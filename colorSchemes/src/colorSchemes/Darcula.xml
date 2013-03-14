@@ -896,8 +896,7 @@
     </option>
     <option name="MATCHED_BRACE_ATTRIBUTES">
       <value>
-        <option name="FOREGROUND" value="ffffff" />
-        <option name="FONT_TYPE" value="1" />
+        <option name="FOREGROUND" value="ff8647" />
       </value>
     </option>
     <option name="MESSAGE_ARGUMENT">
@@ -1472,6 +1471,11 @@
     <option name="Type parameter">
       <value>
         <option name="FOREGROUND" value="247877" />
+      </value>
+    </option>
+    <option name="UNMATCHED_BRACE_ATTRIBUTES">
+      <value>
+        <option name="FOREGROUND" value="d1243b" />
       </value>
     </option>
     <option name="Unresolved reference access">

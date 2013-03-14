@@ -38,6 +38,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -72,7 +73,7 @@ public class CvsContentRevision implements ContentRevision {
       byte[] content = loadContent();
       if (content != null) {
         final Charset charset = myLocalFile.getCharset();
-        myContent = charset == null ? CharsetToolkit.bytesToString(content) : CharsetToolkit.bytesToString(content, charset);
+        myContent = charset == null ? CharsetToolkit.bytesToString(content, EncodingRegistry.getInstance().getDefaultCharset()) : CharsetToolkit.bytesToString(content, charset);
       }
     }
     return myContent;

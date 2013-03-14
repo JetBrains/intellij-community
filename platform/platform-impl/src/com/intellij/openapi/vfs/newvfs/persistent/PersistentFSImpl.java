@@ -60,7 +60,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = new StripedLockIntObjectConcurrentHashMap<VirtualFileSystemEntry>();
   private final Object myInputLock = new Object();
 
-  @Nullable private VirtualFileSystemEntry myFakeRoot;
+  @Nullable private volatile VirtualFileSystemEntry myFakeRoot;
   private boolean myShutDown = false;
 
   public PersistentFSImpl(@NotNull final MessageBus bus) {
@@ -378,9 +378,22 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public int getId(@NotNull final VirtualFile parent, @NotNull final String childName, @NotNull final NewVirtualFileSystem fs) {
-    final int parentId = getFileId(parent);
+    int parentId = getFileId(parent);
 
-    final int[] children = FSRecords.list(parentId);
+    if (parent == myFakeRoot) {
+      // children of the fake root must be the FS roots only
+      myRootsLock.readLock().lock();
+      try {
+        String rootUrl = fs.getProtocol() + "://" + VfsImplUtil.normalize(fs, childName);
+        VirtualFileSystemEntry root = myRoots.get(rootUrl);
+        return root == null ? 0 : root.getId();
+      }
+      finally {
+        myRootsLock.readLock().unlock();
+      }
+    }
+
+    int[] children = FSRecords.list(parentId);
 
     if (children.length > 0) {
       // fast path, check that some child has same nameId as given name, this avoid O(N) on retrieving names for processing non-cached children

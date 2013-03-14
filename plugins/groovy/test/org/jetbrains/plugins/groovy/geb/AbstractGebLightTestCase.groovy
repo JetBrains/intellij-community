@@ -29,7 +29,7 @@ import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author Sergey Evdokimov
  */
-class AbstractGebLightTestCase extends LightCodeInsightFixtureTestCase {
+abstract class AbstractGebLightTestCase extends LightCodeInsightFixtureTestCase {
 
   static descriptor = new GebProjectDescriptor()
 

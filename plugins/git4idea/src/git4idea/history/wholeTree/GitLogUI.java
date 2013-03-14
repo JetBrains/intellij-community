@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1772,7 +1772,7 @@ public class GitLogUI implements Disposable {
   }
 
   interface Colors {
-    Color tag = new JBColor(new Color(0xf1ef9e), new Color(0x7D7B12));
+    Color tag = new JBColor(new Color(0xf1ef9e), new Color(113, 111, 64));
     Color remote = new JBColor(new Color(0xbcbcfc), new Color(0xbcbcfc).darker().darker());
     Color local = new JBColor(new Color(0x75eec7), new Color(0x0D6D4F));
     Color highlighted = new JBColor(new Color(210,255,233), UIUtil.getTableBackground());

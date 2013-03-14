@@ -20,8 +20,8 @@ import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.util.JDOMBuilder;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.testFramework.PlatformLangTestCase;
-import com.intellij.util.text.CharsetUtil;
 
 import java.io.UnsupportedEncodingException;
 
@@ -34,7 +34,7 @@ public abstract class ProjectStoreBaseTestCase extends PlatformLangTestCase {
                        JDOMBuilder.tag("option", JDOMBuilder.attr("name", "VALUE"), JDOMBuilder.attr("value", "true")))
       )),
       "\n");
-    return iprContent.getBytes(CharsetUtil.UTF8);
+    return iprContent.getBytes(CharsetToolkit.UTF8);
   }
 
   @State(

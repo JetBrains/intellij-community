@@ -24,7 +24,6 @@ import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.DistinctRootsCollection;
-import com.intellij.util.text.CharsetUtil;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -82,6 +81,10 @@ public class VfsUtilCore {
   public static String getRelativePath(@NotNull VirtualFile file, @NotNull VirtualFile ancestor, char separator) {
     if (!file.getFileSystem().equals(ancestor.getFileSystem())) return null;
 
+    return doGetRelative(file, ancestor, separator);
+  }
+
+  public static String doGetRelative(VirtualFile file, VirtualFile ancestor, char separator) {
     int length = 0;
     VirtualFile parent = file;
     while (true) {
@@ -166,7 +169,7 @@ public class VfsUtilCore {
 
   @NotNull
   public static InputStream inputStreamSkippingBOM(@NotNull InputStream stream, @NotNull VirtualFile file) throws IOException {
-    return CharsetUtil.inputStreamSkippingBOM(stream);
+    return CharsetToolkit.inputStreamSkippingBOM(stream);
   }
 
   @NotNull

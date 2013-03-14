@@ -16,6 +16,7 @@
 package com.intellij.util.text;
 
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -26,17 +27,17 @@ import org.jetbrains.annotations.Nullable;
  */
 public class XmlCharsetDetector {
   @NonNls private static final String XML_PROLOG_START = "<?xml";
-  @NonNls private static final byte[] XML_PROLOG_START_BYTES = CharsetUtil.getUtf8Bytes(XML_PROLOG_START);
+  @NonNls private static final byte[] XML_PROLOG_START_BYTES = CharsetToolkit.getUtf8Bytes(XML_PROLOG_START);
   @NonNls private static final String ENCODING = "encoding";
-  @NonNls private static final byte[] ENCODING_BYTES = CharsetUtil.getUtf8Bytes(ENCODING);
+  @NonNls private static final byte[] ENCODING_BYTES = CharsetToolkit.getUtf8Bytes(ENCODING);
   @NonNls private static final String XML_PROLOG_END = "?>";
-  @NonNls private static final byte[] XML_PROLOG_END_BYTES = CharsetUtil.getUtf8Bytes(XML_PROLOG_END);
+  @NonNls private static final byte[] XML_PROLOG_END_BYTES = CharsetToolkit.getUtf8Bytes(XML_PROLOG_END);
 
   @Nullable
   public static String extractXmlEncodingFromProlog(final byte[] bytes) {
     int index = 0;
-    if (CharsetUtil.hasUTF8Bom(bytes)) {
-      index = CharsetUtil.UTF8_BOM.length;
+    if (CharsetToolkit.hasUTF8Bom(bytes)) {
+      index = CharsetToolkit.UTF8_BOM.length;
     }
 
     index = skipWhiteSpace(index, bytes);

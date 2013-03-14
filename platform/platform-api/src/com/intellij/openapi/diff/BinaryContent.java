@@ -23,6 +23,7 @@ import com.intellij.openapi.fileTypes.UIBasedFileType;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.testFramework.LightVirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -74,7 +75,7 @@ public class BinaryContent extends DiffContent {
       String text = null;
       try {
         if (myCharset == null) {
-          text = CharsetToolkit.bytesToString(myBytes);
+          text = CharsetToolkit.bytesToString(myBytes, EncodingRegistry.getInstance().getDefaultCharset());
         }
         else {
           text = CharsetToolkit.bytesToString(myBytes, myCharset);

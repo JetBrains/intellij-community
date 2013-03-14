@@ -15,18 +15,13 @@
  */
 package com.intellij.openapi.vfs;
 
-import com.intellij.openapi.vfs.encoding.EncodingRegistry;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.text.CharsetUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.FileInputStream;
-import java.io.IOException;
-import java.io.InputStream;
+import java.io.*;
 import java.nio.ByteBuffer;
 import java.nio.CharBuffer;
 import java.nio.charset.Charset;
@@ -78,19 +73,24 @@ import java.util.Map;
  * @author Guillaume LAFORGE
  */
 public class CharsetToolkit {
-  @NonNls public static final String UTF8 = CharsetUtil.UTF8;
+  @NonNls public static final String UTF8 = "UTF-8";
   public static final Charset UTF8_CHARSET = Charset.forName(UTF8);
   public static final Charset UTF_16LE_CHARSET = Charset.forName("UTF-16LE");
   public static final Charset UTF_16BE_CHARSET = Charset.forName("UTF-16BE");
   public static final Charset UTF_32BE_CHARSET = Charset.forName("UTF-32BE");
   public static final Charset UTF_32LE_CHARSET = Charset.forName("UTF-32LE");
   public static final Charset UTF_16_CHARSET = Charset.forName("UTF-16");
+  private static final byte FF = (byte)0xff;
+  private static final byte FE = (byte)0xfe;
+  private static final byte EF = (byte)0xef;
+  private static final byte BB = (byte)0xbb;
+  private static final byte BF = (byte)0xbf;
 
   private final byte[] buffer;
   private final Charset defaultCharset;
   private boolean enforce8Bit = false;
 
-  public static final byte[] UTF8_BOM = CharsetUtil.UTF8_BOM;
+  public static final byte[] UTF8_BOM = {0xffffffef, 0xffffffbb, 0xffffffbf};
   public static final byte[] UTF16LE_BOM = {-1, -2, };
   public static final byte[] UTF16BE_BOM = {-2, -1, };
   public static final byte[] UTF32BE_BOM = {0, 0, -2, -1, };
@@ -124,6 +124,96 @@ public class CharsetToolkit {
   public CharsetToolkit(@NotNull byte[] buffer, Charset defaultCharset) {
     this.buffer = buffer;
     this.defaultCharset = defaultCharset == null ? getDefaultSystemCharset() : defaultCharset;
+  }
+
+  @NotNull
+  public static InputStream inputStreamSkippingBOM(@NotNull InputStream stream) throws IOException {
+    assert stream.markSupported() :stream;
+    stream.mark(4);
+    boolean mustReset = true;
+    try {
+      int ret = stream.read();
+      if (ret == -1) {
+        return stream; // no bom
+      }
+      byte b0 = (byte)ret;
+      if (b0 != EF && b0 != FF && b0 != FE && b0 != 0) return stream; // no bom
+
+      ret = stream.read();
+      if (ret == -1) {
+        return stream; // no bom
+      }
+      byte b1 = (byte)ret;
+      if (b0 == FF && b1 == FE) {
+        stream.mark(2);
+        ret = stream.read();
+        if (ret == -1) {
+          return stream;  // utf-16 LE
+        }
+        byte b2 = (byte)ret;
+        if (b2 != 0) {
+          return stream; // utf-16 LE
+        }
+        ret = stream.read();
+        if (ret == -1) {
+          return stream;
+        }
+        byte b3 = (byte)ret;
+        if (b3 != 0) {
+          return stream; // utf-16 LE
+        }
+
+        // utf-32 LE
+        mustReset = false;
+        return stream;
+      }
+      if (b0 == FE && b1 == FF) {
+        mustReset = false;
+        return stream; // utf-16 BE
+      }
+      if (b0 == EF && b1 == BB) {
+        ret = stream.read();
+        if (ret == -1) {
+          return stream; // no bom
+        }
+        byte b2 = (byte)ret;
+        if (b2 == BF) {
+          mustReset = false;
+          return stream; // utf-8 bom
+        }
+
+        // no bom
+        return stream;
+      }
+
+      if (b0 == 0 && b1 == 0) {
+        ret = stream.read();
+        if (ret == -1) {
+          return stream;  // no bom
+        }
+        byte b2 = (byte)ret;
+        if (b2 != FE) {
+          return stream; // no bom
+        }
+        ret = stream.read();
+        if (ret == -1) {
+          return stream;  // no bom
+        }
+        byte b3 = (byte)ret;
+        if (b3 != FF) {
+          return stream; // no bom
+        }
+
+        mustReset = false;
+        return stream; // UTF-32 BE
+      }
+
+      // no bom
+      return stream;
+    }
+    finally {
+      if (mustReset) stream.reset();
+    }
   }
 
   /**
@@ -195,11 +285,6 @@ public class CharsetToolkit {
         return UTF8_CHARSET;
     }
     return null;
-  }
-
-  @NotNull
-  public static String bytesToString(@NotNull byte[] bytes) {
-    return bytesToString(bytes, EncodingRegistry.getInstance().getDefaultCharset());
   }
 
   @NotNull
@@ -335,10 +420,6 @@ public class CharsetToolkit {
     return guessEncoding(guess_length, defaultCharset);
   }
 
-  public static Charset guessEncoding(@NotNull File f, int bufferLength) throws IOException {
-    return guessEncoding(f, bufferLength, EncodingRegistry.getInstance().getDefaultCharset());
-  }
-
   public static Charset guessEncoding(@NotNull File f, int bufferLength, Charset defaultCharset) throws IOException {
     byte[] buffer = new byte[bufferLength];
     int read;
@@ -437,7 +518,7 @@ public class CharsetToolkit {
    * @return true if the buffer has a BOM for UTF8.
    */
   public static boolean hasUTF8Bom(@NotNull byte[] bom) {
-    return CharsetUtil.hasUTF8Bom(bom);
+    return ArrayUtil.startsWith(bom, UTF8_BOM);
   }
 
   /**
@@ -482,7 +563,12 @@ public class CharsetToolkit {
 
   @NotNull
   public static byte[] getUtf8Bytes(@NotNull String s) {
-    return CharsetUtil.getUtf8Bytes(s);
+    try {
+      return s.getBytes(CharsetToolkit.UTF8);
+    }
+    catch (UnsupportedEncodingException e) {
+      throw new RuntimeException("UTF-8 must be supported", e);
+    }
   }
 
   public static int getBOMLength(@NotNull byte[] content, Charset charset) {
@@ -544,13 +630,5 @@ public class CharsetToolkit {
     }
 
     return charset;
-  }
-
-  /**
-   * @deprecated use {@link CharsetUtil#inputStreamSkippingBOM(java.io.InputStream)} instead
-   */
-  @NotNull
-  public static InputStream inputStreamSkippingBOM(@NotNull InputStream stream) throws IOException {
-    return CharsetUtil.inputStreamSkippingBOM(stream);
   }
 }
