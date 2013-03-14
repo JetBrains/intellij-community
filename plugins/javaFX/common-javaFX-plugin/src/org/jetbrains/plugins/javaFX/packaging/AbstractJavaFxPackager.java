@@ -33,7 +33,7 @@ public abstract class AbstractJavaFxPackager {
   private static final Logger LOG = Logger.getInstance("#" + AbstractJavaFxPackager.class.getName());
 
   //artifact description
-  protected abstract String getArtifactName();
+  protected abstract String getArtifactRootName();
   protected abstract String getArtifactOutputPath();
   protected abstract String getArtifactOutputFilePath();
 
@@ -86,7 +86,7 @@ public abstract class AbstractJavaFxPackager {
     addParameter(commandLine, tempDirWithJar.getPath());
     addParameter(commandLine, "-outfile");
 
-    addParameter(commandLine, getArtifactName());
+    addParameter(commandLine, getArtifactRootName());
     addParameter(commandLine, "-v");
 
     addParameter(commandLine, "-nocss2bin");
@@ -126,7 +126,7 @@ public abstract class AbstractJavaFxPackager {
     addParameter(commandLine, getUpdateMode());
 
     addParameter(commandLine, "-name");
-    addParameter(commandLine, getArtifactName());
+    addParameter(commandLine, getArtifactRootName());
 
 
     addParameter(commandLine, "-outdir");
@@ -142,7 +142,7 @@ public abstract class AbstractJavaFxPackager {
     addParameter(commandLine, tempDirectory.getPath());
 
     addParameter(commandLine, "-outfile");
-    addParameter(commandLine, getArtifactName());
+    addParameter(commandLine, getArtifactRootName());
 
     addParameter(commandLine, "-srcdir");
     addParameter(commandLine, tempDirWithCreatedJar.getPath());
