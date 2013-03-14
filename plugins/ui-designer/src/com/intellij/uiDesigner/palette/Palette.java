@@ -613,7 +613,8 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
       for (final PropertyDescriptor descriptor : descriptors) {
         Method readMethod = descriptor.getReadMethod();
         Method writeMethod = descriptor.getWriteMethod();
-        if (writeMethod == null || readMethod == null) {
+        Class propertyType = descriptor.getPropertyType();
+        if (writeMethod == null || readMethod == null || propertyType == null) {
           continue;
         }
 
@@ -630,7 +631,6 @@ public final class Palette implements ProjectComponent, PersistentStateComponent
 
         final IntrospectedProperty property;
 
-        final Class propertyType = descriptor.getPropertyType();
         final Properties properties = (myProject == null) ? new Properties() : Properties.getInstance();
         if (int.class.equals(propertyType)) { // int
           IntEnumEditor.Pair[] enumPairs = properties.getEnumPairs(aClass, name);
