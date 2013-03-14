@@ -15,18 +15,18 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.group;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
-import com.intellij.application.options.codeStyle.arrangement.component.ArrangementEditorAware;
-import com.intellij.application.options.codeStyle.arrangement.component.ArrangementRepresentationAware;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
+import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
+import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementEditorAware;
+import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementRepresentationAware;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
-import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
-import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.CompositeArrangementSettingsToken;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.table.JBTable;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.AbstractTableCellEditor;
-import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -35,8 +35,9 @@ import javax.swing.table.DefaultTableModel;
 import javax.swing.table.TableCellRenderer;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.*;
+import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Denis Zhdanov
@@ -44,15 +45,19 @@ import java.util.List;
  */
 public class ArrangementGroupingRulesControl extends JBTable {
 
-  @NotNull private final Map<ArrangementGroupingType, ArrangementGroupingComponent> myComponents
-    = new EnumMap<ArrangementGroupingType, ArrangementGroupingComponent>(ArrangementGroupingType.class);
-  
+  @NotNull public static final DataKey<ArrangementGroupingRulesControl> KEY = DataKey.create("Arrangement.Rule.Group.Control");
+
+  @NotNull private final Map<ArrangementSettingsToken, ArrangementGroupingComponent> myComponents = ContainerUtilRt.newHashMap();
+
+  @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
+
   private int myRowUnderMouse = -1;
 
-  public ArrangementGroupingRulesControl(@NotNull ArrangementNodeDisplayManager displayManager,
-                                         @NotNull ArrangementStandardSettingsAware settingsFilter)
+  public ArrangementGroupingRulesControl(@NotNull ArrangementStandardSettingsManager settingsManager,
+                                         @NotNull ArrangementColorsProvider colorsProvider)
   {
     super(new DefaultTableModel(0, 1));
+    mySettingsManager = settingsManager;
     setDefaultRenderer(Object.class, new MyRenderer());
     getColumnModel().getColumn(0).setCellEditor(new MyEditor());
     setShowColumns(false);
@@ -61,19 +66,13 @@ public class ArrangementGroupingRulesControl extends JBTable {
     setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
-    for (ArrangementGroupingType groupingType : ArrangementGroupingType.values()) {
-      if (!settingsFilter.isEnabled(groupingType, null)) {
-        continue;
+    List<CompositeArrangementSettingsToken> groupingTokens = settingsManager.getSupportedGroupingTokens();
+    if (groupingTokens != null) {
+      for (CompositeArrangementSettingsToken token : groupingTokens) {
+        ArrangementGroupingComponent component = new ArrangementGroupingComponent(token, colorsProvider, settingsManager);
+        myComponents.put(token.getToken(), component);
+        getModel().addRow(new Object[]{component});
       }
-      List<ArrangementEntryOrderType> orderTypes = new ArrayList<ArrangementEntryOrderType>();
-      for (ArrangementEntryOrderType orderType : ArrangementEntryOrderType.values()) {
-        if (settingsFilter.isEnabled(groupingType, orderType)) {
-          orderTypes.add(orderType);
-        }
-      }
-      ArrangementGroupingComponent component = new ArrangementGroupingComponent(displayManager, groupingType, orderTypes);
-      myComponents.put(groupingType, component);
-      getModel().addRow(new Object[]{component});
     }
   }
 
@@ -84,9 +83,9 @@ public class ArrangementGroupingRulesControl extends JBTable {
 
   public void setRules(@Nullable List<ArrangementGroupingRule> rules) {
     for (ArrangementGroupingComponent component : myComponents.values()) {
-      component.setChecked(false);
+      component.setSelected(false);
     }
-    
+
     if (rules == null) {
       return;
     }
@@ -96,15 +95,15 @@ public class ArrangementGroupingRulesControl extends JBTable {
       model.removeRow(model.getRowCount() - 1);
     }
 
-    List<ArrangementGroupingType> types = new ArrayList<ArrangementGroupingType>(myComponents.keySet());
-    ContainerUtil.sort(types, new MyComparator(rules));
-    for (ArrangementGroupingType type : types) {
-      model.addRow(new Object[] { myComponents.get(type) });
+    List<ArrangementSettingsToken> types = ContainerUtilRt.newArrayList(myComponents.keySet());
+    types = mySettingsManager.sort(types);
+    for (ArrangementSettingsToken type : types) {
+      model.addRow(new Object[]{myComponents.get(type)});
     }
     for (ArrangementGroupingRule rule : rules) {
       ArrangementGroupingComponent component = myComponents.get(rule.getGroupingType());
-      component.setChecked(true);
-      ArrangementEntryOrderType orderType = rule.getOrderType();
+      component.setSelected(true);
+      ArrangementSettingsToken orderType = rule.getOrderType();
       component.setOrderType(orderType);
     }
   }
@@ -115,10 +114,10 @@ public class ArrangementGroupingRulesControl extends JBTable {
     DefaultTableModel model = getModel();
     for (int i = 0, max = model.getRowCount(); i < max; i++) {
       ArrangementGroupingComponent component = (ArrangementGroupingComponent)model.getValueAt(i, 0);
-      if (!component.isChecked()) {
+      if (!component.isSelected()) {
         continue;
       }
-      ArrangementEntryOrderType orderType = component.getOrderType();
+      ArrangementSettingsToken orderType = component.getOrderType();
       if (orderType == null) {
         result.add(new ArrangementGroupingRule(component.getGroupingType()));
       }
@@ -154,6 +153,7 @@ public class ArrangementGroupingRulesControl extends JBTable {
     super.processMouseEvent(e);
   }
 
+  @SuppressWarnings("ConstantConditions")
   private class MyRenderer implements TableCellRenderer {
     @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
@@ -170,6 +170,7 @@ public class ArrangementGroupingRulesControl extends JBTable {
     }
   }
   
+  @SuppressWarnings("ConstantConditions")
   private static class MyEditor extends AbstractTableCellEditor {
     
     @Nullable Object myValue;
@@ -193,32 +194,6 @@ public class ArrangementGroupingRulesControl extends JBTable {
       super.stopCellEditing();
       myValue = null;
       return true;
-    }
-  }
-  
-  private static class MyComparator implements Comparator<ArrangementGroupingType> {
-
-    @NotNull private final TObjectIntHashMap<ArrangementGroupingType> myWeights = new TObjectIntHashMap<ArrangementGroupingType>();
-
-    MyComparator(@NotNull List<ArrangementGroupingRule> list) {
-      int weight = 0;
-      for (ArrangementGroupingRule rule : list) {
-        myWeights.put(rule.getGroupingType(), weight++);
-      }
-    }
-
-    @Override
-    public int compare(ArrangementGroupingType t1, ArrangementGroupingType t2) {
-      if (myWeights.containsKey(t1) && myWeights.containsKey(t2)) {
-        return myWeights.get(t1) - myWeights.get(t2);
-      }
-      else if (myWeights.containsKey(t1)) {
-        return -1;
-      }
-      else if (myWeights.containsKey(t2)) {
-        return 1;
-      }
-      return 0;
     }
   }
 }

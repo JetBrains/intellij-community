@@ -51,5 +51,5 @@ public interface ArrangementSettingsSerializer {
    * @param settings  settings to serialize
    * @param holder    element to hold serialized settings
    */
-  void serialize(ArrangementSettings settings, @NotNull Element holder);
+  void serialize(@NotNull ArrangementSettings settings, @NotNull Element holder);
 }

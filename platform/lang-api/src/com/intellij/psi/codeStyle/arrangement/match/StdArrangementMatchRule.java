@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement.match;
 
-import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -32,8 +32,8 @@ public class StdArrangementMatchRule extends ArrangementMatchRule implements Clo
     super(matcher);
   }
 
-  public StdArrangementMatchRule(@NotNull StdArrangementEntryMatcher matcher, @NotNull ArrangementEntryOrderType type) {
-    super(matcher, type);
+  public StdArrangementMatchRule(@NotNull StdArrangementEntryMatcher matcher, @NotNull ArrangementSettingsToken orderType) {
+    super(matcher, orderType);
   }
 
   @NotNull

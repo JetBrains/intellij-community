@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.action;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesModel;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -35,7 +34,7 @@ public abstract class AbstractMoveArrangementRuleAction extends AnAction impleme
 
   @Override
   public void update(AnActionEvent e) {
-    ArrangementMatchingRulesControl control = ArrangementConstants.MATCHING_RULES_CONTROL_KEY.getData(e.getDataContext());
+    ArrangementMatchingRulesControl control = ArrangementMatchingRulesControl.KEY.getData(e.getDataContext());
     if (control == null) {
       e.getPresentation().setEnabled(false);
       return;
@@ -54,7 +53,7 @@ public abstract class AbstractMoveArrangementRuleAction extends AnAction impleme
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final ArrangementMatchingRulesControl control = ArrangementConstants.MATCHING_RULES_CONTROL_KEY.getData(e.getDataContext());
+    final ArrangementMatchingRulesControl control = ArrangementMatchingRulesControl.KEY.getData(e.getDataContext());
     if (control == null) {
       return;
     }

@@ -16,20 +16,20 @@
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
-import com.intellij.application.options.codeStyle.arrangement.component.*;
+import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementEditorAware;
+import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementRepresentationAware;
 import com.intellij.application.options.codeStyle.arrangement.util.ArrangementListRowDecorator;
 import com.intellij.application.options.codeStyle.arrangement.util.IntObjectMap;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
-import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.ui.AbstractTableCellEditor;
 import gnu.trove.TIntArrayList;
@@ -56,6 +56,8 @@ import java.util.List;
  */
 public class ArrangementMatchingRulesControl extends JBTable {
 
+  @NotNull public static final DataKey<ArrangementMatchingRulesControl> KEY = DataKey.create("Arrangement.Rule.Match.Control");
+
   @NotNull private static final Logger LOG            = Logger.getInstance("#" + ArrangementMatchingRulesControl.class.getName());
   @NotNull private static final JLabel EMPTY_RENDERER = new JLabel(ApplicationBundle.message("arrangement.text.empty.rule"));
 
@@ -72,14 +74,13 @@ public class ArrangementMatchingRulesControl extends JBTable {
   private int myEditorRow     = -1;
   private boolean mySkipSelectionChange;
 
-  public ArrangementMatchingRulesControl(@NotNull ArrangementNodeDisplayManager displayManager,
+  public ArrangementMatchingRulesControl(@NotNull ArrangementStandardSettingsManager settingsManager,
                                          @NotNull ArrangementColorsProvider colorsProvider,
-                                         @NotNull ArrangementStandardSettingsAware settingsFilter,
                                          @NotNull RepresentationCallback callback)
   {
     super(new ArrangementMatchingRulesModel());
     myRepresentationCallback = callback;
-    myFactory = new ArrangementMatchNodeComponentFactory(displayManager, colorsProvider, this);
+    myFactory = new ArrangementMatchNodeComponentFactory(settingsManager, colorsProvider, this);
     myRenderer = new MyRenderer();
     setDefaultRenderer(Object.class, myRenderer);
     getColumnModel().getColumn(0).setCellEditor(new MyEditor());
@@ -89,12 +90,12 @@ public class ArrangementMatchingRulesControl extends JBTable {
     setSurrendersFocusOnKeystroke(true);
     putClientProperty("terminateEditOnFocusLost", Boolean.TRUE);
 
-    ArrangementAtomMatchCondition condition = new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.CLASS);
+    ArrangementAtomMatchCondition condition = new ArrangementAtomMatchCondition(StdArrangementTokens.EntryType.CLASS);
     StdArrangementMatchRule rule = new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition));
-    ArrangementMatchConditionComponent component = myFactory.getComponent(condition, rule, true);
+    ArrangementUiComponent component = myFactory.getComponent(condition, rule, true);
     myMinRowHeight = new ArrangementListRowDecorator(component, this).getPreferredSize().height;
 
-    myEditor = new ArrangementMatchingRuleEditor(settingsFilter, colorsProvider, displayManager, this);
+    myEditor = new ArrangementMatchingRuleEditor(settingsManager, colorsProvider, this);
     addMouseMotionListener(new MouseAdapter() {
       @Override
       public void mouseMoved(MouseEvent e) {
@@ -108,7 +109,8 @@ public class ArrangementMatchingRulesControl extends JBTable {
       }
     });
     getModel().addTableModelListener(new TableModelListener() {
-      @Override public void tableChanged(TableModelEvent e) { onTableChange(e); }
+      @Override
+      public void tableChanged(TableModelEvent e) { onTableChange(e); }
     });
   }
 
@@ -467,7 +469,7 @@ public class ArrangementMatchingRulesControl extends JBTable {
           return EMPTY_RENDERER;
         }
         StdArrangementMatchRule rule = (StdArrangementMatchRule)value;
-        ArrangementMatchConditionComponent ruleComponent = myFactory.getComponent(rule.getMatcher().getCondition(), rule, true);
+        ArrangementUiComponent ruleComponent = myFactory.getComponent(rule.getMatcher().getCondition(), rule, true);
         component = new ArrangementListRowDecorator(ruleComponent, ArrangementMatchingRulesControl.this);
         myComponents.set(row, component);
       }
@@ -477,12 +479,13 @@ public class ArrangementMatchingRulesControl extends JBTable {
       component.setSelected(getSelectionModel().isSelectedIndex(row) || (myEditorRow >= 0 && row == myEditorRow - 1));
       component.setBeingEdited(myEditorRow >= 0 && myEditorRow == row + 1);
       boolean showSortIcon = value instanceof StdArrangementMatchRule
-                             && ((StdArrangementMatchRule)value).getOrderType() == ArrangementEntryOrderType.BY_NAME;
+                             && StdArrangementTokens.Order.BY_NAME.equals(((StdArrangementMatchRule)value).getOrderType());
       component.setShowSortIcon(showSortIcon);
       return component.getUiComponent();
     }
   }
   
+  @SuppressWarnings("ConstantConditions")
   private class MyEditor extends AbstractTableCellEditor {
     
     private int myRow;

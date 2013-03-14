@@ -5,7 +5,7 @@ import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.DefaultArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.NameAwareArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.TypeAwareArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,14 +18,15 @@ import java.util.Set;
 public class XmlElementArrangementEntry extends DefaultArrangementEntry
   implements TypeAwareArrangementEntry, NameAwareArrangementEntry {
 
-  private final ArrangementEntryType myType;
-  private final String myName;
+  private final ArrangementSettingsToken myType;
+  private final String                   myName;
 
   public XmlElementArrangementEntry(@Nullable ArrangementEntry parent,
                                     @NotNull TextRange range,
-                                    @NotNull ArrangementEntryType type,
+                                    @NotNull ArrangementSettingsToken type,
                                     @Nullable String name,
-                                    boolean canBeMatched) {
+                                    boolean canBeMatched)
+  {
     super(parent, range.getStartOffset(), range.getEndOffset(), canBeMatched);
     myName = name;
     myType = type;
@@ -39,12 +40,7 @@ public class XmlElementArrangementEntry extends DefaultArrangementEntry
 
   @NotNull
   @Override
-  public Set<ArrangementEntryType> getTypes() {
+  public Set<ArrangementSettingsToken> getTypes() {
     return Collections.singleton(myType);
-  }
-
-  @NotNull
-  public ArrangementEntryType getType() {
-    return myType;
   }
 }

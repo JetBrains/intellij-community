@@ -16,11 +16,8 @@
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationManager;
-import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationPanel;
-import com.intellij.application.options.codeStyle.arrangement.component.ArrangementEditorAware;
-import com.intellij.application.options.codeStyle.arrangement.component.ArrangementRepresentationAware;
-import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRuleEditor;
-import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
+import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementEditorAware;
+import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementRepresentationAware;
 import com.intellij.application.options.codeStyle.arrangement.util.CalloutBorder;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;

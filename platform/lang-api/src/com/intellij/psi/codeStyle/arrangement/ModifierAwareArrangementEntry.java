@@ -15,8 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement;
 
-import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
@@ -28,5 +27,5 @@ import java.util.Set;
 public interface ModifierAwareArrangementEntry extends ArrangementEntry {
   
   @NotNull
-  Set<ArrangementModifier> getModifiers();
+  Set<ArrangementSettingsToken> getModifiers();
 }

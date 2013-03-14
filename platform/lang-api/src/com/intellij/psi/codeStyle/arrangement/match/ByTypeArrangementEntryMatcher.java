@@ -17,15 +17,15 @@ package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.TypeAwareArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.Set;
 
 /**
- * Filters {@link ArrangementEntry entries} by {@link TypeAwareArrangementEntry#getType() their types}.
+ * Filters {@link ArrangementEntry entries} by {@link TypeAwareArrangementEntry#getTypes() their types}.
  * <p/>
  * <b>Note:</b> type-unaware entry will not be matched by the current rule.
  * <p/>
@@ -36,13 +36,13 @@ import java.util.Set;
  */
 public class ByTypeArrangementEntryMatcher implements ArrangementEntryMatcher {
 
-  @NotNull private final Set<ArrangementEntryType> myTypes = EnumSet.noneOf(ArrangementEntryType.class);
+  @NotNull private final Set<ArrangementSettingsToken> myTypes = ContainerUtilRt.newHashSet();
 
-  public ByTypeArrangementEntryMatcher(@NotNull ArrangementEntryType... interestedTypes) {
-    this(Arrays.asList(interestedTypes));
+  public ByTypeArrangementEntryMatcher(@NotNull ArrangementSettingsToken interestedType) {
+    myTypes.add(interestedType);
   }
 
-  public ByTypeArrangementEntryMatcher(@NotNull Collection<ArrangementEntryType> interestedTypes) {
+  public ByTypeArrangementEntryMatcher(@NotNull Collection<ArrangementSettingsToken> interestedTypes) {
     myTypes.addAll(interestedTypes);
   }
 
@@ -55,7 +55,7 @@ public class ByTypeArrangementEntryMatcher implements ArrangementEntryMatcher {
   }
 
   @NotNull
-  public Set<ArrangementEntryType> getTypes() {
+  public Set<ArrangementSettingsToken> getTypes() {
     return myTypes;
   }
 

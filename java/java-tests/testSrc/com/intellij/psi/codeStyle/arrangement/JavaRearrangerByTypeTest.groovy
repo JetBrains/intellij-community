@@ -15,13 +15,12 @@
  */
 package com.intellij.psi.codeStyle.arrangement
 
-import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType
 import org.junit.Before
 
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.*
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PRIVATE
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PROTECTED
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PUBLIC
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.*
+
 /**
  * @author Denis Zhdanov
  * @since 7/20/12 2:45 PM
@@ -35,7 +34,7 @@ class JavaRearrangerByTypeTest extends AbstractJavaRearrangerTest {
     commonSettings.BLANK_LINES_AROUND_CLASS = 0
   }
 
-  void testFieldsBeforeMethods() {
+  void "test fields before methods"() {
     doTest(
       initial: '''\
 class Test {
@@ -48,6 +47,7 @@ public void test() {
     private int i;
   private int j;
 }''',
+      rules: [rule(FIELD)],
       expected: '''\
 class Test {
    private int i;
@@ -58,12 +58,11 @@ class Test2 {
   private int j;
 public void test() {
 }
-}''',
-      rules: [rule(FIELD)]
+}'''
     )
   }
 
-  void testAnonymousClassAtFieldInitializer() {
+  void "test anonymous class at field initializer"() {
     doTest(
       initial: '''\
 class Test {
@@ -107,7 +106,7 @@ class Test {
     )
   }
 
-  void testAnonymousClassAtMethod() {
+  void "test anonymous class at method"() {
     doTest(
       initial: '''\
 class Test {
@@ -145,7 +144,7 @@ class Test {
     )
   }
 
-  void testInnerClassInterfaceAndEnum() {
+  void "test inner class interface and enum"() {
     doTest(
       initial: '''\
 class Test {
@@ -165,7 +164,7 @@ class Test {
     )
   }
 
-  void testRanges() {
+  void "test ranges"() {
     doTest(
       initial: '''\
 class Test {
@@ -203,7 +202,7 @@ class Test {
     )
   }
 
-  void testMethodsAndConstructors() {
+  void "test methods and constructors"() {
     doTest(
       initial: '''\
 class Test {
@@ -220,24 +219,7 @@ class Test {
       rules: [rule(CONSTRUCTOR), rule(METHOD)])
   }
 
-  void testConstructorAsMethod() {
-    doTest(
-      initial: '''\
-class Test {
-  private int i;
-  Test() {}
-  public int j;
-}''',
-      expected: '''\
-class Test {
-  public int j;
-  Test() {}
-  private int i;
-}''',
-      rules: [rule(FIELD, PUBLIC), rule(METHOD), rule(FIELD)])
-  }
-
-  void testMultipleFieldsInOneRow() {
+  void "test multiple fields in one row"() {
     doTest(
       initial: '''\
 class Test {
@@ -326,7 +308,7 @@ class Test {
   int c; // comment
   int a;
 }''',
-      rules: [rule(ArrangementEntryOrderType.BY_NAME, FIELD)],
+      rules: [ruleWithOrder(BY_NAME, rule(FIELD))],
       expected: '''\
 class Test {
   int a;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,12 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement.model;
+package com.intellij.psi.codeStyle.arrangement.std;
 
 /**
  * @author Denis Zhdanov
- * @since 8/6/12 5:02 PM
+ * @since 3/11/13 9:45 AM
  */
-public enum ArrangementSettingType {
-  TYPE, MODIFIER, NAME, ORDER
+public enum StdArrangementTokenUiRole {
+  LABEL,
+  CHECKBOX,
+  COMBO_BOX,
+  TEXT_FIELD,
+  BULB,
 }

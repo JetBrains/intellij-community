@@ -24,15 +24,17 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings
 import com.intellij.psi.codeStyle.arrangement.engine.ArrangementEngine
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule
-import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition
-import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase
 import org.jetbrains.annotations.NotNull
 import org.junit.Assert
+
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.KEEP
 
 /**
  * @author Denis Zhdanov
@@ -63,36 +65,62 @@ abstract class AbstractRearrangerTest extends LightPlatformCodeInsightFixtureTes
   }
 
   @NotNull
-  protected static ArrangementGroupingRule group(@NotNull ArrangementGroupingType type) {
-    group(type, ArrangementEntryOrderType.KEEP)
+  protected static ArrangementGroupingRule group(@NotNull ArrangementSettingsToken type) {
+    group(type, KEEP)
   }
   
   @NotNull
-  protected static ArrangementGroupingRule group(@NotNull ArrangementGroupingType type, @NotNull ArrangementEntryOrderType order) {
+  protected static ArrangementGroupingRule group(@NotNull ArrangementSettingsToken type, @NotNull ArrangementSettingsToken order) {
     new ArrangementGroupingRule(type, order)
   }
 
   @NotNull
-  protected static StdArrangementMatchRule rule(@NotNull Object ... conditions) {
-    rule(ArrangementEntryOrderType.KEEP, conditions)
+  protected static StdArrangementMatchRule rule(@NotNull ArrangementSettingsToken token) {
+    new StdArrangementMatchRule(new StdArrangementEntryMatcher(atom(token)))
   }
-  
+
   @NotNull
-  protected static StdArrangementMatchRule rule(@NotNull ArrangementEntryOrderType orderType, @NotNull Object ... conditions) {
-    def condition
-    if (conditions.length == 1) {
-      condition = atom(conditions[0])
+  protected static StdArrangementMatchRule nameRule(@NotNull String nameFilter, @NotNull ArrangementSettingsToken ... tokens) {
+    if (tokens.length == 0) {
+      new StdArrangementMatchRule(new StdArrangementEntryMatcher(atom(nameFilter)))
     }
     else {
-      condition = ArrangementUtil.combine(conditions.collect { atom(it) } as ArrangementMatchCondition[])
+      def compositeCondition = ArrangementUtil.combine([atom(nameFilter)] + tokens.collect { atom(it) } as ArrangementAtomMatchCondition[])
+      new StdArrangementMatchRule(new StdArrangementEntryMatcher(compositeCondition))
     }
-    
-    new StdArrangementMatchRule(new StdArrangementEntryMatcher(condition), orderType)
   }
   
   @NotNull
-  protected static ArrangementAtomMatchCondition atom(@NotNull Object condition) {
-    new ArrangementAtomMatchCondition(ArrangementUtil.parseType(condition), condition)
+  protected static StdArrangementMatchRule rule(@NotNull ArrangementSettingsToken ... conditions) {
+    rule(conditions.collect { atom(it) })
+  }
+
+  @NotNull
+  protected static StdArrangementMatchRule rule(@NotNull ArrangementAtomMatchCondition ... conditions) {
+    def compositeCondition = ArrangementUtil.combine(conditions)
+    new StdArrangementMatchRule(new StdArrangementEntryMatcher(compositeCondition))
+  }
+
+  @NotNull
+  protected static StdArrangementMatchRule rule(@NotNull List<ArrangementAtomMatchCondition> conditions) {
+    rule(conditions as ArrangementAtomMatchCondition[])
+  }
+
+  @NotNull
+  protected static StdArrangementMatchRule ruleWithOrder(@NotNull ArrangementSettingsToken orderType,
+                                                         @NotNull StdArrangementMatchRule rule)
+  {
+    new StdArrangementMatchRule(rule.matcher, orderType)
+  }
+  
+  @NotNull
+  protected static ArrangementAtomMatchCondition atom(@NotNull ArrangementSettingsToken token) {
+    new ArrangementAtomMatchCondition(token)
+  }
+
+  @NotNull
+  protected static ArrangementAtomMatchCondition atom(@NotNull String nameFilter) {
+    new ArrangementAtomMatchCondition(StdArrangementTokens.General.NAME, nameFilter)
   }
   
   protected void doTest(@NotNull args) {

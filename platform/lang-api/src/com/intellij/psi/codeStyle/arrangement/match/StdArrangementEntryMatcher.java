@@ -17,17 +17,17 @@ package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.model.*;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.EnumSet;
 import java.util.List;
 import java.util.Set;
 
 /**
- * {@link ArrangementEntryMatcher} which is based on standard match conditions like {@link ArrangementEntryType entry type}
- * or {@link ArrangementModifier modifier}.
+ * {@link ArrangementEntryMatcher} which is based on standard match conditions in form of {@link ArrangementSettingsToken}.
  * <p/>
  * Implementations of this interface are expected to be thread-safe.
  * 
@@ -76,7 +76,7 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
   public String toString() {
     return myCondition.toString();
   }
-  
+
   @NotNull
   private static ArrangementEntryMatcher doBuildMatcher(@NotNull ArrangementMatchCondition condition) {
     MyVisitor visitor = new MyVisitor();
@@ -87,8 +87,8 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
   private static class MyVisitor implements ArrangementMatchConditionVisitor {
 
     @NotNull private final List<ArrangementEntryMatcher> myMatchers  = ContainerUtilRt.newArrayList();
-    @NotNull private final Set<ArrangementEntryType>     myTypes     = EnumSet.noneOf(ArrangementEntryType.class);
-    @NotNull private final Set<ArrangementModifier>      myModifiers = EnumSet.noneOf(ArrangementModifier.class);
+    @NotNull private final Set<ArrangementSettingsToken> myTypes     = ContainerUtilRt.newHashSet();
+    @NotNull private final Set<ArrangementSettingsToken> myModifiers = ContainerUtilRt.newHashSet();
 
     @Nullable private String myNamePattern;
 
@@ -96,15 +96,19 @@ public class StdArrangementEntryMatcher implements ArrangementEntryMatcher {
 
     @Override
     public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-      switch (condition.getType()) {
-        case TYPE:
-          myTypes.add((ArrangementEntryType)condition.getValue());
-          break;
-        case MODIFIER:
-          myModifiers.add((ArrangementModifier)condition.getValue());
-          break;
-        case NAME:
-          myNamePattern = condition.getValue().toString();
+      if (StdArrangementTokens.General.NAME.equals(condition.getType())) {
+        myNamePattern = condition.getValue().toString();
+        return;
+      }
+      Object v = condition.getValue();
+      if (v instanceof ArrangementSettingsToken) {
+        ArrangementSettingsToken token = (ArrangementSettingsToken)v;
+        if (StdArrangementTokens.EntryType.is(token)) {
+          myTypes.add(token);
+        }
+        else if (StdArrangementTokens.Modifier.is(token)) {
+          myModifiers.add(token);
+        }
       }
     }
 

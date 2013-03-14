@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,25 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.psi.codeStyle.arrangement.match;
+package com.intellij.application.options.codeStyle.arrangement.ui;
 
-import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
+import org.jetbrains.annotations.NotNull;
+
+import javax.swing.*;
 
 /**
- * Enumerates all possible {@link ArrangementEntry entry} types.
- * <p/>
- * This enum is expected to be populated every time new entry type is introduced.
- * 
  * @author Denis Zhdanov
- * @since 7/17/12 11:14 AM
+ * @since 11/12/12 12:34 PM
  */
-public enum ArrangementEntryType {
-  
-  CLASS, ANONYMOUS_CLASS, FIELD, CONSTRUCTOR, METHOD, ENUM, INTERFACE,
+public interface ArrangementEditorAware {
 
-  CONST, VAR, PROPERTY, EVENT_HANDLER, STATIC_INIT,
-
-  NAMESPACE, TRAIT,
-
-  XML_TAG, XML_ATTRIBUTE
+  @NotNull
+  JComponent getComponent();
 }

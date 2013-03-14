@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,8 +13,10 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement.match;
+package com.intellij.psi.codeStyle.arrangement.std;
 
+import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,44 +24,61 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
+import java.util.List;
 
 /**
- * Component which manages {@link ArrangementMatchCondition match condition} UI representation.
+ * Defines a contract for UI component used at standard arrangement settings managing code.
+ * <p/>
+ * It's assumed that there is a dedicated implementation of this interface for every {@link StdArrangementTokenUiRole}.
  * 
  * @author Denis Zhdanov
- * @since 8/10/12 11:22 AM
+ * @since 3/11/13 10:22 AM
  */
-public interface ArrangementMatchConditionComponent {
+public interface ArrangementUiComponent {
   
+  @Nullable ArrangementSettingsToken getToken();
+
+  void chooseToken(@NotNull ArrangementSettingsToken data) throws IllegalArgumentException, UnsupportedOperationException;
+
   @NotNull
   ArrangementMatchCondition getMatchCondition();
 
+  @NotNull JComponent getUiComponent();
+
   /**
-   * @return    UI component for the {@link #getMatchCondition() target match condition}
+   * We use 'enabled by user' property name here in order to avoid clash
+   * with {@link Component#isEnabled() standard awt 'enabled' property}. 
+   *
+   * @return    <code>true</code> if current ui token is enabled; <code>false</code> otherwise
    */
-  @NotNull
-  JComponent getUiComponent();
+  boolean isEnabled();
+
+  void setEnabled(boolean enabled);
 
   /**
    * @return    screen bounds for the {@link #getUiComponent() target UI component} (if known)
    */
   @Nullable
   Rectangle getScreenBounds();
-
+  
+  boolean isSelected();
+  
   /**
    * Instructs current component that it should {@link #getUiComponent() draw} itself according to the given 'selected' state.
    *
    * @param selected  flag that indicates if current component should be drawn as 'selected'
    */
   void setSelected(boolean selected);
-
+  
+  void reset();
+  
   /**
    * Notifies current component about mose move event.
    * <p/>
    * Primary intention is to allow to react on event like 'on mouse hover' etc. We can't do that by subscribing to the
    * mouse events at the {@link #getUiComponent() corresponding UI control} because it's used only as a renderer and is not put
    * to the containers hierarchy, hence, doesn't receive mouse events.
-   * 
+   *
    * @param event  target mouse move event
    * @return       bounds to be repainted (in screen coordinates) if any; <code>null</code> otherwise
    */
@@ -73,4 +92,27 @@ public interface ArrangementMatchConditionComponent {
 
   @Nullable
   Rectangle onMouseEntered(@NotNull MouseEvent e);
+  
+  /**
+   * @param width   the width to get baseline for
+   * @param height  the height to get baseline for
+   * @return baseline's y coordinate if applicable; negative value otherwise
+   */
+  int getBaselineToUse(int width, int height);
+
+  void setListener(@NotNull Listener listener);
+  
+  interface Factory {
+    ExtensionPointName<Factory> EP_NAME = ExtensionPointName.create("com.intellij.rearranger.ui");
+
+    @Nullable
+    ArrangementUiComponent build(@NotNull StdArrangementTokenUiRole role,
+                                 @NotNull List<ArrangementSettingsToken> tokens,
+                                 @NotNull ArrangementColorsProvider colorsProvider,
+                                 @NotNull ArrangementStandardSettingsManager settingsManager);
+  }
+
+  interface Listener {
+    void stateChanged();
+  }
 }

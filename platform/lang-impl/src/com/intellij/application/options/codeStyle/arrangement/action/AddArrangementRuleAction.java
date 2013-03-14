@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.action;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesControl;
 import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchingRulesModel;
 import com.intellij.application.options.codeStyle.arrangement.match.EmptyArrangementRuleComponent;
@@ -45,7 +44,7 @@ public class AddArrangementRuleAction extends AnAction implements DumbAware {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    ArrangementMatchingRulesControl control = ArrangementConstants.MATCHING_RULES_CONTROL_KEY.getData(e.getDataContext());
+    ArrangementMatchingRulesControl control = ArrangementMatchingRulesControl.KEY.getData(e.getDataContext());
     if (control == null) {
       return;
     }

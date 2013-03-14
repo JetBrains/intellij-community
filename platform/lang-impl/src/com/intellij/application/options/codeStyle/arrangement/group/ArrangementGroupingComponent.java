@@ -16,15 +16,14 @@
 package com.intellij.application.options.codeStyle.arrangement.group;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
-import com.intellij.application.options.codeStyle.arrangement.component.ArrangementEditorAware;
-import com.intellij.application.options.codeStyle.arrangement.component.ArrangementRepresentationAware;
+import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
+import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementEditorAware;
+import com.intellij.application.options.codeStyle.arrangement.ui.ArrangementRepresentationAware;
 import com.intellij.application.options.codeStyle.arrangement.util.ArrangementRuleIndexControl;
-import com.intellij.application.options.codeStyle.arrangement.util.InsetsPanel;
-import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
-import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
+import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
+import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.components.JBCheckBox;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,11 +31,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ItemEvent;
-import java.awt.event.ItemListener;
-import java.awt.event.MouseAdapter;
-import java.awt.event.MouseEvent;
-import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -44,18 +40,44 @@ import java.util.Collection;
  */
 public class ArrangementGroupingComponent extends JPanel implements ArrangementRepresentationAware, ArrangementEditorAware {
 
-  @NotNull private final ArrangementGroupingType     myGroupingType;
+  @NotNull private final ArrangementUiComponent      myGroupingTypeToken;
   @NotNull private final ArrangementRuleIndexControl myRowIndexControl;
-  @NotNull private final JBCheckBox                  myCheckedBox;
-  @NotNull private final JLabel                      myGroupingTypeLabel;
 
-  @Nullable private final JComboBox myOrderTypeBox;
+  @Nullable private final ArrangementUiComponent myOrderTypeToken;
 
-  public ArrangementGroupingComponent(@NotNull final ArrangementNodeDisplayManager displayManager,
-                                      @NotNull ArrangementGroupingType groupingType,
-                                      @NotNull Collection<ArrangementEntryOrderType> availableOrderTypes)
+  /**
+   * Assumes that given token {@link CompositeArrangementSettingsToken#getChildren() has no children} or all its children have
+   * the {@link CompositeArrangementSettingsToken#getRole() same UI role}.
+   * <p/>
+   * Lays out given token (and its children if any) in a single row.
+   *
+   * @param token                       base token which serves as a grouping rule model
+   * @param colorsProvider              colors provider
+   *                                    
+   * @throws IllegalArgumentException   if invariant described above is not satisfied
+   */
+  public ArrangementGroupingComponent(@NotNull CompositeArrangementSettingsToken token,
+                                      @NotNull ArrangementColorsProvider colorsProvider,
+                                      @NotNull ArrangementStandardSettingsManager settingsManager)
+    throws IllegalArgumentException
   {
-    myGroupingType = groupingType;
+    List<ArrangementSettingsToken> children = ContainerUtilRt.newArrayList();
+    StdArrangementTokenUiRole childRole = null;
+    for (CompositeArrangementSettingsToken child : token.getChildren()) {
+      if (childRole == null) {
+        childRole = child.getRole();
+        children.add(child.getToken());
+      }
+      else if (!childRole.equals(child.getRole())) {
+        throw new IllegalArgumentException(String.format(
+          "Can't build a grouping component for token '%s'. Reason: its children has different UI roles (%s and %s)",
+          token, childRole, child.getRole()
+        ));
+      }
+      else {
+        children.add(child.getToken());
+      }
+    }
 
     FontMetrics metrics = getFontMetrics(getFont());
     int maxWidth = 0;
@@ -66,32 +88,20 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
     int diameter = Math.max(maxWidth, height) * 5 / 3;
     myRowIndexControl = new ArrangementRuleIndexControl(diameter, height);
 
-    myCheckedBox = new JBCheckBox();
-    myCheckedBox.setOpaque(false);
-    myCheckedBox.addItemListener(new ItemListener() {
-      @Override
-      public void itemStateChanged(ItemEvent e) {
-        refreshControl();
-      }
-    });
-    
-    myGroupingTypeLabel = new JLabel(displayManager.getDisplayValue(groupingType));
-    myGroupingTypeLabel.addMouseListener(new MouseAdapter() {
-      @Override
-      public void mousePressed(MouseEvent e) {
-        myCheckedBox.setSelected(!myCheckedBox.isSelected());
-      }
-    });
+    myGroupingTypeToken = ArrangementUtil.buildUiComponent(
+      token.getRole(), Collections.singletonList(token.getToken()), colorsProvider, settingsManager
+    );
 
-    if (availableOrderTypes.isEmpty()) {
-      myOrderTypeBox = null;
+    if (children.size() <= 0) {
+      myOrderTypeToken = null;
     }
     else {
-      myOrderTypeBox = new JComboBox(availableOrderTypes.toArray());
-      myOrderTypeBox.setRenderer(new ListCellRenderer() {
+      assert childRole != null;
+      myOrderTypeToken = ArrangementUtil.buildUiComponent(childRole, children, colorsProvider, settingsManager);
+      myGroupingTypeToken.setListener(new ArrangementUiComponent.Listener() {
         @Override
-        public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
-          return new JLabel(displayManager.getDisplayValue(value));
+        public void stateChanged() {
+          myOrderTypeToken.setEnabled(myGroupingTypeToken.isEnabled());
         }
       });
     }
@@ -105,17 +115,9 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
         new GridBag().anchor(GridBagConstraints.CENTER)
           .insets(0, ArrangementConstants.HORIZONTAL_PADDING, 0, ArrangementConstants.HORIZONTAL_GAP * 2)
     );
-    add(myCheckedBox, new GridBag().anchor(GridBagConstraints.WEST).insets(0, 0, 0, 2));
-    add(myGroupingTypeLabel, new GridBag().anchor(GridBagConstraints.WEST).insets(0, 0, 0, ArrangementConstants.HORIZONTAL_GAP));
-    if (myOrderTypeBox != null) {
-      int minWidth = 0;
-      ListCellRenderer renderer = myOrderTypeBox.getRenderer();
-      for (int i = 0, max = myOrderTypeBox.getItemCount(); i < max; i++) {
-        Component rendererComponent = renderer.getListCellRendererComponent(null, myOrderTypeBox.getItemAt(i), i, false, true);
-        minWidth = Math.max(minWidth, rendererComponent.getPreferredSize().width);
-      }
-      myOrderTypeBox.setPreferredSize(new Dimension(minWidth * 5 / 3, myOrderTypeBox.getPreferredSize().height));
-      add(myOrderTypeBox, new GridBag().anchor(GridBagConstraints.WEST));
+    add(myGroupingTypeToken.getUiComponent(), new GridBag().anchor(GridBagConstraints.WEST).insets(0, 0, 0, 2));
+    if (myOrderTypeToken != null) {
+      add(myOrderTypeToken.getUiComponent(), new GridBag().anchor(GridBagConstraints.WEST));
     }
     add(new JLabel(" "), new GridBag().weightx(1).fillCellHorizontally());
     
@@ -127,9 +129,11 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
   protected void paintComponent(Graphics g) {
     Dimension size = getSize();
     if (size != null) {
-      int baseline = myGroupingTypeLabel.getBaseline(size.width, size.height);
-      baseline -= myRowIndexControl.getBounds().y;
-      myRowIndexControl.setBaseLine(baseline);
+      int baseline = myGroupingTypeToken.getBaselineToUse(size.width, size.height);
+      if (baseline > 0) {
+        baseline -= myRowIndexControl.getBounds().y;
+        myRowIndexControl.setBaseLine(baseline);
+      }
     }
     super.paintComponent(g);
   }
@@ -140,31 +144,32 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
     return this;
   }
 
-  public boolean isChecked() {
-    return myCheckedBox.isSelected();
+  public boolean isSelected() {
+    return myGroupingTypeToken.isSelected();
   }
 
-  public void setChecked(boolean checked) {
-    myCheckedBox.setSelected(checked);
+  public void setSelected(boolean selected) {
+    myGroupingTypeToken.setSelected(selected);
     refreshControl();
   }
 
   private void refreshControl() {
-    boolean checked = isChecked();
-    myGroupingTypeLabel.setEnabled(checked);
-    if (myOrderTypeBox != null) {
-      myOrderTypeBox.setEnabled(checked);
+    boolean checked = isSelected();
+    if (myOrderTypeToken != null) {
+      myOrderTypeToken.setEnabled(checked);
     }
   }
 
   @NotNull
-  public ArrangementGroupingType getGroupingType() {
-    return myGroupingType;
+  public ArrangementSettingsToken getGroupingType() {
+    ArrangementSettingsToken token = myGroupingTypeToken.getToken();
+    assert token != null;
+    return token;
   }
 
-  public void setOrderType(@NotNull ArrangementEntryOrderType type) {
-    if (myOrderTypeBox != null) {
-      myOrderTypeBox.setSelectedItem(type);
+  public void setOrderType(@NotNull ArrangementSettingsToken type) {
+    if (myOrderTypeToken != null) {
+      myOrderTypeToken.chooseToken(type);
     }
   }
 
@@ -177,12 +182,12 @@ public class ArrangementGroupingComponent extends JPanel implements ArrangementR
   }
   
   @Nullable
-  public ArrangementEntryOrderType getOrderType() {
-    return myOrderTypeBox == null ? null : (ArrangementEntryOrderType)myOrderTypeBox.getSelectedItem();
+  public ArrangementSettingsToken getOrderType() {
+    return myOrderTypeToken == null ? null : myOrderTypeToken.getToken();
   }
 
   @Override
   public String toString() {
-    return myGroupingType.toString();
+    return myGroupingTypeToken.toString();
   }
 }

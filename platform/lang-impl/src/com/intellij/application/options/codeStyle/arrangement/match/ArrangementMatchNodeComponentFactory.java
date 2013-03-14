@@ -16,15 +16,21 @@
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationManager;
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationPanel;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
+import com.intellij.application.options.codeStyle.arrangement.component.ArrangementAndMatchConditionComponent;
+import com.intellij.application.options.codeStyle.arrangement.component.ArrangementAtomMatchConditionComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
-import com.intellij.psi.codeStyle.arrangement.model.*;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
@@ -38,15 +44,15 @@ public class ArrangementMatchNodeComponentFactory {
 
   private static final Logger LOG = Logger.getInstance("#" + ArrangementMatchNodeComponentFactory.class.getName());
 
-  @NotNull private final ArrangementNodeDisplayManager   myDisplayManager;
-  @NotNull private final ArrangementColorsProvider       myColorsProvider;
-  @NotNull private final ArrangementMatchingRulesControl myList;
+  @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
+  @NotNull private final ArrangementColorsProvider          myColorsProvider;
+  @NotNull private final ArrangementMatchingRulesControl    myList;
 
-  public ArrangementMatchNodeComponentFactory(@NotNull ArrangementNodeDisplayManager manager,
+  public ArrangementMatchNodeComponentFactory(@NotNull ArrangementStandardSettingsManager manager,
                                               @NotNull ArrangementColorsProvider provider,
                                               @NotNull ArrangementMatchingRulesControl list)
   {
-    myDisplayManager = manager;
+    mySettingsManager = manager;
     myColorsProvider = provider;
     myList = list;
   }
@@ -61,24 +67,24 @@ public class ArrangementMatchNodeComponentFactory {
    * @return renderer for the given model
    */
   @NotNull
-  public ArrangementMatchConditionComponent getComponent(@NotNull final ArrangementMatchCondition rendererTarget,
-                                                         @NotNull final StdArrangementMatchRule rule,
-                                                         final boolean allowModification)
+  public ArrangementUiComponent getComponent(@NotNull final ArrangementMatchCondition rendererTarget,
+                                             @NotNull final StdArrangementMatchRule rule,
+                                             final boolean allowModification)
   {
-    final Ref<ArrangementMatchConditionComponent> ref = new Ref<ArrangementMatchConditionComponent>();
+    final Ref<ArrangementUiComponent> ref = new Ref<ArrangementUiComponent>();
     rendererTarget.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
         RemoveAtomConditionCallback callback = allowModification ? new RemoveAtomConditionCallback(rule) : null;
-        ArrangementMatchConditionComponent component = new ArrangementAtomMatchConditionComponent(
-          myDisplayManager, myColorsProvider, condition, callback
+        ArrangementUiComponent component = new ArrangementAtomMatchConditionComponent(
+          mySettingsManager, myColorsProvider, condition, callback
         );
         ref.set(component);
       }
 
       @Override
       public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
-        ref.set(new ArrangementAndMatchConditionComponent(rule, condition, ArrangementMatchNodeComponentFactory.this, myDisplayManager));
+        ref.set(new ArrangementAndMatchConditionComponent(rule, condition, ArrangementMatchNodeComponentFactory.this, mySettingsManager));
       }
     });
     return ref.get();

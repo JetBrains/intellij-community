@@ -15,8 +15,9 @@
  */
 package com.intellij.psi.codeStyle.arrangement
 
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.*
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.*
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*
+
 /**
  * @author Denis Zhdanov
  * @since 8/30/12 12:14 PM
