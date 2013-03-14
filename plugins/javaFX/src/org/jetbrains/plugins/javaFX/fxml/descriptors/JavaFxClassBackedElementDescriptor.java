@@ -161,7 +161,6 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
 
   @Override
   public XmlAttributeDescriptor[] getAttributesDescriptors(@Nullable XmlTag context) {
-    //todo filter
     if (context != null) {
       final String name = context.getName();
       if (Comparing.equal(name, getName()) && myPsiClass != null) {
