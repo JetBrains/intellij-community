@@ -717,4 +717,17 @@ public class PsiImplUtil {
   public static PsiElement handleMirror(PsiElement element) {
     return element instanceof PsiMirrorElement ? ((PsiMirrorElement)element).getPrototype() : element;
   }
+
+  @Nullable
+  public static PsiModifierList findNeighbourModifierList(@NotNull PsiJavaCodeReferenceElement ref) {
+    PsiElement parent = PsiTreeUtil.skipParentsOfType(ref, PsiJavaCodeReferenceElement.class);
+    if (parent instanceof PsiTypeElement) {
+      PsiElement prevElement = PsiTreeUtil.skipSiblingsBackward(parent, PsiComment.class, PsiWhiteSpace.class, PsiTypeParameterList.class);
+      if (prevElement instanceof PsiModifierList) {
+        return (PsiModifierList)prevElement;
+      }
+    }
+
+    return null;
+  }
 }
