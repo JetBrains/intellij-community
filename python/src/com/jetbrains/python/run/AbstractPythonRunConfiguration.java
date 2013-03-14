@@ -201,8 +201,10 @@ public abstract class AbstractPythonRunConfiguration<T extends AbstractRunConfig
     mySdkHome = JDOMExternalizerUtil.readField(element, "SDK_HOME");
     myWorkingDirectory = JDOMExternalizerUtil.readField(element, "WORKING_DIRECTORY");
     myUseModuleSdk = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "IS_MODULE_SDK"));
-    myAddContentRoots = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "ADD_CONTENT_ROOTS"));
-    myAddSourceRoots = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "ADD_SOURCE_ROOTS"));
+    final String addContentRoots = JDOMExternalizerUtil.readField(element, "ADD_CONTENT_ROOTS");
+    myAddContentRoots = addContentRoots == null || Boolean.parseBoolean(addContentRoots);
+    final String addSourceRoots = JDOMExternalizerUtil.readField(element, "ADD_SOURCE_ROOTS");
+    myAddSourceRoots = addSourceRoots == null|| Boolean.parseBoolean(addSourceRoots);
     getConfigurationModule().readExternal(element);
 
     setMappingSettings(PathMappingSettings.readExternal(element));

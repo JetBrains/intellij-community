@@ -41,8 +41,6 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
 
   private String myPattern = ""; // pattern for modules in folder to match against
   private boolean usePattern = false;
-  protected boolean myAddContentRoots = true;
-  protected boolean myAddSourceRoots = true;
 
   protected AbstractPythonTestRunConfiguration(RunConfigurationModule module, ConfigurationFactory configurationFactory, String name) {
     super(name, module, configurationFactory);
@@ -58,8 +56,6 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
 
     myPattern = JDOMExternalizerUtil.readField(element, "PATTERN");
     usePattern = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "USE_PATTERN"));
-    myAddContentRoots = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "ADD_CONTENT_ROOTS"));
-    myAddSourceRoots = Boolean.parseBoolean(JDOMExternalizerUtil.readField(element, "ADD_SOURCE_ROOTS"));
 
     try {
       final String testType = JDOMExternalizerUtil.readField(element, "TEST_TYPE");
@@ -81,8 +77,6 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
     JDOMExternalizerUtil.writeField(element, "TEST_TYPE", myTestType.toString());
     JDOMExternalizerUtil.writeField(element, "PATTERN", myPattern);
     JDOMExternalizerUtil.writeField(element, "USE_PATTERN", String.valueOf(usePattern));
-    JDOMExternalizerUtil.writeField(element, "ADD_CONTENT_ROOTS", String.valueOf(myAddContentRoots));
-    JDOMExternalizerUtil.writeField(element, "ADD_SOURCE_ROOTS", String.valueOf(myAddSourceRoots));
   }
 
   public AbstractPythonRunConfigurationParams getBaseParams() {
@@ -346,25 +340,5 @@ public abstract class AbstractPythonTestRunConfiguration extends AbstractPythonR
 
   private static boolean pathsEqual(VirtualFile vFile, final String folderName) {
     return Comparing.equal(new File(vFile.getPath()).getAbsolutePath(), new File(folderName).getAbsolutePath());
-  }
-
-  @Override
-  public boolean addSourceRoots() {
-    return myAddSourceRoots;
-  }
-
-  @Override
-  public boolean addContentRoots() {
-    return myAddContentRoots;
-  }
-
-  @Override
-  public void addSourceRoots(boolean addSourceRoots) {
-    myAddSourceRoots = addSourceRoots;
-  }
-
-  @Override
-  public void addContentRoots(boolean addContentRoots) {
-    myAddContentRoots = addContentRoots;
   }
 }
