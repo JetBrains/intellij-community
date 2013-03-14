@@ -125,7 +125,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
   public void inlineUsage(@NotNull UsageInfo usage, @NotNull PsiElement referenced) {
     PsiElement element=usage.getElement();
 
-    assert element instanceof GrExpression && element.getParent() instanceof GrCallExpression;
+    if (!(element instanceof GrExpression && element.getParent() instanceof GrCallExpression)) return;
 
     final Editor editor = getCurrentEditorIfApplicable(element);
 
