@@ -16,7 +16,13 @@
 package com.intellij.refactoring.changeSignature;
 
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.ide.CommonActionsManager;
+import com.intellij.ide.DefaultTreeExpander;
 import com.intellij.ide.highlighter.HighlighterFactory;
+import com.intellij.openapi.actionSystem.ActionManager;
+import com.intellij.openapi.actionSystem.ActionPlaces;
+import com.intellij.openapi.actionSystem.ActionToolbar;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -115,6 +121,15 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
       }
     };
     myTree.getSelectionModel().addTreeSelectionListener(myTreeSelectionListener);
+
+    // build action toolbar
+    DefaultActionGroup toolbarActions = new DefaultActionGroup();
+    DefaultTreeExpander treeExpander = new DefaultTreeExpander(myTree);
+    CommonActionsManager actionManager = CommonActionsManager.getInstance();
+    toolbarActions.add(actionManager.createExpandAllAction(treeExpander, myTree));
+    toolbarActions.add(actionManager.createCollapseAllAction(treeExpander, myTree));
+    ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, toolbarActions, true);
+    result.add(actionToolbar.getComponent(), BorderLayout.PAGE_START);
 
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(myTree);
     splitter.setFirstComponent(scrollPane);
@@ -250,7 +265,7 @@ public abstract class CallerChooserBase<M extends PsiElement> extends DialogWrap
       }
     };
     Tree tree = new CheckboxTree(cellRenderer, root, new CheckboxTreeBase.CheckPolicy(false, false, true, false));
-    tree.getSelectionModel().setSelectionMode(TreeSelectionModel.SINGLE_TREE_SELECTION);
+    tree.getSelectionModel().setSelectionMode(TreeSelectionModel.DISCONTIGUOUS_TREE_SELECTION);
     tree.getSelectionModel().setSelectionPath(new TreePath(myRoot.getPath()));
 
     return tree;
