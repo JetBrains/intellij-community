@@ -245,15 +245,17 @@ public class ArrangementUtil {
     else if (StdArrangementTokens.Modifier.is(condition.getType())) {
       return new ByModifierArrangementEntryMatcher(condition.getType());
     }
-    else if (StdArrangementTokens.General.NAME.equals(condition.getType())) {
+    else if (StdArrangementTokens.Regexp.NAME.equals(condition.getType())) {
       return new ByNameArrangementEntryMatcher(condition.getValue().toString());
+    }
+    else if (StdArrangementTokens.Regexp.XML_NAMESPACE.equals(condition.getType())) {
+      return new ByNamespaceArrangementEntryMatcher(condition.getValue().toString());
     }
     else {
       return null;
     }
   }
 
-  // TODO den add doc
   @NotNull
   public static ArrangementUiComponent buildUiComponent(@NotNull StdArrangementTokenUiRole role,
                                                         @NotNull List<ArrangementSettingsToken> tokens,

@@ -29,7 +29,7 @@ import java.util.Set;
 import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokenUiRole.*;
 
 /**
- * // TODO den add doc
+ * Holds settings tokens used by built-in IJ arrangers.
  *
  * @author Denis Zhdanov
  * @since 3/6/13 3:16 PM
@@ -119,12 +119,28 @@ public class StdArrangementTokens {
 
     @NotNull public static final ArrangementSettingsToken TYPE     = token("TYPE", "arrangement.settings.text.general.type", LABEL);
     @NotNull public static final ArrangementSettingsToken MODIFIER = token("MODIFIER", "arrangement.settings.text.general.modifier", LABEL);
-    @NotNull public static final ArrangementSettingsToken NAME     = token("NAME", "arrangement.settings.text.general.name", TEXT_FIELD);
     @NotNull public static final ArrangementSettingsToken ORDER    = token("ORDER", "arrangement.settings.text.general.order", LABEL);
 
     private static final NotNullLazyValue<Set<ArrangementSettingsToken>> TOKENS = collectFields(General.class);
 
     private General() {
+    }
+
+    public static boolean is(@NotNull ArrangementSettingsToken token) {
+      return TOKENS.getValue().contains(token);
+    }
+  }
+  
+  public static class Regexp {
+
+    @NotNull public static final ArrangementSettingsToken NAME = token("NAME", "arrangement.settings.text.general.name", TEXT_FIELD);
+
+    @NotNull public static final ArrangementSettingsToken XML_NAMESPACE =
+      token("XML_NAMESPACE", "arrangement.settings.text.general.xml.namespace", TEXT_FIELD);
+
+    private static final NotNullLazyValue<Set<ArrangementSettingsToken>> TOKENS = collectFields(Regexp.class);
+
+    private Regexp() {
     }
 
     public static boolean is(@NotNull ArrangementSettingsToken token) {
@@ -214,9 +230,9 @@ public class StdArrangementTokens {
 
   public static class Order {
 
-    @NotNull public static final ArrangementSettingsToken KEEP          = token("KEEP", "arrangement.settings.order.type.keep",
-                                                                                COMBO_BOX);
-    @NotNull public static final ArrangementSettingsToken BY_NAME       = token("BY_NAME", "arrangement.settings.order.type.by.name",
+    @NotNull public static final ArrangementSettingsToken KEEP    = token("KEEP", "arrangement.settings.order.type.keep",
+                                                                          COMBO_BOX);
+    @NotNull public static final ArrangementSettingsToken BY_NAME = token("BY_NAME", "arrangement.settings.order.type.by.name",
                                                                                 COMBO_BOX);
     @NotNull public static final ArrangementSettingsToken DEPTH_FIRST   = token("DEPTH_FIRST",
                                                                                 "arrangement.settings.order.type.depth.first",
