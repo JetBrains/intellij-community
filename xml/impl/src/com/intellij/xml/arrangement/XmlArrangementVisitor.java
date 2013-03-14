@@ -4,7 +4,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.XmlElementVisitor;
 import com.intellij.psi.codeStyle.arrangement.DefaultArrangementEntry;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
@@ -13,6 +13,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
+
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.XML_ATTRIBUTE;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.XML_TAG;
 
 /**
  * @author Eugene.Kudelevsky
@@ -41,7 +44,7 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
   @Override
   public void visitXmlTag(XmlTag tag) {
     final XmlElementArrangementEntry entry = createNewEntry(
-      tag.getTextRange(), ArrangementEntryType.XML_TAG, null, true);
+      tag.getTextRange(), XML_TAG, null, true);
     processEntry(entry, tag);
   }
 
@@ -49,7 +52,7 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
   public void visitXmlAttribute(XmlAttribute attribute) {
     final String name = attribute.isNamespaceDeclaration() ? "" : attribute.getName();
     final XmlElementArrangementEntry entry = createNewEntry(
-      attribute.getTextRange(), ArrangementEntryType.XML_ATTRIBUTE, name, true);
+      attribute.getTextRange(), XML_ATTRIBUTE, name, true);
     processEntry(entry, null);
   }
 
@@ -68,7 +71,7 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
 
   @Nullable
   private XmlElementArrangementEntry createNewEntry(@NotNull TextRange range,
-                                                    @NotNull ArrangementEntryType type,
+                                                    @NotNull ArrangementSettingsToken type,
                                                     @Nullable String name,
                                                     boolean canBeMatched) {
     if (!isWithinBounds(range)) {
@@ -100,4 +103,6 @@ public class XmlArrangementVisitor extends XmlElementVisitor {
     }
     return false;
   }
+  
+  
 }

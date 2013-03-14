@@ -7,68 +7,40 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
-import com.intellij.psi.codeStyle.arrangement.StdArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
-import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsRepresentationAware;
-import com.intellij.psi.codeStyle.arrangement.settings.DefaultArrangementSettingsRepresentationManager;
-import gnu.trove.TObjectIntHashMap;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
+import com.intellij.psi.codeStyle.arrangement.std.CompositeArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementSettings;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
+
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.XML_ATTRIBUTE;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.XML_TAG;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.General.NAME;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.General.ORDER;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.General.TYPE;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.KEEP;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class XmlRearranger
   implements Rearranger<XmlElementArrangementEntry>,
-             ArrangementStandardSettingsAware,
-             ArrangementStandardSettingsRepresentationAware {
+             ArrangementStandardSettingsAware {
 
-  private static final Set<ArrangementEntryType> SUPPORTED_TYPES = EnumSet.of(
-    ArrangementEntryType.XML_ATTRIBUTE, ArrangementEntryType.XML_TAG);
-
+  private static final Set<ArrangementSettingsToken> SUPPORTED_TYPES = ContainerUtilRt.newLinkedHashSet(XML_TAG, XML_ATTRIBUTE); 
   private static final List<StdArrangementMatchRule> DEFAULT_MATCH_RULES = new ArrayList<StdArrangementMatchRule>();
 
   private static final StdArrangementSettings DEFAULT_SETTINGS = new StdArrangementSettings(
     Collections.<ArrangementGroupingRule>emptyList(), DEFAULT_MATCH_RULES);
-
-  @NotNull private static final TObjectIntHashMap<Object> WEIGHTS = new TObjectIntHashMap<Object>();
-
-  @NotNull
-  private static final Comparator<Object> COMPARATOR = new Comparator<Object>() {
-    @Override
-    public int compare(Object o1, Object o2) {
-      if (WEIGHTS.containsKey(o1) && WEIGHTS.containsKey(o2)) {
-        return WEIGHTS.get(o1) - WEIGHTS.get(o2);
-      }
-      else if (WEIGHTS.containsKey(o1) && !WEIGHTS.containsKey(o2)) {
-        return -1;
-      }
-      else if (!WEIGHTS.containsKey(o1) && WEIGHTS.containsKey(o2)) {
-        return 1;
-      }
-      else {
-        return o1.hashCode() - o2.hashCode();
-      }
-    }
-  };
-
-  static {
-    final Object[] ids = {
-      ArrangementEntryType.XML_TAG, ArrangementEntryType.XML_ATTRIBUTE
-    };
-    for (int i = 0; i < ids.length; i++) {
-      WEIGHTS.put(ids[i], i);
-    }
-  }
 
   @Nullable
   @Override
@@ -77,29 +49,14 @@ public class XmlRearranger
   }
 
   @Override
-  public boolean isNameFilterSupported() {
-    return true;
-  }
-
-  @Override
-  public boolean isEnabled(@NotNull ArrangementEntryType type, @Nullable ArrangementMatchCondition current) {
-    return SUPPORTED_TYPES.contains(type);
-  }
-
-  @Override
-  public boolean isEnabled(@NotNull ArrangementModifier modifier, @Nullable ArrangementMatchCondition current) {
-    return false;
-  }
-
-  @Override
-  public boolean isEnabled(@NotNull ArrangementGroupingType groupingType, @Nullable ArrangementEntryOrderType orderType) {
-    return false;
+  public boolean isEnabled(@NotNull ArrangementSettingsToken token, @Nullable ArrangementMatchCondition current) {
+    return NAME.equals(token) || KEEP.equals(token) || BY_NAME.equals(token) || SUPPORTED_TYPES.contains(token);
   }
 
   @NotNull
   @Override
-  public Collection<Set<?>> getMutexes() {
-    return Collections.<Set<?>>singleton(SUPPORTED_TYPES);
+  public Collection<Set<ArrangementSettingsToken>> getMutexes() {
+    return Collections.singleton(SUPPORTED_TYPES);
   }
 
   @Nullable
@@ -108,7 +65,8 @@ public class XmlRearranger
                                                                                          @Nullable Document document,
                                                                                          @NotNull Collection<TextRange> ranges,
                                                                                          @NotNull PsiElement element,
-                                                                                         @Nullable ArrangementSettings settings) {
+                                                                                         @Nullable ArrangementSettings settings)
+  {
     final XmlArrangementParseInfo newEntryInfo = new XmlArrangementParseInfo();
     element.accept(new XmlArrangementVisitor(newEntryInfo, Collections.singleton(element.getTextRange())));
 
@@ -140,43 +98,25 @@ public class XmlRearranger
     return -1;
   }
 
-  @NotNull
+  @Nullable
   @Override
-  public String getDisplayValue(@NotNull ArrangementEntryType type) {
-    switch (type) {
-      case XML_TAG:
-        return "tag";
-      case XML_ATTRIBUTE:
-        return "attribute";
-      default:
-        return DefaultArrangementSettingsRepresentationManager.
-          INSTANCE.getDisplayValue(type);
-    }
+  public List<CompositeArrangementSettingsToken> getSupportedGroupingTokens() {
+    return null;
+  }
+
+  @Nullable
+  @Override
+  public List<CompositeArrangementSettingsToken> getSupportedMatchingTokens() {
+    return ContainerUtilRt.newArrayList(
+      new CompositeArrangementSettingsToken(TYPE, SUPPORTED_TYPES),
+      new CompositeArrangementSettingsToken(NAME),
+      new CompositeArrangementSettingsToken(ORDER, KEEP, BY_NAME)
+    );
   }
 
   @NotNull
   @Override
-  public String getDisplayValue(@NotNull ArrangementModifier modifier) {
-    return DefaultArrangementSettingsRepresentationManager.INSTANCE.getDisplayValue(modifier);
-  }
-
-  @NotNull
-  @Override
-  public String getDisplayValue(@NotNull ArrangementGroupingType groupingType) {
-    return DefaultArrangementSettingsRepresentationManager.INSTANCE.getDisplayValue(groupingType);
-  }
-
-  @NotNull
-  @Override
-  public String getDisplayValue(@NotNull ArrangementEntryOrderType orderType) {
-    return DefaultArrangementSettingsRepresentationManager.INSTANCE.getDisplayValue(orderType);
-  }
-
-  @NotNull
-  @Override
-  public <T> List<T> sort(@NotNull Collection<T> ids) {
-    final List<T> result = new ArrayList<T>(ids);
-    Collections.sort(result, COMPARATOR);
-    return result;
+  public ArrangementEntryMatcher buildMatcher(@NotNull ArrangementMatchCondition condition) throws IllegalArgumentException {
+    throw new IllegalArgumentException("Can't build a matcher for condition " + condition);
   }
 }

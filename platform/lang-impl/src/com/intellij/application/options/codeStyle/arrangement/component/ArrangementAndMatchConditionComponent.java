@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,65 +13,77 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement.match;
+package com.intellij.application.options.codeStyle.arrangement.component;
 
-import com.intellij.application.options.codeStyle.arrangement.util.ArrangementConfigUtil;
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
+import com.intellij.application.options.codeStyle.arrangement.match.ArrangementMatchNodeComponentFactory;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
-import com.intellij.psi.codeStyle.arrangement.model.*;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
 /**
- * {@link ArrangementMatchConditionComponent Component} for showing {@link ArrangementCompositeMatchCondition composite nodes}.
+ * {@link ArrangementUiComponent Component} for showing {@link ArrangementCompositeMatchCondition composite nodes}.
  * <p/>
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 8/8/12 10:51 AM
  */
-public class ArrangementAndMatchConditionComponent extends JPanel implements ArrangementMatchConditionComponent {
+public class ArrangementAndMatchConditionComponent extends JPanel implements ArrangementUiComponent {
 
-  @NotNull private final List<ArrangementMatchConditionComponent> myComponents = new ArrayList<ArrangementMatchConditionComponent>();
+  @NotNull private final List<ArrangementUiComponent> myComponents = ContainerUtilRt.newArrayList();
 
   @NotNull private final ArrangementCompositeMatchCondition mySetting;
   @Nullable private      Rectangle                          myScreenBounds;
-  @Nullable private      ArrangementMatchConditionComponent myComponentUnderMouse;
+  @Nullable private      ArrangementUiComponent             myComponentUnderMouse;
 
   public ArrangementAndMatchConditionComponent(@NotNull StdArrangementMatchRule rule,
                                                @NotNull ArrangementCompositeMatchCondition setting,
                                                @NotNull ArrangementMatchNodeComponentFactory factory,
-                                               @NotNull ArrangementNodeDisplayManager manager)
+                                               @NotNull ArrangementStandardSettingsManager manager)
   {
     mySetting = setting;
     setOpaque(false);
     setLayout(new GridBagLayout());
-    final Map<Object, ArrangementMatchCondition> operands = new HashMap<Object, ArrangementMatchCondition>();
+    final Map<ArrangementSettingsToken, ArrangementMatchCondition> operands = ContainerUtilRt.newHashMap();
     ArrangementMatchConditionVisitor visitor = new ArrangementMatchConditionVisitor() {
-      @Override public void visit(@NotNull ArrangementAtomMatchCondition condition) { operands.put(condition.getValue(), condition); }
-      @Override public void visit(@NotNull ArrangementCompositeMatchCondition condition) { operands.put(condition, condition); }
+      @Override
+      public void visit(@NotNull ArrangementAtomMatchCondition condition) {
+        operands.put(condition.getType(), condition);
+      }
+
+      @Override
+      public void visit(@NotNull ArrangementCompositeMatchCondition condition) {
+        assert false;
+      }
     };
     for (ArrangementMatchCondition operand : setting.getOperands()) {
       operand.invite(visitor);
     }
 
-    List<Object> ordered = manager.sort(operands.keySet());
+    List<ArrangementSettingsToken> ordered = manager.sort(operands.keySet());
     GridBagConstraints constraints = new GridBag().anchor(GridBagConstraints.EAST).insets(0, 0, 0, ArrangementConstants.HORIZONTAL_GAP);
-    for (Object key : ordered) {
+    for (ArrangementSettingsToken key : ordered) {
       ArrangementMatchCondition operand = operands.get(key);
       assert operand != null;
-      ArrangementMatchConditionComponent component = factory.getComponent(operand, rule, true);
+      ArrangementUiComponent component = factory.getComponent(operand, rule, true);
       myComponents.add(component);
       JComponent uiComponent = component.getUiComponent();
       add(uiComponent, constraints);
@@ -98,7 +110,7 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
 
   @Override
   public void setSelected(boolean selected) {
-    for (ArrangementMatchConditionComponent component : myComponents) {
+    for (ArrangementUiComponent component : myComponents) {
       component.setSelected(selected);
     }
   }
@@ -115,7 +127,7 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
 
   @Override
   public void paint(Graphics g) {
-    Point point = ArrangementConfigUtil.getLocationOnScreen(this);
+    Point point = UIUtil.getLocationOnScreen(this);
     if (point != null) {
       Rectangle bounds = getBounds();
       myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
@@ -126,7 +138,7 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
   @Override
   public Rectangle onMouseMove(@NotNull MouseEvent event) {
     Point location = event.getLocationOnScreen();
-    for (ArrangementMatchConditionComponent component : myComponents) {
+    for (ArrangementUiComponent component : myComponents) {
       Rectangle bounds = component.getScreenBounds();
       if (bounds == null || !bounds.contains(location)) {
         continue;
@@ -170,7 +182,7 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
   @Override
   public void onMouseRelease(@NotNull MouseEvent event) {
     Point location = event.getLocationOnScreen();
-    for (ArrangementMatchConditionComponent component : myComponents) {
+    for (ArrangementUiComponent component : myComponents) {
       Rectangle bounds = component.getScreenBounds();
       if (bounds != null && bounds.contains(location)) {
         component.onMouseRelease(event);
@@ -182,7 +194,7 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
   @Override
   public Rectangle onMouseEntered(@NotNull MouseEvent event) {
     Point location = event.getLocationOnScreen();
-    for (ArrangementMatchConditionComponent component : myComponents) {
+    for (ArrangementUiComponent component : myComponents) {
       Rectangle bounds = component.getScreenBounds();
       if (bounds != null && bounds.contains(location)) {
         myComponentUnderMouse = component;
@@ -201,6 +213,41 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
       return result;
     }
     return null;
+  }
+
+  @Nullable
+  @Override
+  public ArrangementSettingsToken getToken() {
+    return myComponentUnderMouse == null ? null : myComponentUnderMouse.getToken();
+  }
+
+  @Override
+  public void chooseToken(@NotNull ArrangementSettingsToken data) throws IllegalArgumentException, UnsupportedOperationException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isSelected() {
+    return myComponentUnderMouse != null && myComponentUnderMouse.isSelected();
+  }
+
+  @Override
+  public void reset() {
+    for (ArrangementUiComponent component : myComponents) {
+      component.reset();
+    }
+  }
+
+  @Override
+  public int getBaselineToUse(int width, int height) {
+    return -1;
+  }
+
+  @Override
+  public void setListener(@NotNull Listener listener) {
+    for (ArrangementUiComponent component : myComponents) {
+      component.setListener(listener);
+    } 
   }
 
   @Override

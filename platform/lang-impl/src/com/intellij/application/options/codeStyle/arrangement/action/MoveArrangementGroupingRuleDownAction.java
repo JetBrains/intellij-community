@@ -15,7 +15,6 @@
  */
 package com.intellij.application.options.codeStyle.arrangement.action;
 
-import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
 import com.intellij.application.options.codeStyle.arrangement.group.ArrangementGroupingRulesControl;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -37,7 +36,7 @@ public class MoveArrangementGroupingRuleDownAction extends AnAction implements D
 
   @Override
   public void update(AnActionEvent e) {
-    ArrangementGroupingRulesControl control = ArrangementConstants.GROUPING_RULES_CONTROL_KEY.getData(e.getDataContext());
+    ArrangementGroupingRulesControl control = ArrangementGroupingRulesControl.KEY.getData(e.getDataContext());
     if (control == null) {
       e.getPresentation().setEnabled(false);
       return;
@@ -49,7 +48,7 @@ public class MoveArrangementGroupingRuleDownAction extends AnAction implements D
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    ArrangementGroupingRulesControl control = ArrangementConstants.GROUPING_RULES_CONTROL_KEY.getData(e.getDataContext());
+    ArrangementGroupingRulesControl control = ArrangementGroupingRulesControl.KEY.getData(e.getDataContext());
     if (control == null) {
       return;
     }

@@ -15,15 +15,16 @@
  */
 package com.intellij.psi.codeStyle.arrangement
 
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.*
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.*
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*
+
 /**
  * @author Denis Zhdanov
  * @since 8/28/12 6:42 PM
  */
 class JavaRearrangerByTypeAndModifierTest extends AbstractJavaRearrangerTest {
 
-  void testComplex() {
+  void "test complex sample"() {
     commonSettings.BLANK_LINES_AROUND_METHOD = 0
     commonSettings.BLANK_LINES_AROUND_CLASS = 0
 
@@ -34,7 +35,7 @@ class Test {
    protected static class ProtectedStaticInner {}
    public class PublicInner {}
    private interface PrivateInterface {}
-   public abstract abstractMethod();
+   public abstract void abstractMethod();
    private void privateMethod() {}
    public void publicMethod() {}
    private int privateField;
@@ -48,7 +49,7 @@ class Test {
    public int publicField;
    private volatile int privateVolatileField;
    private int privateField;
-   public abstract abstractMethod();
+   public abstract void abstractMethod();
    public void publicMethod() {}
    private void privateMethod() {}
    private interface PrivateInterface {}
@@ -70,7 +71,7 @@ class Test {
     )
   }
 
-  void testInstanceInitializationBlockBoundToField() {
+  void "test instance initialization block bound to a field"() {
     doTest(
       initial: '''\
 class Test {
@@ -89,7 +90,7 @@ class Test {
       rules: [rule(FIELD, PUBLIC), rule(FIELD, PROTECTED), rule(FIELD, PRIVATE)])
   }
 
-  void testInstanceInitializationBlockAsFirstChild() {
+  void "test instance initialization block as the first child"() {
     doTest(
       initial: '''\
 class Test {

@@ -21,7 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,7 +49,7 @@ public interface Rearranger<E extends ArrangementEntry> {
    * 
    * @param element   element to wrap into format eligible for further processing by arrangement engine
    * @param settings  arrangement settings to use. The primary idea is to make the rearranger aware about
-   *                  {@link ArrangementGroupingType grouping rules} (if any). E.g. it's not worth to process java method bodies
+   *                  {@link StdArrangementTokens.Grouping grouping rules} (if any). E.g. it's not worth to process java method bodies
    *                  in order to build method dependency graph if no such grouping rule is defined
    * @return          arrangement entry for the given element if it's possible to perform the mapping and list of arrangement entries
    *                  available at the given context plus newly created entry for the given element;
@@ -69,7 +69,7 @@ public interface Rearranger<E extends ArrangementEntry> {
    * @param document  document which corresponds to the target PSI tree
    * @param ranges    target offsets ranges to use for filtering given root's children
    * @param settings  arrangement settings to use. The primary idea is to make the rearranger aware about
-   *                  {@link ArrangementGroupingType grouping rules} (if any). E.g. it's not worth to process java method bodies
+   *                  {@link StdArrangementTokens.Grouping grouping rules} (if any). E.g. it's not worth to process java method bodies
    *                  in order to build method dependency graph if no such grouping rule is defined
    * @return          given root's children which are subject for further rearrangement
    */

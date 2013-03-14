@@ -2604,4 +2604,24 @@ public class UIUtil {
   public static Paint getGradientPaint(float x1, float y1, @NotNull Color c1, float x2, float y2, @NotNull Color c2) {
     return (Registry.is("ui.no.bangs.and.whistles", false)) ? ColorUtil.mix(c1, c2, .5) : new GradientPaint(x1, y1, c1, x2, y2, c2);
   }
+
+  @Nullable
+  public static Point getLocationOnScreen(@NotNull JComponent component) {
+    int dx = 0;
+    int dy = 0;
+    for (Container c = component; c != null; c = c.getParent()) {
+      if (c.isShowing()) {
+        Point locationOnScreen = c.getLocationOnScreen();
+        locationOnScreen.translate(dx, dy);
+        return locationOnScreen;
+      }
+      else {
+        Point location = c.getLocation();
+        dx += location.x;
+        dy += location.y;
+      }
+    }
+    return null;
+  }
+
 }

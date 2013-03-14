@@ -15,13 +15,11 @@
  */
 package com.intellij.psi.codeStyle.arrangement
 
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier
-import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType
 import org.junit.Before
 
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PROTECTED
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PUBLIC
-import static com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType.BY_NAME
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PROTECTED
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME
 
 /**
  * @author Denis Zhdanov
@@ -50,7 +48,7 @@ class Test {
   public void setI() {}
   public void test() {}
 }''',
-      rules: [rule("get.*")]
+      rules: [nameRule("get.*")]
     )
   }
   
@@ -68,7 +66,7 @@ class Test {
   protected void test() {}
   private void getInner() {}
 }''',
-      rules: [rule("get.*", PUBLIC), rule(PROTECTED)]
+      rules: [nameRule("get.*", PUBLIC), rule(PROTECTED)]
     )
   }
   
@@ -88,7 +86,7 @@ class Test {
   private void getC() {}
   public void test() {}
 }''',
-      rules: [rule(BY_NAME, "get.*")]
+      rules: [ruleWithOrder(BY_NAME, nameRule("get.*"))]
     )
   }
 }

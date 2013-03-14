@@ -16,14 +16,13 @@
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.util.TitleWithToolbar;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NonNls;
@@ -42,9 +41,8 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
 
   @NotNull private final ArrangementMatchingRulesControl myControl;
 
-  public ArrangementMatchingRulesPanel(@NotNull ArrangementNodeDisplayManager displayManager,
-                                       @NotNull ArrangementColorsProvider colorsProvider,
-                                       @NotNull ArrangementStandardSettingsAware settingsFilter)
+  public ArrangementMatchingRulesPanel(@NotNull ArrangementStandardSettingsManager settingsManager,
+                                       @NotNull ArrangementColorsProvider colorsProvider)
   {
     super(new GridBagLayout());
     
@@ -69,7 +67,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
         }
       }
     };
-    myControl = new ArrangementMatchingRulesControl(displayManager, colorsProvider, settingsFilter, callback);
+    myControl = new ArrangementMatchingRulesControl(settingsManager, colorsProvider, callback);
     scrollPane.setViewportView(myControl);
     CustomizationUtil.installPopupHandler(
       myControl, ArrangementConstants.ACTION_GROUP_MATCHING_RULES_CONTEXT_MENU, ArrangementConstants.MATCHING_RULES_CONTROL_PLACE
@@ -97,7 +95,7 @@ public class ArrangementMatchingRulesPanel extends JPanel implements DataProvide
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (ArrangementConstants.MATCHING_RULES_CONTROL_KEY.is(dataId)) {
+    if (ArrangementMatchingRulesControl.KEY.is(dataId)) {
       return myControl;
     }
     return null;

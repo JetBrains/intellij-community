@@ -3,7 +3,8 @@ import com.intellij.ide.highlighter.XmlFileType
 import com.intellij.lang.xml.XMLLanguage
 import com.intellij.psi.codeStyle.arrangement.AbstractRearrangerTest
 
-import static com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType.BY_NAME
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BY_NAME
+
 /**
  * @author Eugene.Kudelevsky
  */
@@ -17,7 +18,7 @@ class XmlRearrangerTest extends AbstractRearrangerTest {
     doTest(
       initial: '''<root xmlns:ns="http://ns.com" attr2="value2" attr1="value1" attr3="value3"/>''',
       expected: '''<root xmlns:ns="http://ns.com" attr1="value1" attr2="value2" attr3="value3"/>''',
-      rules: [rule(BY_NAME, ".*")]
+      rules: [ruleWithOrder(BY_NAME, nameRule(".*"))]
     )
   }
 
@@ -25,7 +26,7 @@ class XmlRearrangerTest extends AbstractRearrangerTest {
     doTest(
       initial: '''<root attr3="value3" attr2="value2" attr1="value1" xmlns:ns="http://ns.com"/>''',
       expected: '''<root xmlns:ns="http://ns.com" attr1="value1" attr2="value2" attr3="value3"/>''',
-      rules: [rule(BY_NAME, ".*")]
+      rules: [ruleWithOrder(BY_NAME, nameRule(".*"))]
     )
   }
 
@@ -47,7 +48,7 @@ class XmlRearrangerTest extends AbstractRearrangerTest {
   </tag1>
 </root>
 ''',
-      rules: [rule(BY_NAME, ".*")]
+      rules: [ruleWithOrder(BY_NAME, nameRule(".*"))]
     )
   }
 }

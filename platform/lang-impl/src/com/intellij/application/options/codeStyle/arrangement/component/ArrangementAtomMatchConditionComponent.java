@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,52 +13,46 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement.match;
+package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.application.options.codeStyle.arrangement.action.ArrangementRemoveConditionAction;
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationPanel;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
-import com.intellij.application.options.codeStyle.arrangement.util.ArrangementConfigUtil;
 import com.intellij.application.options.codeStyle.arrangement.util.InsetsPanel;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.RoundedLineBorder;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Map;
 
 /**
- * {@link ArrangementMatchConditionComponent} for {@link ArrangementAtomMatchCondition} representation.
+ * {@link ArrangementUiComponent} for {@link ArrangementAtomMatchCondition} representation.
  * <p/>
  * Not thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 8/8/12 10:06 AM
  */
-public class ArrangementAtomMatchConditionComponent implements ArrangementMatchConditionComponent {
+public class ArrangementAtomMatchConditionComponent implements ArrangementUiComponent {
 
-  @NotNull private static final Map<ArrangementSettingType, BorderStrategy> BORDER_STRATEGIES = ContainerUtilRt.newHashMap();
-  static {
-    BORDER_STRATEGIES.put(ArrangementSettingType.NAME, new NameBorderStrategy());
-    
-    PredefinedConditionBorderStrategy strategy = new PredefinedConditionBorderStrategy();
-    BORDER_STRATEGIES.put(ArrangementSettingType.TYPE, strategy);
-    BORDER_STRATEGIES.put(ArrangementSettingType.MODIFIER, strategy);
-  }
+  @NotNull private static final BorderStrategy NAME_BORDER_STRATEGY       = new NameBorderStrategy();
+  @NotNull private static final BorderStrategy PREDEFINED_BORDER_STRATEGY = new PredefinedConditionBorderStrategy();
 
   @NotNull
   private final SimpleColoredComponent myTextControl = new SimpleColoredComponent() {
@@ -98,11 +92,13 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
 
   @Nullable private Dimension myTextControlSize;
   @Nullable private Rectangle myScreenBounds;
+  @Nullable private Listener myListener;
 
   private boolean myEnabled = true;
+  private boolean mySelected;
   private boolean myCloseButtonHovered;
 
-  public ArrangementAtomMatchConditionComponent(@NotNull ArrangementNodeDisplayManager manager,
+  public ArrangementAtomMatchConditionComponent(@NotNull ArrangementStandardSettingsManager manager,
                                                 @NotNull ArrangementColorsProvider colorsProvider,
                                                 @NotNull ArrangementAtomMatchCondition condition,
                                                 @Nullable Consumer<ArrangementAtomMatchConditionComponent> closeCallback)
@@ -110,12 +106,17 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     myColorsProvider = colorsProvider;
     myCondition = condition;
     myCloseCallback = closeCallback;
-    myBorderStrategy = BORDER_STRATEGIES.get(condition.getType());
-    myText = manager.getDisplayValue(condition);
+    myBorderStrategy = StdArrangementTokens.General.NAME.equals(condition.getType()) ? NAME_BORDER_STRATEGY : PREDEFINED_BORDER_STRATEGY;
+    if (condition.getType().equals(condition.getValue())) {
+      myText = condition.getType().getRepresentationValue();
+    }
+    else {
+      myText = condition.getValue().toString();
+    }
     myTextControl.setTextAlign(SwingConstants.CENTER);
     myTextControl.append(myText, SimpleTextAttributes.fromTextAttributes(colorsProvider.getTextAttributes(condition.getType(), false)));
     myTextControl.setOpaque(false);
-    int maxWidth = manager.getMaxWidth(condition.getType());
+    int maxWidth = manager.getWidth(condition.getType());
     if (maxWidth > 0) {
       myTextControlSize = new Dimension(maxWidth, myTextControl.getPreferredSize().height);
     }
@@ -195,7 +196,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
     myAnimationPanel = new ArrangementAnimationPanel(roundBorderPanel, false, true) {
       @Override
       public void paint(Graphics g) {
-        Point point = ArrangementConfigUtil.getLocationOnScreen(this);
+        Point point = UIUtil.getLocationOnScreen(this);
         if (point != null) {
           Rectangle bounds = myAnimationPanel.getBounds();
           myScreenBounds = new Rectangle(point.x, point.y, bounds.width, bounds.height);
@@ -237,11 +238,16 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
    * @param selected  flag that indicates if current component should be drawn as 'selected'
    */
   public void setSelected(boolean selected) {
+    boolean notifyListener = selected != mySelected;
+    mySelected = selected;
     myTextControl.clear();
     TextAttributes attributes = myColorsProvider.getTextAttributes(myCondition.getType(), selected);
     myTextControl.append(myText, SimpleTextAttributes.fromTextAttributes(attributes));
     myBorder.setColor(myColorsProvider.getBorderColor(selected));
     myBackgroundColor = attributes.getBackgroundColor();
+    if (notifyListener && myListener != null) {
+      myListener.stateChanged();
+    }
   }
 
   public boolean isEnabled() {
@@ -255,7 +261,9 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
    */
   public void setEnabled(boolean enabled) {
     myEnabled = enabled;
-    setSelected(false);
+    if (!enabled) {
+      setSelected(false);
+    }
   }
 
   @Nullable
@@ -322,7 +330,39 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementMatchC
   public String toString() {
     return myText;
   }
-  
+
+  @NotNull
+  @Override
+  public ArrangementSettingsToken getToken() {
+    return myCondition.getType();
+  }
+
+  @Override
+  public void chooseToken(@NotNull ArrangementSettingsToken data) throws IllegalArgumentException, UnsupportedOperationException {
+    throw new UnsupportedOperationException();
+  }
+
+  @Override
+  public boolean isSelected() {
+    return mySelected;
+  }
+
+  @Override
+  public void reset() {
+    setSelected(false); 
+  }
+
+  @Override
+  public int getBaselineToUse(int width, int height) {
+    return -1;
+  }
+
+  @SuppressWarnings("NullableProblems")
+  @Override
+  public void setListener(@NotNull Listener listener) {
+    myListener = listener; 
+  }
+
   private interface BorderStrategy {
     RoundedLineBorder create();
     void setup(@NotNull Graphics2D g);

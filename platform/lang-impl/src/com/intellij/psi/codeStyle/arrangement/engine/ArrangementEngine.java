@@ -32,8 +32,8 @@ import com.intellij.psi.codeStyle.arrangement.ArrangementSettings;
 import com.intellij.psi.codeStyle.arrangement.NameAwareArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.Rearranger;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
-import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashSet;
@@ -226,9 +226,9 @@ public class ArrangementEngine {
   public static <E extends ArrangementEntry> List<E> arrange(@NotNull Collection<E> entries,
                                                              @NotNull List<? extends ArrangementMatchRule> rules)
   {
-    List<E> arranged = new ArrayList<E>();
-    Set<E> unprocessed = new LinkedHashSet<E>();
-    List<Pair<Set<ArrangementEntry>, E>> dependent = new ArrayList<Pair<Set<ArrangementEntry>, E>>();
+    List<E> arranged = ContainerUtilRt.newArrayList();
+    Set<E> unprocessed = ContainerUtilRt.newLinkedHashSet();
+    List<Pair<Set<ArrangementEntry>, E>> dependent = ContainerUtilRt.newArrayList();
     for (E entry : entries) {
       List<? extends ArrangementEntry> dependencies = entry.getDependencies();
       if (dependencies == null) {
@@ -261,7 +261,7 @@ public class ArrangementEngine {
       unprocessed.removeAll(matched);
       
       // Sort by name if necessary.
-      if (rule.getOrderType() == ArrangementEntryOrderType.BY_NAME) {
+      if (StdArrangementTokens.Order.BY_NAME.equals(rule.getOrderType())) {
         sortByName(arranged, startIndex);
       }
     }

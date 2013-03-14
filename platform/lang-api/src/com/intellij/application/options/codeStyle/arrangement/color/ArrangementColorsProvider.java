@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,19 +13,23 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.application.options.codeStyle.arrangement.node;
+package com.intellij.application.options.codeStyle.arrangement.color;
 
+import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import org.jetbrains.annotations.NotNull;
 
-import javax.swing.*;
-import javax.swing.tree.TreeNode;
+import java.awt.*;
 
 /**
  * @author Denis Zhdanov
- * @since 9/27/12 4:44 PM
+ * @since 10/23/12 11:46 PM
  */
-public interface ArrangementEditableNode extends TreeNode {
+public interface ArrangementColorsProvider {
+  
+  @NotNull
+  Color getBorderColor(boolean selected);
 
   @NotNull
-  JComponent getEditor();
+  TextAttributes getTextAttributes(@NotNull ArrangementSettingsToken token, boolean selected);
 }

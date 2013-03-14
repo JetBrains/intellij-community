@@ -29,7 +29,7 @@ import java.util.ResourceBundle;
 public class ApplicationBundle {
   private static Reference<ResourceBundle> ourBundle;
 
-  @NonNls private static final String BUNDLE = "messages.ApplicationBundle";
+  @NonNls public static final String BUNDLE = "messages.ApplicationBundle";
 
   private ApplicationBundle() {
   }

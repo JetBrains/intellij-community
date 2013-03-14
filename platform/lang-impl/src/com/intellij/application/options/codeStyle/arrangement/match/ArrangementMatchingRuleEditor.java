@@ -16,34 +16,25 @@
 package com.intellij.application.options.codeStyle.arrangement.match;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
-import com.intellij.application.options.codeStyle.arrangement.util.ArrangementConfigUtil;
-import com.intellij.openapi.application.ApplicationBundle;
-import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.arrangement.ArrangementRuleInfo;
+import com.intellij.openapi.util.Pair;
 import com.intellij.psi.codeStyle.arrangement.ArrangementUtil;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementMatchRule;
+import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
-import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
+import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.components.JBTextField;
-import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.MultiRowFlowPanel;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
@@ -58,148 +49,184 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 8/14/12 9:54 AM
  */
-public class ArrangementMatchingRuleEditor extends JPanel {
+public class ArrangementMatchingRuleEditor extends JPanel implements ArrangementUiComponent.Listener {
 
-  @NotNull private final Map<Object, ArrangementAtomMatchConditionComponent> myConditionComponents = ContainerUtilRt.newHashMap();
-  @NotNull private final List<MultiRowFlowPanel>                             myRows                = ContainerUtilRt.newArrayList();
+  @NotNull private final Map<ArrangementSettingsToken, ArrangementUiComponent> myComponents = ContainerUtilRt.newHashMap();
+  @NotNull private final List<MultiRowFlowPanel>                               myRows       = ContainerUtilRt.newArrayList();
 
-  @NotNull private final Map<ArrangementEntryOrderType, ArrangementOrderTypeComponent> myOrderTypeComponents
-    = new EnumMap<ArrangementEntryOrderType, ArrangementOrderTypeComponent>(ArrangementEntryOrderType.class);
-
-  @NotNull private final ArrangementRuleInfo myRuleInfo  = new ArrangementRuleInfo();
-  @NotNull private final Alarm               myAlarm     = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
-  @NotNull private final JBTextField         myNameField = new JBTextField(20);
-
-  @NotNull private final ArrangementMatchingRulesControl  myControl;
-  @NotNull private final ArrangementStandardSettingsAware myFilter;
-  @NotNull private final ArrangementColorsProvider        myColorsProvider;
+  @NotNull private final ArrangementMatchingRulesControl    myControl;
+  @NotNull private final ArrangementStandardSettingsManager mySettingsManager;
+  @NotNull private final ArrangementColorsProvider          myColorsProvider;
 
   private int myRow = -1;
-  private int     myLabelWidth;
-  private boolean myRequestFocus;
+  private int        myLabelWidth;
+  
+  @Nullable private JComponent myDefaultFocusRequestor;
+  @Nullable private JComponent myFocusRequestor;
+  
+  private boolean mySkipStateChange;
 
-  public ArrangementMatchingRuleEditor(@NotNull ArrangementStandardSettingsAware filter,
-                                       @NotNull ArrangementColorsProvider provider,
-                                       @NotNull ArrangementNodeDisplayManager displayManager,
+  public ArrangementMatchingRuleEditor(@NotNull ArrangementStandardSettingsManager settingsManager,
+                                       @NotNull ArrangementColorsProvider colorsProvider,
                                        @NotNull ArrangementMatchingRulesControl control)
   {
-    myFilter = filter;
-    myColorsProvider = provider;
+    mySettingsManager = settingsManager;
+    myColorsProvider = colorsProvider;
     myControl = control;
-    init(displayManager);
+    init(settingsManager);
     addMouseListener(new MouseAdapter() {
       @Override
       public void mouseClicked(MouseEvent e) {
         onMouseClicked(e);
       }
     });
-    myNameField.getDocument().addDocumentListener(new DocumentListener() {
-      @Override public void insertUpdate(DocumentEvent e) { scheduleNameUpdate(); }
-      @Override public void removeUpdate(DocumentEvent e) { scheduleNameUpdate(); }
-      @Override public void changedUpdate(DocumentEvent e) { scheduleNameUpdate(); }
-    });
   }
 
-  private void init(@NotNull ArrangementNodeDisplayManager displayManager) {
+  private void init(@NotNull ArrangementStandardSettingsManager settingsManager) {
     setLayout(new GridBagLayout());
     setBorder(IdeBorderFactory.createEmptyBorder(5));
 
-    Map<ArrangementSettingType, Set<?>> supportedSettings = ArrangementConfigUtil.buildAvailableConditions(myFilter, null);
-    addRowIfPossible(ArrangementSettingType.TYPE, supportedSettings, displayManager);
-    addRowIfPossible(ArrangementSettingType.MODIFIER, supportedSettings, displayManager);
-    addNameFilterIfPossible();
-    addOrderRowIfPossible(displayManager);
+    List<CompositeArrangementSettingsToken> tokens = settingsManager.getSupportedMatchingTokens();
+    if (tokens != null) {
+      for (CompositeArrangementSettingsToken token : tokens) {
+        addToken(token);
+      }
+    }
+
     applyBackground(UIUtil.getListBackground());
   }
 
-  private void addRowIfPossible(@NotNull ArrangementSettingType key,
-                                @NotNull Map<ArrangementSettingType, Set<?>> supportedSettings,
-                                @NotNull ArrangementNodeDisplayManager manager)
-  {
-    Set<?> values = supportedSettings.get(key);
-    if (values == null || values.isEmpty()) {
-      return;
-    }
-
-    MultiRowFlowPanel valuesPanel = newRow(manager.getDisplayLabel(key));
-    for (Object value : manager.sort(values)) {
-      ArrangementAtomMatchConditionComponent component =
-        new ArrangementAtomMatchConditionComponent(manager, myColorsProvider, new ArrangementAtomMatchCondition(key, value), null);
-      myConditionComponents.put(value, component);
-      valuesPanel.add(component.getUiComponent());
-    }
-  }
-
-  private void addNameFilterIfPossible() {
-    if (!myFilter.isNameFilterSupported()) {
-      return;
-    }
-    MultiRowFlowPanel panel = newRow(ApplicationBundle.message("arrangement.text.name"));
-    panel.add(myNameField);
-  }
-
-  private void addOrderRowIfPossible(@NotNull ArrangementNodeDisplayManager displayManager) {
-    if (!myFilter.isNameFilterSupported()) {
-      return;
-    }
-    MultiRowFlowPanel panel = newRow(ApplicationBundle.message("arrangement.order.name"));
-    ArrangementEntryOrderType[] orderTypes = { ArrangementEntryOrderType.KEEP, ArrangementEntryOrderType.BY_NAME };
-    int maxWidth = displayManager.getMaxWidth(orderTypes);
-    for (ArrangementEntryOrderType type : orderTypes) {
-      ArrangementOrderTypeComponent component = new ArrangementOrderTypeComponent(type, displayManager, myColorsProvider, maxWidth);
-      panel.add(component);
-      myOrderTypeComponents.put(type, component);
-    }
-  }
-
-  private MultiRowFlowPanel newRow(@NotNull String rowLabel) {
-    MultiRowFlowPanel result = new MultiRowFlowPanel(
+  private void addToken(@NotNull CompositeArrangementSettingsToken rowToken) {
+    List<CompositeArrangementSettingsToken> tokens = ArrangementUtil.flatten(rowToken);
+    GridBag labelConstraints = new GridBag().anchor(GridBagConstraints.NORTHWEST).insets(ArrangementConstants.VERTICAL_PADDING, 0, 0, 0);
+    MultiRowFlowPanel panel = new MultiRowFlowPanel(
       FlowLayout.LEFT, ArrangementConstants.HORIZONTAL_GAP, ArrangementConstants.VERTICAL_GAP
     );
-    JLabel label = new JLabel(rowLabel + ":");
-    add(label, new GridBag().anchor(GridBagConstraints.NORTHWEST).insets(ArrangementConstants.VERTICAL_PADDING, 0, 0, 0));
-    myLabelWidth = Math.max(myLabelWidth, label.getPreferredSize().width);
-
-    add(result, new GridBag().anchor(GridBagConstraints.WEST).weightx(1).fillCellHorizontally().coverLine());
-    myRows.add(result);
-    return result;
-  }
-
-  private void scheduleNameUpdate() {
-    myAlarm.cancelAllRequests();
-    myAlarm.addRequest(new Runnable() {
-      @Override
-      public void run() {
-        updateName();
+    List<ArrangementSettingsToken> prevTokens = ContainerUtilRt.newArrayList();
+    StdArrangementTokenUiRole prevRole = null;
+    ArrangementUiComponent component;
+    JComponent uiComponent;
+    for (CompositeArrangementSettingsToken token : tokens) {
+      StdArrangementTokenUiRole role = token.getRole();
+      if (role != prevRole && !prevTokens.isEmpty()) {
+        component = ArrangementUtil.buildUiComponent(
+          role, prevTokens, myColorsProvider, mySettingsManager
+        );
+        component.setListener(this);
+        for (ArrangementSettingsToken prevToken : prevTokens) {
+          myComponents.put(prevToken, component);
+        }
+        panel.add(component.getUiComponent());
+        panel = addRowIfNecessary(panel);
+        prevRole = null;
+        prevTokens.clear();
       }
-    }, ArrangementConstants.NAME_CONDITION_UPDATE_DELAY_MILLIS);
+      component = ArrangementUtil.buildUiComponent(
+        role, Collections.singletonList(token.getToken()), myColorsProvider, mySettingsManager
+      );
+      component.setListener(this);
+      uiComponent = component.getUiComponent();
+      switch (role) {
+        case LABEL:
+          panel = addRowIfNecessary(panel);
+          add(uiComponent, labelConstraints);
+          myLabelWidth = Math.max(myLabelWidth, uiComponent.getPreferredSize().width);
+          prevRole = null;
+          break;
+        case TEXT_FIELD:
+          panel = addRowIfNecessary(panel);
+          
+          ArrangementUiComponent textLabel = ArrangementUtil.buildUiComponent(
+            StdArrangementTokenUiRole.LABEL, Collections.singletonList(token.getToken()), myColorsProvider, mySettingsManager
+          );
+          JComponent textLabelComponent = textLabel.getUiComponent();
+          add(textLabelComponent, labelConstraints);
+          myLabelWidth = Math.max(myLabelWidth, textLabelComponent.getPreferredSize().width);
+
+          panel.add(uiComponent);
+          panel = addRowIfNecessary(panel);
+          prevRole = null;
+
+          myComponents.put(token.getToken(), component);
+          
+          if (myDefaultFocusRequestor == null) {
+            myDefaultFocusRequestor = uiComponent;
+          }
+          break;
+        default:
+          if (role == StdArrangementTokenUiRole.COMBO_BOX) {
+            prevTokens.add(token.getToken());
+            prevRole = role;
+            break;
+          }
+          
+          panel.add(uiComponent);
+          myComponents.put(token.getToken(), component);
+      }
+    }
+
+    if (prevRole != null && !prevTokens.isEmpty()) {
+      component = ArrangementUtil.buildUiComponent(prevRole, prevTokens, myColorsProvider, mySettingsManager);
+      panel.add(component.getUiComponent());
+      component.setListener(this);
+      for (ArrangementSettingsToken prevToken : prevTokens) {
+        myComponents.put(prevToken, component);
+      }
+    }
+    addRowIfNecessary(panel);
   }
 
-  private void updateName() {
-    myAlarm.cancelAllRequests();
-    if (myRow < 0) {
-      return;
+  @NotNull
+  private MultiRowFlowPanel addRowIfNecessary(@NotNull MultiRowFlowPanel panel) {
+    if (panel.getComponentCount() <= 0) {
+      return panel;
     }
-
-    String namePattern = myNameField.getText();
-    if (StringUtil.isEmpty(namePattern)) {
-      namePattern = null;
-    }
-    if (Comparing.equal(namePattern, myRuleInfo.getNamePattern())) {
-      return;
-    }
-    myRuleInfo.setNamePattern(namePattern);
-    apply();
+    add(panel, new GridBag().anchor(GridBagConstraints.WEST).weightx(1).fillCellHorizontally().coverLine());
+    myRows.add(panel);
+    return new MultiRowFlowPanel(
+      FlowLayout.LEFT, ArrangementConstants.HORIZONTAL_GAP, ArrangementConstants.VERTICAL_GAP
+    );
   }
 
   @Override
-  protected void paintComponent(Graphics g) {
-    if (myRequestFocus) {
-      if (myNameField.isFocusOwner()) {
-        myRequestFocus = false;
+  public void stateChanged() {
+    if (!mySkipStateChange) {
+      apply();
+    }
+  }
+
+  @Nullable
+  private Pair<ArrangementMatchCondition, ArrangementSettingsToken> buildCondition() {
+    List<ArrangementMatchCondition> conditions = ContainerUtilRt.newArrayList();
+    ArrangementSettingsToken orderType = null;
+    for (ArrangementUiComponent component : myComponents.values()) {
+      if (!component.isEnabled() || !component.isSelected()) {
+        continue;
+      }
+      ArrangementSettingsToken token = component.getToken();
+      if (token != null && StdArrangementTokens.Order.is(token)) {
+        orderType = token;
       }
       else {
-        myNameField.requestFocusInWindow();
+        conditions.add(component.getMatchCondition());
+      }
+    }
+    if (orderType != null && !conditions.isEmpty()) {
+      return Pair.create(ArrangementUtil.combine(conditions.toArray(new ArrangementMatchCondition[conditions.size()])), orderType);
+    }
+    else {
+      return null;
+    }
+  }
+  
+  @Override
+  protected void paintComponent(Graphics g) {
+    if (myFocusRequestor != null) {
+      if (myFocusRequestor.isFocusOwner()) {
+        myFocusRequestor = null;
+      }
+      else {
+        myFocusRequestor.requestFocusInWindow();
       }
     }
     super.paintComponent(g);
@@ -213,17 +240,16 @@ public class ArrangementMatchingRuleEditor extends JPanel {
    */
   public void reset(int row) {
     // Reset state.
-    myNameField.setText("");
-    myAlarm.cancelAllRequests();
     myRow = row;
-    myRuleInfo.clear();
-    myRequestFocus = true;
-    for (ArrangementAtomMatchConditionComponent component : myConditionComponents.values()) {
-      component.setEnabled(false);
-      component.setSelected(false);
+    myFocusRequestor = myDefaultFocusRequestor;
+    mySkipStateChange = true;
+    try {
+      for (ArrangementUiComponent component : myComponents.values()) {
+        component.reset();
+      }
     }
-    for (ArrangementOrderTypeComponent component : myOrderTypeComponents.values()) {
-      component.setSelected(false);
+    finally {
+      mySkipStateChange = false;
     }
 
     ArrangementMatchingRulesModel model = myControl.getModel();
@@ -233,68 +259,68 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     }
 
     Object element = model.getElementAt(row);
-    if (element instanceof EmptyArrangementRuleComponent) {
-      // Disable conditions which are not applicable for empty rules (e.g. we don't want to enable 'volatile' condition
-      // for java rearranger if no 'field' condition is selected.
-      for (ArrangementAtomMatchConditionComponent component : myConditionComponents.values()) {
-        ArrangementAtomMatchCondition condition = component.getMatchCondition();
-        Map<ArrangementSettingType, Set<?>> map = ArrangementConfigUtil.buildAvailableConditions(myFilter, condition);
-        component.setEnabled(map.get(condition.getType()).contains(condition.getValue()));
-      }
-      return;
-    }
-    if (!(element instanceof StdArrangementMatchRule)) {
-      return;
-    }
-
-    StdArrangementMatchRule rule = (StdArrangementMatchRule)element;
-    myRuleInfo.setOrderType(rule.getOrderType());
-    ArrangementOrderTypeComponent orderTypeComponent = myOrderTypeComponents.get(rule.getOrderType());
-    if (orderTypeComponent != null) {
-      orderTypeComponent.setSelected(true);
-    }
-
-    ArrangementMatchCondition condition = rule.getMatcher().getCondition();
-    ArrangementRuleInfo infoWithConditions = ArrangementUtil.extractConditions(condition);
-    myRuleInfo.copyConditionsFrom(infoWithConditions);
-    myNameField.setText(myRuleInfo.getNamePattern());
-
-    for (ArrangementAtomMatchConditionComponent component : myConditionComponents.values()) {
-      if (myRuleInfo.hasCondition(component.getMatchCondition().getValue())) {
-        component.setEnabled(true);
-        component.setSelected(true);
-      }
-    }
+    ArrangementSettingsToken orderType = element instanceof ArrangementMatchRule ? ((ArrangementMatchRule)element).getOrderType() : null;
+    final ArrangementMatchCondition condition;
+    final Set<ArrangementSettingsToken> conditionTokens;
     
-    refreshConditions();
+    if (element instanceof EmptyArrangementRuleComponent) {
+      // We need to disable conditions which are not applicable for empty rules (e.g. we don't want to enable 'volatile' condition
+      // for java rearranger if no 'field' condition is selected.
+      condition = null;
+      conditionTokens = ContainerUtilRt.newHashSet();
+    }
+    else if (!(element instanceof StdArrangementMatchRule)) {
+      return;
+    }
+    else {
+      condition = ((StdArrangementMatchRule)element).getMatcher().getCondition();
+      conditionTokens = ArrangementUtil.extractTokens(condition);
+    }
+
+    mySkipStateChange = true;
+    try {
+      for (ArrangementUiComponent component : myComponents.values()) {
+        ArrangementSettingsToken token = component.getToken();
+        if (token != null && (token.equals(orderType) || mySettingsManager.isEnabled(token, condition))) {
+          component.setEnabled(true);
+          component.setSelected(conditionTokens.contains(token));
+        }
+      }
+
+      refreshConditions();
+    }
+    finally {
+      mySkipStateChange = false;
+    }
   }
 
   /**
    * Disable conditions not applicable at the current context (e.g. disable 'synchronized' if no 'method' is selected).
    */
   private void refreshConditions() {
-    Map<ArrangementSettingType, Set<?>> available = ArrangementConfigUtil.buildAvailableConditions(myFilter, myRuleInfo.buildCondition());
-    for (ArrangementAtomMatchConditionComponent component : myConditionComponents.values()) {
-      ArrangementAtomMatchCondition c = component.getMatchCondition();
-      Set<?> s = available.get(c.getType());
-      if (s == null || !s.contains(c.getValue())) {
-        if (myRuleInfo.hasCondition(c.getValue())) {
-          removeCondition(component);
-        }
-        else {
-          component.setEnabled(false);
-        }
+    Pair<ArrangementMatchCondition, ArrangementSettingsToken> pair = buildCondition();
+    ArrangementMatchCondition condition = pair == null ? null : pair.first;
+    for (ArrangementUiComponent component : myComponents.values()) {
+      ArrangementSettingsToken token = component.getToken();
+      if (token == null) {
+        continue;
       }
-      else if (s.contains(c.getValue()) && !component.isEnabled()) {
-        component.setEnabled(true);
+      boolean enabled = mySettingsManager.isEnabled(token, condition);
+      component.setEnabled(enabled);
+      if (!enabled) {
+        component.setSelected(false);
       }
     }
   }
 
   private void apply() {
-    Object modelValue = myRuleInfo.buildRule();
-    if (modelValue == null) {
+    final Pair<ArrangementMatchCondition, ArrangementSettingsToken> pair = buildCondition();
+    final Object modelValue;
+    if (pair == null) {
       modelValue = new EmptyArrangementRuleComponent(myControl.getRowHeight(myRow));
+    }
+    else {
+      modelValue = new StdArrangementMatchRule(new StdArrangementEntryMatcher(pair.first), pair.second);
     }
     myControl.getModel().set(myRow, modelValue);
     myControl.repaintRows(myRow, myRow, true);
@@ -320,13 +346,13 @@ public class ArrangementMatchingRuleEditor extends JPanel {
     }
 
     Point locationOnScreen = e.getLocationOnScreen();
-    for (ArrangementAtomMatchConditionComponent component : myConditionComponents.values()) {
+    for (ArrangementUiComponent component : myComponents.values()) {
       Rectangle screenBounds = component.getScreenBounds();
       if (screenBounds == null || !screenBounds.contains(locationOnScreen)) {
         continue;
       }
       if (component.isEnabled()) {
-        if (myRuleInfo.hasCondition(component.getMatchCondition().getValue())) {
+        if (component.isSelected()) {
           removeCondition(component);
         }
         else {
@@ -336,50 +362,37 @@ public class ArrangementMatchingRuleEditor extends JPanel {
       apply();
       return;
     }
-    for (ArrangementOrderTypeComponent component : myOrderTypeComponents.values()) {
-      Rectangle bounds = component.getScreenBounds();
-      if (bounds == null || !bounds.contains(locationOnScreen)) {
-        continue;
-      }
-      if (component.getOrderType() != myRuleInfo.getOrderType()) {
-        ArrangementOrderTypeComponent orderTypeComponent = myOrderTypeComponents.get(myRuleInfo.getOrderType());
-        if (orderTypeComponent != null) {
-          orderTypeComponent.setSelected(false);
+  }
+
+  private void addCondition(@NotNull ArrangementUiComponent component) {
+    mySkipStateChange = true;
+    try {
+      component.setSelected(true);
+      Collection<Set<ArrangementSettingsToken>> mutexes = mySettingsManager.getMutexes();
+
+      // Update 'mutex conditions', i.e. conditions which can't be active at the same time (e.g. type 'field' and type 'method').
+      for (Set<ArrangementSettingsToken> mutex : mutexes) {
+        if (!mutex.contains(component.getToken())) {
+          continue;
         }
-        orderTypeComponent = myOrderTypeComponents.get(component.getOrderType());
-        if (orderTypeComponent != null) {
-          orderTypeComponent.setSelected(true);
+        for (ArrangementSettingsToken key : mutex) {
+          if (key.equals(component.getToken())) {
+            continue;
+          }
+          ArrangementUiComponent c = myComponents.get(key);
+          if (c != null && c.isEnabled()) {
+            removeCondition(c);
+          }
         }
-        myRuleInfo.setOrderType(component.getOrderType());
-        apply();
       }
-      return;
+      refreshConditions();
+    }
+    finally {
+      mySkipStateChange = false;
     }
   }
 
-  private void addCondition(@NotNull ArrangementAtomMatchConditionComponent component) {
-    ArrangementAtomMatchCondition chosenCondition = component.getMatchCondition();
-    myRuleInfo.addAtomCondition(chosenCondition);
-    component.setSelected(true);
-    Collection<Set<?>> mutexes = myFilter.getMutexes();
-    
-    // Update 'mutex conditions', i.e. conditions which can't be active at the same time (e.g. type 'field' and type 'method').
-    for (Set<?> mutex : mutexes) {
-      if (!mutex.contains(chosenCondition.getValue())) {
-        continue;
-      }
-      for (Object key : mutex) {
-        if (!chosenCondition.getValue().equals(key) && myRuleInfo.hasCondition(key)) {
-          removeCondition(myConditionComponents.get(key));
-          myRuleInfo.addAtomCondition(chosenCondition);
-        }
-      }
-    }
-    refreshConditions();
-  }
-
-  private void removeCondition(@NotNull ArrangementAtomMatchConditionComponent component) {
-    myRuleInfo.removeCondition(component.getMatchCondition().getValue());
+  private void removeCondition(@NotNull ArrangementUiComponent component) {
     component.setSelected(false);
     refreshConditions();
   }

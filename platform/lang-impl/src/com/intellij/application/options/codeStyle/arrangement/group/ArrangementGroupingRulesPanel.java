@@ -16,12 +16,12 @@
 package com.intellij.application.options.codeStyle.arrangement.group;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.application.options.codeStyle.arrangement.ArrangementNodeDisplayManager;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
+import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
 import com.intellij.application.options.codeStyle.arrangement.util.TitleWithToolbar;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,12 +39,12 @@ public class ArrangementGroupingRulesPanel extends JPanel implements DataProvide
 
   @NotNull private final ArrangementGroupingRulesControl myControl;
 
-  public ArrangementGroupingRulesPanel(@NotNull ArrangementNodeDisplayManager displayManager,
-                                       @NotNull ArrangementStandardSettingsAware settingsFilter)
+  public ArrangementGroupingRulesPanel(@NotNull ArrangementStandardSettingsManager settingsManager,
+                                       @NotNull ArrangementColorsProvider colorsProvider)
   {
     super(new GridBagLayout());
 
-    myControl = new ArrangementGroupingRulesControl(displayManager, settingsFilter);
+    myControl = new ArrangementGroupingRulesControl(settingsManager, colorsProvider);
 
     TitleWithToolbar top = new TitleWithToolbar(
       ApplicationBundle.message("arrangement.settings.section.groups"),
@@ -69,7 +69,7 @@ public class ArrangementGroupingRulesPanel extends JPanel implements DataProvide
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (ArrangementConstants.GROUPING_RULES_CONTROL_KEY.is(dataId)) {
+    if (ArrangementGroupingRulesControl.KEY.is(dataId)) {
       return myControl;
     }
     return null;

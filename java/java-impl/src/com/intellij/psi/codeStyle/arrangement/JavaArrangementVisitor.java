@@ -18,12 +18,12 @@ package com.intellij.psi.codeStyle.arrangement;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.psi.search.searches.SuperMethodsSearch;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,37 +33,41 @@ import java.util.HashMap;
 import java.util.Map;
 import java.util.Set;
 
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
+
 public class JavaArrangementVisitor extends JavaElementVisitor {
-  
+
   private static final String NULL_CONTENT = "no content";
-  
-  private static final Map<String, ArrangementModifier> MODIFIERS = new HashMap<String, ArrangementModifier>();
+
+  private static final Map<String, ArrangementSettingsToken> MODIFIERS = ContainerUtilRt.newHashMap();
+
   static {
-    MODIFIERS.put(PsiModifier.PUBLIC, ArrangementModifier.PUBLIC);
-    MODIFIERS.put(PsiModifier.PROTECTED, ArrangementModifier.PROTECTED);
-    MODIFIERS.put(PsiModifier.PRIVATE, ArrangementModifier.PRIVATE);
-    MODIFIERS.put(PsiModifier.PACKAGE_LOCAL, ArrangementModifier.PACKAGE_PRIVATE);
-    MODIFIERS.put(PsiModifier.STATIC, ArrangementModifier.STATIC);
-    MODIFIERS.put(PsiModifier.FINAL, ArrangementModifier.FINAL);
-    MODIFIERS.put(PsiModifier.TRANSIENT, ArrangementModifier.TRANSIENT);
-    MODIFIERS.put(PsiModifier.VOLATILE, ArrangementModifier.VOLATILE);
-    MODIFIERS.put(PsiModifier.SYNCHRONIZED, ArrangementModifier.SYNCHRONIZED);
-    MODIFIERS.put(PsiModifier.ABSTRACT, ArrangementModifier.ABSTRACT);
+    MODIFIERS.put(PsiModifier.PUBLIC, PUBLIC);
+    MODIFIERS.put(PsiModifier.PROTECTED, PROTECTED);
+    MODIFIERS.put(PsiModifier.PRIVATE, PRIVATE);
+    MODIFIERS.put(PsiModifier.PACKAGE_LOCAL, PACKAGE_PRIVATE);
+    MODIFIERS.put(PsiModifier.STATIC, STATIC);
+    MODIFIERS.put(PsiModifier.FINAL, FINAL);
+    MODIFIERS.put(PsiModifier.TRANSIENT, TRANSIENT);
+    MODIFIERS.put(PsiModifier.VOLATILE, VOLATILE);
+    MODIFIERS.put(PsiModifier.SYNCHRONIZED, SYNCHRONIZED);
+    MODIFIERS.put(PsiModifier.ABSTRACT, ABSTRACT);
   }
 
   @NotNull private final Stack<JavaElementArrangementEntry>           myStack   = new Stack<JavaElementArrangementEntry>();
   @NotNull private final Map<PsiElement, JavaElementArrangementEntry> myEntries = new HashMap<PsiElement, JavaElementArrangementEntry>();
 
-  @NotNull private final  JavaArrangementParseInfo     myInfo;
-  @NotNull private final  Collection<TextRange>        myRanges;
-  @NotNull private final  Set<ArrangementGroupingType> myGroupingRules;
-  @NotNull private final  MethodBodyProcessor          myMethodBodyProcessor;
-  @Nullable private final Document                     myDocument;
+  @NotNull private final  JavaArrangementParseInfo      myInfo;
+  @NotNull private final  Collection<TextRange>         myRanges;
+  @NotNull private final  Set<ArrangementSettingsToken> myGroupingRules;
+  @NotNull private final  MethodBodyProcessor           myMethodBodyProcessor;
+  @Nullable private final Document                      myDocument;
 
   public JavaArrangementVisitor(@NotNull JavaArrangementParseInfo infoHolder,
                                 @Nullable Document document,
                                 @NotNull Collection<TextRange> ranges,
-                                @NotNull Set<ArrangementGroupingType> groupingRules)
+                                @NotNull Set<ArrangementSettingsToken> groupingRules)
   {
     myInfo = infoHolder;
     myDocument = document;
@@ -74,12 +78,12 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
 
   @Override
   public void visitClass(PsiClass aClass) {
-    ArrangementEntryType type = ArrangementEntryType.CLASS;
+    ArrangementSettingsToken type = CLASS;
     if (aClass.isEnum()) {
-      type = ArrangementEntryType.ENUM;
+      type = ENUM;
     }
     else if (aClass.isInterface()) {
-      type = ArrangementEntryType.INTERFACE;
+      type = INTERFACE;
     }
     JavaElementArrangementEntry entry = createNewEntry(aClass, aClass.getTextRange(), type, aClass.getName(), true);
     processEntry(entry, aClass, aClass);
@@ -88,7 +92,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
   @Override
   public void visitAnonymousClass(PsiAnonymousClass aClass) {
     JavaElementArrangementEntry entry = createNewEntry(
-      aClass, aClass.getTextRange(), ArrangementEntryType.ANONYMOUS_CLASS, aClass.getName(), false
+      aClass, aClass.getTextRange(), ANONYMOUS_CLASS, aClass.getName(), false
     );
     processEntry(entry, null, aClass);
   }
@@ -107,8 +111,8 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     PsiElement fieldPrev = getPreviousNonWsComment(field.getPrevSibling(), 0);
     if (fieldPrev instanceof PsiJavaToken && ((PsiJavaToken)fieldPrev).getTokenType() == JavaTokenType.COMMA) {
       return;
-    } 
-    
+    }
+
     // There is a possible case that fields which share the same type declaration are located on different document lines, e.g.:
     //    int i1,
     //        i2;
@@ -158,7 +162,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
         break;
       }
     }
-    JavaElementArrangementEntry entry = createNewEntry(field, range, ArrangementEntryType.FIELD, field.getName(), true);
+    JavaElementArrangementEntry entry = createNewEntry(field, range, FIELD, field.getName(), true);
     processEntry(entry, field, field.getInitializer());
   }
 
@@ -182,7 +186,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
 
   @Override
   public void visitClassInitializer(PsiClassInitializer initializer) {
-    JavaElementArrangementEntry entry = createNewEntry(initializer, initializer.getTextRange(), ArrangementEntryType.FIELD, null, true);
+    JavaElementArrangementEntry entry = createNewEntry(initializer, initializer.getTextRange(), FIELD, null, true);
     if (entry == null) {
       return;
     }
@@ -211,7 +215,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
 
   @Override
   public void visitMethod(PsiMethod method) {
-    ArrangementEntryType type = method.isConstructor() ? ArrangementEntryType.CONSTRUCTOR : ArrangementEntryType.METHOD;
+    ArrangementSettingsToken type = method.isConstructor() ? CONSTRUCTOR : METHOD;
     JavaElementArrangementEntry entry = createNewEntry(method, method.getTextRange(), type, method.getName(), true);
     if (entry == null) {
       return;
@@ -236,7 +240,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
   }
 
   private void parseProperties(PsiMethod method, JavaElementArrangementEntry entry) {
-    if (!myGroupingRules.contains(ArrangementGroupingType.GETTERS_AND_SETTERS)) {
+    if (!myGroupingRules.contains(StdArrangementTokens.Grouping.GETTERS_AND_SETTERS)) {
       return;
     }
 
@@ -283,7 +287,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
       return;
     }
     JavaElementArrangementEntry entry =
-      createNewEntry(anonymousClass, anonymousClass.getTextRange(), ArrangementEntryType.CLASS, anonymousClass.getName(), false);
+      createNewEntry(anonymousClass, anonymousClass.getTextRange(), CLASS, anonymousClass.getName(), false);
     processEntry(entry, null, anonymousClass);
   }
 
@@ -326,7 +330,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
   @Nullable
   private JavaElementArrangementEntry createNewEntry(@NotNull PsiElement element,
                                                      @NotNull TextRange range,
-                                                     @NotNull ArrangementEntryType type,
+                                                     @NotNull ArrangementSettingsToken type,
                                                      @Nullable String name,
                                                      boolean canArrange)
   {
@@ -375,14 +379,14 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     }
     for (String modifier : PsiModifier.MODIFIERS) {
       if (modifierList.hasModifierProperty(modifier)) {
-        ArrangementModifier arrangementModifier = MODIFIERS.get(modifier);
+        ArrangementSettingsToken arrangementModifier = MODIFIERS.get(modifier);
         if (arrangementModifier != null) {
           entry.addModifier(arrangementModifier);
         }
       }
     }
     if (modifierList.hasModifierProperty(PsiModifier.PACKAGE_LOCAL)) {
-      entry.addModifier(ArrangementModifier.PACKAGE_PRIVATE);
+      entry.addModifier(PACKAGE_PRIVATE);
     }
   }
   

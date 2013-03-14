@@ -15,25 +15,24 @@
  */
 package com.intellij.psi.codeStyle.arrangement.match;
 
-import static org.junit.Assert.*;
-import static org.junit.Assert.assertEquals;
-
 import com.intellij.psi.codeStyle.arrangement.ModifierAwareArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.TypeAwareArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
-import com.intellij.psi.codeStyle.arrangement.model.ArrangementSettingType;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jmock.Expectations;
-import org.junit.Test;
-import org.junit.Before;
-import org.junit.After;
-import org.junit.runner.RunWith;
+import org.jmock.Mockery;
 import org.jmock.integration.junit4.JMock;
 import org.jmock.integration.junit4.JUnit4Mockery;
-import org.jmock.Mockery;
 import org.jmock.lib.legacy.ClassImposteriser;
+import org.junit.After;
+import org.junit.Before;
+import org.junit.Test;
+import org.junit.runner.RunWith;
 
-import java.util.EnumSet;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
+import static org.junit.Assert.*;
 
 /**
  * @author Denis Zhdanov
@@ -58,7 +57,7 @@ public class StandardArrangementEntryMatcherTest {
 
   @Test
   public void atomCondition() {
-    ArrangementAtomMatchCondition condition = new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD);
+    ArrangementAtomMatchCondition condition = new ArrangementAtomMatchCondition(FIELD);
     
     StdArrangementEntryMatcher matcher = new StdArrangementEntryMatcher(condition);
     assertEquals(condition, matcher.getCondition());
@@ -67,9 +66,9 @@ public class StandardArrangementEntryMatcherTest {
     final TypeAwareArrangementEntry classEntry = myMockery.mock(TypeAwareArrangementEntry.class, "class");
     final ModifierAwareArrangementEntry publicEntry = myMockery.mock(ModifierAwareArrangementEntry.class, "public");
     myMockery.checking(new Expectations() {{
-      allowing(fieldEntry).getTypes(); will(returnValue(EnumSet.of(ArrangementEntryType.FIELD)));
-      allowing(classEntry).getTypes(); will(returnValue(EnumSet.of(ArrangementEntryType.CLASS)));
-      allowing(publicEntry).getModifiers(); will(returnValue(EnumSet.of(ArrangementModifier.PUBLIC)));
+      allowing(fieldEntry).getTypes(); will(returnValue(ContainerUtilRt.newHashSet(FIELD)));
+      allowing(classEntry).getTypes(); will(returnValue(ContainerUtilRt.newHashSet(CLASS)));
+      allowing(publicEntry).getModifiers(); will(returnValue(ContainerUtilRt.newHashSet(PUBLIC)));
     }});
     
     assertTrue(matcher.isMatched(fieldEntry));
@@ -80,8 +79,8 @@ public class StandardArrangementEntryMatcherTest {
   @Test
   public void compositeAndCondition() {
     ArrangementCompositeMatchCondition condition = new ArrangementCompositeMatchCondition();
-    condition.addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, ArrangementEntryType.FIELD));
-    condition.addOperand(new ArrangementAtomMatchCondition(ArrangementSettingType.MODIFIER, ArrangementModifier.PUBLIC));
+    condition.addOperand(new ArrangementAtomMatchCondition(FIELD));
+    condition.addOperand(new ArrangementAtomMatchCondition(PUBLIC));
 
     StdArrangementEntryMatcher matcher = new StdArrangementEntryMatcher(condition);
     assertEquals(condition, matcher.getCondition());
@@ -93,21 +92,21 @@ public class StandardArrangementEntryMatcherTest {
     final TypeAndModifierAware publicFieldEntry = myMockery.mock(TypeAndModifierAware.class, "public field");
     final TypeAndModifierAware publicStaticFieldEntry = myMockery.mock(TypeAndModifierAware.class, "public static field");
     myMockery.checking(new Expectations() {{
-      allowing(fieldEntry).getTypes(); will(returnValue(EnumSet.of(ArrangementEntryType.FIELD)));
+      allowing(fieldEntry).getTypes(); will(returnValue(ContainerUtilRt.newHashSet(FIELD)));
       
-      allowing(publicEntry).getModifiers(); will(returnValue(EnumSet.of(ArrangementModifier.PUBLIC)));
+      allowing(publicEntry).getModifiers(); will(returnValue(ContainerUtilRt.newHashSet(PUBLIC)));
       
-      allowing(privateFieldEntry).getTypes(); will(returnValue(EnumSet.of(ArrangementEntryType.FIELD)));
-      allowing(privateFieldEntry).getModifiers(); will(returnValue(EnumSet.of(ArrangementModifier.PRIVATE)));
+      allowing(privateFieldEntry).getTypes(); will(returnValue(ContainerUtilRt.newHashSet(FIELD)));
+      allowing(privateFieldEntry).getModifiers(); will(returnValue(ContainerUtilRt.newHashSet(PRIVATE)));
       
-      allowing(publicMethodEntry).getTypes(); will(returnValue(EnumSet.of(ArrangementEntryType.METHOD)));
-      allowing(publicMethodEntry).getModifiers(); will(returnValue(EnumSet.of(ArrangementModifier.PUBLIC)));
+      allowing(publicMethodEntry).getTypes(); will(returnValue(ContainerUtilRt.newHashSet(METHOD)));
+      allowing(publicMethodEntry).getModifiers(); will(returnValue(ContainerUtilRt.newHashSet(PUBLIC)));
       
-      allowing(publicFieldEntry).getTypes(); will(returnValue(EnumSet.of(ArrangementEntryType.FIELD)));
-      allowing(publicFieldEntry).getModifiers(); will(returnValue(EnumSet.of(ArrangementModifier.PUBLIC)));
+      allowing(publicFieldEntry).getTypes(); will(returnValue(ContainerUtilRt.newHashSet(FIELD)));
+      allowing(publicFieldEntry).getModifiers(); will(returnValue(ContainerUtilRt.newHashSet(PUBLIC)));
 
-      allowing(publicStaticFieldEntry).getTypes(); will(returnValue(EnumSet.of(ArrangementEntryType.FIELD)));
-      allowing(publicStaticFieldEntry).getModifiers(); will(returnValue(EnumSet.of(ArrangementModifier.PUBLIC, ArrangementModifier.STATIC)));
+      allowing(publicStaticFieldEntry).getTypes(); will(returnValue(ContainerUtilRt.newHashSet(FIELD)));
+      allowing(publicStaticFieldEntry).getModifiers(); will(returnValue(ContainerUtilRt.newHashSet(PUBLIC, STATIC)));
     }});
     
     assertFalse(matcher.isMatched(fieldEntry));

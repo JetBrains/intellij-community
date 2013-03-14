@@ -17,10 +17,11 @@ package com.intellij.psi.codeStyle.arrangement.match;
 
 import com.intellij.psi.codeStyle.arrangement.ArrangementEntry;
 import com.intellij.psi.codeStyle.arrangement.ModifierAwareArrangementEntry;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.EnumSet;
 import java.util.Set;
 
 /**
@@ -29,12 +30,16 @@ import java.util.Set;
  */
 public class ByModifierArrangementEntryMatcher implements ArrangementEntryMatcher {
 
-  @NotNull private final Set<ArrangementModifier> myModifiers = EnumSet.noneOf(ArrangementModifier.class);
+  @NotNull private final Set<ArrangementSettingsToken> myModifiers = ContainerUtilRt.newHashSet();
 
-  public ByModifierArrangementEntryMatcher(@NotNull Collection<ArrangementModifier> interestedModifiers) {
-    myModifiers.addAll(interestedModifiers);
+  public ByModifierArrangementEntryMatcher(@NotNull ArrangementSettingsToken interestedModifier) {
+    myModifiers.add(interestedModifier);
   }
   
+  public ByModifierArrangementEntryMatcher(@NotNull Collection<ArrangementSettingsToken> interestedModifiers) {
+    myModifiers.addAll(interestedModifiers);
+  }
+
   @Override
   public boolean isMatched(@NotNull ArrangementEntry entry) {
     if (entry instanceof ModifierAwareArrangementEntry) {

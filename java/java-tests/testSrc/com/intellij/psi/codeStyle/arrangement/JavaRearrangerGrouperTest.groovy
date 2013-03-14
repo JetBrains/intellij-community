@@ -17,12 +17,10 @@ package com.intellij.psi.codeStyle.arrangement
 
 import org.junit.Test
 
-import static com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType.GETTERS_AND_SETTERS
-import static com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType.OVERRIDDEN_METHODS
-import static com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType.DEPENDENT_METHODS
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.PUBLIC
-import static com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType.BREADTH_FIRST
-import static com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType.DEPTH_FIRST
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Grouping.*
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.PUBLIC
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.BREADTH_FIRST
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.DEPTH_FIRST
 
 /**
  * @author Denis Zhdanov
@@ -35,7 +33,7 @@ class JavaRearrangerGrouperTest extends AbstractJavaRearrangerTest {
     commonSettings.BLANK_LINES_AROUND_METHOD = 0
   }
   
-  void testGettersAndSetters() {
+  void "test getters and setters"() {
     commonSettings.BLANK_LINES_AROUND_METHOD = 1
     
     doTest(
@@ -59,7 +57,7 @@ class Test {
   }
   
   @Test
-  void testUtilityMethodsDepthFirst() {
+  void "test utility methods depth-first"() {
     doTest(
       initial: '''\
 class Test {
@@ -81,7 +79,7 @@ class Test {
   }
 
   @Test
-  void testUtilityMethodsBreadthFirst() {
+  void "test utility methods breadth-first"() {
     doTest(
       initial: '''\
 class Test {
@@ -100,7 +98,7 @@ class Test {
 }''')
   }
 
-  void testOverriddenMethods() {
+  void "test overridden methods"() {
     doTest(
       initial: '''\
 class Base {
@@ -128,7 +126,7 @@ class Sub extends Base {
   void test2() {}
 }''')
   }
-  void testOverriddenAndUtilityMethods() {
+  void "test overriden and utility methods"() {
     doTest(
       initial: '''\
 class Base {

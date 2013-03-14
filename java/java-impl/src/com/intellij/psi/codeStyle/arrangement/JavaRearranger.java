@@ -18,31 +18,25 @@ package com.intellij.psi.codeStyle.arrangement;
 import com.intellij.ide.highlighter.JavaHighlightingColors;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.SyntaxHighlighterColors;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingRule;
-import com.intellij.psi.codeStyle.arrangement.group.ArrangementGroupingType;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
-import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
+import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementEntryMatcher;
 import com.intellij.psi.codeStyle.arrangement.match.StdArrangementMatchRule;
-import com.intellij.psi.codeStyle.arrangement.model.*;
-import com.intellij.psi.codeStyle.arrangement.order.ArrangementEntryOrderType;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementColorsAware;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementConditionsGrouper;
-import com.intellij.psi.codeStyle.arrangement.settings.ArrangementStandardSettingsAware;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementCompositeMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementColorsAware;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsAware;
+import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,36 +45,38 @@ import java.awt.*;
 import java.util.*;
 import java.util.List;
 
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType.*;
-import static com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.EntryType.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Grouping.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Modifier.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.Order.*;
+import static com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens.General.*;
 
 /**
  * @author Denis Zhdanov
  * @since 7/20/12 2:31 PM
  */
-public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, ArrangementStandardSettingsAware,
-                                       ArrangementConditionsGrouper, ArrangementColorsAware
-{
+public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, ArrangementStandardSettingsAware, ArrangementColorsAware {
 
   // Type
-  @NotNull private static final Set<ArrangementEntryType> SUPPORTED_TYPES = EnumSet.of(INTERFACE, CLASS, ENUM, FIELD, METHOD, CONSTRUCTOR);
-
-  // Modifier
-  @NotNull private static final Set<ArrangementModifier> SUPPORTED_MODIFIERS = EnumSet.of(
-    PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE, STATIC, FINAL, VOLATILE, TRANSIENT, SYNCHRONIZED, ABSTRACT
+  @NotNull private static final Set<ArrangementSettingsToken> SUPPORTED_TYPES = ContainerUtilRt.newLinkedHashSet(
+    FIELD, CONSTRUCTOR, METHOD, CLASS, INTERFACE, ENUM
   );
-
-  @NotNull private static final Object                                NO_TYPE           = new Object();
-  @NotNull private static final Map<Object, Set<ArrangementModifier>> MODIFIERS_BY_TYPE = new HashMap<Object, Set<ArrangementModifier>>();
-  @NotNull private static final Collection<Set<?>>                    MUTEXES           = new ArrayList<Set<?>>();
-
+  // Modifier
+  @NotNull private static final Set<ArrangementSettingsToken> SUPPORTED_MODIFIERS = ContainerUtilRt.newLinkedHashSet(
+    PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE, STATIC, FINAL, ABSTRACT, SYNCHRONIZED, TRANSIENT, VOLATILE
+  );
+  @NotNull private static final List<ArrangementSettingsToken> SUPPORTED_ORDERS = ContainerUtilRt.newArrayList(KEEP, BY_NAME);
+  @NotNull private static final ArrangementSettingsToken NO_TYPE = new ArrangementSettingsToken("NO_TYPE", "NO_TYPE");
+  @NotNull
+  private static final Map<ArrangementSettingsToken, Set<ArrangementSettingsToken>> MODIFIERS_BY_TYPE = ContainerUtilRt.newHashMap();
+  @NotNull private static final Collection<Set<ArrangementSettingsToken>> MUTEXES = ContainerUtilRt.newArrayList();
   static {
-    EnumSet<ArrangementModifier> visibilityModifiers = EnumSet.of(PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE);
+    Set<ArrangementSettingsToken> visibilityModifiers = ContainerUtilRt.newHashSet(PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE);
     MUTEXES.add(visibilityModifiers);
     MUTEXES.add(SUPPORTED_TYPES);
 
-    Set<ArrangementModifier> commonModifiers = concat(visibilityModifiers, STATIC, FINAL);
-    
+    Set<ArrangementSettingsToken> commonModifiers = concat(visibilityModifiers, STATIC, FINAL);
+
     MODIFIERS_BY_TYPE.put(NO_TYPE, commonModifiers);
     MODIFIERS_BY_TYPE.put(ENUM, visibilityModifiers);
     MODIFIERS_BY_TYPE.put(INTERFACE, visibilityModifiers);
@@ -89,133 +85,18 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     MODIFIERS_BY_TYPE.put(CONSTRUCTOR, concat(commonModifiers, SYNCHRONIZED));
     MODIFIERS_BY_TYPE.put(FIELD, concat(commonModifiers, TRANSIENT, VOLATILE));
   }
-
-  @NotNull private static final List<Set<ArrangementMatchCondition>> UI_GROUPING_RULES = ContainerUtilRt.newArrayList();
+  private static final Map<ArrangementSettingsToken, List<ArrangementSettingsToken>> GROUPING_RULES = ContainerUtilRt.newLinkedHashMap();
   static {
-    UI_GROUPING_RULES.add(new HashSet<ArrangementMatchCondition>(
-      ContainerUtil.map(
-        SUPPORTED_TYPES,
-        new Function<ArrangementEntryType, ArrangementMatchCondition>() {
-          @Override
-          public ArrangementMatchCondition fun(ArrangementEntryType type) {
-            return new ArrangementAtomMatchCondition(ArrangementSettingType.TYPE, type);
-          }
-        }
-      )
-    ));
-  }
-
-  private static final Map<ArrangementGroupingType, Set<ArrangementEntryOrderType>> GROUPING_RULES = ContainerUtilRt.newHashMap();
-  static {
-    GROUPING_RULES.put(ArrangementGroupingType.GETTERS_AND_SETTERS, EnumSet.noneOf(ArrangementEntryOrderType.class));
-    GROUPING_RULES.put(ArrangementGroupingType.OVERRIDDEN_METHODS,
-                       EnumSet.of(ArrangementEntryOrderType.BY_NAME, ArrangementEntryOrderType.KEEP));
-    GROUPING_RULES.put(ArrangementGroupingType.DEPENDENT_METHODS,
-                       EnumSet.of(ArrangementEntryOrderType.BREADTH_FIRST, ArrangementEntryOrderType.DEPTH_FIRST));
-  }
-
-  private static final List<ArrangementGroupingRule> DEFAULT_GROUPING_RULES = new ArrayList<ArrangementGroupingRule>();
-  static {
-    DEFAULT_GROUPING_RULES.add(new ArrangementGroupingRule(ArrangementGroupingType.GETTERS_AND_SETTERS));
-  }
-
-  private static final List<StdArrangementMatchRule> DEFAULT_MATCH_RULES = new ArrayList<StdArrangementMatchRule>();
-
-  static {
-    ArrangementModifier[] visibility = {PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE};
-    for (ArrangementModifier modifier : visibility) {
-      and(FIELD, STATIC, FINAL, modifier);
-    }
-    for (ArrangementModifier modifier : visibility) {
-      and(FIELD, STATIC, modifier);
-    }
-    for (ArrangementModifier modifier : visibility) {
-      and(FIELD, FINAL, modifier);
-    }
-    for (ArrangementModifier modifier : visibility) {
-      and(FIELD, modifier);
-    }
-    and(FIELD);
-    and(CONSTRUCTOR);
-    and(METHOD, STATIC);
-    and(METHOD);
-    and(ENUM);
-    and(INTERFACE);
-    and(CLASS, STATIC);
-    and(CLASS);
-  }
-
-  private static final StdArrangementSettings DEFAULT_SETTINGS = new StdArrangementSettings(DEFAULT_GROUPING_RULES, DEFAULT_MATCH_RULES);
-
-  private static void and(@NotNull Object... conditions) {
-    if (conditions.length == 1) {
-      DEFAULT_MATCH_RULES.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(new ArrangementAtomMatchCondition(
-        ArrangementUtil.parseType(conditions[0]), conditions[0]
-      ))));
-      return;
-    }
-
-    ArrangementCompositeMatchCondition composite = new ArrangementCompositeMatchCondition();
-    for (Object condition : conditions) {
-      composite.addOperand(new ArrangementAtomMatchCondition(ArrangementUtil.parseType(condition), condition));
-    }
-    DEFAULT_MATCH_RULES.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(composite)));
+    GROUPING_RULES.put(GETTERS_AND_SETTERS, Collections.<ArrangementSettingsToken>emptyList());
+    GROUPING_RULES.put(OVERRIDDEN_METHODS, ContainerUtilRt.newArrayList(BY_NAME, KEEP));
+    GROUPING_RULES.put(DEPENDENT_METHODS, ContainerUtilRt.newArrayList(BREADTH_FIRST, DEPTH_FIRST));
   }
 
   @NotNull
-  private static Set<ArrangementModifier> concat(@NotNull Set<ArrangementModifier> base, ArrangementModifier... modifiers) {
-    EnumSet<ArrangementModifier> result = EnumSet.copyOf(base);
+  private static Set<ArrangementSettingsToken> concat(@NotNull Set<ArrangementSettingsToken> base, ArrangementSettingsToken... modifiers) {
+    Set<ArrangementSettingsToken> result = ContainerUtilRt.newHashSet(base);
     Collections.addAll(result, modifiers);
     return result;
-  }
-
-  @Nullable
-  @Override
-  public Pair<JavaElementArrangementEntry, List<JavaElementArrangementEntry>> parseWithNew(
-    @NotNull PsiElement root,
-    @Nullable Document document,
-    @NotNull Collection<TextRange> ranges,
-    @NotNull PsiElement element,
-    @Nullable ArrangementSettings settings)
-  {
-    Set<ArrangementGroupingType> groupingRules = getGroupingRules(settings);
-    JavaArrangementParseInfo existingEntriesInfo = new JavaArrangementParseInfo();
-    root.accept(new JavaArrangementVisitor(existingEntriesInfo, document, ranges, groupingRules));
-
-    JavaArrangementParseInfo newEntryInfo = new JavaArrangementParseInfo();
-    element.accept(new JavaArrangementVisitor(newEntryInfo, document, Collections.singleton(element.getTextRange()), groupingRules));
-    if (newEntryInfo.getEntries().size() != 1) {
-      return null;
-    }
-    return Pair.create(newEntryInfo.getEntries().get(0), existingEntriesInfo.getEntries());
-  }
-
-  @NotNull
-  @Override
-  public List<JavaElementArrangementEntry> parse(@NotNull PsiElement root,
-                                                 @Nullable Document document,
-                                                 @NotNull Collection<TextRange> ranges,
-                                                 @Nullable ArrangementSettings settings)
-  {
-    // Following entries are subject to arrangement: class, interface, field, method.
-    JavaArrangementParseInfo parseInfo = new JavaArrangementParseInfo();
-    root.accept(new JavaArrangementVisitor(parseInfo, document, ranges, getGroupingRules(settings)));
-    if (settings != null) {
-      for (ArrangementGroupingRule rule : settings.getGroupings()) {
-        switch (rule.getGroupingType()) {
-          case GETTERS_AND_SETTERS:
-            setupGettersAndSetters(parseInfo);
-            break;
-          case DEPENDENT_METHODS:
-            setupUtilityMethods(parseInfo, rule.getOrderType());
-            break;
-          case OVERRIDDEN_METHODS:
-            setupOverriddenMethods(parseInfo);
-          default: // Do nothing
-        }
-      }
-    }
-    return parseInfo.getEntries();
   }
 
   private static void setupGettersAndSetters(@NotNull JavaArrangementParseInfo info) {
@@ -229,18 +110,19 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     }
   }
 
-  private static void setupUtilityMethods(@NotNull JavaArrangementParseInfo info, @NotNull ArrangementEntryOrderType orderType) {
-    switch (orderType) {
-      case DEPTH_FIRST:
-        for (JavaArrangementMethodDependencyInfo rootInfo : info.getMethodDependencyRoots()) {
-          setupDepthFirstDependency(rootInfo);
-        }
-        break;
-      case BREADTH_FIRST:
-        for (JavaArrangementMethodDependencyInfo rootInfo : info.getMethodDependencyRoots()) {
-          setupBreadthFirstDependency(rootInfo);
-        }
-      default: // Unexpected type, do nothing
+  private static void setupUtilityMethods(@NotNull JavaArrangementParseInfo info, @NotNull ArrangementSettingsToken orderType) {
+    if (DEPTH_FIRST.equals(orderType)) {
+      for (JavaArrangementMethodDependencyInfo rootInfo : info.getMethodDependencyRoots()) {
+        setupDepthFirstDependency(rootInfo);
+      }
+    }
+    else if (BREADTH_FIRST.equals(orderType)) {
+      for (JavaArrangementMethodDependencyInfo rootInfo : info.getMethodDependencyRoots()) {
+        setupBreadthFirstDependency(rootInfo);
+      }
+    }
+    else {
+      assert false : orderType;
     }
   }
 
@@ -280,16 +162,52 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
       }
     }
   }
-  
+
+  @Nullable
+  @Override
+  public Pair<JavaElementArrangementEntry, List<JavaElementArrangementEntry>> parseWithNew(
+    @NotNull PsiElement root,
+    @Nullable Document document,
+    @NotNull Collection<TextRange> ranges,
+    @NotNull PsiElement element,
+    @Nullable ArrangementSettings settings)
+  {
+    Set<ArrangementSettingsToken> groupingRules = getGroupingRules(settings);
+    JavaArrangementParseInfo existingEntriesInfo = new JavaArrangementParseInfo();
+    root.accept(new JavaArrangementVisitor(existingEntriesInfo, document, ranges, groupingRules));
+
+    JavaArrangementParseInfo newEntryInfo = new JavaArrangementParseInfo();
+    element.accept(new JavaArrangementVisitor(newEntryInfo, document, Collections.singleton(element.getTextRange()), groupingRules));
+    if (newEntryInfo.getEntries().size() != 1) {
+      return null;
+    }
+    return Pair.create(newEntryInfo.getEntries().get(0), existingEntriesInfo.getEntries());
+  }
+
   @NotNull
-  private static Set<ArrangementGroupingType> getGroupingRules(@Nullable ArrangementSettings settings) {
-    Set<ArrangementGroupingType> groupingRules = EnumSet.noneOf(ArrangementGroupingType.class);
+  @Override
+  public List<JavaElementArrangementEntry> parse(@NotNull PsiElement root,
+                                                 @Nullable Document document,
+                                                 @NotNull Collection<TextRange> ranges,
+                                                 @Nullable ArrangementSettings settings)
+  {
+    // Following entries are subject to arrangement: class, interface, field, method.
+    JavaArrangementParseInfo parseInfo = new JavaArrangementParseInfo();
+    root.accept(new JavaArrangementVisitor(parseInfo, document, ranges, getGroupingRules(settings)));
     if (settings != null) {
       for (ArrangementGroupingRule rule : settings.getGroupings()) {
-        groupingRules.add(rule.getGroupingType());
+        if (GETTERS_AND_SETTERS.equals(rule.getGroupingType())) {
+          setupGettersAndSetters(parseInfo);
+        }
+        else if (DEPENDENT_METHODS.equals(rule.getGroupingType())) {
+          setupUtilityMethods(parseInfo, rule.getOrderType());
+        }
+        else if (OVERRIDDEN_METHODS.equals(rule.getGroupingType())) {
+          setupOverriddenMethods(parseInfo);
+        }
       }
     }
-    return groupingRules;
+    return parseInfo.getEntries();
   }
 
   @Override
@@ -303,112 +221,153 @@ public class JavaRearranger implements Rearranger<JavaElementArrangementEntry>, 
     }
 
     CommonCodeStyleSettings commonSettings = settings.getCommonSettings(JavaLanguage.INSTANCE);
-    switch (target.getType()) {
-      case FIELD:
-        if (parent != null && parent.getType() == INTERFACE) {
-          return commonSettings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE;
-        }
-        else {
-          return commonSettings.BLANK_LINES_AROUND_FIELD;
-        }
-      case METHOD:
-        if (parent != null && parent.getType() == INTERFACE) {
-          return commonSettings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE;
-        }
-        else {
-          return commonSettings.BLANK_LINES_AROUND_METHOD;
-        }
-      case CLASS: return commonSettings.BLANK_LINES_AROUND_CLASS;
-      default: return -1;
+    if (FIELD.equals(target.getType())) {
+      if (parent != null && parent.getType() == INTERFACE) {
+        return commonSettings.BLANK_LINES_AROUND_FIELD_IN_INTERFACE;
+      }
+      else {
+        return commonSettings.BLANK_LINES_AROUND_FIELD;
+      }
+    }
+    else if (METHOD.equals(target.getType())) {
+      if (parent != null && parent.getType() == INTERFACE) {
+        return commonSettings.BLANK_LINES_AROUND_METHOD_IN_INTERFACE;
+      }
+      else {
+        return commonSettings.BLANK_LINES_AROUND_METHOD;
+      }
+    }
+    else if (CLASS.equals(target.getType())) {
+      return commonSettings.BLANK_LINES_AROUND_CLASS;
+    }
+    else {
+      return -1;
     }
   }
 
-  @Override
-  public boolean isEnabled(@NotNull ArrangementEntryType type, @Nullable ArrangementMatchCondition current) {
-    return SUPPORTED_TYPES.contains(type);
-  }
-
-  @Override
-  public boolean isEnabled(@NotNull ArrangementModifier modifier, @Nullable ArrangementMatchCondition current) {
-    if (current == null) {
-      return SUPPORTED_MODIFIERS.contains(modifier);
+  @NotNull
+  private static Set<ArrangementSettingsToken> getGroupingRules(@Nullable ArrangementSettings settings) {
+    Set<ArrangementSettingsToken> groupingRules = ContainerUtilRt.newHashSet();
+    if (settings != null) {
+      for (ArrangementGroupingRule rule : settings.getGroupings()) {
+        groupingRules.add(rule.getGroupingType());
+      }
     }
-
-    final Ref<Object> typeRef = new Ref<Object>();
-    current.invite(new ArrangementMatchConditionVisitor() {
-      @Override
-      public void visit(@NotNull ArrangementAtomMatchCondition setting) {
-        if (setting.getType() == ArrangementSettingType.TYPE) {
-          typeRef.set(setting.getValue());
-        }
-      }
-
-      @Override
-      public void visit(@NotNull ArrangementCompositeMatchCondition setting) {
-        for (ArrangementMatchCondition n : setting.getOperands()) {
-          if (typeRef.get() != null) {
-            return;
-          }
-          n.invite(this);
-        }
-      }
-    });
-    Object key = typeRef.get() == null ? NO_TYPE : typeRef.get();
-    Set<ArrangementModifier> modifiers = MODIFIERS_BY_TYPE.get(key);
-    return modifiers != null && modifiers.contains(modifier);
+    return groupingRules;
   }
 
   @NotNull
   @Override
-  public Collection<Set<?>> getMutexes() {
+  public StdArrangementSettings getDefaultSettings() {
+    List<ArrangementGroupingRule> groupingRules = ContainerUtilRt.newArrayList(new ArrangementGroupingRule(GETTERS_AND_SETTERS));
+    List<StdArrangementMatchRule> matchRules = ContainerUtilRt.newArrayList();
+    ArrangementSettingsToken[] visibility = {PUBLIC, PROTECTED, PACKAGE_PRIVATE, PRIVATE};
+    for (ArrangementSettingsToken modifier : visibility) {
+      and(matchRules, FIELD, STATIC, FINAL, modifier);
+    }
+    for (ArrangementSettingsToken modifier : visibility) {
+      and(matchRules, FIELD, STATIC, modifier);
+    }
+    for (ArrangementSettingsToken modifier : visibility) {
+      and(matchRules, FIELD, FINAL, modifier);
+    }
+    for (ArrangementSettingsToken modifier : visibility) {
+      and(matchRules, FIELD, modifier);
+    }
+    and(matchRules, FIELD);
+    and(matchRules, CONSTRUCTOR);
+    and(matchRules, METHOD, STATIC);
+    and(matchRules, METHOD);
+    and(matchRules, ENUM);
+    and(matchRules, INTERFACE);
+    and(matchRules, CLASS, STATIC);
+    and(matchRules, CLASS);
+
+    return new StdArrangementSettings(groupingRules, matchRules);
+  }
+
+  @Nullable
+  @Override
+  public List<CompositeArrangementSettingsToken> getSupportedGroupingTokens() {
+    return ContainerUtilRt.newArrayList(
+      new CompositeArrangementSettingsToken(GETTERS_AND_SETTERS),
+      new CompositeArrangementSettingsToken(OVERRIDDEN_METHODS, BY_NAME, KEEP),
+      new CompositeArrangementSettingsToken(DEPENDENT_METHODS, BREADTH_FIRST, DEPTH_FIRST)
+    );
+  }
+
+  @Nullable
+  @Override
+  public List<CompositeArrangementSettingsToken> getSupportedMatchingTokens() {
+    return ContainerUtilRt.newArrayList(
+      new CompositeArrangementSettingsToken(TYPE, SUPPORTED_TYPES),
+      new CompositeArrangementSettingsToken(MODIFIER, SUPPORTED_MODIFIERS),
+      new CompositeArrangementSettingsToken(NAME),
+      new CompositeArrangementSettingsToken(ORDER, KEEP, BY_NAME)
+    );
+  }
+  
+  @Override
+  public boolean isEnabled(@NotNull ArrangementSettingsToken token, @Nullable ArrangementMatchCondition current) {
+    if (SUPPORTED_TYPES.contains(token) || SUPPORTED_ORDERS.contains(token) || NAME.equals(token)) {
+      return true;
+    }
+    ArrangementSettingsToken type = null;
+    if (current != null) {
+      type = ArrangementUtil.parseType(current);
+    }
+    if (type == null) {
+      type = NO_TYPE;
+    }
+    Set<ArrangementSettingsToken> modifiers = MODIFIERS_BY_TYPE.get(type);
+    return modifiers != null && modifiers.contains(token);
+  }
+
+  @NotNull
+  @Override
+  public ArrangementEntryMatcher buildMatcher(@NotNull ArrangementMatchCondition condition) throws IllegalArgumentException {
+    throw new IllegalArgumentException("Can't build a matcher for condition " + condition);
+  }
+
+  @NotNull
+  @Override
+  public Collection<Set<ArrangementSettingsToken>> getMutexes() {
     return MUTEXES;
   }
 
-  @NotNull
-  @Override
-  public List<Set<ArrangementMatchCondition>> getGroupingConditions() {
-    return Collections.emptyList();
-    //return UI_GROUPING_RULES;
-  }
-  
-  @Nullable
-  @Override
-  public StdArrangementSettings getDefaultSettings() {
-    return DEFAULT_SETTINGS;
-  }
+  private static void and(@NotNull List<StdArrangementMatchRule> matchRules, @NotNull ArrangementSettingsToken... conditions) {
+      if (conditions.length == 1) {
+        matchRules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(new ArrangementAtomMatchCondition(
+          conditions[0], conditions[0]
+        ))));
+        return;
+      }
 
-  @Override
-  public boolean isNameFilterSupported() {
-    return true;
-  }
-
-  @Override
-  public boolean isEnabled(@NotNull ArrangementGroupingType groupingType, @Nullable ArrangementEntryOrderType orderType) {
-    Set<ArrangementEntryOrderType> orderTypes = GROUPING_RULES.get(groupingType);
-    if (orderTypes == null) {
-      return false;
+      ArrangementCompositeMatchCondition composite = new ArrangementCompositeMatchCondition();
+      for (ArrangementSettingsToken condition : conditions) {
+        composite.addOperand(new ArrangementAtomMatchCondition(condition, condition));
+      }
+      matchRules.add(new StdArrangementMatchRule(new StdArrangementEntryMatcher(composite)));
     }
-    return orderType == null || orderTypes.contains(orderType);
-  }
 
   @Nullable
   @Override
-  public TextAttributes getTextAttributes(@NotNull EditorColorsScheme scheme, @NotNull ArrangementSettingType type, boolean selected) {
+  public TextAttributes getTextAttributes(@NotNull EditorColorsScheme scheme, @NotNull ArrangementSettingsToken token, boolean selected) {
     if (selected) {
       TextAttributes attributes = new TextAttributes();
       attributes.setForegroundColor(scheme.getColor(EditorColors.SELECTION_FOREGROUND_COLOR));
       attributes.setBackgroundColor(scheme.getColor(EditorColors.SELECTION_BACKGROUND_COLOR));
       return attributes;
     }
-    if (type == ArrangementSettingType.MODIFIER) {
+    else if (SUPPORTED_TYPES.contains(token)) {
       return getAttributes(scheme, JavaHighlightingColors.KEYWORD);
     }
-    else if (type == ArrangementSettingType.TYPE) {
-      return getAttributes(scheme, CodeInsightColors.CLASS_NAME_ATTRIBUTES, CodeInsightColors.INTERFACE_NAME_ATTRIBUTES);
+    else if (SUPPORTED_MODIFIERS.contains(token)) {
+      getAttributes(scheme, JavaHighlightingColors.KEYWORD);
     }
     return null;
   }
-  
+
   @Nullable
   private static TextAttributes getAttributes(@NotNull EditorColorsScheme scheme, @NotNull TextAttributesKey ... keys) {
     TextAttributes result = null;

@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.codeStyle.arrangement.model;
 
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -27,18 +28,22 @@ import org.jetbrains.annotations.NotNull;
  */
 public class ArrangementAtomMatchCondition implements ArrangementMatchCondition {
 
-  @NotNull private final ArrangementSettingType myType;
-  @NotNull private final Object                 myValue;
-  
+  @NotNull private final ArrangementSettingsToken myType;
+  @NotNull private final Object                   myValue;
+
   private boolean myInverted;
 
-  public ArrangementAtomMatchCondition(@NotNull ArrangementSettingType type, @NotNull Object value) {
+  public ArrangementAtomMatchCondition(@NotNull ArrangementSettingsToken type) {
+    this(type, type);
+  }
+  
+  public ArrangementAtomMatchCondition(@NotNull ArrangementSettingsToken type, @NotNull Object value) {
     myType = type;
     myValue = value;
   }
 
   @NotNull
-  public ArrangementSettingType getType() {
+  public ArrangementSettingsToken getType() {
     return myType;
   }
 
@@ -78,7 +83,7 @@ public class ArrangementAtomMatchCondition implements ArrangementMatchCondition 
     if (myInverted != setting.myInverted) {
       return false;
     }
-    if (myType != setting.myType) {
+    if (!myType.equals(setting.myType)) {
       return false;
     }
     if (!myValue.equals(setting.myValue)) {
@@ -98,6 +103,11 @@ public class ArrangementAtomMatchCondition implements ArrangementMatchCondition 
 
   @Override
   public String toString() {
-    return String.format("%s: %s%s", myType.toString().toLowerCase(), myInverted ? "not " : "", myValue.toString().toLowerCase());
+    if (myType.equals(myValue)) {
+      return String.format("%s%s", myInverted ? "not " : "", myType.getRepresentationValue());
+    }
+    else {
+      return String.format("%s: %s%s", myType.getRepresentationValue(), myInverted ? "not " : "", myValue.toString().toLowerCase());
+    }
   }
 }
