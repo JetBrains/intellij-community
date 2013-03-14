@@ -107,21 +107,9 @@ public abstract class AbstractJavaFxPackager {
 
     addParameter(commandLine, "-deploy");
 
-    final String title = getTitle();
-    if (!StringUtil.isEmptyOrSpaces(title)) {
-      addParameter(commandLine, "-title");
-      addParameter(commandLine, title);
-    }
-    final String vendor = getVendor();
-    if (!StringUtil.isEmptyOrSpaces(vendor)) {
-      addParameter(commandLine, "-vendor");
-      addParameter(commandLine, vendor);
-    }
-    final String description = getDescription();
-    if (!StringUtil.isEmptyOrSpaces(description)) {
-      addParameter(commandLine, "-description");
-      addParameter(commandLine, description);
-    }
+    appendIfNotEmpty(commandLine, "-title", getTitle());
+    appendIfNotEmpty(commandLine, "-vendor", getVendor());
+    appendIfNotEmpty(commandLine, "-description", getDescription());
 
     addParameter(commandLine, "-appclass");
     addParameter(commandLine, getAppClass());
@@ -131,11 +119,8 @@ public abstract class AbstractJavaFxPackager {
     addParameter(commandLine, "-height");
     addParameter(commandLine, getHeight());
 
-    addParameter(commandLine, "-htmlparamfile");
-    addParameter(commandLine, getHtmlParamFile());
-
-    addParameter(commandLine, "-paramfile");
-    addParameter(commandLine, getParamFile());
+    appendIfNotEmpty(commandLine, "-htmlparamfile", getHtmlParamFile());
+    appendIfNotEmpty(commandLine, "-paramfile", getParamFile());
 
     addParameter(commandLine, "-updatemode");
     addParameter(commandLine, getUpdateMode());
@@ -169,6 +154,13 @@ public abstract class AbstractJavaFxPackager {
     FileUtil.delete(new File(getArtifactOutputFilePath()));
     copyResultsToArtifactsOutput(tempDirectory);
     copyResultsToArtifactsOutput(tempDirWithCreatedJar);
+  }
+
+  private void appendIfNotEmpty(List<String> commandLine, final String propName, String title) {
+    if (!StringUtil.isEmptyOrSpaces(title)) {
+      addParameter(commandLine, propName);
+      addParameter(commandLine, title);
+    }
   }
 
   private void copyResultsToArtifactsOutput(final File tempDirectory) {

@@ -17,7 +17,9 @@ package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.*;
+import com.intellij.packaging.elements.CompositePackagingElement;
+import com.intellij.packaging.elements.PackagingElementFactory;
+import com.intellij.packaging.elements.PackagingElementOutputKind;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -47,6 +49,6 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
   @NotNull
   @Override
   public CompositePackagingElement<?> createRootElement(@NotNull String artifactName) {
-    return new JavaFxRootPackagingElement(artifactName);
+    return PackagingElementFactory.getInstance().createArchive(artifactName + ".jar");
   }
 }
