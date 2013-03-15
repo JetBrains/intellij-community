@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -43,7 +43,7 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
       return ServiceManager.getService(project, PsiElementFactory.class);
     }
   }
-  
+
   /**
    * Creates an empty class with the specified name.
    *
@@ -164,12 +164,21 @@ public interface PsiElementFactory extends PsiJavaParserFacade, JVMElementFactor
    */
   @NotNull PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor);
 
-  /*
-    additional languageLevel parameter to memorize language level for allowing/prohibiting boxing/unboxing
+  /**
+   * Creates a class type for the specified class, using the specified substitutor
+   * to replace generic type parameters on the class.
+   *
+   * @param resolve       the class for which the class type is created.
+   * @param substitutor   the substitutor to use.
+   * @param languageLevel to memorize language level for allowing/prohibiting boxing/unboxing.
+   * @return the class type instance.
    */
-  @NotNull PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @NotNull LanguageLevel languageLevel);
+  @NotNull PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @Nullable LanguageLevel languageLevel);
 
-  @NotNull PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @NotNull LanguageLevel languageLevel, @NotNull PsiAnnotation[] annotations);
+  @NotNull PsiClassType createType(@NotNull PsiClass resolve,
+                                   @NotNull PsiSubstitutor substitutor,
+                                   @Nullable LanguageLevel languageLevel,
+                                   @NotNull PsiAnnotation[] annotations);
 
   /**
    * Creates a class type for the specified reference pointing to a class.

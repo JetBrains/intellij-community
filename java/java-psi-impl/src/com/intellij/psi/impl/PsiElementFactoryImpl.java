@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -89,24 +89,22 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
 
   @NotNull
   @Override
-  public PsiClassType createType(@NotNull final PsiClass resolve, @NotNull final PsiSubstitutor substitutor) {
+  public PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor) {
     return new PsiImmediateClassType(resolve, substitutor);
   }
 
   @NotNull
   @Override
-  public PsiClassType createType(@NotNull final PsiClass resolve,
-                                 @NotNull final PsiSubstitutor substitutor,
-                                 @NotNull final LanguageLevel languageLevel) {
+  public PsiClassType createType(@NotNull PsiClass resolve, @NotNull PsiSubstitutor substitutor, @Nullable LanguageLevel languageLevel) {
     return new PsiImmediateClassType(resolve, substitutor, languageLevel);
   }
 
   @NotNull
   @Override
-  public PsiClassType createType(@NotNull final PsiClass resolve,
-                                 @NotNull final PsiSubstitutor substitutor,
-                                 @NotNull final LanguageLevel languageLevel,
-                                 @NotNull final PsiAnnotation[] annotations) {
+  public PsiClassType createType(@NotNull PsiClass resolve,
+                                 @NotNull PsiSubstitutor substitutor,
+                                 @Nullable LanguageLevel languageLevel,
+                                 @NotNull PsiAnnotation[] annotations) {
     return new PsiImmediateClassType(resolve, substitutor, languageLevel, annotations);
   }
 
