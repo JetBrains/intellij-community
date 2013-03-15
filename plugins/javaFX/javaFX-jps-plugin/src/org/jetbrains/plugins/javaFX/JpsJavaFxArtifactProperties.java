@@ -28,6 +28,12 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     myState.setHtmlParamFile(state.myHtmlParamFile);
     myState.setParamFile(state.myParamFile);
     myState.setUpdateMode(state.myUpdateMode);
+    myState.setEnabledSigning(state.myEnabledSigning);
+    myState.setSelfSigning(state.mySelfSigning);
+    myState.setKeystore(state.myKeystore);
+    myState.setKeypass(state.myKeypass);
+    myState.setStorepass(state.myStorepass);
+    myState.setAlias(state.myAlias);
   }
 
   @NotNull
@@ -51,6 +57,12 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     private String myHtmlParamFile;
     private String myParamFile;
     private String myUpdateMode = JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND;
+    private boolean myEnabledSigning = false;
+    private boolean mySelfSigning = true;
+    private String myAlias;
+    private String myKeystore;
+    private String myStorepass;
+    private String myKeypass;
 
     public String getTitle() {
       return myTitle;
@@ -122,6 +134,54 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
 
     public void setUpdateMode(String updateMode) {
       myUpdateMode = updateMode;
+    }
+
+    public boolean isEnabledSigning() {
+      return myEnabledSigning;
+    }
+
+    public void setEnabledSigning(boolean enabledSigning) {
+      myEnabledSigning = enabledSigning;
+    }
+
+    public boolean isSelfSigning() {
+      return mySelfSigning;
+    }
+
+    public void setSelfSigning(boolean selfSigning) {
+      mySelfSigning = selfSigning;
+    }
+
+    public String getAlias() {
+      return myAlias;
+    }
+
+    public void setAlias(String alias) {
+      myAlias = alias;
+    }
+
+    public String getKeystore() {
+      return myKeystore;
+    }
+
+    public void setKeystore(String keystore) {
+      myKeystore = keystore;
+    }
+
+    public String getStorepass() {
+      return myStorepass;
+    }
+
+    public void setStorepass(String storepass) {
+      myStorepass = storepass;
+    }
+
+    public String getKeypass() {
+      return myKeypass;
+    }
+
+    public void setKeypass(String keypass) {
+      myKeypass = keypass;
     }
   }
 }

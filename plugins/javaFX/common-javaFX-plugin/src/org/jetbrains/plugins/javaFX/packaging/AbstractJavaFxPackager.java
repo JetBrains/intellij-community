@@ -34,18 +34,28 @@ public abstract class AbstractJavaFxPackager {
 
   //artifact description
   protected abstract String getArtifactRootName();
+
   protected abstract String getArtifactOutputPath();
+
   protected abstract String getArtifactOutputFilePath();
 
   //artifact properties
   protected abstract String getAppClass();
+
   protected abstract String getTitle();
+
   protected abstract String getVendor();
+
   protected abstract String getDescription();
+
   protected abstract String getWidth();
+
   protected abstract String getHeight();
+
   protected abstract String getHtmlParamFile();
+
   protected abstract String getParamFile();
+
   protected abstract String getUpdateMode();
 
   protected abstract void registerJavaFxPackagerError(final String message);
@@ -151,12 +161,73 @@ public abstract class AbstractJavaFxPackager {
     addParameter(commandLine, "-v");
 
     final int result = startProcess(commandLine);
+    if (result == 0) {
+      if (isEnabledSigning()) {
+        signApp(binPath, tempDirectory);
+      }
+    }
     FileUtil.delete(tempUnzippedArtifactOutput);
     FileUtil.delete(new File(getArtifactOutputFilePath()));
-    copyResultsToArtifactsOutput(tempDirectory);
     copyResultsToArtifactsOutput(tempDirWithCreatedJar);
+    copyResultsToArtifactsOutput(tempDirectory);
   }
 
+  private void signApp(String binPath, File tempDirectory) {
+    final boolean selfSigning = isSelfSigning();
+    final int genResult = selfSigning ? genKey(binPath) : 0;
+    if (genResult == 0) {
+
+      final List<String> signCommandLine = new ArrayList<String>();
+      addParameter(signCommandLine, FileUtil.toSystemDependentName(binPath + File.separator + "jarsigner"));
+
+      collectStoreParams(selfSigning, signCommandLine);
+
+      addParameter(signCommandLine, tempDirectory.getPath() + File.separator + getArtifactRootName());
+      addParameter(signCommandLine, getAlias(selfSigning));
+
+      final int signedResult = startProcess(signCommandLine);
+    }
+  }
+
+  private int genKey(String binPath) {
+    final String keyStorePath = getKeystore(true);
+    final File keyStoreFile = new File(keyStorePath);
+    if (keyStoreFile.isFile()) {
+      FileUtil.delete(keyStoreFile);
+    }
+
+    final List<String> genCommandLine = new ArrayList<String>();
+    addParameter(genCommandLine, FileUtil.toSystemDependentName(binPath + File.separator + "keytool"));
+
+    addParameter(genCommandLine, "-genkeypair");
+
+    addParameter(genCommandLine, "-dname");
+    String vendor = getVendor();
+    if (StringUtil.isEmptyOrSpaces(vendor)) {
+      vendor = "jb-fx-build";
+    }
+    addParameter(genCommandLine, "CN=" + vendor.replaceAll(",", "\\\\,"));
+
+    addParameter(genCommandLine, "-alias");
+    addParameter(genCommandLine, getAlias(true));
+
+    collectStoreParams(true, genCommandLine);
+
+    return startProcess(genCommandLine);
+  }
+
+  private void collectStoreParams(boolean selfSigning, List<String> signCommandLine) {
+    addParameter(signCommandLine, "-keyStore");
+    addParameter(signCommandLine, getKeystore(selfSigning));
+
+    addParameter(signCommandLine, "-storepass");
+    addParameter(signCommandLine, getStorepass(selfSigning));
+
+    addParameter(signCommandLine, "-keypass");
+    addParameter(signCommandLine, getKeypass(selfSigning));
+  }
+
+ 
   private void appendIfNotEmpty(List<String> commandLine, final String propName, String title) {
     if (!StringUtil.isEmptyOrSpaces(title)) {
       addParameter(commandLine, propName);
@@ -221,4 +292,32 @@ public abstract class AbstractJavaFxPackager {
       return -1;
     }
   }
+
+  private String getAlias(boolean selfSigning) {
+    return selfSigning ? "jb" : getAlias();
+  }
+
+  private String getKeypass(boolean selfSigning) {
+    return selfSigning ? "keypass" : getKeypass();
+  }
+
+  private String getKeystore(boolean selfSigning) {
+    return selfSigning ? getArtifactOutputPath() + File.separator + "jb-jfx.jks" : getKeystore();
+  }
+
+  private String getStorepass(boolean selfSigning) {
+    return selfSigning ? "storepass" : getStorepass();
+  }
+
+  public abstract String getKeypass();
+
+  public abstract String getStorepass();
+
+  public abstract String getKeystore();
+
+  public abstract String getAlias();
+
+  public abstract boolean isSelfSigning();
+
+  public abstract boolean isEnabledSigning();
 }

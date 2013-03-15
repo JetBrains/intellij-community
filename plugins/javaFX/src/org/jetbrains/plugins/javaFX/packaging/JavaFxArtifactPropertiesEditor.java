@@ -37,6 +37,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.util.Collections;
 import java.util.Set;
 
@@ -57,14 +59,30 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private TextFieldWithBrowseButton myHtmlParams;
   private TextFieldWithBrowseButton myParams;
   private JCheckBox myUpdateInBackgroundCB;
+  private JCheckBox myEnableSigningCB;
+  private JButton myEditSignCertificateButton;
+  private JavaFxEditCertificatesDialog myDialog;
 
-  public JavaFxArtifactPropertiesEditor(JavaFxArtifactProperties properties, Project project, Artifact artifact) {
+  public JavaFxArtifactPropertiesEditor(JavaFxArtifactProperties properties, final Project project, Artifact artifact) {
     super();
     myProperties = properties;
     new JavaFxApplicationClassBrowser(project, artifact).setField(myAppClass);
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.PROPERTIES);
     myHtmlParams.addBrowseFolderListener("Choose Properties File", "Parameters for the resulting application to run standalone.", project, descriptor);
     myParams.addBrowseFolderListener("Choose Properties File", "Parameters for the resulting application to run in the browser.", project, descriptor);
+    myEditSignCertificateButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myDialog = new JavaFxEditCertificatesDialog(myWholePanel, myProperties, project);
+        myDialog.show();
+      }
+    });
+    myEnableSigningCB.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myEditSignCertificateButton.setEnabled(myEnableSigningCB.isSelected());
+      }
+    });
   }
 
   @Override
@@ -90,6 +108,14 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     if (isModified(myProperties.getParamFile(), myParams)) return true;
     final boolean inBackground = Comparing.strEqual(myProperties.getUpdateMode(), JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND);
     if (inBackground != myUpdateInBackgroundCB.isSelected()) return true;
+    if (myProperties.isEnabledSigning() != myEnableSigningCB.isSelected()) return true;
+    if (myDialog != null) {
+      if (isModified(myProperties.getAlias(), myDialog.myPanel.myAliasTF)) return true;
+      if (isModified(myProperties.getKeystore(), myDialog.myPanel.myKeystore)) return true;
+      if (isModified(myProperties.getKeypass(), myDialog.myPanel.myKeypassTF)) return true;
+      if (isModified(myProperties.getStorepass(), myDialog.myPanel.myStorePassTF)) return true;
+      if (myProperties.isSelfSigning() != myDialog.myPanel.mySelfSignedRadioButton.isSelected()) return true;
+    }
     return false;
   }
 
@@ -113,6 +139,14 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myProperties.setParamFile(myParams.getText());
     myProperties.setUpdateMode(myUpdateInBackgroundCB.isSelected() ? JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND 
                                                                    : JavaFxPackagerConstants.UPDATE_MODE_ALWAYS);
+    myProperties.setEnabledSigning(myEnableSigningCB.isSelected());
+    if (myDialog != null) {
+      myProperties.setSelfSigning(myDialog.myPanel.mySelfSignedRadioButton.isSelected());
+      myProperties.setAlias(myDialog.myPanel.myAliasTF.getText());
+      myProperties.setKeystore(myDialog.myPanel.myKeystore.getText());
+      myProperties.setKeypass(myDialog.myPanel.myKeypassTF.getText());
+      myProperties.setStorepass(myDialog.myPanel.myStorePassTF.getText());
+    }
   }
 
   @Override
@@ -126,6 +160,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     setText(myHtmlParams, myProperties.getHtmlParamFile());
     setText(myParams, myProperties.getParamFile());
     myUpdateInBackgroundCB.setSelected(Comparing.strEqual(myProperties.getUpdateMode(), JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND));
+    myEnableSigningCB.setSelected(myProperties.isEnabledSigning());
+    myEditSignCertificateButton.setEnabled(myProperties.isEnabledSigning());
   }
 
   private static void setText(TextFieldWithBrowseButton tf, final String title) {
@@ -141,7 +177,11 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   }
 
   @Override
-  public void disposeUIResources() {}
+  public void disposeUIResources() {
+    if (myDialog != null) {
+      myDialog.myPanel = null;
+    }
+  }
 
   private static class JavaFxApplicationClassBrowser extends ClassBrowser {
 
