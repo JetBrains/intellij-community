@@ -32,6 +32,15 @@ public class FilePathsHelper {
     return convertPath(path);
   }
 
+  public static String convertPath(final String parent, final String subpath) {
+    String convParent = FileUtil.toSystemIndependentName(parent);
+    String convPath = FileUtil.toSystemIndependentName(subpath);
+
+    String withSlash = convParent + (convParent.endsWith("/") ? "" : "/") +
+                       (convPath.startsWith("/") ? convPath.substring(1, convPath.length()) : convPath);
+    return SystemInfo.isFileSystemCaseSensitive ? withSlash : withSlash.toUpperCase(Locale.US);
+  }
+
   public static String convertPath(final String s) {
     String result = FileUtil.toSystemIndependentName(s);
     return SystemInfo.isFileSystemCaseSensitive ? result : result.toUpperCase(Locale.US);
