@@ -99,9 +99,10 @@ public abstract class AbstractJavaFxPackager {
     }
   }
 
-  private void deploy(String binPath,
+  private void deploy(final String binPath,
                       final File tempDirWithCreatedJar,
                       final File tempUnzippedArtifactOutput) {
+    final String artifactName = FileUtil.getNameWithoutExtension(getArtifactRootName());
     final List<String> commandLine = new ArrayList<String>();
     addParameter(commandLine, FileUtil.toSystemDependentName(binPath + File.separator + "javafxpackager"));
 
@@ -126,7 +127,7 @@ public abstract class AbstractJavaFxPackager {
     addParameter(commandLine, getUpdateMode());
 
     addParameter(commandLine, "-name");
-    addParameter(commandLine, getArtifactRootName());
+    addParameter(commandLine, artifactName);
 
 
     addParameter(commandLine, "-outdir");
@@ -142,7 +143,7 @@ public abstract class AbstractJavaFxPackager {
     addParameter(commandLine, tempDirectory.getPath());
 
     addParameter(commandLine, "-outfile");
-    addParameter(commandLine, getArtifactRootName());
+    addParameter(commandLine, artifactName);
 
     addParameter(commandLine, "-srcdir");
     addParameter(commandLine, tempDirWithCreatedJar.getPath());
