@@ -17,6 +17,7 @@ package org.jetbrains.plugins.javaFX.packaging.ant;
 
 import com.intellij.compiler.ant.*;
 import com.intellij.compiler.ant.artifacts.DirectoryAntCopyInstructionCreator;
+import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -27,12 +28,15 @@ import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Base64Converter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactProperties;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactPropertiesProvider;
 
+import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -42,6 +46,13 @@ import java.util.List;
  * Date: 3/14/13
  */
 public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
+
+  @NonNls public static final String ARTIFACT_VENDOR_SIGN_PROPERTY = "artifact.sign.vendor";
+  @NonNls public static final String ARTIFACT_ALIAS_SIGN_PROPERTY = "artifact.sign.alias";
+  @NonNls public static final String ARTIFACT_KEYSTORE_SIGN_PROPERTY = "artifact.sign.keystore";
+  @NonNls public static final String ARTIFACT_STOREPASS_SIGN_PROPERTY = "artifact.sign.storepass";
+  @NonNls public static final String ARTIFACTKEYPASS_SIGN_PROPERTY = "artifact.sign.keypass";
+
   @NotNull
   @Override
   public String[] getTargets(ModuleChunk chunk) {
@@ -146,13 +157,58 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
 
     generator.add(deployTag);
 
-    
+    if (properties.isEnabledSigning()) {
+
+      final boolean selfSigning = properties.isSelfSigning();
+      String vendor = properties.getVendor();
+      if (vendor != null) {
+        vendor = vendor.replaceAll(",", "\\\\,")  ;
+      }
+      generator.add(new Property(artifactBasedProperty(ARTIFACT_VENDOR_SIGN_PROPERTY, artifactName), "CN=" + vendor));
+
+      final String alias = selfSigning ? "jb" : properties.getAlias();
+      generator.add(new Property(artifactBasedProperty(ARTIFACT_ALIAS_SIGN_PROPERTY, artifactName), alias));
+
+      final String keystore = selfSigning ? tempDirPath + File.separator + "jb-key.jks" : properties.getKeystore();
+      generator.add(new Property(artifactBasedProperty(ARTIFACT_KEYSTORE_SIGN_PROPERTY, artifactName), keystore));
+
+      final String storepass = selfSigning ? "storepass" : Base64Converter.decode(properties.getStorepass());
+      generator.add(new Property(artifactBasedProperty(ARTIFACT_STOREPASS_SIGN_PROPERTY, artifactName), storepass));
+
+      final String keypass = selfSigning ? "keypass" : Base64Converter.decode(properties.getKeypass());
+      generator.add(new Property(artifactBasedProperty(ARTIFACTKEYPASS_SIGN_PROPERTY, artifactName), keypass));
+      
+      final Pair[] keysDescriptions = createKeysDescriptions(artifactName);
+      if (selfSigning) {
+        generator.add(new Tag("genkey", 
+                              ArrayUtil.prepend(new Pair<String, String>("dname", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_VENDOR_SIGN_PROPERTY, artifactName))), 
+                                                keysDescriptions)));
+      }
+      
+      final Tag signjar = new Tag("signjar", keysDescriptions);
+      final Tag fileset = new Tag("fileset", new Pair<String, String>("dir", tempDirPath + "/deploy"));
+      fileset.add(new Tag("include", new Pair<String, String>("name", artifactFileName)));
+      signjar.add(fileset);
+      generator.add(signjar);
+    }
 
     final DirectoryAntCopyInstructionCreator creator = new DirectoryAntCopyInstructionCreator(BuildProperties.propertyRef(context.getConfiguredArtifactOutputProperty(artifact)));
     generator.add(creator.createDirectoryContentCopyInstruction(tempDirPath + "/deploy"));
     final Tag deleteTag = new Tag("delete", new Pair<String, String>("includeemptydirs", "true"));
     deleteTag.add(new Tag("fileset", new Pair<String, String>("dir", tempDirPath)));
     generator.add(deleteTag);
+  }
+
+  private static String artifactBasedProperty(final String property, String artifactName) {
+    return property + "." + artifactName;
+  }
+
+  private static Pair[] createKeysDescriptions(String artifactName) {
+    return new Pair[]{
+      new Pair<String, String>("alias", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_ALIAS_SIGN_PROPERTY, artifactName))),
+      new Pair<String, String>("keystore", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_KEYSTORE_SIGN_PROPERTY, artifactName))),
+      new Pair<String, String>("storepass", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_STOREPASS_SIGN_PROPERTY, artifactName))),
+      new Pair<String, String>("keypass", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACTKEYPASS_SIGN_PROPERTY, artifactName)))};
   }
 
   @Nullable
