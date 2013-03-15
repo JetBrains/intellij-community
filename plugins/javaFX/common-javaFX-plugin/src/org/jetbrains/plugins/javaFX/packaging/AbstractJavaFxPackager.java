@@ -18,6 +18,7 @@ package org.jetbrains.plugins.javaFX.packaging;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Base64Converter;
 import com.intellij.util.io.ZipUtil;
 
 import java.io.File;
@@ -298,7 +299,7 @@ public abstract class AbstractJavaFxPackager {
   }
 
   private String getKeypass(boolean selfSigning) {
-    return selfSigning ? "keypass" : getKeypass();
+    return selfSigning ? "keypass" : Base64Converter.decode(getKeypass());
   }
 
   private String getKeystore(boolean selfSigning) {
@@ -306,7 +307,7 @@ public abstract class AbstractJavaFxPackager {
   }
 
   private String getStorepass(boolean selfSigning) {
-    return selfSigning ? "storepass" : getStorepass();
+    return selfSigning ? "storepass" : Base64Converter.decode(getStorepass());
   }
 
   public abstract String getKeypass();

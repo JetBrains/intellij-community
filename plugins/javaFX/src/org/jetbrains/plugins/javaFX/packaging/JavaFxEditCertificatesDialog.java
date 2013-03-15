@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.Base64Converter;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,8 +57,10 @@ public class JavaFxEditCertificatesDialog extends DialogWrapper {
 
     myPanel.myAliasTF.setText(properties.getAlias());
     myPanel.myKeystore.setText(properties.getKeystore());
-    myPanel.myKeypassTF.setText(properties.getKeypass());
-    myPanel.myStorePassTF.setText(properties.getStorepass());
+    final String keypass = properties.getKeypass();
+    myPanel.myKeypassTF.setText(keypass != null ? Base64Converter.decode(keypass) : "");
+    final String storepass = properties.getStorepass();
+    myPanel.myStorePassTF.setText(storepass != null ? Base64Converter.decode(storepass) : "");
     myPanel.myKeystore.addBrowseFolderListener("Choose Keystore File", "Select file containing generated keys", project, BrowseFilesListener.SINGLE_FILE_DESCRIPTOR);
   }
 
@@ -77,7 +80,8 @@ public class JavaFxEditCertificatesDialog extends DialogWrapper {
         Messages.showErrorDialog(myPanel.myWholePanel, "Keystore file should exist");
         return;
       }
-      if (StringUtil.isEmptyOrSpaces(myPanel.myKeypassTF.getText()) || StringUtil.isEmptyOrSpaces(myPanel.myStorePassTF.getText())) {
+      if (StringUtil.isEmptyOrSpaces(String.valueOf(myPanel.myKeypassTF.getPassword())) || 
+          StringUtil.isEmptyOrSpaces(String.valueOf(myPanel.myStorePassTF.getPassword()))) {
         Messages.showErrorDialog(myPanel.myWholePanel, "Passwords should be set");
         return;
       }

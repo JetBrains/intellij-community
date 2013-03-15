@@ -33,6 +33,7 @@ import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.Base64Converter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -112,8 +113,10 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     if (myDialog != null) {
       if (isModified(myProperties.getAlias(), myDialog.myPanel.myAliasTF)) return true;
       if (isModified(myProperties.getKeystore(), myDialog.myPanel.myKeystore)) return true;
-      if (isModified(myProperties.getKeypass(), myDialog.myPanel.myKeypassTF)) return true;
-      if (isModified(myProperties.getStorepass(), myDialog.myPanel.myStorePassTF)) return true;
+      final String keypass = myProperties.getKeypass();
+      if (isModified(keypass != null ? Base64Converter.decode(keypass) : "", myDialog.myPanel.myKeypassTF)) return true;
+      final String storepass = myProperties.getStorepass();
+      if (isModified(storepass != null ? Base64Converter.decode(storepass) : "", myDialog.myPanel.myStorePassTF)) return true;
       if (myProperties.isSelfSigning() != myDialog.myPanel.mySelfSignedRadioButton.isSelected()) return true;
     }
     return false;
@@ -144,8 +147,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       myProperties.setSelfSigning(myDialog.myPanel.mySelfSignedRadioButton.isSelected());
       myProperties.setAlias(myDialog.myPanel.myAliasTF.getText());
       myProperties.setKeystore(myDialog.myPanel.myKeystore.getText());
-      myProperties.setKeypass(myDialog.myPanel.myKeypassTF.getText());
-      myProperties.setStorepass(myDialog.myPanel.myStorePassTF.getText());
+      myProperties.setKeypass(Base64Converter.encode(String.valueOf((myDialog.myPanel.myKeypassTF.getPassword()))));
+      myProperties.setStorepass(Base64Converter.encode(String.valueOf(myDialog.myPanel.myStorePassTF.getPassword())));
     }
   }
 
