@@ -8,6 +8,7 @@ import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeModel;
 import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeTableNode;
 import org.jdesktop.swingx.JXTreeTable;
 import org.jdesktop.swingx.treetable.TreeTableModel;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.event.KeyEvent;
 import java.util.HashSet;
@@ -98,5 +99,15 @@ public class UI_RefTable extends JXTreeTable {
         }
 
         return false;
+    }
+
+    @Nullable
+    public Hash getCommitHashInRow(int row) {
+        RefTreeTableNode node = getNode(row);
+        if (node.isRefNode()) {
+            return node.getRef().getCommitHash();
+        } else {
+            return null;
+        }
     }
 }

@@ -1,5 +1,6 @@
 package org.hanuna.gitalk.swing_ui.frame;
 
+import org.hanuna.gitalk.commit.Hash;
 import org.hanuna.gitalk.swing_ui.UI_Utilities;
 import org.hanuna.gitalk.ui.UI_Controller;
 
@@ -44,9 +45,29 @@ public class MainFrame extends JFrame {
         refTable.addMouseListener(new MouseAdapter() {
             @Override
             public void mouseClicked(MouseEvent e) {
-                ui_controller.updateVisibleBranches();
+                if (e.getClickCount() == 2) {
+                    int row = refTable.getSelectedRow();
+                    Hash commitCash = refTable.getCommitHashInRow(row);
+                    if (commitCash != null) {
+                        refTable.setValueAt(true, row, 0);
+                        ui_controller.updateVisibleBranches();
+                        ui_controller.jumpToCommit(commitCash);
+                    }
+                } else {
+                    ui_controller.updateVisibleBranches();
+                }
             }
         });
+        refTable.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (refTable.keyPressed(e)) {
+                    ui_controller.updateVisibleBranches();
+                    refTable.updateUI();
+                }
+            }
+        });
+
         tablePanel.add(branchScroll);
     }
 
@@ -79,16 +100,10 @@ public class MainFrame extends JFrame {
             public void mouseClicked(MouseEvent e) {
                 ui_controller.setLongEdgeVisibility(visibleLongEdges.isSelected());
             }
+
+
         });
-        refTable.addKeyListener(new KeyAdapter() {
-            @Override
-            public void keyPressed(KeyEvent e) {
-                if (refTable.keyPressed(e)) {
-                    ui_controller.updateVisibleBranches();
-                    refTable.updateUI();
-                }
-            }
-        });
+
         topPanel.add(visibleLongEdges);
 
         topPanel.add(Box.createHorizontalGlue());
