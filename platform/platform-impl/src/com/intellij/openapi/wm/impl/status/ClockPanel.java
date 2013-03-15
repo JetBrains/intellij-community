@@ -16,12 +16,7 @@
 package com.intellij.openapi.wm.impl.status;
 
 import com.intellij.concurrency.JobScheduler;
-import com.intellij.openapi.wm.CustomStatusBarWidget;
-import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -38,8 +33,7 @@ import static java.util.Calendar.*;
 /**
  * User: Vassiliy.Kudryashov
  */
-public class ClockPanel extends JComponent implements CustomStatusBarWidget {
-  @NonNls public static final String WIDGET_ID = "Clock";
+public class ClockPanel extends JComponent {
   private static final int TOP = 1 << 0 | 1 << 2 | 1 << 3 | 1 << 5 | 1 << 6 | 1 << 7 | 1 << 8 | 1 << 9;
   private static final int TOP_LEFT = 1 << 0 | 1 << 4 | 1 << 5 | 1 << 6 | 1 << 8 | 1 << 9;
   private static final int TOP_RIGHT = 1 << 0 | 1 << 1 | 1 << 2 | 1 << 3 | 1 << 4 | 1 << 7 | 1 << 8 | 1 << 9;
@@ -72,17 +66,6 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
     is24Hours = new SimpleDateFormat().toLocalizedPattern().contains("H");
   }
 
-  @NotNull
-  @Override
-  public String ID() {
-    return WIDGET_ID;
-  }
-
-  @Override
-  public void install(@NotNull StatusBar statusBar) {
-    scheduleNextRepaint();
-  }
-
   private void scheduleNextRepaint() {
     if (myScheduledFuture != null && !myScheduledFuture.isDone()) {
       myScheduledFuture.cancel(false);
@@ -97,26 +80,6 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
   }
 
   @Override
-  public void dispose() {
-    if (myScheduledFuture != null) {
-      myScheduledFuture.cancel(false);
-      myScheduledFuture = null;
-    }
-  }
-
-
-  @Override
-  public JComponent getComponent() {
-    return this;
-  }
-
-  @Nullable
-  @Override
-  public WidgetPresentation getPresentation(@NotNull PlatformType type) {
-    return null;
-  }
-
-  @Override
   public Dimension getPreferredSize() {
     int height;
     Container parent = getParent();
@@ -126,7 +89,7 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
     else {
       height = super.getPreferredSize().height;
     }
-    return new Dimension(height * 2, height);
+    return new Dimension((int)(height * 2.5), height);
   }
 
   @Override
@@ -140,7 +103,7 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
     try {
       g.setRenderingHint(KEY_ANTIALIASING, RenderingHints.VALUE_ANTIALIAS_ON);
       g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-      int h = (int)(getHeight() *.6);
+      int h = (int)(getHeight() *.8);
       int w = h / 2;
       float thickness = h * .1F;
       AffineTransform transform = g.getTransform();

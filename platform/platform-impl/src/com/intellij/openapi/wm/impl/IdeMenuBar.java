@@ -31,6 +31,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.UIUtil;
@@ -40,10 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.awt.event.AWTEventListener;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.awt.event.MouseEvent;
+import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
 
@@ -56,6 +54,7 @@ import java.util.ArrayList;
 public class IdeMenuBar extends JMenuBar {
 
   private static final int COLLAPSED_HEIGHT = 2;
+  private final ClockPanel myClockPanel;
   private IdeMenuBar.MyBorderDelegator myBorderDelegator;
 
   private enum State {
@@ -90,6 +89,7 @@ public class IdeMenuBar extends JMenuBar {
     myPresentationFactory = new MenuItemPresentationFactory();
     myDataManager = dataManager;
     if (SystemInfo.isWindows) {
+      addMouseListener(new MouseAdapter() {});//event catcher for "floating" fulscreen menu
       myAnimator = new Animator("MenuBarAnimator", 16, 300, false) {
         @Override
         public void paintNow(int frame, int totalFrames, int cycle) {
@@ -167,11 +167,51 @@ public class IdeMenuBar extends JMenuBar {
           }
         }
       });
+      myClockPanel = new ClockPanel();
+      add(myClockPanel);
     }
     else {
       myAnimator = null;
       myActivationWatcher = null;
+      myClockPanel = null;
     }
+  }
+
+  @Override
+  public void doLayout() {
+    super.doLayout();
+    if (myClockPanel != null) {
+      if (myState != State.EXPANDED) {
+        myClockPanel.setVisible(true);
+        Dimension preferredSize = myClockPanel.getPreferredSize();
+        myClockPanel.setBounds(getBounds().width - preferredSize.width, 0, preferredSize.width, preferredSize.height);
+      }
+      else {
+        myClockPanel.setVisible(false);
+      }
+    }
+  }
+
+  @Override
+  public void menuSelectionChanged(boolean isIncluded) {
+    if (!getSelectionModel().isSelected()) return;
+    if (myState == State.COLLAPSED) {
+      myActivated = true;
+      setState(State.TEMPORARY_EXPANDED);
+      revalidate();
+      repaint();
+      SwingUtilities.invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          JMenu menu = getMenu(getSelectionModel().getSelectedIndex());
+          if (menu.isPopupMenuVisible()) {
+            menu.setPopupMenuVisible(false);
+            menu.setPopupMenuVisible(true);
+          }
+        }
+      });
+    }
+    super.menuSelectionChanged(isIncluded);
   }
 
   @Override
@@ -318,6 +358,9 @@ public class IdeMenuBar extends JMenuBar {
 
       fixMenuBackground();
       updateMnemonicsVisibility();
+      if (SystemInfo.isWindows) {
+        add(myClockPanel);
+      }
       validate();
 
       if (changeBarVisibility) {
