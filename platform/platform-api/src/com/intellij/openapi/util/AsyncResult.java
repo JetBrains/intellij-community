@@ -18,7 +18,7 @@ package com.intellij.openapi.util;
 import org.jetbrains.annotations.NotNull;
 
 public class AsyncResult<T> extends ActionCallback {
-  private T myResult;
+  protected T myResult;
 
   @NotNull
   public AsyncResult<T> setDone(T result) {
