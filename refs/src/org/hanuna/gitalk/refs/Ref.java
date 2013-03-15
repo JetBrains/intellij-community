@@ -6,7 +6,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author erokhins
  */
-public class Ref {
+public final class Ref {
     private final Hash commitHash;
     private final String name;
     private final RefType type;
@@ -46,6 +46,28 @@ public class Ref {
                 ", name='" + name + '\'' +
                 ", type=" + type +
                 '}';
+    }
+
+    @Override
+    public boolean equals(Object o) {
+        if (this == o) return true;
+        if (o == null || getClass() != o.getClass()) return false;
+
+        Ref ref = (Ref) o;
+
+        if (commitHash != null ? !commitHash.equals(ref.commitHash) : ref.commitHash != null) return false;
+        if (name != null ? !name.equals(ref.name) : ref.name != null) return false;
+        if (type != ref.type) return false;
+
+        return true;
+    }
+
+    @Override
+    public int hashCode() {
+        int result = commitHash != null ? commitHash.hashCode() : 0;
+        result = 31 * result + (name != null ? name.hashCode() : 0);
+        result = 31 * result + (type != null ? type.hashCode() : 0);
+        return result;
     }
 
     public static enum RefType {

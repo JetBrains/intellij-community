@@ -95,6 +95,11 @@ public class UI_ControllerImpl implements UI_Controller {
     }
 
     @Override
+    public RefTreeModel getRefTreeModel() {
+        return refTreeModel;
+    }
+
+    @Override
     public void addControllerListener(@NotNull ControllerListener listener) {
         events.addListener(listener);
     }

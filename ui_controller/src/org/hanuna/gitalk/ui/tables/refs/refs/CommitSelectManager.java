@@ -22,21 +22,33 @@ public class CommitSelectManager {
         return selectCommits.contains(commitHash);
     }
 
+    private void checkEmpty() {
+        if (selectCommits.isEmpty()) {
+            selectCommits.add(headHash);
+        }
+    }
+
     public void setSelectCommit(@NotNull Hash commitHash, boolean  select) {
         if (select) {
             selectCommits.add(commitHash);
         } else {
             selectCommits.remove(commitHash);
         }
-        if (selectCommits.isEmpty()) {
-            selectCommits.add(headHash);
-        }
+        checkEmpty();
     }
 
     public Set<Hash> getSelectCommits() {
         return Collections.unmodifiableSet(selectCommits);
     }
 
+    public void inverseSelectCommit(Set<Hash> commits) {
+        if (selectCommits.containsAll(commits)) {
+            selectCommits.removeAll(commits);
+        } else {
+            selectCommits.addAll(commits);
+        }
+        checkEmpty();
+    }
 
 
 }

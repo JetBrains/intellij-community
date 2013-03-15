@@ -5,6 +5,8 @@ import org.hanuna.gitalk.ui.UI_Controller;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.awt.event.MouseAdapter;
 import java.awt.event.MouseEvent;
 
@@ -24,7 +26,7 @@ public class MainFrame extends JFrame {
     public MainFrame(final UI_Controller ui_controller) {
         this.ui_controller = ui_controller;
         this.graphTable = new UI_GraphTable(ui_controller);
-        this.refTable = new UI_RefTable(ui_controller.getRefsTreeTableModel());
+        this.refTable = new UI_RefTable(ui_controller.getRefsTreeTableModel(), ui_controller.getRefTreeModel());
         packElements();
     }
 
@@ -78,9 +80,37 @@ public class MainFrame extends JFrame {
                 ui_controller.setLongEdgeVisibility(visibleLongEdges.isSelected());
             }
         });
+        refTable.addKeyListener(new KeyAdapter() {
+            @Override
+            public void keyPressed(KeyEvent e) {
+                if (refTable.keyPressed(e)) {
+                    ui_controller.updateVisibleBranches();
+                    refTable.updateUI();
+                }
+            }
+        });
         topPanel.add(visibleLongEdges);
 
         topPanel.add(Box.createHorizontalGlue());
+
+        JButton expand = new JButton("Expand");
+        expand.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                refTable.expandAll();
+            }
+        });
+        topPanel.add(expand);
+
+        JButton collapse = new JButton("Collapse");
+        collapse.addMouseListener(new MouseAdapter() {
+            @Override
+            public void mouseClicked(MouseEvent e) {
+                refTable.collapseAll();
+            }
+        });
+        topPanel.add(collapse);
+
     }
 
     private void packMainPanel() {

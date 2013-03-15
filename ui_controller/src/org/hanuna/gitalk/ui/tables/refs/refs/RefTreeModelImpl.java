@@ -53,6 +53,11 @@ public class RefTreeModelImpl implements RefTreeModel {
         return selectManager.getSelectCommits();
     }
 
+    @Override
+    public void inverseSelectCommit(Set<Hash> commits) {
+        selectManager.inverseSelectCommit(commits);
+    }
+
     private void createTree() {
         nodeMap.put("", rootNode);
 

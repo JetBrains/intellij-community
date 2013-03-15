@@ -1,6 +1,7 @@
 package org.hanuna.gitalk.ui;
 
 import org.hanuna.gitalk.graph.elements.GraphElement;
+import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeModel;
 import org.jdesktop.swingx.treetable.TreeTableModel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,7 @@ public interface UI_Controller {
     public void updateVisibleBranches();
 
     public TreeTableModel getRefsTreeTableModel();
-
+    public RefTreeModel getRefTreeModel();
 
     public void addControllerListener(@NotNull ControllerListener listener);
 
