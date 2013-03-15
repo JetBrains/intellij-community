@@ -23,10 +23,7 @@ import org.jetbrains.jps.model.JpsDummyElement;
 import org.jetbrains.jps.model.JpsEncodingConfigurationService;
 import org.jetbrains.jps.model.JpsEncodingProjectConfiguration;
 import org.jetbrains.jps.model.artifact.JpsArtifactService;
-import org.jetbrains.jps.model.java.JpsJavaDependencyExtension;
-import org.jetbrains.jps.model.java.JpsJavaDependencyScope;
-import org.jetbrains.jps.model.java.JpsJavaExtensionService;
-import org.jetbrains.jps.model.java.JpsJavaSdkType;
+import org.jetbrains.jps.model.java.*;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
@@ -133,6 +130,13 @@ public class JpsProjectSerializationTest extends JpsSerializationTestCase {
     assertNotSame(lib1, lib2);
     assertNotNull(lib2);
     assertSameElements(lib2.getRootUrls(JpsOrderRootType.COMPILED), getUrl("data/lib2"));
+  }
+
+  public void testDotIdeaUnderDotIdea() {
+    loadProject("/jps/model-serialization/testData/matryoshka/.idea");
+    JpsJavaProjectExtension extension = JpsJavaExtensionService.getInstance().getProjectExtension(myProject);
+    assertNotNull(extension);
+    assertEquals(getUrl("out"), extension.getOutputUrl());
   }
 
   public void testLoadEncoding() {
