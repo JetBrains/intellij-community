@@ -55,6 +55,13 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myParamFile;
   private String myUpdateMode = JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND;
 
+  private boolean myEnabledSigning = false;
+  private boolean mySelfSigning = true;
+  private String myAlias;
+  private String myKeystore;
+  private String myStorepass;
+  private String myKeypass;
+
   @Override
   public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
     if (!(artifact.getArtifactType() instanceof JavaFxApplicationArtifactType)) {
@@ -188,6 +195,54 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myUpdateMode = updateMode;
   }
 
+  public boolean isEnabledSigning() {
+    return myEnabledSigning;
+  }
+
+  public void setEnabledSigning(boolean enabledSigning) {
+    myEnabledSigning = enabledSigning;
+  }
+
+  public boolean isSelfSigning() {
+    return mySelfSigning;
+  }
+
+  public void setSelfSigning(boolean selfSigning) {
+    mySelfSigning = selfSigning;
+  }
+
+  public String getAlias() {
+    return myAlias;
+  }
+
+  public void setAlias(String alias) {
+    myAlias = alias;
+  }
+
+  public String getKeystore() {
+    return myKeystore;
+  }
+
+  public void setKeystore(String keystore) {
+    myKeystore = keystore;
+  }
+
+  public String getStorepass() {
+    return myStorepass;
+  }
+
+  public void setStorepass(String storepass) {
+    myStorepass = storepass;
+  }
+
+  public String getKeypass() {
+    return myKeypass;
+  }
+
+  public void setKeypass(String keypass) {
+    myKeypass = keypass;
+  }
+
   private static class JavaFxPackager extends AbstractJavaFxPackager {
     private final Artifact myArtifact;
     private final JavaFxArtifactProperties myProperties;
@@ -267,6 +322,36 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     @Override
     protected String getUpdateMode() {
       return myProperties.getUpdateMode();
+    }
+
+    @Override
+    public String getKeypass() {
+      return myProperties.getKeypass();
+    }
+
+    @Override
+    public String getStorepass() {
+      return myProperties.getStorepass();
+    }
+
+    @Override
+    public String getKeystore() {
+      return myProperties.getKeystore();
+    }
+
+    @Override
+    public String getAlias() {
+      return myProperties.getAlias();
+    }
+
+    @Override
+    public boolean isSelfSigning() {
+      return myProperties.isSelfSigning();
+    }
+
+    @Override
+    public boolean isEnabledSigning() {
+      return myProperties.isEnabledSigning();
     }
   }
 }

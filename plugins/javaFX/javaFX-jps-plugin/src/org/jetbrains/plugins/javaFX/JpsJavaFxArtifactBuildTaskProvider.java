@@ -158,6 +158,36 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     protected String getUpdateMode() {
       return myProperties.myState.getUpdateMode();
     }
+
+    @Override
+    public String getKeypass() {
+      return myProperties.myState.getKeypass();
+    }
+
+    @Override
+    public String getStorepass() {
+      return myProperties.myState.getStorepass();
+    }
+
+    @Override
+    public String getKeystore() {
+      return myProperties.myState.getKeystore();
+    }
+
+    @Override
+    public String getAlias() {
+      return myProperties.myState.getAlias();
+    }
+
+    @Override
+    public boolean isSelfSigning() {
+      return myProperties.myState.isSelfSigning();
+    }
+
+    @Override
+    public boolean isEnabledSigning() {
+      return myProperties.myState.isEnabledSigning();
+    }
   }
 }
 
