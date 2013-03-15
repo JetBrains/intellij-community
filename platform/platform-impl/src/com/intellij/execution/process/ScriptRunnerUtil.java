@@ -165,6 +165,7 @@ public final class ScriptRunnerUtil {
       commandLine.setExePath(shell.getAbsolutePath());
       commandLine.addParameter("-c");
       commandLine.addParameter(appCommandLine.getCommandLineString());
+      commandLine.setPassFixedPathEnvVarOnMac(true);
 
       if (workingDirectory != null) {
         commandLine.setWorkDirectory(workingDirectory);
@@ -198,6 +199,7 @@ public final class ScriptRunnerUtil {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(exePath);
     commandLine.setPassParentEnvs(true);
+    commandLine.setPassFixedPathEnvVarOnMac(true);
     if (scriptFile != null) {
       commandLine.addParameter(scriptFile.getPresentableUrl());
     }
