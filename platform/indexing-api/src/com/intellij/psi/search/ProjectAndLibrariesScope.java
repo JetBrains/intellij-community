@@ -27,10 +27,16 @@ import java.util.List;
 
 public class ProjectAndLibrariesScope extends GlobalSearchScope {
   protected final ProjectFileIndex myProjectFileIndex;
+  protected final boolean mySearchOutsideRootModel;
 
-  public ProjectAndLibrariesScope(final Project project) {
+  public ProjectAndLibrariesScope(Project project) {
+    this(project, false);
+  }
+
+  public ProjectAndLibrariesScope(Project project, boolean searchOutsideRootModel) {
     super(project);
     myProjectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
+    mySearchOutsideRootModel = searchOutsideRootModel;
   }
 
   public boolean contains(VirtualFile file) {
@@ -65,6 +71,11 @@ public class ProjectAndLibrariesScope extends GlobalSearchScope {
     }
 
     return res;
+  }
+
+  @Override
+  public boolean isSearchOutsideRootModel() {
+    return mySearchOutsideRootModel;
   }
 
   public boolean isSearchInModuleContent(@NotNull Module aModule) {
