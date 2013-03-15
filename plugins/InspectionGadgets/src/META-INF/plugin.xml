@@ -107,6 +107,10 @@
                      key="assignment.to.static.field.from.instance.method.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.assignment.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.assignment.AssignmentToStaticFieldFromInstanceMethodInspection"/>
+    <localInspection language="JAVA" shortName="AssignmentToSuperclassField" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="assignment.to.superclass.field.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.assignment.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.assignment.AssignmentToSuperclassFieldInspection"/>
     <localInspection language="JAVA" shortName="AssignmentUsedAsCondition" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="assignment.used.as.condition.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.assignment.issues" enabledByDefault="false" level="WARNING"
