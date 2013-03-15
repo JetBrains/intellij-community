@@ -18,6 +18,7 @@ package com.intellij.util.io;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.PlatformTestCase;
 
@@ -48,7 +49,7 @@ public class PersistentFSTest extends PlatformTestCase {
 
   public void testListChildrenOfTheRootOfTheRoot() {
     PersistentFS fs = PersistentFS.getInstance();
-    VirtualFile fakeRoot = fs.findRoot("", LocalFileSystem.getInstance());
+    NewVirtualFile fakeRoot = fs.findRoot("", LocalFileSystem.getInstance());
     int users = fs.getId(fakeRoot, "Users", LocalFileSystem.getInstance());
     assertEquals(0, users);
     int win = fs.getId(fakeRoot, "Windows", LocalFileSystem.getInstance());
@@ -59,5 +60,14 @@ public class PersistentFSTest extends PlatformTestCase {
       int rid = fs.getId(fakeRoot, root.getName(), LocalFileSystem.getInstance());
       assertTrue(0 != rid);
     }
+
+    NewVirtualFile c = fakeRoot.refreshAndFindChild("Users");
+    assertNull(c);
+    c = fakeRoot.refreshAndFindChild("Users");
+    assertNull(c);
+    c = fakeRoot.refreshAndFindChild("Windows");
+    assertNull(c);
+    c = fakeRoot.refreshAndFindChild("Windows");
+    assertNull(c);
   }
 }

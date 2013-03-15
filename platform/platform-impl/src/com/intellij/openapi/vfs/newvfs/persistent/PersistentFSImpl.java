@@ -380,19 +380,6 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   public int getId(@NotNull final VirtualFile parent, @NotNull final String childName, @NotNull final NewVirtualFileSystem fs) {
     int parentId = getFileId(parent);
 
-    if (parent == myFakeRoot) {
-      // children of the fake root must be the FS roots only
-      myRootsLock.readLock().lock();
-      try {
-        String rootUrl = fs.getProtocol() + "://" + VfsImplUtil.normalize(fs, childName);
-        VirtualFileSystemEntry root = myRoots.get(rootUrl);
-        return root == null ? 0 : root.getId();
-      }
-      finally {
-        myRootsLock.readLock().unlock();
-      }
-    }
-
     int[] children = FSRecords.list(parentId);
 
     if (children.length > 0) {
