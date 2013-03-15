@@ -238,7 +238,7 @@
     </action>
     <action id="IncrementWindowHeight" />
     <action id="InspectCode">
-      <keyboard-shortcut first-keystroke="meta alt B" />
+      <keyboard-shortcut first-keystroke="meta shift B" />
     </action>
     <action id="Instruments">
       <keyboard-shortcut first-keystroke="meta I" />

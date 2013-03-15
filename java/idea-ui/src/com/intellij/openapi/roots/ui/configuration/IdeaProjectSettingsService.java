@@ -25,6 +25,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.ModuleStructureConfigurable;
 import com.intellij.packaging.artifacts.Artifact;
 import org.jetbrains.annotations.NotNull;
@@ -58,6 +59,17 @@ public class IdeaProjectSettingsService extends ProjectSettingsService implement
       @Override
       public void run() {
         config.selectGlobalLibraries(true);
+      }
+    });
+  }
+
+  @Override
+  public void openLibrary(@NotNull final Library library) {
+    final ProjectStructureConfigurable config = ProjectStructureConfigurable.getInstance(myProject);
+    ShowSettingsUtil.getInstance().editConfigurable(myProject, config, new Runnable() {
+      @Override
+      public void run() {
+        config.selectProjectOrGlobalLibrary(library, true);
       }
     });
   }

@@ -688,7 +688,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public FileAttributes getAttributes(@NotNull final VirtualFile file) {
-    final String path = file.getPath();
+    String path = normalize(file.getPath());
+    if (path == null) return null;
     if (StringUtil.isEmpty(path) || file.getParent() == null && path.startsWith("//")) {
       return FAKE_ROOT_ATTRIBUTES;  // fake Windows roots
     }

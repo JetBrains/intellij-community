@@ -62,9 +62,8 @@ public class PsiBuilderAdapter implements PsiBuilder {
   }
 
   @Override
-  @Nullable
-  public WhitespaceSkippedCallback setWhitespaceSkippedCallback(@Nullable final WhitespaceSkippedCallback callback) {
-    return myDelegate.setWhitespaceSkippedCallback(callback);
+  public void setWhitespaceSkippedCallback(@Nullable final WhitespaceSkippedCallback callback) {
+    myDelegate.setWhitespaceSkippedCallback(callback);
   }
 
   @Override

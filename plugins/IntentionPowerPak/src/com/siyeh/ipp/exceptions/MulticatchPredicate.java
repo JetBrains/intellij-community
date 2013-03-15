@@ -1,5 +1,5 @@
 /*
- * Copyright 2011 Bas Leijdekkers
+ * Copyright 2011-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,21 +16,15 @@
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
-import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.PsiElementPredicate;
 
 class MulticatchPredicate implements PsiElementPredicate {
 
   public boolean satisfiedBy(PsiElement element) {
-    if (!(element instanceof PsiKeyword)) {
+    if (element instanceof PsiCodeBlock) {
       return false;
     }
-    final PsiJavaToken javaToken = (PsiJavaToken)element;
-    final IElementType tokenType = javaToken.getTokenType();
-    if (!tokenType.equals(JavaTokenType.CATCH_KEYWORD)) {
-      return false;
-    }
-    final PsiElement parent = javaToken.getParent();
+    final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiCatchSection)) {
       return false;
     }

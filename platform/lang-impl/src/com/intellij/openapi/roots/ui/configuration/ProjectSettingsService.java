@@ -45,6 +45,9 @@ public class ProjectSettingsService {
   public void openGlobalLibraries() {
   }
 
+  public void openLibrary(@NotNull Library library) {
+  }
+
   public void openModuleSettings(final Module module) {
   }
 

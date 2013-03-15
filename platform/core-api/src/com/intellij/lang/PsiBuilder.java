@@ -76,10 +76,8 @@ public interface PsiBuilder extends UserDataHolder, UserDataHolderUnprotected {
   /**
    * Subscribe for notification on default whitespace and comments skipped events.
    * @param callback an implementation for the callback
-   * @return previously registered callback
    */
-  @Nullable
-  WhitespaceSkippedCallback setWhitespaceSkippedCallback(@Nullable WhitespaceSkippedCallback callback);
+  void setWhitespaceSkippedCallback(@Nullable WhitespaceSkippedCallback callback);
 
   /**
    * See what token type is in <code>steps</code> ahead
