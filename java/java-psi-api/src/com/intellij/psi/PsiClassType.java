@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,11 +39,13 @@ public abstract class PsiClassType extends PsiType {
       return new PsiClassType[count];
     }
   };
+
   protected final LanguageLevel myLanguageLevel;
 
   protected PsiClassType(LanguageLevel languageLevel) {
     this(languageLevel, PsiAnnotation.EMPTY_ARRAY);
   }
+
   protected PsiClassType(LanguageLevel languageLevel, @NotNull PsiAnnotation[] annotations) {
     super(annotations);
     myLanguageLevel = languageLevel;
@@ -69,7 +71,8 @@ public abstract class PsiClassType extends PsiType {
    *
    * @return the array of type arguments, or an empty array if the type does not point to a generic class or interface.
    */
-  @NotNull public abstract PsiType[] getParameters();
+  @NotNull
+  public abstract PsiType[] getParameters();
 
   public int getParameterCount() {
     return getParameters().length;
@@ -78,8 +81,7 @@ public abstract class PsiClassType extends PsiType {
   public boolean equals(Object obj) {
     if (this == obj) return true;
     if (!(obj instanceof PsiClassType)) return false;
-    PsiClassType otherClassType = (PsiClassType) obj;
-    //if (!isValid() || !otherClassType.isValid()) return false;
+    PsiClassType otherClassType = (PsiClassType)obj;
 
     String className = getClassName();
     String otherClassName = otherClassType.getClassName();
@@ -158,20 +160,20 @@ public abstract class PsiClassType extends PsiType {
   @Override
   @NotNull
   public PsiType[] getSuperTypes() {
-    final ClassResolveResult resolveResult = resolveGenerics();
-    final PsiClass aClass = resolveResult.getElement();
+    ClassResolveResult resolveResult = resolveGenerics();
+    PsiClass aClass = resolveResult.getElement();
     if (aClass == null) return EMPTY_ARRAY;
-    final PsiClassType[] superTypes = aClass.getSuperTypes();
 
-    final PsiType[] subtitutionResults = new PsiType[superTypes.length];
+    PsiClassType[] superTypes = aClass.getSuperTypes();
+    PsiType[] substitutionResults = new PsiType[superTypes.length];
     for (int i = 0; i < superTypes.length; i++) {
-      subtitutionResults[i] = resolveResult.getSubstitutor().substitute(superTypes[i]);
+      substitutionResults[i] = resolveResult.getSubstitutor().substitute(superTypes[i]);
     }
-    return subtitutionResults;
+    return substitutionResults;
   }
 
   /**
-   * Checks whether the specified resolve result representss a raw type. <br>
+   * Checks whether the specified resolve result represents a raw type. <br>
    * Raw type is a class type for a class <i>with type parameters</i> which does not assign
    * any value to them. If a class does not have any type parameters, it cannot generate any raw type.
    */
@@ -196,14 +198,16 @@ public abstract class PsiClassType extends PsiType {
    *
    * @return the resolve result instance.
    */
-  @NotNull public abstract ClassResolveResult resolveGenerics();
+  @NotNull
+  public abstract ClassResolveResult resolveGenerics();
 
   /**
    * Returns the raw type (with no values assigned to type parameters) corresponding to this type.
    *
    * @return the raw type instance.
    */
-  @NotNull public abstract PsiClassType rawType();
+  @NotNull
+  public abstract PsiClassType rawType();
 
   /**
    * Overrides {@link com.intellij.psi.PsiType#getResolveScope()} to narrow specify @NotNull.
@@ -223,6 +227,7 @@ public abstract class PsiClassType extends PsiType {
 
   /**
    * Functional style setter preserving original type's language level
+   *
    * @param languageLevel level to obtain class type with
    * @return type with requested language level
    */
@@ -248,17 +253,17 @@ public abstract class PsiClassType extends PsiType {
       }
 
       @Override
-      public boolean isValidResult(){
+      public boolean isValidResult() {
         return false;
       }
 
       @Override
-      public boolean isAccessible(){
+      public boolean isAccessible() {
         return false;
       }
 
       @Override
-      public boolean isStaticsScopeCorrect(){
+      public boolean isStaticsScopeCorrect() {
         return false;
       }
 
