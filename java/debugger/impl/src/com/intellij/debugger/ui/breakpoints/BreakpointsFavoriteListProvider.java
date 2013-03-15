@@ -187,7 +187,7 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
       case EDIT:
         DebuggerSupport debuggerSupport = XBreakpointUtil.getDebuggerSupport(myProject, breakpointItem);
         if (debuggerSupport == null) return;
-        debuggerSupport.getEditBreakpointAction().editBreakpoint(myProject, component, whereToShow, breakpointItem.getBreakpoint());
+        debuggerSupport.getEditBreakpointAction().editBreakpoint(myProject, component, whereToShow, breakpointItem);
         break;
       case REMOVE:
         breakpointItem.removed(myProject);

@@ -25,19 +25,13 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsMasterDetailPopupFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
 
-/**
- * Created with IntelliJ IDEA.
- * User: zajac
- * Date: 04.05.12
- * Time: 4:03
- * To change this template use File | Settings | File Templates.
- */
 public abstract class EditBreakpointActionHandler extends DebuggerActionHandler {
 
   protected abstract void doShowPopup(Project project, JComponent component, Point whereToShow, Object breakpoint);
@@ -67,7 +61,7 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
     doShowPopup(project, gutterComponent, whereToShow, breakpoint);
   }
 
-  public void editBreakpoint(@NotNull Project project, @NotNull JComponent parent, @NotNull Point whereToShow, @NotNull Object breakpoint) {
-    doShowPopup(project, parent, whereToShow, breakpoint);
+  public void editBreakpoint(@NotNull Project project, @NotNull JComponent parent, @NotNull Point whereToShow, @NotNull BreakpointItem breakpoint) {
+    doShowPopup(project, parent, whereToShow, breakpoint.getBreakpoint());
   }
 }
