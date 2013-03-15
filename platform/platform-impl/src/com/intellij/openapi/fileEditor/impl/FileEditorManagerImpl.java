@@ -815,7 +815,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           }
         };
         if (!isDumbAware(editor)) {
-          DumbService.getInstance(getProject()).runWhenSmart(runnable);
+          DumbService.getInstance(getProject()).smartInvokeLater(runnable);
         }
         else {
           ApplicationManager.getApplication().invokeLater(runnable);
