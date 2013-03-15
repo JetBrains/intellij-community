@@ -70,6 +70,7 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
 
   @Override
   public void dispose() {
+    myAlarm.cancelAllRequests();
   }
 
   @Override
