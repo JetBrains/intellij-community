@@ -31,8 +31,9 @@ public class RootView extends com.intellij.designer.designSurface.RootView {
     super(x, y, image);
   }
 
-  public void setImage(BufferedImage image) {
-    super.setImage(image);
+  @Override
+  public void setImage(BufferedImage image, int x, int y, int width, int height) {
+    super.setImage(image, x, y, width, height);
     myEmptyRegions = new ArrayList<EmptyRegion>();
   }
 
