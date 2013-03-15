@@ -58,7 +58,7 @@ public class PersistentFSTest extends PlatformTestCase {
     VirtualFile[] roots = fs.getRoots(LocalFileSystem.getInstance());
     for (VirtualFile root : roots) {
       int rid = fs.getId(fakeRoot, root.getName(), LocalFileSystem.getInstance());
-      assertTrue(0 != rid);
+      assertTrue(root.getPath(), 0 != rid);
     }
 
     NewVirtualFile c = fakeRoot.refreshAndFindChild("Users");
