@@ -162,7 +162,7 @@ public class UI_ControllerImpl implements UI_Controller {
                 @NotNull
                 @Override
                 public Boolean get(@NotNull Node key) {
-                    return checkedCommitHashes.contains(key.getCommitHash());
+                    return key.getType() == Node.NodeType.COMMIT_NODE && checkedCommitHashes.contains(key.getCommitHash());
                 }
             });
 
