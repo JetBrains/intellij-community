@@ -146,6 +146,8 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
 
     generator.add(deployTag);
 
+    
+
     final DirectoryAntCopyInstructionCreator creator = new DirectoryAntCopyInstructionCreator(BuildProperties.propertyRef(context.getConfiguredArtifactOutputProperty(artifact)));
     generator.add(creator.createDirectoryContentCopyInstruction(tempDirPath + "/deploy"));
     final Tag deleteTag = new Tag("delete", new Pair<String, String>("includeemptydirs", "true"));
