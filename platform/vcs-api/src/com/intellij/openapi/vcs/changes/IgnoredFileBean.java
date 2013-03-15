@@ -32,10 +32,12 @@ import com.intellij.openapi.vfs.newvfs.impl.NullVirtualFile;
 import com.intellij.util.PatternUtil;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.regex.Matcher;
 
 public class IgnoredFileBean {
   private final String myPath;
+  private final String myFilenameIfFile;
   private final String myMask;
   private final Matcher myMatcher;
   private final IgnoreSettingsType myType;
@@ -45,9 +47,18 @@ public class IgnoredFileBean {
   IgnoredFileBean(String path, IgnoreSettingsType type, Project project) {
     myPath = path;
     myType = type;
+    if (IgnoreSettingsType.FILE.equals(type)) {
+      myFilenameIfFile = new File(path).getName();
+    } else {
+      myFilenameIfFile = null;
+    }
     myProject = project;
     myMask = null;
     myMatcher = null;
+  }
+
+  Project getProject() {
+    return myProject;
   }
 
   IgnoredFileBean(String mask) {
@@ -60,6 +71,7 @@ public class IgnoredFileBean {
       myMatcher = PatternUtil.fromMask(mask).matcher("");
     }
     myPath = null;
+    myFilenameIfFile = null;
     myProject = null;
   }
 
@@ -103,8 +115,10 @@ public class IgnoredFileBean {
     if (myType == IgnoreSettingsType.MASK) {
       myMatcher.reset(file.getName());
       return myMatcher.matches();
-    }
-    else {
+    } else {
+      // quick check for 'file' == exact match pattern
+      if (IgnoreSettingsType.FILE.equals(myType) && ! myFilenameIfFile.equals(file.getName())) return false;
+
       VirtualFile selector = resolve();
       if (Comparing.equal(selector, NullVirtualFile.INSTANCE)) return false;
 

@@ -22,16 +22,15 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 public class IgnoredFilesComponent {
   private final Set<IgnoredFileBean> myFilesToIgnore;
+  private final Map<String, IgnoredFileBean> myFilesMap;
 
   public IgnoredFilesComponent(final Project project, final boolean registerListener) {
     myFilesToIgnore = new LinkedHashSet<IgnoredFileBean>();
+    myFilesMap = new HashMap<String, IgnoredFileBean>();
 
     if (registerListener) {
       project.getMessageBus().connect(project).subscribe(VirtualFileManager.VFS_CHANGES, new BulkFileListener.Adapter() {
@@ -45,17 +44,33 @@ public class IgnoredFilesComponent {
 
   public IgnoredFilesComponent(final IgnoredFilesComponent other) {
     myFilesToIgnore = new LinkedHashSet<IgnoredFileBean>(other.myFilesToIgnore);
+    myFilesMap = new HashMap<String, IgnoredFileBean>(other.myFilesMap);
   }
 
   public void add(final IgnoredFileBean... filesToIgnore) {
     synchronized(myFilesToIgnore) {
       Collections.addAll(myFilesToIgnore, filesToIgnore);
+      addIgnoredFiles(filesToIgnore);
+    }
+  }
+
+  private void addIgnoredFiles(final IgnoredFileBean... filesToIgnore) {
+    for (IgnoredFileBean bean : filesToIgnore) {
+      if (IgnoreSettingsType.FILE.equals(bean.getType())) {
+        final Project project = bean.getProject();
+        final VirtualFile baseDir = project.getBaseDir();
+        if (baseDir != null) {
+          // if baseDir == null, then nothing will be added to map, but check will still be correct through set
+          myFilesMap.put(FilePathsHelper.convertPath(baseDir.getPath(), bean.getPath()), bean);
+        }
+      }
     }
   }
 
   public void clear() {
     synchronized (myFilesToIgnore) {
       myFilesToIgnore.clear();
+      myFilesMap.clear();
     }
   }
   public boolean isEmpty() {
@@ -68,6 +83,8 @@ public class IgnoredFilesComponent {
     synchronized(myFilesToIgnore) {
       myFilesToIgnore.clear();
       Collections.addAll(myFilesToIgnore, filesToIgnore);
+      myFilesMap.clear();
+      addIgnoredFiles(filesToIgnore);
     }
   }
 
@@ -88,6 +105,10 @@ public class IgnoredFilesComponent {
   public boolean isIgnoredFile(@NotNull VirtualFile file) {
     synchronized(myFilesToIgnore) {
       if (myFilesToIgnore.size() == 0) return false;
+
+      final String path = FilePathsHelper.convertPath(file);
+      final IgnoredFileBean fileBean = myFilesMap.get(path);
+      if (fileBean != null && fileBean.matchesFile(file)) return true;
 
       for(IgnoredFileBean bean: myFilesToIgnore) {
         if (bean.matchesFile(file)) return true;
