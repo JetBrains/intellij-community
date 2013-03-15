@@ -41,9 +41,13 @@ public class RootView extends JComponent {
     return myImage;
   }
 
-  public void setImage(BufferedImage image) {
+  public final void setImage(BufferedImage image) {
+    setImage(image, myX, myY, image.getWidth(), image.getHeight());
+  }
+
+  public void setImage(BufferedImage image, int x, int y, int width, int height) {
     myImage = image;
-    setBounds(myX, myY, image.getWidth(), image.getHeight());
+    setBounds(x, y, width, height);
     repaint();
   }
 
