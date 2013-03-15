@@ -34,7 +34,7 @@ public class PersistentFSTest extends PlatformTestCase {
   public void testAccessingFileByID() throws Exception {
     File dir = createTempDirectory();
     File file = new File(dir, "test.txt");
-    file.createNewFile();
+    assertTrue(file.createNewFile());
 
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNotNull(vFile);
@@ -50,6 +50,7 @@ public class PersistentFSTest extends PlatformTestCase {
   public void testListChildrenOfTheRootOfTheRoot() {
     PersistentFS fs = PersistentFS.getInstance();
     NewVirtualFile fakeRoot = fs.findRoot("", LocalFileSystem.getInstance());
+    assertNotNull(fakeRoot);
     int users = fs.getId(fakeRoot, "Users", LocalFileSystem.getInstance());
     assertEquals(0, users);
     int win = fs.getId(fakeRoot, "Windows", LocalFileSystem.getInstance());
