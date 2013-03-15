@@ -32,6 +32,9 @@ import java.util.Set;
  * User: Vassiliy.Kudryashov
  */
 public abstract class AbstractFavoritesListProvider<T> implements FavoritesListProvider {
+  public static final int BOOKMARKS_WEIGHT = 100;
+  public static final int BREAKPOINTS_WEIGHT = 200;
+  public static final int TASKS_WEIGHT = 300;
   protected final Project myProject;
   private final String myListName;
   protected final List<AbstractTreeNode<T>> myChildren = new ArrayList<AbstractTreeNode<T>>();

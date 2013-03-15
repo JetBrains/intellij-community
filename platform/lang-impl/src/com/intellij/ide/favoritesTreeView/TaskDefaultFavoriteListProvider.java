@@ -72,7 +72,7 @@ public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvid
 
   @Override
   public int getWeight() {
-    return 300;
+    return TASKS_WEIGHT;
   }
 //@Override
   //public Comparator<FavoritesTreeNodeDescriptor> getNodeDescriptorComparator() {
