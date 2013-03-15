@@ -59,16 +59,11 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
 
   protected final Calendar myCalendar;
   private final boolean is24Hours;
-  private int myLastPaintedState = 0;
   private ScheduledFuture<?> myScheduledFuture;
-  private final Runnable myCheckAndRepaintRunnable = new Runnable() {
+  private final Runnable myRepaintRunnable = new Runnable() {
     @Override
     public void run() {
-      myCalendar.setTimeInMillis(System.currentTimeMillis());
-      int state = myCalendar.get(is24Hours ? HOUR_OF_DAY : HOUR) * 100 + myCalendar.get(MINUTE);
-      if (myLastPaintedState != state) {
-        ClockPanel.this.repaint();
-      }
+      ClockPanel.this.repaint();
     }
   };
 
@@ -85,12 +80,20 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
 
   @Override
   public void install(@NotNull StatusBar statusBar) {
-    myScheduledFuture = JobScheduler.getScheduler().scheduleWithFixedDelay(new Runnable() {
+    scheduleNextRepaint();
+  }
+
+  private void scheduleNextRepaint() {
+    if (myScheduledFuture != null && !myScheduledFuture.isDone()) {
+      myScheduledFuture.cancel(false);
+    }
+    myCalendar.setTimeInMillis(System.currentTimeMillis());
+    myScheduledFuture = JobScheduler.getScheduler().schedule(new Runnable() {
       @Override
       public void run() {
-        UIUtil.invokeLaterIfNeeded(myCheckAndRepaintRunnable);
+        UIUtil.invokeLaterIfNeeded(myRepaintRunnable);
       }
-    }, 0, 1000, TimeUnit.MILLISECONDS);
+    }, 60 - myCalendar.get(SECOND), TimeUnit.SECONDS);
   }
 
   @Override
@@ -171,7 +174,7 @@ public class ClockPanel extends JComponent implements CustomStatusBarWidget {
       paintDigit(g, x, y, w, h, thickness, minutes / 10);
       x += w + thickness * 2;
       paintDigit(g, x, y, w, h, thickness, minutes % 10);
-      myLastPaintedState = hours * 100 + minutes;
+      scheduleNextRepaint();
     }
     finally {
       g.dispose();
