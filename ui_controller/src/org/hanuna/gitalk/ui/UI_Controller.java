@@ -13,21 +13,23 @@ import javax.swing.table.TableModel;
 public interface UI_Controller {
 
     public TableModel getGraphTableModel();
-    public TreeTableModel getRefsTreeTableModel();
-
-    public void addControllerListener(@NotNull ControllerListener listener);
-    public void removeAllListeners();
 
     public void click(@Nullable GraphElement graphElement);
-    public void doubleClick(int rowIndex);
     public void over(@Nullable GraphElement graphElement);
-
     public void hideAll();
 
+    public void showAll();
     public void setLongEdgeVisibility(boolean visibility);
     public void updateVisibleBranches();
 
-    public void readNextPart();
+    public TreeTableModel getRefsTreeTableModel();
 
-    public void showAll();
+
+    public void addControllerListener(@NotNull ControllerListener listener);
+
+
+    public void removeAllListeners();
+
+    public void doubleClick(int rowIndex);
+    public void readNextPart();
 }
