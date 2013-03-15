@@ -7,6 +7,9 @@ import org.hanuna.gitalk.ui.tables.refs.refs.RefTreeTableNode;
 import javax.swing.*;
 import javax.swing.tree.TreeCellRenderer;
 import java.awt.*;
+import java.awt.image.BufferedImage;
+
+import static org.hanuna.gitalk.swing_ui.render.Print_Parameters.HEIGHT_CELL;
 
 /**
 * @author erokhins
@@ -18,7 +21,11 @@ public class RefTreeCellRender implements TreeCellRenderer {
         @Override
         public void paint(Graphics g) {
             if (node.isRefNode()) {
-                refPainter.draw((Graphics2D) g, OneElementList.buildList(node.getRef()), 0);
+                BufferedImage image = new BufferedImage(1000, HEIGHT_CELL, BufferedImage.TYPE_INT_ARGB);
+                Graphics2D g2 = image.createGraphics();
+                g2.setBackground(new Color(0,0,0,0));
+                refPainter.draw(g2, OneElementList.buildList(node.getRef()), 0);
+                g.drawImage(image,0, 0, null);
             } else {
                 super.paint(g);
             }
