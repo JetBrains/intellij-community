@@ -2,7 +2,6 @@ package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -11,7 +10,6 @@ import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PropertyUtil;
-import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -280,36 +278,14 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         host.addMessage(((XmlAttributeImpl)attribute).getNameElement(), "fx:controller can only be applied to root element", ValidationHost.ErrorType.ERROR); //todo add delete/move to upper tag fix
       }
     }
-    validateTagAccordingToFieldType(context, parentTag, host);
+    final String canCoerceError = JavaFxPsiUtil.isClassAcceptable(parentTag, myPsiClass);
+    if (canCoerceError != null) {
+      host.addMessage(context.getNavigationElement(), canCoerceError, ValidationHost.ErrorType.ERROR);
+    }
     if (myPsiClass != null && myPsiClass.isValid()) {
       final String message = JavaFxPsiUtil.isAbleToInstantiate(myPsiClass);
       if (message != null) {
         host.addMessage(context, message, ValidationHost.ErrorType.ERROR);
-      }
-    }
-  }
-
-  private void validateTagAccordingToFieldType(XmlTag context, XmlTag parentTag, ValidationHost host) {
-    if (myPsiClass != null && myPsiClass.isValid()) {
-      final XmlElementDescriptor descriptor = parentTag != null ? parentTag.getDescriptor() : null;
-      if (descriptor instanceof JavaFxPropertyElementDescriptor) {
-        final PsiElement declaration = descriptor.getDeclaration();
-        if (declaration instanceof PsiField) {
-          final PsiType type = ((PsiField)declaration).getType();
-          final PsiType collectionItemType = GenericsHighlightUtil.getCollectionItemType(type, myPsiClass.getResolveScope());
-          if (collectionItemType != null && PsiPrimitiveType.getUnboxedType(collectionItemType) == null) {
-            final PsiClass baseClass = PsiUtil.resolveClassInType(collectionItemType);
-            if (baseClass != null) {
-              final String qualifiedName = baseClass.getQualifiedName();
-              if (qualifiedName != null && !Comparing.strEqual(qualifiedName, CommonClassNames.JAVA_LANG_STRING)) {
-                if (!InheritanceUtil.isInheritor(myPsiClass, qualifiedName)) {
-                  host.addMessage(context.getNavigationElement(), 
-                                  "Unable to coerce " + HighlightUtil.formatClass(myPsiClass)+ " to " + qualifiedName, ValidationHost.ErrorType.ERROR);
-                }
-              }
-            }
-          }
-        }
       }
     }
   }

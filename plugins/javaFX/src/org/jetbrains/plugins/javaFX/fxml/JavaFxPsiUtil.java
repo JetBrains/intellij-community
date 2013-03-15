@@ -16,6 +16,8 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.AnnotationUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
 import com.intellij.openapi.fileTypes.StdFileTypes;
@@ -33,6 +35,8 @@ import com.intellij.util.Processor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -428,6 +432,54 @@ public class JavaFxPsiUtil {
       }
     }
     return null;
+  }
+
+  public static String isClassAcceptable(@Nullable XmlTag parentTag, final PsiClass aClass) {
+    if (aClass != null && aClass.isValid()) {
+      if (parentTag == null) {
+        if (!InheritanceUtil.isInheritor(aClass, false, JavaFxCommonClassNames.JAVAFX_SCENE_NODE)) {
+          return unableToCoerceMessage(aClass, JavaFxCommonClassNames.JAVAFX_SCENE_NODE);
+        }
+        return null;
+      }
+      final XmlElementDescriptor descriptor = parentTag.getDescriptor();
+      if (descriptor instanceof JavaFxPropertyElementDescriptor) {
+        final PsiElement declaration = descriptor.getDeclaration();
+        if (declaration instanceof PsiField) {
+          return canCoerce(aClass, ((PsiField)declaration).getType());
+        }
+      }
+      else if (descriptor instanceof JavaFxClassBackedElementDescriptor) {
+        final PsiElement declaration = descriptor.getDeclaration();
+        if (declaration instanceof PsiClass) {
+          final PsiType type = getDefaultPropertyExpectedType((PsiClass)declaration);
+          if (type != null) {
+            return canCoerce(aClass, type);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static String canCoerce(PsiClass aClass, PsiType type) {
+    final PsiType collectionItemType = GenericsHighlightUtil.getCollectionItemType(type, aClass.getResolveScope());
+    if (collectionItemType != null && PsiPrimitiveType.getUnboxedType(collectionItemType) == null) {
+      final PsiClass baseClass = PsiUtil.resolveClassInType(collectionItemType);
+      if (baseClass != null) {
+        final String qualifiedName = baseClass.getQualifiedName();
+        if (qualifiedName != null && !Comparing.strEqual(qualifiedName, CommonClassNames.JAVA_LANG_STRING)) {
+          if (!InheritanceUtil.isInheritor(aClass, qualifiedName)) {
+             return unableToCoerceMessage(aClass, qualifiedName);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static String unableToCoerceMessage(PsiClass aClass, String qualifiedName) {
+    return "Unable to coerce " + HighlightUtil.formatClass(aClass)+ " to " + qualifiedName;
   }
 
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {
