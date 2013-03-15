@@ -16,11 +16,7 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 public class AddTypeCastTest extends LightQuickFixTestCase {
-  public void test() {
-    doAllTests();
-
-    Object o = null;
-  }
+  public void test() { doAllTests(); }
 
   @Override
   protected String getBasePath() {
