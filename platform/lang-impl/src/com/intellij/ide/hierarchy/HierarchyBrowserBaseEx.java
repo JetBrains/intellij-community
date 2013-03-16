@@ -309,7 +309,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
     configureTree(tree);
     EditSourceOnDoubleClickHandler.install(tree);
-    myRefreshAction.registerShortcutOn(tree);
+    myRefreshAction.registerShortcutOn(this);
 
     return tree;
   }
