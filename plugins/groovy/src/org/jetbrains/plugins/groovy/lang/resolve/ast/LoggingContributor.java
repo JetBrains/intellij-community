@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,7 +39,7 @@ public class LoggingContributor extends AstTransformContributor {
     build();
 
   @Override
-  public void collectFields(@NotNull GrTypeDefinition psiClass, Collection<GrField> collector) {
+  public void collectFields(@NotNull GrTypeDefinition psiClass, @NotNull Collection<GrField> collector) {
     GrModifierList modifierList = psiClass.getModifierList();
     if (modifierList == null) return;
 

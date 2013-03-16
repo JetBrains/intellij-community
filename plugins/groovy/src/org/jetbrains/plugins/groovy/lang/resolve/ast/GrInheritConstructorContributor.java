@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,7 +32,7 @@ import java.util.Collection;
 public class GrInheritConstructorContributor extends AstTransformContributor {
 
   @Override
-  public void collectMethods(@NotNull GrTypeDefinition psiClass, Collection<PsiMethod> collector) {
+  public void collectMethods(@NotNull GrTypeDefinition psiClass, @NotNull Collection<PsiMethod> collector) {
     if (psiClass.isAnonymous() || psiClass.isInterface() || psiClass.isEnum()) {
       return;
     }

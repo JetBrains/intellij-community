@@ -41,7 +41,7 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames.
 public class ConstructorAnnotationsProcessor extends AstTransformContributor {
 
   @Override
-  public void collectMethods(@NotNull GrTypeDefinition typeDefinition, Collection<PsiMethod> collector) {
+  public void collectMethods(@NotNull GrTypeDefinition typeDefinition, @NotNull Collection<PsiMethod> collector) {
     if (typeDefinition.getName() == null) return;
 
     PsiModifierList modifierList = typeDefinition.getModifierList();
