@@ -139,11 +139,11 @@ public final class ScriptRunnerUtil {
                                                     @Nullable VirtualFile scriptFile,
                                                     @NotNull String[] parameters) throws ExecutionException {
     if (!SystemInfo.isMac) {
-      return execute(exePath, workingDirectory, scriptFile, parameters);
+      return execute(exePath, workingDirectory, scriptFile, parameters, true);
     }
     ExecutionException firstException;
     try {
-      return execute(exePath, workingDirectory, scriptFile, parameters);
+      return execute(exePath, workingDirectory, scriptFile, parameters, true);
     }
     catch (ExecutionException e) {
       firstException = e;
@@ -196,10 +196,19 @@ public final class ScriptRunnerUtil {
                                          @Nullable String workingDirectory,
                                          @Nullable VirtualFile scriptFile,
                                          String[] parameters) throws ExecutionException {
+    return execute(exePath, workingDirectory, scriptFile, parameters, false);
+  }
+
+  @NotNull
+  private static OSProcessHandler execute(@NotNull String exePath,
+                                         @Nullable String workingDirectory,
+                                         @Nullable VirtualFile scriptFile,
+                                         String[] parameters,
+                                         boolean passFixedPathEnvVarOnMac) throws ExecutionException {
     GeneralCommandLine commandLine = new GeneralCommandLine();
     commandLine.setExePath(exePath);
     commandLine.setPassParentEnvs(true);
-    commandLine.setPassFixedPathEnvVarOnMac(true);
+    commandLine.setPassFixedPathEnvVarOnMac(passFixedPathEnvVarOnMac);
     if (scriptFile != null) {
       commandLine.addParameter(scriptFile.getPresentableUrl());
     }
