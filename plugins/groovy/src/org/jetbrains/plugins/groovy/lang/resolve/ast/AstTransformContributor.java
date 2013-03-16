@@ -44,41 +44,29 @@ public abstract class AstTransformContributor {
 
   @NotNull
   public static Collection<PsiMethod> runContributorsForMethods(@NotNull final GrTypeDefinition clazz) {
-    final Collection<PsiMethod> methods = RecursionManager.doPreventingRecursion(clazz, false, new Computable<Collection<PsiMethod>>() {
+    Collection<PsiMethod> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<Collection<PsiMethod>>() {
       @Override
       public Collection<PsiMethod> compute() {
-        Collection<PsiMethod> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<Collection<PsiMethod>>() {
-          @Override
-          public Collection<PsiMethod> compute() {
-            Collection<PsiMethod> collector = new ArrayList<PsiMethod>();
-            for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
-              contributor.collectMethods(clazz, collector);
-            }
-            return collector;
-          }
-        });
-        return result == null ? Collections.<PsiMethod>emptyList() : result;
+        Collection<PsiMethod> collector = new ArrayList<PsiMethod>();
+        for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
+          contributor.collectMethods(clazz, collector);
+        }
+        return collector;
       }
     });
-    return methods != null ? methods : Collections.<PsiMethod>emptyList();
+    return result == null ? Collections.<PsiMethod>emptyList() : result;
   }
 
   @NotNull
   public static List<GrField> runContributorsForFields(@NotNull final GrTypeDefinition clazz) {
-    final List<GrField> fields = RecursionManager.doPreventingRecursion(clazz, false, new Computable<List<GrField>>() {
+    List<GrField> fields = RecursionManager.doPreventingRecursion(clazz, true, new Computable<List<GrField>>() {
       @Override
       public List<GrField> compute() {
-        List<GrField> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<List<GrField>>() {
-          @Override
-          public List<GrField> compute() {
-            List<GrField> collector = new ArrayList<GrField>();
-            for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
-              contributor.collectFields(clazz, collector);
-            }
-            return collector;
-          }
-        });
-        return result == null ? Collections.<GrField>emptyList() : result;
+        List<GrField> collector = new ArrayList<GrField>();
+        for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
+          contributor.collectFields(clazz, collector);
+        }
+        return collector;
       }
     });
     return fields != null ? fields : Collections.<GrField>emptyList();

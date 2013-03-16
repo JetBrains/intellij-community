@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.task;
+package org.jetbrains.plugins.gradle.internal.task;
 
 import org.jetbrains.annotations.NotNull;
 

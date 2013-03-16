@@ -9,10 +9,10 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskManager;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
-import org.jetbrains.plugins.gradle.task.GradleTaskManager;
-import org.jetbrains.plugins.gradle.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -54,7 +54,7 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
   }
 
   @Override
-  protected void doActionPerformed(@NotNull final Project project, @NotNull final String linkedProjectPath) {
+  protected void doActionPerformed(@NotNull AnActionEvent event, @NotNull final Project project, @NotNull final String linkedProjectPath) {
     // We save all documents because there is more than one target 'build.gradle' file in case of multi-module gradle project.
     FileDocumentManager.getInstance().saveAllDocuments();
 

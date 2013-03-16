@@ -1,9 +1,10 @@
-package org.jetbrains.plugins.gradle.task;
+package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager;
@@ -25,17 +26,17 @@ import java.util.concurrent.atomic.AtomicReference;
  * @since 1/24/12 7:03 AM
  */
 public abstract class AbstractGradleTask implements GradleTask {
-  
+
   private static final Logger LOG = Logger.getInstance("#" + AbstractGradleTask.class.getName());
-  
+
   private final AtomicReference<GradleTaskState> myState = new AtomicReference<GradleTaskState>(GradleTaskState.NOT_STARTED);
   private final AtomicReference<Throwable>       myError = new AtomicReference<Throwable>();
 
-  @Nullable transient private final Project      myIntellijProject;
-  @NotNull  private final            GradleTaskId myId;
+  @Nullable transient private final Project      myIdeProject;
+  @NotNull private final            GradleTaskId myId;
 
   protected AbstractGradleTask(@Nullable Project project, @NotNull GradleTaskType type) {
-    myIntellijProject = project;
+    myIdeProject = project;
     myId = GradleTaskId.create(type);
   }
 
@@ -59,8 +60,8 @@ public abstract class AbstractGradleTask implements GradleTask {
   }
 
   @Nullable
-  public Project getIntellijProject() {
-    return myIntellijProject;
+  public Project getIdeProject() {
+    return myIdeProject;
   }
 
   public void refreshState() {
@@ -69,27 +70,36 @@ public abstract class AbstractGradleTask implements GradleTask {
     }
     final GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
     try {
-      final GradleApiFacade facade = manager.getFacade(myIntellijProject);
+      final GradleApiFacade facade = manager.getFacade(myIdeProject);
       setState(facade.isTaskInProgress(getId()) ? GradleTaskState.IN_PROGRESS : GradleTaskState.FAILED);
     }
     catch (Throwable e) {
       setState(GradleTaskState.FAILED);
       myError.set(e);
-      if (myIntellijProject == null || !myIntellijProject.isDisposed()) {
+      if (myIdeProject == null || !myIdeProject.isDisposed()) {
         LOG.warn(e);
       }
     }
   }
   
   @Override
-  public void execute(@NotNull final ProgressIndicator indicator) {
+  public void execute(@NotNull final ProgressIndicator indicator, @NotNull GradleTaskNotificationListener ... listeners) {
     indicator.setIndeterminate(true);
-    execute(new GradleTaskNotificationListenerAdapter() {
+    GradleTaskNotificationListenerAdapter adapter = new GradleTaskNotificationListenerAdapter() {
       @Override
       public void onStatusChange(@NotNull GradleTaskNotificationEvent event) {
-        indicator.setText(GradleBundle.message("gradle.sync.progress.update.text", event.getDescription()));
+        indicator.setText(wrapProgressText(event.getDescription()));
       }
-    });
+    };
+    final GradleTaskNotificationListener[] ls;
+    if (listeners.length > 0) {
+      ls = ArrayUtil.append(listeners, adapter);
+    }
+    else {
+      ls = new GradleTaskNotificationListener[] { adapter };
+    }
+    
+    execute(ls);
   }
   
   @Override
@@ -114,6 +124,11 @@ public abstract class AbstractGradleTask implements GradleTask {
   }
 
   protected abstract void doExecute() throws Exception;
+
+  @NotNull
+  protected String wrapProgressText(@NotNull String text) {
+    return GradleBundle.message("gradle.general.progress.update.text", text);
+  }
   
   @Override
   public int hashCode() {

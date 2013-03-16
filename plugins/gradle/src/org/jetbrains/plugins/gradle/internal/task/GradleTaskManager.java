@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.task;
+package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;

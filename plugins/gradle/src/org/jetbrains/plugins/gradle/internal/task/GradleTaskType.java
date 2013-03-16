@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.task;
+package org.jetbrains.plugins.gradle.internal.task;
 
 /**
  * Enumerates interested types of tasks that may be enqueued to Gradle API.
@@ -8,5 +8,5 @@ package org.jetbrains.plugins.gradle.task;
  */
 public enum GradleTaskType {
   
-  RESOLVE_PROJECT
+  RESOLVE_PROJECT, REFRESH_TASKS_LIST, EXECUTE_TASK
 }

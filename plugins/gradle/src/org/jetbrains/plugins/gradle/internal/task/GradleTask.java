@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.task;
+package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
@@ -27,8 +27,9 @@ public interface GradleTask {
    * Executes current task and updates given indicator's {@link ProgressIndicator#setText2(String) status} during that.
    * 
    * @param indicator  target progress indicator
+   * @param listeners  callbacks to be notified on task execution update
    */
-  void execute(@NotNull ProgressIndicator indicator);
+  void execute(@NotNull ProgressIndicator indicator, @NotNull GradleTaskNotificationListener ... listeners);
   
   /**
    * Executes current task at the calling thread, i.e. the call to this method blocks.

@@ -112,7 +112,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myUISettingsListener=new MyUISettingsListenerImpl();
     if (SystemInfo.isWindows) {
       menuBar = new IdeMenuBar(actionManager, dataManager);
-      getLayeredPane().add(menuBar, new Integer(1));
+      getLayeredPane().add(menuBar, new Integer(JLayeredPane.DEFAULT_LAYER - 1));
       if (frame instanceof IdeFrameImpl) {
         final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
           @Override
