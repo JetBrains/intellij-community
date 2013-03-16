@@ -3,16 +3,15 @@ package org.jetbrains.plugins.gradle.config;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.autoimport.*;
+import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
 
-import java.util.HashMap;
-import java.util.HashSet;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -35,6 +34,11 @@ public class GradleLocalSettings implements PersistentStateComponent<GradleLocal
 
   private final AtomicReference<Set<GradleUserProjectChange>> myUserChanges
     = new AtomicReference<Set<GradleUserProjectChange>>(new HashSet<GradleUserProjectChange>());
+
+  private final AtomicReference<List<GradleTaskDescriptor>>       myRecentTasks    =
+    new AtomicReference<List<GradleTaskDescriptor>>(ContainerUtilRt.<GradleTaskDescriptor>newArrayList());
+  private final AtomicReference<Collection<GradleTaskDescriptor>> myAvailableTasks =
+    new AtomicReference<Collection<GradleTaskDescriptor>>(ContainerUtilRt.<GradleTaskDescriptor>newArrayList());
 
   @NotNull
   public static GradleLocalSettings getInstance(@NotNull Project project) {
@@ -101,5 +105,23 @@ public class GradleLocalSettings implements PersistentStateComponent<GradleLocal
 
   public void setUserProjectChanges(@Nullable Set<GradleUserProjectChange> changes) {
     myUserChanges.set(changes);
+  }
+
+  @NotNull
+  public Collection<GradleTaskDescriptor> getAvailableTasks() {
+    return myAvailableTasks.get();
+  }
+
+  public void setAvailableTasks(@NotNull Collection<GradleTaskDescriptor> taskNames) {
+    myAvailableTasks.set(taskNames);
+  }
+
+  @NotNull
+  public List<GradleTaskDescriptor> getRecentTasks() {
+    return myRecentTasks.get();
+  }
+
+  public void setRecentTasks(@NotNull List<GradleTaskDescriptor> taskNames) {
+    myRecentTasks.set(taskNames);
   }
 }

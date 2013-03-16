@@ -34,7 +34,7 @@ public class GradleOpenScriptAction extends AbstractGradleLinkedProjectAction im
   }
 
   @Override
-  protected void doActionPerformed(@NotNull Project project, @NotNull String linkedProjectPath) {
+  protected void doActionPerformed(@NotNull AnActionEvent event, @NotNull Project project, @NotNull String linkedProjectPath) {
     final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByPath(linkedProjectPath);
     if (virtualFile == null) {
       LOG.warn(String.format("Can't obtain virtual file for the target file path: '%s'", linkedProjectPath));

@@ -2,7 +2,7 @@ package org.jetbrains.plugins.gradle.remote;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
-import org.jetbrains.plugins.gradle.task.GradleTaskAware;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskAware;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;

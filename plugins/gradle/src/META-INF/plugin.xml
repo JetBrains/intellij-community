@@ -86,7 +86,7 @@
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.autoimport.GradleUserProjectChangesCalculator"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.task.GradleTaskManager"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.internal.task.GradleTaskManager"/>
 
     <toolWindow id="JetGradle" anchor="right" icon="GradleIcons.ToolWindowGradle"
                 factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"/>
@@ -139,6 +139,9 @@
     </group>
     
     <action id="Gradle.RebuildChangesTree" class="org.jetbrains.plugins.gradle.action.GradleRebuildStructureChangesTreeAction"/>
+    <group id="Gradle.TasksGroup">
+      <reference ref="RunContextGroup"/>
+    </group>
   </actions>
   
 </idea-plugin>
