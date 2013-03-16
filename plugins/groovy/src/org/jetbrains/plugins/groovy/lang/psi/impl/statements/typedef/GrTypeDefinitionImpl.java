@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -75,7 +75,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ast.AstTransformContributor;
 import org.jetbrains.plugins.groovy.runner.GroovyRunnerUtil;
-import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import javax.swing.*;
 import java.util.ArrayList;
@@ -90,13 +89,13 @@ import static org.jetbrains.plugins.groovy.lang.psi.util.GrClassImplUtil.*;
  */
 public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefinitionStub> implements GrTypeDefinition, StubBasedPsiElement<GrTypeDefinitionStub> {
 
-  private static final LightCacheKey<List<GrField>> AST_TRANSFORM_FIELD = LightCacheKey.createByJavaModificationCount();
   private static final RecursionGuard ourGuard = RecursionManager.createGuard("groovyMembers");
 
   private volatile PsiClass[] myInnerClasses;
   private volatile GrMethod[] myGroovyMethods;
   private volatile PsiMethod[] myConstructors;
   private volatile GrMethod[] myCodeConstructors;
+  private volatile List<GrField> mySyntheticFields;
 
   Key<CachedValue<PsiMethod[]>> CACHED_METHODS = Key.create("cached.type.definition.methods");
 
@@ -329,13 +328,15 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   }
 
   private List<GrField> getSyntheticFields() {
-    List<GrField> fields = AST_TRANSFORM_FIELD.getCachedValue(this);
-    if (fields == null) {
-      fields = AstTransformContributor.runContributorsForFields(this);
-      fields = AST_TRANSFORM_FIELD.putCachedValue(this, fields);
+    List<GrField> cached = mySyntheticFields;
+    if (cached == null) {
+      RecursionGuard.StackStamp stamp = ourGuard.markStack();
+      cached = AstTransformContributor.runContributorsForFields(this);
+      if (stamp.mayCacheNow()) {
+        mySyntheticFields = cached;
+      }
     }
-
-    return fields;
+    return cached;
   }
 
   @NotNull
