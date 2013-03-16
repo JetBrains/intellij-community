@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.task;
+package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -8,6 +8,7 @@ import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -21,8 +22,7 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
   
   private final AtomicReference<GradleProject> myGradleProject = new AtomicReference<GradleProject>();
   
-  
-  private final String  myProjectPath;
+  @NotNull private final String  myProjectPath;
   private final boolean myResolveLibraries;
   
   public GradleResolveProjectTask(@Nullable Project project, @NotNull String projectPath, boolean resolveLibraries) {
@@ -33,13 +33,13 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
 
   protected void doExecute() throws Exception {
     final GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
-    GradleProjectResolver resolver = manager.getFacade(getIntellijProject()).getResolver();
+    Project ideProject = getIdeProject();
+    GradleProjectResolver resolver = manager.getFacade(ideProject).getResolver();
     setState(GradleTaskState.IN_PROGRESS);
 
     GradleProjectStructureChangesModel model = null;
-    final Project intellijProject = getIntellijProject();
-    if (intellijProject != null && !intellijProject.isDisposed()) {
-      model = ServiceManager.getService(intellijProject, GradleProjectStructureChangesModel.class);
+    if (ideProject != null && !ideProject.isDisposed()) {
+      model = ServiceManager.getService(ideProject, GradleProjectStructureChangesModel.class);
     }
     final GradleProject project;
     try {
@@ -69,5 +69,11 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
   @Nullable
   public GradleProject getGradleProject() {
     return myGradleProject.get();
+  }
+
+  @Override
+  @NotNull
+  protected String wrapProgressText(@NotNull String text) {
+    return GradleBundle.message("gradle.sync.progress.update.text", text);
   }
 }

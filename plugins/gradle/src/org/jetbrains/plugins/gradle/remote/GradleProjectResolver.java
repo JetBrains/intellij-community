@@ -4,8 +4,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
-import org.jetbrains.plugins.gradle.task.GradleTaskId;
-import org.jetbrains.plugins.gradle.task.GradleTaskType;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskId;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
 
 import java.rmi.RemoteException;
 import java.util.Collections;

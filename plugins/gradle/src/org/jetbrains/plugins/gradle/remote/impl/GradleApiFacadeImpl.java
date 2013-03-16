@@ -4,12 +4,12 @@ import com.intellij.execution.rmi.RemoteServer;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ConcurrentHashMap;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.task.GradleTaskId;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskId;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationEvent;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
 import org.jetbrains.plugins.gradle.remote.RemoteGradleProgressNotificationManager;
 import org.jetbrains.plugins.gradle.remote.*;
-import org.jetbrains.plugins.gradle.task.GradleTaskType;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
 
 import java.lang.reflect.InvocationHandler;
 import java.lang.reflect.Method;
@@ -66,6 +66,17 @@ public class GradleApiFacadeImpl extends RemoteServer implements GradleApiFacade
     }
     catch (Exception e) {
       throw new IllegalStateException(String.format("Can't create '%s' service", GradleProjectResolver.class.getName()), e);
+    }
+  }
+
+  @NotNull
+  @Override
+  public GradleBuildManager getBuildManager() throws RemoteException {
+    try {
+      return getRemote(GradleBuildManager.class, GradleBuildManagerImpl.class);
+    }
+    catch (Exception e) {
+      throw new IllegalStateException(String.format("Can't create '%s' service", GradleBuildManager.class.getName()), e);
     }
   }
 

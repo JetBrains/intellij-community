@@ -16,8 +16,9 @@ import org.jetbrains.plugins.gradle.autoimport.GradleUserProjectChangesCalculato
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 import org.jetbrains.plugins.gradle.manage.GradleProjectEntityChangeListener;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
-import org.jetbrains.plugins.gradle.task.GradleTaskManager;
-import org.jetbrains.plugins.gradle.task.GradleTaskType;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskManager;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
+import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.Collection;
@@ -99,7 +100,9 @@ public class GradleProjectStructureChangesDetector implements GradleProjectStruc
   }
 
   private void rebuildTreeModel() {
-    final GradleProjectStructureTreeModel treeModel = GradleUtil.getProjectStructureTreeModel(myProject);
+    final GradleProjectStructureTreeModel treeModel = GradleUtil.getToolWindowElement(
+      GradleProjectStructureTreeModel.class, myProject, GradleDataKeys.SYNC_TREE_MODEL
+    );
     if (treeModel != null) {
       treeModel.rebuild(myAutoImporter.isInProgress());
     }
