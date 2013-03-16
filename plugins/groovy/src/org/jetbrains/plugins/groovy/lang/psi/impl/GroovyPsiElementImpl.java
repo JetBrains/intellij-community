@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 import com.intellij.extapi.psi.ASTDelegatePsiElement;
 import com.intellij.extapi.psi.ASTWrapperPsiElement;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.impl.CheckUtil;
@@ -69,6 +70,7 @@ public abstract class GroovyPsiElementImpl extends ASTWrapperPsiElement implemen
   public static void acceptGroovyChildren(PsiElement parent, GroovyElementVisitor visitor) {
     PsiElement child = parent.getFirstChild();
     while (child != null) {
+      ProgressManager.checkCanceled();
       if (child instanceof GroovyPsiElement) {
         ((GroovyPsiElement) child).accept(visitor);
       }
