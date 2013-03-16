@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,31 +42,45 @@ public abstract class AstTransformContributor {
 
   }
 
+  @NotNull
   public static Collection<PsiMethod> runContributorsForMethods(@NotNull final GrTypeDefinition clazz) {
-    Collection<PsiMethod> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<Collection<PsiMethod>>() {
+    final Collection<PsiMethod> methods = RecursionManager.doPreventingRecursion(clazz, false, new Computable<Collection<PsiMethod>>() {
       @Override
       public Collection<PsiMethod> compute() {
-        Collection<PsiMethod> collector = new ArrayList<PsiMethod>();
-        for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
-          contributor.collectMethods(clazz, collector);
-        }
-        return collector;
+        Collection<PsiMethod> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<Collection<PsiMethod>>() {
+          @Override
+          public Collection<PsiMethod> compute() {
+            Collection<PsiMethod> collector = new ArrayList<PsiMethod>();
+            for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
+              contributor.collectMethods(clazz, collector);
+            }
+            return collector;
+          }
+        });
+        return result == null ? Collections.<PsiMethod>emptyList() : result;
       }
     });
-    return result == null ? Collections.<PsiMethod>emptyList() : result;
+    return methods != null ? methods : Collections.<PsiMethod>emptyList();
   }
 
+  @NotNull
   public static List<GrField> runContributorsForFields(@NotNull final GrTypeDefinition clazz) {
-    List<GrField> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<List<GrField>>() {
+    final List<GrField> fields = RecursionManager.doPreventingRecursion(clazz, false, new Computable<List<GrField>>() {
       @Override
       public List<GrField> compute() {
-        List<GrField> collector = new ArrayList<GrField>();
-        for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
-          contributor.collectFields(clazz, collector);
-        }
-        return collector;
+        List<GrField> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<List<GrField>>() {
+          @Override
+          public List<GrField> compute() {
+            List<GrField> collector = new ArrayList<GrField>();
+            for (final AstTransformContributor contributor : EP_NAME.getExtensions()) {
+              contributor.collectFields(clazz, collector);
+            }
+            return collector;
+          }
+        });
+        return result == null ? Collections.<GrField>emptyList() : result;
       }
     });
-    return result == null ? Collections.<GrField>emptyList() : result;
+    return fields != null ? fields : Collections.<GrField>emptyList();
   }
 }
