@@ -23,7 +23,7 @@ import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 
-public class GrJoinControlStatementHandler implements JoinLinesHandlerDelegate {
+public class GrJoinControlStatementHandler2 implements JoinLinesHandlerDelegate {
   @Override
   public int tryJoinLines(Document document, PsiFile file, int start, int end) {
     if (!(file instanceof GroovyFileBase)) return CANNOT_JOIN;
