@@ -114,7 +114,7 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
       g.setPaint(b.isEnabled() ? Gray._30 : Gray._60);
       g.drawLine(4, 7, 7, 11);
       g.drawLine(7, 11, w, 2);
-      g.setPaint(b.isEnabled() ? Gray._200 : Gray._120);
+      g.setPaint(b.isEnabled() ? Gray._170 : Gray._120);
       g.drawLine(4, 5, 7, 9);
       g.drawLine(7, 9, w, 0);
     }
