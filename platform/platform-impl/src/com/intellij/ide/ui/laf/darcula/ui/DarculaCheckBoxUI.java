@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -69,22 +69,21 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
                                                      viewRect, iconRect, textRect, b.getIconTextGap());
 
     //background
-    if(c.isOpaque()) {
+    if (c.isOpaque()) {
       g.setColor(b.getBackground());
-      g.fillRect(0,0, size.width, size.height);
+      g.fillRect(0, 0, size.width, size.height);
     }
 
     final int x = iconRect.x + 3;
     final int y = iconRect.y + 3;
     final int w = iconRect.width - 6;
     final int h = iconRect.height - 6;
-    final int u = 1;
 
     g.translate(x, y);
     final Paint paint = UIUtil.getGradientPaint(w / 2, 0, b.getBackground().brighter(),
                                                   w / 2, h, b.getBackground());
     g.setPaint(paint);
-    g.fillRect(u, u, w - 2 * u, h - 2 * u);
+    g.fillRect(1, 1, w - 2, h - 2);
 
     //setup AA for lines
     final GraphicsConfig config = new GraphicsConfig(g);
@@ -111,13 +110,13 @@ public class DarculaCheckBoxUI extends MetalCheckBoxUI {
 
     if (b.getModel().isSelected()) {
       g.setRenderingHint(RenderingHints.KEY_STROKE_CONTROL, RenderingHints.VALUE_STROKE_PURE);
-      g.setStroke(new BasicStroke(u*2.0f, BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
-      g.setPaint(Gray._30);
-      g.drawLine(4*u, 7*u, 7*u, 11*u);
-      g.drawLine(7*u, 11*u, w, 2*u);
-      g.setPaint(Gray._200);
-      g.drawLine(4*u, 5*u, 7*u, 9*u);
-      g.drawLine(7*u, 9*u, w, 0);
+      g.setStroke(new BasicStroke(1 *2.0f, BasicStroke.CAP_ROUND,BasicStroke.JOIN_ROUND));
+      g.setPaint(b.isEnabled() ? Gray._30 : Gray._60);
+      g.drawLine(4, 7, 7, 11);
+      g.drawLine(7, 11, w, 2);
+      g.setPaint(b.isEnabled() ? Gray._200 : Gray._120);
+      g.drawLine(4, 5, 7, 9);
+      g.drawLine(7, 9, w, 0);
     }
     g.translate(-x, -y);
     config.restore();
