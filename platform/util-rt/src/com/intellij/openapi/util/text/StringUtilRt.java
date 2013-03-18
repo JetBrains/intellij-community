@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.util.text;
 
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -218,4 +219,11 @@ public class StringUtilRt {
   public static boolean endsWithChar(@Nullable CharSequence s, char suffix) {
     return s != null && s.length() != 0 && s.charAt(s.length() - 1) == suffix;
   }
+
+  public static boolean startsWithIgnoreCase(@NonNls @NotNull String str, @NonNls @NotNull String prefix) {
+    final int stringLength = str.length();
+    final int prefixLength = prefix.length();
+    return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);
+  }
+
 }
