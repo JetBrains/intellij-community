@@ -59,9 +59,14 @@ import java.util.Map;
  */
 public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
 
+  private static final Map<String, String> LINE_SEPARATORS         = ContainerUtilRt.newHashMap();
   private static final Map<String, String> ESCAPED_LINE_SEPARATORS = ContainerUtilRt.newHashMap();
 
   static {
+    for (LineSeparator separator : LineSeparator.values()) {
+      LINE_SEPARATORS.put(separator.getSeparatorString(), separator.toString());
+    }
+
     ESCAPED_LINE_SEPARATORS.put("\n", "\\n");
     ESCAPED_LINE_SEPARATORS.put("\r", "\\r");
     ESCAPED_LINE_SEPARATORS.put("\r\n", "\\r\\n");
@@ -74,7 +79,7 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
   public LineSeparatorPanel(@NotNull final Project project) {
     super(project);
 
-    myComponent = new TextPanel(getText(LineSeparator.CRLF.getSeparatorString())) {
+    myComponent = new TextPanel(LineSeparator.CRLF.toString()) {
       @Override
       protected void paintComponent(@NotNull final Graphics g) {
         super.paintComponent(g);
@@ -99,7 +104,13 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
   }
 
   @NotNull
-  private static String getText(@NotNull String separator) {
+  private static String getSeparatorName(@NotNull String separator) {
+    String result = LINE_SEPARATORS.get(separator);
+    return result == null ? "" : result;
+  }
+
+  @NotNull
+  private static String getEscapedSeparator(@NotNull String separator) {
     String result = ESCAPED_LINE_SEPARATORS.get(separator);
     return result == null ? "" : result;
   }
@@ -123,9 +134,8 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
         }
         else {
           myActionEnabled = true;
-          String text = getText(lineSeparator);
-          myComponent.setToolTipText(String.format("Line separator: %s%nClick to change", text));
-          myComponent.setText(text);
+          myComponent.setToolTipText(String.format("Line separator: %s%nClick to change", getEscapedSeparator(lineSeparator)));
+          myComponent.setText(getSeparatorName(lineSeparator));
           Project project = getProject();
           if (project != null) {
             String projectSeparator = CodeStyleSettingsManager.getInstance(project).getCurrentSettings().getLineSeparator();
@@ -134,7 +144,7 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
             }
           }
         }
-        
+
         if (myActionEnabled) {
           myComponent.setForeground(UIUtil.getActiveTextColor());
         }
