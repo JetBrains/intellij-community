@@ -24,9 +24,11 @@ import com.intellij.execution.ui.layout.actions.RestoreViewAction;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.ActionCallback;
+import com.intellij.openapi.util.ActiveRunnable;
+import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
@@ -493,12 +495,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     for (Content content : contents) {
       getStateFor(content).setWindow(0);
     }
-    myManager.removeAllContents(false);
-    if (isOriginal()) return;
     for (Content content : contents) {
       myOriginal.myManager.addContent(content);
       myOriginal.findCellFor(content).minimize(content);
     }
+    myManager.removeAllContents(false);
   }
 
   @Override
@@ -1075,15 +1076,10 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myCommonActionsPlaceholder.clear();
     myContextActions.clear();
 
-    ApplicationManager.getApplication().invokeLater(new Runnable() {
-      @Override
-      public void run() {
-        myOriginal = null;
-        myTopActions = null;
-        myAdditonalFocusActions = null;
-        myLeftToolbarActions = null;
-      }
-    });
+    myOriginal = null;
+    myTopActions = null;
+    myAdditonalFocusActions = null;
+    myLeftToolbarActions = null;
   }
 
   public void restoreLayout() {
