@@ -50,7 +50,7 @@ public class CreateMethodQuickFix extends IntentionAndQuickFixAction {
   @NotNull
   public String getName() {
 
-    String signature = PsiFormatUtil.formatMethod(createMethod(myTargetClass.getProject()), PsiSubstitutor.EMPTY,
+    String signature = PsiFormatUtil.formatMethod(createMethod(), PsiSubstitutor.EMPTY,
                                                   PsiFormatUtilBase.SHOW_NAME |
                                                   PsiFormatUtilBase.SHOW_TYPE |
                                                   PsiFormatUtilBase.SHOW_PARAMETERS |
@@ -69,7 +69,7 @@ public class CreateMethodQuickFix extends IntentionAndQuickFixAction {
   public void applyFix(Project project, PsiFile file, @Nullable Editor editor) {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(myTargetClass.getContainingFile())) return;
 
-    PsiMethod method = createMethod(project);
+    PsiMethod method = createMethod();
     List<Pair<PsiExpression, PsiType>> arguments =
       ContainerUtil.map2List(method.getParameterList().getParameters(), new Function<PsiParameter, Pair<PsiExpression, PsiType>>() {
         @Override
@@ -82,8 +82,11 @@ public class CreateMethodQuickFix extends IntentionAndQuickFixAction {
     CreateMethodFromUsageFix.doCreate(myTargetClass, method, arguments, PsiSubstitutor.EMPTY, ExpectedTypeInfo.EMPTY_ARRAY, method);
   }
 
-  private PsiMethod createMethod(Project project) {
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+  private PsiMethod createMethod() {
+    JVMElementFactory elementFactory = JVMElementFactories.getFactory(myTargetClass.getLanguage(), myTargetClass.getProject());
+    if (elementFactory == null) {
+      elementFactory = JavaPsiFacade.getElementFactory(myTargetClass.getProject());
+    }
     String methodText = mySignature + (myTargetClass.isInterface() ? ";" : "{" + myBody + "}");
     return elementFactory.createMethodFromText(methodText, null);
   }
@@ -92,7 +95,7 @@ public class CreateMethodQuickFix extends IntentionAndQuickFixAction {
   public static CreateMethodQuickFix createFix(@NotNull PsiClass targetClass, @NonNls final String signature, @NonNls final String body) {
     CreateMethodQuickFix fix = new CreateMethodQuickFix(targetClass, signature, body);
     try {
-      fix.createMethod(targetClass.getProject());
+      fix.createMethod();
       return fix;
     }
     catch (IncorrectOperationException e) {
