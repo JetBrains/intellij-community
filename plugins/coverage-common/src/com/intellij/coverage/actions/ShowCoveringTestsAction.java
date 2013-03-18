@@ -28,6 +28,7 @@ import com.intellij.rt.coverage.data.LineData;
 import com.intellij.ui.popup.NotLookupOrSearchCondition;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.PlatformIcons;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.Nullable;
 
@@ -100,7 +101,15 @@ public class ShowCoveringTestsAction extends AnAction {
       if (!elements.isEmpty()) {
         component = new ImplementationViewComponent(PsiUtilCore.toPsiElementArray(elements), 0);
         popupBuilder = JBPopupFactory.getInstance().createComponentPopupBuilder(component, component.getPreferredFocusableComponent())
-          .setDimensionServiceKey(project, "ShowTestsPopup", false);
+          .setDimensionServiceKey(project, "ShowTestsPopup", false)
+          .setCouldPin(new Processor<JBPopup>() {
+            @Override
+            public boolean process(JBPopup popup) {
+              component.showInUsageView();
+              popup.cancel();
+              return false;
+            }
+          });
       } else {
         component = null;
         final JPanel panel = new PanelWithText("Following test" + (testNames.length > 1 ? "s" : "") + " could not be found: " + StringUtil.join(testNames, ",").replace("_", "."));
