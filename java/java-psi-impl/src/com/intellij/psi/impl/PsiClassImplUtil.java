@@ -480,10 +480,15 @@ public class PsiClassImplUtil {
         if (list != null) {
           for (final Pair<PsiMember, PsiSubstitutor> candidate : list) {
             PsiMember candidateField = candidate.getFirst();
-            PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(candidateField.getContainingClass(), candidate.getSecond(), aClass,
+            PsiClass containingClass = candidateField.getContainingClass();
+            if (containingClass == null) {
+              LOG.error("No class for field " + candidateField.getName() + " of " + candidateField.getClass());
+              continue;
+            }
+            PsiSubstitutor finalSubstitutor = obtainFinalSubstitutor(containingClass, candidate.getSecond(), aClass,
                                                                      substitutor, factory, languageLevel);
 
-            processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, candidateField.getContainingClass());
+            processor.handleEvent(PsiScopeProcessor.Event.SET_DECLARATION_HOLDER, containingClass);
             if (!processor.execute(candidateField, state.put(PsiSubstitutor.KEY, finalSubstitutor))) return false;
           }
         }
