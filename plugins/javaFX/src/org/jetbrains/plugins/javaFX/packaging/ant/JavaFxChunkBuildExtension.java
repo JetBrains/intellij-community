@@ -23,6 +23,7 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactType;
@@ -37,9 +38,13 @@ import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactProperties;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactPropertiesProvider;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * User: anna
@@ -128,6 +133,11 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
                                        new Pair<String, String>("id", appId),
                                        new Pair<String, String>("name", artifactName),
                                        new Pair<String, String>("mainClass", properties.getAppClass()));
+
+    appendValuesFromPropertiesFile(applicationTag, properties.getHtmlParamFile(), "fx:htmlParam", false);
+    //also loads fx:argument values
+    appendValuesFromPropertiesFile(applicationTag, properties.getParamFile(), "fx:param", true);
+
     generator.add(applicationTag);
 
     //create jar task
@@ -197,6 +207,40 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
     final Tag deleteTag = new Tag("delete", new Pair<String, String>("includeemptydirs", "true"));
     deleteTag.add(new Tag("fileset", new Pair<String, String>("dir", tempDirPath)));
     generator.add(deleteTag);
+  }
+
+  private static void appendValuesFromPropertiesFile(final Tag applicationTag,
+                                                     final String htmlParamFile,
+                                                     final String paramTagName,
+                                                     final boolean allowNoNamed) {
+    if (!StringUtil.isEmptyOrSpaces(htmlParamFile)) {
+      final Properties htmlProperties = new Properties();
+      try {
+        final FileInputStream paramsInputStream = new FileInputStream(new File(htmlParamFile));
+        try {
+          htmlProperties.load(paramsInputStream);
+          for (Object o : htmlProperties.keySet()) {
+            final String propName = (String)o;
+            final String propValue = htmlProperties.getProperty(propName);
+            if (!StringUtil.isEmptyOrSpaces(propValue)) {
+              applicationTag.add(new Tag(paramTagName, new Pair<String, String>("name", propName), new Pair<String, String>("value", propValue)));
+            } else if (allowNoNamed) {
+              applicationTag.add(new Generator() {
+                @Override
+                public void generate(PrintWriter out) throws IOException {
+                  out.print("<fx:argument>" + propName + "</fx:argument>");
+                }
+              });
+            }
+          }
+        }
+        finally {
+          paramsInputStream.close();
+        }
+      }
+      catch (IOException ignore) {
+      }
+    }
   }
 
   private static String artifactBasedProperty(final String property, String artifactName) {
