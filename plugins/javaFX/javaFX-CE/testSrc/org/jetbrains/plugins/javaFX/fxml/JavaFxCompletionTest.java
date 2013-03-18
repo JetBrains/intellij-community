@@ -117,6 +117,14 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest("GridPane");
   }
 
+  public void testChildrenInsideGridPaneRoot() throws Exception {
+    doTest("children");
+  }
+
+  public void testClassInsideObjectProperty() throws Exception {
+    doTest("Insets");
+  }
+
   public void testReadOnly() throws Exception {
     configureByFile(getTestName(true) + ".fxml");
     assertTrue(myItems.length > 0);

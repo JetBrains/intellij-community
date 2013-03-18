@@ -71,7 +71,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
 
         final PsiType returnType = JavaFxPsiUtil.getDefaultPropertyExpectedType(myPsiClass);
         if (returnType != null) {
-          JavaFxPropertyElementDescriptor.collectDescriptorsByCollection(returnType, myPsiClass.getResolveScope(), children);
+          JavaFxPropertyElementDescriptor.collectDescriptorsByCollection(returnType, myPsiClass.getResolveScope(), children, myPsiClass.getProject());
         }
 
         for (String name : FxmlConstants.FX_DEFAULT_ELEMENTS) {
@@ -148,10 +148,17 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     }
 
     final String parentTagName = contextTag.getName();
-    if (!FxmlConstants.FX_ROOT.equals(parentTagName) && !FxmlConstants.FX_DEFINE.equals(parentTagName)) {
-      final JavaFxPropertyElementDescriptor elementDescriptor = new JavaFxPropertyElementDescriptor(myPsiClass, name, false);
-      if (myPsiClass != null && elementDescriptor.getDeclaration() != null) {
-        return elementDescriptor;
+    if (myPsiClass != null) {
+      if (!FxmlConstants.FX_DEFINE.equals(parentTagName)) {
+        final JavaFxPropertyElementDescriptor elementDescriptor = new JavaFxPropertyElementDescriptor(myPsiClass, name, false);
+        if (FxmlConstants.FX_ROOT.equals(parentTagName)) {
+          final PsiField fieldByName = myPsiClass.findFieldByName(name, true);
+          if (fieldByName != null) {
+            return elementDescriptor;
+          }
+        } else if (elementDescriptor.getDeclaration() != null) {
+          return elementDescriptor;
+        }
       }
     }
     return new JavaFxClassBackedElementDescriptor(name, childTag);
