@@ -43,7 +43,7 @@ public abstract class EditorBasedWidget extends FileEditorManagerAdapter impleme
   @Nullable
   protected final Editor getEditor() {
     final Project project = getProject();
-    if (project == null) return null;
+    if (project == null || project.isDisposed()) return null;
 
     FileEditor fileEditor = StatusBarUtil.getCurrentFileEditor(project, myStatusBar);
     Editor result = null;
