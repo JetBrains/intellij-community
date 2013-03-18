@@ -20,7 +20,7 @@ import com.intellij.util.LineSeparator;
 /**
  * @author Nikolai Matveev
  */
-public class ConvertToWindowsLineSeparatorsAction extends ConvertLineSeparatorsAction {
+public class ConvertToWindowsLineSeparatorsAction extends AbstractConvertLineSeparatorsAction {
 
   public ConvertToWindowsLineSeparatorsAction() {
     super("Windows (\\r\\n)", LineSeparator.CRLF);

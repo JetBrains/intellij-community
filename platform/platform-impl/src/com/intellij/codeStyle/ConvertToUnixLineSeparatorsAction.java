@@ -20,7 +20,7 @@ import com.intellij.util.LineSeparator;
 /**
  * @author Nikolai Matveev
  */
-public class ConvertToUnixLineSeparatorsAction extends ConvertLineSeparatorsAction {
+public class ConvertToUnixLineSeparatorsAction extends AbstractConvertLineSeparatorsAction {
 
   public ConvertToUnixLineSeparatorsAction() {
     super("Unix (\\n)", LineSeparator.LF);

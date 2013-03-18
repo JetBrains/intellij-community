@@ -20,7 +20,7 @@ import com.intellij.util.LineSeparator;
 /**
  * @author Nikolai Matveev
  */
-public class ConvertToMacLineSeparatorsAction extends ConvertLineSeparatorsAction {
+public class ConvertToMacLineSeparatorsAction extends AbstractConvertLineSeparatorsAction {
   public ConvertToMacLineSeparatorsAction() {
     super("Old Mac (\\r)", LineSeparator.CR);
   }
