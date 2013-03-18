@@ -14,23 +14,18 @@
  * limitations under the License.
  */
 
-package com.intellij.psi.util;
-
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.ui.SpeedSearchComparator;
-import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.Matcher;
-import org.jetbrains.annotations.NonNls;
-
-import java.util.ArrayList;
-import java.util.List;
-
+package com.intellij.psi.util
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.codeStyle.MinusculeMatcher
+import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.ui.SpeedSearchComparator
+import com.intellij.util.ThrowableRunnable
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.text.Matcher
+import org.jetbrains.annotations.NonNls
 /**
  * @author max
  * @author peter
