@@ -308,7 +308,7 @@ public class PopupChooserBuilder {
       .setCancelCallback(myCancelCallback)
       .setAlpha(myAlpha)
       .setFocusOwners(myFocusOwners)
-      .setCancelKeyEnabled(myCancelKeyEnabled && !(myChooserComponent instanceof ListWithFilter))
+      .setCancelKeyEnabled(myCancelKeyEnabled)
       .setAdText(myAd, myAdAlignment)
       .setKeyboardActions(myKeyboardActions)
       .setMayBeParent(myMayBeParent)
