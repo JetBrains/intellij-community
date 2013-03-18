@@ -2,6 +2,7 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -374,12 +375,12 @@ class PyDocumentationBuilder {
       return;
     }
     else if (documentationSettings.isReSTFormat(element.getContainingFile())) {
-      Module module = ModuleUtil.findModuleForPsiElement(element);
+      Module module = ModuleUtilCore.findModuleForPsiElement(element);
       String formatted = null;
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(element.getProject());
       Sdk pythonSdk = module != null ? PythonSdkType.findPythonSdk(module) : projectRootManager.getProjectSdk();
       if (pythonSdk != null) {
-        formatted = ReSTRunner.formatDocstring(pythonSdk, preparedDocstring);
+        formatted = ReSTRunner.formatDocstring(pythonSdk, docstring);
       }
       if (formatted == null) {
         formatted = new SphinxDocString(preparedDocstring).getDescription();

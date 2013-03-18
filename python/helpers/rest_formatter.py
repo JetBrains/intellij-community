@@ -15,6 +15,12 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
     atts['align'] = "right"
     self.body.append(self.starttag(node, 'th', '', **atts))
 
+  def unknown_visit(self, node):
+    """ Ignore unknown nodes """
+
+  def unknown_departure(self, node):
+    """ Ignore unknown nodes """
+
 class MyParsedRstDocstring(ParsedRstDocstring):
   def __init__(self, document):
     ParsedRstDocstring.__init__(self, document)
