@@ -4,6 +4,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.LineTokenizer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +27,7 @@ import com.jetbrains.python.psi.resolve.QualifiedResolveResult;
 import com.jetbrains.python.psi.resolve.RootVisitor;
 import com.jetbrains.python.psi.resolve.RootVisitorHost;
 import com.jetbrains.python.psi.types.*;
+import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
@@ -374,8 +376,10 @@ class PyDocumentationBuilder {
     else if (documentationSettings.isReSTFormat(element.getContainingFile())) {
       Module module = ModuleUtil.findModuleForPsiElement(element);
       String formatted = null;
-      if (module != null) {
-        formatted = ReSTRunner.formatDocstring(module, preparedDocstring);
+      final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(element.getProject());
+      Sdk pythonSdk = module != null ? PythonSdkType.findPythonSdk(module) : projectRootManager.getProjectSdk();
+      if (pythonSdk != null) {
+        formatted = ReSTRunner.formatDocstring(pythonSdk, preparedDocstring);
       }
       if (formatted == null) {
         formatted = new SphinxDocString(preparedDocstring).getDescription();
