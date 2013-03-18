@@ -91,7 +91,13 @@ public class MavenArtifactDownloader {
     }
     finally {
       boolean isAsync = !ApplicationManager.getApplication().isUnitTestMode();
-      LocalFileSystem.getInstance().refreshIoFiles(downloadedFiles, isAsync, false, null);
+
+      Set<File> parentsToRefresh = new HashSet<File>(); // We have to refresh parents of downloaded files, because some additional files could be download.
+      for (File file : downloadedFiles) {
+        parentsToRefresh.add(file.getParentFile());
+      }
+
+      LocalFileSystem.getInstance().refreshIoFiles(parentsToRefresh, isAsync, false, null);
     }
   }
 
