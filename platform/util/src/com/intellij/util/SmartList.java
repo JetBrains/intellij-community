@@ -268,23 +268,6 @@ public class SmartList<E> extends AbstractList<E> {
   }
 
   /**
-   * Copies list elements into new array and clears the list if requested.
-   *
-   * @param factory a factory to allocate arrays.
-   * @param clear   clear this lists after copying.
-   * @return allocated array.
-   */
-  @NotNull
-  public <T> T[] toArray(@NotNull ArrayFactory<T> factory, boolean clear) {
-    T[] a = factory.create(mySize);
-    if (size() > 0) {
-      a = toArray(a);
-      if (clear) clear();
-    }
-    return a;
-  }
-
-  /**
    * Trims the capacity of this list to be the
    * list's current size.  An application can use this operation to minimize
    * the storage of a list instance.
