@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -136,7 +136,10 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     if (myProject.isDisposed()) return;
 
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getFocusOwner();
-    if (SwingUtilities.isDescendingFrom(myToolWindow.getComponent(), owner) || JBPopupFactory.getInstance().isPopupActive()) return;
+    final boolean insideToolwindow = SwingUtilities.isDescendingFrom(myToolWindow.getComponent(), owner);
+    if (!myFirstRun && (insideToolwindow || JBPopupFactory.getInstance().isPopupActive())) {
+      return;
+    }
 
     final DataContext dataContext = DataManager.getInstance().getDataContext(owner);
     if (dataContext.getData(myKey) == this) return;
