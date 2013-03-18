@@ -302,6 +302,11 @@ public class AdvHighlightingTest extends DaemonAnalyzerTestCase {
     doTest(BASE_PATH + "/packageClassClash2/pkg/Sub.java", BASE_PATH + "/packageClassClash2", false, false);
   }
 
+  // todo[r.sh] IDEA-91596 (probably PJCRE.resolve() should be changed to qualifier-first model)
+  //public void testPackageAndClassConflict3() throws Exception {
+  //  doTest(BASE_PATH + "/packageClassClash3/test/Test.java", BASE_PATH + "/packageClassClash3", false, false);
+  //}
+
   public void testDefaultPackageAndClassConflict() throws Exception {
     doTest(BASE_PATH + "/lang.java", false, false);
   }
