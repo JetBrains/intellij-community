@@ -29,13 +29,13 @@ import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.WriteAction;
-import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
@@ -217,21 +217,36 @@ public class CodeCompletionHandlerBase {
   }
 
   private static void assertCommitSuccessful(Editor editor, PsiFile psiFile) {
-    int docLength = editor.getDocument().getTextLength();
+    Document document = editor.getDocument();
+    int docLength = document.getTextLength();
     int psiLength = psiFile.getTextLength();
-    if (docLength != psiLength) {
-      if (ApplicationManagerEx.getApplicationEx().isInternal()) {
-        String docText = editor.getDocument().getText();
-        String psiText = psiFile.getText();
-        String message = "unsuccessful commit: (injected=" +(editor instanceof EditorWindow) +"); document " + System.identityHashCode(editor.getDocument()) + "; " +
-                         "docText=\n'" + docText +"' (" + docText.length() +" chars; .length()="+ docLength+")\n" +
-                         "; fileText=\n'" + psiText + "' (" + psiText.length() +" chars; .length()="+ psiLength+")\n"
-                         ;
-        throw new AssertionError(message);
-      }
-
-      throw new AssertionError("unsuccessful commit: injected=" + (editor instanceof EditorWindow));
+    if (docLength == psiLength) {
+      return;
     }
+
+    String message = "unsuccessful commit: (injected=" +(editor instanceof EditorWindow) +")";
+    message += "\nfile=" + psiFile.getName();
+    message += "\nfile class=" + psiFile.getClass();
+    message += "\nlanguage=" + psiFile.getLanguage();
+    message += "\ndoc.length=" + docLength;
+    message += "\npsiFile.length=" + psiLength;
+    String fileText = psiFile.getText();
+    if (fileText != null) {
+      message += "\npsiFile.text.length=" + fileText.length();
+    }
+    FileASTNode node = psiFile.getNode();
+    if (node != null) {
+      message += "\nnode.length=" + node.getTextLength();
+      String nodeText = node.getText();
+      if (nodeText != null) {
+        message += "\nnode.text.length=" + nodeText.length();
+      }
+    }
+
+    LOG.error(LogMessageEx.createEvent("Commit unsuccessful", message,
+                                       new Attachment(psiFile.getViewProvider().getVirtualFile().getPath(), fileText),
+                                       createAstAttachment(psiFile, psiFile),
+                                       new Attachment("docText.txt", document.getText())));
   }
 
   private static void checkEditorValid2(Editor editor) {
