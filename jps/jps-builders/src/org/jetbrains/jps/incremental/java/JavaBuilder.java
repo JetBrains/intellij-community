@@ -78,7 +78,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
   private static final String DOT_JAVA_EXTENSION = "." + JAVA_EXTENSION;
   public static final boolean USE_EMBEDDED_JAVAC = System.getProperty(GlobalOptions.USE_EXTERNAL_JAVAC_OPTION) == null;
   private static final Key<Integer> JAVA_COMPILER_VERSION_KEY = Key.create("_java_compiler_version_");
-  private static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
+  public static final Key<Boolean> IS_ENABLED = Key.create("_java_compiler_enabled_");
   private static final Key<AtomicReference<String>> COMPILER_VERSION_INFO = Key.create("_java_compiler_version_info_");
 
   private static final Set<String> FILTERED_OPTIONS = new HashSet<String>(Arrays.<String>asList(
