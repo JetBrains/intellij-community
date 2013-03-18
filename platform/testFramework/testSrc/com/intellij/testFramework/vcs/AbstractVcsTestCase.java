@@ -192,7 +192,8 @@ public abstract class AbstractVcsTestCase {
     new WriteCommandAction.Simple(myProject) {
       @Override
       protected void run() throws Throwable {
-        for (int i = 0; i < 5; i++) {
+        int numOfRuns = 5;
+        for (int i = 0; i < numOfRuns; i++) {
           try {
             final VirtualFile[] children = dir.getChildren();
             for (VirtualFile child : children) {
@@ -203,11 +204,11 @@ public abstract class AbstractVcsTestCase {
             return;
           }
           catch (IOException e) {
-            try {
-              Thread.sleep(50);
-            } catch (InterruptedException e1) {
-              //
+            if (i == (numOfRuns - 1)) {
+              // last run
+              throw e;
             }
+            Thread.sleep(50);
             continue;
           }
         }
