@@ -15,6 +15,8 @@
  */
 package com.intellij.openapi.util;
 
+import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
 public class AsyncResult<T> extends ActionCallback {
@@ -35,6 +37,18 @@ public class AsyncResult<T> extends ActionCallback {
   }
 
   @NotNull
+  public <DependentResult> AsyncResult<DependentResult> subResult(@NotNull Function<T, DependentResult> doneHandler) {
+    return subResult(new AsyncResult<DependentResult>(), doneHandler);
+  }
+
+  @NotNull
+  public <SubResult, SubAsyncResult extends AsyncResult<SubResult>> SubAsyncResult subResult(@NotNull SubAsyncResult subResult,
+                                                                                             @NotNull Function<T, SubResult> doneHandler) {
+    doWhenDone(new SubResultDoneCallback<T, SubResult, SubAsyncResult>(subResult, doneHandler)).notifyWhenRejected(subResult);
+    return subResult;
+  }
+
+  @NotNull
   public AsyncResult<T> doWhenDone(@NotNull final Handler<T> handler) {
     doWhenDone(new Runnable() {
       public void run() {
@@ -51,6 +65,12 @@ public class AsyncResult<T> extends ActionCallback {
         handler.run(myResult);
       }
     });
+    return this;
+  }
+
+  @NotNull
+  public final AsyncResult<T> notify(@NotNull final ActionCallback child) {
+    super.notify(child);
     return this;
   }
 
@@ -75,6 +95,32 @@ public class AsyncResult<T> extends ActionCallback {
 
     public Rejected(T value) {
       setRejected(value);
+    }
+  }
+
+  // we don't use inner class, avoid memory leak, we don't want to hold this result while dependent is computing
+  private static class SubResultDoneCallback<Result, SubResult, AsyncSubResult extends AsyncResult<SubResult>> implements Handler<Result> {
+    private static final Logger LOG = Logger.getInstance(SubResultDoneCallback.class);
+
+    private final AsyncSubResult dependentResult;
+    private final Function<Result, SubResult> doneHandler;
+
+    public SubResultDoneCallback(AsyncSubResult dependentResult, Function<Result, SubResult> doneHandler) {
+      this.dependentResult = dependentResult;
+      this.doneHandler = doneHandler;
+    }
+
+    public void run(Result result) {
+      SubResult v;
+      try {
+        v = doneHandler.fun(result);
+      }
+      catch (Throwable e) {
+        dependentResult.setRejected();
+        LOG.error(e);
+        return;
+      }
+      dependentResult.setDone(v);
     }
   }
 }

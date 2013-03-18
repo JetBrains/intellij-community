@@ -110,7 +110,7 @@ public class ActionCallback implements Disposable {
   }
 
   @NotNull
-  public final ActionCallback notify(@NotNull final ActionCallback child) {
+  public ActionCallback notify(@NotNull final ActionCallback child) {
     return doWhenDone(child.createSetDoneRunnable()).doWhenRejected(child.createSetRejectedRunnable());
   }
 
