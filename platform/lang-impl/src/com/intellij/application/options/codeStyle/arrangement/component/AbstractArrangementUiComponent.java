@@ -92,6 +92,11 @@ public abstract class AbstractArrangementUiComponent implements ArrangementUiCom
 
   protected abstract JComponent doGetUiComponent();
 
+  @Override
+  public void setData(@NotNull Object data) {
+    // Do nothing
+  }
+  
   public void setListener(@Nullable Listener listener) {
     myListener = listener;
   }

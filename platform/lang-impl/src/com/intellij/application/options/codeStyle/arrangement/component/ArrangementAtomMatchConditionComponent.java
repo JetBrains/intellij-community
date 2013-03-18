@@ -16,7 +16,6 @@
 package com.intellij.application.options.codeStyle.arrangement.component;
 
 import com.intellij.application.options.codeStyle.arrangement.ArrangementConstants;
-import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.application.options.codeStyle.arrangement.action.ArrangementRemoveConditionAction;
 import com.intellij.application.options.codeStyle.arrangement.animation.ArrangementAnimationPanel;
 import com.intellij.application.options.codeStyle.arrangement.color.ArrangementColorsProvider;
@@ -25,6 +24,7 @@ import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementAtomMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
+import com.intellij.psi.codeStyle.arrangement.std.ArrangementStandardSettingsManager;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementUiComponent;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
 import com.intellij.ui.IdeBorderFactory;
@@ -229,6 +229,11 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     return myCondition;
   }
 
+  @Override
+  public void setData(@NotNull Object data) {
+    // Do nothing
+  }
+  
   @NotNull
   @Override
   public JComponent getUiComponent() {

@@ -32,10 +32,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-import java.util.Queue;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
@@ -180,12 +177,14 @@ public class ArrangementUtil {
   }
 
   @NotNull
-  public static Set<ArrangementSettingsToken> extractTokens(@NotNull ArrangementMatchCondition condition) {
-    final Set<ArrangementSettingsToken> result = ContainerUtilRt.newHashSet();
+  public static Map<ArrangementSettingsToken, Object> extractTokens(@NotNull ArrangementMatchCondition condition) {
+    final Map<ArrangementSettingsToken, Object> result = ContainerUtilRt.newHashMap();
     condition.invite(new ArrangementMatchConditionVisitor() {
       @Override
       public void visit(@NotNull ArrangementAtomMatchCondition condition) {
-        result.add(condition.getType()); 
+        ArrangementSettingsToken type = condition.getType();
+        Object value = condition.getValue();
+        result.put(condition.getType(), type.equals(value) ? null : value); 
       }
 
       @Override

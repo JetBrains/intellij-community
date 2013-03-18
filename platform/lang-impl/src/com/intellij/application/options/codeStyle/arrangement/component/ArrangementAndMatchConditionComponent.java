@@ -96,6 +96,11 @@ public class ArrangementAndMatchConditionComponent extends JPanel implements Arr
     return mySetting;
   }
 
+  @Override
+  public void setData(@NotNull Object data) {
+    // Do nothing
+  }
+
   @NotNull
   @Override
   public JComponent getUiComponent() {

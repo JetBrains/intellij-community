@@ -112,6 +112,11 @@ public class ArrangementTextFieldUiComponent extends AbstractArrangementUiCompon
   }
 
   @Override
+  public void setData(@NotNull Object data) {
+    myTextField.setText(data.toString());
+  }
+
+  @Override
   public void doReset() {
     myTextField.setText("");
   }

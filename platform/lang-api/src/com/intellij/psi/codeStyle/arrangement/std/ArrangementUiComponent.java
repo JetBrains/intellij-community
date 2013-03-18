@@ -69,6 +69,8 @@ public interface ArrangementUiComponent {
    * @param selected  flag that indicates if current component should be drawn as 'selected'
    */
   void setSelected(boolean selected);
+
+  void setData(@NotNull Object data);
   
   void reset();
   

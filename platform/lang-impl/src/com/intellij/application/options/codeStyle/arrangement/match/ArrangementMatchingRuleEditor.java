@@ -261,13 +261,13 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
     Object element = model.getElementAt(row);
     ArrangementSettingsToken orderType = element instanceof ArrangementMatchRule ? ((ArrangementMatchRule)element).getOrderType() : null;
     final ArrangementMatchCondition condition;
-    final Set<ArrangementSettingsToken> conditionTokens;
+    final Map<ArrangementSettingsToken, Object> conditionTokens;
     
     if (element instanceof EmptyArrangementRuleComponent) {
       // We need to disable conditions which are not applicable for empty rules (e.g. we don't want to enable 'volatile' condition
       // for java rearranger if no 'field' condition is selected.
       condition = null;
-      conditionTokens = ContainerUtilRt.newHashSet();
+      conditionTokens = ContainerUtilRt.newHashMap();
     }
     else if (!(element instanceof StdArrangementMatchRule)) {
       return;
@@ -283,7 +283,11 @@ public class ArrangementMatchingRuleEditor extends JPanel implements Arrangement
         ArrangementSettingsToken token = component.getToken();
         if (token != null && (token.equals(orderType) || mySettingsManager.isEnabled(token, condition))) {
           component.setEnabled(true);
-          component.setSelected(conditionTokens.contains(token));
+          component.setSelected(conditionTokens.containsKey(token));
+          Object value = conditionTokens.get(token);
+          if (value != null) {
+            component.setData(value);
+          }
         }
       }
 

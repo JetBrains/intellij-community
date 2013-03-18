@@ -161,6 +161,11 @@ public class ArrangementListRowDecorator extends JPanel implements ArrangementUi
     myDelegate.setSelected(selected); 
   }
 
+  @Override
+  public void setData(@NotNull Object data) {
+    myDelegate.setData(data);
+  }
+
   public void setShowSortIcon(boolean show) {
     mySortLabel.setVisible(show);
   }
