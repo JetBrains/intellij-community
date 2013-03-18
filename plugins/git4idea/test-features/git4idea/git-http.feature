@@ -15,6 +15,7 @@ Feature: Support remote operation over HTTP.
     When I provide username 'gituser'
     Then I should be asked for the password
     When I provide password 'gitpassword'
+    Then repository should be cloned to projectA
 
   Scenario: Clone from HTTP url containing username, provide incorrect password
     When I clone http://gituser@deb6-vm7-git/projectA.git
