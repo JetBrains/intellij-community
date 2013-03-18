@@ -1,5 +1,6 @@
 import sys
 from docutils.core import publish_string
+from docutils import nodes
 from epydoc.markup import DocstringLinker
 from epydoc.markup.restructuredtext import ParsedRstDocstring, _EpydocHTMLTranslator, _DocumentPseudoWriter, _EpydocReader
 
@@ -20,6 +21,25 @@ class RestHTMLTranslator(_EpydocHTMLTranslator):
 
   def unknown_departure(self, node):
     """ Ignore unknown nodes """
+
+
+  def visit_literal(self, node):
+    """Process text to prevent tokens from wrapping."""
+    self.body.append(
+      self.starttag(node, 'tt', '', CLASS='docutils literal'))
+    text = node.astext()
+    for token in self.words_and_spaces.findall(text):
+      if token.strip():
+        self.body.append('<code>%s</code>'
+                         % self.encode(token))
+      elif token in ('\n', ' '):
+        # Allow breaks at whitespace:
+        self.body.append(token)
+      else:
+        # Protect runs of multiple spaces; the last space can wrap:
+        self.body.append('&nbsp;' * (len(token) - 1) + ' ')
+    self.body.append('</tt>')
+    raise nodes.SkipNode
 
 class MyParsedRstDocstring(ParsedRstDocstring):
   def __init__(self, document):
