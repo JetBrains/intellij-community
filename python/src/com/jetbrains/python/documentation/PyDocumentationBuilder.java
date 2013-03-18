@@ -364,7 +364,8 @@ class PyDocumentationBuilder {
     List<String> result = new ArrayList<String>();
     String[] lines = removeCommonIndentation(docstring);
     String preparedDocstring = StringUtil.join(lines, "\n");
-    if (documentationSettings.isEpydocFormat(element.getContainingFile())) {
+    if (documentationSettings.isEpydocFormat(element.getContainingFile()) ||
+        StructuredDocString.isEpydocDocstring(preparedDocstring)) {
       Module module = ModuleUtil.findModuleForPsiElement(element);
       final EpydocString epydocString = new EpydocString(preparedDocstring);
 
@@ -374,7 +375,8 @@ class PyDocumentationBuilder {
       unformattedOutput.add(result);
       return;
     }
-    else if (documentationSettings.isReSTFormat(element.getContainingFile())) {
+    else if (documentationSettings.isReSTFormat(element.getContainingFile()) ||
+      StructuredDocString.isSphinxDocstring(preparedDocstring)) {
       Module module = ModuleUtilCore.findModuleForPsiElement(element);
       String formatted = null;
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(element.getProject());
