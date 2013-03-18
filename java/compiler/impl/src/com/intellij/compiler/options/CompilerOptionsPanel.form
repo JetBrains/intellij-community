@@ -29,7 +29,7 @@
               <text resource-bundle="messages/CompilerBundle" key="label.option.resource.patterns.text"/>
             </properties>
           </component>
-          <component id="263f1" class="javax.swing.JTextField" binding="myResourcePatternsField">
+          <component id="263f1" class="com.intellij.ui.RawCommandLineEditor" binding="myResourcePatternsField" custom-create="true">
             <constraints>
               <grid row="0" column="1" row-span="1" col-span="1" vsize-policy="0" hsize-policy="6" anchor="8" fill="1" indent="0" use-parent-layout="false">
                 <preferred-size width="150" height="-1"/>
@@ -37,7 +37,6 @@
             </constraints>
             <properties>
               <focusable value="true"/>
-              <margin top="0" left="2" bottom="0" right="0"/>
               <text value="" noi18n="true"/>
             </properties>
           </component>

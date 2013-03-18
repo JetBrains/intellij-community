@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,9 +26,13 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.Gray;
 import com.intellij.ui.JBColor;
+import com.intellij.ui.RawCommandLineEditor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -40,10 +44,29 @@ import java.util.StringTokenizer;
 
 public class CompilerUIConfigurable implements SearchableConfigurable, Configurable.NoScroll {
   private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.options.CompilerUIConfigurable");
+
+  public static final Function<String, List<String>> LINE_PARSER = new Function<String, List<String>>() {
+    @Override
+    public List<String> fun(String text) {
+      final ArrayList<String> result = ContainerUtilRt.newArrayList();
+      final StringTokenizer tokenizer = new StringTokenizer(text, ";", false);
+      while (tokenizer.hasMoreTokens()) {
+        result.add(tokenizer.nextToken());
+      }
+      return result;
+    }
+  };
+  public static final Function<List<String>, String> LINE_JOINER = new Function<List<String>, String>() {
+    @Override
+    public String fun(List<String> strings) {
+      return StringUtil.join(strings, ";");
+    }
+  };
+
   private JPanel myPanel;
   private final Project myProject;
 
-  private JTextField myResourcePatternsField;
+  private RawCommandLineEditor myResourcePatternsField;
   private JCheckBox myCbClearOutputDirectory;
   private JCheckBox myCbAssertNotNull;
   private JBLabel myPatternLegendLabel;
@@ -222,4 +245,8 @@ public class CompilerUIConfigurable implements SearchableConfigurable, Configura
     myVMOptionsLabel.setEnabled(enabled);
   }
 
+  private void createUIComponents() {
+    myResourcePatternsField = new RawCommandLineEditor(LINE_PARSER, LINE_JOINER);
+    myResourcePatternsField.setDialogCaption("Resource patterns");
+  }
 }

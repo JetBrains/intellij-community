@@ -17,6 +17,7 @@ package com.intellij.util.execution;
 
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
@@ -29,6 +30,19 @@ import java.util.List;
  * @author nik
  */
 public class ParametersListUtil {
+  public static final Function<String, List<String>> DEFAULT_LINE_PARSER = new Function<String, List<String>>() {
+    @Override
+    public List<String> fun(String text) {
+      return parse(text, true);
+    }
+  };
+  public static final Function<List<String>,String> DEFAULT_LINE_JOINER = new Function<List<String>, String>() {
+    @Override
+    public String fun(List<String> strings) {
+      return StringUtil.join(strings, " ");
+    }
+  };
+
   /**
    * <p>Joins list of parameters into single string, which may be then parsed back into list by {@link #parseToArray(String)}.</p>
    * <p/>
