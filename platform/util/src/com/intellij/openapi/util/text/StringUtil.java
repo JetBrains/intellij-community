@@ -304,6 +304,20 @@ public class StringUtil extends StringUtilRt {
     return c == '\n' || c == '\r';
   }
 
+  @NotNull
+  public static String escapeLineBreak(@NotNull String text) {
+    StringBuilder buffer = new StringBuilder();
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      switch (c) {
+        case '\n': buffer.append("\\n"); break;
+        case '\r': buffer.append("\\r"); break;
+        default: buffer.append(c);
+      }
+    }
+    return buffer.toString();
+  }
+
   public static boolean endsWithLineBreak(@NotNull CharSequence text) {
     int len = text.length();
     return len > 0 && isLineBreak(text.charAt(len - 1));

@@ -21,9 +21,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.colors.CodeInsightColors;
-import com.intellij.openapi.editor.colors.EditorColorsManager;
-import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.FileEditorManagerEvent;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
@@ -31,6 +28,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.ListPopup;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
 import com.intellij.openapi.vfs.VirtualFileEvent;
@@ -39,11 +37,9 @@ import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.wm.CustomStatusBarWidget;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.StatusBarWidget;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.LineSeparator;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,26 +47,12 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.MouseEvent;
-import java.util.Map;
 
 /**
  * @author Denis Zhdanov
  * @since 3/17/13 11:56 AM
  */
 public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
-
-  private static final Map<String, String> LINE_SEPARATORS         = ContainerUtilRt.newHashMap();
-  private static final Map<String, String> ESCAPED_LINE_SEPARATORS = ContainerUtilRt.newHashMap();
-
-  static {
-    for (LineSeparator separator : LineSeparator.values()) {
-      LINE_SEPARATORS.put(separator.getSeparatorString(), separator.toString());
-    }
-
-    ESCAPED_LINE_SEPARATORS.put("\n", "\\n");
-    ESCAPED_LINE_SEPARATORS.put("\r", "\\r");
-    ESCAPED_LINE_SEPARATORS.put("\r\n", "\\r\\n");
-  }
 
   @NotNull private final TextPanel myComponent;
 
@@ -103,18 +85,6 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
     myComponent.setBorder(WidgetBorder.INSTANCE);
   }
 
-  @NotNull
-  private static String getSeparatorName(@NotNull String separator) {
-    String result = LINE_SEPARATORS.get(separator);
-    return result == null ? "" : result;
-  }
-
-  @NotNull
-  private static String getEscapedSeparator(@NotNull String separator) {
-    String result = ESCAPED_LINE_SEPARATORS.get(separator);
-    return result == null ? "" : result;
-  }
-
   private void update() {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
@@ -134,15 +104,8 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
         }
         else {
           myActionEnabled = true;
-          myComponent.setToolTipText(String.format("Line separator: %s%nClick to change", getEscapedSeparator(lineSeparator)));
-          myComponent.setText(getSeparatorName(lineSeparator));
-          Project project = getProject();
-          if (project != null) {
-            String projectSeparator = CodeStyleSettingsManager.getInstance(project).getCurrentSettings().getLineSeparator();
-            if (projectSeparator != null && !projectSeparator.equals(lineSeparator)) {
-              myComponent.setCustomColor(getErrorColor());
-            }
-          }
+          myComponent.setToolTipText(String.format("Line separator: %s%nClick to change", StringUtil.escapeLineBreak(lineSeparator)));
+          myComponent.setText(LineSeparator.fromString(lineSeparator).toString());
         }
 
         if (myActionEnabled) {
@@ -157,13 +120,6 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
         }
       }
     });
-  }
-
-  @NotNull
-  private static Color getErrorColor() {
-    TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.ERRORS_ATTRIBUTES);
-    Color color = attributes.getForegroundColor();
-    return color == null ? Color.RED : color;
   }
 
   private void showPopup(MouseEvent e) {
