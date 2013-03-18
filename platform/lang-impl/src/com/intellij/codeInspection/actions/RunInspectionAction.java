@@ -43,7 +43,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.LinkedHashSet;
+import java.util.List;
 
 /**
  * @author Konstantin Bulenkov
@@ -78,15 +81,31 @@ public class RunInspectionAction extends GotoActionBase {
       public void elementChosen(ChooseByNamePopup popup, final Object element) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           public void run() {
-            runInspection(project, (InspectionProfileEntry)element, virtualFile, psiElement, psiFile);
+            InspectionProfileEntry profileEntry = (InspectionProfileEntry)element;
+            LinkedHashSet<InspectionProfileEntry> dependentEntries = new LinkedHashSet<InspectionProfileEntry>();
+            collectDependentInspections(profileEntry, dependentEntries, model);
+            runInspection(project, profileEntry.getDisplayName(), new ArrayList<InspectionProfileEntry>(dependentEntries), virtualFile, psiElement, psiFile);
           }
         });
       }
     });
   }
 
+  private static void collectDependentInspections(@NotNull InspectionProfileEntry profileEntry,
+                                                  @NotNull LinkedHashSet<InspectionProfileEntry> dependentEntries,
+                                                  @NotNull GotoInspectionModel model) {
+    dependentEntries.add(profileEntry);
+    String mainToolId = profileEntry.getMainToolId();
+    InspectionProfileEntry dependentEntry = mainToolId != null ? model.getProfileEntryByName(mainToolId) : null;
+
+    if (dependentEntry != null && !dependentEntries.contains(dependentEntry)) {
+      collectDependentInspections(dependentEntry, dependentEntries, model);
+    }
+  }
+
   private static void runInspection(@NotNull Project project,
-                                    @NotNull InspectionProfileEntry profileEntry,
+                                    @NotNull String profileName,
+                                    @NotNull List<InspectionProfileEntry> profileEntries,
                                     @Nullable VirtualFile virtualFile,
                                     PsiElement psiElement, PsiFile psiFile) {
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
@@ -139,6 +158,6 @@ public class RunInspectionAction extends GotoActionBase {
     if (!dlg.isOK()) return;
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     scope = dlg.getScope(uiOptions, scope, project, module);
-    RunInspectionIntention.rerunInspection(profileEntry, managerEx, scope, psiFile);
+    RunInspectionIntention.rerunInspection(profileName, profileEntries, managerEx, scope, psiFile);
   }
 }

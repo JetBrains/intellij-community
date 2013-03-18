@@ -24,6 +24,7 @@ import com.intellij.codeInspection.visibility.VisibilityInspection;
 
 import java.util.ArrayList;
 import java.util.Arrays;
+import java.util.Collections;
 
 /**
  * @author Dmitry Avdeev
@@ -59,7 +60,8 @@ public class GlobalInspectionContextTest extends CodeInsightTestCase {
     InspectionProfileEntry[] tools = profile.getInspectionTools(null);
     for (InspectionProfileEntry tool : tools) {
       if (!tool.isEnabledByDefault()) {
-        GlobalInspectionContextImpl context = RunInspectionIntention.createContext(tool, (InspectionManagerEx)InspectionManager.getInstance(myProject), null);
+        GlobalInspectionContextImpl context = RunInspectionIntention.createContext(tool.getDisplayName(), Collections.singletonList(tool),
+                                                                                   (InspectionManagerEx)InspectionManager.getInstance(myProject), null);
         context.initializeTools(new ArrayList<Tools>(), new ArrayList<Tools>(), new ArrayList<Tools>());
         assertEquals(1, context.getTools().size());
         return;
