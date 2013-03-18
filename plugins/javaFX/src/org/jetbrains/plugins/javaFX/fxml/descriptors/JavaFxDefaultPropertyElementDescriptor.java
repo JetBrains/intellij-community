@@ -68,6 +68,9 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
     final String name = childTag.getName();
     if (myName.equals(FxmlConstants.FX_DEFINE)) {
+      if (name.equals(FxmlConstants.FX_INCLUDE)) {
+        return new JavaFxDefaultPropertyElementDescriptor(name, childTag);
+      }
       return new JavaFxClassBackedElementDescriptor(name, childTag);
     }
 

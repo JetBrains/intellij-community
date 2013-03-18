@@ -214,6 +214,11 @@ public class JavaFXHighlightingTest extends DaemonAnalyzerTestCase {
     doDoTest(false, false);
   }
 
+  public void testAllowIncludeTagInsideDefine() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", "btn.fxml");
+    doDoTest(false, false);
+  }
+
   public void testValueOfAcceptance() throws Exception {
     doTest();
   }
