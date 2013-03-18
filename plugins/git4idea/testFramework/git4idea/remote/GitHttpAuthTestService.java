@@ -54,7 +54,8 @@ public class GitHttpAuthTestService extends GitHttpAuthService {
 
   @NotNull
   @Override
-  public GitHttpAuthenticator createAuthenticator(@NotNull Project project, @Nullable ModalityState state, @NotNull GitCommand command) {
+  public GitHttpAuthenticator createAuthenticator(@NotNull Project project, @Nullable ModalityState state, @NotNull GitCommand command,
+                                                  @NotNull String url) {
     return myAuthenticator;
   }
 
