@@ -35,6 +35,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -42,8 +43,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Collections;
-import java.util.List;
+import java.util.LinkedHashSet;
+import java.util.Set;
 
 /**
  * User: anna
@@ -72,7 +73,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final InspectionProfileEntry tool =
-        InspectionProjectProfileManager.getInstance(project).getInspectionProfile().getInspectionTool(myShortName, file);
+      InspectionProjectProfileManager.getInstance(project).getInspectionProfile().getInspectionTool(myShortName, file);
     if (tool instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)tool).isUnfair()) {
       return false;
     }
@@ -98,32 +99,34 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     final AnalysisUIOptions uiOptions = AnalysisUIOptions.getInstance(project);
     analysisScope = dlg.getScope(uiOptions, analysisScope, project, module);
     final InspectionProfileEntry baseTool =
-        InspectionProjectProfileManager.getInstance(project).getInspectionProfile().getInspectionTool(myShortName, file);
-    rerunInspection(baseTool.getDisplayName(), Collections.singletonList(baseTool), managerEx, analysisScope, file);
+      InspectionProjectProfileManager.getInstance(project).getInspectionProfile().getInspectionTool(myShortName, file);
+    rerunInspection(baseTool, managerEx, analysisScope, file);
   }
 
-  public static void rerunInspection(final String profileName, final List<InspectionProfileEntry> baseTools,
-                                     final InspectionManagerEx managerEx, final AnalysisScope scope,
-                              PsiElement psiElement) {
-    GlobalInspectionContextImpl inspectionContext = createContext(profileName, baseTools, managerEx, psiElement);
+  public static void rerunInspection(final InspectionProfileEntry baseTool, final InspectionManagerEx managerEx, final AnalysisScope scope,
+                                     PsiElement psiElement) {
+    GlobalInspectionContextImpl inspectionContext = createContext(baseTool, managerEx, psiElement);
     inspectionContext.doInspections(scope, managerEx);
   }
 
-  public static GlobalInspectionContextImpl createContext(final String profileName, final List<InspectionProfileEntry> baseTools,
-                                                          InspectionManagerEx managerEx, PsiElement psiElement) {
-    final InspectionProfileImpl model = InspectionProfileImpl.createSimple(profileName, baseTools);
+  public static GlobalInspectionContextImpl createContext(final InspectionProfileEntry baseTool, InspectionManagerEx managerEx, PsiElement psiElement) {
+    final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getRootProfile();
+    LinkedHashSet<InspectionProfileEntry> dependentEntries = new LinkedHashSet<InspectionProfileEntry>();
+    GlobalInspectionContextImpl.collectDependentInspections(baseTool, dependentEntries, rootProfile);
+    InspectionProfileEntry[] toolsArray = dependentEntries.toArray(new InspectionProfileEntry[dependentEntries.size()]);
+    final InspectionProfileImpl model = InspectionProfileImpl.createSimple(baseTool.getDisplayName(), toolsArray);
     try {
       Element element = new Element("toCopy");
 
-      for (InspectionProfileEntry baseTool : baseTools) {
-        baseTool.writeSettings(element);
-        model.getInspectionTool(baseTool.getShortName(), psiElement).readSettings(element);
+      for (InspectionProfileEntry tool : dependentEntries) {
+        tool.writeSettings(element);
+        model.getInspectionTool(tool.getShortName(), psiElement).readSettings(element);
       }
     }
     catch (Exception e) {
       //skip
     }
-    model.setEditable(profileName);
+    model.setEditable(baseTool.getDisplayName());
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
     inspectionContext.setExternalProfile(model);
     return inspectionContext;

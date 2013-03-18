@@ -54,8 +54,10 @@ import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.content.*;
+import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.TripleFunction;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
@@ -70,10 +72,7 @@ import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 public class GlobalInspectionContextImpl extends UserDataHolderBase implements GlobalInspectionContext {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.GlobalInspectionContextImpl");
@@ -743,22 +742,47 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     }
   }
 
+  public static void collectDependentInspections(@NotNull InspectionProfileEntry profileEntry,
+                                                 @NotNull Set<InspectionProfileEntry> dependentEntries,
+                                                 @NotNull InspectionProfileImpl rootProfile) {
+    dependentEntries.add(profileEntry);
+    String mainToolId = profileEntry.getMainToolId();
+
+    if (mainToolId != null) {
+      InspectionProfileEntry dependentEntry = rootProfile.getInspectionTool(mainToolId);
+
+      if (dependentEntry != null) {
+        if (!dependentEntries.contains(dependentEntry)) {
+          collectDependentInspections(dependentEntry, dependentEntries, rootProfile);
+        }
+      }
+      else {
+        LOG.error("Can't find main tool: " + mainToolId);
+      }
+    }
+  }
+
   protected List<ToolsImpl> getUsedTools() {
     InspectionProfileImpl profile = new InspectionProfileImpl((InspectionProfileImpl)getCurrentProfile());
     List<ToolsImpl> tools = profile.getAllEnabledInspectionTools(myProject);
-    THashSet<ToolsImpl> set = null;
+    Set<InspectionProfileEntry> dependentTools = new LinkedHashSet<InspectionProfileEntry>();
     for (ToolsImpl tool : tools) {
-      String id = tool.getTool().getMainToolId();
-      if (id != null) {
-        InspectionProfileEntry mainTool = profile.getInspectionTool(id);
-        LOG.assertTrue(mainTool != null, "Can't find main tool: " + id);
-        if (set == null) {
-          set = new THashSet<ToolsImpl>(tools, TOOLS_HASHING_STRATEGY);
-        }
-        set.add(new ToolsImpl(mainTool, mainTool.getDefaultLevel(), true));
-      }
+      collectDependentInspections(tool.getTool(), dependentTools, profile);
     }
-    return set == null ? tools : new ArrayList<ToolsImpl>(set);
+
+    if (!dependentTools.isEmpty()) {
+      THashSet<ToolsImpl> set = new THashSet<ToolsImpl>(tools, TOOLS_HASHING_STRATEGY);
+      set.addAll(ContainerUtil.map(dependentTools, new Function<InspectionProfileEntry, ToolsImpl>() {
+        @Override
+        public ToolsImpl fun(InspectionProfileEntry entry) {
+          return new ToolsImpl(entry, entry.getDefaultLevel(), true);
+        }
+      }));
+      return new ArrayList<ToolsImpl>(set);
+    }
+    else {
+      return tools;
+    }
   }
 
   private void classifyTool(List<Tools> outGlobalTools,
