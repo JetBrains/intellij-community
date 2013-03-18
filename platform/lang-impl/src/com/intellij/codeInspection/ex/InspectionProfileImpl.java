@@ -130,7 +130,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     setProfileManager(InspectionProfileManager.getInstance());
   }
 
-  public static InspectionProfileImpl createSimple(String name, final List<InspectionProfileEntry> tools) {
+  public static InspectionProfileImpl createSimple(String name, final InspectionProfileEntry... tools) {
     InspectionProfileImpl profile = new InspectionProfileImpl(name, new InspectionToolRegistrar(null) {
       @Override
       public List<InspectionToolWrapper> createTools() {
