@@ -4,13 +4,14 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiEnumConstant;
 import com.intellij.psi.PsiField;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.xml.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
@@ -105,15 +106,34 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
     if (context instanceof XmlAttributeValue) {
       final XmlAttributeValue xmlAttributeValue = (XmlAttributeValue)context;
       final PsiElement parent = xmlAttributeValue.getParent();
-      if (parent instanceof XmlAttribute && JavaFxPsiUtil.checkIfAttributeHandler((XmlAttribute)parent)) {
-        if (value.startsWith("#")) {
-          if (JavaFxPsiUtil.getControllerClass(context.getContainingFile()) == null) {
-            return "No controller specified for top level element";
+      if (parent instanceof XmlAttribute) {
+        if (JavaFxPsiUtil.checkIfAttributeHandler((XmlAttribute)parent)) {
+          if (value.startsWith("#")) {
+            if (JavaFxPsiUtil.getControllerClass(context.getContainingFile()) == null) {
+              return "No controller specified for top level element";
+            }
           }
-        }
-        else {
-          if (JavaFxPsiUtil.parseInjectedLanguages((XmlFile)context.getContainingFile()).isEmpty()) {
-            return "Page language not specified.";
+          else {
+            if (JavaFxPsiUtil.parseInjectedLanguages((XmlFile)context.getContainingFile()).isEmpty()) {
+              return "Page language not specified.";
+            }
+          }
+        } else if (FxmlConstants.FX_ID.equals(((XmlAttribute)parent).getName())) {
+          final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(context.getContainingFile());
+          if (controllerClass != null) {
+            final XmlTag xmlTag = ((XmlAttribute)parent).getParent();
+            if (xmlTag != null) {
+              final XmlElementDescriptor descriptor = xmlTag.getDescriptor();
+              if (descriptor instanceof JavaFxClassBackedElementDescriptor) {
+                final PsiElement declaration = descriptor.getDeclaration();
+                if (declaration instanceof PsiClass) {
+                  final PsiField fieldByName = controllerClass.findFieldByName(xmlAttributeValue.getValue(), false);
+                  if (fieldByName != null && !InheritanceUtil.isInheritorOrSelf((PsiClass)declaration, PsiUtil.resolveClassInType(fieldByName.getType()), true)) {
+                    return "Cannot set " + ((PsiClass)declaration).getQualifiedName() + " to field \'" + fieldByName.getName() + "\'";
+                  }
+                }
+              }
+            }
           }
         }
       }
