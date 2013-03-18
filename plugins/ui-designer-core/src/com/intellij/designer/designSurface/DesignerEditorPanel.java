@@ -749,6 +749,14 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   public abstract List<PaletteGroup> getPaletteGroups();
 
+  /**
+   * Returns a suitable version label from the version attribute from a {@link PaletteItem} version
+   */
+  @NotNull
+  public String getVersionLabel(@Nullable String version) {
+    return StringUtil.notNullize(version);
+  }
+
   protected InputTool createDefaultTool() {
     return new SelectionTool();
   }
