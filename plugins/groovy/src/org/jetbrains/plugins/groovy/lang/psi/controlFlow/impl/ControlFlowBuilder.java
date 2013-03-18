@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl;
 
 import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
@@ -1177,4 +1178,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
     return null;
   }
+
+  @Override
+  public void visitElement(GroovyPsiElement element) {
+    ProgressManager.checkCanceled();
+    super.visitElement(element);
+  }
+
 }

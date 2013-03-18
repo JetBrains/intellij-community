@@ -40,6 +40,10 @@ public class JavaFXQuickfixTest extends DaemonAnalyzerTestCase {
     doTest("Create Method 'void bar(ActionEvent)'", true);
   }
 
+  public void testCreateField() throws Exception {
+    doTest("Create Field 'btn'", true);
+  }
+
   private void doTest(final String actionName) throws Exception {
     doTest(actionName, false);
   }

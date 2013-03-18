@@ -33,7 +33,13 @@ public class JavaFXImportTest extends DaemonAnalyzerTestCase {
   public void testSimpleImport() throws Exception {
     doTest();
   }
-  
+
+  public void testTextField() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml", getTestName(false) + ".java");
+    final List<HighlightInfo> infos = doHighlighting();
+    findAndInvokeIntentionAction(infos, "Import Class", getEditor(), getFile());
+    checkResultByFile(getTestName(true) + "_after.fxml");
+  }
 
   private void doTest() throws Exception {
     configureByFiles(null, getTestName(true) + ".fxml");

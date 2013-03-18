@@ -80,6 +80,10 @@ public class AntHighlightingTest extends DaemonAnalyzerTestCase {
   public void testRefid() throws Exception {
     doTest();
   }
+  
+  public void testRefidInCustomDomElement() throws Exception {
+    doTest();
+  }
 
   public void testExternalValidator() throws Exception {
     doTest();

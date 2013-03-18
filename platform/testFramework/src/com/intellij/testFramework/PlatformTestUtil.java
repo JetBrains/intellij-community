@@ -69,6 +69,7 @@ import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.DecimalFormat;
+import java.text.DecimalFormatSymbols;
 import java.util.*;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -112,12 +113,10 @@ public class PlatformTestUtil {
         return presentation;
       }
     }
-    else if (node == null) {
+    if (node == null) {
       return "NULL";
     }
-    else {
-      return node.toString();
-    }
+    return node.toString();
   }
 
   public static String print(JTree tree, boolean withSelection) {
@@ -373,7 +372,6 @@ public class PlatformTestUtil {
     if (COVERAGE_ENABLED_BUILD) return;
 
     final long expectedOnMyMachine = Math.max(1, expectedMs * Timings.MACHINE_TIMING / Timings.ETALON_TIMING);
-    final double acceptableChangeFactor = 1.1;
 
     // Allow 10% more in case of test machine is busy.
     String logMessage = message;
@@ -389,6 +387,7 @@ public class PlatformTestUtil {
                   ", I/O=" + Timings.IO_TIMING + "." +
                   " (" + (int)(Timings.MACHINE_TIMING*1.0/Timings.ETALON_TIMING*100) + "% of the Standard)" +
                   ".";
+    final double acceptableChangeFactor = 1.1;
     if (actual < expectedOnMyMachine) {
       System.out.println(logMessage);
       TeamCityLogger.info(logMessage);
@@ -489,7 +488,6 @@ public class PlatformTestUtil {
         if (adjustForIO) {
           expectedOnMyMachine = adjust(expectedOnMyMachine, Timings.IO_TIMING, Timings.ETALON_IO_TIMING);
         }
-        final double acceptableChangeFactor = 1.1;
 
         // Allow 10% more in case of test machine is busy.
         String logMessage = message;
@@ -499,6 +497,7 @@ public class PlatformTestUtil {
         }
         logMessage +=
           ". Expected: " + formatTime(expectedOnMyMachine) + ". Actual: " + formatTime(duration) + "." + Timings.getStatistics();
+        final double acceptableChangeFactor = 1.1;
         if (duration < expectedOnMyMachine) {
           int percentage = (int)(100.0 * (expectedOnMyMachine - duration) / expectedOnMyMachine);
           logMessage = percentage + "% faster. " + logMessage;
@@ -542,13 +541,13 @@ public class PlatformTestUtil {
     }
 
     private static String formatTime(long millis) {
-      StringBuilder hint = new StringBuilder();
-      DecimalFormat format = new DecimalFormat("#.0");
-      if (millis >= 1000) hint.append(format.format(millis / 1000.f)).append("s");
-      if (millis >= 60 * 1000) hint.append(" ").append(format.format(millis / 60 / 1000.f)).append("m");
+      String hint = "";
+      DecimalFormat format = new DecimalFormat("#.0", DecimalFormatSymbols.getInstance(Locale.US));
+      if (millis >= 60 * 1000) hint = format.format(millis / 60 / 1000.f) + "m";
+      if (millis >= 1000) hint += (hint.isEmpty() ? "" : " ") + format.format(millis / 1000.f) + "s";
       String result = millis + "ms";
-      if (hint.length() > 0) {
-        result = result + " (" + hint.toString() + ")";
+      if (!hint.isEmpty()) {
+        result = result + " (" + hint + ")";
       }
       return result;
     }

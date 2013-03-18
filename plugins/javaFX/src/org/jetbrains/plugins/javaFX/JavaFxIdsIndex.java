@@ -24,20 +24,7 @@ import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
-import org.jetbrains.plugins.javaFX.fxml.JavaFXNamespaceProvider;
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.StringReader;
 import java.util.*;
 
 public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>> {
@@ -46,8 +33,8 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
 
   private final KeyDescriptor<String> myKeyDescriptor = new EnumeratorStringDescriptor();
   private final FileBasedIndex.InputFilter myInputFilter = new JavaFxControllerClassIndex.MyInputFilter();
-  private final MyDataIndexer myDataIndexer = new MyDataIndexer();
-  private final MyDataExternalizer myDataExternalizer = new MyDataExternalizer();
+  private final FxmlDataIndexer myDataIndexer = new FxmlDataIndexer();
+  private final FxmlDataExternalizer myDataExternalizer = new FxmlDataExternalizer();
 
   @NotNull
   @Override
@@ -97,79 +84,5 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
   public static Collection<String> getFilePaths(Project project, String id) {
     final List<Set<String>> values = FileBasedIndex.getInstance().getValues(KEY, id, GlobalSearchScope.projectScope(project));
     return (Collection<String>)(values.isEmpty() ? Collections.emptySet() : values.get(0));
-  }
-  
-  private static class MyDataIndexer implements DataIndexer<String, Set<String>, FileContent> {
-    private static final SAXParser SAX_PARSER = createParser();
-
-    private static SAXParser createParser() {
-      try {
-        return SAXParserFactory.newInstance().newSAXParser();
-      }
-      catch (Exception e) {
-        return null;
-      }
-    }
-
-    @Override
-    @NotNull
-    public Map<String, Set<String>> map(final FileContent inputData) {
-      final Map<String, Set<String>> map = getIds(inputData.getContentAsText().toString(), inputData.getFile().getPath());
-      if (map != null) {
-        return map;
-      }
-      return Collections.emptyMap();
-    }
-
-    @Nullable
-    private static Map<String, Set<String>> getIds(String content, final String path) {
-      if (!content.contains(JavaFXNamespaceProvider.JAVAFX_NAMESPACE)) {
-        return null;
-      }
-
-      final Map<String, Set<String>> map = new HashMap<String, Set<String>>();
-      try {
-        SAX_PARSER.parse(new InputSource(new StringReader(content)), new DefaultHandler() {
-          public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-            final String attributesValue = attributes.getValue(FxmlConstants.FX_ID);
-            if (attributesValue != null) {
-              Set<String> paths = map.get(attributesValue);
-              if (paths == null) {
-                paths = new HashSet<String>();
-                map.put(attributesValue, paths);
-              }
-              paths.add(path);
-            }
-          }
-        });
-      }
-      catch (Exception e) {
-        // Do nothing.
-      }
-
-      return map;
-    }
-  }
-
-  private static class MyDataExternalizer implements DataExternalizer<Set<String>> {
-    @Override
-    public void save(DataOutput out, Set<String> value) throws IOException {
-      out.writeInt(value.size());
-      for (String s : value) {
-        out.writeUTF(s);
-      }
-    }
-
-    @Override
-    public Set<String> read(DataInput in) throws IOException {
-      final int size = in.readInt();
-      final Set<String> result = new HashSet<String>(size);
-
-      for (int i = 0; i < size; i++) {
-        final String s = in.readUTF();
-        result.add(s);
-      }
-      return result;
-    }
   }
 }

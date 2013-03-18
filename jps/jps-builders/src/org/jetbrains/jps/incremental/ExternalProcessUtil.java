@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +47,25 @@ public class ExternalProcessUtil {
     }
   }
 
+  private static final char QUOTE = '\uEFEF';
+  // please keep in sync with GeneralCommandLine.prepareCommand()
+  public static String prepareCommand(String parameter) {
+    if (SystemInfo.isWindows) {
+      if (parameter.contains("\"")) {
+        parameter = StringUtil.replace(parameter, "\"", "\\\"");
+      }
+      else if (parameter.length() == 0) {
+        parameter = "\"\"";
+      }
+    }
+
+    if (parameter.length() >= 2 && parameter.charAt(0) == QUOTE && parameter.charAt(parameter.length() - 1) == QUOTE) {
+      parameter = '"' + parameter.substring(1, parameter.length() - 1) + '"';
+    }
+
+    return parameter;
+  }
+  
   public static List<String> buildJavaCommandLine(String javaExecutable,
                                                 String mainClass,
                                                 List<String> bootClasspath,

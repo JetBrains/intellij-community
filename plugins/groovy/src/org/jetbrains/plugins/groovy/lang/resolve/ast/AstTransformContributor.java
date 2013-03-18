@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,6 +42,7 @@ public abstract class AstTransformContributor {
 
   }
 
+  @NotNull
   public static Collection<PsiMethod> runContributorsForMethods(@NotNull final GrTypeDefinition clazz) {
     Collection<PsiMethod> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<Collection<PsiMethod>>() {
       @Override
@@ -56,8 +57,9 @@ public abstract class AstTransformContributor {
     return result == null ? Collections.<PsiMethod>emptyList() : result;
   }
 
+  @NotNull
   public static List<GrField> runContributorsForFields(@NotNull final GrTypeDefinition clazz) {
-    List<GrField> result = RecursionManager.doPreventingRecursion(clazz, true, new Computable<List<GrField>>() {
+    List<GrField> fields = RecursionManager.doPreventingRecursion(clazz, true, new Computable<List<GrField>>() {
       @Override
       public List<GrField> compute() {
         List<GrField> collector = new ArrayList<GrField>();
@@ -67,6 +69,6 @@ public abstract class AstTransformContributor {
         return collector;
       }
     });
-    return result == null ? Collections.<GrField>emptyList() : result;
+    return fields != null ? fields : Collections.<GrField>emptyList();
   }
 }

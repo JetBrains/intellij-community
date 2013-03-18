@@ -1,0 +1,24 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<problems>
+
+  <problem>
+    <file>AssignmentToSuperclassField.java</file>
+    <line>20</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Constructor assigns value to field defined in superclass</problem_class>
+    <description>Assignment to field 'i' defined in superclass 'AssignmentToSuperclassField'</description>
+  </problem>
+
+  <problem>
+    <file>AssignmentToSuperclassField.java</file>
+    <line>21</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Constructor assigns value to field defined in superclass</problem_class>
+    <description>Assignment to field 'j' defined in superclass 'AssignmentToSuperclassField'</description>
+  </problem>
+
+  <problem>
+    <file>AssignmentToSuperclassField.java</file>
+    <line>22</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Constructor assigns value to field defined in superclass</problem_class>
+    <description>Assignment to field 'k' defined in superclass 'AssignmentToSuperclassField'</description>
+  </problem>
+</problems>

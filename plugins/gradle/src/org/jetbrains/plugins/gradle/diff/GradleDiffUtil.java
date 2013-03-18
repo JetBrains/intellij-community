@@ -182,8 +182,9 @@ public class GradleDiffUtil {
   {
     Map<Object, I> ideEntitiesByKeys = new HashMap<Object, I>();
     for (I entity : ideEntities) {
-      final I previous = ideEntitiesByKeys.put(calculator.getIdeKey(entity), entity);
-      assert previous == null;
+      Object key = calculator.getIdeKey(entity);
+      final I previous = ideEntitiesByKeys.put(key, entity);
+      assert previous == null : key;
     }
     for (G gradleEntity: gradleEntities) {
       I ideEntity = ideEntitiesByKeys.remove(calculator.getGradleKey(gradleEntity, context));

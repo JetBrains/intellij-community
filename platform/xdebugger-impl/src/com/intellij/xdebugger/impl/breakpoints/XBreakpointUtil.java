@@ -24,6 +24,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointType;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.xdebugger.impl.DebuggerSupport;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -104,5 +105,18 @@ public class XBreakpointUtil {
       }
     });
     return panelProviders;
+  }
+
+  @Nullable
+  public static DebuggerSupport getDebuggerSupport(Project project, BreakpointItem breakpointItem) {
+    DebuggerSupport[] debuggerSupports = DebuggerSupport.getDebuggerSupports();
+    List<BreakpointItem> items = new ArrayList<BreakpointItem>();
+    for (DebuggerSupport support : debuggerSupports) {
+      support.getBreakpointPanelProvider().provideBreakpointItems(project, items);
+      if (items.contains(breakpointItem))
+        return support;
+      items.clear();
+    }
+    return null;
   }
 }

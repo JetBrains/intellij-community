@@ -4,35 +4,30 @@ import com.intellij.execution.rmi.RemoteObject;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
-import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.HashMap;
-import org.gradle.tooling.*;
-import org.gradle.tooling.internal.consumer.DefaultGradleConnector;
+import org.gradle.tooling.ModelBuilder;
+import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
 import org.gradle.tooling.model.idea.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskId;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.model.gradle.*;
-import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationEvent;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.remote.RemoteGradleProcessSettings;
 import org.jetbrains.plugins.gradle.remote.RemoteGradleService;
-import org.jetbrains.plugins.gradle.task.GradleTaskId;
-import org.jetbrains.plugins.gradle.task.GradleTaskType;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
-import java.io.IOException;
 import java.rmi.RemoteException;
 import java.util.HashSet;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * @author Denis Zhdanov
@@ -40,46 +35,33 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GradleProjectResolverImpl extends RemoteObject implements GradleProjectResolver, RemoteGradleService {
 
-  private final AtomicReference<RemoteGradleProcessSettings>    mySettings          = new AtomicReference<RemoteGradleProcessSettings>();
-  private final GradleLibraryNamesMixer                         myLibraryNamesMixer = new GradleLibraryNamesMixer();
-  private final ConcurrentHashSet<GradleTaskId>                 myTasksInProgress   = new ConcurrentHashSet<GradleTaskId>();
-  private final AtomicReference<GradleTaskNotificationListener> myNotificationListener
-    = new AtomicReference<GradleTaskNotificationListener>();
-  
+  @NotNull private final RemoteGradleServiceHelper myHelper = new RemoteGradleServiceHelper();
+
+  private final GradleLibraryNamesMixer myLibraryNamesMixer = new GradleLibraryNamesMixer();
 
   @NotNull
   @Override
-  public GradleProject resolveProjectInfo(@NotNull GradleTaskId id, @NotNull String projectPath, boolean downloadLibraries)
+  public GradleProject resolveProjectInfo(@NotNull final GradleTaskId id, @NotNull final String projectPath, final boolean downloadLibraries)
     throws RemoteException, GradleApiException, IllegalArgumentException, IllegalStateException
   {
-    ProjectConnection connection = getConnection(projectPath);
-    try {
-      return doResolveProjectInfo(id, projectPath, connection, downloadLibraries);
-    }
-    catch (Throwable e) {
-      throw new GradleApiException(e);
-    }
-    finally {
-      try {
-        connection.close();
+    return myHelper.execute(id, GradleTaskType.RESOLVE_PROJECT, projectPath, new Function<ProjectConnection, GradleProject>() {
+      @Nullable
+      @Override
+      public GradleProject fun(ProjectConnection connection) {
+        return doResolveProjectInfo(id, projectPath, connection, downloadLibraries);
       }
-      catch (Throwable e) {
-        // ignore
-      }
-    }
+    });
   }
 
   @Override
-  public boolean isTaskInProgress(@NotNull GradleTaskId id) {
-    return myTasksInProgress.contains(id);
+  public boolean isTaskInProgress(@NotNull GradleTaskId id) throws RemoteException {
+    return myHelper.isTaskInProgress(id);
   }
 
   @NotNull
   @Override
   public Map<GradleTaskType, Set<GradleTaskId>> getTasksInProgress() throws RemoteException {
-    Map<GradleTaskType, Set<GradleTaskId>> result = new HashMap<GradleTaskType, Set<GradleTaskId>>();
-    result.put(GradleTaskType.RESOLVE_PROJECT, new HashSet<GradleTaskId>(myTasksInProgress));
-    return result;
+    return myHelper.getTasksInProgress();
   }
 
   @NotNull
@@ -87,24 +69,9 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
                                              @NotNull String projectPath,
                                              @NotNull ProjectConnection connection,
                                              boolean downloadLibraries)
-    throws RemoteException, IllegalArgumentException, IllegalStateException
+    throws IllegalArgumentException, IllegalStateException
   {
-    final GradleTaskNotificationListener progressManager = myNotificationListener.get();
-    progressManager.onStart(id);
-    ModelBuilder<? extends IdeaProject> modelBuilder = connection.model(downloadLibraries ? IdeaProject.class : BasicIdeaProject.class);
-    final RemoteGradleProcessSettings settings = mySettings.get();
-    if (settings != null) {
-      final String javaHome = settings.getJavaHome();
-      if (javaHome != null && new File(javaHome).isDirectory()) {
-        modelBuilder.setJavaHome(new File(javaHome));
-      }
-    }
-    modelBuilder.addProgressListener(new ProgressListener() {
-      @Override
-      public void statusChanged(ProgressEvent event) {
-        progressManager.onStatusChange(new GradleTaskNotificationEvent(id, event.getDescription()));
-      }
-    });
+    ModelBuilder<? extends IdeaProject> modelBuilder = myHelper.getModelBuilder(id, connection, downloadLibraries);
     IdeaProject project = modelBuilder.get();
     GradleProject result = populateProject(project, projectPath);
 
@@ -376,72 +343,13 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     return null;
   }
 
-  /**
-   * Allows to retrieve gradle api connection to use for the given project.
-   * 
-   * @param projectPath     target project path
-   * @return                connection to use
-   * @throws IllegalStateException    if it's not possible to create the connection
-   */
-  @NotNull
-  private ProjectConnection getConnection(@NotNull String projectPath) throws IllegalStateException {
-    File projectFile = new File(projectPath);
-    if (!projectFile.isFile()) {
-      throw new IllegalArgumentException(GradleBundle.message("gradle.import.text.error.invalid.path", projectPath));
-    }
-    File projectDir = projectFile.getParentFile();
-    GradleConnector connector = GradleConnector.newConnector();
-    RemoteGradleProcessSettings settings = mySettings.get();
-    if (settings != null) {
-      
-      // Setup wrapper/local installation usage.
-      if (!settings.isUseWrapper()) {
-        String gradleHome = settings.getGradleHome();
-        if (gradleHome != null) {
-          try {
-            // There were problems with symbolic links processing at the gradle side.
-            connector.useInstallation(new File(gradleHome).getCanonicalFile());
-          }
-          catch (IOException e) {
-            connector.useInstallation(new File(settings.getGradleHome()));
-          }
-        }
-      }
-      
-      // Setup service directory if necessary.
-      String serviceDirectory = settings.getServiceDirectory();
-      if (serviceDirectory != null) {
-        connector.useGradleUserHomeDir(new File(serviceDirectory));
-      }
-      
-      // Setup logging if necessary.
-      if (settings.isVerboseApi() && connector instanceof DefaultGradleConnector) {
-        ((DefaultGradleConnector)connector).setVerboseLogging(true);
-      }
-      
-      // Setup daemon ttl if necessary.
-      long ttl = settings.getTtlInMs();
-      if (ttl > 0 && connector instanceof DefaultGradleConnector) {
-        ((DefaultGradleConnector)connector).daemonMaxIdleTime((int)ttl, TimeUnit.MILLISECONDS);
-      }
-    }
-    connector.forProjectDirectory(projectDir);
-    ProjectConnection connection = connector.connect();
-    if (connection == null) {
-      throw new IllegalStateException(String.format(
-        "Can't create connection to the target project via gradle tooling api. Project path: '%s'", projectPath
-      ));
-    }
-    return connection;
-  }
-  
   @Override
-  public void setSettings(@NotNull RemoteGradleProcessSettings settings) {
-    mySettings.set(settings); 
+  public void setSettings(@NotNull RemoteGradleProcessSettings settings) throws RemoteException {
+    myHelper.setSettings(settings); 
   }
 
   @Override
-  public void setNotificationListener(@NotNull GradleTaskNotificationListener notificationListener) {
-    myNotificationListener.set(notificationListener);
+  public void setNotificationListener(@NotNull GradleTaskNotificationListener notificationListener) throws RemoteException {
+    myHelper.setNotificationListener(notificationListener);
   }
 }

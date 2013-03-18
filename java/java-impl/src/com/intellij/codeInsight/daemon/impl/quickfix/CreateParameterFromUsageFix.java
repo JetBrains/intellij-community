@@ -17,9 +17,13 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.ide.util.SuperMethodWarningUtil;
+import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.Result;
+import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
@@ -74,7 +78,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     PsiType[] expectedTypes = CreateFromUsageUtils.guessType(myReferenceExpression, false);
     PsiType type = expectedTypes[0];
 
-    String varName = myReferenceExpression.getReferenceName();
+    final String varName = myReferenceExpression.getReferenceName();
     PsiMethod method = PsiTreeUtil.getParentOfType(myReferenceExpression, PsiMethod.class);
     LOG.assertTrue(method != null);
     method = IntroduceParameterHandler.chooseEnclosingMethod(method);
@@ -93,7 +97,8 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
       parameterInfos.add(parameterInfos.size() - 1, parameterInfo);
     }
 
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    final Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode()) {
       ParameterInfoImpl[] array = parameterInfos.toArray(new ParameterInfoImpl[parameterInfos.size()]);
       String modifier = PsiUtil.getAccessModifier(PsiUtil.getAccessLevel(method.getModifierList()));
       ChangeSignatureProcessor processor =
@@ -102,7 +107,7 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
     }
     else {
       final PsiMethod finalMethod = method;
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
+      application.invokeLater(new Runnable() {
         @Override
         public void run() {
           if (project.isDisposed()) return;
@@ -110,6 +115,27 @@ public class CreateParameterFromUsageFix extends CreateVarFromUsageFix {
             JavaChangeSignatureDialog dialog = JavaChangeSignatureDialog.createAndPreselectNew(project, finalMethod, parameterInfos, true, myReferenceExpression);
             dialog.setParameterInfos(parameterInfos);
             dialog.show();
+            if (dialog.isOK()) {
+              for (ParameterInfoImpl info : parameterInfos) {
+                if (info.getOldIndex() == -1) {
+                  final String newParamName = info.getName();
+                  if (!Comparing.strEqual(varName, newParamName)) {
+                    final PsiExpression newExpr = JavaPsiFacade.getElementFactory(project).createExpressionFromText(newParamName, finalMethod);
+                    new WriteCommandAction(project){
+                      @Override
+                      protected void run(Result result) throws Throwable {
+                        final PsiReferenceExpression[] refs =
+                          CreateFromUsageUtils.collectExpressions(myReferenceExpression, PsiMember.class, PsiFile.class);
+                        for (PsiReferenceExpression ref : refs) {
+                          ref.replace(newExpr.copy());
+                        }
+                      }
+                    }.execute();
+                  }
+                  break;
+                }
+              }
+            }
           }
           catch (Exception e) {
             throw new RuntimeException(e);

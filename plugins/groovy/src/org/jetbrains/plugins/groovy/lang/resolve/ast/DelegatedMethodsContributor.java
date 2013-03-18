@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,7 +48,7 @@ import java.util.*;
  */
 public class DelegatedMethodsContributor extends AstTransformContributor {
   @Override
-  public void collectMethods(@NotNull final GrTypeDefinition clazz, Collection<PsiMethod> collector) {
+  public void collectMethods(@NotNull final GrTypeDefinition clazz, @NotNull Collection<PsiMethod> collector) {
     Set<PsiClass> processed = new HashSet<PsiClass>();
 
     if (!checkForDelegate(clazz)) return;

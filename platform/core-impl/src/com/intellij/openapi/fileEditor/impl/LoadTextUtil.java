@@ -227,6 +227,7 @@ public final class LoadTextUtil {
     }
     setDetectedFromBytesFlagBack(virtualFile, buffer);
 
+    virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, null);
     OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, -1);
     try {
       outputStream.write(buffer);

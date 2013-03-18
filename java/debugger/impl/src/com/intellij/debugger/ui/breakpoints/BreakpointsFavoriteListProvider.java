@@ -185,7 +185,7 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
     BreakpointItem breakpointItem = (BreakpointItem)((AbstractTreeNode)selectedObjects.iterator().next()).getValue();
     switch (type) {
       case EDIT:
-        DebuggerSupport debuggerSupport = getDebuggerSupport(breakpointItem);
+        DebuggerSupport debuggerSupport = XBreakpointUtil.getDebuggerSupport(myProject, breakpointItem);
         if (debuggerSupport == null) return;
         debuggerSupport.getEditBreakpointAction().editBreakpoint(myProject, component, whereToShow, breakpointItem.getBreakpoint());
         break;
@@ -198,20 +198,7 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
 
   @Override
   public int getWeight() {
-    return 200;
-  }
-
-  @Nullable
-  private DebuggerSupport getDebuggerSupport(BreakpointItem breakpointItem) {
-    DebuggerSupport[] debuggerSupports = DebuggerSupport.getDebuggerSupports();
-    List<BreakpointItem> items = new ArrayList<BreakpointItem>();
-    for (DebuggerSupport support : debuggerSupports) {
-      support.getBreakpointPanelProvider().provideBreakpointItems(myProject, items);
-      if (items.contains(breakpointItem))
-        return support;
-      items.clear();
-    }
-    return null;
+    return BREAKPOINTS_WEIGHT;
   }
 
   @Override

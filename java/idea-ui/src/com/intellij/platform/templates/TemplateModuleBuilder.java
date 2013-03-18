@@ -161,8 +161,9 @@ public class TemplateModuleBuilder extends ModuleBuilder {
   public Module createModule(@NotNull ModifiableModuleModel moduleModel)
     throws InvalidDataException, IOException, ModuleWithNameAlreadyExists, JDOMException, ConfigurationException {
     final String path = getContentEntryPath();
-    unzip(null, path, true);
-    Module module = ImportImlMode.setUpLoader(getModuleFilePath()).createModule(moduleModel);
+    final ExistingModuleLoader loader = ImportImlMode.setUpLoader(getModuleFilePath());
+    unzip(loader.getName(), path, true);
+    Module module = loader.createModule(moduleModel);
     if (myProjectMode) {
       moduleModel.renameModule(module, module.getProject().getName());
     }

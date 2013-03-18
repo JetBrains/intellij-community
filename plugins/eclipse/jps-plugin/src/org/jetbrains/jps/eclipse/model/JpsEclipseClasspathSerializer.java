@@ -54,7 +54,7 @@ public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer 
         final Document emlDocument = JDOMUtil.loadDocument(emlFile);
         root = emlDocument.getRootElement();
         settings = new JpsIdeaSpecificSettings(expander);
-        settings.readIDEASpecific(root, module, projectSdkType, levels);
+        settings.initLevels(root, module, levels);
       } else {
         settings = null;
         root = null;
@@ -64,7 +64,7 @@ public class JpsEclipseClasspathSerializer extends JpsModuleClasspathSerializer 
       final JpsEclipseClasspathReader reader = new JpsEclipseClasspathReader(classpathDir, paths, new HashSet<String>(), levels);
       reader.readClasspath(module, null, document.getRootElement(), expander);//todo
       if (settings != null) {
-        settings.updateEntries(root, module);
+        settings.updateEntries(root, module, projectSdkType);
       }
     }
     catch (Exception e) {

@@ -54,14 +54,14 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   @Nullable
   private PsiType doGetType(@Nullable PsiAnnotation stopAt) {
     PsiType type = null;
-    SmartList<PsiAnnotation> untied = new SmartList<PsiAnnotation>();
+    SmartList<PsiAnnotation> annotations = new SmartList<PsiAnnotation>();
     boolean stop = false;
 
     for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       IElementType elementType = child.getElementType();
       if (elementType == JavaElementType.ANNOTATION) {
         PsiAnnotation annotation = (PsiAnnotation)child.getPsi();
-        untied.add(annotation);
+        annotations.add(annotation);
         if (annotation == stopAt) stop = true;
       }
       else if (elementType == JavaElementType.JAVA_CODE_REFERENCE) {
@@ -72,31 +72,25 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
       else if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)) {
         assert type == null : this;
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-        type = factory.createPrimitiveType(child.getText(), copyAndClear(untied));
+        type = factory.createPrimitiveType(child.getText(), annotations.toArray(PsiAnnotation.ARRAY_FACTORY, true));
         if (stop) return type;
       }
       else if (elementType == JavaTokenType.LBRACKET) {
         assert type != null : this;
-        type = type.createArrayType(copyAndClear(untied));
+        type = type.createArrayType(annotations.toArray(PsiAnnotation.ARRAY_FACTORY, true));
         if (stop) return type;
       }
       else if (elementType == JavaElementType.ANONYMOUS_CLASS) {
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
         PsiClass aClass = (PsiClass)child.getPsi();
         PsiSubstitutor substitutor = aClass instanceof PsiTypeParameter ? PsiSubstitutor.EMPTY : factory.createRawSubstitutor(aClass);
-        type = factory.createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass), copyAndClear(untied));
+        type = factory.createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass), annotations.toArray(PsiAnnotation.ARRAY_FACTORY, true));
         if (stop) return type;
       }
     }
 
     // stop == true means annotation is misplaced
     return stop ? null : type;
-  }
-
-  private static PsiAnnotation[] copyAndClear(SmartList<PsiAnnotation> list) {
-    PsiAnnotation[] array = list.toArray(PsiAnnotation.ARRAY_FACTORY);
-    list.clear();
-    return array;
   }
 
   @Override

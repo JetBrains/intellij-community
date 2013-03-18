@@ -24,9 +24,12 @@ import javax.swing.*;
 import java.awt.*;
 
 public class TextPanel extends JComponent {
-  private String myText;
+  @Nullable private String  myText;
+  @Nullable private Color myCustomColor;
+
   private final String myMaxPossibleString;
-  private Integer myPrefHeight;
+
+  private Integer   myPrefHeight;
   private Dimension myExplicitSize;
 
   private boolean myDecorate = true;
@@ -56,6 +59,14 @@ public class TextPanel extends JComponent {
 
   public void setDecorate(boolean decorate) {
     myDecorate = decorate;
+  }
+
+  public void resetColor() {
+    myCustomColor = null;
+  }
+
+  public void setCustomColor(@Nullable Color customColor) {
+    myCustomColor = customColor;
   }
 
   @Override
@@ -97,11 +108,11 @@ public class TextPanel extends JComponent {
 
     final int y = UIUtil.getStringY(s, bounds, g2);
     if (SystemInfo.isMac && !UIUtil.isUnderDarcula() && myDecorate) {
-      g2.setColor(Gray._215);
+      g2.setColor(myCustomColor == null ? Gray._215 : myCustomColor);
       g2.drawString(s, x, y + 1);
     }
 
-    g2.setColor(getForeground());
+    g2.setColor(myCustomColor == null ? getForeground() : myCustomColor);
     g2.drawString(s, x, y);
   }
 

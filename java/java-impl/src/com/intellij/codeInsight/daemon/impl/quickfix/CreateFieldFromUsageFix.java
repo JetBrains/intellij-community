@@ -66,8 +66,6 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
     }
     while (parentClass instanceof PsiAnonymousClass);
 
-    final PsiFile targetFile = targetClass.getContainingFile();
-
     ExpectedTypeInfo[] expectedTypes = CreateFromUsageUtils.guessExpectedTypes(myReferenceExpression, false);
 
     String fieldName = myReferenceExpression.getReferenceName();
@@ -94,10 +92,20 @@ public class CreateFieldFromUsageFix extends CreateVarFromUsageFix {
 
     setupVisibility(parentClass, targetClass, field.getModifierList());
 
+    createFieldFromUsageTemplate(targetClass, project, expectedTypes, field, createConstantField(), myReferenceExpression);
+  }
+
+  public static void createFieldFromUsageTemplate(final PsiClass targetClass,
+                                                  final Project project,
+                                                  final ExpectedTypeInfo[] expectedTypes,
+                                                  final PsiField field,
+                                                  final boolean createConstantField,
+                                                  final PsiElement context) {
+    final PsiFile targetFile = targetClass.getContainingFile();
     final Editor newEditor = positionCursor(project, targetFile, field);
     if (newEditor == null) return;
     Template template =
-      CreateFieldFromUsageHelper.setupTemplate(field, expectedTypes, targetClass, newEditor, myReferenceExpression, createConstantField());
+      CreateFieldFromUsageHelper.setupTemplate(field, expectedTypes, targetClass, newEditor, context, createConstantField);
 
     startTemplate(newEditor, template, project, new TemplateEditingAdapter() {
       @Override

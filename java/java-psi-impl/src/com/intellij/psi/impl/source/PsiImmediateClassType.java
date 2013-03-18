@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -74,15 +75,18 @@ public class PsiImmediateClassType extends PsiClassType {
   };
 
   public PsiImmediateClassType(@NotNull PsiClass aClass, @NotNull PsiSubstitutor substitutor) {
-    this (aClass, substitutor, null);
+    this(aClass, substitutor, null, PsiAnnotation.EMPTY_ARRAY);
   }
 
-  public PsiImmediateClassType(@NotNull PsiClass aClass, @NotNull PsiSubstitutor substitutor, final LanguageLevel languageLevel) {
-    this(aClass, substitutor,languageLevel, PsiAnnotation.EMPTY_ARRAY);
+  public PsiImmediateClassType(@NotNull PsiClass aClass, @NotNull PsiSubstitutor substitutor, @Nullable LanguageLevel languageLevel) {
+    this(aClass, substitutor, languageLevel, PsiAnnotation.EMPTY_ARRAY);
   }
 
-  public PsiImmediateClassType(@NotNull PsiClass aClass, @NotNull PsiSubstitutor substitutor, LanguageLevel languageLevel, @NotNull PsiAnnotation[] annotations) {
-    super(languageLevel,annotations);
+  public PsiImmediateClassType(@NotNull PsiClass aClass,
+                               @NotNull PsiSubstitutor substitutor,
+                               @Nullable LanguageLevel languageLevel,
+                               @NotNull PsiAnnotation[] annotations) {
+    super(languageLevel, annotations);
     myClass = aClass;
     myManager = aClass.getManager();
     mySubstitutor = substitutor;
@@ -131,7 +135,7 @@ public class PsiImmediateClassType extends PsiClassType {
   @Override
   public String getPresentableText() {
     if (myPresentableText == null) {
-      final StringBuilder buffer = new StringBuilder();
+      StringBuilder buffer = new StringBuilder();
       buildText(myClass, mySubstitutor, buffer, false, false);
       myPresentableText = buffer.toString();
     }
@@ -142,7 +146,7 @@ public class PsiImmediateClassType extends PsiClassType {
   public String getCanonicalText() {
     if (myCanonicalText == null) {
       assert mySubstitutor.isValid();
-      final StringBuilder buffer = new StringBuilder();
+      StringBuilder buffer = new StringBuilder();
       buildText(myClass, mySubstitutor, buffer, true, false);
       myCanonicalText = buffer.toString();
     }
@@ -152,7 +156,7 @@ public class PsiImmediateClassType extends PsiClassType {
   @Override
   public String getInternalCanonicalText() {
     if (myInternalCanonicalText == null) {
-      final StringBuilder buffer = new StringBuilder();
+      StringBuilder buffer = new StringBuilder();
       buildText(myClass, mySubstitutor, buffer, true, true);
       myInternalCanonicalText = buffer.toString();
     }
@@ -173,15 +177,17 @@ public class PsiImmediateClassType extends PsiClassType {
       }
       return;
     }
+
+    if (canonical == internal) {
+      buffer.append(getAnnotationsTextPrefix());
+    }
+
     PsiClass enclosingClass = null;
     if (!aClass.hasModifierProperty(PsiModifier.STATIC)) {
       final PsiElement parent = aClass.getParent();
       if (parent instanceof PsiClass && !(parent instanceof PsiAnonymousClass)) {
         enclosingClass = (PsiClass)parent;
       }
-    }
-    if (canonical == internal) {
-      buffer.append(getAnnotationsTextPrefix());
     }
     if (enclosingClass != null) {
       buildText(enclosingClass, substitutor, buffer, canonical, false);

@@ -36,7 +36,7 @@ import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
-import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
+import org.jetbrains.plugins.gradle.internal.task.GradleResolveProjectTask;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleLog;

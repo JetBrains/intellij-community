@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -104,9 +104,9 @@ public class DarculaRadioButtonUI extends MetalRadioButtonUI {
     }
 
     if (b.isSelected()) {
-      g.setColor(Gray._0.withAlpha(120));
+      g.setColor(b.isEnabled() ? Gray._30 : Gray._60);
       g.fillOval(w/2 - 3, h/2 - 1, 5, 5);
-      g.setColor(Gray._255.withAlpha(180));
+      g.setColor(b.isEnabled() ? Gray._170 : Gray._120);
       g.fillOval(w/2 - 3, h/2 - 2, 5, 5);
     }
     config.restore();

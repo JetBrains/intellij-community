@@ -166,7 +166,7 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
 
   @Override
   public int getWeight() {
-    return 100;
+    return BOOKMARKS_WEIGHT;
   }
 
   @Override
