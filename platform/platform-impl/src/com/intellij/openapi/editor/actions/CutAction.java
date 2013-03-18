@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.EditorModificationUtil;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.util.registry.Registry;
 
 public class CutAction extends EditorAction {
   public CutAction() {
@@ -39,6 +40,9 @@ public class CutAction extends EditorAction {
     @Override
     public void executeWriteAction(Editor editor, DataContext dataContext) {
       if(!editor.getSelectionModel().hasSelection()) {
+        if (Registry.is(CopyAction.SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
+          return;
+        }
         editor.getSelectionModel().selectLineAtCaret();
       }
       editor.getSelectionModel().copySelectionToClipboard();

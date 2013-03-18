@@ -32,8 +32,8 @@ import com.intellij.openapi.util.registry.Registry;
 
 public class CopyAction extends EditorAction {
 
-  public static final String SKIP_COPY_FOR_EMPTY_SELECTION_KEY = "editor.skip.copy.for.empty.selection";
-  
+  public static final String SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY = "editor.skip.copy.and.cut.for.empty.selection";
+
   public CopyAction() {
     super(new Handler());
   }
@@ -42,7 +42,7 @@ public class CopyAction extends EditorAction {
     @Override
     public void execute(Editor editor, DataContext dataContext) {
       if (!editor.getSelectionModel().hasSelection() && !editor.getSelectionModel().hasBlockSelection()) {
-        if (Registry.is(SKIP_COPY_FOR_EMPTY_SELECTION_KEY)) {
+        if (Registry.is(SKIP_COPY_AND_CUT_FOR_EMPTY_SELECTION_KEY)) {
           return;
         }
         editor.getSelectionModel().selectLineAtCaret();
