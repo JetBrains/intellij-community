@@ -438,6 +438,12 @@ public class IdeMenuBar extends JMenuBar {
     }
   }
 
+  @Override
+  public int getMenuCount() {
+    int menuCount = super.getMenuCount();
+    return myClockPanel != null ? menuCount - 1: menuCount;
+  }
+
   private void updateMnemonicsVisibility() {
     final boolean enabled = !UISettings.getInstance().DISABLE_MNEMONICS;
     for (int i = 0; i < getMenuCount(); i++) {
