@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1925,6 +1925,17 @@ public class ContainerUtil extends ContainerUtilRt {
   @NotNull
   public static <T> T[] toArray(@NotNull Collection<T> c, @NotNull T[] sample) {
     return ContainerUtilRt.toArray(c, sample);
+  }
+
+  @NotNull
+  public static <T> T[] copyAndClear(@NotNull Collection<T> collection, @NotNull ArrayFactory<T> factory, boolean clear) {
+    int size = collection.size();
+    T[] a = factory.create(size);
+    if (size > 0) {
+      a = collection.toArray(a);
+      if (clear) collection.clear();
+    }
+    return a;
   }
 
   @NotNull
