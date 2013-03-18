@@ -378,7 +378,7 @@ class PyDocumentationBuilder {
       Module module = ModuleUtilCore.findModuleForPsiElement(element);
       String formatted = null;
       final ProjectRootManager projectRootManager = ProjectRootManager.getInstance(element.getProject());
-      Sdk pythonSdk = module != null ? PythonSdkType.findPythonSdk(module) : projectRootManager.getProjectSdk();
+      Sdk pythonSdk = module != null ? PythonSdkType.findPython2Sdk(module) : projectRootManager.getProjectSdk();
       if (pythonSdk != null) {
         formatted = ReSTRunner.formatDocstring(pythonSdk, docstring);
       }
