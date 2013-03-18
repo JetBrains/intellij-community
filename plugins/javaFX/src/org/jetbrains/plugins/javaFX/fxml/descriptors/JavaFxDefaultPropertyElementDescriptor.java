@@ -60,6 +60,12 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
 
   @Override
   public XmlElementDescriptor[] getElementsDescriptors(XmlTag context) {
+    if (myName.equals(FxmlConstants.FX_ROOT)) {
+      final JavaFxClassBackedElementDescriptor tagDescriptor = getRootTagDescriptor(context);
+      if (tagDescriptor != null) {
+        return tagDescriptor.getElementsDescriptors(context);
+      }
+    }
     return XmlElementDescriptor.EMPTY_ARRAY;
   }
 
