@@ -15,13 +15,31 @@
  */
 package com.intellij.util;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.Map;
 
 public class EnvironmentUtil {
   private static final Map<String, String> ourEnvironmentProperties = Collections.unmodifiableMap(new ProcessBuilder().environment());
+  private static final Map<String, String> ourEnvironmentVariablesOsSpecific;
+
+  static {
+    Map<String, String> envVars = ourEnvironmentProperties;
+    if (SystemInfo.isWindows) {
+      THashMap<String, String> map = new THashMap<String, String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
+      map.putAll(envVars);
+      ourEnvironmentVariablesOsSpecific = map;
+    }
+    else {
+      ourEnvironmentVariablesOsSpecific = envVars;
+    }
+  }
 
   private EnvironmentUtil() {
   }
@@ -36,6 +54,19 @@ public class EnvironmentUtil {
   @NonNls
   public static Map<String, String> getEnvironmentProperties() {
     return ourEnvironmentProperties;
+  }
+
+  /**
+   * Returns value for the passed environment variable name.
+   * The passed environment variable name is handled in a case-sensitive or case-insensitive manner depending on OS.<p>
+   * For example, on Windows <code>getValue("Path")</code> will return the same result as <code>getValue("PATH")</code>.
+   *
+   * @param name environment variable name
+   * @return value of the environment variable or null if no such variable found
+   */
+  @Nullable
+  public static String getValue(@NotNull String name) {
+    return ourEnvironmentVariablesOsSpecific.get(name);
   }
 
   public static String[] getEnvironment() {
