@@ -151,7 +151,7 @@ public class URLUtil {
 
   /**
    * Splits the url into 2 parts: the scheme ("http://" for instance) and the rest of the URL.
-   * The scheme can be null.
+   * The scheme can be absent, in which case empty string is written to the first item of the Pair.
    */
   @NotNull
   public static Pair<String, String> splitScheme(@NotNull String url) {
@@ -159,10 +159,10 @@ public class URLUtil {
     int ind = url.indexOf(schemeSeparator);
     if (ind >= 0) {
       String scheme = url.substring(0, ind + schemeSeparator.length());
-      return Pair.create(scheme, url.substring(ind));
+      return Pair.create(scheme, url.substring(ind + schemeSeparator.length()));
     }
     else {
-      return Pair.create(null, url);
+      return Pair.create("", url);
     }
   }
 }
