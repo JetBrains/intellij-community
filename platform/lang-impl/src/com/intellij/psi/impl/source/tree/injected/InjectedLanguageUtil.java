@@ -478,7 +478,7 @@ public class InjectedLanguageUtil {
   }
 
   @Nullable
-  public static DocumentWindow getDocumentWindow(PsiElement element) {
+  public static DocumentWindow getDocumentWindow(@NotNull PsiElement element) {
     PsiFile file = element.getContainingFile();
     if (file == null) return null;
     VirtualFile virtualFile = file.getVirtualFile();

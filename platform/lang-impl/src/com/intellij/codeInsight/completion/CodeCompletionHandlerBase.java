@@ -28,6 +28,7 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.diagnostic.errordialog.Attachment;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.ide.DataManager;
+import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.FileASTNode;
 import com.intellij.lang.Language;
@@ -601,18 +602,17 @@ public class CodeCompletionHandlerBase {
       if (injected instanceof PsiFileImpl && injectedLanguageManager.isInjectedFragment(originalFile)) {
         ((PsiFileImpl)injected).setOriginalFile(originalFile);
       }
+      DocumentWindow documentWindow = InjectedLanguageUtil.getDocumentWindow(injected);
+      assert documentWindow != null : "no DocumentWindow for an injected fragment";
+
       TextRange host = injectedLanguageManager.injectedToHost(injected, injected.getTextRange());
       assert hostStartOffset >= host.getStartOffset() : "startOffset before injected";
       assert hostStartOffset <= host.getEndOffset() : "startOffset after injected";
 
-      EditorWindow injectedEditor = (EditorWindow)InjectedLanguageUtil
-        .getEditorForInjectedLanguageNoCommit(hostEditor, hostCopy, hostStartOffset);
-      assert injected == injectedEditor.getInjectedFile();
-      context = new CompletionContext(hostCopy.getProject(), injectedEditor, injected,
-                                      translateOffsetMapToInjected(hostEditor, hostMap, injectedEditor));
+      context = new CompletionContext(injected, translateOffsetMapToInjected(hostMap, documentWindow));
       assert hostStartOffset == injectedLanguageManager.injectedToHost(injected, context.getStartOffset()) : "inconsistent injected offset translation";
     } else {
-      context = new CompletionContext(hostCopy.getProject(), hostEditor, hostCopy, hostMap);
+      context = new CompletionContext(hostCopy, hostMap);
     }
 
     assert context.getStartOffset() < context.file.getTextLength() : "start outside the file";
@@ -621,10 +621,10 @@ public class CodeCompletionHandlerBase {
     return context;
   }
 
-  private static OffsetMap translateOffsetMapToInjected(Editor hostEditor, OffsetMap hostMap, EditorWindow injectedEditor) {
-    final OffsetMap map = new OffsetMap(injectedEditor.getDocument());
+  private static OffsetMap translateOffsetMapToInjected(OffsetMap hostMap, DocumentWindow injectedDocument) {
+    final OffsetMap map = new OffsetMap(injectedDocument);
     for (final OffsetKey key : hostMap.getAllOffsets()) {
-      map.addOffset(key, injectedEditor.logicalPositionToOffset(injectedEditor.hostToInjected(hostEditor.offsetToLogicalPosition(hostMap.getOffset(key)))));
+      map.addOffset(key, injectedDocument.hostToInjected(hostMap.getOffset(key)));
     }
     return map;
   }
