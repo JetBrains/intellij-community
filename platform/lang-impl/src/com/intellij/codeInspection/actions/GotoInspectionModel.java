@@ -24,6 +24,7 @@ import com.intellij.ide.util.gotoByName.SimpleChooseByNameModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
@@ -87,6 +88,11 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
       result.addAll(entries);
     }
     return result.toArray(new InspectionProfileEntry[result.size()]);
+  }
+
+  @Nullable
+  public InspectionProfileEntry getProfileEntryByName(String shortName) {
+    return myToolShortNames.get(shortName);
   }
 
   public String getElementName(final Object element) {

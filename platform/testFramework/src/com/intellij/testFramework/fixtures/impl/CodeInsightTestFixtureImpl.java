@@ -463,7 +463,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
                                                                        final InspectionManagerEx inspectionManager,
                                                                        final InspectionTool... tools) {
 
-    final InspectionProfileImpl profile = InspectionProfileImpl.createSimple("test", tools);
+    final InspectionProfileImpl profile = InspectionProfileImpl.createSimple("test", Arrays.<InspectionProfileEntry>asList(tools));
     GlobalInspectionContextImpl globalContext = new GlobalInspectionContextImpl(project, inspectionManager.getContentManager()) {
       @Override
       protected List<ToolsImpl> getUsedTools() {

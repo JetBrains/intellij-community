@@ -42,6 +42,9 @@ import com.intellij.util.IncorrectOperationException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
+import java.util.List;
+
 /**
  * User: anna
  * Date: 21-Feb-2006
@@ -96,26 +99,31 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     analysisScope = dlg.getScope(uiOptions, analysisScope, project, module);
     final InspectionProfileEntry baseTool =
         InspectionProjectProfileManager.getInstance(project).getInspectionProfile().getInspectionTool(myShortName, file);
-    rerunInspection(baseTool, managerEx, analysisScope, file);
+    rerunInspection(baseTool.getDisplayName(), Collections.singletonList(baseTool), managerEx, analysisScope, file);
   }
 
-  public static void rerunInspection(final InspectionProfileEntry baseTool, final InspectionManagerEx managerEx, final AnalysisScope scope,
+  public static void rerunInspection(final String profileName, final List<InspectionProfileEntry> baseTools,
+                                     final InspectionManagerEx managerEx, final AnalysisScope scope,
                               PsiElement psiElement) {
-    GlobalInspectionContextImpl inspectionContext = createContext(baseTool, managerEx, psiElement);
+    GlobalInspectionContextImpl inspectionContext = createContext(profileName, baseTools, managerEx, psiElement);
     inspectionContext.doInspections(scope, managerEx);
   }
 
-  public static GlobalInspectionContextImpl createContext(final InspectionProfileEntry baseTool, InspectionManagerEx managerEx, PsiElement psiElement) {
-    final InspectionProfileImpl model = InspectionProfileImpl.createSimple(baseTool.getDisplayName(), baseTool);
+  public static GlobalInspectionContextImpl createContext(final String profileName, final List<InspectionProfileEntry> baseTools,
+                                                          InspectionManagerEx managerEx, PsiElement psiElement) {
+    final InspectionProfileImpl model = InspectionProfileImpl.createSimple(profileName, baseTools);
     try {
       Element element = new Element("toCopy");
-      baseTool.writeSettings(element);
-      model.getInspectionTool(baseTool.getShortName(), psiElement).readSettings(element);
+
+      for (InspectionProfileEntry baseTool : baseTools) {
+        baseTool.writeSettings(element);
+        model.getInspectionTool(baseTool.getShortName(), psiElement).readSettings(element);
+      }
     }
     catch (Exception e) {
       //skip
     }
-    model.setEditable(baseTool.getDisplayName());
+    model.setEditable(profileName);
     final GlobalInspectionContextImpl inspectionContext = managerEx.createNewGlobalContext(false);
     inspectionContext.setExternalProfile(model);
     return inspectionContext;
