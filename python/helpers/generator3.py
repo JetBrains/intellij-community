@@ -2602,7 +2602,7 @@ if __name__ == "__main__":
         ' -L -- print version and then a list of binary module files found ' '\n'
         '    on sys.path and in directories in directory_list;' '\n'
         '    lines are "qualified.module.name /full/path/to/module_file.{pyd,dll,so}"' '\n'
-        ' -S -- lists all python sources found in sys.path and in directories in directory_list'
+        ' -S -- lists all python sources found in sys.path and in directories in directory_list\n'
         ' -z archive_name -- zip files to archive_name. Accepts files to be archived from stdin in format <filepath> <name in archive>'
     )
     opts, args = getopt(sys.argv[1:], "d:hbqxvc:ps:LSz")
