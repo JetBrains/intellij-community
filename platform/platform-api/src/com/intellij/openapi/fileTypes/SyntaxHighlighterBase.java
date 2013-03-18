@@ -74,6 +74,10 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     }
   }
 
+  /**
+   * Tries to update the map by associating given keys with a given value.
+   * Throws error if the map already contains different mapping for one of given keys.
+   */
   protected static void safeMap(
     @NotNull final Map<IElementType, TextAttributesKey> map,
     @NotNull final TokenSet keys,
@@ -84,16 +88,18 @@ public abstract class SyntaxHighlighterBase implements SyntaxHighlighter {
     }
   }
 
+  /**
+   * Tries to update the map by associating given key with a given value.
+   * Throws error if the map already contains different mapping for given key.
+   */
   protected static void safeMap(
     @NotNull final Map<IElementType, TextAttributesKey> map,
     @NotNull final IElementType type,
     @NotNull final TextAttributesKey value)
   {
     final TextAttributesKey oldVal = map.put(type, value);
-    if (ApplicationManager.getApplication().isInternal()) {
-      if (oldVal != null && !oldVal.equals(value)) {
-        LOG.error("Remapping highlighting for \"" + type + "\" val: old=" + oldVal + " new=" + value);
-      }
+    if (oldVal != null && !oldVal.equals(value)) {
+      LOG.error("Remapping highlighting for \"" + type + "\" val: old=" + oldVal + " new=" + value);
     }
   }
 
