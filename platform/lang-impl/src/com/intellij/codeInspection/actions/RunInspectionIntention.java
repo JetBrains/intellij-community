@@ -111,14 +111,15 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
 
   public static GlobalInspectionContextImpl createContext(final InspectionProfileEntry baseTool, InspectionManagerEx managerEx, PsiElement psiElement) {
     final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getRootProfile();
-    LinkedHashSet<InspectionProfileEntry> dependentEntries = new LinkedHashSet<InspectionProfileEntry>();
-    GlobalInspectionContextImpl.collectDependentInspections(baseTool, dependentEntries, rootProfile);
-    InspectionProfileEntry[] toolsArray = dependentEntries.toArray(new InspectionProfileEntry[dependentEntries.size()]);
+    LinkedHashSet<InspectionProfileEntry> allEntries = new LinkedHashSet<InspectionProfileEntry>();
+    allEntries.add(baseTool);
+    GlobalInspectionContextImpl.collectDependentInspections(baseTool, allEntries, rootProfile);
+    InspectionProfileEntry[] toolsArray = allEntries.toArray(new InspectionProfileEntry[allEntries.size()]);
     final InspectionProfileImpl model = InspectionProfileImpl.createSimple(baseTool.getDisplayName(), toolsArray);
     try {
       Element element = new Element("toCopy");
 
-      for (InspectionProfileEntry tool : dependentEntries) {
+      for (InspectionProfileEntry tool : allEntries) {
         tool.writeSettings(element);
         model.getInspectionTool(tool.getShortName(), psiElement).readSettings(element);
       }

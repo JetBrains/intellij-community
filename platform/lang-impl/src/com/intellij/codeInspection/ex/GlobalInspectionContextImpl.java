@@ -745,7 +745,6 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
   public static void collectDependentInspections(@NotNull InspectionProfileEntry profileEntry,
                                                  @NotNull Set<InspectionProfileEntry> dependentEntries,
                                                  @NotNull InspectionProfileImpl rootProfile) {
-    dependentEntries.add(profileEntry);
     String mainToolId = profileEntry.getMainToolId();
 
     if (mainToolId != null) {
@@ -753,6 +752,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
       if (dependentEntry != null) {
         if (!dependentEntries.contains(dependentEntry)) {
+          dependentEntries.add(dependentEntry);
           collectDependentInspections(dependentEntry, dependentEntries, rootProfile);
         }
       }
