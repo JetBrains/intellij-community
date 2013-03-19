@@ -327,7 +327,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
     myQuickFixManager = new QuickFixManager(this, myGlassLayer, myScrollPane.getViewport());
 
-    myActionPanel = new DesignerActionPanel(this, myGlassLayer);
+    myActionPanel = createActionPanel();
     myWarnAction = new FixableMessageAction();
 
     add(myActionPanel.getToolbarComponent());
@@ -342,6 +342,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
         storeSourceSelectionState();
       }
     });
+  }
+
+  protected DesignerActionPanel createActionPanel() {
+    return new DesignerActionPanel(this, myGlassLayer);
   }
 
   @Nullable
