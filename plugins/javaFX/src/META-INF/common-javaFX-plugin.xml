@@ -37,6 +37,8 @@
     <packaging.artifactType implementation="org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType"/>
     <compileServer.plugin classpath="javaFX-jps-plugin.jar;common-javaFX-plugin.jar"/>
     <antBuildGen implementation="org.jetbrains.plugins.javaFX.packaging.ant.JavaFxChunkBuildExtension"/>
+    <packaging.artifactType implementation="org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactType"/>
+    <packaging.artifactPropertiesProvider implementation="org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxArtifactPreloaderPropertiesProvider"/>
   </extensions>
 
   <actions>
