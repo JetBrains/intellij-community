@@ -81,8 +81,10 @@ class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferenceProvi
         if (myAClass != null) {
           final XmlFile xmlFile = (XmlFile)myXmlAttributeValue.getContainingFile();
           final XmlTag rootTag = xmlFile.getRootTag();
-          if (rootTag != null && !FxmlConstants.FX_ROOT.equals(rootTag.getName())) {
-            return null;
+          if (rootTag != null) {
+            if (!JavaFxPsiUtil.isOutOfHierarchy(myXmlAttributeValue) && !FxmlConstants.FX_ROOT.equals(rootTag.getName())) {
+              return null;
+            }
           }
         }
         return myXmlAttributeValue;
