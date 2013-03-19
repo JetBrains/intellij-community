@@ -29,15 +29,20 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactProperties;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.elements.ArchivePackagingElement;
+import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactPropertiesProvider;
+import org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactProperties;
+import org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactType;
 
 import java.io.File;
 import java.util.Collections;
@@ -329,11 +334,33 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
 
     @Override
     public String getPreloaderClass() {
+      final Artifact artifact = getPreloaderArtifact();
+      if (artifact != null) {
+        final JavaFxPreloaderArtifactProperties properties = (JavaFxPreloaderArtifactProperties)artifact.getProperties(JavaFxPreloaderArtifactPropertiesProvider.getInstance());
+        return properties.getPreloaderClass();
+      }
       return null;
     }
 
     @Override
     public String getPreloaderJar() {
+      final Artifact artifact = getPreloaderArtifact();
+      if (artifact != null) {
+        return ((ArchivePackagingElement)artifact.getRootElement()).getArchiveFileName();
+      }
+      return null;
+    }
+
+    private Artifact getPreloaderArtifact() {
+      for (PackagingElement<?> element : myArtifact.getRootElement().getChildren()) {
+        if (element instanceof ArtifactPackagingElement) {
+          final Artifact artifact = ((ArtifactPackagingElement)element)
+            .findArtifact(ArtifactManager.getInstance(myCompileContext.getProject()).getResolvingContext());
+          if (artifact != null && artifact.getArtifactType() instanceof JavaFxPreloaderArtifactType) {
+            return artifact;
+          }
+        }
+      }
       return null;
     }
 

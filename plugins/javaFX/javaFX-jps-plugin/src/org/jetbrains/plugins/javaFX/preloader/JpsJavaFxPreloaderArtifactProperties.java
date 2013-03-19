@@ -47,6 +47,10 @@ public class JpsJavaFxPreloaderArtifactProperties extends JpsElementBase<JpsJava
     copyState(modified.myState);
   }
 
+  public String getPreloaderClass() {
+    return myState.getPreloaderClass();
+  }
+
   public static class MyState {
     private String myPreloaderClass;
 
