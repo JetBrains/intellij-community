@@ -23,7 +23,6 @@ import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
@@ -143,18 +142,8 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
 
   private void changeLineSeparators(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     try {
-      CharSequence currentText = LoadTextUtil.getTextByBinaryPresentation(virtualFile.contentsToByteArray(), virtualFile);
-      String currentLineSeparator = LoadTextUtil.detectLineSeparator(virtualFile, false);
-      if (mySeparator.equals(currentLineSeparator)) {
-        return;
-      }
-      String newText = StringUtil.convertLineSeparators(currentText.toString(), mySeparator);
-      LoadTextUtil.write(project, virtualFile, this, newText, -1);
-      LocalHistory.getInstance().putSystemLabel(project, String.format(
-        "Line Ending: %s->%s",
-        currentLineSeparator == null ? "" : LineSeparator.fromString(currentLineSeparator),
-        LineSeparator.fromString(mySeparator)
-      ));
+      LoadTextUtil.changeLineSeparators(project, virtualFile, mySeparator, this);
+      LocalHistory.getInstance().putSystemLabel(project, "Line Ending: %s" + LineSeparator.fromString(mySeparator));
     }
     catch (IOException e) {
       LOG.warn(e);

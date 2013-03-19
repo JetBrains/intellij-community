@@ -24,7 +24,7 @@ import java.awt.*;
 public class LineFeedback extends JComponent {
   protected final Color myColor;
   private final int myLine;
-  private boolean myHorizontal;
+  protected boolean myHorizontal;
 
   public LineFeedback(Color color, int line, boolean horizontal) {
     myColor = color;

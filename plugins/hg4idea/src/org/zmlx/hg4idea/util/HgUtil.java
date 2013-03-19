@@ -285,8 +285,7 @@ public abstract class HgUtil {
 
 
   public static HgFile getFileNameInTargetRevision(Project project, HgRevisionNumber vcsRevisionNumber, HgFile localHgFile) {
-    HgStatusCommand statCommand = new HgStatusCommand.Builder(true).includeUnknown(false).build(project);
-    statCommand.setBaseRevision(vcsRevisionNumber);
+    HgStatusCommand statCommand = new HgStatusCommand.Builder(true).unknown(false).baseRevision(vcsRevisionNumber).build(project);
 
     Set<HgChange> changes = statCommand.execute(localHgFile.getRepo());
 
@@ -400,16 +399,18 @@ public abstract class HgUtil {
                                      @NotNull final FilePath path,
                                      @Nullable final HgFileRevision rev1,
                                      @Nullable final HgFileRevision rev2) {
-    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).includeCopySource(false).build(project);
+    HgStatusCommand statusCommand;
     HgRevisionNumber revNumber1 = null;
     if (rev1 != null) {
       revNumber1 = rev1.getRevisionNumber();
-      statusCommand.setBaseRevision(revNumber1);
-      statusCommand.setTargetRevision(rev2 != null ? rev2.getRevisionNumber() : null);   //rev2==null means "compare with local version"
+      //rev2==null means "compare with local version"
+      statusCommand = new HgStatusCommand.Builder(true).copySource(false).baseRevision(revNumber1)
+        .targetRevision(rev2 != null ? rev2.getRevisionNumber() : null).build(project);
     }
     else {
       LOG.assertTrue(rev2 != null, "revision1 and revision2 can't both be null. Path: " + path); //rev1 and rev2 can't be null both//
-      statusCommand.setBaseRevision(rev2.getRevisionNumber());     //get initial changes//
+      //get initial changes//
+      statusCommand = new HgStatusCommand.Builder(true).copySource(false).baseRevision(rev2.getRevisionNumber()).build(project);
     }
 
     Collection<HgChange> hgChanges = statusCommand.execute(root, Collections.singleton(path));

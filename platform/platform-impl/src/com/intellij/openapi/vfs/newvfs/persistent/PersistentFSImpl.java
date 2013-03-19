@@ -1188,8 +1188,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
 
     @Override
-    protected String rawName() {
-      return myParentLocalFile.getPath() + JarFileSystem.JAR_SEPARATOR;
+    protected char[] appendPathOnFileSystem(int accumulatedPathLength, int[] positionRef) {
+      String parentPath = myParentLocalFile.getPath();
+      char[] chars = new char[parentPath.length() + JarFileSystem.JAR_SEPARATOR.length() + accumulatedPathLength];
+      positionRef[0] = copyString(chars, positionRef[0], myParentLocalFile.getPath());
+      positionRef[0] = copyString(chars, positionRef[0], JarFileSystem.JAR_SEPARATOR);
+      return chars;
     }
 
     @Override

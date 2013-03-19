@@ -27,6 +27,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.OrderEntryAppearanceService;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.ColoredListCellRenderer;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
@@ -177,7 +178,10 @@ public class AntUIUtil {
       if (jdk == null) {
         if (myProjectJdkName.length() > 0) {
           setIcon(AllIcons.General.Jdk);
-          append(AntBundle.message("project.jdk.project.jdk.name.list.column.value", myProjectJdkName), selected ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
+          append(AntBundle.message("project.jdk.project.jdk.name.list.column.value", myProjectJdkName),
+                 selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))
+                 ? SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES
+                 : SimpleTextAttributes.SIMPLE_CELL_ATTRIBUTES);
         }
         else {
           setIcon(PlatformIcons.INVALID_ENTRY_ICON);

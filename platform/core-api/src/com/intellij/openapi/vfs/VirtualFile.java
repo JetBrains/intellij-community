@@ -477,7 +477,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @return Retrieve the charset file has been loaded with (if loaded) and would be saved with (if would).
    */
   public Charset getCharset() {
-    Charset charset = getUserData(CHARSET_KEY);
+    Charset charset = getStoredCharset();
     if (charset == null) {
       charset = EncodingRegistry.getInstance().getDefaultCharset();
       setCharset(charset);
@@ -485,13 +485,22 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
     return charset;
   }
 
+  @Nullable
+  protected Charset getStoredCharset() {
+    return getUserData(CHARSET_KEY);
+  }
+
+  protected void storeCharset(Charset charset) {
+    putUserData(CHARSET_KEY, charset);
+  }
+
   public void setCharset(final Charset charset) {
     setCharset(charset, null);
   }
 
   public void setCharset(final Charset charset, @Nullable Runnable whenChanged) {
-    final Charset old = getUserData(CHARSET_KEY);
-    putUserData(CHARSET_KEY, charset);
+    final Charset old = getStoredCharset();
+    storeCharset(charset);
     if (Comparing.equal(charset, old)) return;
     byte[] bom = charset == null ? null : CharsetToolkit.getMandatoryBom(charset);
     byte[] existingBOM = getBOM();
@@ -507,7 +516,7 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
   }
 
   public boolean isCharsetSet() {
-    return getUserData(CHARSET_KEY) != null;
+    return getStoredCharset() != null;
   }
 
   public final void setBinaryContent(@NotNull byte[] content) throws IOException {

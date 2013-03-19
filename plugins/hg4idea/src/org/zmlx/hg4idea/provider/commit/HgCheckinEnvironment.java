@@ -134,8 +134,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   private Set<HgFile> getChangedFilesNotInCommit(VirtualFile repo, Set<HgFile> selectedFiles) {
     List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(repo);
 
-    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).includeUnknown(false).includeIgnored(false).build(myProject);
-    statusCommand.setBaseRevision(parents.get(0));
+    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).unknown(false).ignored(false).baseRevision(parents.get(0)).build(myProject);
     Set<HgChange> allChangedFilesInRepo = statusCommand.execute(repo);
 
     Set<HgFile> filesNotIncluded = new HashSet<HgFile>();

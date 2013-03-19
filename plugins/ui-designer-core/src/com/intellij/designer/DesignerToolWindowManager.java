@@ -155,9 +155,11 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
       }
     });
 
-    myToolWindow =
-      ToolWindowManager.getInstance(myProject)
-        .registerToolWindow(DesignerBundle.message("designer.toolwindow.name"), false, ToolWindowAnchor.LEFT, myProject, true);
+    DesignerCustomizations customization = getCustomizations();
+    ToolWindowAnchor anchor = customization != null ? customization.getPaletteAnchor() : ToolWindowAnchor.LEFT;
+
+    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(DesignerBundle.message("designer.toolwindow.name"),
+                                                                               false, anchor, myProject, true);
     myToolWindow.setIcon(UIDesignerNewIcons.ToolWindow);
     myToolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
 

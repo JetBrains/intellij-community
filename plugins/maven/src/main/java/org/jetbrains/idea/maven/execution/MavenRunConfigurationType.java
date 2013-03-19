@@ -196,7 +196,7 @@ public class MavenRunConfigurationType implements ConfigurationType {
     }
   }
 
-  static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(@Nullable MavenGeneralSettings generalSettings,
+  public static RunnerAndConfigurationSettings createRunnerAndConfigurationSettings(@Nullable MavenGeneralSettings generalSettings,
                                                                              @Nullable MavenRunnerSettings runnerSettings,
                                                                              MavenRunnerParameters params,
                                                                              Project project) {

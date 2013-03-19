@@ -32,12 +32,25 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.OutputStream;
+import java.nio.charset.Charset;
 import java.util.Collection;
 import java.util.Collections;
 
 public class VirtualFileImpl extends VirtualFileSystemEntry {
+  private Charset myCharset;
+
   VirtualFileImpl(String name, VirtualDirectoryImpl parent, int id, @PersistentFS.Attributes final int attributes) {
     super(name, parent, id, attributes);
+  }
+
+  @Override
+  protected void storeCharset(Charset charset) {
+    myCharset = charset;
+  }
+
+  @Override
+  protected Charset getStoredCharset() {
+    return myCharset;
   }
 
   @Override
