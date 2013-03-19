@@ -28,6 +28,7 @@ import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
+import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Base64Converter;
 import org.jetbrains.annotations.NonNls;
@@ -110,20 +111,30 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
                                        ArtifactAntGenerationContext context,
                                        CompositeGenerator generator) {
     if (preprocessing) return;
+
     final CompositePackagingElement<?> rootElement = artifact.getRootElement();
-    final String artifactName = FileUtil.getNameWithoutExtension(rootElement.getName());
 
-    final String tempDirPath = BuildProperties.propertyRef(context.getArtifactOutputProperty(artifact));
+    List<PackagingElement<?>> children = rootElement.getChildren();
+    String artifactFileName = rootElement.getName();
+    for (PackagingElement<?> child : children) {
+      if (child instanceof ArchivePackagingElement) {
+        artifactFileName = ((ArchivePackagingElement)child).getArchiveFileName();
+        children = ((ArchivePackagingElement)child).getChildren();
+      }
+    }
 
-    final List<PackagingElement<?>> children = rootElement.getChildren();
+    final String artifactName = FileUtil.getNameWithoutExtension(artifactFileName);
+
+    final String tempDirPath = BuildProperties.propertyRef(
+      context.createNewTempFileProperty("artifact.temp.output." + artifactName, artifactFileName));
+
     final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(context.getProject()).getResolvingContext();
     for (Generator childGenerator : computeChildrenGenerators(resolvingContext, 
                                                               new DirectoryAntCopyInstructionCreator(tempDirPath),
                                                          context, artifact.getArtifactType(), children)) {
       generator.add(childGenerator);
     }
-    
-    final String artifactFileName = rootElement.getName();
+
     final JavaFxArtifactProperties properties =
       (JavaFxArtifactProperties)artifact.getProperties(JavaFxArtifactPropertiesProvider.getInstance());
 

@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.javaFX;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
 import org.jetbrains.jps.incremental.BuildTask;
@@ -11,6 +12,7 @@ import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.artifact.elements.JpsArchivePackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
@@ -91,7 +93,7 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
 
     @Override
     protected String getArtifactRootName() {
-      return ((JpsArchivePackagingElement)myArtifact.getRootElement()).getArchiveName();
+      return FileUtil.sanitizeFileName(myArtifact.getName()) + ".jar";
     }
 
     @Override
@@ -101,6 +103,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
 
     @Override
     protected String getArtifactOutputFilePath() {
+      for (JpsPackagingElement element : myArtifact.getRootElement().getChildren()) {
+        if (element instanceof JpsArchivePackagingElement) {
+          return myArtifact.getOutputFilePath() + File.separator + ((JpsArchivePackagingElement)element).getArchiveName();
+        }
+      }
       return myArtifact.getOutputFilePath();
     }
 
@@ -187,6 +194,16 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     @Override
     public boolean isEnabledSigning() {
       return myProperties.myState.isEnabledSigning();
+    }
+
+    @Override
+    public String getPreloaderClass() {
+      return null;
+    }
+
+    @Override
+    public String getPreloaderJar() {
+      return null;
     }
   }
 }
