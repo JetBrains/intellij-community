@@ -99,7 +99,9 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     
     myRecentTasksModel.clear();
     myRecentTasksModel.setTasks(myLocalSettings.getRecentTasks());
-    myRecentTasksModel.ensureSize(Registry.intValue(GradleConstants.REGISTRY_RECENT_TASKS_NUMBER_KEY, 5));
+    int recentTasksNumber = Registry.intValue(GradleConstants.REGISTRY_RECENT_TASKS_NUMBER_KEY, 5);
+    myRecentTasksModel.ensureSize(recentTasksNumber);
+    myRecentTasksList.setVisibleRowCount(recentTasksNumber);
     addListPanel(myRecentTasksList, result, GradleBundle.message("gradle.task.recent.title"), false);
     
     myAllTasksModel.clear();
