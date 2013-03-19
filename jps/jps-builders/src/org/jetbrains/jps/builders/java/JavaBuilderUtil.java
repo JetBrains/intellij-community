@@ -74,6 +74,7 @@ public class JavaBuilderUtil {
 
       final Mappings globalMappings = context.getProjectDescriptor().dataManager.getMappings();
 
+      final boolean errorsDetected = Utils.errorsDetected(context);
       if (!isForcedRecompilationAllJavaModules(context)) {
         if (context.shouldDifferentiate(chunk)) {
           context.processMessage(new ProgressMessage("Checking dependencies... [" + chunk.getName() + "]"));
@@ -151,14 +152,18 @@ public class JavaBuilderUtil {
           }
         }
         else {
-          globalMappings.differentiateOnNonIncrementalMake(delta, removedPaths, filesToCompile);
+          if (!errorsDetected) { // makes sense only if we are going to integrate changes
+            globalMappings.differentiateOnNonIncrementalMake(delta, removedPaths, filesToCompile);
+          }
         }
       }
       else {
-        globalMappings.differentiateOnRebuild(delta);
+        if (!errorsDetected) { // makes sense only if we are going to integrate changes
+          globalMappings.differentiateOnRebuild(delta);
+        }
       }
 
-      if (Utils.errorsDetected(context)) {
+      if (errorsDetected) {
         // important: perform dependency analysis and mark found dependencies even if there were errors during the first phase of make.
         // Integration of changes should happen only if the corresponding phase of make succeeds
         // In case of errors this wil ensure that all dependencies marked after the first phase
