@@ -39,7 +39,10 @@ public class ActionLink extends LinkLabel implements DataProvider {
   private Color myNormalColor;
 
   public ActionLink(String text, @NotNull AnAction action) {
-    super(text, ICON);
+    this(text, ICON, action);
+  }
+  public ActionLink(String text, Icon icon, @NotNull AnAction action) {
+    super(text, icon);
     setListener(new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
