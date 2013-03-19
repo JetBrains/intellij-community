@@ -2385,7 +2385,7 @@ public final class CmdlineRemoteProto {
           int getTargetIdCount();
           String getTargetId(int index);
           
-          // optional bool force_build = 4;
+          // required bool force_build = 4;
           boolean hasForceBuild();
           boolean getForceBuild();
         }
@@ -2464,7 +2464,7 @@ public final class CmdlineRemoteProto {
             return targetId_.get(index);
           }
           
-          // optional bool force_build = 4;
+          // required bool force_build = 4;
           public static final int FORCE_BUILD_FIELD_NUMBER = 4;
           private boolean forceBuild_;
           public boolean hasForceBuild() {
@@ -2486,6 +2486,10 @@ public final class CmdlineRemoteProto {
             if (isInitialized != -1) return isInitialized == 1;
             
             if (!hasTypeId()) {
+              memoizedIsInitialized = 0;
+              return false;
+            }
+            if (!hasForceBuild()) {
               memoizedIsInitialized = 0;
               return false;
             }
@@ -2731,6 +2735,10 @@ public final class CmdlineRemoteProto {
                 
                 return false;
               }
+              if (!hasForceBuild()) {
+                
+                return false;
+              }
               return true;
             }
             
@@ -2890,7 +2898,7 @@ public final class CmdlineRemoteProto {
               
             }
             
-            // optional bool force_build = 4;
+            // required bool force_build = 4;
             private boolean forceBuild_ ;
             public boolean hasForceBuild() {
               return ((bitField0_ & 0x00000008) == 0x00000008);

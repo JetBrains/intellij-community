@@ -74,7 +74,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
 
   @Override
   public boolean isMake() {
-    return !JavaBuilderUtil.isForcedRecompilationJava(this);
+    return JavaBuilderUtil.isCompileJavaIncrementally(this);
   }
 
   @Override
