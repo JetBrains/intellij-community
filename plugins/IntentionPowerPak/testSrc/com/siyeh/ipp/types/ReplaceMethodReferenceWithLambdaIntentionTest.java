@@ -101,4 +101,8 @@ public class ReplaceMethodReferenceWithLambdaIntentionTest extends IPPTestCase {
   public void testArrayMethodRef() throws Exception {
     doTest();
   }
+
+  public void testArrayConstructorRefUniqueParamName() throws Exception {
+    doTest();
+  }
 }
