@@ -100,8 +100,6 @@ class IgnoredFileCache {
         int id = ((NewVirtualFile)file).getId();
         if (id >= 0) {
           ids.add(id);
-        } else {
-          LOG.error("Negative id: " + file + "; " + event);
         }
       }
     });
