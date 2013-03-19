@@ -82,6 +82,8 @@ public abstract class AbstractJavaFxPackager {
     addParameter(commandLine, "-appclass");
     addParameter(commandLine, getAppClass());
 
+    appendPreloader(commandLine, true);
+
     addParameter(commandLine, "-srcdir");
     addParameter(commandLine, tempUnzippedArtifactOutput.getPath());
     addParameter(commandLine, "-outdir");
@@ -110,6 +112,20 @@ public abstract class AbstractJavaFxPackager {
     }
   }
 
+  private void appendPreloader(List<String> commandLine, boolean appendPreloaderJar) {
+    final String preloaderClass = getPreloaderClass();
+    final String preloaderJar = getPreloaderJar();
+    if (!StringUtil.isEmptyOrSpaces(preloaderClass) && !StringUtil.isEmptyOrSpaces(preloaderJar)) {
+      addParameter(commandLine, "-preloader");
+      addParameter(commandLine, preloaderClass);
+
+      if (appendPreloaderJar) {
+        addParameter(commandLine, "-classpath");
+        addParameter(commandLine, new File(preloaderJar).getName());
+      }
+    }
+  }
+
   private void deploy(final String binPath,
                       final File tempDirWithCreatedJar,
                       final File tempUnzippedArtifactOutput) {
@@ -125,6 +141,8 @@ public abstract class AbstractJavaFxPackager {
 
     addParameter(commandLine, "-appclass");
     addParameter(commandLine, getAppClass());
+
+    appendPreloader(commandLine, false);
 
     addParameter(commandLine, "-width");
     addParameter(commandLine, getWidth());
@@ -321,4 +339,8 @@ public abstract class AbstractJavaFxPackager {
   public abstract boolean isSelfSigning();
 
   public abstract boolean isEnabledSigning();
+
+  public abstract String getPreloaderClass();
+
+  public abstract String getPreloaderJar();
 }

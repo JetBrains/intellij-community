@@ -26,16 +26,20 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactProperties;
+import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.Set;
 
@@ -61,6 +65,9 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myKeystore;
   private String myStorepass;
   private String myKeypass;
+
+  private String myPreloaderClass;
+  private String myPreloaderJar;
 
   @Override
   public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
@@ -243,6 +250,22 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myKeypass = keypass;
   }
 
+  public String getPreloaderClass() {
+    return myPreloaderClass;
+  }
+
+  public void setPreloaderClass(String preloaderClass) {
+    myPreloaderClass = preloaderClass;
+  }
+
+  public String getPreloaderJar() {
+    return myPreloaderJar;
+  }
+
+  public void setPreloaderJar(String preloaderJar) {
+    myPreloaderJar = preloaderJar;
+  }
+
   private static class JavaFxPackager extends AbstractJavaFxPackager {
     private final Artifact myArtifact;
     private final JavaFxArtifactProperties myProperties;
@@ -256,7 +279,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
 
     @Override
     protected String getArtifactRootName() {
-      return myArtifact.getRootElement().getName();
+      return FileUtil.sanitizeFileName(myArtifact.getName()) + ".jar";
     }
 
     @Override
@@ -266,6 +289,11 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
 
     @Override
     protected String getArtifactOutputFilePath() {
+      for (PackagingElement<?> element : myArtifact.getRootElement().getChildren()) {
+        if (element instanceof ArchivePackagingElement) {
+          return myArtifact.getOutputFilePath() + File.separator + ((ArchivePackagingElement)element).getArchiveFileName();
+        }
+      }
       return myArtifact.getOutputFilePath();
     }
 
@@ -297,6 +325,16 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     @Override
     protected String getHeight() {
       return myProperties.getHeight();
+    }
+
+    @Override
+    public String getPreloaderClass() {
+      return null;
+    }
+
+    @Override
+    public String getPreloaderJar() {
+      return null;
     }
 
     @Override
