@@ -36,6 +36,7 @@ import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.instrumentation.BaseInstrumentingBuilder;
+import org.jetbrains.jps.incremental.instrumentation.ClassProcessingBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -78,7 +79,7 @@ public class FormsInstrumenter extends FormsBuilder {
       formsToCompile.addAll(files);
     }
 
-    if (!JavaBuilderUtil.isForcedRecompilationJava(context)) {
+    if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
       final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
       if (logger.isEnabled()) {
         logger.logCompiledFiles(formsToCompile, getPresentableName(), "Compiling forms:");
@@ -94,8 +95,7 @@ public class FormsInstrumenter extends FormsBuilder {
       final Map<File, String> chunkSourcePath = ProjectPaths.getSourceRootsWithDependents(chunk);
       classpath.addAll(chunkSourcePath.keySet()); // sourcepath for loading forms resources
 
-      final InstrumentationClassFinder finder =
-        BaseInstrumentingBuilder.createInstrumentationClassFinder(platformCp, classpath, outputConsumer);
+      final InstrumentationClassFinder finder = ClassProcessingBuilder.createInstrumentationClassFinder(platformCp, classpath, outputConsumer);
 
       try {
         final Map<File, Collection<File>> processed = instrumentForms(context, chunk, chunkSourcePath, finder, formsToCompile, outputConsumer);

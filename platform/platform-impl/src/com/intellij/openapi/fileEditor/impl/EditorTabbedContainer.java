@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -71,7 +71,7 @@ import java.util.Map;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget {
+public final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget {
   private final EditorWindow myWindow;
   private final Project myProject;
   private final JBEditorTabs myTabs;
@@ -160,6 +160,11 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
   public ActionCallback setSelectedIndex(final int indexToSelect, boolean focusEditor) {
     if (indexToSelect >= myTabs.getTabCount()) return new ActionCallback.Rejected();
     return myTabs.select(myTabs.getTabAt(indexToSelect), focusEditor);
+  }
+
+
+  public static DockableEditor createDockableEditor(Project project, Image image, VirtualFile file, Presentation presentation, EditorWindow window) {
+    return new DockableEditor(project, image, file, presentation, window);
   }
 
   private void updateTabBorder() {
@@ -582,7 +587,7 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       myFile = (VirtualFile)info.getObject();
       Presentation presentation = new Presentation(info.getText());
       presentation.setIcon(info.getIcon());
-      mySession = getDockManager().createDragSession(mouseEvent, new DockableEditor(img, myFile, presentation, myWindow));
+      mySession = getDockManager().createDragSession(mouseEvent, createDockableEditor(myProject, img, myFile, presentation, myWindow));
     }
 
     private DockManager getDockManager() {
@@ -625,63 +630,64 @@ final class EditorTabbedContainer implements Disposable, CloseAction.CloseTarget
       mySession = null;
     }
 
-    class DockableEditor implements DockableContent<VirtualFile> {
-      final Image myImg;
-      private DockableEditorTabbedContainer myContainer;
-      private Presentation myPresentation;
-      private EditorWindow myEditorWindow;
-      private Dimension myPreferredSize;
-      private boolean myPinned;
+  }
 
+  public static class DockableEditor implements DockableContent<VirtualFile> {
+    final Image myImg;
+    private DockableEditorTabbedContainer myContainer;
+    private Presentation myPresentation;
+    private EditorWindow myEditorWindow;
+    private Dimension myPreferredSize;
+    private boolean myPinned;
+    private VirtualFile myFile;
 
-      public DockableEditor(Image img, VirtualFile file, Presentation presentation, EditorWindow window) {
-        myImg = img;
-        myFile = file;
-        myPresentation = presentation;
-        myContainer = new DockableEditorTabbedContainer(myProject);
-        myEditorWindow = window;
-        myPreferredSize = myEditorWindow.getSize();
-        myPinned = window.isFilePinned(file);
-      }
+    public DockableEditor(Project project, Image img, VirtualFile file, Presentation presentation, EditorWindow window) {
+      myImg = img;
+      myFile = file;
+      myPresentation = presentation;
+      myContainer = new DockableEditorTabbedContainer(project);
+      myEditorWindow = window;
+      myPreferredSize = myEditorWindow.getSize();
+      myPinned = window.isFilePinned(file);
+    }
 
-      @NotNull
-      @Override
-      public VirtualFile getKey() {
-        return myFile;
-      }
+    @NotNull
+    @Override
+    public VirtualFile getKey() {
+      return myFile;
+    }
 
-      @Override
-      public Image getPreviewImage() {
-        return myImg;
-      }
+    @Override
+    public Image getPreviewImage() {
+      return myImg;
+    }
 
-      @Override
-      public Dimension getPreferredSize() {
-        return myPreferredSize;
-      }
+    @Override
+    public Dimension getPreferredSize() {
+      return myPreferredSize;
+    }
 
-      @Override
-      public String getDockContainerType() {
-        return DockableEditorContainerFactory.TYPE;
-      }
+    @Override
+    public String getDockContainerType() {
+      return DockableEditorContainerFactory.TYPE;
+    }
 
-      @Override
-      public Presentation getPresentation() {
-        return myPresentation;
-      }
+    @Override
+    public Presentation getPresentation() {
+      return myPresentation;
+    }
 
-      @Override
-      public void close() {
-        myContainer.close(myFile);
-      }
+    @Override
+    public void close() {
+      myContainer.close(myFile);
+    }
 
-      public VirtualFile getFile() {
-        return myFile;
-      }
+    public VirtualFile getFile() {
+      return myFile;
+    }
 
-      public boolean isPinned() {
-        return myPinned;
-      }
+    public boolean isPinned() {
+      return myPinned;
     }
   }
 

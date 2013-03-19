@@ -568,6 +568,9 @@
   <action id="EditSource">
     <keyboard-shortcut first-keystroke="F4"/>
   </action>
+  <action id="EditSourceInNewWindow">
+    <keyboard-shortcut first-keystroke="shift F4"/>
+  </action>
   <action id="CodeCompletion">
     <keyboard-shortcut first-keystroke="control SPACE"/>
   </action>

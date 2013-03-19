@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -68,6 +68,7 @@ import com.intellij.ui.FocusTrackback;
 import com.intellij.ui.Gray;
 import com.intellij.ui.docking.DockContainer;
 import com.intellij.ui.docking.DockManager;
+import com.intellij.ui.docking.impl.DockManagerImpl;
 import com.intellij.ui.tabs.impl.JBTabsImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.messages.MessageBusConnection;
@@ -83,6 +84,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
+import java.awt.event.KeyEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
@@ -598,6 +600,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
     assertDispatchThread();
 
+    if (isShiftEnter(EventQueue.getCurrentEvent())) {
+      return openFileInNewWindow(file);
+    }
+
+
     EditorWindow wndToOpenIn = null;
     if (searchForSplitter) {
       Set<EditorsSplitters> all = getAllSplitters();
@@ -628,6 +635,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
     openAssociatedFile(file, wndToOpenIn, splitters);
     return openFileImpl2(wndToOpenIn, file, focusEditor);
+  }
+
+  public Pair<FileEditor[], FileEditorProvider[]> openFileInNewWindow(VirtualFile file) {
+    return ((DockManagerImpl)DockManager.getInstance(getProject())).createNewDockContainerFor(file, this);
+  }
+
+  private static boolean isShiftEnter(AWTEvent event) {
+    return event instanceof KeyEvent
+      && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_ENTER
+      && ((KeyEvent)event).isShiftDown();
   }
 
   private void openAssociatedFile(VirtualFile file, EditorWindow wndToOpenIn, EditorsSplitters splitters) {
