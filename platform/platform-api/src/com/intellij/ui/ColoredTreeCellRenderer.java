@@ -116,10 +116,6 @@ public abstract class ColoredTreeCellRenderer extends SimpleColoredComponent imp
       setIpad(new Insets(0, 2,  0, 2));
     }
 
-    if (getFont() == null) {
-      setFont(tree.getFont());
-    }
-
     customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
 
     return this;
