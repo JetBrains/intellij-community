@@ -40,7 +40,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.HttpURLConnection;
-import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -76,7 +75,6 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
   private JBLabel myOtherWarning;
   private final HttpConfigurable myHttpConfigurable;
   private volatile boolean myConnectionCheckInProgress;
-  private String myOldStyleWarning;
 
   public boolean isModified() {
     boolean isModified = false;
@@ -244,13 +242,11 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
     final boolean showError = !StringUtil.isEmptyOrSpaces(httpConfigurable.LAST_ERROR);
     myErrorLabel.setVisible(showError);
     myErrorLabel.setText(showError ? errorText(httpConfigurable.LAST_ERROR) : "");
-//    myErrorLabel.setForeground(SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor());
 
-    final String oldStyleText = getOldStyleWarning();
+    final String oldStyleText = CommonProxy.getMessageFromProps(CommonProxy.getOldStyleProperties());
     myOtherWarning.setVisible(oldStyleText != null);
     if (oldStyleText != null) {
       myOtherWarning.setText(oldStyleText);
-//      myOtherWarning.setForeground(SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor());
       myOtherWarning.setUI(new MultiLineLabelUI());
       myOtherWarning.setIcon(Messages.getWarningIcon());
     }
@@ -360,10 +356,5 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
 
   @Override
   public void disposeUIResources() {
-  }
-
-  public String getOldStyleWarning() {
-    final Map<String,String> properties = CommonProxy.getOldStyleProperties();
-    return properties == null || properties.isEmpty() ? null : CommonProxy.getMessageFromProps(properties);
   }
 }
