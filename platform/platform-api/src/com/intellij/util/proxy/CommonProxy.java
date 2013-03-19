@@ -28,6 +28,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.IOException;
 import java.net.*;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -41,7 +42,7 @@ public class CommonProxy extends ProxySelector {
   private final CommonAuthenticator myAuthenticator;
 
   public final static List<Proxy> NO_PROXY_LIST = Collections.singletonList(Proxy.NO_PROXY);
-  private final static long ourErrorInterval = 3 * 60 * 1000;
+  private final static long ourErrorInterval = TimeUnit.MINUTES.toMillis(3);
   private static volatile int ourNotificationCount;
   private volatile static long ourErrorTime = 0;
   private volatile static ProxySelector ourWrong;
@@ -62,7 +63,7 @@ public class CommonProxy extends ProxySelector {
     return ourInstance;
   }
 
-  public CommonProxy() {
+  private CommonProxy() {
     myLock = new Object();
     myNoProxy = new HashSet<Pair<HostInfo, Thread>>();
     myCustom = new HashMap<String, ProxySelector>();
@@ -91,6 +92,7 @@ public class CommonProxy extends ProxySelector {
   private static boolean itsTime() {
     final boolean b = System.currentTimeMillis() - ourErrorTime > ourErrorInterval && ourNotificationCount < 5;
     if (b) {
+      ourErrorTime = System.currentTimeMillis();
       ++ ourNotificationCount;
     }
     return b;
@@ -105,9 +107,8 @@ public class CommonProxy extends ProxySelector {
 
     final String message = getMessageFromProps(props);
     if (message != null) {
-      /*if (ApplicationManager.getApplication() != null && ! ApplicationManager.getApplication().isHeadlessEnvironment()) {
-        PopupUtil.showBalloonForActiveComponent(message, MessageType.WARNING);
-      }*/
+      // we only intend to somehow report possible misconfiguration
+      // will not show to the user since on Mac OS this setting is typical
       LOG.info(message);
     }
   }
