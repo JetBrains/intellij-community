@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgContentRevision;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.HgRevisionNumber;
+import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
@@ -93,13 +94,21 @@ public class HgMergeProvider implements MergeProvider {
           if (result != null) {
             String output = result.getRawOutput();
             final List<String> parts = StringUtil.split(output, ":");
-            if (parts.size() >= 2) {
+            if (parts.size() < 2) {
+              LOG.info("Couldn't parse result of debugancestor command execution " + arguments);
+              new HgCommandResultNotifier(myProject)
+                .notifyError(null, HgVcsMessages.message("hg4idea.error.debugancestor.command.execution"),
+                             HgVcsMessages.message("hg4idea.error.debugancestor.command.description"));
+            }
+            else {
               baseRevisionNumber = HgRevisionNumber.getInstance(parts.get(0), parts.get(1));
             }
           }
           else {
+            LOG.info(HgVcsMessages.message("hg4idea.error.debugancestor.command.execution") + arguments);
             new HgCommandResultNotifier(myProject)
-              .notifyError(null, "Error during debugancestor command execution", "Couldn't collect information about ancestor");
+              .notifyError(null, HgVcsMessages.message("hg4idea.error.debugancestor.command.execution"),
+                           HgVcsMessages.message("hg4idea.error.debugancestor.command.description"));
           }
         } else {
           // 2. local changes are not checked in.
@@ -118,7 +127,8 @@ public class HgMergeProvider implements MergeProvider {
 
         if (baseRevisionNumber != null) {
           final HgContentRevision base = new HgContentRevision(myProject, hgFile, baseRevisionNumber);
-          mergeData.ORIGINAL = base.getContentAsBytes();
+          //if file doesn't exist in ancestor revision the base revision should be empty
+          mergeData.ORIGINAL = base.getContent() != null ? base.getContentAsBytes() : new byte[0];
         } else { // no base revision means that the file was added simultaneously with different content in both repositories
           mergeData.ORIGINAL = new byte[0];
         }
