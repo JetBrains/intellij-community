@@ -16,6 +16,7 @@
 package com.intellij.designer.palette;
 
 import com.intellij.designer.AbstractToolWindowManager;
+import com.intellij.designer.DesignerCustomizations;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileEditor.FileEditorManager;
@@ -51,7 +52,10 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
 
   @Override
   protected void initToolWindow() {
-    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette\t", false, ToolWindowAnchor.RIGHT, myProject, true);
+    DesignerCustomizations customization = getCustomizations();
+    ToolWindowAnchor anchor = customization != null ? customization.getPaletteAnchor() : ToolWindowAnchor.RIGHT;
+
+    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette\t", false, anchor, myProject, true);
     myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowPalette);
 
     ContentManager contentManager = myToolWindow.getContentManager();

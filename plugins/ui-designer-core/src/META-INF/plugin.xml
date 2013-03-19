@@ -22,4 +22,8 @@
   <extensions defaultExtensionNs="com.intellij">
      <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
   </extensions>
+
+  <extensionPoints>
+    <extensionPoint qualifiedName="Designer.customizations" interface="com.intellij.designer.DesignerCustomizations"/>
+  </extensionPoints>
 </idea-plugin>
