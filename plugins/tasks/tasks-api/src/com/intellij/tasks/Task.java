@@ -78,9 +78,7 @@ public abstract class Task {
   public abstract String getIssueUrl();
 
   @Nullable
-  public TaskRepository getRepository() {
-    return null;
-  }
+  public abstract TaskRepository getRepository();
 
   @Nullable
   public TaskState getState() {
