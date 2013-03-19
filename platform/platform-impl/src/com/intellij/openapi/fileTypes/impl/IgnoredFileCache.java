@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -35,6 +36,7 @@ import java.util.List;
  * @author peter
  */
 class IgnoredFileCache {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileTypes.impl.IgnoredFileCache");
   private final BitSet myCheckedIds = new BitSet();
   private final TIntHashSet myIgnoredIds = new TIntHashSet();
   private final IgnoredPatternSet myIgnoredPatterns;
@@ -68,19 +70,19 @@ class IgnoredFileCache {
 
       private IntArrayList collectChangedIds(List<? extends VFileEvent> events, boolean before) {
         final IntArrayList ids = new IntArrayList();
-        for (VFileEvent event : events) {
+        for (final VFileEvent event : events) {
           VirtualFile file = event.getFile();
           if (!(file instanceof NewVirtualFile)) {
             continue;
           }
 
           if (event instanceof VFilePropertyChangeEvent) {
-            ids.add(((NewVirtualFile)file).getId());
+            addId(ids, event, file);
           } else if (event instanceof VFileDeleteEvent && before || event instanceof VFileCreateEvent && !before) {
             VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
               @Override
               public boolean visitFile(@NotNull VirtualFile file) {
-                ids.add(((NewVirtualFile)file).getId());
+                addId(ids, event, file);
                 return true;
               }
 
@@ -92,6 +94,15 @@ class IgnoredFileCache {
           }
         }
         return ids;
+      }
+
+      private void addId(IntArrayList ids, VFileEvent event, VirtualFile file) {
+        int id = ((NewVirtualFile)file).getId();
+        if (id >= 0) {
+          ids.add(id);
+        } else {
+          LOG.error("Negative id: " + file + "; " + event);
+        }
       }
     });
   }
