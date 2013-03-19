@@ -41,6 +41,8 @@ public class CommonProxy extends ProxySelector {
   private final static CommonProxy ourInstance = new CommonProxy();
   private final CommonAuthenticator myAuthenticator;
 
+  private final static ThreadLocal<Boolean> ourReenterDefence = new ThreadLocal<Boolean>();
+
   public final static List<Proxy> NO_PROXY_LIST = Collections.singletonList(Proxy.NO_PROXY);
   private final static long ourErrorInterval = TimeUnit.MINUTES.toMillis(3);
   private static volatile int ourNotificationCount;
@@ -204,27 +206,35 @@ public class CommonProxy extends ProxySelector {
     }
     LOG.debug("CommonProxy.select called for " + uri.toString());
 
-    final String host = uri.getHost() == null ? "" : uri.getHost();
-    final int port = uri.getPort();
-    final String protocol = uri.getScheme();
+    if (Boolean.TRUE.equals(ourReenterDefence.get())) {
+      return NO_PROXY_LIST;
+    }
+    try {
+      ourReenterDefence.set(Boolean.TRUE);
+      final String host = uri.getHost() == null ? "" : uri.getHost();
+      final int port = uri.getPort();
+      final String protocol = uri.getScheme();
 
-    final HostInfo info = new HostInfo(protocol, host, port);
-    final Map<String, ProxySelector> copy;
-    synchronized (myLock) {
-      if (myNoProxy.contains(Pair.create(info, Thread.currentThread()))) {
-        LOG.debug("CommonProxy.select returns no proxy (in no proxy list) for " + uri.toString());
-        return NO_PROXY_LIST;
+      final HostInfo info = new HostInfo(protocol, host, port);
+      final Map<String, ProxySelector> copy;
+      synchronized (myLock) {
+        if (myNoProxy.contains(Pair.create(info, Thread.currentThread()))) {
+          LOG.debug("CommonProxy.select returns no proxy (in no proxy list) for " + uri.toString());
+          return NO_PROXY_LIST;
+        }
+        copy = new HashMap<String, ProxySelector>(myCustom);
       }
-      copy = new HashMap<String, ProxySelector>(myCustom);
-    }
-    for (Map.Entry<String, ProxySelector> entry : copy.entrySet()) {
-      final List<Proxy> proxies = entry.getValue().select(uri);
-      if (proxies != null && proxies.size() > 0) {
-        LOG.debug("CommonProxy.select returns custom proxy for " + uri.toString() + ", " + proxies.toString());
-        return proxies;
+      for (Map.Entry<String, ProxySelector> entry : copy.entrySet()) {
+        final List<Proxy> proxies = entry.getValue().select(uri);
+        if (proxies != null && proxies.size() > 0) {
+          LOG.debug("CommonProxy.select returns custom proxy for " + uri.toString() + ", " + proxies.toString());
+          return proxies;
+        }
       }
+      return NO_PROXY_LIST;
+    } finally {
+      ourReenterDefence.remove();
     }
-    return NO_PROXY_LIST;
   }
 
   @Override
