@@ -71,9 +71,6 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myStorepass;
   private String myKeypass;
 
-  private String myPreloaderClass;
-  private String myPreloaderJar;
-
   @Override
   public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
     if (!(artifact.getArtifactType() instanceof JavaFxApplicationArtifactType)) {
@@ -255,22 +252,38 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myKeypass = keypass;
   }
 
-  public String getPreloaderClass() {
-    return myPreloaderClass;
+  public String getPreloaderClass(Artifact rootArtifact, Project project) {
+    final Artifact artifact = getPreloaderArtifact(rootArtifact, project);
+    if (artifact != null) {
+      final JavaFxPreloaderArtifactProperties properties =
+        (JavaFxPreloaderArtifactProperties)artifact.getProperties(JavaFxPreloaderArtifactPropertiesProvider.getInstance());
+      return properties.getPreloaderClass();
+    }
+    return null;
   }
 
-  public void setPreloaderClass(String preloaderClass) {
-    myPreloaderClass = preloaderClass;
+  public String getPreloaderJar(Artifact rootArtifact, Project project) {
+    final Artifact artifact = getPreloaderArtifact(rootArtifact, project);
+    if (artifact != null) {
+      return ((ArchivePackagingElement)artifact.getRootElement()).getArchiveFileName();
+    }
+    return null;
   }
 
-  public String getPreloaderJar() {
-    return myPreloaderJar;
-  }
 
-  public void setPreloaderJar(String preloaderJar) {
-    myPreloaderJar = preloaderJar;
+  private static Artifact getPreloaderArtifact(Artifact rootArtifact, Project project) {
+    for (PackagingElement<?> element : rootArtifact.getRootElement().getChildren()) {
+      if (element instanceof ArtifactPackagingElement) {
+        final Artifact artifact = ((ArtifactPackagingElement)element)
+          .findArtifact(ArtifactManager.getInstance(project).getResolvingContext());
+        if (artifact != null && artifact.getArtifactType() instanceof JavaFxPreloaderArtifactType) {
+          return artifact;
+        }
+      }
+    }
+    return null;
   }
-
+  
   private static class JavaFxPackager extends AbstractJavaFxPackager {
     private final Artifact myArtifact;
     private final JavaFxArtifactProperties myProperties;
@@ -334,34 +347,12 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
 
     @Override
     public String getPreloaderClass() {
-      final Artifact artifact = getPreloaderArtifact();
-      if (artifact != null) {
-        final JavaFxPreloaderArtifactProperties properties = (JavaFxPreloaderArtifactProperties)artifact.getProperties(JavaFxPreloaderArtifactPropertiesProvider.getInstance());
-        return properties.getPreloaderClass();
-      }
-      return null;
+      return myProperties.getPreloaderClass(myArtifact, myCompileContext.getProject());
     }
 
     @Override
     public String getPreloaderJar() {
-      final Artifact artifact = getPreloaderArtifact();
-      if (artifact != null) {
-        return ((ArchivePackagingElement)artifact.getRootElement()).getArchiveFileName();
-      }
-      return null;
-    }
-
-    private Artifact getPreloaderArtifact() {
-      for (PackagingElement<?> element : myArtifact.getRootElement().getChildren()) {
-        if (element instanceof ArtifactPackagingElement) {
-          final Artifact artifact = ((ArtifactPackagingElement)element)
-            .findArtifact(ArtifactManager.getInstance(myCompileContext.getProject()).getResolvingContext());
-          if (artifact != null && artifact.getArtifactType() instanceof JavaFxPreloaderArtifactType) {
-            return artifact;
-          }
-        }
-      }
-      return null;
+      return myProperties.getPreloaderJar(myArtifact, myCompileContext.getProject());
     }
 
     @Override

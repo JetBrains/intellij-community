@@ -111,15 +111,18 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
                                        ArtifactAntGenerationContext context,
                                        CompositeGenerator generator) {
     if (preprocessing) return;
+    if (!(artifact.getArtifactType() instanceof JavaFxApplicationArtifactType)) return;
 
     final CompositePackagingElement<?> rootElement = artifact.getRootElement();
 
-    List<PackagingElement<?>> children = rootElement.getChildren();
+    final List<PackagingElement<?>> children = new ArrayList<PackagingElement<?>>();
     String artifactFileName = rootElement.getName();
-    for (PackagingElement<?> child : children) {
+    for (PackagingElement<?> child : rootElement.getChildren()) {
       if (child instanceof ArchivePackagingElement) {
         artifactFileName = ((ArchivePackagingElement)child).getArchiveFileName();
-        children = ((ArchivePackagingElement)child).getChildren();
+        children.addAll(((ArchivePackagingElement)child).getChildren());
+      } else {
+        children.add(child);
       }
     }
 
@@ -138,12 +141,28 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
     final JavaFxArtifactProperties properties =
       (JavaFxArtifactProperties)artifact.getProperties(JavaFxArtifactPropertiesProvider.getInstance());
 
+    String preloaderFiles = null;
+    final String preloaderJar = properties.getPreloaderJar(artifact, context.getProject());
+    final String preloaderClass = properties.getPreloaderClass(artifact, context.getProject());
+    if (!StringUtil.isEmptyOrSpaces(preloaderJar) && !StringUtil.isEmptyOrSpaces(preloaderClass)) {
+      preloaderFiles = artifactName + "_preloader_files";
+      generator.add(new Tag("fx:fileset",
+                            new Pair<String, String>("id", preloaderFiles),
+                            new Pair<String, String>("requiredFor", "preloader"),
+                            new Pair<String, String>("dir", tempDirPath),
+                            new Pair<String, String>("includes", preloaderJar)));
+    }
+
     //register application
     final String appId = artifactName + "_id";
-    final Tag applicationTag = new Tag("fx:application",
-                                       new Pair<String, String>("id", appId),
-                                       new Pair<String, String>("name", artifactName),
-                                       new Pair<String, String>("mainClass", properties.getAppClass()));
+    Pair[] applicationParams = {new Pair<String, String>("id", appId),
+      new Pair<String, String>("name", artifactName),
+      new Pair<String, String>("mainClass", properties.getAppClass())};
+    if (preloaderFiles != null) {
+      applicationParams = ArrayUtil.append(applicationParams, new Pair<String, String>("preloaderClass", preloaderClass));
+    }
+    
+    final Tag applicationTag = new Tag("fx:application", applicationParams);
 
     appendValuesFromPropertiesFile(applicationTag, properties.getHtmlParamFile(), "fx:htmlParam", false);
     //also loads fx:argument values
@@ -156,6 +175,11 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
                                      new Pair<String, String>("destfile", tempDirPath + "/" + artifactFileName));
     createJarTag.add(new Tag("fx:application", new Pair<String, String>("refid", appId)));
     createJarTag.add(new Tag("fileset", new Pair<String, String>("dir", tempDirPath)));
+    if (preloaderFiles != null) {
+      final Tag createJarResourcesTag = new Tag("fx:resources");
+      createJarResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("refid", preloaderFiles)));
+      createJarTag.add(createJarResourcesTag);
+    }
     generator.add(createJarTag);
 
     //deploy task
@@ -174,6 +198,10 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
     final Tag deployResourcesTag = new Tag("fx:resources");
     deployResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("dir", tempDirPath), 
                                                  new Pair<String, String>("includes", artifactFileName)));
+    if (preloaderFiles != null) {
+      deployResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("refid", preloaderFiles)));
+    }
+    
     deployTag.add(deployResourcesTag);
 
     generator.add(deployTag);
