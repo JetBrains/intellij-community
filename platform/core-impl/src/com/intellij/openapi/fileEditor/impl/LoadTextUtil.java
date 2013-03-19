@@ -196,6 +196,22 @@ public final class LoadTextUtil {
     return Pair.create(charset, ArrayUtil.EMPTY_BYTE_ARRAY);
   }
 
+  public static void changeLineSeparators(@Nullable Project project,
+                                          @NotNull VirtualFile file,
+                                          @NotNull String newSeparator,
+                                          @NotNull Object requestor) throws IOException
+  {
+    CharSequence currentText = getTextByBinaryPresentation(file.contentsToByteArray(), file, true, false);
+    String currentSeparator = detectLineSeparator(file, false);
+    if (newSeparator.equals(currentSeparator)) {
+      return;
+    }
+    String newText = StringUtil.convertLineSeparators(currentText.toString(), newSeparator);
+
+    file.putUserData(DETECTED_LINE_SEPARATOR_KEY, newSeparator);
+    write(project, file, requestor, newText, -1);
+  }
+
   /**
    * Overwrites file with text and sets modification stamp and time stamp to the specified values.
    * <p/>
@@ -227,7 +243,6 @@ public final class LoadTextUtil {
     }
     setDetectedFromBytesFlagBack(virtualFile, buffer);
 
-    virtualFile.putUserData(DETECTED_LINE_SEPARATOR_KEY, null);
     OutputStream outputStream = virtualFile.getOutputStream(requestor, newModificationStamp, -1);
     try {
       outputStream.write(buffer);
