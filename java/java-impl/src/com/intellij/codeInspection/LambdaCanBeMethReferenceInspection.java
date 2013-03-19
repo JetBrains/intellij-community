@@ -189,7 +189,13 @@ public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionT
       } else if (methodCall instanceof PsiNewExpression) {
         final PsiExpression[] dimensions = ((PsiNewExpression)methodCall).getArrayDimensions();
         if (dimensions.length > 0) {
-          return methodCall;
+          final PsiMethod interfaceMethod = LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType);
+          if (interfaceMethod != null) {
+            final PsiParameter[] psiParameters = interfaceMethod.getParameterList().getParameters();
+            if (psiParameters.length == 1 && PsiType.INT.equals(psiParameters[0].getType())) {
+              return methodCall;
+            }
+          }
         }
       }
     }
