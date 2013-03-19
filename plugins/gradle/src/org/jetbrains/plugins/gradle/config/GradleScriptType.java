@@ -20,8 +20,6 @@ import com.intellij.compiler.options.CompileStepBeforeRunNoErrorCheck;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -182,12 +180,7 @@ public class GradleScriptType extends GroovyScriptType {
             GradleTasksModel model = GradleUtil.getToolWindowElement(GradleTasksModel.class, project, GradleDataKeys.RECENT_TASKS_MODEL);
             if (model != null) {
               GradleTaskDescriptor descriptor = new GradleTaskDescriptor(parameters, null);
-              if (DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId())) {
-                descriptor.setType(GradleTaskDescriptor.Type.DEBUG);
-              }
-              else if (DefaultRunExecutor.EXECUTOR_ID.equals(executor.getId())) {
-                descriptor.setType(GradleTaskDescriptor.Type.RUN);
-              }
+              descriptor.setExecutorId(executor.getId());
               model.setFirst(descriptor);
               GradleLocalSettings.getInstance(project).setRecentTasks(model.getTasks());
             }

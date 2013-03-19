@@ -15,8 +15,9 @@
  */
 package org.jetbrains.plugins.gradle.tasks;
 
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.Location;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.customization.CustomizationUtil;
@@ -150,20 +151,28 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
           return;
         }
 
-        GradleTaskDescriptor.Type taskType = getSelectedTaskType(list);
-        final String actionId;
-        if (taskType == GradleTaskDescriptor.Type.DEBUG) {
-          actionId = DefaultDebugExecutor.getDebugExecutorInstance().getContextActionId();
+        int row = list.locationToIndex(e.getPoint());
+        ListModel model = list.getModel();
+        if (row < 0 || row >= model.getSize()) {
+          return;
         }
-        else if (taskType == GradleTaskDescriptor.Type.RUN) {
-          actionId = DefaultRunExecutor.getRunExecutorInstance().getContextActionId();
+
+        Object element = model.getElementAt(row);
+        if (!(element instanceof GradleTaskDescriptor)) {
+          return;
         }
-        else if (Registry.is(GradleConstants.REGISTRY_DEBUG_ON_TASK_CLICK_KEY, false)) {
-          actionId = DefaultDebugExecutor.getDebugExecutorInstance().getContextActionId();
+
+        String executorId = ((GradleTaskDescriptor)element).getExecutorId();
+        if (StringUtil.isEmpty(executorId)) {
+          executorId = DefaultRunExecutor.EXECUTOR_ID;
         }
-        else {
-          actionId = DefaultRunExecutor.getRunExecutorInstance().getContextActionId();
+        
+        Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
+        if (executor == null) {
+          return;
         }
+        
+        final String actionId = executor.getContextActionId();
         if (StringUtil.isEmpty(actionId)) {
           return;
         }
@@ -236,15 +245,6 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     return new GradleTaskLocation(getProject(), psiFile, tasks);
   }
 
-  @Nullable
-  private static GradleTaskDescriptor.Type getSelectedTaskType(@NotNull JBList list) {
-    int[] indices = list.getSelectedIndices();
-    if (indices == null || indices.length != 1) {
-      return null;
-    }
-    return ((GradleTaskDescriptor)list.getModel().getElementAt(indices[0])).getType();
-  }
-  
   @Nullable
   private static List<String> getSelectedTasks(@NotNull JBList list) {
     int[] selectedIndices = list.getSelectedIndices();

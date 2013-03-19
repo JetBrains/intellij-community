@@ -15,8 +15,9 @@
  */
 package org.jetbrains.plugins.gradle.tasks;
 
-import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBList;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
@@ -49,11 +50,19 @@ public class GradleTasksList extends JBList {
       else if (value instanceof GradleTaskDescriptor) {
         GradleTaskDescriptor descriptor = (GradleTaskDescriptor)value;
         setText(descriptor.getName());
-        switch (descriptor.getType()) {
-          case GENERAL: setIcon(GradleIcons.Task); break;
-          case RUN: setIcon(DefaultRunExecutor.getRunExecutorInstance().getIcon()); break;
-          case DEBUG: setIcon(DefaultDebugExecutor.getDebugExecutorInstance().getIcon()); break;
+        Icon icon = null;
+        String executorId = descriptor.getExecutorId();
+        if (!StringUtil.isEmpty(executorId)) {
+          Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
+          if (executor != null) {
+            icon = executor.getIcon();
+          }
         }
+
+        if (icon == null) {
+          icon = GradleIcons.Task;
+        }
+        setIcon(icon);
       }
       return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     }
