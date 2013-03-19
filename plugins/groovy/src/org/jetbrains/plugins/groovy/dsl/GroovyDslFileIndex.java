@@ -28,6 +28,7 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileAdapter;
@@ -48,6 +49,7 @@ import com.intellij.util.ExceptionUtil;
 import com.intellij.util.PathUtil;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.containers.ConcurrentMultiMap;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
@@ -56,8 +58,10 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.annotator.GroovyFrameworkConfigNotification;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import javax.swing.event.HyperlinkEvent;
@@ -71,6 +75,7 @@ import java.util.concurrent.ThreadFactory;
 import java.util.concurrent.ThreadPoolExecutor;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicReference;
+import java.util.regex.Pattern;
 
 /**
  * @author peter
@@ -223,6 +228,69 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       return null;
     }
     return pair.first;
+  }
+
+  @Nullable
+  public static PsiClassType pocessScriptSuperClasses(@NotNull GroovyFile scriptFile) {
+    if (!scriptFile.isScript()) return null;
+
+    final VirtualFile virtualFile = scriptFile.getVirtualFile();
+    if (virtualFile == null) return null;
+    final String filePath = virtualFile.getPath();
+
+
+    List<Trinity<String, String, GroovyDslScript>> supers = ContainerUtil.newArrayList();
+    final Project project = scriptFile.getProject();
+    for (GroovyDslScript script : getDslScripts(project)) {
+      final MultiMap staticInfo = script.getStaticInfo();
+      final Collection infos = staticInfo != null ? staticInfo.get("scriptSuperClass") : Collections.emptyList();
+
+      for (Object info : infos) {
+        if (info instanceof Map) {
+          final Map map = (Map)info;
+
+          final Object _pattern = map.get("pattern");
+          final Object _superClass = map.get("superClass");
+
+          if (_pattern instanceof String && _superClass instanceof String) {
+            final String pattern = (String)_pattern;
+            final String superClass = (String)_superClass;
+
+            try {
+              if (Pattern.matches(".*" + pattern, filePath)) {
+                supers.add(Trinity.create(superClass, pattern, script));
+              }
+            }
+            catch (RuntimeException e) {
+              script.handleDslError(e);
+            }
+          }
+        }
+      }
+    }
+
+    if (!supers.isEmpty()) {
+      final String className = supers.get(0).first;
+      final GroovyDslScript script = supers.get(0).third;
+      try {
+        return TypesUtil.createTypeByFQClassName(className, scriptFile);
+      }
+      catch (RuntimeException e) {
+        script.handleDslError(e);
+        return null;
+      }
+    }
+    /*else if (supers.size() > 1) {
+      StringBuilder buffer = new StringBuilder("Several script super class patterns match file ").append(filePath).append(". <p> ");
+      for (Trinity<String, String, GroovyDslScript> aSuper : supers) {
+        buffer.append(aSuper.third.getFilePath()).append(" ").append(aSuper.second).append('\n');
+      }
+      NOTIFICATION_GROUP.createNotification("DSL script execution error", buffer.toString(), NotificationType.ERROR, null).notify(project);
+      return null;
+    }*/
+    else {
+      return null;
+    }
   }
 
   public static boolean processExecutors(PsiType psiType, PsiElement place, final PsiScopeProcessor processor, ResolveState state) {

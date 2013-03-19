@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,6 +34,7 @@ import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.ProcessingContext;
+import com.intellij.util.containers.MultiMap;
 import groovy.lang.Closure;
 import org.codehaus.groovy.runtime.InvokerInvocationException;
 import org.jetbrains.annotations.NotNull;
@@ -140,7 +141,7 @@ public class GroovyDslScript {
     return false;
   }
 
-  private boolean handleDslError(Throwable e) {
+  public boolean handleDslError(Throwable e) {
     if (project.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) {
       return true;
     }
@@ -153,5 +154,10 @@ public class GroovyDslScript {
   @Override
   public String toString() {
     return "GroovyDslScript: " + myPath;
+  }
+
+  @Nullable
+  public MultiMap getStaticInfo() {
+    return executor.getStaticInfo();
   }
 }
