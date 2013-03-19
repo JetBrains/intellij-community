@@ -59,19 +59,36 @@ import java.util.List;
 public class GradleTasksPanel extends GradleToolWindowPanel {
 
   @NotNull private final GradleTasksModel myRecentTasksModel = new GradleTasksModel();
-  @NotNull private final GradleTasksList  myRecentTasksList  = new GradleTasksList(myRecentTasksModel);
+  @NotNull private final GradleTasksList  myRecentTasksList;
   
   @NotNull private final GradleTasksModel myAllTasksModel = new GradleTasksModel();
-  @NotNull private final GradleTasksList  myAllTasksList  = new GradleTasksList(myAllTasksModel);
+  @NotNull private final GradleTasksList  myAllTasksList;
 
   @NotNull private final GradleLocalSettings myLocalSettings;
+  
+  @Nullable private GradleTasksList myActiveList;
 
   public GradleTasksPanel(@NotNull Project project) {
     super(project, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE);
+    myRecentTasksList = buildList(myRecentTasksModel);
+    myAllTasksList = buildList(myAllTasksModel);
     myLocalSettings = GradleLocalSettings.getInstance(project);
     initContent();
   }
 
+  @NotNull
+  private GradleTasksList buildList(@NotNull GradleTasksModel model) {
+    return new GradleTasksList(model) {
+      @Override
+      protected void processMouseEvent(MouseEvent e) {
+        if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+          myActiveList = this;
+        }
+        super.processMouseEvent(e);
+      }
+    };
+  }
+  
   @NotNull
   @Override
   protected JComponent buildContent() {
@@ -192,7 +209,10 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
 
   @Nullable
   private Location buildLocation() {
-    List<String> tasks = getSelectedTasks(myAllTasksList);
+    if (myActiveList == null) {
+      return null;
+    }
+    List<String> tasks = getSelectedTasks(myActiveList);
     if (tasks == null) {
       return null;
     }
@@ -201,7 +221,7 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     if (StringUtil.isEmpty(gradleProjectPath)) {
       return null;
     }
-    
+
     assert gradleProjectPath != null;
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(gradleProjectPath);
     if (vFile == null) {
@@ -212,7 +232,7 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     if (psiFile == null) {
       return null;
     }
-    
+
     return new GradleTaskLocation(getProject(), psiFile, tasks);
   }
 
