@@ -138,7 +138,7 @@ public class JavaBuilderUtil {
               for (File file : newlyAffectedFiles) {
                 FSOperations.markDirtyIfNotDeleted(context, file);
               }
-              additionalPassRequired = !isForcedRecompilationJava(context) && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
+              additionalPassRequired = isCompileJavaIncrementally(context) && chunkContainsAffectedFiles(context, chunk, newlyAffectedFiles);
             }
           }
           else {
@@ -146,7 +146,7 @@ public class JavaBuilderUtil {
             LOG.info("Non-incremental mode: " + messageText);
             context.processMessage(new ProgressMessage(messageText));
 
-            additionalPassRequired = !isForcedRecompilationJava(context);
+            additionalPassRequired = isCompileJavaIncrementally(context);
             FSOperations.markDirtyRecursively(context, chunk);
           }
         }
@@ -186,12 +186,13 @@ public class JavaBuilderUtil {
 
   public static boolean isForcedRecompilationAllJavaModules(CompileContext context) {
     CompileScope scope = context.getScope();
-    return scope.isRecompilationForcedForAllTargets(JavaModuleBuildTargetType.PRODUCTION) && scope.isRecompilationForcedForAllTargets(JavaModuleBuildTargetType.TEST);
+    return scope.isBuildForcedForAllTargets(JavaModuleBuildTargetType.PRODUCTION) && scope.isBuildForcedForAllTargets(
+      JavaModuleBuildTargetType.TEST);
   }
 
-  public static boolean isForcedRecompilationJava(CompileContext context) {
+  public static boolean isCompileJavaIncrementally(CompileContext context) {
     CompileScope scope = context.getScope();
-    return scope.isRecompilationForcedForTargetsOfType(JavaModuleBuildTargetType.PRODUCTION) && scope.isRecompilationForcedForTargetsOfType(JavaModuleBuildTargetType.TEST);
+    return scope.isBuildIncrementally(JavaModuleBuildTargetType.PRODUCTION) || scope.isBuildIncrementally(JavaModuleBuildTargetType.TEST);
   }
 
   private static List<Pair<File, JpsModule>> checkAffectedFilesInCorrectModules(CompileContext context,

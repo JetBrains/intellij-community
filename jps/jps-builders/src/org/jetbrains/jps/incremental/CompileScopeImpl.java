@@ -66,19 +66,19 @@ public class CompileScopeImpl extends CompileScope {
   }
 
   @Override
-  public boolean isRecompilationForced(@NotNull BuildTarget<?> target) {
+  public boolean isBuildForced(@NotNull BuildTarget<?> target) {
     BuildTargetType<?> type = target.getTargetType();
     return myTypesToForceBuild.contains(type) && (myTypes.contains(type) || myTargets.contains(target) || isAffectedByAssociatedModule(target));
   }
 
   @Override
-  public boolean isRecompilationForcedForAllTargets(@NotNull BuildTargetType<?> targetType) {
+  public boolean isBuildForcedForAllTargets(@NotNull BuildTargetType<?> targetType) {
     return myTypesToForceBuild.contains(targetType) && myTypes.contains(targetType);
   }
 
   @Override
-  public boolean isRecompilationForcedForTargetsOfType(@NotNull BuildTargetType<?> targetType) {
-    return myTypesToForceBuild.contains(targetType);
+  public boolean isBuildIncrementally(@NotNull BuildTargetType<?> targetType) {
+    return !myTypesToForceBuild.contains(targetType);
   }
 
   @Override

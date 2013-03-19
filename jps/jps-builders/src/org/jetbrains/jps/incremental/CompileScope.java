@@ -30,9 +30,9 @@ public abstract class CompileScope {
 
   public abstract boolean isAffected(@NotNull BuildTarget<?> target);
 
-  public abstract boolean isRecompilationForced(@NotNull BuildTarget<?> target);
+  public abstract boolean isBuildForced(@NotNull BuildTarget<?> target);
 
-  public abstract boolean isRecompilationForcedForAllTargets(@NotNull BuildTargetType<?> targetType);
+  public abstract boolean isBuildForcedForAllTargets(@NotNull BuildTargetType<?> targetType);
 
-  public abstract boolean isRecompilationForcedForTargetsOfType(@NotNull BuildTargetType<?> targetType);
+  public abstract boolean isBuildIncrementally(@NotNull BuildTargetType<?> targetType);
 }
