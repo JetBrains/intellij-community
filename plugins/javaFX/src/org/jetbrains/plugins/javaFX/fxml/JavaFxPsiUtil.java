@@ -486,6 +486,17 @@ public class JavaFxPsiUtil {
     return "Unable to coerce " + HighlightUtil.formatClass(aClass)+ " to " + qualifiedName;
   }
 
+  public static boolean isOutOfHierarchy(final XmlAttributeValue element) {
+    XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+    while (tag != null) {
+      if (FxmlConstants.FX_DEFINE.equals(tag.getName())) {
+        return true;
+      }
+      tag = tag.getParentTag();
+    }
+    return false;
+  }
+
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {
     private final Project myProject;
     private final PsiFile myContainingFile;
