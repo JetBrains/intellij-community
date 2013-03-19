@@ -288,7 +288,10 @@ public class TagNameReference implements PsiReference {
                                  context instanceof XmlTag ? (XmlTag)context : element, extension);
       if (nsInfo != null) {
         for (int i = initialSize; i < variants.size(); i++) {
-          nsInfo.add(namespace);
+          XmlElementDescriptor descriptor = variants.get(i);
+          nsInfo.add(descriptor instanceof XmlElementDescriptorImpl
+                     ? ((XmlElementDescriptorImpl)descriptor).getNamespaceByContext(element)
+                     : namespace);
         }
       }
     }
@@ -299,7 +302,7 @@ public class TagNameReference implements PsiReference {
         if (descriptor instanceof AnyXmlElementDescriptor) {
           return null;
         }
-        else if (hasPrefix && descriptor instanceof XmlElementDescriptorImpl && 
+        else if (hasPrefix && descriptor instanceof XmlElementDescriptorImpl &&
                  !namespaces.contains(((XmlElementDescriptorImpl)descriptor).getNamespace())) {
           return null;
         }
