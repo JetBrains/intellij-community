@@ -31,6 +31,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.ProperTextRange;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.patterns.ElementPattern;
 import com.intellij.psi.PsiDocumentManager;
@@ -251,8 +252,9 @@ public class CompletionUtil {
         OffsetTranslator translator = hostDocument.getUserData(RANGE_TRANSLATION);
         if (translator != null) {
           if (document instanceof DocumentWindowImpl) {
-            start = ((DocumentWindowImpl)document).injectedToHost(start);
-            end = ((DocumentWindowImpl)document).injectedToHost(end);
+            ProperTextRange translated = ((DocumentWindowImpl)document).injectedToHost(new TextRange(start, end));
+            start = translated.getStartOffset();
+            end = translated.getEndOffset();
           }
 
           start = translator.translateOffset(start);
