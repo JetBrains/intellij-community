@@ -18,10 +18,9 @@ package org.jetbrains.idea.maven.dom;
 import com.intellij.idea.Bombed;
 import com.intellij.lang.properties.IProperty;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiDirectory;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiReference;
+import com.intellij.psi.*;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlAttribute;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.model.MavenDomProfilesModel;
 import org.jetbrains.idea.maven.dom.references.MavenPropertyPsiReference;
@@ -603,6 +602,41 @@ public class MavenFilteredPropertiesCompletionAndResolutionTest extends MavenDom
                      "</build>");
 
     checkHighlighting();
+  }
+
+  public void testReferencesInXml() throws Exception {
+    createProjectSubDir("res");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>res</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    VirtualFile f = createProjectSubFile("res/foo.xml",
+                                         "<root attr='${based<caret>ir}'>" +
+                                         "</root>");
+
+    myFixture.configureFromExistingVirtualFile(f);
+
+    XmlAttribute attribute = PsiTreeUtil.getParentOfType(myFixture.getFile().findElementAt(myFixture.getCaretOffset()), XmlAttribute.class);
+
+    PsiReference[] references = attribute.getReferences();
+
+    for (PsiReference ref : references) {
+      if (ref.resolve() instanceof PsiDirectory) {
+        return; // Maven references was added.
+      }
+    }
+
+    assertTrue("Maven filter refrence was not added", false);
   }
 
 }
