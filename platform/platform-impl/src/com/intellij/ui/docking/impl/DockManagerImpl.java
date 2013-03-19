@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,16 +19,19 @@ import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
 import com.intellij.openapi.components.Storage;
 import com.intellij.openapi.components.StoragePathMacros;
-import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
-import com.intellij.openapi.extensions.PluginDescriptor;
+import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.fileEditor.FileEditorProvider;
+import com.intellij.openapi.fileEditor.impl.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FrameWrapper;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
@@ -404,6 +407,46 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
         window.myUiContainer.setPreferredSize(null);
       }
     });
+  }
+  public Pair<FileEditor[], FileEditorProvider[]> createNewDockContainerFor(VirtualFile file, FileEditorManagerImpl fileEditorManager) {
+    DockContainer container = getFactory(DockableEditorContainerFactory.TYPE).createContainer(null);
+    register(container);
+
+    final DockWindow window = createWindowFor(null, container);
+    Point showPoint = DimensionService.getInstance().getLocation("new.editor.frame", myProject);
+    Dimension size = DimensionService.getInstance().getSize("new.editor.frame", myProject);
+
+    if (size == null) {
+      final IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(myProject);
+      size = new Dimension(((Window)frame).getWidth() - 200, ((Window)frame).getHeight() - 200);
+    }
+    if (showPoint == null) {
+      final IdeFrame frame = WindowManagerEx.getInstanceEx().findFrameFor(myProject);
+      showPoint = new Point(((Window)frame).getX() + 100, ((Window)frame).getY() + 100);
+    }
+
+    Rectangle target = new Rectangle(showPoint, size);
+    ScreenUtil.moveRectangleToFitTheScreen(target);
+    ScreenUtil.cropRectangleToFitTheScreen(target);
+
+    window.setLocation(target.getLocation());
+    window.myDockContentUiContainer.setPreferredSize(target.getSize());
+    window.setDimensionKey("new.editor.frame");
+
+    window.show(false);
+    window.getFrame().pack();
+    final EditorWindow editorWindow = ((DockableEditorTabbedContainer)container).getSplitters().getOrCreateCurrentWindow(file);
+    final Pair<FileEditor[], FileEditorProvider[]> result = fileEditorManager.openFileImpl2(editorWindow, file, true);
+    container.add(EditorTabbedContainer.createDockableEditor(myProject, null, file, new Presentation(file.getName()),
+                                                             editorWindow), new RelativePoint(target.getLocation()));
+
+    SwingUtilities.invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        window.myUiContainer.setPreferredSize(null);
+      }
+    });
+    return result;
   }
 
   private DockWindow createWindowFor(@Nullable String id, DockContainer container) {
