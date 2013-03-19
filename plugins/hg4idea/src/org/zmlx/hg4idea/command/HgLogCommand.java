@@ -17,6 +17,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgEncodingUtil;
 
 import java.util.LinkedList;
 import java.util.List;
@@ -75,6 +76,7 @@ public class HgLogCommand extends HgRevisionsCommand {
     if (logFile) {
       arguments.add(hgFile.getRelativePath());
     }
+    executor.setCharset(HgEncodingUtil.getDefaultCharset());
     return executor.executeInCurrentThread(repo, "log", arguments);
   }
 
