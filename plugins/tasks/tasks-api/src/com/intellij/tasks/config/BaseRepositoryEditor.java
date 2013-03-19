@@ -122,6 +122,9 @@ public class BaseRepositoryEditor<T extends BaseRepository> extends TaskReposito
       Messages.installHyperlinkSupport(myAdvertiser);
       myAdvertiser.setText(advertiser);
     }
+    else {
+      myAdvertiser.setVisible(false);
+    }
 
     installListener(myAddCommitMessage);
     installListener(myDocument);
