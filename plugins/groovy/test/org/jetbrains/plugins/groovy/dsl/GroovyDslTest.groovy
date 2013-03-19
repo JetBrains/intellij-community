@@ -278,4 +278,21 @@ public class MyCategory {
 
     assertNotNull(myFixture.getReferenceAtCaretPosition().resolve())
   }
+
+  void testScriptSuperClass() {
+    myFixture.addClass('''\
+      public class Abc {
+        public void foo() {}
+      }
+    ''')
+    addGdsl('''
+      scriptSuperClass(pattern: 'a.groovy', superClass: 'Abc')
+    ''')
+
+    myFixture.configureByText('a.groovy', '''\
+      fo<caret>o()
+    ''')
+
+    assertNotNull(myFixture.getReferenceAtCaretPosition().resolve())
+  }
 }
