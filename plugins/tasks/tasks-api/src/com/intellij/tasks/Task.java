@@ -77,8 +77,11 @@ public abstract class Task {
   @Nullable
   public abstract String getIssueUrl();
 
+  // todo it should be abstract @NotNull method
   @Nullable
-  public abstract TaskRepository getRepository();
+  public TaskRepository getRepository() {
+    return null;
+  }
 
   @Nullable
   public TaskState getState() {
