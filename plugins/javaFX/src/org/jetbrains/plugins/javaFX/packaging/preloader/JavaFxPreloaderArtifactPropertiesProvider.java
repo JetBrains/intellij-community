@@ -24,8 +24,8 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: 3/12/13
  */
-public class JavaFxArtifactPreloaderPropertiesProvider extends ArtifactPropertiesProvider {
-  protected JavaFxArtifactPreloaderPropertiesProvider() {
+public class JavaFxPreloaderArtifactPropertiesProvider extends ArtifactPropertiesProvider {
+  protected JavaFxPreloaderArtifactPropertiesProvider() {
     super("javafx-preloader-properties");
   }
 
@@ -40,7 +40,7 @@ public class JavaFxArtifactPreloaderPropertiesProvider extends ArtifactPropertie
     return new JavaFxPreloaderArtifactProperties();
   }
   
-  public static JavaFxArtifactPreloaderPropertiesProvider getInstance() {
-    return EP_NAME.findExtension(JavaFxArtifactPreloaderPropertiesProvider.class);
+  public static JavaFxPreloaderArtifactPropertiesProvider getInstance() {
+    return EP_NAME.findExtension(JavaFxPreloaderArtifactPropertiesProvider.class);
   }
 }
