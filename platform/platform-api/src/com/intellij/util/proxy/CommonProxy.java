@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
 import java.net.*;
@@ -195,9 +196,11 @@ public class CommonProxy extends ProxySelector {
   }
 
   @Override
-  public List<Proxy> select(URI uri) {
+  public List<Proxy> select(@Nullable URI uri) {
     isInstalledAssertion();
-    if (uri == null) return NO_PROXY_LIST;
+    if (uri == null) {
+      return NO_PROXY_LIST;
+    }
     LOG.debug("CommonProxy.select called for " + uri.toString());
 
     final String host = uri.getHost() == null ? "" : uri.getHost();
