@@ -90,7 +90,7 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
       if (myModules.size() == 1) {
         return "From module '" + myModules.get(0).getName() + "'";
       }
-      return "From module ...";
+      return "From module...";
     }
 
     @Override
