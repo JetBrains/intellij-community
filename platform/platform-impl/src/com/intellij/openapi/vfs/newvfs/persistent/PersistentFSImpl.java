@@ -21,6 +21,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.io.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.*;
 import com.intellij.openapi.vfs.newvfs.events.*;
@@ -753,12 +754,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @Nullable
   public VirtualFileSystemEntry findRoot(@NotNull String basePath, @NotNull NewVirtualFileSystem fs) {
-    String rootUrl = fs.getProtocol() + "://" + VfsImplUtil.normalize(fs, basePath);
+    String rootUrl = normalizeRootUrl(fs, basePath);
 
-    VirtualFileSystemEntry root;
+    boolean isFakeRoot = basePath.isEmpty();
     myRootsLock.readLock().lock();
+    VirtualFileSystemEntry root;
     try {
-      root = basePath.isEmpty() ? myFakeRoot : myRoots.get(rootUrl);
+      root = isFakeRoot ? myFakeRoot : myRoots.get(rootUrl);
       if (root != null) return root;
     }
     finally {
@@ -767,14 +769,14 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     myRootsLock.writeLock().lock();
     try {
-      root = basePath.isEmpty() ? myFakeRoot : myRoots.get(rootUrl);
+      root = isFakeRoot ? myFakeRoot : myRoots.get(rootUrl);
       if (root != null) return root;
 
       int rootId = FSRecords.findRootRecord(rootUrl);
       root = myRootsById.get(rootId);
       if (root != null) return root;
 
-      if (basePath.isEmpty()) {
+      if (isFakeRoot) {
         // fake super-root
         root = new VirtualDirectoryImpl("", null, fs, rootId, 0) {
           @SuppressWarnings("NonSynchronizedMethodOverridesSynchronizedMethod")
@@ -809,22 +811,19 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         root = new VirtualDirectoryImpl(basePath, null, fs, rootId, 0);
       }
 
-      final FileAttributes attributes = fs.getAttributes(root);
-      if (attributes == null) {
-        return null;
-      }
-
-      final boolean newRoot = writeAttributesToRecord(rootId, 0, root, fs, attributes);
-      if (!newRoot) {
-        if (attributes.lastModified != FSRecords.getTimestamp(rootId)) {
-          root.markDirtyRecursively();
-        }
-      }
-
-      if (basePath.isEmpty()) {
+      if (isFakeRoot) {
         myFakeRoot = root;
       }
       else {
+        FileAttributes attributes = fs.getAttributes(root);
+        if (attributes == null || !attributes.isDirectory()) {
+          return null;
+        }
+        final boolean newRoot = writeAttributesToRecord(rootId, 0, root, fs, attributes);
+        if (!newRoot && attributes.lastModified != FSRecords.getTimestamp(rootId)) {
+          root.markDirtyRecursively();
+        }
+
         myRoots.put(rootUrl, root);
         myRootsById.put(rootId, root);
 
@@ -836,6 +835,12 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     finally {
       myRootsLock.writeLock().unlock();
     }
+  }
+
+  @NotNull
+  private static String normalizeRootUrl(@NotNull NewVirtualFileSystem fs, @NotNull String basePath) {
+    String url = fs.getProtocol() + "://" + VfsImplUtil.normalize(fs, basePath);
+    return StringUtil.trimEnd(url, "/");
   }
 
   @Override
@@ -1048,7 +1053,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     if (parentId == 0) {
       myRootsLock.writeLock().lock();
       try {
-        String rootUrl = file.getUrl();
+        String rootUrl = normalizeRootUrl((NewVirtualFileSystem)file.getFileSystem(), file.getPath());
         myRoots.remove(rootUrl);
         myRootsById.remove(id);
         FSRecords.deleteRootRecord(id);

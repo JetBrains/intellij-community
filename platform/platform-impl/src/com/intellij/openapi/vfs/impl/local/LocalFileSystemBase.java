@@ -197,16 +197,15 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   protected String normalize(@NotNull String path) {
     if (path.isEmpty()) {
       try {
-        return new File("").getCanonicalPath();
+        path = new File("").getCanonicalPath();
       }
       catch (IOException e) {
         return path;
       }
     }
-
-    if (SystemInfo.isWindows) {
+    else if (SystemInfo.isWindows) {
       if (path.charAt(0) == '/' && !path.startsWith("//")) {
-        path = path.substring(1);  // hack over new File(path).toUrl().getFile()
+        path = path.substring(1);  // hack over new File(path).toURI().toURL().getFile()
       }
 
       if (path.contains("~")) {
@@ -218,13 +217,23 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         }
       }
     }
-    else {
-      if (!StringUtil.startsWithChar(path, '/')) {
-        path = new File(path).getAbsolutePath();
-      }
+    File file = new File(path);
+
+    if (!isAbsoluteFileOrDriveLetter(file)) {
+      path = file.getAbsolutePath();
     }
 
     return FileUtil.normalize(path);
+  }
+
+  private static boolean isAbsoluteFileOrDriveLetter(File file) {
+    String path = file.getPath();
+    if (SystemInfo.isWindows && path.length() == 2 && path.charAt(1) == ':') {
+      // just drive letter.
+      // return true, despite the fact that technically it's not an absolute path
+      return true;
+    }
+    return file.isAbsolute();
   }
 
   @Override
@@ -688,12 +697,20 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public FileAttributes getAttributes(@NotNull final VirtualFile file) {
-    String path = normalize(file.getPath());
-    if (path == null) return null;
-    if (StringUtil.isEmpty(path) || file.getParent() == null && path.startsWith("//")) {
+    String path = file.getPath();
+
+    // ordinarily, usual valid file path is always absolute.
+    // however, some artificially constructed files may appear here which are not absolute, e.g. new FakeVirtualFile(root, "x.txt")
+    // they shall not pass
+    File ioFile = new File(path);
+    if (!isAbsoluteFileOrDriveLetter(ioFile)) return null;
+
+    if (file.getParent() == null && path.startsWith("//")) {
+      // UNC path
       return FAKE_ROOT_ATTRIBUTES;  // fake Windows roots
     }
-    return FileSystemUtil.getAttributes(FileUtil.toSystemDependentName(path));
+    // ioFile already normalized
+    return FileSystemUtil.getAttributes(ioFile);
   }
 
   @Override

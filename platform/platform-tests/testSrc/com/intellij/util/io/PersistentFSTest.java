@@ -15,6 +15,10 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.IoTestUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -23,6 +27,10 @@ import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.testFramework.PlatformTestCase;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+
+import static org.junit.Assume.assumeTrue;
 
 public class PersistentFSTest extends PlatformTestCase {
   @Override
@@ -59,7 +67,7 @@ public class PersistentFSTest extends PlatformTestCase {
     VirtualFile[] roots = fs.getRoots(LocalFileSystem.getInstance());
     for (VirtualFile root : roots) {
       int rid = fs.getId(fakeRoot, root.getName(), LocalFileSystem.getInstance());
-      assertTrue(root.getPath(), 0 != rid);
+      assertTrue(root.getPath()+"; Roots:"+ Arrays.toString(roots), 0 != rid);
     }
 
     NewVirtualFile c = fakeRoot.refreshAndFindChild("Users");
@@ -70,5 +78,30 @@ public class PersistentFSTest extends PlatformTestCase {
     assertNull(c);
     c = fakeRoot.refreshAndFindChild("Windows");
     assertNull(c);
+  }
+
+  public void testDeleteSubstRoots() throws IOException, InterruptedException {
+    assumeTrue(SystemInfo.isWindows);
+
+    File tempDirectory = FileUtil.createTempDirectory(getTestName(false), null);
+    File substRoot = IoTestUtil.createSubst(tempDirectory.getPath());
+    VirtualFile subst = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(substRoot);
+    assertNotNull(subst);
+    try {
+      final File[] children = substRoot.listFiles();
+      assertNotNull(children);
+    }
+    finally {
+      IoTestUtil.deleteSubst(substRoot.getPath());
+    }
+    subst.refresh(false, true);
+    PersistentFS fs = PersistentFS.getInstance();
+
+    VirtualFile[] roots = fs.getRoots(LocalFileSystem.getInstance());
+    for (VirtualFile root : roots) {
+      String rootPath = root.getPath();
+      String prefix = StringUtil.commonPrefix(rootPath, substRoot.getPath());
+      assertEmpty(prefix);
+    }
   }
 }

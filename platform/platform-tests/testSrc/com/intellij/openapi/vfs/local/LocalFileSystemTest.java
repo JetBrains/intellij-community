@@ -22,9 +22,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
+import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
+import com.intellij.openapi.vfs.newvfs.impl.FakeVirtualFile;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
@@ -341,5 +343,36 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
 
     final VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
     assertNull(vFile);
+  }
+
+  public void testGetAttributesConvertsToAbsolute() throws Exception {
+    PersistentFS fs = PersistentFS.getInstance();
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    NewVirtualFile fakeRoot = fs.findRoot("", lfs);
+    assertNotNull(fakeRoot);
+    File userDir = new File(System.getProperty("user.dir"));
+    File[] files = userDir.listFiles();
+    File fileToQuery;
+    if (files != null && files.length != 0) {
+      fileToQuery = files[0];
+    }
+    else if (userDir.isDirectory()) {
+      fileToQuery = FileUtil.createTempFile(userDir, getTestName(false), "", true);
+      myFilesToDelete.add(fileToQuery);
+    }
+    else {
+      // can't test
+      return;
+    }
+
+    FileAttributes attributes = lfs.getAttributes(new FakeVirtualFile(fakeRoot, fileToQuery.getName()));
+    assertNull(attributes);
+
+    attributes = lfs.getAttributes(new FakeVirtualFile(fakeRoot, "windows"));
+    assertNull(attributes);
+    attributes = lfs.getAttributes(new FakeVirtualFile(fakeRoot, "usr"));
+    assertNull(attributes);
+    attributes = lfs.getAttributes(new FakeVirtualFile(fakeRoot, "Users"));
+    assertNull(attributes);
   }
 }
