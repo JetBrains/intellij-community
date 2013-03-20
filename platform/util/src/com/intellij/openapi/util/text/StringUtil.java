@@ -24,14 +24,12 @@ import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.CharArrayUtil;
-import com.intellij.util.text.LineReader;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.beans.Introspector;
-import java.io.ByteArrayInputStream;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -80,7 +78,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static <T> Function<T, String> createToStringFunction(Class<T> cls) {
+  public static <T> Function<T, String> createToStringFunction(@NotNull Class<T> cls) {
     return new Function<T, String>() {
       @Override
       public String fun(@NotNull T o) {
@@ -154,7 +152,7 @@ public class StringUtil extends StringUtilRt {
       }
       else {
         if (newS == null) return null;
-        if (newText == null) newText = new StringBuilder();
+        if (newText == null) newText = new StringBuilder(text.length() - i);
         newText.append(text, i, i1);
         newText.append(newS);
         i = i1 + oldS.length();
@@ -304,7 +302,7 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   public static String escapeLineBreak(@NotNull String text) {
-    StringBuilder buffer = new StringBuilder();
+    StringBuilder buffer = new StringBuilder(text.length());
     for (int i = 0; i < text.length(); i++) {
       char c = text.charAt(i);
       switch (c) {
@@ -461,7 +459,7 @@ public class StringUtil extends StringUtilRt {
       public String fun(@NotNull String dom) {
         final StringBuilder builder = StringBuilderSpinAllocator.alloc();
         try {
-          StringUtil.escapeStringCharacters(dom.length(), dom, additionalChars, escapeSlash, builder);
+          escapeStringCharacters(dom.length(), dom, additionalChars, escapeSlash, builder);
           return builder.toString();
         }
         finally {
@@ -541,7 +539,7 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   public static String escapeStringCharacters(@NotNull String s) {
-    StringBuilder buffer = new StringBuilder();
+    StringBuilder buffer = new StringBuilder(s.length());
     escapeStringCharacters(s.length(), s, buffer);
     return buffer.toString();
   }
@@ -549,7 +547,7 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   public static String unescapeStringCharacters(@NotNull String s) {
-    StringBuilder buffer = new StringBuilder();
+    StringBuilder buffer = new StringBuilder(s.length());
     unescapeStringCharacters(s.length(), s, buffer);
     return buffer.toString();
   }
@@ -647,7 +645,7 @@ public class StringUtil extends StringUtilRt {
           case 'u':
             if (idx + 4 < length) {
               try {
-                int code = Integer.valueOf(s.substring(idx + 1, idx + 5), 16).intValue();
+                int code = Integer.parseInt(s.substring(idx + 1, idx + 5), 16);
                 idx += 4;
                 buffer.append((char)code);
               }
@@ -709,7 +707,7 @@ public class StringUtil extends StringUtilRt {
                                        boolean allWords,
                                        boolean leaveOriginalDelims) {
     final StringTokenizer tokenizer = new StringTokenizer(text, tokenizerDelim, leaveOriginalDelims);
-    final StringBuilder out = new StringBuilder();
+    final StringBuilder out = new StringBuilder(text.length());
     boolean toCapitalize = true;
     while (tokenizer.hasMoreTokens()) {
       final String word = tokenizer.nextToken();
@@ -972,8 +970,9 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static String repeat(final String s, final int count) {
-    StringBuilder sb = new StringBuilder();
+  public static String repeat(@NotNull String s, int count) {
+    assert count >=0 : count;
+    StringBuilder sb = new StringBuilder(s.length() * count);
     for (int i = 0; i < count; i++) {
       sb.append(s);
     }
@@ -982,8 +981,8 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   public static List<String> splitHonorQuotes(@NotNull String s, char separator) {
-    final ArrayList<String> result = new ArrayList<String>();
-    final StringBuilder builder = new StringBuilder();
+    final List<String> result = new ArrayList<String>();
+    final StringBuilder builder = new StringBuilder(s.length());
     boolean inQuotes = false;
     for (int i = 0; i < s.length(); i++) {
       final char c = s.charAt(i);
@@ -1037,7 +1036,7 @@ public class StringUtil extends StringUtilRt {
       }
       pos = nextPos;
     }
-    if (pos < s.length() || (!excludeEmptyStrings && pos == s.length())) {
+    if (pos < s.length() || !excludeEmptyStrings && pos == s.length()) {
       result.add(s.substring(pos, s.length()));
     }
     return result;
@@ -1683,6 +1682,7 @@ public class StringUtil extends StringUtilRt {
     escapeChar(buf, '/');
   }
 
+  @NotNull
   public static String unescapeSlashes(@NotNull final String str) {
     final StringBuilder buf = StringBuilderSpinAllocator.alloc();
     try {
@@ -1747,7 +1747,8 @@ public class StringUtil extends StringUtilRt {
     }
   }
 
-  public static StringBuilder escapeToRegexp(CharSequence text, StringBuilder builder) {
+  @NotNull
+  public static StringBuilder escapeToRegexp(@NotNull CharSequence text, @NotNull StringBuilder builder) {
     for (int i = 0; i < text.length(); i++) {
       final char c = text.charAt(i);
       if (c == ' ' || Character.isLetter(c) || Character.isDigit(c) || c == '_') {
@@ -1764,7 +1765,7 @@ public class StringUtil extends StringUtilRt {
     return builder;
   }
 
-  public static boolean isNotEscapedBackslash(char[] chars, int startOffset, int backslashOffset) {
+  public static boolean isNotEscapedBackslash(@NotNull char[] chars, int startOffset, int backslashOffset) {
     if (chars[backslashOffset] != '\\') {
       return false;
     }
@@ -1780,7 +1781,7 @@ public class StringUtil extends StringUtilRt {
     return !escaped;
   }
 
-  public static boolean isNotEscapedBackslash(CharSequence text, int startOffset, int backslashOffset) {
+  public static boolean isNotEscapedBackslash(@NotNull CharSequence text, int startOffset, int backslashOffset) {
     if (text.charAt(backslashOffset) != '\\') {
       return false;
     }
@@ -1914,27 +1915,6 @@ public class StringUtil extends StringUtilRt {
     return true;
   }
 
-  @NotNull
-  public static String shiftIndentInside(@NotNull String initial, final int i, boolean shiftEmptyLines) throws IOException {
-    StringBuilder result = new StringBuilder(initial.length());
-    LineReader reader = new LineReader(new ByteArrayInputStream(initial.getBytes()));
-    boolean first = true;
-    for (byte[] line : reader.readLines()) {
-      try {
-        if (!first) result.append('\n');
-        if (line.length > 0 || shiftEmptyLines) {
-          repeatSymbol(result, ' ', i);
-        }
-        result.append(new String(line));
-      }
-      finally {
-        first = false;
-      }
-    }
-
-    return result.toString();
-  }
-
   /**
    * Escape property name or key in property file. Unicode characters are escaped as well.
    *
@@ -1944,7 +1924,7 @@ public class StringUtil extends StringUtilRt {
    */
   @NotNull
   public static String escapeProperty(@NotNull String input, final boolean isKey) {
-    final StringBuilder escaped = new StringBuilder();
+    final StringBuilder escaped = new StringBuilder(input.length());
     for (int i = 0; i < input.length(); i++) {
       final char ch = input.charAt(i);
       switch (ch) {
@@ -2061,7 +2041,7 @@ public class StringUtil extends StringUtilRt {
     return res;
   }
 
-  public static int getOccurrenceCount(@NotNull String text, final String s) {
+  public static int getOccurrenceCount(@NotNull String text, @NotNull String s) {
     int res = 0;
     int i = 0;
     while (i < text.length()) {
@@ -2089,7 +2069,7 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   public static String sanitizeJavaIdentifier(@NotNull String name) {
-    final StringBuilder result = new StringBuilder();
+    final StringBuilder result = new StringBuilder(name.length());
 
     for (int i = 0; i < name.length(); i++) {
       final char ch = name.charAt(i);
@@ -2144,11 +2124,13 @@ public class StringUtil extends StringUtilRt {
    * @param string String to split
    * @return array of strings
    */
-  public static String[] splitByLines(final String string) {
+  @NotNull
+  public static String[] splitByLines(@NotNull String string) {
     return EOL_SPLIT_PATTERN.split(string);
   }
 
-  public static List<Pair<String, Integer>> getWordsWithOffset(String s) {
+  @NotNull
+  public static List<Pair<String, Integer>> getWordsWithOffset(@NotNull String s) {
     List<Pair<String, Integer>> res = ContainerUtil.newArrayList();
     s += " ";
     StringBuilder name = new StringBuilder();
@@ -2254,6 +2236,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static int compare(@Nullable String s1, @Nullable String s2, boolean ignoreCase) {
+    //noinspection StringEquality
     if (s1 == s2) return 0;
     if (s1 == null) return -1;
     if (s2 == null) return 1;
@@ -2336,7 +2319,8 @@ public class StringUtil extends StringUtilRt {
     return compare(c1,c2,ignoreCase) == 0;
   }
 
-  public static String formatLinks(String message) {
+  @NotNull
+  public static String formatLinks(@NotNull String message) {
     Pattern linkPattern = Pattern.compile("http://[a-zA-Z0-9\\./\\-\\+]+");
     StringBuffer result = new StringBuffer();
     Matcher m = linkPattern.matcher(message);
@@ -2356,22 +2340,18 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static String shortenTextWithEllipsis(@NotNull final String text, final int max_length, final int suffix_length) {
-    final int prefix_length = max_length - suffix_length - 3;
+  public static String shortenTextWithEllipsis(@NotNull final String text, final int maxLength, final int suffixLength) {
+    final int prefix_length = maxLength - suffixLength - 3;
     assert prefix_length > 0;
-    final StringBuilder buffer = new StringBuilder();
+    String result;
     final int textLength = text.length();
-    if (textLength > max_length) {
-      StringBuilder shorterText = new StringBuilder();
-      shorterText.append(text.substring(0, prefix_length));
-      shorterText.append("...");
-      shorterText.append(text.substring(textLength - suffix_length));
-      buffer.append(shorterText.toString());
+    if (textLength > maxLength) {
+      result = text.substring(0, prefix_length) + "..." + text.substring(textLength - suffixLength);
     }
     else {
-      buffer.append(text);
+      result = text;
     }
-    return buffer.toString();
+    return result;
   }
 
   @NotNull
@@ -2389,7 +2369,9 @@ public class StringUtil extends StringUtilRt {
   public static char toUpperCase(char a) {
     return StringUtilRt.toUpperCase(a);
   }
-  public static String toUpperCase(String a) {
+
+  @NotNull
+  public static String toUpperCase(@NotNull String a) {
     return StringUtilRt.toUpperCase(a);
   }
 
@@ -2433,7 +2415,7 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.parseDouble(string, defaultValue);
   }
 
-  public static boolean parseBoolean(final String string, final boolean defaultValue) {
+  public static boolean parseBoolean(String string, final boolean defaultValue) {
     return StringUtilRt.parseBoolean(string, defaultValue);
   }
 
@@ -2452,7 +2434,8 @@ public class StringUtil extends StringUtilRt {
     return StringUtilRt.getShortName(fqName, separator);
   }
 
-  public static CharSequence newBombedCharSequence(CharSequence sequence, long delay) {
+  @NotNull
+  public static CharSequence newBombedCharSequence(@NotNull CharSequence sequence, long delay) {
     final long myTime = System.currentTimeMillis() + delay;
     return new BombedCharSequence(sequence) {
       @Override
@@ -2465,7 +2448,7 @@ public class StringUtil extends StringUtilRt {
     };
   }
 
-  public static boolean trimEnd(StringBuilder buffer, final CharSequence end) {
+  public static boolean trimEnd(@NotNull StringBuilder buffer, @NotNull CharSequence end) {
     if (endsWith(buffer, end)) {
       buffer.delete(buffer.length() - end.length(), buffer.length());
       return true;
@@ -2473,7 +2456,7 @@ public class StringUtil extends StringUtilRt {
     return false;
   }
 
-  private static boolean trimStart(StringBuilder buffer, final CharSequence start) {
+  private static boolean trimStart(@NotNull StringBuilder buffer, @NotNull CharSequence start) {
     if (startsWith(buffer, start)) {
       buffer.delete(0, start.length());
       return true;
@@ -2482,14 +2465,14 @@ public class StringUtil extends StringUtilRt {
   }
 
   /**
-   * Expirable CharSequence. Very useful to control external libary execution time,
+   * Expirable CharSequence. Very useful to control external library execution time,
    * i.e. when java.util.regex.Pattern match goes out of control.
    */
   public abstract static class BombedCharSequence implements CharSequence {
     private CharSequence delegate;
     private int i = 0;
 
-    public BombedCharSequence(CharSequence sequence) {
+    public BombedCharSequence(@NotNull CharSequence sequence) {
       delegate = sequence;
     }
 
@@ -2511,6 +2494,7 @@ public class StringUtil extends StringUtilRt {
       }
     }
 
+    @NotNull
     @Override
     public String toString() {
       check();
