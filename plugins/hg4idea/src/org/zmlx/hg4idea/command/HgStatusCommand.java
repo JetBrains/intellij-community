@@ -39,7 +39,7 @@ public class HgStatusCommand {
   private static final int ITEM_COUNT = 3;
   private static final int STATUS_INDEX = 0;
 
-  private final Project myProject;
+  @NotNull private final Project myProject;
 
   private final boolean myIncludeAdded;
   private final boolean myIncludeModified;
@@ -102,13 +102,13 @@ public class HgStatusCommand {
       return this;
     }
 
-    public HgStatusCommand build(Project project) {
+    public HgStatusCommand build(@NotNull Project project) {
       return new HgStatusCommand(project, this);
     }
 
   }
 
-  private HgStatusCommand(Project project, Builder builder) {
+  private HgStatusCommand(@NotNull Project project, Builder builder) {
     this.myProject = project;
     myIncludeAdded = builder.includeAdded;
     myIncludeModified = builder.includeModified;
