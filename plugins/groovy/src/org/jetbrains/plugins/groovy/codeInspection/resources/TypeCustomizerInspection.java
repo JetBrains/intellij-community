@@ -19,10 +19,8 @@ import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.compiler.CompilerConfiguration;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
-import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
@@ -70,27 +68,20 @@ public class TypeCustomizerInspection extends BaseInspection {
 
 
   public static boolean fileSeemsToBeTypeCustomizer(@NotNull final PsiFile file) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
-      @Override
-      public Boolean compute() {
-        if (file instanceof GroovyFile && ((GroovyFile)file).isScript()) {
-          for (GrStatement statement : ((GroovyFile)file).getStatements()) {
-            if (statement instanceof GrMethodCall) {
-              GrExpression invoked = ((GrMethodCall)statement).getInvokedExpression();
-              if (invoked instanceof GrReferenceExpression &&
-                  !((GrReferenceExpression)invoked).isQualified() &&
-                  isCustomizerEvent(((GrReferenceExpression)invoked).getReferenceName())) {
-                return true;
-              }
-            }
+    if (file instanceof GroovyFile && ((GroovyFile)file).isScript()) {
+      for (GrStatement statement : ((GroovyFile)file).getStatements()) {
+        if (statement instanceof GrMethodCall) {
+          GrExpression invoked = ((GrMethodCall)statement).getInvokedExpression();
+          if (invoked instanceof GrReferenceExpression &&
+              !((GrReferenceExpression)invoked).isQualified() &&
+              isCustomizerEvent(((GrReferenceExpression)invoked).getReferenceName())) {
+            return true;
           }
         }
-
-        return false;
       }
+    }
 
-
-    });
+    return false;
   }
   private static boolean isCustomizerEvent(@Nullable String name) {
     return CUSTOMIZER_EVENT_NAMES.contains(name);
