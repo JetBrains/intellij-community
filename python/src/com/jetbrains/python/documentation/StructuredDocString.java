@@ -43,10 +43,18 @@ public abstract class StructuredDocString {
     if (text == null) {
       return null;
     }
-    if (text.contains(":param ") || text.contains(":rtype") || text.contains(":type")) {
+    if (isSphinxDocstring(text)) {
       return new SphinxDocString(text);
     }
     return new EpydocString(text);
+  }
+
+  public static boolean isSphinxDocstring(String text) {
+    return text.contains(":param ") || text.contains(":rtype") || text.contains(":type");
+  }
+
+  public static boolean isEpydocDocstring(String text) {
+    return text.contains("@param ") || text.contains("@rtype") || text.contains("@type");
   }
 
   protected StructuredDocString(@NotNull String docStringText, String tagPrefix) {

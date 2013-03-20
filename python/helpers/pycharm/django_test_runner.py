@@ -4,6 +4,7 @@ from tcunittest import TeamcityTestRunner
 from tcmessages import TeamcityServiceMessages
 
 from pycharm_run_utils import adjust_django_sys_path
+from nose_utils import TeamcityNoseRunner
 
 adjust_django_sys_path()
 
@@ -78,8 +79,6 @@ class DjangoTeamcityTestRunner(BaseRunner):
       config.plugins.addPlugin(result_plugin)
       for plugin in _get_plugins_from_settings():
         config.plugins.addPlugin(plugin)
-
-      from nose_utils import TeamcityNoseRunner
 
       nose.core.TestProgram(argv=suite, exit=False,
         testRunner=TeamcityNoseRunner(config=config))

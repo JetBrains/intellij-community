@@ -2,11 +2,10 @@ package com.jetbrains.python.documentation;
 
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -21,11 +20,7 @@ public class ReSTRunner {
   }
 
   @Nullable
-  public static String formatDocstring(Module module, String text) {
-    Sdk sdk = PythonSdkType.findPython2Sdk(module);
-    if (sdk == null) {
-      return null;
-    }
+  public static String formatDocstring(@NotNull Sdk sdk, String text) {
     String sdkHome = sdk.getHomePath();
     final String formatter = PythonHelpersLocator.getHelperPath("rest_formatter.py");
     ProcessOutput output = PySdkUtil.getProcessOutput(new File(sdkHome).getParent(),
