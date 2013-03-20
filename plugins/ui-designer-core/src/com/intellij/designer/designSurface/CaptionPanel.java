@@ -55,8 +55,11 @@ public class CaptionPanel extends JBLayeredPane implements DataProvider, DeleteP
   private List<RadComponent> myRootChildren = Collections.emptyList();
   private ICaption myCaption;
 
-  public CaptionPanel(DesignerEditorPanel designer, boolean horizontal) {
-    setBorder(IdeBorderFactory.createBorder(horizontal ? SideBorder.BOTTOM : SideBorder.RIGHT));
+  public CaptionPanel(DesignerEditorPanel designer, boolean horizontal, boolean addBorder) {
+    if (addBorder) {
+      setBorder(IdeBorderFactory.createBorder(horizontal ? SideBorder.BOTTOM : SideBorder.RIGHT));
+    }
+
     setFocusable(true);
 
     myHorizontal = horizontal;
