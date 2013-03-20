@@ -118,7 +118,7 @@ public class HgMergeDialog extends DialogWrapper {
   }
 
   private void loadBranches(VirtualFile root) {
-    assert branchesForRepos.get(root) != null;
+    assert branchesForRepos.get(root) != null : "No inforamtion about root " + root;
     branchSelector.setModel(new DefaultComboBoxModel(branchesForRepos.get(root).toArray()));
   }
 
