@@ -121,6 +121,26 @@ public abstract class RadComponent extends PropertiesContainer {
     getParent().remove(this);
   }
 
+  /**
+   * Whether this view is considered to be the background.
+   * This can for example return true for the root layout, such that marquee
+   * selection, and Select All, will not include it in marquee selection or select
+   * all operations.
+   *
+   * @return true if this view should be considered part of the background
+   */
+  public boolean isBackground() {
+    return false;
+  }
+
+  /**
+   * Returns true if this component is of the same logical type as the given other component.
+   * This is used to for example select "Select Same Type".
+   */
+  public boolean isSameType(@NotNull RadComponent other) {
+    return other.getClass() == this.getClass();
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Visual
