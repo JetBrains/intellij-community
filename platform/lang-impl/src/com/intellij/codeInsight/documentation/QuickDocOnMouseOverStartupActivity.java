@@ -16,9 +16,9 @@
 package com.intellij.codeInsight.documentation;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.editor.ex.EditorSettingsExternalizable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
+import com.intellij.util.SystemProperties;
 
 /**
  * @author Denis Zhdanov
@@ -28,7 +28,7 @@ public class QuickDocOnMouseOverStartupActivity implements StartupActivity {
 
   @Override
   public void runActivity(Project project) {
-    if (EditorSettingsExternalizable.getInstance().isShowQuickDocOnMouseOverElement()) {
+    if (SystemProperties.getBooleanProperty("auto.show.quick.doc", false)) {
       ServiceManager.getService(QuickDocOnMouseOverManager.class).setEnabled(true);
     }
   }
