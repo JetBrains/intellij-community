@@ -734,6 +734,10 @@ public class FileUtil extends FileUtilRt {
     }
   }
 
+  /**
+   * converts back slashes to forward slashes
+   * removes double slashes inside the path, e.g. "x/y//z" => "x/y/z"
+   */
   @NotNull
   public static String normalize(@NotNull String path) {
     final StringBuilder result = new StringBuilder(path.length());
