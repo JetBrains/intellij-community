@@ -21,6 +21,7 @@ import com.intellij.codeInsight.lookup.AutoCompletionPolicy;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.TailTypeDecorator;
+import com.intellij.html.impl.RelaxedHtmlFromSchemaElementDescriptor;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -289,7 +290,7 @@ public class TagNameReference implements PsiReference {
       if (nsInfo != null) {
         for (int i = initialSize; i < variants.size(); i++) {
           XmlElementDescriptor descriptor = variants.get(i);
-          nsInfo.add(descriptor instanceof XmlElementDescriptorImpl
+          nsInfo.add(descriptor instanceof XmlElementDescriptorImpl && !(descriptor instanceof RelaxedHtmlFromSchemaElementDescriptor)
                      ? ((XmlElementDescriptorImpl)descriptor).getNamespaceByContext(element)
                      : namespace);
         }
