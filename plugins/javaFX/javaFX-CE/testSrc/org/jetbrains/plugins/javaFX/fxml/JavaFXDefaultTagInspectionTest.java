@@ -23,7 +23,7 @@ import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxDefaultTa
  * User: anna
  * Date: 1/10/13
  */
-public class JavaFXDefaultTagInspectionTest extends AbstractJavaFXQuickFixTestCase {
+public class JavaFXDefaultTagInspectionTest extends AbstractJavaFXQuickFixTest {
 
   @Override
   protected void enableInspections() {

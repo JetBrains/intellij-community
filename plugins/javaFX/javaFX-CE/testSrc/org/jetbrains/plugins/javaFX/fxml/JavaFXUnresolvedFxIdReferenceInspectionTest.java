@@ -24,7 +24,7 @@ import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolve
  * User: anna
  * Date: 1/10/13
  */
-public class JavaFXUnresolvedFxIdReferenceInspectionTest extends AbstractJavaFXQuickFixTestCase {
+public class JavaFXUnresolvedFxIdReferenceInspectionTest extends AbstractJavaFXQuickFixTest {
 
   @Override
   protected void enableInspections() {
