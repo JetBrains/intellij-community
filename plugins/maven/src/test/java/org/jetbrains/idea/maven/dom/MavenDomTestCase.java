@@ -99,9 +99,9 @@ public abstract class MavenDomTestCase extends MavenImportingTestCase {
   }
 
   protected void configTest(VirtualFile f) throws IOException {
-    if (Comparing.equal(myConfigTimestamps.get(f), f.getModificationStamp())) return;
+    if (Comparing.equal(myConfigTimestamps.get(f), f.getTimeStamp())) return;
     myFixture.configureFromExistingVirtualFile(f);
-    myConfigTimestamps.put(f, f.getModificationStamp());
+    myConfigTimestamps.put(f, f.getTimeStamp());
   }
 
   protected void type(VirtualFile f, char c) throws IOException {
