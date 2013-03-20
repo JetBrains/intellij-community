@@ -176,7 +176,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     String scheme = split.getFirst();
     String urlItself = split.getSecond();
     int pathStart = urlItself.indexOf("/");
-    return scheme + urlItself.substring(0, pathStart);
+    return scheme + URLUtil.SCHEME_SEPARATOR + urlItself.substring(0, pathStart);
   }
 
   /**
@@ -232,7 +232,7 @@ class GitHttpGuiAuthenticator implements GitHttpAuthenticator {
     Pair<String,String> pair = URLUtil.splitScheme(url);
     String scheme = pair.getFirst();
     if (StringUtil.isEmpty(scheme)) {
-      return scheme + login + "@" + pair.getSecond();
+      return scheme + URLUtil.SCHEME_SEPARATOR + login + "@" + pair.getSecond();
     }
     return login + "@" + url;
   }
