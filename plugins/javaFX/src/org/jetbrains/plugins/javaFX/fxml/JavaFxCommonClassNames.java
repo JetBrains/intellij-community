@@ -61,4 +61,6 @@ public class JavaFxCommonClassNames {
     ourReadOnlyMap.put("javafx.beans.property.ReadOnlyLongProperty", PsiType.LONG);
     ourReadOnlyMap.put("javafx.beans.property.ReadOnlyDoubleProperty", PsiType.DOUBLE);
   }
+
+  @NonNls public static final String JAVA_FX_PARENT = "javafx.scene.Parent";
 }
