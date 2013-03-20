@@ -41,7 +41,6 @@ import com.intellij.projectImport.ProjectFormatPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HideableDecorator;
 import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.JBSplitter;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.MultiMap;
@@ -79,9 +78,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private TextFieldWithBrowseButton myModuleFileLocation;
   private JPanel myModulePanel;
 
-  private JPanel myLeftPanel;
-  private JPanel myRightPanel;
-  private final JBSplitter mySplitter;
+  private JPanel myPanel;
 
   private boolean myModuleNameChangedByUser = false;
   private boolean myModuleNameDocListenerEnabled = true;
@@ -142,12 +139,6 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
     if (myWizardContext.isCreatingNewProject()) {
       addProjectFormat(myModulePanel);
     }
-
-    mySplitter = new JBSplitter(false, 0.3f, 0.3f, 0.6f);
-    mySplitter.setSplitterProportionKey("select.template.proportion");
-    myLeftPanel.setMinimumSize(new Dimension(200, 200));
-    mySplitter.setFirstComponent(myLeftPanel);
-    mySplitter.setSecondComponent(myRightPanel);
   }
 
   private JTextField getNameComponent() {
@@ -270,7 +261,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
 
   @Override
   public JComponent getComponent() {
-    return mySplitter;
+    return myPanel;
   }
 
   @Override
