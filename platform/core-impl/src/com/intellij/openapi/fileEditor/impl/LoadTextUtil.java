@@ -434,7 +434,14 @@ public final class LoadTextUtil {
     if (charset == null) {
       charset = Charset.forName("ISO-8859-1");
     }
-    CharBuffer charBuffer = charset.decode(byteBuffer);
+    CharBuffer charBuffer;
+    try {
+      charBuffer = charset.decode(byteBuffer);
+    }
+    catch (Exception e) {
+      // esoteric charsets can throw any kind of exception
+      charBuffer = CharBuffer.wrap(ArrayUtil.EMPTY_CHAR_ARRAY);
+    }
     return convertLineSeparators(charBuffer);
   }
 
