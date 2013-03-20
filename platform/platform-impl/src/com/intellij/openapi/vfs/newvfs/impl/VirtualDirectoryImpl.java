@@ -199,9 +199,16 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       String shorty = new String(name);
       VirtualFileSystemEntry child = createChild(shorty, id, delegate); // So we don't hold whole char[] buffer of a lengthy path
 
-      boolean ignoreCase = !delegate.isCaseSensitive();
-      insertChildAt(child, indexInReal);
-      assertConsistency(myChildren, ignoreCase, name);
+      VirtualFileSystemEntry[] after = myChildren;
+      if (after != array)  {
+        // in tests when we call assertAccessInTests it can load a huge number of files which lead to children modification
+        // so fall back to slow path
+        addChild(child);
+      }
+      else {
+        insertChildAt(child, indexInReal);
+        assertConsistency(myChildren, !delegate.isCaseSensitive(), name);
+      }
       return child;
     }
   }
@@ -278,13 +285,13 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
       Set<String> allowed = allowedRoots();
       boolean isUnder = allowed == null;
       if (!isUnder) {
+        String childPath = child.getPath();
+        if (delegate == JarFileSystem.getInstance()) {
+          VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(child);
+          assert local != null : child;
+          childPath = local.getPath();
+        }
         for (String root : allowed) {
-          String childPath = child.getPath();
-          if (delegate == JarFileSystem.getInstance()) {
-            VirtualFile local = JarFileSystem.getInstance().getVirtualFileForJar(child);
-            assert local != null : child;
-            childPath = local.getPath();
-          }
           if (FileUtil.startsWith(childPath, root)) {
             isUnder = true;
             break;
@@ -297,11 +304,7 @@ public class VirtualDirectoryImpl extends VirtualFileSystemEntry {
         }
       }
 
-      if (!isUnder) {
-        if (!allowed.isEmpty()) {
-          assert false : "File accessed outside allowed roots: " + child + ";\nAllowed roots: " + new ArrayList<String>(allowed);
-        }
-      }
+      assert isUnder || allowed.isEmpty() : "File accessed outside allowed roots: " + child + ";\nAllowed roots: " + new ArrayList<String>(allowed);
     }
   }
 
