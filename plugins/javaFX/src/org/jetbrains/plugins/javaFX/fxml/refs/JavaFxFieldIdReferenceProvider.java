@@ -33,7 +33,7 @@ import java.util.List;
  * User: anna
  * Date: 1/17/13
  */
-class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferenceProvider {
+public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferenceProvider {
   @Override
   protected PsiReference[] getReferencesByElement(@NotNull final PsiClass aClass,
                                                   final XmlAttributeValue xmlAttributeValue,
