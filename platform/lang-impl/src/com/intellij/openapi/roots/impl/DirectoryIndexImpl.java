@@ -35,10 +35,12 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.impl.BulkVirtualFileListenerAdapter;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.impl.FileNameCache;
 import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -54,6 +56,17 @@ import java.util.*;
 public class DirectoryIndexImpl extends DirectoryIndex {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.roots.impl.DirectoryIndexImpl");
   private static final boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
+  private static final TObjectHashingStrategy<int[]> INT_ARRAY_STRATEGY = new TObjectHashingStrategy<int[]>() {
+    @Override
+    public int computeHashCode(int[] object) {
+      return Arrays.hashCode(object);
+    }
+
+    @Override
+    public boolean equals(int[] o1, int[] o2) {
+      return Arrays.equals(o1, o2);
+    }
+  };
 
   private final ManagingFS myPersistence;
   private final Project myProject;
@@ -203,7 +216,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       VirtualFile parentContentRoot = parentInfo.getContentRoot();
       state.fillMapWithModuleContent(file, module, (NewVirtualFile)parentContentRoot, null);
 
-      String parentPackage = state.myDirToPackageName.get(parentId);
+      String parentPackage = state.getPackageNameForDirectory(parent);
 
       if (module != null) {
         if (parentInfo.isInModuleSource()) {
@@ -340,7 +353,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       dispatchPendingEvents();
 
       IndexState state = myState;
-      int[] allDirs = state.getDirsForPackage(packageName);
+      int[] allDirs = state.getDirsForPackage(internPackageName(packageName));
       if (allDirs == null) allDirs = ArrayUtil.EMPTY_INT_ARRAY;
 
       List<VirtualFile> files = new ArrayList<VirtualFile>(allDirs.length);
@@ -390,14 +403,15 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     for (int file : keySet) {
       DirectoryInfo info1 = myState.getInfo(file);
       DirectoryInfo info2 = oldState.getInfo(file);
+      assert info1 != null;
       assert info1.equals(info2);
       info1.assertConsistency();
     }
 
     assert myState.myPackageNameToDirsMap.size() == oldState.myPackageNameToDirsMap.size();
-    myState.myPackageNameToDirsMap.forEachEntry(new TObjectIntProcedure<String>() {
+    myState.myPackageNameToDirsMap.forEachEntry(new TObjectIntProcedure<int[]>() {
       @Override
-      public boolean execute(String packageName, int i) {
+      public boolean execute(int[] packageName, int i) {
         int[] dirs = oldState.getDirsForPackage(packageName);
         int[] dirs1 = myState.getDirsForPackage(packageName);
 
@@ -464,7 +478,49 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   public String getPackageName(@NotNull VirtualFile dir) {
     checkAvailability();
     if (!(dir instanceof NewVirtualFile)) return null;
-    return myState.myDirToPackageName.get(((NewVirtualFile)dir).getId());
+    return myState.getPackageNameForDirectory((NewVirtualFile)dir);
+  }
+
+  private static String decodePackageName(@NotNull int[] interned) {
+    if (interned.length == 0) {
+      return "";
+    }
+
+    StringBuilder result = new StringBuilder(interned[0]);
+    for (int i = 1; i < interned.length; i++) {
+      if (i > 1) {
+        result.append('.');
+      }
+      result.append(FileNameCache.getVFileName(interned[i]));
+    }
+    return result.toString();
+  }
+
+  private static int[] internPackageName(@Nullable String packageName) {
+    if (packageName == null) {
+      return null;
+    }
+
+    if (packageName.isEmpty()) {
+      return ArrayUtil.EMPTY_INT_ARRAY;
+    }
+
+    int dotCount = StringUtil.countChars(packageName, '.');
+    int[] result = new int[dotCount + 2];
+    result[0] = packageName.length();
+
+    int tokenStart = 0;
+    int tokenIndex = 0;
+    while (tokenStart < packageName.length()) {
+      int tokenEnd = packageName.indexOf('.', tokenStart);
+      if (tokenEnd < 0) {
+        tokenEnd = packageName.length();
+      }
+      result[tokenIndex + 1] = FileNameCache.storeName(packageName.substring(tokenStart, tokenEnd));
+      tokenStart = tokenEnd + 1;
+      tokenIndex++;
+    }
+    return result;
   }
 
   private void checkAvailability() {
@@ -487,20 +543,20 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     private final TIntObjectHashMap<Set<String>> myExcludeRootsMap = new TIntObjectHashMap<Set<String>>();
     private final TIntHashSet myProjectExcludeRoots = new TIntHashSet();
     private final TIntObjectHashMap<DirectoryInfo> myDirToInfoMap = new TIntObjectHashMap<DirectoryInfo>();
-    private final TObjectIntHashMap<String> myPackageNameToDirsMap = new TObjectIntHashMap<String>();
+    private final TObjectIntHashMap<int[]> myPackageNameToDirsMap = new TObjectIntHashMap<int[]>(INT_ARRAY_STRATEGY);
     private final List<int[]> multiDirPackages = new ArrayList<int[]>(Arrays.asList(new int[]{-1}));
-    private final TIntObjectHashMap<String> myDirToPackageName = new TIntObjectHashMap<String>();
+    private final TIntObjectHashMap<int[]> myDirToPackageName = new TIntObjectHashMap<int[]>();
 
     private IndexState() {
     }
 
     @Nullable
-    private int[] getDirsForPackage(@NotNull String packageName) {
+    private int[] getDirsForPackage(@NotNull int[] packageName) {
       int i = myPackageNameToDirsMap.get(packageName);
       return i == 0 ? null : i > 0 ? new int[]{i} : multiDirPackages.get(-i);
     }
 
-    private void removeDirFromPackage(@NotNull String packageName, int dirId) {
+    private void removeDirFromPackage(@NotNull int[] packageName, int dirId) {
       int i = myPackageNameToDirsMap.get(packageName);
       int[] oldPackageDirs = i == 0 ? null : i > 0 ? new int[]{i} : multiDirPackages.get(-i);
       int index = ArrayUtil.find(oldPackageDirs, dirId);
@@ -519,7 +575,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     }
 
-    private void addDirToPackage(@NotNull String packageName, int dirId) {
+    private void addDirToPackage(@NotNull int[] packageName, int dirId) {
       int i = myPackageNameToDirsMap.get(packageName);
 
       if (i < 0) {
@@ -651,6 +707,12 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       return newInfo;
     }
 
+    @Nullable
+    private String getPackageNameForDirectory(NewVirtualFile dir) {
+      int[] interned = myDirToPackageName.get(dir.getId());
+      return interned == null ? null : decodePackageName(interned);
+    }
+
     private abstract class DirectoryVisitor extends VirtualFileVisitor {
       private final Stack<DirectoryInfo> myDirectoryInfoStack = new Stack<DirectoryInfo>();
 
@@ -747,12 +809,19 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           if (!contentRoot.equals(info.getContentRoot())) return null;
 
           if (info.isInModuleSource()) { // module sources overlap
-            String definedPackage = myDirToPackageName.get(id);
-            if (definedPackage != null && definedPackage.isEmpty()) return null; // another source root starts here
+            if (isAnotherRoot(id)) return null; // another source root starts here
           }
 
 
-          assert VfsUtilCore.isAncestor(dir, file, false) : "dir: "+dir+" ("+dir.getFileSystem()+"); file: "+file+" ("+file.getFileSystem()+")";
+          assert VfsUtilCore.isAncestor(dir, file, false) : "dir: " +
+                                                            dir +
+                                                            " (" +
+                                                            dir.getFileSystem() +
+                                                            "); file: " +
+                                                            file +
+                                                            " (" +
+                                                            file.getFileSystem() +
+                                                            ")";
 
           int flag = info.getSourceFlag() | DirectoryInfo.MODULE_SOURCE_FLAG;
           flag = BitUtil.set(flag, DirectoryInfo.TEST_SOURCE_FLAG, isTestSource);
@@ -760,7 +829,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
           String currentPackage = myPackages.isEmpty() ? packageName : getPackageNameForSubdir(myPackages.peek(), file.getName());
           myPackages.push(currentPackage);
-          setPackageName(id, currentPackage);
+          setPackageName(id, internPackageName(currentPackage));
           return info;
         }
 
@@ -770,6 +839,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           myPackages.pop();
         }
       });
+    }
+
+    private boolean isAnotherRoot(int id) {
+      return myDirToPackageName.get(id) == ArrayUtil.EMPTY_INT_ARRAY;
     }
 
     private void initLibrarySources(@NotNull Module module, @NotNull ProgressIndicator progress) {
@@ -803,8 +876,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           DirectoryInfo info = getOrCreateDirInfo(dirId);
 
           if (info.isInLibrarySource()) { // library sources overlap
-            String definedPackage = myDirToPackageName.get(dirId);
-            if (definedPackage != null && definedPackage.isEmpty()) return false; // another library source root starts here
+            if (isAnotherRoot(dirId)) return false; // another library source root starts here
           }
 
           int flag = info.getSourceFlag() | DirectoryInfo.LIBRARY_SOURCE_FLAG;
@@ -812,7 +884,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
           final String packageName = getCurrentValue();
           final String newPackageName = Comparing.equal(file, dir) ? packageName : getPackageNameForSubdir(packageName, file.getName());
-          setPackageName(dirId, newPackageName);
+          setPackageName(dirId, internPackageName(newPackageName));
           setValueForChildren(newPackageName);
 
           return true;
@@ -852,8 +924,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           DirectoryInfo info = getOrCreateDirInfo(dirId);
 
           if (info.hasLibraryClassRoot()) { // library classes overlap
-            String definedPackage = myDirToPackageName.get(dirId);
-            if (definedPackage != null && definedPackage.isEmpty()) return false; // another library root starts here
+            if (isAnotherRoot(dirId)) return false; // another library root starts here
           }
 
           info = with(dirId, info, null, null, null, classRoot, 0, null);
@@ -861,7 +932,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
           final String packageName = getCurrentValue();
           final String childPackageName = Comparing.equal(file, dir) ? packageName : getPackageNameForSubdir(packageName, file.getName());
           if (!info.isInModuleSource() && !info.isInLibrarySource()) {
-            setPackageName(dirId, childPackageName);
+            setPackageName(dirId, internPackageName(childPackageName));
           }
           setValueForChildren(childPackageName);
 
@@ -944,8 +1015,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     }
 
-    private void setPackageName(int dirId, @Nullable String newPackageName) {
-      String oldPackageName = myDirToPackageName.get(dirId);
+    private void setPackageName(int dirId, @Nullable int[] newPackageName) {
+      int[] oldPackageName = myDirToPackageName.get(dirId);
       if (oldPackageName != null) {
         removeDirFromPackage(oldPackageName, dirId);
       }
@@ -1182,9 +1253,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         });
         copy.multiDirPackages.add(filtered);
       }
-      myPackageNameToDirsMap.forEachEntry(new TObjectIntProcedure<String>() {
+      myPackageNameToDirsMap.forEachEntry(new TObjectIntProcedure<int[]>() {
         @Override
-        public boolean execute(String name, int id) {
+        public boolean execute(int[] name, int id) {
           if (id > 0) {
             if (copy.getInfo(id) == null) id = 0;
           }
@@ -1198,9 +1269,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
         }
       });
 
-      myDirToPackageName.forEachEntry(new TIntObjectProcedure<String>() {
+      myDirToPackageName.forEachEntry(new TIntObjectProcedure<int[]>() {
         @Override
-        public boolean execute(int id, String name) {
+        public boolean execute(int id, int[] name) {
           if (idFilter == null || idFilter.execute(id)) {
             copy.myDirToPackageName.put(id, name);
           }
