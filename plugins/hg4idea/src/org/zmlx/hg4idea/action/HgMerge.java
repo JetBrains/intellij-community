@@ -46,19 +46,20 @@ public class HgMerge extends HgAbstractGlobalAction {
   @Override
 
   public void execute(final Project project, final Collection<VirtualFile> repos) {
-    HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<Map<VirtualFile, List<HgTagBranch>>>() {
+    HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<HgUiUtil.VcsBranchTagInfo>() {
 
       @Override
-      public void consume(Map<VirtualFile, List<HgTagBranch>> branches) {
-        showMergeDialogAndExecute(project, repos, branches);
+      public void consume(HgUiUtil.VcsBranchTagInfo info) {
+        showMergeDialogAndExecute(project, repos, info.getBranchesForRepos(), info.getTagsForRepos());
       }
     });
   }
 
   private void showMergeDialogAndExecute(final Project project,
                                          Collection<VirtualFile> repos,
-                                         Map<VirtualFile, List<HgTagBranch>> branchesForRepos) {
-    final HgMergeDialog mergeDialog = new HgMergeDialog(project, repos, branchesForRepos);
+                                         Map<VirtualFile, List<HgTagBranch>> branchesForRepos,
+                                         Map<VirtualFile, List<HgTagBranch>> tagsForRepos) {
+    final HgMergeDialog mergeDialog = new HgMergeDialog(project, repos, branchesForRepos, tagsForRepos);
     mergeDialog.show();
     if (mergeDialog.isOK()) {
       new Task.Backgroundable(project, "Merging changes...") {
