@@ -21,7 +21,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
  * User: anna
  * Date: 3/20/13
  */
-public abstract class AbstractJavaFXQuickFixTestCase extends AbstractJavaFXTestCase {
+public abstract class AbstractJavaFXQuickFixTest extends AbstractJavaFXTestCase {
   protected abstract String getHint(String tagName);
 
   protected void doLaunchQuickfixTest(final String tagName) throws Exception {
