@@ -34,7 +34,7 @@ public abstract class BaseButtonBehavior {
   private boolean myPressedByMouse;
   private boolean mySelected;
 
-  private TimedDeadzone myMouseDeadzone;
+  private final TimedDeadzone myMouseDeadzone;
 
   private int myActionTrigger;
 
