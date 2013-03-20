@@ -989,10 +989,15 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
 
     final Runnable r = new Runnable() {
       public void run() {
-        importer.set(
-          new MavenProjectImporter(myProject, myProjectsTree, getFileToModuleMapping(modelsProvider), projectsToImportWithChanges,
-                                   importModuleGroupsRequired, modelsProvider, getImportingSettings()));
-        postTasks.set(importer.get().importProject());
+        MavenProjectImporter projectImporter = new MavenProjectImporter(myProject,
+                                                                        myProjectsTree,
+                                                                        getFileToModuleMapping(modelsProvider),
+                                                                        projectsToImportWithChanges,
+                                                                        importModuleGroupsRequired,
+                                                                        modelsProvider,
+                                                                        getImportingSettings());
+        importer.set(projectImporter);
+        postTasks.set(projectImporter.importProject());
       }
     };
 
@@ -1024,7 +1029,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     // do not block user too often
     myImportingQueue.restartTimer();
 
-    return importer.get().getCreatedModules();
+    MavenProjectImporter projectImporter = importer.get();
+    if (projectImporter == null) return Collections.emptyList();
+
+    return projectImporter.getCreatedModules();
   }
 
   public void generateBuildConfiguration(boolean force) {
