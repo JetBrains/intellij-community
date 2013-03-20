@@ -157,6 +157,7 @@ public class HighlightDisplayKey {
     return myName;
   }
 
+  @NotNull
   public String getID(){
     return myID;
   }
