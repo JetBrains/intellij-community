@@ -65,6 +65,10 @@ public class JavaFXHighlightingTest extends LightCodeInsightFixtureTestCase {
     doTest();
   }
 
+  public void testRootTagCoercedUnchecked() throws Exception {
+    doTest();
+  }
+
   public void testStaticProperties() throws Exception {
     doTest();
   }

@@ -436,13 +436,10 @@ public class JavaFxPsiUtil {
   }
 
   public static String isClassAcceptable(@Nullable XmlTag parentTag, final PsiClass aClass) {
+    if (parentTag == null) {
+      return null;
+    }
     if (aClass != null && aClass.isValid()) {
-      if (parentTag == null) {
-        if (!InheritanceUtil.isInheritor(aClass, false, JavaFxCommonClassNames.JAVAFX_SCENE_NODE)) {
-          return unableToCoerceMessage(aClass, JavaFxCommonClassNames.JAVAFX_SCENE_NODE);
-        }
-        return null;
-      }
       final XmlElementDescriptor descriptor = parentTag.getDescriptor();
       if (descriptor instanceof JavaFxPropertyElementDescriptor) {
         final PsiElement declaration = descriptor.getDeclaration();
