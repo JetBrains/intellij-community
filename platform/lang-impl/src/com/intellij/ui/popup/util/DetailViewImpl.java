@@ -168,10 +168,11 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     }
     else {
       clearEditor();
-
+      removeAll();
       JLabel label = new JLabel("Navigate to selected " + (file.isDirectory() ? "directory " : "file ") + "in Project View");
       label.setHorizontalAlignment(JLabel.CENTER);
       add(label);
+      validate();
     }
   }
 
