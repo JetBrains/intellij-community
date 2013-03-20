@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.javaFX;
 
-import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
 import org.jetbrains.jps.incremental.BuildTask;
@@ -92,11 +91,6 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
       myArtifact = artifact;
       myProperties = properties;
       myCompileContext = compileContext;
-    }
-
-    @Override
-    protected String getArtifactRootName() {
-      return FileUtil.sanitizeFileName(myArtifact.getName()) + ".jar";
     }
 
     @Override

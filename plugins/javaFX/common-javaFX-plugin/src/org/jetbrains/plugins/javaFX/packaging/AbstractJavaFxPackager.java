@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Base64Converter;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.io.ZipUtil;
 
 import java.io.File;
@@ -34,7 +35,9 @@ public abstract class AbstractJavaFxPackager {
   private static final Logger LOG = Logger.getInstance("#" + AbstractJavaFxPackager.class.getName());
 
   //artifact description
-  protected abstract String getArtifactRootName();
+  protected String getArtifactRootName() {
+    return PathUtilRt.getFileName(getArtifactOutputFilePath());
+  }
 
   protected abstract String getArtifactOutputPath();
 
