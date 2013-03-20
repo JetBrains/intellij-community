@@ -378,6 +378,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     Disposer.register(project, new Disposable() {
       public void dispose() {
         statusBar.removeWidget(encodingPanel.ID());
+        statusBar.removeWidget(lineSeparatorPanel.ID());
         statusBar.removeWidget(positionPanel.ID());
         statusBar.removeWidget(notificationArea.ID());
         statusBar.removeWidget(readOnlyAttributePanel.ID());
