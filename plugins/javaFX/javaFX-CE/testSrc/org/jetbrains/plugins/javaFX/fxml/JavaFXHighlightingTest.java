@@ -18,15 +18,8 @@ package org.jetbrains.plugins.javaFX.fxml;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.roots.ContentEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.testFramework.LightProjectDescriptor;
-import com.intellij.testFramework.PsiTestUtil;
-import com.intellij.testFramework.fixtures.DefaultLightProjectDescriptor;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -34,20 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * @author anna
  * @since 10.01.2013
  */
-public class JavaFXHighlightingTest extends LightCodeInsightFixtureTestCase {
-  public static final DefaultLightProjectDescriptor JAVA_FX_DESCRIPTOR = new DefaultLightProjectDescriptor() {
-    @Override
-       public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
-       PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
-       super.configureModule(module, model, contentEntry);
-     }
-   };
-
-  @NotNull
-  @Override
-  protected LightProjectDescriptor getProjectDescriptor() {
-    return JAVA_FX_DESCRIPTOR;
-  }
+public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
 
   public void testLoginForm() throws Exception {
     doTest();
@@ -300,8 +280,7 @@ public class JavaFXHighlightingTest extends LightCodeInsightFixtureTestCase {
   }
 
   @Override
-  protected void setUp() throws Exception {
-    super.setUp();
+  protected void enableInspections() {
     myFixture.enableInspections(new XmlPathReferenceInspection(), new RequiredAttributesInspection());
   }
 

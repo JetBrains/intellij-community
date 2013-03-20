@@ -15,42 +15,42 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxDefaultTagInspection;
+import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolvedFxIdReferenceInspection;
 
 /**
  * User: anna
  * Date: 1/10/13
  */
-public class JavaFXDefaultTagInspectionTest extends AbstractJavaFXQuickFixTestCase {
+public class JavaFXUnresolvedFxIdReferenceInspectionTest extends AbstractJavaFXQuickFixTestCase {
 
   @Override
   protected void enableInspections() {
-    myFixture.enableInspections(new JavaFxDefaultTagInspection());
+    myFixture.enableInspections(new JavaFxUnresolvedFxIdReferenceInspection());
   }
 
-
-  public void testChildren() throws Exception {
-    doLaunchQuickfixTest("children");
+  public void testUnknownRef() throws Exception {
+    doTest("Controller");
   }
 
-  public void testEmptyChildren() throws Exception {
-    doLaunchQuickfixTest("children");
-  }
-
-  public void testStylesheets() throws Exception {
-    checkQuickFixNotAvailable("stylesheets");
+  private void doTest(final String controllerName) {
+    myFixture.configureByFiles(getTestName(true) + ".fxml", controllerName + ".java");
+    final IntentionAction singleIntention = myFixture.findSingleIntention(getHint("unknown"));
+    assertNotNull(singleIntention);
+    myFixture.launchAction(singleIntention);
+    myFixture.checkResultByFile(controllerName + ".java", controllerName + "_after.java", true);
   }
 
   @Override
   protected String getHint(String tagName) {
-    return "Unwrap '" + tagName + "'";
+    return "Create Field '" + tagName + "'";
   }
 
   @NotNull
   @Override
   protected String getTestDataPath() {
-    return PluginPathManager.getPluginHomePath("javaFX") + "/testData/inspections/defaultTag/";
+    return PluginPathManager.getPluginHomePath("javaFX") + "/testData/inspections/unresolvedFxId/";
   }
 }
