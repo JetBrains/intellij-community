@@ -22,9 +22,7 @@ import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgHeadsCommand;
 import org.zmlx.hg4idea.command.HgTagBranch;
-import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
-import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -53,11 +51,16 @@ public class HgMergeDialog extends DialogWrapper {
 
   private HgRevisionNumber otherHead;
   private Map<VirtualFile, List<HgTagBranch>> branchesForRepos;
+  private Map<VirtualFile, List<HgTagBranch>> tagsForRepos;
 
-  public HgMergeDialog(Project project, Collection<VirtualFile> roots, Map<VirtualFile, List<HgTagBranch>> branchesForRepos) {
+  public HgMergeDialog(Project project,
+                       Collection<VirtualFile> roots,
+                       Map<VirtualFile, List<HgTagBranch>> branchesForRepos,
+                       Map<VirtualFile, List<HgTagBranch>> tagsForRepos) {
     super(project, false);
     this.project = project;
     this.branchesForRepos = branchesForRepos;
+    this.tagsForRepos = tagsForRepos;
     setRoots(roots);
     hgRepositorySelectorComponent.setTitle("Select repository to merge");
     hgRepositorySelectorComponent.addActionListener(new ActionListener() {
@@ -123,15 +126,8 @@ public class HgMergeDialog extends DialogWrapper {
   }
 
   private void loadTags(VirtualFile root) {
-    HgCommandResult tagsResult = new HgTagBranchCommand(project, root).collectTags();
-    assert tagsResult != null;
-    final List<HgTagBranch> tags = HgTagBranchCommand.parseResult(tagsResult);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        tagSelector.setModel(new DefaultComboBoxModel(tags.toArray()));
-      }
-    });
+    assert tagsForRepos.get(root) != null : "No inforamtion about root " + root;
+    tagSelector.setModel(new DefaultComboBoxModel(tagsForRepos.get(root).toArray()));
   }
 
   private void loadHeads(final VirtualFile root) {

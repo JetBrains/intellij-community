@@ -36,20 +36,20 @@ import java.util.Map;
 public class HgUpdateToAction extends HgAbstractGlobalAction {
 
   protected void execute(final Project project, final Collection<VirtualFile> repos) {
-    HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<Map<VirtualFile, List<HgTagBranch>>>() {
-
+    HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<HgUiUtil.VcsBranchTagInfo>() {
       @Override
-      public void consume(Map<VirtualFile, List<HgTagBranch>> branches) {
-        showUpdateDialogAndExecute(project, repos, branches);
+      public void consume(HgUiUtil.VcsBranchTagInfo info) {
+        showUpdateDialogAndExecute(project, repos, info.getBranchesForRepos(), info.getTagsForRepos());
       }
     });
   }
 
   private void showUpdateDialogAndExecute(final Project project,
                                           Collection<VirtualFile> repos,
-                                          Map<VirtualFile, List<HgTagBranch>> branchesForRepos) {
+                                          Map<VirtualFile, List<HgTagBranch>> branchesForRepos,
+                                          Map<VirtualFile, List<HgTagBranch>> tagsForRepos) {
     final HgUpdateToDialog dialog = new HgUpdateToDialog(project);
-    dialog.setRoots(repos, branchesForRepos);
+    dialog.setRoots(repos, branchesForRepos, tagsForRepos);
     dialog.show();
     if (dialog.isOK()) {
       FileDocumentManager.getInstance().saveAllDocuments();
