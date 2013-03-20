@@ -85,6 +85,7 @@ import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.KeyEvent;
+import java.awt.event.MouseEvent;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.lang.ref.WeakReference;
@@ -600,7 +601,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
     assertDispatchThread();
 
-    if (isShiftEnter(EventQueue.getCurrentEvent())) {
+    if (isOpenInNewWindow(EventQueue.getCurrentEvent())) {
       return openFileInNewWindow(file);
     }
 
@@ -641,10 +642,20 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return ((DockManagerImpl)DockManager.getInstance(getProject())).createNewDockContainerFor(file, this);
   }
 
-  private static boolean isShiftEnter(AWTEvent event) {
-    return event instanceof KeyEvent
-      && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_ENTER
-      && ((KeyEvent)event).isShiftDown();
+  private static boolean isOpenInNewWindow(AWTEvent event) {
+    // Shift was used while clicking
+    if (event instanceof MouseEvent && ((MouseEvent)event).isShiftDown()) {
+      return true;
+    }
+
+    // Shift + Enter
+    if (event instanceof KeyEvent
+        && ((KeyEvent)event).getKeyCode() == KeyEvent.VK_ENTER
+        && ((KeyEvent)event).isShiftDown()) {
+      return true;
+    }
+
+    return false;
   }
 
   private void openAssociatedFile(VirtualFile file, EditorWindow wndToOpenIn, EditorsSplitters splitters) {
