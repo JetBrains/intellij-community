@@ -48,6 +48,8 @@ public class HgPusher {
 
   private static final Logger LOG = Logger.getInstance(HgPusher.class);
   private static Pattern PUSH_COMMITS_PATTERN = Pattern.compile(".*added (\\d+) changesets.*");
+  private static int PUSH_SUCCEEDED_EXIT_VALUE = 0;
+  private static int NOTHING_TO_PUSH_EXIT_VALUE = 1;
 
   private final Project myProject;
 
@@ -114,12 +116,12 @@ public class HgPusher {
         }
 
         int commitsNum = getNumberOfPushedCommits(result);
-        if (commitsNum > 0 && result.getExitValue() == 0) {
+        if (commitsNum > 0 && result.getExitValue() == PUSH_SUCCEEDED_EXIT_VALUE) {
           String successTitle = "Pushed successfully";
           String successDescription = String.format("Pushed %d %s [%s]", commitsNum, StringUtil.pluralize("commit", commitsNum),
                                                     repo.getPresentableName());
           new HgCommandResultNotifier(project).notifySuccess(successTitle, successDescription);
-        } else if (commitsNum == 0) {
+        } else if (commitsNum == 0 && result.getExitValue() == NOTHING_TO_PUSH_EXIT_VALUE) {
           new HgCommandResultNotifier(project).notifySuccess("", "Nothing to push");
         } else {
           new HgCommandResultNotifier(project).notifyError(result, "Push failed",
