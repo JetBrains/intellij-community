@@ -112,6 +112,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     final PsiManager manager = PsiManager.getInstance(myProject);
     final FileDocumentManager fileManager = FileDocumentManager.getInstance();
     PsiDocumentManager.getInstance(myProject).commitAllDocuments();
+    if (ApplicationManager.getApplication().isWriteAccessAllowed()) throw new RuntimeException("Must not run under write action");
 
     boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       @Override
@@ -138,7 +139,11 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
               }
             }
           }
-        } catch (Exception e) {
+        }
+        catch (ProcessCanceledException e) {
+          throw e;
+        }
+        catch (Exception e) {
           LOG.error(e);
           myException = e;
         }
@@ -183,9 +188,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
     if (type instanceof HighlightInfoType.HighlightInfoTypeSeverityByKey) {
       final HighlightDisplayKey severityKey = ((HighlightInfoType.HighlightInfoTypeSeverityByKey)type).getSeverityKey();
       final String id = severityKey.getID();
-      if (id != null) {
-        return "[" + id + "] " + description;
-      }
+      return "[" + id + "] " + description;
     }
     return description;
   }
