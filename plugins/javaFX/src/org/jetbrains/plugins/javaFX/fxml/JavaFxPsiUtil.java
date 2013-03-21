@@ -327,25 +327,30 @@ public class JavaFxPsiUtil {
         final PsiClass psiClass = (PsiClass)declaration;
         final PsiField psiField = psiClass.findFieldByName(attributeName, true);
         if (psiField != null) {
-          if (findPropertySetter(attributeName, (PsiClass)declaration) == null &&
-              findPropertySetter(attributeName, tag) == null && 
-              !InheritanceUtil.isInheritor(psiField.getType(), "javafx.collections.ObservableList")) {
-            //todo read only condition?
-            final PsiMethod[] constructors = psiClass.getConstructors();
-            for (PsiMethod constructor : constructors) {
-              for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
-                if (psiField.getType().equals(parameter.getType())) {
-                  return false;
-                }
-              }
-            }
-            return true;
-          }
+          return isReadOnly(psiClass, psiField);
         }
       }
     }
     return false;
     
+  }
+
+  public static boolean isReadOnly(PsiClass psiClass, PsiField psiField) {
+    final String name = psiField.getName();
+    if (findPropertySetter(name, psiClass) == null &&
+        !InheritanceUtil.isInheritor(psiField.getType(), "javafx.collections.ObservableList")) {
+      //todo read only condition?
+      final PsiMethod[] constructors = psiClass.getConstructors();
+      for (PsiMethod constructor : constructors) {
+        for (PsiParameter parameter : constructor.getParameterList().getParameters()) {
+          if (psiField.getType().equals(parameter.getType())) {
+            return false;
+          }
+        }
+      }
+      return true;
+    }
+    return false;
   }
 
   public static boolean isExpressionBinding(String value) {
