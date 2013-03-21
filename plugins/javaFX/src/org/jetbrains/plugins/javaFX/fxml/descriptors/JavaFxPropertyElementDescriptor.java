@@ -41,6 +41,10 @@ public class JavaFxPropertyElementDescriptor implements XmlElementDescriptor {
     myStatic = isStatic;
   }
 
+  public boolean isStatic() {
+    return myStatic;
+  }
+
   @Override
   public String getQualifiedName() {
     return getName();

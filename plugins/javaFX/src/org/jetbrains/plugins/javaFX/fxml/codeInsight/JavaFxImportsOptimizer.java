@@ -32,10 +32,13 @@ import com.intellij.psi.impl.source.codeStyle.ImportHelper;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
 import com.intellij.util.containers.HashSet;
+import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxStaticPropertyAttributeDescriptor;
 
 import java.util.*;
 
@@ -123,21 +126,35 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
       public void visitXmlProcessingInstruction(XmlProcessingInstruction processingInstruction) {}
 
       @Override
-      public void visitXmlAttribute(XmlAttribute attribute) {}
+      public void visitXmlAttribute(XmlAttribute attribute) {
+        final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+        if (descriptor instanceof JavaFxStaticPropertyAttributeDescriptor) {
+          final PsiElement declaration = descriptor.getDeclaration();
+          if (declaration instanceof PsiMember) {
+            appendClassName(((PsiMember)declaration).getContainingClass());
+          }
+        }
+      }
 
       @Override
       public void visitXmlTag(XmlTag tag) {
         super.visitXmlTag(tag);
         final XmlElementDescriptor descriptor = tag.getDescriptor();
         if (descriptor instanceof JavaFxClassBackedElementDescriptor) {
+          appendClassName(descriptor.getDeclaration());
+        } else if (descriptor instanceof JavaFxPropertyElementDescriptor && ((JavaFxPropertyElementDescriptor)descriptor).isStatic()) {
           final PsiElement declaration = descriptor.getDeclaration();
-          if (declaration instanceof PsiClass) {
-            names.add(Pair.create(((PsiClass)declaration).getQualifiedName(), false));
+          if (declaration instanceof PsiMember) {
+            appendClassName(((PsiMember)declaration).getContainingClass());
           }
         }
       }
 
-      
+      private void appendClassName(PsiElement declaration) {
+        if (declaration instanceof PsiClass) {
+          names.add(Pair.create(((PsiClass)declaration).getQualifiedName(), false));
+        }
+      }
     });
   } 
 }
