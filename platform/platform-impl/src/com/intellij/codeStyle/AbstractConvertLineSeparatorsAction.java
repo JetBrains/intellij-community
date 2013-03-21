@@ -15,14 +15,17 @@
  */
 package com.intellij.codeStyle;
 
-import com.intellij.history.LocalHistory;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
@@ -140,14 +143,35 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     }
   }
 
-  private void changeLineSeparators(@NotNull Project project, @NotNull VirtualFile virtualFile) {
-    try {
-      LoadTextUtil.changeLineSeparators(project, virtualFile, mySeparator, this);
-      LocalHistory.getInstance().putSystemLabel(project, "Line Ending: %s" + LineSeparator.fromString(mySeparator));
+  private void changeLineSeparators(@NotNull final Project project, @NotNull final VirtualFile virtualFile) {
+    FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+    Document document = fileDocumentManager.getCachedDocument(virtualFile);
+    if (document != null) {
+      fileDocumentManager.saveDocument(document);
     }
-    catch (IOException e) {
-      LOG.warn(e);
-    }
-  }
 
+    String currentSeparator = LoadTextUtil.detectLineSeparator(virtualFile, false);
+    final String commandText;
+    if (StringUtil.isEmpty(currentSeparator)) {
+      commandText = "Changed line separators to " + LineSeparator.fromString(mySeparator);
+    }
+    else {
+      assert currentSeparator != null;
+      commandText = String.format("Changed line separators from %s to %s",
+                                  LineSeparator.fromString(currentSeparator), LineSeparator.fromString(mySeparator));
+    }
+
+    CommandProcessor commandProcessor = CommandProcessor.getInstance();
+    commandProcessor.executeCommand(project, new Runnable() {
+      @Override
+      public void run() {
+        try {
+          LoadTextUtil.changeLineSeparators(project, virtualFile, mySeparator, this);
+        }
+        catch (IOException e) {
+          LOG.warn(e);
+        }
+      }
+    }, commandText, null);
+  }
 }

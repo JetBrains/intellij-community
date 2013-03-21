@@ -20,8 +20,6 @@ import com.intellij.compiler.options.CompileStepBeforeRunNoErrorCheck;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
-import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -44,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.GradleTaskLocation;
 import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
-import org.jetbrains.plugins.gradle.tasks.GradleTasksModel;
+import org.jetbrains.plugins.gradle.tasks.GradleTasksList;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -179,17 +177,12 @@ public class GradleScriptType extends GroovyScriptType {
           GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)profile;
           String parameters = configuration.getScriptParameters();
           if (parameters != null) {
-            GradleTasksModel model = GradleUtil.getToolWindowElement(GradleTasksModel.class, project, GradleDataKeys.RECENT_TASKS_MODEL);
-            if (model != null) {
+            GradleTasksList list = GradleUtil.getToolWindowElement(GradleTasksList.class, project, GradleDataKeys.RECENT_TASKS_LIST);
+            if (list != null) {
               GradleTaskDescriptor descriptor = new GradleTaskDescriptor(parameters, null);
-              if (DefaultDebugExecutor.EXECUTOR_ID.equals(executor.getId())) {
-                descriptor.setType(GradleTaskDescriptor.Type.DEBUG);
-              }
-              else if (DefaultRunExecutor.EXECUTOR_ID.equals(executor.getId())) {
-                descriptor.setType(GradleTaskDescriptor.Type.RUN);
-              }
-              model.setFirst(descriptor);
-              GradleLocalSettings.getInstance(project).setRecentTasks(model.getTasks());
+              descriptor.setExecutorId(executor.getId());
+              list.setFirst(descriptor);
+              GradleLocalSettings.getInstance(project).setRecentTasks(list.getModel().getTasks());
             }
           }
         }

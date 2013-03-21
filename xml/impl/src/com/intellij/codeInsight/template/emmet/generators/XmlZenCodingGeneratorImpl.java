@@ -107,7 +107,7 @@ public class XmlZenCodingGeneratorImpl extends XmlZenCodingGenerator {
       @Override
       public void visitXmlTag(final XmlTag tag) {
         if (!isTagClosed(tag)) {
-          tagToClose.add(pointerManager.createLazyPointer(tag));
+          tagToClose.add(pointerManager.createSmartPsiElementPointer(tag));
         }
       }
     });

@@ -113,7 +113,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       if (descr instanceof JavaFxClassBackedElementDescriptor) {
         final PsiElement element = descr.getDeclaration();
         if (element instanceof PsiClass) {
-          for (PsiMethod method : ((PsiClass)element).getMethods()) {
+          for (PsiMethod method : ((PsiClass)element).getAllMethods()) {
             if (method.hasModifierProperty(PsiModifier.STATIC) && method.getName().startsWith("set")) {
               final PsiParameter[] parameters = method.getParameterList().getParameters();
               if (parameters.length == 2 && InheritanceUtil.isInheritor(parameters[0].getType(), JavaFxCommonClassNames.JAVAFX_SCENE_NODE)) {

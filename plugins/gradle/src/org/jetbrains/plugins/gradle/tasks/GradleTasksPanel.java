@@ -15,8 +15,9 @@
  */
 package org.jetbrains.plugins.gradle.tasks;
 
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
 import com.intellij.execution.Location;
-import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.customization.CustomizationUtil;
@@ -59,19 +60,36 @@ import java.util.List;
 public class GradleTasksPanel extends GradleToolWindowPanel {
 
   @NotNull private final GradleTasksModel myRecentTasksModel = new GradleTasksModel();
-  @NotNull private final GradleTasksList  myRecentTasksList  = new GradleTasksList(myRecentTasksModel);
+  @NotNull private final GradleTasksList  myRecentTasksList;
   
   @NotNull private final GradleTasksModel myAllTasksModel = new GradleTasksModel();
-  @NotNull private final GradleTasksList  myAllTasksList  = new GradleTasksList(myAllTasksModel);
+  @NotNull private final GradleTasksList  myAllTasksList;
 
   @NotNull private final GradleLocalSettings myLocalSettings;
+  
+  @Nullable private GradleTasksList myActiveList;
 
   public GradleTasksPanel(@NotNull Project project) {
     super(project, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE);
+    myRecentTasksList = buildList(myRecentTasksModel);
+    myAllTasksList = buildList(myAllTasksModel);
     myLocalSettings = GradleLocalSettings.getInstance(project);
     initContent();
   }
 
+  @NotNull
+  private GradleTasksList buildList(@NotNull GradleTasksModel model) {
+    return new GradleTasksList(model) {
+      @Override
+      protected void processMouseEvent(MouseEvent e) {
+        if (e.getID() == MouseEvent.MOUSE_PRESSED) {
+          myActiveList = this;
+        }
+        super.processMouseEvent(e);
+      }
+    };
+  }
+  
   @NotNull
   @Override
   protected JComponent buildContent() {
@@ -81,7 +99,9 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     
     myRecentTasksModel.clear();
     myRecentTasksModel.setTasks(myLocalSettings.getRecentTasks());
-    myRecentTasksModel.ensureSize(Registry.intValue(GradleConstants.REGISTRY_RECENT_TASKS_NUMBER_KEY, 5));
+    int recentTasksNumber = Registry.intValue(GradleConstants.REGISTRY_RECENT_TASKS_NUMBER_KEY, 5);
+    myRecentTasksModel.ensureSize(recentTasksNumber);
+    myRecentTasksList.setVisibleRowCount(recentTasksNumber);
     addListPanel(myRecentTasksList, result, GradleBundle.message("gradle.task.recent.title"), false);
     
     myAllTasksModel.clear();
@@ -133,20 +153,28 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
           return;
         }
 
-        GradleTaskDescriptor.Type taskType = getSelectedTaskType(list);
-        final String actionId;
-        if (taskType == GradleTaskDescriptor.Type.DEBUG) {
-          actionId = DefaultDebugExecutor.getDebugExecutorInstance().getContextActionId();
+        int row = list.locationToIndex(e.getPoint());
+        ListModel model = list.getModel();
+        if (row < 0 || row >= model.getSize()) {
+          return;
         }
-        else if (taskType == GradleTaskDescriptor.Type.RUN) {
-          actionId = DefaultRunExecutor.getRunExecutorInstance().getContextActionId();
+
+        Object element = model.getElementAt(row);
+        if (!(element instanceof GradleTaskDescriptor)) {
+          return;
         }
-        else if (Registry.is(GradleConstants.REGISTRY_DEBUG_ON_TASK_CLICK_KEY, false)) {
-          actionId = DefaultDebugExecutor.getDebugExecutorInstance().getContextActionId();
+
+        String executorId = ((GradleTaskDescriptor)element).getExecutorId();
+        if (StringUtil.isEmpty(executorId)) {
+          executorId = DefaultRunExecutor.EXECUTOR_ID;
         }
-        else {
-          actionId = DefaultRunExecutor.getRunExecutorInstance().getContextActionId();
+        
+        Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
+        if (executor == null) {
+          return;
         }
+        
+        final String actionId = executor.getContextActionId();
         if (StringUtil.isEmpty(actionId)) {
           return;
         }
@@ -178,8 +206,8 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     if (GradleDataKeys.ALL_TASKS_MODEL.is(dataId)) {
       return myAllTasksModel;
     }
-    else if (GradleDataKeys.RECENT_TASKS_MODEL.is(dataId)) {
-      return myRecentTasksModel;
+    else if (GradleDataKeys.RECENT_TASKS_LIST.is(dataId)) {
+      return myRecentTasksList;
     }
     else if (Location.DATA_KEY.is(dataId)) {
       Location location = buildLocation();
@@ -192,7 +220,10 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
 
   @Nullable
   private Location buildLocation() {
-    List<String> tasks = getSelectedTasks(myAllTasksList);
+    if (myActiveList == null) {
+      return null;
+    }
+    List<String> tasks = getSelectedTasks(myActiveList);
     if (tasks == null) {
       return null;
     }
@@ -201,7 +232,7 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     if (StringUtil.isEmpty(gradleProjectPath)) {
       return null;
     }
-    
+
     assert gradleProjectPath != null;
     VirtualFile vFile = LocalFileSystem.getInstance().refreshAndFindFileByPath(gradleProjectPath);
     if (vFile == null) {
@@ -212,19 +243,10 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     if (psiFile == null) {
       return null;
     }
-    
+
     return new GradleTaskLocation(getProject(), psiFile, tasks);
   }
 
-  @Nullable
-  private static GradleTaskDescriptor.Type getSelectedTaskType(@NotNull JBList list) {
-    int[] indices = list.getSelectedIndices();
-    if (indices == null || indices.length != 1) {
-      return null;
-    }
-    return ((GradleTaskDescriptor)list.getModel().getElementAt(indices[0])).getType();
-  }
-  
   @Nullable
   private static List<String> getSelectedTasks(@NotNull JBList list) {
     int[] selectedIndices = list.getSelectedIndices();

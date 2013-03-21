@@ -79,7 +79,7 @@ public class TestProxy extends AbstractTestProxy {
     if (psiElement != null) {
       final Project project = psiElement.getProject();
       PsiDocumentManager.getInstance(project).commitAllDocuments();
-      this.psiElement = SmartPointerManager.getInstance(project).createLazyPointer(psiElement);
+      this.psiElement = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(psiElement);
     } else {
       this.psiElement = null;
     }

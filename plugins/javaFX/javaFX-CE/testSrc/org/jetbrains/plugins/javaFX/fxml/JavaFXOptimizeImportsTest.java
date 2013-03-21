@@ -16,18 +16,10 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.actions.OptimizeImportsProcessor;
-import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.PsiTestUtil;
 import org.jetbrains.annotations.NotNull;
 
-public class JavaFXOptimizeImportsTest extends DaemonAnalyzerTestCase {
-  @Override
-  protected void setUpModule() {
-    super.setUpModule();
-    PsiTestUtil.addLibrary(getModule(), "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
-  }
-
+public class JavaFXOptimizeImportsTest extends AbstractJavaFXTestCase {
   public void testCollapseOnDemand() throws Exception {
     doTest();
   }
@@ -40,10 +32,22 @@ public class JavaFXOptimizeImportsTest extends DaemonAnalyzerTestCase {
     doTest();
   }
 
+  public void testStaticPropertiesAttrAndCustomComponents() throws Exception {
+    myFixture.addClass("import javafx.scene.layout.GridPane;\n" +
+                       "public class MyGridPane extends GridPane {}\n");
+    doTest();
+  }
+
+  public void testStaticPropertiesTagAndCustomComponents() throws Exception {
+    myFixture.addClass("import javafx.scene.layout.GridPane;\n" +
+                       "public class MyGridPane extends GridPane {}\n");
+    doTest();
+  }
+
   private void doTest() throws Exception {
-    configureByFile(getTestName(true) + ".fxml");
-    new OptimizeImportsProcessor(getProject(), getFile()).run();
-    checkResultByFile(getTestName(true) + "_after.fxml");
+    myFixture.configureByFile(getTestName(true) + ".fxml");
+    new OptimizeImportsProcessor(getProject(), myFixture.getFile()).run();
+    myFixture.checkResultByFile(getTestName(true) + "_after.fxml");
   }
 
   @NotNull

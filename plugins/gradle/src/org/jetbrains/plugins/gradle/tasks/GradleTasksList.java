@@ -15,15 +15,19 @@
  */
 package org.jetbrains.plugins.gradle.tasks;
 
-import com.intellij.execution.executors.DefaultDebugExecutor;
-import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.Executor;
+import com.intellij.execution.ExecutorRegistry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtilRt;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author Denis Zhdanov
@@ -39,6 +43,41 @@ public class GradleTasksList extends JBList {
     setCellRenderer(RENDERER);
   }
 
+  @Override
+  public GradleTasksModel getModel() {
+    return (GradleTasksModel)super.getModel();
+  }
+
+  public void setFirst(@NotNull GradleTaskDescriptor descriptor) {
+    Set<GradleTaskDescriptor> selected = getSelectedDescriptors();
+    GradleTasksModel model = getModel();
+    model.setFirst(descriptor);
+    clearSelection();
+    for (int i = 0; i < model.size(); i++) {
+      //noinspection SuspiciousMethodCalls
+      if (selected.contains(model.getElementAt(i))) {
+        addSelectionInterval(i, i);
+      }
+    }
+  }
+
+  @NotNull
+  public Set<GradleTaskDescriptor> getSelectedDescriptors() {
+    int[] indices = getSelectedIndices();
+    if (indices == null || indices.length <= 0) {
+      return Collections.emptySet();
+    }
+    Set<GradleTaskDescriptor> result = ContainerUtilRt.newHashSet();
+    GradleTasksModel model = getModel();
+    for (int i : indices) {
+      Object e = model.getElementAt(i);
+      if (e instanceof GradleTaskDescriptor) {
+        result.add((GradleTaskDescriptor)e);
+      }
+    }
+    return result;
+  }
+
   private static class MyRenderer extends DefaultListCellRenderer {
 
     @Override
@@ -49,11 +88,19 @@ public class GradleTasksList extends JBList {
       else if (value instanceof GradleTaskDescriptor) {
         GradleTaskDescriptor descriptor = (GradleTaskDescriptor)value;
         setText(descriptor.getName());
-        switch (descriptor.getType()) {
-          case GENERAL: setIcon(GradleIcons.Task); break;
-          case RUN: setIcon(DefaultRunExecutor.getRunExecutorInstance().getIcon()); break;
-          case DEBUG: setIcon(DefaultDebugExecutor.getDebugExecutorInstance().getIcon()); break;
+        Icon icon = null;
+        String executorId = descriptor.getExecutorId();
+        if (!StringUtil.isEmpty(executorId)) {
+          Executor executor = ExecutorRegistry.getInstance().getExecutorById(executorId);
+          if (executor != null) {
+            icon = executor.getIcon();
+          }
         }
+
+        if (icon == null) {
+          icon = GradleIcons.Task;
+        }
+        setIcon(icon);
       }
       return super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
     }

@@ -53,6 +53,12 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testStaticPropertiesCustomLayout() throws Exception {
+    myFixture.addClass("import javafx.scene.layout.GridPane;\n" +
+                       "public class MyGridPane extends GridPane {}\n");
+    myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
+  }
+
   public void testEnumValues() throws Exception {
     doTest();
   }

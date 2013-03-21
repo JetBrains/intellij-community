@@ -34,7 +34,7 @@ public class DefaultLanguageHighlighterColors {
   public final static TextAttributesKey KEYWORD =
     TextAttributesKey.createTextAttributesKey("DEFAULT_KEYWORD");
   public final static TextAttributesKey STRING =
-    TextAttributesKey.createTextAttributesKey("DEFAULT_STRING", HighlighterColors.TEXT);
+    TextAttributesKey.createTextAttributesKey("DEFAULT_STRING");
   public final static TextAttributesKey BLOCK_COMMENT =
     TextAttributesKey.createTextAttributesKey("DEFAULT_BLOCK_COMMENT");
   public final static TextAttributesKey LINE_COMMENT =

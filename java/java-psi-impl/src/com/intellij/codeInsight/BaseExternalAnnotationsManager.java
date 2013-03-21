@@ -298,7 +298,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
       MostlySingularMultiMap<String, AnnotationData> fileData = getDataFromFile(file);
 
-      Collection<AnnotationData> data = (Collection<AnnotationData>)fileData.get(externalName);
+      Iterable<AnnotationData> data = fileData.get(externalName);
       for (AnnotationData ad : data) {
         if (result.contains(ad)) {
           // there can be compatible annotations in different files
@@ -311,7 +311,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
         }
       }
       if (oldExternalName != null && !externalName.equals(oldExternalName)) {
-        Collection<AnnotationData> oldCollection = (Collection<AnnotationData>)fileData.get(oldExternalName);
+        Iterable<AnnotationData> oldCollection = fileData.get(oldExternalName);
         for (AnnotationData ad : oldCollection) {
           if (result.contains(ad)) {
             LOG.error("Duplicate signature o:\n" + oldExternalName + "; in  " + toVirtualFiles(files));
