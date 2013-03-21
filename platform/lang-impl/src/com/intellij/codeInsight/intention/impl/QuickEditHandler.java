@@ -16,15 +16,12 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.editorActions.CopyPastePreProcessor;
-import com.intellij.codeInsight.folding.CodeFoldingManager;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.lang.Language;
-import com.intellij.lang.StdLanguages;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -231,8 +228,9 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
           public void run() {
             for (RangeMarker o : ContainerUtil.reverse(((DocumentEx)myNewDocument).getGuardedBlocks())) {
               String replacement = o.getUserData(REPLACEMENT_KEY);
+              if (StringUtil.isEmpty(replacement)) continue;
               FoldRegion region = foldingModel.addFoldRegion(o.getStartOffset(), o.getEndOffset(), replacement);
-              region.setExpanded(false);
+              if (region != null) region.setExpanded(false);
             }
           }
         });
@@ -299,8 +297,6 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
         shred.getRange().getEndOffset() - shred.getSuffix().length());
       final TextRange rangeInsideHost = shred.getRangeInsideHost();
       PsiLanguageInjectionHost host = shred.getHost();
-      // todo fixme: char literal update will throw exceptions
-      boolean oneCharOnly = host.getText().startsWith("'") && "JAVA".equals(host.getLanguage().getID());
       RangeMarker origMarker = myOrigDocument.createRangeMarker(rangeInsideHost.shiftRight(host.getTextRange().getStartOffset()));
       SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer = smartPointerManager.createSmartPsiElementPointer(host);
       Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> markers =
