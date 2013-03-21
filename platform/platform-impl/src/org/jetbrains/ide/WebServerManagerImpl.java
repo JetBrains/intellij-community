@@ -79,12 +79,12 @@ public class WebServerManagerImpl extends WebServerManager {
   }
 
   private Future<?> startServerInPooledThread() {
-    if (!started.compareAndSet(false, true)) {
+    Application application = ApplicationManager.getApplication();
+    if (application.isUnitTestMode() && !myEnabledInUnitTestMode) {
       return null;
     }
 
-    Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode() && !myEnabledInUnitTestMode) {
+    if (!started.compareAndSet(false, true)) {
       return null;
     }
 
