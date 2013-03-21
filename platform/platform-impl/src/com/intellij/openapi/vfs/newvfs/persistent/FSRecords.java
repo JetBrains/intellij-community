@@ -145,7 +145,7 @@ public class FSRecords implements Forceable {
       }
     }
 
-    public static int getFreeRecord() {
+    static int getFreeRecord() {
       if (myFreeRecords.isEmpty()) return 0;
       return myFreeRecords.remove(myFreeRecords.size() - 1);
     }
@@ -456,7 +456,7 @@ public class FSRecords implements Forceable {
       }
     }
 
-    private static int getAttributeId(String attId) throws IOException {
+    private static int getAttributeId(@NotNull String attId) throws IOException {
       Integer integer = myAttributeIds.get(attId);
       if (integer != null) return integer.intValue();
       int enumeratedId = myNames.enumerate(attId);
@@ -477,7 +477,7 @@ public class FSRecords implements Forceable {
       return new RuntimeException(e);
     }
 
-    public static void addFreeRecord(final int id) {
+    private static void addFreeRecord(final int id) {
       myFreeRecords.add(id);
     }
 
@@ -531,12 +531,12 @@ public class FSRecords implements Forceable {
 
       final int free = DbConnection.getFreeRecord();
       if (free == 0) {
-        final int filelength = (int)getRecords().length();
-        LOG.assertTrue(filelength % RECORD_SIZE == 0);
-        int newrecord = filelength / RECORD_SIZE;
-        DbConnection.cleanRecord(newrecord);
-        assert filelength + RECORD_SIZE == getRecords().length();
-        return newrecord;
+        final int fileLength = (int)getRecords().length();
+        LOG.assertTrue(fileLength % RECORD_SIZE == 0);
+        int newRecord = fileLength / RECORD_SIZE;
+        DbConnection.cleanRecord(newRecord);
+        assert fileLength + RECORD_SIZE == getRecords().length();
+        return newRecord;
       }
       else {
         DbConnection.cleanRecord(free);
@@ -614,7 +614,7 @@ public class FSRecords implements Forceable {
     setFlags(id, FREE_RECORD_FLAG, false);
   }
 
-  public static int[] listRoots() throws IOException {
+  static int[] listRoots() {
     try {
       try {
         r.lock();
@@ -1203,7 +1203,7 @@ public class FSRecords implements Forceable {
     return recordId;
   }
 
-  private static int findAttributePage(int fileId, String attrId, boolean toWrite) throws IOException {
+  private static int findAttributePage(int fileId, @NotNull String attrId, boolean toWrite) throws IOException {
     checkFileIsValid(fileId);
 
     Storage storage = getAttributesStorage();
@@ -1317,7 +1317,7 @@ public class FSRecords implements Forceable {
   }
 
   @NotNull
-  public static DataOutputStream writeAttribute(final int fileId, final String attId, boolean fixedSize) {
+  public static DataOutputStream writeAttribute(final int fileId, @NotNull String attId, boolean fixedSize) {
     return new AttributeOutputStream(fileId, attId, fixedSize);
   }
 
@@ -1340,7 +1340,7 @@ public class FSRecords implements Forceable {
   private static class AttributeOutputStream extends BaseOutputStream {
     private final String myAttributeId;
 
-    private AttributeOutputStream(final int fileId, final String attributeId, boolean fixedSize) {
+    private AttributeOutputStream(final int fileId, @NotNull String attributeId, boolean fixedSize) {
       super(fileId, fixedSize);
       myAttributeId = attributeId;
     }
