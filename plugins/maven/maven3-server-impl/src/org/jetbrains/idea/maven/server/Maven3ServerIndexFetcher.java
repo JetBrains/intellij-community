@@ -16,7 +16,8 @@
 package org.jetbrains.idea.maven.server;
 
 import org.apache.maven.artifact.manager.WagonManager;
-import org.apache.maven.artifact.repository.DefaultArtifactRepository;
+import org.apache.maven.artifact.repository.ArtifactRepository;
+import org.apache.maven.repository.RepositorySystem;
 import org.apache.maven.wagon.ConnectionException;
 import org.apache.maven.wagon.ResourceDoesNotExistException;
 import org.apache.maven.wagon.Wagon;
@@ -36,24 +37,28 @@ public class Maven3ServerIndexFetcher extends AbstractResourceFetcher {
   private final String myOriginalRepositoryId;
   private final String myOriginalRepositoryUrl;
   private final WagonManager myWagonManager;
+  private final RepositorySystem myRepositorySystem;
   private final TransferListener myListener;
   private Wagon myWagon = null;
 
   public Maven3ServerIndexFetcher(String originalRepositoryId,
                                   String originalRepositoryUrl,
                                   WagonManager wagonManager,
+                                  RepositorySystem repositorySystem,
                                   TransferListener listener) {
     myOriginalRepositoryId = originalRepositoryId;
     myOriginalRepositoryUrl = originalRepositoryUrl;
     myWagonManager = wagonManager;
+    myRepositorySystem = repositorySystem;
     myListener = listener;
   }
 
   @Override
   public void connect(String _ignoredContextId, String _ignoredUrl) throws IOException {
-    String mirrorUrl = myWagonManager.getMirrorRepository(new DefaultArtifactRepository(myOriginalRepositoryId,
-                                                                                        myOriginalRepositoryUrl,
-                                                                                        null)).getUrl();
+    ArtifactRepository artifactRepository =
+      myRepositorySystem.createArtifactRepository(myOriginalRepositoryId, myOriginalRepositoryUrl, null, null, null);
+
+    String mirrorUrl = myWagonManager.getMirrorRepository(artifactRepository).getUrl();
     String indexUrl = mirrorUrl + (mirrorUrl.endsWith("/") ? "" : "/") + ".index";
     Repository repository = new Repository(myOriginalRepositoryId, indexUrl);
 
