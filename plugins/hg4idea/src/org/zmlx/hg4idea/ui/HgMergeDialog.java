@@ -23,6 +23,7 @@ import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgHeadsCommand;
 import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
+import org.zmlx.hg4idea.util.HgBranchesAndTags;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -55,12 +56,11 @@ public class HgMergeDialog extends DialogWrapper {
 
   public HgMergeDialog(Project project,
                        Collection<VirtualFile> roots,
-                       Map<VirtualFile, List<HgTagBranch>> branchesForRepos,
-                       Map<VirtualFile, List<HgTagBranch>> tagsForRepos) {
+                       HgBranchesAndTags branchesAndTags) {
     super(project, false);
     this.project = project;
-    this.branchesForRepos = branchesForRepos;
-    this.tagsForRepos = tagsForRepos;
+    branchesForRepos = branchesAndTags.getBranchesForRepos();
+    tagsForRepos = branchesAndTags.getTagsForRepos();
     setRoots(roots);
     hgRepositorySelectorComponent.setTitle("Select repository to merge");
     hgRepositorySelectorComponent.addActionListener(new ActionListener() {
