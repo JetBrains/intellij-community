@@ -50,7 +50,7 @@ public class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionOnPsiEl
   public String getText() {
     PsiClass myTargetClass = (PsiClass)getStartElement();
     String signature = myTargetClass == null ? "" :
-                       PsiFormatUtil.formatMethod(createMethod(myTargetClass.getProject(), myTargetClass), PsiSubstitutor.EMPTY,
+                       PsiFormatUtil.formatMethod(createMethod(myTargetClass), PsiSubstitutor.EMPTY,
                                                   PsiFormatUtilBase.SHOW_NAME |
                                                   PsiFormatUtilBase.SHOW_TYPE |
                                                   PsiFormatUtilBase.SHOW_PARAMETERS |
@@ -74,7 +74,7 @@ public class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionOnPsiEl
     PsiClass myTargetClass = (PsiClass)startElement;
     if (!CodeInsightUtilBase.preparePsiElementForWrite(myTargetClass.getContainingFile())) return;
 
-    PsiMethod method = createMethod(project, myTargetClass);
+    PsiMethod method = createMethod(myTargetClass);
     List<Pair<PsiExpression, PsiType>> arguments =
       ContainerUtil.map2List(method.getParameterList().getParameters(), new Function<PsiParameter, Pair<PsiExpression, PsiType>>() {
         @Override
@@ -87,7 +87,8 @@ public class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionOnPsiEl
     CreateMethodFromUsageFix.doCreate(myTargetClass, method, arguments, PsiSubstitutor.EMPTY, ExpectedTypeInfo.EMPTY_ARRAY, method);
   }
 
-  private PsiMethod createMethod(Project project, @NotNull PsiClass myTargetClass) {
+  private PsiMethod createMethod(@NotNull PsiClass myTargetClass) {
+    Project project = myTargetClass.getProject();
     JVMElementFactory elementFactory = JVMElementFactories.getFactory(myTargetClass.getLanguage(), project);
     if (elementFactory == null) {
       elementFactory = JavaPsiFacade.getElementFactory(project);
@@ -100,7 +101,7 @@ public class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionOnPsiEl
   public static CreateMethodQuickFix createFix(@NotNull PsiClass targetClass, @NonNls final String signature, @NonNls final String body) {
     CreateMethodQuickFix fix = new CreateMethodQuickFix(targetClass, signature, body);
     try {
-      fix.createMethod(targetClass.getProject(), targetClass);
+      fix.createMethod(targetClass);
       return fix;
     }
     catch (IncorrectOperationException e) {
