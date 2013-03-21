@@ -280,6 +280,26 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       public void showError(@NonNls String message, Throwable e) {
         DesignerEditorPanel.this.showError(message, e);
       }
+
+      @Override
+      public boolean isZoomSupported() {
+        return DesignerEditorPanel.this.isZoomSupported();
+      }
+
+      @Override
+      public void zoom(@NotNull ZoomType type) {
+        DesignerEditorPanel.this.zoom(type);
+      }
+
+      @Override
+      public void setZoom(double zoom) {
+        DesignerEditorPanel.this.setZoom(zoom);
+      }
+
+      @Override
+      public double getZoom() {
+        return DesignerEditorPanel.this.getZoom();
+      }
     };
 
     myGlassLayer = new GlassLayer(myToolProvider, mySurfaceArea);
@@ -833,6 +853,26 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   @Nullable
   public PropertyTableTab[] getPropertyTableTabs() {
     return null;
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Zoom
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  public boolean isZoomSupported() {
+    return false;
+  }
+
+  public void zoom(@NotNull ZoomType type) {
+  }
+
+  public void setZoom(double zoom) {
+  }
+
+  public double getZoom() {
+    return 1;
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
