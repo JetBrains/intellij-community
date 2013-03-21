@@ -32,7 +32,6 @@ import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.execution.HgCommandResultHandler;
 import org.zmlx.hg4idea.ui.HgPushDialog;
-import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import java.util.Collections;
@@ -48,6 +47,8 @@ public class HgPusher {
 
   private static final Logger LOG = Logger.getInstance(HgPusher.class);
   private static Pattern PUSH_COMMITS_PATTERN = Pattern.compile(".*added (\\d+) changesets.*");
+  // hg push command has definite exit values for some cases:
+  // mercurial returns 0 if push was successful, 1 if nothing to push. see hg push --help
   private static int PUSH_SUCCEEDED_EXIT_VALUE = 0;
   private static int NOTHING_TO_PUSH_EXIT_VALUE = 1;
 
@@ -115,13 +116,13 @@ public class HgPusher {
           return;
         }
 
-        int commitsNum = getNumberOfPushedCommits(result);
-        if (commitsNum > 0 && result.getExitValue() == PUSH_SUCCEEDED_EXIT_VALUE) {
+        if (result.getExitValue() == PUSH_SUCCEEDED_EXIT_VALUE) {
+          int commitsNum = getNumberOfPushedCommits(result);
           String successTitle = "Pushed successfully";
           String successDescription = String.format("Pushed %d %s [%s]", commitsNum, StringUtil.pluralize("commit", commitsNum),
                                                     repo.getPresentableName());
           new HgCommandResultNotifier(project).notifySuccess(successTitle, successDescription);
-        } else if (commitsNum == 0 && result.getExitValue() == NOTHING_TO_PUSH_EXIT_VALUE) {
+        } else if (result.getExitValue() == NOTHING_TO_PUSH_EXIT_VALUE) {
           new HgCommandResultNotifier(project).notifySuccess("", "Nothing to push");
         } else {
           new HgCommandResultNotifier(project).notifyError(result, "Push failed",
@@ -141,24 +142,21 @@ public class HgPusher {
 
   private static int getNumberOfPushedCommits(HgCommandResult result) {
     int numberOfCommitsInAllSubrepos = 0;
-    if (!HgErrorUtil.isAbort(result)) {
-      final List<String> outputLines = result.getOutputLines();
-      for (String outputLine : outputLines) {
-        outputLine = outputLine.trim();
-        final Matcher matcher = PUSH_COMMITS_PATTERN.matcher(outputLine);
-        if (matcher.matches()) {
-          try {
-            numberOfCommitsInAllSubrepos += Integer.parseInt(matcher.group(1));
-          }
-          catch (NumberFormatException e) {
-            LOG.info("getNumberOfPushedCommits ", e);
-            return -1;
-          }
+    final List<String> outputLines = result.getOutputLines();
+    for (String outputLine : outputLines) {
+      outputLine = outputLine.trim();
+      final Matcher matcher = PUSH_COMMITS_PATTERN.matcher(outputLine);
+      if (matcher.matches()) {
+        try {
+          numberOfCommitsInAllSubrepos += Integer.parseInt(matcher.group(1));
+        }
+        catch (NumberFormatException e) {
+          LOG.error("getNumberOfPushedCommits ", e);
+          return -1;
         }
       }
-      return numberOfCommitsInAllSubrepos;
     }
-    return -1;
+    return numberOfCommitsInAllSubrepos;
   }
 
 }
