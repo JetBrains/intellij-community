@@ -110,11 +110,21 @@ public class DesignerActionPanel implements DataProvider {
     };
     selectParent.registerCustomShortcutSet(KeyEvent.VK_ESCAPE, 0, null);
 
-    SelectAllAction selectAllAction = new SelectAllAction(designer.getSurfaceArea());
+    EditableArea area = designer.getSurfaceArea();
+
+    AnAction selectSiblings = new SelectSiblingsAction(area);
+    AnAction selectSameType = new SelectSameTypeAction(area);
+    AnAction deselectAllAction = new DeselectAllAction(area);
+
+    SelectAllAction selectAllAction = new SelectAllAction(area);
     registerAction(selectAllAction, "$SelectAll");
 
     group.add(selectParent);
+    group.add(selectSiblings);
+    group.add(selectSameType);
+    group.addSeparator();
     group.add(selectAllAction);
+    group.add(deselectAllAction);
 
     return group;
   }

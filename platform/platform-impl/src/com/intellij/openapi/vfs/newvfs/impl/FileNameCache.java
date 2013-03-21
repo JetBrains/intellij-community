@@ -35,7 +35,7 @@ public class FileNameCache {
   @NonNls private static final String EMPTY = "";
   private static final IntSLRUCache<IntObjectLinkedMap.MapEntry<Object>> ourNameCache = new IntSLRUCache<IntObjectLinkedMap.MapEntry<Object>>(40000, 20000);
 
-  static int storeName(@NotNull String name) {
+  public static int storeName(@NotNull String name) {
     final int idx = FSRecords.getNameId(name);
     cacheData(name, idx);
     return idx;
@@ -83,7 +83,7 @@ public class FileNameCache {
   }
 
   @NotNull
-  static String getVFileName(int nameId) {
+  public static String getVFileName(int nameId) {
     IntObjectLinkedMap.MapEntry<Object> entry = getEntry(nameId);
     Object name = entry.value;
     if (name instanceof String) {

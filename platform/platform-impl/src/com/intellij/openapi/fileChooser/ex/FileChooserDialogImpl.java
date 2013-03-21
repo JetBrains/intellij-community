@@ -17,6 +17,7 @@ package com.intellij.openapi.fileChooser.ex;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.IdeEventQueue;
 import com.intellij.ide.SaveAndSyncHandlerImpl;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.ide.util.treeView.NodeRenderer;
@@ -35,7 +36,10 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
@@ -62,7 +66,6 @@ import javax.swing.event.TreeSelectionListener;
 import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.io.File;
@@ -200,15 +203,18 @@ public class FileChooserDialogImpl extends DialogWrapper implements FileChooserD
         return true;
       }
     }.installOn(label);
-    myPathTextField.getField().addKeyListener(new KeyAdapter() {
+
+    new AnAction() {
       @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-          showRecentFilesPopup();
-          e.consume();
-        }
+      public void actionPerformed(AnActionEvent e) {
+        showRecentFilesPopup();
       }
-    });
+
+      @Override
+      public void update(AnActionEvent e) {
+        e.getPresentation().setEnabled(!IdeEventQueue.getInstance().isPopupActive());
+      }
+    }.registerCustomShortcutSet(KeyEvent.VK_DOWN, 0, myPathTextField.getField());
     return label;
   }
 

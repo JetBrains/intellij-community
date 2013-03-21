@@ -9,7 +9,6 @@
     <xml.schemaProvider implementation="org.jetbrains.plugins.javaFX.fxml.JavaFXSchemaHandler"/>
     <psi.referenceContributor implementation="org.jetbrains.plugins.javaFX.fxml.refs.FxmlReferencesContributor"/>
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxEventHandlerReference$JavaFxUnresolvedReferenceHandlerQuickfixProvider"/>
-    <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxFieldIdReferenceProvider$JavaFxUnresolvedReferenceHandlerQuickfixProvider"/>
     <codeInsight.unresolvedReferenceQuickFixProvider implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxTagNameReference$JavaFxUnresolvedTagRefsProvider"/>
     <multiHostInjector implementation="org.jetbrains.plugins.javaFX.fxml.ScriptLanguageInjector"/>
     <annotator language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxAnnotator"/>
@@ -18,6 +17,8 @@
 
     <localInspection language="XML" shortName="JavaFxDefaultTag" displayName="Unnecessary default tag" groupName="JavaFX"
                      enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxDefaultTagInspection"/>
+    <localInspection language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolvedFxIdReferenceInspection" displayName="Unresolved fx:id attribute reference" 
+                     enabledByDefault="true" level="WARNING" groupName="JavaFX"/>
     <applicationService serviceInterface="org.jetbrains.plugins.javaFX.JavaFxSettings" serviceImplementation="org.jetbrains.plugins.javaFX.JavaFxSettings"/>
     <applicationConfigurable instance="org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.JavaFxControllerClassIndex"/>
@@ -37,6 +38,8 @@
     <packaging.artifactType implementation="org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType"/>
     <compileServer.plugin classpath="javaFX-jps-plugin.jar;common-javaFX-plugin.jar"/>
     <antBuildGen implementation="org.jetbrains.plugins.javaFX.packaging.ant.JavaFxChunkBuildExtension"/>
+    <packaging.artifactType implementation="org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactType"/>
+    <packaging.artifactPropertiesProvider implementation="org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactPropertiesProvider"/>
   </extensions>
 
   <actions>

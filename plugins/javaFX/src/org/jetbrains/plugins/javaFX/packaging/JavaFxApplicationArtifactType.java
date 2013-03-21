@@ -20,6 +20,7 @@ import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.roots.ui.configuration.ChooseModulesDialog;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.packaging.artifacts.ArtifactTemplate;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
@@ -59,7 +60,7 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
   @NotNull
   @Override
   public CompositePackagingElement<?> createRootElement(@NotNull String artifactName) {
-    return PackagingElementFactory.getInstance().createArchive(artifactName + ".jar");
+    return PackagingElementFactory.getInstance().createArtifactRootElement();
   }
 
   @NotNull
@@ -89,7 +90,7 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
       if (myModules.size() == 1) {
         return "From module '" + myModules.get(0).getName() + "'";
       }
-      return "From modules ...";
+      return "From module...";
     }
 
     @Override
@@ -113,8 +114,11 @@ public class JavaFxApplicationArtifactType extends ArtifactType {
       }
       if (module == null) return null;
       final CompositePackagingElement<?> rootElement = JavaFxApplicationArtifactType.this.createRootElement(module.getName());
+      final CompositePackagingElement<?>
+        subElement = PackagingElementFactory.getInstance().createArchive(FileUtil.sanitizeFileName(module.getName()) + ".jar");
       final PackagingElement<?> moduleOutputElement = PackagingElementFactory.getInstance().createModuleOutput(module);
-      rootElement.addFirstChild(moduleOutputElement);
+      subElement.addFirstChild(moduleOutputElement);
+      rootElement.addFirstChild(subElement);
       return new NewArtifactConfiguration(rootElement, module.getName(), JavaFxApplicationArtifactType.this);
     }
   }

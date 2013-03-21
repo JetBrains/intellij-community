@@ -16,19 +16,20 @@
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.openapi.util.TextRange;
-import com.intellij.patterns.*;
+import com.intellij.patterns.PlatformPatterns;
+import com.intellij.patterns.XmlAttributeValuePattern;
+import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassReferenceProvider;
-import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlProcessingInstruction;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
+import static com.intellij.patterns.PlatformPatterns.virtualFile;
 import static com.intellij.patterns.StandardPatterns.string;
 
 /**
@@ -40,7 +41,8 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
 
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
-    final XmlAttributeValuePattern attributeValueInFxml = XmlPatterns.xmlAttributeValue().with(inFxmlCondition());
+    final XmlAttributeValuePattern attributeValueInFxml = XmlPatterns.xmlAttributeValue().inVirtualFile(
+      virtualFile().withExtension(JavaFxFileTypeFactory.FXML_EXTENSION));
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_CONTROLLER))
                                           .and(attributeValueInFxml),
                                         CLASS_REFERENCE_PROVIDER);
@@ -51,7 +53,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                           .and(attributeValueInFxml),
                                         CLASS_REFERENCE_PROVIDER);
 
-    registrar.registerReferenceProvider(XmlPatterns.xmlTag().with(inFxmlCondition()),
+    registrar.registerReferenceProvider(XmlPatterns.xmlTag().inVirtualFile(virtualFile().withExtension(JavaFxFileTypeFactory.FXML_EXTENSION)),
                                         new MyJavaClassReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_ID))
@@ -95,7 +97,8 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.STYLESHEETS)).and(attributeValueInFxml),
                                         new JavaFxLocationReferenceProvider(true));
 
-    registrar.registerReferenceProvider(PlatformPatterns.psiElement(XmlProcessingInstruction.class).inFile(inFxmlElementPattern()), new ImportReferenceProvider());
+    registrar.registerReferenceProvider(PlatformPatterns.psiElement(XmlProcessingInstruction.class).inVirtualFile(virtualFile().withExtension(JavaFxFileTypeFactory.FXML_EXTENSION)),
+                                        new ImportReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().and(attributeValueInFxml),
                                         new EnumeratedAttributeReferenceProvider()); 
@@ -108,24 +111,6 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                                         .withParent(XmlPatterns.xmlTag().withParent(XmlPatterns.xmlTag().withName(FxmlConstants.STYLESHEETS))))
                                           .and(attributeValueInFxml),
                                         new JavaFxLocationReferenceProvider(true));
-  }
-
-  public static PsiFilePattern.Capture<PsiFile> inFxmlElementPattern() {
-    return new PsiFilePattern.Capture<PsiFile>(new InitialPatternCondition<PsiFile>(PsiFile.class) {
-      @Override
-      public boolean accepts(@Nullable Object o, ProcessingContext context) {
-        return o instanceof PsiFile && JavaFxFileTypeFactory.isFxml((PsiFile)o);
-      }
-    });
-  }
-
-  public static <T extends XmlElement> PatternCondition<T> inFxmlCondition() {
-    return new PatternCondition<T>("inFxmlFile") {
-      @Override
-      public boolean accepts(@NotNull T value, ProcessingContext context) {
-        return JavaFxFileTypeFactory.isFxml(value.getContainingFile());
-      }
-    };
   }
 
   private static class MyJavaClassReferenceProvider extends JavaClassReferenceProvider {

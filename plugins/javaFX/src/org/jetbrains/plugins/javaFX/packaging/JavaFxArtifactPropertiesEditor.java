@@ -15,24 +15,14 @@
  */
 package org.jetbrains.plugins.javaFX.packaging;
 
-import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.ui.ClassBrowser;
-import com.intellij.ide.util.ClassFilter;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.util.Base64Converter;
 import org.jetbrains.annotations.Nullable;
 
@@ -40,8 +30,6 @@ import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.Collections;
-import java.util.Set;
 
 /**
  * User: anna
@@ -183,48 +171,6 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   public void disposeUIResources() {
     if (myDialog != null) {
       myDialog.myPanel = null;
-    }
-  }
-
-  private static class JavaFxApplicationClassBrowser extends ClassBrowser {
-
-    private final Artifact myArtifact;
-
-    public JavaFxApplicationClassBrowser(Project project, Artifact artifact) {
-      super(project, "Choose Application Class");
-      myArtifact = artifact;
-    }
-
-    @Override
-    protected ClassFilter.ClassFilterWithScope getFilter() throws NoFilterException {
-      return new ClassFilter.ClassFilterWithScope() {
-        @Override
-        public GlobalSearchScope getScope() {
-          return GlobalSearchScope.projectScope(getProject());
-        }
-
-        @Override
-        public boolean isAccepted(PsiClass aClass) {
-          return InheritanceUtil.isInheritor(aClass, "javafx.application.Application");
-        }
-      };
-    }
-
-    @Override
-    protected PsiClass findClass(String className) {
-      final Set<Module> modules = ApplicationManager.getApplication().runReadAction(new Computable<Set<Module>>() {
-        @Override
-        public Set<Module> compute() {
-          return ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(myArtifact), getProject());
-        }
-      });
-      for (Module module : modules) {
-        final PsiClass aClass = JavaExecutionUtil.findMainClass(getProject(), className, GlobalSearchScope.moduleScope(module));
-        if (aClass != null) {
-          return aClass;
-        }
-      }
-      return null;
     }
   }
 }

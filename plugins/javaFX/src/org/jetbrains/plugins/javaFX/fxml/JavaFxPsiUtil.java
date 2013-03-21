@@ -356,13 +356,14 @@ public class JavaFxPsiUtil {
 
   @Nullable
   public static PsiType getPropertyType(final PsiType type, final Project project) {
-    final PsiClass psiClass = PsiUtil.resolveClassInType(type);
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(type);
+    final PsiClass psiClass = resolveResult.getElement();
     if (psiClass != null) {
       final PsiClass propertyClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY,
                                                                                   GlobalSearchScope.allScope(project));
       if (propertyClass != null) {
         final PsiSubstitutor substitutor =
-          TypeConversionUtil.getClassSubstitutor(propertyClass, psiClass, PsiSubstitutor.EMPTY);
+          TypeConversionUtil.getClassSubstitutor(propertyClass, psiClass, resolveResult.getSubstitutor());
         if (substitutor != null) {
           return substitutor.substitute(propertyClass.getTypeParameters()[0]);
         }
@@ -435,13 +436,10 @@ public class JavaFxPsiUtil {
   }
 
   public static String isClassAcceptable(@Nullable XmlTag parentTag, final PsiClass aClass) {
+    if (parentTag == null) {
+      return null;
+    }
     if (aClass != null && aClass.isValid()) {
-      if (parentTag == null) {
-        if (!InheritanceUtil.isInheritor(aClass, false, JavaFxCommonClassNames.JAVAFX_SCENE_NODE)) {
-          return unableToCoerceMessage(aClass, JavaFxCommonClassNames.JAVAFX_SCENE_NODE);
-        }
-        return null;
-      }
       final XmlElementDescriptor descriptor = parentTag.getDescriptor();
       if (descriptor instanceof JavaFxPropertyElementDescriptor) {
         final PsiElement declaration = descriptor.getDeclaration();
@@ -463,7 +461,10 @@ public class JavaFxPsiUtil {
   }
 
   private static String canCoerce(PsiClass aClass, PsiType type) {
-    final PsiType collectionItemType = GenericsHighlightUtil.getCollectionItemType(type, aClass.getResolveScope());
+    PsiType collectionItemType = GenericsHighlightUtil.getCollectionItemType(type, aClass.getResolveScope());
+    if (collectionItemType == null && InheritanceUtil.isInheritor(type, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY)) {
+      collectionItemType = getPropertyType(type, aClass.getProject());
+    }
     if (collectionItemType != null && PsiPrimitiveType.getUnboxedType(collectionItemType) == null) {
       final PsiClass baseClass = PsiUtil.resolveClassInType(collectionItemType);
       if (baseClass != null) {
@@ -480,6 +481,17 @@ public class JavaFxPsiUtil {
 
   private static String unableToCoerceMessage(PsiClass aClass, String qualifiedName) {
     return "Unable to coerce " + HighlightUtil.formatClass(aClass)+ " to " + qualifiedName;
+  }
+
+  public static boolean isOutOfHierarchy(final XmlAttributeValue element) {
+    XmlTag tag = PsiTreeUtil.getParentOfType(element, XmlTag.class);
+    while (tag != null) {
+      if (FxmlConstants.FX_DEFINE.equals(tag.getName())) {
+        return true;
+      }
+      tag = tag.getParentTag();
+    }
+    return false;
   }
 
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {

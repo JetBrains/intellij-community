@@ -122,7 +122,7 @@ public class ReplaceMethodRefWithLambdaIntention extends Intention {
             int dim = type.getArrayDimensions();
             buf.append(type.getDeepComponentType().getCanonicalText());
             buf.append("[");
-            buf.append(parameters[0].getName());
+            buf.append(map.get(parameters[0]));
             buf.append("]");
             while (--dim > 0) {
               buf.append("[]");

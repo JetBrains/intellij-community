@@ -43,7 +43,9 @@ public class SelectAllAction extends AnAction {
       rootComponent.accept(new RadComponentVisitor() {
         @Override
         public void endVisit(RadComponent component) {
-          components.add(component);
+          if (!component.isBackground()) {
+            components.add(component);
+          }
         }
       }, true);
       myArea.setSelection(components);

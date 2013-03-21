@@ -217,8 +217,8 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
         }
       }
     }
-    File file = new File(path);
 
+    File file = new File(path);
     if (!isAbsoluteFileOrDriveLetter(file)) {
       path = file.getAbsolutePath();
     }

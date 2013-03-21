@@ -23,10 +23,12 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.*;
+import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Base64Converter;
 import org.jetbrains.annotations.NonNls;
@@ -37,9 +39,13 @@ import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactProperties;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactPropertiesProvider;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * User: anna
@@ -105,29 +111,63 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
                                        ArtifactAntGenerationContext context,
                                        CompositeGenerator generator) {
     if (preprocessing) return;
+    if (!(artifact.getArtifactType() instanceof JavaFxApplicationArtifactType)) return;
+
     final CompositePackagingElement<?> rootElement = artifact.getRootElement();
-    final String artifactName = FileUtil.getNameWithoutExtension(rootElement.getName());
 
-    final String tempDirPath = BuildProperties.propertyRef(context.getArtifactOutputProperty(artifact));
+    final List<PackagingElement<?>> children = new ArrayList<PackagingElement<?>>();
+    String artifactFileName = rootElement.getName();
+    for (PackagingElement<?> child : rootElement.getChildren()) {
+      if (child instanceof ArchivePackagingElement) {
+        artifactFileName = ((ArchivePackagingElement)child).getArchiveFileName();
+        children.addAll(((ArchivePackagingElement)child).getChildren());
+      } else {
+        children.add(child);
+      }
+    }
 
-    final List<PackagingElement<?>> children = rootElement.getChildren();
+    final String artifactName = FileUtil.getNameWithoutExtension(artifactFileName);
+
+    final String tempDirPath = BuildProperties.propertyRef(
+      context.createNewTempFileProperty("artifact.temp.output." + artifactName, artifactFileName));
+
     final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(context.getProject()).getResolvingContext();
     for (Generator childGenerator : computeChildrenGenerators(resolvingContext, 
                                                               new DirectoryAntCopyInstructionCreator(tempDirPath),
                                                          context, artifact.getArtifactType(), children)) {
       generator.add(childGenerator);
     }
-    
-    final String artifactFileName = rootElement.getName();
+
     final JavaFxArtifactProperties properties =
       (JavaFxArtifactProperties)artifact.getProperties(JavaFxArtifactPropertiesProvider.getInstance());
 
+    String preloaderFiles = null;
+    final String preloaderJar = properties.getPreloaderJar(artifact, context.getProject());
+    final String preloaderClass = properties.getPreloaderClass(artifact, context.getProject());
+    if (!StringUtil.isEmptyOrSpaces(preloaderJar) && !StringUtil.isEmptyOrSpaces(preloaderClass)) {
+      preloaderFiles = artifactName + "_preloader_files";
+      generator.add(new Tag("fx:fileset",
+                            new Pair<String, String>("id", preloaderFiles),
+                            new Pair<String, String>("requiredFor", "preloader"),
+                            new Pair<String, String>("dir", tempDirPath),
+                            new Pair<String, String>("includes", preloaderJar)));
+    }
+
     //register application
     final String appId = artifactName + "_id";
-    final Tag applicationTag = new Tag("fx:application",
-                                       new Pair<String, String>("id", appId),
-                                       new Pair<String, String>("name", artifactName),
-                                       new Pair<String, String>("mainClass", properties.getAppClass()));
+    Pair[] applicationParams = {new Pair<String, String>("id", appId),
+      new Pair<String, String>("name", artifactName),
+      new Pair<String, String>("mainClass", properties.getAppClass())};
+    if (preloaderFiles != null) {
+      applicationParams = ArrayUtil.append(applicationParams, new Pair<String, String>("preloaderClass", preloaderClass));
+    }
+    
+    final Tag applicationTag = new Tag("fx:application", applicationParams);
+
+    appendValuesFromPropertiesFile(applicationTag, properties.getHtmlParamFile(), "fx:htmlParam", false);
+    //also loads fx:argument values
+    appendValuesFromPropertiesFile(applicationTag, properties.getParamFile(), "fx:param", true);
+
     generator.add(applicationTag);
 
     //create jar task
@@ -135,6 +175,11 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
                                      new Pair<String, String>("destfile", tempDirPath + "/" + artifactFileName));
     createJarTag.add(new Tag("fx:application", new Pair<String, String>("refid", appId)));
     createJarTag.add(new Tag("fileset", new Pair<String, String>("dir", tempDirPath)));
+    if (preloaderFiles != null) {
+      final Tag createJarResourcesTag = new Tag("fx:resources");
+      createJarResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("refid", preloaderFiles)));
+      createJarTag.add(createJarResourcesTag);
+    }
     generator.add(createJarTag);
 
     //deploy task
@@ -153,6 +198,10 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
     final Tag deployResourcesTag = new Tag("fx:resources");
     deployResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("dir", tempDirPath), 
                                                  new Pair<String, String>("includes", artifactFileName)));
+    if (preloaderFiles != null) {
+      deployResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("refid", preloaderFiles)));
+    }
+    
     deployTag.add(deployResourcesTag);
 
     generator.add(deployTag);
@@ -197,6 +246,40 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
     final Tag deleteTag = new Tag("delete", new Pair<String, String>("includeemptydirs", "true"));
     deleteTag.add(new Tag("fileset", new Pair<String, String>("dir", tempDirPath)));
     generator.add(deleteTag);
+  }
+
+  private static void appendValuesFromPropertiesFile(final Tag applicationTag,
+                                                     final String htmlParamFile,
+                                                     final String paramTagName,
+                                                     final boolean allowNoNamed) {
+    if (!StringUtil.isEmptyOrSpaces(htmlParamFile)) {
+      final Properties htmlProperties = new Properties();
+      try {
+        final FileInputStream paramsInputStream = new FileInputStream(new File(htmlParamFile));
+        try {
+          htmlProperties.load(paramsInputStream);
+          for (Object o : htmlProperties.keySet()) {
+            final String propName = (String)o;
+            final String propValue = htmlProperties.getProperty(propName);
+            if (!StringUtil.isEmptyOrSpaces(propValue)) {
+              applicationTag.add(new Tag(paramTagName, new Pair<String, String>("name", propName), new Pair<String, String>("value", propValue)));
+            } else if (allowNoNamed) {
+              applicationTag.add(new Generator() {
+                @Override
+                public void generate(PrintWriter out) throws IOException {
+                  out.print("<fx:argument>" + propName + "</fx:argument>");
+                }
+              });
+            }
+          }
+        }
+        finally {
+          paramsInputStream.close();
+        }
+      }
+      catch (IOException ignore) {
+      }
+    }
   }
 
   private static String artifactBasedProperty(final String property, String artifactName) {

@@ -121,20 +121,165 @@ public abstract class RadComponent extends PropertiesContainer {
     getParent().remove(this);
   }
 
+  /**
+   * Whether this view is considered to be the background.
+   * This can for example return true for the root layout, such that marquee
+   * selection, and Select All, will not include it in marquee selection or select
+   * all operations.
+   *
+   * @return true if this view should be considered part of the background
+   */
+  public boolean isBackground() {
+    return false;
+  }
+
+  /**
+   * Returns true if this component is of the same logical type as the given other component.
+   * This is used to for example select "Select Same Type".
+   */
+  public boolean isSameType(@NotNull RadComponent other) {
+    return other.getClass() == this.getClass();
+  }
+
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // Visual
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
+  /**
+   * Returns the bounds of this {@linkplain RadComponent} in the model.
+   * <p/>
+   * Caller should <b>not</b> modify this rectangle.
+   *
+   * @return the bounds of this {@linkplain RadComponent} in the model coordinate system
+   *         (e.g. unaffected by a view zoom for example)
+   */
   public Rectangle getBounds() {
     return null;
   }
 
+  /**
+   * Returns the bounds of this {@linkplain RadComponent} in the coordinate system of
+   * the given Swing component. This will scale the coordinates if the view is zoomed
+   * (see {@link DesignerEditorPanel#zoom(com.intellij.designer.designSurface.ZoomType)})
+   * and will apply any relative position offsets of views in the hierarchy between the
+   * two components.
+   * <p/>
+   * Returns a new {@link Rectangle}, so callers are free to modify the result.
+   *
+   * @param relativeTo the component whose coordinate system the model bounds should
+   *                   be shifted and scaled into
+   * @return the bounds of this {@linkplain RadComponent} in the given coordinate system
+   */
   public Rectangle getBounds(Component relativeTo) {
     return null;
   }
 
+  /**
+   * Converts the given rectangle (in model coordinates) to coordinates in the given
+   * target component's coordinate system. The model coordinate system refers to
+   * the same coordinate system as the bounds returned by {@link #getBounds()}.
+   * <p/>
+   * This means that calling {@link #getBounds(java.awt.Component)} is equivalent
+   * to calling this method and passing in {@link #getBounds()}.
+   * <p/>
+   * Returns a new {@link Rectangle}, so callers are free to modify the result.
+   *
+   * @param target    the component whose coordinate system the rectangle should be
+   *                  translated into
+   * @param rectangle the model rectangle to convert
+   * @return the rectangle converted to the coordinate system of the target
+   */
+  public Rectangle fromModel(@NotNull Component target, @NotNull Rectangle rectangle) {
+    return null;
+  }
+
+  /**
+   * Converts the given rectangle (in coordinates relative to the given component)
+   * into the equivalent rectangle in model coordinates.
+   * <p/>
+   * Returns a new {@link Rectangle}, so callers are free to modify the result.
+   *
+   * @param source    the component which defines the coordinate system of the rectangle
+   * @param rectangle the rectangle to be converted into model coordinates
+   * @return the rectangle converted to the model coordinate system
+   */
+  public Rectangle toModel(@NotNull Component source, @NotNull Rectangle rectangle) {
+    return null;
+  }
+
+  /**
+   * Converts the given point (in model coordinates) to coordinates in the given
+   * target component's coordinate system. The model coordinate system refers to
+   * the same coordinate system as the bounds returned by {@link #getBounds()}.
+   * <p/>
+   * Returns a new {@link Point}, so callers are free to modify the result.
+   *
+   * @param target the component whose coordinate system the point should be
+   *               translated into
+   * @param point  the model point to convert
+   * @return the point converted to the coordinate system of the target
+   */
+  public Point fromModel(@NotNull Component target, @NotNull Point point) {
+    return null;
+  }
+
+  /**
+   * Converts the given point (in coordinates relative to the given component)
+   * into the equivalent point in model coordinates.
+   * <p/>
+   * Returns a new {@link Point}, so callers are free to modify the result.
+   *
+   * @param source the component which defines the coordinate system of the point
+   * @param point  the point to be converted into model coordinates
+   * @return the point converted to the model coordinate system
+   */
+  public Point toModel(@NotNull Component source, @NotNull Point point) {
+    return null;
+  }
+
+  /**
+   * Converts the given rectangle (in model coordinates) to coordinates in the given
+   * target component's coordinate system. The model coordinate system refers to
+   * the same coordinate system as the bounds returned by {@link #getBounds()}.
+   * <p/>
+   * Returns a new {@link Dimension}, so callers are free to modify the result.
+   *
+   * @param target the component whose coordinate system the dimension should be
+   *               translated into
+   * @param size   the model dimension to convert
+   * @return the size converted to the coordinate system of the target
+   */
+  public Dimension fromModel(@NotNull Component target, @NotNull Dimension size) {
+    return null;
+  }
+
+  /**
+   * Converts the given size (in coordinates relative to the given component)
+   * into the equivalent size in model coordinates.
+   * <p/>
+   * Returns a new {@link Dimension}, so callers are free to modify the result.
+   *
+   * @param source the component which defines the coordinate system of the size
+   * @param size   the dimension to be converted into model coordinates
+   * @return the size converted to the model coordinate system
+   */
+  public Dimension toModel(@NotNull Component source, @NotNull Dimension size) {
+    return null;
+  }
+
+  /**
+   * Returns the point in the model coordinate space (see {@link #getBounds()}) given
+   * a coordinate {@code x, y} in the given Swing component.
+   * <p/>
+   * Returns a new {@link Point}, so callers are free to modify the result.
+   *
+   * @param relativeFrom the component whose coordinate system defines the rectangle
+   * @param x            the x coordinate of the point
+   * @param y            the y coordinate of the point
+   * @return a corresponding {@link Point} in the model coordinate system
+   */
   public Point convertPoint(Component relativeFrom, int x, int y) {
     return null;
   }
