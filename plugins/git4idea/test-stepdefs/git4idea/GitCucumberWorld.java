@@ -1,6 +1,7 @@
 package git4idea;
 
 import com.intellij.dvcs.test.MockVcsHelper;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
@@ -36,7 +37,10 @@ import org.picocontainer.MutablePicoContainer;
 import java.io.File;
 import java.lang.reflect.Field;
 import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Random;
+import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.dvcs.test.Executor.cd;
@@ -66,6 +70,8 @@ public class GitCucumberWorld {
   public static GitHttpAuthTestService myHttpAuthService; // only with @remote tag
 
   public static GitTestVirtualCommitsHolder virtualCommits;
+
+  private static Collection<Future> myAsyncTasks;
 
   private IdeaProjectTestFixture myProjectFixture;
 
@@ -99,14 +105,15 @@ public class GitCucumberWorld {
     myChangeListManager = myPlatformFacade.getChangeListManager(myProject);
     myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);
 
+    virtualCommits = new GitTestVirtualCommitsHolder();
+    myAsyncTasks = new ArrayList<Future>();
+
     cd(myProjectRoot);
     myRepository = createRepo(myProjectRoot);
 
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     AbstractVcs vcs = vcsManager.findVcsByName("Git");
     Assert.assertEquals(1, vcsManager.getRootsUnderVcs(vcs).length);
-
-    virtualCommits = new GitTestVirtualCommitsHolder();
   }
 
   @NotNull
@@ -131,6 +138,7 @@ public class GitCucumberWorld {
 
   @After
   public void tearDown() throws Throwable {
+    stopPendingTasks();
     nullifyStaticFields();
     edt(new ThrowableRunnable<Exception>() {
       @Override
@@ -138,6 +146,16 @@ public class GitCucumberWorld {
         myProjectFixture.tearDown();
       }
     });
+  }
+
+  public static void executeOnPooledThread(Runnable runnable) {
+    myAsyncTasks.add(ApplicationManager.getApplication().executeOnPooledThread(runnable));
+  }
+
+  private static void stopPendingTasks() {
+    for (Future future : myAsyncTasks) {
+      future.cancel(true);
+    }
   }
 
   private static void nullifyStaticFields() throws IllegalAccessException {
