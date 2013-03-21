@@ -17,6 +17,7 @@ package org.jetbrains.plugins.gradle.autoimport;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleLocalSettings;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
@@ -65,7 +66,8 @@ public class GradleAutoImporter implements GradleProjectStructureChangesPostProc
                              @NotNull Project project,
                              boolean onIdeProjectStructureChange)
   {
-    if (onIdeProjectStructureChange || !GradleSettings.getInstance(project).isUseAutoImport()) {
+    GradleSettings s = GradleSettings.getInstance(project);
+    if (onIdeProjectStructureChange || !s.isUseAutoImport() || StringUtil.isEmpty(s.getLinkedProjectPath())) {
       return;
     }
     GradleLocalSettings settings = GradleLocalSettings.getInstance(project);

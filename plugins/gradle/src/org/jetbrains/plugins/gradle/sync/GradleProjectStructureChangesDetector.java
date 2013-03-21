@@ -7,12 +7,14 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.autoimport.GradleAutoImporter;
 import org.jetbrains.plugins.gradle.autoimport.GradleUserProjectChangesCalculator;
+import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 import org.jetbrains.plugins.gradle.manage.GradleProjectEntityChangeListener;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
@@ -116,10 +118,12 @@ public class GradleProjectStructureChangesDetector implements GradleProjectStruc
   }
 
   private void scheduleUpdate() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()
+        || StringUtil.isEmpty(GradleSettings.getInstance(myProject).getLinkedProjectPath()))
+    {
       return;
     }
-    
+
     myUserProjectChangesCalculator.updateChanges();
     
     // We experienced a situation when project root change event has been fired but no actual project structure change has
