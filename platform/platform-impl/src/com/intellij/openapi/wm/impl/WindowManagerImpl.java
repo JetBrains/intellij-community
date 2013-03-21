@@ -733,9 +733,11 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         // frame.state is not updated by jdk so get it directly from peer
         extendedState = ((FramePeer)frame.getPeer()).getState();
       }
-      boolean usePreviousBounds = (extendedState == Frame.MAXIMIZED_BOTH ||
-                                  isFullScreenSupportedInCurrentOS() && WindowManagerEx.getInstanceEx().isFullScreen(frame)) &&
-                                  myFrameBounds != null && frame.getBounds().contains(myFrameBounds);
+      boolean isMaximized = extendedState == Frame.MAXIMIZED_BOTH ||
+                            isFullScreenSupportedInCurrentOS() && WindowManagerEx.getInstanceEx().isFullScreen(frame);
+      boolean usePreviousBounds = isMaximized &&
+                                  myFrameBounds != null &&
+                                  frame.getBounds().contains(new Point((int)myFrameBounds.getCenterX(), (int)myFrameBounds.getCenterY()));
       Rectangle rectangle = usePreviousBounds ? myFrameBounds : frame.getBounds();
       frameElement.setAttribute(X_ATTR, Integer.toString(rectangle.x));
       frameElement.setAttribute(Y_ATTR, Integer.toString(rectangle.y));
