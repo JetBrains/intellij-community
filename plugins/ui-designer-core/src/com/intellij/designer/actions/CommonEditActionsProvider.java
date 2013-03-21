@@ -21,6 +21,7 @@ import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.designer.designSurface.EditableArea;
 import com.intellij.designer.designSurface.tools.ComponentPasteFactory;
 import com.intellij.designer.designSurface.tools.PasteTool;
+import com.intellij.designer.model.IComponentDeletionParticipant;
 import com.intellij.designer.model.IGroupDeleteComponent;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.ide.CopyProvider;
@@ -40,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.DataFlavor;
 import java.awt.datatransfer.Transferable;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Alexander Lobas
@@ -105,16 +107,39 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
           area.select(newSelection);
         }
 
-        if (components.get(0) instanceof IGroupDeleteComponent) {
-          ((IGroupDeleteComponent)components.get(0)).delete(components);
-        }
-        else {
-          for (RadComponent component : components) {
-            component.delete();
-          }
-        }
+        handleDeletion(components);
       }
     }, DesignerBundle.message("command.delete.selection"), true);
+  }
+
+  private static void deleteComponents(List<RadComponent> components) throws Exception {
+    if (components.get(0) instanceof IGroupDeleteComponent) {
+      ((IGroupDeleteComponent)components.get(0)).delete(components);
+    }
+    else {
+      for (RadComponent component : components) {
+        component.delete();
+      }
+    }
+  }
+
+  private static void handleDeletion(@NotNull List<RadComponent> components) throws Exception {
+    // Segment the deleted components into lists of siblings
+    Map<RadComponent, List<RadComponent>> siblingLists = RadComponent.groupSiblings(components);
+
+    // Notify parent components about children getting deleted
+    for (Map.Entry<RadComponent, List<RadComponent>> entry : siblingLists.entrySet()) {
+      RadComponent parent = entry.getKey();
+      List<RadComponent> children = entry.getValue();
+      boolean finished = false;
+      if (parent instanceof IComponentDeletionParticipant) {
+        IComponentDeletionParticipant handler = (IComponentDeletionParticipant)parent;
+        finished = handler.deleteChildren(parent, children);
+      }
+      if (!finished) {
+        deleteComponents(children);
+      }
+    }
   }
 
   @Nullable

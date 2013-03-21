@@ -481,6 +481,41 @@ public abstract class RadComponent extends PropertiesContainer {
     }, true);
   }
 
+  /**
+   * Partitions the given list of components into a map where each value is a list of siblings,
+   * in the same order as in the original list, and where the keys are the parents (or null
+   * for the components that do not have a parent).
+   * <p/>
+   * The value lists will never be empty. The parent key will be null for components without parents.
+   *
+   * @param components the components to be grouped
+   * @return a map from parents (or null) to a list of components with the corresponding parent
+   */
+  @NotNull
+  public static Map<RadComponent, List<RadComponent>> groupSiblings(@NotNull List<? extends RadComponent> components) {
+    Map<RadComponent, List<RadComponent>> siblingLists = new HashMap<RadComponent, List<RadComponent>>();
+
+    if (components.isEmpty()) {
+      return siblingLists;
+    }
+    if (components.size() == 1) {
+      RadComponent component = components.get(0);
+      siblingLists.put(component.getParent(), Collections.singletonList(component));
+      return siblingLists;
+    }
+
+    for (RadComponent component : components) {
+      RadComponent parent = component.getParent();
+      List<RadComponent> children = siblingLists.get(parent);
+      if (children == null) {
+        children = new ArrayList<RadComponent>();
+        siblingLists.put(parent, children);
+      }
+      children.add(component);
+    }
+
+    return siblingLists;
+  }
 
   public static Set<RadComponent> getParents(List<RadComponent> components) {
     Set<RadComponent> parents = new HashSet<RadComponent>();
