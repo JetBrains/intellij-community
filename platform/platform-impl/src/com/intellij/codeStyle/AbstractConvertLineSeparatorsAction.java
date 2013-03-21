@@ -143,7 +143,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
   private void changeLineSeparators(@NotNull Project project, @NotNull VirtualFile virtualFile) {
     try {
       LoadTextUtil.changeLineSeparators(project, virtualFile, mySeparator, this);
-      LocalHistory.getInstance().putSystemLabel(project, "Line Ending: %s" + LineSeparator.fromString(mySeparator));
+      LocalHistory.getInstance().putSystemLabel(project, "Line Ending: " + LineSeparator.fromString(mySeparator));
     }
     catch (IOException e) {
       LOG.warn(e);
