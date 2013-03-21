@@ -108,7 +108,7 @@ public class HgStatusCommand {
 
   }
 
-  private HgStatusCommand(@NotNull Project project, Builder builder) {
+  private HgStatusCommand(@NotNull Project project, @NotNull Builder builder) {
     myProject = project;
     myIncludeAdded = builder.includeAdded;
     myIncludeModified = builder.includeModified;
