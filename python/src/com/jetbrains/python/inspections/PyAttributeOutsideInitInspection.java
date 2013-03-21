@@ -4,6 +4,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.inspections.quickfix.PyMoveAttributeToInitQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.PyTargetExpression;
@@ -58,7 +59,8 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
 
       for (Map.Entry<String, PyTargetExpression> attribute : attributes.entrySet()) {
         if (!attributesInInit.containsKey(attribute.getKey())) {
-          registerProblem(attribute.getValue(), PyBundle.message("INSP.attribute.$0.outside.init", attribute.getKey()));
+          registerProblem(attribute.getValue(), PyBundle.message("INSP.attribute.$0.outside.init", attribute.getKey()),
+                          new PyMoveAttributeToInitQuickFix());
         }
       }
     }
