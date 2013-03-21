@@ -193,11 +193,13 @@ public class ResolveUtil {
     }
 
     if (scope instanceof GrClosableBlock) {
-      PsiClass superClass = getLiteralSuperClass((GrClosableBlock)scope);
-      if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
+      ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, scope);
 
-      if (!GdkMethodUtil.categoryIteration((GrClosableBlock)scope, processor, ResolveState.initial())) return false;
-      if (!processNonCodeMembers(TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place), processor, place, ResolveState.initial())) return false;
+      PsiClass superClass = getLiteralSuperClass((GrClosableBlock)scope);
+      if (superClass != null && !superClass.processDeclarations(processor, state, null, place)) return false;
+
+      if (!GdkMethodUtil.categoryIteration((GrClosableBlock)scope, processor, state)) return false;
+      if (!processNonCodeMembers(GrClosureType.create(((GrClosableBlock)scope), false), processor, place, state)) return false;
     }
 
     if (scope instanceof GrStatementOwner) {

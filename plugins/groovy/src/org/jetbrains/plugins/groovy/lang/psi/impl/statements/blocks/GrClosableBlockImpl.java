@@ -149,17 +149,9 @@ public class GrClosableBlockImpl extends GrBlockImpl implements GrClosableBlock 
                                              @Nullable PsiElement lastParent,
                                              @NotNull PsiElement place) {
     final PsiClass closureClass = GroovyPsiManager.getInstance(getProject()).findClassWithCache(GROOVY_LANG_CLOSURE, getResolveScope());
-    if (closureClass != null) {
-      if (!closureClass.processDeclarations(processor, state, lastParent, place)) return false;
+    if (closureClass == null) return true;
 
-      if (place instanceof GroovyPsiElement) {
-        GrClosureType closureType = GrClosureType.create(this, false /*if it is 'true' need-to-prevent-recursion triggers*/);
-        if (!ResolveUtil.processNonCodeMembers(closureType, processor, place, state)) {
-          return false;
-        }
-      }
-    }
-    return true;
+    return closureClass.processDeclarations(processor, state, lastParent, place);
   }
 
   private boolean processParameters(@NotNull PsiScopeProcessor processor,
