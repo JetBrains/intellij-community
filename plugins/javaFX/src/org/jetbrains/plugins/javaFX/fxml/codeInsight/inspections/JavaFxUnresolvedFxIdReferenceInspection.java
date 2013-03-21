@@ -46,7 +46,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(final @NotNull ProblemsHolder holder,
-                                        boolean isOnTheFly,
+                                        final boolean isOnTheFly,
                                         @NotNull LocalInspectionToolSession session) {
     return new XmlElementVisitor() {
       @Override
@@ -68,7 +68,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
                   checkContext(((JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef)reference).getXmlAttributeValue());
                 if (fieldClass != null) {
                   holder.registerProblem(reference.getElement(), reference.getRangeInElement(), "Unresolved fx:id reference",
-                                         new CreateFieldFromUsageQuickFix(reference.getCanonicalText()));
+                                         isOnTheFly ? new LocalQuickFix[]{new CreateFieldFromUsageQuickFix(reference.getCanonicalText())} : LocalQuickFix.EMPTY_ARRAY);
                 }
               }
             }
