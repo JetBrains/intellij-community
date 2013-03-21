@@ -36,6 +36,7 @@ public final class OperationContext {
   private EditableArea myArea;
   private List<RadComponent> myComponents;
   private InputEvent myInputEvent;
+  private int myModifiers;
   private Point myLocation;
   private Point myMoveDelta;
   private Dimension mySizeDelta;
@@ -136,6 +137,14 @@ public final class OperationContext {
 
   public void setInputEvent(InputEvent inputEvent) {
     myInputEvent = inputEvent;
+  }
+
+  public int getModifiers() {
+    return myModifiers;
+  }
+
+  public void setModifiers(int modifiers) {
+    myModifiers = modifiers;
   }
 
   public Point getLocation() {

@@ -70,9 +70,15 @@ public class SelectionTool extends InputTool {
       }
 
       RadComponent component = myArea.findTarget(myCurrentScreenX, myCurrentScreenY, null);
-      if (component == null) {
+      if (component == null || component.isBackground()) {
         if (!myArea.isTree()) {
-          setTracker(new MarqueeTracker());
+          MarqueeTracker tracker = new MarqueeTracker();
+
+          // Allow marquee dragging within the root (background) layout, and if you click
+          // without dragging, select that background component
+          tracker.setSelectBackground(component != null && component.isBackground());
+
+          setTracker(tracker);
         }
       }
       else {
@@ -137,6 +143,7 @@ public class SelectionTool extends InputTool {
         myToolProvider.hideInspections();
         myTracker.setToolProvider(myToolProvider);
         myTracker.setArea(myArea);
+        myTracker.myModifiers = myModifiers;
         myTracker.activate();
       }
     }
@@ -155,6 +162,7 @@ public class SelectionTool extends InputTool {
   @Override
   public void mouseDown(MouseEvent event, EditableArea area) throws Exception {
     super.mouseDown(event, area);
+
     if (myTracker != null) {
       myTracker.mouseDown(event, area);
     }
@@ -165,6 +173,7 @@ public class SelectionTool extends InputTool {
     if (myTracker != null) {
       myTracker.mouseUp(event, area);
     }
+
     super.mouseUp(event, area);
   }
 
@@ -173,6 +182,7 @@ public class SelectionTool extends InputTool {
     if (myTracker != null) {
       myTracker.mouseMove(event, area);
     }
+
     super.mouseMove(event, area);
   }
 
@@ -181,6 +191,7 @@ public class SelectionTool extends InputTool {
     if (myTracker != null) {
       myTracker.mouseDrag(event, area);
     }
+
     super.mouseDrag(event, area);
   }
 
@@ -190,12 +201,14 @@ public class SelectionTool extends InputTool {
     if (myTracker != null) {
       myTracker.mousePopup(event, area);
     }
+
     super.mousePopup(event, area);
   }
 
   @Override
   public void mouseDoubleClick(MouseEvent event, EditableArea area) throws Exception {
     super.mouseDoubleClick(event, area);
+
     if (myTracker != null) {
       myTracker.mouseDoubleClick(event, area);
     }
@@ -203,6 +216,8 @@ public class SelectionTool extends InputTool {
 
   @Override
   public void keyPressed(KeyEvent event, EditableArea area) throws Exception {
+    super.keyTyped(event, area);
+
     if (myTracker != null) {
       myTracker.keyPressed(event, area);
     }
@@ -219,6 +234,8 @@ public class SelectionTool extends InputTool {
 
   @Override
   public void keyTyped(KeyEvent event, EditableArea area) throws Exception {
+    super.keyTyped(event, area);
+
     if (myTracker != null) {
       myTracker.keyTyped(event, area);
     }
@@ -260,6 +277,8 @@ public class SelectionTool extends InputTool {
 
   @Override
   public void keyReleased(KeyEvent event, EditableArea area) throws Exception {
+    super.keyReleased(event, area);
+
     if (myTracker != null) {
       myTracker.keyReleased(event, area);
     }
