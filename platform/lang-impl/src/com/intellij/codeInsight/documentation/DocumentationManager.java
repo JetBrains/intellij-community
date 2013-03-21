@@ -459,9 +459,14 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       })
       .setKeyEventHandler(new BooleanFunction<KeyEvent>() {
         @Override
-        public boolean fun(KeyEvent event) {
+        public boolean fun(KeyEvent e) {
           if (myCloseOnSneeze) {
             closeDocHint();
+          }
+          boolean closeRequest = e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0;
+          if ((closeRequest && getDocInfoHint() != null)) {
+            closeDocHint();
+            return true;
           }
           return false;
         }
