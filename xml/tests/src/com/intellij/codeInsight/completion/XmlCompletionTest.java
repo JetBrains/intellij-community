@@ -168,19 +168,15 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testAttributesTemplateFinishWithSpace() throws Throwable {
-    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
-    try {
-      configureByFile(getTestName(false) + ".xml");
-      type('b');
-      type('e');
-      type('a');
-      type('n');
-      type(' ');
-      checkResultByFile(getTestName(false) + "_after.xml");
-    }
-    finally {
-      ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
-    }
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+
+    configureByFile(getTestName(false) + ".xml");
+    type('b');
+    type('e');
+    type('a');
+    type('n');
+    type(' ');
+    checkResultByFile(getTestName(false) + "_after.xml");
   }
 
   private void configureByFile(String s) {
@@ -189,17 +185,13 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testNoAttributesTemplateFinishWithSpace() throws Throwable {
-    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
-    try {
-      configureByFile(getTestName(false) + ".xml");
-      type('d');
-      type('e');
-      type(' ');
-      checkResultByFile(getTestName(false) + "_after.xml");
-    }
-    finally {
-      ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
-    }
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+
+    configureByFile(getTestName(false) + ".xml");
+    type('d');
+    type('e');
+    type(' ');
+    checkResultByFile(getTestName(false) + "_after.xml");
   }
 
   private void type(char c) {
