@@ -137,6 +137,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     if (document != null) {
       if (getEditor() == null || getEditor().getDocument() != document) {
         clearEditor();
+        removeAll();
         setEditor(EditorFactory.getInstance().createViewer(document, project));
 
         final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
