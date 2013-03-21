@@ -190,7 +190,7 @@ public class DesignerActionPanel implements DataProvider {
   }
 
   private void updateSelectionActions(List<RadComponent> selection) {
-    boolean update = isVisible(myDynamicGroup);
+    boolean oldVisible = isVisible(myDynamicGroup);
 
     if (myDynamicGroup.getChildrenCount() > 0) {
       for (AnAction action : myDynamicGroup.getChildActionsOrStubs()) {
@@ -199,16 +199,19 @@ public class DesignerActionPanel implements DataProvider {
       myDynamicGroup.removeAll();
     }
 
+    addSelectionActions(selection, myDynamicGroup);
+
+    if (oldVisible || isVisible(myDynamicGroup)) {
+      update();
+    }
+  }
+
+  protected void addSelectionActions(List<RadComponent> selection, DefaultActionGroup group) {
     for (RadComponent parent : RadComponent.getParents(selection)) {
-      parent.getLayout().addSelectionActions(myDesigner, myDynamicGroup, myShortcuts, selection);
+      parent.getLayout().addSelectionActions(myDesigner, group, myShortcuts, selection);
     }
     for (RadComponent component : selection) {
-      component.addSelectionActions(myDesigner, myDynamicGroup, myShortcuts, selection);
-    }
-    update |= isVisible(myDynamicGroup);
-
-    if (update) {
-      update();
+      component.addSelectionActions(myDesigner, group, myShortcuts, selection);
     }
   }
 
