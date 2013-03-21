@@ -105,7 +105,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected CaptionPanel myHorizontalCaption;
   protected CaptionPanel myVerticalCaption;
 
-  private JScrollPane myScrollPane;
+  protected JScrollPane myScrollPane;
   protected JLayeredPane myLayeredPane;
   protected GlassLayer myGlassLayer;
   private DecorationLayer myDecorationLayer;
@@ -790,6 +790,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     return StringUtil.notNullize(version);
   }
 
+  public boolean isDeprecated(@Nullable String deprecatedIn) {
+    return !StringUtil.isEmpty(deprecatedIn);
+  }
+
   protected InputTool createDefaultTool() {
     return new SelectionTool();
   }
@@ -857,7 +861,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   //////////////////////////////////////////////////////////////////////////////////////////
   //
-  // Zoom
+  // Zooming
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
@@ -873,6 +877,11 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   public double getZoom() {
     return 1;
+  }
+
+  protected void viewZoomed() {
+    // Hide quickfix light bulbs; position can be obsolete after the zoom level has changed
+    myQuickFixManager.hideHint();
   }
 
   //////////////////////////////////////////////////////////////////////////////////////////
@@ -953,6 +962,32 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     }
   }
 
+  /**
+   * Size of the scene, in scroll pane view port pixels.
+   */
+  @NotNull
+  protected Dimension getSceneSize(Component target) {
+    int width = 0;
+    int height = 0;
+
+    if (myRootComponent != null) {
+      Rectangle bounds = myRootComponent.getBounds(target);
+      width = Math.max(width, (int)bounds.getMaxX());
+      height = Math.max(height, (int)bounds.getMaxY());
+
+      for (RadComponent component : myRootComponent.getChildren()) {
+        Rectangle childBounds = component.getBounds(target);
+        width = Math.max(width, (int)childBounds.getMaxX());
+        height = Math.max(height, (int)childBounds.getMaxY());
+      }
+    }
+
+    width += 50;
+    height += 40;
+
+    return new Dimension(width, height);
+  }
+
   private final class MyLayeredPane extends JBLayeredPane implements Scrollable {
     public void doLayout() {
       for (int i = getComponentCount() - 1; i >= 0; i--) {
@@ -966,25 +1001,13 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     }
 
     public Dimension getPreferredSize() {
-      int width = 0;
-      int height = 0;
-
-      if (myRootComponent != null) {
-        width = Math.max(width, (int)myRootComponent.getBounds().getMaxX());
-        height = Math.max(height, (int)myRootComponent.getBounds().getMaxY());
-
-        for (RadComponent component : myRootComponent.getChildren()) {
-          width = Math.max(width, (int)component.getBounds().getMaxX());
-          height = Math.max(height, (int)component.getBounds().getMaxY());
-        }
-      }
-
-      width += 50;
-      height += 40;
-
       Rectangle bounds = myScrollPane.getViewport().getBounds();
+      Dimension size = getSceneSize(this);
 
-      return new Dimension(Math.max(width, bounds.width), Math.max(height, bounds.height));
+      size.width = Math.max(size.width, bounds.width);
+      size.height = Math.max(size.height, bounds.height);
+
+      return size;
     }
 
     public Dimension getPreferredScrollableViewportSize() {
