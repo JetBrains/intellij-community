@@ -27,7 +27,7 @@ public class PsiNamedElementUsageGroupBase<T extends PsiNamedElement & Navigatio
     String myName = element.getName();
     if (myName == null) myName = "<anonymous>";
     this.myName = myName;
-    myElementPointer = SmartPointerManager.getInstance(element.getProject()).createLazyPointer(element);
+    myElementPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
 
     myIcon = icon;
   }

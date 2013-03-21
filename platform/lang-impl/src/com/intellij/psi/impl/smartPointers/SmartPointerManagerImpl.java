@@ -22,7 +22,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
-import com.intellij.openapi.editor.impl.DocumentImpl;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.ProperTextRange;
@@ -61,9 +60,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
       List<SmartPointerEx> pointers = getPointers(file);
       if (pointers == null) return;
       PsiDocumentManager psiDocumentManager = PsiDocumentManager.getInstance(file.getProject());
-      Document document = psiDocumentManager.getDocument(file);
-      if (document instanceof DocumentImpl) {
-      }
 
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < pointers.size(); i++) {
@@ -95,10 +91,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
 
       List<SmartPointerEx> pointers = getPointers(file);
       if (pointers == null) return;
-
-      Document document = psiDocumentManager.getDocument(file);
-      if (document instanceof DocumentImpl) {
-      }
 
       //noinspection ForLoopReplaceableByForEach
       for (int i = 0; i < pointers.size(); i++) {
@@ -225,13 +217,6 @@ public class SmartPointerManagerImpl extends SmartPointerManager {
     return file.getUserData(BELTS_ARE_FASTEN_KEY) == Boolean.TRUE;
   }
 
-
-  @Override
-  @NotNull
-  @Deprecated
-  public <E extends PsiElement> SmartPsiElementPointer<E> createLazyPointer(@NotNull E element) {
-    return createSmartPsiElementPointer(element);
-  }
 
   @Override
   public boolean pointToTheSameElement(@NotNull SmartPsiElementPointer pointer1, @NotNull SmartPsiElementPointer pointer2) {

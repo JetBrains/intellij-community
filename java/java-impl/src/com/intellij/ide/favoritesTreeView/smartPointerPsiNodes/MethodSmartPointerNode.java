@@ -32,7 +32,7 @@ import java.util.Collections;
 
 public class MethodSmartPointerNode extends BaseSmartPointerPsiNode<SmartPsiElementPointer>{
   public MethodSmartPointerNode(Project project, PsiMethod value, ViewSettings viewSettings) {
-    super(project, SmartPointerManager.getInstance(project).createLazyPointer(value), viewSettings);
+    super(project, SmartPointerManager.getInstance(project).createSmartPsiElementPointer(value), viewSettings);
   }
 
   public MethodSmartPointerNode(final Project project, final Object value, final ViewSettings viewSettings) {

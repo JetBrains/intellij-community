@@ -39,7 +39,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
 
   public CreateClassFromUsageBaseFix(CreateClassKind kind, final PsiJavaCodeReferenceElement refElement) {
     myKind = kind;
-    myRefElement = SmartPointerManager.getInstance(refElement.getProject()).createLazyPointer(refElement);
+    myRefElement = SmartPointerManager.getInstance(refElement.getProject()).createSmartPsiElementPointer(refElement);
   }
 
   protected abstract String getText(String varName);

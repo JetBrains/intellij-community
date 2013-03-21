@@ -219,7 +219,7 @@ public class NullityInferrer {
   }
 
   private void registerAnnotation(@NotNull PsiModifierListOwner method, boolean isNullable) {
-    final SmartPsiElementPointer<PsiModifierListOwner> methodPointer = myPointerManager.createLazyPointer(method);
+    final SmartPsiElementPointer<PsiModifierListOwner> methodPointer = myPointerManager.createSmartPsiElementPointer(method);
     if (isNullable) {
       myNullableSet.add(methodPointer);
     }
@@ -420,7 +420,7 @@ public class NullityInferrer {
     if (NullableNotNullManager.isNotNull(owner)) {
       return true;
     }
-    final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createLazyPointer(owner);
+    final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createSmartPsiElementPointer(owner);
     return myNotNullSet.contains(pointer);
   }
 
@@ -428,7 +428,7 @@ public class NullityInferrer {
     if (NullableNotNullManager.isNullable(owner)) {
       return true;
     }
-    final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createLazyPointer(owner);
+    final SmartPsiElementPointer<PsiModifierListOwner> pointer = myPointerManager.createSmartPsiElementPointer(owner);
     return myNullableSet.contains(pointer);
   }
 

@@ -24,7 +24,6 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.editor.event.EditorEventMulticaster;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.impl.source.PsiFileImpl;
@@ -156,7 +155,8 @@ public class SmartPsiElementPointersTest extends CodeInsightTestCase {
     PsiClass aClass = myJavaFacade.findClass("AClass",GlobalSearchScope.allScope(getProject()));
     assertNotNull(aClass);
 
-    final SmartPsiElementPointer<PsiIdentifier> pointer = SmartPointerManager.getInstance(myProject).createLazyPointer(aClass.getNameIdentifier());
+    final SmartPsiElementPointer<PsiIdentifier> pointer =
+      SmartPointerManager.getInstance(myProject).createSmartPsiElementPointer(aClass.getNameIdentifier());
     final PsiComment javadoc =
       JavaPsiFacade.getInstance(aClass.getProject()).getElementFactory().createCommentFromText("/** javadoc */", aClass);
     aClass.getParent().addBefore(javadoc, aClass);
