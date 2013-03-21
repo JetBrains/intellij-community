@@ -400,7 +400,7 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     cleanUp();
   }
 
-  private void cleanUp() {
+  protected void cleanUp() {
     mySuspendedThreads.clear();
   }
 
