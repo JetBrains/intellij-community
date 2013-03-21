@@ -71,16 +71,23 @@ public class PySkeletonGenerator {
                                   String sdkHomePath,
                                   Consumer<Boolean> resultConsumer)
     throws InvalidSdkException {
-    boolean ret = true;
 
     final ProcessOutput genResult = runSkeletonGeneration(modname, modfilename, assemblyRefs, sdkHomePath,
                                                           syspath);
 
-    if (genResult.getExitCode() != 0) {
-      ret = false;
+    if (genResult.getStderrLines().size() > 0) {
       StringBuilder sb = new StringBuilder("Skeleton for ");
-      sb.append(modname).append(" failed on ").append(sdkHomePath).append(". stderr: --\n");
-      for (String err_line : genResult.getStderrLines()) sb.append(err_line).append("\n");
+      sb.append(modname);
+      if (genResult.getExitCode() != 0) {
+        sb.append(" failed on ");
+      }
+      else {
+        sb.append(" had some minor errors on ");
+      }
+      sb.append(sdkHomePath).append(". stderr: --\n");
+      for (String err_line : genResult.getStderrLines()) {
+        sb.append(err_line).append("\n");
+      }
       sb.append("--");
       if (ApplicationManagerEx.getApplicationEx().isInternal()) {
         LOG.warn(sb.toString());
@@ -90,7 +97,7 @@ public class PySkeletonGenerator {
       }
     }
 
-    resultConsumer.consume(ret);
+    resultConsumer.consume(genResult.getExitCode() == 0);
   }
 
   public ProcessOutput runSkeletonGeneration(String modname,

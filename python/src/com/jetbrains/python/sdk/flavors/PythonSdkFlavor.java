@@ -81,6 +81,7 @@ public abstract class PythonSdkFlavor {
     result.add(PyPySdkFlavor.INSTANCE);
     result.add(VirtualEnvSdkFlavor.INSTANCE);
     result.add(PyRemoteSdkFlavor.INSTANCE);
+    result.add(MayaSdkFlavor.INSTANCE);
 
     return result;
   }
