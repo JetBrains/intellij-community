@@ -19,12 +19,15 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBList;
+import com.intellij.util.containers.ContainerUtilRt;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.Collections;
+import java.util.Set;
 
 /**
  * @author Denis Zhdanov
@@ -38,6 +41,41 @@ public class GradleTasksList extends JBList {
   public GradleTasksList(@NotNull GradleTasksModel model) {
     super(model);
     setCellRenderer(RENDERER);
+  }
+
+  @Override
+  public GradleTasksModel getModel() {
+    return (GradleTasksModel)super.getModel();
+  }
+
+  public void setFirst(@NotNull GradleTaskDescriptor descriptor) {
+    Set<GradleTaskDescriptor> selected = getSelectedDescriptors();
+    GradleTasksModel model = getModel();
+    model.setFirst(descriptor);
+    clearSelection();
+    for (int i = 0; i < model.size(); i++) {
+      //noinspection SuspiciousMethodCalls
+      if (selected.contains(model.getElementAt(i))) {
+        addSelectionInterval(i, i);
+      }
+    }
+  }
+
+  @NotNull
+  public Set<GradleTaskDescriptor> getSelectedDescriptors() {
+    int[] indices = getSelectedIndices();
+    if (indices == null || indices.length <= 0) {
+      return Collections.emptySet();
+    }
+    Set<GradleTaskDescriptor> result = ContainerUtilRt.newHashSet();
+    GradleTasksModel model = getModel();
+    for (int i : indices) {
+      Object e = model.getElementAt(i);
+      if (e instanceof GradleTaskDescriptor) {
+        result.add((GradleTaskDescriptor)e);
+      }
+    }
+    return result;
   }
 
   private static class MyRenderer extends DefaultListCellRenderer {

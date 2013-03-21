@@ -42,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.GradleTaskLocation;
 import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
-import org.jetbrains.plugins.gradle.tasks.GradleTasksModel;
+import org.jetbrains.plugins.gradle.tasks.GradleTasksList;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -177,12 +177,12 @@ public class GradleScriptType extends GroovyScriptType {
           GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)profile;
           String parameters = configuration.getScriptParameters();
           if (parameters != null) {
-            GradleTasksModel model = GradleUtil.getToolWindowElement(GradleTasksModel.class, project, GradleDataKeys.RECENT_TASKS_MODEL);
-            if (model != null) {
+            GradleTasksList list = GradleUtil.getToolWindowElement(GradleTasksList.class, project, GradleDataKeys.RECENT_TASKS_LIST);
+            if (list != null) {
               GradleTaskDescriptor descriptor = new GradleTaskDescriptor(parameters, null);
               descriptor.setExecutorId(executor.getId());
-              model.setFirst(descriptor);
-              GradleLocalSettings.getInstance(project).setRecentTasks(model.getTasks());
+              list.setFirst(descriptor);
+              GradleLocalSettings.getInstance(project).setRecentTasks(list.getModel().getTasks());
             }
           }
         }

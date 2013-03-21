@@ -206,8 +206,8 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     if (GradleDataKeys.ALL_TASKS_MODEL.is(dataId)) {
       return myAllTasksModel;
     }
-    else if (GradleDataKeys.RECENT_TASKS_MODEL.is(dataId)) {
-      return myRecentTasksModel;
+    else if (GradleDataKeys.RECENT_TASKS_LIST.is(dataId)) {
+      return myRecentTasksList;
     }
     else if (Location.DATA_KEY.is(dataId)) {
       Location location = buildLocation();

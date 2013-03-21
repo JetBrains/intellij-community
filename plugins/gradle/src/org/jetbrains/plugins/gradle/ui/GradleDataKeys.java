@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.ui;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
+import org.jetbrains.plugins.gradle.tasks.GradleTasksList;
 import org.jetbrains.plugins.gradle.tasks.GradleTasksModel;
 
 import java.util.Collection;
@@ -27,7 +28,7 @@ public class GradleDataKeys {
   public static final DataKey<GradleProjectStructureNode<?>> SYNC_TREE_NODE_UNDER_MOUSE
     = DataKey.create("gradle.sync.tree.node.under.mouse");
 
-  public static final DataKey<GradleTasksModel> RECENT_TASKS_MODEL = DataKey.create("gradle.recent.tasks.model");
+  public static final DataKey<GradleTasksList> RECENT_TASKS_LIST = DataKey.create("gradle.recent.tasks.list");
   
   public static final DataKey<GradleTasksModel> ALL_TASKS_MODEL = DataKey.create("gradle.all.tasks.model");
 
