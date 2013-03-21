@@ -2,6 +2,7 @@ package com.intellij.openapi.vcs.changes;
 
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -36,8 +37,7 @@ public class FilePathsHelper {
     String convParent = FileUtil.toSystemIndependentName(parent);
     String convPath = FileUtil.toSystemIndependentName(subpath);
 
-    String withSlash = convParent + (convParent.endsWith("/") ? "" : "/") +
-                       (convPath.startsWith("/") ? convPath.substring(1, convPath.length()) : convPath);
+    String withSlash = StringUtil.trimEnd(convParent, "/") + "/" + StringUtil.trimStart(convPath, "/");
     return SystemInfo.isFileSystemCaseSensitive ? withSlash : withSlash.toUpperCase(Locale.US);
   }
 
