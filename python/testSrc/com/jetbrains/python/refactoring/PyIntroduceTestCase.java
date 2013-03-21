@@ -1,11 +1,9 @@
 package com.jetbrains.python.refactoring;
 
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.testFramework.LightPlatformTestCase;
 import com.intellij.util.Consumer;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.psi.PyExpression;
@@ -63,9 +61,8 @@ public abstract class PyIntroduceTestCase extends PyTestCase {
     String name = getTestName(true);
     myFixture.configureByFile(name + ".py");
     final boolean enabled = myFixture.getEditor().getSettings().isVariableInplaceRenameEnabled();
-    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(LightPlatformTestCase.getProject());
     try {
-      templateManager.setTemplateTesting(true);
+      TemplateManagerImpl.setTemplateTesting(myFixture.getProject(), getTestRootDisposable());
       myFixture.getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       IntroduceHandler handler = createHandler();
@@ -83,7 +80,6 @@ public abstract class PyIntroduceTestCase extends PyTestCase {
     }
     finally {
       myFixture.getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
-      templateManager.setTemplateTesting(false);
     }
   }
 }
