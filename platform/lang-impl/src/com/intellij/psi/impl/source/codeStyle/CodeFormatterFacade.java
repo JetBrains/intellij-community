@@ -600,6 +600,8 @@ public class CodeFormatterFacade {
 
       // We know that number of lines is just increased, hence, update the data accordingly.
       maxLine++;
+      //noinspection AssignmentToForLoopParameter
+      line++;
     }
   }
 
