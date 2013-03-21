@@ -115,6 +115,7 @@ public class CommonProxy extends ProxySelector {
     }
   }
 
+  @Nullable
   public static String getMessageFromProps(Map<String, String> props) {
     String message = null;
     for (Map.Entry<String, String> entry : props.entrySet()) {
