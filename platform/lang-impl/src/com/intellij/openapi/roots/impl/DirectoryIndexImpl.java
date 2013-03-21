@@ -525,7 +525,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       if (i < 0) {
         // add another dir to the list of existing dirs
         int[] ids = multiDirPackages.get(-i);
-        int[] newIds = ArrayUtil.append(ids, dirId);
+        int[] newIds = ids == null ? new int[]{dirId} : ArrayUtil.append(ids, dirId);
         multiDirPackages.set(-i, newIds);
       }
       else if (i > 0) {
@@ -1174,6 +1174,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
       copy.multiDirPackages.clear();
       for (int[] dirs : multiDirPackages) {
+        if (dirs == null) continue;
         int[] filtered = ContainerUtil.filter(dirs, new TIntProcedure() {
           @Override
           public boolean execute(int id) {
