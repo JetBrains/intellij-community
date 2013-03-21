@@ -121,6 +121,7 @@ public class SelectLocationDialog extends DialogWrapper {
     return "svn.repositoryBrowser";
   }
 
+  @Nullable
   private static SVNURL initRoot(final Project project, final String urlString) throws SVNException {
     final Ref<SVNURL> result = new Ref<SVNURL>();
     final Ref<SVNException> excRef = new Ref<SVNException>();
