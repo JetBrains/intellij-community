@@ -101,6 +101,8 @@ public class GitCucumberWorld {
     myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
     myGit = ServiceManager.getService(myProject, Git.class);
     mySettings = myPlatformFacade.getSettings(myProject);
+    // dynamic overriding is used instead of making it in plugin.xml,
+    // because MockVcsHelper is not ready to be a full featured implementation for all tests.
     myVcsHelper = overrideService(myProject, AbstractVcsHelper.class, MockVcsHelper.class);
     myChangeListManager = myPlatformFacade.getChangeListManager(myProject);
     myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);
