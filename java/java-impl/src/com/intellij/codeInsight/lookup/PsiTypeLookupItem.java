@@ -108,7 +108,7 @@ public class PsiTypeLookupItem extends LookupItem {
     context.getDocument().insertString(genericsStart, JavaCompletionUtil.escapeXmlIfNeeded(context, calcGenerics(position, context)));
     JavaCompletionUtil.shortenReference(context.getFile(), genericsStart - 1);
 
-    int tail = context.getSelectionEndOffset();
+    int tail = context.getTailOffset();
     String braces = StringUtil.repeat("[]", getBracketsCount());
     Editor editor = context.getEditor();
     if (!braces.isEmpty()) {
