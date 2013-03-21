@@ -123,6 +123,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       private String selectedPropertyName;
       private PropertiesFile selectedPropertiesFile;
 
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         // filter out temp unselect/select events
         if (getSelectedPropertyName() == null) return;
@@ -300,6 +301,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       }
 
       editor.getContentComponent().addFocusListener(new FocusAdapter() {
+        @Override
         public void focusGained(FocusEvent e) {
           mySelectedEditor = editor;
         }
@@ -392,22 +394,27 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     
     virtualFileManager.addVirtualFileListener(myVfsListener, this);
     PsiTreeChangeAdapter psiTreeChangeAdapter = new PsiTreeChangeAdapter() {
+      @Override
       public void childAdded(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void childRemoved(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void childReplaced(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void childMoved(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
         final PsiFile file = event.getFile();
         PropertiesFile propertiesFile = PropertiesUtil.getPropertiesFile(file);
@@ -431,6 +438,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private void updateEditorsFromProperties() {
     myUpdateEditorAlarm.cancelAllRequests();
     myUpdateEditorAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         if (!isValid()) return;
         // there is pending update which is going to change prop file anyway
@@ -461,8 +469,10 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
             }
             final Document document = editor.getDocument();
             CommandProcessor.getInstance().executeCommand(null, new Runnable() {
+              @Override
               public void run() {
                 ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                  @Override
                   public void run() {
                     updateDocumentFromPropertyValue(value, document, propertiesFile);
                   }
@@ -523,10 +533,12 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       DocumentAdapter listener = new DocumentAdapter() {
         private String oldText;
 
+        @Override
         public void beforeDocumentChange(DocumentEvent e) {
           oldText = e.getDocument().getText();
         }
 
+        @Override
         public void documentChanged(DocumentEvent e) {
           Document document = e.getDocument();
           String text = document.getText();
@@ -542,10 +554,14 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
     for (final PropertiesFile propertiesFile : propertiesFiles) {
       Editor editor = myEditors.get(propertiesFile);
-      DocumentListener listener = myDocumentListeners.remove(editor);
-      if (listener != null) {
-        editor.getDocument().removeDocumentListener(listener);
-      }
+      uninstallDocumentListener(editor);
+    }
+  }
+
+  private void uninstallDocumentListener(Editor editor) {
+    DocumentListener listener = myDocumentListeners.remove(editor);
+    if (listener != null) {
+      editor.getDocument().removeDocumentListener(listener);
     }
   }
 
@@ -553,11 +569,14 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private void updatePropertyValueFor(final Document document, final PropertiesFile propertiesFile, final String text, final String oldText) {
     myUpdatePsiAlarm.cancelAllRequests();
     myUpdatePsiAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         if (!isValid()) return;
         CommandProcessor.getInstance().runUndoTransparentAction(new Runnable() {
+          @Override
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
               public void run() {
                 Project project = propertiesFile.getProject();
                 PsiDocumentManager documentManager = PsiDocumentManager.getInstance(project);
@@ -598,6 +617,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     return getNodeValue((DefaultMutableTreeNode)selected.getLastPathComponent());
   }
 
+  @Override
   @NotNull
   public JComponent getComponent() {
     return myDataProviderPanel;
@@ -606,11 +626,13 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private Object getData(final String dataId) {
     if (SelectInContext.DATA_KEY.is(dataId)) {
       return new SelectInContext(){
+        @Override
         @NotNull
         public Project getProject() {
           return myProject;
         }
 
+        @Override
         @NotNull
         public VirtualFile getVirtualFile() {
           PropertiesFile selectedFile = getSelectedPropertiesFile();
@@ -620,14 +642,17 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
           return virtualFile;
         }
 
+        @Override
         public Object getSelectorInFile() {
           return getSelectedPropertiesFile();
         }
 
+        @Override
         public FileEditorProvider getFileEditorProvider() {
           final PropertiesFile selectedPropertiesFile = getSelectedPropertiesFile();
           if (selectedPropertiesFile == null) return null;
           return new FileEditorProvider() {
+            @Override
             public FileEditor openFileEditor() {
               final VirtualFile file = selectedPropertiesFile.getVirtualFile();
               if (file == null) {
@@ -656,15 +681,18 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     return selectedFile;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myStructureViewPanel;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "Resource Bundle";
   }
 
+  @Override
   @NotNull
   public ResourceBundleEditorState getState(@NotNull FileEditorStateLevel level) {
     return new ResourceBundleEditorState(getSelectedPropertyName());
@@ -674,6 +702,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     return (JBSplitter)mySplitParent.getComponents()[0];
   }
 
+  @Override
   public void setState(@NotNull FileEditorState state) {
     ResourceBundleEditorState myState = (ResourceBundleEditorState)state;
     String propertyName = myState.myPropertyName;
@@ -683,42 +712,52 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     }
   }
 
+  @Override
   public boolean isModified() {
     return false;
   }
 
+  @Override
   public boolean isValid() {
     return !myDisposed && !myProject.isDisposed();
   }
 
+  @Override
   public void selectNotify() {
 
   }
 
+  @Override
   public void deselectNotify() {
 
   }
 
+  @Override
   public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) {
 
   }
 
+  @Override
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) {
 
   }
 
+  @Override
   public BackgroundEditorHighlighter getBackgroundHighlighter() {
     return null;
   }
 
+  @Override
   public FileEditorLocation getCurrentLocation() {
     return null;
   }
 
+  @Override
   public StructureViewBuilder getStructureViewBuilder() {
     return null;
   }
 
+  @Override
   public void dispose() {
     VirtualFileManager.getInstance().removeVirtualFileListener(myVfsListener);
 
@@ -729,11 +768,16 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
 
   private void releaseAllEditors() {
     for (Editor editor : myEditors.values()) {
-      if (!editor.isDisposed()) {
-        EditorFactory.getInstance().releaseEditor(editor);
-      }
+      releaseEditor(editor);
     }
     myEditors.clear();
+  }
+
+  private void releaseEditor(Editor editor) {
+    if (!editor.isDisposed()) {
+      uninstallDocumentListener(editor);
+      EditorFactory.getInstance().releaseEditor(editor);
+    }
   }
 
   /**
@@ -760,6 +804,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       myPropertyName = propertyName;
     }
 
+    @Override
     public boolean canBeMergedWith(FileEditorState otherState, FileEditorStateLevel level) {
       return false;
     }
@@ -801,6 +846,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       add(panel, BorderLayout.CENTER);
     }
 
+    @Override
     @Nullable
     public Object getData(String dataId) {
       return ResourceBundleEditor.this.getData(dataId);
@@ -812,23 +858,28 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       super(layout);
     }
 
+    @Override
     public Dimension getPreferredScrollableViewportSize() {
       return getPreferredSize();
     }
 
+    @Override
     public int getScrollableUnitIncrement(Rectangle visibleRect, int orientation, int direction) {
       Editor editor = myEditors.values().iterator().next();
       return editor.getLineHeight()*4;
     }
 
+    @Override
     public int getScrollableBlockIncrement(Rectangle visibleRect, int orientation, int direction) {
       return visibleRect.height;
     }
 
+    @Override
     public boolean getScrollableTracksViewportWidth() {
       return true;
     }
 
+    @Override
     public boolean getScrollableTracksViewportHeight() {
       return false;
     }
