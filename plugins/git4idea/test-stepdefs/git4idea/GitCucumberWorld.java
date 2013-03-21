@@ -14,6 +14,10 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ui.UIUtil;
 import cucumber.annotation.After;
 import cucumber.annotation.Before;
 import cucumber.annotation.Order;
@@ -32,6 +36,8 @@ import org.junit.Assert;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
+import java.util.Random;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.dvcs.test.Executor.cd;
 import static junit.framework.Assert.assertNotNull;
@@ -66,8 +72,18 @@ public class GitCucumberWorld {
   @Before
   @Order(0)
   public void setUp() throws Throwable {
-    myProjectFixture = new GitCucumberLightProjectFixture();
-    myProjectFixture.setUp();
+    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "PlatformLangXml");
+
+    String tempFileName = getClass().getName() + "." + new Random().nextInt();
+    myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(tempFileName).getFixture();
+
+    edt(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        myProjectFixture.setUp();
+      }
+    });
+
     myProject = myProjectFixture.getProject();
 
     ((ProjectComponent)ChangeListManager.getInstance(myProject)).projectOpened();
@@ -120,7 +136,12 @@ public class GitCucumberWorld {
   @After
   public void tearDown() throws Throwable {
     virtualCommits = null;
-    myProjectFixture.tearDown();
+    edt(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        myProjectFixture.tearDown();
+      }
+    });
   }
 
   @SuppressWarnings("unchecked")
@@ -148,5 +169,23 @@ public class GitCucumberWorld {
     return overrideService(null, serviceInterface, serviceImplementation);
   }
 
+  private static void edt(@NotNull final ThrowableRunnable<Exception> runnable) throws Exception {
+    final AtomicReference<Exception> exception = new AtomicReference<Exception>();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          runnable.run();
+        }
+        catch (Exception throwable) {
+          exception.set(throwable);
+        }
+      }
+    });
+    //noinspection ThrowableResultOfMethodCallIgnored
+    if (exception.get() != null) {
+      throw exception.get();
+    }
+  }
 
 }
