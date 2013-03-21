@@ -818,7 +818,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           DumbService.getInstance(getProject()).smartInvokeLater(runnable);
         }
         else {
-          ApplicationManager.getApplication().invokeLater(runnable);
+          UIUtil.invokeLaterIfNeeded(runnable);
         }
       }
     }
