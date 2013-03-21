@@ -610,7 +610,6 @@ public class CodeCompletionHandlerBase {
       assert hostStartOffset <= host.getEndOffset() : "startOffset after injected";
 
       context = new CompletionContext(injected, translateOffsetMapToInjected(hostMap, documentWindow));
-      assert hostStartOffset == injectedLanguageManager.injectedToHost(injected, context.getStartOffset()) : "inconsistent injected offset translation";
     } else {
       context = new CompletionContext(hostCopy, hostMap);
     }
