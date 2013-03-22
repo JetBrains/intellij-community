@@ -106,9 +106,19 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   }
 
   public FrameworkSupportConfigurable getFrameworkConfigurable(@NotNull @NonNls String providerId) {
+    FrameworkSupportConfigurable configurable = findFrameworkConfigurable(providerId);
+    if (configurable == null) {
+      throw new IllegalArgumentException("provider '" + providerId + " not found");
+    }
+    return configurable;
+  }
+
+  @Nullable
+  @Override
+  public FrameworkSupportConfigurable findFrameworkConfigurable(@NotNull @NonNls String providerId) {
     final FrameworkSupportNode node = mySettingsMap.get(providerId);
     if (node == null) {
-      throw new IllegalArgumentException("provider '" + providerId + " not found");
+      return null;
     }
     return ((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)node.getConfigurable()).getConfigurable();
   }
