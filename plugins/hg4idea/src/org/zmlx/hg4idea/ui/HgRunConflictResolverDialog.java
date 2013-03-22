@@ -12,6 +12,8 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -62,20 +64,27 @@ public class HgRunConflictResolverDialog extends DialogWrapper {
   private void onChangeRepository() {
     VirtualFile repo = repositorySelector.getRepository();
     HgResolveCommand command = new HgResolveCommand(project);
+    final ModalityState modalityState = ApplicationManager.getApplication().getModalityStateForComponent(getRootPane());
     command.list(repo, new Consumer<Map<HgFile, HgResolveStatusEnum>>() {
       @Override
       public void consume(Map<HgFile, HgResolveStatusEnum> status) {
-        DefaultListModel model = new DefaultListModel();
+        final DefaultListModel model = new DefaultListModel();
         for (Map.Entry<HgFile, HgResolveStatusEnum> entry : status.entrySet()) {
           if (entry.getValue() == HgResolveStatusEnum.UNRESOLVED) {
             model.addElement(entry.getKey().getRelativePath());
           }
         }
-        setOKActionEnabled(!model.isEmpty());
-        if (model.isEmpty()) {
-          model.addElement("No conflicts to resolve");
-        }
-        conflictsList.setModel(model);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+
+          @Override
+          public void run() {
+            setOKActionEnabled(!model.isEmpty());
+            if (model.isEmpty()) {
+              model.addElement("No conflicts to resolve");
+            }
+            conflictsList.setModel(model);
+          }
+        }, modalityState);
       }
     });
   }
