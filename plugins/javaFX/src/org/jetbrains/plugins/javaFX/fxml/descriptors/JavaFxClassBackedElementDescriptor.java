@@ -67,7 +67,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
           public XmlElementDescriptor fun(PsiField field) {
             return new JavaFxPropertyElementDescriptor(myPsiClass, field.getName(), false);
           }
-        });
+        }, false);
 
         final JavaFxPropertyElementDescriptor defaultPropertyDescriptor = getDefaultPropertyDescriptor();
         if (defaultPropertyDescriptor != null) {
@@ -209,7 +209,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
           public XmlAttributeDescriptor fun(PsiField field) {
             return new JavaFxPropertyAttributeDescriptor(field.getName(), myPsiClass);
           }
-        });
+        }, true);
         collectStaticAttributesDescriptors(context, simpleAttrs);
         for (String defaultProperty : FxmlConstants.FX_DEFAULT_PROPERTIES) {
           simpleAttrs.add(new JavaFxDefaultAttributeDescriptor(defaultProperty, myPsiClass));
@@ -220,7 +220,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     return XmlAttributeDescriptor.EMPTY;
   }
 
-  private <T> void collectProperties(List<T> children, Function<PsiField, T> factory) {
+  private <T> void collectProperties(List<T> children, Function<PsiField, T> factory, boolean acceptPrimitive) {
     final PsiField[] fields = myPsiClass.getAllFields();
     if (fields.length > 0) {
       for (PsiField field : fields) {
@@ -229,7 +229,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         if (!JavaFxPsiUtil.isReadOnly(myPsiClass, field) && 
             InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY) || 
             fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
-            fieldType instanceof PsiPrimitiveType ||
+            (acceptPrimitive && fieldType instanceof PsiPrimitiveType) ||
             GenericsHighlightUtil.getCollectionItemType(field.getType(), myPsiClass.getResolveScope()) != null) {
           children.add(factory.fun(field));
         }
