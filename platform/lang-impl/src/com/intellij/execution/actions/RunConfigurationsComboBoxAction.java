@@ -30,18 +30,24 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.wm.IdeFrame;
+import com.intellij.ui.SizedIcon;
+import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
-import java.util.*;
 import java.util.List;
+import java.util.Map;
 
 public class RunConfigurationsComboBoxAction extends ComboBoxAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.actions.RunConfigurationAction");
   private static final Key<ComboBoxButton> BUTTON_KEY = Key.create("COMBOBOX_BUTTON");
+
+  public static final Icon CHECKED_ICON = new SizedIcon(AllIcons.Actions.Checked, 16, 16);
+  public static final Icon CHECKED_SELECTED_ICON = new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16);
+  public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 
   public void actionPerformed(final AnActionEvent e) {
     final IdeFrame ideFrame = findFrame(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
@@ -278,10 +284,9 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       Presentation presentation = getTemplatePresentation();
       presentation.setText(name, false);
       presentation.setDescription("Select " + name);
-      if (selected) {
-        presentation.setIcon(AllIcons.Actions.Checked);
-        presentation.setSelectedIcon(AllIcons.Actions.Checked_selected);
-      }
+
+      presentation.setIcon(selected ? CHECKED_ICON : EMPTY_ICON);
+      presentation.setSelectedIcon(selected ? CHECKED_SELECTED_ICON : EMPTY_ICON);
     }
 
     @Override
