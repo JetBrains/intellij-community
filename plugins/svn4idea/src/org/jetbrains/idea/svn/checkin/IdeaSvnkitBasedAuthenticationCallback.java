@@ -267,7 +267,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       if (myCertificate == null) {   // this is if certificate was stored only in passive area
         String stored = (String) manager.getRuntimeAuthStorage().getData("svn.ssl.server", myRealm);
         if (StringUtil.isEmptyOrSpaces(stored)) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, "No stored in runtime server certificate found"));
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, "No stored server certificate was found in runtime"));
         }
         CertificateFactory cf;
         try {
