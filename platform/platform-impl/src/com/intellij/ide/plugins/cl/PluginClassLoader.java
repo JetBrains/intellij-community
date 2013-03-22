@@ -73,7 +73,7 @@ public class PluginClassLoader extends UrlClassLoader {
       return c;
     }
 
-    PluginManager.addPluginClass(name, myPluginId);
+    PluginManager.addPluginClass(name, myPluginId, false);
     throw new ClassNotFoundException(name + " " + this);
   }
 
@@ -108,7 +108,7 @@ public class PluginClassLoader extends UrlClassLoader {
       throw new PluginException(e, myPluginId);
     }
     if (c != null) {
-      PluginManager.addPluginClass(c.getName(), myPluginId);
+      PluginManager.addPluginClass(c.getName(), myPluginId, true);
     }
 
     return c;
