@@ -41,6 +41,10 @@ public class XmlAttributeValuePattern extends XmlElementPattern<XmlAttributeValu
   }
 
   public XmlAttributeValuePattern withLocalName(@NonNls String... names) {
+    if (names.length == 1) {
+      return withLocalName(StandardPatterns.string().equalTo(names[0]));
+    }
+
     return withLocalName(StandardPatterns.string().oneOf(names));
   }
 
