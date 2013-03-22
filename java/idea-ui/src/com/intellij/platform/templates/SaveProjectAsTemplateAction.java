@@ -67,6 +67,7 @@ import java.util.zip.ZipOutputStream;
 public class SaveProjectAsTemplateAction extends AnAction {
 
   private static final Logger LOG = Logger.getInstance(SaveProjectAsTemplateAction.class);
+  private static final String PROJECT_TEMPLATE_XML = "project-template.xml";
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -163,7 +164,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
               final boolean system = ".idea".equals(virtualFile.getParent().getName());
               if (system) {
                 if (!fileName.equals("description.html") &&
-                    !fileName.equals("project-template.xml") &&
+                    !fileName.equals(PROJECT_TEMPLATE_XML) &&
                     !fileName.equals("misc.xml") &&
                     !fileName.equals("modules.xml") &&
                     !fileName.equals("workspace.xml")) {
@@ -174,7 +175,7 @@ public class SaveProjectAsTemplateAction extends AnAction {
               ZipUtil.addFileToZip(finalStream, new File(virtualFile.getPath()), dir.getName() + "/" + relativePath, null, null, new ZipUtil.FileContentProcessor() {
                 @Override
                 public InputStream getContent(final File file) throws IOException {
-                  if (virtualFile.getFileType().isBinary()) return STANDARD.getContent(file);
+                  if (virtualFile.getFileType().isBinary() || PROJECT_TEMPLATE_XML.equals(virtualFile.getName())) return STANDARD.getContent(file);
                   String result = getEncodedContent(virtualFile, project, parameters);
                   return new ByteArrayInputStream(result.getBytes(TemplateModuleBuilder.UTF_8));
                 }
