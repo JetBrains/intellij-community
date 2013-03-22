@@ -237,15 +237,6 @@ public class BreakpointMasterDetailPopupBuilder {
 
     myPopup = myPopupBuilder.setCloseOnEnter(false).createMasterDetailPopup();
 
-    myTreeController.setDelegate(new BreakpointItemsTreeController.BreakpointItemsTreeDelegate() {
-      @Override
-      public void execute(BreakpointItem item) {
-        if (myCallback != null) {
-          myCallback.breakpointChosen(myProject, item, myPopup, true);
-        }
-      }
-    });
-
     initSelection(myBreakpointItems);
 
     myPopup.addListener(new JBPopupListener() {
