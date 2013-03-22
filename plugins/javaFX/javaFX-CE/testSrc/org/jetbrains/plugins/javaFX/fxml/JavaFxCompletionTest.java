@@ -129,6 +129,12 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     doTest("top");
   }
 
+  public void testPrimitiveSubtags() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    complete();
+    assertDoesntContain(myFixture.getLookupElementStrings(), "geomBoundsInvalid");
+  }
+
   public void testIncludedRootAttributes() throws Exception {
     myFixture.addFileToProject("foo.fxml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                                    "<?import javafx.scene.layout.*?>\n" +
