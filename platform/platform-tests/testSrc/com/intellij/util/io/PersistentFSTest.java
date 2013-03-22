@@ -30,8 +30,6 @@ import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
 
-import static org.junit.Assume.assumeTrue;
-
 public class PersistentFSTest extends PlatformTestCase {
   @Override
   public void setUp() throws Exception {
@@ -81,7 +79,7 @@ public class PersistentFSTest extends PlatformTestCase {
   }
 
   public void testDeleteSubstRoots() throws IOException, InterruptedException {
-    assumeTrue(SystemInfo.isWindows);
+    if (!SystemInfo.isWindows) return;
 
     File tempDirectory = FileUtil.createTempDirectory(getTestName(false), null);
     File substRoot = IoTestUtil.createSubst(tempDirectory.getPath());
