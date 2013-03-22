@@ -4,6 +4,7 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.PyMoveAttributeToInitQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -50,9 +51,9 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
       if (containingClass == null) return;
 
       Map<String, PyTargetExpression> attributesInInit = new HashMap<String, PyTargetExpression>();
-      final PyFunction initOrNew = containingClass.findInitOrNew(true);
-      if (initOrNew != null)
-        PyClassImpl.collectInstanceAttributes(initOrNew, attributesInInit);
+      final PyFunction initMethod = containingClass.findMethodByName(PyNames.INIT, true);
+      if (initMethod != null)
+        PyClassImpl.collectInstanceAttributes(initMethod, attributesInInit);
 
       Map<String, PyTargetExpression> attributes = new HashMap<String, PyTargetExpression>();
       PyClassImpl.collectInstanceAttributes(node, attributes);

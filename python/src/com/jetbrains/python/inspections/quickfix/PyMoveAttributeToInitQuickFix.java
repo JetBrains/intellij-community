@@ -6,6 +6,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -45,7 +46,7 @@ public class PyMoveAttributeToInitQuickFix implements LocalQuickFix {
   }
 
   private static boolean addDefinition(PsiElement copy, PyClass containingClass) {
-    PyFunction init = containingClass.findInitOrNew(false);
+    PyFunction init = containingClass.findMethodByName(PyNames.INIT, true);
 
     if (init == null) {
       final PyStatementList classStatementList = containingClass.getStatementList();
