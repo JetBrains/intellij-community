@@ -114,6 +114,10 @@ public class PluginClassLoader extends UrlClassLoader {
     return c;
   }
 
+  public boolean hasLoadedClass(String name) {
+    return findLoadedClass(name) != null;
+  }
+
   public URL findResource(final String name) {
     final long started = myDebugTime ? System.nanoTime():0;
     
