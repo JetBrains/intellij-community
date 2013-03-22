@@ -14,6 +14,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,19 +25,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AddFieldQuickFix implements LocalQuickFix {
 
-  private PyClass myQualifierClass;
+  private PyClassType myQualifierType;
   private final String myInitializer;
   private String myIdentifier;
 
-  public AddFieldQuickFix(String identifier, PyClass qualifierClass, String initializer) {
+  public AddFieldQuickFix(String identifier, PyClassType qualifierType, String initializer) {
     myIdentifier = identifier;
-    myQualifierClass = qualifierClass;
+    myQualifierType = qualifierType;
     myInitializer = initializer;
   }
 
   @NotNull
   public String getName() {
-    return PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", myIdentifier, myQualifierClass.getName());
+    return PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", myIdentifier, myQualifierType.getName());
   }
 
   @NotNull
@@ -66,14 +67,19 @@ public class AddFieldQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     // expect the descriptor to point to the unresolved identifier.
-    PyClass cls = myQualifierClass;
-    String item_name = myIdentifier;
-    if (cls != null) {
-      PsiElement initStatement = addFieldToInit(project, cls, item_name, new CreateFieldCallback(project, item_name, myInitializer));
-      if (initStatement != null) {
-        showTemplateBuilder(initStatement);
-        return;
-      }
+    PyClass cls = myQualifierType.getPyClass();
+    PsiElement initStatement;
+    if (!myQualifierType.isDefinition()) {
+      initStatement = addFieldToInit(project, cls, myIdentifier, new CreateFieldCallback(project, myIdentifier, myInitializer));
+    }
+    else {
+      PyStatement field = PyElementGenerator.getInstance(project)
+        .createFromText(LanguageLevel.getDefault(), PyStatement.class, myIdentifier + " = " + myInitializer);
+      initStatement = PyUtil.addElementToStatementList(field, cls.getStatementList(), true);
+    }
+    if (initStatement != null) {
+      showTemplateBuilder(initStatement);
+      return;
     }
     // somehow we failed. tell about this
     PyUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.field"), MessageType.ERROR);
@@ -83,8 +89,11 @@ public class AddFieldQuickFix implements LocalQuickFix {
     initStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(initStatement);
     if (initStatement instanceof PyAssignmentStatement) {
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(initStatement);
-      builder.replaceElement(((PyAssignmentStatement) initStatement).getAssignedValue(), myInitializer);
-      builder.run();
+      final PyExpression assignedValue = ((PyAssignmentStatement)initStatement).getAssignedValue();
+      if (assignedValue != null) {
+        builder.replaceElement(assignedValue, myInitializer);
+        builder.run();
+      }
     }
   }
 

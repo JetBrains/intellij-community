@@ -54,13 +54,13 @@ public class PyMoveAttributeToInitQuickFix implements LocalQuickFix {
                                                                                          PyFunction.class,
                                                                                          "def __init__(self):\n\t" +
                                                                                          copy.getText());
-      PyUtil.addElementToStatementList(init, classStatementList);
+      PyUtil.addElementToStatementList(init, classStatementList, true);
       return true;
     }
 
     final PyStatementList statementList = init.getStatementList();
     if (statementList == null) return false;
-    PyUtil.addElementToStatementList(copy, statementList);
+    PyUtil.addElementToStatementList(copy, statementList, true);
     return true;
   }
 
