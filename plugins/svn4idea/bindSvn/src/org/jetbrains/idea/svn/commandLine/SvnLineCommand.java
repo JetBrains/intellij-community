@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.AuthenticationCallback;
-import org.jetbrains.idea.svn.Util;
+import org.jetbrains.idea.svn.SvnBindUtil;
 import org.jetbrains.idea.svn.config.SvnBindException;
 
 import java.io.File;
@@ -81,10 +81,14 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
-  public static void runAndWaitProcessErrorsIntoExceptions(final String exePath, final File firstFile, SvnCommandName commandName,
-                                                           final LineCommandListener listener, @Nullable AuthenticationCallback authenticationCallback, final String... parameters) throws SvnBindException {
+  public static void runWithAuthenticationAttempt(final String exePath,
+                                                  final File firstFile,
+                                                  SvnCommandName commandName,
+                                                  final LineCommandListener listener,
+                                                  @Nullable AuthenticationCallback authenticationCallback,
+                                                  final String... parameters) throws SvnBindException {
     File base = firstFile.isDirectory() ? firstFile : firstFile.getParentFile();
-    base = Util.correctUpToExistingParent(base);
+    base = SvnBindUtil.correctUpToExistingParent(base);
 
     listener.baseDirectory(base);
 
@@ -194,7 +198,7 @@ public class SvnLineCommand extends SvnCommand {
   }
 
   private static void cleanup(String exePath, SvnCommandName commandName, File base) throws SvnBindException {
-    File wcRoot = Util.getWcRoot(base);
+    File wcRoot = SvnBindUtil.getWcRoot(base);
     if (wcRoot == null) throw new SvnBindException("Can not find working copy root for: " + base.getPath());
 
     //cleanup -> check command type
@@ -252,7 +256,7 @@ public class SvnLineCommand extends SvnCommand {
     command.addParameters(parameters);
     final AtomicReference<Throwable> exceptionRef = new AtomicReference<Throwable>();
     // several threads
-    command.addListener(new LineProcessEventListener() {
+    command.addLineListener(new LineProcessEventListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (SvnCommand.LOG.isDebugEnabled()) {
@@ -339,7 +343,7 @@ public class SvnLineCommand extends SvnCommand {
     myLineListeners.getMulticaster().onLineAvailable(trimmed, outputType);
   }
 
-  public void addListener(LineProcessEventListener listener) {
+  public void addLineListener(LineProcessEventListener listener) {
     myLineListeners.addListener(listener);
     super.addListener(listener);
   }

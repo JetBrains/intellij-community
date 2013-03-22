@@ -52,4 +52,11 @@ public class IdeaCommitHandler implements CommitEventHandler {
       myPi.setText2(SvnBundle.message("progress.text2.transmitting.delta", target));
     }
   }
+
+  @Override
+  public void committedRevision(long revNum) {
+    if (myPi == null) return;
+    myPi.checkCanceled();
+    myPi.setText2(SvnBundle.message("status.text.comitted.revision", revNum));
+  }
 }

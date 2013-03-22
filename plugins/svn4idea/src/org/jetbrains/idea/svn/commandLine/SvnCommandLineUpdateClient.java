@@ -162,9 +162,10 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
           updatedToRevision.set(myRevisions);
         }
       };
-      SvnLineCommand.runAndWaitProcessErrorsIntoExceptions(SvnApplicationSettings.getInstance().getCommandLinePath(),
-        base, SvnCommandName.up, listener,
-        new IdeaSvnkitBasedAuthenticationCallback(SvnVcs.getInstance(myProject)), parameters.toArray(new String[parameters.size()]));
+      SvnLineCommand.runWithAuthenticationAttempt(SvnApplicationSettings.getInstance().getCommandLinePath(),
+                                                  base, SvnCommandName.up, listener,
+                                                  new IdeaSvnkitBasedAuthenticationCallback(SvnVcs.getInstance(myProject)),
+                                                  parameters.toArray(new String[parameters.size()]));
     }
     catch (SvnBindException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));

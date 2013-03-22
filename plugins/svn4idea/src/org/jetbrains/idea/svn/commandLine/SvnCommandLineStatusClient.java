@@ -21,8 +21,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.Convertor;
+import org.jetbrains.idea.svn.SvnBindUtil;
 import org.jetbrains.idea.svn.SvnUtil;
-import org.jetbrains.idea.svn.Util;
 import org.jetbrains.idea.svn.portable.PortableStatus;
 import org.jetbrains.idea.svn.portable.SvnExceptionWrapper;
 import org.jetbrains.idea.svn.portable.SvnStatusClientI;
@@ -97,7 +97,7 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
                        final ISVNStatusHandler handler,
                        final Collection changeLists) throws SVNException {
     File base = path.isDirectory() ? path : path.getParentFile();
-    base = Util.correctUpToExistingParent(base);
+    base = SvnBindUtil.correctUpToExistingParent(base);
 
     final SVNInfo infoBase = myInfoClient.doInfo(base, revision);
 
