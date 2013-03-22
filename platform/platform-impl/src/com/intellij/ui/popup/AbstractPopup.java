@@ -1489,8 +1489,9 @@ public class AbstractPopup implements JBPopup {
 
   private class MyWindowListener extends WindowAdapter {
     @Override
-    public void windowClosed(final WindowEvent e) {
+    public void windowClosing(final WindowEvent e) {
       resetWindow();
+      cancel();
     }
   }
 
