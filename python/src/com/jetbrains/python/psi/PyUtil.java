@@ -1202,5 +1202,30 @@ public class PyUtil {
     return element instanceof PsiWhiteSpace ? null : element;
   }
 
+
+  public static PsiElement addElementToStatementList(@NotNull PsiElement element, @NotNull PyStatementList statementList) {
+    final PsiElement firstChild = statementList.getFirstChild();
+    if (firstChild == statementList.getLastChild() && firstChild instanceof PyPassStatement) {
+      element = firstChild.replace(element);
+    }
+    else {
+      final PyStatement[] statements = statementList.getStatements();
+      String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "";
+      if (PyNames.INIT.equals(name) && statements.length > 0) {
+        final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(statementList, PyDocStringOwner.class);
+        final PyStatement firstStatement = statements[0];
+        if (docStringOwner != null && firstStatement instanceof PyExpressionStatement &&
+            ((PyExpressionStatement)firstStatement).getExpression() == docStringOwner.getDocStringExpression()) {
+          element = statementList.addAfter(element, firstStatement);
+        }
+        else
+          element = statementList.addBefore(element, firstStatement);
+      }
+      else {
+        element = statementList.add(element);
+      }
+    }
+    return element;
+  }
 }
 

@@ -29,11 +29,14 @@ import static com.jetbrains.python.psi.PyUtil.sure;
 public class AddMethodQuickFix implements LocalQuickFix {
 
   private PyClassType myQualifierType;
+  private final boolean myReplaceUsage;
   private String myIdentifier;
 
-  public AddMethodQuickFix(String identifier, PyClassType qualifierType) {
+  public AddMethodQuickFix(String identifier, PyClassType qualifierType,
+                           boolean replaceUsage) {
     myIdentifier = identifier;
     myQualifierType = qualifierType;
+    myReplaceUsage = replaceUsage;
   }
 
   @NotNull
@@ -62,10 +65,12 @@ public class AddMethodQuickFix implements LocalQuickFix {
       PyFunctionBuilder builder = new PyFunctionBuilder(item_name);
       PsiElement pe = problem_elt.getParent();
       String deco_name = null; // set to non-null to add a decorator
-      sure(pe instanceof PyCallExpression);
-      PyArgumentList arglist = ((PyCallExpression)pe).getArgumentList();
-      sure(arglist);
-      final PyExpression[] args = arglist.getArguments();
+      PyExpression[] args = new PyExpression[0];
+      if (pe instanceof PyCallExpression) {
+        PyArgumentList arglist = ((PyCallExpression)pe).getArgumentList();
+        sure(arglist);
+        args = arglist.getArguments();
+      }
       boolean made_instance = false;
       if (call_by_class) {
         if (args.length > 0) {
@@ -107,17 +112,10 @@ public class AddMethodQuickFix implements LocalQuickFix {
         PyDecoratorList deco_list = generator.createFromText(LanguageLevel.getDefault(), PyDecoratorList.class, "@" + deco_name + "\ndef foo(): pass", new int[]{0, 0});
         meth.addBefore(deco_list, meth.getFirstChild()); // in the very beginning
       }
-      
-      final PsiElement first_stmt = cls_stmt_list.getFirstChild();
-      if (first_stmt == cls_stmt_list.getLastChild() && first_stmt instanceof PyPassStatement) {
-        // replace the lone 'pass'
-        meth = (PyFunction) first_stmt.replace(meth);
-      }
-      else {
-        // add ourselves to the bottom
-        meth = (PyFunction) cls_stmt_list.add(meth);
-      }
-      showTemplateBuilder(meth);
+
+      meth = (PyFunction)PyUtil.addElementToStatementList(meth, cls_stmt_list);
+      if (myReplaceUsage)
+        showTemplateBuilder(meth);
     }
     catch (IncorrectOperationException ignored) {
       // we failed. tell about this
@@ -138,7 +136,9 @@ public class AddMethodQuickFix implements LocalQuickFix {
       }
     );
 
-    builder.replaceElement(method.getStatementList(), PyNames.PASS);
+    final PyStatementList statementList = method.getStatementList();
+    if (statementList == null) return;
+    builder.replaceElement(statementList, PyNames.PASS);
 
     builder.run();
   }

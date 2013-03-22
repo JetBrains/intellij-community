@@ -46,42 +46,21 @@ public class PyMoveAttributeToInitQuickFix implements LocalQuickFix {
   }
 
   private static boolean addDefinition(PsiElement copy, PyClass containingClass) {
-    PyFunction init = containingClass.findMethodByName(PyNames.INIT, true);
+    PyFunction init = containingClass.findMethodByName(PyNames.INIT, false);
 
     if (init == null) {
       final PyStatementList classStatementList = containingClass.getStatementList();
-      final PyStatement[] statements = classStatementList.getStatements();
       init = PyElementGenerator.getInstance(containingClass.getProject()).createFromText(LanguageLevel.forElement(containingClass),
                                                                                          PyFunction.class,
                                                                                          "def __init__(self):\n\t" +
                                                                                          copy.getText());
-      if (statements.length > 0) {
-        final PyStatement statement = statements[0];
-        if (statement instanceof PyExpressionStatement &&
-            ((PyExpressionStatement)statement).getExpression() == containingClass.getDocStringExpression())
-          classStatementList.addAfter(init, statement);
-        else
-          classStatementList.addBefore(init, statement);
-      }
-      else {
-        classStatementList.add(init);
-      }
+      PyUtil.addElementToStatementList(init, classStatementList);
       return true;
     }
+
     final PyStatementList statementList = init.getStatementList();
     if (statementList == null) return false;
-
-    final PyStatement[] statements = statementList.getStatements();
-    if (statements.length == 1) {
-      final PyStatement firstStatement = statements[0];
-      if (firstStatement instanceof PyPassStatement) {
-        firstStatement.replace(copy);
-      }
-      else
-        statementList.addAfter(copy, statements[statements.length - 1]);
-    }
-    else
-      statementList.addAfter(copy, statements[statements.length - 1]);
+    PyUtil.addElementToStatementList(copy, statementList);
     return true;
   }
 
