@@ -148,6 +148,10 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     doTest("layoutY");
   }
 
+  public void testAllowPropertyTypeClass() throws Exception {
+    doTest("ColumnConstraints");
+  }
+
   public void testReadOnly() throws Exception {
     configureByFile(getTestName(true) + ".fxml");
     assertTrue(myItems.length > 0);
