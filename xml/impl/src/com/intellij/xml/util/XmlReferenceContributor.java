@@ -16,7 +16,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaRefer
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.xml.*;
 
-import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.patterns.XmlPatterns.*;
 
 /**
@@ -82,7 +81,7 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(
       xmlAttributeValue().withLocalName("schemaLocation","namespace").
         withSuperParent(2,
-                        xmlTag().withNamespace(XmlUtil.SCHEMA_URIS).withLocalName(string().oneOf("import", "include","redefine"))),
+                        xmlTag().withNamespace(XmlUtil.SCHEMA_URIS).withLocalName("import", "include","redefine")),
       uriProvider);
 
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, null, URIReferenceProvider.ELEMENT_FILTER, true, uriProvider);
