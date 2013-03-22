@@ -427,7 +427,7 @@ catch (<warning descr="Exception 'java.io.IOException' has already been caught">
     testHighlighting('''\
 try {}
 catch (e){}
-catch (<warning descr="Exception 'java.lang.Throwable' has already been caught">e</warning>){}
+catch (<warning descr="Exception 'java.lang.Exception' has already been caught">e</warning>){}
 ''')
   }
 
