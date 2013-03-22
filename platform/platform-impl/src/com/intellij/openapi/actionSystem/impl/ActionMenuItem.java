@@ -54,6 +54,7 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
   private final ActionRef<AnAction> myAction;
   private final Presentation myPresentation;
   private final String myPlace;
+  private final boolean myInsideCheckedGroup;
   private DataContext myContext;
   private AnActionEvent myEvent;
   private MenuItemSynchronizer myMenuItemSynchronizer;
@@ -66,13 +67,15 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
                         @NotNull final String place,
                         final DataContext context,
                         final boolean enableMnemonics,
-                        final boolean prepareNow) {
+                        final boolean prepareNow,
+                        final boolean insideCheckedGroup) {
     myAction = ActionRef.fromAction(action);
     myPresentation = presentation;
     myPlace = place;
     myContext = context;
     myEnableMnemonics = enableMnemonics;
     myToggleable = action instanceof Toggleable;
+    myInsideCheckedGroup = insideCheckedGroup;
 
     myEvent = new AnActionEvent(null, context, place, myPresentation, ActionManager.getInstance(), 0);
     addActionListener(new ActionTransmitter());
@@ -264,7 +267,7 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
   }
 
   private void updateIcon(AnAction action) {
-    if (isToggleable() && myPresentation.getIcon() == null) {
+    if (isToggleable() && (myPresentation.getIcon() == null || myInsideCheckedGroup)) {
       action.update(myEvent);
       myToggled = Boolean.TRUE.equals(myEvent.getPresentation().getClientProperty(Toggleable.SELECTED_PROPERTY));
       if ((ActionPlaces.MAIN_MENU.equals(myPlace) && SystemInfo.isMacSystemMenu) ||
