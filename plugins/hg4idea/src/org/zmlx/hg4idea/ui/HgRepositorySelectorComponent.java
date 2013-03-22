@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.event.ActionListener;
@@ -30,6 +31,12 @@ public class HgRepositorySelectorComponent {
     }
     repositorySelector.setModel(model);
     mainPanel.setVisible(roots.size() > 1);
+  }
+
+  public void setSelectedRoot(@Nullable VirtualFile repository) {
+    if (repository != null) {
+      repositorySelector.setSelectedItem(new RepositoryDisplay(repository));
+    }
   }
 
   public void addActionListener(ActionListener actionListener) {
@@ -54,6 +61,11 @@ public class HgRepositorySelectorComponent {
     @Override
     public String toString() {
       return repo.getPresentableUrl();
+    }
+
+    @Override
+    public boolean equals(Object obj) {
+      return obj instanceof RepositoryDisplay && this.repo.equals(((RepositoryDisplay)obj).repo);
     }
   }
 

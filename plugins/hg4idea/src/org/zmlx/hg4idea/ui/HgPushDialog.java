@@ -53,7 +53,7 @@ public class HgPushDialog extends DialogWrapper {
   private EditorComboBox myRepositoryURL;
   private String myCurrentRepositoryUrl;
 
-  public HgPushDialog(Project project, Collection<VirtualFile> repos, List<HgTagBranch> branches) {
+  public HgPushDialog(Project project, Collection<VirtualFile> repos, List<HgTagBranch> branches, @Nullable VirtualFile selectedRepo) {
     super(project, false);
     myProject = project;
 
@@ -74,6 +74,7 @@ public class HgPushDialog extends DialogWrapper {
     init();
 
     hgRepositorySelectorComponent.setRoots(repos);
+    hgRepositorySelectorComponent.setSelectedRoot(selectedRepo);
     updateBranchComboBox(branches);
     updateRepository();
   }

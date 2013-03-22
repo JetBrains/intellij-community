@@ -18,6 +18,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgResolveStatusEnum;
@@ -52,8 +53,9 @@ public class HgRunConflictResolverDialog extends DialogWrapper {
     return repositorySelector.getRepository();
   }
 
-  public void setRoots(Collection<VirtualFile> repos) {
+  public void setRoots(Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo) {
     repositorySelector.setRoots(repos);
+    repositorySelector.setSelectedRoot(selectedRepo);
     onChangeRepository();
   }
 

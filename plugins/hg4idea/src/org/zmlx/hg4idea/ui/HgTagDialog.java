@@ -16,6 +16,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -59,8 +60,9 @@ public class HgTagDialog extends DialogWrapper {
     return hgRepositorySelectorComponent.getRepository();
   }
 
-  public void setRoots(Collection<VirtualFile> repos) {
+  public void setRoots(Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo) {
     hgRepositorySelectorComponent.setRoots(repos);
+    hgRepositorySelectorComponent.setSelectedRoot(selectedRepo);
     update();
   }
 

@@ -226,7 +226,7 @@ public abstract class HgUtil {
    * @see #getHgRootOrNull(com.intellij.openapi.project.Project, com.intellij.openapi.vcs.FilePath)
    */
   @Nullable
-  public static VirtualFile getHgRootOrNull(Project project, VirtualFile file) {
+  public static VirtualFile getHgRootOrNull(Project project, @NotNull VirtualFile file) {
     return getHgRootOrNull(project, VcsUtil.getFilePath(file.getPath()));
   }
 

@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
@@ -33,20 +34,20 @@ import java.util.Collection;
 
 public class HgUpdateToAction extends HgAbstractGlobalAction {
 
-  protected void execute(final Project project, final Collection<VirtualFile> repos) {
+  protected void execute(final Project project, final Collection<VirtualFile> repos, @Nullable final VirtualFile selectedRepo) {
     HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<HgBranchesAndTags>() {
       @Override
       public void consume(HgBranchesAndTags info) {
-        showUpdateDialogAndExecute(project, repos, info);
+        showUpdateDialogAndExecute(project, repos, selectedRepo, info);
       }
     });
   }
 
   private void showUpdateDialogAndExecute(final Project project,
-                                          Collection<VirtualFile> repos,
+                                          Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo,
                                           HgBranchesAndTags branchesAndTags) {
     final HgUpdateToDialog dialog = new HgUpdateToDialog(project);
-    dialog.setRoots(repos, branchesAndTags);
+    dialog.setRoots(repos, selectedRepo, branchesAndTags);
     dialog.show();
     if (dialog.isOK()) {
       FileDocumentManager.getInstance().saveAllDocuments();
