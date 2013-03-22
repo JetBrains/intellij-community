@@ -20,6 +20,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
+import org.apache.subversion.javahl.types.Revision;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.commandLine.LineCommandListener;
 import org.jetbrains.idea.svn.commandLine.SvnCommandName;
@@ -38,19 +40,14 @@ import java.util.*;
  * Time: 4:56 PM
  */
 public class SvnCommitRunner {
-  private final static String ourTransmittingData = "Transmitting file data";
-  private final static String ourCommittedRevision = "Committed revision";
-
-  private SvnBindException myException;
   private final String myExePath;
-  @Nullable private final CommitEventHandler myHandler;
   @Nullable private final AuthenticationCallback myAuthenticationCallback;
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.SvnCommitRunner");
-  private long myCommittedRevision = -1;
+  private SvnCommitRunner.CommandListener myCommandListener;
 
-  public SvnCommitRunner(String path, @Nullable CommitEventHandler handler, @Nullable AuthenticationCallback authenticationCallback) {
+  public SvnCommitRunner(@NotNull String path, @Nullable CommitEventHandler handler, @Nullable AuthenticationCallback authenticationCallback) {
     myExePath = path;
-    myHandler = handler;
+    myCommandListener = new CommandListener(handler);
     myAuthenticationCallback = authenticationCallback;
   }
 
@@ -61,11 +58,11 @@ public class SvnCommitRunner {
                      boolean keepChangelist,
                      String[] changelists,
                      Map revpropTable) throws ClientException {
-    if (paths.length == 0) return -1;
+    if (paths.length == 0) return Revision.SVN_INVALID_REVNUM;
 
     final List<String> parameters = new ArrayList<String>();
     parameters.add("--depth");
-    parameters.add(Util.getDepthName(depth));
+    parameters.add(SvnBindUtil.getDepthName(depth));
     if (noUnlock) {
       parameters.add("--no-unlock");
     }
@@ -73,7 +70,7 @@ public class SvnCommitRunner {
       parameters.add("--keep-changelists");
     }
     if (changelists != null && changelists.length > 0) {
-      Util.changelistsToCommand(changelists, parameters);
+      SvnBindUtil.changelistsToCommand(changelists, parameters);
     }
     if (revpropTable != null && ! revpropTable.isEmpty()) {
       final Set<Map.Entry<Object, Object>> set = revpropTable.entrySet();
@@ -88,21 +85,36 @@ public class SvnCommitRunner {
     parameters.addAll(Arrays.asList(paths));
 
     try {
-      SvnLineCommand.runAndWaitProcessErrorsIntoExceptions(myExePath, new File(paths[0]), SvnCommandName.ci,
-                                                           new CommandListener(), myAuthenticationCallback, ArrayUtil.toStringArray(parameters));
+      SvnLineCommand.runWithAuthenticationAttempt(myExePath, new File(paths[0]), SvnCommandName.ci,
+                                                  myCommandListener, myAuthenticationCallback, ArrayUtil.toStringArray(parameters));
     }
     catch (SvnBindException e) {
-      throw BindClientException.create(e, -1);
+      throw BindClientException.create(e, Revision.SVN_INVALID_REVNUM);
     }
-    if (myException != null) {
-      throw BindClientException.create(myException, -1);
-    }
+    myCommandListener.throwExceptionIfOccurred();
 
-    return myCommittedRevision;
+    return myCommandListener.getCommittedRevision();
   }
 
-  private class CommandListener extends LineCommandListener {
+  private static class CommandListener extends LineCommandListener {
+    @Nullable private final CommitEventHandler myHandler;
+    private SvnBindException myException;
+    private long myCommittedRevision = Revision.SVN_INVALID_REVNUM;
     private File myBase;
+
+    public CommandListener(@Nullable CommitEventHandler handler) {
+      myHandler = handler;
+    }
+
+    public void throwExceptionIfOccurred() throws BindClientException {
+      if (myException != null) {
+        throw BindClientException.create(myException, Revision.SVN_INVALID_REVNUM);
+      }
+    }
+
+    private long getCommittedRevision() {
+      return myCommittedRevision;
+    }
 
     @Override
     public void baseDirectory(File file) {
@@ -124,14 +136,14 @@ public class SvnCommitRunner {
 
     private void parseLine(String line) throws SvnBindException {
       if (StringUtil.isEmptyOrSpaces(line)) return;
-      if (line.startsWith(ourTransmittingData)) {
+      if (line.startsWith(CommitEventType.transmittingDeltas.getText())) {
         if (myHandler != null) {
           myHandler.commitEvent(CommitEventType.transmittingDeltas, myBase);
         }
         return;
       }
-      if (line.startsWith(ourCommittedRevision)) {
-        final String substring = line.substring(ourCommittedRevision.length());
+      if (line.startsWith(CommitEventType.committedRevision.getText())) {
+        final String substring = line.substring(CommitEventType.committedRevision.getText().length());
         int cnt = 0;
         while (StringUtil.isWhiteSpace(substring.charAt(cnt))) {
           ++ cnt;
@@ -144,6 +156,9 @@ public class SvnCommitRunner {
         if (num.length() > 0) {
           try {
             myCommittedRevision = Long.parseLong(num.toString());
+            if (myHandler != null) {
+              myHandler.committedRevision(myCommittedRevision);
+            }
           } catch (NumberFormatException e) {
             final String message = "Wrong committed revision number: " + num.toString() + ", string: " + line;
             LOG.info(message, e);
