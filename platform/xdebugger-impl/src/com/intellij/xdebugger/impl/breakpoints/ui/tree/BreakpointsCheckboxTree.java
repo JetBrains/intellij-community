@@ -31,8 +31,6 @@ public class BreakpointsCheckboxTree extends CheckboxTree {
   }
 
   interface Delegate {
-    void didSelectNode(CheckedTreeNode node);
-
     void nodeStateChanged(CheckedTreeNode node);
   }
 
