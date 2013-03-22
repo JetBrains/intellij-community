@@ -104,6 +104,7 @@ import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.security.cert.CertificateException;
 import java.util.*;
+import java.util.concurrent.TimeUnit;
 import java.util.logging.Level;
 
 @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
@@ -941,7 +942,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     private final boolean myLoggingEnabled;
     private final boolean myLogNative;
     private final Logger myLog;
-    private final static long ourErrorNotificationInterval = 120000;
+    private final static long ourErrorNotificationInterval = TimeUnit.MINUTES.toMillis(2);
     private long myPreviousTime = 0;
 
     public JavaSVNDebugLogger(boolean loggingEnabled, boolean logNative, Logger log) {
