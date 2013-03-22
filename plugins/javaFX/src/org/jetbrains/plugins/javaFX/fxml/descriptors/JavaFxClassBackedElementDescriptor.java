@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.openapi.project.Project;
@@ -26,6 +27,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -150,14 +152,27 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     final String parentTagName = contextTag.getName();
     if (myPsiClass != null) {
       if (!FxmlConstants.FX_DEFINE.equals(parentTagName)) {
-        final JavaFxPropertyElementDescriptor elementDescriptor = new JavaFxPropertyElementDescriptor(myPsiClass, name, false);
+        JavaFxPropertyElementDescriptor elementDescriptor = new JavaFxPropertyElementDescriptor(myPsiClass, name, false);
         if (FxmlConstants.FX_ROOT.equals(parentTagName)) {
           final PsiField fieldByName = myPsiClass.findFieldByName(name, true);
           if (fieldByName != null) {
             return elementDescriptor;
           }
-        } else if (elementDescriptor.getDeclaration() != null) {
-          return elementDescriptor;
+        } else {
+          final PsiAnnotation defaultProperty = AnnotationUtil
+            .findAnnotationInHierarchy(myPsiClass, Collections.singleton(JavaFxCommonClassNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
+          if (defaultProperty != null) {
+            final PsiAnnotationMemberValue defaultPropertyAttributeValue = defaultProperty.findAttributeValue("value");
+            if (defaultPropertyAttributeValue instanceof PsiLiteralExpression) {
+              final Object value = ((PsiLiteralExpression)defaultPropertyAttributeValue).getValue();
+              if (value instanceof String && ((String)value).equalsIgnoreCase(name) && myPsiClass.findFieldByName(name, true) == null) {
+                elementDescriptor = null;
+              }
+            }
+          }
+          if (elementDescriptor != null && elementDescriptor.getDeclaration() != null) {
+            return elementDescriptor;
+          }
         }
       }
     }
