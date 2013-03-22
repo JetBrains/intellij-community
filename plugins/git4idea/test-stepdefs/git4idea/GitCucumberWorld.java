@@ -40,7 +40,10 @@ import java.lang.reflect.Modifier;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Random;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.dvcs.test.Executor.cd;
@@ -140,7 +143,7 @@ public class GitCucumberWorld {
 
   @After
   public void tearDown() throws Throwable {
-    stopPendingTasks();
+    waitForPendingTasks();
     nullifyStaticFields();
     edt(new ThrowableRunnable<Exception>() {
       @Override
@@ -154,9 +157,9 @@ public class GitCucumberWorld {
     myAsyncTasks.add(ApplicationManager.getApplication().executeOnPooledThread(runnable));
   }
 
-  private static void stopPendingTasks() {
+  private static void waitForPendingTasks() throws InterruptedException, ExecutionException, TimeoutException {
     for (Future future : myAsyncTasks) {
-      future.cancel(true);
+      future.get(30, TimeUnit.SECONDS);
     }
   }
 
