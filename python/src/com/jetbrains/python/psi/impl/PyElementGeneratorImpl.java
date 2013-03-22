@@ -304,6 +304,17 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     }
   }
 
+  @Override
+  public PyPassStatement createPassStatement() {
+    final PyStatementList statementList = createPassStatementList();
+    return (PyPassStatement)statementList.getStatements()[0];
+  }
+
+  private PyStatementList createPassStatementList() {
+    final PyFunction function = createFromText(LanguageLevel.getDefault(), PyFunction.class, "def foo():\n\tpass");
+    return function.getStatementList();
+  }
+
   public PyExpressionStatement createDocstring(String content) {
     return createFromText(LanguageLevel.getDefault(),
                           PyExpressionStatement.class, content + "\n");

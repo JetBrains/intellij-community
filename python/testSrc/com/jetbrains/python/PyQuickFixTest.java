@@ -115,16 +115,6 @@ public class PyQuickFixTest extends PyTestCase {
                      true, true);
   }
 
-  public void testAddMethodFromInstance() {
-    doInspectionTest("AddMethodFromInstance.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "y", "A"),
-                     true, true);
-  }
-
-  public void testAddMethodFromMethod() {
-    doInspectionTest("AddMethodFromMethod.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.method.$0.to.class.$1", "y", "A"),
-                     true, true);
-  }
-
   public void testRemoveTrailingSemicolon() {
     doInspectionTest("RemoveTrailingSemicolon.py", PyTrailingSemicolonInspection.class, PyBundle.message("QFIX.remove.trailing.semicolon"),
                      true, true);

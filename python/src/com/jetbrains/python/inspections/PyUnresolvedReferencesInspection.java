@@ -684,7 +684,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
           return true;
         }
         final String docString = cls.getDocStringValue();
-        if (docString != null && docString.indexOf("@DynamicAttrs") != -1) {
+        if (docString != null && docString.contains("@DynamicAttrs")) {
           return true;
         }
       }
@@ -697,7 +697,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         PyClass cls = ((PyClassType)qtype).getPyClass();
         if (!PyBuiltinCache.getInstance(element).hasInBuiltins(cls)) {
           if (element.getParent() instanceof PyCallExpression) {
-            actions.add(new AddMethodQuickFix(refText, (PyClassType)qtype));
+            actions.add(new AddMethodQuickFix(refText, (PyClassType)qtype, true));
           }
           else if (!(reference instanceof PyOperatorReference)) {
             actions.add(new AddFieldQuickFix(refText, cls, "None"));
