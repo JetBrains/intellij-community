@@ -20,17 +20,13 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.action.HgCommandResultNotifier;
-import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 /**
  * @author Nadya Zabrodina
@@ -39,18 +35,25 @@ public class HgUiUtil {
 
   public static void loadBranchesInBackgroundableAndExecuteAction(final Project project,
                                                                   final Collection<VirtualFile> repos,
-                                                                  final Consumer<Map<VirtualFile, List<HgTagBranch>>> successHandler) {
-    final Map<VirtualFile, List<HgTagBranch>> branchesForRepos = new HashMap<VirtualFile, List<HgTagBranch>>();
+                                                                  final Consumer<HgBranchesAndTags> successHandler) {
+    final HgBranchesAndTags branchTagInfo = new HgBranchesAndTags();
     new Task.Backgroundable(project, "Collecting information...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
         for (final VirtualFile repo : repos) {
-          HgCommandResult result = new HgTagBranchCommand(project, repo).collectBranches();
+          HgTagBranchCommand tagBranchCommand = new HgTagBranchCommand(project, repo);
+          HgCommandResult result = tagBranchCommand.collectBranches();
           if (result == null) {
             indicator.cancel();
             return;
           }
-          branchesForRepos.put(repo, HgTagBranchCommand.parseResult(result));
+          branchTagInfo.addBranches(repo, HgTagBranchCommand.parseResult(result));
+          result = tagBranchCommand.collectTags();
+          if (result == null) {
+            indicator.cancel();
+            return;
+          }
+          branchTagInfo.addTags(repo, HgTagBranchCommand.parseResult(result));
         }
       }
 
@@ -62,7 +65,7 @@ public class HgUiUtil {
 
       @Override
       public void onSuccess() {
-        successHandler.consume(branchesForRepos);
+        successHandler.consume(branchTagInfo);
       }
     }.queue();
   }

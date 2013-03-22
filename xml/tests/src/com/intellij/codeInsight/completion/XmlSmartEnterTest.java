@@ -84,6 +84,11 @@ public class XmlSmartEnterTest extends LightCodeInsightTestCase {
     checkResultByFile("", BASE_PATH + "/" + "CompleteMissingTag_after_5.xml", true);
   }
 
+  public void testSmartCloseTag2() throws Exception {
+    _doTest("idea103417_1.xml", "idea103417_1_after.xml");
+    _doTest("idea103417_2.xml", "idea103417_2_after.xml");
+  }
+
   private void _doTestCompletion(final String name, final String after_name) throws Exception {
     configureByFile(BASE_PATH + "/" + name);
     performCompletionAction();

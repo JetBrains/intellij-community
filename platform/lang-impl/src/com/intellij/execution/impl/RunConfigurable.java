@@ -39,6 +39,7 @@ import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBScrollPane;
+import com.intellij.ui.components.labels.ActionLink;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IconUtil;
@@ -107,6 +108,7 @@ class RunConfigurable extends BaseConfigurable {
   private Map<ConfigurationFactory, Configurable> myStoredComponents = new HashMap<ConfigurationFactory, Configurable>();
   private ToolbarDecorator myToolbarDecorator;
   private boolean isFolderCreating;
+  private RunConfigurable.MyToolbarAddAction myAddAction = new MyToolbarAddAction();
 
   public RunConfigurable(final Project project) {
     this(project, null);
@@ -325,7 +327,7 @@ class RunConfigurable extends BaseConfigurable {
         else {
           mySelectedConfigurable = null;
         }
-        TreeUtil.selectInTree(defaults, true, myTree);
+        //TreeUtil.selectInTree(defaults, true, myTree);
         drawPressAddButtonMessage(null);
       }
     });
@@ -474,7 +476,7 @@ class RunConfigurable extends BaseConfigurable {
     panel.setBorder(new EmptyBorder(30, 0, 0, 0));
     panel.add(new JLabel("Press the"));
 
-    JLabel addIcon = new JLabel(IconUtil.getAddIcon());
+    ActionLink addIcon = new ActionLink("", ADD_ICON, myAddAction);
     addIcon.setBorder(new EmptyBorder(0, 0, 0, 5));
     panel.add(addIcon);
 
@@ -511,7 +513,7 @@ class RunConfigurable extends BaseConfigurable {
     MyMoveAction moveUpAction = new MyMoveAction(ExecutionBundle.message("move.up.action.name"), null, IconUtil.getMoveUpIcon(), -1);
     MyMoveAction moveDownAction = new MyMoveAction(ExecutionBundle.message("move.down.action.name"), null, IconUtil.getMoveDownIcon(), 1);
     myToolbarDecorator = ToolbarDecorator.createDecorator(myTree).setAsUsualTopToolbar()
-      .setAddAction(new MyToolbarAddAction()).setAddActionName(ExecutionBundle.message("add.new.run.configuration.acrtion.name"))
+      .setAddAction(myAddAction).setAddActionName(ExecutionBundle.message("add.new.run.configuration.acrtion.name"))
       .setRemoveAction(removeAction).setRemoveActionUpdater(removeAction)
       .setRemoveActionName(ExecutionBundle.message("remove.run.configuration.action.name"))
       .setMoveUpAction(moveUpAction).setMoveUpActionName(ExecutionBundle.message("move.up.action.name")).setMoveUpActionUpdater(moveUpAction)

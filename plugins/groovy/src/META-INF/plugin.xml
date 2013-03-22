@@ -267,7 +267,7 @@
     <!-- Groovy language -->
     <syntaxHighlighter key="Groovy" implementationClass="org.jetbrains.plugins.groovy.highlighter.GroovySyntaxHighlighter"/>
 
-    <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GroovyAnnotator"/>
+    <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.annotator.GrAnnotatorImpl"/>
     <annotator language="Groovy" implementationClass="org.jetbrains.plugins.groovy.dsl.GroovyDslAnnotator"/>
 
     <lang.psiStructureViewFactory language="Groovy"
@@ -541,6 +541,11 @@
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
                      key="no.return.display.name" groupKey="groovy.dfa.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.noReturnMethod.MissingReturnInspection"/>
+    <localInspection language="Groovy" groupPath="Groovy" shortName="TypeCustomizer"
+                     displayName="Type customizer inspection"
+                     bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
+                     groupKey="other" enabledByDefault="true" level="WARNING"
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.resources.TypeCustomizerInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyAssignabilityCheck" displayName="Incompatible type assignments"
                      groupName="Assignment issues"
                      enabledByDefault="true" level="WARNING"

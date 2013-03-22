@@ -15,13 +15,11 @@
  */
 package com.intellij.codeInsight.daemon.quickFix
 import com.intellij.codeInsight.lookup.LookupManager
-import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.DataManager
 import com.intellij.openapi.actionSystem.DataContext
 import com.intellij.openapi.actionSystem.IdeActions
 import com.intellij.openapi.editor.actionSystem.EditorActionManager
-
 /**
  * @author ven
  */
@@ -41,7 +39,7 @@ class SomeOuterClassWithLongName {
     }
 }
 """
-    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
+    TemplateManagerImpl.setTemplateTesting(project, testRootDisposable);
     doAction("Create Method 'addSubGroup'")
     def state = TemplateManagerImpl.getTemplateState(getEditor())
     //skip void return type
@@ -76,12 +74,6 @@ class SomeOuterClassWithLongName {
 }
 """
 
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
-    super.tearDown()
   }
 
   @Override

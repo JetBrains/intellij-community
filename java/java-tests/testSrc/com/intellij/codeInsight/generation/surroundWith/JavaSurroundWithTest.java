@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.generation.surroundWith;
 
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.surroundWith.Surrounder;
@@ -107,47 +106,23 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
   }
 
   public void testSurroundBinaryWithCast() {
-    final TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(getProject());
-    templateManager.setTemplateTesting(true);
-    try {
-      doTest(getTestName(false), new JavaWithCastSurrounder());
-    }
-    finally {
-      templateManager.setTemplateTesting(false);
-    }
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    doTest(getTestName(false), new JavaWithCastSurrounder());
   }
 
   public void testSurroundConditionalWithCast() {
-    final TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(getProject());
-    templateManager.setTemplateTesting(true);
-    try {
-      doTest(getTestName(false), new JavaWithCastSurrounder());
-    }
-    finally {
-      templateManager.setTemplateTesting(false);
-    }
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    doTest(getTestName(false), new JavaWithCastSurrounder());
   }
 
   public void testSurroundAssignmentWithCast() {
-    final TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(getProject());
-    templateManager.setTemplateTesting(true);
-    try {
-      doTest(getTestName(false), new JavaWithCastSurrounder());
-    }
-    finally {
-      templateManager.setTemplateTesting(false);
-    }
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    doTest(getTestName(false), new JavaWithCastSurrounder());
   }
 
   public void testSurroundWithNotNullCheck() {
-    final TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(getProject());
-    templateManager.setTemplateTesting(true);
-    try {
-      doTest(getTestName(false), new JavaWithNullCheckSurrounder());
-    }
-    finally {
-      templateManager.setTemplateTesting(false);
-    }
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    doTest(getTestName(false), new JavaWithNullCheckSurrounder());
   }
 
   private void doTest(@NotNull String fileName, final Surrounder surrounder) {
@@ -158,22 +133,16 @@ public class JavaSurroundWithTest extends LightCodeInsightTestCase {
 
   private void doTestWithTemplateFinish(@NotNull String fileName, final Surrounder surrounder, @Nullable String textToType)
     throws Exception {
-    final TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(getProject());
-    try {
-      templateManager.setTemplateTesting(true);
-      configureByFile(BASE_PATH + fileName + ".java");
-      SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
-      if (textToType != null) {
-        type(textToType);
-      }
-      TemplateState templateState = TemplateManagerImpl.getTemplateState(getEditor());
-      assertNotNull(templateState);
-      templateState.nextTab();
-      checkResultByFile(BASE_PATH + fileName + "_after.java");
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    configureByFile(BASE_PATH + fileName + ".java");
+    SurroundWithHandler.invoke(getProject(), getEditor(), getFile(), surrounder);
+    if (textToType != null) {
+      type(textToType);
     }
-    finally {
-      templateManager.setTemplateTesting(false);
-    }
+    TemplateState templateState = TemplateManagerImpl.getTemplateState(getEditor());
+    assertNotNull(templateState);
+    templateState.nextTab();
+    checkResultByFile(BASE_PATH + fileName + "_after.java");
   }
 
 }

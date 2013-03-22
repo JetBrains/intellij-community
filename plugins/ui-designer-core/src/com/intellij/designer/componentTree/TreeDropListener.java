@@ -86,9 +86,11 @@ public class TreeDropListener extends DropTargetAdapter {
 
   @Override
   public void drop(DropTargetDropEvent event) {
+    event.acceptDrop(event.getDropAction());
     eraseFeedback();
     executeCommand();
     clearState(true);
+    event.dropComplete(true);
   }
 
   private void showFeedback() {

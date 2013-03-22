@@ -152,6 +152,10 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
     return withName(StandardPatterns.string().equalTo(name));
   }
 
+  public Self withName(@NotNull @NonNls final String... names) {
+    return withName(StandardPatterns.string().oneOf(names));
+  }
+
   public Self withName(@NotNull final ElementPattern<String> name) {
     return with(new PsiNamePatternCondition<T>("withName", name));
   }

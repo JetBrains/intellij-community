@@ -32,7 +32,7 @@ void message(MSG id);
 // logging
 void userlog(int priority, const char* format, ...);
 
-#define CHECK_NULL(p, r) if (p == NULL)  { userlog(LOG_ERR, "out of memory"); return r; }
+#define CHECK_NULL(p, r) if (p == NULL) { userlog(LOG_ERR, "out of memory"); return r; }
 
 
 // variable-length array

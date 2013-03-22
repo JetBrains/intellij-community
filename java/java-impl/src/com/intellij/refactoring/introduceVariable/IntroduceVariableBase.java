@@ -841,7 +841,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
           declaration = (PsiDeclarationStatement)JavaCodeStyleManager.getInstance(project).shortenClassReferences(declaration);
           PsiVariable var = (PsiVariable) declaration.getDeclaredElements()[0];
           PsiUtil.setModifierProperty(var, PsiModifier.FINAL, settings.isDeclareFinal());
-          variable.set(SmartPointerManager.getInstance(project).createLazyPointer(var));
+          variable.set(SmartPointerManager.getInstance(project).createSmartPsiElementPointer(var));
           fieldConflictsResolver.fix();
         } catch (IncorrectOperationException e) {
           LOG.error(e);

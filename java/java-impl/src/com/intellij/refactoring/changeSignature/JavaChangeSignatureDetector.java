@@ -121,7 +121,11 @@ public class JavaChangeSignatureDetector implements LanguageChangeSignatureDetec
 
   @Override
   public ChangeInfo createNextChangeInfo(String signature, @NotNull final ChangeInfo currentInfo, String initialName) {
-    final Project project = currentInfo.getMethod().getProject();
+    final PsiElement currentInfoMethod = currentInfo.getMethod();
+    if (currentInfoMethod == null) {
+      return null;
+    }
+    final Project project = currentInfoMethod.getProject();
     if (currentInfo instanceof RenameChangeInfo) {
       return currentInfo;
     }

@@ -137,6 +137,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     if (document != null) {
       if (getEditor() == null || getEditor().getDocument() != document) {
         clearEditor();
+        removeAll();
         setEditor(EditorFactory.getInstance().createViewer(document, project));
 
         final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -168,10 +169,11 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     }
     else {
       clearEditor();
-
+      removeAll();
       JLabel label = new JLabel("Navigate to selected " + (file.isDirectory() ? "directory " : "file ") + "in Project View");
       label.setHorizontalAlignment(JLabel.CENTER);
       add(label);
+      validate();
     }
   }
 

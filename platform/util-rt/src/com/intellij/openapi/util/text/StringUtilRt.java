@@ -31,7 +31,8 @@ public class StringUtilRt {
     return a == b || toUpperCase(a) == toUpperCase(b) || toLowerCase(a) == toLowerCase(b);
   }
 
-  public static String toUpperCase(String s) {
+  @NotNull
+  public static String toUpperCase(@NotNull String s) {
     StringBuilder answer = null;
 
     for (int i = 0; i < s.length(); i++) {

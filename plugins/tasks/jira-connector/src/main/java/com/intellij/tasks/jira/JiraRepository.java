@@ -8,7 +8,6 @@ import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.tasks.LocalTask;
 import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskRepository;
 import com.intellij.tasks.TaskState;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.Function;
@@ -99,12 +98,7 @@ public class JiraRepository extends BaseRepositoryImpl {
       LOG.info("JIRA: " + children.size() + " issues found");
       final List<Task> tasks = ContainerUtil.map(children, new Function<Element, Task>() {
         public Task fun(Element o) {
-          return new JiraTask(new JIRAIssueBean(getUrl(), o, false)) {
-            @Override
-            public TaskRepository getRepository() {
-              return JiraRepository.this;
-            }
-          };
+          return new JiraTask(new JIRAIssueBean(getUrl(), o, false), JiraRepository.this);
         }
       });
       return tasks.toArray(new Task[tasks.size()]);

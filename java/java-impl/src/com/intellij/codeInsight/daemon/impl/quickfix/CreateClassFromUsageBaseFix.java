@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -38,7 +39,7 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
 
   public CreateClassFromUsageBaseFix(CreateClassKind kind, final PsiJavaCodeReferenceElement refElement) {
     myKind = kind;
-    myRefElement = SmartPointerManager.getInstance(refElement.getProject()).createLazyPointer(refElement);
+    myRefElement = SmartPointerManager.getInstance(refElement.getProject()).createSmartPsiElementPointer(refElement);
   }
 
   protected abstract String getText(String varName);
@@ -113,6 +114,12 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
     PsiElement parent = element.getParent();
     if (parent instanceof PsiExpression && !(parent instanceof PsiReferenceExpression)) return false;
     if (!isAvailableInContext(element)) return false;
+    final String superClassName = getSuperClassName(element);
+    if (superClassName != null) {
+      if (superClassName.equals(CommonClassNames.JAVA_LANG_ENUM) && myKind != CreateClassKind.ENUM) return false;
+      final PsiClass psiClass = JavaPsiFacade.getInstance(project).findClass(superClassName, GlobalSearchScope.allScope(project));
+      if (psiClass != null && psiClass.hasModifierProperty(PsiModifier.FINAL)) return false;
+    }
     final int offset = editor.getCaretModel().getOffset();
     if (CreateFromUsageUtils.shouldShowTag(offset, nameElement, element)) {
       setText(getText(nameElement.getText()));

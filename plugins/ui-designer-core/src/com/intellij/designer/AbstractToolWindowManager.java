@@ -111,6 +111,11 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
     return null;
   }
 
+  @Nullable
+  protected static DesignerCustomizations getCustomizations() {
+    return DesignerCustomizations.EP_NAME.findExtension(DesignerCustomizations.class);
+  }
+
   private void bindToDesigner(final DesignerEditorPanel designer) {
     myWindowQueue.cancelAllUpdates();
     myWindowQueue.queue(new Update("update") {

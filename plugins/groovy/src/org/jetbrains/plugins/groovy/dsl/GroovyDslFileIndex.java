@@ -21,6 +21,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
@@ -274,6 +275,9 @@ public class GroovyDslFileIndex extends ScalarIndexExtension<String> {
       final GroovyDslScript script = supers.get(0).third;
       try {
         return TypesUtil.createTypeByFQClassName(className, scriptFile);
+      }
+      catch (ProcessCanceledException e) {
+        throw e;
       }
       catch (RuntimeException e) {
         script.handleDslError(e);

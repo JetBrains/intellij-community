@@ -36,9 +36,13 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.testFramework.LightIdeaTestCase;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.text.LineReader;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
+import java.io.ByteArrayInputStream;
 import java.io.File;
+import java.io.IOException;
 import java.util.EnumMap;
 import java.util.Map;
 
@@ -49,6 +53,27 @@ import java.util.Map;
  * @since Apr 27, 2010 6:26:29 PM
  */
 public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
+
+  @NotNull
+  public static String shiftIndentInside(@NotNull String initial, final int i, boolean shiftEmptyLines) throws IOException {
+    StringBuilder result = new StringBuilder(initial.length());
+    LineReader reader = new LineReader(new ByteArrayInputStream(initial.getBytes()));
+    boolean first = true;
+    for (byte[] line : reader.readLines()) {
+      try {
+        if (!first) result.append('\n');
+        if (line.length > 0 || shiftEmptyLines) {
+          StringUtil.repeatSymbol(result, ' ', i);
+        }
+        result.append(new String(line));
+      }
+      finally {
+        first = false;
+      }
+    }
+
+    return result.toString();
+  }
 
   protected enum Action {REFORMAT, INDENT}
 
@@ -171,7 +196,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     doTextTest(
       Action.REFORMAT,
       "class Foo{\n" + "    void foo() {\n" + before + '\n' + "    }\n" + "}",
-      "class Foo {\n" + "    void foo() {\n" + StringUtil.shiftIndentInside(after, 8, false) + '\n' + "    }\n" + "}"
+      "class Foo {\n" + "    void foo() {\n" + shiftIndentInside(after, 8, false) + '\n' + "    }\n" + "}"
     );
   }
 
@@ -179,7 +204,7 @@ public abstract class AbstractJavaFormatterTest extends LightIdeaTestCase {
     doTextTest(
       Action.REFORMAT,
       "class Foo{\n" + before + '\n' + "}",
-      "class Foo {\n" + StringUtil.shiftIndentInside(after, 4, false) + '\n' + "}"
+      "class Foo {\n" + shiftIndentInside(after, 4, false) + '\n' + "}"
     );
   }
 

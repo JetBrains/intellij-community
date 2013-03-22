@@ -25,7 +25,6 @@ import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
-import com.intellij.lang.annotation.Annotator;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.IndexNotReadyException;
@@ -47,7 +46,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.annotator.intentions.*;
-import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.codeInspection.untypedUnresolvedAccess.GrUnresolvedAccessInspection;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.lang.documentation.GroovyPresentationUtil;
@@ -81,7 +79,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAnnotationMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.*;
@@ -104,43 +105,13 @@ import static org.jetbrains.plugins.groovy.highlighter.DefaultHighlighter.*;
  * @author ven
  */
 @SuppressWarnings({"unchecked"})
-public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
+public class GroovyAnnotator extends GroovyElementVisitor {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.annotator.GroovyAnnotator");
 
-  private AnnotationHolder myHolder;
+  private final AnnotationHolder myHolder;
 
-  public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
-    if (element instanceof GroovyPsiElement) {
-      myHolder = holder;
-      ((GroovyPsiElement)element).accept(this);
-      if (PsiUtil.isCompileStatic(element)) {
-        GroovyAssignabilityCheckInspection.checkElement((GroovyPsiElement)element, holder);
-      }
-      myHolder = null;
-    }
-    else {
-      final PsiElement parent = element.getParent();
-      if (parent instanceof GrMethod) {
-        if (element.equals(((GrMethod)parent).getNameIdentifierGroovy()) &&
-            ((GrMethod)parent).getReturnTypeElementGroovy() == null) {
-          checkMethodReturnType((GrMethod)parent, element, holder);
-        }
-      }
-      else if (parent instanceof GrField) {
-        final GrField field = (GrField)parent;
-        if (element.equals(field.getNameIdentifierGroovy())) {
-          final GrAccessorMethod[] getters = field.getGetters();
-          for (GrAccessorMethod getter : getters) {
-            checkMethodReturnType(getter, field.getNameIdentifierGroovy(), holder);
-          }
-
-          final GrAccessorMethod setter = field.getSetter();
-          if (setter != null) {
-            checkMethodReturnType(setter, field.getNameIdentifierGroovy(), holder);
-          }
-        }
-      }
-    }
+  public GroovyAnnotator(@NotNull AnnotationHolder holder) {
+    myHolder = holder;
   }
 
   @Override
@@ -889,7 +860,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     holder.createErrorAnnotation(element, GroovyBundle.message("unexpected.attribute.type.0", element.getType()));
   }
 
-  private static void checkMethodReturnType(PsiMethod method, PsiElement toHighlight, AnnotationHolder holder) {
+  static void checkMethodReturnType(PsiMethod method, PsiElement toHighlight, AnnotationHolder holder) {
     final HierarchicalMethodSignature signature = method.getHierarchicalMethodSignature();
     final List<HierarchicalMethodSignature> superSignatures = signature.getSuperSignatures();
 

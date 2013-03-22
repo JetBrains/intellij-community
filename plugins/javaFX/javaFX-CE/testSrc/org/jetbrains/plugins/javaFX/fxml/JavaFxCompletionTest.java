@@ -15,22 +15,22 @@
  */
 package org.jetbrains.plugins.javaFX.fxml;
 
-import com.intellij.codeInsight.completion.CompletionTestCase;
+import com.intellij.codeInsight.completion.LightFixtureCompletionTestCase;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.application.PluginPathManager;
-import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
  * Date: 1/17/13
  */
-public class JavaFxCompletionTest extends CompletionTestCase {
+public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
 
+  @NotNull
   @Override
-  protected void setUpModule() {
-    super.setUpModule();
-    PsiTestUtil.addLibrary(getModule(), "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
+  protected LightProjectDescriptor getProjectDescriptor() {
+    return AbstractJavaFXTestCase.JAVA_FX_DESCRIPTOR;
   }
 
   public void testAvailablePositions() throws Exception {
@@ -117,6 +117,18 @@ public class JavaFxCompletionTest extends CompletionTestCase {
     doTest("GridPane");
   }
 
+  public void testChildrenInsideGridPaneRoot() throws Exception {
+    doTest("children");
+  }
+
+  public void testClassInsideObjectProperty() throws Exception {
+    doTest("Insets");
+  }
+
+  public void testPrimitiveProperties() throws Exception {
+    doTest("top");
+  }
+
   public void testReadOnly() throws Exception {
     configureByFile(getTestName(true) + ".fxml");
     assertTrue(myItems.length > 0);
@@ -143,7 +155,7 @@ public class JavaFxCompletionTest extends CompletionTestCase {
   private void doTest(final String selection, String additionalPath) throws Exception {
     final String mainFxml = getTestName(true) + ".fxml";
     if (additionalPath != null) {
-      configureByFiles(null, mainFxml, additionalPath);
+      myFixture.configureByFiles(mainFxml, additionalPath);
       complete();
     } else {
       configureByFile(mainFxml);

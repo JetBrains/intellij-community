@@ -90,8 +90,21 @@ public class TemplateManagerImpl extends TemplateManager implements ProjectCompo
   }
 
   @TestOnly
+  @Deprecated
   public void setTemplateTesting(final boolean templateTesting) {
     myTemplateTesting = templateTesting;
+  }
+
+  @TestOnly
+  public static void setTemplateTesting(Project project, Disposable parentDisposable) {
+    final TemplateManagerImpl instance = (TemplateManagerImpl)getInstance(project);
+    instance.myTemplateTesting = true;
+    Disposer.register(parentDisposable, new Disposable() {
+      @Override
+      public void dispose() {
+        instance.myTemplateTesting = false;
+      }
+    });
   }
 
   private void disposeState(final TemplateState tState) {

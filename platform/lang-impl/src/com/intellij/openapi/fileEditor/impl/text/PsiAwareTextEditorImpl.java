@@ -71,7 +71,10 @@ public class PsiAwareTextEditorImpl extends TextEditorImpl {
 
     @Override
     void dispose() {
-      CodeFoldingManager.getInstance(myProject).releaseFoldings(getEditor());
+      CodeFoldingManager foldingManager = CodeFoldingManager.getInstance(myProject);
+      if (foldingManager != null) {
+        foldingManager.releaseFoldings(getEditor());
+      }
       super.dispose();
     }
 

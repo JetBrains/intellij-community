@@ -17,6 +17,7 @@
 package com.intellij.codeInsight.editorActions.moveUpDown;
 
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -28,7 +29,8 @@ public class LineMover extends StatementUpDownMover {
   public boolean checkAvailable(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
     LineRange range = StatementUpDownMover.getLineRangeFromSelection(editor);
 
-    final int maxLine = editor.offsetToLogicalPosition(editor.getDocument().getTextLength()).line;
+    LogicalPosition maxLinePos = editor.offsetToLogicalPosition(editor.getDocument().getTextLength());
+    int maxLine = maxLinePos.column == 0? maxLinePos.line : maxLinePos.line + 1;
     if (range.startLine == 0 && !down) return false;
     if (range.endLine >= maxLine && down) return false;
 

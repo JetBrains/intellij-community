@@ -33,6 +33,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.TimeoutUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,7 +53,6 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
   private final FileWatcher myWatcher;
 
   private static class WatchRequestImpl implements WatchRequest {
-    private final String myRootPath;
     private final boolean myToWatchRecursively;
     private String myFSRootPath;
     private boolean myDominated;
@@ -73,14 +73,13 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
       }
 
       myFSRootPath = rootFile.getAbsolutePath();
-      myRootPath = FileUtil.toSystemIndependentName(myFSRootPath);
       myToWatchRecursively = toWatchRecursively;
     }
 
     @Override
     @NotNull
     public String getRootPath() {
-      return myRootPath;
+      return FileUtil.toSystemIndependentName(myFSRootPath);
     }
 
     /** @deprecated implementation details (to remove in IDEA 13) */
@@ -102,13 +101,13 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
     @Override
     public String toString() {
-      return myRootPath;
+      return getRootPath();
     }
   }
 
   private static class TreeNode {
     private WatchRequestImpl watchRequest = null;
-    private Map<String, TreeNode> nodes = ContainerUtil.newTroveMap(FileUtil.PATH_HASHING_STRATEGY);
+    private Map<String, TreeNode> nodes = new THashMap<String, TreeNode>(1, FileUtil.PATH_HASHING_STRATEGY);
   }
 
   public LocalFileSystemImpl(@NotNull ManagingFS managingFS) {
@@ -270,10 +269,10 @@ public final class LocalFileSystemImpl extends LocalFileSystemBase implements Ap
 
   private static boolean dominates(final WatchRequestImpl request, final WatchRequestImpl other) {
     if (request.myToWatchRecursively) {
-      return other.myRootPath.startsWith(request.myRootPath);
+      return other.myFSRootPath.startsWith(request.myFSRootPath);
     }
 
-    return !other.myToWatchRecursively && request.myRootPath.equals(other.myRootPath);
+    return !other.myToWatchRecursively && request.myFSRootPath.equals(other.myFSRootPath);
   }
 
   private void storeRefreshStatusToFiles() {

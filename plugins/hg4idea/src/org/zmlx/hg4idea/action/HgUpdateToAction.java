@@ -22,34 +22,31 @@ import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.HgVcsMessages;
-import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.command.HgUpdateCommand;
 import org.zmlx.hg4idea.execution.HgCommandResult;
 import org.zmlx.hg4idea.ui.HgUpdateToDialog;
+import org.zmlx.hg4idea.util.HgBranchesAndTags;
 import org.zmlx.hg4idea.util.HgErrorUtil;
 import org.zmlx.hg4idea.util.HgUiUtil;
 
 import java.util.Collection;
-import java.util.List;
-import java.util.Map;
 
 public class HgUpdateToAction extends HgAbstractGlobalAction {
 
   protected void execute(final Project project, final Collection<VirtualFile> repos) {
-    HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<Map<VirtualFile, List<HgTagBranch>>>() {
-
+    HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<HgBranchesAndTags>() {
       @Override
-      public void consume(Map<VirtualFile, List<HgTagBranch>> branches) {
-        showUpdateDialogAndExecute(project, repos, branches);
+      public void consume(HgBranchesAndTags info) {
+        showUpdateDialogAndExecute(project, repos, info);
       }
     });
   }
 
   private void showUpdateDialogAndExecute(final Project project,
                                           Collection<VirtualFile> repos,
-                                          Map<VirtualFile, List<HgTagBranch>> branchesForRepos) {
+                                          HgBranchesAndTags branchesAndTags) {
     final HgUpdateToDialog dialog = new HgUpdateToDialog(project);
-    dialog.setRoots(repos, branchesForRepos);
+    dialog.setRoots(repos, branchesAndTags);
     dialog.show();
     if (dialog.isOK()) {
       FileDocumentManager.getInstance().saveAllDocuments();

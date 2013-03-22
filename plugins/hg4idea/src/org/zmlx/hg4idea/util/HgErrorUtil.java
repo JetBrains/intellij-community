@@ -26,8 +26,13 @@ public final class HgErrorUtil {
     if (result == null) {
       return true;
     }
-    String line = getLastErrorLine(result);
-    return !StringUtil.isEmptyOrSpaces(line) && line.contains("abort:");
+    final List<String> errorLines = result.getErrorLines();
+    for (String line : errorLines) {
+      if (!StringUtil.isEmptyOrSpaces(line) && line.trim().startsWith("abort:")) {
+        return true;
+      }
+    }
+    return false;
   }
 
   public static boolean isAuthorizationError(@Nullable HgCommandResult result) {

@@ -78,6 +78,8 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   private FileTypeAssocTable<FileType> myPatternsTable = new FileTypeAssocTable<FileType>();
   private final IgnoredPatternSet myIgnoredPatterns = new IgnoredPatternSet();
+  private final IgnoredFileCache myIgnoredFileCache = new IgnoredFileCache(myIgnoredPatterns);
+
   private final FileTypeAssocTable<FileType> myInitialAssociations = new FileTypeAssocTable<FileType>();
   private final Map<FileNameMatcher, String> myUnresolvedMappings = new THashMap<FileNameMatcher, String>();
   private final Map<FileNameMatcher, Trinity<String, String, Boolean>> myUnresolvedRemovedMappings = new THashMap<FileNameMatcher, Trinity<String, String, Boolean>>();
@@ -511,6 +513,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
   @Override
   public void setIgnoredFilesList(@NotNull String list) {
     fireBeforeFileTypesChanged();
+    myIgnoredFileCache.clearCache();
     myIgnoredPatterns.setIgnoreMasks(list);
     fireFileTypesChanged();
   }
@@ -532,7 +535,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
 
   @Override
   public boolean isFileIgnored(@NonNls @NotNull VirtualFile file) {
-    return isFileIgnored(file.getName());
+    return myIgnoredFileCache.isFileIgnored(file);
   }
 
   @Override
@@ -671,6 +674,7 @@ public class FileTypeManagerImpl extends FileTypeManagerEx implements NamedJDOME
     if (savedVersion < VERSION) {
       addIgnore("*.rbc");
     }
+    myIgnoredFileCache.clearCache();
   }
 
   private void readGlobalMappings(final Element e) {

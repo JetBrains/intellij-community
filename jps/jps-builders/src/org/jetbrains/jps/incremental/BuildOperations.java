@@ -53,7 +53,7 @@ public class BuildOperations {
       pd.fsState.markInitialScanPerformed(target);
       configuration.save(context);
     }
-    else if (context.getScope().isRecompilationForced(target) || configuration.isTargetDirty(context) || configuration.outputRootWasDeleted(context)) {
+    else if (context.getScope().isBuildForced(target) || configuration.isTargetDirty(context) || configuration.outputRootWasDeleted(context)) {
       initTargetFSState(context, target, true);
       IncProjectBuilder.clearOutputFiles(context, target);
       pd.dataManager.cleanTargetStorages(target);

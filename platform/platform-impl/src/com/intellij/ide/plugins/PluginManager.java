@@ -78,7 +78,6 @@ import java.util.zip.ZipInputStream;
 public class PluginManager {
 
   @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
-  private static final Object PLUGIN_CLASSES_LOCK = new Object();
   @NonNls public static final String INSTALLED_TXT = "installed.txt";
   private static String myPluginError = null;
   private static List<String> myPlugins2Disable = null;
@@ -102,7 +101,7 @@ public class PluginManager {
   public static final float PLUGINS_PROGRESS_MAX_VALUE = 0.3f;
 
   private static IdeaPluginDescriptorImpl[] ourPlugins;
-  private static Map<String, PluginId> ourPluginClasses;
+  private static final PluginClassCache ourPluginClasses = new PluginClassCache();
   private static final String DISABLE = "disable";
   private static final String ENABLE = "enable";
   private static final String EDIT = "edit";
@@ -1107,12 +1106,7 @@ public class PluginManager {
   }
 
   public static void addPluginClass(String className, PluginId pluginId) {
-    synchronized(PLUGIN_CLASSES_LOCK) {
-      if (ourPluginClasses == null) {
-        ourPluginClasses = new THashMap<String, PluginId>();
-      }
-      ourPluginClasses.put(className, pluginId);
-    }
+    ourPluginClasses.addPluginClass(className, pluginId);
   }
 
   public static boolean isPluginClass(String className) {
@@ -1121,9 +1115,7 @@ public class PluginManager {
 
   @Nullable
   public static PluginId getPluginByClassName(String className) {
-    synchronized (PLUGIN_CLASSES_LOCK) {
-      return ourPluginClasses != null ? ourPluginClasses.get(className) : null;
-    }
+    return ourPluginClasses.getPluginByClassName(className);
   }
 
   public static boolean disablePlugin(String id) {
@@ -1260,48 +1252,7 @@ public class PluginManager {
     return LoggerHolder.ourLogger;
   }
 
-  private static class ClassCounter {
-    private final String myPluginId;
-    private int myCount;
-
-    private ClassCounter(String pluginId) {
-      myPluginId = pluginId;
-      myCount = 1;
-    }
-
-    private void increment() {
-      myCount++;
-    }
-
-    @Override
-    public String toString() {
-      return myPluginId + " loaded " + myCount + " classes";
-    }
-  }
-
   public static void dumpPluginClassStatistics() {
-    if (!Boolean.valueOf(System.getProperty("idea.is.internal")).booleanValue() || ourPluginClasses == null) return;
-    Map<String, ClassCounter> pluginToClassMap = new HashMap<String, ClassCounter>();
-    synchronized (PLUGIN_CLASSES_LOCK) {
-      for (Map.Entry<String, PluginId> entry : ourPluginClasses.entrySet()) {
-        String id = entry.getValue().toString();
-        final ClassCounter counter = pluginToClassMap.get(id);
-        if (counter != null) {
-          counter.increment();
-        }
-        else {
-          pluginToClassMap.put(id, new ClassCounter(id));
-        }
-      }
-    }
-    List<ClassCounter> counters = new ArrayList<ClassCounter>(pluginToClassMap.values());
-    Collections.sort(counters, new Comparator<ClassCounter>() {
-      public int compare(ClassCounter o1, ClassCounter o2) {
-        return o2.myCount - o1.myCount;
-      }
-    });
-    for (ClassCounter counter : counters) {
-      getLogger().info(counter.toString());
-    }
+    ourPluginClasses.dumpPluginClassStatistics();
   }
 }

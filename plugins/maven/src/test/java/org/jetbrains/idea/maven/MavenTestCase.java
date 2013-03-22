@@ -481,7 +481,7 @@ public abstract class MavenTestCase extends UsefulTestCase {
       @Override
       protected void run(Result<VirtualFile> result) throws Throwable {
         if (advanceStamps) {
-          file.setBinaryContent(content.getBytes(), file.getModificationStamp() + 4000, file.getTimeStamp() + 4000);
+          file.setBinaryContent(content.getBytes(), -1, file.getTimeStamp() + 4000);
         }
         else {
           file.setBinaryContent(content.getBytes(), file.getModificationStamp(), file.getTimeStamp());

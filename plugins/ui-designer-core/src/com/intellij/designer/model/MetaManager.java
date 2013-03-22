@@ -17,6 +17,7 @@ package com.intellij.designer.model;
 
 import com.intellij.designer.palette.DefaultPaletteItem;
 import com.intellij.designer.palette.PaletteGroup;
+import com.intellij.designer.palette.PaletteItem;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Attribute;
@@ -193,8 +194,32 @@ public abstract class MetaManager extends ModelLoader {
     PaletteGroup group = new PaletteGroup(element.getAttributeValue(NAME));
 
     for (Object child : element.getChildren(ITEM)) {
-      String tag = ((Element)child).getAttributeValue(TAG);
-      group.addItem(getModelByTag(tag).getPaletteItem());
+      Element itemElement = (Element)child;
+      MetaModel model = getModelByTag(itemElement.getAttributeValue(TAG));
+      PaletteItem paletteItem = model.getPaletteItem();
+
+      if (!itemElement.getChildren().isEmpty()) {
+        // Replace the palette item shown in the palette; it might provide a custom
+        // title, icon or creation logic (and this is done here rather than in the
+        // default palette item, since when loading elements back from XML, there's
+        // no variation matching. We don't want for example to call the default
+        // LinearLayout item "LinearLayout (Horizontal)", since that item would be
+        // shown in the component tree for any <LinearLayout> found in the XML, including
+        // those which set orientation="vertical". In the future, consider generalizing
+        // this such that the {@link MetaModel} can hold multiple {@link PaletteItem}
+        // instances, and perform attribute matching.
+        if (itemElement.getAttribute("title") != null) {
+          paletteItem = new VariationPaletteItem(paletteItem, model, itemElement);
+        }
+        group.addItem(paletteItem);
+
+        for (Object grandChild : itemElement.getChildren(ITEM)) {
+          group.addItem(new VariationPaletteItem(paletteItem, model, (Element)grandChild));
+        }
+      }
+      else {
+        group.addItem(paletteItem);
+      }
     }
 
     myPaletteGroups.add(group);

@@ -15,13 +15,11 @@
  */
 package com.intellij.refactoring;
 
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.openapi.util.Pass;
 import com.intellij.refactoring.introduce.inplace.AbstractInplaceIntroducer;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
-import com.intellij.testFramework.LightPlatformTestCase;
 
 /**
  * User: anna
@@ -35,9 +33,8 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
-    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(LightPlatformTestCase.getProject());
     try {
-      templateManager.setTemplateTesting(true);
+      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       invokeRefactoring();
@@ -48,7 +45,6 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
     }
     finally {
       getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
-      templateManager.setTemplateTesting(false);
     }
   }
 
@@ -58,9 +54,8 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
     String name = getTestName(true);
     configureByFile(getBasePath() + name + getExtension());
     final boolean enabled = getEditor().getSettings().isVariableInplaceRenameEnabled();
-    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(LightPlatformTestCase.getProject());
     try {
-      templateManager.setTemplateTesting(true);
+      TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
       getEditor().getSettings().setVariableInplaceRenameEnabled(true);
 
       final AbstractInplaceIntroducer introducer = invokeRefactoring();
@@ -72,7 +67,6 @@ public abstract class AbstractInplaceIntroduceTest extends LightPlatformCodeInsi
     }
     finally {
       getEditor().getSettings().setVariableInplaceRenameEnabled(enabled);
-      templateManager.setTemplateTesting(false);
     }
   }
 

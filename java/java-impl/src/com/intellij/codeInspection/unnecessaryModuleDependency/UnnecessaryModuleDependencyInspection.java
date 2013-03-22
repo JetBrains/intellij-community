@@ -27,10 +27,12 @@ import java.util.Set;
  */
 public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool {
 
+  @Override
   public RefGraphAnnotator getAnnotator(final RefManager refManager) {
     return new UnnecessaryModuleDependencyAnnotator(refManager);
   }
 
+  @Override
   public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope, InspectionManager manager, final GlobalInspectionContext globalContext) {
     if (refEntity instanceof RefModule){
       final RefModule refModule = (RefModule)refEntity;
@@ -46,8 +48,10 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
               InspectionsBundle.message("unnecessary.module.dependency.problem.descriptor", module.getName(), dependency.getName()),
               new RemoveModuleDependencyFix(module, dependency));
           } else {
-            problemDescriptor = manager.createProblemDescriptor(
-              InspectionsBundle.message("suspected.module.dependency.problem.descriptor", module.getName(), dependency.getName(), scope.getDisplayName(), dependency.getName()), null);
+            String message = InspectionsBundle
+              .message("suspected.module.dependency.problem.descriptor", module.getName(), dependency.getName(), scope.getDisplayName(),
+                       dependency.getName());
+            problemDescriptor = manager.createProblemDescriptor(message);
           }
           descriptors.add(problemDescriptor);
         }
@@ -57,16 +61,19 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
     return null;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("unnecessary.module.dependency.display.name");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
@@ -82,16 +89,19 @@ public class UnnecessaryModuleDependencyInspection extends GlobalInspectionTool 
       myDependency = dependency;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return "Remove dependency";
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull CommonProblemDescriptor descriptor) {
       final ModifiableRootModel model = ModuleRootManager.getInstance(myModule).getModifiableModel();
       for (OrderEntry entry : model.getOrderEntries()) {

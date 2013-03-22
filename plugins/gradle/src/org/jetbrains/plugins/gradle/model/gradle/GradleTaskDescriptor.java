@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.model.gradle;
 
+import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,15 +26,14 @@ import java.io.Serializable;
  * @since 3/15/13 1:01 PM
  */
 public class GradleTaskDescriptor implements Serializable, Comparable<GradleTaskDescriptor> {
-  
-  public enum Type { RUN, DEBUG, GENERAL }
-  
+
   private static final long serialVersionUID = 1L;
 
   // The fields are mutable in order to ease IJ default xml serialization.
   private String myName;
-  @NotNull private Type myType = Type.GENERAL;
+
   @Nullable private String myDescription;
+  @Nullable private String myExecutorId;
 
   @SuppressWarnings("UnusedDeclaration")
   public GradleTaskDescriptor() {
@@ -50,6 +50,10 @@ public class GradleTaskDescriptor implements Serializable, Comparable<GradleTask
     return myDescription;
   }
 
+  public void setDescription(@Nullable String description) {
+    myDescription = description;
+  }
+
   public String getName() {
     return myName;
   }
@@ -58,24 +62,20 @@ public class GradleTaskDescriptor implements Serializable, Comparable<GradleTask
     myName = name;
   }
 
-  @NotNull
-  public Type getType() {
-    return myType;
+  @Nullable
+  public String getExecutorId() {
+    return myExecutorId;
   }
 
-  public void setType(@NotNull Type type) {
-    myType = type;
-  }
-
-  public void setDescription(@Nullable String description) {
-    myDescription = description;
+  public void setExecutorId(@Nullable String executorId) {
+    myExecutorId = executorId;
   }
 
   @Override
   public int compareTo(GradleTaskDescriptor that) {
     int cmp = myName.compareTo(that.myName);
     if (cmp == 0) {
-      cmp = myType.compareTo(that.myType);
+      return Comparing.compare(myExecutorId, that.myExecutorId);
     }
     return cmp;
   }
@@ -83,7 +83,7 @@ public class GradleTaskDescriptor implements Serializable, Comparable<GradleTask
   @Override
   public int hashCode() {
     int result = myName.hashCode();
-    result = 31 * result + myType.hashCode();
+    result = 31 * result + (myExecutorId != null ? myExecutorId.hashCode() : 0);
     result = 31 * result + (myDescription != null ? myDescription.hashCode() : 0);
     return result;
   }
@@ -96,7 +96,7 @@ public class GradleTaskDescriptor implements Serializable, Comparable<GradleTask
     GradleTaskDescriptor that = (GradleTaskDescriptor)o;
 
     if (!myName.equals(that.myName)) return false;
-    if (myType != that.myType) return false;
+    if (myExecutorId != null ? !myExecutorId.equals(that.myExecutorId) : that.myExecutorId != null) return false;
     if (myDescription != null ? !myDescription.equals(that.myDescription) : that.myDescription != null) return false;
 
     return true;

@@ -14,6 +14,10 @@ import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
+import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import com.intellij.util.PlatformUtils;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ui.UIUtil;
 import cucumber.annotation.After;
 import cucumber.annotation.Before;
 import cucumber.annotation.Order;
@@ -25,13 +29,19 @@ import git4idea.repo.GitRepository;
 import git4idea.test.GitTestInitUtil;
 import git4idea.test.TestNotificator;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.ide.WebServerManager;
 import org.jetbrains.ide.WebServerManagerImpl;
 import org.junit.Assert;
 import org.picocontainer.MutablePicoContainer;
 
 import java.io.File;
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
+import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Random;
+import java.util.concurrent.Future;
+import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.dvcs.test.Executor.cd;
 import static junit.framework.Assert.assertNotNull;
@@ -61,13 +71,25 @@ public class GitCucumberWorld {
 
   public static GitTestVirtualCommitsHolder virtualCommits;
 
-  private static IdeaProjectTestFixture myProjectFixture;
+  private static Collection<Future> myAsyncTasks;
+
+  private IdeaProjectTestFixture myProjectFixture;
 
   @Before
   @Order(0)
   public void setUp() throws Throwable {
-    myProjectFixture = new GitCucumberLightProjectFixture();
-    myProjectFixture.setUp();
+    System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "PlatformLangXml");
+
+    String tempFileName = getClass().getName() + "-" + new Random().nextInt();
+    myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(tempFileName).getFixture();
+
+    edt(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        myProjectFixture.setUp();
+      }
+    });
+
     myProject = myProjectFixture.getProject();
 
     ((ProjectComponent)ChangeListManager.getInstance(myProject)).projectOpened();
@@ -79,9 +101,14 @@ public class GitCucumberWorld {
     myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
     myGit = ServiceManager.getService(myProject, Git.class);
     mySettings = myPlatformFacade.getSettings(myProject);
+    // dynamic overriding is used instead of making it in plugin.xml,
+    // because MockVcsHelper is not ready to be a full featured implementation for all tests.
     myVcsHelper = overrideService(myProject, AbstractVcsHelper.class, MockVcsHelper.class);
     myChangeListManager = myPlatformFacade.getChangeListManager(myProject);
-    myNotificator = overrideService(myProject, Notificator.class, TestNotificator.class);
+    myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);
+
+    virtualCommits = new GitTestVirtualCommitsHolder();
+    myAsyncTasks = new ArrayList<Future>();
 
     cd(myProjectRoot);
     myRepository = createRepo(myProjectRoot);
@@ -89,8 +116,6 @@ public class GitCucumberWorld {
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     AbstractVcs vcs = vcsManager.findVcsByName("Git");
     Assert.assertEquals(1, vcsManager.getRootsUnderVcs(vcs).length);
-
-    virtualCommits = new GitTestVirtualCommitsHolder();
   }
 
   @NotNull
@@ -110,43 +135,65 @@ public class GitCucumberWorld {
     ((WebServerManagerImpl)WebServerManager.getInstance()).setEnabledInUnitTestMode(true);
     // default port will be occupied by main idea instance => define the custom default to avoid searching of free port
     System.setProperty(WebServerManagerImpl.PROPERTY_RPC_PORT, "64463");
-    if (myHttpAuthService == null) {
-      // this should be executed only once, because the service is registered in the XmlRcpServer only once.
-      // otherwise the service instance will be recreated for each test while only the first instance will be called by XML RPC.
-      myHttpAuthService = overrideAppService(GitHttpAuthService.class, GitHttpAuthTestService.class);
-    }
+    myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
   }
 
   @After
   public void tearDown() throws Throwable {
-    virtualCommits = null;
-    myProjectFixture.tearDown();
+    stopPendingTasks();
+    nullifyStaticFields();
+    edt(new ThrowableRunnable<Exception>() {
+      @Override
+      public void run() throws Exception {
+        myProjectFixture.tearDown();
+      }
+    });
+  }
+
+  public static void executeOnPooledThread(Runnable runnable) {
+    myAsyncTasks.add(ApplicationManager.getApplication().executeOnPooledThread(runnable));
+  }
+
+  private static void stopPendingTasks() {
+    for (Future future : myAsyncTasks) {
+      future.cancel(true);
+    }
+  }
+
+  private static void nullifyStaticFields() throws IllegalAccessException {
+    for (Field field : GitCucumberWorld.class.getDeclaredFields()) {
+      if (Modifier.isStatic(field.getModifiers())) {
+        field.set(null, null);
+      }
+    }
   }
 
   @SuppressWarnings("unchecked")
-  private static <T> T overrideService(@Nullable Project project, Class<? super T> serviceInterface, Class<T> serviceImplementation) {
-    final String key = serviceInterface.getName();
-    final MutablePicoContainer picoContainer;
-    if (project != null) {
-      picoContainer = (MutablePicoContainer) project.getPicoContainer();
-    }
-    else {
-      picoContainer = (MutablePicoContainer) ApplicationManager.getApplication().getPicoContainer();
-
-    }
+  private static <T> T overrideService(@NotNull Project project, Class<? super T> serviceInterface, Class<T> serviceImplementation) {
+    String key = serviceInterface.getName();
+    MutablePicoContainer picoContainer = (MutablePicoContainer) project.getPicoContainer();
     picoContainer.unregisterComponent(key);
     picoContainer.registerComponentImplementation(key, serviceImplementation);
-    if (project != null) {
-      return (T) ServiceManager.getService(project, serviceInterface);
-    }
-    else {
-      return (T) ServiceManager.getService(serviceInterface);
-    }
+    return (T) ServiceManager.getService(project, serviceInterface);
   }
 
-  private static <T> T overrideAppService(Class<? super T> serviceInterface, Class<T> serviceImplementation) {
-    return overrideService(null, serviceInterface, serviceImplementation);
+  private static void edt(@NotNull final ThrowableRunnable<Exception> runnable) throws Exception {
+    final AtomicReference<Exception> exception = new AtomicReference<Exception>();
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        try {
+          runnable.run();
+        }
+        catch (Exception throwable) {
+          exception.set(throwable);
+        }
+      }
+    });
+    //noinspection ThrowableResultOfMethodCallIgnored
+    if (exception.get() != null) {
+      throw exception.get();
+    }
   }
-
 
 }

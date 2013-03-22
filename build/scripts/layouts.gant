@@ -182,9 +182,10 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       dir("javaFX") {
         dir("lib") {
           jar("javaFX.jar") {
-            module("javaFX")
-            module("javaFX-CE")
+            noResources("javaFX")
+            noResources("javaFX-CE")
           }
+          resources(["javaFX", "javaFX-CE"])
           jar("javaFX-jps-plugin.jar") {
             module("javaFX-jps-plugin")
           }

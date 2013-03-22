@@ -79,6 +79,7 @@ public class SelectionTracker extends TargetingTool {
 
   @Override
   public void keyPressed(KeyEvent event, EditableArea area) throws Exception {
+    super.keyPressed(event, area);
     if (event.getKeyCode() == KeyEvent.VK_ESCAPE) {
       myToolProvider.loadDefaultTool();
     }

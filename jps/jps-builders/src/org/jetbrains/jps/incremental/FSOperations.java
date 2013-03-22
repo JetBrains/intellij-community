@@ -114,7 +114,7 @@ public class FSOperations {
       markDirtyFiles(context, target, timestamps, true, null, null);
     }
 
-    if (!JavaBuilderUtil.isForcedRecompilationJava(context)) {
+    if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
       // mark as non-incremental only the module that triggered non-incremental change
       for (ModuleBuildTarget target : targets) {
         context.markNonIncremental(target);

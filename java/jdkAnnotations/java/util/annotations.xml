@@ -770,6 +770,9 @@
   <item name="java.util.Deque java.util.Iterator&lt;E&gt; descendingIterator()">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
+  <item name="java.util.Formatter java.util.Formatter format(java.lang.String, java.lang.Object...) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
   <item name="java.util.List List&lt;E&gt; subList(int fromIndex, int toIndex)">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>

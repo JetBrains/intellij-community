@@ -15,6 +15,7 @@
  */
 package com.intellij.psi;
 
+import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
@@ -216,7 +217,7 @@ public class PsiDiamondTypeImpl extends PsiDiamondType {
     buf.append(StringUtil.join(params, new Function<PsiTypeParameter, String>() {
       @Override
       public String fun(PsiTypeParameter psiTypeParameter) {
-        final String extendsList = psiTypeParameter.getExtendsList().getText();
+        final String extendsList = psiTypeParameter.getLanguage().isKindOf(JavaLanguage.INSTANCE) ? psiTypeParameter.getExtendsList().getText() : null;
         return psiTypeParameter.getName() + (StringUtil.isEmpty(extendsList) ? "" : " " + extendsList);
       }
     }, ", "));

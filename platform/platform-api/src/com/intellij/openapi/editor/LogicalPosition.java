@@ -94,10 +94,8 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
   public LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
                          int softWrapColumnDiff, int foldedLines, int foldingColumnDiff) throws IllegalArgumentException
   {
-    this(
-      line, column, softWrapLinesBeforeCurrentLogicalLine, softWrapLinesOnCurrentLogicalLine, softWrapColumnDiff, foldedLines,
-      foldingColumnDiff, true
-    );
+    this(line, column, softWrapLinesBeforeCurrentLogicalLine, softWrapLinesOnCurrentLogicalLine, softWrapColumnDiff, foldedLines,
+      foldingColumnDiff, true);
   }
 
   private LogicalPosition(int line, int column, int softWrapLinesBeforeCurrentLogicalLine, int softWrapLinesOnCurrentLogicalLine,
@@ -112,6 +110,8 @@ public class LogicalPosition implements Comparable<LogicalPosition> {
         softWrapLinesOnCurrentLogicalLine, softWrapColumnDiff, foldedLines, foldingColumnDiff, visualPositionAware
       ));
     }
+    if (line < 0) throw new IllegalArgumentException("line must be non negative: "+line);
+    if (column < 0) throw new IllegalArgumentException("column must be non negative: "+column);
     this.line = line;
     this.column = column;
     this.softWrapLinesBeforeCurrentLogicalLine = softWrapLinesBeforeCurrentLogicalLine;

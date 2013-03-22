@@ -871,32 +871,26 @@ class Foo {
   }
 
   public void testCompletionWhenLiveTemplateAreNotSufficient() {
-    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
-    try {
-      myFixture.configureByText("a.java", """
-  class Foo {
-      {
-          Iterable<String> l1 = null;
-          Iterable<String> l2 = null;
-          Object asdf = null;
-          iter<caret>
-      }
-  }
-  """)
-      type '\t'
-      assert myFixture.lookupElementStrings == ['l2', 'l1']
-      type 'as'
-      assert lookup
-      assertContains 'asdf', 'assert'
-      type '\n.'
-      assert lookup
-      assert 'hashCode' in myFixture.lookupElementStrings
-      assert myFixture.file.text.contains('asdf.')
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    myFixture.configureByText("a.java", """
+class Foo {
+    {
+        Iterable<String> l1 = null;
+        Iterable<String> l2 = null;
+        Object asdf = null;
+        iter<caret>
     }
-    finally {
-      ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
-    }
-
+}
+""")
+    type '\t'
+    assert myFixture.lookupElementStrings == ['l2', 'l1']
+    type 'as'
+    assert lookup
+    assertContains 'asdf', 'assert'
+    type '\n.'
+    assert lookup
+    assert 'hashCode' in myFixture.lookupElementStrings
+    assert myFixture.file.text.contains('asdf.')
   }
 
   public void testNoWordCompletionAutoPopup() {
@@ -1177,16 +1171,11 @@ class Foo extends Abcdefg <caret>'''
   }
 
   public void testSoutvTemplate() {
-    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
-    try {
-      myFixture.configureByText 'a.java', 'class Foo {{ <caret> }}'
-      type 'soutv\tgetcl.'
-      myFixture.checkResult '''class Foo {{
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    myFixture.configureByText 'a.java', 'class Foo {{ <caret> }}'
+    type 'soutv\tgetcl.'
+    myFixture.checkResult '''class Foo {{
     System.out.println("getClass(). = " + getClass().<caret>); }}'''
-    }
-    finally {
-      ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
-    }
   }
 
   public void testReturnLParen() {

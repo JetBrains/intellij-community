@@ -42,11 +42,11 @@ public class FileAttribute {
    * @deprecated
    * @see #FileAttribute(String, int, boolean)
    */
-  public FileAttribute(@NonNls final String id, int version) {
+  public FileAttribute(@NonNls @NotNull String id, int version) {
     this(id, version, false);
   }
 
-  public FileAttribute(@NonNls final String id, int version, boolean fixedSize) {
+  public FileAttribute(@NonNls @NotNull String id, int version, boolean fixedSize) {
     myId = id;
     myVersion = version;
     myFixedSize = fixedSize;
@@ -113,6 +113,7 @@ public class FileAttribute {
     }
   }
 
+  @NotNull
   public String getId() {
     return myId;
   }

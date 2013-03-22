@@ -19,10 +19,7 @@ package com.intellij.tasks.jira;
 import com.atlassian.theplugin.idea.jira.CachedIconLoader;
 import com.atlassian.theplugin.jira.api.JIRAComment;
 import com.atlassian.theplugin.jira.api.JIRAIssue;
-import com.intellij.tasks.Comment;
-import com.intellij.tasks.Task;
-import com.intellij.tasks.TaskState;
-import com.intellij.tasks.TaskType;
+import com.intellij.tasks.*;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import icons.JiraConnectorIcons;
@@ -43,9 +40,11 @@ import java.util.Locale;
 class JiraTask extends Task {
 
   private final JIRAIssue myJiraIssue;
+  private final TaskRepository myRepository;
 
-  public JiraTask(JIRAIssue jiraIssue) {
+  public JiraTask(JIRAIssue jiraIssue, TaskRepository repository) {
     myJiraIssue = jiraIssue;
+    myRepository = repository;
   }
 
   @NotNull
@@ -152,5 +151,11 @@ class JiraTask extends Task {
   @Override
   public String getIssueUrl() {
     return myJiraIssue.getIssueUrl();
+  }
+
+  @Nullable
+  @Override
+  public TaskRepository getRepository() {
+    return myRepository;
   }
 }

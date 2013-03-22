@@ -610,7 +610,6 @@ public class CodeCompletionHandlerBase {
       assert hostStartOffset <= host.getEndOffset() : "startOffset after injected";
 
       context = new CompletionContext(injected, translateOffsetMapToInjected(hostMap, documentWindow));
-      assert hostStartOffset == injectedLanguageManager.injectedToHost(injected, context.getStartOffset()) : "inconsistent injected offset translation";
     } else {
       context = new CompletionContext(hostCopy, hostMap);
     }
@@ -639,9 +638,24 @@ public class CodeCompletionHandlerBase {
       FeatureUsageTracker.getInstance().triggerFeatureUsed(CodeCompletionFeatures.EDITING_COMPLETION_BASIC);
     }
 
-    final CompletionLookupArranger.StatisticsUpdate update =
-      CompletionLookupArranger.collectStatisticChanges(item, indicator.getParameters().getLookup());
+    WatchingInsertionContext context = null;
+    try {
+      Lookup lookup = indicator.getParameters().getLookup();
+      CompletionLookupArranger.StatisticsUpdate update = CompletionLookupArranger.collectStatisticChanges(item, lookup);
+      context = insertItemHonorBlockSelection(indicator, item, completionChar, items, update);
+      CompletionLookupArranger.trackStatistics(context, update);
+    }
+    finally {
+      afterItemInsertion(indicator, context == null ? null : context.getLaterRunnable());
+    }
 
+  }
+
+  private static WatchingInsertionContext insertItemHonorBlockSelection(CompletionProgressIndicator indicator,
+                                                                        LookupElement item,
+                                                                        char completionChar,
+                                                                        List<LookupElement> items,
+                                                                        CompletionLookupArranger.StatisticsUpdate update) {
     final Editor editor = indicator.getEditor();
 
     final int caretOffset = editor.getCaretModel().getOffset();
@@ -680,19 +694,20 @@ public class CodeCompletionHandlerBase {
       for (RangeMarker marker : caretsAfter) {
         marker.dispose();
       }
-      
+
     } else {
       context = insertItem(indicator, item, completionChar, items, update, editor, caretOffset, idEndOffset);
     }
-    CompletionLookupArranger.trackStatistics(context, update);
+    return context;
+  }
 
-    final Runnable runnable = context.getLaterRunnable();
-    if (runnable != null) {
+  private static void afterItemInsertion(final CompletionProgressIndicator indicator, final Runnable laterRunnable) {
+    if (laterRunnable != null) {
       final Runnable runnable1 = new Runnable() {
         @Override
         public void run() {
           if (!indicator.getProject().isDisposed()) {
-            runnable.run();
+            laterRunnable.run();
           }
           indicator.disposeIndicator();
         }

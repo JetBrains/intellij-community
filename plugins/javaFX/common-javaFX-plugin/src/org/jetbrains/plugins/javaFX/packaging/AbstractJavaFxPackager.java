@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Base64Converter;
+import com.intellij.util.PathUtilRt;
 import com.intellij.util.io.ZipUtil;
 
 import java.io.File;
@@ -34,7 +35,9 @@ public abstract class AbstractJavaFxPackager {
   private static final Logger LOG = Logger.getInstance("#" + AbstractJavaFxPackager.class.getName());
 
   //artifact description
-  protected abstract String getArtifactRootName();
+  protected String getArtifactRootName() {
+    return PathUtilRt.getFileName(getArtifactOutputFilePath());
+  }
 
   protected abstract String getArtifactOutputPath();
 
@@ -82,6 +85,8 @@ public abstract class AbstractJavaFxPackager {
     addParameter(commandLine, "-appclass");
     addParameter(commandLine, getAppClass());
 
+    appendPreloader(commandLine, true);
+
     addParameter(commandLine, "-srcdir");
     addParameter(commandLine, tempUnzippedArtifactOutput.getPath());
     addParameter(commandLine, "-outdir");
@@ -110,6 +115,20 @@ public abstract class AbstractJavaFxPackager {
     }
   }
 
+  private void appendPreloader(List<String> commandLine, boolean appendPreloaderJar) {
+    final String preloaderClass = getPreloaderClass();
+    final String preloaderJar = getPreloaderJar();
+    if (!StringUtil.isEmptyOrSpaces(preloaderClass) && !StringUtil.isEmptyOrSpaces(preloaderJar)) {
+      addParameter(commandLine, "-preloader");
+      addParameter(commandLine, preloaderClass);
+
+      if (appendPreloaderJar) {
+        addParameter(commandLine, "-classpath");
+        addParameter(commandLine, new File(preloaderJar).getName());
+      }
+    }
+  }
+
   private void deploy(final String binPath,
                       final File tempDirWithCreatedJar,
                       final File tempUnzippedArtifactOutput) {
@@ -125,6 +144,8 @@ public abstract class AbstractJavaFxPackager {
 
     addParameter(commandLine, "-appclass");
     addParameter(commandLine, getAppClass());
+
+    appendPreloader(commandLine, false);
 
     addParameter(commandLine, "-width");
     addParameter(commandLine, getWidth());
@@ -321,4 +342,8 @@ public abstract class AbstractJavaFxPackager {
   public abstract boolean isSelfSigning();
 
   public abstract boolean isEnabledSigning();
+
+  public abstract String getPreloaderClass();
+
+  public abstract String getPreloaderJar();
 }
