@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -268,6 +268,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
       possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(expression, validator, true);
     }
     else {
+      assert var != null;
       possibleNames = GroovyNameSuggestionUtil.suggestVariableNameByType(var.getType(), validator);
     }
     List<String> list = new ArrayList<String>();
@@ -278,8 +279,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     myNameField = new NameSuggestionsField(ArrayUtil.toStringArray(list), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
 
     if (expression == null) {
-      myTypeComboBox = GrTypeComboBox.createTypeComboBoxWithDefType(var.getDeclaredType()
-      );
+      myTypeComboBox = GrTypeComboBox.createTypeComboBoxWithDefType(var.getDeclaredType(), var);
     }
     else {
       myTypeComboBox = GrTypeComboBox.createTypeComboBoxFromExpression(expression);

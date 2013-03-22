@@ -248,7 +248,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     final GrExpression expression = myContext.getExpression();
     if (expression == null) {
       assert var != null;
-      myTypeCombo = GrTypeComboBox.createTypeComboBoxWithDefType(var.getDeclaredType());
+      myTypeCombo = GrTypeComboBox.createTypeComboBoxWithDefType(var.getDeclaredType(), var);
     }
     else {
       myTypeCombo = GrTypeComboBox.createTypeComboBoxFromExpression(expression);
