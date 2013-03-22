@@ -129,6 +129,13 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     doTest("top");
   }
 
+  public void testIncludedRootAttributes() throws Exception {
+    myFixture.addFileToProject("foo.fxml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                                   "<?import javafx.scene.layout.*?>\n" +
+                                   "<VBox xmlns:fx=\"http://javafx.com/fxml\"/>");
+    doTest("layoutY");
+  }
+
   public void testReadOnly() throws Exception {
     configureByFile(getTestName(true) + ".fxml");
     assertTrue(myItems.length > 0);

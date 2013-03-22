@@ -21,6 +21,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.xml.XmlAttributeDescriptor;
@@ -113,6 +114,13 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
         if (rootTagDescriptor != null) {
           Collections.addAll(descriptors, rootTagDescriptor.getAttributesDescriptors(context));
         }
+        final XmlTag includedRoot = getIncludedRoot(context);
+        if (includedRoot != null) {
+          final XmlElementDescriptor includedRootDescriptor = includedRoot.getDescriptor();
+          if (includedRootDescriptor != null) {
+            Collections.addAll(descriptors, includedRootDescriptor.getAttributesDescriptors(includedRoot));
+          }
+        }
       }
       return descriptors.toArray(new XmlAttributeDescriptor[descriptors.size()]);
     }
@@ -161,6 +169,36 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
       final JavaFxClassBackedElementDescriptor rootTagDescriptor = getRootTagDescriptor(context);
       if (rootTagDescriptor != null) {
         return rootTagDescriptor.getAttributeDescriptor(attributeName, context);
+      }
+      if (context != null && FxmlConstants.FX_INCLUDE.equals(getName())) {
+        final XmlTag includedRoot = getIncludedRoot(context);
+        if (includedRoot != null) {
+          final XmlElementDescriptor includedRootDescriptor = includedRoot.getDescriptor();
+          if (includedRootDescriptor != null) {
+            return includedRootDescriptor.getAttributeDescriptor(attributeName, includedRoot);
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  private static XmlTag getIncludedRoot(XmlTag context) {
+    if (context == null) return null;
+    final XmlAttribute xmlAttribute = context.getAttribute(FxmlConstants.FX_ELEMENT_SOURCE);
+    if (xmlAttribute != null) {
+      final XmlAttributeValue valueElement = xmlAttribute.getValueElement();
+      if (valueElement != null) {
+        final PsiReference reference = valueElement.getReference();
+        if (reference != null) {
+          final PsiElement resolve = reference.resolve();
+          if (resolve instanceof XmlFile) {
+            final XmlTag rootTag = ((XmlFile)resolve).getRootTag();
+            if (rootTag != null) {
+              return rootTag;
+            }
+          }
+        }
       }
     }
     return null;
