@@ -41,7 +41,7 @@ import java.lang.reflect.Type;
 import java.util.*;
 
 @SuppressWarnings({"deprecation"})
-abstract class ComponentStoreImpl implements IComponentStore {
+public abstract class ComponentStoreImpl implements IComponentStore {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.components.ComponentStoreImpl");
   private final Map<String, Object> myComponents = Collections.synchronizedMap(new THashMap<String, Object>());
@@ -335,7 +335,7 @@ abstract class ComponentStoreImpl implements IComponentStore {
     return (Class<T>)ReflectionUtil.getRawType(type);
   }
 
-  private static String getComponentName(@NotNull final PersistentStateComponent<?> persistentStateComponent) {
+  public static String getComponentName(@NotNull final PersistentStateComponent<?> persistentStateComponent) {
     final State stateSpec = getStateSpec(persistentStateComponent);
     if (stateSpec == null) {
       LOG.error("Null state spec for " + persistentStateComponent);
