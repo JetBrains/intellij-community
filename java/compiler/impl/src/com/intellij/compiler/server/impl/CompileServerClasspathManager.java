@@ -30,6 +30,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -115,9 +116,14 @@ public class CompileServerClasspathManager {
   @Nullable
   private static File getPluginDir(IdeaPluginDescriptor plugin) {
     String pluginDirName = StringUtil.getShortName(plugin.getPluginId().getIdString());
-    String[] roots = {PathManager.getHomePath(), PathManager.getHomePath() + File.separator + "community"};
+    List<String> roots = Arrays.asList(new File(PathManager.getHomePath(), "plugins").getPath(),
+                                       new File(PathManager.getHomePath(), "community/plugins").getPath());
+    String extraDir = System.getProperty("compile.server.development.plugins.dir");
+    if (extraDir != null) {
+      roots.add(extraDir);
+    }
     for (String root : roots) {
-      File pluginDir = new File(root, "plugins" + File.separator + pluginDirName);
+      File pluginDir = new File(root, pluginDirName);
       if (pluginDir.isDirectory()) {
         return pluginDir;
       }
