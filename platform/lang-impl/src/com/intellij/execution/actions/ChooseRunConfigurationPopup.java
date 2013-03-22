@@ -942,7 +942,13 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
         }
         else {
           if (wrapper.isChecked()) {
-            myLabel.setIcon(isSelected ? AllIcons.Actions.Checked_selected : AllIcons.Actions.Checked);
+            myTextLabel.setIcon(isSelected ? RunConfigurationsComboBoxAction.CHECKED_SELECTED_ICON
+                                           : RunConfigurationsComboBoxAction.CHECKED_ICON);
+          }
+          else {
+            if (myTextLabel.getIcon() == null) {
+              myTextLabel.setIcon(RunConfigurationsComboBoxAction.EMPTY_ICON);
+            }
           }
           myLabel.setText("");
         }
@@ -990,7 +996,7 @@ class ChooseRunConfigurationPopup implements ExecutorProvider {
       boolean hasSideBar = false;
       for (Object each : getListStep().getValues()) {
         if (each instanceof Wrapper) {
-          if (((Wrapper)each).getMnemonic() != -1 || ((Wrapper)each).isChecked()) {
+          if (((Wrapper)each).getMnemonic() != -1) {
             hasSideBar = true;
             break;
           }
