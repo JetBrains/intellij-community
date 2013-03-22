@@ -19,7 +19,6 @@ package com.intellij.execution.impl;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.ide.util.projectWizard.ProjectTemplateComponent;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
