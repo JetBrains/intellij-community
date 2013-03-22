@@ -69,6 +69,11 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
           }
         }, false);
 
+        final JavaFxPropertyElementDescriptor defaultPropertyDescriptor = getDefaultPropertyDescriptor();
+        if (defaultPropertyDescriptor != null) {
+          Collections.addAll(children, defaultPropertyDescriptor.getElementsDescriptors(context));
+        }
+
         collectStaticElementDescriptors(context, children);
 
         final PsiType returnType = JavaFxPsiUtil.getDefaultPropertyExpectedType(myPsiClass);
@@ -86,6 +91,21 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       }
     }
     return XmlElementDescriptor.EMPTY_ARRAY;
+  }
+
+  private JavaFxPropertyElementDescriptor getDefaultPropertyDescriptor() {
+    final PsiAnnotation defaultProperty = AnnotationUtil
+      .findAnnotationInHierarchy(myPsiClass, Collections.singleton(JavaFxCommonClassNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
+    if (defaultProperty != null) {
+      final PsiAnnotationMemberValue defaultPropertyAttributeValue = defaultProperty.findAttributeValue("value");
+      if (defaultPropertyAttributeValue instanceof PsiLiteralExpression) {
+        final Object value = ((PsiLiteralExpression)defaultPropertyAttributeValue).getValue();
+        if (value instanceof String) {
+          return new JavaFxPropertyElementDescriptor(myPsiClass, (String)value, false);
+        }
+      }
+    }
+    return null;
   }
 
   static void collectStaticAttributesDescriptors(@Nullable XmlTag context, List<XmlAttributeDescriptor> simpleAttrs) {
@@ -159,18 +179,17 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
             return elementDescriptor;
           }
         } else {
-          final PsiAnnotation defaultProperty = AnnotationUtil
-            .findAnnotationInHierarchy(myPsiClass, Collections.singleton(JavaFxCommonClassNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
-          if (defaultProperty != null) {
-            final PsiAnnotationMemberValue defaultPropertyAttributeValue = defaultProperty.findAttributeValue("value");
-            if (defaultPropertyAttributeValue instanceof PsiLiteralExpression) {
-              final Object value = ((PsiLiteralExpression)defaultPropertyAttributeValue).getValue();
-              if (value instanceof String && ((String)value).equalsIgnoreCase(name) && myPsiClass.findFieldByName(name, true) == null) {
-                elementDescriptor = null;
+          final JavaFxPropertyElementDescriptor defaultPropertyDescriptor = getDefaultPropertyDescriptor();
+          if (defaultPropertyDescriptor != null) {
+            final String defaultPropertyName = defaultPropertyDescriptor.getName();
+            if (StringUtil.equalsIgnoreCase(defaultPropertyName, name) && !StringUtil.equals(defaultPropertyName, name)) {
+              final XmlElementDescriptor childDescriptor = defaultPropertyDescriptor.getElementDescriptor(childTag, contextTag);
+              if (childDescriptor != null) {
+                return childDescriptor;
               }
             }
           }
-          if (elementDescriptor != null && elementDescriptor.getDeclaration() != null) {
+          if (elementDescriptor.getDeclaration() != null) {
             return elementDescriptor;
           }
         }
