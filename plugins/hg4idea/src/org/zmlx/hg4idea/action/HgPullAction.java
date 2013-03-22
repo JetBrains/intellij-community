@@ -18,6 +18,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgPullCommand;
 import org.zmlx.hg4idea.ui.HgPullDialog;
 
@@ -28,9 +29,10 @@ public class HgPullAction extends HgAbstractGlobalAction {
     super(AllIcons.Actions.CheckOut);
   }
 
-  protected void execute(final Project project, Collection<VirtualFile> repos) {
+  @Override
+  protected void execute(final Project project, Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo) {
     final HgPullDialog dialog = new HgPullDialog(project);
-    dialog.setRoots(repos);
+    dialog.setRoots(repos, selectedRepo);
     dialog.show();
     if (dialog.isOK()) {
       dialog.rememberSettings();

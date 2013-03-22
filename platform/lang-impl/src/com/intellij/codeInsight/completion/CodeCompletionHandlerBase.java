@@ -659,7 +659,10 @@ public class CodeCompletionHandlerBase {
     final Editor editor = indicator.getEditor();
 
     final int caretOffset = editor.getCaretModel().getOffset();
-    final int idEndOffset = indicator.getIdentifierEndOffset();
+    int idEndOffset = indicator.getIdentifierEndOffset();
+    if (idEndOffset < 0) {
+      idEndOffset = CompletionInitializationContext.calcDefaultIdentifierEnd(editor, caretOffset);
+    }
 
     WatchingInsertionContext context = null;
     if (editor.getSelectionModel().hasBlockSelection() && editor.getSelectionModel().getBlockSelectionEnds().length > 0) {

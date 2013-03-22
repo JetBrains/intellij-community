@@ -15,6 +15,7 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgTagBranch;
 import org.zmlx.hg4idea.util.HgBranchesAndTags;
 
@@ -67,10 +68,11 @@ public class HgUpdateToDialog extends DialogWrapper {
   }
 
   public void setRoots(Collection<VirtualFile> repos,
-                       HgBranchesAndTags branchesAndTags) {
+                       @Nullable VirtualFile selectedRepo, HgBranchesAndTags branchesAndTags) {
     hgRepositorySelectorComponent.setRoots(repos);
     branchesForRepos = branchesAndTags.getBranchesForRepos();
     tagsForRepos = branchesAndTags.getTagsForRepos();
+    hgRepositorySelectorComponent.setSelectedRoot(selectedRepo);
     updateRepository();
   }
 

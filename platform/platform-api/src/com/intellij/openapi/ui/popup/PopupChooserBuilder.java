@@ -29,6 +29,7 @@ import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.JBViewport;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.ui.treeStructure.treetable.TreeTable;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -212,10 +213,21 @@ public class PopupChooserBuilder {
 
   @NotNull
   public JBPopup createPopup() {
-    JList list = null;
+    final JList list;
+    BooleanFunction<KeyEvent> keyEventHandler = null;
     if (myChooserComponent instanceof JList) {
       list = (JList)myChooserComponent;
       myChooserComponent = ListWithFilter.wrap(list, new MyListWrapper(list), myItemsNamer);
+      keyEventHandler = new BooleanFunction<KeyEvent>() {
+        @Override
+        public boolean fun(KeyEvent keyEvent) {
+          list.dispatchEvent(keyEvent);
+          return keyEvent.isConsumed();
+        }
+      };
+    }
+    else {
+      list = null;
     }
 
     JPanel contentPane = new JPanel(new BorderLayout());
@@ -318,6 +330,10 @@ public class PopupChooserBuilder {
       .setCancelOnWindowDeactivation(myCancelOnWindowDeactivation)
       .setCancelOnClickOutside(myCancelOnClickOutside)
       .setCouldPin(myCouldPin);
+
+    if (keyEventHandler != null) {
+      builder.setKeyEventHandler(keyEventHandler);
+    }
 
     if (myCommandButton != null) {
       builder.setCommandButton(myCommandButton);

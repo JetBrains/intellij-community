@@ -17,6 +17,7 @@ import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.provider.update.HgConflictResolver;
 import org.zmlx.hg4idea.ui.HgRunConflictResolverDialog;
@@ -25,10 +26,11 @@ import java.util.Collection;
 
 public class HgRunConflictResolverAction extends HgAbstractGlobalAction {
 
-  public void execute(final Project project, Collection<VirtualFile> repos) {
+  @Override
+  public void execute(final Project project, Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo) {
     final VirtualFile repository;
     if (repos.size() > 1) {
-      repository = letUserSelectRepository(repos, project);
+      repository = letUserSelectRepository(repos, project, selectedRepo);
     }
     else if (repos.size() == 1) {
       repository = repos.iterator().next();
@@ -49,9 +51,9 @@ public class HgRunConflictResolverAction extends HgAbstractGlobalAction {
   }
 
 
-  private static VirtualFile letUserSelectRepository(Collection<VirtualFile> repos, Project project) {
+  private static VirtualFile letUserSelectRepository(Collection<VirtualFile> repos, Project project, @Nullable VirtualFile selectedRepo) {
     HgRunConflictResolverDialog dialog = new HgRunConflictResolverDialog(project);
-    dialog.setRoots(repos);
+    dialog.setRoots(repos, selectedRepo);
     dialog.show();
     if (dialog.isOK()) {
       return dialog.getRepository();

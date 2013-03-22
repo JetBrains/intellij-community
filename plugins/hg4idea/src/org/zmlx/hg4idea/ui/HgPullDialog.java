@@ -22,6 +22,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorComboBox;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRememberedInputs;
 import org.zmlx.hg4idea.command.HgShowConfigCommand;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -80,8 +81,9 @@ public class HgPullDialog extends DialogWrapper {
     return myCurrentRepositoryUrl;
   }
 
-  public void setRoots(Collection<VirtualFile> repos) {
+  public void setRoots(Collection<VirtualFile> repos, @Nullable final VirtualFile selectedRepo) {
     hgRepositorySelector.setRoots(repos);
+    hgRepositorySelector.setSelectedRoot(selectedRepo);
     onChangeRepository();
   }
 

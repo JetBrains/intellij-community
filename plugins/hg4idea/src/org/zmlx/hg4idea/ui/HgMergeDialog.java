@@ -56,12 +56,12 @@ public class HgMergeDialog extends DialogWrapper {
 
   public HgMergeDialog(Project project,
                        Collection<VirtualFile> roots,
-                       HgBranchesAndTags branchesAndTags) {
+                       @Nullable VirtualFile selectedRepo, HgBranchesAndTags branchesAndTags) {
     super(project, false);
     this.project = project;
     branchesForRepos = branchesAndTags.getBranchesForRepos();
     tagsForRepos = branchesAndTags.getTagsForRepos();
-    setRoots(roots);
+    setRoots(roots, selectedRepo);
     hgRepositorySelectorComponent.setTitle("Select repository to merge");
     hgRepositorySelectorComponent.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -82,8 +82,9 @@ public class HgMergeDialog extends DialogWrapper {
     init();
   }
 
-  public void setRoots(Collection<VirtualFile> repos) {
+  public void setRoots(Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo) {
     hgRepositorySelectorComponent.setRoots(repos);
+    hgRepositorySelectorComponent.setSelectedRoot(selectedRepo);
     updateRepository();
   }
 

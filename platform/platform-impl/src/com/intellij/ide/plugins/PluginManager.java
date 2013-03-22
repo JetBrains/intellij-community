@@ -1105,8 +1105,8 @@ public class PluginManager {
     return null;
   }
 
-  public static void addPluginClass(String className, PluginId pluginId) {
-    ourPluginClasses.addPluginClass(className, pluginId);
+  public static void addPluginClass(String className, PluginId pluginId, boolean loaded) {
+    ourPluginClasses.addPluginClass(className, pluginId, loaded);
   }
 
   public static boolean isPluginClass(String className) {

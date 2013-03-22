@@ -58,7 +58,7 @@ public class HgPusher {
     myProject = project;
   }
 
-  public void showDialogAndPush() {
+  public void showDialogAndPush(@Nullable final VirtualFile selectedRepo) {
     HgUtil.executeOnPooledThreadIfNeeded(new Runnable() {
       public void run() {
         final List<VirtualFile> repositories = HgUtil.getHgRepositories(myProject);
@@ -75,7 +75,7 @@ public class HgPusher {
         UIUtil.invokeAndWaitIfNeeded(new Runnable() {
           @Override
           public void run() {
-            final HgPushDialog dialog = new HgPushDialog(myProject, repositories, branches);
+            final HgPushDialog dialog = new HgPushDialog(myProject, repositories, branches, selectedRepo);
             dialog.show();
             if (dialog.isOK()) {
               dialog.rememberSettings();

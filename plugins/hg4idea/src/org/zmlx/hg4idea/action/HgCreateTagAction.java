@@ -26,9 +26,9 @@ import java.util.Collection;
 
 public class HgCreateTagAction extends HgAbstractGlobalAction {
 
-  protected void execute(final Project project, Collection<VirtualFile> repos) {
+  protected void execute(final Project project, Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo) {
     final HgTagDialog dialog = new HgTagDialog(project);
-    dialog.setRoots(repos);
+    dialog.setRoots(repos, selectedRepo);
     dialog.show();
     if (dialog.isOK()) {
       try {
