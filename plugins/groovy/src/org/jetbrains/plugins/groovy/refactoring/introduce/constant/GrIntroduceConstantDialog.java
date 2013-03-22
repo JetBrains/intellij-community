@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,6 +52,7 @@ import org.jetbrains.plugins.groovy.actions.GroovyTemplatesFactory;
 import org.jetbrains.plugins.groovy.actions.NewGroovyActionBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNameSuggestionUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyNamesUtil;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
@@ -242,21 +243,25 @@ public class GrIntroduceConstantDialog extends DialogWrapper
 
   private void createUIComponents() {
     myJavaVisibilityPanel = new JavaVisibilityPanel(false, true);
-    if (myContext.getExpression() == null) {
-      myTypeCombo = GrTypeComboBox.createTypeComboBoxWithDefType(myContext.getVar().getDeclaredType()
-      );
+
+    final GrVariable var = myContext.getVar();
+    final GrExpression expression = myContext.getExpression();
+    if (expression == null) {
+      assert var != null;
+      myTypeCombo = GrTypeComboBox.createTypeComboBoxWithDefType(var.getDeclaredType());
     }
     else {
-      myTypeCombo = GrTypeComboBox.createTypeComboBoxFromExpression(myContext.getExpression());
+      myTypeCombo = GrTypeComboBox.createTypeComboBoxFromExpression(expression);
     }
 
     List<String> names = new ArrayList<String>();
-    final GrVariable var = myContext.getVar();
     if (var != null) {
       names.add(var.getName());
     }
-    String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(myContext.getExpression(), new GroovyVariableValidator(myContext), true);
-    ContainerUtil.addAll(names, possibleNames);
+    if (expression != null) {
+      String[] possibleNames = GroovyNameSuggestionUtil.suggestVariableNames(expression, new GroovyVariableValidator(myContext), true);
+      ContainerUtil.addAll(names, possibleNames);
+    }
 
     myNameField = new NameSuggestionsField(ArrayUtil.toStringArray(names), myContext.getProject(), GroovyFileType.GROOVY_FILE_TYPE);
 
