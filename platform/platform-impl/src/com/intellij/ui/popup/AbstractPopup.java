@@ -1677,7 +1677,16 @@ public class AbstractPopup implements JBPopup {
   @Override
   public boolean dispatchKeyEvent(@NotNull KeyEvent e) {
     BooleanFunction<KeyEvent> handler = myKeyEventHandler;
-    return handler != null && handler.fun(e);
+    if (handler != null) {
+      return handler.fun(e);
+    }
+    else {
+      if (isCloseRequest(e) && myCancelKeyEnabled) {
+        cancel(e);
+        return true;
+      }
+    }
+    return false;
   }
 
   private class SpeedSearchKeyListener implements KeyListener {
@@ -1704,5 +1713,9 @@ public class AbstractPopup implements JBPopup {
   @NotNull
   public Dimension getFooterPreferredSize() {
     return myAdComponent == null ? new Dimension(0,0) : myAdComponent.getPreferredSize();
+  }
+
+  public static boolean isCloseRequest(KeyEvent e) {
+    return e != null && e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0;
   }
 }

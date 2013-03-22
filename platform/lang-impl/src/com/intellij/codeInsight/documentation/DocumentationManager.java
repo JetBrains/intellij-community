@@ -463,8 +463,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
           if (myCloseOnSneeze) {
             closeDocHint();
           }
-          boolean closeRequest = e.getID() == KeyEvent.KEY_PRESSED && e.getKeyCode() == KeyEvent.VK_ESCAPE && e.getModifiers() == 0;
-          if ((closeRequest && getDocInfoHint() != null)) {
+          if ((AbstractPopup.isCloseRequest(e) && getDocInfoHint() != null)) {
             closeDocHint();
             return true;
           }
