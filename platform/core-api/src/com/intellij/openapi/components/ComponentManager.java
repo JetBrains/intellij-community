@@ -37,7 +37,8 @@ public interface ComponentManager extends UserDataHolder, Disposable {
    * Gets the component by its name
    *
    * @param name the name of the component
-   * @return component that matches interface class or null if there is no such component
+   * @return component with given name or null if there is no such component
+   * @see com.intellij.openapi.components.NamedComponent#getComponentName()
    */
   BaseComponent getComponent(String name);
 
