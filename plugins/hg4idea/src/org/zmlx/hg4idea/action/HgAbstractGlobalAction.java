@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -38,7 +39,9 @@ abstract class HgAbstractGlobalAction extends AnAction {
     if (project == null) {
       return;
     }
-    execute(project, HgUtil.getHgRepositories(project));
+    VirtualFile file = event.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile repo = file != null ? HgUtil.getHgRootOrNull(project, file) : null;
+    execute(project, HgUtil.getHgRepositories(project), repo);
   }
 
   @Override
@@ -54,7 +57,7 @@ abstract class HgAbstractGlobalAction extends AnAction {
     }
   }
 
-  protected abstract void execute(Project project, Collection<VirtualFile> repositories);
+  protected abstract void execute(Project project, Collection<VirtualFile> repositories, @Nullable VirtualFile selectedRepo);
 
   protected static void handleException(Project project, Exception e) {
     LOG.info(e);

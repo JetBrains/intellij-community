@@ -72,7 +72,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
                                    Set<String> feedback) {
     List<VcsException> exceptions = new LinkedList<VcsException>();
-    for (Map.Entry<VirtualFile, Set<HgFile>> entry : getFilesByRepository(changes).entrySet()) {
+    Map<VirtualFile, Set<HgFile>> repositoriesMap = getFilesByRepository(changes);
+    for (Map.Entry<VirtualFile, Set<HgFile>> entry : repositoriesMap.entrySet()) {
 
       VirtualFile repo = entry.getKey();
       Set<HgFile> selectedFiles = entry.getValue();
@@ -117,9 +118,10 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     // push if needed
     if (myNextCommitIsPushed && exceptions.isEmpty()) {
+      final VirtualFile preselectedRepo = repositoriesMap.size() == 1 ? repositoriesMap.keySet().iterator().next() : null;
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
-          new HgPusher(myProject).showDialogAndPush();
+          new HgPusher(myProject).showDialogAndPush(preselectedRepo);
         }
       });
     }

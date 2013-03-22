@@ -24,6 +24,7 @@ import com.intellij.openapi.vcs.update.UpdatedFiles;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgMergeCommand;
@@ -43,21 +44,20 @@ import java.util.Collection;
 public class HgMerge extends HgAbstractGlobalAction {
 
   @Override
-
-  public void execute(final Project project, final Collection<VirtualFile> repos) {
+  public void execute(final Project project, final Collection<VirtualFile> repos, @Nullable final VirtualFile selectedRepo) {
     HgUiUtil.loadBranchesInBackgroundableAndExecuteAction(project, repos, new Consumer<HgBranchesAndTags>() {
 
       @Override
       public void consume(HgBranchesAndTags info) {
-        showMergeDialogAndExecute(project, repos, info);
+        showMergeDialogAndExecute(project, repos, selectedRepo, info);
       }
     });
   }
 
   private void showMergeDialogAndExecute(final Project project,
                                          Collection<VirtualFile> repos,
-                                         HgBranchesAndTags branchesAndTags) {
-    final HgMergeDialog mergeDialog = new HgMergeDialog(project, repos, branchesAndTags);
+                                         @Nullable VirtualFile selectedRepo, HgBranchesAndTags branchesAndTags) {
+    final HgMergeDialog mergeDialog = new HgMergeDialog(project, repos, selectedRepo, branchesAndTags);
     mergeDialog.show();
     if (mergeDialog.isOK()) {
       new Task.Backgroundable(project, "Merging changes...") {
