@@ -189,7 +189,11 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
               }
             }
           }
-          if (elementDescriptor.getDeclaration() != null) {
+          final PsiElement declaration = elementDescriptor.getDeclaration();
+          if (declaration != null) {
+            if (declaration instanceof PsiField && ((PsiField)declaration).getType() instanceof PsiPrimitiveType) {
+              return null;
+            }
             return elementDescriptor;
           }
         }
