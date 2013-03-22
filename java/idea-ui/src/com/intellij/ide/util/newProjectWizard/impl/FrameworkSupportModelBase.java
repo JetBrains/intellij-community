@@ -21,6 +21,7 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
 import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
+import com.intellij.ide.util.newProjectWizard.FrameworkSupportOptionsComponent;
 import com.intellij.ide.util.newProjectWizard.OldFrameworkSupportProviderWrapper;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.Disposable;
@@ -44,6 +45,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   private final LibrariesContainer myLibrariesContainer;
   private final EventDispatcher<FrameworkSupportModelListener> myDispatcher = EventDispatcher.create(FrameworkSupportModelListener.class);
   private final Map<String, FrameworkSupportNode> mySettingsMap = new HashMap<String, FrameworkSupportNode>();
+  private final Map<String, FrameworkSupportOptionsComponent> myOptionsComponentsMap = new HashMap<String, FrameworkSupportOptionsComponent>();
 
   public FrameworkSupportModelBase(final @Nullable Project project, @Nullable ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {
     myProject = project;
@@ -56,6 +58,10 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
 
   public void registerComponent(@NotNull final FrameworkSupportInModuleProvider provider, @NotNull final FrameworkSupportNode node) {
     mySettingsMap.put(provider.getFrameworkType().getId(), node);
+  }
+
+  public void registerOptionsComponent(FrameworkSupportInModuleProvider provider, FrameworkSupportOptionsComponent component) {
+    myOptionsComponentsMap.put(provider.getFrameworkType().getId(), component);
   }
 
   public Project getProject() {
@@ -88,6 +94,14 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
     final FrameworkSupportNode node = mySettingsMap.get(providerId);
     if (node != null && enable != node.isChecked()) {
       node.setChecked(enable);
+    }
+  }
+
+  @Override
+  public void updateFrameworkLibraryComponent(@NotNull String providerId) {
+    FrameworkSupportOptionsComponent component = myOptionsComponentsMap.get(providerId);
+    if (component != null) {
+      component.updateLibrariesPanel();
     }
   }
 
