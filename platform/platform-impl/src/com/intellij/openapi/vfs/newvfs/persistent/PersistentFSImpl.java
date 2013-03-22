@@ -1200,14 +1200,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @TestOnly
   public void cleanPersistedContents() {
-    try {
-      final int[] roots = FSRecords.listRoots();
-      for (int root : roots) {
-        cleanPersistedContentsRecursively(root);
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    final int[] roots = FSRecords.listRoots();
+    for (int root : roots) {
+      cleanPersistedContentsRecursively(root);
     }
   }
 
