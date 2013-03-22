@@ -232,12 +232,6 @@ public class GenericRepository extends BaseRepositoryImpl {
     return answer;
   }
 
-  @Nullable
-  @Override
-  public String getTaskComment(final Task task) {
-    return super.getTaskComment(task);
-  }
-
   public String getLoginURL() {
     return myLoginURL;
   }

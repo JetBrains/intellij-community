@@ -40,6 +40,10 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
     return withLocalName(StandardPatterns.string().equalTo(localName));
   }
 
+  public Self withLocalName(@NonNls String... localNames) {
+    return withLocalName(StandardPatterns.string().oneOf(localNames));
+  }
+
   public Self withLocalName(final ElementPattern<String> localName) {
     return with(new PsiNamePatternCondition<T>("withLocalName", localName) {
       public String getPropertyValue(@NotNull final Object o) {
@@ -48,8 +52,12 @@ public abstract class XmlNamedElementPattern<T extends XmlElement & PsiNamedElem
     });
   }
 
+  public Self withNamespace(@NonNls final String namespace) {
+    return withNamespace(StandardPatterns.string().equalTo(namespace));
+  }
+
   public Self withNamespace(@NonNls final String... namespaces) {
-    return withNamespace(PlatformPatterns.string().oneOf(namespaces));
+    return withNamespace(StandardPatterns.string().oneOf(namespaces));
   }
 
   public Self withNamespace(final ElementPattern<String> namespace) {

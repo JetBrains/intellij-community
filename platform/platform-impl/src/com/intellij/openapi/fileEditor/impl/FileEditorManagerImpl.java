@@ -20,7 +20,6 @@ import com.intellij.ide.IdeBundle;
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.ide.util.projectWizard.ProjectTemplateComponent;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -97,7 +96,7 @@ import java.util.List;
  * @author Eugene Belyaev
  * @author Vladimir Kondratyev
  */
-public class FileEditorManagerImpl extends FileEditorManagerEx implements ProjectComponent, JDOMExternalizable, ProjectTemplateComponent {
+public class FileEditorManagerImpl extends FileEditorManagerEx implements ProjectComponent, JDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl");
   private static final Key<LocalFileSystem.WatchRequest> WATCH_REQUEST_KEY = Key.create("WATCH_REQUEST_KEY");
   private static final Key<Boolean> DUMB_AWARE = Key.create("DUMB_AWARE");
@@ -105,6 +104,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private static final FileEditor[] EMPTY_EDITOR_ARRAY = {};
   private static final FileEditorProvider[] EMPTY_PROVIDER_ARRAY = {};
   public static final Key<Boolean> CLOSING_TO_REOPEN = Key.create("CLOSING_TO_REOPEN");
+  public static final String FILE_EDITOR_MANAGER = "FileEditorManager";
 
   private volatile JPanel myPanels;
   private EditorsSplitters mySplitters;
@@ -253,11 +253,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         }
       }
     }
-  }
-
-  @Override
-  public String getStorageFile() {
-    return "workspace.xml";
   }
 
   private static class MyBorder implements Border {
@@ -1379,7 +1374,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
   @NotNull
   public String getComponentName() {
-    return "FileEditorManager";
+    return FILE_EDITOR_MANAGER;
   }
 
   public void initComponent() {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,6 +62,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testExtends10() throws Exception { doTest(false); }
   public void testExtends11() throws Exception { doTest(false); }
   public void testExtends12() throws Exception { doTest(false); }
+  public void testExtends13() throws Exception { doTest(false); }
   public void testSynchronized1() throws Exception { doTest(false); }
 
   public void testSynchronized2() throws Exception {

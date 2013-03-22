@@ -14,7 +14,7 @@
  * limitations under the License.
  */
 package com.intellij.codeInsight.template
-import com.intellij.codeInsight.CodeInsightSettings
+
 import com.intellij.codeInsight.template.impl.ConstantNode
 import com.intellij.codeInsight.template.impl.EmptyNode
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
@@ -32,13 +32,11 @@ public class XmlLiveTemplateTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
   }
 
   @Override
   protected void tearDown() throws Exception {
-    CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
-      ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
     if (state != null) {
       state.gotoEnd();
     }

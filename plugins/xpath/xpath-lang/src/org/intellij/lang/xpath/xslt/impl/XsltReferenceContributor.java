@@ -58,9 +58,9 @@ public class XsltReferenceContributor {
   public static class XML extends PsiReferenceContributor {
     public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
       registrar.registerReferenceProvider(
-        psiElement(XmlAttributeValue.class).withParent(xmlAttribute().withLocalName(string().oneOf(
-          "name", "href", "mode", "elements", "exclude-result-prefixes", "extension-element-prefixes", "stylesheet-prefix"
-        )).withParent(xmlTag().withNamespace(XsltSupport.XSLT_NS))),
+        psiElement(XmlAttributeValue.class).withParent(
+          xmlAttribute().withLocalName("name", "href", "mode", "elements", "exclude-result-prefixes", "extension-element-prefixes", "stylesheet-prefix").withParent(
+            xmlTag().withNamespace(XsltSupport.XSLT_NS))),
         new XsltReferenceProvider());
 
       registrar.registerReferenceProvider(

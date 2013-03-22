@@ -30,8 +30,8 @@ public class InspectionsPropertiesReferenceProviderContributor extends PsiRefere
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
     ElementPattern pattern = XmlPatterns.xmlAttributeValue()
-      .withParent(XmlPatterns.xmlAttribute().withLocalName(string().oneOf("key", "groupKey"))
-                    .withParent(XmlPatterns.xmlTag().withName(string().oneOf("localInspection", "globalInspection"))
+      .withParent(XmlPatterns.xmlAttribute().withLocalName("key", "groupKey")
+                    .withParent(XmlPatterns.xmlTag().withName("localInspection", "globalInspection")
                                   .withSuperParent(2, XmlPatterns.xmlTag().withName("idea-plugin"))));
     registrar.registerReferenceProvider(pattern, new InspectionsKeyPropertiesReferenceProvider(false),
                                         PsiReferenceRegistrar.DEFAULT_PRIORITY);

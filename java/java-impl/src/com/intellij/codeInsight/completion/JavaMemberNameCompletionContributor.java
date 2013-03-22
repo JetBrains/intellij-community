@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,8 +52,11 @@ import static com.intellij.patterns.StandardPatterns.or;
  * @author peter
  */
 public class JavaMemberNameCompletionContributor extends CompletionContributor {
-  public static final ElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN =
-    psiElement().afterLeaf(psiElement().withText("?").afterLeaf("<", ","));
+  public static final ElementPattern<PsiElement> INSIDE_TYPE_PARAMS_PATTERN = psiElement().
+    afterLeaf(psiElement().withText("?").andOr(
+      psiElement().afterLeaf("<", ","),
+      psiElement().afterSiblingSkipping(psiElement().whitespaceCommentEmptyOrError(), psiElement(PsiAnnotation.class))));
+
   static final int MAX_SCOPE_SIZE_TO_SEARCH_UNRESOLVED = 50000;
 
   @Override
@@ -410,7 +413,7 @@ public class JavaMemberNameCompletionContributor extends CompletionContributor {
           continue outer;
         }
       }
-      
+
       LookupElement element = PrioritizedLookupElement.withPriority(LookupElementBuilder.create(name).withAutoCompletionPolicy(AutoCompletionPolicy.GIVE_CHANCE_TO_OVERWRITE), -i);
       if (callback != null) {
         element = LookupElementDecorator.withInsertHandler(element, new InsertHandler<LookupElementDecorator<LookupElement>>() {

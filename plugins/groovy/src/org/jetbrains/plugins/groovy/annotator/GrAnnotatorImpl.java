@@ -18,6 +18,9 @@ package org.jetbrains.plugins.groovy.annotator;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
 import com.intellij.psi.PsiElement;
+import com.intellij.util.ConcurrencyUtil;
+import com.intellij.util.containers.ConcurrentWeakHashMap;
+import gnu.trove.TObjectHashingStrategy;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeInspection.assignment.GroovyAssignabilityCheckInspection;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
@@ -26,14 +29,30 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
+import java.util.concurrent.ConcurrentMap;
+
 /**
  * @author Max Medvedev
  */
 public class GrAnnotatorImpl implements Annotator {
+  private final ConcurrentMap<AnnotationHolder, GroovyAnnotator> myCache =
+    new ConcurrentWeakHashMap<AnnotationHolder, GroovyAnnotator>(new TObjectHashingStrategy<AnnotationHolder>() {
+      @Override
+      public int computeHashCode(AnnotationHolder object) {
+        return object.hashCode();
+      }
+
+      @Override
+      public boolean equals(AnnotationHolder o1, AnnotationHolder o2) {
+        return o1 == o2;
+      }
+    });
+
   @Override
   public void annotate(@NotNull PsiElement element, @NotNull AnnotationHolder holder) {
     if (element instanceof GroovyPsiElement) {
-      ((GroovyPsiElement)element).accept(new GroovyAnnotator(holder));
+      final GroovyAnnotator annotator = getAnnotator(holder);
+      ((GroovyPsiElement)element).accept(annotator);
       if (PsiUtil.isCompileStatic(element)) {
         GroovyAssignabilityCheckInspection.checkElement((GroovyPsiElement)element, holder);
       }
@@ -59,6 +78,17 @@ public class GrAnnotatorImpl implements Annotator {
           }
         }
       }
+    }
+  }
+
+  @NotNull
+  private GroovyAnnotator getAnnotator(@NotNull AnnotationHolder holder) {
+    final GroovyAnnotator annotator = myCache.get(holder);
+    if (annotator == null) {
+      return ConcurrencyUtil.cacheOrGet(myCache, holder, new GroovyAnnotator(holder));
+    }
+    else {
+      return annotator;
     }
   }
 }

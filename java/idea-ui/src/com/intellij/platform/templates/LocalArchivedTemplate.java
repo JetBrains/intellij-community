@@ -43,7 +43,7 @@ import java.util.zip.ZipInputStream;
  */
 public class LocalArchivedTemplate extends ArchivedProjectTemplate {
 
-  static final String DESCRIPTION_PATH = ".idea/description.html";
+  public static final String DESCRIPTION_PATH = ".idea/description.html";
   static final String IDEA_INPUT_FIELDS_XML = ".idea/project-template.xml";
 
   private final URL myArchivePath;

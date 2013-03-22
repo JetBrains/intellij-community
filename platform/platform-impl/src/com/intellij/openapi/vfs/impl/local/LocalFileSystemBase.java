@@ -697,20 +697,12 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
 
   @Override
   public FileAttributes getAttributes(@NotNull final VirtualFile file) {
-    String path = file.getPath();
-
-    // ordinarily, usual valid file path is always absolute.
-    // however, some artificially constructed files may appear here which are not absolute, e.g. new FakeVirtualFile(root, "x.txt")
-    // they shall not pass
-    File ioFile = new File(path);
-    if (!isAbsoluteFileOrDriveLetter(ioFile)) return null;
-
+    String path = normalize(file.getPath());
+    if (path == null) return null;
     if (file.getParent() == null && path.startsWith("//")) {
-      // UNC path
       return FAKE_ROOT_ATTRIBUTES;  // fake Windows roots
     }
-    // ioFile already normalized
-    return FileSystemUtil.getAttributes(ioFile);
+    return FileSystemUtil.getAttributes(FileUtil.toSystemDependentName(path));
   }
 
   @Override

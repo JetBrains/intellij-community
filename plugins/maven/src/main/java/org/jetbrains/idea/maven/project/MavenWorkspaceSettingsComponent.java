@@ -15,14 +15,12 @@
  */
 package org.jetbrains.idea.maven.project;
 
-import com.intellij.ide.util.projectWizard.ProjectTemplateComponent;
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 @State(name = "MavenImportPreferences", storages = {@Storage( file = StoragePathMacros.WORKSPACE_FILE)})
-public class MavenWorkspaceSettingsComponent implements PersistentStateComponent<MavenWorkspaceSettings>, ProjectTemplateComponent {
+public class MavenWorkspaceSettingsComponent implements PersistentStateComponent<MavenWorkspaceSettings> {
   private MavenWorkspaceSettings mySettings = new MavenWorkspaceSettings();
 
   private final Project myProject;
@@ -48,11 +46,4 @@ public class MavenWorkspaceSettingsComponent implements PersistentStateComponent
   public MavenWorkspaceSettings getSettings() {
     return mySettings;
   }
-
-
-  @Override
-  public String getStorageFile() {
-    return "workspace.xml";
-  }
-
 }

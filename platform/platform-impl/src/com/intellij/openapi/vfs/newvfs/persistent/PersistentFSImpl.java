@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.ShutDownTracker;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
@@ -56,12 +57,16 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   private final MessageBus myEventsBus;
 
   private final ReadWriteLock myRootsLock = new ReentrantReadWriteLock();
+  // (normalized)url -> root. guarded by myRootsLock
   private final Map<String, VirtualFileSystemEntry> myRoots = new THashMap<String, VirtualFileSystemEntry>(FileUtil.PATH_HASHING_STRATEGY);
+  // root.getId() -> root. guarded by myRootsLock
   private final TIntObjectHashMap<VirtualFileSystemEntry> myRootsById = new TIntObjectHashMap<VirtualFileSystemEntry>();
+
   private final ConcurrentIntObjectMap<VirtualFileSystemEntry> myIdToDirCache = new StripedLockIntObjectConcurrentHashMap<VirtualFileSystemEntry>();
   private final Object myInputLock = new Object();
 
-  @Nullable private volatile VirtualFileSystemEntry myFakeRoot;
+  // the root of all roots. All roots in myRoots and myRootsById maps are children of this super root. guarded by myRootsLock
+  @Nullable private volatile VirtualFileSystemEntry mySuperRoot;
   private boolean myShutDown = false;
 
   public PersistentFSImpl(@NotNull final MessageBus bus) {
@@ -153,7 +158,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @NotNull
-  private static FSRecords.NameId[] persistAllChildren(@NotNull final VirtualFile file, final int id, @NotNull FSRecords.NameId[] current) {
+  private FSRecords.NameId[] persistAllChildren(@NotNull final VirtualFile file, final int id, @NotNull FSRecords.NameId[] current) {
+    assert file != mySuperRoot;
     final NewVirtualFileSystem fs = replaceWithNativeFS(getDelegate(file));
 
     String[] delegateNames = VfsUtil.filterNames(fs.list(file));
@@ -379,6 +385,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @Override
   public int getId(@NotNull final VirtualFile parent, @NotNull final String childName, @NotNull final NewVirtualFileSystem fs) {
+    if (parent == mySuperRoot) {
+      String rootUrl = normalizeRootUrl(childName, fs);
+      VirtualFileSystemEntry root = myRoots.get(rootUrl);
+      return root == null ? 0 : root.getId();
+    }
     int parentId = getFileId(parent);
 
     int[] children = FSRecords.list(parentId);
@@ -754,13 +765,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   @Override
   @Nullable
   public VirtualFileSystemEntry findRoot(@NotNull String basePath, @NotNull NewVirtualFileSystem fs) {
-    String rootUrl = normalizeRootUrl(fs, basePath);
+    String rootUrl = normalizeRootUrl(basePath, fs);
 
     boolean isFakeRoot = basePath.isEmpty();
     myRootsLock.readLock().lock();
     VirtualFileSystemEntry root;
     try {
-      root = isFakeRoot ? myFakeRoot : myRoots.get(rootUrl);
+      root = isFakeRoot ? mySuperRoot : myRoots.get(rootUrl);
       if (root != null) return root;
     }
     finally {
@@ -769,7 +780,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
     myRootsLock.writeLock().lock();
     try {
-      root = isFakeRoot ? myFakeRoot : myRoots.get(rootUrl);
+      root = isFakeRoot ? mySuperRoot : myRoots.get(rootUrl);
       if (root != null) return root;
 
       int rootId = FSRecords.findRootRecord(rootUrl);
@@ -791,6 +802,20 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
             if (name.isEmpty()) return null;
             return findRoot(name, getFileSystem());
           }
+
+          @Override
+          protected char[] appendPathOnFileSystem(int pathLength, int[] position) {
+            // getPath() for super-root should never be called.
+            // however, when new FakeVirtualFile(superRoot, "name") is constructed,
+            // return garbage to make sure they won't find anything by the name returned
+            String fakeName = "@&^%$#*/\\(";
+            int rootPathLength = pathLength + fakeName.length();
+            char[] chars = new char[rootPathLength];
+
+            position[0] = copyString(chars, position[0], fakeName);
+        
+            return chars;
+          }
         };
       }
       else if (fs instanceof JarFileSystem) {
@@ -808,11 +833,31 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
         root = new JarRoot(fs, rootId, parentLocalFile);
       }
       else {
-        root = new VirtualDirectoryImpl(basePath, null, fs, rootId, 0);
+        root = new VirtualDirectoryImpl(basePath, null, fs, rootId, 0){
+          @Override
+          protected char[] appendPathOnFileSystem(int pathLength, int[] position) {
+            // do not call super method since we know it's the root
+            String name = getName();
+            int nameLength = name.length();
+            boolean appendSlash = SystemInfo.isWindows && nameLength == 2 && name.charAt(1) == ':';
+
+            int rootPathLength = pathLength + nameLength;
+            if (appendSlash) ++rootPathLength;
+            char[] chars = new char[rootPathLength];
+
+            position[0] = copyString(chars, position[0], name);
+        
+            if (appendSlash) {
+              chars[position[0]++] = '/';
+            }
+        
+            return chars;
+          }
+        };
       }
 
       if (isFakeRoot) {
-        myFakeRoot = root;
+        mySuperRoot = root;
       }
       else {
         FileAttributes attributes = fs.getAttributes(root);
@@ -838,7 +883,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   }
 
   @NotNull
-  private static String normalizeRootUrl(@NotNull NewVirtualFileSystem fs, @NotNull String basePath) {
+  private static String normalizeRootUrl(@NotNull String basePath, @NotNull NewVirtualFileSystem fs) {
     String url = fs.getProtocol() + "://" + VfsImplUtil.normalize(fs, basePath);
     return StringUtil.trimEnd(url, "/");
   }
@@ -1051,9 +1096,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     final int parentId = parent == null ? 0 : getFileId(parent);
 
     if (parentId == 0) {
+      String rootUrl = normalizeRootUrl(file.getPath(), (NewVirtualFileSystem)file.getFileSystem());
       myRootsLock.writeLock().lock();
       try {
-        String rootUrl = normalizeRootUrl((NewVirtualFileSystem)file.getFileSystem(), file.getPath());
         myRoots.remove(rootUrl);
         myRootsById.remove(id);
         FSRecords.deleteRootRecord(id);
@@ -1155,14 +1200,9 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @TestOnly
   public void cleanPersistedContents() {
-    try {
-      final int[] roots = FSRecords.listRoots();
-      for (int root : roots) {
-        cleanPersistedContentsRecursively(root);
-      }
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
+    final int[] roots = FSRecords.listRoots();
+    for (int root : roots) {
+      cleanPersistedContentsRecursively(root);
     }
   }
 
@@ -1178,7 +1218,7 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     }
   }
 
-  private static class JarRoot extends VirtualDirectoryImpl {
+  public static class JarRoot extends VirtualDirectoryImpl {
     private final VirtualFile myParentLocalFile;
 
     private JarRoot(@NotNull NewVirtualFileSystem fs, int rootId, @NotNull VirtualFile parentLocalFile) {
@@ -1204,6 +1244,11 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
     @Override
     public void setParent(@NotNull VirtualFile newParent) {
       throw new IncorrectOperationException();
+    }
+
+    @NotNull
+    public VirtualFile getParentLocalFile() {
+      return myParentLocalFile;
     }
   }
 }

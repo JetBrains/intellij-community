@@ -45,7 +45,7 @@ public class GitRemoteSteps {
 
     myHttpAuthService.register(myAuthenticator);
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         String projectName = url.substring(url.lastIndexOf('/') + 1).replace(".git", "");

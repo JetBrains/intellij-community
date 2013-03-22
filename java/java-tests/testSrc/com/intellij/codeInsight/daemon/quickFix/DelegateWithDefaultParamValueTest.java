@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.quickFix;
 
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 
@@ -26,17 +25,13 @@ public class DelegateWithDefaultParamValueTest extends LightQuickFixTestCase {
   @Override
   protected void doAction(String text, boolean actionShouldBeAvailable, String testFullPath, String testName)
     throws Exception {
-    try {
-      ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(true);
-      super.doAction(text, actionShouldBeAvailable, testFullPath, testName);
+    TemplateManagerImpl.setTemplateTesting(getProject(), getTestRootDisposable());
+    super.doAction(text, actionShouldBeAvailable, testFullPath, testName);
 
-      if (actionShouldBeAvailable) {
-        TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
-        assert state != null;
-        state.gotoEnd(false);
-      }
-    } finally {
-      ((TemplateManagerImpl)TemplateManager.getInstance(getProject())).setTemplateTesting(false);
+    if (actionShouldBeAvailable) {
+      TemplateState state = TemplateManagerImpl.getTemplateState(getEditor());
+      assert state != null;
+      state.gotoEnd(false);
     }
   }
 

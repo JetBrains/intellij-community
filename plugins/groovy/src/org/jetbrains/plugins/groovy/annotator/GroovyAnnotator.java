@@ -90,6 +90,7 @@ import org.jetbrains.plugins.groovy.lang.psi.dataFlow.types.TypeInferenceHelper;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.modifiers.GrAnnotationCollector;
 import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -190,25 +191,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     final GrCatchClause[] clauses = statement.getCatchClauses();
     List<PsiType> usedExceptions = new ArrayList<PsiType>();
 
-    final PsiClassType throwable = PsiType.getJavaLangThrowable(statement.getManager(), statement.getResolveScope());
-
     for (GrCatchClause clause : clauses) {
       final GrParameter parameter = clause.getParameter();
       if (parameter == null) continue;
 
       final GrTypeElement typeElement = parameter.getTypeElementGroovy();
-
-      PsiType type = typeElement != null ? typeElement.getType() : null;
-      if (type == null) {
-        type = throwable;
-      }
-
-      if (!throwable.isAssignableFrom(type)) {
-        LOG.assertTrue(typeElement != null);
-        myHolder.createErrorAnnotation(typeElement,
-                                       GroovyBundle.message("catch.statement.parameter.type.should.be.a.subclass.of.throwable"));
-        continue;
-      }
+      PsiType type = typeElement != null ? typeElement.getType() : TypesUtil.createType(CommonClassNames.JAVA_LANG_EXCEPTION, statement);
 
       if (typeElement instanceof GrDisjunctionTypeElement) {
         final GrTypeElement[] elements = ((GrDisjunctionTypeElement)typeElement).getTypeElements();
@@ -237,6 +225,22 @@ public class GroovyAnnotator extends GroovyElementVisitor {
         if (checkExceptionUsed(usedExceptions, parameter, typeElement, type)) {
           usedExceptions.add(type);
         }
+      }
+    }
+  }
+
+  @Override
+  public void visitCatchClause(GrCatchClause clause) {
+    final GrParameter parameter = clause.getParameter();
+    if (parameter == null) return;
+
+    final GrTypeElement typeElement = parameter.getTypeElementGroovy();
+    if (typeElement != null) {
+      final PsiType type = typeElement.getType();
+      if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == null) return; //don't highlight unresolved types
+      final PsiClassType throwable = TypesUtil.createType(CommonClassNames.JAVA_LANG_THROWABLE, clause);
+      if (!throwable.isAssignableFrom(type)) {
+        myHolder.createErrorAnnotation(typeElement, GroovyBundle.message("catch.statement.parameter.type.should.be.a.subclass.of.throwable"));
       }
     }
   }

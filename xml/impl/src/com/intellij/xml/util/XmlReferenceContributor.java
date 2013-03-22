@@ -4,7 +4,6 @@ import com.intellij.codeInsight.daemon.impl.analysis.encoding.XmlEncodingReferen
 import com.intellij.html.impl.providers.MicrodataReferenceProvider;
 import com.intellij.html.impl.util.MicrodataUtil;
 import com.intellij.patterns.PlatformPatterns;
-import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.PsiReferenceContributor;
 import com.intellij.psi.PsiReferenceRegistrar;
 import com.intellij.psi.filters.*;
@@ -16,7 +15,6 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaRefer
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.URIReferenceProvider;
 import com.intellij.psi.xml.*;
 
-import static com.intellij.patterns.StandardPatterns.string;
 import static com.intellij.patterns.XmlPatterns.*;
 
 /**
@@ -82,7 +80,7 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
     registrar.registerReferenceProvider(
       xmlAttributeValue().withLocalName("schemaLocation","namespace").
         withSuperParent(2,
-                        xmlTag().withNamespace(XmlUtil.SCHEMA_URIS).withLocalName(string().oneOf("import", "include","redefine"))),
+                        xmlTag().withNamespace(XmlUtil.SCHEMA_URIS).withLocalName("import", "include","redefine")),
       uriProvider);
 
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, null, URIReferenceProvider.ELEMENT_FILTER, true, uriProvider);
@@ -90,6 +88,6 @@ public class XmlReferenceContributor extends PsiReferenceContributor {
     XmlUtil.registerXmlAttributeValueReferenceProvider(registrar, new String[] {"encoding"}, new ScopeFilter(new ParentElementFilter(new ClassFilter(XmlProcessingInstruction.class))), true,
                                                        new XmlEncodingReferenceProvider());
 
-    registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue(), new XmlPrefixReferenceProvider());
+    registrar.registerReferenceProvider(xmlAttributeValue(), new XmlPrefixReferenceProvider());
   }
 }

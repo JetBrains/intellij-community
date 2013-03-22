@@ -355,7 +355,7 @@
     <localInspection language="XML" bundle="messages.XmlBundle" key="xml.inspections.duplicate.id"
                      groupKey="xml.inspections.group.name" enabledByDefault="true" level="ERROR" runForWholeFile="true" unfair="true"
                      implementationClass="com.intellij.xml.util.XmlDuplicatedIdInspection"/>
-    <localInspection language="XML" bundle="messages.XmlBundle" key="xml.inspections.duplicate.id"
+    <localInspection language="XML" bundle="messages.XmlBundle" key="xml.inspections.invalid.id"
                      groupKey="xml.inspections.group.name" enabledByDefault="true" level="ERROR" runForWholeFile="true" unfair="true"
                      implementationClass="com.intellij.xml.util.XmlInvalidIdInspection"/>
 
