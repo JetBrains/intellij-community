@@ -22,7 +22,6 @@ import com.intellij.codeInsight.lookup.Lookup
 import com.intellij.codeInsight.lookup.LookupElementPresentation
 import com.intellij.codeInsight.lookup.LookupManager
 import com.intellij.codeInsight.lookup.impl.LookupImpl
-import com.intellij.codeInsight.template.TemplateManager
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl
 import com.intellij.ide.DataManager
 import com.intellij.ide.ui.UISettings
@@ -1364,6 +1363,25 @@ class FooBar {
     assert myFixture.lookupElementStrings == ['fooBar']
     type '\n'
     assert myFixture.editor.document.text.contains('fooBar')
+  }
+
+  public void "test middle matching and overwrite"() {
+    myFixture.configureByText 'a.java', '''
+class ListConfigKey {
+  void foo() {
+    <caret>
+  }
+}
+'''
+    type 'CK\t'
+    myFixture.checkResult '''
+class ListConfigKey {
+  void foo() {
+    ListConfigKey<caret>
+  }
+}
+'''
+
   }
 
 }
