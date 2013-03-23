@@ -55,7 +55,10 @@ public abstract class GitXmlRpcHandlerService<T> {
   @NotNull private final Class<?> myScriptMainClass;
 
   @Nullable private File myScriptPath;
+  @NotNull private final Object SCRIPT_FILE_LOCK = new Object();
+
   @NotNull private final THashMap<Integer, T> handlers = new THashMap<Integer, T>();
+  @NotNull private final Object HANDLERS_LOCK = new Object();
 
   protected GitXmlRpcHandlerService(@NotNull String prefix, @NotNull Class<? extends GitExternalApp> aClass) {
     myScriptTempFilePrefix = prefix;
@@ -76,14 +79,17 @@ public abstract class GitXmlRpcHandlerService<T> {
    * @throws IOException if script cannot be generated
    */
   @NotNull
-  public synchronized File getScriptPath() throws IOException {
-    if (myScriptPath == null || !myScriptPath.exists()) {
-      ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix, myScriptMainClass);
-      generator.addClasses(XmlRpcClientLite.class, DecoderException.class, FileUtilRt.class);
-      customizeScriptGenerator(generator);
-      myScriptPath = generator.generate();
+  public File getScriptPath() throws IOException {
+    ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix, myScriptMainClass);
+    generator.addClasses(XmlRpcClientLite.class, DecoderException.class, FileUtilRt.class);
+    customizeScriptGenerator(generator);
+
+    synchronized (SCRIPT_FILE_LOCK) {
+      if (myScriptPath == null || !myScriptPath.exists()) {
+        myScriptPath = generator.generate();
+      }
+      return myScriptPath;
     }
-    return myScriptPath;
   }
 
   /**
@@ -97,23 +103,25 @@ public abstract class GitXmlRpcHandlerService<T> {
    * @param handler a handler to register
    * @return an identifier to pass to the environment variable
    */
-  public synchronized int registerHandler(@NotNull T handler) {
-    XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
-    if (!xmlRpcServer.hasHandler(getRpcHandlerName())) {
-      xmlRpcServer.addHandler(getRpcHandlerName(), createRpcRequestHandlerDelegate());
-    }
+  public int registerHandler(@NotNull T handler) {
+    synchronized (HANDLERS_LOCK) {
+      XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
+      if (!xmlRpcServer.hasHandler(getRpcHandlerName())) {
+        xmlRpcServer.addHandler(getRpcHandlerName(), createRpcRequestHandlerDelegate());
+      }
 
-    while (true) {
-      int candidate = RANDOM.nextInt();
-      if (candidate == Integer.MIN_VALUE) {
-        continue;
+      while (true) {
+        int candidate = RANDOM.nextInt();
+        if (candidate == Integer.MIN_VALUE) {
+          continue;
+        }
+        candidate = Math.abs(candidate);
+        if (handlers.containsKey(candidate)) {
+          continue;
+        }
+        handlers.put(candidate, handler);
+        return candidate;
       }
-      candidate = Math.abs(candidate);
-      if (handlers.containsKey(candidate)) {
-        continue;
-      }
-      handlers.put(candidate, handler);
-      return candidate;
     }
   }
 
@@ -138,12 +146,14 @@ public abstract class GitXmlRpcHandlerService<T> {
    * @return the registered handler
    */
   @NotNull
-  protected synchronized T getHandler(int key) {
-    T rc = handlers.get(key);
-    if (rc == null) {
-      throw new IllegalStateException("No handler for the key " + key);
+  protected T getHandler(int key) {
+    synchronized (HANDLERS_LOCK) {
+      T rc = handlers.get(key);
+      if (rc == null) {
+        throw new IllegalStateException("No handler for the key " + key);
+      }
+      return rc;
     }
-    return rc;
   }
 
   /**
@@ -151,9 +161,11 @@ public abstract class GitXmlRpcHandlerService<T> {
    *
    * @param key the key to unregister
    */
-  public synchronized void unregisterHandler(int key) {
-    if (handlers.remove(key) == null) {
-      throw new IllegalArgumentException("The handler " + key + " is not registered");
+  public void unregisterHandler(int key) {
+    synchronized (HANDLERS_LOCK) {
+      if (handlers.remove(key) == null) {
+        throw new IllegalArgumentException("The handler " + key + " is not registered");
+      }
     }
   }
 
