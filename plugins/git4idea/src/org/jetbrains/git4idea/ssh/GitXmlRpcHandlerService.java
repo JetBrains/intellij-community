@@ -28,7 +28,6 @@ import org.jetbrains.ide.WebServerManager;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.Random;
 
 /**
  * <p>The provider of external application scripts called by Git when a remote operation needs communication with the user.</p>
@@ -49,8 +48,6 @@ import java.util.Random;
  */
 public abstract class GitXmlRpcHandlerService<T> {
 
-  private static final Random RANDOM = new Random();
-
   @NotNull private final String myScriptTempFilePrefix;
   @NotNull private final String myHandlerName;
   @NotNull private final Class<? extends GitExternalApp> myScriptMainClass;
@@ -59,6 +56,7 @@ public abstract class GitXmlRpcHandlerService<T> {
   @NotNull private final Object SCRIPT_FILE_LOCK = new Object();
 
   @NotNull private final THashMap<Integer, T> handlers = new THashMap<Integer, T>();
+  private int myNextHandlerKey;
   @NotNull private final Object HANDLERS_LOCK = new Object();
 
   /**
@@ -117,18 +115,10 @@ public abstract class GitXmlRpcHandlerService<T> {
         xmlRpcServer.addHandler(myHandlerName, createRpcRequestHandlerDelegate());
       }
 
-      while (true) {
-        int candidate = RANDOM.nextInt();
-        if (candidate == Integer.MIN_VALUE) {
-          continue;
-        }
-        candidate = Math.abs(candidate);
-        if (handlers.containsKey(candidate)) {
-          continue;
-        }
-        handlers.put(candidate, handler);
-        return candidate;
-      }
+      int key = myNextHandlerKey;
+      handlers.put(key, handler);
+      myNextHandlerKey++;
+      return key;
     }
   }
 
