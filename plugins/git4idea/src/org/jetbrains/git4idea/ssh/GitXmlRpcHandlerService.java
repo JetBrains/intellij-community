@@ -52,7 +52,8 @@ public abstract class GitXmlRpcHandlerService<T> {
   private static final Random RANDOM = new Random();
 
   @NotNull private final String myScriptTempFilePrefix;
-  @NotNull private final Class<?> myScriptMainClass;
+  @NotNull private final String myHandlerName;
+  @NotNull private final Class<? extends GitExternalApp> myScriptMainClass;
 
   @Nullable private File myScriptPath;
   @NotNull private final Object SCRIPT_FILE_LOCK = new Object();
@@ -60,8 +61,14 @@ public abstract class GitXmlRpcHandlerService<T> {
   @NotNull private final THashMap<Integer, T> handlers = new THashMap<Integer, T>();
   @NotNull private final Object HANDLERS_LOCK = new Object();
 
-  protected GitXmlRpcHandlerService(@NotNull String prefix, @NotNull Class<? extends GitExternalApp> aClass) {
+  /**
+   * @param handlerName Returns the name of the handler to be used by XML RPC client to call remote methods of a proper object.
+   * @param aClass      Main class of the external application invoked by Git,
+   *                    which is able to handle its requests and pass to the main IDEA instance.
+   */
+  protected GitXmlRpcHandlerService(@NotNull String prefix, @NotNull String handlerName, @NotNull Class<? extends GitExternalApp> aClass) {
     myScriptTempFilePrefix = prefix;
+    myHandlerName = handlerName;
     myScriptMainClass = aClass;
   }
 
@@ -106,8 +113,8 @@ public abstract class GitXmlRpcHandlerService<T> {
   public int registerHandler(@NotNull T handler) {
     synchronized (HANDLERS_LOCK) {
       XmlRpcServer xmlRpcServer = XmlRpcServer.SERVICE.getInstance();
-      if (!xmlRpcServer.hasHandler(getRpcHandlerName())) {
-        xmlRpcServer.addHandler(getRpcHandlerName(), createRpcRequestHandlerDelegate());
+      if (!xmlRpcServer.hasHandler(myHandlerName)) {
+        xmlRpcServer.addHandler(myHandlerName, createRpcRequestHandlerDelegate());
       }
 
       while (true) {
@@ -124,12 +131,6 @@ public abstract class GitXmlRpcHandlerService<T> {
       }
     }
   }
-
-  /**
-   * Returns the name of the handler to be used by XML RPC client to call remote methods of a proper object.
-   */
-  @NotNull
-  protected abstract String getRpcHandlerName();
 
   /**
    * Creates an implementation of the xml rpc handler, which methods will be called from the external application.

@@ -28,19 +28,13 @@ import java.util.Vector;
 public class GitXmlRpcSshService extends GitXmlRpcHandlerService<GitSSHGUIHandler> {
 
   private GitXmlRpcSshService() {
-    super(GitSSHHandler.GIT_SSH_PREFIX, SSHMain.class);
+    super(GitSSHHandler.GIT_SSH_PREFIX, GitSSHHandler.HANDLER_NAME, SSHMain.class);
   }
 
   @Override
   protected void customizeScriptGenerator(@NotNull ScriptGenerator generator) {
     generator.addClasses(KnownHosts.class);
     generator.addResource(SSHMainBundle.class, "/org/jetbrains/git4idea/ssh/SSHMainBundle.properties");
-  }
-
-  @NotNull
-  @Override
-  protected String getRpcHandlerName() {
-    return GitSSHHandler.HANDLER_NAME;
   }
 
   @NotNull
