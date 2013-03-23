@@ -533,8 +533,11 @@ public abstract class GitHandler {
    * Cleanup environment
    */
   protected synchronized void cleanupEnv() {
+    if (myEnvironmentCleanedUp) {
+      return;
+    }
     GitRemoteProtocol remoteProtocol = GitRemoteProtocol.fromUrl(myUrl);
-    if (remoteProtocol == GitRemoteProtocol.SSH && !myEnvironmentCleanedUp) {
+    if (remoteProtocol == GitRemoteProtocol.SSH) {
       GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
       myEnvironmentCleanedUp = true;
       ssh.unregisterHandler(myHandlerNo);
