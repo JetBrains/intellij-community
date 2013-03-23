@@ -124,7 +124,7 @@ public interface GitSSHHandler {
    * @param method    the authentication method, the empty string means that authentication failed
    * @param error     the error shown in the case when authentication process failed
    */
-  String setLastSuccessful(final int handlerNo, final String userName, final String method, final String error);
+  void setLastSuccessful(final int handlerNo, final String userName, final String method, final String error);
 
   /**
    * Get last successful authentication method

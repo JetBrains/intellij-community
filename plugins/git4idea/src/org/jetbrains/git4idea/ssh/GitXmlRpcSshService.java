@@ -86,9 +86,8 @@ public class GitXmlRpcSshService extends GitXmlRpcHandlerService<GitSSHGUIHandle
     }
 
     @Override
-    public String setLastSuccessful(int handlerNo, String userName, String method, String error) {
+    public void setLastSuccessful(int handlerNo, String userName, String method, String error) {
       getHandler(handlerNo).setLastSuccessful(userName, method, error);
-      return "";
     }
 
     @Override
