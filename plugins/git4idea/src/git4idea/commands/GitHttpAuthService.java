@@ -29,16 +29,8 @@ import org.jetbrains.git4idea.util.ScriptGenerator;
  */
 public abstract class GitHttpAuthService extends GitXmlRpcHandlerService<GitHttpAuthenticator> {
 
-  @NotNull
-  @Override
-  protected String getScriptTempFilePrefix() {
-    return "git-askpass-";
-  }
-
-  @NotNull
-  @Override
-  protected Class<?> getScriptMainClass() {
-    return GitAskPassApp.class;
+  protected GitHttpAuthService() {
+    super("git-askpass-", GitAskPassApp.class);
   }
 
   @Override

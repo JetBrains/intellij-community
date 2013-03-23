@@ -50,8 +50,16 @@ public abstract class GitXmlRpcHandlerService<T> {
 
   private static final Random RANDOM = new Random();
 
+  @NotNull private final String myScriptTempFilePrefix;
+  @NotNull private final Class<?> myScriptMainClass;
+
   @Nullable private File myScriptPath;
   @NotNull private final THashMap<Integer, T> handlers = new THashMap<Integer, T>();
+
+  protected GitXmlRpcHandlerService(@NotNull String prefix, @NotNull Class<?> aClass) {
+    myScriptTempFilePrefix = prefix;
+    myScriptMainClass = aClass;
+  }
 
   /**
    * @return the port number for XML RCP
@@ -69,19 +77,13 @@ public abstract class GitXmlRpcHandlerService<T> {
   @NotNull
   public synchronized File getScriptPath() throws IOException {
     if (myScriptPath == null || !myScriptPath.exists()) {
-      ScriptGenerator generator = new ScriptGenerator(getScriptTempFilePrefix(), getScriptMainClass());
+      ScriptGenerator generator = new ScriptGenerator(myScriptTempFilePrefix, myScriptMainClass);
       generator.addClasses(XmlRpcClientLite.class, DecoderException.class, FileUtilRt.class);
       customizeScriptGenerator(generator);
       myScriptPath = generator.generate();
     }
     return myScriptPath;
   }
-
-  @NotNull
-  protected abstract String getScriptTempFilePrefix();
-
-  @NotNull
-  protected abstract Class<?> getScriptMainClass();
 
   /**
    * Adds more classes or resources to the script if needed.
