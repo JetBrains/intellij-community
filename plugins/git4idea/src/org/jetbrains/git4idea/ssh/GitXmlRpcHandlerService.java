@@ -22,6 +22,7 @@ import org.apache.commons.codec.DecoderException;
 import org.apache.xmlrpc.XmlRpcClientLite;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.git4idea.GitExternalApp;
 import org.jetbrains.git4idea.util.ScriptGenerator;
 import org.jetbrains.ide.WebServerManager;
 
@@ -56,7 +57,7 @@ public abstract class GitXmlRpcHandlerService<T> {
   @Nullable private File myScriptPath;
   @NotNull private final THashMap<Integer, T> handlers = new THashMap<Integer, T>();
 
-  protected GitXmlRpcHandlerService(@NotNull String prefix, @NotNull Class<?> aClass) {
+  protected GitXmlRpcHandlerService(@NotNull String prefix, @NotNull Class<? extends GitExternalApp> aClass) {
     myScriptTempFilePrefix = prefix;
     myScriptMainClass = aClass;
   }
