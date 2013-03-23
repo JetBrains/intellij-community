@@ -460,17 +460,19 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
       myVersion = GitVersion.identifyVersion(executable);
       if (! myVersion.isSupported()) {
         log.info("Unsupported Git version: " + myVersion);
-        String message = String.format("The <a href='settings'>configured</a> version of Git is not supported: %s.<br/> " +
-                                       "The minimal supported version is %s. Please <a href='update'>update</a>.",
+        final String SETTINGS_LINK = "settings";
+        final String UPDATE_LINK = "update";
+        String message = String.format("The <a href='" + SETTINGS_LINK + "'>configured</a> version of Git is not supported: %s.<br/> " +
+                                       "The minimal supported version is %s. Please <a href='" + UPDATE_LINK + "'>update</a>.",
                                        myVersion, GitVersion.MIN);
         IMPORTANT_ERROR_NOTIFICATION.createNotification("Unsupported Git version", message, NotificationType.ERROR,
           new NotificationListener.Adapter() {
             @Override
             protected void hyperlinkActivated(@NotNull Notification notification, @NotNull HyperlinkEvent e) {
-              if (e.getDescription().equals("settings")) {
+              if (SETTINGS_LINK.equals(e.getDescription())) {
                 ShowSettingsUtil.getInstance().showSettingsDialog(myProject, getConfigurable().getDisplayName());
               }
-              else if (e.getDescription().equals("update")) {
+              else if (UPDATE_LINK.equals(e.getDescription())) {
                 BrowserUtil.browse("http://git-scm.com");
               }
             }
