@@ -41,7 +41,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 import java.util.Set;
-import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Git "pull" action
@@ -66,7 +65,6 @@ public class GitPull extends GitRepositoryAction {
     }
     final Label beforeLabel = LocalHistory.getInstance().putSystemLabel(project, "Before update");
     
-    final AtomicReference<GitLineHandler> handlerReference = new AtomicReference<GitLineHandler>();
     new Task.Backgroundable(project, GitBundle.message("pulling.title", dialog.getRemote()), true) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -83,7 +81,7 @@ public class GitPull extends GitRepositoryAction {
           return;
         }
 
-        handlerReference.set(dialog.makeHandler(url));
+        final GitLineHandler handler = dialog.makeHandler(url);
 
         final VirtualFile root = dialog.gitRoot();
         affectedRoots.add(root);
@@ -93,7 +91,7 @@ public class GitPull extends GitRepositoryAction {
         }
         final GitRevisionNumber currentRev = new GitRevisionNumber(revision);
     
-        GitTask pullTask = new GitTask(project, handlerReference.get(), GitBundle.message("pulling.title", dialog.getRemote()));
+        GitTask pullTask = new GitTask(project, handler, GitBundle.message("pulling.title", dialog.getRemote()));
         pullTask.setProgressIndicator(indicator);
         pullTask.setProgressAnalyzer(new GitStandardProgressAnalyzer());
         pullTask.execute(true, false, new GitTaskResultHandlerAdapter() {
@@ -107,7 +105,7 @@ public class GitPull extends GitRepositoryAction {
     
           @Override
           protected void onFailure() {
-            GitUIUtil.notifyGitErrors(project, "Error pulling " + dialog.getRemote(), "", handlerReference.get().errors());
+            GitUIUtil.notifyGitErrors(project, "Error pulling " + dialog.getRemote(), "", handler.errors());
             repositoryManager.updateRepository(root);
           }
         });
