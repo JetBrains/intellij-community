@@ -40,6 +40,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.IOException;
 import java.net.HttpURLConnection;
+import java.util.concurrent.atomic.AtomicReference;
 
 /**
  * Created by IntelliJ IDEA.
@@ -152,7 +153,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
           if (! StringUtil.isEmptyOrSpaces(answer)) {
             apply();
             final HttpConfigurable instance = HttpConfigurable.getInstance();
-            final IOException exc[] = new IOException[1];
+            final AtomicReference<IOException> exc = new AtomicReference<IOException>();
             myCheckButton.setEnabled(false);
             myCheckButton.setText("Check connection (in progress...)");
             myConnectionCheckInProgress = true;
@@ -162,27 +163,31 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
               public void run() {
                 HttpURLConnection connection = null;
                 try {
+                  //already checked for null above
+                  //noinspection ConstantConditions
                   connection = instance.openHttpConnection(answer);
                   connection.setReadTimeout(3 * 1000);
                   connection.setConnectTimeout(3 * 1000);
                   connection.connect();
                   final int code = connection.getResponseCode();
                   if (HttpURLConnection.HTTP_OK != code) {
-                    exc[0] = new IOException("Error code: " + code);
+                    exc.set(new IOException("Error code: " + code));
                   }
                 }
                 catch (IOException e1) {
-                  exc[0] = e1;
+                  exc.set(e1);
                 }
                 finally {
                   if (connection != null) {
                     connection.disconnect();
                   }
                 }
+                //noinspection SSBasedInspection
                 SwingUtilities.invokeLater(new Runnable() {
                   @Override
                   public void run() {
                     myConnectionCheckInProgress = false;
+                    reset();  // since password might have been set
                     Component parent = null;
                     if (myMainPanel.isShowing()) {
                       parent = myMainPanel;
@@ -195,14 +200,17 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
                       }
                       parent = frame.getComponent();
                     }
-                    if (exc[0] == null) {
+                    //noinspection ThrowableResultOfMethodCallIgnored
+                    final IOException exception = exc.get();
+                    if (exception == null) {
                       Messages.showMessageDialog(parent, "Connection successful", title, Messages.getInformationIcon());
                     }
                     else {
+                      final String message = exception.getMessage();
                       if (instance.USE_HTTP_PROXY) {
-                        instance.LAST_ERROR = exc[0].getMessage();
+                        instance.LAST_ERROR = message;
                       }
-                      Messages.showErrorDialog(parent, errorText(exc[0].getMessage()));
+                      Messages.showErrorDialog(parent, errorText(message));
                     }
                   }
                 });

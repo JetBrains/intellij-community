@@ -63,13 +63,13 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public boolean PROXY_TYPE_IS_SOCKS = false;
   public boolean USE_HTTP_PROXY = false;
   public boolean USE_PROXY_PAC = false;
-  public transient boolean AUTHENTICATION_CANCELLED = false;
+  public volatile transient boolean AUTHENTICATION_CANCELLED = false;
   public String PROXY_HOST = "";
   public int PROXY_PORT = 80;
 
-  public boolean PROXY_AUTHENTICATION = false;
-  public String PROXY_LOGIN = "";
-  public String PROXY_PASSWORD_CRYPT = "";
+  public volatile boolean PROXY_AUTHENTICATION = false;
+  public volatile String PROXY_LOGIN = "";
+  public volatile String PROXY_PASSWORD_CRYPT = "";
   public boolean KEEP_PROXY_PASSWORD = false;
   public transient String LAST_ERROR;
   public Map<CommonProxy.HostInfo, ProxyInfo> myGenericPasswords = new HashMap<CommonProxy.HostInfo, ProxyInfo>();
@@ -221,7 +221,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   public PasswordAuthentication getPromptedAuthentication(final String host, final String prompt) {
     if (AUTHENTICATION_CANCELLED) return null;
     final String password = getPlainProxyPassword();
-    if (! StringUtil.isEmptyOrSpaces(PROXY_LOGIN) && ! StringUtil.isEmptyOrSpaces(password)) {
+    if (PROXY_AUTHENTICATION && ! StringUtil.isEmptyOrSpaces(PROXY_LOGIN) && ! StringUtil.isEmptyOrSpaces(password)) {
       return new PasswordAuthentication(PROXY_LOGIN, password.toCharArray());
     }
 
@@ -237,7 +237,9 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     final Runnable runnable = new Runnable() {
       public void run() {
         if (AUTHENTICATION_CANCELLED) return;
-        if (! StringUtil.isEmptyOrSpaces(PROXY_LOGIN) && ! StringUtil.isEmptyOrSpaces(password)) {
+        // password might have changed, and the check below is for that
+        final String password = getPlainProxyPassword();
+        if (PROXY_AUTHENTICATION && ! StringUtil.isEmptyOrSpaces(PROXY_LOGIN) && ! StringUtil.isEmptyOrSpaces(password)) {
           value[0] = new PasswordAuthentication(PROXY_LOGIN, password.toCharArray());
           return;
         }
@@ -245,6 +247,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
                                                                   "Please enter credentials for: " + prompt, login, "", KEEP_PROXY_PASSWORD);
         dlg.show();
         if (dlg.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
+          PROXY_AUTHENTICATION = true;
           final AuthenticationPanel panel = dlg.getPanel();
           KEEP_PROXY_PASSWORD = panel.isRememberPassword();
           PROXY_LOGIN = panel.getLogin();
@@ -259,6 +262,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     return value[0];
   }
 
+  @SuppressWarnings("MethodMayBeStatic")
   private void runAboveAll(final Runnable runnable) {
     final Runnable throughSwing = new Runnable() {
       @Override
