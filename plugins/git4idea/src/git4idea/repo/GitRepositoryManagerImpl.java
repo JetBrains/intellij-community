@@ -59,7 +59,7 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
     myVcs = myPlatformFacade.getVcs(myProject);
     Disposer.register(myProject, this);
     myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
-    new GitRootScanner(myProject);
+    GitRootScanner.start(myProject);
   }
 
   @Override
