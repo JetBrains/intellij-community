@@ -16,7 +16,6 @@
 package git4idea.roots;
 
 import com.intellij.ProjectTopics;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
@@ -39,7 +38,7 @@ import java.util.concurrent.TimeUnit;
 /**
  * @author Kirill Likhodedov
  */
-public class GitRootScanner implements BulkFileListener, ModuleRootListener, Disposable, VcsListener {
+public class GitRootScanner implements BulkFileListener, ModuleRootListener, VcsListener {
 
   @NotNull private final GitRootProblemNotifier myRootProblemNotifier;
 
@@ -66,11 +65,6 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
     messageBus.connect().subscribe(ProjectTopics.PROJECT_ROOTS, this);
 
     myAlarm = new Alarm(Alarm.ThreadToUse.POOLED_THREAD, project);
-  }
-
-  @Override
-  public void dispose() {
-    myAlarm.cancelAllRequests();
   }
 
   @Override
@@ -115,6 +109,10 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
   private void scheduleScan() {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       // don't scan in tests
+      return;
+    }
+
+    if (myAlarm.isDisposed()) {
       return;
     }
 
