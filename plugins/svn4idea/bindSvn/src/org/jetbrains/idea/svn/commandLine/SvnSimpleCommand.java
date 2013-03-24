@@ -96,14 +96,9 @@ public class SvnSimpleCommand extends SvnCommand {
       if (code == 0) {
         return myStdout.toString();
       } else {
-        boolean stdErr = true;
-        String msg = myStderr.toString();
-        if (msg.length() == 0) {
-          stdErr = false;
-          msg = getStdout().toString();
-        }
-        msg = new StringBuilder("Svn process exited with error code: ").append(code).append("\n")
-          .append(stdErr ? "stderr: " : "stdout: ").append(msg).append("\nCommand was: ").append(myCommandLine.getCommandLineString()).toString();
+        final String msg = new StringBuilder("Svn process exited with error code: ").append(code).append("\n")
+          .append("stderr: ").append(myStderr.toString()).append("\nstdout: ").append(getStdout().toString())
+          .append("\nCommand was: ").append(myCommandLine.getCommandLineString()).toString();
         throw new VcsException(msg);
       }
     }
