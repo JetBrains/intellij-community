@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.Trinity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.annotate.AnnotationProvider;
 import com.intellij.openapi.vcs.changes.*;
@@ -77,6 +78,7 @@ import org.jetbrains.idea.svn.history.SvnChangeList;
 import org.jetbrains.idea.svn.history.SvnCommittedChangesProvider;
 import org.jetbrains.idea.svn.history.SvnHistoryProvider;
 import org.jetbrains.idea.svn.lowLevel.PrimitivePool;
+import org.jetbrains.idea.svn.networking.SSLProtocolExceptionParser;
 import org.jetbrains.idea.svn.rollback.SvnRollbackEnvironment;
 import org.jetbrains.idea.svn.update.SvnIntegrateEnvironment;
 import org.jetbrains.idea.svn.update.SvnUpdateEnvironment;
@@ -100,6 +102,7 @@ import org.tmatesoft.svn.util.SVNDebugLogAdapter;
 import org.tmatesoft.svn.util.SVNLogType;
 
 import javax.net.ssl.SSLHandshakeException;
+import javax.net.ssl.SSLProtocolException;
 import java.io.File;
 import java.io.UnsupportedEncodingException;
 import java.security.cert.CertificateException;
@@ -959,12 +962,14 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
     public void log(final SVNLogType logType, final Throwable th, final Level logLevel) {
       if (th instanceof SSLHandshakeException) {
         final long time = System.currentTimeMillis();
+        // not trusted certificate exception is not the problem, just part of normal behaviour
+        if (th.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException) {
+          LOG.info(th);
+          return;
+        }
+
         if ((time - myPreviousTime) > ourErrorNotificationInterval) {
           myPreviousTime = time;
-          if (th.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException) {
-            LOG.info(th);
-            return;
-          }
           String info = SSLExceptionsHelper.getAddInfo();
           info = info == null ? "" : " (" + info + ") ";
           if (th.getCause() instanceof CertificateException) {
@@ -973,6 +978,20 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
             final String postMessage = "\nPlease check Subversion SSL settings (Settings | Version Control | Subversion | Network)\n" +
                                        "Maybe you should specify SSL protocol manually - SSLv3 or TLSv1";
             PopupUtil.showBalloonForActiveFrame("Subversion: " + info + th.getMessage() + postMessage, MessageType.ERROR);
+          }
+        }
+      } else if (th instanceof SSLProtocolException) {
+        final String message = th.getMessage();
+        if (! StringUtil.isEmptyOrSpaces(message)) {
+          final long time = System.currentTimeMillis();
+          if ((time - myPreviousTime) > ourErrorNotificationInterval) {
+            myPreviousTime = time;
+            String info = SSLExceptionsHelper.getAddInfo();
+            info = info == null ? "" : " (" + info + ") ";
+            final SSLProtocolExceptionParser parser = new SSLProtocolExceptionParser(message);
+            parser.parse();
+            final String errMessage = "Subversion: " + info + parser.getParsedMessage();
+            PopupUtil.showBalloonForActiveFrame(errMessage, MessageType.ERROR);
           }
         }
       }
