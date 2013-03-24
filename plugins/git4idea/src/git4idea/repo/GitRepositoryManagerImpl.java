@@ -16,6 +16,7 @@
 package git4idea.repo;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,10 @@ import git4idea.roots.GitRootScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
 /**
@@ -59,7 +63,9 @@ public class GitRepositoryManagerImpl extends AbstractProjectComponent implement
     myVcs = myPlatformFacade.getVcs(myProject);
     Disposer.register(myProject, this);
     myProject.getMessageBus().connect().subscribe(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED, this);
-    GitRootScanner.start(myProject);
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      GitRootScanner.start(myProject);
+    }
   }
 
   @Override

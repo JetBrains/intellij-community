@@ -111,11 +111,6 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Vcs
   }
 
   private void scheduleScan() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      // don't scan in tests
-      return;
-    }
-
     if (myAlarm.isDisposed()) {
       return;
     }
