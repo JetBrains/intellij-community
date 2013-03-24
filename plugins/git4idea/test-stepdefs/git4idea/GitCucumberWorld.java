@@ -141,6 +141,12 @@ public class GitCucumberWorld {
     myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
   }
 
+  @After("@remote")
+  @Order(1)
+  public void tearDownRemoteOperations() {
+    ((WebServerManagerImpl)WebServerManager.getInstance()).setEnabledInUnitTestMode(false);
+  }
+
   @After
   public void tearDown() throws Throwable {
     waitForPendingTasks();
