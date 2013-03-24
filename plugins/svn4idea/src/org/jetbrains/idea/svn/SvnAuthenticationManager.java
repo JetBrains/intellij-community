@@ -36,6 +36,7 @@ import com.intellij.util.messages.Topic;
 import com.intellij.util.net.HttpConfigurable;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.ui.UIUtil;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.auth.ProviderType;
 import org.jetbrains.idea.svn.auth.SvnAuthenticationInteraction;
@@ -149,10 +150,10 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
     }
   }
 
-  public static interface ISVNAuthenticationProviderListener {
+  public interface ISVNAuthenticationProviderListener {
     void requestClientAuthentication(String kind, SVNURL url, String realm, SVNErrorMessage errorMessage,
       SVNAuthentication previousAuth, boolean authMayBeStored, SVNAuthentication authentication);
-    void acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored, int accepted);
+    void acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored, @MagicConstant int acceptResult);
   }
 
   @Override
