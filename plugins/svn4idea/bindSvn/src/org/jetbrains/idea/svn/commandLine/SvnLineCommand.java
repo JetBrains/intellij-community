@@ -46,7 +46,8 @@ public class SvnLineCommand extends SvnCommand {
   public static final String AUTHENTICATION_REALM = "Authentication realm:";
   public static final String CERTIFICATE_ERROR = "Error validating server certificate for";
   public static final String PASSPHRASE_FOR = "Passphrase for";
-  public static final String CLIENT_CERTIFICATE_FILENAME = "Client certificate filename:";
+  // kept for exact text
+  //public static final String CLIENT_CERTIFICATE_FILENAME = "Client certificate filename:";
   /**
    * the partial line from stdout stream
    */
