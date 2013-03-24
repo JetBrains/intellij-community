@@ -195,10 +195,6 @@ public class SvnCommandLineStatusClient implements SvnStatusClientI {
       @Override
       public void switchPath() {
         final PortableStatus pending = svnHandl[0].getPending();
-        /*if (pending.isLocked()) {
-          throw new SvnExceptionWrapper(new SVNException(SVNErrorMessage.create(SVNErrorCode.SQLITE_ERROR),
-                                                         new SqlJetException(SqlJetErrorCode.BUSY, "Working copy is locked for: " + base)));
-        }*/
         pending.setChangelistName(changelistName[0]);
         try {
           //if (infoBase != null) {
