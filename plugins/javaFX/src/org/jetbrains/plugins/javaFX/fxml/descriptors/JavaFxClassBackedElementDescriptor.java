@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
+import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.openapi.project.Project;
@@ -26,6 +27,7 @@ import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -65,7 +67,12 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
           public XmlElementDescriptor fun(PsiField field) {
             return new JavaFxPropertyElementDescriptor(myPsiClass, field.getName(), false);
           }
-        });
+        }, false);
+
+        final JavaFxPropertyElementDescriptor defaultPropertyDescriptor = getDefaultPropertyDescriptor();
+        if (defaultPropertyDescriptor != null) {
+          Collections.addAll(children, defaultPropertyDescriptor.getElementsDescriptors(context));
+        }
 
         collectStaticElementDescriptors(context, children);
 
@@ -84,6 +91,21 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       }
     }
     return XmlElementDescriptor.EMPTY_ARRAY;
+  }
+
+  private JavaFxPropertyElementDescriptor getDefaultPropertyDescriptor() {
+    final PsiAnnotation defaultProperty = AnnotationUtil
+      .findAnnotationInHierarchy(myPsiClass, Collections.singleton(JavaFxCommonClassNames.JAVAFX_BEANS_DEFAULT_PROPERTY));
+    if (defaultProperty != null) {
+      final PsiAnnotationMemberValue defaultPropertyAttributeValue = defaultProperty.findAttributeValue("value");
+      if (defaultPropertyAttributeValue instanceof PsiLiteralExpression) {
+        final Object value = ((PsiLiteralExpression)defaultPropertyAttributeValue).getValue();
+        if (value instanceof String) {
+          return new JavaFxPropertyElementDescriptor(myPsiClass, (String)value, false);
+        }
+      }
+    }
+    return null;
   }
 
   static void collectStaticAttributesDescriptors(@Nullable XmlTag context, List<XmlAttributeDescriptor> simpleAttrs) {
@@ -150,14 +172,30 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     final String parentTagName = contextTag.getName();
     if (myPsiClass != null) {
       if (!FxmlConstants.FX_DEFINE.equals(parentTagName)) {
-        final JavaFxPropertyElementDescriptor elementDescriptor = new JavaFxPropertyElementDescriptor(myPsiClass, name, false);
+        JavaFxPropertyElementDescriptor elementDescriptor = new JavaFxPropertyElementDescriptor(myPsiClass, name, false);
         if (FxmlConstants.FX_ROOT.equals(parentTagName)) {
           final PsiField fieldByName = myPsiClass.findFieldByName(name, true);
           if (fieldByName != null) {
             return elementDescriptor;
           }
-        } else if (elementDescriptor.getDeclaration() != null) {
-          return elementDescriptor;
+        } else {
+          final JavaFxPropertyElementDescriptor defaultPropertyDescriptor = getDefaultPropertyDescriptor();
+          if (defaultPropertyDescriptor != null) {
+            final String defaultPropertyName = defaultPropertyDescriptor.getName();
+            if (StringUtil.equalsIgnoreCase(defaultPropertyName, name) && !StringUtil.equals(defaultPropertyName, name)) {
+              final XmlElementDescriptor childDescriptor = defaultPropertyDescriptor.getElementDescriptor(childTag, contextTag);
+              if (childDescriptor != null) {
+                return childDescriptor;
+              }
+            }
+          }
+          final PsiElement declaration = elementDescriptor.getDeclaration();
+          if (declaration != null) {
+            if (declaration instanceof PsiField && ((PsiField)declaration).getType() instanceof PsiPrimitiveType) {
+              return null;
+            }
+            return elementDescriptor;
+          }
         }
       }
     }
@@ -175,7 +213,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
           public XmlAttributeDescriptor fun(PsiField field) {
             return new JavaFxPropertyAttributeDescriptor(field.getName(), myPsiClass);
           }
-        });
+        }, true);
         collectStaticAttributesDescriptors(context, simpleAttrs);
         for (String defaultProperty : FxmlConstants.FX_DEFAULT_PROPERTIES) {
           simpleAttrs.add(new JavaFxDefaultAttributeDescriptor(defaultProperty, myPsiClass));
@@ -186,7 +224,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     return XmlAttributeDescriptor.EMPTY;
   }
 
-  private <T> void collectProperties(List<T> children, Function<PsiField, T> factory) {
+  private <T> void collectProperties(List<T> children, Function<PsiField, T> factory, boolean acceptPrimitive) {
     final PsiField[] fields = myPsiClass.getAllFields();
     if (fields.length > 0) {
       for (PsiField field : fields) {
@@ -195,7 +233,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         if (!JavaFxPsiUtil.isReadOnly(myPsiClass, field) && 
             InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY) || 
             fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
-            fieldType instanceof PsiPrimitiveType ||
+            (acceptPrimitive && fieldType instanceof PsiPrimitiveType) ||
             GenericsHighlightUtil.getCollectionItemType(field.getType(), myPsiClass.getResolveScope()) != null) {
           children.add(factory.fun(field));
         }

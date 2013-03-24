@@ -43,8 +43,6 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
   private List<XBreakpointGroupingRule> myGroupingRules;
   private final Map<XBreakpointGroup, BreakpointsGroupNode> myGroupNodes = new HashMap<XBreakpointGroup, BreakpointsGroupNode>();
 
-  private BreakpointItemsTreeDelegate myDelegate;
-
   private final MultiValuesMap<XBreakpointGroupingRule, XBreakpointGroup> myGroups = new MultiValuesMap<XBreakpointGroupingRule, XBreakpointGroup>();
 
   private JTree myTreeView;
@@ -60,10 +58,6 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
       ((BreakpointsCheckboxTree)treeView).setDelegate(this);
     }
     myTreeView.setShowsRootHandles(!myGroupingRules.isEmpty());
-  }
-
-  public void setDelegate(BreakpointItemsTreeDelegate delegate) {
-    myDelegate = delegate;
   }
 
   private void setGroupingRulesInternal(final Collection<XBreakpointGroupingRule> groupingRules) {
@@ -140,13 +134,6 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
       parent.add(groupNode);
     }
     return groupNode;
-  }
-
-  @Override
-  public void didSelectNode(CheckedTreeNode node) {
-    if (node instanceof BreakpointItemNode) {
-      myDelegate.execute(((BreakpointItemNode)node).getBreakpointItem());
-    }
   }
 
   @Override

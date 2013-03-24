@@ -16,7 +16,9 @@
 package org.jetbrains.plugins.javaFX.fxml;
 
 import com.intellij.codeInsight.daemon.impl.analysis.XmlPathReferenceInspection;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.htmlInspections.RequiredAttributesInspection;
+import com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -281,13 +283,34 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testDefaultPropertyField() throws Exception {
+    doTest();
+  }
+
+  public void testPrimitiveSubtags() throws Exception {
+    doTest();
+  }
+
+  public void testInjectedControllerFields() throws Exception {
+    myFixture.addFileToProject("sample.fxml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
+                                              "<?import javafx.scene.control.*?>\n" +
+                                              "<?import javafx.scene.layout.*?>\n" +
+                                              "<AnchorPane id=\"AnchorPane\" xmlns:fx=\"http://javafx.com/fxml\" fx:controller=\"" + getTestName(false)+ "\">\n" +
+                                              "  <Button fx:id=\"id1\" />\n" +
+                                              "</AnchorPane>\n");
+    myFixture.testHighlighting(true, false, false, getTestName(false) + ".java");
+  }
+
   private void doTest() throws Exception {
     myFixture.testHighlighting(false, false, false, getTestName(true) + ".fxml");
   }
 
   @Override
   protected void enableInspections() {
-    myFixture.enableInspections(new XmlPathReferenceInspection(), new RequiredAttributesInspection());
+    myFixture.enableInspections(new XmlPathReferenceInspection(), 
+                                new RequiredAttributesInspection(), 
+                                new UnusedSymbolLocalInspection(), 
+                                new UnusedDeclarationInspection());
   }
 
   @NotNull

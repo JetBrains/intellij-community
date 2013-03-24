@@ -390,8 +390,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
       VirtualFileSystemEntry root = myRoots.get(rootUrl);
       return root == null ? 0 : root.getId();
     }
-    int parentId = getFileId(parent);
 
+    int parentId = getFileId(parent);
     int[] children = FSRecords.list(parentId);
 
     if (children.length > 0) {
