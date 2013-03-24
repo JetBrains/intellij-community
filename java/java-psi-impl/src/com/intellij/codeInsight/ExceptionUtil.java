@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.util.NullableFunction;
+import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
@@ -421,21 +422,20 @@ public class ExceptionUtil {
   }
 
   @NotNull
-  public static List<PsiClassType> getUnhandledExceptions(final PsiThrowStatement throwStatement, @Nullable final PsiElement topElement) {
-    final PsiExpression exception = throwStatement.getException();
-    final List<PsiType> types = getPreciseThrowTypes(exception);
-    return ContainerUtil.mapNotNull(types, new NullableFunction<PsiType, PsiClassType>() {
-      @Override
-      public PsiClassType fun(PsiType type) {
-        if (type instanceof PsiClassType) {
-          final PsiClassType classType = (PsiClassType)type;
+  public static List<PsiClassType> getUnhandledExceptions(PsiThrowStatement throwStatement, @Nullable PsiElement topElement) {
+    List<PsiClassType> unhandled = new SmartList<PsiClassType>();
+    for (PsiType type : getPreciseThrowTypes(throwStatement.getException())) {
+      List<PsiType> types = type instanceof PsiDisjunctionType ? ((PsiDisjunctionType)type).getDisjunctions() : Collections.singletonList(type);
+      for (PsiType subType : types) {
+        if (subType instanceof PsiClassType) {
+          PsiClassType classType = (PsiClassType)subType;
           if (!isUncheckedException(classType) && !isHandled(throwStatement, classType, topElement)) {
-            return classType;
+            unhandled.add(classType);
           }
         }
-        return null;
       }
-    });
+    }
+    return unhandled;
   }
 
   @NotNull
