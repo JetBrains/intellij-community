@@ -89,11 +89,8 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
     final List<String> kinds = getKinds(url, password);
 
-    // ignore username clearing
-    //noinspection LoopStatementThatDoesntLoop
     for (String kind : kinds) {
       configuration.clearCredentials(kind, realm);
-      break;
     }
   }
 

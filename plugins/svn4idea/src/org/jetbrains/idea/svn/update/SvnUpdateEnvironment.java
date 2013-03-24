@@ -110,7 +110,6 @@ public class SvnUpdateEnvironment extends AbstractSvnUpdateIntegrateEnvironment 
           SvnAuthenticationManager.HTTP.equals(sourceUrl.getProtocol()) ||
           SvnAuthenticationManager.HTTPS.equals(sourceUrl.getProtocol())
           )) {
-          //|| sourceUrl.getProtocol().contains("svn+"))) {
         updateClient = new SvnCommandLineUpdateClient(myVcs.getProject(), null);
       } else {
         updateClient = new SvnSvnkitUpdateClient(myVcs.createUpdateClient());
