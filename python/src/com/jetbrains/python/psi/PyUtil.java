@@ -642,6 +642,19 @@ public class PyUtil {
     return AccessDirection.READ;
   }
 
+  public static boolean deleteParameter(@NotNull final PyFunction problemFunction, int index) {
+    final PyParameterList parameterList = problemFunction.getParameterList();
+    final PyParameter[] parameters = parameterList.getParameters();
+    if (parameters.length <= 0) return false;
+
+    PsiElement first = parameters[index];
+    PsiElement last = parameters.length > index + 1 ? parameters[index + 1] : parameterList.getLastChild();
+    PsiElement prevSibling = last.getPrevSibling() != null ? last.getPrevSibling() : parameters[index];
+
+    parameterList.deleteChildRange(first, prevSibling);
+    return true;
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
