@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
+import com.intellij.codeInsight.daemon.Validator;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -29,6 +30,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.XmlElementsGroup;
 import com.intellij.xml.XmlNSDescriptor;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -40,7 +42,7 @@ import java.util.List;
 /**
  * User: anna
  */
-public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescriptor{
+public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescriptor, Validator<XmlTag>{
   private final String myName;
   private final XmlTag myXmlTag;
 
@@ -100,7 +102,7 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
         descriptors.add(new JavaFxDefaultAttributeDescriptor(defaultAttrName, getName()));
       }
       JavaFxClassBackedElementDescriptor.collectStaticAttributesDescriptors(context, descriptors);
-      final XmlTag referencedTag = getReferencedTag(getName(), myXmlTag);
+      final XmlTag referencedTag = getReferencedTag(myXmlTag);
       if (referencedTag != null) {
         final XmlElementDescriptor referencedDescriptor = referencedTag.getDescriptor();
         if (referencedDescriptor != null) {
@@ -128,8 +130,8 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
   }
 
   @Nullable
-  private static XmlTag getReferencedTag(String name, XmlTag tag) {
-    if (name.equals(FxmlConstants.FX_REFERENCE)) {
+  private static XmlTag getReferencedTag(XmlTag tag) {
+    if (FxmlConstants.FX_REFERENCE.equals(tag.getName())) {
       final XmlAttribute attribute = tag.getAttribute(FxmlConstants.FX_ELEMENT_SOURCE);
       if (attribute != null) {
         final XmlAttributeValue valueElement = attribute.getValueElement();
@@ -159,7 +161,7 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
       if (propertySetter != null) {
         return new JavaFxStaticPropertyAttributeDescriptor(propertySetter, attributeName);
       }
-      final XmlTag referencedTag = getReferencedTag(getName(), myXmlTag);
+      final XmlTag referencedTag = getReferencedTag(myXmlTag);
       if (referencedTag != null) {
         final XmlElementDescriptor referencedDescriptor = referencedTag.getDescriptor();
         if (referencedDescriptor != null) {
@@ -269,5 +271,22 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
   @Override
   public Object[] getDependences() {
     return ArrayUtil.EMPTY_OBJECT_ARRAY;
+  }
+
+  @Override
+  public void validate(@NotNull XmlTag context, @NotNull ValidationHost host) {
+    final XmlTag referencedTag = getReferencedTag(context);
+    if (referencedTag != null) {
+      final XmlElementDescriptor descriptor = referencedTag.getDescriptor();
+      if (descriptor != null) {
+        final PsiElement declaration = descriptor.getDeclaration();
+        if (declaration instanceof PsiClass) {
+          final String canCoerceError = JavaFxPsiUtil.isClassAcceptable(context.getParentTag(), (PsiClass)declaration);
+          if (canCoerceError != null) {
+            host.addMessage(context.getNavigationElement(), canCoerceError, ValidationHost.ErrorType.ERROR);
+          }
+        }
+      }
+    }
   }
 }
