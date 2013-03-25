@@ -76,7 +76,9 @@ public class CopyClassesHandler extends CopyHandlerDelegateBase {
                                                                    Map<PsiFile, String> relativeMap) {
     final Map<PsiFile, PsiClass[]> result = new HashMap<PsiFile, PsiClass[]>();
     for (PsiElement element : elements) {
-      final PsiFile containingFile = element.getNavigationElement().getContainingFile();
+      final PsiElement navigationElement = element.getNavigationElement();
+      LOG.assertTrue(navigationElement != null, element);
+      final PsiFile containingFile = navigationElement.getContainingFile();
       if (!(containingFile instanceof PsiClassOwner &&
             ProjectRootsUtil.isOutsideSourceRoot(containingFile))) {
         PsiClass[] topLevelClasses = getTopLevelClasses(element);
