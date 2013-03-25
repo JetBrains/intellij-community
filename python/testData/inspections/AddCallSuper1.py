@@ -3,6 +3,6 @@ class A:
         pass
 
 class B(A):
-  def <caret><warning descr="Call to constructor of super class is missed">__init__</warning>(self, r, b = 6):
+  def <caret><warning descr="Call to __init__ of super class is missed">__init__</warning>(self, r, b = 6):
     """docstring"""
     print "Constructor B was called"
