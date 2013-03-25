@@ -98,18 +98,13 @@ public class PyPathEvaluator {
   }
 
   public static String evaluatePathInJoin(String containingFilePath, PyExpression[] args, int endElement, Set<PyExpression> visited) {
-    String result = null;
+    String result = containingFilePath;
     for (int i = 0; i < endElement; i++) {
-      String arg = evaluate(args[i], containingFilePath, visited);
+      String arg = evaluate(args[i], result, visited);
       if (arg == null) {
         return null;
       }
-      if (result == null) {
-        result = arg;
-      }
-      else {
-        result = new File(result, arg).getPath();
-      }
+      result = arg;
     }
     return result;
   }
