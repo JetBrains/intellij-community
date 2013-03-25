@@ -16,13 +16,16 @@
 
 package org.jetbrains.android.dom.manifest;
 
+import com.android.SdkConstants;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.XmlName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
 import java.util.ArrayList;
 import java.util.Collections;
+import java.util.List;
 
 /**
  * Created by IntelliJ IDEA.
@@ -33,6 +36,14 @@ import java.util.Collections;
  */
 public class AndroidManifestUtils {
   private AndroidManifestUtils() {
+  }
+
+  @Nullable
+  public static String getStyleableNameForElement(@NotNull ManifestElement element) {
+    if (element instanceof CompatibleScreensScreen) {
+      return "AndroidManifestCompatibleScreensScreen";
+    }
+    return null;
   }
 
   @NotNull
@@ -77,7 +88,8 @@ public class AndroidManifestUtils {
   public static String[] getStaticallyDefinedSubtags(@NotNull ManifestElement element) {
     List<String> strings = new ArrayList<String>();
     if (element instanceof Manifest) {
-      Collections.addAll(strings, "application", "instrumentation", "permission", "permission-group", "permission-tree", "uses-permission");
+      Collections.addAll(strings, "application", "instrumentation", "permission", "permission-group",
+                         "permission-tree", "uses-permission", "compatible-screens");
     }
     else if (element instanceof Application) {
       Collections.addAll(strings, "activity", "activity-alias", "service", "provider", "receiver", "uses-library");
@@ -109,5 +121,14 @@ public class AndroidManifestUtils {
       builder.append(Character.toLowerCase(c));
     }
     return builder.toString();
+  }
+
+  public static boolean isRequiredAttribute(XmlName attrName, DomElement element) {
+    if (element instanceof CompatibleScreensScreen &&
+        SdkConstants.NS_RESOURCES.equals(attrName.getNamespaceKey())) {
+      final String localName = attrName.getLocalName();
+      return "screenSize".equals(localName) || "screenDensity".equals(localName);
+    }
+    return false;
   }
 }

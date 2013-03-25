@@ -62,6 +62,8 @@ import com.intellij.util.Alarm;
 import com.intellij.util.PsiNavigateUtil;
 import com.intellij.util.ThrowableConsumer;
 import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.ui.update.MergingUpdateQueue;
+import com.intellij.util.ui.update.Update;
 import org.jetbrains.android.actions.RunAndroidAvdManagerAction;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.maven.AndroidMavenUtil;
@@ -95,6 +97,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   private final ExternalPSIChangeListener myPSIChangeListener;
   private final ProfileAction myProfileAction;
   private final Alarm mySessionAlarm = new Alarm();
+  private final MergingUpdateQueue mySessionQueue;
   private FolderConfiguration myLastRenderedConfiguration;
   private IAndroidTarget myLastTarget;
   private volatile RenderSession mySession;
@@ -109,6 +112,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
                                     @NotNull Module module,
                                     @NotNull VirtualFile file) {
     super(editor, project, module, file);
+
+    mySessionQueue = ViewsMetaManager.getInstance(project).getSessionQueue();
 
     myXmlFile = (XmlFile)ApplicationManager.getApplication().runReadAction(new Computable<PsiFile>() {
       @Override
@@ -273,7 +278,8 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
 
     final long sessionId = ++mySessionId;
 
-    ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    //ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+    mySessionQueue.queue(new Update("render") {
       private void cancel() {
         mySessionAlarm.cancelAllRequests();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -670,11 +676,6 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
   @Override
   protected ComponentDecorator getRootSelectionDecorator() {
     return NON_RESIZE_DECORATOR;
-  }
-
-  @Override
-  protected EditOperation processRootOperation(OperationContext context) {
-    return null;
   }
 
   @Override

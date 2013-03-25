@@ -54,6 +54,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.messages.MessageBusConnection;
@@ -111,7 +112,7 @@ public class AndroidLayoutPreviewToolWindowManager implements ProjectComponent {
     myFileEditorManager = fileEditorManager;
 
     myToolWindowUpdateQueue = new MergingUpdateQueue("android.layout.preview", 300, true, null, project);
-    myRenderingQueue = new MergingUpdateQueue("android.layout.rendering", 300, true, null, project, null, false);
+    myRenderingQueue = new MergingUpdateQueue("android.layout.rendering", 300, true, null, project, null, Alarm.ThreadToUse.OWN_THREAD);
     mySaveAndRenderQueue = new MergingUpdateQueue("android.layout.preview.save.and.render", 1000, true, null, project, null, true);
 
     final MessageBusConnection connection = project.getMessageBus().connect(project);

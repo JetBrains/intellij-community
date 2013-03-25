@@ -17,9 +17,9 @@
 package org.jetbrains.android.newProject;
 
 
+import com.android.SdkConstants;
 import com.android.resources.ResourceType;
 import com.android.sdklib.IAndroidTarget;
-import com.android.SdkConstants;
 import com.intellij.CommonBundle;
 import com.intellij.codeInsight.actions.ReformatCodeProcessor;
 import com.intellij.execution.ExecutionException;
@@ -28,7 +28,10 @@ import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
-import com.intellij.ide.util.projectWizard.*;
+import com.intellij.ide.util.projectWizard.JavaModuleBuilder;
+import com.intellij.ide.util.projectWizard.ModuleWizardStep;
+import com.intellij.ide.util.projectWizard.SettingsStep;
+import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -142,7 +145,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
 
       if (myProjectType == ProjectType.TEST) {
         assert myTestedModule != null;
-        facet.getConfiguration().PACK_TEST_CODE = true;
+        facet.getProperties().PACK_TEST_CODE = true;
         ModuleOrderEntry entry = rootModel.addModuleOrderEntry(myTestedModule);
         entry.setScope(DependencyScope.PROVIDED);
       }
@@ -284,10 +287,20 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
       commandLine.addParameter(myActivityName);
     }
     else if (myProjectType == ProjectType.TEST) {
-      String moduleDirPath = AndroidRootUtil.getModuleDirPath(myTestedModule);
-      assert moduleDirPath != null;
+      final AndroidFacet testedFacet = AndroidFacet.getInstance(myTestedModule);
+      final VirtualFile moduleDir = testedFacet != null
+                                    ? AndroidRootUtil.getMainContentRoot(testedFacet)
+                                    : null;
+      if (moduleDir == null) {
+        if (!ApplicationManager.getApplication().isUnitTestMode()) {
+          Messages.showErrorDialog(module.getProject(), AndroidBundle.message(
+            "android.wizard.cannot.find.main.content.root.error",
+            module.getName()), CommonBundle.getErrorTitle());
+        }
+        return true;
+      }
       commandLine.addParameter("--main");
-      commandLine.addParameter(FileUtil.toSystemDependentName(moduleDirPath));
+      commandLine.addParameter(FileUtil.toSystemDependentName(moduleDir.getPath()));
     }
 
     final File finalTempContentRoot = tempContentRoot;

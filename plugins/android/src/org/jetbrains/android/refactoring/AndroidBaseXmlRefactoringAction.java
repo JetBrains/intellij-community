@@ -30,7 +30,7 @@ import org.jetbrains.annotations.Nullable;
  */
 abstract class AndroidBaseXmlRefactoringAction extends BaseRefactoringAction {
   @Override
-  protected boolean isAvailableOnElementInEditorAndFile(PsiElement element, Editor editor, PsiFile file, DataContext context) {
+  protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     final XmlTag[] tags = getXmlTagsFromExternalContext(context);
     if (tags.length > 0) {
       return AndroidFacet.getInstance(tags[0]) != null && isEnabledForTags(tags);
@@ -124,7 +124,7 @@ abstract class AndroidBaseXmlRefactoringAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected boolean isEnabledOnElements(PsiElement[] elements) {
+  protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     if (elements.length == 0) {
       return false;
     }
@@ -195,7 +195,7 @@ abstract class AndroidBaseXmlRefactoringAction extends BaseRefactoringAction {
   }
 
   @Override
-  protected RefactoringActionHandler getHandler(DataContext dataContext) {
+  protected RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     final XmlTag[] componentTags = getXmlTagsFromExternalContext(dataContext);
     return new MyHandler(componentTags);
   }

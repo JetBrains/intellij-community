@@ -15,14 +15,16 @@
  */
 package org.jetbrains.android.compiler.tools;
 
+import com.android.SdkConstants;
 import com.android.jarutils.DebugKeyProvider;
 import com.android.jarutils.JavaResourceFilter;
 import com.android.jarutils.SignedJarBuilder;
 import com.android.prefs.AndroidLocation;
-import com.android.SdkConstants;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
@@ -118,9 +120,31 @@ public class AndroidApkBuilder {
                                                                       @NotNull String sdkPath,
                                                                       @Nullable String customKeystorePath,
                                                                       @NotNull Condition<File> resourceFilter) throws IOException {
+    final AndroidBuildTestingManager testingManager = AndroidBuildTestingManager.getTestingManager();
+
+    if (testingManager != null) {
+      testingManager.getCommandExecutor().log(StringUtil.join(new String[]{
+        "apk_builder",
+        resPackagePath,
+        dexPath,
+        AndroidBuildTestingManager.arrayToString(sourceRoots),
+        AndroidBuildTestingManager.arrayToString(externalJars),
+        AndroidBuildTestingManager.arrayToString(nativeLibsFolders),
+        additionalNativeLibs.toString(),
+        finalApk,
+        Boolean.toString(unsigned),
+        sdkPath,
+        customKeystorePath}, "\n"));
+    }
     final Map<AndroidCompilerMessageKind, List<String>> map = new HashMap<AndroidCompilerMessageKind, List<String>>();
     map.put(ERROR, new ArrayList<String>());
     map.put(WARNING, new ArrayList<String>());
+
+    final File outputDir = new File(finalApk).getParentFile();
+    if (!outputDir.exists() && !outputDir.mkdirs()) {
+      map.get(ERROR).add("Cannot create directory " + outputDir.getPath());
+      return map;
+    }
     File additionalLibsDir = null;
     try {
       if (additionalNativeLibs.size() > 0) {
@@ -413,11 +437,10 @@ public class AndroidApkBuilder {
 
   public static void collectNativeLibraries(@NotNull File file, @NotNull List<File> result, boolean debugBuild) {
     if (!file.isDirectory()) {
-      String ext = FileUtil.getExtension(file.getName());
 
       // some users store jars and *.so libs in the same directory. Do not pack JARs to APK's "lib" folder!
-      if (EXT_NATIVE_LIB.equalsIgnoreCase(ext) ||
-          (debugBuild && !("jar".equals(ext)))) {
+      if (FileUtilRt.extensionEquals(file.getName(), EXT_NATIVE_LIB) ||
+          (debugBuild && !(FileUtilRt.extensionEquals(file.getName(), "jar")))) {
         result.add(file);
       }
     }
@@ -469,7 +492,7 @@ public class AndroidApkBuilder {
   private static boolean checkFileForPackaging(File file) {
     String fileName = FileUtil.getNameWithoutExtension(file);
     if (fileName.length() > 0) {
-      return JavaResourceFilter.checkFileForPackaging(fileName, FileUtil.getExtension(file.getName()));
+      return JavaResourceFilter.checkFileForPackaging(fileName, FileUtilRt.getExtension(file.getName()));
     }
     return false;
   }

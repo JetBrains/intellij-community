@@ -226,19 +226,19 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
       return super.isReadyForDebugging(data, processHandler);
     }
 
-    public boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device)
+    public LaunchResult launch(@NotNull AndroidRunningState state, @NotNull IDevice device)
       throws IOException, AdbCommandRejectedException, TimeoutException {
       String activityName = myActivityName;
-      if (activityName == null) return true;
+      if (activityName == null) return LaunchResult.NOTHING_TO_DO;
       activityName = activityName.replace("$", "\\$");
       final String activityPath = state.getPackageName() + '/' + activityName;
       ProcessHandler processHandler = state.getProcessHandler();
-      if (state.isStopped()) return false;
+      if (state.isStopped()) return LaunchResult.STOP;
       processHandler.notifyTextAvailable("Launching application: " + activityPath + ".\n", STDOUT);
       AndroidRunningState.MyReceiver receiver = state.new MyReceiver();
       boolean debug = state.isDebugMode();
       while (true) {
-        if (state.isStopped()) return false;
+        if (state.isStopped()) return LaunchResult.STOP;
         String command = "am start " + (debug ? "-D " : "") + "-n \"" + activityPath + "\"";
         boolean deviceNotResponding = false;
         try {
@@ -268,7 +268,7 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
       else {
         processHandler.notifyTextAvailable(receiver.getOutput().toString(), STDERR);
       }
-      return success;
+      return success ? LaunchResult.SUCCESS : LaunchResult.STOP;
     }
   }
 }

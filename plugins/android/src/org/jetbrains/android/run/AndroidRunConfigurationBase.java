@@ -73,6 +73,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
   
   public String TARGET_SELECTION_MODE = TargetSelectionMode.EMULATOR.name();
   public String PREFERRED_AVD = "";
+  public boolean USE_COMMAND_LINE = true;
   public String COMMAND_LINE = "";
   public boolean WIPE_USER_DATA = false;
   public boolean DISABLE_BOOT_ANIMATION = false;
@@ -94,7 +95,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     if (facet == null) {
       throw new RuntimeConfigurationError(AndroidBundle.message("android.no.facet.error"));
     }
-    if (facet.getConfiguration().LIBRARY_PROJECT) {
+    if (facet.getProperties().LIBRARY_PROJECT) {
       throw new RuntimeConfigurationError(AndroidBundle.message("android.cannot.run.library.project.error"));
     }
     if (facet.getConfiguration().getAndroidPlatform() == null) {
@@ -157,7 +158,7 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
           AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
           if (depFacet != null &&
               !module2PackageName.containsKey(depFacet) &&
-              !depFacet.getConfiguration().LIBRARY_PROJECT) {
+              !depFacet.getProperties().LIBRARY_PROJECT) {
             String packageName = getPackageName(depFacet);
             if (packageName == null) {
               return false;
@@ -249,24 +250,29 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
 
   @Nullable
   private static String getPackageName(AndroidFacet facet) {
-    Manifest manifest = facet.getManifest();
-    if (manifest == null) return null;
-    GenericAttributeValue<String> packageAttrValue = manifest.getPackage();
-    String aPackage = packageAttrValue.getValue();
-    if (aPackage == null || aPackage.length() == 0) {
-      Project project = facet.getModule().getProject();
-      Messages.showErrorDialog(project, AndroidBundle.message("specify.main.package.error", facet.getModule().getName()),
-                               CommonBundle.getErrorTitle());
-      XmlAttributeValue attrValue = packageAttrValue.getXmlAttributeValue();
-      if (attrValue != null) {
-        PsiNavigateUtil.navigate(attrValue);
-      }
-      else {
-        PsiNavigateUtil.navigate(manifest.getXmlElement());
-      }
-      return null;
+    if (facet.getProperties().USE_CUSTOM_MANIFEST_PACKAGE) {
+      return facet.getProperties().CUSTOM_MANIFEST_PACKAGE;
     }
-    return aPackage;
+    else {
+      Manifest manifest = facet.getManifest();
+      if (manifest == null) return null;
+      GenericAttributeValue<String> packageAttrValue = manifest.getPackage();
+      String aPackage = packageAttrValue.getValue();
+      if (aPackage == null || aPackage.length() == 0) {
+        Project project = facet.getModule().getProject();
+        Messages.showErrorDialog(project, AndroidBundle.message("specify.main.package.error", facet.getModule().getName()),
+                                 CommonBundle.getErrorTitle());
+        XmlAttributeValue attrValue = packageAttrValue.getXmlAttributeValue();
+        if (attrValue != null) {
+          PsiNavigateUtil.navigate(attrValue);
+        }
+        else {
+          PsiNavigateUtil.navigate(manifest.getXmlElement());
+        }
+        return null;
+      }
+      return aPackage;
+    }
   }
 
   private String computeCommandLine() {
@@ -279,7 +285,9 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     if (DISABLE_BOOT_ANIMATION) {
       result.append("-no-boot-anim ");
     }
-    result.append(COMMAND_LINE);
+    if (USE_COMMAND_LINE) {
+      result.append(COMMAND_LINE);
+    }
     int last = result.length() - 1;
     if (result.charAt(last) == ' ') {
       result.deleteCharAt(last);

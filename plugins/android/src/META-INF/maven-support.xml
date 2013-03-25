@@ -1,4 +1,3 @@
-<!DOCTYPE idea-plugin PUBLIC "Plugin/DTD" "http://plugins.intellij.net/plugin.dtd">
 <idea-plugin url="http://www.jetbrains.com/idea">
   <extensions xmlns="org.jetbrains.idea.maven">
     <importer implementation="org.jetbrains.android.maven.AndroidFacetImporter1"/>

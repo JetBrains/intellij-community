@@ -16,7 +16,6 @@
 package org.jetbrains.android.maven;
 
 import com.intellij.openapi.components.*;
-import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
@@ -152,16 +151,24 @@ public class AndroidExternalApklibDependenciesManager implements PersistentState
     private String myVersion;
     private String myType;
     private String myScope;
+    private String myPath;
+    private String myLibName;
 
     public MavenDependencyInfo() {
     }
 
-    public MavenDependencyInfo(@NotNull MavenId mavenId, @NotNull String type, @NotNull String scope) {
+    public MavenDependencyInfo(@NotNull MavenId mavenId,
+                               @NotNull String type,
+                               @NotNull String scope,
+                               @NotNull String path,
+                               @NotNull String libName) {
       myGroupId = mavenId.getGroupId();
       myArtifactId = mavenId.getArtifactId();
       myVersion = mavenId.getVersion();
       myType = type;
       myScope = scope;
+      myPath = path;
+      myLibName = libName;
     }
 
     public String getGroupId() {
@@ -184,6 +191,14 @@ public class AndroidExternalApklibDependenciesManager implements PersistentState
       return myScope;
     }
 
+    public String getPath() {
+      return myPath;
+    }
+
+    public String getLibName() {
+      return myLibName;
+    }
+
     public void setGroupId(String groupId) {
       myGroupId = groupId;
     }
@@ -202,6 +217,14 @@ public class AndroidExternalApklibDependenciesManager implements PersistentState
 
     public void setScope(String scope) {
       myScope = scope;
+    }
+
+    public void setPath(String path) {
+      myPath = path;
+    }
+
+    public void setLibName(String libName) {
+      myLibName = libName;
     }
   }
 }

@@ -89,11 +89,11 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
       return false;
     }
     PsiElement element = getPsiElement(file, editor);
-    return element != null && getStringLiteralValue(element, file) != null;
+    return element != null && getStringLiteralValue(project, element, file) != null;
   }
 
   @Nullable
-  protected static String getStringLiteralValue(@NotNull PsiElement element, @NotNull PsiFile file) {
+  protected static String getStringLiteralValue(@NotNull Project project, @NotNull PsiElement element, @NotNull PsiFile file) {
     if (file instanceof PsiJavaFile && element instanceof PsiLiteralExpression) {
       PsiLiteralExpression literalExpression = (PsiLiteralExpression)element;
       Object value = literalExpression.getValue();
@@ -105,7 +105,7 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
       final XmlAttribute attribute = PsiTreeUtil.getParentOfType(element, XmlAttribute.class);
 
       if (attribute != null) {
-        final GenericAttributeValue domAttribute = DomManager.getDomManager(element.getProject()).getDomElement(attribute);
+        final GenericAttributeValue domAttribute = DomManager.getDomManager(project).getDomElement(attribute);
 
         if (domAttribute != null) {
           final Converter converter = domAttribute.getConverter();
@@ -163,7 +163,7 @@ public class AndroidAddStringResourceAction extends AbstractIntentionAction impl
   }
 
   protected static void doInvoke(Project project, Editor editor, PsiFile file, @Nullable String resName, PsiElement element) {
-    String value = getStringLiteralValue(element, file);
+    String value = getStringLiteralValue(project, element, file);
     assert value != null;
 
     final AndroidFacet facet = AndroidFacet.getInstance(file);

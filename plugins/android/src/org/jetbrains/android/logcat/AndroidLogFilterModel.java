@@ -24,6 +24,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -39,7 +40,7 @@ public abstract class AndroidLogFilterModel extends LogFilterModel {
   static final Pattern ANDROID_LOG_MESSAGE_PATTERN =
     Pattern.compile("\\d\\d-\\d\\d\\s\\d\\d:\\d\\d:\\d\\d\\.\\d+:\\s+([A-Z]+)/([\\S ]+)\\((\\d+)\\):(.*)");
 
-  private final List<LogFilterListener> myListeners = new ArrayList<LogFilterListener>();
+  private final List<LogFilterListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
 
   private Log.LogLevel myPrevMessageLogLevel;
   private String myPrevTag;

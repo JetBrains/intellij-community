@@ -27,6 +27,8 @@ import org.jetbrains.android.compiler.artifact.ApkSigningSettingsForm;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUiUtil;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.File;
@@ -70,11 +72,13 @@ class KeystoreStep extends ExportSignedPackageWizardStep implements ApkSigningSe
     if (settings.REMEMBER_PASSWORDS) {
       final PasswordSafe passwordSafe = PasswordSafe.getInstance();
       try {
-        String password = passwordSafe.getPassword(project, KeystoreStep.class, KEY_STORE_PASSWORD_KEY);
+        String password = passwordSafe.getPassword(project, KeystoreStep.class, makePasswordKey(
+          KEY_STORE_PASSWORD_KEY, settings.KEY_STORE_PATH, null));
         if (password != null) {
           myKeyStorePasswordField.setText(password);
         }
-        password = passwordSafe.getPassword(project, KeystoreStep.class, KEY_PASSWORD_KEY);
+        password = passwordSafe.getPassword(project, KeystoreStep.class, makePasswordKey(
+          KEY_PASSWORD_KEY, settings.KEY_STORE_PATH, settings.KEY_ALIAS));
         if (password != null) {
           myKeyPasswordField.setText(password);
         }
@@ -86,6 +90,10 @@ class KeystoreStep extends ExportSignedPackageWizardStep implements ApkSigningSe
       }
     }
     AndroidUiUtil.initSigningSettingsForm(project, this);
+  }
+
+  private static String makePasswordKey(@NotNull String prefix, @NotNull String keyStorePath, @Nullable String keyAlias) {
+    return prefix + "__" + keyStorePath + (keyAlias != null ? "__" + keyAlias : "");
   }
 
   @Override
@@ -153,14 +161,17 @@ class KeystoreStep extends ExportSignedPackageWizardStep implements ApkSigningSe
     settings.REMEMBER_PASSWORDS = rememberPasswords;
     final PasswordSafe passwordSafe = PasswordSafe.getInstance();
 
+    final String keyStorePasswordKey = makePasswordKey(KEY_STORE_PASSWORD_KEY, keyStoreLocation, null);
+    final String keyPasswordKey = makePasswordKey(KEY_PASSWORD_KEY, keyStoreLocation, keyAlias);
+
     try {
       if (rememberPasswords) {
-        passwordSafe.storePassword(project, KeystoreStep.class, KEY_STORE_PASSWORD_KEY, new String(keyStorePassword));
-        passwordSafe.storePassword(project, KeystoreStep.class, KEY_PASSWORD_KEY, new String(keyPassword));
+        passwordSafe.storePassword(project, KeystoreStep.class, keyStorePasswordKey, new String(keyStorePassword));
+        passwordSafe.storePassword(project, KeystoreStep.class, keyPasswordKey, new String(keyPassword));
       }
       else {
-        passwordSafe.removePassword(project, KeystoreStep.class, KEY_STORE_PASSWORD_KEY);
-        passwordSafe.removePassword(project, KeystoreStep.class, KEY_PASSWORD_KEY);
+        passwordSafe.removePassword(project, KeystoreStep.class, keyStorePasswordKey);
+        passwordSafe.removePassword(project, KeystoreStep.class, keyPasswordKey);
       }
     }
     catch (PasswordSafeException e) {

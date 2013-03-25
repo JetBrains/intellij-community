@@ -43,13 +43,18 @@ public abstract class AndroidBuildTargetType<T extends AndroidBuildTarget> exten
       final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
 
       if (extension != null) {
-        targets.add(createBuildTarget(module));
+        final T target = createBuildTarget(extension);
+
+        if (target != null) {
+          targets.add(target);
+        }
       }
     }
     return targets;
   }
 
-  public abstract T createBuildTarget(@NotNull JpsModule module);
+  @Nullable
+  public abstract T createBuildTarget(@NotNull JpsAndroidModuleExtension extension);
 
   @NotNull
   @Override

@@ -25,6 +25,7 @@ import com.android.sdklib.IAndroidTarget;
 import com.intellij.execution.process.OSProcessHandler;
 import com.intellij.execution.process.OSProcessManager;
 import com.intellij.facet.ProjectFacetManager;
+import com.intellij.ide.highlighter.ArchiveFileType;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -46,6 +47,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.util.containers.HashSet;
@@ -84,37 +86,63 @@ public class AndroidSdkUtils {
   }
 
   @NotNull
-  public static List<OrderRoot> getLibraryRootsForTarget(@NotNull IAndroidTarget target, @Nullable String sdkPath) {
-    List<OrderRoot> result = new ArrayList<OrderRoot>();
-    VirtualFile platformDir = getPlatformDir(target);
-    if (platformDir == null) return result;
+  public static List<VirtualFile> getPlatformAndAddOnJars(@NotNull IAndroidTarget target) {
+    final List<VirtualFile> result = new ArrayList<VirtualFile>();
+    final VirtualFile platformDir = getPlatformDir(target);
 
-    VirtualFile androidJar = platformDir.findChild(SdkConstants.FN_FRAMEWORK_LIBRARY);
-    if (androidJar == null) return result;
-    VirtualFile androidJarRoot = JarFileSystem.getInstance().findFileByPath(androidJar.getPath() + JarFileSystem.JAR_SEPARATOR);
-    if (androidJarRoot != null) {
-      result.add(new OrderRoot(androidJarRoot, OrderRootType.CLASSES));
+    if (platformDir == null) {
+      return result;
     }
+    final VirtualFile androidJar = platformDir.findChild(SdkConstants.FN_FRAMEWORK_LIBRARY);
 
-    IAndroidTarget.IOptionalLibrary[] libs = target.getOptionalLibraries();
+    if (androidJar == null) {
+      return result;
+    }
+    final VirtualFile androidJarRoot = JarFileSystem.getInstance().findFileByPath(androidJar.getPath() + JarFileSystem.JAR_SEPARATOR);
+
+    if (androidJarRoot != null) {
+      result.add(androidJarRoot);
+    }
+    final IAndroidTarget.IOptionalLibrary[] libs = target.getOptionalLibraries();
+
     if (libs != null) {
       for (IAndroidTarget.IOptionalLibrary lib : libs) {
-        VirtualFile libRoot = JarFileSystem.getInstance().findFileByPath(lib.getJarPath() + JarFileSystem.JAR_SEPARATOR);
+        final VirtualFile libRoot = JarFileSystem.getInstance().findFileByPath(lib.getJarPath() + JarFileSystem.JAR_SEPARATOR);
+
         if (libRoot != null) {
-          result.add(new OrderRoot(libRoot, OrderRootType.CLASSES));
+          result.add(libRoot);
         }
       }
     }
+    return result;
+  }
+
+  @NotNull
+  public static List<OrderRoot> getLibraryRootsForTarget(@NotNull IAndroidTarget target,
+                                                         @Nullable String sdkPath,
+                                                         boolean addPlatformAndAddOnJars) {
+    List<OrderRoot> result = new ArrayList<OrderRoot>();
+
+    if (addPlatformAndAddOnJars) {
+      for (VirtualFile file : getPlatformAndAddOnJars(target)) {
+        result.add(new OrderRoot(file, OrderRootType.CLASSES));
+      }
+    }
+    VirtualFile platformDir = getPlatformDir(target);
+    if (platformDir == null) return result;
+
     VirtualFile targetDir = platformDir;
     if (!target.isPlatform()) {
       targetDir = LocalFileSystem.getInstance().findFileByPath(target.getLocation());
     }
+    boolean docsOrSourcesFound = false;
+
     if (targetDir != null) {
-      addJavaDocAndSources(result, targetDir);
+      docsOrSourcesFound = addJavaDocAndSources(result, targetDir) || docsOrSourcesFound;
     }
     VirtualFile sdkDir = sdkPath != null ? LocalFileSystem.getInstance().findFileByPath(sdkPath) : null;
     if (sdkDir != null) {
-      addJavaDocAndSources(result, sdkDir);
+      docsOrSourcesFound = addJavaDocAndSources(result, sdkDir) || docsOrSourcesFound;
     }
 
     // todo: replace it by target.getPath(SOURCES) when it'll be up to date
@@ -123,9 +151,17 @@ public class AndroidSdkUtils {
       final VirtualFile platformSourcesDir = sourcesDir.findChild(platformDir.getName());
       if (platformSourcesDir != null && platformSourcesDir.isDirectory()) {
         result.add(new OrderRoot(platformSourcesDir, OrderRootType.SOURCES));
+        docsOrSourcesFound = true;
       }
     }
 
+    if (!docsOrSourcesFound) {
+      final VirtualFile f = VirtualFileManager.getInstance().findFileByUrl(AndroidSdkType.DEFAULT_EXTERNAL_DOCUMENTATION_URL);
+
+      if (f != null) {
+        result.add(new OrderRoot(f, JavadocOrderRootType.getInstance()));
+      }
+    }
     final String resFolderPath = target.getPath(IAndroidTarget.RESOURCES);
 
     if (resFolderPath != null) {
@@ -162,16 +198,21 @@ public class AndroidSdkUtils {
     return null;
   }
 
-  private static void addJavaDocAndSources(@NotNull List<OrderRoot> list, @NotNull VirtualFile dir) {
+  private static boolean addJavaDocAndSources(@NotNull List<OrderRoot> list, @NotNull VirtualFile dir) {
+    boolean found = false;
+
     VirtualFile javadocDir = findJavadocDir(dir);
     if (javadocDir != null) {
       list.add(new OrderRoot(javadocDir, JavadocOrderRootType.getInstance()));
+      found = true;
     }
 
     VirtualFile sourcesDir = dir.findChild(SdkConstants.FD_SOURCES);
     if (sourcesDir != null) {
       list.add(new OrderRoot(sourcesDir, OrderRootType.SOURCES));
+      found = true;
     }
+    return found;
   }
 
   public static String getPresentableTargetName(@NotNull IAndroidTarget target) {
@@ -182,19 +223,33 @@ public class AndroidSdkUtils {
     return target.getName();
   }
 
-  public static Sdk createNewAndroidPlatform(@NotNull IAndroidTarget target, @NotNull String sdkPath, boolean addRoots) {
-    ProjectJdkTable table = ProjectJdkTable.getInstance();
-    String sdkName = SdkConfigurationUtil.createUniqueSdkName(AndroidSdkType.SDK_NAME, Arrays.asList(table.getAllJdks()));
+  @Nullable
+  public static Sdk createNewAndroidPlatform(@NotNull IAndroidTarget target,
+                                             @NotNull String sdkPath,
+                                             boolean addRoots) {
+    return createNewAndroidPlatform(target, sdkPath, addRoots, chooseNameForNewLibrary(target));
+  }
 
-    final Sdk sdk = table.createSdk(sdkName, SdkType.findInstance(AndroidSdkType.class));
+  @Nullable
+  public static Sdk createNewAndroidPlatform(@NotNull IAndroidTarget target,
+                                             @NotNull String sdkPath,
+                                             boolean addRoots,
+                                             @NotNull String sdkName) {
+    final Sdk javaSdk = tryToChooseJavaSdk();
+
+    if (javaSdk == null) {
+      return null;
+    }
+    ProjectJdkTable table = ProjectJdkTable.getInstance();
+    String tmpName = SdkConfigurationUtil.createUniqueSdkName(AndroidSdkType.SDK_NAME, Arrays.asList(table.getAllJdks()));
+
+    final Sdk sdk = table.createSdk(tmpName, SdkType.findInstance(AndroidSdkType.class));
 
     SdkModificator sdkModificator = sdk.getSdkModificator();
     sdkModificator.setHomePath(sdkPath);
     sdkModificator.commitChanges();
 
-
-    final Sdk javaSdk = tryToChooseJavaSdk();
-    setUpSdk(sdk, javaSdk, table.getAllJdks(), target, addRoots);
+    setUpSdk(sdk, javaSdk, table.getAllJdks(), target, addRoots, sdkName);
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
@@ -237,12 +292,12 @@ public class AndroidSdkUtils {
                               @Nullable Sdk javaSdk,
                               @NotNull Sdk[] allSdks,
                               @NotNull IAndroidTarget target,
-                              boolean addRoots) {
+                              boolean addRoots,
+                              @NotNull String sdkName) {
     AndroidSdkAdditionalData data = new AndroidSdkAdditionalData(androidSdk, javaSdk);
 
     data.setBuildTarget(target);
 
-    String sdkName = chooseNameForNewLibrary(target);
     sdkName = SdkConfigurationUtil.createUniqueSdkName(sdkName, Arrays.asList(allSdks));
 
     final SdkModificator sdkModificator = androidSdk.getSdkModificator();
@@ -255,7 +310,7 @@ public class AndroidSdkUtils {
     sdkModificator.setSdkAdditionalData(data);
 
     if (addRoots) {
-      for (OrderRoot orderRoot : getLibraryRootsForTarget(target, androidSdk.getHomePath())) {
+      for (OrderRoot orderRoot : getLibraryRootsForTarget(target, androidSdk.getHomePath(), true)) {
         sdkModificator.addRoot(orderRoot.getFile(), orderRoot.getType());
       }
     }
@@ -317,9 +372,17 @@ public class AndroidSdkUtils {
       }
     }
     for (Sdk sdk : ProjectJdkTable.getInstance().getSdksOfType(AndroidSdkType.getInstance())) {
-      if (tryToSetAndroidPlatform(module, sdk)) {
-        component.setValue(DEFAULT_PLATFORM_NAME_PROPERTY, sdk.getName());
-        return;
+      final AndroidSdkAdditionalData data = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
+
+      if (data != null) {
+        final AndroidPlatform platform = data.getAndroidPlatform();
+
+        if (platform != null &&
+            checkSdkRoots(sdk, platform.getTarget(), false) &&
+            tryToSetAndroidPlatform(module, sdk)) {
+          component.setValue(DEFAULT_PLATFORM_NAME_PROPERTY, sdk.getName());
+          return;
+        }
       }
     }
   }
@@ -334,7 +397,8 @@ public class AndroidSdkUtils {
         if (androidPlatform != null) {
           final String baseDir = FileUtil.toSystemIndependentName(androidPlatform.getSdkData().getLocation());
           if ((sdkDir == null || FileUtil.pathsEqual(baseDir, sdkDir)) &&
-              targetHashString.equals(androidPlatform.getTarget().hashString())) {
+              targetHashString.equals(androidPlatform.getTarget().hashString()) &&
+              checkSdkRoots(sdk, androidPlatform.getTarget(), false)) {
             return sdk;
           }
         }
@@ -423,7 +487,9 @@ public class AndroidSdkUtils {
   }
 
   @Nullable
-  public static Sdk findAppropriateAndroidPlatform(@NotNull IAndroidTarget target, @NotNull AndroidSdkData sdkData) {
+  public static Sdk findAppropriateAndroidPlatform(@NotNull IAndroidTarget target,
+                                                   @NotNull AndroidSdkData sdkData,
+                                                   boolean forMaven) {
     for (Sdk library : ProjectJdkTable.getInstance().getAllJdks()) {
       final String homePath = library.getHomePath();
 
@@ -436,7 +502,9 @@ public class AndroidSdkUtils {
           if (data != null) {
             final IAndroidTarget target1 = data.getBuildTarget(sdkData1);
 
-            if (target1 != null && target.hashString().equals(target1.hashString())) {
+            if (target1 != null &&
+                target.hashString().equals(target1.hashString()) &&
+                checkSdkRoots(library, target, forMaven)) {
               return library;
             }
           }
@@ -444,6 +512,39 @@ public class AndroidSdkUtils {
       }
     }
     return null;
+  }
+
+  public static boolean checkSdkRoots(@NotNull Sdk sdk, @NotNull IAndroidTarget target, boolean forMaven) {
+    final String homePath = sdk.getHomePath();
+
+    if (homePath == null) {
+      return false;
+    }
+    final AndroidSdkAdditionalData sdkAdditionalData =
+      (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
+    final Sdk javaSdk = sdkAdditionalData != null
+                        ? sdkAdditionalData.getJavaSdk()
+                        : null;
+    if (javaSdk == null) {
+      return false;
+    }
+    final Set<VirtualFile> filesInSdk = new HashSet<VirtualFile>(Arrays.asList(
+      sdk.getRootProvider().getFiles(OrderRootType.CLASSES)));
+
+    for (VirtualFile file : getPlatformAndAddOnJars(target)) {
+      if (filesInSdk.contains(file) == forMaven) {
+        return false;
+      }
+    }
+    boolean containsJarFromJdk = false;
+
+    for (VirtualFile file : javaSdk.getRootProvider().getFiles(OrderRootType.CLASSES)) {
+      if (file.getFileType() instanceof ArchiveFileType &&
+          filesInSdk.contains(file)) {
+        containsJarFromJdk = true;
+      }
+    }
+    return containsJarFromJdk == forMaven;
   }
 
   @Nullable

@@ -30,6 +30,7 @@ import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.RawCommandLineEditor;
+import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.annotations.NonNls;
@@ -47,7 +48,6 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
 
   private JPanel myPanel;
   private JComboBox myModulesComboBox;
-  private LabeledComponent<RawCommandLineEditor> myCommandLineComponent;
   private JPanel myConfigurationSpecificPanel;
   private JCheckBox myWipeUserDataCheckBox;
   private JComboBox myNetworkSpeedCombo;
@@ -60,8 +60,9 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
   private JRadioButton myUsbDeviceRadioButton;
   private LabeledComponent<AvdComboBox> myAvdComboComponent;
   private JBLabel myMinSdkInfoMessageLabel;
-  private AvdComboBox myAvdCombo;
+  private JBCheckBox myUseAdditionalCommandLineOptionsCheckBox;
   private RawCommandLineEditor myCommandLineField;
+  private AvdComboBox myAvdCombo;
   private String incorrectPreferredAvd;
   private JComponent anchor;
 
@@ -78,9 +79,8 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
   }
 
   public AndroidRunConfigurationEditor(final Project project) {
-    myCommandLineField = myCommandLineComponent.getComponent();
-    myCommandLineField.setDialogCaption(myCommandLineComponent.getRawText());
-    myCommandLineComponent.getLabel().setLabelFor(myCommandLineField.getTextField());
+    myCommandLineField.setDialogCaption("Emulator Additional Command Line Options");
+
     myModuleSelector = new ConfigurationModuleSelector(project, myModulesComboBox) {
       @Override
       public boolean isModuleAccepted(Module module) {
@@ -88,7 +88,7 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
           return false;
         }
         final AndroidFacet facet = AndroidFacet.getInstance(module);
-        return facet != null && !facet.getConfiguration().LIBRARY_PROJECT;
+        return facet != null && !facet.getProperties().LIBRARY_PROJECT;
       }
     };
 
@@ -135,6 +135,13 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
 
     myNetworkSpeedCombo.setModel(new DefaultComboBoxModel(NETWORK_SPEEDS));
     myNetworkLatencyCombo.setModel(new DefaultComboBoxModel(NETWORK_LATENCIES));
+
+    myUseAdditionalCommandLineOptionsCheckBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myCommandLineField.setEnabled(myUseAdditionalCommandLineOptionsCheckBox.isSelected());
+      }
+    });
   }
 
   private void resetAvdCompatibilityWarningLabel(@Nullable String warning) {
@@ -220,7 +227,8 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
     resetAvdCompatibilityWarningLabel(targetSelectionMode == TargetSelectionMode.EMULATOR
                                       ? getAvdCompatibilityWarning()
                                       : null);
-    
+
+    myUseAdditionalCommandLineOptionsCheckBox.setSelected(configuration.USE_COMMAND_LINE);
     myCommandLineField.setText(configuration.COMMAND_LINE);
     myConfigurationSpecificEditor.resetFrom(configuration);
     myWipeUserDataCheckBox.setSelected(configuration.WIPE_USER_DATA);
@@ -261,6 +269,7 @@ public class AndroidRunConfigurationEditor<T extends AndroidRunConfigurationBase
     }
 
     configuration.COMMAND_LINE = myCommandLineField.getText();
+    configuration.USE_COMMAND_LINE = myUseAdditionalCommandLineOptionsCheckBox.isSelected();
     configuration.PREFERRED_AVD = "";
     configuration.WIPE_USER_DATA = myWipeUserDataCheckBox.isSelected();
     configuration.DISABLE_BOOT_ANIMATION = myDisableBootAnimationCombo.isSelected();

@@ -26,6 +26,7 @@ import org.jdom.Element;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -39,6 +40,7 @@ import java.util.List;
 public class AndroidSdkType extends JavaDependentSdkType implements JavaSdkType {
 
   @NonNls public static final String SDK_NAME = "Android SDK";
+  @NonNls public static final String DEFAULT_EXTERNAL_DOCUMENTATION_URL = "http://developer.android.com/reference/";
 
   public AndroidSdkType() {
     super(SDK_NAME);
@@ -144,7 +146,9 @@ public class AndroidSdkType extends JavaDependentSdkType implements JavaSdkType 
     }
     final String name = javaSdks.get(dialog.getSelectedJavaSdkIndex());
     final Sdk jdk = sdkModel.findSdk(name);
-    AndroidSdkUtils.setUpSdk(sdk, jdk, sdks, targets[dialog.getSelectedTargetIndex()], true);
+    final IAndroidTarget target = targets[dialog.getSelectedTargetIndex()];
+    final String sdkName = AndroidSdkUtils.chooseNameForNewLibrary(target);
+    AndroidSdkUtils.setUpSdk(sdk, jdk, sdks, target, true, sdkName);
     return true;
   }
 
@@ -177,6 +181,12 @@ public class AndroidSdkType extends JavaDependentSdkType implements JavaSdkType 
   @Override
   public Icon getIconForAddAction() {
     return getIcon();
+  }
+
+  @Nullable
+  @Override
+  public String getDefaultDocumentationUrl(@NotNull Sdk sdk) {
+    return DEFAULT_EXTERNAL_DOCUMENTATION_URL;
   }
 
   @Nullable

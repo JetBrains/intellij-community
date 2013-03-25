@@ -1,0 +1,8 @@
+<idea-plugin url="http://www.jetbrains.com/idea">
+  <extensions defaultExtensionNs="com.intellij">
+    <localInspection language="JAVA" shortName="AndroidNonConstantResIdsInSwitch" bundle="messages.AndroidBundle"
+                     key="android.inspections.non.constant.res.ids.in.switch.name" groupKey="android.inspections.group.name"
+                     enabledByDefault="true" level="ERROR"
+                     implementationClass="org.jetbrains.android.inspections.AndroidNonConstantResIdsInSwitchInspection"/>
+  </extensions>
+</idea-plugin>

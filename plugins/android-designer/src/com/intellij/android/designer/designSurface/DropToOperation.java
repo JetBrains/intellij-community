@@ -15,43 +15,21 @@
  */
 package com.intellij.android.designer.designSurface;
 
-import com.intellij.designer.designSurface.FeedbackLayer;
+import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.designSurface.OperationContext;
-import com.intellij.designer.designSurface.feedbacks.AlphaFeedback;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.ui.JBColor;
-
-import javax.swing.*;
 
 /**
  * @author Alexander Lobas
  */
-public class DropToOperation extends AbstractEditOperation {
-  private JComponent myFeedback;
-
+public class DropToOperation extends com.intellij.designer.designSurface.DropToOperation {
   public DropToOperation(RadComponent container, OperationContext context) {
-    super(container, context);
+    super(container, context, JBColor.GREEN);
   }
 
   @Override
-  public void showFeedback() {
-    FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
-
-    if (myFeedback == null) {
-      myFeedback = new AlphaFeedback(JBColor.GREEN);
-      layer.add(myFeedback);
-      myFeedback.setBounds(myContainer.getBounds(layer));
-      layer.repaint();
-    }
-  }
-
-  @Override
-  public void eraseFeedback() {
-    if (myFeedback != null) {
-      FeedbackLayer layer = myContext.getArea().getFeedbackLayer();
-      layer.remove(myFeedback);
-      layer.repaint();
-      myFeedback = null;
-    }
+  public void execute() throws Exception {
+    AbstractEditOperation.execute(myContext, (RadViewComponent)myContainer, myComponents, null);
   }
 }

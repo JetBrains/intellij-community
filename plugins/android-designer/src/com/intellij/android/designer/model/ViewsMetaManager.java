@@ -18,16 +18,25 @@ package com.intellij.android.designer.model;
 import com.intellij.designer.model.MetaManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.util.Alarm;
+import com.intellij.util.ui.update.MergingUpdateQueue;
 
 /**
  * @author Alexander Lobas
  */
 public class ViewsMetaManager extends MetaManager {
+  private final MergingUpdateQueue mySessionQueue;
+
   public ViewsMetaManager(Project project) {
     super(project, "views-meta-model.xml");
+    mySessionQueue = new MergingUpdateQueue("android.designer", 300, true, null, project, null, Alarm.ThreadToUse.OWN_THREAD);
   }
 
-  public static MetaManager getInstance(Project project) {
+  public MergingUpdateQueue getSessionQueue() {
+    return mySessionQueue;
+  }
+
+  public static ViewsMetaManager getInstance(Project project) {
     return ServiceManager.getService(project, ViewsMetaManager.class);
   }
 }

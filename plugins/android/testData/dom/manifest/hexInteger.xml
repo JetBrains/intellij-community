@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest xmlns:android="http://schemas.android.com/apk/res/android"
+          package="com.example.module2"
+          android:versionCode="1"
+          android:versionName="1.0">
+
+  <uses-feature android:glEsVersion="10" android:required="true"/>
+  <uses-feature android:glEsVersion="0x00020000" android:required="true"/>
+  <uses-feature android:glEsVersion="<error>aba</error>" android:required="true"/>
+
+  <application>
+  </application>
+</manifest>

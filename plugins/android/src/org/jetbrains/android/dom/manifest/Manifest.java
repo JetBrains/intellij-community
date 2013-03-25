@@ -29,6 +29,8 @@ import java.util.List;
 public interface Manifest extends ManifestElement {
   Application getApplication();
 
+  CompatibleScreens getCompatibleScreens();
+
   @Convert(AndroidPackageConverter.class)
   GenericAttributeValue<String> getPackage();
 

@@ -67,7 +67,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
     if (CompilerWorkspaceConfiguration.getInstance(module.getProject()).useOutOfProcessBuild()) {
       return true;
     }
-    if (!(configuration.RUN_PROCESS_RESOURCES_MAVEN_TASK && AndroidMavenUtil.isMavenizedModule(module))) {
+    if (!(configuration.getState().RUN_PROCESS_RESOURCES_MAVEN_TASK && AndroidMavenUtil.isMavenizedModule(module))) {
       return true;
     }
     return false;
@@ -178,7 +178,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
   @Nullable
   public static VirtualFile getResourceDirForApkCompiler(@NotNull AndroidFacet facet) {
-    return facet.getConfiguration().USE_CUSTOM_APK_RESOURCE_FOLDER
+    return facet.getProperties().USE_CUSTOM_APK_RESOURCE_FOLDER
            ? getCustomResourceDirForApt(facet)
            : AndroidRootUtil.getResourceDir(facet);
   }
@@ -238,7 +238,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
   @Nullable
   public static VirtualFile getCustomResourceDirForApt(@NotNull AndroidFacet facet) {
-    return AndroidRootUtil.getFileByRelativeModulePath(facet.getModule(), facet.getConfiguration().CUSTOM_APK_RESOURCE_FOLDER, false);
+    return AndroidRootUtil.getFileByRelativeModulePath(facet.getModule(), facet.getProperties().CUSTOM_APK_RESOURCE_FOLDER, false);
   }
 
   private static final class PrepareAction implements Computable<GenerationItem[]> {
@@ -303,20 +303,20 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
 
           if (!AndroidCommonUtils.contains2Identifiers(packageName)) {
             final String message = "[" + module.getName() + "] Package name must contain at least 2 segments";
-            myContext.addMessage(facet.getConfiguration().LIBRARY_PROJECT ? CompilerMessageCategory.WARNING : CompilerMessageCategory.ERROR,
+            myContext.addMessage(facet.getProperties().LIBRARY_PROJECT ? CompilerMessageCategory.WARNING : CompilerMessageCategory.ERROR,
                                  message, manifestFile.getUrl(), -1, -1);
             continue;
           }
           final String[] libPackages = AndroidCompileUtil.getLibPackages(module, packageName);
 
           final Module circularDepLibWithSamePackage = AndroidCompileUtil.findCircularDependencyOnLibraryWithSamePackage(facet);
-          if (circularDepLibWithSamePackage != null && !facet.getConfiguration().LIBRARY_PROJECT) {
+          if (circularDepLibWithSamePackage != null && !facet.getProperties().LIBRARY_PROJECT) {
             myContext.addMessage(CompilerMessageCategory.WARNING,
                                  AndroidBundle.message("android.compilation.warning.circular.app.dependency",
                                                        packageName, module.getName(),
                                                        circularDepLibWithSamePackage.getName()), null, -1, -1);
           }
-          final boolean generateNonFinalFields = facet.getConfiguration().LIBRARY_PROJECT || circularDepLibWithSamePackage != null;
+          final boolean generateNonFinalFields = facet.getProperties().LIBRARY_PROJECT || circularDepLibWithSamePackage != null;
 
           final VirtualFile outputDirForDex = AndroidDexCompiler.getOutputDirectoryForDex(module);
           final String proguardCfgOutputFileOsPath =
@@ -355,7 +355,7 @@ public class AndroidAptCompiler implements SourceGeneratingCompiler {
         return;
       }
       AndroidFacetConfiguration configuration = facet.getConfiguration();
-      myCustomGenPathR = configuration.GEN_FOLDER_RELATIVE_PATH_APT;
+      myCustomGenPathR = configuration.getState().GEN_FOLDER_RELATIVE_PATH_APT;
     }
 
     public MyValidityState(DataInput is) throws IOException {

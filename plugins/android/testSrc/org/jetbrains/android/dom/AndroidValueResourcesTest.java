@@ -328,6 +328,16 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
     doTestHighlighting();
   }
 
+  public void testLocalStyleItemReferenceCompletion() throws Throwable {
+    copyFileToProject("localStyleItemReference_layout.xml", "res/layout/myLayout.xml");
+    doTestCompletion();
+  }
+
+  public void testLocalStyleItemReferenceHighlighting() throws Throwable {
+    copyFileToProject("localStyleItemReference_layout.xml", "res/layout/myLayout.xml");
+    doTestHighlighting();
+  }
+
   private void doCreateValueResourceFromUsage(VirtualFile virtualFile) {
     myFixture.configureFromExistingVirtualFile(virtualFile);
     final List<HighlightInfo> infos = myFixture.doHighlighting();

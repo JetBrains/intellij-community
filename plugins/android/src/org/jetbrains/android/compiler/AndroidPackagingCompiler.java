@@ -110,9 +110,9 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     final List<ProcessingItem> items = new ArrayList<ProcessingItem>();
     for (Module module : ModuleManager.getInstance(context.getProject()).getModules()) {
       AndroidFacet facet = AndroidFacet.getInstance(module);
-      if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
+      if (facet != null && !facet.getProperties().LIBRARY_PROJECT) {
         VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
-        VirtualFile[] sourceRoots = getSourceRootsForModuleAndDependencies(module, facet.getConfiguration().PACK_TEST_CODE);
+        VirtualFile[] sourceRoots = getSourceRootsForModuleAndDependencies(module, facet.getProperties().PACK_TEST_CODE);
         if (manifestFile != null) {
           AndroidFacetConfiguration configuration = facet.getConfiguration();
           VirtualFile outputDir = AndroidDexCompiler.getOutputDirectoryForDex(module);
@@ -138,10 +138,10 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
                                  AndroidBundle.message("android.compilation.error.apk.path.not.specified", module.getName()), null, -1, -1);
               continue;
             }
-            final String keystorePath = FileUtil.toSystemDependentName(VfsUtil.urlToPath(configuration.CUSTOM_DEBUG_KEYSTORE_PATH));
+            final String keystorePath = FileUtil.toSystemDependentName(VfsUtil.urlToPath(configuration.getState().CUSTOM_DEBUG_KEYSTORE_PATH));
             items.add(
               createItem(module, facet, manifestFile, sourceRoots, externalJars, resPackagePath, classesDexPath, sdkPath, outputPath,
-                         configuration.GENERATE_UNSIGNED_APK, AndroidCompileUtil.isReleaseBuild(context), keystorePath));
+                         false, AndroidCompileUtil.isReleaseBuild(context), keystorePath));
           }
         }
       }
@@ -288,11 +288,6 @@ public class AndroidPackagingCompiler implements PackagingCompiler {
     if (releaseBuild) {
       return true;
     }
-
-    if (facet.getConfiguration().GENERATE_UNSIGNED_APK) {
-      return true;
-    }
-
     return false;
   }
 

@@ -101,10 +101,11 @@
 
   <depends>JUnit</depends>
   <depends>com.intellij.properties</depends>
-  <depends>IntentionPowerPack</depends>
 
   <depends optional="true" config-file="maven-support.xml">org.jetbrains.idea.maven</depends>
   <depends optional="true" config-file="test-ng.xml">TestNG-J</depends>
+  <depends optional="true" config-file="intention-power-pack.xml">IntentionPowerPack</depends>
+  <depends optional="true" config-file="eclipse.xml">org.jetbrains.idea.eclipse</depends>
 
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
@@ -181,11 +182,6 @@
     <localInspection language="XML" shortName="AndroidElementNotAllowed" bundle="messages.AndroidBundle"
                      key="android.inspections.element.not.allowed.name" groupKey="android.inspections.group.name" enabledByDefault="true"
                      level="WARNING" implementationClass="org.jetbrains.android.inspections.AndroidElementNotAllowedInspection"/>
-
-    <localInspection language="JAVA" shortName="AndroidNonConstantResIdsInSwitch" bundle="messages.AndroidBundle"
-                     key="android.inspections.non.constant.res.ids.in.switch.name" groupKey="android.inspections.group.name"
-                     enabledByDefault="true" level="ERROR"
-                     implementationClass="org.jetbrains.android.inspections.AndroidNonConstantResIdsInSwitchInspection"/>
 
     <globalInspection hasStaticDescription="true" shortName="AndroidLintContentDescription" displayName="Missing content description" groupKey="android.lint.inspections.group.name" bundle="messages.AndroidBundle" enabledByDefault="true"  level="WARNING" implementationClass="org.jetbrains.android.inspections.lint.AndroidLintInspectionToolProvider$AndroidLintContentDescriptionInspection"/>
     <globalInspection hasStaticDescription="true" shortName="AndroidLintAdapterViewChildren" displayName="AdapterView element cannot have children" groupKey="android.lint.inspections.group.name" bundle="messages.AndroidBundle" enabledByDefault="true"  level="WARNING" implementationClass="org.jetbrains.android.inspections.lint.AndroidLintInspectionToolProvider$AndroidLintAdapterViewChildrenInspection"/>
@@ -338,6 +334,11 @@
     <predefinedCodeStyle implementation="org.jetbrains.android.formatter.AndroidXmlPredefinedCodeStyle"/>
     <editorNotificationProvider implementation="org.jetbrains.android.formatter.AndroidCodeStyleNotificationProvider"/>
     <compiler.buildTargetScopeProvider implementation="org.jetbrains.android.compiler.AndroidBuildTargetScopeProvider"/>
+
+    <treeStructureProvider implementation="org.jetbrains.android.projectView.ResourceMergerTreeStructureProvider"/>
+    <editorNotificationProvider implementation="org.jetbrains.android.projectView.ResourceQualifierSwitcher"/>
+    <spellchecker.bundledDictionaryProvider implementation="org.jetbrains.android.spellchecker.AndroidBundledDictionaryProvider"/>
+    <projectStructureDetector implementation="org.jetbrains.android.newProject.AndroidProjectStructureDetector"/>
   </extensions>
 
   <extensionPoints>

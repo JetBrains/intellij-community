@@ -236,6 +236,7 @@ public final class AndroidApt {
                                                                                @Nullable String configFilter,
                                                                                boolean debugMode,
                                                                                int versionCode,
+                                                                               @Nullable String customManifestPackage,
                                                                                FileFilter assetsFilter) throws IOException {
     for (String resDirPath : resPaths) {
       if (FileUtil.isAncestor(resDirPath, outputPath, false)) {
@@ -290,7 +291,6 @@ public final class AndroidApt {
       args.add("-c");
       args.add(configFilter);
     }
-
     args.add("-M");
     args.add(manifestPath);
 
@@ -319,6 +319,10 @@ public final class AndroidApt {
       args.add("-I");
       args.add(target.getPath(IAndroidTarget.ANDROID_JAR));
 
+      if (customManifestPackage != null) {
+        args.add("--rename-manifest-package");
+        args.add(customManifestPackage);
+      }
       args.add("-F");
       args.add(outputPath);
 
