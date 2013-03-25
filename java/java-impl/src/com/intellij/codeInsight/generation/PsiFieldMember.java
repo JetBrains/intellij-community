@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInsight.generation;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiSubstitutor;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiUtil;
@@ -90,7 +87,7 @@ public class PsiFieldMember extends PsiElementClassMember<PsiField> implements P
     PsiMethod existing = aClass.findMethodBySignature(template, false);
     if (existing == null) {
       if (template != null) {
-        String modifier = PsiUtil.getMaximumModifierForMember(aClass);
+        String modifier = aClass.isEnum() && aClass.hasModifierProperty(PsiModifier.PUBLIC) ? null : PsiUtil.getMaximumModifierForMember(aClass);
         if (modifier != null) {
           PsiUtil.setModifierProperty(template, modifier, true);
         }
