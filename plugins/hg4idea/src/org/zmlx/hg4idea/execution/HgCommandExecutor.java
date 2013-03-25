@@ -13,6 +13,7 @@
 package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -207,13 +208,35 @@ public final class HgCommandExecutor {
     result.setWarnings(warnings);
 
     log(operation, arguments, result);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      logToConsole(operation, arguments, result);
+    }
     return result;
   }
 
-  // logging to the Version Control console (without extensions and configs)
-  private void log(@NotNull String operation, @Nullable List<String> arguments, @NotNull HgCommandResult result) {
-    if (myProject.isDisposed()) {
+  private void logToConsole(@NotNull String operation, @Nullable List<String> arguments, @NotNull HgCommandResult result) {
+    final String cmdString = constructCommandOutput(operation, arguments);
+    if (cmdString == null) {
       return;
+    }
+    // log command
+    System.out.println(cmdString);
+
+    // log output
+    if (!result.getRawOutput().isEmpty()) {
+      System.out.println(result.getRawOutput());
+    }
+
+    // log error
+    if (!result.getRawError().isEmpty()) {
+      System.out.println(result.getRawError());
+    }
+  }
+
+  @Nullable
+  private String constructCommandOutput(@NotNull String operation, @Nullable List<String> arguments) {
+    if (myProject.isDisposed()) {
+      return null;
     }
     final HgGlobalSettings settings = myVcs.getGlobalSettings();
     String exeName;
@@ -221,7 +244,15 @@ public final class HgCommandExecutor {
     exeName = settings.getHgExecutable().substring(lastSlashIndex + 1);
 
     final String executable = settings.isRunViaBash() ? "bash -c " + exeName : exeName;
-    final String cmdString = String.format("%s %s %s", executable, operation, arguments == null ? "" : StringUtil.join(arguments, " "));
+    return String.format("%s %s %s", executable, operation, arguments == null ? "" : StringUtil.join(arguments, " "));
+  }
+
+  // logging to the Version Control console (without extensions and configs)
+  private void log(@NotNull String operation, @Nullable List<String> arguments, @NotNull HgCommandResult result) {
+    final String cmdString = constructCommandOutput(operation, arguments);
+    if (cmdString == null) {
+      return;
+    }
 
     // log command
     if (!myIsSilent) {
