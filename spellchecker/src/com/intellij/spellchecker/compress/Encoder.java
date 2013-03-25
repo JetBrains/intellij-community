@@ -62,7 +62,7 @@ public final class Encoder {
   public String decode(@NotNull UnitBitSet bitSet) {
     int wordLength = bitSet.getUnitValue(0);
     char firstLetter = alphabet.getLetter(bitSet.getUnitValue(1));
-    final StringBuffer result = new StringBuffer();
+    final StringBuilder result = new StringBuilder();
     for (int i = 2; i < bitSet.b.length; i++) {
       int value = bitSet.getUnitValue(i);
       if (value > 0 && value <= alphabet.getLastIndexUsed()) {

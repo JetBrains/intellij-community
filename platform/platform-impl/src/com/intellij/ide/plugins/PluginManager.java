@@ -1025,9 +1025,9 @@ public class PluginManager {
   }
 
   @Nullable
-  private static ClassLoader createPluginClassLoader(final File[] classPath,
-                                                     final ClassLoader[] parentLoaders,
-                                                     IdeaPluginDescriptor pluginDescriptor) {
+  private static ClassLoader createPluginClassLoader(@NotNull File[] classPath,
+                                                     @NotNull ClassLoader[] parentLoaders,
+                                                     @NotNull IdeaPluginDescriptor pluginDescriptor) {
 
     if (pluginDescriptor.getUseIdeaClassLoader()) {
       try {
@@ -1105,7 +1105,7 @@ public class PluginManager {
     return null;
   }
 
-  public static void addPluginClass(String className, PluginId pluginId, boolean loaded) {
+  public static void addPluginClass(@NotNull String className, PluginId pluginId, boolean loaded) {
     ourPluginClasses.addPluginClass(className, pluginId, loaded);
   }
 
@@ -1114,7 +1114,7 @@ public class PluginManager {
   }
 
   @Nullable
-  public static PluginId getPluginByClassName(String className) {
+  public static PluginId getPluginByClassName(@NotNull String className) {
     return ourPluginClasses.getPluginByClassName(className);
   }
 
