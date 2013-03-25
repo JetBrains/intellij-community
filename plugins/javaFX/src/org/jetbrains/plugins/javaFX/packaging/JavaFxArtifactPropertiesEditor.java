@@ -21,6 +21,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
 import com.intellij.util.Base64Converter;
@@ -135,8 +136,10 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
       myProperties.setSelfSigning(myDialog.myPanel.mySelfSignedRadioButton.isSelected());
       myProperties.setAlias(myDialog.myPanel.myAliasTF.getText());
       myProperties.setKeystore(myDialog.myPanel.myKeystore.getText());
-      myProperties.setKeypass(Base64Converter.encode(String.valueOf((myDialog.myPanel.myKeypassTF.getPassword()))));
-      myProperties.setStorepass(Base64Converter.encode(String.valueOf(myDialog.myPanel.myStorePassTF.getPassword())));
+      final String keyPass = String.valueOf((myDialog.myPanel.myKeypassTF.getPassword()));
+      myProperties.setKeypass(!StringUtil.isEmptyOrSpaces(keyPass) ? Base64Converter.encode(keyPass) : null);
+      final String storePass = String.valueOf(myDialog.myPanel.myStorePassTF.getPassword());
+      myProperties.setStorepass(!StringUtil.isEmptyOrSpaces(storePass) ? Base64Converter.encode(storePass) : null);
     }
   }
 
