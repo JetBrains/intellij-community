@@ -268,11 +268,16 @@ public abstract class InplaceRefactoring {
     int offset = myEditor.getCaretModel().getOffset();
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, stringUsages, offset);
 
-    if (nameIdentifier != null) addVariable(nameIdentifier, selectedElement, builder);
+    boolean subrefOnPrimaryElement = false;
     for (PsiReference ref : refs) {
-      if (nameIdentifier != null && ref.getElement() == nameIdentifier.getParent()) continue;
+      if (nameIdentifier != null && ref.getElement() == nameIdentifier.getParent()) {
+        builder.replaceElement(ref, PRIMARY_VARIABLE_NAME, createLookupExpression(), true);
+        subrefOnPrimaryElement = true;
+        continue;
+      }
       addVariable(ref, selectedElement, builder, offset);
     }
+    if (nameIdentifier != null && !subrefOnPrimaryElement) addVariable(nameIdentifier, selectedElement, builder);
     for (Pair<PsiElement, TextRange> usage : stringUsages) {
       addVariable(usage.first, usage.second, selectedElement, builder);
     }
