@@ -29,19 +29,21 @@ import java.util.Map;
 
 public class ReplaceOperatorAssignmentWithAssignmentIntention extends MutablyNamedIntention {
 
-  private static final Map<IElementType, IElementType> tokenMap = new HashMap<IElementType, IElementType>() {{
-    put(JavaTokenType.PLUSEQ, JavaTokenType.PLUS);
-    put(JavaTokenType.MINUSEQ, JavaTokenType.MINUS);
-    put(JavaTokenType.ASTERISKEQ, JavaTokenType.ASTERISK);
-    put(JavaTokenType.DIVEQ, JavaTokenType.DIV);
-    put(JavaTokenType.ANDEQ, JavaTokenType.AND);
-    put(JavaTokenType.OREQ, JavaTokenType.OR);
-    put(JavaTokenType.XOREQ, JavaTokenType.XOR);
-    put(JavaTokenType.PERCEQ, JavaTokenType.PERC);
-    put(JavaTokenType.LTLTEQ, JavaTokenType.LTLT);
-    put(JavaTokenType.GTGTEQ, JavaTokenType.GTGT);
-    put(JavaTokenType.GTGTGTEQ, JavaTokenType.GTGTGT);
-  }};
+  private static final Map<IElementType, IElementType> tokenMap = new HashMap<IElementType, IElementType>();
+
+  static {
+    tokenMap.put(JavaTokenType.PLUSEQ, JavaTokenType.PLUS);
+    tokenMap.put(JavaTokenType.MINUSEQ, JavaTokenType.MINUS);
+    tokenMap.put(JavaTokenType.ASTERISKEQ, JavaTokenType.ASTERISK);
+    tokenMap.put(JavaTokenType.DIVEQ, JavaTokenType.DIV);
+    tokenMap.put(JavaTokenType.ANDEQ, JavaTokenType.AND);
+    tokenMap.put(JavaTokenType.OREQ, JavaTokenType.OR);
+    tokenMap.put(JavaTokenType.XOREQ, JavaTokenType.XOR);
+    tokenMap.put(JavaTokenType.PERCEQ, JavaTokenType.PERC);
+    tokenMap.put(JavaTokenType.LTLTEQ, JavaTokenType.LTLT);
+    tokenMap.put(JavaTokenType.GTGTEQ, JavaTokenType.GTGT);
+    tokenMap.put(JavaTokenType.GTGTGTEQ, JavaTokenType.GTGTGT);
+  }
 
   @Override
   @NotNull
@@ -68,8 +70,8 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention extends MutablyNam
     final String lhsText = lhs.getText();
     final String rhsText = (rhs == null) ? "" : rhs.getText();
     final boolean parentheses;
-    if (rhs instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)rhs;
+    if (rhs instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)rhs;
       final int precedence1 = ParenthesesUtils.getPrecedenceForOperator(binaryExpression.getOperationTokenType());
       final IElementType signTokenType = sign.getTokenType();
       final IElementType newOperatorToken = tokenMap.get(signTokenType);
