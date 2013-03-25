@@ -95,26 +95,6 @@ public class PyQuickFixTest extends PyTestCase {
                      true);
   }
 
-  public void testAddFieldFromMethod() {
-    doInspectionTest("AddFieldFromMethod.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "y", "A"),
-                     true, true);
-  }
-
-  public void testAddFieldFromInstance() {
-    doInspectionTest("AddFieldFromInstance.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "y", "A"),
-                     true, true);
-  }
-
-  public void testAddFieldAddConstructor() {
-    doInspectionTest("AddFieldAddConstructor.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "x", "B"),
-                     true, true);
-  }
-
-  public void testAddFieldNewConstructor() {
-    doInspectionTest("AddFieldNewConstructor.py", PyUnresolvedReferencesInspection.class, PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", "x", "B"),
-                     true, true);
-  }
-
   public void testRemoveTrailingSemicolon() {
     doInspectionTest("RemoveTrailingSemicolon.py", PyTrailingSemicolonInspection.class, PyBundle.message("QFIX.remove.trailing.semicolon"),
                      true, true);

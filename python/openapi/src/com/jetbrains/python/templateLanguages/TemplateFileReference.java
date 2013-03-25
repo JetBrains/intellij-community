@@ -82,7 +82,7 @@ public class TemplateFileReference extends WeakFileReference {
       dstItem = _dstItem;
     }
 
-    final Collection<PsiFileSystemItem> contexts = getFileReferenceSet().getDefaultContexts();
+    final Collection<PsiFileSystemItem> contexts = getContexts();
     switch (contexts.size()) {
       case 0:
         break;

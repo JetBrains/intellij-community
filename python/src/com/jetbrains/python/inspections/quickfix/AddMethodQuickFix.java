@@ -113,7 +113,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
         meth.addBefore(deco_list, meth.getFirstChild()); // in the very beginning
       }
 
-      meth = (PyFunction)PyUtil.addElementToStatementList(meth, cls_stmt_list);
+      meth = (PyFunction)PyUtil.addElementToStatementList(meth, cls_stmt_list, PyNames.INIT.equals(meth.getName()));
       if (myReplaceUsage)
         showTemplateBuilder(meth);
     }

@@ -54,10 +54,10 @@ public class PyMissingConstructorInspection extends PyInspection {
           return;
         }
         if (superClasses.length == 1 || node.isNewStyleClass())
-          registerProblem(initMethod.getNameIdentifier(), "Call to constructor of super class is missed",
+          registerProblem(initMethod.getNameIdentifier(), PyBundle.message("INSP.missing.super.constructor.message"),
                           new AddCallSuperQuickFix(node.getSuperClasses()[0], superClasses[0].getText()));
         else
-          registerProblem(initMethod.getNameIdentifier(), "Call to constructor of super class is missed");
+          registerProblem(initMethod.getNameIdentifier(), PyBundle.message("INSP.missing.super.constructor.message"));
       }
     }
 

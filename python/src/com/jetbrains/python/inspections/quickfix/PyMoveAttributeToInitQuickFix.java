@@ -5,8 +5,9 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.Function;
+import com.intellij.util.FunctionUtil;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -39,29 +40,9 @@ public class PyMoveAttributeToInitQuickFix implements LocalQuickFix {
     final PyAssignmentStatement assignment = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
     if (containingClass == null || assignment == null) return;
 
-    final PsiElement copy = assignment.copy();
-    if (!addDefinition(copy, containingClass)) return;
-
+    final Function<String, PyStatement> callback = FunctionUtil.<String, PyStatement>constant(assignment);
+    AddFieldQuickFix.addFieldToInit(project, containingClass, ((PyTargetExpression)element).getName(), callback);
     removeDefinition(assignment);
-  }
-
-  private static boolean addDefinition(PsiElement copy, PyClass containingClass) {
-    PyFunction init = containingClass.findMethodByName(PyNames.INIT, false);
-
-    if (init == null) {
-      final PyStatementList classStatementList = containingClass.getStatementList();
-      init = PyElementGenerator.getInstance(containingClass.getProject()).createFromText(LanguageLevel.forElement(containingClass),
-                                                                                         PyFunction.class,
-                                                                                         "def __init__(self):\n\t" +
-                                                                                         copy.getText());
-      PyUtil.addElementToStatementList(init, classStatementList);
-      return true;
-    }
-
-    final PyStatementList statementList = init.getStatementList();
-    if (statementList == null) return false;
-    PyUtil.addElementToStatementList(copy, statementList);
-    return true;
   }
 
   private static boolean removeDefinition(PyAssignmentStatement assignment) {

@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author yole
  */
-public class WeakFileReference extends FileReference implements PsiReferenceEx {
+public class WeakFileReference extends FileReferenceWithOneContext implements PsiReferenceEx {
   public WeakFileReference(FileReferenceSet fileReferenceSet, TextRange range, int index, String text) {
     super(fileReferenceSet, range, index, text);
   }

@@ -51,11 +51,12 @@ public class PyPathEvaluator {
         if (argValue == null) {
           return null;
         }
-        if (FileUtil.isAbsolute(argValue)) {
+        if (FileUtil.isAbsolutePlatformIndependent(argValue)) {
           return argValue;
         }
         else {
-          return new File(new File(containingFilePath).getParent(), argValue).getPath();
+          String path = new File(new File(containingFilePath).getParent(), argValue).getPath();
+          return path.replace("\\", "/");
         }
       }
       else if (call.isCalleeText(PyNames.REPLACE) && args.length == 2) {
@@ -108,7 +109,7 @@ public class PyPathEvaluator {
         result = arg;
       }
       else {
-        result = new File(result, arg).getPath();
+        result = new File(result, arg).getPath().replace("\\", "/");
       }
     }
     return result;

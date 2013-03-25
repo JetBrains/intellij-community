@@ -27,6 +27,7 @@ import com.jetbrains.python.psi.impl.PyImportStatementNavigator;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.search.PyOverridingMethodsSearch;
 import com.jetbrains.python.psi.search.PySuperMethodsSearch;
+import com.jetbrains.python.psi.types.PyClassTypeImpl;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -280,7 +281,7 @@ public class PyUnusedLocalInspectionVisitor extends PyInspectionVisitor {
             }
           }
           final LocalQuickFix[] fixes = mayBeField
-                                  ? new LocalQuickFix[] { new AddFieldQuickFix(name, containingClass, name) }
+                                  ? new LocalQuickFix[] { new AddFieldQuickFix(name, new PyClassTypeImpl(containingClass, false), name) }
                                   : LocalQuickFix.EMPTY_ARRAY;
           registerWarning(element, PyBundle.message("INSP.unused.locals.parameter.isnot.used", name), fixes);
         }
