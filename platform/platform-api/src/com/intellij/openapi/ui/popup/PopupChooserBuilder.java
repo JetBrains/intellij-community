@@ -221,7 +221,6 @@ public class PopupChooserBuilder {
       keyEventHandler = new BooleanFunction<KeyEvent>() {
         @Override
         public boolean fun(KeyEvent keyEvent) {
-          list.dispatchEvent(keyEvent);
           return keyEvent.isConsumed();
         }
       };
