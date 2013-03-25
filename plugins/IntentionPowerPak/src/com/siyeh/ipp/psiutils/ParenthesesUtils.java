@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -81,7 +81,7 @@ public class ParenthesesUtils {
     return expression;
   }
 
-  public static boolean isCommutativeBinaryOperator(@NotNull IElementType token) {
+  public static boolean isCommutativeOperator(@NotNull IElementType token) {
     return !(token.equals(JavaTokenType.MINUS) ||
              token.equals(JavaTokenType.DIV) ||
              token.equals(JavaTokenType.PERC) ||
@@ -185,8 +185,8 @@ public class ParenthesesUtils {
       removeParensFromPostfixExpression(postfixExpression, ignoreClarifyingParentheses);
     }
     if (expression instanceof PsiPolyadicExpression) {
-      final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)expression;
-      removeParensFromPolyadicExpression(binaryExpression, ignoreClarifyingParentheses);
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      removeParensFromPolyadicExpression(polyadicExpression, ignoreClarifyingParentheses);
     }
     if (expression instanceof PsiInstanceOfExpression) {
       final PsiInstanceOfExpression instanceofExpression = (PsiInstanceOfExpression)expression;
@@ -225,12 +225,15 @@ public class ParenthesesUtils {
       return;
     }
     else if (parent instanceof PsiArrayAccessExpression) {
-      // use addAfter() + delete() instead of replace() to
-      // workaround automatic insertion of parentheses by psi
-      final PsiExpression newExpression = (PsiExpression)parent.addAfter(body, parenthesizedExpression);
-      parenthesizedExpression.delete();
-      removeParentheses(newExpression, ignoreClarifyingParentheses);
-      return;
+      final PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)parent;
+      if (parenthesizedExpression == arrayAccessExpression.getIndexExpression()) {
+        // use addAfter() + delete() instead of replace() to
+        // workaround automatic insertion of parentheses by psi
+        final PsiExpression newExpression = (PsiExpression)parent.addAfter(body, parenthesizedExpression);
+        parenthesizedExpression.delete();
+        removeParentheses(newExpression, ignoreClarifyingParentheses);
+        return;
+      }
     }
     final PsiExpression parentExpression = (PsiExpression)parent;
     final int parentPrecedence = getPrecedence(parentExpression);
@@ -245,15 +248,15 @@ public class ParenthesesUtils {
     }
     else if (parentPrecedence == childPrecedence) {
       if (parentExpression instanceof PsiPolyadicExpression && body instanceof PsiPolyadicExpression) {
-        final PsiPolyadicExpression parentBinaryExpression = (PsiPolyadicExpression)parentExpression;
-        final IElementType parentOperator = parentBinaryExpression.getOperationTokenType();
-        final PsiPolyadicExpression bodyBinaryExpression = (PsiPolyadicExpression)body;
-        final IElementType bodyOperator = bodyBinaryExpression.getOperationTokenType();
-        final PsiType parentType = parentBinaryExpression.getType();
+        final PsiPolyadicExpression parentPolyadicExpression = (PsiPolyadicExpression)parentExpression;
+        final IElementType parentOperator = parentPolyadicExpression.getOperationTokenType();
+        final PsiPolyadicExpression bodyPolyadicExpression = (PsiPolyadicExpression)body;
+        final IElementType bodyOperator = bodyPolyadicExpression.getOperationTokenType();
+        final PsiType parentType = parentPolyadicExpression.getType();
         final PsiType bodyType = body.getType();
         if (parentType != null && parentType.equals(bodyType) && parentOperator.equals(bodyOperator)) {
-          final PsiExpression[] parentOperands = parentBinaryExpression.getOperands();
-          if (PsiTreeUtil.isAncestor(parentOperands[0], body, true) || isCommutativeBinaryOperator(bodyOperator)) {
+          final PsiExpression[] parentOperands = parentPolyadicExpression.getOperands();
+          if (PsiTreeUtil.isAncestor(parentOperands[0], body, true) || isCommutativeOperator(bodyOperator)) {
             // use addAfter() + delete() instead of replace() to
             // workaround automatic insertion of parentheses by psi
             final PsiExpression newExpression = (PsiExpression)parent.addAfter(body, parenthesizedExpression);
@@ -407,12 +410,18 @@ public class ParenthesesUtils {
     if (child == null) {
       return true;
     }
+    if (parent instanceof PsiArrayAccessExpression) {
+      final PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)parent;
+      final PsiExpression indexExpression = arrayAccessExpression.getIndexExpression();
+      if (expression == indexExpression) {
+        return false;
+      }
+    }
     return areParenthesesNeeded(child, (PsiExpression)parent);
   }
 
   public static boolean areParenthesesNeeded(PsiExpression expression, PsiExpression parentExpression) {
-    if (parentExpression instanceof PsiParenthesizedExpression || parentExpression instanceof PsiArrayAccessExpression ||
-        parentExpression instanceof PsiArrayInitializerExpression) {
+    if (parentExpression instanceof PsiParenthesizedExpression || parentExpression instanceof PsiArrayInitializerExpression) {
       return false;
     }
     final int parentPrecedence = getPrecedence(parentExpression);
@@ -451,7 +460,7 @@ public class ParenthesesUtils {
       final PsiExpression[] parentOperands = parentPolyadicExpression.getOperands();
       if (!PsiTreeUtil.isAncestor(parentOperands[0], expression, false)) {
         final IElementType parentOperator = parentPolyadicExpression.getOperationTokenType();
-        if (!isCommutativeBinaryOperator(parentOperator)) {
+        if (!isCommutativeOperator(parentOperator)) {
           return true;
         }
       }

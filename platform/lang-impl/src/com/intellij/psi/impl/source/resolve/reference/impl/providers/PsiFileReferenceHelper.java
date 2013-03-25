@@ -39,6 +39,7 @@ import java.util.*;
  */
 public class PsiFileReferenceHelper extends FileReferenceHelper {
 
+  @NotNull
   @Override
   public List<? extends LocalQuickFix> registerFixes(HighlightInfo info, FileReference reference) {
     return FileReferenceQuickFixProvider.registerQuickFix(info, reference);

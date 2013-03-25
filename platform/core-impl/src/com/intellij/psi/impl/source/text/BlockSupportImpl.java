@@ -189,11 +189,7 @@ public class BlockSupportImpl extends BlockSupport {
       copy.getLanguages();
       Language language = fileImpl.getLanguage();
       SingleRootFileViewProvider.doNotCheckFileSizeLimit(lightFile); // optimization: do not convert file contents to bytes to determine if we should codeinsight it
-      PsiFileImpl newFile = (PsiFileImpl)copy.getPsi(language);
-
-      if (newFile == null && language == PlainTextLanguage.INSTANCE && fileImpl == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
-        newFile = (PsiFileImpl)copy.getPsi(copy.getBaseLanguage());
-      }
+      PsiFileImpl newFile = getFileCopy(fileImpl, copy);
 
       if (newFile == null) {
         throw new RuntimeException("View provider " + viewProvider + " refused to parse text with " + language +
@@ -211,6 +207,17 @@ public class BlockSupportImpl extends BlockSupport {
       ((PsiManagerEx)fileImpl.getManager()).getFileManager().setViewProvider(lightFile, null);
       return diffLog;
     }
+  }
+
+  public static PsiFileImpl getFileCopy(PsiFileImpl originalFile, FileViewProvider providerCopy) {
+    FileViewProvider viewProvider = originalFile.getViewProvider();
+    Language language = originalFile.getLanguage();
+    PsiFileImpl newFile = (PsiFileImpl)providerCopy.getPsi(language);
+
+    if (newFile == null && language == PlainTextLanguage.INSTANCE && originalFile == viewProvider.getPsi(viewProvider.getBaseLanguage())) {
+      newFile = (PsiFileImpl)providerCopy.getPsi(providerCopy.getBaseLanguage());
+    }
+    return newFile;
   }
 
   @NotNull

@@ -42,7 +42,7 @@ public abstract class FileReferenceHelper {
     return url;
   }
 
-  @Nullable
+  @NotNull
   public List<? extends LocalQuickFix> registerFixes(HighlightInfo info, FileReference reference) {
     return Collections.emptyList();
   }

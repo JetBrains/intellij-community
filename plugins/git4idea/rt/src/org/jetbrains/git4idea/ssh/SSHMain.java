@@ -21,6 +21,7 @@ import com.trilead.ssh2.*;
 import com.trilead.ssh2.crypto.PEMDecoder;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.git4idea.GitExternalApp;
 
 import java.io.*;
 import java.util.*;
@@ -34,7 +35,7 @@ import java.util.concurrent.Semaphore;
  * The code here is based on SwingShell example.
  */
 @SuppressWarnings({"CallToPrintStackTrace", "UseOfSystemOutOrSystemErr"})
-public class SSHMain {
+public class SSHMain implements GitExternalApp {
   /**
    * the semaphore
    */

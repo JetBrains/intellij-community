@@ -118,7 +118,7 @@ public class CompileServerClasspathManager {
     String pluginDirName = StringUtil.getShortName(plugin.getPluginId().getIdString());
     List<String> roots = Arrays.asList(new File(PathManager.getHomePath(), "plugins").getPath(),
                                        new File(PathManager.getHomePath(), "community/plugins").getPath());
-    String extraDir = System.getProperty("compile.server.development.plugins.dir");
+    String extraDir = System.getProperty("idea.external.build.development.plugins.dir");
     if (extraDir != null) {
       roots.add(extraDir);
     }

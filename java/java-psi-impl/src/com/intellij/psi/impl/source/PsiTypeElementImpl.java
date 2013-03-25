@@ -40,8 +40,6 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import static com.intellij.psi.PsiAnnotation.TargetType;
-
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiTypeElementImpl");
 
@@ -91,7 +89,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     while (element != null) {
       IElementType elementType = element.getElementType();
       if (element.getTreeNext() == null && ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)) {
-        addTypeUseAnnotationsFromModifierList(getParent(), typeAnnotations);
+        PsiImplUtil.addTypeUseAnnotationsFromModifierList(getParent(), typeAnnotations);
         final PsiAnnotation[] array = toAnnotationsArray(typeAnnotations);
         cachedType = JavaPsiFacade.getInstance(getProject()).getElementFactory().createPrimitiveType(element.getText(), array);
       }
@@ -117,7 +115,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
         }
       }
       else if (elementType == JavaElementType.JAVA_CODE_REFERENCE) {
-        addTypeUseAnnotationsFromModifierList(getParent(), typeAnnotations);
+        PsiImplUtil.addTypeUseAnnotationsFromModifierList(getParent(), typeAnnotations);
         final PsiAnnotation[] array = toAnnotationsArray(typeAnnotations);
         final PsiJavaCodeReferenceElement reference = SourceTreeToPsiMap.treeToPsiNotNull(element);
         cachedType = new PsiClassReferenceType(reference, null, array);
@@ -155,17 +153,6 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   private static PsiAnnotation[] toAnnotationsArray(List<PsiAnnotation> typeAnnotations) {
     final int size = typeAnnotations.size();
     return size == 0 ? PsiAnnotation.EMPTY_ARRAY : typeAnnotations.toArray(new PsiAnnotation[size]);
-  }
-
-  public static void addTypeUseAnnotationsFromModifierList(PsiElement member, List<PsiAnnotation> typeAnnotations) {
-    if (!(member instanceof PsiModifierListOwner)) return;
-    PsiModifierList list = ((PsiModifierListOwner)member).getModifierList();
-    PsiAnnotation[] annotations = list == null ? PsiAnnotation.EMPTY_ARRAY : list.getAnnotations();
-    for (PsiAnnotation annotation : annotations) {
-      if (PsiImplUtil.findApplicableTarget(annotation, TargetType.TYPE_USE) == TargetType.TYPE_USE) {
-        typeAnnotations.add(annotation);
-      }
-    }
   }
 
   public PsiType getDetachedType(@NotNull PsiElement context) {
@@ -314,7 +301,7 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     PsiAnnotation[] annotations = getAnnotations();
 
     ArrayList<PsiAnnotation> list = new ArrayList<PsiAnnotation>(Arrays.asList(annotations));
-    addTypeUseAnnotationsFromModifierList(getParent(), list);
+    PsiImplUtil.addTypeUseAnnotationsFromModifierList(getParent(), list);
 
     return toAnnotationsArray(list);
   }

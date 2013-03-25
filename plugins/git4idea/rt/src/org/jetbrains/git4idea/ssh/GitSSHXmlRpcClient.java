@@ -182,9 +182,9 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
    */
   @Override
   @SuppressWarnings("unchecked")
-  public String setLastSuccessful(int handlerNo, String userName, String method, String error) {
+  public void setLastSuccessful(int handlerNo, String userName, String method, String error) {
     if (myClient == null) {
-      return "";
+      return;
     }
     Vector parameters = new Vector();
     parameters.add(handlerNo);
@@ -192,7 +192,7 @@ public class GitSSHXmlRpcClient implements GitSSHHandler {
     parameters.add(method);
     parameters.add(error);
     try {
-      return (String)myClient.execute(methodName("setLastSuccessful"), parameters);
+      myClient.execute(methodName("setLastSuccessful"), parameters);
     }
     catch (XmlRpcException e) {
       throw new RuntimeException("Invocation failed " + e.getMessage(), e);

@@ -16,8 +16,9 @@
 import static org.jetbrains.jps.idea.IdeaProjectLoader.guessHome
 
 includeTargets << new File("${guessHome(this)}/build/scripts/utils.gant")
+includeTargets << new File("${guessHome(this)}/build/scripts/cucumber-tests.gant")
 
-requireProperty("out", "$home/out/classes")
+requireProperty("out", "$home/out")
 
 target(compile: "Compile project") {
   ant.delete(failonerror: false) {
@@ -38,7 +39,7 @@ private pass(String prop) {
   }
 }
 
-target('default': 'The default target') {
+target('run_tests': 'Run java tests') {
   depends([compile])
 
   ant.junit(fork: "yes", showoutput: "true", logfailedtests:false) {
@@ -74,4 +75,8 @@ target('default': 'The default target') {
       test (name: it)
     }
   }
+}
+
+target('default' : "Run all tests") {
+  depends([compile, run_tests, run_cucumber_tests])
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2007-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,7 +20,6 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiExpression;
 import com.intellij.psi.PsiJavaToken;
 import com.intellij.psi.tree.IElementType;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -35,15 +34,12 @@ public class FlipExpressionIntention extends MutablyNamedIntention {
     final PsiJavaToken sign = expression.getOperationSign();
     final String operatorText = sign.getText();
     final IElementType token = sign.getTokenType();
-    final boolean commutative =
-      ParenthesesUtils.isCommutativeBinaryOperator(token);
+    final boolean commutative = ParenthesesUtils.isCommutativeOperator(token);
     if (commutative) {
-      return IntentionPowerPackBundle.message("flip.smth.intention.name",
-                                              operatorText);
+      return IntentionPowerPackBundle.message("flip.smth.intention.name", operatorText);
     }
     else {
-      return IntentionPowerPackBundle.message("flip.smth.intention.name1",
-                                              operatorText);
+      return IntentionPowerPackBundle.message("flip.smth.intention.name1", operatorText);
     }
   }
 
@@ -54,8 +50,7 @@ public class FlipExpressionIntention extends MutablyNamedIntention {
   }
 
   @Override
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  public void processIntention(@NotNull PsiElement element) {
     final PsiBinaryExpression expression = (PsiBinaryExpression)element;
     final PsiExpression lhs = expression.getLOperand();
     final PsiExpression rhs = expression.getROperand();
