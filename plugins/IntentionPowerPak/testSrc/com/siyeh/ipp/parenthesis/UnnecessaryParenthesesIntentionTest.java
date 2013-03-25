@@ -17,6 +17,7 @@ public class UnnecessaryParenthesesIntentionTest extends IPPTestCase {
   public void testNotCommutative2() { doTest(); }
   public void testArrayInitializer() { doTest(); }
   public void testArrayAccessExpression() { doTest(); }
+  public void testArrayAccessExpression2() { doTest(); }
   public void testSimplePrecedence() { assertIntentionNotAvailable(); }
 
   @Override
