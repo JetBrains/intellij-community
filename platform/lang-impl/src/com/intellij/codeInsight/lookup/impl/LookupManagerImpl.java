@@ -32,6 +32,7 @@ import com.intellij.openapi.editor.EditorFactory;
 import com.intellij.openapi.editor.event.EditorFactoryAdapter;
 import com.intellij.openapi.editor.event.EditorFactoryEvent;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.psi.PsiDocumentManager;
@@ -153,7 +154,11 @@ public class LookupManagerImpl extends LookupManager {
         if (myActiveLookup == lookup && lookup.getCurrentItem() != null) {
           final CompletionProcess completion = CompletionService.getCompletionService().getCurrentCompletion();
           if (completion != null && !completion.isAutopopupCompletion()) {
-            DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
+            try {
+              DocumentationManager.getInstance(myProject).showJavaDocInfo(editor, psiFile, false);
+            }
+            catch (IndexNotReadyException ignored) {
+            }
           }
         }
       }

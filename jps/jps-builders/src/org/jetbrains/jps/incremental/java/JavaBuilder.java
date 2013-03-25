@@ -171,7 +171,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       });
 
-      if (context.isMake()) {
+      if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
         final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
         if (logger.isEnabled()) {
           if (filesToCompile.size() > 0) {

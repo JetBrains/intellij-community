@@ -235,6 +235,7 @@ public class Utils{
                               final boolean isWindowMenu,
                               final boolean mayDataContextBeInvalid){
     final ActionCallback menuBuilt = new ActionCallback();
+    final boolean checked = group instanceof CheckedActionGroup;
 
     final ArrayList<AnAction> list = new ArrayList<AnAction>();
     expandActionGroup(group, list, presentationFactory, context, place, ActionManager.getInstance());
@@ -258,7 +259,7 @@ public class Utils{
 
             @Override
             protected void paintComponent(Graphics g) {
-              if (UIUtil.isUnderWindowsClassicLookAndFeel() || UIUtil.isUnderDarcula()) {
+              if (UIUtil.isUnderWindowsClassicLookAndFeel() || UIUtil.isUnderDarcula() || UIUtil.isUnderWindowsLookAndFeel()) {
                 g.setColor(component.getBackground());
                 g.fillRect(0, 0, getWidth(), getHeight());
               }
@@ -276,7 +277,7 @@ public class Utils{
       }
       else {
         final ActionMenuItem each =
-          new ActionMenuItem(action, presentationFactory.getPresentation(action), place, context, enableMnemonics, !fixMacScreenMenu);
+          new ActionMenuItem(action, presentationFactory.getPresentation(action), place, context, enableMnemonics, !fixMacScreenMenu, checked);
         component.add(each);
         children.add(each);
       }
@@ -285,7 +286,7 @@ public class Utils{
     if (list.isEmpty()) {
       final ActionMenuItem each =
         new ActionMenuItem(EMPTY_MENU_FILLER, presentationFactory.getPresentation(EMPTY_MENU_FILLER), place, context, enableMnemonics,
-                           !fixMacScreenMenu);
+                           !fixMacScreenMenu, checked);
       component.add(each);
       children.add(each);
     }

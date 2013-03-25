@@ -16,6 +16,7 @@
 
 package com.intellij.util.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.Alarm;
 
@@ -155,6 +156,16 @@ public abstract class BaseButtonBehavior {
       repaintComponent();
 
       BaseButtonBehavior.this.execute(e);
+      ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
+        public void run() {
+          if (!myComponent.isShowing()) {
+            setHovered(false);
+            myMouseDeadzone.clear();
+          }
+        }
+      });
+
       return false;
     }
 

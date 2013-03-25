@@ -31,6 +31,7 @@ import org.jetbrains.asm4.ClassReader;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.builders.logging.ProjectBuilderLogger;
 import org.jetbrains.jps.incremental.*;
@@ -77,7 +78,7 @@ public class FormsInstrumenter extends FormsBuilder {
       formsToCompile.addAll(files);
     }
 
-    if (context.isMake()) {
+    if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
       final ProjectBuilderLogger logger = context.getLoggingManager().getProjectBuilderLogger();
       if (logger.isEnabled()) {
         logger.logCompiledFiles(formsToCompile, getPresentableName(), "Compiling forms:");

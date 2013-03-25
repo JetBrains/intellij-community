@@ -173,35 +173,23 @@ public class DefaultXmlExtension extends XmlExtension {
     final String namespace = possibleNamespaces.iterator().next();
 
     final Project project = file.getProject();
-    final XmlDocument document = file.getDocument();
-    assert document != null;
-    final XmlTag rootTag = document.getRootTag();
+    final XmlTag rootTag = file.getRootTag();
     assert rootTag != null;
-    final XmlAttribute[] attributes = rootTag.getAttributes();
-    XmlAttribute anchor = null;
-    for (XmlAttribute attribute : attributes) {
-      final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
-      if (attribute.isNamespaceDeclaration() || (descriptor != null && descriptor.isRequired())) {
-        anchor = attribute;
-      } else {
-        break;
-      }
-    }
+    XmlAttribute anchor = getAnchor(rootTag);
     
     final List<XmlSchemaProvider> providers = XmlSchemaProvider.getAvailableProviders(file);
-    String prefix = nsPrefix;
-    if (prefix == null) {
-      for (XmlSchemaProvider provider : providers) {
-        prefix = provider.getDefaultPrefix(namespace, file);
-        if (prefix != null) {
-          break;
-        }
+    String prefix = getPrefix(file, nsPrefix, namespace, providers);
+
+    final XmlElementFactory elementFactory = XmlElementFactory.getInstance(project);
+    String location = getLocation(file, namespace, providers);
+    String xsiPrefix = null;
+    if (location != null) {
+      xsiPrefix = rootTag.getPrefixByNamespace(XmlUtil.XML_SCHEMA_INSTANCE_URI);
+      if (xsiPrefix == null) {
+        xsiPrefix = "xsi";
+        rootTag.add(elementFactory.createXmlAttribute("xmlns:xsi", XmlUtil.XML_SCHEMA_INSTANCE_URI));
       }
     }
-    if (prefix == null) {
-      prefix = "";
-    }
-    final XmlElementFactory elementFactory = XmlElementFactory.getInstance(project);
 
     @NonNls final String qname = "xmlns" + (prefix.length() > 0 ? ":"+ prefix :"");
     final XmlAttribute attribute = elementFactory.createXmlAttribute(qname, namespace);
@@ -211,29 +199,21 @@ public class DefaultXmlExtension extends XmlExtension {
       rootTag.addAfter(attribute, anchor);
     }
 
-    String location = null;
-    if (namespace.length() > 0) {
-      for (XmlSchemaProvider provider : providers) {
-        Set<String> locations = provider.getLocations(namespace, file);
-        if (locations != null && !locations.isEmpty()) {
-          location = locations.iterator().next();
-        }
-      }
-    }
-
     if (location != null) {
-      XmlAttribute xmlAttribute = rootTag.getAttribute("xsi:schemaLocation");
+      XmlAttribute locationAttribute = rootTag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT, XmlUtil.XML_SCHEMA_INSTANCE_URI);
       final String pair = namespace + " " + location;
-      if (xmlAttribute == null) {
-        xmlAttribute = elementFactory.createXmlAttribute("xsi:schemaLocation", pair);
-        rootTag.add(xmlAttribute);
-      } else {
-        final String value = xmlAttribute.getValue();
+      if (locationAttribute == null) {
+        locationAttribute = elementFactory.createXmlAttribute(xsiPrefix + ":" + XmlUtil.SCHEMA_LOCATION_ATT, pair);
+        rootTag.add(locationAttribute);
+      }
+      else {
+        final String value = locationAttribute.getValue();
         if (!StringUtil.notNullize(value).contains(namespace)) {
-          if (StringUtil.isEmptyOrSpaces(value)) {
-            xmlAttribute.setValue(pair);
-          } else {
-            xmlAttribute.setValue(value.trim() + " " + pair);
+          if (value == null || StringUtil.isEmptyOrSpaces(value)) {
+            locationAttribute.setValue(pair);
+          }
+          else {
+            locationAttribute.setValue(value.trim() + " " + pair);
           }
         }
       }
@@ -253,6 +233,49 @@ public class DefaultXmlExtension extends XmlExtension {
     if (runAfter != null) {
       runAfter.run(prefix);
     }
+  }
+
+  private static String getPrefix(XmlFile file, String nsPrefix, String namespace, List<XmlSchemaProvider> providers) {
+    String prefix = nsPrefix;
+    if (prefix == null) {
+      for (XmlSchemaProvider provider : providers) {
+        prefix = provider.getDefaultPrefix(namespace, file);
+        if (prefix != null) {
+          break;
+        }
+      }
+    }
+    if (prefix == null) {
+      prefix = "";
+    }
+    return prefix;
+  }
+
+  private static XmlAttribute getAnchor(XmlTag rootTag) {
+    final XmlAttribute[] attributes = rootTag.getAttributes();
+    XmlAttribute anchor = null;
+    for (XmlAttribute attribute : attributes) {
+      final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+      if (attribute.isNamespaceDeclaration() || (descriptor != null && descriptor.isRequired())) {
+        anchor = attribute;
+      } else {
+        break;
+      }
+    }
+    return anchor;
+  }
+
+  private static String getLocation(XmlFile file, String namespace, List<XmlSchemaProvider> providers) {
+    String location = null;
+    if (namespace.length() > 0) {
+      for (XmlSchemaProvider provider : providers) {
+        Set<String> locations = provider.getLocations(namespace, file);
+        if (locations != null && !locations.isEmpty()) {
+          location = locations.iterator().next();
+        }
+      }
+    }
+    return location;
   }
 
   public SchemaPrefix getPrefixDeclaration(final XmlTag context, String namespacePrefix) {

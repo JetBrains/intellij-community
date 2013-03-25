@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -107,8 +107,8 @@ public class GroovyRunConfigurationEditor extends SettingsEditor<GroovyScriptRun
     configuration.setVMParameters(myVMParameters.getText());
     configuration.setDebugEnabled(myDebugCB.isSelected());
     configuration.setScriptParameters(myParameters.getText());
-    configuration.setScriptPath(scriptPathField.getText());
-    configuration.setWorkDir(workDirField.getText());
+    configuration.setScriptPath(scriptPathField.getText().trim());
+    configuration.setWorkDir(workDirField.getText().trim());
     configuration.setEnvs(myEnvVariables.getEnvs());
   }
 

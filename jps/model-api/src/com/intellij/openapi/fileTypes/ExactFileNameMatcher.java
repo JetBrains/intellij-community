@@ -71,4 +71,9 @@ public class ExactFileNameMatcher implements FileNameMatcher {
   public int hashCode() {
     return myFileName.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return getPresentableString();
+  }
 }

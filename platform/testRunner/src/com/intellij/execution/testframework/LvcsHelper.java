@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,12 +23,13 @@ package com.intellij.execution.testframework;
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.history.LocalHistory;
 import com.intellij.openapi.project.Project;
+import com.intellij.ui.JBColor;
 
 import java.awt.*;
 
 public class LvcsHelper {
-  private static final Color RED = new Color(250, 220, 220);
-  private static final Color GREEN = new Color(220, 250, 220);
+  private static final Color RED = new JBColor(new Color(250, 220, 220), new Color(104, 67, 67));
+  private static final Color GREEN = new JBColor(new Color(220, 250, 220), new Color(44, 66, 60));
 
   public static void addLabel(final TestFrameworkRunningModel model) {
     String label;

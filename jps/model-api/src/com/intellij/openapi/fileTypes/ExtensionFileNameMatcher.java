@@ -60,4 +60,9 @@ public class ExtensionFileNameMatcher implements FileNameMatcher {
   public int hashCode() {
     return myExtension.hashCode();
   }
+
+  @Override
+  public String toString() {
+    return getPresentableString();
+  }
 }

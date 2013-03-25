@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,8 +31,8 @@ import java.util.HashSet;
 import java.util.Set;
 
 /**
- * User: anna
- * Date: 15-Nov-2005
+ * @author anna
+ * @since 15-Nov-2005
  */
 public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
   @NotNull
@@ -66,10 +66,8 @@ public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
     return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
-
-
-  //@top
-  private static ProblemDescriptor checkExceptionsNeverThrown(PsiJavaCodeReferenceElement referenceElement, InspectionManager inspectionManager,
+  private static ProblemDescriptor checkExceptionsNeverThrown(PsiJavaCodeReferenceElement referenceElement,
+                                                              InspectionManager inspectionManager,
                                                               boolean onTheFly) {
     if (!(referenceElement.getParent() instanceof PsiReferenceList)) return null;
     PsiReferenceList referenceList = (PsiReferenceList)referenceElement.getParent();
@@ -111,8 +109,7 @@ public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
     }
 
     for (PsiClassType unhandledException : unhandled) {
-      if (unhandledException.isAssignableFrom(exceptionType) ||
-          exceptionType.isAssignableFrom(unhandledException)) {
+      if (unhandledException.isAssignableFrom(exceptionType) || exceptionType.isAssignableFrom(unhandledException)) {
         return null;
       }
     }
@@ -120,10 +117,7 @@ public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
     if (HighlightMethodUtil.isSerializationRelatedMethod(method, containingClass)) return null;
 
     String description = JavaErrorMessages.message("exception.is.never.thrown", HighlightUtil.formatType(exceptionType));
-
-    final LocalQuickFix quickFixes = new DeleteThrowsFix(method, exceptionType);
-    return inspectionManager.createProblemDescriptor(referenceElement, description, quickFixes, ProblemHighlightType.LIKE_UNUSED_SYMBOL,
-                                                     onTheFly);
+    LocalQuickFix quickFixes = new DeleteThrowsFix(method, exceptionType);
+    return inspectionManager.createProblemDescriptor(referenceElement, description, quickFixes, ProblemHighlightType.LIKE_UNUSED_SYMBOL, onTheFly);
   }
-
 }

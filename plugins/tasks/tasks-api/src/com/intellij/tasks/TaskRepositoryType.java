@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.tasks.config.TaskRepositoryEditor;
 import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.EnumSet;
@@ -38,6 +39,9 @@ public abstract class TaskRepositoryType<T extends TaskRepository> {
 
   @NotNull
   public abstract Icon getIcon();
+
+  @Nullable
+  public String getAdvertiser() { return null; }
 
   @NotNull
   public abstract TaskRepositoryEditor createEditor(T repository, Project project, Consumer<T> changeListener);

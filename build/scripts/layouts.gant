@@ -182,8 +182,15 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       dir("javaFX") {
         dir("lib") {
           jar("javaFX.jar") {
-            module("javaFX")
-            module("javaFX-CE")
+            noResources("javaFX")
+            noResources("javaFX-CE")
+          }
+          resources(["javaFX", "javaFX-CE"])
+          jar("javaFX-jps-plugin.jar") {
+            module("javaFX-jps-plugin")
+          }
+          jar("common-javaFX-plugin.jar") {
+            module("common-javaFX-plugin")
           }
         }
       }
@@ -213,7 +220,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 
 public def layoutCommunityPlugins(String home) {
   dir("plugins") {
-    def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "hg4idea", "github", "ui-designer-core", "tasks-time-tracking"]
+    def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "hg4idea", "github", "ui-designer-core"]
 
     simplePlugins.each {
       layoutPlugin it

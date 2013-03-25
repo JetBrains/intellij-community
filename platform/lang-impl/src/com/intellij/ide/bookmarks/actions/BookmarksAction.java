@@ -84,7 +84,15 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       .setDetailView(new DetailViewImpl(project))
       .setCloseOnEnter(false)
       .setDelegate(this).createMasterDetailPopup();
-
+    new AnAction() {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        Object selectedValue = list.getSelectedValue();
+        if (selectedValue instanceof BookmarkItem) {
+          itemChosen((BookmarkItem)selectedValue, project, myPopup, true);
+        }
+      }
+    }.registerCustomShortcutSet(CommonShortcuts.getEditSource(), list);
     editDescriptionAction.setPopup(myPopup);
     myPopup.showCenteredInCurrentWindow(project);
     //todo[zaec] selection mode shouldn't be set in builder.setList() method

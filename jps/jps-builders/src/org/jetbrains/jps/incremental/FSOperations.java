@@ -26,6 +26,7 @@ import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.FileProcessor;
 import org.jetbrains.jps.builders.impl.BuildTargetChunk;
+import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
 import org.jetbrains.jps.cmdline.ProjectDescriptor;
 import org.jetbrains.jps.incremental.storage.Timestamps;
@@ -113,7 +114,7 @@ public class FSOperations {
       markDirtyFiles(context, target, timestamps, true, null, null);
     }
 
-    if (context.isMake()) {
+    if (JavaBuilderUtil.isCompileJavaIncrementally(context)) {
       // mark as non-incremental only the module that triggered non-incremental change
       for (ModuleBuildTarget target : targets) {
         context.markNonIncremental(target);

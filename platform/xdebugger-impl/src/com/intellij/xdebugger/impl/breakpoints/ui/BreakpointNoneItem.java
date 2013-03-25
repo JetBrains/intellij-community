@@ -31,12 +31,11 @@ public class BreakpointNoneItem extends BreakpointItem {
 
   @Override
   public boolean isEnabled() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   @Override
   public void setEnabled(boolean state) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override
@@ -45,14 +44,14 @@ public class BreakpointNoneItem extends BreakpointItem {
   }
 
   @Override
-  protected void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView) {
+  public void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView) {
     renderer.clear();
     renderer.append(getDisplayText());
   }
 
   @Override
   public Icon getIcon() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @Override
@@ -61,13 +60,22 @@ public class BreakpointNoneItem extends BreakpointItem {
   }
 
   @Override
-  public boolean navigate() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+  public void navigate(boolean requestFocus) {
+  }
+
+  @Override
+  public boolean canNavigate() {
+    return false;
+  }
+
+  @Override
+  public boolean canNavigateToSource() {
+    return false;
   }
 
   @Override
   public String speedSearchText() {
-    return null;  //To change body of implemented methods use File | Settings | File Templates.
+    return null;
   }
 
   @Override
@@ -77,17 +85,15 @@ public class BreakpointNoneItem extends BreakpointItem {
 
   @Override
   protected void doUpdateDetailView(DetailView panel, boolean editorOnly) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override
   public boolean allowedToRemove() {
-    return false;  //To change body of implemented methods use File | Settings | File Templates.
+    return false;
   }
 
   @Override
   public void removed(Project project) {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
 
   @Override

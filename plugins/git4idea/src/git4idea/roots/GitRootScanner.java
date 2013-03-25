@@ -17,6 +17,7 @@ package git4idea.roots;
 
 import com.intellij.ProjectTopics;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -69,6 +70,7 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
 
   @Override
   public void dispose() {
+    myAlarm.cancelAllRequests();
   }
 
   @Override
@@ -111,6 +113,11 @@ public class GitRootScanner implements BulkFileListener, ModuleRootListener, Dis
   }
 
   private void scheduleScan() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      // don't scan in tests
+      return;
+    }
+
     myAlarm.cancelAllRequests(); // one scan is enough, no need to queue, they all do the same
     myAlarm.addRequest(new Runnable() {
       @Override

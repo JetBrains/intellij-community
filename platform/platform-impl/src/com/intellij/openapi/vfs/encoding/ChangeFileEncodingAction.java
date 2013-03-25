@@ -52,7 +52,6 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
   }
 
   public ChangeFileEncodingAction(boolean allowDirectories) {
-    super("File Encoding");
     this.allowDirectories = allowDirectories;
   }
 
@@ -124,7 +123,7 @@ public class ChangeFileEncodingAction extends AnAction implements DumbAware {
        return createCharsetsActionGroup(clearItemText, null, new Function<Charset, String>() {
          @Override
          public String fun(Charset charset) {
-           assert text != null : charset;
+           assert myFile.isDirectory() || text != null : charset;
            EncodingUtil.Magic8 safeToReload = myFile.isDirectory() ? EncodingUtil.Magic8.ABSOLUTELY : EncodingUtil.isSafeToReloadIn(myFile, text, bytes, charset);
            boolean enabled = safeToReload != EncodingUtil.Magic8.NO_WAY;
            if (!enabled) {

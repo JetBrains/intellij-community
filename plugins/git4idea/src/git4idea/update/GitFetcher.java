@@ -211,7 +211,7 @@ public class GitFetcher {
 
   private GitFetchResult fetchNatively(@NotNull VirtualFile root, @NotNull GitRemote remote, @NotNull String url, @Nullable String branch) {
     final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(myProject, root, GitCommand.FETCH);
-    h.setRemoteProtocol(url);
+    h.setUrl(url);
     h.addProgressParameter();
     if (GitVersionSpecialty.SUPPORTS_FETCH_PRUNE.existsIn(myVcs.getVersion())) {
       h.addParameters("--prune");

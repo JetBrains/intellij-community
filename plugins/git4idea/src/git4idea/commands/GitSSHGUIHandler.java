@@ -73,6 +73,7 @@ public class GitSSHGUIHandler {
     return rc.get();
   }
 
+  @Nullable
   public String askPassphrase(final String username, final String keyPath, boolean resetPassword, final String lastError) {
     String error = processLastError(resetPassword, lastError);
     return PasswordSafePromptDialog.askPassphrase(myProject, myState, GitBundle.getString("ssh.ask.passphrase.title"),
@@ -161,6 +162,7 @@ public class GitSSHGUIHandler {
    * @param resetPassword true if the previous password supplied to the service was incorrect
    * @param lastError     the previous error  @return a password or null if dialog was cancelled.
    */
+  @Nullable
   public String askPassword(final String username, boolean resetPassword, final String lastError) {
     String error = processLastError(resetPassword, lastError);
     return PasswordSafePromptDialog.askPassword(myProject, myState, GitBundle.getString("ssh.password.title"),

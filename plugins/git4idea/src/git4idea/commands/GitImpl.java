@@ -132,7 +132,7 @@ public class GitImpl implements Git {
   public GitCommandResult clone(@NotNull Project project, @NotNull File parentDirectory, @NotNull String url,
                                 @NotNull String clonedDirectoryName, @NotNull GitLineHandlerListener... listeners) {
     GitLineHandlerPasswordRequestAware handler = new GitLineHandlerPasswordRequestAware(project, parentDirectory, GitCommand.CLONE);
-    handler.setRemoteProtocol(url);
+    handler.setUrl(url);
     handler.addParameters("--progress");
     handler.addParameters(url);
     handler.addParameters(clonedDirectoryName);
@@ -360,7 +360,7 @@ public class GitImpl implements Git {
                                @NotNull GitLineHandlerListener... listeners) {
     final GitLineHandlerPasswordRequestAware h = new GitLineHandlerPasswordRequestAware(repository.getProject(), repository.getRoot(),
                                                                                         GitCommand.PUSH);
-    h.setRemoteProtocol(url);
+    h.setUrl(url);
     h.setSilent(false);
     addListeners(h, listeners);
     h.addProgressParameter();

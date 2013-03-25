@@ -17,13 +17,14 @@
 package org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightClassReference;
-import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.util.PairFunction;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,11 +47,15 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrAnnotationStub;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
+import java.util.List;
+
 /**
  * @author: Dmitry.Krasilschikov
  * @date: 04.04.2007
  */
 public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implements GrAnnotation, StubBasedPsiElement<GrAnnotationStub> {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.plugins.groovy.lang.psi.impl.auxiliary.annotation.GrAnnotationImpl");
+
   private static final PairFunction<Project, String, PsiAnnotation> ANNOTATION_CREATOR = new PairFunction<Project, String, PsiAnnotation>() {
     public PsiAnnotation fun(Project project, String text) {
       return GroovyPsiElementFactory.getInstance(project).createAnnotationFromText(text);
@@ -188,14 +193,25 @@ public class GrAnnotationImpl extends GrStubElementBase<GrAnnotationStub> implem
     return null;
   }
 
+  @NotNull
+  public static TargetType[] translate(@Nullable String... types) {
+    if (types == null || types.length == 0) return TargetType.EMPTY_ARRAY;
+
+    List<TargetType> targets = ContainerUtil.newArrayListWithExpectedSize(types.length);
+    for (String type : types) {
+      try {
+        targets.add(TargetType.valueOf(type));
+      }
+      catch (IllegalArgumentException e) {
+        LOG.error("Unknown target: " + type);
+      }
+    }
+    return targets.toArray(new TargetType[targets.size()]);
+  }
 
   public static boolean isAnnotationApplicableTo(GrAnnotation annotation, boolean strict, String... elementTypeFields) {
     if (elementTypeFields == null) return true;
-    GrCodeReferenceElement nameRef = annotation.getClassReference();
-    PsiElement resolved = nameRef.resolve();
-    if (resolved instanceof PsiClass && ((PsiClass)resolved).isAnnotationType()) {
-      return PsiAnnotationImpl.isAnnotationApplicable(strict, (PsiClass)resolved, elementTypeFields, annotation.getResolveScope());
-    }
-    return !strict;
+    TargetType target = PsiImplUtil.findApplicableTarget(annotation, translate(elementTypeFields));
+    return target != null && (!strict || target != TargetType.UNKNOWN);
   }
 }

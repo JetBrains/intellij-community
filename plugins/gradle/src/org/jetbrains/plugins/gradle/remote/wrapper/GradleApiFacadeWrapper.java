@@ -2,12 +2,9 @@ package org.jetbrains.plugins.gradle.remote.wrapper;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl;
-import org.jetbrains.plugins.gradle.remote.GradleApiFacade;
-import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
-import org.jetbrains.plugins.gradle.remote.RemoteGradleProcessSettings;
-import org.jetbrains.plugins.gradle.remote.RemoteGradleProgressNotificationManager;
-import org.jetbrains.plugins.gradle.task.GradleTaskId;
-import org.jetbrains.plugins.gradle.task.GradleTaskType;
+import org.jetbrains.plugins.gradle.remote.*;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskId;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
 
 import java.rmi.RemoteException;
 import java.util.Map;
@@ -37,6 +34,12 @@ public class GradleApiFacadeWrapper implements GradleApiFacade {
   @Override
   public GradleProjectResolver getResolver() throws RemoteException, IllegalStateException {
     return new GradleProjectResolverWrapper(myDelegate.getResolver(), myNotificationManager);
+  }
+
+  @NotNull
+  @Override
+  public GradleBuildManager getBuildManager() throws RemoteException {
+    return new GradleBuildManagerWrapper(myDelegate.getBuildManager(), myNotificationManager);
   }
 
   @Override

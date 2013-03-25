@@ -28,10 +28,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.actionSystem.ex.ActionUtil;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationActivationListener;
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.openapi.application.*;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
@@ -1095,7 +1092,10 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     if (myPreloadActionsRunnable == null) {
       myPreloadActionsRunnable = new Runnable() {
         public void run() {
-          doPreloadActions();
+          try {
+            doPreloadActions();
+          } catch (RuntimeInterruptedException ignore) {
+          }
         }
       };
       ApplicationManager.getApplication().executeOnPooledThread(myPreloadActionsRunnable);
@@ -1107,7 +1107,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
       Thread.sleep(5000); // wait for project initialization to complete
     }
     catch (InterruptedException e) {
-      // ignore
+      return; // IDEA exited
     }
     preloadActionGroup(IdeActions.GROUP_EDITOR_POPUP);
     preloadActionGroup(IdeActions.GROUP_EDITOR_TAB_POPUP);
@@ -1149,7 +1149,9 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
           //noinspection BusyWait
           Thread.sleep(300);
         }
-        catch (InterruptedException ignored) { }
+        catch (InterruptedException ignored) {
+          throw new RuntimeInterruptedException(ignored);
+        }
       }
     }
   }

@@ -41,6 +41,7 @@ import java.util.*;
  * @author nik
  */
 public class ArtifactCompileScope {
+  private static final Key<Boolean> FORCE_ARTIFACT_BUILD = Key.create("force_artifact_build");
   private static final Key<Artifact[]> ARTIFACTS_KEY = Key.create("artifacts");
   private static final Key<Set<Artifact>> CACHED_ARTIFACTS_KEY = Key.create("cached_artifacts");
   private static final Key<Key<?>> ARTIFACTS_CONTENT_ID_KEY = Key.create("build_artifacts_task");
@@ -53,14 +54,33 @@ public class ArtifactCompileScope {
     return new ModuleCompileScope(project, modules.toArray(new Module[modules.size()]), true);
   }
 
-  public static CompileScope createArtifactsScope(@NotNull Project project, @NotNull Collection<Artifact> artifacts) {
-    return createScopeWithArtifacts(createScopeForModulesInArtifacts(project, artifacts), artifacts, true);
+  public static CompileScope createArtifactsScope(@NotNull Project project,
+                                                  @NotNull Collection<Artifact> artifacts) {
+    return createArtifactsScope(project, artifacts, false);
   }
 
-  public static CompileScope createScopeWithArtifacts(final CompileScope baseScope, @NotNull Collection<Artifact> artifacts, boolean useCustomContentId) {
+  public static CompileScope createArtifactsScope(@NotNull Project project,
+                                                  @NotNull Collection<Artifact> artifacts,
+                                                  final boolean forceArtifactBuild) {
+    return createScopeWithArtifacts(createScopeForModulesInArtifacts(project, artifacts), artifacts, true, forceArtifactBuild);
+  }
+
+  public static CompileScope createScopeWithArtifacts(final CompileScope baseScope,
+                                                      @NotNull Collection<Artifact> artifacts,
+                                                      boolean useCustomContentId) {
+    return createScopeWithArtifacts(baseScope, artifacts, useCustomContentId, false);
+  }
+
+  public static CompileScope createScopeWithArtifacts(final CompileScope baseScope,
+                                                      @NotNull Collection<Artifact> artifacts,
+                                                      boolean useCustomContentId,
+                                                      final boolean forceArtifactBuild) {
     baseScope.putUserData(ARTIFACTS_KEY, artifacts.toArray(new Artifact[artifacts.size()]));
     if (useCustomContentId) {
       baseScope.putUserData(CompilerManager.CONTENT_ID_KEY, ARTIFACTS_CONTENT_ID_KEY);
+    }
+    if (forceArtifactBuild) {
+      baseScope.putUserData(FORCE_ARTIFACT_BUILD, Boolean.TRUE);
     }
     return baseScope;
   }
@@ -99,6 +119,10 @@ public class ArtifactCompileScope {
   @Nullable
   public static Artifact[] getArtifacts(CompileScope compileScope) {
     return compileScope.getUserData(ARTIFACTS_KEY);
+  }
+
+  public static boolean isArtifactRebuildForced(@NotNull CompileScope scope) {
+    return Boolean.TRUE.equals(scope.getUserData(FORCE_ARTIFACT_BUILD));
   }
 
   private static boolean containsModuleOutput(Artifact artifact, final Set<Module> modules, final PackagingElementResolvingContext context) {

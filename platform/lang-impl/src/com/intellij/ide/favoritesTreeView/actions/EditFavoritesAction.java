@@ -42,7 +42,7 @@ public class EditFavoritesAction extends AnAction {
     FavoritesListProvider provider = favoritesManager.getListProvider(listName);
     Set<Object> selection = treeBuilder.getSelectedElements();
     if (provider != null && provider.willHandle(CommonActionsPanel.Buttons.EDIT, project, selection)) {
-      provider.handle(CommonActionsPanel.Buttons.EDIT, project, selection);
+      provider.handle(CommonActionsPanel.Buttons.EDIT, project, selection, treeBuilder.getTree());
       return;
     }
     favoritesManager.renameList(project, listName);

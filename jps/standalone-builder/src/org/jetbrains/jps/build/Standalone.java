@@ -115,7 +115,6 @@ public class Standalone {
     }
 
     JpsModelLoaderImpl loader = new JpsModelLoaderImpl(projectPath, globalOptionsPath, initializer);
-    BuildType buildType = incremental ? BuildType.MAKE : BuildType.PROJECT_REBUILD;
     Set<String> modulesSet = new HashSet<String>(Arrays.asList(modules));
     List<String> artifactsList = Arrays.asList(artifacts);
     File dataStorageRoot;
@@ -132,7 +131,7 @@ public class Standalone {
 
     long start = System.currentTimeMillis();
     try {
-      runBuild(loader, dataStorageRoot, buildType, modulesSet, artifactsList, true, new ConsoleMessageHandler());
+      runBuild(loader, dataStorageRoot, !incremental, modulesSet, artifactsList, true, new ConsoleMessageHandler());
     }
     catch (Throwable t) {
       System.err.println("Internal error: " + t.getMessage());
@@ -141,12 +140,12 @@ public class Standalone {
     System.out.println("Build finished in " + Utils.formatDuration(System.currentTimeMillis() - start));
   }
 
-  public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, BuildType buildType, Set<String> modulesSet,
+  public static void runBuild(JpsModelLoader loader, final File dataStorageRoot, boolean forceBuild, Set<String> modulesSet,
                               List<String> artifactsList, final boolean includeTests, final MessageHandler messageHandler) throws Exception {
     List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
     for (JavaModuleBuildTargetType type : JavaModuleBuildTargetType.ALL_TYPES) {
       if (includeTests || !type.isTests()) {
-        TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId());
+        TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder().setTypeId(type.getTypeId()).setForceBuild(forceBuild);
         if (modulesSet.isEmpty()) {
           builder.setAllTargets(true);
         }
@@ -157,12 +156,12 @@ public class Standalone {
       }
     }
     if (!artifactsList.isEmpty()) {
-      scopes.add(TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId()).addAllTargetId(artifactsList).build());
+      scopes.add(TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId()).setForceBuild(forceBuild).addAllTargetId(artifactsList).build());
     }
     final BuildRunner buildRunner = new BuildRunner(loader, scopes, Collections.<String>emptyList(), Collections.<String, String>emptyMap());
     ProjectDescriptor descriptor = buildRunner.load(messageHandler, dataStorageRoot, new BuildFSState(true));
     try {
-      buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, buildType);
+      buildRunner.runBuild(descriptor, CanceledStatus.NULL, null, messageHandler, BuildType.BUILD);
     }
     finally {
       descriptor.release();

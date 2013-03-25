@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,8 +48,15 @@ public class TypeArguments implements GroovyElementTypes {
     }
 
     if (!parseArgument(builder)) {
-      marker.rollbackTo();
-      return false;
+      builder.error(GroovyBundle.message("type.argument.expected"));
+      if (ParserUtils.getToken(builder, mGT)) {
+        marker.done(TYPE_ARGUMENTS);
+        return true;
+      }
+      else {
+        marker.rollbackTo();
+        return false;
+      }
     }
 
     boolean hasComma = ParserUtils.lookAhead(builder, mCOMMA);

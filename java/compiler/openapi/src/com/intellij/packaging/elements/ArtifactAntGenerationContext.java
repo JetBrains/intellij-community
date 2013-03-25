@@ -46,4 +46,6 @@ public interface ArtifactAntGenerationContext {
   Project getProject();
 
   GenerationOptions getGenerationOptions();
+
+  String getConfiguredArtifactOutputProperty(@NotNull Artifact artifact);
 }

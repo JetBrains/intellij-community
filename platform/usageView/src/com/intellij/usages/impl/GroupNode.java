@@ -21,7 +21,6 @@ import com.intellij.pom.Navigatable;
 import com.intellij.usages.Usage;
 import com.intellij.usages.UsageGroup;
 import com.intellij.usages.UsageView;
-import com.intellij.usages.UsageViewSettings;
 import com.intellij.usages.rules.MergeableUsage;
 import com.intellij.util.Consumer;
 import com.intellij.util.SmartList;
@@ -43,10 +42,12 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   private final int myRuleIndex;
   private final Map<UsageGroup, GroupNode> mySubgroupNodes = new THashMap<UsageGroup, GroupNode>();
   private final List<UsageNode> myUsageNodes = new SmartList<UsageNode>();
+  @NotNull private final UsageViewTreeModelBuilder myUsageTreeModel;
   private volatile int myRecursiveUsageCount = 0;
 
   public GroupNode(@Nullable UsageGroup group, int ruleIndex, @NotNull UsageViewTreeModelBuilder treeModel) {
     super(treeModel);
+    myUsageTreeModel = treeModel;
     setUserObject(group);
     myGroup = group;
     myRuleIndex = ruleIndex;
@@ -163,7 +164,7 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
   public UsageNode addUsage(@NotNull Usage usage, @NotNull Consumer<Runnable> edtQueue) {
     final UsageNode node;
     synchronized (lock) {
-      if (UsageViewSettings.getInstance().isFilterDuplicatedLine()) {
+      if (myUsageTreeModel.isFilterDuplicatedLine()) {
         UsageNode mergedWith = tryMerge(usage);
         if (mergedWith != null) {
           return mergedWith;

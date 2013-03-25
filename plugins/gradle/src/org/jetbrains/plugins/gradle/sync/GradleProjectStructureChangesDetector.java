@@ -7,17 +7,20 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.autoimport.GradleAutoImporter;
 import org.jetbrains.plugins.gradle.autoimport.GradleUserProjectChangesCalculator;
+import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
 import org.jetbrains.plugins.gradle.manage.GradleProjectEntityChangeListener;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
-import org.jetbrains.plugins.gradle.task.GradleTaskManager;
-import org.jetbrains.plugins.gradle.task.GradleTaskType;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskManager;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
+import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.Collection;
@@ -99,7 +102,9 @@ public class GradleProjectStructureChangesDetector implements GradleProjectStruc
   }
 
   private void rebuildTreeModel() {
-    final GradleProjectStructureTreeModel treeModel = GradleUtil.getProjectStructureTreeModel(myProject);
+    final GradleProjectStructureTreeModel treeModel = GradleUtil.getToolWindowElement(
+      GradleProjectStructureTreeModel.class, myProject, GradleDataKeys.SYNC_TREE_MODEL
+    );
     if (treeModel != null) {
       treeModel.rebuild(myAutoImporter.isInProgress());
     }
@@ -113,10 +118,12 @@ public class GradleProjectStructureChangesDetector implements GradleProjectStruc
   }
 
   private void scheduleUpdate() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode()
+        || StringUtil.isEmpty(GradleSettings.getInstance(myProject).getLinkedProjectPath()))
+    {
       return;
     }
-    
+
     myUserProjectChangesCalculator.updateChanges();
     
     // We experienced a situation when project root change event has been fired but no actual project structure change has

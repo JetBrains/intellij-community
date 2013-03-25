@@ -48,7 +48,7 @@ class XBreakpointItem extends BreakpointItem {
     setupGenericRenderer(renderer, false);
   }
 
-  protected void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView) {
+  public void setupGenericRenderer(SimpleColoredComponent renderer, boolean plainView) {
     if (plainView) {
       renderer.setIcon(getIcon());
     }
@@ -102,13 +102,23 @@ class XBreakpointItem extends BreakpointItem {
   }
 
   @Override
-  public boolean navigate() {
+  public void navigate(boolean requestFocus) {
     Navigatable navigatable = myBreakpoint.getNavigatable();
     if (navigatable != null) {
-      navigatable.navigate(true);
-      return true;
+      navigatable.navigate(requestFocus);
     }
-    return false;
+  }
+
+  @Override
+  public boolean canNavigate() {
+    Navigatable navigatable = myBreakpoint.getNavigatable();
+    return navigatable != null && navigatable.canNavigate();
+  }
+
+  @Override
+  public boolean canNavigateToSource() {
+    Navigatable navigatable = myBreakpoint.getNavigatable();
+    return navigatable != null && navigatable.canNavigateToSource();
   }
 
   private XBreakpointManagerImpl getManager() {

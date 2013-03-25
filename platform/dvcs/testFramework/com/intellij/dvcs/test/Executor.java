@@ -65,7 +65,7 @@ public class Executor {
   public static String touch(String fileName) {
     try {
       File file = child(fileName);
-      assert !file.exists();
+      assert !file.exists() : "File " + file + " shouldn't exist yet";
       boolean fileCreated = file.createNewFile();
       assert fileCreated;
       log("touch " + fileName);

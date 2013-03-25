@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.gradle.notification;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.task.GradleTaskId;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskId;
 
 import java.io.Serializable;
 

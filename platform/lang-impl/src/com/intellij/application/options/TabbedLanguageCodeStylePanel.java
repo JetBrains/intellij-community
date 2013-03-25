@@ -586,7 +586,7 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
     @Override
     protected int getRightMargin() {
-      return getSettings().RIGHT_MARGIN;
+      return myProvider.getRightMargin(LanguageCodeStyleSettingsProvider.SettingsType.INDENT_SETTINGS);
     }
 
     @Override

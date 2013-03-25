@@ -262,6 +262,9 @@ public class PsiMethodReferenceUtil {
     for (int i = 0; i < min; i++) {
       final PsiType type1 = GenericsUtil.eliminateWildcards(psiSubstitutor.substitute(signatureParameterTypes1[offset + i]));
       if (isVarargs && i == min - 1) {
+        if (!(signatureParameterTypes2[i] instanceof PsiArrayType)) {
+          return false;
+        }
         if (!TypeConversionUtil.isAssignable(((PsiArrayType)signatureParameterTypes2[i]).getComponentType(), type1) && 
             !TypeConversionUtil.isAssignable(signatureParameterTypes2[i], type1)) {
           return false;

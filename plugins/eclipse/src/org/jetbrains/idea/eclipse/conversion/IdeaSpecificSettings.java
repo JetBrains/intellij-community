@@ -215,21 +215,29 @@ public class IdeaSpecificSettings extends AbstractIdeaSpecificSettings<Modifiabl
 
   @Override
   public void readContentEntry(Element root, ContentEntry entry, ModifiableRootModel model) {
+    final SourceFolder[] folders = entry.getSourceFolders();
+    final String[] sourceFoldersUrls = new String[folders.length];
+    for (int i = 0; i < folders.length; i++) {
+      final SourceFolder folder = folders[i];
+      sourceFoldersUrls[i] = folder.getUrl();
+      entry.removeSourceFolder(folder);
+    }
+
+    final boolean[] testFolders = new boolean[sourceFoldersUrls.length];
     for (Object o : root.getChildren(IdeaXml.TEST_FOLDER_TAG)) {
       final String url = ((Element)o).getAttributeValue(IdeaXml.URL_ATTR);
-      SourceFolder folderToBeTest = null;
-      for (SourceFolder folder : entry.getSourceFolders()) {
-        if (Comparing.strEqual(folder.getUrl(), url)) {
-          folderToBeTest = folder;
+      for (int i = 0; i < sourceFoldersUrls.length; i++) {
+        if (Comparing.strEqual(sourceFoldersUrls[i], url)) {
+          testFolders[i] = true;
           break;
         }
       }
-      if (folderToBeTest != null) {
-        entry.removeSourceFolder(folderToBeTest);
-      }
-      entry.addSourceFolder(url, true);
     }
 
+    for (int i = 0; i < sourceFoldersUrls.length; i++) {
+      entry.addSourceFolder(sourceFoldersUrls[i], testFolders[i]);
+    }
+    
     for (Object o : root.getChildren(IdeaXml.PACKAGE_PREFIX_TAG)) {
       Element ppElement = (Element)o;
       final String prefix = ppElement.getAttributeValue(IdeaXml.PACKAGE_PREFIX_VALUE_ATTR);

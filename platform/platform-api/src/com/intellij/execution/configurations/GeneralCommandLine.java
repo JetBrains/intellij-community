@@ -57,6 +57,7 @@ public class GeneralCommandLine implements UserDataHolder {
   private File myWorkDirectory = null;
   private Map<String, String> myEnvParams = null;
   private boolean myPassParentEnvironment = true;
+  private boolean myPassFixedPathEnvVarOnMac = false;
   private final ParametersList myProgramParams = new ParametersList();
   private Charset myCharset = CharsetToolkit.getDefaultSystemCharset();
   private boolean myRedirectErrorStream = false;
@@ -113,6 +114,21 @@ public class GeneralCommandLine implements UserDataHolder {
 
   public boolean isPassParentEnvironment() {
     return myPassParentEnvironment;
+  }
+
+  /**
+   * Requests to pass a correct value of PATH environment variable to a created child process on Mac OSX.
+   * To determine correct value of PATH environment variable, the following command is invoked:
+   * <pre>
+   *   /bin/bash --login -c "printenv"
+   * </pre>
+   * This command is execute once and its result is cached in memory.
+   * See also http://youtrack.jetbrains.com/issue/IDEA-99154
+   *
+   * @param passFixedPathEnvVarOnMac true if a correct value of PATH environment variable should be passed
+   */
+  public void setPassFixedPathEnvVarOnMac(boolean passFixedPathEnvVarOnMac) {
+    myPassFixedPathEnvVarOnMac = passFixedPathEnvVarOnMac;
   }
 
   public void addParameters(final String... parameters) {
@@ -246,8 +262,8 @@ public class GeneralCommandLine implements UserDataHolder {
     return result;
   }
 
-  // please keep in sync with com.intellij.rt.execution.junit.ProcessBuilder.prepareCommand()
-  private static String prepareCommand(String parameter) {
+  // please keep in sync with com.intellij.rt.execution.junit.ProcessBuilder.prepareCommand() && org.jetbrains.jps.incremental.ExternalProcessUtil.prepareCommand()
+  public static String prepareCommand(String parameter) {
     if (SystemInfo.isWindows) {
       if (parameter.contains("\"")) {
         parameter = StringUtil.replace(parameter, "\"", "\\\"");
@@ -268,7 +284,7 @@ public class GeneralCommandLine implements UserDataHolder {
     if (!myPassParentEnvironment) {
       environment.clear();
     }
-    else if (SystemInfo.isMac) {
+    else if (SystemInfo.isMac && myPassFixedPathEnvVarOnMac) {
       String pathEnvVarValue = PathEnvironmentVariableUtil.getFixedPathEnvVarValueOnMac();
       if (pathEnvVarValue != null) {
         environment.put(PathEnvironmentVariableUtil.PATH_ENV_VAR_NAME, pathEnvVarValue);

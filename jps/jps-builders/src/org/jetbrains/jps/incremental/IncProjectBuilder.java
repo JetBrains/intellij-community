@@ -130,7 +130,7 @@ public class IncProjectBuilder {
   public void checkUpToDate(CompileScope scope) {
     CompileContextImpl context = null;
     try {
-      context = createContext(scope, true, false);
+      context = createContext(scope);
       final BuildFSState fsState = myProjectDescriptor.fsState;
       for (BuildTarget<?> target : myProjectDescriptor.getBuildTargetIndex().getAllTargets()) {
         if (scope.isAffected(target)) {
@@ -164,8 +164,7 @@ public class IncProjectBuilder {
   }
 
 
-  public void build(CompileScope scope, final boolean isMake, final boolean isProjectRebuild, boolean forceCleanCaches)
-    throws RebuildRequestedException {
+  public void build(CompileScope scope, boolean forceCleanCaches) throws RebuildRequestedException {
 
     final LowMemoryWatcher memWatcher = LowMemoryWatcher.register(new Runnable() {
       @Override
@@ -176,7 +175,7 @@ public class IncProjectBuilder {
     });
     CompileContextImpl context = null;
     try {
-      context = createContext(scope, isMake, isProjectRebuild);
+      context = createContext(scope);
       runBuild(context, forceCleanCaches);
       myProjectDescriptor.dataManager.saveVersion();
       reportRebuiltModules(context);
@@ -326,14 +325,13 @@ public class IncProjectBuilder {
 
   }
 
-  private CompileContextImpl createContext(CompileScope scope, boolean isMake, final boolean isProjectRebuild)
-    throws ProjectBuildException {
-    final CompileContextImpl context = new CompileContextImpl(scope, myProjectDescriptor, isMake, isProjectRebuild, myMessageDispatcher,
-                                                              myBuilderParams, myCancelStatus
-    );
+  private CompileContextImpl createContext(CompileScope scope) throws ProjectBuildException {
+    final CompileContextImpl context = new CompileContextImpl(scope, myProjectDescriptor, myMessageDispatcher,
+                                                              myBuilderParams, myCancelStatus);
+
     // in project rebuild mode performance gain is hard to observe, so it is better to save memory
     // in make mode it is critical to traverse file system as fast as possible, so we choose speed over memory savings
-    myProjectDescriptor.setFSCache(isProjectRebuild? FSCache.NO_CACHE : new FSCache());
+    myProjectDescriptor.setFSCache(context.isProjectRebuild() ? FSCache.NO_CACHE : new FSCache());
     JavaBuilderUtil.CONSTANT_SEARCH_SERVICE.set(context, myConstantSearch);
     return context;
   }
@@ -964,7 +962,7 @@ public class IncProjectBuilder {
               FSOperations.processFilesToRecompile(context, chunk, processor);
             }
           };
-        if (!context.isProjectRebuild()) {
+        if (!JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
           final Map<ModuleBuildTarget, Set<File>> cleanedSources = BuildOperations
             .cleanOutputsCorrespondingToChangedFiles(context, dirtyFilesHolder);
           for (Map.Entry<ModuleBuildTarget, Set<File>> entry : cleanedSources.entrySet()) {
@@ -1006,7 +1004,7 @@ public class IncProjectBuilder {
               nextPassRequired = true;
             }
             else if (buildResult == ModuleLevelBuilder.ExitCode.CHUNK_REBUILD_REQUIRED) {
-              if (!rebuildFromScratchRequested && !context.isProjectRebuild()) {
+              if (!rebuildFromScratchRequested && !JavaBuilderUtil.isForcedRecompilationAllJavaModules(context)) {
                 LOG.info("Builder " + builder.getPresentableName() + " requested rebuild of module chunk " + chunk.getName());
                 // allow rebuild from scratch only once per chunk
                 rebuildFromScratchRequested = true;

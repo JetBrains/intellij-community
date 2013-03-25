@@ -28,7 +28,6 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.CompositeElement;
 import com.intellij.psi.impl.source.tree.Factory;
 import com.intellij.psi.impl.source.tree.TreeElement;
-import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -259,11 +258,12 @@ public class PsiModifierListImpl extends JavaStubPsiElement<PsiModifierListStub>
   @Override
   @NotNull
   public PsiAnnotation[] getApplicableAnnotations() {
-    final String[] fields = PsiAnnotationImpl.getApplicableElementTypeFields(this);
+    final PsiAnnotation.TargetType[] targets = PsiImplUtil.getTargetsForLocation(this);
     List<PsiAnnotation> filtered = ContainerUtil.findAll(getAnnotations(), new Condition<PsiAnnotation>() {
       @Override
       public boolean value(PsiAnnotation annotation) {
-        return PsiAnnotationImpl.isAnnotationApplicableTo(annotation, true, fields);
+        PsiAnnotation.TargetType target = PsiImplUtil.findApplicableTarget(annotation, targets);
+        return target != null && target != PsiAnnotation.TargetType.UNKNOWN;
       }
     });
 

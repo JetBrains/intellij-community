@@ -280,7 +280,7 @@ public class PsiDirectoryNode extends BasePsiNode<PsiDirectory> implements Navig
 
     final Bookmark bookmarkAtFile = BookmarkManager.getInstance(myProject).findFileBookmark(file);
     if (bookmarkAtFile != null) {
-      final RowIcon composite = new RowIcon(2);
+      final RowIcon composite = new RowIcon(2, RowIcon.Alignment.CENTER);
       composite.setIcon(icon, 0);
       composite.setIcon(bookmarkAtFile.getIcon(), 1);
       icon = composite;

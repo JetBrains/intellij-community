@@ -95,6 +95,8 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   private static final int ourFlagsForTargetElements = TargetElementUtilBase.getInstance().getAllAccepted();
 
+  private boolean myCloseOnSneeze;
+
   @Override
   protected String getToolwindowId() {
     return ToolWindowId.DOCUMENTATION;
@@ -120,6 +122,15 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     return "Auto Show Documentation for Selected Element";
   }
 
+  /**
+   * @return    <code>true</code> if quick doc control is configured to not prevent user-IDE interaction (e.g. should be closed if
+   *            the user presses a key);
+   *            <code>false</code> otherwise
+   */
+  public boolean isCloseOnSneeze() {
+    return myCloseOnSneeze;
+  }
+  
   public static DocumentationManager getInstance(Project project) {
     return ServiceManager.getService(project, DocumentationManager.class);
   }
@@ -169,6 +180,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     if (hint == null) {
       return;
     }
+    myCloseOnSneeze = false;
     hint.cancel();
     Component toFocus = myPreviouslyFocused;
     hint.cancel();
@@ -200,6 +212,33 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
     showJavaDocInfo(element, original, false, null);
   }
 
+  /**
+   * Asks to show quick doc for the target element.
+   *
+   * @param editor         editor with an element for which quick do should be shown
+   * @param element        target element which documentation should be shown
+   * @param original       element that was used as a quick doc anchor. Example: consider a code like {@code Runnable task;}.
+   *                       A user wants to see javadoc for the {@code Runnable}, so, original element is a class name from the variable
+   *                       declaration but <code>'element'</code> argument is a {@code Runnable} descriptor
+   * @param closeCallback  callback to be notified on target hint close (if any)
+   * @param closeOnSneeze  flag that defines whether quick doc control should be as non-obtrusive as possible. E.g. there are at least
+   *                       two possible situations - the quick doc is shown automatically on mouse over element; the quick doc is shown
+   *                       on explicit action call (Ctrl+Q). We want to close the doc on, say, editor viewport position change
+   *                       at the first situation but don't want to do that at the second
+   * @param allowReuse     defines whether currently requested documentation should reuse existing doc control (if any)
+   */
+  public void showJavaDocInfo(@NotNull Editor editor,
+                              @NotNull final PsiElement element,
+                              @NotNull final PsiElement original,
+                              @Nullable Runnable closeCallback,
+                              boolean closeOnSneeze,
+                              boolean allowReuse)
+  {
+    myEditor = editor;
+    myCloseOnSneeze = closeOnSneeze;
+    showJavaDocInfo(element, original, allowReuse, closeCallback);
+  }
+  
   public void showJavaDocInfo(@NotNull final PsiElement element,
                               final PsiElement original,
                               boolean allowReuse,
@@ -403,6 +442,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       .setCancelCallback(new Computable<Boolean>() {
         @Override
         public Boolean compute() {
+          myCloseOnSneeze = false;
           if (closeCallback != null) {
             closeCallback.run();
           }
@@ -420,6 +460,9 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
       .setKeyEventHandler(new BooleanFunction<KeyEvent>() {
         @Override
         public boolean fun(KeyEvent event) {
+          if (myCloseOnSneeze) {
+            closeDocHint();
+          }
           return false;
         }
       })
@@ -476,7 +519,11 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
 
   @Nullable
   public PsiElement findTargetElement(@NotNull final Editor editor, @Nullable final PsiFile file, PsiElement contextElement) {
-    int offset = editor.getCaretModel().getOffset();
+    return findTargetElement(editor, editor.getCaretModel().getOffset(), file, contextElement);
+  }
+  
+  @Nullable
+  public PsiElement findTargetElement(final Editor editor, int offset, @Nullable final PsiFile file, PsiElement contextElement) {
     TargetElementUtilBase util = TargetElementUtilBase.getInstance();
     PsiElement element = assertSameProject(getElementFromLookup(editor, file));
     if (element == null && file != null) {
@@ -485,10 +532,10 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         element = assertSameProject(((DocumentationProviderEx)documentationProvider).getCustomDocumentationElement(editor, file, contextElement));
       }
     }
-    
+
     if (element == null) {
       element = assertSameProject(util.findTargetElement(editor, ourFlagsForTargetElements, offset));
-      
+
       // Allow context doc over xml tag content
       if (element != null || contextElement != null) {
         final PsiElement adjusted = assertSameProject(util.adjustElement(editor, ourFlagsForTargetElements, element, contextElement));
@@ -497,7 +544,7 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
         }
       }
     }
-    
+
     if (element == null) {
       final PsiReference ref = TargetElementUtilBase.findReference(editor, offset);
       if (ref != null) {

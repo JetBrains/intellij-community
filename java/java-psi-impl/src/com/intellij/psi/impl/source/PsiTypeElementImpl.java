@@ -23,7 +23,6 @@ import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -40,6 +39,8 @@ import org.jetbrains.annotations.Nullable;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+
+import static com.intellij.psi.PsiAnnotation.TargetType;
 
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiTypeElementImpl");
@@ -159,10 +160,10 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   public static void addTypeUseAnnotationsFromModifierList(PsiElement member, List<PsiAnnotation> typeAnnotations) {
     if (!(member instanceof PsiModifierListOwner)) return;
     PsiModifierList list = ((PsiModifierListOwner)member).getModifierList();
-    PsiAnnotation[] gluedAnnotations = list == null ? PsiAnnotation.EMPTY_ARRAY : list.getAnnotations();
-    for (PsiAnnotation anno : gluedAnnotations) {
-      if (PsiAnnotationImpl.isAnnotationApplicableTo(anno, true, "TYPE_USE")) {
-        typeAnnotations.add(anno);
+    PsiAnnotation[] annotations = list == null ? PsiAnnotation.EMPTY_ARRAY : list.getAnnotations();
+    for (PsiAnnotation annotation : annotations) {
+      if (PsiImplUtil.findApplicableTarget(annotation, TargetType.TYPE_USE) == TargetType.TYPE_USE) {
+        typeAnnotations.add(annotation);
       }
     }
   }

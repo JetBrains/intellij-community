@@ -805,17 +805,20 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         state = editorHistoryManager.getState(file, provider);
       }
       if (state != null) {
-        if (!isDumbAware(editor)) {
-          final FileEditorState finalState = state;
-          DumbService.getInstance(getProject()).runWhenSmart(new Runnable() {
-            @Override
-            public void run() {
+        final FileEditorState finalState = state;
+        Runnable runnable = new Runnable() {
+          @Override
+          public void run() {
+            if (editor.isValid()) {
               editor.setState(finalState);
             }
-          });
+          }
+        };
+        if (!isDumbAware(editor)) {
+          DumbService.getInstance(getProject()).smartInvokeLater(runnable);
         }
         else {
-          editor.setState(state);
+          UIUtil.invokeLaterIfNeeded(runnable);
         }
       }
     }

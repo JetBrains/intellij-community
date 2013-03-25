@@ -4,17 +4,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl;
-import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
-import org.jetbrains.plugins.gradle.remote.RemoteGradleProcessSettings;
-import org.jetbrains.plugins.gradle.task.GradleTaskId;
-import org.jetbrains.plugins.gradle.task.GradleTaskManager;
-import org.jetbrains.plugins.gradle.task.GradleTaskType;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskId;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskManager;
 
 import java.rmi.RemoteException;
-import java.util.Map;
-import java.util.Set;
 
 /**
  * Intercepts calls to the target {@link GradleProjectResolver} and
@@ -25,15 +20,16 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since 2/8/12 7:21 PM
  */
-public class GradleProjectResolverWrapper implements GradleProjectResolver {
+public class GradleProjectResolverWrapper extends AbstractRemoteGradleServiceWrapper<GradleProjectResolver>
+  implements GradleProjectResolver
+{
 
-  @NotNull private final GradleProjectResolver                 myResolver;
   @NotNull private final GradleProgressNotificationManagerImpl myNotificationManager;
 
-  public GradleProjectResolverWrapper(@NotNull GradleProjectResolver resolver,
+  public GradleProjectResolverWrapper(@NotNull GradleProjectResolver delegate,
                                       @NotNull GradleProgressNotificationManagerImpl notificationManager)
   {
-    myResolver = resolver;
+    super(delegate);
     myNotificationManager = notificationManager;
   }
 
@@ -44,31 +40,10 @@ public class GradleProjectResolverWrapper implements GradleProjectResolver {
   {
     myNotificationManager.onQueued(id);
     try {
-      return myResolver.resolveProjectInfo(id, projectPath, downloadLibraries);
+      return getDelegate().resolveProjectInfo(id, projectPath, downloadLibraries);
     }
     finally {
       myNotificationManager.onEnd(id);
     }
-  }
-
-  @Override
-  public void setSettings(@NotNull RemoteGradleProcessSettings settings) throws RemoteException {
-    myResolver.setSettings(settings);
-  }
-
-  @Override
-  public void setNotificationListener(@NotNull GradleTaskNotificationListener notificationListener) throws RemoteException {
-    myResolver.setNotificationListener(notificationListener);
-  }
-
-  @Override
-  public boolean isTaskInProgress(@NotNull GradleTaskId id) throws RemoteException {
-    return myResolver.isTaskInProgress(id);
-  }
-
-  @Override
-  @NotNull
-  public Map<GradleTaskType, Set<GradleTaskId>> getTasksInProgress() throws RemoteException {
-    return myResolver.getTasksInProgress();
   }
 }

@@ -654,11 +654,11 @@ public class JavaCompletionUtil {
     assert document != null;
     document.replaceString(startOffset, endOffset, name);
 
-    final RangeMarker toDelete = insertTemporary(startOffset + name.length(), document, " ");
+    int newEndOffset = startOffset + name.length();
+    final RangeMarker toDelete = insertTemporary(newEndOffset, document, " ");
 
     documentManager.commitAllDocuments();
 
-    int newEndOffset = endOffset;
     PsiElement element = file.findElementAt(startOffset);
     if (element instanceof PsiIdentifier) {
       PsiElement parent = element.getParent();

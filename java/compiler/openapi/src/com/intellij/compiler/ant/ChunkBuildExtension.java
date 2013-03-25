@@ -20,12 +20,15 @@ import com.intellij.ExtensionPoints;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactType;
 import com.intellij.packaging.elements.ArtifactAntGenerationContext;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -50,6 +53,17 @@ public abstract class ChunkBuildExtension {
                                        CompositeGenerator generator) {
   }
 
+  @Nullable
+  public Pair<String, String> getArtifactXmlNs(ArtifactType artifactType) {
+    return null;
+  } 
+
+  public boolean needAntArtifactInstructions(ArtifactType type) {
+    return true;
+  }
+  
+  public void initArtifacts(Project project, GenerationOptions genOptions, CompositeGenerator generator) {}
+  
   public List<String> getCleanTargetNames(Project project, GenerationOptions genOptions) {
     return Collections.emptyList();
   }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,8 +33,6 @@ import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.List;
-
 public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNewExpression {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.java.PsiNewExpressionImpl");
 
@@ -43,39 +41,56 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   }
 
   @Override
-  public PsiType getType(){
+  public PsiType getType() {
+    return doGetType(null);
+  }
+
+  @Override
+  public PsiType getOwner(@NotNull PsiAnnotation annotation) {
+    assert annotation.getParent() == this : annotation.getParent() + " != " + this;
+    return doGetType(annotation);
+  }
+
+  @Nullable
+  private PsiType doGetType(@Nullable PsiAnnotation stopAt) {
     PsiType type = null;
-    List<PsiAnnotation> annotations = new SmartList<PsiAnnotation>();
-    for(ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()){
+    SmartList<PsiAnnotation> annotations = new SmartList<PsiAnnotation>();
+    boolean stop = false;
+
+    for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
       IElementType elementType = child.getElementType();
       if (elementType == JavaElementType.ANNOTATION) {
-        annotations.add((PsiAnnotation)child.getPsi());
-        continue;
+        PsiAnnotation annotation = (PsiAnnotation)child.getPsi();
+        annotations.add(annotation);
+        if (annotation == stopAt) stop = true;
       }
-      if (elementType == JavaElementType.JAVA_CODE_REFERENCE){
-        LOG.assertTrue(type == null);
-        type = new PsiClassReferenceType((PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(child), null);
+      else if (elementType == JavaElementType.JAVA_CODE_REFERENCE) {
+        assert type == null : this;
+        type = new PsiClassReferenceType((PsiJavaCodeReferenceElement)child.getPsi(), null);
+        if (stop) return type;
       }
-      else if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)){
-        LOG.assertTrue(type == null);
-        PsiAnnotation[] annos = annotations.toArray(new PsiAnnotation[annotations.size()]);
-        type = JavaPsiFacade.getInstance(getProject()).getElementFactory().createPrimitiveType(child.getText(), annos);
-      }
-      else if (elementType == JavaTokenType.LBRACKET){
-        LOG.assertTrue(type != null);
-        PsiAnnotation[] annos = annotations.toArray(new PsiAnnotation[annotations.size()]);
-
-        type = type.createArrayType(annos);
-      }
-      else if (elementType == JavaElementType.ANONYMOUS_CLASS){
-        PsiAnnotation[] annos = annotations.toArray(new PsiAnnotation[annotations.size()]);
+      else if (ElementType.PRIMITIVE_TYPE_BIT_SET.contains(elementType)) {
+        assert type == null : this;
         PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
-        PsiClass aClass = (PsiClass)SourceTreeToPsiMap.treeElementToPsi(child);
+        type = factory.createPrimitiveType(child.getText(), annotations.toArray(PsiAnnotation.ARRAY_FACTORY, true));
+        if (stop) return type;
+      }
+      else if (elementType == JavaTokenType.LBRACKET) {
+        assert type != null : this;
+        type = type.createArrayType(annotations.toArray(PsiAnnotation.ARRAY_FACTORY, true));
+        if (stop) return type;
+      }
+      else if (elementType == JavaElementType.ANONYMOUS_CLASS) {
+        PsiElementFactory factory = JavaPsiFacade.getInstance(getProject()).getElementFactory();
+        PsiClass aClass = (PsiClass)child.getPsi();
         PsiSubstitutor substitutor = aClass instanceof PsiTypeParameter ? PsiSubstitutor.EMPTY : factory.createRawSubstitutor(aClass);
-        type = factory.createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass),annos);
+        type = factory.createType(aClass, substitutor, PsiUtil.getLanguageLevel(aClass), annotations.toArray(PsiAnnotation.ARRAY_FACTORY, true));
+        if (stop) return type;
       }
     }
-    return type;
+
+    // stop == true means annotation is misplaced
+    return stop ? null : type;
   }
 
   @Override
@@ -360,7 +375,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
   }
 
   @Override
-  public void accept(@NotNull PsiElementVisitor visitor){
+  public void accept(@NotNull PsiElementVisitor visitor) {
     if (visitor instanceof JavaElementVisitor) {
       ((JavaElementVisitor)visitor).visitNewExpression(this);
     }
@@ -369,8 +384,7 @@ public class PsiNewExpressionImpl extends ExpressionPsiElement implements PsiNew
     }
   }
 
-  public String toString(){
+  public String toString() {
     return "PsiNewExpression:" + getText();
   }
 }
-

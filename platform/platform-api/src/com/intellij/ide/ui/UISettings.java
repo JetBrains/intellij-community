@@ -97,6 +97,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public int MAX_LOOKUP_LIST_HEIGHT = 11;
   public boolean HIDE_NAVIGATION_ON_FOCUS_LOSS = true;
   public boolean FILE_COLORS_IN_PROJECT_VIEW = false;
+  public boolean DEFAULT_AUTOSCROLL_TO_SOURCE = false;
 
   /**
    * Defines whether asterisk is shown on modified editor tab or not

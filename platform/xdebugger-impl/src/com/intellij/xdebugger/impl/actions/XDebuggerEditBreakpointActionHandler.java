@@ -19,7 +19,6 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ex.EditorGutterComponentEx;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
@@ -29,6 +28,7 @@ import com.intellij.xdebugger.impl.breakpoints.XLineBreakpointImpl;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -40,8 +40,8 @@ import java.awt.*;
  */
 public class XDebuggerEditBreakpointActionHandler extends EditBreakpointActionHandler {
   @Override
-  protected void doShowPopup(Project project, EditorGutterComponentEx gutterComponent, Point whereToShow, Object breakpoint) {
-    DebuggerUIUtil.showXBreakpointEditorBalloon(project, whereToShow, gutterComponent, false, (XBreakpoint)breakpoint);
+  protected void doShowPopup(Project project, JComponent component, Point whereToShow, Object breakpoint) {
+    DebuggerUIUtil.showXBreakpointEditorBalloon(project, whereToShow, component, false, (XBreakpoint)breakpoint);
   }
 
   @Override

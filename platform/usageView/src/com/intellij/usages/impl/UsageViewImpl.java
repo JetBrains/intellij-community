@@ -852,24 +852,28 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
 
   @Override
   public void includeUsages(@NotNull Usage[] usages) {
+    List<TreeNode> nodes = new ArrayList<TreeNode>(usages.length);
     for (Usage usage : usages) {
       final UsageNode node = myUsageNodes.get(usage);
       if (node != NULL_NODE && node != null) {
         node.setUsageExcluded(false);
+        nodes.add(node);
       }
     }
-    updateImmediately();
+    updateImmediatelyNodesUpToRoot(nodes);
   }
 
   @Override
   public void excludeUsages(@NotNull Usage[] usages) {
+    List<TreeNode> nodes = new ArrayList<TreeNode>(usages.length);
     for (Usage usage : usages) {
       final UsageNode node = myUsageNodes.get(usage);
       if (node != NULL_NODE && node != null) {
         node.setUsageExcluded(true);
+        nodes.add(node);
       }
     }
-    updateImmediately();
+    updateImmediatelyNodesUpToRoot(nodes);
   }
 
   @Override
@@ -909,6 +913,24 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     checkNodeValidity((DefaultMutableTreeNode)myTree.getModel().getRoot());
     updateOnSelectionChanged();
   }
+
+  private void updateImmediatelyNodesUpToRoot(@NotNull List<TreeNode> nodes) {
+    if (myProject.isDisposed()) return;
+    TreeNode root = (TreeNode)myTree.getModel().getRoot();
+
+    for (int i=0; i<nodes.size(); i++) {
+      TreeNode node = nodes.get(i);
+      if (node instanceof Node) {
+        ((Node)node).update(this);
+        TreeNode parent = node.getParent();
+        if (parent != root && parent != null) {
+          nodes.add(parent);
+        }
+      }
+    }
+    updateImmediately();
+  }
+
 
   private void updateOnSelectionChanged() {
     List<UsageInfo> infos = getSelectedUsageInfos();

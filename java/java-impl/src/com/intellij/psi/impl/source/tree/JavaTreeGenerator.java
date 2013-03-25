@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,31 +13,24 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.psi.impl.source.tree;
 
-import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
-import com.intellij.lexer.JavaLexer;
-import com.intellij.lexer.Lexer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
-import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.*;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.parsing.ParseUtilBase;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -61,15 +54,16 @@ public class JavaTreeGenerator implements TreeGenerator {
       final String text = original.getText();
       return createLeafFromText(text, table, manager, original, ((PsiJavaToken)original).getTokenType());
     }
+
     if (original instanceof PsiModifierList) {
       final String text = original.getText();
       assert text != null : "Text is null for " + original + "; " + original.getClass();
       final LanguageLevel level = PsiUtil.getLanguageLevel(original);
       final DummyHolder holder = DummyHolderFactory.createHolder(original.getManager(), new JavaDummyElement(text, MOD_LIST, level), null);
       final TreeElement modifierListElement = holder.getTreeElement().getFirstChildNode();
-      if (CodeEditUtil.isNodeGenerated(original.getNode())) modifierListElement.acceptTree(new GeneratedMarkerVisitor());
-      return modifierListElement;
+      return markGeneratedIfNeeded(original, modifierListElement);
     }
+
     if (original instanceof PsiReferenceExpression) {
       TreeElement element = createReferenceExpression(original.getProject(), original.getText(), original);
       PsiElement refElement = ((PsiJavaCodeReferenceElement)original).resolve();
@@ -78,6 +72,7 @@ public class JavaTreeGenerator implements TreeGenerator {
       }
       return element;
     }
+
     if (original instanceof PsiJavaCodeReferenceElement) {
       PsiElement refElement = ((PsiJavaCodeReferenceElement)original).resolve();
       final boolean generated = refElement != null && CodeEditUtil.isNodeGenerated(refElement.getNode());
@@ -115,6 +110,7 @@ public class JavaTreeGenerator implements TreeGenerator {
       }
       return createReference(original.getProject(), original.getText(), generated);
     }
+
     if (original instanceof PsiCompiledElement) {
       PsiElement sourceVersion = original.getNavigationElement();
       if (sourceVersion != original) {
@@ -123,82 +119,42 @@ public class JavaTreeGenerator implements TreeGenerator {
       ASTNode mirror = SourceTreeToPsiMap.psiElementToTree(((PsiCompiledElement)original).getMirror());
       return ChangeUtil.generateTreeElement(SourceTreeToPsiMap.treeElementToPsi(mirror), table,manager);
     }
+
     if (original instanceof PsiTypeElement) {
-      final boolean generated = CodeEditUtil.isNodeGenerated(original.getNode());
       PsiTypeElement typeElement = (PsiTypeElement)original;
       PsiType type = typeElement.getType();
-      if (type instanceof PsiEllipsisType) {
-        TreeElement componentTypeCopy = ChangeUtil.generateTreeElement(
-          new LightTypeElement(original.getManager(), ((PsiEllipsisType)type).getComponentType()),
-          table,
-          manager);
-        if (componentTypeCopy == null) return null;
-        CompositeElement element = ASTFactory.composite(JavaElementType.TYPE);
-        CodeEditUtil.setNodeGenerated(element, generated);
-        element.rawAddChildren(componentTypeCopy);
-        element.rawAddChildren(createLeafFromText("...", table, manager, original, JavaTokenType.ELLIPSIS));
-        return element;
-      }
-      if (type instanceof PsiArrayType) {
-        TreeElement componentTypeCopy = ChangeUtil.generateTreeElement(
-          new LightTypeElement(original.getManager(), ((PsiArrayType)type).getComponentType()),
-          table,
-          manager);
-        if (componentTypeCopy == null) return null;
-        CompositeElement element = ASTFactory.composite(JavaElementType.TYPE);
-        CodeEditUtil.setNodeGenerated(element, generated);
-        element.rawAddChildren(componentTypeCopy);
-        element.rawAddChildren(createLeafFromText("[", table, manager, original, JavaTokenType.LBRACKET));
-        element.rawAddChildren(createLeafFromText("]", table, manager, original, JavaTokenType.RBRACKET));
-        return element;
-      }
-      if (type instanceof PsiPrimitiveType) {
-        @NonNls String text = typeElement.getText();
-        if (text.equals("null")) return null;
-        Lexer lexer = new JavaLexer(LanguageLevel.JDK_1_3);
-        lexer.start(text);
-        TreeElement keyword = ParseUtilBase.createTokenElement(lexer, table);
-        CodeEditUtil.setNodeGenerated(keyword, generated);
-        CompositeElement element = ASTFactory.composite(JavaElementType.TYPE);
-        CodeEditUtil.setNodeGenerated(element, generated);
-        element.rawAddChildren(keyword);
-        return element;
-      }
-      if (type instanceof PsiWildcardType || type instanceof PsiCapturedWildcardType || type instanceof PsiDisjunctionType) {
-        final String originalText = original.getText();
-        return createType(original.getProject(), originalText, null, generated);
-      }
+
       if (type instanceof PsiIntersectionType) {
-        LightTypeElement te = new LightTypeElement(original.getManager(), ((PsiIntersectionType)type).getRepresentative());
-        return ChangeUtil.generateTreeElement(te, table, manager);
+        type = ((PsiIntersectionType)type).getRepresentative();
       }
-      if (type instanceof PsiMethodReferenceType || type instanceof PsiLambdaExpressionType) {
+      else if (type instanceof PsiMethodReferenceType || type instanceof PsiLambdaExpressionType) {
         type = PsiType.getJavaLangObject(manager, GlobalSearchScope.projectScope(manager.getProject()));
       }
 
-      PsiClassType classType = (PsiClassType)type;
+      String text = type.getPresentableText();
+      PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(original.getProject()).getParserFacade();
+      TreeElement element = (TreeElement)parserFacade.createTypeElementFromText(text, original).getNode();
 
-      String text = classType.getPresentableText();
-      final TreeElement element = createType(original.getProject(), text, original, false);
-      PsiTypeElementImpl result = SourceTreeToPsiMap.treeToPsiNotNull(element);
-
-      CodeEditUtil.setNodeGenerated(result, generated);
-      if (generated) {
-        PsiJavaCodeReferenceElement ref = result.getInnermostComponentReferenceElement();
-        if (ref != null) ((CompositeElement)ref.getNode()).acceptTree(new GeneratedMarkerVisitor());
+      PsiTypeElementImpl result = (PsiTypeElementImpl)element.getPsi();
+      markGeneratedIfNeeded(original, result);
+      if (type instanceof PsiClassType) {
+        encodeInfoInTypeElement(result, type);
       }
-      encodeInfoInTypeElement(result, classType);
       return result;
     }
+
     return null;
   }
 
-  private static LeafElement createLeafFromText(final String text,
-                                                final CharTable table,
-                                                final PsiManager manager,
-                                                final PsiElement original,
-                                                final IElementType type) {
+  private static LeafElement createLeafFromText(String text, CharTable table, PsiManager manager, PsiElement original, IElementType type) {
     return Factory.createSingleLeafElement(type, text, 0, text.length(), table, manager, CodeEditUtil.isNodeGenerated(original.getNode()));
+  }
+
+  private static TreeElement markGeneratedIfNeeded(PsiElement original, TreeElement copy) {
+    if (CodeEditUtil.isNodeGenerated(original.getNode())) {
+      copy.acceptTree(new GeneratedMarkerVisitor());
+    }
+    return copy;
   }
 
   private static TreeElement createReference(final Project project, final String text, boolean mark) {
@@ -212,13 +168,6 @@ public class JavaTreeGenerator implements TreeGenerator {
     final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(project).getParserFacade();
     final PsiExpression expression = parserFacade.createExpressionFromText(text, context);
     return (TreeElement)expression.getNode();
-  }
-
-  private static TreeElement createType(final Project project, final String text, final PsiElement context, final boolean mark) {
-    final PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(project).getParserFacade();
-    final TreeElement element = (TreeElement)parserFacade.createTypeElementFromText(text, context).getNode();
-    if (mark) element.acceptTree(new GeneratedMarkerVisitor());
-    return element;
   }
 
   private static void encodeInfoInTypeElement(ASTNode typeElement, PsiType type) {

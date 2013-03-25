@@ -254,20 +254,7 @@ public class CompileDriver {
             return;
           }
           try {
-            final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
-            List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
-            if (paths.isEmpty()) {
-              if (!compileContext.isRebuild() && !CompileScopeUtil.allProjectModulesAffected(compileContext)) {
-                CompileScopeUtil.addScopesForModules(Arrays.asList(compileContext.getCompileScope().getAffectedModules()), scopes);
-              }
-              else {
-                scopes.addAll(CmdlineProtoUtil.createAllModulesScopes());
-              }
-              for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
-                scopes = CompileScopeUtil.mergeScopes(scopes, provider.getBuildTargetScopes(compileContext.getCompileScope(), myCompilerFilter, myProject));
-              }
-            }
-            final RequestFuture future = compileInExternalProcess(compileContext, scopes, paths, true);
+            final RequestFuture future = compileInExternalProcess(compileContext, true);
             if (future != null) {
               while (!future.waitFor(200L , TimeUnit.MILLISECONDS)) {
                 if (indicator.isCanceled()) {
@@ -474,12 +461,24 @@ public class CompileDriver {
   }
 
   @Nullable
-  private RequestFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext,
-                                                 @NotNull List<TargetTypeBuildScope> scopes,
-                                                 final @NotNull Collection<String> paths,
-                                                 final boolean onlyCheckUpToDate)
+  private RequestFuture compileInExternalProcess(final @NotNull CompileContextImpl compileContext, final boolean onlyCheckUpToDate)
     throws Exception {
     final CompileScope scope = compileContext.getCompileScope();
+    final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
+    List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
+    final boolean forceBuild = !compileContext.isMake();
+    if (!compileContext.isRebuild() && !CompileScopeUtil.allProjectModulesAffected(compileContext)) {
+      CompileScopeUtil.addScopesForModules(Arrays.asList(scope.getAffectedModules()), scopes, forceBuild);
+    }
+    else {
+      scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild));
+    }
+    if (paths.isEmpty()) {
+      for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
+        scopes = CompileScopeUtil.mergeScopes(scopes, provider.getBuildTargetScopes(scope, myCompilerFilter, myProject, forceBuild));
+      }
+    }
+
     // need to pass scope's user data to server
     final Map<String, String> builderParams;
     if (onlyCheckUpToDate) {
@@ -683,20 +682,7 @@ public class CompileDriver {
               return;
             }
 
-            final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
-            List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
-            if (paths.isEmpty()) {
-              if (!isRebuild && !CompileScopeUtil.allProjectModulesAffected(compileContext)) {
-                CompileScopeUtil.addScopesForModules(Arrays.asList(compileContext.getCompileScope().getAffectedModules()), scopes);
-              }
-              else {
-                scopes.addAll(CmdlineProtoUtil.createAllModulesScopes());
-              }
-              for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
-                scopes = CompileScopeUtil.mergeScopes(scopes, provider.getBuildTargetScopes(scope, myCompilerFilter, myProject));
-              }
-            }
-            final RequestFuture future = compileInExternalProcess(compileContext, scopes, paths, false);
+            final RequestFuture future = compileInExternalProcess(compileContext, false);
             if (future != null) {
               while (!future.waitFor(200L , TimeUnit.MILLISECONDS)) {
                 if (indicator.isCanceled()) {

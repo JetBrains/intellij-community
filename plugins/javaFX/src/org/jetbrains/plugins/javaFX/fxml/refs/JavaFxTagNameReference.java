@@ -69,9 +69,10 @@ public class JavaFxTagNameReference extends TagNameReference{
     final List<LookupElement> elements = new ArrayList<LookupElement>(variants.size());
     for (XmlElementDescriptor descriptor : variants) {
       final String descriptorName = descriptor.getName(element);
-      LOGGER.assertTrue(descriptorName != null, "Descriptor: " + descriptor + "; tag: " + xmlTag.getName());
-      LookupElementBuilder lookupElement = LookupElementBuilder.create(descriptor, descriptorName);
-      elements.add(lookupElement.withInsertHandler(JavaFxTagInsertHandler.INSTANCE));
+      if (descriptorName != null) {
+        LookupElementBuilder lookupElement = LookupElementBuilder.create(descriptor, descriptorName);
+        elements.add(lookupElement.withInsertHandler(JavaFxTagInsertHandler.INSTANCE));
+      }
     }
     return elements.toArray(new LookupElement[elements.size()]);
   }

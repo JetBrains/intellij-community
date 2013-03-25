@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,8 +20,8 @@ import com.intellij.codeInsight.completion.CompletionWeigher;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.PsiTypeLookupItem;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.light.LightElement;
-import com.intellij.psi.impl.source.tree.java.PsiAnnotationImpl;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -98,7 +98,7 @@ public class GrKindWeigher extends CompletionWeigher {
             PsiElement annoParent = annotation.getParent();
             PsiElement owner = annoParent.getParent();
             String[] elementTypeFields = GrAnnotationImpl.getApplicableElementTypeFields(annoParent instanceof PsiModifierList ? owner : annoParent);
-            if (PsiAnnotationImpl.isAnnotationApplicable(false, (PsiClass)o, elementTypeFields, position.getResolveScope())) {
+            if (PsiImplUtil.findApplicableTarget((PsiClass)o, GrAnnotationImpl.translate(elementTypeFields)) != null) {
               return NotQualifiedKind.restrictedClass;
             }
           }
@@ -149,11 +149,11 @@ public class GrKindWeigher extends CompletionWeigher {
     final PsiClass containingClass = o.getContainingClass();
     return containingClass != null && TRASH_CLASSES.contains(containingClass.getQualifiedName());
   }
-  
+
   private static boolean isAccessor(PsiMember member) {
     return member instanceof PsiMethod && (GroovyPropertyUtils.isSimplePropertyAccessor((PsiMethod)member) || "setProperty".equals(((PsiMethod)member).getName()));
   }
-  
+
 
   private static boolean isQualifierClassMember(PsiMember member, PsiElement qualifier) {
     if (!(qualifier instanceof GrExpression)) return false;

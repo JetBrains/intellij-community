@@ -45,13 +45,19 @@ class FTManager {
   public static final String CONTENT_ENCODING = CharsetToolkit.UTF8;
 
   private final String myName;
+  private final boolean myInternal;
   private final String myTemplatesDir;
   private final Map<String, FileTemplateBase> myTemplates = new HashMap<String, FileTemplateBase>();
   private volatile List<FileTemplateBase> mySortedTemplates;
   private final List<DefaultTemplate> myDefaultTemplates = new ArrayList<DefaultTemplate>();
 
   FTManager(@NotNull @NonNls String name, @NotNull @NonNls String defaultTemplatesDirName) {
+    this(name, defaultTemplatesDirName, false);
+  }
+
+  FTManager(@NotNull @NonNls String name, @NotNull @NonNls String defaultTemplatesDirName, boolean internal) {
     myName = name;
+    myInternal = internal;
     myTemplatesDir = TEMPLATES_DIR + (defaultTemplatesDirName.equals(".") ? "" : File.separator + defaultTemplatesDirName);
   }
 
@@ -176,7 +182,7 @@ class FTManager {
   }
 
   private BundledFileTemplate createAndStoreBundledTemplate(DefaultTemplate template) {
-    final BundledFileTemplate bundled = new BundledFileTemplate(template);
+    final BundledFileTemplate bundled = new BundledFileTemplate(template, myInternal);
     final String qName = bundled.getQualifiedName();
     final FileTemplateBase previous = myTemplates.put(qName, bundled);
     mySortedTemplates = null;

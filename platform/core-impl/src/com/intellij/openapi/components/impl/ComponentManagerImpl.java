@@ -426,16 +426,18 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     private final List<ComponentConfig> myComponentConfigs = new ArrayList<ComponentConfig>();
     private final List<Object> myImplementations = new ArrayList<Object>();
     private final Map<Class, ComponentConfig> myComponentClassToConfig = new THashMap<Class, ComponentConfig>();
-    private boolean myClassesLoaded = false;
+    private Throwable myClassesLoaded;
 
     private void loadClasses() {
-      assert !myClassesLoaded;
+      if (myClassesLoaded != null) {
+        LOG.error("Classes already loaded", myClassesLoaded);
+      }
 
       for (ComponentConfig config : myComponentConfigs) {
         loadClasses(config);
       }
 
-      myClassesLoaded = true;
+      myClassesLoaded = new Throwable();
     }
 
     private void loadClasses(final ComponentConfig config) {
@@ -478,12 +480,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     }
 
     private Class[] getComponentInterfaces() {
-      assert myClassesLoaded;
+      assert myClassesLoaded != null;
       return myComponentInterfaces.toArray(new Class[myComponentInterfaces.size()]);
     }
 
     private boolean containsInterface(final Class interfaceClass) {
-      if (!myClassesLoaded) loadClasses();
+      if (myClassesLoaded == null) loadClasses();
       return myInterfaceToClassMap.containsKey(interfaceClass);
     }
 
@@ -518,7 +520,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     private void registerComponent(ComponentConfig config) {
       myComponentConfigs.add(config);
 
-      if (myClassesLoaded) {
+      if (myClassesLoaded != null) {
         loadClasses(config);
       }
     }

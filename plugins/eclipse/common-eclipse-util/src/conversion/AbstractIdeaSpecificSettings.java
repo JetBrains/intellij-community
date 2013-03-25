@@ -34,8 +34,17 @@ public abstract class AbstractIdeaSpecificSettings<T, C, SdkType> {
     readLanguageLevel(root, model);
 
     setupCompilerOutputs(root, model);
-
-    updateEntries(root, model);
+    final List entriesElements = root.getChildren(IdeaXml.CONTENT_ENTRY_TAG);
+    if (!entriesElements.isEmpty()) {
+      for (Object o : entriesElements) {
+        readContentEntry((Element)o, createContentEntry(model, ((Element)o).getAttributeValue(IdeaXml.URL_ATTR)), model);
+      }
+    } else {
+      final C[] entries = getEntries(model);//todo
+      if (entries.length > 0) {
+        readContentEntry(root, entries[0], model);
+      }
+    }
 
     setupJdk(root, model, projectSdkType);
     setupLibraryRoots(root, model);
@@ -43,7 +52,15 @@ public abstract class AbstractIdeaSpecificSettings<T, C, SdkType> {
     readLibraryLevels(root, levels);
   }
 
-  public void updateEntries(Element root, T model) {
+  public void initLevels(final Element root, T model, Map<String, String> levels) throws InvalidDataException {
+    expandElement(root, model);
+    readLanguageLevel(root, model);
+    readLibraryLevels(root, levels);
+  }
+
+  public void updateEntries(Element root, T model, @Nullable SdkType projectSdkType) {
+    setupJdk(root, model, projectSdkType);
+    setupCompilerOutputs(root, model);
     final List entriesElements = root.getChildren(IdeaXml.CONTENT_ENTRY_TAG);
     if (!entriesElements.isEmpty()) {
       for (Object o : entriesElements) {

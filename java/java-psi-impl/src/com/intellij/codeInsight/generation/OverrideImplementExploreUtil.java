@@ -4,6 +4,7 @@ import com.intellij.codeInsight.MemberImplementorExplorer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.MethodSignature;
@@ -63,9 +64,9 @@ public class OverrideImplementExploreUtil {
       }
 
       Map<MethodSignature, PsiMethod> map = hisClass.isInterface() || method.hasModifierProperty(PsiModifier.ABSTRACT) ? abstracts : concretes;
-      PsiMethod other = map.get(signature);
-      if (other == null || preferLeftForImplement(method, other)) {
-        map.put(signature, method);
+      fillMap(signature, method, map);
+      if (isDefaultMethod(aClass, method)) {
+        fillMap(signature, method, concretes);
       }
     }
 
@@ -92,6 +93,18 @@ public class OverrideImplementExploreUtil {
     return result;
   }
 
+  private static boolean isDefaultMethod(PsiClass aClass, PsiMethod method) {
+    return method.hasModifierProperty(PsiModifier.DEFAULT) &&
+           PsiUtil.getLanguageLevel(aClass).isAtLeast(LanguageLevel.JDK_1_8);
+  }
+
+  private static void fillMap(HierarchicalMethodSignature signature, PsiMethod method, Map<MethodSignature, PsiMethod> map) {
+    final PsiMethod other = map.get(signature);
+    if (other == null || preferLeftForImplement(method, other)) {
+      map.put(signature, method);
+    }
+  }
+
   public static void collectMethodsToImplement(PsiClass aClass,
                                                Map<MethodSignature, PsiMethod> abstracts,
                                                Map<MethodSignature, PsiMethod> finals,
@@ -103,7 +116,8 @@ public class OverrideImplementExploreUtil {
       PsiMethod concrete = concretes.get(signature);
       if (concrete == null
           || PsiUtil.getAccessLevel(concrete.getModifierList()) < PsiUtil.getAccessLevel(abstractOne.getModifierList())
-          || !abstractOne.getContainingClass().isInterface() && abstractOne.getContainingClass().isInheritor(concrete.getContainingClass(), true)) {
+          || !abstractOne.getContainingClass().isInterface() && abstractOne.getContainingClass().isInheritor(concrete.getContainingClass(), true)
+          || isDefaultMethod(aClass, abstractOne)) {
         if (finals.get(signature) == null) {
           PsiSubstitutor subst = correctSubstitutor(abstractOne, signature.getSubstitutor());
           CandidateInfo info = new CandidateInfo(abstractOne, subst);

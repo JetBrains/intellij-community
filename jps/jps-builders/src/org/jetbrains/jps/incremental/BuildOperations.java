@@ -53,7 +53,7 @@ public class BuildOperations {
       pd.fsState.markInitialScanPerformed(target);
       configuration.save(context);
     }
-    else if (context.getScope().isRecompilationForced(target) || configuration.isTargetDirty(context) || configuration.outputRootWasDeleted(context)) {
+    else if (context.getScope().isBuildForced(target) || configuration.isTargetDirty(context) || configuration.outputRootWasDeleted(context)) {
       initTargetFSState(context, target, true);
       IncProjectBuilder.clearOutputFiles(context, target);
       pd.dataManager.cleanTargetStorages(target);
@@ -112,8 +112,7 @@ public class BuildOperations {
     if (!Utils.errorsDetected(context) && !context.getCancelStatus().isCanceled()) {
       boolean marked = dropRemovedPaths(context, chunk);
       for (BuildTarget<?> target : chunk.getTargets()) {
-        if (context.isMake() && target instanceof ModuleBuildTarget) {
-          // ensure non-incremental flag cleared
+        if (target instanceof ModuleBuildTarget) {
           context.clearNonIncrementalMark((ModuleBuildTarget)target);
         }
         final Timestamps timestamps = pd.timestamps.getStorage();

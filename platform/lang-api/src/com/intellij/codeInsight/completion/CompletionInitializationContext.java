@@ -56,12 +56,16 @@ public class CompletionInitializationContext {
     final int selectionEndOffset = selectionModel.hasSelection() ? selectionModel.getSelectionEnd() : caretOffset;
     myOffsetMap.addOffset(SELECTION_END_OFFSET, selectionEndOffset);
 
+    myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, calcDefaultIdentifierEnd(editor, selectionEndOffset));
+  }
+
+  static int calcDefaultIdentifierEnd(Editor editor, int startFrom) {
     final CharSequence text = editor.getDocument().getCharsSequence();
-    int idEnd = selectionEndOffset;
+    int idEnd = startFrom;
     while (idEnd < text.length() && Character.isJavaIdentifierPart(text.charAt(idEnd))) {
       idEnd++;
     }
-    myOffsetMap.addOffset(IDENTIFIER_END_OFFSET, idEnd);
+    return idEnd;
   }
 
   public void setDummyIdentifier(@NotNull String dummyIdentifier) {

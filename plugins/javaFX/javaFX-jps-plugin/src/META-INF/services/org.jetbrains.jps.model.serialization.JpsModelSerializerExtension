@@ -1,0 +1,2 @@
+org.jetbrains.plugins.javaFX.JpsJavaFxModelSerializerExtension
+org.jetbrains.plugins.javaFX.preloader.JpsJavaFxPreloaderModelSerializerExtension

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl;
 import com.intellij.psi.impl.source.SourceJavaCodeReference;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -27,6 +28,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -51,7 +53,7 @@ public class ReferenceAdjuster {
 
   public TreeElement process(TreeElement element, boolean addImports, boolean uncompleteCode) {
     IElementType elementType = element.getElementType();
-    if (elementType == JavaElementType.JAVA_CODE_REFERENCE || elementType == JavaElementType.REFERENCE_EXPRESSION) {
+    if ((elementType == JavaElementType.JAVA_CODE_REFERENCE || elementType == JavaElementType.REFERENCE_EXPRESSION) && !isAnnotated(element)) {
       final IElementType parentElementType = element.getTreeParent().getElementType();
       if (elementType == JavaElementType.JAVA_CODE_REFERENCE || parentElementType == JavaElementType.REFERENCE_EXPRESSION || parentElementType == JavaElementType.METHOD_REF_EXPRESSION || uncompleteCode) {
         final PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)SourceTreeToPsiMap.treeElementToPsi(element);
@@ -124,6 +126,26 @@ public class ReferenceAdjuster {
     }
 
     return element;
+  }
+
+  private static boolean isAnnotated(TreeElement element) {
+    PsiJavaCodeReferenceElement ref = (PsiJavaCodeReferenceElement)element.getPsi();
+
+    PsiElement qualifier = ref.getQualifier();
+    if (qualifier instanceof PsiJavaCodeReferenceElement && PsiTreeUtil.getChildOfType(qualifier, PsiAnnotation.class) != null) {
+      return true;
+    }
+
+    PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(ref);
+    if (modifierList != null) {
+      for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+        if (PsiImplUtil.findApplicableTarget(annotation, PsiAnnotation.TargetType.TYPE_USE) != null) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   private boolean makeFQ(boolean isInsideDocComment) {

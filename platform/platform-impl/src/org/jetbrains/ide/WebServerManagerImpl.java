@@ -16,17 +16,18 @@ import com.intellij.openapi.util.Disposer;
 import org.jboss.netty.channel.ChannelException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 import org.jetbrains.io.WebServer;
 
 import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 import java.util.concurrent.atomic.AtomicBoolean;
 
-class WebServerManagerImpl extends WebServerManager {
+public class WebServerManagerImpl extends WebServerManager {
   private static final Logger LOG = Logger.getInstance(WebServerManager.class);
 
   @NonNls
-  private static final String PROPERTY_RPC_PORT = "rpc.port";
+  public static final String PROPERTY_RPC_PORT = "rpc.port";
   private static final int FIRST_PORT_NUMBER = 63342;
   private static final int PORTS_COUNT = 20;
 
@@ -35,6 +36,7 @@ class WebServerManagerImpl extends WebServerManager {
 
   @Nullable
   private WebServer server;
+  private boolean myEnabledInUnitTestMode;
 
   public int getPort() {
     return detectedPortNumber == -1 ? getDefaultPort() : detectedPortNumber;
@@ -82,7 +84,7 @@ class WebServerManagerImpl extends WebServerManager {
     }
 
     Application application = ApplicationManager.getApplication();
-    if (application.isUnitTestMode()) {
+    if (application.isUnitTestMode() && !myEnabledInUnitTestMode) {
       return null;
     }
 
@@ -120,4 +122,13 @@ class WebServerManagerImpl extends WebServerManager {
   public Disposable getServerDisposable() {
     return server;
   }
+
+  /**
+   * Pass true to start the WebServerManager even in the {@link Application#isUnitTestMode() unit test mode}.
+   */
+  @TestOnly
+  public void setEnabledInUnitTestMode(boolean enabled) {
+    myEnabledInUnitTestMode = enabled;
+  }
+
 }

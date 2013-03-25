@@ -40,9 +40,14 @@ import com.intellij.psi.search.NonClasspathDirectoryScope;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.execution.GradleTaskLocation;
+import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
+import org.jetbrains.plugins.gradle.tasks.GradleTasksList;
+import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -61,6 +66,8 @@ import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -84,24 +91,38 @@ public class GradleScriptType extends GroovyScriptType {
   }
 
   @Override
-   public boolean isConfigurationByLocation(@NotNull GroovyScriptRunConfiguration existing, @NotNull Location location) {
+  public boolean isConfigurationByLocation(@NotNull GroovyScriptRunConfiguration existing, @NotNull Location location) {
     final String params = existing.getScriptParameters();
-    final String s = getTaskTarget(location);
-    return s != null && params != null && (params.startsWith(s + " ") || params.equals(s));
+    if (params == null) {
+      return false;
+    }
+    
+    final List<String> tasks = getTasksTarget(location);
+    if (tasks == null) {
+      return false;
+    }
+
+    String s = StringUtil.join(tasks, " ");
+    return params.startsWith(s + " ") || params.equals(s);
   }
 
   @Override
   public void tuneConfiguration(@NotNull GroovyFile file, @NotNull GroovyScriptRunConfiguration configuration, Location location) {
-    String target = getTaskTarget(location);
-    if (target != null) {
-      configuration.setScriptParameters(target);
-      configuration.setName(configuration.getName() + "." + target);
+    List<String> tasks = getTasksTarget(location);
+    if (tasks != null) {
+      String s = StringUtil.join(tasks, " ");
+      configuration.setScriptParameters(s);
+      configuration.setName("gradle:" + s);
     }
     RunManagerEx.disableTasks(file.getProject(), configuration, CompileStepBeforeRun.ID, CompileStepBeforeRunNoErrorCheck.ID);
   }
 
   @Nullable
-  private static String getTaskTarget(Location location) {
+  private static List<String> getTasksTarget(Location location) {
+    if (location instanceof GradleTaskLocation) {
+      return ((GradleTaskLocation)location).getTasks();
+    }
+
     PsiElement parent = location.getPsiElement();
     while (parent.getParent() != null && !(parent.getParent() instanceof PsiFile)) {
       parent = parent.getParent();
@@ -110,7 +131,7 @@ public class GradleScriptType extends GroovyScriptType {
     if (isCreateTaskMethod(parent)) {
       final GrExpression[] arguments = ((GrMethodCallExpression)parent).getExpressionArguments();
       if (arguments.length > 0 && arguments[0] instanceof GrLiteral && ((GrLiteral)arguments[0]).getValue() instanceof String) {
-        return (String)((GrLiteral)arguments[0]).getValue();
+        return Collections.singletonList((String)((GrLiteral)arguments[0]).getValue());
       }
     }
     else if (parent instanceof GrApplicationStatement) {
@@ -118,17 +139,17 @@ public class GradleScriptType extends GroovyScriptType {
       if (shiftExpression instanceof GrShiftExpressionImpl) {
         PsiElement shiftiesChild = shiftExpression.getChildren()[0];
         if (shiftiesChild instanceof GrReferenceExpression) {
-          return shiftiesChild.getText();
+          return Collections.singletonList(shiftiesChild.getText());
         }
         else if (shiftiesChild instanceof GrMethodCallExpression) {
-          return shiftiesChild.getChildren()[0].getText();
+          return Collections.singletonList(shiftiesChild.getChildren()[0].getText());
         }
       }
       else if (shiftExpression instanceof GrMethodCallExpression) {
-        return shiftExpression.getChildren()[0].getText();
+        return Collections.singletonList(shiftExpression.getChildren()[0].getText());
       }
     }
-    
+
     return null;
   }
 
@@ -152,6 +173,19 @@ public class GradleScriptType extends GroovyScriptType {
 
       @Override
       public boolean ensureRunnerConfigured(@Nullable Module module, RunProfile profile, Executor executor, final Project project) throws ExecutionException {
+        if (project != null && profile instanceof GroovyScriptRunConfiguration) {
+          GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)profile;
+          String parameters = configuration.getScriptParameters();
+          if (parameters != null) {
+            GradleTasksList list = GradleUtil.getToolWindowElement(GradleTasksList.class, project, GradleDataKeys.RECENT_TASKS_LIST);
+            if (list != null) {
+              GradleTaskDescriptor descriptor = new GradleTaskDescriptor(parameters, null);
+              descriptor.setExecutorId(executor.getId());
+              list.setFirst(descriptor);
+              GradleLocalSettings.getInstance(project).setRecentTasks(list.getModel().getTasks());
+            }
+          }
+        }
         final GradleInstallationManager libraryManager = ServiceManager.getService(GradleInstallationManager.class);
         if (libraryManager.getGradleHome(module, project) == null) {
           int result = Messages.showOkCancelDialog(
@@ -177,6 +211,8 @@ public class GradleScriptType extends GroovyScriptType {
         throws CantRunException
       {
         final Project project = configuration.getProject();
+        String scriptParameters = configuration.getScriptParameters();
+
         final GradleInstallationManager libraryManager = ServiceManager.getService(GradleInstallationManager.class);
         final VirtualFile gradleHome = libraryManager.getGradleHome(module, project);
         assert gradleHome != null;
@@ -217,7 +253,7 @@ public class GradleScriptType extends GroovyScriptType {
         params.getProgramParametersList().add("--build-file");
         params.getProgramParametersList().add(FileUtil.toSystemDependentName(scriptPath));
         params.getProgramParametersList().addParametersString(configuration.getProgramParameters());
-        params.getProgramParametersList().addParametersString(configuration.getScriptParameters());
+        params.getProgramParametersList().addParametersString(scriptParameters);
       }
     };
   }
