@@ -98,8 +98,8 @@ public class AddFieldQuickFix implements LocalQuickFix {
   }
 
   @Nullable
-  public static PsiElement addFieldToInit(Project project, PyClass cls, String item_name, Function<String, PyStatement> callback) {
-    if (cls != null && item_name != null) {
+  public static PsiElement addFieldToInit(Project project, PyClass cls, String itemName, Function<String, PyStatement> callback) {
+    if (cls != null && itemName != null) {
       PyFunction init = cls.findMethodByName(PyNames.INIT, false);
       if (init != null) {
         return appendToMethod(init, callback);
@@ -109,21 +109,23 @@ public class AddFieldQuickFix implements LocalQuickFix {
           init = ancestor.findMethodByName(PyNames.INIT, false);
           if (init != null) break;
         }
-        PyFunction new_init = createInitMethod(project, cls, init);
-        if (new_init == null) {
+        PyFunction newInit = createInitMethod(project, cls, init);
+        if (newInit == null) {
           return null;
         }
 
-        appendToMethod(new_init, callback);
+        appendToMethod(newInit, callback);
 
-        PsiElement add_anchor = null;
+        PsiElement addAnchor = null;
         PyFunction[] meths = cls.getMethods();
-        if (meths.length > 0) add_anchor = meths[0].getPrevSibling();
-        PyStatementList cls_content = cls.getStatementList();
-        new_init = (PyFunction) cls_content.addAfter(new_init, add_anchor);
+        if (meths.length > 0) addAnchor = meths[0].getPrevSibling();
+        PyStatementList clsContent = cls.getStatementList();
+        newInit = (PyFunction) clsContent.addAfter(newInit, addAnchor);
 
-        PyUtil.showBalloon(project, PyBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), item_name), MessageType.INFO);
-        return new_init.getStatementList().getStatements()[0];
+        PyUtil.showBalloon(project, PyBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), itemName), MessageType.INFO);
+        final PyStatementList statementList = newInit.getStatementList();
+        assert statementList != null;
+        return statementList.getStatements()[0];
         //else  // well, that can't be
       }
     }
