@@ -26,6 +26,7 @@ import javax.tools.*;
 import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
+import java.lang.reflect.Method;
 import java.util.*;
 
 /**
@@ -284,18 +285,28 @@ public class JavacMain {
 
   private static boolean ourCleanupFailed = false;
   private static final class NameTableCleanupDataHolder {
-    static final com.sun.tools.javac.util.List emptyList = com.sun.tools.javac.util.List.nil();
+    static final Object emptyList;
     static final Field freelistField;
+
     static {
       try {
+        final ClassLoader loader = ToolProvider.getSystemToolClassLoader();
+        if (loader == null) {
+          throw new RuntimeException("no tools provided");
+        }
+        
+        final Class<?> listClass = Class.forName("com.sun.tools.javac.util.List", true, loader);
+        final Method nilMethod = listClass.getDeclaredMethod("nil");
+        emptyList = nilMethod.invoke(null);
+
         Field freelistRef;
         try {
           // trying jdk 6
-          freelistRef = Class.forName("com.sun.tools.javac.util.Name$Table").getDeclaredField("freelist");
+          freelistRef = Class.forName("com.sun.tools.javac.util.Name$Table", true, loader).getDeclaredField("freelist");
         }
         catch (Exception e) {
           // trying jdk 7
-          freelistRef = Class.forName("com.sun.tools.javac.util.SharedNameTable").getDeclaredField("freelist");
+          freelistRef = Class.forName("com.sun.tools.javac.util.SharedNameTable", true, loader).getDeclaredField("freelist");
         }
         freelistRef.setAccessible(true);
         freelistField = freelistRef;
