@@ -466,14 +466,14 @@ public class CompileDriver {
     final CompileScope scope = compileContext.getCompileScope();
     final Collection<String> paths = CompileScopeUtil.fetchFiles(compileContext);
     List<TargetTypeBuildScope> scopes = new ArrayList<TargetTypeBuildScope>();
+    final boolean forceBuild = !compileContext.isMake();
+    if (!compileContext.isRebuild() && !CompileScopeUtil.allProjectModulesAffected(compileContext)) {
+      CompileScopeUtil.addScopesForModules(Arrays.asList(scope.getAffectedModules()), scopes, forceBuild);
+    }
+    else {
+      scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild));
+    }
     if (paths.isEmpty()) {
-      boolean forceBuild = !compileContext.isMake();
-      if (!compileContext.isRebuild() && !CompileScopeUtil.allProjectModulesAffected(compileContext)) {
-        CompileScopeUtil.addScopesForModules(Arrays.asList(scope.getAffectedModules()), scopes, forceBuild);
-      }
-      else {
-        scopes.addAll(CmdlineProtoUtil.createAllModulesScopes(forceBuild));
-      }
       for (BuildTargetScopeProvider provider : BuildTargetScopeProvider.EP_NAME.getExtensions()) {
         scopes = CompileScopeUtil.mergeScopes(scopes, provider.getBuildTargetScopes(scope, myCompilerFilter, myProject, forceBuild));
       }
