@@ -409,7 +409,7 @@
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>
-      <className>com.siyeh.ipp.exceptions.SplitMulticatchIntention</className>
+      <className>com.siyeh.ipp.exceptions.SplitMultiCatchIntention</className>
       <categoryKey>intention.category.other</categoryKey>
     </intentionAction>
     <intentionAction>

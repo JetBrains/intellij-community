@@ -23,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
 
-public class SplitMulticatchIntention extends Intention {
+public class SplitMultiCatchIntention extends Intention {
 
   @NotNull
   @Override
