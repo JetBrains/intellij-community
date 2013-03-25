@@ -78,14 +78,9 @@ public class URIReferenceProvider extends PsiReferenceProvider {
     }
 
     @Nullable
-    public PsiFile resolveResource() {
-      final String canonicalText = getCanonicalText();
-      return ExternalResourceManager.getInstance().getResourceLocation(canonicalText, myElement.getContainingFile(), null);
-    }
-
-    @Nullable
     public PsiElement resolve() {
-      final PsiFile file = resolveResource();
+      final String canonicalText = getCanonicalText();
+      final PsiFile file = ExternalResourceManager.getInstance().getResourceLocation(canonicalText, myElement.getContainingFile(), null);
       if (file != null) return file;
       return myReference.resolve();
     }
