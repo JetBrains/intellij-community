@@ -72,6 +72,10 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         final JavaFxPropertyElementDescriptor defaultPropertyDescriptor = getDefaultPropertyDescriptor();
         if (defaultPropertyDescriptor != null) {
           Collections.addAll(children, defaultPropertyDescriptor.getElementsDescriptors(context));
+        } else {
+          for (String name : FxmlConstants.FX_DEFAULT_ELEMENTS) {
+            children.add(new JavaFxDefaultPropertyElementDescriptor(name, null));
+          }
         }
 
         collectStaticElementDescriptors(context, children);
@@ -79,10 +83,6 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         final PsiType returnType = JavaFxPsiUtil.getDefaultPropertyExpectedType(myPsiClass);
         if (returnType != null) {
           JavaFxPropertyElementDescriptor.collectDescriptorsByCollection(returnType, myPsiClass.getResolveScope(), children, myPsiClass.getProject());
-        }
-
-        for (String name : FxmlConstants.FX_DEFAULT_ELEMENTS) {
-          children.add(new JavaFxDefaultPropertyElementDescriptor(name, null));
         }
 
         if (!children.isEmpty()) {
