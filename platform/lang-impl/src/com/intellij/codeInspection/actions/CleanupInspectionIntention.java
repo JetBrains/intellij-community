@@ -16,6 +16,7 @@
 
 package com.intellij.codeInspection.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -30,6 +31,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -77,9 +79,11 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
         return d2.getTextRange().getStartOffset() - d1.getTextRange().getStartOffset();
       }
     });
+    boolean fixesWereAvailable = false;
     for (CommonProblemDescriptor descriptor : descriptions) {
       final QuickFix[] fixes = descriptor.getFixes();
       if (fixes != null && fixes.length > 0) {
+        fixesWereAvailable = true;
         for (QuickFix<CommonProblemDescriptor> fix : fixes) {
           if (fix != null && fix.getClass().isAssignableFrom(myQuickfixClass)) {
             final PsiElement element = ((ProblemDescriptor)descriptor).getPsiElement();
@@ -91,6 +95,9 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
           }
         }
       }
+    }
+    if (!fixesWereAvailable) {
+      CommonRefactoringUtil.showErrorHint(project, editor, "No fixes are available in batch mode", CommonBundle.getWarningTitle(), null);
     }
   }
 
