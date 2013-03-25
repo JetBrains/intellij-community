@@ -51,11 +51,12 @@ public class PyPathEvaluator {
         if (argValue == null) {
           return null;
         }
-        if (FileUtil.isAbsolute(argValue)) {
+        if (FileUtil.isAbsolutePlatformIndependent(argValue)) {
           return argValue;
         }
         else {
-          return new File(new File(containingFilePath).getParent(), argValue).getPath();
+          String path = new File(new File(containingFilePath).getParent(), argValue).getPath();
+          return path.replace("\\", "/");
         }
       }
       else if (call.isCalleeText(PyNames.REPLACE) && args.length == 2) {
@@ -98,13 +99,18 @@ public class PyPathEvaluator {
   }
 
   public static String evaluatePathInJoin(String containingFilePath, PyExpression[] args, int endElement, Set<PyExpression> visited) {
-    String result = containingFilePath;
+    String result = null;
     for (int i = 0; i < endElement; i++) {
-      String arg = evaluate(args[i], result, visited);
+      String arg = evaluate(args[i], containingFilePath, visited);
       if (arg == null) {
         return null;
       }
-      result = arg;
+      if (result == null) {
+        result = arg;
+      }
+      else {
+        result = new File(result, arg).getPath().replace("\\", "/");
+      }
     }
     return result;
   }

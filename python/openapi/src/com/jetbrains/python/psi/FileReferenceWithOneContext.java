@@ -17,11 +17,15 @@ package com.jetbrains.python.psi;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
+import com.intellij.psi.impl.source.resolve.reference.impl.CachingReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceHelper;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -45,5 +49,16 @@ public class FileReferenceWithOneContext extends FileReference {
   @Override
   protected Collection<PsiFileSystemItem> getContextsForBindToElement(VirtualFile curVFile, Project project, FileReferenceHelper helper) {
     return getContexts();
+  }
+
+  @Override
+  protected PsiElement rename(final String newName) throws IncorrectOperationException {
+    if (FileUtil.isAbsolutePlatformIndependent(newName)) {
+      return super.rename(newName);
+    }
+    else {
+      PsiElement element = getElement();
+      return CachingReference.getManipulator(element).handleContentChange(element, getRangeInElement(), newName);
+    }
   }
 }
