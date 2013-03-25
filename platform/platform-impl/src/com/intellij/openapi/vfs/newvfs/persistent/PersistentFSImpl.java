@@ -884,7 +884,8 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
 
   @NotNull
   private static String normalizeRootUrl(@NotNull String basePath, @NotNull NewVirtualFileSystem fs) {
-    String url = fs.getProtocol() + "://" + VfsImplUtil.normalize(fs, basePath);
+    // need to protect against relative path of the form "/x/../y"
+    String url = fs.getProtocol() + "://" + VfsImplUtil.normalize(fs, FileUtil.toCanonicalPath(basePath));
     return StringUtil.trimEnd(url, "/");
   }
 

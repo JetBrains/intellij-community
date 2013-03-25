@@ -19,6 +19,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.IoTestUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
@@ -59,6 +60,8 @@ public class PersistentFSTest extends PlatformTestCase {
     assertNotNull(fakeRoot);
     int users = fs.getId(fakeRoot, "Users", LocalFileSystem.getInstance());
     assertEquals(0, users);
+    users = fs.getId(fakeRoot, "usr", LocalFileSystem.getInstance());
+    assertEquals(0, users);
     int win = fs.getId(fakeRoot, "Windows", LocalFileSystem.getInstance());
     assertEquals(0, win);
 
@@ -76,6 +79,24 @@ public class PersistentFSTest extends PlatformTestCase {
     assertNull(c);
     c = fakeRoot.refreshAndFindChild("Windows");
     assertNull(c);
+  }
+
+  public void testFindRootShouldNotBeFooledByRelativePath() throws IOException {
+    File tmp = createTempDirectory();
+    File x = new File(tmp, "x.jar");
+    x.createNewFile();
+    LocalFileSystem lfs = LocalFileSystem.getInstance();
+    VirtualFile vx = lfs.refreshAndFindFileByIoFile(x);
+    assertNotNull(vx);
+    JarFileSystem jfs = JarFileSystem.getInstance();
+    VirtualFile root = jfs.getJarRootForLocalFile(vx);
+
+    PersistentFS fs = PersistentFS.getInstance();
+
+    String path = vx.getPath() + "/../" + vx.getName() + JarFileSystem.JAR_SEPARATOR;
+    NewVirtualFile root1 = fs.findRoot(path, jfs);
+
+    assertSame(root1, root);
   }
 
   public void testDeleteSubstRoots() throws IOException, InterruptedException {
