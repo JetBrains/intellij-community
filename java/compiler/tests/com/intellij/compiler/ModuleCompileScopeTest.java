@@ -1,6 +1,7 @@
 package com.intellij.compiler;
 
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 
@@ -23,6 +24,23 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     assertOutput(module, fs().file("A.class"));
     make(module);
     assertOutput(module, fs().file("A.class").file("B.class"));
+    assertModulesUpToDate();
+  }
+
+  public void testForceCompileUpToDateFile() {
+    VirtualFile a = createFile("src/A.java", "class A{}");
+    Module module = addModule("a", a.getParent());
+    make(module);
+    assertOutput(module, fs().file("A.class"));
+    final VirtualFile output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module));
+    assertNotNull(output);
+    final VirtualFile classFile = output.findChild("A.class");
+    assertNotNull(classFile);
+    deleteFile(classFile);
+    make(module);
+    assertOutput(module, fs());
+    compile(true, a);
+    assertOutput(module, fs().file("A.class"));
     assertModulesUpToDate();
   }
 
