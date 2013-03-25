@@ -52,6 +52,13 @@ public class HighlightNamesUtil {
                                                   final PsiElement elementToHighlight,
                                                   final boolean isDeclaration,
                                                   @NotNull EditorColorsScheme colorsScheme) {
+    return highlightMethodName(method, elementToHighlight, elementToHighlight.getTextRange(), colorsScheme, isDeclaration);
+  }
+
+  @Nullable
+  public static HighlightInfo highlightMethodName(@NotNull PsiMethod method,
+                                                  final PsiElement elementToHighlight,
+                                                  TextRange range, @NotNull EditorColorsScheme colorsScheme, final boolean isDeclaration) {
     boolean isInherited = false;
 
     if (!isDeclaration) {
@@ -64,7 +71,7 @@ public class HighlightNamesUtil {
     HighlightInfoType type = getMethodNameHighlightType(method, isDeclaration, isInherited);
     if (type != null && elementToHighlight != null) {
       TextAttributes attributes = mergeWithScopeAttributes(method, type, colorsScheme);
-      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(elementToHighlight.getTextRange());
+      HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(type).range(range);
       if (attributes != null) {
         builder.textAttributes(attributes);
       }
