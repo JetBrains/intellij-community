@@ -45,6 +45,7 @@ import com.intellij.psi.impl.cache.CacheUtil;
 import com.intellij.psi.impl.file.PsiFileImplUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.resolve.FileContextUtil;
+import com.intellij.psi.impl.source.text.BlockSupportImpl;
 import com.intellij.psi.impl.source.tree.*;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -422,7 +423,7 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
     if (providerCopy == null) {
       throw new AssertionError("Unable to clone the view provider: " + viewProvider + "; " + language);
     }
-    PsiFileImpl clone = (PsiFileImpl)providerCopy.getPsi(language);
+    PsiFileImpl clone = BlockSupportImpl.getFileCopy(this, providerCopy);
     if (clone == null) {
       throw new AssertionError("Cannot find psi file with: " + language + "." +
                                " Original viewprovider: " + viewProvider +
