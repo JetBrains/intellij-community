@@ -179,7 +179,7 @@ public class PsiImmediateClassType extends PsiClassType {
     }
 
     if (canonical == internal) {
-      buffer.append(getAnnotationsTextPrefix());
+      buffer.append(getAnnotationsTextPrefix(internal, false, true));
     }
 
     PsiClass enclosingClass = null;
