@@ -20,6 +20,7 @@ import com.siyeh.ipp.IPPTestCase;
 
 public class SplitMultiCatchIntentionTest extends IPPTestCase {
   public void testSimple() { doTest(); }
+  public void testTypeAnno() { doTest(); }
 
   @Override
   protected String getIntentionName() {
