@@ -1,5 +1,26 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <root>
+  <item name="java.io.DataInput java.lang.String readUTF()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.DataInput void readFully(byte[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.DataInput void readFully(byte[], int, int) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.DataInputStream DataInputStream(java.io.InputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.DataInputStream int read(byte[]) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.DataInputStream java.lang.String readUTF()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.DataInputStream java.lang.String readUTF(java.io.DataInput)">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
   <item name="java.io.File File(java.io.File, java.lang.String) 1">
     <annotation name="org.jetbrains.annotations.NonNls" />
     <annotation name="org.jetbrains.annotations.NotNull" />
@@ -60,6 +81,12 @@
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.io.File java.nio.file.Path toPath()">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.FilterInputStream FilterInputStream(java.io.InputStream) 0">
+    <annotation name="org.jetbrains.annotations.NotNull" />
+  </item>
+  <item name="java.io.InputStream int read(byte[], int, int) 0">
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.io.RandomAccessFile RandomAccessFile(java.io.File, java.lang.String) 1">
