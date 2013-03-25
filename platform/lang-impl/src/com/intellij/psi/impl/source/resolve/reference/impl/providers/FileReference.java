@@ -530,7 +530,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
 
   /**
    * TODO: This should be fixed: bindToElement takes contexts from FileReferenceHelper.getContexts() while for resolve they are taken from
-   * FileReference.getContexts()
+   * FileReference.getContexts(). Note that in this case it should rename only the text range of the reference
    */
   protected Collection<PsiFileSystemItem> getContextsForBindToElement(VirtualFile curVFile, Project project, FileReferenceHelper helper) {
     return helper.getContexts(project, curVFile);
