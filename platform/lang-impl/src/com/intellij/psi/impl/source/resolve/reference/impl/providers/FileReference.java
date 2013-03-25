@@ -64,11 +64,12 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
                                       EmptyResolveMessageProvider, BindablePsiReference {
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReference");
-  
+
   public static final FileReference[] EMPTY = new FileReference[0];
 
   private static final TObjectHashingStrategy<PsiElement> VARIANTS_HASHING_STRATEGY = new TObjectHashingStrategy<PsiElement>() {
     @Override
+
     public int computeHashCode(final PsiElement object) {
       if (object instanceof PsiNamedElement) {
         final String name = ((PsiNamedElement)object).getName();
@@ -117,7 +118,8 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
         }
       }
       result.addAll(defaultContexts);
-    } else {
+    }
+    else {
       ResolveResult[] resolveResults = contextRef.multiResolve(false);
       for (ResolveResult resolveResult : resolveResults) {
         if (resolveResult.getElement() != null) {
@@ -135,7 +137,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   @NotNull
   public ResolveResult[] multiResolve(final boolean incompleteCode) {
     PsiFile file = getElement().getContainingFile();
-    return ResolveCache.getInstance(file.getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false,file);
+    return ResolveCache.getInstance(file.getProject()).resolveWithCaching(this, MyResolver.INSTANCE, false, false, file);
   }
 
   protected ResolveResult[] innerResolve() {
@@ -146,7 +148,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   protected ResolveResult[] innerResolve(boolean caseSensitive) {
     final String referenceText = getText();
     if (referenceText.isEmpty() && myIndex == 0) {
-      return new ResolveResult[] { new PsiElementResolveResult(getElement().getContainingFile())};
+      return new ResolveResult[]{new PsiElementResolveResult(getElement().getContainingFile())};
     }
     final Collection<PsiFileSystemItem> contexts = getContexts();
     final Collection<ResolveResult> result = new THashSet<ResolveResult>();
@@ -162,7 +164,9 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return resultCount > 0 ? result.toArray(new ResolveResult[resultCount]) : ResolveResult.EMPTY_ARRAY;
   }
 
-  protected void innerResolveInContext(@NotNull final String text, @NotNull final PsiFileSystemItem context, final Collection<ResolveResult> result,
+  protected void innerResolveInContext(@NotNull final String text,
+                                       @NotNull final PsiFileSystemItem context,
+                                       final Collection<ResolveResult> result,
                                        final boolean caseSensitive) {
     if (isAllowedEmptyPath(text) || ".".equals(text) || "/".equals(text)) {
       result.add(new PsiElementResolveResult(context));
@@ -226,7 +230,9 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     return getCanonicalText();
   }
 
-  public @Nullable String getNewFileTemplateName() {
+  public
+  @Nullable
+  String getNewFileTemplateName() {
     return null;
   }
 
@@ -238,7 +244,7 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   private boolean isAllowedEmptyPath(String text) {
     return text.isEmpty() && isLast() &&
            (StringUtil.isEmpty(myFileReferenceSet.getPathString()) && myFileReferenceSet.isEmptyPathAllowed() ||
-           !myFileReferenceSet.isEndingSlashNotAllowed() && myIndex > 0);
+            !myFileReferenceSet.isEndingSlashNotAllowed() && myIndex > 0);
   }
 
   @Nullable
@@ -269,11 +275,13 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
       return ArrayUtil.EMPTY_OBJECT_ARRAY;
     }
 
-    final CommonProcessors.CollectUniquesProcessor<PsiFileSystemItem> collector = new CommonProcessors.CollectUniquesProcessor<PsiFileSystemItem>();
+    final CommonProcessors.CollectUniquesProcessor<PsiFileSystemItem> collector =
+      new CommonProcessors.CollectUniquesProcessor<PsiFileSystemItem>();
     final PsiElementProcessor<PsiFileSystemItem> processor = new PsiElementProcessor<PsiFileSystemItem>() {
       @Override
       public boolean execute(@NotNull PsiFileSystemItem fileSystemItem) {
-        return new FilteringProcessor<PsiFileSystemItem>(myFileReferenceSet.getReferenceCompletionFilter(), collector).process(getOriginalFile(fileSystemItem));
+        return new FilteringProcessor<PsiFileSystemItem>(myFileReferenceSet.getReferenceCompletionFilter(), collector).process(
+          getOriginalFile(fileSystemItem));
       }
     };
     for (PsiFileSystemItem context : getContexts()) {
@@ -414,7 +422,9 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   }
 
   public PsiElement bindToElement(@NotNull final PsiElement element, final boolean absolute) throws IncorrectOperationException {
-    if (!(element instanceof PsiFileSystemItem)) throw new IncorrectOperationException("Cannot bind to element, should be instanceof PsiFileSystemItem: " + element);
+    if (!(element instanceof PsiFileSystemItem)) {
+      throw new IncorrectOperationException("Cannot bind to element, should be instanceof PsiFileSystemItem: " + element);
+    }
 
     // handle empty reference that resolves to current file
     if (getCanonicalText().isEmpty() && element == getElement().getContainingFile()) return getElement();
@@ -468,13 +478,12 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
         return getElement();
       }
       newName = myFileReferenceSet.getNewAbsolutePath(root, relativePath);
+    }
+    else { // relative path
 
-    } else { // relative path
-      PsiFileSystemItem curItem = null;
-      PsiFileSystemItem dstItem = null;
       final FileReferenceHelper helper = FileReferenceHelperRegistrar.getNotNullHelper(file);
 
-      final Collection<PsiFileSystemItem> contexts = helper.getContexts(project, curVFile);
+      final Collection<PsiFileSystemItem> contexts = getContextsForBindToElement(curVFile, project, helper);
       switch (contexts.size()) {
         case 0:
           break;
@@ -489,20 +498,16 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
               }
             }
           }
-        case 1:
-          PsiFileSystemItem _dstItem = helper.getPsiFileSystemItem(project, dstVFile);
-          PsiFileSystemItem _curItem = helper.getPsiFileSystemItem(project, curVFile);
-          if (_dstItem != null && _curItem != null) {
-            curItem = _curItem;
-            dstItem = _dstItem;
-            break;
-          }
       }
+
+      PsiFileSystemItem dstItem = helper.getPsiFileSystemItem(project, dstVFile);
+      PsiFileSystemItem curItem = helper.getPsiFileSystemItem(project, curVFile);
+
       if (curItem == null) {
         throw new IncorrectOperationException("Cannot find path between files; " +
                                               "src = " + curVFile.getPresentableUrl() + "; " +
                                               "dst = " + dstVFile.getPresentableUrl() + "; " +
-        "Contexts: " + contexts);
+                                              "Contexts: " + contexts);
       }
       if (curItem.equals(dstItem)) {
         if (getCanonicalText().equals(dstItem.getName())) {
@@ -521,6 +526,14 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
     }
 
     return rename(newName);
+  }
+
+  /**
+   * TODO: This should be fixed: bindToElement takes contexts from FileReferenceHelper.getContexts() while for resolve they are taken from
+   * FileReference.getContexts()
+   */
+  protected Collection<PsiFileSystemItem> getContextsForBindToElement(VirtualFile curVFile, Project project, FileReferenceHelper helper) {
+    return helper.getContexts(project, curVFile);
   }
 
   protected PsiElement fixRefText(String name) {
