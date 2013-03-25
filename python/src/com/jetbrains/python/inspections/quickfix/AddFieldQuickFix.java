@@ -14,6 +14,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
+import com.jetbrains.python.psi.types.PyClassType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,19 +25,19 @@ import org.jetbrains.annotations.Nullable;
  */
 public class AddFieldQuickFix implements LocalQuickFix {
 
-  private PyClass myQualifierClass;
+  private PyClassType myQualifierType;
   private final String myInitializer;
   private String myIdentifier;
 
-  public AddFieldQuickFix(String identifier, PyClass qualifierClass, String initializer) {
+  public AddFieldQuickFix(String identifier, PyClassType qualifierType, String initializer) {
     myIdentifier = identifier;
-    myQualifierClass = qualifierClass;
+    myQualifierType = qualifierType;
     myInitializer = initializer;
   }
 
   @NotNull
   public String getName() {
-    return PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", myIdentifier, myQualifierClass.getName());
+    return PyBundle.message("QFIX.NAME.add.field.$0.to.class.$1", myIdentifier, myQualifierType.getName());
   }
 
   @NotNull
@@ -66,14 +67,19 @@ public class AddFieldQuickFix implements LocalQuickFix {
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     // expect the descriptor to point to the unresolved identifier.
-    PyClass cls = myQualifierClass;
-    String item_name = myIdentifier;
-    if (cls != null) {
-      PsiElement initStatement = addFieldToInit(project, cls, item_name, new CreateFieldCallback(project, item_name, myInitializer));
-      if (initStatement != null) {
-        showTemplateBuilder(initStatement);
-        return;
-      }
+    PyClass cls = myQualifierType.getPyClass();
+    PsiElement initStatement;
+    if (!myQualifierType.isDefinition()) {
+      initStatement = addFieldToInit(project, cls, myIdentifier, new CreateFieldCallback(project, myIdentifier, myInitializer));
+    }
+    else {
+      PyStatement field = PyElementGenerator.getInstance(project)
+        .createFromText(LanguageLevel.getDefault(), PyStatement.class, myIdentifier + " = " + myInitializer);
+      initStatement = PyUtil.addElementToStatementList(field, cls.getStatementList(), true);
+    }
+    if (initStatement != null) {
+      showTemplateBuilder(initStatement);
+      return;
     }
     // somehow we failed. tell about this
     PyUtil.showBalloon(project, PyBundle.message("QFIX.failed.to.add.field"), MessageType.ERROR);
@@ -83,14 +89,17 @@ public class AddFieldQuickFix implements LocalQuickFix {
     initStatement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(initStatement);
     if (initStatement instanceof PyAssignmentStatement) {
       final TemplateBuilder builder = TemplateBuilderFactory.getInstance().createTemplateBuilder(initStatement);
-      builder.replaceElement(((PyAssignmentStatement) initStatement).getAssignedValue(), myInitializer);
-      builder.run();
+      final PyExpression assignedValue = ((PyAssignmentStatement)initStatement).getAssignedValue();
+      if (assignedValue != null) {
+        builder.replaceElement(assignedValue, myInitializer);
+        builder.run();
+      }
     }
   }
 
   @Nullable
-  public static PsiElement addFieldToInit(Project project, PyClass cls, String item_name, Function<String, PyStatement> callback) {
-    if (cls != null && item_name != null) {
+  public static PsiElement addFieldToInit(Project project, PyClass cls, String itemName, Function<String, PyStatement> callback) {
+    if (cls != null && itemName != null) {
       PyFunction init = cls.findMethodByName(PyNames.INIT, false);
       if (init != null) {
         return appendToMethod(init, callback);
@@ -100,21 +109,23 @@ public class AddFieldQuickFix implements LocalQuickFix {
           init = ancestor.findMethodByName(PyNames.INIT, false);
           if (init != null) break;
         }
-        PyFunction new_init = createInitMethod(project, cls, init);
-        if (new_init == null) {
+        PyFunction newInit = createInitMethod(project, cls, init);
+        if (newInit == null) {
           return null;
         }
 
-        appendToMethod(new_init, callback);
+        appendToMethod(newInit, callback);
 
-        PsiElement add_anchor = null;
+        PsiElement addAnchor = null;
         PyFunction[] meths = cls.getMethods();
-        if (meths.length > 0) add_anchor = meths[0].getPrevSibling();
-        PyStatementList cls_content = cls.getStatementList();
-        new_init = (PyFunction) cls_content.addAfter(new_init, add_anchor);
+        if (meths.length > 0) addAnchor = meths[0].getPrevSibling();
+        PyStatementList clsContent = cls.getStatementList();
+        newInit = (PyFunction) clsContent.addAfter(newInit, addAnchor);
 
-        PyUtil.showBalloon(project, PyBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), item_name), MessageType.INFO);
-        return new_init.getStatementList().getStatements()[0];
+        PyUtil.showBalloon(project, PyBundle.message("QFIX.added.constructor.$0.for.field.$1", cls.getName(), itemName), MessageType.INFO);
+        final PyStatementList statementList = newInit.getStatementList();
+        assert statementList != null;
+        return statementList.getStatements()[0];
         //else  // well, that can't be
       }
     }

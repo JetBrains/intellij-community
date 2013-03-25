@@ -34,7 +34,10 @@ class TeamcityDocTestResult(TeamcityTestResult):
 
   def getTestId(self, test):
     file = os.path.realpath(self.current_suite.filename)
-    return "file://" + file + ":" + str( self.current_suite.lineno + test.lineno)
+    line_no = test.lineno
+    if self.current_suite.lineno:
+      line_no += self.current_suite.lineno
+    return "file://" + file + ":" + str(line_no)
 
   def getSuiteLocation(self):
     file = os.path.realpath(self.current_suite.filename)

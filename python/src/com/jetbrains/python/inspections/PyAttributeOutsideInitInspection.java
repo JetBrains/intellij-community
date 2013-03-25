@@ -6,10 +6,11 @@ import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.PyMoveAttributeToInitQuickFix;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyTargetExpression;
+import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyClassImpl;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.PyType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -52,8 +53,11 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
 
       Map<String, PyTargetExpression> attributesInInit = new HashMap<String, PyTargetExpression>();
       final PyFunction initMethod = containingClass.findMethodByName(PyNames.INIT, false);
-      if (initMethod != null)
+      if (initMethod != null) {
         PyClassImpl.collectInstanceAttributes(initMethod, attributesInInit);
+
+        collectAttributesFromSuper(attributesInInit, initMethod);
+      }
 
       Map<String, PyTargetExpression> attributes = new HashMap<String, PyTargetExpression>();
       PyClassImpl.collectInstanceAttributes(node, attributes);
@@ -66,5 +70,25 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
       }
     }
 
+    private void collectAttributesFromSuper(Map<String, PyTargetExpression> attributesInInit, PyFunction initMethod) {
+      final PyStatementList statementList = initMethod.getStatementList();
+      if (statementList != null) {
+        for (PyStatement statement : statementList.getStatements()) {
+          if (statement instanceof PyExpressionStatement) {
+            final PyExpression expression = ((PyExpressionStatement)statement).getExpression();
+            if (expression instanceof PyCallExpression) {
+              final PyType callType = PyCallExpressionHelper.getCallType((PyCallExpression)expression, myTypeEvalContext);
+              if (callType instanceof PyClassType) {
+                final PyClass superClass = ((PyClassType)callType).getPyClass();
+                final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, false);
+                if (superInit != null) {
+                  PyClassImpl.collectInstanceAttributes(superInit, attributesInInit);
+                }
+              }
+            }
+          }
+        }
+      }
+    }
   }
 }

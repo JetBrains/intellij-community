@@ -1203,15 +1203,16 @@ public class PyUtil {
   }
 
 
-  public static PsiElement addElementToStatementList(@NotNull PsiElement element, @NotNull PyStatementList statementList) {
+  public static PsiElement addElementToStatementList(@NotNull PsiElement element,
+                                                     @NotNull PyStatementList statementList,
+                                                     boolean toTheBeginning) {
     final PsiElement firstChild = statementList.getFirstChild();
     if (firstChild == statementList.getLastChild() && firstChild instanceof PyPassStatement) {
       element = firstChild.replace(element);
     }
     else {
       final PyStatement[] statements = statementList.getStatements();
-      String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : "";
-      if (PyNames.INIT.equals(name) && statements.length > 0) {
+      if (toTheBeginning && statements.length > 0) {
         final PyDocStringOwner docStringOwner = PsiTreeUtil.getParentOfType(statementList, PyDocStringOwner.class);
         final PyStatement firstStatement = statements[0];
         if (docStringOwner != null && firstStatement instanceof PyExpressionStatement &&
