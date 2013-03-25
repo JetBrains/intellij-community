@@ -141,6 +141,13 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     assertContainsElements(myFixture.getLookupElementStrings(), "image", "Image");
   }
 
+  public void testDefaultPropertyIncludeOnce() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    myItems = myFixture.completeBasic();
+    assertContainsElements(myFixture.getLookupElementStrings(), "fx:reference");
+    assertEquals(5, myItems.length);
+  }
+
   public void testIncludedRootAttributes() throws Exception {
     myFixture.addFileToProject("foo.fxml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                                    "<?import javafx.scene.layout.*?>\n" +
