@@ -413,31 +413,37 @@ public class JavaFxPsiUtil {
       if (noArgConstructor == null) {
         final PsiMethod valueOf = findValueOfMethod(psiClass);
         if (valueOf == null) {
-          final PsiClass builderClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_FXML_BUILDER,
-                                                                                     GlobalSearchScope.allScope(project));
-          if (builderClass != null) {
-            //todo cache this info
-            final PsiMethod[] buildMethods = builderClass.findMethodsByName("build", false);
-            if (buildMethods.length == 1 && buildMethods[0].getParameterList().getParametersCount() == 0) {
-              if (ClassInheritorsSearch.search(builderClass).forEach(new Processor<PsiClass>() {
-                @Override
-                public boolean process(PsiClass aClass) {
-                  PsiType returnType = null;
-                  final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(aClass, buildMethods[0], false);
-                  if (method != null) {
-                    returnType = method.getReturnType();
-                  }
-                  return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(returnType));
-                }
-              })) {
-                return "Unable to instantiate";
-              }
-            }
-          }
+          if (!hasBuilder(psiClass)) return "Unable to instantiate";
         }
       }
     }
     return null;
+  }
+
+  public static boolean hasBuilder(final PsiClass psiClass) {
+    final Project project = psiClass.getProject();
+    final PsiClass builderClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_FXML_BUILDER,
+                                                                               GlobalSearchScope.allScope(project));
+    if (builderClass != null) {
+      //todo cache this info
+      final PsiMethod[] buildMethods = builderClass.findMethodsByName("build", false);
+      if (buildMethods.length == 1 && buildMethods[0].getParameterList().getParametersCount() == 0) {
+        if (ClassInheritorsSearch.search(builderClass).forEach(new Processor<PsiClass>() {
+          @Override
+          public boolean process(PsiClass aClass) {
+            PsiType returnType = null;
+            final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(aClass, buildMethods[0], false);
+            if (method != null) {
+              returnType = method.getReturnType();
+            }
+            return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(returnType));
+          }
+        })) {
+          return false;
+        }
+      }
+    }
+    return true;
   }
 
   public static String isClassAcceptable(@Nullable XmlTag parentTag, final PsiClass aClass) {
