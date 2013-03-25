@@ -53,7 +53,7 @@ public class PsiPrimitiveType extends PsiType {
 
   @Override
   public String getPresentableText() {
-    return getAnnotationsTextPrefix() + myName;
+    return getAnnotationsTextPrefix(false, false, true) + myName;
   }
 
   @Override
@@ -63,7 +63,7 @@ public class PsiPrimitiveType extends PsiType {
 
   @Override
   public String getInternalCanonicalText() {
-    return getAnnotationsTextPrefix() + myName;
+    return getAnnotationsTextPrefix(true, false, true) + myName;
   }
 
   /**

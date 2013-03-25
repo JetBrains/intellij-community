@@ -43,7 +43,7 @@ public class PsiArrayType extends PsiType {
 
   @Override
   public String getPresentableText() {
-    return StringUtil.joinOrNull(myComponentType.getPresentableText(), getAnnotationsTextPrefix(true, true), "[]");
+    return StringUtil.joinOrNull(myComponentType.getPresentableText(), getAnnotationsTextPrefix(false, true, true), "[]");
   }
 
   @Override
@@ -53,7 +53,7 @@ public class PsiArrayType extends PsiType {
 
   @Override
   public String getInternalCanonicalText() {
-    return StringUtil.joinOrNull(myComponentType.getInternalCanonicalText(), getAnnotationsTextPrefix(true, true), "[]");
+    return StringUtil.joinOrNull(myComponentType.getInternalCanonicalText(), getAnnotationsTextPrefix(true, true, true), "[]");
   }
 
   @Override
