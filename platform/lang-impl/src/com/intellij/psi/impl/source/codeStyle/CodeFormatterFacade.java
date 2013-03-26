@@ -443,88 +443,10 @@ public class CodeFormatterFacade {
     for (int line = startLine; line < maxLine; line++) {
       int startLineOffset = document.getLineStartOffset(line);
       int endLineOffset = document.getLineEndOffset(line);
+      final int preferredWrapPosition
+        = calculatePreferredWrapPosition(editor, text, tabSize, spaceSize, startLineOffset, endLineOffset, endOffsetToUse);
 
-      boolean hasTabs = false;
-      boolean canOptimize = true;
-      boolean hasNonSpaceSymbols = false;
-      loop:
-      for (int i = startLineOffset; i < Math.min(endLineOffset, endOffsetToUse); i++) {
-        char c = text.charAt(i);
-        switch (c) {
-          case '\t': {
-            hasTabs = true;
-            if (hasNonSpaceSymbols) {
-              canOptimize = false;
-              break loop;
-            }
-          }
-          case ' ': break;
-          default: hasNonSpaceSymbols = true;
-        }
-      }
-
-      boolean wrapLine = false;
-      int preferredWrapPosition = Integer.MAX_VALUE;
-      if (!hasTabs) {
-        if (Math.min(endLineOffset, endOffsetToUse) - startLineOffset > mySettings.RIGHT_MARGIN) {
-          preferredWrapPosition = startLineOffset + mySettings.RIGHT_MARGIN - FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS;
-          wrapLine = true;
-        }
-      }
-      else if (canOptimize) {
-        int width = 0;
-        int symbolWidth;
-        for (int i = startLineOffset; i < Math.min(endLineOffset, endOffsetToUse); i++) {
-          char c = text.charAt(i);
-          switch (c) {
-            case '\t': symbolWidth = tabSize - (width % tabSize); break;
-            default: symbolWidth = 1;
-          }
-          if (width + symbolWidth + FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS >= mySettings.RIGHT_MARGIN
-              && (Math.min(endLineOffset, endOffsetToUse) - i) >= FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
-          {
-            // Remember preferred position.
-            preferredWrapPosition = i - 1;
-          }
-          if (width + symbolWidth >= mySettings.RIGHT_MARGIN) {
-            wrapLine = true;
-            break;
-          }
-          width += symbolWidth;
-        }
-      }
-      else {
-        int width = 0;
-        int x = 0;
-        int newX;
-        int symbolWidth;
-        for (int i = startLineOffset; i < Math.min(endLineOffset, endOffsetToUse); i++) {
-          char c = text.charAt(i);
-          switch (c) {
-            case '\t':
-              newX = EditorUtil.nextTabStop(x, editor);
-              int diffInPixels = newX - x;
-              symbolWidth = diffInPixels / spaceSize;
-              if (diffInPixels % spaceSize > 0) {
-                symbolWidth++;
-              }
-              break;
-            default: newX = x + EditorUtil.charWidth(c, Font.PLAIN, editor); symbolWidth = 1;
-          }
-          if (width + symbolWidth + FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS >= mySettings.RIGHT_MARGIN
-              && (Math.min(endLineOffset, endOffsetToUse) - i) >= FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
-          {
-            preferredWrapPosition = i - 1;
-          }
-          if (width + symbolWidth >= mySettings.RIGHT_MARGIN) {
-            wrapLine = true;
-            break;
-          }
-          x = newX;
-          width += symbolWidth;
-        }
-      }
-      if (!wrapLine || preferredWrapPosition >= endLineOffset) {
+      if (preferredWrapPosition < 0 || preferredWrapPosition >= endLineOffset) {
         continue;
       }
       if (preferredWrapPosition >= endOffsetToUse) {
@@ -543,71 +465,216 @@ public class CodeFormatterFacade {
           || CharArrayUtil.shiftBackward(text, startLineOffset, wrapOffset - 1, " \t") < startLineOffset) {
         continue;
       }
+      
+      // Move caret to the target position and emulate pressing <enter>.
       editor.getCaretModel().moveToOffset(wrapOffset);
-
-      // There is a possible case that formatting is performed from project view and editor is not opened yet. The problem is that
-      // its data context doesn't contain information about project then. So, we explicitly support that here (see IDEA-72791).
-      final DataContext baseDataContext = DataManager.getInstance().getDataContext(editor.getComponent());
-      final DataContext dataContext = new DelegatingDataContext(baseDataContext) {
-        @Override
-        public Object getData(@NonNls String dataId) {
-          Object result = baseDataContext.getData(dataId);
-          if (result == null && PlatformDataKeys.PROJECT.is(dataId)) {
-            result = project;
-          }
-          return result;
-        }
-      };
-
-
-      SelectionModel selectionModel = editor.getSelectionModel();
-      int startSelectionOffset = 0;
-      int endSelectionOffset = 0;
-      boolean restoreSelection = selectionModel.hasSelection();
-      if (restoreSelection) {
-        startSelectionOffset = selectionModel.getSelectionStart();
-        endSelectionOffset = selectionModel.getSelectionEnd();
-        selectionModel.removeSelection();
-      }
-      int textLengthBeforeWrap = document.getTextLength();
-
-      DataManager.getInstance().saveInDataContext(dataContext, WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY, true);
-      CommandProcessor commandProcessor = CommandProcessor.getInstance();
-      try {
-        Runnable command = new Runnable() {
-          @Override
-          public void run() {
-            EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
-          }
-        };
-        if (commandProcessor.getCurrentCommand() == null) {
-          commandProcessor.executeCommand(editor.getProject(), command, WRAP_LINE_COMMAND_NAME, null);
-        }
-        else {
-          command.run();
-        }
-      }
-      finally {
-        DataManager.getInstance().saveInDataContext(dataContext, WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY, null);
-      }
-      if (restoreSelection) {
-        int symbolsDiff = document.getTextLength() - textLengthBeforeWrap;
-        int newSelectionStart = startSelectionOffset;
-        int newSelectionEnd = endSelectionOffset;
-        if (startSelectionOffset >= wrapOffset) {
-          newSelectionStart += symbolsDiff;
-        }
-        if (endSelectionOffset >= wrapOffset) {
-          newSelectionEnd += symbolsDiff;
-        }
-        selectionModel.setSelection(newSelectionStart, newSelectionEnd);
-      }
+      int addedLinesNumber = emulateEnter(editor, project);
 
       // We know that number of lines is just increased, hence, update the data accordingly.
-      maxLine++;
-      //noinspection AssignmentToForLoopParameter
-      line++;
+      maxLine += addedLinesNumber;
     }
+  }
+
+  /**
+   * Emulates pressing <code>Enter</code> at current caret position.
+   * 
+   * @param editor       target editor
+   * @return             number of lines added during <code>Enter</code> processing
+   */
+  private static int emulateEnter(@NotNull final Editor editor, @NotNull Project project) {
+    final DataContext dataContext = prepareContext(editor.getComponent(), project);
+    int caretOffset = editor.getCaretModel().getOffset();
+    Document document = editor.getDocument();
+    SelectionModel selectionModel = editor.getSelectionModel();
+    int startSelectionOffset = 0;
+    int endSelectionOffset = 0;
+    boolean restoreSelection = selectionModel.hasSelection();
+    if (restoreSelection) {
+      startSelectionOffset = selectionModel.getSelectionStart();
+      endSelectionOffset = selectionModel.getSelectionEnd();
+      selectionModel.removeSelection();
+    }
+    int textLengthBeforeWrap = document.getTextLength();
+    int lineCountBeforeWrap = document.getLineCount();
+
+    DataManager.getInstance().saveInDataContext(dataContext, WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY, true);
+    CommandProcessor commandProcessor = CommandProcessor.getInstance();
+    try {
+      Runnable command = new Runnable() {
+        @Override
+        public void run() {
+          EditorActionManager.getInstance().getActionHandler(IdeActions.ACTION_EDITOR_ENTER).execute(editor, dataContext);
+        }
+      };
+      if (commandProcessor.getCurrentCommand() == null) {
+        commandProcessor.executeCommand(editor.getProject(), command, WRAP_LINE_COMMAND_NAME, null);
+      }
+      else {
+        command.run();
+      }
+    }
+    finally {
+      DataManager.getInstance().saveInDataContext(dataContext, WRAP_LONG_LINE_DURING_FORMATTING_IN_PROGRESS_KEY, null);
+    }
+    if (restoreSelection) {
+      int symbolsDiff = document.getTextLength() - textLengthBeforeWrap;
+      int newSelectionStart = startSelectionOffset;
+      int newSelectionEnd = endSelectionOffset;
+      if (startSelectionOffset >= caretOffset) {
+        newSelectionStart += symbolsDiff;
+      }
+      if (endSelectionOffset >= caretOffset) {
+        newSelectionEnd += symbolsDiff;
+      }
+      selectionModel.setSelection(newSelectionStart, newSelectionEnd);
+    }
+    return document.getLineCount() - lineCountBeforeWrap;
+  }
+
+  /**
+   * Checks if it's worth to try to wrap target line (it's long enough) and tries to calculate preferred wrap position.
+   * 
+   * @param editor                target editor
+   * @param text                  text contained at the given editor
+   * @param tabSize               tab space to use (number of visual columns occupied by a tab)
+   * @param spaceSize             space width in pixels
+   * @param startLineOffset       start offset of the text line to process
+   * @param endLineOffset         end offset of the text line to process
+   * @param targetRangeEndOffset  target text region's end offset
+   * @return                      negative value if no wrapping should be performed for the target line;
+   *                              preferred wrap position otherwise
+   */
+  private int calculatePreferredWrapPosition(@NotNull Editor editor,
+                                             @NotNull CharSequence text,
+                                             int tabSize,
+                                             int spaceSize,
+                                             int startLineOffset,
+                                             int endLineOffset,
+                                             int targetRangeEndOffset) {
+    boolean hasTabs = false;
+    boolean canOptimize = true;
+    boolean hasNonSpaceSymbols = false;
+    loop:
+    for (int i = startLineOffset; i < Math.min(endLineOffset, targetRangeEndOffset); i++) {
+      char c = text.charAt(i);
+      switch (c) {
+        case '\t': {
+          hasTabs = true;
+          if (hasNonSpaceSymbols) {
+            canOptimize = false;
+            break loop;
+          }
+        }
+        case ' ': break;
+        default: hasNonSpaceSymbols = true;
+      }
+    }
+
+    if (!hasTabs) {
+      return wrapPositionForTextWithoutTabs(startLineOffset, endLineOffset, targetRangeEndOffset);
+    }
+    else if (canOptimize) {
+      return wrapPositionForTabbedTextWithOptimization(text, tabSize, startLineOffset, endLineOffset, targetRangeEndOffset);
+    }
+    else {
+      return wrapPositionForTabbedTextWithoutOptimization(editor, text, spaceSize, startLineOffset, endLineOffset, targetRangeEndOffset);
+    }
+  }
+
+  private int wrapPositionForTextWithoutTabs(int startLineOffset, int endLineOffset, int targetRangeEndOffset) {
+    if (Math.min(endLineOffset, targetRangeEndOffset) - startLineOffset > mySettings.RIGHT_MARGIN) {
+      return startLineOffset + mySettings.RIGHT_MARGIN - FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS;
+    }
+    return -1;
+  }
+
+  private int wrapPositionForTabbedTextWithOptimization(@NotNull CharSequence text,
+                                                        int tabSize,
+                                                        int startLineOffset,
+                                                        int endLineOffset,
+                                                        int targetRangeEndOffset)
+  {
+    int width = 0;
+    int symbolWidth;
+    int result = Integer.MAX_VALUE;
+    boolean wrapLine = false;
+    for (int i = startLineOffset; i < Math.min(endLineOffset, targetRangeEndOffset); i++) {
+      char c = text.charAt(i);
+      switch (c) {
+        case '\t': symbolWidth = tabSize - (width % tabSize); break;
+        default: symbolWidth = 1;
+      }
+      if (width + symbolWidth + FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS >= mySettings.RIGHT_MARGIN
+          && (Math.min(endLineOffset, targetRangeEndOffset) - i) >= FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
+      {
+        // Remember preferred position.
+        result = i - 1;
+      }
+      if (width + symbolWidth >= mySettings.RIGHT_MARGIN) {
+        wrapLine = true;
+        break;
+      }
+      width += symbolWidth;
+    }
+    return wrapLine ? result : -1;
+  }
+
+  private int wrapPositionForTabbedTextWithoutOptimization(@NotNull Editor editor,
+                                                           @NotNull CharSequence text,
+                                                           int spaceSize,
+                                                           int startLineOffset,
+                                                           int endLineOffset,
+                                                           int targetRangeEndOffset)
+  {
+    int width = 0;
+    int x = 0;
+    int newX;
+    int symbolWidth;
+    int result = Integer.MAX_VALUE;
+    boolean wrapLine = false;
+    for (int i = startLineOffset; i < Math.min(endLineOffset, targetRangeEndOffset); i++) {
+      char c = text.charAt(i);
+      switch (c) {
+        case '\t':
+          newX = EditorUtil.nextTabStop(x, editor);
+          int diffInPixels = newX - x;
+          symbolWidth = diffInPixels / spaceSize;
+          if (diffInPixels % spaceSize > 0) {
+            symbolWidth++;
+          }
+          break;
+        default: newX = x + EditorUtil.charWidth(c, Font.PLAIN, editor); symbolWidth = 1;
+      }
+      if (width + symbolWidth + FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS >= mySettings.RIGHT_MARGIN
+          && (Math.min(endLineOffset, targetRangeEndOffset) - i) >= FormatConstants.RESERVED_LINE_WRAP_WIDTH_IN_COLUMNS)
+      {
+        result = i - 1;
+      }
+      if (width + symbolWidth >= mySettings.RIGHT_MARGIN) {
+        wrapLine = true;
+        break;
+      }
+      x = newX;
+      width += symbolWidth;
+    }
+    return wrapLine ? result : -1;
+  }
+
+  @NotNull
+  private static DataContext prepareContext(@NotNull Component component, @NotNull final Project project) {
+    // There is a possible case that formatting is performed from project view and editor is not opened yet. The problem is that
+    // its data context doesn't contain information about project then. So, we explicitly support that here (see IDEA-72791).
+    final DataContext baseDataContext = DataManager.getInstance().getDataContext(component);
+    return new DelegatingDataContext(baseDataContext) {
+      @Override
+      public Object getData(@NonNls String dataId) {
+        Object result = baseDataContext.getData(dataId);
+        if (result == null && PlatformDataKeys.PROJECT.is(dataId)) {
+          result = project;
+        }
+        return result;
+      }
+    };
   }
 
   private static class DelegatingDataContext implements DataContext, UserDataHolder {
