@@ -188,6 +188,13 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return p;
   }
 
+  @Override
+  public void setLayout(LayoutManager mgr) {
+    //First time mgr comes from createRootLayout(), it's OK. But then Alloy spoils it and breaks FullScreen mode under Windows
+    if (getLayout() != null && UIUtil.isUnderAlloyLookAndFeel()) return;
+    super.setLayout(mgr);
+  }
+
   protected final Container createContentPane(){
     myContentPane = new JBPanel(new BorderLayout()){
       @Override
