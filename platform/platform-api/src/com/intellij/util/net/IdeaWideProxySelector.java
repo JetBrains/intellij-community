@@ -18,12 +18,15 @@ package com.intellij.util.net;
 import com.btr.proxy.search.ProxySearch;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.proxy.CommonProxy;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 import java.net.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.regex.Pattern;
 
 /**
 * Created with IntelliJ IDEA.
@@ -40,7 +43,7 @@ public class IdeaWideProxySelector extends ProxySelector {
   }
 
   @Override
-  public List<Proxy> select(URI uri) {
+  public List<Proxy> select(@NotNull URI uri) {
     LOG.debug("IDEA-wide proxy selector asked for " + uri.toString());
     final String scheme = uri.getScheme();
     if (! ("http".equals(scheme) || "https".equals(scheme))) {
@@ -48,6 +51,13 @@ public class IdeaWideProxySelector extends ProxySelector {
       return CommonProxy.NO_PROXY_LIST;
     }
     if (myHttpConfigurable.USE_HTTP_PROXY) {
+      if (isProxyException(uri)) {
+        if (LOG.isDebugEnabled()) {
+          LOG.debug("IDEA-wide proxy selector detected that uri matches proxy exceptions: uri: " + uri.toString() +
+                    ", proxy exceptions string: '" + myHttpConfigurable.PROXY_EXCEPTIONS + "'");
+        }
+        return CommonProxy.NO_PROXY_LIST;
+      }
       final Proxy proxy = new Proxy(myHttpConfigurable.PROXY_TYPE_IS_SOCKS ? Proxy.Type.SOCKS : Proxy.Type.HTTP,
                                     new InetSocketAddress(myHttpConfigurable.PROXY_HOST, myHttpConfigurable.PROXY_PORT));
       LOG.debug("IDEA-wide proxy selector returns defined proxy: " + proxy);
@@ -64,6 +74,18 @@ public class IdeaWideProxySelector extends ProxySelector {
       LOG.debug("IDEA-wide proxy selector found no autodetected proxies");
     }
     return CommonProxy.NO_PROXY_LIST;
+  }
+
+  private boolean isProxyException(URI uri) {
+    String uriHost = uri.getHost();
+    if (StringUtil.isEmptyOrSpaces(uriHost)) return false;
+    if (StringUtil.isEmptyOrSpaces(myHttpConfigurable.PROXY_EXCEPTIONS)) return false;
+    final List<String> hosts = StringUtil.split(myHttpConfigurable.PROXY_EXCEPTIONS, ",");
+    for (String hostPattern : hosts) {
+      final String regexpPattern = StringUtil.escapeToRegexp(hostPattern.trim()).replace("\\*", ".*");
+      if (Pattern.compile(regexpPattern).matcher(uriHost).matches()) return true;
+    }
+    return false;
   }
 
   @Override
