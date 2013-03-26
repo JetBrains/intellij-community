@@ -54,6 +54,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -535,7 +536,11 @@ public class CodeFormatterFacade {
         document, editor.getProject(), Math.max(startLineOffset, startOffsetToUse), Math.min(endLineOffset, endOffsetToUse),
         preferredWrapPosition, false, false
       );
-      if (wrapOffset < 0) {
+      if (wrapOffset < 0 // No appropriate wrap position is found.
+          // No point in splitting line when its left part contains only white spaces, example:
+          //    line start -> |                   | <- right margin
+          //                  |   aaaaaaaaaaaaaaaa|aaaaaaaaaaaaaaaaaaaa() <- don't want to wrap this line even if it exceeds right margin
+          || CharArrayUtil.shiftBackward(text, startLineOffset, wrapOffset - 1, " \t") < startLineOffset) {
         continue;
       }
       editor.getCaretModel().moveToOffset(wrapOffset);
