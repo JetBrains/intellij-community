@@ -32,6 +32,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.UserDataHolderBase;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileFactory;
@@ -61,22 +62,37 @@ public class GenerationNode extends UserDataHolderBase {
   private final int myTotalIterations;
   private String mySurroundedText;
   private final boolean myInsertSurroundedTextAtTheEnd;
-  private GenerationNode myParent;
 
+  private final boolean myInsertNewLineBetweenNodes;
+
+  private GenerationNode myParent;
   private boolean myContainsSurroundedTextMarker = false;
 
   public GenerationNode(TemplateToken templateToken,
                         int numberInIteration,
                         int totalIterations, String surroundedText,
                         boolean insertSurroundedTextAtTheEnd, GenerationNode parent) {
+    this(templateToken, numberInIteration, totalIterations, surroundedText, insertSurroundedTextAtTheEnd, parent, false);
+  }
+
+
+  public GenerationNode(TemplateToken templateToken,
+                        int numberInIteration,
+                        int totalIterations, String surroundedText,
+                        boolean insertSurroundedTextAtTheEnd, GenerationNode parent, boolean insertNewLineBetweenNodes) {
     myTemplateToken = templateToken;
     myNumberInIteration = numberInIteration;
     myTotalIterations = totalIterations;
     mySurroundedText = surroundedText;
     myInsertSurroundedTextAtTheEnd = insertSurroundedTextAtTheEnd;
+    myInsertNewLineBetweenNodes = insertNewLineBetweenNodes;
     if(parent != null) {
       parent.addChild(this);
     }
+  }
+
+  public boolean isInsertNewLineBetweenNodes() {
+    return myInsertNewLineBetweenNodes;
   }
 
   public List<GenerationNode> getChildren() {
@@ -181,12 +197,8 @@ public class GenerationNode extends UserDataHolderBase {
       indentStr = "\t";
     }
     else {
-      StringBuilder tab = new StringBuilder();
       int tabSize = settings.getTabSize(callback.getFileType());
-      while (tabSize-- > 0) {
-        tab.append(' ');
-      }
-      indentStr = tab.toString();
+      indentStr = StringUtil.repeatSymbol(' ', tabSize);
     }
 
     for (int i = 0, myChildrenSize = myChildren.size(); i < myChildrenSize; i++) {
@@ -203,7 +215,7 @@ public class GenerationNode extends UserDataHolderBase {
       int e = builder.insertTemplate(offset, childTemplate, null);
       offset = marker != null ? marker.getEndOffset() : builder.length();
 
-      if (!singleLineFilterEnabled && blockTag && !isNewLineAfter(builder.getText(), offset)) {
+      if (!singleLineFilterEnabled && ((blockTag && !isNewLineAfter(builder.getText(), offset)) || myInsertNewLineBetweenNodes)) {
         builder.insertText(offset, "\n" + indentStr, false);
         offset += indentStr.length() + 1;
       }

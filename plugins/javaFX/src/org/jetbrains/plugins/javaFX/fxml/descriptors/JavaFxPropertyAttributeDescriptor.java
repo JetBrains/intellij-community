@@ -1,9 +1,6 @@
 package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiEnumConstant;
-import com.intellij.psi.PsiField;
+import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.*;
@@ -12,8 +9,11 @@ import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -79,7 +79,15 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
       }
       return ArrayUtil.toStringArray(enumConstants);
     }
-    return null;
+
+    final String propertyQName = getBoxedPropertyType(getDeclaration());
+    if (CommonClassNames.JAVA_LANG_FLOAT.equals(propertyQName) || CommonClassNames.JAVA_LANG_DOUBLE.equals(propertyQName)) {
+      return new String[] {"Infinity", "-Infinity", "NaN",  "-NaN"};
+    } else if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(propertyQName)) {
+      return new String[] {"true", "false"};
+    }
+
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   protected boolean isConstant(PsiField enumField) {
@@ -136,9 +144,53 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
             }
           }
         }
+        else {
+          final XmlAttributeDescriptor attributeDescriptor = ((XmlAttribute)parent).getDescriptor();
+          if (attributeDescriptor != null) {
+            final PsiElement declaration = attributeDescriptor.getDeclaration();
+            final String boxedQName = getBoxedPropertyType(declaration);
+            if (boxedQName != null) {
+              try {
+                final Class<?> aClass = Class.forName(boxedQName);
+                final Method method = aClass.getMethod(JavaFxCommonClassNames.VALUE_OF, String.class);
+                method.invoke(aClass, ((XmlAttributeValue)context).getValue());
+              }
+              catch (InvocationTargetException e) {
+                final Throwable cause = e.getCause();
+                if (cause instanceof NumberFormatException) {
+                  return "Invalid value: unable to coerce to " + boxedQName;
+                }
+              }
+              catch (Exception ignore) {
+              }
+            }
+          }
+        }
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static String getBoxedPropertyType(PsiElement declaration) {
+    PsiType attrType = null;
+    if (declaration instanceof PsiField) {
+      attrType = JavaFxPsiUtil.getWrappedPropertyType((PsiField)declaration, declaration.getProject(), JavaFxCommonClassNames.ourWritableMap);
+    } else if (declaration instanceof PsiMethod) {
+      final PsiParameter[] parameters = ((PsiMethod)declaration).getParameterList().getParameters();
+      if (parameters.length == 2) {
+        attrType = parameters[1].getType();
+      }
+    }
+
+    String boxedQName = null;
+    if (attrType instanceof PsiPrimitiveType) {
+      boxedQName = ((PsiPrimitiveType)attrType).getBoxedTypeName();
+    } else if (PsiPrimitiveType.getUnboxedType(attrType) != null) {
+      final PsiClass attrClass = PsiUtil.resolveClassInType(attrType);
+      boxedQName = attrClass != null ? attrClass.getQualifiedName() : null;
+    }
+    return boxedQName;
   }
 
   @Override

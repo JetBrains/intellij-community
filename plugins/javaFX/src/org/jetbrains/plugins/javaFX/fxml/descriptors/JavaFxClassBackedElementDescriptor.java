@@ -9,8 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -129,19 +128,32 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   }
 
   private static <T> void collectParentStaticProperties(XmlTag context, List<T> children, Function<PsiMethod, T> factory) {
+    final CachedValuesManager manager = context != null ? CachedValuesManager.getManager(context.getProject()) : null;
     XmlTag tag = context;
     while (tag != null) {
       final XmlElementDescriptor descr = tag.getDescriptor();
       if (descr instanceof JavaFxClassBackedElementDescriptor) {
         final PsiElement element = descr.getDeclaration();
         if (element instanceof PsiClass) {
-          for (PsiMethod method : ((PsiClass)element).getAllMethods()) {
-            if (method.hasModifierProperty(PsiModifier.STATIC) && method.getName().startsWith("set")) {
-              final PsiParameter[] parameters = method.getParameterList().getParameters();
-              if (parameters.length == 2 && InheritanceUtil.isInheritor(parameters[0].getType(), JavaFxCommonClassNames.JAVAFX_SCENE_NODE)) {
-                children.add(factory.fun(method));
+          final List<PsiMethod> setters = manager.getCachedValue(element, new CachedValueProvider<List<PsiMethod>>() {
+            @Nullable
+            @Override
+            public Result<List<PsiMethod>> compute() {
+              final List<PsiMethod> meths = new ArrayList<PsiMethod>();
+              for (PsiMethod method : ((PsiClass)element).getAllMethods()) {
+                if (method.hasModifierProperty(PsiModifier.STATIC) && method.getName().startsWith("set")) {
+                  final PsiParameter[] parameters = method.getParameterList().getParameters();
+                  if (parameters.length == 2 &&
+                      InheritanceUtil.isInheritor(parameters[0].getType(), JavaFxCommonClassNames.JAVAFX_SCENE_NODE)) {
+                    meths.add(method);
+                  }
+                }
               }
+              return Result.create(meths, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
             }
+          });
+          for (PsiMethod setter : setters) {
+            children.add(factory.fun(setter));
           }
         }
       }
@@ -224,19 +236,33 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     return XmlAttributeDescriptor.EMPTY;
   }
 
-  private <T> void collectProperties(List<T> children, Function<PsiField, T> factory, boolean acceptPrimitive) {
-    final PsiField[] fields = myPsiClass.getAllFields();
-    if (fields.length > 0) {
-      for (PsiField field : fields) {
-        if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
-        final PsiType fieldType = field.getType();
-        if (!JavaFxPsiUtil.isReadOnly(myPsiClass, field) && 
-            InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY) || 
-            fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
-            (acceptPrimitive && fieldType instanceof PsiPrimitiveType) ||
-            GenericsHighlightUtil.getCollectionItemType(field.getType(), myPsiClass.getResolveScope()) != null) {
-          children.add(factory.fun(field));
+  private <T> void collectProperties(final List<T> children, final Function<PsiField, T> factory, final boolean acceptPrimitive) {
+    final List<PsiField> fieldList =
+      CachedValuesManager.getManager(myPsiClass.getProject()).getCachedValue(myPsiClass, new CachedValueProvider<List<PsiField>>() {
+        @Nullable
+        @Override
+        public Result<List<PsiField>> compute() {
+          List<PsiField> acceptableFields = new ArrayList<PsiField>();
+          final PsiField[] fields = myPsiClass.getAllFields();
+          if (fields.length > 0) {
+            for (PsiField field : fields) {
+              if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
+              final PsiType fieldType = field.getType();
+              if (!JavaFxPsiUtil.isReadOnly(myPsiClass, field) &&
+                  InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY) ||
+                  fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
+                  (acceptPrimitive && fieldType instanceof PsiPrimitiveType) ||
+                  GenericsHighlightUtil.getCollectionItemType(field.getType(), myPsiClass.getResolveScope()) != null) {
+                acceptableFields.add(field);
+              }
+            }
+          }
+          return Result.create(acceptableFields, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
         }
+      });
+    if (fieldList != null) {
+      for (PsiField field : fieldList) {
+        children.add(factory.fun(field));
       }
     }
   }

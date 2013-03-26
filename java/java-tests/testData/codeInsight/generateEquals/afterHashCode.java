@@ -24,7 +24,7 @@ class Test {
         result = i;
         result = 31 * result + a.hashCode();
         result = 31 * result + (b != null ? b.hashCode() : 0);
-        temp = c != +0.0d ? Double.doubleToLongBits(c) : 0L;
+        temp = Double.doubleToLongBits(c);
         result = 31 * result + (int) (temp ^ (temp >>> 32));
         return result;
     }

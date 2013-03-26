@@ -63,7 +63,7 @@ def launch_with_port(port):
     
     if found:
         if args:
-            cmd = "activate " + "\0".join(args)
+            cmd = "activate " + os.getcwd() + "\0" + "\0".join(args)
             encoded = struct.pack(">h", len(cmd)) + cmd
             s.send(encoded)
             time.sleep(0.5)   # don't close socket immediately

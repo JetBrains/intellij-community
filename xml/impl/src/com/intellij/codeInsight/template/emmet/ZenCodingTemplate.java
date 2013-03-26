@@ -197,6 +197,10 @@ public class ZenCodingTemplate implements CustomLiveTemplate {
       GenerationNode genNode = genNodes.get(i);
       TemplateImpl template = genNode.generate(callback, generator, filters, true);
       int e = builder.insertTemplate(builder.length(), template, null);
+      if (i < genNodesSize - 1 && genNode.isInsertNewLineBetweenNodes()) {
+        builder.insertText(e, "\n", false);
+        e++;
+      }
       if (end == -1 && end < builder.length()) {
         end = e;
       }

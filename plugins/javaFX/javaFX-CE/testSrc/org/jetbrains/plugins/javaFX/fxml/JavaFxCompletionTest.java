@@ -141,6 +141,24 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     assertContainsElements(myFixture.getLookupElementStrings(), "image", "Image");
   }
 
+  public void testInfinity() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    complete();
+    assertContainsElements(myFixture.getLookupElementStrings(), "Infinity", "-Infinity", "NaN", "-NaN");
+  }
+
+  public void testNoInfinity() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    complete();
+    assertDoesntContain(myFixture.getLookupElementStrings(), "Infinity");
+  }
+
+  public void testBooleanValues() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    complete();
+    assertContainsElements(myFixture.getLookupElementStrings(), "true", "false");
+  }
+
   public void testDefaultPropertyIncludeOnce() throws Exception {
     myFixture.configureByFiles(getTestName(true) + ".fxml");
     myItems = myFixture.completeBasic();
