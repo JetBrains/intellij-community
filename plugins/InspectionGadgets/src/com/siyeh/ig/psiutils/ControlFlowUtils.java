@@ -16,6 +16,7 @@
 package com.siyeh.ig.psiutils;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.source.jsp.jspJava.JspClassLevelDeclarationStatement;
 import com.intellij.psi.impl.source.jsp.jspJava.JspTemplateStatement;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -93,7 +94,7 @@ public class ControlFlowUtils {
     else if (statement instanceof PsiSwitchStatement) {
       return switchStatementMayCompleteNormally((PsiSwitchStatement)statement);
     }
-    else if (statement instanceof JspTemplateStatement) {
+    else if (statement instanceof JspTemplateStatement || statement instanceof JspClassLevelDeclarationStatement) {
       return true;
     }
     else {

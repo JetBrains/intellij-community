@@ -424,18 +424,6 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
       throw new AssertionError("Unable to clone the view provider: " + viewProvider + "; " + language);
     }
     PsiFileImpl clone = BlockSupportImpl.getFileCopy(this, providerCopy);
-    if (clone == null) {
-      throw new AssertionError("Cannot find psi file with: " + language + "." +
-                               " Original viewprovider: " + viewProvider +
-                               "; languages: " + viewProvider.getLanguages() +
-                               "; copied viewprovider: " + providerCopy +
-                               "; languages: " + providerCopy.getLanguages() +
-                               "; Original virtual file: " + getVirtualFile() +
-                               "; copied virtual file: " + providerCopy.getVirtualFile() +
-                               "; its.getOriginal(): " +
-                               (providerCopy.getVirtualFile() instanceof LightVirtualFile ? ((LightVirtualFile)providerCopy.getVirtualFile()).getOriginalFile() : null));
-    }
-
     copyCopyableDataTo(clone);
 
     if (getTreeElement() != null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2010 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,7 @@ import com.intellij.psi.tree.IElementType;
 
 public class ConcatenationUtils {
 
-  private ConcatenationUtils() {
-    super();
-  }
+  private ConcatenationUtils() {}
 
   public static boolean isConcatenation(PsiElement element) {
     if (!(element instanceof PsiPolyadicExpression)) {
@@ -33,20 +31,24 @@ public class ConcatenationUtils {
     if (!tokenType.equals(JavaTokenType.PLUS)) {
       return false;
     }
-    PsiExpression[] operands = expression.getOperands();
-    if (operands.length <= 1) return false;
+    final PsiExpression[] operands = expression.getOperands();
+    if (operands.length <= 1) {
+      return false;
+    }
     final PsiType type = expression.getType();
     if (type == null) {
       for (PsiExpression operand : operands) {
-        if (hasStringType(operand)) return true;
+        if (hasStringType(operand)) {
+          return true;
+        }
       }
       return false;
     }
-    return type.equalsToText("java.lang.String");
+    return type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
   }
 
   private static boolean hasStringType(PsiExpression expression) {
     final PsiType type = expression.getType();
-    return type != null && type.equalsToText("java.lang.String");
+    return type != null && type.equalsToText(CommonClassNames.JAVA_LANG_STRING);
   }
 }
