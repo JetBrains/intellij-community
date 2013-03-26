@@ -524,6 +524,9 @@ public class JavaFxPsiUtil {
           }
         }
         if (substitute == null) {
+          if (!InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE)) {
+            return Result.create(fieldType, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          }
           final PsiClass aClass = JavaPsiFacade.getInstance(project)
             .findClass(JavaFxCommonClassNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE, GlobalSearchScope.allScope(project));
           LOG.assertTrue(aClass != null);
