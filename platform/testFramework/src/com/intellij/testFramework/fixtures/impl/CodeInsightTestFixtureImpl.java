@@ -113,6 +113,7 @@ import com.intellij.util.indexing.FileBasedIndex;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashMap;
 import junit.framework.Assert;
+import junit.framework.ComparisonFailure;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -638,11 +639,11 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
   }
 
   @Override
-  public void finishLookup() {
+  public void finishLookup(final char completionChar) {
     CommandProcessor.getInstance().executeCommand(getProject(), new Runnable() {
       @Override
       public void run() {
-        ((LookupImpl)LookupManager.getActiveLookup(getEditor())).finishLookup(Lookup.NORMAL_SELECT_CHAR);
+        ((LookupImpl)LookupManager.getActiveLookup(getEditor())).finishLookup(completionChar);
       }
     }, null, null);
   }
@@ -1685,7 +1686,12 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     actualText = StringUtil.convertLineSeparators(actualText);
 
     if (!Comparing.equal(newFileText1, actualText)) {
-      throw new FileComparisonFailure(expectedFile, newFileText1, actualText, loader.filePath);
+      if (loader.filePath != null) {
+        throw new FileComparisonFailure(expectedFile, newFileText1, actualText, loader.filePath);
+      }
+      else {
+        throw new ComparisonFailure(expectedFile, newFileText1, actualText);
+      }
     }
 
     if (loader.caretMarker != null) {
