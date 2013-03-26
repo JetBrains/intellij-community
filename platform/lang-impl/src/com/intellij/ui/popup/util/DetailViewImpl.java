@@ -57,10 +57,10 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
   private JBScrollPane myDetailScrollPanel;
 
   private JPanel myDetailPanelWrapper;
-  private JLabel myNothingToShow = new JLabel("Nothing to show");
   private RangeHighlighter myHighlighter;
   private PreviewEditorState myEditorState = PreviewEditorState.EMPTY;
   private JComponent myParentComponent;
+  private final JLabel myLabel = new JLabel("", SwingConstants.CENTER);
 
 
   public void setDoneRunnable(Runnable doneRunnable, JComponent parent) {
@@ -74,7 +74,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     super(new BorderLayout());
     myProject = project;
     setPreferredSize(new Dimension(700, 400));
-    myNothingToShow.setHorizontalAlignment(JLabel.CENTER);
+    myLabel.setVerticalAlignment(SwingConstants.CENTER);
   }
 
   @Override
@@ -134,10 +134,10 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     Document document = FileDocumentManager.getInstance().getDocument(file);
     Project project = myProject;
 
+    clearEditor();
+    remove(myLabel);
     if (document != null) {
       if (getEditor() == null || getEditor().getDocument() != document) {
-        clearEditor();
-        removeAll();
         setEditor(EditorFactory.getInstance().createViewer(document, project));
 
         final EditorColorsScheme scheme = EditorColorsManager.getInstance().getGlobalScheme();
@@ -168,11 +168,8 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
       }
     }
     else {
-      clearEditor();
-      removeAll();
-      JLabel label = new JLabel("Navigate to selected " + (file.isDirectory() ? "directory " : "file ") + "in Project View");
-      label.setHorizontalAlignment(JLabel.CENTER);
-      add(label);
+      myLabel.setText("Navigate to selected " + (file.isDirectory() ? "directory " : "file ") + "in Project View");
+      add(myLabel, BorderLayout.CENTER);
       validate();
     }
   }
@@ -208,7 +205,8 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     }
     else {
       myDetailPanelWrapper.removeAll();
-      myDetailPanelWrapper.add(myNothingToShow);
+      myLabel.setText("Nothing to show");
+      add(myLabel, BorderLayout.CENTER);
     }
     myDetailPanel = panel;
     revalidate();
