@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -117,7 +118,7 @@ public class ConvertMethodToClosureIntention extends Intention {
 
         StringBuilder builder = new StringBuilder(method.getTextLength());
         String modifiers = method.getModifierList().getText();
-        if (modifiers.trim().length() == 0) {
+        if (StringUtil.isEmptyOrSpaces(modifiers)) {
           modifiers = GrModifier.DEF;
         }
         builder.append(modifiers).append(' ');

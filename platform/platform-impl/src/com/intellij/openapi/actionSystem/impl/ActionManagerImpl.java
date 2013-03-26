@@ -751,7 +751,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
     }
 
     String keymapName = element.getAttributeValue(KEYMAP_ATTR_NAME);
-    if (keymapName == null || keymapName.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(keymapName)) {
       reportActionError(pluginId, "attribute \"keymap\" should be defined");
       return;
     }
@@ -776,7 +776,7 @@ public final class ActionManagerImpl extends ActionManagerEx implements Applicat
 
   private static void processMouseShortcutNode(Element element, String actionId, PluginId pluginId) {
     String keystrokeString = element.getAttributeValue(KEYSTROKE_ATTR_NAME);
-    if (keystrokeString == null || keystrokeString.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(keystrokeString)) {
       reportActionError(pluginId, "\"keystroke\" attribute must be specified for action with id=" + actionId);
       return;
     }

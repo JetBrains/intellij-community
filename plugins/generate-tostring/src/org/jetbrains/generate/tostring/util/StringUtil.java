@@ -18,6 +18,7 @@ package org.jetbrains.generate.tostring.util;
 /**
  * String utility methods.
  */
+@Deprecated // use com.intellij.openapi.util.text.StringUtil
 public class StringUtil {
 
     /**
@@ -33,7 +34,7 @@ public class StringUtil {
      * @return true if it's an empty string.
      */
     public static boolean isEmpty(String s) {
-        return s == null || s.trim().length() == 0;
+        return com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces(s);
     }
 
     /**

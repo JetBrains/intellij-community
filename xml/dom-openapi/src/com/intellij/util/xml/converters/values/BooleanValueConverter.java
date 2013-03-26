@@ -16,6 +16,7 @@
 
 package com.intellij.util.xml.converters.values;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.DomBundle;
@@ -70,7 +71,7 @@ public class BooleanValueConverter extends ResolvingConverter<String> {
   }
 
   public String fromString(@Nullable @NonNls final String stringValue, final ConvertContext context) {
-    if (stringValue != null && ((myAllowEmpty && stringValue.trim().length() == 0) || Arrays.binarySearch(getAllValues(), stringValue) >= 0)) {
+    if (stringValue != null && ((myAllowEmpty && StringUtil.isEmptyOrSpaces(stringValue)) || Arrays.binarySearch(getAllValues(), stringValue) >= 0)) {
       return stringValue;
     }
     return null;

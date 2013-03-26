@@ -17,6 +17,7 @@ package com.intellij.execution;
 
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class CantRunException extends ExecutionException {
@@ -25,7 +26,7 @@ public class CantRunException extends ExecutionException {
   }
 
   public static CantRunException noModuleConfigured(final String moduleName) {
-    if (moduleName.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(moduleName)) {
       return new CantRunException(ExecutionBundle.message("no.module.defined.error.message"));
     }
     return new CantRunException(ExecutionBundle.message("module.does.not.exist.error.message", moduleName));

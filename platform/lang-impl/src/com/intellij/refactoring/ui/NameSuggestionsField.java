@@ -26,6 +26,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
@@ -139,7 +140,7 @@ public class NameSuggestionsField extends JPanel {
     final String oldSelectedItem = (String)comboBox.getSelectedItem();
     final String oldItemFromTextField = (String) comboBox.getEditor().getItem();
     final boolean shouldUpdateTextField =
-      oldItemFromTextField.equals(oldSelectedItem) || oldItemFromTextField.trim().length() == 0;
+      oldItemFromTextField.equals(oldSelectedItem) || StringUtil.isEmptyOrSpaces(oldItemFromTextField);
     myComboBoxModel.setSuggestions(suggestions);
     if(suggestions.length > 0 && shouldUpdateTextField) {
       if (oldSelectedItem != null) {

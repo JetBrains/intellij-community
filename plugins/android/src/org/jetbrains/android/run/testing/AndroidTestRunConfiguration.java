@@ -38,6 +38,7 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
@@ -211,7 +212,7 @@ public class AndroidTestRunConfiguration extends AndroidRunConfigurationBase {
     if (!JUnitUtil.isTestClass(testClass)) {
       throw new RuntimeConfigurationWarning(ExecutionBundle.message("class.isnt.test.class.error.message", CLASS_NAME));
     }
-    if (METHOD_NAME == null || METHOD_NAME.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(METHOD_NAME)) {
       throw new RuntimeConfigurationError(ExecutionBundle.message("method.name.not.specified.error.message"));
     }
     final JUnitUtil.TestMethodFilter filter = new JUnitUtil.TestMethodFilter(testClass);

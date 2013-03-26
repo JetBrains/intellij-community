@@ -27,6 +27,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.DimensionService;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.xml.XmlElement;
@@ -186,7 +187,7 @@ public class EditContextDialog extends DialogWrapper {
       final String name = (String)myVariableTableModel.getValueAt(i, 0);
 
       final String expr = expression.getExpression();
-      if ((expr == null || expr.trim().length() == 0) && (name == null || name.trim().length() == 0)) {
+      if (StringUtil.isEmptyOrSpaces(expr) && StringUtil.isEmptyOrSpaces(name)) {
         continue;
       }
       final String error = getError(expression);

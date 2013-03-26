@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -41,10 +42,6 @@ public class JDComment {
     myFormatter = formatter;
   }
 
-  protected static boolean isNull(String s) {
-    return s == null || s.trim().length() == 0;
-  }
-
   protected static boolean isNull(ArrayList l) {
     return l == null || l.size() == 0;
   }
@@ -62,7 +59,7 @@ public class JDComment {
 
     int start = sb.length();
 
-    if (!isNull(description)) {
+    if (!StringUtil.isEmptyOrSpaces(description)) {
       sb.append(myFormatter.getParser().splitIntoCLines(description, prefix));
 
       if (myFormatter.getSettings().JD_ADD_BLANK_AFTER_DESCRIPTION) {
@@ -105,7 +102,7 @@ public class JDComment {
       }
     }
 
-    if (!isNull(since)) {
+    if (!StringUtil.isEmptyOrSpaces(since)) {
       sb.append(prefix);
       sb.append("@since ");
       sb.append(myFormatter.getParser().splitIntoCLines(since, prefix + "       ", false));

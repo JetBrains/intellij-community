@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -87,7 +88,9 @@ public class GotoLineNumberDialog extends DialogWrapper {
       String text = getText();
       int columnIndex = columnSeparatorIndex(text);
       text = columnIndex == -1 ? text : text.substring(0, columnIndex);
-      if (text.trim().length() == 0) return defaultLine;
+      if (StringUtil.isEmptyOrSpaces(text)) {
+        return defaultLine;
+      }
       return Integer.parseInt(text);
     } catch (NumberFormatException e) {
       return -1;

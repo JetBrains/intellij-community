@@ -19,6 +19,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
@@ -56,7 +57,7 @@ public class XsltAnnotator extends XPath2ElementVisitor implements Annotator {
       if (XsltSupport.isPatternAttribute(context)) {
         XsltPatternValidator.validate(myHolder, file);
       } else {
-        if (file.getText().trim().length() == 0 && file.getExpression() == null) {
+        if (StringUtil.isEmptyOrSpaces(file.getText()) && file.getExpression() == null) {
           myHolder.createErrorAnnotation(file, "Empty XPath expression");
         }
       }

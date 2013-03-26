@@ -171,7 +171,7 @@ public class NewMappings {
       final Set<String> set = myVcsToPaths.keySet();
       final List<AbstractVcs> list = new ArrayList<AbstractVcs>(set.size());
       for (String s : set) {
-        if (s.trim().length() == 0) continue;
+        if (StringUtil.isEmptyOrSpaces(s)) continue;
         final AbstractVcs vcs = AllVcses.getInstance(myProject).getByName(s);
         if (vcs != null) {
           list.add(vcs);
@@ -534,7 +534,7 @@ public class NewMappings {
       Set<String> notInBottom = null;
       for (String topItem : top) {
         // omit empty vcs: not a vcs
-        if (topItem.trim().length() == 0) continue;
+        if (StringUtil.isEmptyOrSpaces(topItem)) continue;
 
         if (! bottom.contains(topItem)) {
           if (notInBottom == null) {

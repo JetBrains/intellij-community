@@ -18,6 +18,7 @@ package com.intellij.util.xml.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.lang.annotation.HighlightSeverity;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.util.xml.DomElement;
 import com.intellij.util.xml.DomUtil;
@@ -75,7 +76,7 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     }
 
     // highlight empty cell with errors
-    if (hasErrors && (value == null || value.toString().trim().length() == 0)) {
+    if (hasErrors && (value == null || StringUtil.isEmptyOrSpaces(value.toString()))) {
       component.setBackground(BaseControl.ERROR_BACKGROUND);
     }
     else if (warningProblems.size() > 0) {

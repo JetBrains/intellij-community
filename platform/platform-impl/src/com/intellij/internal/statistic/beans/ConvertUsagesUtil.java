@@ -15,6 +15,8 @@
  */
 package com.intellij.internal.statistic.beans;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 import java.util.*;
 
 /**
@@ -79,7 +81,7 @@ public class ConvertUsagesUtil {
     assert usages != null;
     Map<GroupDescriptor, Set<UsageDescriptor>> descriptors = new HashMap<GroupDescriptor, Set<UsageDescriptor>>();
     for (String groupStr : usages.split(Character.toString(GROUPS_SEPARATOR))) {
-      if (!isEmptyOrSpaces(groupStr)) {
+      if (!StringUtil.isEmptyOrSpaces(groupStr)) {
         final StringPair group = getPair(groupStr, Character.toString(GROUP_SEPARATOR));
         if (group != null) {
           final String groupId = group.first;
@@ -98,11 +100,11 @@ public class ConvertUsagesUtil {
     assert groupId != null;
     final Map<GroupDescriptor, Set<UsageDescriptor>> descriptors = new HashMap<GroupDescriptor, Set<UsageDescriptor>>();
     for (String value : valueData.split(Character.toString(GROUP_VALUE_SEPARATOR))) {
-      if (!isEmptyOrSpaces(value)) {
+      if (!StringUtil.isEmptyOrSpaces(value)) {
         final StringPair pair = getPair(value, "=");
         if (pair != null) {
           final String count = pair.second;
-          if (!isEmptyOrSpaces(count)) {
+          if (!StringUtil.isEmptyOrSpaces(count)) {
             try {
               final int i = Integer.parseInt(count);
               if (!descriptors.containsKey(groupId)) {
@@ -128,7 +130,7 @@ public class ConvertUsagesUtil {
     if (i > 0 && i < str.length() - 1) {
       String key = str.substring(0, i).trim();
       String value = str.substring(i + 1).trim();
-      if (!isEmptyOrSpaces(key) && !isEmptyOrSpaces(value)) {
+      if (!StringUtil.isEmptyOrSpaces(key) && !StringUtil.isEmptyOrSpaces(value)) {
         return new StringPair(key, value);
       }
     }
@@ -158,10 +160,6 @@ public class ConvertUsagesUtil {
       this.first = first;
       this.second = second;
     }
-  }
-
-  public static boolean isEmptyOrSpaces(final String s) {
-    return s == null || s.trim().length() == 0;
   }
 
   public static void assertDescriptorName(String key) {

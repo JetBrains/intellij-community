@@ -139,7 +139,7 @@ public class ITNReporter extends ErrorReportSubmitter {
 
     @NonNls String login = errorReportConfigurable.ITN_LOGIN;
     @NonNls String password = errorReportConfigurable.getPlainItnPassword();
-    if (login.trim().length() == 0 && password.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(login) && StringUtil.isEmptyOrSpaces(password)) {
       login = "idea_anonymous";
       password = "guest";
     }

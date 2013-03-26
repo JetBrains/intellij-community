@@ -19,6 +19,7 @@ import com.intellij.CommonBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -67,7 +68,7 @@ public final class GenerateGroovyDocDialog extends DialogWrapper {
   }
 
   private boolean checkDir(String dirName, String dirPrefix) {
-    if (dirName == null || dirName.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(dirName)) {
       Messages.showMessageDialog(myProject, GroovyDocBundle.message("groovydoc.generate.0.directory.not.specified", dirPrefix),
                                  CommonBundle.getErrorTitle(), Messages.getErrorIcon());
       return false;

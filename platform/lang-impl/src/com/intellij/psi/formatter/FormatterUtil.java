@@ -22,6 +22,7 @@ import com.intellij.lang.ASTNode;
 import com.intellij.lang.Language;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.checkin.ReformatBeforeCheckinHandler;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.TokenType;
@@ -40,8 +41,7 @@ import java.util.Collections;
 public class FormatterUtil {
 
   public static final Collection<String> FORMATTER_ACTION_NAMES = Collections.unmodifiableCollection(ContainerUtilRt.newHashSet(
-    ReformatAndOptimizeImportsProcessor.COMMAND_NAME, ReformatCodeProcessor.COMMAND_NAME, ReformatBeforeCheckinHandler.COMMAND_NAME
-  ));
+    ReformatAndOptimizeImportsProcessor.COMMAND_NAME, ReformatCodeProcessor.COMMAND_NAME, ReformatBeforeCheckinHandler.COMMAND_NAME));
 
   private FormatterUtil() {
   }
@@ -271,23 +271,21 @@ public class FormatterUtil {
    * This method allows such 'inner element modifications', i.e. it receives information on what new text should be used
    * at the target inner element range and performs corresponding replacement by generating new leaf with adjusted text
    * and replacing the old one by it.
-   * 
-   * @param newWhiteSpaceText  new text to use at the target inner element range
-   * @param holder             target range holder
-   * @param whiteSpaceRange    target range which text should be replaced by the given one
+   *
+   * @param newWhiteSpaceText new text to use at the target inner element range
+   * @param holder            target range holder
+   * @param whiteSpaceRange   target range which text should be replaced by the given one
    */
   public static void replaceInnerWhiteSpace(@NotNull final String newWhiteSpaceText,
                                             @NotNull final ASTNode holder,
-                                            @NotNull final TextRange whiteSpaceRange)
-  {
+                                            @NotNull final TextRange whiteSpaceRange) {
     final CharTable charTable = SharedImplUtil.findCharTableByTree(holder);
     StringBuilder newText = createNewLeafChars(holder, whiteSpaceRange, newWhiteSpaceText);
-    LeafElement newElement =
-      Factory.createSingleLeafElement(holder.getElementType(), newText, charTable, holder.getPsi().getManager());
+    LeafElement newElement = Factory.createSingleLeafElement(holder.getElementType(), newText, charTable, holder.getPsi().getManager());
 
     holder.getTreeParent().replaceChild(holder, newElement);
   }
-  
+
   public static void replaceWhiteSpace(final String whiteSpace,
                                        final ASTNode leafElement,
                                        final IElementType whiteSpaceToken,
@@ -300,11 +298,10 @@ public class FormatterUtil {
     }
 
     if (treePrev != null &&
-        treePrev.getText().trim().length() == 0 &&
+        StringUtil.isEmptyOrSpaces(treePrev.getText()) &&
         treePrev.getElementType() != whiteSpaceToken &&
         treePrev.getTextLength() > 0 &&
-        whiteSpace.length() >
-        0) {
+        whiteSpace.length() > 0) {
       LeafElement whiteSpaceElement =
         Factory.createSingleLeafElement(treePrev.getElementType(), whiteSpace, charTable, SharedImplUtil.getManagerByTree(leafElement));
 
@@ -458,7 +455,7 @@ public class FormatterUtil {
   }
 
   /**
-   * @return    <code>true</code> explicitly called 'reformat' is in  progress at the moment; <code>false</code> otherwise
+   * @return <code>true</code> explicitly called 'reformat' is in  progress at the moment; <code>false</code> otherwise
    */
   public static boolean isFormatterCalledExplicitly() {
     return FORMATTER_ACTION_NAMES.contains(CommandProcessor.getInstance().getCurrentCommandName());

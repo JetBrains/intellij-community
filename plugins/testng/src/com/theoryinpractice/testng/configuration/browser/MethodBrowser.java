@@ -17,6 +17,7 @@ package com.theoryinpractice.testng.configuration.browser;
 
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.execution.configuration.BrowseModuleValueActionListener;
@@ -39,7 +40,7 @@ public class MethodBrowser extends BrowseModuleValueActionListener
     @Override
     protected String showDialog() {
         String className = editor.getClassName();
-        if(className.trim().length() == 0) {
+        if(StringUtil.isEmptyOrSpaces(className)) {
             Messages.showMessageDialog(getField(), "Set class name first", "Cannot Browse Methods", Messages.getInformationIcon());
             return null;
         }

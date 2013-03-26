@@ -22,6 +22,7 @@ package com.intellij.psi.impl.source.codeStyle.javadoc;
 
 import com.intellij.formatting.IndentInfo;
 import com.intellij.ide.highlighter.JavaFileType;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NonNls;
@@ -104,7 +105,7 @@ public class JDParamListOwnerComment extends JDComment{
       for (Object aList : list) {
         NameDesc nd = (NameDesc)aList;
         int l = nd.name.length();
-        if (isNull(nd.desc) && !generate_empty_tags) continue;
+        if (StringUtil.isEmptyOrSpaces(nd.desc) && !generate_empty_tags) continue;
         if (l > max && l <= max_name_length) max = l;
       }
     }
@@ -121,8 +122,8 @@ public class JDParamListOwnerComment extends JDComment{
     
     for (Object aList1 : list) {
       NameDesc nd = (NameDesc)aList1;
-      if (isNull(nd.desc) && !generate_empty_tags) continue;
-      if (wrapDescription && !isNull(nd.desc)) {
+      if (StringUtil.isEmptyOrSpaces(nd.desc) && !generate_empty_tags) continue;
+      if (wrapDescription && !StringUtil.isEmptyOrSpaces(nd.desc)) {
         sb.append(prefix).append(tag).append(nd.name).append("\n");
         sb.append(myFormatter.getParser().splitIntoCLines(nd.desc, wrapParametersPrefix));
       }

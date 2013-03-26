@@ -16,6 +16,7 @@
 package git4idea.history;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.VcsException;
@@ -122,13 +123,13 @@ class GitLogRecord {
 
   String[] getParentsShortHashes() {
     final String parents = lookup(SHORT_PARENTS);
-    if (parents.trim().length() == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (StringUtil.isEmptyOrSpaces(parents)) return ArrayUtil.EMPTY_STRING_ARRAY;
     return parents.split(" ");
   }
 
   String[] getParentsHashes() {
     final String parents = lookup(PARENTS);
-    if (parents.trim().length() == 0) return ArrayUtil.EMPTY_STRING_ARRAY;
+    if (StringUtil.isEmptyOrSpaces(parents)) return ArrayUtil.EMPTY_STRING_ARRAY;
     return parents.split(" ");
   }
 

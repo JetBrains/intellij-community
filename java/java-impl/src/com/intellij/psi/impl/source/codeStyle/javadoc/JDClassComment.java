@@ -15,6 +15,7 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
@@ -43,7 +44,7 @@ public class JDClassComment extends JDParamListOwnerComment {
         sb.append(myFormatter.getParser().splitIntoCLines(s, prefix + "        ", false));
       }
     }
-    if (!isNull(version)) {
+    if (!StringUtil.isEmptyOrSpaces(version)) {
       sb.append(prefix);
       sb.append("@version ");
       sb.append(myFormatter.getParser().splitIntoCLines(version, prefix + "         ", false));

@@ -1182,7 +1182,7 @@ public class GitLogUI implements Disposable {
       StringBuilder sb = new StringBuilder();
       mySearchContext.clear();
       for (String string : strings) {
-        if (string.trim().length() == 0) continue;
+        if (StringUtil.isEmptyOrSpaces(string)) continue;
         mySearchContext.add(string.toLowerCase());
         final String word = StringUtil.escapeToRegexp(string);
         sb.append(word).append(".*");

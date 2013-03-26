@@ -42,6 +42,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaCodeFragment;
 import com.intellij.psi.PsiClass;
@@ -413,7 +414,7 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       @Override
       protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
         final String className = getClassName();
-        if (className.trim().length() == 0) {
+        if (StringUtil.isEmptyOrSpaces(className)) {
           return;
         }
         final PsiClass testClass = getModuleSelector().findClass(className);

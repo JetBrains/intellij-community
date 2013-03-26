@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.converters.values;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.ConvertContext;
 import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.DomBundle;
@@ -34,7 +35,7 @@ public class CharacterValueConverter extends Converter<String> {
   public String fromString(@Nullable @NonNls String s, final ConvertContext context) {
     if (s == null) return null;
 
-    if (myAllowEmpty && s.trim().length() == 0) return s;
+    if (myAllowEmpty && StringUtil.isEmptyOrSpaces(s)) return s;
 
     if (s.trim().length() == 1) return s;
 

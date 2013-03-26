@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
@@ -91,7 +92,7 @@ public class AntBuildModelImpl implements AntBuildModelBase {
       return null;
     }
     final String modelName = getName();
-    if (modelName == null || modelName.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(modelName)) {
       return null;
     }
     return AntConfiguration.getActionIdPrefix(getBuildFile().getProject()) + modelName;

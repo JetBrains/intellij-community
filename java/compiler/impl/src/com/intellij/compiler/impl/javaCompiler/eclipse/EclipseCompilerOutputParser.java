@@ -20,6 +20,7 @@ import com.intellij.compiler.impl.javaCompiler.FileObject;
 import com.intellij.openapi.compiler.CompilerBundle;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.io.File;
@@ -41,7 +42,7 @@ public class EclipseCompilerOutputParser extends OutputParser {
     if (line == null) {
       return false;
     }
-    if (line.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(line)) {
       return true;
     }
     if (line.startsWith("[parsing ")) {

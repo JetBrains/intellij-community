@@ -16,6 +16,7 @@
 package com.intellij.psi.formatter;
 
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.JavaDocTokenType;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,6 +26,8 @@ import org.jetbrains.annotations.NotNull;
 public class JavadocWhiteSpaceFormattingStrategy extends WhiteSpaceFormattingStrategyAdapter {
   @Override
   public boolean containsWhitespacesOnly(@NotNull final ASTNode node) {
-    return node.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA && node.textContains('\n') && node.getText().trim().length() == 0;
+    return node.getElementType() == JavaDocTokenType.DOC_COMMENT_DATA &&
+           node.textContains('\n') &&
+           StringUtil.isEmptyOrSpaces(node.getText());
   }
 }

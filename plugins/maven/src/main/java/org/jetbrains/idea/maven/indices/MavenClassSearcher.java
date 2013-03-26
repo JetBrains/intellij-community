@@ -35,7 +35,7 @@ public class MavenClassSearcher extends MavenSearcher<MavenClassSearchResult> {
 
   protected Pair<String, Query> preparePatternAndQuery(String pattern) {
     pattern = pattern.toLowerCase();
-    if (pattern.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(pattern)) {
       return new Pair<String, Query>(pattern, new MatchAllDocsQuery());
     }
 

@@ -238,7 +238,7 @@ public class GrChangeSignatureDialog extends ChangeSignatureDialogBase<GrParamet
 
       String defaultValue = item.defaultValueCodeFragment.getText();
       final String initializer = item.initializerCodeFragment.getText();
-      if (item.parameter.getOldIndex() < 0 && defaultValue.trim().length() == 0 && initializer.trim().length() == 0) {
+      if (item.parameter.getOldIndex() < 0 && StringUtil.isEmptyOrSpaces(defaultValue) && StringUtil.isEmptyOrSpaces(initializer)) {
         return message("specify.default.value", name);
       }
 

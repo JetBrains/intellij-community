@@ -324,7 +324,7 @@ public class GrIntroduceConstantDialog extends DialogWrapper
     }
 
     final String targetClassName = myTargetClassEditor.getText();
-    if (targetClassName.trim().length() == 0 && myDefaultTargetClass == null) {
+    if (StringUtil.isEmptyOrSpaces(targetClassName) && myDefaultTargetClass == null) {
       setOKActionEnabled(false);
       return;
     }

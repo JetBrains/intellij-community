@@ -459,7 +459,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       Object value = expression.getValue();
       if (!(value instanceof String)) return;
       String stringValue = (String)value;
-      if (stringValue.trim().length() == 0) {
+      if (StringUtil.isEmptyOrSpaces(stringValue)) {
         return;
       }
 
@@ -607,7 +607,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
   }
 
   public void cacheNonNlsCommentPattern() {
-    myCachedNonNlsPattern = nonNlsCommentPattern.trim().length() == 0 ? null : Pattern.compile(nonNlsCommentPattern);
+    myCachedNonNlsPattern = StringUtil.isEmptyOrSpaces(nonNlsCommentPattern) ? null : Pattern.compile(nonNlsCommentPattern);
   }
 
   private static boolean isClassRef(final PsiLiteralExpression expression, String value) {

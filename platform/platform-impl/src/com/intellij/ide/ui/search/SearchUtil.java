@@ -225,7 +225,9 @@ public class SearchUtil {
 
     rootComponent.putClientProperty(HIGHLIGHT_WITH_BORDER, null);
 
-    if (option == null || option.trim().length() == 0) return false;
+    if (StringUtil.isEmptyOrSpaces(option)) {
+      return false;
+    }
     boolean highlight = false;
     if (rootComponent instanceof JCheckBox) {
       final JCheckBox checkBox = ((JCheckBox)rootComponent);

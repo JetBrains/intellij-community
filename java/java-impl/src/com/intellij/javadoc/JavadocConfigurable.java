@@ -16,6 +16,7 @@
 package com.intellij.javadoc;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiKeyword;
 
 import javax.swing.*;
@@ -36,11 +37,11 @@ public final class JavadocConfigurable implements Configurable {
 
   public void applyTo(JavadocConfiguration configuration) {
     configuration.OUTPUT_DIRECTORY = toSystemIndependentFormat(myPanel.myTfOutputDir.getText());
-    configuration.OTHER_OPTIONS = convertString(myPanel.myOtherOptionsField.getText());
-    configuration.HEAP_SIZE = convertString(myPanel.myHeapSizeField.getText());
-    configuration.LOCALE = convertString(myPanel.myLocaleTextField.getText());
+    configuration.OTHER_OPTIONS = StringUtil.nullize(myPanel.myOtherOptionsField.getText(), true);
+    configuration.HEAP_SIZE = StringUtil.nullize(myPanel.myHeapSizeField.getText(), true);
+    configuration.LOCALE = StringUtil.nullize(myPanel.myLocaleTextField.getText(), true);
     configuration.OPEN_IN_BROWSER = myPanel.myOpenInBrowserCheckBox.isSelected();
-    configuration.OPTION_SCOPE = convertString(myPanel.getScope());
+    configuration.OPTION_SCOPE = StringUtil.nullize(myPanel.getScope(), true);
     configuration.OPTION_HIERARCHY = myPanel.myHierarchy.isSelected();
     configuration.OPTION_NAVIGATOR = myPanel.myNavigator.isSelected();
     configuration.OPTION_INDEX = myPanel.myIndex.isSelected();
@@ -119,13 +120,6 @@ public final class JavadocConfigurable implements Configurable {
 
   public void disposeUIResources() {
     myPanel = null;
-  }
-
-  private static String convertString(String s) {
-    if (s != null && s.trim().length() == 0) {
-      return null;
-    }
-    return s;
   }
 
   private static String toSystemIndependentFormat(String directory) {

@@ -22,6 +22,7 @@ import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,9 +52,9 @@ public abstract class BaseToolManager<T extends Tool> implements ExportableAppli
   protected abstract SchemeProcessor<ToolsGroup<T>> createProcessor();
 
   @Nullable
+  @Deprecated
   public static String convertString(String s) {
-    if (s != null && s.trim().length() == 0) return null;
-    return s;
+    return StringUtil.nullize(s, true);
   }
 
   @NotNull

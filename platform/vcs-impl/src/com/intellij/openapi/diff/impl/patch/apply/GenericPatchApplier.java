@@ -815,7 +815,7 @@ public class GenericPatchApplier {
     final int offset = splitHunk.getContextBefore().size();
     final List<BeforeAfter<List<String>>> steps = splitHunk.getPatchSteps();
     if (splitHunk.isInsertion()) {
-      final boolean emptyFile = myLines.isEmpty() || myLines.size() == 1 && myLines.get(0).trim().length() == 0;
+      final boolean emptyFile = myLines.isEmpty() || myLines.size() == 1 && StringUtil.isEmptyOrSpaces(myLines.get(0));
       if (emptyFile) {
         myNotBound.add(splitHunk);
       }

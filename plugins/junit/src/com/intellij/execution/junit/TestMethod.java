@@ -22,6 +22,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMethod;
@@ -128,7 +129,7 @@ class TestMethod extends TestObject {
     final PsiClass psiClass = configurationModule.checkModuleAndClassName(testClass, ExecutionBundle.message("no.test.class.specified.error.text"));
 
     final String methodName = data.getMethodName();
-    if (methodName == null || methodName.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(methodName)) {
       throw new RuntimeConfigurationError(ExecutionBundle.message("method.name.not.specified.error.message"));
     }
     final JUnitUtil.TestMethodFilter filter = new JUnitUtil.TestMethodFilter(psiClass);

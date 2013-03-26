@@ -18,6 +18,7 @@ package com.intellij.refactoring.migration;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.*;
 import com.intellij.ui.table.JBTable;
@@ -53,7 +54,7 @@ public class EditMigrationDialog extends DialogWrapper{
 
   private void validateOKButton() {
     boolean isEnabled = true;
-    if (myNameField.getText().trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(myNameField.getText())) {
       isEnabled = false;
     } else if (myMigrationMap.getEntryCount() == 0) {
       isEnabled = false;

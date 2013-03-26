@@ -20,6 +20,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.Navigatable;
 import com.intellij.util.SmartList;
 import com.intellij.util.containers.StringInterner;
@@ -125,7 +126,7 @@ public class GeneratedStructureModel extends DefaultTreeModel {
       if (child instanceof StructureNode) {
         final OutputEventQueue.NodeEvent event = (OutputEventQueue.NodeEvent)child.getUserObject();
         if (event != null && event.getType() == OutputEventQueue.CHARACTERS) {
-          if (event.getValue().trim().length() == 0) {
+          if (StringUtil.isEmptyOrSpaces(event.getValue())) {
             child = child.getNextSibling();
             continue;
           }

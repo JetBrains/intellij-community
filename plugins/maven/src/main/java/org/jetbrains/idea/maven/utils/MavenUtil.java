@@ -588,8 +588,9 @@ public class MavenUtil {
     return isValidMavenHome(file) ? file : null;
   }
 
+  @Deprecated
   public static boolean isEmptyOrSpaces(@Nullable String str) {
-    return str == null || str.length() == 0 || str.trim().length() == 0;
+    return StringUtil.isEmptyOrSpaces(str);
   }
 
   public static boolean isValidMavenHome(File home) {
