@@ -211,7 +211,9 @@ public class FileWatcher {
     }
 
     LOG.info("Starting file watcher: " + myExecutable);
-    final Process process = Runtime.getRuntime().exec(new String[]{myExecutable.getAbsolutePath()});  // use array to allow spaces in path
+    ProcessBuilder processBuilder = new ProcessBuilder(myExecutable.getAbsolutePath());
+    processBuilder.redirectErrorStream(true);
+    final Process process = processBuilder.start();
     myProcessHandler = new MyProcessHandler(process);
     myProcessHandler.addProcessListener(new MyProcessAdapter());
     myProcessHandler.startNotify();
@@ -342,6 +344,11 @@ public class FileWatcher {
 
     protected boolean useAdaptiveSleepingPolicyWhenReadingOutput() {
       return true;
+    }
+
+    @Override
+    protected boolean processHasSeparateErrorStream() {
+      return false;
     }
   }
 
