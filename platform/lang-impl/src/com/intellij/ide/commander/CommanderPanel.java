@@ -279,7 +279,7 @@ public class CommanderPanel extends JPanel {
     myParentTitle = new MyTitleLabel(myTitlePanel);
     myParentTitle.setText(" ");
     myParentTitle.setFont(UIUtil.getLabelFont().deriveFont(Font.BOLD));
-    myParentTitle.setForeground(JBColor.foreground);
+    myParentTitle.setForeground(JBColor.foreground());
     myParentTitle.setUI(new RightAlignedLabelUI());
     final JPanel panel1 = new JPanel(new BorderLayout());
     panel1.setOpaque(false);
@@ -392,7 +392,7 @@ public class CommanderPanel extends JPanel {
       LOG.assertTrue(color != null);
       myTitlePanel.setBackground(color);
       myTitlePanel.setBorder(BorderFactory.createBevelBorder(BevelBorder.LOWERED, color.brighter(), color.darker()));
-      myParentTitle.setForeground(JBColor.foreground);
+      myParentTitle.setForeground(JBColor.foreground());
     }
     final int[] selectedIndices = myList.getSelectedIndices();
     if (selectedIndices.length == 0 && myList.getModel().getSize() > 0) {

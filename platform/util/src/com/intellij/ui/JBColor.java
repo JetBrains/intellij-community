@@ -75,9 +75,7 @@ public class JBColor extends Color {
   public final static Color cyan = new JBColor(Color.cyan, new Color(0, 137, 137));
   public final static Color CYAN = cyan;
 
-  public static Color foreground = UIUtil.getLabelForeground();
-  public static Color FOREGROUND = foreground;
+  public static Color foreground() {return UIUtil.getLabelForeground();}
 
-  public static Color background = UIUtil.getListBackground();
-  public static Color BACKGROUND = background;
+  public static Color background() {return UIUtil.getListBackground();}
 }

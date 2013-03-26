@@ -296,7 +296,7 @@ public class IncrementalSearchHandler {
       data.label.setForeground(JBColor.RED);
     }
     else {
-      data.label.setForeground(JBColor.foreground);
+      data.label.setForeground(JBColor.foreground());
       if (matchLength > 0) {
         TextAttributes attributes = editor.getColorsScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
         data.segmentHighlighter = editor.getMarkupModel()
@@ -327,7 +327,7 @@ public class IncrementalSearchHandler {
     public MyLabel(String text) {
       super(text);
       this.setBackground(HintUtil.INFORMATION_COLOR);
-      this.setForeground(JBColor.foreground);
+      this.setForeground(JBColor.foreground());
       this.setOpaque(true);
     }
   }

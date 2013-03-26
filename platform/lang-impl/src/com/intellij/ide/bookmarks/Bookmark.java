@@ -270,7 +270,7 @@ public class Bookmark implements Navigatable {
       g.setColor(JBColor.GRAY);
       g.drawRect(x, y, getIconWidth() - 2, getIconHeight());
 
-      g.setColor(JBColor.foreground);
+      g.setColor(JBColor.foreground());
       final Font oldFont = g.getFont();
       g.setFont(MNEMONIC_FONT);
 
