@@ -32,10 +32,10 @@ public class PyUnwrapDescriptor extends UnwrapDescriptorBase{
   @Nullable
   protected PsiElement findTargetElement(Editor editor, PsiFile file) {
     int offset = editor.getCaretModel().getOffset();
-    PsiElement endElement = PyUtil.findNonWhitespaceAtOffset(file, offset);
+    PsiElement endElement = PyUtil.findElementAtOffset(file, offset);
     SelectionModel selectionModel = editor.getSelectionModel();
     if (selectionModel.hasSelection() && selectionModel.getSelectionStart() < offset) {
-      PsiElement startElement = PyUtil.findNonWhitespaceAtOffset(file, selectionModel.getSelectionStart());
+      PsiElement startElement = PyUtil.findElementAtOffset(file, selectionModel.getSelectionStart());
       if (startElement != null && startElement != endElement && startElement.getTextRange().getEndOffset() == offset) {
         return startElement;
       }

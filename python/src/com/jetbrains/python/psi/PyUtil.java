@@ -193,6 +193,7 @@ public class PyUtil {
   // TODO: move to a saner place
 
   public static boolean instanceOf(Object obj, Class... possibleClasses) {
+    if (obj == null || possibleClasses == null) return true;
     for (Class cls : possibleClasses) {
       if (cls.isInstance(obj)) return true;
     }
@@ -1177,7 +1178,7 @@ public class PyUtil {
   }
 
   @Nullable
-  public static PsiElement findPrevNonWhitespaceAtOffset(PsiFile psiFile, int caretOffset) {
+  public static PsiElement findPrevAtOffset(PsiFile psiFile, int caretOffset, Class ... toSkip) {
     PsiElement element = psiFile.findElementAt(caretOffset);
     if (element == null) {
       return null;
@@ -1188,23 +1189,31 @@ public class PyUtil {
       int lineNumber = document.getLineNumber(caretOffset);
       lineStartOffset = document.getLineStartOffset(lineNumber);
     }
-    while (caretOffset >= lineStartOffset && element instanceof PsiWhiteSpace) {
+    do {
       caretOffset--;
       element = psiFile.findElementAt(caretOffset);
-    }
-    return element instanceof PsiWhiteSpace ? null : element;
+    } while (caretOffset >= lineStartOffset && instanceOf(element, toSkip));
+    return instanceOf(element, toSkip) ? null : element;
   }
 
   @Nullable
   public static PsiElement findNonWhitespaceAtOffset(PsiFile psiFile, int caretOffset) {
-    PsiElement element = findNextNonWhitespaceAtOffset(psiFile, caretOffset);
+    PsiElement element = findNextAtOffset(psiFile, caretOffset, PsiWhiteSpace.class);
     if (element == null)
-      element = findPrevNonWhitespaceAtOffset(psiFile, caretOffset);
+      element = findPrevAtOffset(psiFile, caretOffset, PsiWhiteSpace.class);
     return element;
   }
 
   @Nullable
-  public static PsiElement findNextNonWhitespaceAtOffset(@NotNull final PsiFile psiFile, int caretOffset) {
+  public static PsiElement findElementAtOffset(PsiFile psiFile, int caretOffset) {
+    PsiElement element = findPrevAtOffset(psiFile, caretOffset);
+    if (element == null)
+      element = findNextAtOffset(psiFile, caretOffset);
+    return element;
+  }
+
+  @Nullable
+  public static PsiElement findNextAtOffset(@NotNull final PsiFile psiFile, int caretOffset, Class ... toSkip) {
     PsiElement element = psiFile.findElementAt(caretOffset);
     if (element == null) {
       return null;
@@ -1216,11 +1225,11 @@ public class PyUtil {
       int lineNumber = document.getLineNumber(caretOffset);
       lineEndOffset = document.getLineEndOffset(lineNumber);
     }
-    while (caretOffset <= lineEndOffset && element instanceof PsiWhiteSpace) {
+    while (caretOffset <= lineEndOffset && instanceOf(element, toSkip)) {
       caretOffset++;
       element = psiFile.findElementAt(caretOffset);
     }
-    return element instanceof PsiWhiteSpace ? null : element;
+    return instanceOf(element, toSkip) ? null : element;
   }
 
 

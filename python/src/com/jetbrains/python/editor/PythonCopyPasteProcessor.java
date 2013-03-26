@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -89,13 +90,13 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
                                       int caretOffset,
                                       int lineNumber) {
 
-    PsiElement nonWS = PyUtil.findNextNonWhitespaceAtOffset(file, caretOffset);
+    PsiElement nonWS = PyUtil.findNextAtOffset(file, caretOffset, PsiWhiteSpace.class);
     if (nonWS != null) {
       final IElementType nonWSType = nonWS.getNode().getElementType();
       if (nonWSType == PyTokenTypes.ELSE_KEYWORD || nonWSType == PyTokenTypes.ELIF_KEYWORD ||
           nonWSType == PyTokenTypes.EXCEPT_KEYWORD || nonWSType == PyTokenTypes.FINALLY_KEYWORD) {
         lineNumber -= 1;
-        nonWS = PyUtil.findNextNonWhitespaceAtOffset(file, getLineStartSafeOffset(document, lineNumber));
+        nonWS = PyUtil.findNextAtOffset(file, getLineStartSafeOffset(document, lineNumber), PsiWhiteSpace.class);
       }
     }
 
@@ -132,7 +133,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
   private static boolean isApplicable(@NotNull final PsiFile file, @NotNull String text, int caretOffset) {
     final boolean useTabs =
       CodeStyleSettingsManager.getSettings(file.getProject()).useTabCharacter(PythonFileType.INSTANCE);
-    final PsiElement nonWS = PyUtil.findNextNonWhitespaceAtOffset(file, caretOffset);
+    final PsiElement nonWS = PyUtil.findNextAtOffset(file, caretOffset, PsiWhiteSpace.class);
     if (nonWS == null || text.endsWith("\n"))
       return true;
     if (inStatementList(file, caretOffset) && (text.startsWith(useTabs ? "\t" : " ") || StringUtil.split(text, "\n").size() > 1))

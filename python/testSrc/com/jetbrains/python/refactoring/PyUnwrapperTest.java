@@ -51,6 +51,7 @@ public class PyUnwrapperTest extends PyTestCase {
   public void testIfInElifBranchUnwrap()              throws Throwable {doNegativeTest(PyBundle.message("unwrap.if"));}
 
   public void testWhitespaceAtCaretUnwrap()           throws Throwable {doTest();}
+  public void testEmptyLineAtCaretUnwrap()            throws Throwable {doTest();}
 
   private void doTest() {
     doTest(0);
