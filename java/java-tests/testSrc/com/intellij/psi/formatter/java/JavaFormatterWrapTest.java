@@ -315,4 +315,19 @@ public class JavaFormatterWrapTest extends AbstractJavaFormatterTest {
       "int j = 2;"
     );
   }
+
+  public void testNoUnnecessaryWrappingIsPerformedForLongLine() throws Exception {
+    // Inspired by IDEA-103624
+    getSettings().WRAP_LONG_LINES = true;
+    getSettings().getRootSettings().RIGHT_MARGIN = 40;
+    getSettings().ALIGN_MULTILINE_PARAMETERS_IN_CALLS = true;
+    String text =
+      "test(1,\n" +
+      "     2,\n" +
+      "     Test.\n" +
+      "             loooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooooongMethod());\n" +
+      "int i = 1;\n" +
+      "int j = 2;";
+    doMethodTest(text, text);
+  }
 }

@@ -250,10 +250,15 @@ public class CharArrayUtil {
   }
 
   public static int shiftBackward(@NotNull CharSequence buffer, int offset, @NotNull String chars) {
-    if (offset >= buffer.length()) return offset;
-
+    return shiftBackward(buffer, 0, offset, chars);
+  }
+  
+  public static int shiftBackward(@NotNull CharSequence buffer, int minOffset, int maxOffset, @NotNull String chars) {
+    if (maxOffset >= buffer.length()) return maxOffset;
+    
+    int offset = maxOffset;
     while (true) {
-      if (offset < 0) break;
+      if (offset < minOffset) break;
       char c = buffer.charAt(offset);
       int i;
       for (i = 0; i < chars.length(); i++) {
