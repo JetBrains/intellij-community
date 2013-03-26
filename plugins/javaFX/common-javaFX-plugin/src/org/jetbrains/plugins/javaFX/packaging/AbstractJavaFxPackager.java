@@ -307,6 +307,7 @@ public abstract class AbstractJavaFxPackager {
   private int startProcess(List<String> commands) {
     try {
       final Process process = new ProcessBuilder(commands).start();
+      LOG.info(new String(FileUtil.loadBytes(process.getErrorStream())));
       return process.waitFor();
     }
     catch (Exception e) {
