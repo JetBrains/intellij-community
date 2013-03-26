@@ -482,7 +482,7 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     final PsiMethodMember[] onlyPrimary = convertToMethodMembers(candidates);
     final PsiMethodMember[] all = ArrayUtil.mergeArrays(onlyPrimary, convertToMethodMembers(secondary));
 
-    final Ref<Boolean> merge = Ref.create(PropertiesComponent.getInstance(project).isTrueValue(PROP_COMBINED_OVERRIDE_IMPLEMENT));
+    final Ref<Boolean> merge = Ref.create(PropertiesComponent.getInstance(project).getBoolean(PROP_COMBINED_OVERRIDE_IMPLEMENT, true));
     final MemberChooser<PsiMethodMember> chooser =
       new MemberChooser<PsiMethodMember>(toImplement || merge.get() ? all : onlyPrimary, false, true, project, PsiUtil.isLanguageLevel5OrHigher(aClass)) {
         @Override
