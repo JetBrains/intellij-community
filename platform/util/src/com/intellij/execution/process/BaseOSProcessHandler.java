@@ -70,10 +70,10 @@ public class BaseOSProcessHandler extends ProcessHandler {
       @Override
       public void startNotified(final ProcessEvent event) {
         try {
-          BaseOutputReader.SleepingPolicy adaptiveSleepingPolicy =
-            useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : AdaptiveSleepingPolicy.SIMPLE;
-          final BaseOutputReader stdoutReader = new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, adaptiveSleepingPolicy);
-          final BaseOutputReader stderrReader = processHasSeparateErrorStream() ? new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, adaptiveSleepingPolicy) : null;
+          BaseOutputReader.SleepingPolicy sleepingPolicy =
+            useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : BaseOutputReader.SleepingPolicy.SIMPLE;
+          final BaseOutputReader stdoutReader = new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, sleepingPolicy);
+          final BaseOutputReader stderrReader = processHasSeparateErrorStream() ? new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, sleepingPolicy) : null;
 
           myWaitFor.setTerminationCallback(new Consumer<Integer>() {
             @Override
