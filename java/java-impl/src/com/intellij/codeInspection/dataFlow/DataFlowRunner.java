@@ -255,8 +255,12 @@ public class DataFlowRunner {
 
     private void checkEnvironment(DataFlowRunner runner, DfaMemoryState memState, @Nullable PsiElement anchor) {
       if (myClassParent == anchor) {
-        DfaMemoryState copy = memState.createCopy();
+        DfaMemoryStateImpl copy = (DfaMemoryStateImpl)memState.createCopy();
         copy.flushFields(runner);
+        for (DfaVariableValue value : copy.getVariableStates().keySet()) {
+          copy.flushDependencies(value);
+        }
+
         myClosureStates.add(copy);
       }
     }

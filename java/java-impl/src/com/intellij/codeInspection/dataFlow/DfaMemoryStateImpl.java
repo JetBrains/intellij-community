@@ -772,7 +772,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     for (DfaVariableValue field : runner.getFields()) {
       if (myVariableStates.containsKey(field) || getEqClassIndex(field) >= 0) {
         if (!DfaUtil.isFinalField(field.getPsiVariable())) {
-          flushWithDependencies(field);
+          flushVariable(field);
           getVariableState(field).setNullable(false);
         }
       }
@@ -780,16 +780,16 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
   }
 
   public void flushVariable(@NotNull DfaVariableValue variable) {
-    flushWithDependencies(variable);
+    doFlush(variable);
+    flushDependencies(variable);
   }
 
   @Override
   public void flushVariableOutOfScope(DfaVariableValue variable) {
-    flushWithDependencies(variable);
+    flushVariable(variable);
   }
 
-  private void flushWithDependencies(DfaVariableValue variable) {
-    doFlush(variable);
+  public void flushDependencies(DfaVariableValue variable) {
     for (DfaVariableValue dependent : myFactory.getVarFactory().getAllQualifiedBy(variable)) {
       doFlush(dependent);
     }

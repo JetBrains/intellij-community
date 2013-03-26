@@ -88,6 +88,7 @@ public class DataFlowInspectionTest extends LightCodeInsightFixtureTestCase {
   public void testThisFieldGetters() throws Throwable { doTest(); }
   public void testChainedFinalFieldAccessorsDfa() throws Throwable { doTest(); }
   public void testAccessorPlusMutator() throws Throwable { doTest(); }
+  public void testClosureVariableField() throws Throwable { doTest(); }
 
   public void testAssigningUnknownToNullable() throws Throwable { doTest(); }
   public void testAssigningClassLiteralToNullable() throws Throwable { doTest(); }
