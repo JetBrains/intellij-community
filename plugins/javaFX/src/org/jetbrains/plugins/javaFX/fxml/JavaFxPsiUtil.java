@@ -417,30 +417,35 @@ public class JavaFxPsiUtil {
     return null;
   }
 
-  public static boolean hasBuilder(final PsiClass psiClass) {
+  public static boolean hasBuilder(@NotNull final PsiClass psiClass) {
     final Project project = psiClass.getProject();
-    final PsiClass builderClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_FXML_BUILDER,
-                                                                               GlobalSearchScope.allScope(project));
-    if (builderClass != null) {
-      //todo cache this info
-      final PsiMethod[] buildMethods = builderClass.findMethodsByName("build", false);
-      if (buildMethods.length == 1 && buildMethods[0].getParameterList().getParametersCount() == 0) {
-        if (ClassInheritorsSearch.search(builderClass).forEach(new Processor<PsiClass>() {
-          @Override
-          public boolean process(PsiClass aClass) {
-            PsiType returnType = null;
-            final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(aClass, buildMethods[0], false);
-            if (method != null) {
-              returnType = method.getReturnType();
+    return CachedValuesManager.getManager(project).getCachedValue(psiClass, new CachedValueProvider<Boolean>() {
+      @Nullable
+      @Override
+      public Result<Boolean> compute() {
+        final PsiClass builderClass = JavaPsiFacade.getInstance(project).findClass(JavaFxCommonClassNames.JAVAFX_FXML_BUILDER,
+                                                                                   GlobalSearchScope.allScope(project));
+        if (builderClass != null) {
+          final PsiMethod[] buildMethods = builderClass.findMethodsByName("build", false);
+          if (buildMethods.length == 1 && buildMethods[0].getParameterList().getParametersCount() == 0) {
+            if (ClassInheritorsSearch.search(builderClass).forEach(new Processor<PsiClass>() {
+              @Override
+              public boolean process(PsiClass aClass) {
+                PsiType returnType = null;
+                final PsiMethod method = MethodSignatureUtil.findMethodBySuperMethod(aClass, buildMethods[0], false);
+                if (method != null) {
+                  returnType = method.getReturnType();
+                }
+                return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(returnType));
+              }
+            })) {
+              return Result.create(false, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
             }
-            return !Comparing.equal(psiClass, PsiUtil.resolveClassInClassTypeOnly(returnType));
           }
-        })) {
-          return false;
         }
+        return Result.create(true, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
-    }
-    return true;
+    });
   }
 
   public static String isClassAcceptable(@Nullable XmlTag parentTag, final PsiClass aClass) {
@@ -502,27 +507,35 @@ public class JavaFxPsiUtil {
     return false;
   }
 
-  public static PsiType getWrappedPropertyType(PsiField field, Project project, final Map<String, PsiType> typeMap) {
-    PsiType substitute = null;
+  public static PsiType getWrappedPropertyType(PsiField field, final Project project, final Map<String, PsiType> typeMap) {
     final PsiType fieldType = field.getType();
-    for (String typeName : typeMap.keySet()) {
-      if (InheritanceUtil.isInheritor(fieldType, typeName)) {
-        substitute = typeMap.get(typeName);
-        break;
+    final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(fieldType);
+    final PsiClass fieldClass = resolveResult.getElement();
+    if (fieldClass == null) return fieldType;
+    return CachedValuesManager.getManager(project).getCachedValue(fieldClass, new CachedValueProvider<PsiType>() {
+      @Nullable
+      @Override
+      public Result<PsiType> compute() {
+        PsiType substitute = null;
+        for (String typeName : typeMap.keySet()) {
+          if (InheritanceUtil.isInheritor(fieldType, typeName)) {
+            substitute = typeMap.get(typeName);
+            break;
+          }
+        }
+        if (substitute == null) {
+          final PsiClass aClass = JavaPsiFacade.getInstance(project)
+            .findClass(JavaFxCommonClassNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE, GlobalSearchScope.allScope(project));
+          LOG.assertTrue(aClass != null);
+          final PsiSubstitutor substitutor =
+            TypeConversionUtil.getSuperClassSubstitutor(aClass, fieldClass, resolveResult.getSubstitutor());
+          final PsiMethod[] values = aClass.findMethodsByName("getValue", false);
+          substitute = substitutor.substitute(values[0].getReturnType());
+        }
+
+        return Result.create(substitute, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
       }
-    }
-    if (substitute == null) {
-      final PsiClass aClass = JavaPsiFacade.getInstance(project)
-        .findClass(JavaFxCommonClassNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE, GlobalSearchScope.allScope(project));
-      LOG.assertTrue(aClass != null);
-      final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(fieldType);
-      final PsiClass fieldClass = resolveResult.getElement();
-      LOG.assertTrue(fieldClass != null);
-      final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(aClass, fieldClass, resolveResult.getSubstitutor());
-      final PsiMethod[] values = aClass.findMethodsByName("getValue", false);
-      substitute = substitutor.substitute(values[0].getReturnType());
-    }
-    return substitute;
+    });
   }
 
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {
