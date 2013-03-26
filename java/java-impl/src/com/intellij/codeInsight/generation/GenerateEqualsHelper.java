@@ -407,10 +407,9 @@ public class GenerateEqualsHelper implements Runnable {
 
   private static void addTempForDoubleInitialization(PsiField field, @NonNls StringBuilder buffer) {
     buffer.append(" = ");
+    buffer.append("Double.doubleToLongBits(");
     buffer.append(field.getName());
-    buffer.append(" != +0.0d ? Double.doubleToLongBits(");
-    buffer.append(field.getName());
-    buffer.append(") : 0L;\n");
+    buffer.append(");\n");
   }
 
   private String addTempDeclaration(@NonNls StringBuilder buffer, boolean resultDeclarationCompleted) {
