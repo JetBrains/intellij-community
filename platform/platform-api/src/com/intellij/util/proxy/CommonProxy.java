@@ -198,6 +198,9 @@ public class CommonProxy extends ProxySelector {
     final String host = uri.getHost() == null ? "" : uri.getHost();
     final int port = uri.getPort();
     final String protocol = uri.getScheme();
+    if ("localhost".equals(host) || "127.0.0.1".equals(host) || "::1".equals(host)) {
+      return NO_PROXY_LIST;
+    }
 
     final HostInfo info = new HostInfo(protocol, host, port);
     final Map<String, ProxySelector> copy;
