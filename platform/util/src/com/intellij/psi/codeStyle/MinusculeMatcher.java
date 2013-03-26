@@ -46,6 +46,7 @@ public class MinusculeMatcher implements Matcher {
   private final char[] myPattern;
   private final NameUtil.MatchingCaseSensitivity myOptions;
   private final boolean myHasHumps;
+  private final boolean myHasSeparators;
   private final boolean myHasDots;
   private final boolean[] isLowerCase;
   private final boolean[] isUpperCase;
@@ -66,15 +67,20 @@ public class MinusculeMatcher implements Matcher {
       char c = myPattern[k];
       isLowerCase[k] = Character.isLowerCase(c);
       isUpperCase[k] = Character.isUpperCase(c);
-      isWordSeparator[k] = NameUtil.isWordSeparator(c);
+      isWordSeparator[k] = isWordSeparator(c);
       toUpperCase[k] = StringUtil.toUpperCase(c);
       toLowerCase[k] = StringUtil.toLowerCase(c);
     }
     int i = 0;
     while (isWildcard(i)) i++;
-    myHasHumps = hasFlag(i + 1, isUpperCase) && hasFlag(i, isLowerCase);
+    myHasHumps = hasFlag(i + 1, isUpperCase) && hasFlag(i, isLowerCase) || pattern.contains("+");
+    myHasSeparators = hasFlag(i, isWordSeparator);
     myHasDots = hasDots(i);
     myHasWildCards = hasWildCards();
+  }
+
+  private static boolean isWordSeparator(char c) {
+    return Character.isWhitespace(c) || c == '_' || c == '-' || c == ':' || c == '+';
   }
 
   private boolean hasWildCards() {
@@ -175,7 +181,7 @@ public class MinusculeMatcher implements Matcher {
 
   private static boolean isStartMatch(@NotNull String name, int startIndex) {
     for (int i = 0; i < startIndex; i++) {
-      if (!NameUtil.isWordSeparator(name.charAt(i))) {
+      if (!isWordSeparator(name.charAt(i))) {
         return false;
       }
     }
@@ -259,7 +265,7 @@ public class MinusculeMatcher implements Matcher {
         return null;
       }
       // pattern humps are allowed to match in words separated by " ()", lowercase characters aren't
-      if (!allowSpecialChars && !myHasHumps && StringUtil.containsAnyChar(name, HARD_SEPARATORS, nameIndex, nextOccurrence)) {
+      if (!allowSpecialChars && !myHasSeparators && !myHasHumps && StringUtil.containsAnyChar(name, HARD_SEPARATORS, nameIndex, nextOccurrence)) {
         return null;
       }
       // if the user has typed a dot, don't skip other dots between humps

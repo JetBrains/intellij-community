@@ -446,6 +446,12 @@ public class NameUtilMatchingTest extends UsefulTestCase {
                         TextRange.from(0, 4), TextRange.from(10, 1));
   }
 
+  public void "test plus in the pattern should allow to be space-surrounded"() {
+    assertMatches("a+b", "alpha+beta")
+    assertMatches("a+b", "alpha_gamma+beta")
+    assertMatches("a+b", "alpha + beta")
+  }
+
   public void testMatchingDegree() {
     assertPreference("jscote", "JsfCompletionTest", "JSCompletionTest", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("OCO", "OneCoolObject", "OCObject");

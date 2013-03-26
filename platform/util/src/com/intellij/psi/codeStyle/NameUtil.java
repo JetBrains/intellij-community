@@ -335,7 +335,7 @@ public class NameUtil {
       }
       return true;
     }
-    if (Character.isDigit(c)) {
+    if (Character.isDigit(c) || c == '+') {
       return true;
     }
     if (!Character.isLetter(c)) {
@@ -394,10 +394,6 @@ public class NameUtil {
       result.add(text.substring(start, next));
       start = next;
     }
-  }
-
-  static boolean isWordSeparator(char c) {
-    return Character.isWhitespace(c) || c == '_' || c == '-' || c == ':';
   }
 
   /**
