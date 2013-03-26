@@ -29,11 +29,9 @@ import com.intellij.util.containers.ContainerUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.Collections;
-import java.util.LinkedHashSet;
-import java.util.List;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author max
@@ -55,7 +53,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
       public boolean value(OrderEntry orderEntry) {
         if (orderEntry instanceof ModuleOrderEntry) {
           final Module module = ((ModuleOrderEntry)orderEntry).getModule();
-          return module != null && processedModules.add(module);
+          return module != null && !processedModules.contains(module);
         }
         return true;
       }
@@ -106,6 +104,7 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
 
       public LinkedHashSet<VirtualFile> visitModuleSourceOrderEntry(final ModuleSourceOrderEntry moduleSourceOrderEntry,
                                                                     final LinkedHashSet<VirtualFile> value) {
+        processedModules.add(moduleSourceOrderEntry.getOwnerModule());
         ContainerUtil.addAll(value, moduleSourceOrderEntry.getRootModel().getSourceRoots());
         return value;
       }
@@ -155,6 +154,11 @@ public class LibraryRuntimeClasspathScope extends GlobalSearchScope {
       if (Comparing.equal(r2, root)) return -1;
     }
     return 0;
+  }
+
+  @TestOnly
+  public List<VirtualFile> getRoots() {
+    return new ArrayList<VirtualFile>(myEntries);
   }
 
   public boolean isSearchInModuleContent(@NotNull Module aModule) {

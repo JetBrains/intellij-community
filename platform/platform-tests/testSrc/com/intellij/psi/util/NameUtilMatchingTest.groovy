@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NonNls
  * @author peter
  * @author Konstantin Bulenkov
  */
-public class NameUtilTest extends UsefulTestCase {
+public class NameUtilMatchingTest extends UsefulTestCase {
 
   public void testSimpleCases() throws Exception {
     assertMatches("N", "NameUtilTest");
@@ -444,6 +444,12 @@ public class NameUtilTest extends UsefulTestCase {
     //               0   4     10
     assertOrderedEquals(new MinusculeMatcher("getCU", NameUtil.MatchingCaseSensitivity.NONE).matchingFragments(sample),
                         TextRange.from(0, 4), TextRange.from(10, 1));
+  }
+
+  public void "test plus in the pattern should allow to be space-surrounded"() {
+    assertMatches("a+b", "alpha+beta")
+    assertMatches("a+b", "alpha_gamma+beta")
+    assertMatches("a+b", "alpha + beta")
   }
 
   public void testMatchingDegree() {

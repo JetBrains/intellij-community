@@ -58,6 +58,7 @@ public class BaseOSProcessHandler extends ProcessHandler {
   }
 
   protected boolean useAdaptiveSleepingPolicyWhenReadingOutput() { return false; }
+  protected boolean processHasSeparateErrorStream() { return true; }
 
   @Override
   public void startNotify() {
@@ -69,21 +70,21 @@ public class BaseOSProcessHandler extends ProcessHandler {
       @Override
       public void startNotified(final ProcessEvent event) {
         try {
-          BaseOutputReader.SleepingPolicy adaptiveSleepingPolicy =
-            useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : AdaptiveSleepingPolicy.SIMPLE;
-          final BaseOutputReader stdoutReader = new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, adaptiveSleepingPolicy);
-          final BaseOutputReader stderrReader = new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, adaptiveSleepingPolicy);
+          BaseOutputReader.SleepingPolicy sleepingPolicy =
+            useAdaptiveSleepingPolicyWhenReadingOutput() ? new AdaptiveSleepingPolicy() : BaseOutputReader.SleepingPolicy.SIMPLE;
+          final BaseOutputReader stdoutReader = new SimpleOutputReader(createProcessOutReader(), ProcessOutputTypes.STDOUT, sleepingPolicy);
+          final BaseOutputReader stderrReader = processHasSeparateErrorStream() ? new SimpleOutputReader(createProcessErrReader(), ProcessOutputTypes.STDERR, sleepingPolicy) : null;
 
           myWaitFor.setTerminationCallback(new Consumer<Integer>() {
             @Override
             public void consume(Integer exitCode) {
               try {
                 // tell readers that no more attempts to read process' output should be made
-                stderrReader.stop();
+                if (stderrReader != null) stderrReader.stop();
                 stdoutReader.stop();
 
                 try {
-                  stderrReader.waitFor();
+                  if (stderrReader != null) stderrReader.waitFor();
                   stdoutReader.waitFor();
                 }
                 catch (InterruptedException ignore) {
