@@ -48,6 +48,16 @@ public class StringUtilTest extends TestCase {
     assertEquals('\u2567', StringUtil.toUpperCase(Character.toLowerCase('\u2567')));
   }
 
+  public void testIsEmptyOrSpaces() throws Exception {
+    assertTrue(StringUtil.isEmptyOrSpaces(null));
+    assertTrue(StringUtil.isEmptyOrSpaces(""));
+    assertTrue(StringUtil.isEmptyOrSpaces("                   "));
+
+    assertFalse(StringUtil.isEmptyOrSpaces("1"));
+    assertFalse(StringUtil.isEmptyOrSpaces("         12345          "));
+    assertFalse(StringUtil.isEmptyOrSpaces("test"));
+  }
+
   public void testSplitWithQuotes() {
     final List<String> strings = StringUtil.splitHonorQuotes("aaa bbb   ccc \"ddd\" \"e\\\"e\\\"e\"  ", ' ');
     assertEquals(5, strings.size());
