@@ -192,7 +192,7 @@ public class HgCloneDialog extends DialogWrapper {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
-                if (testResult) {
+                if (testResult && testButton.getParent().isShowing()) {
                   Messages.showInfoMessage(testButton, HgVcsMessages.message("hg4idea.clone.test.success.message", testURL),
                                            HgVcsMessages.message("hg4idea.clone.test.success"));
                 }
