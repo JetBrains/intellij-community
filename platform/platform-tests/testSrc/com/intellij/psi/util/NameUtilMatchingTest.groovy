@@ -31,7 +31,7 @@ import org.jetbrains.annotations.NonNls
  * @author peter
  * @author Konstantin Bulenkov
  */
-public class NameUtilTest extends UsefulTestCase {
+public class NameUtilMatchingTest extends UsefulTestCase {
 
   public void testSimpleCases() throws Exception {
     assertMatches("N", "NameUtilTest");
