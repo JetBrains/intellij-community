@@ -20,6 +20,7 @@ import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
@@ -38,15 +39,14 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
 
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * User: anna
  */
 public class JavaFxPsiUtil {
+
+  private static final Logger LOG = Logger.getInstance("#" + JavaFxPsiUtil.class.getName());
 
   public static XmlProcessingInstruction createSingleImportInstruction(String qualifiedName, Project project) {
     final String importText = "<?import " + qualifiedName + "?>";
@@ -503,6 +503,29 @@ public class JavaFxPsiUtil {
       tag = tag.getParentTag();
     }
     return false;
+  }
+
+  public static PsiType getWrappedPropertyType(PsiField field, Project project, final Map<String, PsiType> typeMap) {
+    PsiType substitute = null;
+    final PsiType fieldType = field.getType();
+    for (String typeName : typeMap.keySet()) {
+      if (InheritanceUtil.isInheritor(fieldType, typeName)) {
+        substitute = typeMap.get(typeName);
+        break;
+      }
+    }
+    if (substitute == null) {
+      final PsiClass aClass = JavaPsiFacade.getInstance(project)
+        .findClass(JavaFxCommonClassNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE, GlobalSearchScope.allScope(project));
+      LOG.assertTrue(aClass != null);
+      final PsiClassType.ClassResolveResult resolveResult = PsiUtil.resolveGenericsClassInType(fieldType);
+      final PsiClass fieldClass = resolveResult.getElement();
+      LOG.assertTrue(fieldClass != null);
+      final PsiSubstitutor substitutor = TypeConversionUtil.getSuperClassSubstitutor(aClass, fieldClass, resolveResult.getSubstitutor());
+      final PsiMethod[] values = aClass.findMethodsByName("getValue", false);
+      substitute = substitutor.substitute(values[0].getReturnType());
+    }
+    return substitute;
   }
 
   private static class JavaFxControllerCachedValueProvider implements CachedValueProvider<PsiClass> {
