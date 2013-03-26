@@ -51,6 +51,7 @@ import java.util.List;
 
 @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
 public abstract class AndroidTestCase extends UsefulTestCase {
+
   protected JavaCodeInsightTestFixture myFixture;
   protected Module myModule;
   protected List<Module> myAdditionalModules;
@@ -74,7 +75,7 @@ public abstract class AndroidTestCase extends UsefulTestCase {
   protected static String getTestDataPath() {
     String androidHomePath = System.getProperty("android.home.path");
     if (androidHomePath == null) {
-      androidHomePath = new File(PathManager.getHomePath(), "android/android").getPath();
+      androidHomePath = new File(PathManager.getHomePath(), "community/plugins/android").getPath();
     }
     return androidHomePath + "/testData";
   }
