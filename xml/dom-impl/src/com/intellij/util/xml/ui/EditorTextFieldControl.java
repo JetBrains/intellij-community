@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.MarkupModel;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.xml.DomElement;
@@ -144,7 +145,7 @@ public abstract class EditorTextFieldControl<T extends JComponent> extends BaseM
         warningProblems.removeAll(errorProblems);
 
         Color background = getDefaultBackground();
-        if (errorProblems.size() > 0 && textField.getText().trim().length() == 0) {
+        if (errorProblems.size() > 0 && StringUtil.isEmptyOrSpaces(textField.getText())) {
           background = getErrorBackground();
         }
         else if (warningProblems.size() > 0) {

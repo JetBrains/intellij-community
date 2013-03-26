@@ -107,11 +107,11 @@ public class CustomFileTypeEditor extends SettingsEditor<AbstractFileType> {
   }
 
   public void applyEditorTo(AbstractFileType type) throws ConfigurationException {
-    if (myFileTypeName.getText().trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(myFileTypeName.getText())) {
       throw new ConfigurationException(IdeBundle.message("error.name.cannot.be.empty"),
                                        CommonBundle.getErrorTitle());
     }
-    else if (myFileTypeDescr.getText().trim().length() == 0) {
+    else if (StringUtil.isEmptyOrSpaces(myFileTypeDescr.getText())) {
       myFileTypeDescr.setText(myFileTypeName.getText());
     }
     type.setName(myFileTypeName.getText());

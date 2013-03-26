@@ -21,6 +21,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.AnActionButton;
@@ -65,7 +66,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
     setTitle(SvnBundle.message("configure.branches.title"));
 
     final String trunkUrl = configuration.getTrunkUrl();
-    if (trunkUrl == null || trunkUrl.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(trunkUrl)) {
       configuration.setTrunkUrl(rootUrl);
     }
 

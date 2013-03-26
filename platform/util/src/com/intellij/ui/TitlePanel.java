@@ -16,6 +16,7 @@
 
 package com.intellij.ui;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -73,7 +74,7 @@ public class TitlePanel extends CaptionPanel {
 
   public Dimension getPreferredSize() {
     final String text = myLabel.getText();
-    if (text == null || text.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(text)) {
       return new Dimension(0, 0);
     }
 

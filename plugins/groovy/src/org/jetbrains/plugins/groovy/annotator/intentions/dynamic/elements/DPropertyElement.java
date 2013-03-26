@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.annotator.intentions.dynamic.elements;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.CommonClassNames;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiModifier;
@@ -50,7 +51,7 @@ public class DPropertyElement extends DItemElement {
     Boolean isStatic = isStatic();
 
     String type = getType();
-    if (type == null || type.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(type)) {
       type = CommonClassNames.JAVA_LANG_OBJECT;
     }
     myPsi = new GrDynamicImplicitProperty(manager, getName(), type, containingClassName);

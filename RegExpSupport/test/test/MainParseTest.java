@@ -15,6 +15,7 @@
  */
 package test;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.regexp.RegExpFileType;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -196,7 +197,7 @@ public class MainParseTest extends BaseParseTestcase {
             do {
               line = reader.readLine();
             }
-            while (line != null && (line.trim().length() == 0 || line.trim().equals("ERROR:")));
+            while (line != null && (StringUtil.isEmptyOrSpaces(line) || line.trim().equals("ERROR:")));
             if (line != null) {
               if (line.matches(".*java.lang.Error: junit.framework.AssertionFailedError:.*")) {
                 System.out.println("ERROR: " + line.replace("java.lang.Error: junit.framework.AssertionFailedError:", ""));

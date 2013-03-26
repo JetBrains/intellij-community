@@ -18,6 +18,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
@@ -609,7 +610,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
                 buf.append(element.getText());
               }
             }
-            hasProblemsWithTag = buf.toString().trim().length() == 0;
+            hasProblemsWithTag = StringUtil.isEmptyOrSpaces(buf.toString());
           }
           if (hasProblemsWithTag) {
             if (valueElement != null) {

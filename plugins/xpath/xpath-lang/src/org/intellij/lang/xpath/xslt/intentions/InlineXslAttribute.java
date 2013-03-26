@@ -20,6 +20,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -81,7 +82,7 @@ public class InlineXslAttribute implements IntentionAction {
         for (PsiElement child : children) {
             if (child instanceof XmlText) {
                 final XmlText text = (XmlText)child;
-                if (text.getText().trim().length() == 0) {
+                if (StringUtil.isEmptyOrSpaces(text.getText())) {
                     if (texts.length == 0 && exprs.length == 0) {
                         return false;
                     }

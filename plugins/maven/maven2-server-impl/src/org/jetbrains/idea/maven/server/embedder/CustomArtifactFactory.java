@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.server.embedder;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.apache.maven.artifact.Artifact;
 import org.apache.maven.artifact.versioning.VersionRange;
 import org.apache.maven.project.MavenProject;
@@ -109,7 +110,7 @@ public class CustomArtifactFactory extends ProjectArtifactFactory {
   }
 
   private String checkValue(String value) {
-    return value == null || value.trim().length() == 0 ? "error" : value;
+    return StringUtil.isEmptyOrSpaces(value) ? "error" : value;
   }
 
   private String checkVersion(String value) {

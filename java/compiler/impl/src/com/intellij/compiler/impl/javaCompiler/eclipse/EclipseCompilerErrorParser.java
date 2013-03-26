@@ -22,6 +22,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
@@ -40,7 +41,7 @@ public class EclipseCompilerErrorParser extends OutputParser {
       spitOutProblem(callback);
       return false;
     }
-    if (line.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(line)) {
       return true;
     }
     if (line.equals("----------")) {
@@ -55,7 +56,9 @@ public class EclipseCompilerErrorParser extends OutputParser {
 
   private void spitOutProblem(final Callback callback) {
     final String problem = problemText.toString();
-    if (problem.trim().length() == 0) return;
+    if (StringUtil.isEmptyOrSpaces(problem)) {
+      return;
+    }
 
     @NonNls final String problemTemplate = "(\\d*)\\. (\\w*) in (.*)" +
                                            "\\s*\\(at line (\\d*)\\)\n" +

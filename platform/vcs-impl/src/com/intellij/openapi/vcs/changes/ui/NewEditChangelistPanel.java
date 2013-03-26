@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.VcsConfiguration;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
@@ -114,7 +115,7 @@ public abstract class NewEditChangelistPanel extends JPanel {
 
   protected void nameChangedImpl(final Project project, final LocalChangeList initial) {
     String name = getChangeListName();
-    if (name == null || name.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(name)) {
       nameChanged("Cannot create new changelist with empty name.");
     } else if ((initial == null || !name.equals(initial.getName())) && ChangeListManager.getInstance(project).findChangeList(name) != null) {
       nameChanged(VcsBundle.message("new.changelist.duplicate.name.error"));

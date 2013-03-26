@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.update;
 
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePath;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnConfiguration;
@@ -97,12 +98,12 @@ public class SvnIntegrateRootOptionsPanel implements SvnPanel{
 
   public void apply(SvnConfiguration conf) throws ConfigurationException {
 
-    if (myMergeText1.getText().trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(myMergeText1.getText())) {
       myMergeText1.getTextField().requestFocus();
       throw new ConfigurationException(SvnBundle.message("source.url.could.not.be.empty.error.message"));
     }
 
-    if (myMergeText2.getText().trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(myMergeText2.getText())) {
       myMergeText2.getTextField().requestFocus();
       throw new ConfigurationException(SvnBundle.message("source.url.could.not.be.empty.error.message"));
     }

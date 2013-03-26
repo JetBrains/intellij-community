@@ -16,8 +16,8 @@
 
 package com.intellij.util.xml.converters.values;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.Converter;
 import com.intellij.util.xml.DomBundle;
 import com.intellij.util.xml.ResolvingConverter;
 import org.jetbrains.annotations.NonNls;
@@ -43,7 +43,7 @@ public class NumberValueConverter extends ResolvingConverter<String> {
   public String fromString(@Nullable @NonNls final String s, final ConvertContext context) {
     if (s == null) return null;
 
-    if (myAllowEmpty && s.trim().length() == 0) return s;
+    if (myAllowEmpty && StringUtil.isEmptyOrSpaces(s)) return s;
 
     return parseNumber(s, myNumberClass) == null ? null : s;
   }
@@ -55,7 +55,7 @@ public class NumberValueConverter extends ResolvingConverter<String> {
   public String getErrorMessage(@Nullable final String s, final ConvertContext context) {
     if (s == null) return super.getErrorMessage(s, context);
 
-    return  s.trim().length() == 0 ?
+    return StringUtil.isEmptyOrSpaces(s) ?
           DomBundle.message("value.converter.format.exception.empty.string", myNumberClass.getName()) :
           DomBundle.message("value.converter.format.exception", s, myNumberClass.getName());
   }

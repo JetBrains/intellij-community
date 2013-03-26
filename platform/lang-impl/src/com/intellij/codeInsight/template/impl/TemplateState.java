@@ -1070,7 +1070,7 @@ public class TemplateState implements Disposable {
             final int offset = mySegments.getSegmentStart(endSegmentNumber);
             final int lineStart = myDocument.getLineStartOffset(myDocument.getLineNumber(offset));
             // if $END$ is at line start, put it at correct indentation
-            if (myDocument.getCharsSequence().subSequence(lineStart, offset).toString().trim().length() == 0) {
+            if (StringUtil.isEmptyOrSpaces(myDocument.getCharsSequence().subSequence(lineStart, offset).toString())) {
               final int adjustedOffset = style.adjustLineIndent(file, offset);
               mySegments.replaceSegmentAt(endSegmentNumber, adjustedOffset, adjustedOffset);
             }

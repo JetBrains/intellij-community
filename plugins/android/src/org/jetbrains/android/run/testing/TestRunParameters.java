@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
@@ -169,7 +170,7 @@ class TestRunParameters implements ConfigurationSpecificEditor<AndroidTestRunCon
 
     protected String showDialog() {
       final String className = myClassComponent.getComponent().getText();
-      if (className.trim().length() == 0) {
+      if (StringUtil.isEmptyOrSpaces(className)) {
         Messages.showMessageDialog(getField(), ExecutionBundle.message("set.class.name.message"),
                                    ExecutionBundle.message("cannot.browse.method.dialog.title"), Messages.getInformationIcon());
         return null;

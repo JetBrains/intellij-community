@@ -706,7 +706,7 @@ public abstract class MasterDetailsComponent implements Configurable, DetailsCom
         final MyNode node = (MyNode)rootNode.getChildAt(i);
         final NamedConfigurable scopeConfigurable = node.getConfigurable();
         final String name = scopeConfigurable.getDisplayName();
-        if (name.trim().length() == 0) {
+        if (StringUtil.isEmptyOrSpaces(name)) {
           selectNodeInTree(node);
           throw new ConfigurationException("Name should contain non-space characters");
         }

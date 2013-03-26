@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.enumConsta
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -114,7 +115,7 @@ public class GrEnumConstantImpl extends GrFieldImpl implements GrEnumConstant {
   public GrNamedArgument addNamedArgument(final GrNamedArgument namedArgument) throws IncorrectOperationException {
     GrArgumentList list = getArgumentList();
     assert list != null;
-    if (list.getText().trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(list.getText())) {
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(getProject());
       final GrArgumentList newList = factory.createArgumentList();
       list = (GrArgumentList)list.replace(newList);

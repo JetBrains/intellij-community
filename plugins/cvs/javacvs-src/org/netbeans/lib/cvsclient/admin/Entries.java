@@ -13,6 +13,7 @@
 package org.netbeans.lib.cvsclient.admin;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import org.netbeans.lib.cvsclient.util.BugLog;
 import org.netbeans.lib.cvsclient.JavaCvsSrcBundle;
 import org.jetbrains.annotations.NonNls;
@@ -77,7 +78,7 @@ public final class Entries {
     final BufferedReader lineReader = new BufferedReader(reader);
     try {
       for (String line = lineReader.readLine(); line != null; line = lineReader.readLine()) {
-        if (line.trim().length() == 0) {
+        if (StringUtil.isEmptyOrSpaces(line)) {
           continue;
         }
 

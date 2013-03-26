@@ -23,6 +23,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -55,7 +56,7 @@ public class ProgramParametersConfigurator {
     String workingDirectory = configuration.getWorkingDirectory();
     String defaultWorkingDir = getDefaultWorkingDir(project);
 
-    if (workingDirectory == null || workingDirectory.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(workingDirectory)) {
       workingDirectory = defaultWorkingDir;
     }
     if (workingDirectory == null)

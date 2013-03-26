@@ -27,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
@@ -192,7 +193,7 @@ public class AntBuildFileImpl implements AntBuildFileBase {
   public String getPresentableName() {
     AntBuildModel model = myAntConfiguration.getModelIfRegistered(this);
     String name = model != null ? model.getName() : null;
-    if (name == null || name.trim().length() == 0) {
+    if (StringUtil.isEmptyOrSpaces(name)) {
       name = myVFile.getName();
     }
     return name;

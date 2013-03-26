@@ -17,6 +17,7 @@ package com.intellij.lang.xml;
 
 import com.intellij.lang.ASTFactory;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.formatter.WhiteSpaceFormattingStrategyAdapter;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.Factory;
@@ -89,6 +90,6 @@ public class XmlWhiteSpaceFormattingStrategy extends WhiteSpaceFormattingStrateg
 
   public boolean containsWhitespacesOnly(@NotNull final ASTNode node) {
     return (node.getElementType() == XmlTokenType.XML_DATA_CHARACTERS) &&
-           node.getText().trim().length() == 0;
+           StringUtil.isEmptyOrSpaces(node.getText());
   }
 }

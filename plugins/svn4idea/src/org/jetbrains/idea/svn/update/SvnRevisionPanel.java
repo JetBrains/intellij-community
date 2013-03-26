@@ -18,6 +18,7 @@ package org.jetbrains.idea.svn.update;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.containers.ContainerUtil;
@@ -62,7 +63,7 @@ public class SvnRevisionPanel extends JPanel {
     mySpecified.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         if (mySpecified.isSelected()) {
-          if (myRevisionField.getText().trim().length() == 0) {
+          if (StringUtil.isEmptyOrSpaces(myRevisionField.getText())) {
             myRevisionField.setText("HEAD");
           }
           myRevisionField.setEnabled(true);

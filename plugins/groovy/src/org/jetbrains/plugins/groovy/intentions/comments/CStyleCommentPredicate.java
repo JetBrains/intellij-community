@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.intentions.comments;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.javadoc.PsiDocComment;
@@ -51,6 +52,6 @@ class CStyleCommentPredicate implements PsiElementPredicate {
   }
 
   private static boolean isWhitespace(PsiElement element) {
-    return element.getText().replace("\n", "").trim().length() == 0;
+    return StringUtil.isEmptyOrSpaces(element.getText().replace("\n", ""));
   }
 }

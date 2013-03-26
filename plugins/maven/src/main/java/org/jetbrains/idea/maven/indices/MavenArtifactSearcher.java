@@ -30,7 +30,7 @@ public class MavenArtifactSearcher extends MavenSearcher<MavenArtifactSearchResu
 
   protected Pair<String, Query> preparePatternAndQuery(String pattern) {
     pattern = pattern.toLowerCase();
-    if (pattern.trim().length() == 0) return Pair.create(pattern, (Query)new MatchAllDocsQuery());
+    if (StringUtil.isEmptyOrSpaces(pattern)) return Pair.create(pattern, (Query)new MatchAllDocsQuery());
 
     List<String> parts = new ArrayList<String>();
     for (String each : StringUtil.tokenize(pattern, " :")) {

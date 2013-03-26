@@ -69,7 +69,7 @@ public class NamedArgumentInsertHandler implements InsertHandler<LookupElement> 
       String s = argumentListText.substring(tailOffset - argumentList.getTextOffset());
       s = StringUtil.trimEnd(s, ")");
 
-      if (s.trim().length() == 0) {
+      if (StringUtil.isEmptyOrSpaces(s)) {
         String toInsert = insertSpace ? ": " : ":";
         editor.getDocument().insertString(tailOffset, toInsert);
         editor.getCaretModel().moveToOffset(tailOffset + toInsert.length());

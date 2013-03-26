@@ -31,6 +31,7 @@ import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageChooserDialog;
@@ -387,7 +388,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
       @Override
       protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {
         final String className = getClassName();
-        if (className.trim().length() == 0) {
+        if (StringUtil.isEmptyOrSpaces(className)) {
           return;
         }
         final PsiClass testClass = getModuleSelector().findClass(className);
@@ -531,7 +532,7 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
 
     protected String showDialog() {
       final String className = getClassName();
-      if (className.trim().length() == 0) {
+      if (StringUtil.isEmptyOrSpaces(className)) {
         Messages.showMessageDialog(getField(), ExecutionBundle.message("set.class.name.message"),
                                    ExecutionBundle.message("cannot.browse.method.dialog.title"), Messages.getInformationIcon());
         return null;

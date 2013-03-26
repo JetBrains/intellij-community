@@ -272,7 +272,7 @@ public class Util {
       if (fragment.isEqual()) continue;
       for (int side = 0;  side < 2; side++) {
         String text = FragmentSide.fromIndex(side).getText(fragment);
-        if (text == null || text.trim().length() == 0) continue;
+        if (StringUtil.isEmptyOrSpaces(text)) continue;
         return false;
       }
     }

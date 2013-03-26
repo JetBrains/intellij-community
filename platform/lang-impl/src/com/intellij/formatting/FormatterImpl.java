@@ -24,6 +24,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
@@ -517,7 +518,7 @@ public class FormatterImpl extends FormatterEx
 
       if (text.charAt(lineStartOffset) == '\n'
           && wsStart <= (prevEnd = documentModel.getLineStartOffset(documentModel.getLineNumber(lineStartOffset - 1))) &&
-          documentModel.getText(new TextRange(prevEnd, lineStartOffset)).toString().trim().length() == 0 // ws consists of space only, it is not true for <![CDATA[
+          StringUtil.isEmptyOrSpaces(documentModel.getText(new TextRange(prevEnd, lineStartOffset)).toString()) // ws consists of space only, it is not true for <![CDATA[
          ) {
         lineStartOffset--;
       }

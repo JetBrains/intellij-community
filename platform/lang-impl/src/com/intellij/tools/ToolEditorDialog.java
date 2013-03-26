@@ -32,6 +32,7 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
@@ -507,9 +508,9 @@ public class ToolEditorDialog extends DialogWrapper {
     return panel;
   }
 
+  @Deprecated
   private String convertString(String s) {
-    if (s != null && s.trim().length() == 0) return null;
-    return s;
+    return StringUtil.nullize(s, true);
   }
 
   private String toSystemIndependentFormat(String s) {

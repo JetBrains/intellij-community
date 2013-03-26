@@ -15,6 +15,7 @@
  */
 package com.intellij.util.text;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiFormatUtil;
@@ -62,7 +63,7 @@ public abstract class ElementPresentation {
   public String getNameWithFQComment() {
     String comment = getComment();
     String result = getName();
-    if (comment.trim().length() == 0) return result;
+    if (StringUtil.isEmptyOrSpaces(comment)) return result;
     return result + " (" + comment + ")";
   }
 

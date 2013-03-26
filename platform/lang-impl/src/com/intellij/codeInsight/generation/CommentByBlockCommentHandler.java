@@ -34,6 +34,7 @@ import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
@@ -231,8 +232,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
     }
     intersection = TextRange.from(Math.max(intersection.getStartOffset() - element.getTextRange().getStartOffset(), 0),
                                   Math.min(intersection.getEndOffset() - element.getTextRange().getStartOffset(), element.getTextRange().getLength()));
-    return isWhiteSpaceOrComment(element) ||
-           intersection.substring(element.getText()).trim().length() == 0;
+    return isWhiteSpaceOrComment(element) || StringUtil.isEmptyOrSpaces(intersection.substring(element.getText()));
   }
 
   private boolean isWhiteSpaceOrComment(PsiElement element) {
