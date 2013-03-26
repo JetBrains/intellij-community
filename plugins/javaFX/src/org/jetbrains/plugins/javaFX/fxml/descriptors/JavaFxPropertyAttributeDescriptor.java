@@ -83,6 +83,8 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
     final String propertyQName = getBoxedPropertyType(getDeclaration());
     if (CommonClassNames.JAVA_LANG_FLOAT.equals(propertyQName) || CommonClassNames.JAVA_LANG_DOUBLE.equals(propertyQName)) {
       return new String[] {"Infinity", "-Infinity", "NaN",  "-NaN"};
+    } else if (CommonClassNames.JAVA_LANG_BOOLEAN.equals(propertyQName)) {
+      return new String[] {"true", "false"};
     }
 
     return ArrayUtil.EMPTY_STRING_ARRAY;
