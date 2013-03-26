@@ -128,19 +128,32 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   }
 
   private static <T> void collectParentStaticProperties(XmlTag context, List<T> children, Function<PsiMethod, T> factory) {
+    final CachedValuesManager manager = context != null ? CachedValuesManager.getManager(context.getProject()) : null;
     XmlTag tag = context;
     while (tag != null) {
       final XmlElementDescriptor descr = tag.getDescriptor();
       if (descr instanceof JavaFxClassBackedElementDescriptor) {
         final PsiElement element = descr.getDeclaration();
         if (element instanceof PsiClass) {
-          for (PsiMethod method : ((PsiClass)element).getAllMethods()) {
-            if (method.hasModifierProperty(PsiModifier.STATIC) && method.getName().startsWith("set")) {
-              final PsiParameter[] parameters = method.getParameterList().getParameters();
-              if (parameters.length == 2 && InheritanceUtil.isInheritor(parameters[0].getType(), JavaFxCommonClassNames.JAVAFX_SCENE_NODE)) {
-                children.add(factory.fun(method));
+          final List<PsiMethod> setters = manager.getCachedValue(element, new CachedValueProvider<List<PsiMethod>>() {
+            @Nullable
+            @Override
+            public Result<List<PsiMethod>> compute() {
+              final List<PsiMethod> meths = new ArrayList<PsiMethod>();
+              for (PsiMethod method : ((PsiClass)element).getAllMethods()) {
+                if (method.hasModifierProperty(PsiModifier.STATIC) && method.getName().startsWith("set")) {
+                  final PsiParameter[] parameters = method.getParameterList().getParameters();
+                  if (parameters.length == 2 &&
+                      InheritanceUtil.isInheritor(parameters[0].getType(), JavaFxCommonClassNames.JAVAFX_SCENE_NODE)) {
+                    meths.add(method);
+                  }
+                }
               }
+              return Result.create(meths, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
             }
+          });
+          for (PsiMethod setter : setters) {
+            children.add(factory.fun(setter));
           }
         }
       }
