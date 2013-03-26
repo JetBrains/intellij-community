@@ -934,7 +934,15 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static boolean isEmptyOrSpaces(@Nullable final String s) {
-    return s == null || s.trim().isEmpty();
+    if(s == null || s.isEmpty()) {
+      return true;
+    }
+    for(int i = 0; i < s.length(); i++) {
+      if(s.charAt(i) != ' ') {
+        return false;
+      }
+    }
+    return true;
   }
 
   /**
