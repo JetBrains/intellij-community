@@ -120,12 +120,12 @@
               <toolTipText value=""/>
             </properties>
           </component>
-          <component id="ad79c" class="javax.swing.JLabel">
+          <component id="ad79c" class="javax.swing.JLabel" binding="myNoProxyForLabel">
             <constraints>
               <grid row="2" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="9" fill="0" indent="0" use-parent-layout="false"/>
             </constraints>
             <properties>
-              <text value="Proxy exceptions:"/>
+              <text value="No proxy for:"/>
             </properties>
           </component>
           <component id="cc77" class="javax.swing.JLabel" binding="myProxyExceptionsLabel">

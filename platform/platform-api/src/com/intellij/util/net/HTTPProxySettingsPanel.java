@@ -76,6 +76,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
   private JBLabel myOtherWarning;
   private JLabel myProxyExceptionsLabel;
   private JTextArea myProxyExceptions;
+  private JLabel myNoProxyForLabel;
   private final HttpConfigurable myHttpConfigurable;
   private volatile boolean myConnectionCheckInProgress;
 
@@ -114,7 +115,6 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
     myHTTP.setSelected(true);
 
     myProxyExceptions.setBorder(UIUtil.getTextFieldBorder());
-    myProxyExceptionsLabel.setUI(new MultiLineLabelUI());
 
     final Boolean property = Boolean.getBoolean(JavaProxyProperty.USE_SYSTEM_PROXY);
     mySystemProxyDefined.setVisible(Boolean.TRUE.equals(property));
@@ -298,6 +298,9 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
     mySocks.setEnabled(enabled);
     myHTTP.setEnabled(enabled);
     myProxyExceptions.setEnabled(enabled);
+    myProxyExceptions.setBackground(myProxyPortTextField.getBackground());
+    myProxyExceptionsLabel.setEnabled(enabled);
+    myNoProxyForLabel.setEnabled(enabled);
 
     myProxyAuthCheckBox.setEnabled(enabled);
     enableProxyAuthentication(enabled && myProxyAuthCheckBox.isSelected());
