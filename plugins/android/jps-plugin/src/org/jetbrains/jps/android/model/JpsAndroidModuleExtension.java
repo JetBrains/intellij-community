@@ -16,22 +16,22 @@ public interface JpsAndroidModuleExtension extends JpsElement {
   JpsModule getModule();
 
   @Nullable
-  File getResourceDir() throws IOException;
+  File getResourceDir();
 
   @Nullable
-  File getResourceDirForCompilation() throws IOException;
+  File getResourceDirForCompilation();
 
   @Nullable
-  File getManifestFile() throws IOException;
+  File getManifestFile();
 
   @Nullable
-  File getManifestFileForCompilation() throws IOException;
+  File getManifestFileForCompilation();
 
   @Nullable
   File getProguardConfigFile() throws IOException;
 
   @Nullable
-  File getAssetsDir() throws IOException;
+  File getAssetsDir();
 
   @Nullable
   File getAaptGenDir() throws IOException;
@@ -40,7 +40,7 @@ public interface JpsAndroidModuleExtension extends JpsElement {
   File getAidlGenDir() throws IOException;
 
   @Nullable
-  File getNativeLibsDir() throws IOException;
+  File getNativeLibsDir();
 
   boolean isLibrary();
 
@@ -63,4 +63,8 @@ public interface JpsAndroidModuleExtension extends JpsElement {
   String getCustomDebugKeyStorePath();
 
   List<AndroidNativeLibData> getAdditionalNativeLibs();
+
+  boolean isUseCustomManifestPackage();
+
+  String getCustomManifestPackage();
 }

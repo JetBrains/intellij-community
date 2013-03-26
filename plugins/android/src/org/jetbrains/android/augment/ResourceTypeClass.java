@@ -70,7 +70,7 @@ class ResourceTypeClass extends AndroidLightClass {
     final PsiField[] result = new PsiField[fieldNames.size()];
     final PsiElementFactory factory = JavaPsiFacade.getElementFactory(facet.getModule().getProject());
     final Module circularDepLibWithSamePackage = AndroidCompileUtil.findCircularDependencyOnLibraryWithSamePackage(facet);
-    final boolean generateNonFinalFields = facet.getConfiguration().LIBRARY_PROJECT || circularDepLibWithSamePackage != null;
+    final boolean generateNonFinalFields = facet.getProperties().LIBRARY_PROJECT || circularDepLibWithSamePackage != null;
 
     int idIterator = ResourceType.getEnum(resClassName).ordinal() * 100000;
     int i = 0;

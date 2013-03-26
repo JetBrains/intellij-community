@@ -25,7 +25,7 @@ public class AndroidAddStringResourceQuickFix extends AndroidAddStringResourceAc
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     final XmlAttributeValue value = getAttributeValue(myStartElement);
-    return value != null && getStringLiteralValue(value, file) != null;
+    return value != null && getStringLiteralValue(project, value, file) != null;
   }
 
   @Override

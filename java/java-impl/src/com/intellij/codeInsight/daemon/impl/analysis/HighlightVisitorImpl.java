@@ -709,7 +709,9 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         else {
           final PsiElement referenceNameElement = element.getReferenceNameElement();
           if(referenceNameElement != null) {
-            myHolder.add(HighlightNamesUtil.highlightMethodName(method, referenceNameElement, false, colorsScheme));
+            // exclude type parameters from the highlighted text range
+            TextRange range = new TextRange(element.getTextRange().getStartOffset(), referenceNameElement.getTextRange().getEndOffset());
+            myHolder.add(HighlightNamesUtil.highlightMethodName(method, referenceNameElement, range, colorsScheme, false));
           }
         }
       }

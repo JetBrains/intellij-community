@@ -16,7 +16,10 @@
 
 package org.jetbrains.android.dom.converters;
 
-import com.intellij.util.xml.*;
+import com.intellij.util.xml.Converter;
+import com.intellij.util.xml.GenericDomValue;
+import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.WrappingConverter;
 import org.jetbrains.android.dom.AndroidDomUtil;
 import org.jetbrains.android.dom.attrs.AttributeDefinition;
 import org.jetbrains.android.dom.attrs.AttributeDefinitions;
@@ -37,8 +40,9 @@ import org.jetbrains.annotations.Nullable;
 public class StyleItemConverter extends WrappingConverter {
   @Nullable
   private static ResolvingConverter findConverterForAttribute(String nsPrefix, String localName, @NotNull AndroidFacet facet) {
-    if (!"android".equals(nsPrefix)) return null;
-    ResourceManager manager = facet.getResourceManager(AndroidUtils.SYSTEM_RESOURCE_PACKAGE);
+    ResourceManager manager = facet.getResourceManager("android".equals(nsPrefix)
+                                                       ? AndroidUtils.SYSTEM_RESOURCE_PACKAGE
+                                                       : null);
     if (manager != null) {
       AttributeDefinitions attrDefs = manager.getAttributeDefinitions();
       if (attrDefs != null) {

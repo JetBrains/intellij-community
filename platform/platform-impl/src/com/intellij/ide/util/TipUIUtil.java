@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.keymap.KeymapUtil;
 import com.intellij.util.ResourceUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -61,6 +62,9 @@ public class TipUIUtil {
       String replaced = text.toString().replace("&productName;", ApplicationNamesInfo.getInstance().getFullProductName());
       replaced = replaced.replace("&majorVersion;", ApplicationInfo.getInstance().getMajorVersion());
       replaced = replaced.replace("&minorVersion;", ApplicationInfo.getInstance().getMinorVersion());
+      if (UIUtil.isUnderDarcula()) {
+        replaced = replaced.replace("css/tips.css", "css/tips_darcula.css");
+      }
       browser.read(new StringReader(replaced), url);
     }
     catch (IOException e) {

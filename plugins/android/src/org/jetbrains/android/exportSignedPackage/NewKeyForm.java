@@ -20,7 +20,6 @@ import java.security.KeyStore;
 import java.security.PrivateKey;
 import java.security.cert.Certificate;
 import java.security.cert.X509Certificate;
-import java.util.Arrays;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
@@ -138,17 +137,22 @@ public abstract class NewKeyForm {
 
   private void doCreateKey() throws CommitStepException {
     String keystoreLocation = getKeyStoreLocation();
-    char[] keystorePassword = getKeyStorePassword();
-    char[] keyPassword = getKeyPassword();
+    String keystorePassword = new String(getKeyStorePassword());
+    String keyPassword = new String(getKeyPassword());
     String keyAlias = getKeyAlias();
     String dname = getDName();
     assert dname != null;
+
+    if (keystorePassword.indexOf('"') >= 0 || keyPassword.indexOf('"') >= 0) {
+      throw new CommitStepException("Passwords cannot contain quote character");
+    }
+
     boolean createdStore = false;
     final StringBuilder errorBuilder = new StringBuilder();
     final StringBuilder outBuilder = new StringBuilder();
     try {
       createdStore = KeystoreHelper
-        .createNewStore(keystoreLocation, null, new String(keystorePassword), keyAlias, new String(keyPassword), dname, getValidity(),
+        .createNewStore(keystoreLocation, null, keystorePassword, keyAlias, keyPassword, dname, getValidity(),
                         new DebugKeyProvider.IKeyGenOutput() {
                           public void err(String message) {
                             errorBuilder.append(message).append('\n');
@@ -167,28 +171,23 @@ public abstract class NewKeyForm {
     }
     normalizeBuilder(errorBuilder);
     normalizeBuilder(outBuilder);
-    try {
-      if (createdStore) {
-        if (errorBuilder.length() > 0) {
-          String prefix = AndroidBundle.message("android.create.new.key.error.prefix");
-          Messages.showErrorDialog(myContentPanel, prefix + '\n' + errorBuilder.toString());
-        }
+
+    if (createdStore) {
+      if (errorBuilder.length() > 0) {
+        String prefix = AndroidBundle.message("android.create.new.key.error.prefix");
+        Messages.showErrorDialog(myContentPanel, prefix + '\n' + errorBuilder.toString());
       }
-      else {
-        if (errorBuilder.length() > 0) {
-          throw new CommitStepException(errorBuilder.toString());
-        }
-        if (outBuilder.length() > 0) {
-          throw new CommitStepException(outBuilder.toString());
-        }
-        throw new CommitStepException(AndroidBundle.message("android.cannot.create.new.key.error"));
+    }
+    else {
+      if (errorBuilder.length() > 0) {
+        throw new CommitStepException(errorBuilder.toString());
       }
-      loadKeystoreAndKey(keystoreLocation, keystorePassword, keyAlias, keyPassword);
+      if (outBuilder.length() > 0) {
+        throw new CommitStepException(outBuilder.toString());
+      }
+      throw new CommitStepException(AndroidBundle.message("android.cannot.create.new.key.error"));
     }
-    finally {
-      Arrays.fill(keystorePassword, '\0');
-      Arrays.fill(keyPassword, '\0');
-    }
+    loadKeystoreAndKey(keystoreLocation, keystorePassword, keyAlias, keyPassword);
   }
 
   @NotNull
@@ -210,15 +209,16 @@ public abstract class NewKeyForm {
   @NotNull
   protected abstract String getKeyStoreLocation();
 
-  private void loadKeystoreAndKey(String keystoreLocation, char[] keystorePassword, String keyAlias, char[] keyPassword)
+  private void loadKeystoreAndKey(String keystoreLocation, String keystorePassword, String keyAlias, String keyPassword)
     throws CommitStepException {
     FileInputStream fis = null;
     try {
       KeyStore keyStore = KeyStore.getInstance(KeyStore.getDefaultType());
       fis = new FileInputStream(new File(keystoreLocation));
-      keyStore.load(fis, keystorePassword);
+      keyStore.load(fis, keystorePassword.toCharArray());
       myKeyStore = keyStore;
-      KeyStore.PrivateKeyEntry entry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(keyAlias, new KeyStore.PasswordProtection(keyPassword));
+      KeyStore.PrivateKeyEntry entry = (KeyStore.PrivateKeyEntry)keyStore.getEntry(
+        keyAlias, new KeyStore.PasswordProtection(keyPassword.toCharArray()));
       if (entry == null) {
         throw new CommitStepException(AndroidBundle.message("android.extract.package.cannot.find.key.error", keyAlias));
       }

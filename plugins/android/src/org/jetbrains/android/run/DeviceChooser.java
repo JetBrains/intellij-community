@@ -26,6 +26,7 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntArrayList;
 import org.jetbrains.android.facet.AndroidFacet;
@@ -53,7 +54,7 @@ public class DeviceChooser implements Disposable {
   private static final String[] COLUMN_TITLES = new String[]{"Serial Number", "AVD name", "State", "Compatible"};
   public static final IDevice[] EMPTY_DEVICE_ARRAY = new IDevice[0];
 
-  private final List<DeviceChooserListener> myListeners = new ArrayList<DeviceChooserListener>();
+  private final List<DeviceChooserListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final Alarm myRefreshingAlarm = new Alarm(this);
 
   private volatile boolean myProcessSelectionFlag = true;

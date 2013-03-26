@@ -34,7 +34,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -239,7 +239,7 @@ public class CreateResourceFileAction extends CreateElementActionBase {
   }
 
   static String doGetActionName(PsiDirectory directory, String newName) {
-    if (FileUtil.getExtension(newName).length() == 0) {
+    if (FileUtilRt.getExtension(newName).length() == 0) {
       newName += ".xml";
     }
     return AndroidBundle.message("new.resource.action.name", directory.getName() + File.separator + newName);

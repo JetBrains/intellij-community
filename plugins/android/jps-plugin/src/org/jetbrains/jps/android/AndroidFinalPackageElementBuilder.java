@@ -1,7 +1,6 @@
 package org.jetbrains.jps.android;
 
 import com.intellij.openapi.util.io.FileUtil;
-import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.android.builder.AndroidPackagingBuildTarget;
@@ -66,11 +65,9 @@ public class AndroidFinalPackageElementBuilder extends LayoutElementBuilderServi
       return null;
     }
     final String apkPath = AndroidJpsUtil.getApkPath(extension, moduleOutputDir);
-    final String path = apkPath != null
-                        ? AndroidCommonUtils.addSuffixToFileName(apkPath, AndroidCommonUtils.ANDROID_FINAL_PACKAGE_FOR_ARTIFACT_SUFFIX)
-                        : null;
-    return path != null
-           ? FileUtil.toSystemIndependentName(path)
+
+    return apkPath != null
+           ? FileUtil.toSystemIndependentName(apkPath)
            : null;
   }
 }

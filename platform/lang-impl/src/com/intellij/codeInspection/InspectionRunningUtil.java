@@ -18,7 +18,6 @@ package com.intellij.codeInspection;
 import com.intellij.codeInspection.ex.*;
 import com.intellij.codeInspection.reference.RefManagerImpl;
 import com.intellij.psi.PsiFile;
-import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -41,7 +40,7 @@ public class InspectionRunningUtil {
     ((RefManagerImpl)context.getRefManager()).inspectionReadActionStarted();
     try {
       if (tool instanceof LocalInspectionToolWrapper) {
-        ((LocalInspectionToolWrapper)tool).processFile(file, true, managerEx, true);
+        ((LocalInspectionToolWrapper)tool).processFile(file, true, managerEx, false);
         return new ArrayList<CommonProblemDescriptor>(((LocalInspectionToolWrapper)tool).getProblemDescriptors());
       }
       else if (tool instanceof GlobalInspectionToolWrapper) {

@@ -55,6 +55,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -63,8 +64,8 @@ import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.facet.AvdsNotSupportedException;
 import org.jetbrains.android.logcat.AndroidLogcatToolWindowFactory;
-import org.jetbrains.android.logcat.AndroidLogcatView;
 import org.jetbrains.android.logcat.AndroidLogcatUtil;
+import org.jetbrains.android.logcat.AndroidLogcatView;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.sdk.AvdManagerLog;
 import org.jetbrains.android.util.AndroidBundle;
@@ -133,7 +134,7 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
   private TargetChooser myTargetChooser;
   private final boolean mySupportMultipleDevices;
   private final boolean myClearLogcatBeforeStart;
-  private final List<AndroidRunningStateListener> myListeners = new ArrayList<AndroidRunningStateListener>();
+  private final List<AndroidRunningStateListener> myListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private final boolean myNonDebuggableOnDevice;
 
   public void setDebugMode(boolean debugMode) {
@@ -668,9 +669,15 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
         if (!uploadAndInstallDependentModules(device)) return false;
         myApplicationDeployed = true;
       }
-      if (!myApplicationLauncher.launch(this, device)) return false;
+      final AndroidApplicationLauncher.LaunchResult launchResult =
+        myApplicationLauncher.launch(this, device);
 
-      checkDdms();
+      if (launchResult == AndroidApplicationLauncher.LaunchResult.STOP) {
+        return false;
+      }
+      else if (launchResult == AndroidApplicationLauncher.LaunchResult.SUCCESS) {
+        checkDdms();
+      }
 
       synchronized (myDebugLock) {
         Client client = device.getClient(myTargetPackageName);

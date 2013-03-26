@@ -17,7 +17,10 @@ package org.jetbrains.android.uipreview;
 
 
 import com.android.SdkConstants;
-import com.android.ide.common.resources.configuration.*;
+import com.android.ide.common.resources.configuration.DeviceConfigHelper;
+import com.android.ide.common.resources.configuration.FolderConfiguration;
+import com.android.ide.common.resources.configuration.LanguageQualifier;
+import com.android.ide.common.resources.configuration.RegionQualifier;
 import com.android.resources.NightMode;
 import com.android.resources.ResourceType;
 import com.android.resources.ScreenSize;
@@ -1023,7 +1026,9 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
       final IAndroidTarget target = platform != null ? platform.getTarget() : null;
       final IAndroidTarget renderingTarget = getSelectedTarget();
       final State configuration = getSelectedDeviceConfiguration();
-      final ScreenSize screenSize = configuration.getHardware().getScreen().getSize();
+      final ScreenSize screenSize = configuration != null
+                                    ? configuration.getHardware().getScreen().getSize()
+                                    : null;
       preferredTheme = getThemeByRef(getDefaultTheme(target, renderingTarget, screenSize));
     }
 
@@ -1051,9 +1056,9 @@ class AndroidLayoutPreviewToolWindowForm implements Disposable {
   }
 
   @NotNull
-  private static String getDefaultTheme(IAndroidTarget target,
-                                        IAndroidTarget renderingTarget,
-                                        ScreenSize screenSize) {
+  private static String getDefaultTheme(@Nullable IAndroidTarget target,
+                                        @Nullable IAndroidTarget renderingTarget,
+                                        @Nullable ScreenSize screenSize) {
     final int targetApiLevel = target != null ? target.getVersion().getApiLevel() : 0;
 
     final int renderingTargetApiLevel = renderingTarget != null

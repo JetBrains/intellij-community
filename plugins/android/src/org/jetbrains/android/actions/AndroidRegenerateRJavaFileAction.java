@@ -99,7 +99,11 @@ public class AndroidRegenerateRJavaFileAction extends AnAction {
         // todo: compatibility with background autogenerating
 
         for (Module module : modules) {
-          AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.AAPT, context);
+          final AndroidFacet facet = AndroidFacet.getInstance(module);
+
+          if (facet != null) {
+            AndroidCompileUtil.generate(facet, AndroidAutogeneratorMode.AAPT, context);
+          }
         }
         return true;
       }

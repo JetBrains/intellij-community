@@ -9,6 +9,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.api.CmdlineProtoUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -23,14 +24,15 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
 public class AndroidBuildTargetScopeProvider extends BuildTargetScopeProvider {
   @NotNull
   @Override
-  public List<TargetTypeBuildScope> getBuildTargetScopes(
-    @NotNull CompileScope baseScope, @NotNull CompilerFilter filter, @NotNull Project project) {
+  public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull CompileScope baseScope, @NotNull CompilerFilter filter,
+                                                         @NotNull Project project, boolean forceBuild) {
 
     if (!ProjectFacetManager.getInstance(project).hasFacets(AndroidFacet.ID)) {
       return Collections.emptyList();
     }
-    final List<String> dexTargetIds = new ArrayList<String>();
-    final List<String> packagingTargetIds = new ArrayList<String>();
+    final List<String> appTargetIds = new ArrayList<String>();
+    final List<String> libTargetIds = new ArrayList<String>();
+    final List<String> allTargetIds = new ArrayList<String>();
     final boolean fullBuild = AndroidCompileUtil.isFullBuild(baseScope);
 
     for (Module module : baseScope.getAffectedModules()) {
@@ -40,16 +42,23 @@ public class AndroidBuildTargetScopeProvider extends BuildTargetScopeProvider {
         continue;
       }
       // todo: make AndroidPackagingBuilder fully target-based and change this
-      packagingTargetIds.add(module.getName());
+      allTargetIds.add(module.getName());
 
-      if (fullBuild && !facet.getConfiguration().LIBRARY_PROJECT) {
-        dexTargetIds.add(module.getName());
+      if (fullBuild) {
+        if (facet.getProperties().LIBRARY_PROJECT) {
+          libTargetIds.add(module.getName());
+        }
+        else {
+          appTargetIds.add(module.getName());
+        }
       }
     }
     return Arrays.asList(
-      TargetTypeBuildScope.newBuilder().setTypeId(AndroidCommonUtils.DEX_BUILD_TARGET_TYPE_ID).
-        addAllTargetId(dexTargetIds).build(),
-      TargetTypeBuildScope.newBuilder().setTypeId(AndroidCommonUtils.PACKAGING_BUILD_TARGET_TYPE_ID).
-        addAllTargetId(packagingTargetIds).build());
+      CmdlineProtoUtil.createTargetsScope(AndroidCommonUtils.DEX_BUILD_TARGET_TYPE_ID, appTargetIds, forceBuild),
+      CmdlineProtoUtil.createTargetsScope(AndroidCommonUtils.RESOURCE_CACHING_BUILD_TARGET_ID, allTargetIds, forceBuild),
+      CmdlineProtoUtil.createTargetsScope(AndroidCommonUtils.RESOURCE_PACKAGING_BUILD_TARGET_ID, appTargetIds, forceBuild),
+      CmdlineProtoUtil.createTargetsScope(AndroidCommonUtils.PACKAGING_BUILD_TARGET_TYPE_ID, allTargetIds, forceBuild),
+      CmdlineProtoUtil.createTargetsScope(AndroidCommonUtils.LIBRARY_PACKAGING_BUILD_TARGET_ID, libTargetIds, forceBuild)
+    );
   }
 }

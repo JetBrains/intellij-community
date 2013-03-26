@@ -117,7 +117,7 @@ public class AndroidPrecompileTask implements CompileTask {
 
       LOG.debug("Platform-tools revision for module " + module.getName() + " is " + platformToolsRevision);
 
-      if (facet.getConfiguration().LIBRARY_PROJECT) {
+      if (facet.getProperties().LIBRARY_PROJECT) {
         if (platformToolsRevision >= 0 && platformToolsRevision <= 7) {
           LOG.debug("Excluded sources of module " + module.getName());
           excludeAllSourceRoots(module, configuration, addedEntries);
@@ -136,20 +136,25 @@ public class AndroidPrecompileTask implements CompileTask {
     return true;
   }
 
-  private static void createGenModulesAndSourceRoots(Project project) {
+  private static void createGenModulesAndSourceRoots(final Project project) {
     final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    final List<AndroidFacet> facets = new ArrayList<AndroidFacet>();
 
     for (Module module : ModuleManager.getInstance(project).getModules()) {
       final AndroidFacet facet = AndroidFacet.getInstance(module);
 
       if (facet != null) {
-        ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-          @Override
-          public void run() {
-            AndroidCompileUtil.createGenModulesAndSourceRoots(facet);
-          }
-        }, indicator != null ? indicator.getModalityState() : ModalityState.NON_MODAL);
+        facets.add(facet);
       }
+    }
+
+    if (facets.size() > 0) {
+      ApplicationManager.getApplication().invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          AndroidCompileUtil.createGenModulesAndSourceRoots(project, facets);
+        }
+      }, indicator != null ? indicator.getModalityState() : ModalityState.NON_MODAL);
     }
   }
 
@@ -279,7 +284,7 @@ public class AndroidPrecompileTask implements CompileTask {
                            manifestMergerProp.getSecond().getUrl(), -1, -1);
       }
 
-      if (!facet.getConfiguration().LIBRARY_PROJECT) {
+      if (!facet.getProperties().LIBRARY_PROJECT) {
 
         for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
           if (entry instanceof ModuleOrderEntry) {
@@ -291,7 +296,7 @@ public class AndroidPrecompileTask implements CompileTask {
               if (depModule != null) {
                 final AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
 
-                if (depFacet != null && !depFacet.getConfiguration().LIBRARY_PROJECT) {
+                if (depFacet != null && !depFacet.getProperties().LIBRARY_PROJECT) {
                   String message = "Suspicious module dependency " +
                                    module.getName() +
                                    " -> " +

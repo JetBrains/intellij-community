@@ -15,19 +15,15 @@
  */
 package com.intellij.android.designer.componentTree;
 
-import com.intellij.android.designer.model.RadViewComponent;
 import com.intellij.designer.componentTree.AttributeWrapper;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
 import com.intellij.designer.model.IComponentDecorator;
 import com.intellij.designer.model.MetaModel;
-import com.intellij.designer.model.Property;
 import com.intellij.designer.model.RadComponent;
 import com.intellij.designer.palette.DefaultPaletteItem;
-import com.intellij.designer.propertyTable.PropertyTable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
-import org.jetbrains.annotations.Nullable;
 
 /**
  * @author Alexander Lobas

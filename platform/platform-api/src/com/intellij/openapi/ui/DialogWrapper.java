@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -34,7 +34,9 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPaneUtil;
+import com.intellij.ui.ColorUtil;
 import com.intellij.ui.IdeBorderFactory;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.UIBundle;
 import com.intellij.ui.components.JBOptionButton;
 import com.intellij.ui.components.JBScrollPane;
@@ -1824,7 +1826,7 @@ public abstract class DialogWrapper {
         setBorder(null);
       }
       else {
-        myLabel.setText("<html><body><font color=red><left>" + text + "</left></b></font></body></html>");
+        myLabel.setText("<html><body><font color='#" + ColorUtil.toHex(JBColor.RED)+ "'><left>" + text + "</left></b></font></body></html>");
         myLabel.setIcon(AllIcons.Actions.Lightning);
         myLabel.setBorder(new EmptyBorder(4, 10, 0, 2));
         setVisible(true);

@@ -19,7 +19,7 @@ import com.android.SdkConstants;
 import com.intellij.ide.fileTemplates.*;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
@@ -36,7 +36,7 @@ import java.util.Properties;
  * @author yole
  */
 public class AndroidFileTemplateProvider implements FileTemplateGroupDescriptorFactory {
-  @NonNls public static final String REMOTE_INTERFACE_TEMPLATE = "Remote Interface.aidl";
+  @NonNls public static final String REMOTE_INTERFACE_TEMPLATE = "Remote_Interface.aidl";
   @NonNls public static final String ANDROID_MANIFEST_TEMPLATE = SdkConstants.FN_ANDROID_MANIFEST_XML;
   @NonNls public static final String VALUE_RESOURCE_FILE_TEMPLATE = "valueResourceFile.xml";
   @NonNls public static final String RESOURCE_FILE_TEMPLATE = "resourceFile.xml";
@@ -45,7 +45,7 @@ public class AndroidFileTemplateProvider implements FileTemplateGroupDescriptorF
   @NonNls public static final String ACTIVITY = "Activity.java";
   @NonNls public static final String APPLICATION = "Application.java";
   @NonNls public static final String SERVICE = "Service.java";
-  @NonNls public static final String BROADCAST_RECEIVER = "Broadcast Receiver.java";
+  @NonNls public static final String BROADCAST_RECEIVER = "Broadcast_Receiver.java";
   @NonNls public static final String DEFAULT_PROPERTIES_TEMPLATE = "default.properties";
 
   public FileTemplateGroupDescriptor getFileTemplatesDescriptor() {
@@ -100,8 +100,7 @@ public class AndroidFileTemplateProvider implements FileTemplateGroupDescriptorF
 
   @NotNull
   public static String getFileNameByNewElementName(@NotNull String name) {
-    String extension = FileUtil.getExtension(name);
-    if (!extension.equals("xml")) {
+    if (!FileUtilRt.extensionEquals(name, "xml")) {
       name += ".xml";
     }
     return name;

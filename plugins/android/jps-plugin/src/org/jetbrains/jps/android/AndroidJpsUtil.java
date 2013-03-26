@@ -4,9 +4,9 @@ import com.android.SdkConstants;
 import com.android.sdklib.IAndroidTarget;
 import com.android.sdklib.SdkManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
@@ -67,19 +67,13 @@ public class AndroidJpsUtil {
   @NonNls private static final String RESOURCE_CACHE_STORAGE = "res_cache";
   @NonNls private static final String INTERMEDIATE_ARTIFACTS_STORAGE = "intermediate_artifacts";
 
-  public static final Condition<File> CLASSES_AND_JARS_FILTER = new Condition<File>() {
-    @Override
-    public boolean value(File file) {
-      final String ext = FileUtil.getExtension(file.getName());
-      return "jar".equals(ext) || "class".equals(ext);
-    }
-  };
   @NonNls public static final String GENERATED_RESOURCES_DIR_NAME = "generated_resources";
   @NonNls public static final String AAPT_GENERATED_SOURCE_ROOT_NAME = "aapt";
   @NonNls public static final String AIDL_GENERATED_SOURCE_ROOT_NAME = "aidl";
   @NonNls public static final String RENDERSCRIPT_GENERATED_SOURCE_ROOT_NAME = "rs";
   @NonNls public static final String BUILD_CONFIG_GENERATED_SOURCE_ROOT_NAME = "build_config";
   @NonNls private static final String GENERATED_SOURCES_FOLDER_NAME = "generated_sources";
+  @NonNls private static final String COPIED_SOURCES_FOLDER_NAME = "copied_sources";
 
   private AndroidJpsUtil() {
   }
@@ -207,13 +201,14 @@ public class AndroidJpsUtil {
                                                  @NotNull JpsModule module,
                                                  @NotNull AndroidPlatform platform) {
     final BuildDataPaths paths = context.getProjectDescriptor().dataManager.getDataPaths();
-    return getExternalLibraries(paths, module, platform);
+    return getExternalLibraries(paths, module, platform, true);
   }
 
   @NotNull
   public static Set<String> getExternalLibraries(@NotNull BuildDataPaths paths,
                                                  @NotNull JpsModule module,
-                                                 @Nullable AndroidPlatform platform) {
+                                                 @Nullable AndroidPlatform platform,
+                                                 boolean resolveJars) {
     final Set<String> result = new HashSet<String>();
     final AndroidDependencyProcessor processor = new AndroidDependencyProcessor() {
       @Override
@@ -226,7 +221,7 @@ public class AndroidJpsUtil {
         return type == AndroidDependencyType.EXTERNAL_LIBRARY;
       }
     };
-    processClasspath(paths, module, processor);
+    processClasspath(paths, module, processor, resolveJars);
 
     if (platform != null) {
       addAnnotationsJarIfNecessary(platform, result);
@@ -238,28 +233,19 @@ public class AndroidJpsUtil {
     if (platform.needToAddAnnotationsJarToClasspath()) {
       final String sdkHomePath = platform.getSdk().getHomePath();
       final String annotationsJarPath = FileUtil.toSystemIndependentName(sdkHomePath) + AndroidCommonUtils.ANNOTATIONS_JAR_RELATIVE_PATH;
-
-      if (new File(annotationsJarPath).exists()) {
-        libs.add(annotationsJarPath);
-      }
+      libs.add(annotationsJarPath);
     }
-  }
-
-  public static void processClasspath(@NotNull CompileContext context,
-                                      @NotNull JpsModule module,
-                                      @NotNull AndroidDependencyProcessor processor) {
-    final BuildDataPaths paths = context.getProjectDescriptor().dataManager.getDataPaths();
-    processClasspath(paths, module, processor);
   }
 
   public static void processClasspath(@NotNull BuildDataPaths paths,
                                       @NotNull JpsModule module,
-                                      @NotNull AndroidDependencyProcessor processor) {
+                                      @NotNull AndroidDependencyProcessor processor,
+                                      boolean resolveJars) {
     // In a module imported from Maven dependencies are transitive, so we don't need to traverse all dependency tree
     // and compute all jars referred by library modules. Moreover it would be incorrect,
     // because Maven has dependency resolving algorithm based on versioning
     final boolean recursive = shouldProcessDependenciesRecursively(module);
-    processClasspath(paths, module, processor, new HashSet<String>(), false, recursive);
+    processClasspath(paths, module, processor, new HashSet<String>(), false, recursive, resolveJars);
   }
 
   private static void processClasspath(@NotNull BuildDataPaths paths,
@@ -267,19 +253,22 @@ public class AndroidJpsUtil {
                                        @NotNull final AndroidDependencyProcessor processor,
                                        @NotNull final Set<String> visitedModules,
                                        final boolean exportedLibrariesOnly,
-                                       final boolean recursive) {
+                                       final boolean recursive,
+                                       final boolean resolveJars) {
     if (!visitedModules.add(module.getName())) {
       return;
     }
     if (processor.isToProcess(AndroidDependencyType.EXTERNAL_LIBRARY)) {
-      for (JpsDependencyElement item : JpsJavaExtensionService.getInstance().getDependencies(module, JpsJavaClasspathKind.PRODUCTION_RUNTIME, exportedLibrariesOnly)) {
+      for (JpsDependencyElement item : JpsJavaExtensionService.getInstance().getDependencies(module,
+                                                                                             JpsJavaClasspathKind.PRODUCTION_RUNTIME,
+                                                                                             exportedLibrariesOnly)) {
         if (item instanceof JpsLibraryDependency) {
           final JpsLibrary library = ((JpsLibraryDependency)item).getLibrary();
           if (library != null) {
             for (JpsLibraryRoot root : library.getRoots(JpsOrderRootType.COMPILED)) {
               final File file = JpsPathUtil.urlToFile(root.getUrl());
 
-              if (file.exists()) {
+              if (resolveJars) {
                 processClassFilesAndJarsRecursively(file, new Processor<File>() {
                   @Override
                   public boolean process(File file) {
@@ -287,6 +276,9 @@ public class AndroidJpsUtil {
                     return true;
                   }
                 });
+              }
+              else {
+                processor.processExternalLibrary(file);
               }
             }
           }
@@ -321,7 +313,7 @@ public class AndroidJpsUtil {
           processor.processJavaModuleOutputDirectory(depClassDir);
         }
         if (recursive) {
-          processClasspath(paths, depModule, processor, visitedModules, !depLibrary || exportedLibrariesOnly, recursive);
+          processClasspath(paths, depModule, processor, visitedModules, !depLibrary || exportedLibrariesOnly, recursive, resolveJars);
         }
       }
     }
@@ -332,10 +324,10 @@ public class AndroidJpsUtil {
       @Override
       public boolean process(File file) {
         if (file.isFile()) {
-          final String ext = FileUtil.getExtension(file.getName());
+          String fileName = file.getName();
 
           // NOTE: we should ignore apklib dependencies (IDEA-82976)
-          if ("jar".equals(ext) || "class".equals(ext)) {
+          if (FileUtilRt.extensionEquals(fileName, "jar") || FileUtilRt.extensionEquals(fileName, "class")) {
             if (!processor.process(file)) {
               return false;
             }
@@ -450,7 +442,7 @@ public class AndroidJpsUtil {
   }
 
   @Nullable
-  public static File getManifestFileForCompilationPath(@NotNull JpsAndroidModuleExtension extension) throws IOException {
+  public static File getManifestFileForCompilationPath(@NotNull JpsAndroidModuleExtension extension) {
     return extension.useCustomManifestForCompilation()
            ? extension.getManifestFileForCompilation()
            : extension.getManifestFile();
@@ -480,49 +472,61 @@ public class AndroidJpsUtil {
     return new AndroidPlatform(sdk, target);
   }
 
+  @NotNull
   public static String[] collectResourceDirsForCompilation(@NotNull JpsAndroidModuleExtension extension,
                                                            boolean withCacheDirs,
-                                                           @NotNull CompileContext context) throws IOException {
+                                                           @NotNull CompileContext context,
+                                                           boolean checkExistence) {
+    final BuildDataPaths dataPaths = context.getProjectDescriptor().dataManager.getDataPaths();
+    return collectResourceDirsForCompilation(extension, withCacheDirs, dataPaths, checkExistence);
+  }
+
+  @NotNull
+  public static String[] collectResourceDirsForCompilation(@NotNull JpsAndroidModuleExtension extension,
+                                                           boolean withCacheDirs,
+                                                           @NotNull BuildDataPaths dataPaths,
+                                                           boolean checkExistence) {
     final List<String> result = new ArrayList<String>();
-    addCompilableResourceDirsForModule(extension, withCacheDirs, context, result);
+    addCompilableResourceDirsForModule(extension, withCacheDirs, dataPaths, result, checkExistence);
 
     for (JpsAndroidModuleExtension depExtension : getAllAndroidDependencies(extension.getModule(), true)) {
-      addCompilableResourceDirsForModule(depExtension, withCacheDirs, context, result);
+      addCompilableResourceDirsForModule(depExtension, withCacheDirs, dataPaths, result, checkExistence);
     }
     return ArrayUtil.toStringArray(result);
   }
 
   private static void addCompilableResourceDirsForModule(JpsAndroidModuleExtension extension,
                                                          boolean withCacheDirs,
-                                                         CompileContext context,
-                                                         List<String> result) throws IOException {
+                                                         BuildDataPaths dataPaths,
+                                                         List<String> result,
+                                                         boolean checkExistence) {
     if (withCacheDirs) {
-      final File resourcesCacheDir = getResourcesCacheDir(context, extension.getModule());
-      if (resourcesCacheDir.exists()) {
+      final File resourcesCacheDir = getResourcesCacheDir(extension.getModule(), dataPaths);
+      if (!checkExistence || resourcesCacheDir.exists()) {
         result.add(resourcesCacheDir.getPath());
       }
     }
 
     final File resDir = getResourceDirForCompilationPath(extension);
-    if (resDir != null) {
+    if (resDir != null && (!checkExistence || resDir.exists())) {
       result.add(resDir.getPath());
     }
 
-    final File generatedResourcesStorage = getGeneratedResourcesStorage(extension.getModule(), context.getProjectDescriptor().dataManager);
-    if (generatedResourcesStorage.exists()) {
+    final File generatedResourcesStorage = getGeneratedResourcesStorage(extension.getModule(), dataPaths);
+    if (!checkExistence || generatedResourcesStorage.exists()) {
       result.add(generatedResourcesStorage.getPath());
     }
   }
 
   @Nullable
-  public static File getResourceDirForCompilationPath(@NotNull JpsAndroidModuleExtension extension) throws IOException {
+  public static File getResourceDirForCompilationPath(@NotNull JpsAndroidModuleExtension extension) {
     return extension.useCustomResFolderForCompilation()
            ? extension.getResourceDirForCompilation()
            : extension.getResourceDir();
   }
 
   @NotNull
-  static List<JpsAndroidModuleExtension> getAllAndroidDependencies(@NotNull JpsModule module, boolean librariesOnly) {
+  public static List<JpsAndroidModuleExtension> getAllAndroidDependencies(@NotNull JpsModule module, boolean librariesOnly) {
     final List<JpsAndroidModuleExtension> result = new ArrayList<JpsAndroidModuleExtension>();
     collectDependentAndroidLibraries(module, result, new HashSet<String>(), librariesOnly);
     return result;
@@ -593,13 +597,12 @@ public class AndroidJpsUtil {
   }
 
   @NotNull
-  public static File getResourcesCacheDir(@NotNull CompileContext context, @NotNull JpsModule module) {
-    final File androidStorage = new File(context.getProjectDescriptor().dataManager.getDataPaths().getDataStorageRoot(), ANDROID_STORAGE_DIR);
+  public static File getResourcesCacheDir(@NotNull JpsModule module, @NotNull BuildDataPaths dataPaths) {
+    final File androidStorage = new File(dataPaths.getDataStorageRoot(), ANDROID_STORAGE_DIR);
     return new File(new File(androidStorage, RESOURCE_CACHE_STORAGE), module.getName());
   }
 
-  private static void fillSourceRoots(@NotNull JpsModule module, @NotNull Set<JpsModule> visited, @NotNull Set<File> result)
-    throws IOException {
+  private static void fillSourceRoots(@NotNull JpsModule module, @NotNull Set<JpsModule> visited, @NotNull Set<File> result) {
     visited.add(module);
     final JpsAndroidModuleExtension extension = getExtension(module);
     File resDir = null;
@@ -633,7 +636,7 @@ public class AndroidJpsUtil {
   }
 
   @NotNull
-  public static File[] getSourceRootsForModuleAndDependencies(@NotNull JpsModule module) throws IOException {
+  public static File[] getSourceRootsForModuleAndDependencies(@NotNull JpsModule module) {
     Set<File> result = new HashSet<File>();
     fillSourceRoots(module, new HashSet<JpsModule>(), result);
     return result.toArray(new File[result.size()]);
@@ -664,22 +667,38 @@ public class AndroidJpsUtil {
 
   @NotNull
   public static File getGeneratedSourcesStorage(@NotNull JpsModule module, final BuildDataPaths dataPaths) {
-    final File androidStorageRoot = new File(dataPaths.getDataStorageRoot(), ANDROID_STORAGE_DIR);
-    final File generatedSourcesRoot = new File(androidStorageRoot, GENERATED_SOURCES_FOLDER_NAME);
-    return new File(generatedSourcesRoot, module.getName());
+    final File targetDataRoot = dataPaths.getTargetDataRoot(
+      new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
+    return getStorageDir(targetDataRoot, GENERATED_SOURCES_FOLDER_NAME);
+  }
+
+  @NotNull
+  public static File getCopiedSourcesStorage(@NotNull JpsModule module, @NotNull BuildDataPaths dataPaths) {
+    final File targetDataRoot = dataPaths.getTargetDataRoot(
+      new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
+    return getStorageDir(targetDataRoot, COPIED_SOURCES_FOLDER_NAME);
   }
 
   @NotNull
   public static File getGeneratedResourcesStorage(@NotNull JpsModule module, BuildDataManager dataManager) {
-    final File dataStorageRoot = dataManager.getDataPaths().getDataStorageRoot();
-    final File androidStorageRoot = new File(dataStorageRoot, ANDROID_STORAGE_DIR);
-    final File generatedSourcesRoot = new File(androidStorageRoot, GENERATED_RESOURCES_DIR_NAME);
-    return new File(generatedSourcesRoot, module.getName());
+    return getGeneratedResourcesStorage(module, dataManager.getDataPaths());
+  }
+
+  @NotNull
+  private static File getGeneratedResourcesStorage(@NotNull JpsModule module, @NotNull BuildDataPaths dataPaths) {
+    final File targetDataRoot = dataPaths.getTargetDataRoot(
+      new ModuleBuildTarget(module, JavaModuleBuildTargetType.PRODUCTION));
+    return getStorageDir(targetDataRoot, GENERATED_RESOURCES_DIR_NAME);
   }
 
   @NotNull
   public static File getStorageFile(@NotNull File dataStorageRoot, @NotNull String storageName) {
-    return new File(new File(new File(dataStorageRoot, ANDROID_STORAGE_DIR), storageName), storageName);
+    return new File(getStorageDir(dataStorageRoot, storageName), storageName);
+  }
+
+  @NotNull
+  public static File getStorageDir(@NotNull File dataStorageRoot, @NotNull String storageName) {
+    return new File(new File(dataStorageRoot, ANDROID_STORAGE_DIR), storageName);
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")

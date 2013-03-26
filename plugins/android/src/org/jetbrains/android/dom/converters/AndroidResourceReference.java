@@ -20,6 +20,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
+import com.intellij.util.xml.impl.ConvertContextFactory;
 import com.intellij.util.xml.impl.ConvertContextImpl;
 import com.intellij.util.xml.impl.DomCompletionContributor;
 import org.jetbrains.android.dom.AndroidDomUtil;
@@ -55,7 +56,7 @@ public class AndroidResourceReference extends AndroidResourceReferenceBase {
     if (converter instanceof ResolvingConverter) {
       final ResolvingConverter resolvingConverter = (ResolvingConverter)converter;
       ArrayList<Object> result = new ArrayList<Object>();
-      final ConvertContext convertContext = new ConvertContextImpl(myValue);
+      final ConvertContext convertContext = ConvertContextFactory.createConvertContext(myValue);
       for (Object variant : resolvingConverter.getVariants(convertContext)) {
         String name = converter.toString(variant, convertContext);
         if (name != null) {

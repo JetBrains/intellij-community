@@ -23,7 +23,7 @@ import com.intellij.openapi.command.undo.UndoManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
@@ -170,7 +170,7 @@ public class AndroidRenameResourceProcessor extends RenamePsiElementProcessor {
     for (PsiElement resource : resources) {
       if (resource instanceof PsiFile) {
         PsiFile file = (PsiFile)resource;
-        String extension = FileUtil.getExtension(file.getName());
+        String extension = FileUtilRt.getExtension(file.getName());
         allRenames.put(resource, newResName + '.' + extension);
       }
       else if (resource instanceof XmlAttributeValue) {

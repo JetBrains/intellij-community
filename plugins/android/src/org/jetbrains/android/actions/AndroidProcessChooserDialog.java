@@ -49,6 +49,7 @@ import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
@@ -348,15 +349,16 @@ public class AndroidProcessChooserDialog extends DialogWrapper {
     final Set<String> result = new HashSet<String>();
 
     for (AndroidFacet facet : facets) {
+      final String packageName = AndroidCompileUtil.getAaptManifestPackage(facet);
+
+      if (packageName != null) {
+        result.add(packageName.toLowerCase());
+      }
       final Manifest manifest = facet.getManifest();
+
       if (manifest != null) {
-
-        final String packageName = manifest.getPackage().getValue();
-        if (packageName != null) {
-          result.add(packageName.toLowerCase());
-        }
-
         final XmlElement xmlElement = manifest.getXmlElement();
+
         if (xmlElement != null) {
           collectProcessNames(xmlElement, result);
         }

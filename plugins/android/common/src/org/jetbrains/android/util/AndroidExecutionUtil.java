@@ -36,11 +36,21 @@ public final class AndroidExecutionUtil {
   }
 
   @NotNull
-  public static Map<AndroidCompilerMessageKind, List<String>> doExecute(String[] argv, Map<? extends String, ? extends String> enviroment)
+  public static Map<AndroidCompilerMessageKind, List<String>> doExecute(String[] argv,
+                                                                        @NotNull Map<? extends String, ? extends String> enviroment)
     throws IOException {
-    ProcessBuilder builder = new ProcessBuilder(argv);
-    builder.environment().putAll(enviroment);
-    ProcessResult result = readProcessOutput(builder.start());
+    final AndroidBuildTestingManager testingManager = AndroidBuildTestingManager.getTestingManager();
+    final Process process;
+
+    if (testingManager != null) {
+      process = testingManager.getCommandExecutor().createProcess(argv, enviroment);
+    }
+    else {
+      ProcessBuilder builder = new ProcessBuilder(argv);
+      builder.environment().putAll(enviroment);
+      process = builder.start();
+    }
+    ProcessResult result = readProcessOutput(process);
     Map<AndroidCompilerMessageKind, List<String>> messages = result.getMessages();
     int code = result.getExitCode();
     List<String> errMessages = messages.get(AndroidCompilerMessageKind.ERROR);

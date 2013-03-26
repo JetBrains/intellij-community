@@ -185,7 +185,7 @@ public class AndroidDxRunner {
       }
     }
     else {
-      if ("class".equals(FileUtilRt.getExtension(file.getName()))) {
+      if (FileUtilRt.extensionEquals(file.getName(), "class")) {
         final String qName = getQualifiedName(root, file);
         if (qName != null && !qNames.add(qName)) {
           reportWarning(FileUtilRt.toSystemDependentName(file.getPath()) + " won't be added. Class " +

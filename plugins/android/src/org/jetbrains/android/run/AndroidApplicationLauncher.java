@@ -16,7 +16,10 @@
 
 package org.jetbrains.android.run;
 
-import com.android.ddmlib.*;
+import com.android.ddmlib.AdbCommandRejectedException;
+import com.android.ddmlib.ClientData;
+import com.android.ddmlib.IDevice;
+import com.android.ddmlib.TimeoutException;
 import com.intellij.execution.process.ProcessHandler;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,10 +33,14 @@ import java.io.IOException;
  * To change this template use File | Settings | File Templates.
  */
 public abstract class AndroidApplicationLauncher {
-  public abstract boolean launch(@NotNull AndroidRunningState state, @NotNull IDevice device)
+  public abstract LaunchResult launch(@NotNull AndroidRunningState state, @NotNull IDevice device)
     throws IOException, AdbCommandRejectedException, TimeoutException;
 
   public boolean isReadyForDebugging(ClientData data, ProcessHandler processHandler) {
     return data.getDebuggerConnectionStatus() == ClientData.DebuggerStatus.WAITING;
+  }
+
+  public enum LaunchResult {
+    SUCCESS, STOP, NOTHING_TO_DO
   }
 }

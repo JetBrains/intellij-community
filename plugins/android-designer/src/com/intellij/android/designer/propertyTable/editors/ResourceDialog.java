@@ -280,6 +280,7 @@ public class ResourceDialog extends DialogWrapper implements TreeSelectionListen
     return myContentPanel;
   }
 
+  @NotNull
   @Override
   protected Action[] createLeftSideActions() {
     return new Action[]{myNewResourceAction};

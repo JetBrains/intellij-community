@@ -100,11 +100,11 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
   }
 
   private String getResDirName() {
-    return AndroidUtils.getSimpleNameByRelativePath(myFacet.getConfiguration().RES_FOLDER_RELATIVE_PATH);
+    return AndroidUtils.getSimpleNameByRelativePath(myFacet.getProperties().RES_FOLDER_RELATIVE_PATH);
   }
 
   private String getManifestFileName() {
-    return AndroidUtils.getSimpleNameByRelativePath(myFacet.getConfiguration().MANIFEST_FILE_RELATIVE_PATH);
+    return AndroidUtils.getSimpleNameByRelativePath(myFacet.getProperties().MANIFEST_FILE_RELATIVE_PATH);
   }
 
   private void fileChanged(@NotNull final VirtualFileEvent e) {
@@ -148,7 +148,7 @@ class AndroidResourceFilesListener extends VirtualFileAdapter {
       }
 
       for (AndroidAutogeneratorMode autogenerationMode : autogenerationModes) {
-        AndroidCompileUtil.generate(myFacet.getModule(), autogenerationMode, true);
+        AndroidCompileUtil.generate(myFacet.getModule(), autogenerationMode);
       }
     }
 

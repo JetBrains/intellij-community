@@ -43,6 +43,9 @@ import com.intellij.ide.util.DefaultPsiElementCellRenderer;
 import com.intellij.ide.wizard.CommitStepException;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
+import com.intellij.notification.Notification;
+import com.intellij.notification.NotificationType;
+import com.intellij.notification.Notifications;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -472,7 +475,7 @@ public class AndroidUtils {
       AndroidFacetConfiguration configuration = facet.getConfiguration();
       configuration.init(module, contentRoot);
       if (library) {
-        configuration.LIBRARY_PROJECT = true;
+        configuration.getState().LIBRARY_PROJECT = true;
       }
       model.addFacet(facet);
     }
@@ -582,7 +585,7 @@ public class AndroidUtils {
     final List<AndroidFacet> result = new ArrayList<AndroidFacet>();
 
     for (AndroidFacet facet : ProjectFacetManager.getInstance(project).getFacets(AndroidFacet.ID)) {
-      if (!facet.getConfiguration().LIBRARY_PROJECT) {
+      if (!facet.getProperties().LIBRARY_PROJECT) {
         result.add(facet);
       }
     }
@@ -603,7 +606,7 @@ public class AndroidUtils {
           if (depModule != null) {
             final AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
 
-            if (depFacet != null && depFacet.getConfiguration().LIBRARY_PROJECT) {
+            if (depFacet != null && depFacet.getProperties().LIBRARY_PROJECT) {
               depFacets.add(depFacet);
             }
           }
@@ -640,7 +643,7 @@ public class AndroidUtils {
             final AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
 
             if (depFacet != null &&
-                (!androidLibrariesOnly || depFacet.getConfiguration().LIBRARY_PROJECT) &&
+                (!androidLibrariesOnly || depFacet.getProperties().LIBRARY_PROJECT) &&
                 visited.add(depFacet)) {
               collectAllAndroidDependencies(depModule, androidLibrariesOnly, result, visited);
               result.add(0, depFacet);
@@ -776,5 +779,16 @@ public class AndroidUtils {
     if (lexer.getTokenType() != JavaTokenType.IDENTIFIER) return false;
     lexer.advance();
     return lexer.getTokenType() == null;
+  }
+
+  public static void reportImportErrorToEventLog(String message, String modName) {
+    reportImportMessageToEventLog(message, modName, NotificationType.ERROR);
+  }
+
+  private static void reportImportMessageToEventLog(String message, String modName, NotificationType notificationType) {
+    Notifications.Bus.notify(new Notification(AndroidBundle.message("android.facet.importing.notification.group"),
+                                              AndroidBundle.message("android.facet.importing.title", modName),
+                                              message, notificationType, null));
+    LOG.debug(message);
   }
 }

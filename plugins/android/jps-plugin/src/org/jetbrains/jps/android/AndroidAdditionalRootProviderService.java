@@ -33,6 +33,8 @@ public class AndroidAdditionalRootProviderService extends AdditionalRootsProvide
     addRoot(result, buildTarget, new File(generatedSourcesRoot, AndroidJpsUtil.RENDERSCRIPT_GENERATED_SOURCE_ROOT_NAME));
     addRoot(result, buildTarget, new File(generatedSourcesRoot, AndroidJpsUtil.BUILD_CONFIG_GENERATED_SOURCE_ROOT_NAME));
 
+    addRoot(result, buildTarget, AndroidJpsUtil.getCopiedSourcesStorage(buildTarget.getModule(), dataPaths));
+
     return result;
   }
 

@@ -259,12 +259,14 @@ public abstract class PsiType implements PsiAnnotationOwner {
     return getAnnotations();
   }
 
+  /** @deprecated use {@link #getAnnotationsTextPrefix(boolean, boolean, boolean)} (to remove in IDEA 13) */
+  @SuppressWarnings("UnusedDeclaration")
   protected String getAnnotationsTextPrefix() {
-    return getAnnotationsTextPrefix(false, true);
+    return getAnnotationsTextPrefix(false, false, true);
   }
 
   @NotNull
-  protected String getAnnotationsTextPrefix(boolean leadingSpace, boolean trailingSpace) {
+  protected String getAnnotationsTextPrefix(boolean qualified, boolean leadingSpace, boolean trailingSpace) {
     PsiAnnotation[] annotations = getAnnotations();
     if (annotations.length == 0) return "";
 
@@ -272,7 +274,13 @@ public abstract class PsiType implements PsiAnnotationOwner {
     if (leadingSpace) sb.append(' ');
     for (int i = 0; i < annotations.length; i++) {
       if (i > 0) sb.append(' ');
-      sb.append('@').append(annotations[i].getQualifiedName());
+      PsiAnnotation annotation = annotations[i];
+      if (qualified) {
+        sb.append('@').append(annotation.getQualifiedName()).append(annotation.getParameterList().getText());
+      }
+      else {
+        sb.append(annotation.getText());
+      }
     }
     if (trailingSpace) sb.append(' ');
     return sb.toString();

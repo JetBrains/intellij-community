@@ -46,6 +46,10 @@ public class JavaFXCollapseSubtagToAttributeTest extends DaemonAnalyzerTestCase 
     doTest(true, "GridPane.rowIndex");
   }
 
+  public void testStyleclass() throws Exception {
+    doTest(true, "styleClass");
+  }
+
   private void doTest(boolean available) throws Exception {
     doTest(available, "text");
   }

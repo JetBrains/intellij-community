@@ -54,7 +54,7 @@ public class AndroidProguardCompiler implements ClassPostProcessingCompiler {
         for (final Module module : modules) {
           final AndroidFacet facet = AndroidFacet.getInstance(module);
 
-          if (facet == null || facet.getConfiguration().LIBRARY_PROJECT) {
+          if (facet == null || facet.getProperties().LIBRARY_PROJECT) {
             continue;
           }
 
