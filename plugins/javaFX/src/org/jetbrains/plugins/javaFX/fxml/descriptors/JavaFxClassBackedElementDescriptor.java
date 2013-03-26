@@ -9,8 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.xml.XmlAttributeImpl;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
@@ -224,19 +223,33 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     return XmlAttributeDescriptor.EMPTY;
   }
 
-  private <T> void collectProperties(List<T> children, Function<PsiField, T> factory, boolean acceptPrimitive) {
-    final PsiField[] fields = myPsiClass.getAllFields();
-    if (fields.length > 0) {
-      for (PsiField field : fields) {
-        if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
-        final PsiType fieldType = field.getType();
-        if (!JavaFxPsiUtil.isReadOnly(myPsiClass, field) && 
-            InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY) || 
-            fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
-            (acceptPrimitive && fieldType instanceof PsiPrimitiveType) ||
-            GenericsHighlightUtil.getCollectionItemType(field.getType(), myPsiClass.getResolveScope()) != null) {
-          children.add(factory.fun(field));
+  private <T> void collectProperties(final List<T> children, final Function<PsiField, T> factory, final boolean acceptPrimitive) {
+    final List<PsiField> fieldList =
+      CachedValuesManager.getManager(myPsiClass.getProject()).getCachedValue(myPsiClass, new CachedValueProvider<List<PsiField>>() {
+        @Nullable
+        @Override
+        public Result<List<PsiField>> compute() {
+          List<PsiField> acceptableFields = new ArrayList<PsiField>();
+          final PsiField[] fields = myPsiClass.getAllFields();
+          if (fields.length > 0) {
+            for (PsiField field : fields) {
+              if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
+              final PsiType fieldType = field.getType();
+              if (!JavaFxPsiUtil.isReadOnly(myPsiClass, field) &&
+                  InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY) ||
+                  fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
+                  (acceptPrimitive && fieldType instanceof PsiPrimitiveType) ||
+                  GenericsHighlightUtil.getCollectionItemType(field.getType(), myPsiClass.getResolveScope()) != null) {
+                acceptableFields.add(field);
+              }
+            }
+          }
+          return Result.create(acceptableFields, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
         }
+      });
+    if (fieldList != null) {
+      for (PsiField field : fieldList) {
+        children.add(factory.fun(field));
       }
     }
   }
