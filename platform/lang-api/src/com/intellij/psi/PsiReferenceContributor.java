@@ -15,6 +15,11 @@ import com.intellij.openapi.extensions.ExtensionPointName;
  * Some elements return them from {@link PsiElement#getReferences()} directly though, but one should not rely on that
  * behavior since it may be changed in the future.
  *
+ * Note that, if you're implementing a custom language, it won't by default support references registered through PsiReferenceContributor.
+ * If you want to support that, you need to call
+ * {@link com.intellij.psi.impl.source.resolve.reference.ReferenceProvidersRegistry#getReferencesFromProviders(PsiElement)} from your implementation
+ * of PsiElement.getReferences().
+ *
  * The alternative way to register {@link PsiReferenceProvider} is by using {@link PsiReferenceProviderBean}.
  *
  * @author peter
