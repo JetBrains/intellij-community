@@ -106,7 +106,7 @@
     <applicationService serviceInterface="com.jetbrains.python.run.PythonRunConfigurationExtensionsManager"
                         serviceImplementation="com.jetbrains.python.run.PythonRunConfigurationExtensionsManager"/>
     <configurationType implementation="com.jetbrains.python.run.PythonConfigurationType"/>
-    <programRunner implementation="com.jetbrains.python.run.PythonRunner"/>
+    <programRunner implementation="com.jetbrains.python.run.PythonRunner" order="first"/>
     <programRunner implementation="com.jetbrains.python.debugger.PyDebugRunner"/>
     <programRunner implementation="com.jetbrains.python.debugger.remote.PyRemoteDebugRunner"/>
     <programRunner implementation="com.jetbrains.python.coverage.PythonCoverageRunner"/>
