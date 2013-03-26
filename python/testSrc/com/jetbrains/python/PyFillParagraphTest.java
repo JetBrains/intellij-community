@@ -16,6 +16,10 @@ public class PyFillParagraphTest extends PyTestCase {
     doTest();
   }
 
+  public void _testMultilineDocstring() {
+    doTest();
+  }
+
   public void testDocstringOneParagraph() {
     doTest();
   }
