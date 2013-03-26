@@ -1595,7 +1595,11 @@ class ControlFlowAnalyzer extends JavaElementVisitor {
     boolean isCall = expression instanceof PsiMethodCallExpression;
     PsiExpression qualifier = refExpr.getQualifierExpression();
     if (qualifier == null) {
-      return myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null, isCall);
+      DfaVariableValue result = myFactory.getVarFactory().createVariableValue(var, refExpr.getType(), false, null, isCall);
+      if (var instanceof PsiField) {
+        myFields.add(result);
+      }
+      return result;
     }
 
     if (DfaUtil.isFinalField(var) || DfaUtil.isPlainMutableField(var)) {

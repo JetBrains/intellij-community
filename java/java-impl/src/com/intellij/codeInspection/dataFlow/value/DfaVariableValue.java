@@ -30,6 +30,7 @@ import com.intellij.psi.PsiType;
 import com.intellij.psi.PsiVariable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.MultiMap;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -51,6 +52,7 @@ public class DfaVariableValue extends DfaValue {
     public DfaVariableValue createVariableValue(PsiVariable myVariable, boolean isNegated) {
       return createVariableValue(myVariable, myVariable.getType(), isNegated, null, false);
     }
+    @NotNull
     public DfaVariableValue createVariableValue(PsiVariable myVariable,
                                                 @Nullable PsiType varType, boolean isNegated, @Nullable DfaVariableValue qualifier, boolean viaMethods) {
       mySharedInstance.myVariable = myVariable;
