@@ -168,7 +168,7 @@ public class CommandLineProcessor {
         if (StringUtil.isQuotedString(arg)) {
           arg = StringUtil.stripQuotesAroundValue(arg);
         }
-        if (currentDirectory != null) {
+        if (currentDirectory != null && !new File(arg).isAbsolute()) {
           arg = new File(currentDirectory, arg).getAbsolutePath();
         }
         if (line != -1) {
