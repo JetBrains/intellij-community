@@ -120,7 +120,8 @@ public class UnixProcessManager {
 
     findChildProcesses(our_pid, process_pid, foundPid, processInfo, childrenPids);
 
-    boolean result;
+    // result is true if signal was sent to at least one process
+    final boolean result;
     if (!foundPid.isNull()) {
       processInfo.killProcTree(foundPid.get(), signal, UNIX_KILLER);
       result = true;
@@ -132,17 +133,7 @@ public class UnixProcessManager {
       result = !childrenPids.isEmpty(); //we've tried to kill at least one process
     }
 
-    if (result) {
-      foundPid.set(null);
-      childrenPids.clear();
-
-      findChildProcesses(our_pid, process_pid, foundPid, processInfo, childrenPids);
-
-      return foundPid.isNull() && childrenPids.isEmpty(); //all processes have been killed
-    }
-    else {
-      return true; //the parent process was already killed
-    }
+    return result;
     } catch (Exception e) {
       //If we fail somehow just return false
       LOG.warn("Error killing the process", e);
