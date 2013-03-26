@@ -960,43 +960,45 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
 
     @Override
     public void log(final SVNLogType logType, final Throwable th, final Level logLevel) {
+      handleSpecificSSLExceptions(th);
+      if (shouldLog(logType)) {
+        myLog.info(th);
+      }
+    }
+
+    private void handleSpecificSSLExceptions(Throwable th) {
+      final long time = System.currentTimeMillis();
+      if ((time - myPreviousTime) <= ourErrorNotificationInterval) {
+        return;
+      }
       if (th instanceof SSLHandshakeException) {
-        final long time = System.currentTimeMillis();
         // not trusted certificate exception is not the problem, just part of normal behaviour
         if (th.getCause() instanceof SVNSSLUtil.CertificateNotTrustedException) {
           LOG.info(th);
           return;
         }
 
-        if ((time - myPreviousTime) > ourErrorNotificationInterval) {
-          myPreviousTime = time;
-          String info = SSLExceptionsHelper.getAddInfo();
-          info = info == null ? "" : " (" + info + ") ";
-          if (th.getCause() instanceof CertificateException) {
-            PopupUtil.showBalloonForActiveFrame("Subversion: " + info + th.getCause().getMessage(), MessageType.ERROR);
-          } else {
-            final String postMessage = "\nPlease check Subversion SSL settings (Settings | Version Control | Subversion | Network)\n" +
-                                       "Maybe you should specify SSL protocol manually - SSLv3 or TLSv1";
-            PopupUtil.showBalloonForActiveFrame("Subversion: " + info + th.getMessage() + postMessage, MessageType.ERROR);
-          }
+        myPreviousTime = time;
+        String info = SSLExceptionsHelper.getAddInfo();
+        info = info == null ? "" : " (" + info + ") ";
+        if (th.getCause() instanceof CertificateException) {
+          PopupUtil.showBalloonForActiveFrame("Subversion: " + info + th.getCause().getMessage(), MessageType.ERROR);
+        } else {
+          final String postMessage = "\nPlease check Subversion SSL settings (Settings | Version Control | Subversion | Network)\n" +
+                                     "Maybe you should specify SSL protocol manually - SSLv3 or TLSv1";
+          PopupUtil.showBalloonForActiveFrame("Subversion: " + info + th.getMessage() + postMessage, MessageType.ERROR);
         }
       } else if (th instanceof SSLProtocolException) {
         final String message = th.getMessage();
         if (! StringUtil.isEmptyOrSpaces(message)) {
-          final long time = System.currentTimeMillis();
-          if ((time - myPreviousTime) > ourErrorNotificationInterval) {
-            myPreviousTime = time;
-            String info = SSLExceptionsHelper.getAddInfo();
-            info = info == null ? "" : " (" + info + ") ";
-            final SSLProtocolExceptionParser parser = new SSLProtocolExceptionParser(message);
-            parser.parse();
-            final String errMessage = "Subversion: " + info + parser.getParsedMessage();
-            PopupUtil.showBalloonForActiveFrame(errMessage, MessageType.ERROR);
-          }
+          myPreviousTime = time;
+          String info = SSLExceptionsHelper.getAddInfo();
+          info = info == null ? "" : " (" + info + ") ";
+          final SSLProtocolExceptionParser parser = new SSLProtocolExceptionParser(message);
+          parser.parse();
+          final String errMessage = "Subversion: " + info + parser.getParsedMessage();
+          PopupUtil.showBalloonForActiveFrame(errMessage, MessageType.ERROR);
         }
-      }
-      if (shouldLog(logType)) {
-        myLog.info(th);
       }
     }
 
