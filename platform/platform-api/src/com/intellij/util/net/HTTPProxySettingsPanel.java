@@ -29,6 +29,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.proxy.CommonProxy;
 import com.intellij.util.proxy.JavaProxyProperty;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -74,12 +75,15 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
   private JLabel myErrorLabel;
   private JButton myCheckButton;
   private JBLabel myOtherWarning;
+  private JLabel myProxyExceptionsLabel;
+  private JTextArea myProxyExceptions;
   private final HttpConfigurable myHttpConfigurable;
   private volatile boolean myConnectionCheckInProgress;
 
   public boolean isModified() {
     boolean isModified = false;
     HttpConfigurable httpConfigurable = myHttpConfigurable;
+    if (! Comparing.equal(myProxyExceptions.getText().trim(), httpConfigurable.PROXY_EXCEPTIONS)) return true;
     isModified |= httpConfigurable.USE_PROXY_PAC != myAutoDetectProxyRb.isSelected();
     isModified |= httpConfigurable.USE_HTTP_PROXY != myUseHTTPProxyRb.isSelected();
     isModified |= httpConfigurable.PROXY_AUTHENTICATION != myProxyAuthCheckBox.isSelected();
@@ -109,6 +113,9 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
     proxyTypeGroup.add(myHTTP);
     proxyTypeGroup.add(mySocks);
     myHTTP.setSelected(true);
+
+    myProxyExceptions.setBorder(UIUtil.getTextFieldBorder());
+    myProxyExceptionsLabel.setUI(new MultiLineLabelUI());
 
     final Boolean property = Boolean.getBoolean(JavaProxyProperty.USE_SYSTEM_PROXY);
     mySystemProxyDefined.setVisible(Boolean.TRUE.equals(property));
@@ -242,6 +249,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
 
     myProxyPortTextField.setText(Integer.toString(httpConfigurable.PROXY_PORT));
     myProxyHostTextField.setText(httpConfigurable.PROXY_HOST);
+    myProxyExceptions.setText(httpConfigurable.PROXY_EXCEPTIONS);
 
     myRememberProxyPasswordCheckBox.setSelected(httpConfigurable.KEEP_PROXY_PASSWORD);
     mySocks.setSelected(httpConfigurable.PROXY_TYPE_IS_SOCKS);
@@ -274,6 +282,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
 
     httpConfigurable.PROXY_LOGIN = trimFieldText(myProxyLoginTextField);
     httpConfigurable.setPlainProxyPassword(new String(myProxyPasswordTextField.getPassword()));
+    httpConfigurable.PROXY_EXCEPTIONS = myProxyExceptions.getText();
 
     try {
       httpConfigurable.PROXY_PORT = Integer.valueOf(trimFieldText(myProxyPortTextField)).intValue();
@@ -296,6 +305,7 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
     myProxyPortTextField.setEnabled(enabled);
     mySocks.setEnabled(enabled);
     myHTTP.setEnabled(enabled);
+    myProxyExceptions.setEnabled(enabled);
 
     myProxyAuthCheckBox.setEnabled(enabled);
     enableProxyAuthentication(enabled && myProxyAuthCheckBox.isSelected());
