@@ -1177,7 +1177,7 @@ public class PyUtil {
   }
 
   @Nullable
-  public static PsiElement findNonWhitespaceAtOffset(PsiFile psiFile, int caretOffset) {
+  public static PsiElement findPrevNonWhitespaceAtOffset(PsiFile psiFile, int caretOffset) {
     PsiElement element = psiFile.findElementAt(caretOffset);
     if (element == null) {
       return null;
@@ -1193,6 +1193,14 @@ public class PyUtil {
       element = psiFile.findElementAt(caretOffset);
     }
     return element instanceof PsiWhiteSpace ? null : element;
+  }
+
+  @Nullable
+  public static PsiElement findNonWhitespaceAtOffset(PsiFile psiFile, int caretOffset) {
+    PsiElement element = findNextNonWhitespaceAtOffset(psiFile, caretOffset);
+    if (element == null)
+      element = findPrevNonWhitespaceAtOffset(psiFile, caretOffset);
+    return element;
   }
 
   @Nullable
