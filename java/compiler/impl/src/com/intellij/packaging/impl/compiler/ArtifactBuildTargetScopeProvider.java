@@ -41,7 +41,7 @@ public class ArtifactBuildTargetScopeProvider extends BuildTargetScopeProvider {
   @NotNull
   @Override
   public List<TargetTypeBuildScope> getBuildTargetScopes(@NotNull final CompileScope baseScope, @NotNull CompilerFilter filter,
-                                                         @NotNull final Project project) {
+                                                         @NotNull final Project project, final boolean forceBuild) {
     final ArtifactsCompiler compiler = ArtifactsCompiler.getInstance(project);
     if (compiler == null || !filter.acceptCompiler(compiler)) {
       return Collections.emptyList();
@@ -52,11 +52,12 @@ public class ArtifactBuildTargetScopeProvider extends BuildTargetScopeProvider {
         final Set<Artifact> artifacts = ArtifactCompileScope.getArtifactsToBuild(project, baseScope, false);
         if (ArtifactCompileScope.getArtifacts(baseScope) == null) {
           Set<Module> modules = ArtifactUtil.getModulesIncludedInArtifacts(artifacts, project);
-          CompileScopeUtil.addScopesForModules(modules, scopes);
+          CompileScopeUtil.addScopesForModules(modules, scopes, forceBuild);
         }
         if (!artifacts.isEmpty()) {
-          TargetTypeBuildScope.Builder builder =
-            TargetTypeBuildScope.newBuilder().setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId());
+          TargetTypeBuildScope.Builder builder = TargetTypeBuildScope.newBuilder()
+            .setTypeId(ArtifactBuildTargetType.INSTANCE.getTypeId())
+            .setForceBuild(ArtifactCompileScope.isArtifactRebuildForced(baseScope));
           for (Artifact artifact : artifacts) {
             builder.addTargetId(artifact.getName());
           }

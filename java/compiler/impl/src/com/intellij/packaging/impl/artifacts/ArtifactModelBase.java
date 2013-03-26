@@ -73,6 +73,7 @@ public abstract class ArtifactModelBase implements ArtifactModel {
     return artifact;
   }
 
+  @NotNull
   public Collection<? extends Artifact> getArtifactsByType(@NotNull ArtifactType type) {
     final List<Artifact> result = new ArrayList<Artifact>();
     for (Artifact artifact : getArtifacts()) {

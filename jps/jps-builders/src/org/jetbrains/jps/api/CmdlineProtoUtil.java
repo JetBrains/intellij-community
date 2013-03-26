@@ -34,16 +34,6 @@ import static org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage
  */
 public class CmdlineProtoUtil {
 
-  public static CmdlineRemoteProto.Message.ControllerMessage createMakeRequest(String project,
-                                                                               List<TargetTypeBuildScope> scopes,
-                                                                               final Map<String, String> userData,
-                                                                               final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
-                                                                               final @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
-    return createBuildParametersMessage(
-      CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.MAKE, project, scopes, userData, Collections.<String>emptyList(), globals, event
-    );
-  }
-
   public static CmdlineRemoteProto.Message.ControllerMessage createUpToDateCheckRequest(String project,
                                                                                         List<TargetTypeBuildScope> scopes,
                                                                                         Collection<String> paths,
@@ -55,37 +45,33 @@ public class CmdlineProtoUtil {
     );
   }
 
-  public static CmdlineRemoteProto.Message.ControllerMessage createForceCompileRequest(String project,
-                                                                                       List<TargetTypeBuildScope> scopes,
-                                                                                       Collection<String> paths,
-                                                                                       final Map<String, String> userData,
-                                                                                       final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
-                                                                                       final @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
-    return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.FORCED_COMPILATION, project,
-                                        scopes, userData, paths, globals, event);
+  public static CmdlineRemoteProto.Message.ControllerMessage createBuildRequest(String project,
+                                                                                List<TargetTypeBuildScope> scopes,
+                                                                                Collection<String> paths,
+                                                                                final Map<String, String> userData,
+                                                                                final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals,
+                                                                                final @Nullable CmdlineRemoteProto.Message.ControllerMessage.FSEvent event) {
+    return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.BUILD, project, scopes,
+                                        userData, paths, globals, event);
   }
 
-  public static CmdlineRemoteProto.Message.ControllerMessage createRebuildRequest(String project,
-                                                                                  List<TargetTypeBuildScope> scopes,
-                                                                                  final Map<String, String> userData,
-                                                                                  final CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings globals) {
-    return createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.REBUILD, project,
-                                        scopes, userData, Collections.<String>emptyList(),
-                                        globals, null);
-  }
-
-  public static List<TargetTypeBuildScope> createAllModulesScopes() {
+  public static List<TargetTypeBuildScope> createAllModulesScopes(final boolean forceBuild) {
     return Arrays.asList(
-      createAllTargetsScope(JavaModuleBuildTargetType.PRODUCTION),
-      createAllTargetsScope(JavaModuleBuildTargetType.TEST)
+      createAllTargetsScope(JavaModuleBuildTargetType.PRODUCTION, forceBuild),
+      createAllTargetsScope(JavaModuleBuildTargetType.TEST, forceBuild)
     );
   }
 
-  public static TargetTypeBuildScope createAllTargetsScope(BuildTargetType<?> type) {
+  public static TargetTypeBuildScope createAllTargetsScope(BuildTargetType<?> type, boolean forceBuild) {
     return TargetTypeBuildScope.newBuilder()
       .setTypeId(type.getTypeId())
       .setAllTargets(true)
+      .setForceBuild(forceBuild)
       .build();
+  }
+
+  public static TargetTypeBuildScope createTargetsScope(final String targetTypeId, List<String> targetIds, boolean forceBuild) {
+    return TargetTypeBuildScope.newBuilder().setTypeId(targetTypeId).setForceBuild(forceBuild).addAllTargetId(targetIds).build();
   }
 
   private static CmdlineRemoteProto.Message.ControllerMessage createBuildParametersMessage(CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type buildType,
@@ -120,10 +106,10 @@ public class CmdlineProtoUtil {
     return controlMessageBuilder.setType(CmdlineRemoteProto.Message.ControllerMessage.Type.BUILD_PARAMETERS).setParamsMessage(builder.build()).build();
   }
 
+
   public static CmdlineRemoteProto.Message.KeyValuePair createPair(String key, String value) {
     return CmdlineRemoteProto.Message.KeyValuePair.newBuilder().setKey(key).setValue(value).build();
   }
-
 
   public static CmdlineRemoteProto.Message.Failure createFailure(String description, @Nullable Throwable cause) {
     final CmdlineRemoteProto.Message.Failure.Builder builder = CmdlineRemoteProto.Message.Failure.newBuilder();
@@ -268,5 +254,4 @@ public class CmdlineProtoUtil {
     final CmdlineRemoteProto.Message.UUID.Builder uuidBuilder = CmdlineRemoteProto.Message.UUID.newBuilder();
     return uuidBuilder.setMostSigBits(sessionId.getMostSignificantBits()).setLeastSigBits(sessionId.getLeastSignificantBits()).build();
   }
-
 }

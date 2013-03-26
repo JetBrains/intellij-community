@@ -228,6 +228,7 @@
     <extensionPoint name="referencesSearch" interface="com.intellij.util.QueryExecutor"/>
     <extensionPoint name="definitionsSearch" interface="com.intellij.util.QueryExecutor"/>
 
+    <extensionPoint name="searchScopeEnlarger" interface="com.intellij.psi.search.SearchScopeEnlarger"/>
     <extensionPoint name="useScopeEnlarger" interface="com.intellij.psi.search.UseScopeEnlarger"/>
     <extensionPoint name="resolveScopeEnlarger" interface="com.intellij.psi.ResolveScopeEnlarger"/>
     <extensionPoint name="resolveScopeProvider" interface="com.intellij.psi.ResolveScopeProvider"/>

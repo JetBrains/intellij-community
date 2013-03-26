@@ -32,6 +32,9 @@ import java.util.Set;
  * User: Vassiliy.Kudryashov
  */
 public abstract class AbstractFavoritesListProvider<T> implements FavoritesListProvider {
+  public static final int BOOKMARKS_WEIGHT = 100;
+  public static final int BREAKPOINTS_WEIGHT = 200;
+  public static final int TASKS_WEIGHT = 300;
   protected final Project myProject;
   private final String myListName;
   protected final List<AbstractTreeNode<T>> myChildren = new ArrayList<AbstractTreeNode<T>>();
@@ -86,7 +89,14 @@ public abstract class AbstractFavoritesListProvider<T> implements FavoritesListP
   }
 
   @Override
-  public void handle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects) {
+  public void handle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects, JComponent component) {
+  }
+
+  @Override
+  public int compareTo(FavoritesListProvider o) {
+    if (getWeight() > o.getWeight()) return 1;
+    if (getWeight() < o.getWeight()) return -1;
+    return 0;
   }
 
   @Override

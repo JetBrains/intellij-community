@@ -46,7 +46,7 @@ public class IntegerConverter extends ResolvingConverter<String> {
       return s;
     }
     try {
-      Integer.parseInt(s);
+      Integer.decode(s);
     }
     catch (NumberFormatException e) {
       return null;

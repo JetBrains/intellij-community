@@ -16,10 +16,13 @@
 package org.jetbrains.idea.svn.checkin;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.util.ThrowableRunnable;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.*;
@@ -29,7 +32,6 @@ import org.tmatesoft.svn.core.internal.util.SVNHashMap;
 import org.tmatesoft.svn.core.internal.util.SVNSSLUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNFileUtil;
 import org.tmatesoft.svn.core.internal.wc.SVNWCProperties;
-import org.tmatesoft.svn.core.wc.SVNInfo;
 import org.tmatesoft.svn.core.wc.SVNRevision;
 
 import java.io.ByteArrayInputStream;
@@ -39,7 +41,6 @@ import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
 import java.security.cert.X509Certificate;
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -87,31 +88,10 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     if (url == null) return;
     final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
     final List<String> kinds = getKinds(url, password);
-    // ignore username clearing
+
     for (String kind : kinds) {
       configuration.clearCredentials(kind, realm);
-      break;
     }
-  }
-
-  private List<String> getAllPossibleKinds(String protocol) {
-    final List<String> result = new ArrayList<String>();
-    if ("http".equals(protocol)) {
-      result.add(ISVNAuthenticationManager.PASSWORD);
-    } else if ("https".equals(protocol)) {
-      result.add(ISVNAuthenticationManager.SSL);
-      result.add(ISVNAuthenticationManager.PASSWORD);
-      result.add(ISVNAuthenticationManager.USERNAME);
-    } else if ("svn".equals(protocol)) {
-      result.add(ISVNAuthenticationManager.PASSWORD);
-    } else if (protocol.contains("svn+")) {  // todo +-
-      result.add(ISVNAuthenticationManager.SSH);
-      result.add(ISVNAuthenticationManager.PASSWORD);
-      result.add(ISVNAuthenticationManager.USERNAME);
-    } else if ("file".equals(protocol)) {
-      result.add(ISVNAuthenticationManager.USERNAME);
-    }
-    return result;
   }
 
   @Override
@@ -186,6 +166,21 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     protected abstract boolean acknowledge(SvnAuthenticationManager manager, T svnAuthentication) throws SVNException;
   }
 
+  private void doWithSubscribeToAuthProvider(SvnAuthenticationManager.ISVNAuthenticationProviderListener listener,
+                                             final ThrowableRunnable<SVNException> runnable) throws SVNException {
+    MessageBusConnection connection = null;
+    try {
+      final Project project = myVcs.getProject();
+      connection = project.getMessageBus().connect(project);
+      connection.subscribe(SvnAuthenticationManager.AUTHENTICATION_PROVIDER_LISTENER, listener);
+      runnable.run();
+    } finally {
+      if (connection != null) {
+        connection.disconnect();
+      }
+    }
+  }
+
   // plus seems that we also should ask for credentials; but we didn't receive realm name yet
   private class SSLServerCertificateAuthenticator extends AbstractAuthenticator<Boolean> {
     private SVNURL myUrl;
@@ -212,12 +207,12 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     protected Boolean getWithPassive(SvnAuthenticationManager passive) throws SVNException {
       String stored = (String) passive.getRuntimeAuthStorage().getData("svn.ssl.server", myRealm);
       if (stored == null) return null;
-      CertificateFactory cf = null;
+      CertificateFactory cf;
       try {
         cf = CertificateFactory.getInstance("X509");
         final byte[] buffer = new byte[stored.length()];
         SVNBase64.base64ToByteArray(new StringBuffer(stored), buffer);
-        myCertificate = (X509Certificate)cf.generateCertificate(new ByteArrayInputStream(buffer));
+        myCertificate = cf.generateCertificate(new ByteArrayInputStream(buffer));
       }
       catch (CertificateException e) {
         throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, e));
@@ -227,42 +222,45 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     @Override
-    protected Boolean getWithActive(SvnAuthenticationManager active) throws SVNException {
-      final ISVNAuthenticationProvider delegate = active.getProvider();
-      try {
-        active.setAuthenticationProvider(new ISVNAuthenticationProvider() {
-          @Override
-          public SVNAuthentication requestClientAuthentication(String kind,
-                                                               SVNURL url,
-                                                               String realm,
-                                                               SVNErrorMessage errorMessage,
-                                                               SVNAuthentication previousAuth,
-                                                               boolean authMayBeStored) {
-            myCredentialsRealm = realm;
-            myAuthentication = delegate.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
-            if (myAuthentication != null) {
-              myStoreInUsual &= myAuthentication.isStorageAllowed();
-            }
-            return myAuthentication;
-          }
+    protected Boolean getWithActive(final SvnAuthenticationManager active) throws SVNException {
+      doWithSubscribeToAuthProvider(new SvnAuthenticationManager.ISVNAuthenticationProviderListener() {
+                                      @Override
+                                      public void requestClientAuthentication(String kind,
+                                                                              SVNURL url,
+                                                                              String realm,
+                                                                              SVNErrorMessage errorMessage,
+                                                                              SVNAuthentication previousAuth,
+                                                                              boolean authMayBeStored,
+                                                                              SVNAuthentication authentication) {
+                                        if (!myUrl.equals(url)) return;
+                                        myCredentialsRealm = realm;
+                                        myAuthentication = authentication;
+                                        if (myAuthentication != null) {
+                                          myStoreInUsual &= myAuthentication.isStorageAllowed();
+                                        }
+                                      }
 
-          @Override
-          public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
-            myCertificateRealm = realm;
-            myCertificate = certificate;
-            myResult = delegate.acceptServerAuthentication(url, realm, certificate, resultMayBeStored);
-            return myResult;
-          }
-        });
-        final SVNInfo info = myVcs.createWCClient(active).doInfo(myUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
-        myStoreInUsual &= myCertificate != null && ISVNAuthenticationProvider.ACCEPTED == myResult;
-        return ISVNAuthenticationProvider.REJECTED != myResult && myCertificate != null;
-      } catch (SVNException e) {
-        if (e.getErrorMessage().getErrorCode().isAuthentication()) return null;
-        throw e;
-      } finally {
-        active.setAuthenticationProvider(delegate);
-      }
+                                      @Override
+                                      public void acceptServerAuthentication(SVNURL url,
+                                                                             String realm,
+                                                                             Object certificate,
+                                                                             boolean resultMayBeStored,
+                                                                             int accepted) {
+                                        if (!myUrl.equals(url)) return;
+                                        myCertificateRealm = realm;
+                                        myCertificate = certificate;
+                                        myResult = accepted;
+                                      }
+                                    }, new ThrowableRunnable<SVNException>() {
+                                      @Override
+                                      public void run() throws SVNException {
+                                        myVcs.createWCClient(active).doInfo(myUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+                                      }
+                                    }
+      );
+
+      myStoreInUsual &= myCertificate != null && ISVNAuthenticationProvider.ACCEPTED == myResult;
+      return ISVNAuthenticationProvider.REJECTED != myResult && myCertificate != null;
     }
 
     @Override
@@ -271,14 +269,14 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
       if (myCertificate == null) {   // this is if certificate was stored only in passive area
         String stored = (String) manager.getRuntimeAuthStorage().getData("svn.ssl.server", myRealm);
         if (StringUtil.isEmptyOrSpaces(stored)) {
-          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, "No stored in runtime server certificate found"));
+          throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, "No stored server certificate was found in runtime"));
         }
-        CertificateFactory cf = null;
+        CertificateFactory cf;
         try {
           cf = CertificateFactory.getInstance("X509");
           final byte[] buffer = new byte[stored.length()];
           SVNBase64.base64ToByteArray(new StringBuffer(stored), buffer);
-          myCertificate = (X509Certificate)cf.generateCertificate(new ByteArrayInputStream(buffer));
+          myCertificate = cf.generateCertificate(new ByteArrayInputStream(buffer));
         }
         catch (CertificateException e) {
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.AUTHN_CREDS_UNAVAILABLE, e));
@@ -290,7 +288,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
           throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, "Can not store server certificate: " + myCertificate));
         }
         X509Certificate x509Certificate = (X509Certificate) myCertificate;
-        String stored = null;
+        String stored;
         try {
           stored = SVNBase64.byteArrayToBase64(x509Certificate.getEncoded());
         }
@@ -308,6 +306,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     private void storeServerCertificate(final File configDir, String realm, String data, int failures) throws SVNException {
+      //noinspection ResultOfMethodCallIgnored
       configDir.mkdirs();
 
       File file = new File(configDir, "auth/svn.ssl.server/" + SVNFileUtil.computeChecksum(realm));
@@ -342,10 +341,11 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   private class CredentialsAuthenticator extends AbstractAuthenticator<SVNAuthentication> {
     private String myKind;
     private String myRealm;
+    // sometimes realm string is different (with <>), so store credentials for both strings..
+    private String myRealm2;
     private SVNURL myUrl;
     private SVNAuthentication myAuthentication;
     private File myFile;
-    private boolean myPasswordRequest;
 
     protected CredentialsAuthenticator(SvnVcs vcs) {
       super(vcs);
@@ -353,7 +353,6 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
     public boolean tryAuthenticate(String realm, SVNURL url, File file, boolean previousFailed, boolean passwordRequest) {
       myFile = file;
-      myPasswordRequest = passwordRequest;
       realm = realm == null ? url.getHost() : realm;
       myRealm = realm;
       myUrl = url;
@@ -379,8 +378,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
     private SVNAuthentication getWithPassiveImpl(SvnAuthenticationManager passive) throws SVNException {
       try {
-        SVNAuthentication authentication = passive.getFirstAuthentication(myKind, myRealm, myUrl);
-        return authentication;
+        return passive.getFirstAuthentication(myKind, myRealm, myUrl);
       } catch (SVNCancelException e) {
         return null;
       }
@@ -395,36 +393,38 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
 
     @Override
-    protected SVNAuthentication getWithActive(SvnAuthenticationManager active) throws SVNException {
+    protected SVNAuthentication getWithActive(final SvnAuthenticationManager active) throws SVNException {
       if (ISVNAuthenticationManager.SSL.equals(myKind)) {
-        final ISVNAuthenticationProvider provider = active.getProvider();
-        try {
-          active.setAuthenticationProvider(new ISVNAuthenticationProvider() {
-            @Override
-            public SVNAuthentication requestClientAuthentication(String kind,
-                                                                 SVNURL url,
-                                                                 String realm,
-                                                                 SVNErrorMessage errorMessage,
-                                                                 SVNAuthentication previousAuth,
-                                                                 boolean authMayBeStored) {
-              myAuthentication = provider.requestClientAuthentication(kind, url, realm, errorMessage, previousAuth, authMayBeStored);
-              myRealm = realm;
-              myStoreInUsual = myAuthentication != null && myAuthentication.isStorageAllowed();
-              return myAuthentication;
-            }
+        doWithSubscribeToAuthProvider(new SvnAuthenticationManager.ISVNAuthenticationProviderListener() {
+                                        @Override
+                                        public void requestClientAuthentication(String kind,
+                                                                                SVNURL url,
+                                                                                String realm,
+                                                                                SVNErrorMessage errorMessage,
+                                                                                SVNAuthentication previousAuth,
+                                                                                boolean authMayBeStored,
+                                                                                SVNAuthentication authentication) {
+                                          if (!myUrl.equals(url)) return;
+                                          myAuthentication = authentication;
+                                          myRealm2 = realm;
+                                          myStoreInUsual = myAuthentication != null && myAuthentication.isStorageAllowed();
+                                        }
 
-            @Override
-            public int acceptServerAuthentication(SVNURL url, String realm, Object certificate, boolean resultMayBeStored) {
-              return provider.acceptServerAuthentication(url, realm, certificate, resultMayBeStored);
-            }
-          });
-          myVcs.createWCClient(active).doInfo(myUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
-        } finally {
-          active.setAuthenticationProvider(provider);
-        }
-        if (myAuthentication != null) {
-          return myAuthentication;
-        }
+                                        @Override
+                                        public void acceptServerAuthentication(SVNURL url,
+                                                                               String realm,
+                                                                               Object certificate,
+                                                                               boolean resultMayBeStored,
+                                                                               int accepted) {
+                                        }
+                                      }, new ThrowableRunnable<SVNException>() {
+                                        @Override
+                                        public void run() throws SVNException {
+                                          myVcs.createWCClient(active).doInfo(myUrl, SVNRevision.UNDEFINED, SVNRevision.HEAD);
+                                        }
+                                      }
+        );
+        if (myAuthentication != null) return myAuthentication;
       }
       myAuthentication = active.getProvider().requestClientAuthentication(myKind, myUrl, myRealm, null, null, true);
       myStoreInUsual = myTempDirectory == null && myAuthentication != null && myAuthentication.isStorageAllowed();
@@ -433,6 +433,9 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
 
     @Override
     protected boolean acknowledge(SvnAuthenticationManager manager, SVNAuthentication svnAuthentication) throws SVNException {
+      if (! StringUtil.isEmptyOrSpaces(myRealm2) && ! myRealm2.equals(myRealm)) {
+        storeCredentials(manager, svnAuthentication, myRealm2);
+      }
       return storeCredentials(manager, svnAuthentication, myRealm);
     }
   }

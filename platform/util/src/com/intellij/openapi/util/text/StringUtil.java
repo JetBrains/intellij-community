@@ -238,9 +238,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   public static boolean startsWithIgnoreCase(@NonNls @NotNull String str, @NonNls @NotNull String prefix) {
-    final int stringLength = str.length();
-    final int prefixLength = prefix.length();
-    return stringLength >= prefixLength && str.regionMatches(true, 0, prefix, 0, prefixLength);
+    return StringUtilRt.startsWithIgnoreCase(str, prefix);
   }
 
   public static String stripHtml(@NotNull String html, boolean convertBreaks) {
@@ -302,6 +300,20 @@ public class StringUtil extends StringUtilRt {
 
   public static boolean isLineBreak(char c) {
     return c == '\n' || c == '\r';
+  }
+
+  @NotNull
+  public static String escapeLineBreak(@NotNull String text) {
+    StringBuilder buffer = new StringBuilder();
+    for (int i = 0; i < text.length(); i++) {
+      char c = text.charAt(i);
+      switch (c) {
+        case '\n': buffer.append("\\n"); break;
+        case '\r': buffer.append("\\r"); break;
+        default: buffer.append(c);
+      }
+    }
+    return buffer.toString();
   }
 
   public static boolean endsWithLineBreak(@NotNull CharSequence text) {

@@ -16,12 +16,12 @@
 
 package org.jetbrains.android.uipreview;
 
+import com.android.SdkConstants;
 import com.android.ide.common.rendering.LayoutLibrary;
 import com.android.ide.common.rendering.api.*;
 import com.android.ide.common.rendering.legacy.LegacyCallback;
 import com.android.ide.common.resources.IntArrayWrapper;
 import com.android.resources.ResourceType;
-import com.android.SdkConstants;
 import com.android.util.Pair;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -32,6 +32,8 @@ import com.intellij.psi.PsiClass;
 import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
+import org.jetbrains.android.AndroidXmlSchemaProvider;
+import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,10 +62,14 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
   private ProjectClassLoader myProjectClassLoader = null;
   private final ClassLoader myParentClassLoader;
 
-  ProjectCallback(@NotNull LayoutLibrary layoutLib, @NotNull Module module, @NotNull ProjectResources projectResources) {
+  private final String myNamespace;
+
+  ProjectCallback(@NotNull LayoutLibrary layoutLib, @NotNull AndroidFacet facet, @NotNull ProjectResources projectResources) {
     myParentClassLoader = layoutLib.getClassLoader();
-    myModule = module;
+    myModule = facet.getModule();
     myProjectResources = projectResources;
+    final String namespace = AndroidXmlSchemaProvider.getLocalXmlNamespace(facet);
+    myNamespace = namespace != null ? namespace : "";
   }
 
   @Nullable
@@ -85,9 +91,9 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     return null;
   }
 
-  @Nullable
+  @NotNull
   public String getNamespace() {
-    return null;
+    return myNamespace;
   }
 
   @Nullable

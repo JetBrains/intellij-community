@@ -62,6 +62,8 @@ public abstract class ChunkBuildExtension {
     return true;
   }
   
+  public void initArtifacts(Project project, GenerationOptions genOptions, CompositeGenerator generator) {}
+  
   public List<String> getCleanTargetNames(Project project, GenerationOptions genOptions) {
     return Collections.emptyList();
   }

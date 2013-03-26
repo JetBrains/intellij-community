@@ -546,8 +546,11 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
                                                    DomExtensionsRegistrar registrar,
                                                    Set<String> registeredSubtags,
                                                    Set<XmlName> skippedNames) {
-    String styleableName = AndroidManifestUtils.getStyleableNameByTagName(tagName);
+    String styleableName = AndroidManifestUtils.getStyleableNameForElement(element);
 
+    if (styleableName == null) {
+      styleableName = AndroidManifestUtils.getStyleableNameByTagName(tagName);
+    }
     final Set<XmlName> newSkippedNames = new HashSet<XmlName>(skippedNames);
     for (String attrName : AndroidManifestUtils.getStaticallyDefinedAttrs(element)) {
       newSkippedNames.add(new XmlName(attrName, SdkConstants.NS_RESOURCES));
@@ -559,7 +562,16 @@ public class AndroidDomExtender extends DomExtender<AndroidDomElement> {
     if (attrDefs == null) return;
     StyleableDefinition styleable = attrDefs.getStyleableByName(styleableName);
     if (styleable == null) return;
-    registerStyleableAttributes(element, new StyleableDefinition[]{styleable}, SdkConstants.NS_RESOURCES, registrar, null, newSkippedNames);
+
+    registerStyleableAttributes(element, new StyleableDefinition[]{styleable}, SdkConstants.NS_RESOURCES, registrar,
+                                new MyAttributeProcessor() {
+      @Override
+      public void process(@NotNull XmlName attrName, @NotNull DomExtension extension, @NotNull DomElement element) {
+        if (AndroidManifestUtils.isRequiredAttribute(attrName, element)) {
+          extension.addCustomAnnotation(new MyRequired());
+        }
+      }
+    }, newSkippedNames);
 
     Set<String> subtagSet = new HashSet<String>();
     Collections.addAll(subtagSet, AndroidManifestUtils.getStaticallyDefinedSubtags(element));

@@ -155,7 +155,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
       selected = Boolean.parseBoolean(runProguardPropValue);
     }
     else {
-      selected = facet.getConfiguration().RUN_PROGUARD;
+      selected = facet.getProperties().RUN_PROGUARD;
     }
     myProguardCheckBox.setSelected(selected);
     myProguardConfigFilePathLabel.setEnabled(selected);
@@ -175,7 +175,7 @@ class ApkStep extends ExportSignedPackageWizardStep {
     }
     else {
       final AndroidFacetConfiguration configuration = facet.getConfiguration();
-      if (configuration.RUN_PROGUARD) {
+      if (configuration.getState().RUN_PROGUARD) {
         final VirtualFile proguardCfgFile = AndroidRootUtil.getProguardCfgFile(facet);
         if (proguardCfgFile != null) {
           myProguardConfigFilePathField.setText(FileUtil.toSystemDependentName(proguardCfgFile.getPath()));

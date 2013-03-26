@@ -25,7 +25,6 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.io.TestFileSystemBuilder;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
@@ -288,7 +287,7 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
     BuildResult result = new BuildResult();
     builder.addMessageHandler(result);
     try {
-      builder.build(scopeBuilder.build(), scopeBuilder.getBuildType() == BuildType.MAKE, scopeBuilder.getBuildType() == BuildType.PROJECT_REBUILD, false);
+      builder.build(scopeBuilder.build(), false);
     }
     catch (RebuildRequestedException e) {
       throw new RuntimeException(e);

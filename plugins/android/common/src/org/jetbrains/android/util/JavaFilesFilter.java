@@ -1,6 +1,6 @@
 package org.jetbrains.android.util;
 
-import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 
 import java.io.File;
 import java.io.FileFilter;
@@ -16,6 +16,6 @@ public class JavaFilesFilter implements FileFilter {
 
   @Override
   public boolean accept(File file) {
-    return "java".equals(FileUtil.getExtension(file.getName()));
+    return FileUtilRt.extensionEquals(file.getName(), "java");
   }
 }

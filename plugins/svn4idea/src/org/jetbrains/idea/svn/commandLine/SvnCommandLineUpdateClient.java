@@ -18,7 +18,9 @@ package org.jetbrains.idea.svn.commandLine;
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.idea.svn.SvnApplicationSettings;
 import org.jetbrains.idea.svn.SvnVcs;
 import org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback;
@@ -132,7 +134,7 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
           if (ProcessOutputTypes.STDOUT.equals(outputType)) {
             final SVNEvent event = converter.convert(line);
             if (event != null) {
-              checkForUpdateCompleted(event, paths);
+              checkForUpdateCompleted(event);
               try {
                 handler.handleEvent(event, 0.5);
               }
@@ -143,12 +145,13 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
             }
           }
         }
-        private void checkForUpdateCompleted(SVNEvent event, final File[] paths) {
+
+        private void checkForUpdateCompleted(SVNEvent event) {
           if (SVNEventAction.UPDATE_COMPLETED.equals(event.getAction())) {
             final long eventRevision = event.getRevision();
             for (int i = 0; i < paths.length; i++) {
               final File path = paths[i];
-              if (path.equals(event.getFile())) {
+              if (FileUtil.filesEqual(path, event.getFile())) {
                 myRevisions[i] = eventRevision;
                 break;
               }
@@ -162,9 +165,10 @@ public class SvnCommandLineUpdateClient extends SvnSvnkitUpdateClient {
           updatedToRevision.set(myRevisions);
         }
       };
-      SvnLineCommand.runAndWaitProcessErrorsIntoExceptions(SvnApplicationSettings.getInstance().getCommandLinePath(),
-        base, SvnCommandName.up, listener,
-        new IdeaSvnkitBasedAuthenticationCallback(SvnVcs.getInstance(myProject)), parameters.toArray(new String[parameters.size()]));
+      SvnLineCommand.runWithAuthenticationAttempt(SvnApplicationSettings.getInstance().getCommandLinePath(),
+                                                  base, SvnCommandName.up, listener,
+                                                  new IdeaSvnkitBasedAuthenticationCallback(SvnVcs.getInstance(myProject)),
+                                                  ArrayUtil.toStringArray(parameters));
     }
     catch (SvnBindException e) {
       throw new SVNException(SVNErrorMessage.create(SVNErrorCode.IO_ERROR, e));

@@ -32,6 +32,7 @@ import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
+import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -72,7 +73,7 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
       }
     }
     else if (fileType == FileTypes.PLAIN_TEXT) {
-      if (!AndroidCompileUtil.PROGUARD_CFG_FILE_NAME.equals(file.getName()) &&
+      if (!AndroidCommonUtils.PROGUARD_CFG_FILE_NAME.equals(file.getName()) &&
           !AndroidCompileUtil.OLD_PROGUARD_CFG_FILE_NAME.equals(file.getName())) {
         return null;
       }

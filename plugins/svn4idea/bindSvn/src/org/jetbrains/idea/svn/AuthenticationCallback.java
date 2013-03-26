@@ -20,22 +20,64 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 /**
- * Created with IntelliJ IDEA.
+ * Passed for authentication purpose to SvnLineCommand
+ * Called when svn command indicates that it needs credentials. It also means that credential was not found in standard place
+ * (Subversion config directory)
+ *
+ * Implementations should 1) ask credential from user or take it from any other storage (memory, for instance)
+ * 2) write credential in Subversion standard form into
+ * a) standard config directory if user allowed to save *all* credentials
+ * b) TMP directory and return path to the directory from getSpecialConfigDir() - if user rejected at least one credential storing
+ *
+ * Please note that several credentials could be asked during the command and therefore implementation class is used as
+ * keeping its state, and that TMP directory should be reused for all written credentials
+ *
  * User: Irina.Chernushina
  * Date: 2/26/13
  * Time: 1:05 PM
  */
 public interface AuthenticationCallback {
   /**
-   * @return false if authentication canceled
+   * Authenticate for realm and base file belonging to corresponding working copy
+   *
+   * @param realm - realm that should be used for credential retrieval/storage.
+   * @param base - file target of the operation
+   * @param previousFailed - whether previous credentials were correct
+   * @param passwordRequest - if true, password should be asked. Otherwise that may be a certificate (determined by the protocol)
+   * @return false if authentication canceled or was unsuccessful
    */
-  boolean authenticateFor(String realm, File base, boolean previousFailed, boolean passwordRequest);
+  boolean authenticateFor(@Nullable String realm, File base, boolean previousFailed, boolean passwordRequest);
+
+  /**
+   * @return config directory if TMP was created
+   */
   @Nullable
   File getSpecialConfigDir();
 
+  /**
+   * Ask user or read from memory storage whether server certificate should be accepted
+   *
+   * @param url - that we used for request
+   * @param realm - realm that should be used for credential retrieval/storage.
+   * @return true is certificate was accepted
+   */
   boolean acceptSSLServerCertificate(String url, final String realm);
 
+  /**
+   * Ask user or read from memory storage whether server certificate should be accepted
+   *
+   * @param file - that we used for request
+   * @param realm - realm that should be used for credential retrieval/storage.
+   * @return true is certificate was accepted
+   */
   boolean acceptSSLServerCertificate(File file, final String realm);
 
+  /**
+   * Clear credentials stored anywhere - in case they were not full, wrong or anything else
+   *
+   * @param realm - required that credential
+   * @param base - file used in command
+   * @param password - whether password credential should be deleted or certificate, if protocol might demand certificate
+   */
   void clearPassiveCredentials(String realm, File base, boolean password);
 }

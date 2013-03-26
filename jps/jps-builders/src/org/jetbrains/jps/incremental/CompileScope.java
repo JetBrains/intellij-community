@@ -17,6 +17,7 @@ package org.jetbrains.jps.incremental;
 
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
+import org.jetbrains.jps.builders.BuildTargetType;
 
 import java.io.File;
 
@@ -29,5 +30,9 @@ public abstract class CompileScope {
 
   public abstract boolean isAffected(@NotNull BuildTarget<?> target);
 
-  public abstract boolean isRecompilationForced(@NotNull BuildTarget<?> target);
+  public abstract boolean isBuildForced(@NotNull BuildTarget<?> target);
+
+  public abstract boolean isBuildForcedForAllTargets(@NotNull BuildTargetType<?> targetType);
+
+  public abstract boolean isBuildIncrementally(@NotNull BuildTargetType<?> targetType);
 }

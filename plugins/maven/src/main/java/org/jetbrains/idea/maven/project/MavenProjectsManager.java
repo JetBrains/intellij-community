@@ -1024,7 +1024,10 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     // do not block user too often
     myImportingQueue.restartTimer();
 
-    return importer.get().getCreatedModules();
+    MavenProjectImporter projectImporter = importer.get();
+    if (projectImporter == null) return Collections.emptyList();
+
+    return projectImporter.getCreatedModules();
   }
 
   public void generateBuildConfiguration(boolean force) {

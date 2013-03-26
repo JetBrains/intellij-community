@@ -180,7 +180,7 @@ public class PsiClassReferenceType extends PsiClassType {
 
   @Override
   public String getPresentableText() {
-    return getAnnotationsTextPrefix() + PsiNameHelper.getPresentableText(myReference);
+    return getAnnotationsTextPrefix(false, false, true) + PsiNameHelper.getPresentableText(myReference);
   }
 
   @Override
@@ -190,7 +190,7 @@ public class PsiClassReferenceType extends PsiClassType {
 
   @Override
   public String getInternalCanonicalText() {
-    return getAnnotationsTextPrefix() + getCanonicalText();
+    return getAnnotationsTextPrefix(true, false, true) + getCanonicalText();
   }
 
   @NotNull

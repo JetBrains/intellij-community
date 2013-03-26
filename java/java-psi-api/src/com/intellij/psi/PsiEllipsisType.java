@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.intellij.psi;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
-
 /**
  * Represents the type of a variable arguments array passed as a method parameter.
  *
@@ -36,7 +35,7 @@ public class PsiEllipsisType extends PsiArrayType {
 
   @Override
   public String getPresentableText() {
-    return StringUtil.joinOrNull(getComponentType().getPresentableText(), "...");
+    return StringUtil.joinOrNull(getComponentType().getPresentableText(), getAnnotationsTextPrefix(false, true, true), "...");
   }
 
   @Override
@@ -46,13 +45,13 @@ public class PsiEllipsisType extends PsiArrayType {
 
   @Override
   public String getInternalCanonicalText() {
-    return StringUtil.joinOrNull(getComponentType().getInternalCanonicalText(), "...");
+    return StringUtil.joinOrNull(getComponentType().getInternalCanonicalText(), getAnnotationsTextPrefix(true, true, true), "...");
   }
 
   @Override
   public boolean equalsToText(String text) {
-    return text.endsWith("...") && getComponentType().equalsToText(text.substring(0, text.length() - 3))
-           || super.equalsToText(text);
+    return text.endsWith("...") && getComponentType().equalsToText(text.substring(0, text.length() - 3)) ||
+           super.equalsToText(text);
   }
 
   /**

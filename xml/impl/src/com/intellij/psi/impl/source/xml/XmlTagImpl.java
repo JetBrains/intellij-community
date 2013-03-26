@@ -295,7 +295,7 @@ public class XmlTagImpl extends XmlElementImpl implements XmlTag {
       while (tokenizer.hasMoreTokens()) {
         final String uri = tokenizer.nextToken();
         if (tokenizer.hasMoreTokens()) {
-          map = initializeSchema(uri, null, tokenizer.nextToken(), map);
+          map = initializeSchema(uri, getNSVersion(uri, this), tokenizer.nextToken(), map);
         }
       }
     }

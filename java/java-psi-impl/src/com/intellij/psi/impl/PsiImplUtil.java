@@ -717,4 +717,34 @@ public class PsiImplUtil {
   public static PsiElement handleMirror(PsiElement element) {
     return element instanceof PsiMirrorElement ? ((PsiMirrorElement)element).getPrototype() : element;
   }
+
+  @Nullable
+  public static PsiModifierList findNeighbourModifierList(@NotNull PsiJavaCodeReferenceElement ref) {
+    PsiElement parent = PsiTreeUtil.skipParentsOfType(ref, PsiJavaCodeReferenceElement.class);
+    if (parent instanceof PsiTypeElement) {
+      PsiElement grandParent = parent.getParent();
+      if (grandParent instanceof PsiModifierListOwner) {
+        return ((PsiModifierListOwner)grandParent).getModifierList();
+      }
+    }
+
+    return null;
+  }
+
+  public static void addTypeUseAnnotationsFromModifierList(@NotNull PsiElement member, @NotNull List<PsiAnnotation> annotations) {
+    if (member instanceof PsiModifierListOwner) {
+      PsiModifierList modifierList = ((PsiModifierListOwner)member).getModifierList();
+      if (modifierList != null) {
+        addTypeUseAnnotations(modifierList, annotations);
+      }
+    }
+  }
+
+  public static void addTypeUseAnnotations(@NotNull PsiModifierList modifierList, @NotNull List<PsiAnnotation> annotations) {
+    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+      if (findApplicableTarget(annotation, TargetType.TYPE_USE) == TargetType.TYPE_USE) {
+        annotations.add(annotation);
+      }
+    }
+  }
 }

@@ -151,6 +151,23 @@ public class MethodCandidateInfo extends CandidateInfo{
                                       : PsiExpression.EMPTY_ARRAY);
   }
 
+  public PsiSubstitutor inferSubstitutorFromArgs(final ParameterTypeInferencePolicy policy, final PsiExpression[] arguments) {
+    if (myTypeArguments == null) {
+      return inferTypeArguments(policy, arguments);
+    }
+    else {
+      PsiSubstitutor incompleteSubstitutor = super.getSubstitutor();
+      PsiMethod method = getElement();
+      if (method != null) {
+        PsiTypeParameter[] typeParams = method.getTypeParameters();
+        for (int i = 0; i < myTypeArguments.length && i < typeParams.length; i++) {
+          incompleteSubstitutor = incompleteSubstitutor.put(typeParams[i], myTypeArguments[i]);
+        }
+      }
+      return incompleteSubstitutor;
+    }
+  }
+  
   public PsiSubstitutor inferTypeArguments(final ParameterTypeInferencePolicy policy, final PsiExpression[] arguments) {
     Map<PsiElement, Pair<PsiMethod, PsiSubstitutor>> map = CURRENT_CANDIDATE.get();
     if (map == null) {

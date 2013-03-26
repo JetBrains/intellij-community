@@ -1,0 +1,5 @@
+<idea-plugin url="http://www.jetbrains.com/idea">
+  <extensions xmlns="org.jetbrains.idea.eclipse">
+    <natureImporter implementation="org.jetbrains.android.newProject.AndroidEclipseNatureImporter"/>
+  </extensions>
+</idea-plugin>

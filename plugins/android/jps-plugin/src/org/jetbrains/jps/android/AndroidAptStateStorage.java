@@ -4,6 +4,7 @@ import com.intellij.util.io.DataExternalizer;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.jps.builders.storage.StorageProvider;
 import org.jetbrains.jps.incremental.storage.AbstractStateStorage;
 
 import java.io.DataInput;
@@ -16,9 +17,17 @@ import java.io.IOException;
  */
 public class AndroidAptStateStorage extends AbstractStateStorage<String, AndroidAptValidityState> {
 
+  public static final StorageProvider<AndroidAptStateStorage> PROVIDER = new StorageProvider<AndroidAptStateStorage>() {
+    @NotNull
+    @Override
+    public AndroidAptStateStorage createStorage(File targetDataDir) throws IOException {
+      return new AndroidAptStateStorage(targetDataDir);
+    }
+  };
+
   @NonNls private static final String RESOURCE_NAMES_STORAGE = "resource_names";
 
-  public AndroidAptStateStorage(@NotNull File dataStorageRoot) throws IOException {
+  private AndroidAptStateStorage(@NotNull File dataStorageRoot) throws IOException {
     super(AndroidJpsUtil.getStorageFile(dataStorageRoot, RESOURCE_NAMES_STORAGE), new EnumeratorStringDescriptor(), new MyDataExternalizer());
   }
 

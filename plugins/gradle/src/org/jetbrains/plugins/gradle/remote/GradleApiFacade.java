@@ -1,9 +1,9 @@
 package org.jetbrains.plugins.gradle.remote;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.task.GradleTaskAware;
-import org.jetbrains.plugins.gradle.task.GradleTaskId;
-import org.jetbrains.plugins.gradle.task.GradleTaskType;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskAware;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskId;
+import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
 
 import java.rmi.Remote;
 import java.rmi.RemoteException;
@@ -31,6 +31,12 @@ public interface GradleApiFacade extends Remote, GradleTaskAware {
       return GradleProjectResolver.NULL_OBJECT;
     }
 
+    @NotNull
+    @Override
+    public GradleBuildManager getBuildManager() throws RemoteException {
+      return GradleBuildManager.NULL_OBJECT;
+    }
+
     @Override
     public void applySettings(@NotNull RemoteGradleProcessSettings settings) throws RemoteException {
     }
@@ -50,10 +56,10 @@ public interface GradleApiFacade extends Remote, GradleTaskAware {
       return Collections.emptyMap();
     }
   };
-  
+
   /**
    * Exposes <code>'resolve gradle project'</code> service that works at another process.
-   * 
+   *
    * @return                        <code>'resolve gradle project'</code> service
    * @throws RemoteException        in case of unexpected I/O exception during processing
    * @throws IllegalStateException  in case of inability to create the service
@@ -62,8 +68,17 @@ public interface GradleApiFacade extends Remote, GradleTaskAware {
   GradleProjectResolver getResolver() throws RemoteException, IllegalStateException;
 
   /**
+   * Exposes <code>'run gradle task'</code> service which works at another process.
+   *
+   * @return gradle build manager
+   * @throws RemoteException  in case of inability to create the service
+   */
+  @NotNull
+  GradleBuildManager getBuildManager() throws RemoteException;
+
+  /**
    * Asks remote gradle process to apply given settings.
-   * 
+   *
    * @param settings            settings to apply
    * @throws RemoteException    in case of unexpected I/O exception during processing
    */

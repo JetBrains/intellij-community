@@ -26,8 +26,6 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.ui.ComponentWithBrowseButton;
-import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
@@ -82,7 +80,6 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private TextFieldWithBrowseButton myCustomAptSourceDirField;
   private JCheckBox myIsLibraryProjectCheckbox;
   private JPanel myAaptCompilerPanel;
-  private JCheckBox myGenerateUnsignedApk;
   private ComboboxWithBrowseButton myApkPathCombo;
   private JLabel myApkPathLabel;
   private JRadioButton myRunProcessResourcesRadio;
@@ -101,14 +98,13 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private TextFieldWithBrowseButton myProguardConfigFileTextField;
   private JCheckBox myIncludeSystemProguardFileCheckBox;
   private JBCheckBox myIncludeAssetsFromLibraries;
+  private JBCheckBox myUseCustomManifestPackage;
+  private JTextField myCustomManifestPackageField;
 
   public AndroidFacetEditorTab(FacetEditorContext context, AndroidFacetConfiguration androidFacetConfiguration) {
     final Project project = context.getProject();
     myConfiguration = androidFacetConfiguration;
     myContext = context;
-
-    // todo: remove checkbox and related setting from facet
-    myGenerateUnsignedApk.setVisible(false);
 
     myManifestFileLabel.setLabelFor(myManifestFileField);
     myResFolderLabel.setLabelFor(myResFolderField);
@@ -229,23 +225,22 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     apkPathComboBoxComponent.setMinimumSize(new Dimension(10, apkPathComboBoxComponent.getMinimumSize().height));
     apkPathComboBoxComponent.setPreferredSize(new Dimension(10, apkPathComboBoxComponent.getPreferredSize().height));
 
-    final FileChooserDescriptor apkPathChooserDescriptor = new FileChooserDescriptor(false, true, false, false, false, false);
-
-    final TextComponentAccessor<JComboBox> apkPathComboAccessor = new TextComponentAccessor<JComboBox>() {
-      public String getText(JComboBox comboBox) {
-        Object item = comboBox.getEditor().getItem();
-        final String filePath = item.toString();
-        return new File(filePath).getParent();
+    myApkPathCombo.addBrowseFolderListener(project, new FileChooserDescriptor(true, false, false, false, false, false) {
+      @Override
+      public boolean isFileVisible(VirtualFile file, boolean showHiddenFiles) {
+        if (!super.isFileVisible(file, showHiddenFiles)) {
+          return false;
+        }
+        return file.isDirectory() || "apk".equals(file.getExtension());
       }
+    });
 
-      public void setText(JComboBox comboBox, String text) {
-        final String defaultApkName = AndroidCompileUtil.getApkName(myContext.getModule());
-        comboBox.getEditor().setItem(new File(text, defaultApkName).getPath());
+    myUseCustomManifestPackage.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myCustomManifestPackageField.setEnabled(myUseCustomManifestPackage.isSelected());
       }
-    };
-    myApkPathCombo.addBrowseFolderListener(project, new ComponentWithBrowseButton.BrowseFolderActionListener<JComboBox>(
-      "Select Directory for APK", null, myApkPathCombo, project,
-      apkPathChooserDescriptor, apkPathComboAccessor));
+    });
   }
 
   private void updateAptPanel() {
@@ -280,67 +275,70 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
   public boolean isModified() {
     //if (myAddAndroidLibrary.isSelected() != myConfiguration.ADD_ANDROID_LIBRARY) return true;
-    if (myIsLibraryProjectCheckbox.isSelected() != myConfiguration.LIBRARY_PROJECT) return true;
+    if (myIsLibraryProjectCheckbox.isSelected() != myConfiguration.getState().LIBRARY_PROJECT) return true;
 
-    if (checkRelativePath(myConfiguration.GEN_FOLDER_RELATIVE_PATH_APT, myRGenPathField.getText())) {
-      return true;
-    }
-
-    if (checkRelativePath(myConfiguration.GEN_FOLDER_RELATIVE_PATH_AIDL, myAidlGenPathField.getText())) {
+    if (checkRelativePath(myConfiguration.getState().GEN_FOLDER_RELATIVE_PATH_APT, myRGenPathField.getText())) {
       return true;
     }
 
-    if (checkRelativePath(myConfiguration.MANIFEST_FILE_RELATIVE_PATH, myManifestFileField.getText())) {
+    if (checkRelativePath(myConfiguration.getState().GEN_FOLDER_RELATIVE_PATH_AIDL, myAidlGenPathField.getText())) {
       return true;
     }
 
-    if (checkRelativePath(myConfiguration.RES_FOLDER_RELATIVE_PATH, myResFolderField.getText())) {
+    if (checkRelativePath(myConfiguration.getState().MANIFEST_FILE_RELATIVE_PATH, myManifestFileField.getText())) {
       return true;
     }
 
-    if (checkRelativePath(myConfiguration.ASSETS_FOLDER_RELATIVE_PATH, myAssetsFolderField.getText())) {
+    if (checkRelativePath(myConfiguration.getState().RES_FOLDER_RELATIVE_PATH, myResFolderField.getText())) {
       return true;
     }
 
-    if (checkRelativePath(myConfiguration.LIBS_FOLDER_RELATIVE_PATH, myNativeLibsFolder.getText())) {
+    if (checkRelativePath(myConfiguration.getState().ASSETS_FOLDER_RELATIVE_PATH, myAssetsFolderField.getText())) {
       return true;
     }
 
-    if (checkRelativePath(myConfiguration.APK_PATH, (String)myApkPathCombo.getComboBox().getEditor().getItem())) {
+    if (checkRelativePath(myConfiguration.getState().LIBS_FOLDER_RELATIVE_PATH, myNativeLibsFolder.getText())) {
       return true;
     }
 
-    if (myUseCustomSourceDirectoryRadio.isSelected() != myConfiguration.USE_CUSTOM_APK_RESOURCE_FOLDER) {
-      return true;
-    }
-    if (checkRelativePath(myConfiguration.CUSTOM_APK_RESOURCE_FOLDER, myCustomAptSourceDirField.getText())) {
+    if (checkRelativePath(myConfiguration.getState().APK_PATH, (String)myApkPathCombo.getComboBox().getEditor().getItem())) {
       return true;
     }
 
-    if (myRunProcessResourcesRadio.isSelected() != myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK) {
+    if (myUseCustomSourceDirectoryRadio.isSelected() != myConfiguration.getState().USE_CUSTOM_APK_RESOURCE_FOLDER) {
       return true;
     }
-    if (myGenerateUnsignedApk.isSelected() != myConfiguration.GENERATE_UNSIGNED_APK) {
+    if (checkRelativePath(myConfiguration.getState().CUSTOM_APK_RESOURCE_FOLDER, myCustomAptSourceDirField.getText())) {
       return true;
     }
-    if (!myConfiguration.CUSTOM_DEBUG_KEYSTORE_PATH.equals(getSelectedCustomKeystorePath())) {
+
+    if (myRunProcessResourcesRadio.isSelected() != myConfiguration.getState().RUN_PROCESS_RESOURCES_MAVEN_TASK) {
       return true;
     }
-    if (myConfiguration.PACK_TEST_CODE != myIncludeTestCodeAndCheckBox.isSelected()) {
+    if (!myConfiguration.getState().CUSTOM_DEBUG_KEYSTORE_PATH.equals(getSelectedCustomKeystorePath())) {
+      return true;
+    }
+    if (myConfiguration.getState().PACK_TEST_CODE != myIncludeTestCodeAndCheckBox.isSelected()) {
       return true;
     }
     if (myConfiguration.isIncludeAssetsFromLibraries() != myIncludeAssetsFromLibraries.isSelected()) {
       return true;
     }
 
-    if (checkRelativePath(myConfiguration.PROGUARD_CFG_PATH, myProguardConfigFileTextField.getText())) {
+    if (checkRelativePath(myConfiguration.getState().PROGUARD_CFG_PATH, myProguardConfigFileTextField.getText())) {
       return true;
     }
 
-    if (myConfiguration.RUN_PROGUARD != myRunProguardCheckBox.isSelected()) {
+    if (myConfiguration.getState().RUN_PROGUARD != myRunProguardCheckBox.isSelected()) {
       return true;
     }
     if (myConfiguration.isIncludeSystemProguardCfgPath() != myIncludeSystemProguardFileCheckBox.isSelected()) {
+      return true;
+    }
+    if (myConfiguration.getState().USE_CUSTOM_MANIFEST_PACKAGE != myUseCustomManifestPackage.isSelected()) {
+      return true;
+    }
+    if (!myCustomManifestPackageField.getText().trim().equals(myConfiguration.getState().CUSTOM_MANIFEST_PACKAGE)) {
       return true;
     }
     return false;
@@ -397,17 +395,17 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     else {
       String relativeGenPathR = getAndCheckRelativePath(absGenPathR, false);
       String newAptDestDir = '/' + relativeGenPathR;
-      if (!newAptDestDir.equals(myConfiguration.GEN_FOLDER_RELATIVE_PATH_APT)) {
+      if (!newAptDestDir.equals(myConfiguration.getState().GEN_FOLDER_RELATIVE_PATH_APT)) {
         runApt = true;
       }
-      myConfiguration.GEN_FOLDER_RELATIVE_PATH_APT = newAptDestDir;
+      myConfiguration.getState().GEN_FOLDER_RELATIVE_PATH_APT = newAptDestDir;
 
       String relativeGenPathAidl = getAndCheckRelativePath(absGenPathAidl, false);
       String newIdlDestDir = '/' + relativeGenPathAidl;
-      if (!newIdlDestDir.equals(myConfiguration.GEN_FOLDER_RELATIVE_PATH_AIDL)) {
+      if (!newIdlDestDir.equals(myConfiguration.getState().GEN_FOLDER_RELATIVE_PATH_AIDL)) {
         runIdl = true;
       }
-      myConfiguration.GEN_FOLDER_RELATIVE_PATH_AIDL = newIdlDestDir;
+      myConfiguration.getState().GEN_FOLDER_RELATIVE_PATH_AIDL = newIdlDestDir;
     }
 
     String absManifestPath = myManifestFileField.getText().trim();
@@ -418,37 +416,35 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     if (!SdkConstants.FN_ANDROID_MANIFEST_XML.equals(AndroidUtils.getSimpleNameByRelativePath(manifestRelPath))) {
       throw new ConfigurationException("Manifest file must have name AndroidManifest.xml");
     }
-    myConfiguration.MANIFEST_FILE_RELATIVE_PATH = '/' + manifestRelPath;
+    myConfiguration.getState().MANIFEST_FILE_RELATIVE_PATH = '/' + manifestRelPath;
 
     String absResPath = myResFolderField.getText().trim();
     if (absResPath.length() == 0) {
       throw new ConfigurationException("Resources folder not specified");
     }
-    myConfiguration.RES_FOLDER_RELATIVE_PATH = '/' + getAndCheckRelativePath(absResPath, false);
+    myConfiguration.getState().RES_FOLDER_RELATIVE_PATH = '/' + getAndCheckRelativePath(absResPath, false);
 
     String absAssetsPath = myAssetsFolderField.getText().trim();
-    myConfiguration.ASSETS_FOLDER_RELATIVE_PATH = absAssetsPath.length() > 0 ? '/' + getAndCheckRelativePath(absAssetsPath, false) : "";
+    myConfiguration.getState().ASSETS_FOLDER_RELATIVE_PATH = absAssetsPath.length() > 0 ? '/' + getAndCheckRelativePath(absAssetsPath, false) : "";
 
     String absApkPath = (String)myApkPathCombo.getComboBox().getEditor().getItem();
     if (absApkPath.length() == 0) {
-      myConfiguration.APK_PATH = "";
+      myConfiguration.getState().APK_PATH = "";
     }
     else {
-      myConfiguration.APK_PATH = '/' + getAndCheckRelativePath(absApkPath, false);
+      myConfiguration.getState().APK_PATH = '/' + getAndCheckRelativePath(absApkPath, false);
     }
 
     String absLibsPath = myNativeLibsFolder.getText().trim();
-    myConfiguration.LIBS_FOLDER_RELATIVE_PATH = absLibsPath.length() > 0 ? '/' + getAndCheckRelativePath(absLibsPath, false) : "";
+    myConfiguration.getState().LIBS_FOLDER_RELATIVE_PATH = absLibsPath.length() > 0 ? '/' + getAndCheckRelativePath(absLibsPath, false) : "";
 
-    myConfiguration.CUSTOM_DEBUG_KEYSTORE_PATH = getSelectedCustomKeystorePath();
+    myConfiguration.getState().CUSTOM_DEBUG_KEYSTORE_PATH = getSelectedCustomKeystorePath();
 
-    myConfiguration.LIBRARY_PROJECT = myIsLibraryProjectCheckbox.isSelected();
+    myConfiguration.getState().LIBRARY_PROJECT = myIsLibraryProjectCheckbox.isSelected();
 
-    myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK = myRunProcessResourcesRadio.isSelected();
+    myConfiguration.getState().RUN_PROCESS_RESOURCES_MAVEN_TASK = myRunProcessResourcesRadio.isSelected();
 
-    myConfiguration.GENERATE_UNSIGNED_APK = myGenerateUnsignedApk.isSelected();
-    
-    myConfiguration.PACK_TEST_CODE = myIncludeTestCodeAndCheckBox.isSelected();
+    myConfiguration.getState().PACK_TEST_CODE = myIncludeTestCodeAndCheckBox.isSelected();
 
     myConfiguration.setIncludeAssetsFromLibraries(myIncludeAssetsFromLibraries.isSelected());
 
@@ -458,30 +454,33 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
         throw new ConfigurationException("Proguard config file path not specified");
       }
       else {
-        myConfiguration.PROGUARD_CFG_PATH = "";
+        myConfiguration.getState().PROGUARD_CFG_PATH = "";
       }
     }
     else {
-      myConfiguration.PROGUARD_CFG_PATH = '/' + getAndCheckRelativePath(absProguardPath, false);
+      myConfiguration.getState().PROGUARD_CFG_PATH = '/' + getAndCheckRelativePath(absProguardPath, false);
     }
 
-    myConfiguration.RUN_PROGUARD = myRunProguardCheckBox.isSelected();
+    myConfiguration.getState().RUN_PROGUARD = myRunProguardCheckBox.isSelected();
     myConfiguration.setIncludeSystemProguardCfgPath(myIncludeSystemProguardFileCheckBox.isSelected());
 
     boolean useCustomAptSrc = myUseCustomSourceDirectoryRadio.isSelected();
 
-    myConfiguration.USE_CUSTOM_APK_RESOURCE_FOLDER = useCustomAptSrc;
+    myConfiguration.getState().USE_CUSTOM_APK_RESOURCE_FOLDER = useCustomAptSrc;
+
+    myConfiguration.getState().USE_CUSTOM_MANIFEST_PACKAGE = myUseCustomManifestPackage.isSelected();
+    myConfiguration.getState().CUSTOM_MANIFEST_PACKAGE = myCustomManifestPackageField.getText().trim();
 
     String absAptSourcePath = myCustomAptSourceDirField.getText().trim();
     if (useCustomAptSrc) {
       if (absAptSourcePath.length() == 0) {
         throw new ConfigurationException("Resources folder not specified");
       }
-      myConfiguration.CUSTOM_APK_RESOURCE_FOLDER = '/' + getAndCheckRelativePath(absAptSourcePath, false);
+      myConfiguration.getState().CUSTOM_APK_RESOURCE_FOLDER = '/' + getAndCheckRelativePath(absAptSourcePath, false);
     }
     else {
       String relPath = toRelativePath(absAptSourcePath);
-      myConfiguration.CUSTOM_APK_RESOURCE_FOLDER = relPath != null ? '/' + relPath : "";
+      myConfiguration.getState().CUSTOM_APK_RESOURCE_FOLDER = relPath != null ? '/' + relPath : "";
     }
 
     runApt = runApt && AndroidAptCompiler.isToCompileModule(myContext.getModule(), myConfiguration);
@@ -490,7 +489,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       final Module module = myContext.getModule();
 
       if (runApt) {
-        AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.AAPT, true);
+        AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.AAPT);
       }
       if (runIdl) {
         AndroidCompileUtil.generate(module, AndroidAutogeneratorMode.AIDL);
@@ -514,41 +513,42 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
 
   public void reset() {
     resetOptions(myConfiguration);
-    myIsLibraryProjectCheckbox.setSelected(myConfiguration.LIBRARY_PROJECT);
+    myIsLibraryProjectCheckbox.setSelected(myConfiguration.getState().LIBRARY_PROJECT);
   }
 
   private void resetOptions(AndroidFacetConfiguration configuration) {
-    String aptGenPath = configuration.GEN_FOLDER_RELATIVE_PATH_APT;
+    String aptGenPath = configuration.getState().GEN_FOLDER_RELATIVE_PATH_APT;
     String aptAbspath = aptGenPath.length() > 0 ? toAbsolutePath(aptGenPath) : "";
     myRGenPathField.setText(aptAbspath != null ? aptAbspath : "");
 
-    String aidlGenPath = configuration.GEN_FOLDER_RELATIVE_PATH_AIDL;
+    String aidlGenPath = configuration.getState().GEN_FOLDER_RELATIVE_PATH_AIDL;
     String aidlAbsPath = aidlGenPath.length() > 0 ? toAbsolutePath(aidlGenPath) : "";
     myAidlGenPathField.setText(aidlAbsPath != null ? aidlAbsPath : "");
 
-    String manifestPath = configuration.MANIFEST_FILE_RELATIVE_PATH;
+    String manifestPath = configuration.getState().MANIFEST_FILE_RELATIVE_PATH;
     String manifestAbsPath = manifestPath.length() > 0 ? toAbsolutePath(manifestPath) : "";
     myManifestFileField.setText(manifestAbsPath != null ? manifestAbsPath : "");
 
-    String resPath = configuration.RES_FOLDER_RELATIVE_PATH;
+    String resPath = configuration.getState().RES_FOLDER_RELATIVE_PATH;
     String resAbsPath = resPath.length() > 0 ? toAbsolutePath(resPath) : "";
     myResFolderField.setText(resAbsPath != null ? resAbsPath : "");
 
-    String assetsPath = configuration.ASSETS_FOLDER_RELATIVE_PATH;
+    String assetsPath = configuration.getState().ASSETS_FOLDER_RELATIVE_PATH;
     String assetsAbsPath = assetsPath.length() > 0 ? toAbsolutePath(assetsPath) : "";
     myAssetsFolderField.setText(assetsAbsPath != null ? assetsAbsPath : "");
 
-    String libsPath = configuration.LIBS_FOLDER_RELATIVE_PATH;
+    String libsPath = configuration.getState().LIBS_FOLDER_RELATIVE_PATH;
     String libsAbsPath = libsPath.length() > 0 ? toAbsolutePath(libsPath) : "";
     myNativeLibsFolder.setText(libsAbsPath != null ? libsAbsPath : "");
 
-    myCustomDebugKeystoreField.setText(FileUtil.toSystemDependentName(VfsUtil.urlToPath(configuration.CUSTOM_DEBUG_KEYSTORE_PATH)));
+    myCustomDebugKeystoreField.setText(FileUtil.toSystemDependentName(
+      VfsUtil.urlToPath(configuration.getState().CUSTOM_DEBUG_KEYSTORE_PATH)));
 
-    String proguardCfgRelPath = configuration.PROGUARD_CFG_PATH;
+    String proguardCfgRelPath = configuration.getState().PROGUARD_CFG_PATH;
     String proguardCfgAbsPath = proguardCfgRelPath.length() > 0 ? toAbsolutePath(proguardCfgRelPath) : "";
     myProguardConfigFileTextField.setText(proguardCfgAbsPath != null ? proguardCfgAbsPath : "");
 
-    final boolean runProguard = configuration.RUN_PROGUARD;
+    final boolean runProguard = configuration.getState().RUN_PROGUARD;
     myRunProguardCheckBox.setSelected(runProguard);
     myProguardConfigFileLabel.setEnabled(runProguard);
     myProguardConfigFileTextField.setEnabled(runProguard);
@@ -559,32 +559,35 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     final int sdkToolsRevision = platform != null ? platform.getSdkData().getSdkToolsRevision() : -1;
     myIncludeSystemProguardFileCheckBox.setVisible(AndroidCommonUtils.isIncludingInProguardSupported(sdkToolsRevision));
 
-    myUseCustomSourceDirectoryRadio.setSelected(configuration.USE_CUSTOM_APK_RESOURCE_FOLDER);
-    myUseAptResDirectoryFromPathRadio.setSelected(!configuration.USE_CUSTOM_APK_RESOURCE_FOLDER);
+    myUseCustomSourceDirectoryRadio.setSelected(configuration.getState().USE_CUSTOM_APK_RESOURCE_FOLDER);
+    myUseAptResDirectoryFromPathRadio.setSelected(!configuration.getState().USE_CUSTOM_APK_RESOURCE_FOLDER);
 
-    String aptSourcePath = configuration.CUSTOM_APK_RESOURCE_FOLDER;
+    String aptSourcePath = configuration.getState().CUSTOM_APK_RESOURCE_FOLDER;
     String aptSourceAbsPath = aptSourcePath.length() > 0 ? toAbsolutePath(aptSourcePath) : "";
     myCustomAptSourceDirField.setText(aptSourceAbsPath != null ? aptSourceAbsPath : "");
-    myCustomAptSourceDirField.setEnabled(configuration.USE_CUSTOM_APK_RESOURCE_FOLDER);
+    myCustomAptSourceDirField.setEnabled(configuration.getState().USE_CUSTOM_APK_RESOURCE_FOLDER);
 
-    String apkPath = configuration.APK_PATH;
+    String apkPath = configuration.getState().APK_PATH;
     String apkAbsPath = apkPath.length() > 0 ? toAbsolutePath(apkPath) : "";
     myApkPathCombo.getComboBox().getEditor().setItem(apkAbsPath != null ? apkAbsPath : "");
 
     boolean mavenizedModule = AndroidMavenUtil.isMavenizedModule(myContext.getModule());
     myRunProcessResourcesRadio.setVisible(mavenizedModule);
-    myRunProcessResourcesRadio.setSelected(myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK);
+    myRunProcessResourcesRadio.setSelected(myConfiguration.getState().RUN_PROCESS_RESOURCES_MAVEN_TASK);
     myCompileResourcesByIdeRadio.setVisible(mavenizedModule);
-    myCompileResourcesByIdeRadio.setSelected(!myConfiguration.RUN_PROCESS_RESOURCES_MAVEN_TASK);
+    myCompileResourcesByIdeRadio.setSelected(!myConfiguration.getState().RUN_PROCESS_RESOURCES_MAVEN_TASK);
 
-    myGenerateUnsignedApk.setSelected(myConfiguration.GENERATE_UNSIGNED_APK);
-    myIncludeTestCodeAndCheckBox.setSelected(myConfiguration.PACK_TEST_CODE);
+    myIncludeTestCodeAndCheckBox.setSelected(myConfiguration.getState().PACK_TEST_CODE);
     myIncludeAssetsFromLibraries.setSelected(myConfiguration.isIncludeAssetsFromLibraries());
 
     updateAptPanel();
 
-    final boolean lib = myConfiguration.LIBRARY_PROJECT;
+    final boolean lib = myConfiguration.getState().LIBRARY_PROJECT;
     myIncludeAssetsFromLibraries.setEnabled(!lib);
+
+    myUseCustomManifestPackage.setSelected(myConfiguration.getState().USE_CUSTOM_MANIFEST_PACKAGE);
+    myCustomManifestPackageField.setEnabled(myConfiguration.getState().USE_CUSTOM_MANIFEST_PACKAGE);
+    myCustomManifestPackageField.setText(myConfiguration.getState().CUSTOM_MANIFEST_PACKAGE);
   }
 
   @Nullable

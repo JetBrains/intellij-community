@@ -28,14 +28,23 @@ import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactProperties;
+import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
+import com.intellij.packaging.impl.elements.ArchivePackagingElement;
+import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
+import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactProperties;
+import org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactPropertiesProvider;
+import org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactType;
 
+import java.io.File;
 import java.util.Collections;
 import java.util.Set;
 
@@ -54,6 +63,13 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myHtmlParamFile;
   private String myParamFile;
   private String myUpdateMode = JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND;
+
+  private boolean myEnabledSigning = false;
+  private boolean mySelfSigning = true;
+  private String myAlias;
+  private String myKeystore;
+  private String myStorepass;
+  private String myKeypass;
 
   @Override
   public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
@@ -188,6 +204,86 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myUpdateMode = updateMode;
   }
 
+  public boolean isEnabledSigning() {
+    return myEnabledSigning;
+  }
+
+  public void setEnabledSigning(boolean enabledSigning) {
+    myEnabledSigning = enabledSigning;
+  }
+
+  public boolean isSelfSigning() {
+    return mySelfSigning;
+  }
+
+  public void setSelfSigning(boolean selfSigning) {
+    mySelfSigning = selfSigning;
+  }
+
+  public String getAlias() {
+    return myAlias;
+  }
+
+  public void setAlias(String alias) {
+    myAlias = alias;
+  }
+
+  public String getKeystore() {
+    return myKeystore;
+  }
+
+  public void setKeystore(String keystore) {
+    myKeystore = keystore;
+  }
+
+  public String getStorepass() {
+    return myStorepass;
+  }
+
+  public void setStorepass(String storepass) {
+    myStorepass = storepass;
+  }
+
+  public String getKeypass() {
+    return myKeypass;
+  }
+
+  public void setKeypass(String keypass) {
+    myKeypass = keypass;
+  }
+
+  public String getPreloaderClass(Artifact rootArtifact, Project project) {
+    final Artifact artifact = getPreloaderArtifact(rootArtifact, project);
+    if (artifact != null) {
+      final JavaFxPreloaderArtifactProperties properties =
+        (JavaFxPreloaderArtifactProperties)artifact.getProperties(JavaFxPreloaderArtifactPropertiesProvider.getInstance());
+      return properties.getPreloaderClass();
+    }
+    return null;
+  }
+
+  public String getPreloaderJar(Artifact rootArtifact, Project project) {
+    final Artifact artifact = getPreloaderArtifact(rootArtifact, project);
+    if (artifact != null) {
+      return ((ArchivePackagingElement)artifact.getRootElement()).getArchiveFileName();
+    }
+    return null;
+  }
+
+
+  private static Artifact getPreloaderArtifact(Artifact rootArtifact, Project project) {
+    for (PackagingElement<?> element : rootArtifact.getRootElement().getChildren()) {
+      if (element instanceof ArtifactPackagingElement) {
+        final Artifact artifact = ((ArtifactPackagingElement)element)
+          .findArtifact(ArtifactManager.getInstance(project).getResolvingContext());
+        if (artifact != null && artifact.getArtifactType() instanceof JavaFxPreloaderArtifactType) {
+          return artifact;
+        }
+      }
+    }
+    return null;
+  }
+  
   private static class JavaFxPackager extends AbstractJavaFxPackager {
     private final Artifact myArtifact;
     private final JavaFxArtifactProperties myProperties;
@@ -200,17 +296,17 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     }
 
     @Override
-    protected String getArtifactName() {
-      return myArtifact.getName();
-    }
-
-    @Override
     protected String getArtifactOutputPath() {
       return myArtifact.getOutputPath();
     }
 
     @Override
     protected String getArtifactOutputFilePath() {
+      for (PackagingElement<?> element : myArtifact.getRootElement().getChildren()) {
+        if (element instanceof ArchivePackagingElement) {
+          return myArtifact.getOutputFilePath() + File.separator + ((ArchivePackagingElement)element).getArchiveFileName();
+        }
+      }
       return myArtifact.getOutputFilePath();
     }
 
@@ -245,6 +341,16 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     }
 
     @Override
+    public String getPreloaderClass() {
+      return myProperties.getPreloaderClass(myArtifact, myCompileContext.getProject());
+    }
+
+    @Override
+    public String getPreloaderJar() {
+      return myProperties.getPreloaderJar(myArtifact, myCompileContext.getProject());
+    }
+
+    @Override
     protected void registerJavaFxPackagerError(String message) {
       myCompileContext.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
     }
@@ -267,6 +373,36 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     @Override
     protected String getUpdateMode() {
       return myProperties.getUpdateMode();
+    }
+
+    @Override
+    public String getKeypass() {
+      return myProperties.getKeypass();
+    }
+
+    @Override
+    public String getStorepass() {
+      return myProperties.getStorepass();
+    }
+
+    @Override
+    public String getKeystore() {
+      return myProperties.getKeystore();
+    }
+
+    @Override
+    public String getAlias() {
+      return myProperties.getAlias();
+    }
+
+    @Override
+    public boolean isSelfSigning() {
+      return myProperties.isSelfSigning();
+    }
+
+    @Override
+    public boolean isEnabledSigning() {
+      return myProperties.isEnabledSigning();
     }
   }
 }

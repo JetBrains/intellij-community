@@ -69,7 +69,7 @@ public abstract class GitXmlRpcHandlerService<T> {
   @NotNull
   public synchronized File getScriptPath() throws IOException {
     if (myScriptPath == null || !myScriptPath.exists()) {
-      ScriptGenerator generator = new ScriptGenerator(getScriptTempFilePrefix(), getScriptMainClass(), getTempDir());
+      ScriptGenerator generator = new ScriptGenerator(getScriptTempFilePrefix(), getScriptMainClass());
       generator.addClasses(XmlRpcClientLite.class, DecoderException.class, FileUtilRt.class);
       customizeScriptGenerator(generator);
       myScriptPath = generator.generate();
@@ -87,15 +87,6 @@ public abstract class GitXmlRpcHandlerService<T> {
    * Adds more classes or resources to the script if needed.
    */
   protected abstract void customizeScriptGenerator(@NotNull ScriptGenerator generator);
-
-  /**
-   * @return the temporary directory to use or null if the default directory might be used
-   */
-  @SuppressWarnings({"MethodMayBeStatic"})
-  @Nullable
-  protected File getTempDir() {
-    return null;
-  }
 
   /**
    * Register handler. Note that handlers must be unregistered using {@link #unregisterHandler(int)}.

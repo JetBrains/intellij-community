@@ -41,6 +41,7 @@ import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author nik
@@ -59,38 +60,41 @@ public class AndroidFrameworkDetector extends FacetBasedFrameworkDetector<Androi
 
     StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
       public void run() {
-        final Module module = facet.getModule();
-        AndroidSdkUtils.setupAndroidPlatformInNecessary(module, true);
-
-        if (model != null && !model.isDisposed() && model.isWritable()) {
-          model.setSdk(ModuleRootManager.getInstance(module).getSdk());
-        }
-
-        final Pair<String,VirtualFile> manifestMergerProp =
-          AndroidRootUtil.getProjectPropertyValue(module, AndroidCommonUtils.ANDROID_MANIFEST_MERGER_PROPERTY);
-        if (manifestMergerProp != null && Boolean.parseBoolean(manifestMergerProp.getFirst())) {
-          Notifications.Bus.notify(new Notification("Android", "Error importing module " + module.getName(),
-                                                    AndroidBundle.message("android.manifest.merger.not.supported.error"),
-                                                    NotificationType.ERROR));
-        }
-        final Pair<String, VirtualFile> androidLibraryProp =
-          AndroidRootUtil.getProjectPropertyValue(module, AndroidUtils.ANDROID_LIBRARY_PROPERTY);
-
-        if (androidLibraryProp != null && Boolean.parseBoolean(androidLibraryProp.getFirst())) {
-          facet.getConfiguration().LIBRARY_PROJECT = true;
-        }
-        else {
-          Manifest manifest = facet.getManifest();
-          if (manifest != null) {
-            if (AndroidUtils.getDefaultActivityName(manifest) != null) {
-              AndroidUtils.addRunConfiguration(facet, null, false, null, null);
-            }
-          }
-        }
-
+        doImportSdkAndFacetConfiguration(facet, model);
         ApplicationManager.getApplication().saveAll();
       }
     });
+  }
+
+  public static void doImportSdkAndFacetConfiguration(@NotNull AndroidFacet facet, @Nullable ModifiableRootModel model) {
+    final Module module = facet.getModule();
+    AndroidSdkUtils.setupAndroidPlatformInNecessary(module, true);
+
+    if (model != null && !model.isDisposed() && model.isWritable()) {
+      model.setSdk(ModuleRootManager.getInstance(module).getSdk());
+    }
+
+    final Pair<String,VirtualFile> manifestMergerProp =
+      AndroidRootUtil.getProjectPropertyValue(module, AndroidCommonUtils.ANDROID_MANIFEST_MERGER_PROPERTY);
+    if (manifestMergerProp != null && Boolean.parseBoolean(manifestMergerProp.getFirst())) {
+      Notifications.Bus.notify(new Notification("Android", "Error importing module " + module.getName(),
+                                                AndroidBundle.message("android.manifest.merger.not.supported.error"),
+                                                NotificationType.ERROR));
+    }
+    final Pair<String, VirtualFile> androidLibraryProp =
+      AndroidRootUtil.getProjectPropertyValue(module, AndroidUtils.ANDROID_LIBRARY_PROPERTY);
+
+    if (androidLibraryProp != null && Boolean.parseBoolean(androidLibraryProp.getFirst())) {
+      facet.getProperties().LIBRARY_PROJECT = true;
+    }
+    else {
+      Manifest manifest = facet.getManifest();
+      if (manifest != null) {
+        if (AndroidUtils.getDefaultActivityName(manifest) != null) {
+          AndroidUtils.addRunConfiguration(facet, null, false, null, null);
+        }
+      }
+    }
   }
 
   @Override

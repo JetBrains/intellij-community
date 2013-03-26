@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,14 +36,14 @@ public class PsiArrayType extends PsiType {
     this(componentType, PsiAnnotation.EMPTY_ARRAY);
   }
 
-  public PsiArrayType(@NotNull PsiType componentType, PsiAnnotation[] annotations) {
+  public PsiArrayType(@NotNull PsiType componentType, @NotNull PsiAnnotation[] annotations) {
     super(annotations);
     myComponentType = componentType;
   }
 
   @Override
   public String getPresentableText() {
-    return StringUtil.joinOrNull(myComponentType.getPresentableText(), "[]");
+    return StringUtil.joinOrNull(myComponentType.getPresentableText(), getAnnotationsTextPrefix(false, true, true), "[]");
   }
 
   @Override
@@ -53,7 +53,7 @@ public class PsiArrayType extends PsiType {
 
   @Override
   public String getInternalCanonicalText() {
-    return StringUtil.joinOrNull(myComponentType.getInternalCanonicalText(), "[]");
+    return StringUtil.joinOrNull(myComponentType.getInternalCanonicalText(), getAnnotationsTextPrefix(true, true, true), "[]");
   }
 
   @Override

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.util;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -28,7 +29,7 @@ import java.util.regex.Pattern;
  */
 @SuppressWarnings("MethodMayBeStatic")
 public class GradleInstallationManager {
-
+  
   public static final Pattern  GRADLE_JAR_FILE_PATTERN;
   public static final Pattern  ANY_GRADLE_JAR_FILE_PATTERN;
 
@@ -46,7 +47,7 @@ public class GradleInstallationManager {
    * Allows to get file handles for the gradle binaries to use.
    *
    * @param project  target project
-   * @return         file handles for the gradle binaries; <code>null</code> if gradle is not discovered
+   * @return file handles for the gradle binaries; <code>null</code> if gradle is not discovered
    */
   @Nullable
   public Collection<File> getAllLibraries(@Nullable Project project) {
@@ -74,13 +75,17 @@ public class GradleInstallationManager {
 
   /**
    * Tries to return file handle that points to the gradle installation home.
-   * 
+   *
    * @param project  target project (if any)
-   * @return         file handle that points to the gradle installation home (if any)
+   * @return file handle that points to the gradle installation home (if any)
    */
   @Nullable
   public File getGradleHome(@Nullable Project project) {
-    File result = getManuallyDefinedGradleHome(project);
+    File result = getWrapperHome(project);
+    if (result != null) {
+      return result;
+    }
+    result = getManuallyDefinedGradleHome(project);
     if (result != null) {
       return result;
     }
@@ -89,8 +94,8 @@ public class GradleInstallationManager {
 
   /**
    * Tries to deduce gradle location from current environment.
-   * 
-   * @return    gradle home deduced from the current environment (if any); <code>null</code> otherwise
+   *
+   * @return gradle home deduced from the current environment (if any); <code>null</code> otherwise
    */
   @Nullable
   public File getAutodetectedGradleHome() {
@@ -100,9 +105,9 @@ public class GradleInstallationManager {
 
   /**
    * Tries to return gradle home that is defined as a dependency to the given module.
-   * 
+   *
    * @param module  target module
-   * @return        file handle that points to the gradle installation home defined as a dependency of the given module (if any)
+   * @return file handle that points to the gradle installation home defined as a dependency of the given module (if any)
    */
   @Nullable
   public VirtualFile getGradleHome(@Nullable Module module) {
@@ -137,6 +142,55 @@ public class GradleInstallationManager {
 
     final File home = getGradleHome(project);
     return home == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(home);
+  }
+
+  @Nullable
+  public File getWrapperHome(@Nullable Project project) {
+    if (project == null) {
+      return null;
+    }
+    GradleSettings settings = GradleSettings.getInstance(project);
+    String gradleProjectPath = settings.getLinkedProjectPath();
+    if (StringUtil.isEmpty(gradleProjectPath)) {
+      return null;
+    }
+    
+    if (settings.isPreferLocalInstallationToWrapper()) {
+      return null;
+    }
+
+    String version = GradleUtil.getWrapperVersion(gradleProjectPath);
+    if (version == null) {
+      return null;
+    }
+    File gradleSystemDir = new File(System.getProperty("user.home"), ".gradle");
+    if (!gradleSystemDir.isDirectory()) {
+      return null;
+    }
+    
+    File gradleWrapperDistributionsHome = new File(gradleSystemDir, "wrapper/dists");
+    if (!gradleWrapperDistributionsHome.isDirectory()) {
+      return null;
+    }
+    
+    File targetDistributionHome = new File(gradleWrapperDistributionsHome, String.format("gradle-%s-bin", version));
+    if (!targetDistributionHome.isDirectory()) {
+      return null;
+    }
+
+    File[] files = targetDistributionHome.listFiles();
+    if (files == null || files.length != 1) {
+      // Gradle keeps wrapper at a directory which name is a hash value like '35oej0jnbfh6of4dd05531edaj'
+      return null;
+    }
+    
+    File result = new File(files[0], String.format("gradle-%s", version));
+    if (result.isDirectory()) {
+      return result;
+    }
+    else {
+      return null;
+    }
   }
   
   /**

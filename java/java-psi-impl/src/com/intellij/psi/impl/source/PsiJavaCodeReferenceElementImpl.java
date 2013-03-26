@@ -49,6 +49,8 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
+
 public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement implements PsiJavaCodeReferenceElement, SourceJavaCodeReference {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiJavaCodeReferenceElementImpl");
 
@@ -193,15 +195,19 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
   }
 
   @Override
-  public void deleteChildInternal(@NotNull final ASTNode child) {
+  public void deleteChildInternal(@NotNull ASTNode child) {
     if (getChildRole(child) == ChildRole.QUALIFIER) {
-      ASTNode dot = findChildByRole(ChildRole.DOT);
+      ASTNode dot = findChildByType(JavaTokenType.DOT, child);
       assert dot != null : this;
       deleteChildRange(child.getPsi(), dot.getPsi());
+
+      List<PsiAnnotation> annotations = PsiTreeUtil.getChildrenOfTypeAsList(this, PsiAnnotation.class);
+      setAnnotations(annotations);
+
+      return;
     }
-    else {
-      super.deleteChildInternal(child);
-    }
+
+    super.deleteChildInternal(child);
   }
 
   @Override
@@ -362,7 +368,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     Project project = manager.getProject();
 
     final ResolveCache resolveCache = ResolveCache.getInstance(project);
-    final ResolveResult[] results = resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode,file);
+    final ResolveResult[] results = resolveCache.resolveWithCaching(this, OurGenericsResolver.INSTANCE, true, incompleteCode, file);
     return results.length == 0 ? JavaResolveResult.EMPTY_ARRAY : (JavaResolveResult[])results;
   }
 
@@ -467,7 +473,7 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
       }
     }
 
-    LOG.assertTrue(false, this);
+    LOG.error(this);
     return JavaResolveResult.EMPTY_ARRAY;
   }
 
@@ -534,36 +540,72 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
     }
   }
 
-  private static IncorrectOperationException cannotBindError(final PsiElement element) {
-    return new IncorrectOperationException("Cannot bind to "+element);
+  private static IncorrectOperationException cannotBindError(PsiElement element) {
+    return new IncorrectOperationException("Cannot bind to " + element);
   }
 
-  private PsiElement bindToClass(final PsiClass aClass) throws IncorrectOperationException {
+  private PsiElement bindToClass(PsiClass aClass) throws IncorrectOperationException {
     String qName = aClass.getQualifiedName();
-    final boolean preserveQualification = JavaCodeStyleSettingsFacade.getInstance(getProject()).useFQClassNames() && isFullyQualified();
-    final JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
+    boolean preserveQualification = JavaCodeStyleSettingsFacade.getInstance(getProject()).useFQClassNames() && isFullyQualified();
+    JavaPsiFacade facade = JavaPsiFacade.getInstance(getProject());
     if (qName == null) {
       qName = aClass.getName();
-      final PsiClass psiClass = facade.getResolveHelper().resolveReferencedClass(qName, this);
+      PsiClass psiClass = facade.getResolveHelper().resolveReferencedClass(qName, this);
       if (!getManager().areElementsEquivalent(psiClass, aClass)) {
         throw cannotBindError(aClass);
       }
     }
-    else {
-      if (facade.findClass(qName, getResolveScope()) == null && !preserveQualification) {
-        return this;
+    else if (facade.findClass(qName, getResolveScope()) == null && !preserveQualification) {
+      return this;
+    }
+
+    List<PsiAnnotation> annotations = getAnnotations();
+    String text = qName;
+    PsiReferenceParameterList parameterList = getParameterList();
+    if (parameterList != null) {
+      text += parameterList.getText();
+    }
+    PsiJavaCodeReferenceElement ref = facade.getParserFacade().createReferenceFromText(text, getParent());
+    getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
+    ((PsiJavaCodeReferenceElementImpl)ref).setAnnotations(annotations);
+
+    if (!preserveQualification) {
+      JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(aClass.getProject());
+      ref = (PsiJavaCodeReferenceElement)codeStyleManager.shortenClassReferences(ref, JavaCodeStyleManager.UNCOMPLETE_CODE);
+    }
+
+    return ref;
+  }
+
+  private List<PsiAnnotation> getAnnotations() {
+    List<PsiAnnotation> annotations = PsiTreeUtil.getChildrenOfTypeAsList(this, PsiAnnotation.class);
+
+    if (!isQualified()) {
+      PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(this);
+      if (modifierList != null) PsiImplUtil.addTypeUseAnnotations(modifierList, annotations);
+    }
+
+    return annotations;
+  }
+
+  private void setAnnotations(List<PsiAnnotation> annotations) {
+    if (annotations.isEmpty()) return;
+
+    PsiElement newParent = this;
+    PsiElement anchor = SourceTreeToPsiMap.treeElementToPsi(findChildByType(JavaTokenType.DOT));
+    if (anchor == null) {
+      PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(this);
+      if (modifierList != null) {
+        newParent = modifierList;
       }
     }
 
-    final PsiReferenceParameterList parameterList = getParameterList();
-    String text = parameterList == null ? qName : qName + parameterList.getText();
-    PsiJavaCodeReferenceElement ref = facade.getParserFacade().createReferenceFromText(text, getParent());
-    getTreeParent().replaceChildInternal(this, (TreeElement)ref.getNode());
-    if (!preserveQualification /*&& (TreeUtil.findParent(ref, ElementType.DOC_COMMENT) == null)*/) {
-      final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(aClass.getProject());
-      ref = (PsiJavaCodeReferenceElement)codeStyleManager.shortenClassReferences(ref, JavaCodeStyleManager.UNCOMPLETE_CODE);
+    for (PsiAnnotation annotation : annotations) {
+      if (annotation.getParent() != newParent) {
+        newParent.addAfter(annotation, anchor);
+        annotation.delete();
+      }
     }
-    return ref;
   }
 
   private boolean isFullyQualified() {

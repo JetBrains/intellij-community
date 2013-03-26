@@ -1377,4 +1377,23 @@ class FooBar {
     assert myFixture.editor.document.text.contains('fooBar')
   }
 
+  public void "test middle matching and overwrite"() {
+    myFixture.configureByText 'a.java', '''
+class ListConfigKey {
+  void foo() {
+    <caret>
+  }
+}
+'''
+    type 'CK\t'
+    myFixture.checkResult '''
+class ListConfigKey {
+  void foo() {
+    ListConfigKey<caret>
+  }
+}
+'''
+
+  }
+
 }

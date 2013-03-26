@@ -39,6 +39,7 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.IconUtil;
@@ -49,6 +50,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -87,9 +90,10 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private final Disposable myDisposable= Disposer.newDisposable();
 
   private static final Icon BG = IconLoader.getIcon("/frame_background.png");
+  private boolean myFullScreen;
 
   public IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
-              final Application application, IdeFrame frame){
+              final Application application, final IdeFrame frame){
     myActionManager = actionManager;
     myUISettings = uiSettings;
 
@@ -106,8 +110,24 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
 
     myUISettingsListener=new MyUISettingsListenerImpl();
-    setJMenuBar(new IdeMenuBar(actionManager, dataManager));
-
+    if (SystemInfo.isWindows) {
+      menuBar = new IdeMenuBar(actionManager, dataManager);
+      getLayeredPane().add(menuBar, new Integer(JLayeredPane.DEFAULT_LAYER - 1));
+      if (frame instanceof IdeFrameImpl) {
+        final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
+          @Override
+          public void propertyChange(PropertyChangeEvent evt) {
+            if (evt.getNewValue() == null) {//fullscreen state has been just changed
+              myFullScreen = ((IdeFrameImpl)frame).isInFullScreen();
+            }
+          }
+        };
+        addPropertyChangeListener(ScreenUtil.DISPOSE_TEMPORARY, propertyChangeListener);
+      }
+    }
+    else {
+      setJMenuBar(new IdeMenuBar(actionManager, dataManager));
+    }
 
     myGlassPane = new IdeGlassPaneImpl(this);
     setGlassPane(myGlassPane);
@@ -116,6 +136,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myGlassPane.setVisible(false);
     Disposer.register(application, myDisposable);
   }
+
+  @Override
+  protected LayoutManager createRootLayout() {
+    return SystemInfo.isWindows ? new MyRootLayout() : super.createRootLayout();
+  }
+
 
   public void setGlassPane(final Component glass) {
     if (myGlassPaneInitialized) throw new IllegalStateException("Setting of glass pane for IdeFrame is prohibited");
@@ -328,5 +354,91 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   public ToolWindowsPane getToolWindowsPane() {
     return myToolWindowsPane;
+  }
+
+  private class MyRootLayout extends RootLayout {
+    public Dimension preferredLayoutSize(Container parent) {
+      Dimension rd, mbd;
+      Insets i = getInsets();
+
+      if (contentPane != null) {
+        rd = contentPane.getPreferredSize();
+      }
+      else {
+        rd = parent.getSize();
+      }
+      if (menuBar != null && menuBar.isVisible() && !myFullScreen) {
+        mbd = menuBar.getPreferredSize();
+      }
+      else {
+        mbd = new Dimension(0, 0);
+      }
+      return new Dimension(Math.max(rd.width, mbd.width) + i.left + i.right,
+                           rd.height + mbd.height + i.top + i.bottom);
+    }
+
+    public Dimension minimumLayoutSize(Container parent) {
+      Dimension rd, mbd;
+      Insets i = getInsets();
+      if (contentPane != null) {
+        rd = contentPane.getMinimumSize();
+      }
+      else {
+        rd = parent.getSize();
+      }
+      if (menuBar != null && menuBar.isVisible() && !myFullScreen) {
+        mbd = menuBar.getMinimumSize();
+      }
+      else {
+        mbd = new Dimension(0, 0);
+      }
+      return new Dimension(Math.max(rd.width, mbd.width) + i.left + i.right,
+                           rd.height + mbd.height + i.top + i.bottom);
+    }
+
+    public Dimension maximumLayoutSize(Container target) {
+      Dimension rd, mbd;
+      Insets i = getInsets();
+      if (menuBar != null && menuBar.isVisible() && !myFullScreen) {
+        mbd = menuBar.getMaximumSize();
+      }
+      else {
+        mbd = new Dimension(0, 0);
+      }
+      if (contentPane != null) {
+        rd = contentPane.getMaximumSize();
+      }
+      else {
+        rd = new Dimension(Integer.MAX_VALUE,
+                           Integer.MAX_VALUE - i.top - i.bottom - mbd.height - 1);
+      }
+      return new Dimension(Math.min(rd.width, mbd.width) + i.left + i.right,
+                           rd.height + mbd.height + i.top + i.bottom);
+    }
+
+    public void layoutContainer(Container parent) {
+      Rectangle b = parent.getBounds();
+      Insets i = getInsets();
+      int contentY = 0;
+      int w = b.width - i.right - i.left;
+      int h = b.height - i.top - i.bottom;
+
+      if (layeredPane != null) {
+        layeredPane.setBounds(i.left, i.top, w, h);
+      }
+      if (glassPane != null) {
+        glassPane.setBounds(i.left, i.top, w, h);
+      }
+      if (menuBar != null && menuBar.isVisible()) {
+        Dimension mbd = menuBar.getPreferredSize();
+        menuBar.setBounds(0, 0, w, mbd.height);
+        if (!myFullScreen) {
+          contentY += mbd.height;
+        }
+      }
+      if (contentPane != null) {
+        contentPane.setBounds(0, contentY, w, h - contentY);
+      }
+    }
   }
 }

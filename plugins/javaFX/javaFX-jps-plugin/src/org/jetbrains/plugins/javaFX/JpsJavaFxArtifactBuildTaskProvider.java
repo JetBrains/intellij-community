@@ -10,10 +10,15 @@ import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.elements.JpsArchivePackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsArtifactOutputPackagingElement;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.plugins.javaFX.packaging.AbstractJavaFxPackager;
+import org.jetbrains.plugins.javaFX.preloader.JpsJavaFxPreloaderArtifactProperties;
+import org.jetbrains.plugins.javaFX.preloader.JpsJavaFxPreloaderArtifactType;
 
 import java.io.File;
 import java.util.Collections;
@@ -89,17 +94,17 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     }
 
     @Override
-    protected String getArtifactName() {
-      return myArtifact.getName();
-    }
-
-    @Override
     protected String getArtifactOutputPath() {
       return myArtifact.getOutputPath();
     }
 
     @Override
     protected String getArtifactOutputFilePath() {
+      for (JpsPackagingElement element : myArtifact.getRootElement().getChildren()) {
+        if (element instanceof JpsArchivePackagingElement) {
+          return myArtifact.getOutputFilePath() + File.separator + ((JpsArchivePackagingElement)element).getArchiveName();
+        }
+      }
       return myArtifact.getOutputFilePath();
     }
 
@@ -156,6 +161,67 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     @Override
     protected String getUpdateMode() {
       return myProperties.myState.getUpdateMode();
+    }
+
+    @Override
+    public String getKeypass() {
+      return myProperties.myState.getKeypass();
+    }
+
+    @Override
+    public String getStorepass() {
+      return myProperties.myState.getStorepass();
+    }
+
+    @Override
+    public String getKeystore() {
+      return myProperties.myState.getKeystore();
+    }
+
+    @Override
+    public String getAlias() {
+      return myProperties.myState.getAlias();
+    }
+
+    @Override
+    public boolean isSelfSigning() {
+      return myProperties.myState.isSelfSigning();
+    }
+
+    @Override
+    public boolean isEnabledSigning() {
+      return myProperties.myState.isEnabledSigning();
+    }
+
+    @Override
+    public String getPreloaderClass() {
+      final JpsArtifact artifact = getPreloaderArtifact();
+      if (artifact != null) {
+        final JpsJavaFxPreloaderArtifactProperties artifactProperties = (JpsJavaFxPreloaderArtifactProperties)artifact.getProperties();
+        return artifactProperties.getPreloaderClass();
+      }
+      return null;
+    }
+
+    @Override
+    public String getPreloaderJar() {
+      final JpsArtifact artifact = getPreloaderArtifact();
+      if (artifact != null) {
+        return ((JpsArchivePackagingElement)artifact.getRootElement()).getArchiveName();
+      }
+      return null;
+    }
+
+    private JpsArtifact getPreloaderArtifact() {
+      for (JpsPackagingElement element : myArtifact.getRootElement().getChildren()) {
+        if (element instanceof JpsArtifactOutputPackagingElement) {
+          final JpsArtifact artifact = ((JpsArtifactOutputPackagingElement)element).getArtifactReference().resolve();
+          if (artifact != null && artifact.getArtifactType() instanceof JpsJavaFxPreloaderArtifactType) {
+            return artifact;
+          }
+        }
+      }
+      return null;
     }
   }
 }

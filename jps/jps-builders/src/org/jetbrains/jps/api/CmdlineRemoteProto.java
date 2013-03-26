@@ -2327,29 +2327,23 @@ public final class CmdlineRemoteProto {
         
         public enum Type
             implements com.google.protobuf.Internal.EnumLite {
-          REBUILD(0, 1),
-          MAKE(1, 2),
-          CLEAN(2, 3),
-          FORCED_COMPILATION(3, 4),
-          UP_TO_DATE_CHECK(4, 5),
+          BUILD(0, 1),
+          CLEAN(1, 2),
+          UP_TO_DATE_CHECK(2, 3),
           ;
           
-          public static final int REBUILD_VALUE = 1;
-          public static final int MAKE_VALUE = 2;
-          public static final int CLEAN_VALUE = 3;
-          public static final int FORCED_COMPILATION_VALUE = 4;
-          public static final int UP_TO_DATE_CHECK_VALUE = 5;
+          public static final int BUILD_VALUE = 1;
+          public static final int CLEAN_VALUE = 2;
+          public static final int UP_TO_DATE_CHECK_VALUE = 3;
           
           
           public final int getNumber() { return value; }
           
           public static Type valueOf(int value) {
             switch (value) {
-              case 1: return REBUILD;
-              case 2: return MAKE;
-              case 3: return CLEAN;
-              case 4: return FORCED_COMPILATION;
-              case 5: return UP_TO_DATE_CHECK;
+              case 1: return BUILD;
+              case 2: return CLEAN;
+              case 3: return UP_TO_DATE_CHECK;
               default: return null;
             }
           }
@@ -2390,6 +2384,10 @@ public final class CmdlineRemoteProto {
           java.util.List<String> getTargetIdList();
           int getTargetIdCount();
           String getTargetId(int index);
+          
+          // required bool force_build = 4;
+          boolean hasForceBuild();
+          boolean getForceBuild();
         }
         public static final class TargetTypeBuildScope extends
             com.google.protobuf.GeneratedMessageLite
@@ -2466,10 +2464,21 @@ public final class CmdlineRemoteProto {
             return targetId_.get(index);
           }
           
+          // required bool force_build = 4;
+          public static final int FORCE_BUILD_FIELD_NUMBER = 4;
+          private boolean forceBuild_;
+          public boolean hasForceBuild() {
+            return ((bitField0_ & 0x00000004) == 0x00000004);
+          }
+          public boolean getForceBuild() {
+            return forceBuild_;
+          }
+          
           private void initFields() {
             typeId_ = "";
             allTargets_ = false;
             targetId_ = com.google.protobuf.LazyStringArrayList.EMPTY;
+            forceBuild_ = false;
           }
           private byte memoizedIsInitialized = -1;
           public final boolean isInitialized() {
@@ -2477,6 +2486,10 @@ public final class CmdlineRemoteProto {
             if (isInitialized != -1) return isInitialized == 1;
             
             if (!hasTypeId()) {
+              memoizedIsInitialized = 0;
+              return false;
+            }
+            if (!hasForceBuild()) {
               memoizedIsInitialized = 0;
               return false;
             }
@@ -2495,6 +2508,9 @@ public final class CmdlineRemoteProto {
             }
             for (int i = 0; i < targetId_.size(); i++) {
               output.writeBytes(3, targetId_.getByteString(i));
+            }
+            if (((bitField0_ & 0x00000004) == 0x00000004)) {
+              output.writeBool(4, forceBuild_);
             }
           }
           
@@ -2520,6 +2536,10 @@ public final class CmdlineRemoteProto {
               }
               size += dataSize;
               size += 1 * getTargetIdList().size();
+            }
+            if (((bitField0_ & 0x00000004) == 0x00000004)) {
+              size += com.google.protobuf.CodedOutputStream
+                .computeBoolSize(4, forceBuild_);
             }
             memoizedSerializedSize = size;
             return size;
@@ -2629,6 +2649,8 @@ public final class CmdlineRemoteProto {
               bitField0_ = (bitField0_ & ~0x00000002);
               targetId_ = com.google.protobuf.LazyStringArrayList.EMPTY;
               bitField0_ = (bitField0_ & ~0x00000004);
+              forceBuild_ = false;
+              bitField0_ = (bitField0_ & ~0x00000008);
               return this;
             }
             
@@ -2676,6 +2698,10 @@ public final class CmdlineRemoteProto {
                 bitField0_ = (bitField0_ & ~0x00000004);
               }
               result.targetId_ = targetId_;
+              if (((from_bitField0_ & 0x00000008) == 0x00000008)) {
+                to_bitField0_ |= 0x00000004;
+              }
+              result.forceBuild_ = forceBuild_;
               result.bitField0_ = to_bitField0_;
               return result;
             }
@@ -2698,11 +2724,18 @@ public final class CmdlineRemoteProto {
                 }
                 
               }
+              if (other.hasForceBuild()) {
+                setForceBuild(other.getForceBuild());
+              }
               return this;
             }
             
             public final boolean isInitialized() {
               if (!hasTypeId()) {
+                
+                return false;
+              }
+              if (!hasForceBuild()) {
                 
                 return false;
               }
@@ -2739,6 +2772,11 @@ public final class CmdlineRemoteProto {
                   case 26: {
                     ensureTargetIdIsMutable();
                     targetId_.add(input.readBytes());
+                    break;
+                  }
+                  case 32: {
+                    bitField0_ |= 0x00000008;
+                    forceBuild_ = input.readBool();
                     break;
                   }
                 }
@@ -2858,6 +2896,27 @@ public final class CmdlineRemoteProto {
               ensureTargetIdIsMutable();
               targetId_.add(value);
               
+            }
+            
+            // required bool force_build = 4;
+            private boolean forceBuild_ ;
+            public boolean hasForceBuild() {
+              return ((bitField0_ & 0x00000008) == 0x00000008);
+            }
+            public boolean getForceBuild() {
+              return forceBuild_;
+            }
+            public Builder setForceBuild(boolean value) {
+              bitField0_ |= 0x00000008;
+              forceBuild_ = value;
+              
+              return this;
+            }
+            public Builder clearForceBuild() {
+              bitField0_ = (bitField0_ & ~0x00000008);
+              forceBuild_ = false;
+              
+              return this;
             }
             
             // @@protoc_insertion_point(builder_scope:org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.TargetTypeBuildScope)
@@ -2981,7 +3040,7 @@ public final class CmdlineRemoteProto {
         }
         
         private void initFields() {
-          buildType_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.REBUILD;
+          buildType_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.BUILD;
           globalSettings_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.getDefaultInstance();
           projectId_ = "";
           scope_ = java.util.Collections.emptyList();
@@ -3179,7 +3238,7 @@ public final class CmdlineRemoteProto {
           
           public Builder clear() {
             super.clear();
-            buildType_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.REBUILD;
+            buildType_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.BUILD;
             bitField0_ = (bitField0_ & ~0x00000001);
             globalSettings_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.GlobalSettings.getDefaultInstance();
             bitField0_ = (bitField0_ & ~0x00000002);
@@ -3390,7 +3449,7 @@ public final class CmdlineRemoteProto {
           private int bitField0_;
           
           // required .org.jetbrains.jpsservice.Message.ControllerMessage.ParametersMessage.Type build_type = 1;
-          private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type buildType_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.REBUILD;
+          private org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type buildType_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.BUILD;
           public boolean hasBuildType() {
             return ((bitField0_ & 0x00000001) == 0x00000001);
           }
@@ -3408,7 +3467,7 @@ public final class CmdlineRemoteProto {
           }
           public Builder clearBuildType() {
             bitField0_ = (bitField0_ & ~0x00000001);
-            buildType_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.REBUILD;
+            buildType_ = org.jetbrains.jps.api.CmdlineRemoteProto.Message.ControllerMessage.ParametersMessage.Type.BUILD;
             
             return this;
           }

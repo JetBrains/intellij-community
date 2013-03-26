@@ -83,7 +83,7 @@ class AndroidSdkConfigurableForm {
         }
         final IAndroidTarget target = (IAndroidTarget)e.getItem();
 
-        List<OrderRoot> roots = AndroidSdkUtils.getLibraryRootsForTarget(target, mySdkLocation);
+        List<OrderRoot> roots = AndroidSdkUtils.getLibraryRootsForTarget(target, mySdkLocation, true);
         Map<OrderRootType, String[]> configuredRoots = new HashMap<OrderRootType, String[]>();
 
         for (OrderRootType type : OrderRootType.getAllTypes()) {

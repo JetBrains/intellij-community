@@ -22,6 +22,7 @@ import com.intellij.ide.projectView.impl.*;
 import com.intellij.ide.projectView.impl.nodes.LibraryGroupElement;
 import com.intellij.ide.projectView.impl.nodes.NamedLibraryElement;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
@@ -48,7 +49,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.CopyOnWriteArrayList;
 
 import static com.intellij.ide.favoritesTreeView.FavoritesListProvider.EP_NAME;
 
@@ -124,7 +124,9 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
     for (String listName : myName2FavoritesRoots.keySet()) {
       result.add(new FavoritesListNode(myProject, listName, myDescriptions.get(listName)));
     }
-    for (FavoritesListProvider provider : myProviders.values()) {
+    ArrayList<FavoritesListProvider> providers = new ArrayList<FavoritesListProvider>(myProviders.values());
+    Collections.sort(providers);
+    for (FavoritesListProvider provider : providers) {
       result.add(provider.createFavoriteListNode(myProject));
     }
     return result;
@@ -373,21 +375,23 @@ public class FavoritesManager implements ProjectComponent, JDOMExternalizable {
   }
 
   public void projectOpened() {
-    StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
-      public void run() {
-        final FavoritesListProvider[] providers = Extensions.getExtensions(EP_NAME, myProject);
-        for (FavoritesListProvider provider : providers) {
-          myProviders.put(provider.getListName(myProject), provider);
-        }
-        final MyRootsChangeAdapter myPsiTreeChangeAdapter = new MyRootsChangeAdapter();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
+        public void run() {
+          final FavoritesListProvider[] providers = Extensions.getExtensions(EP_NAME, myProject);
+          for (FavoritesListProvider provider : providers) {
+            myProviders.put(provider.getListName(myProject), provider);
+          }
+          final MyRootsChangeAdapter myPsiTreeChangeAdapter = new MyRootsChangeAdapter();
 
-        PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter, myProject);
-        if (myName2FavoritesRoots.isEmpty()) {
-          myDescriptions.put(myProject.getName(), "auto-added");
-          createNewList(myProject.getName());
+          PsiManager.getInstance(myProject).addPsiTreeChangeListener(myPsiTreeChangeAdapter, myProject);
+          if (myName2FavoritesRoots.isEmpty()) {
+            myDescriptions.put(myProject.getName(), "auto-added");
+            createNewList(myProject.getName());
+          }
         }
-      }
-    });
+      });
+    }
   }
 
   public void projectClosed() {

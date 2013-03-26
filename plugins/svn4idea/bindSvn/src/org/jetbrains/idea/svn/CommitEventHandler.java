@@ -18,11 +18,13 @@ package org.jetbrains.idea.svn;
 import java.io.File;
 
 /**
- * Created with IntelliJ IDEA.
+ * Used to listen to commit events to display progress to user
+ *
  * User: Irina.Chernushina
  * Date: 2/26/13
  * Time: 10:12 AM
  */
 public interface CommitEventHandler {
   void commitEvent(final CommitEventType type, final File target);
+  void committedRevision(final long revNum);
 }

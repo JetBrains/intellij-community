@@ -323,7 +323,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       findUsagesStartedBalloon.addRequest(new Runnable() {
         @Override
         public void run() {
-          notifyByFindBalloon("Find Usages in progress...", null);
+          notifyByFindBalloon("Find Usages in progress...", null, MessageType.WARNING);
           findStartedBalloonShown.set(true);
         }
       }, 300, ModalityState.NON_MODAL);
@@ -408,7 +408,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                              myPresentation.getScopeText());
 
               if (notFoundActions == null || notFoundActions.isEmpty()) {
-                notifyByFindBalloon("<html>"+message+".<br>" + createOptionsHtml() + "</html>", createGotToOptionsListener(mySearchFor));
+                notifyByFindBalloon("<html>"+message+".<br>" + createOptionsHtml() + "</html>", createGotToOptionsListener(mySearchFor),
+                                    MessageType.INFO);
                 findStartedBalloonShown.set(false);
               }
               else {
@@ -440,7 +441,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
               usage.navigate(true);
               flashUsageScriptaculously(usage);
             }
-            notifyByFindBalloon("<html>Only one usage found.<br>" + createOptionsHtml() + "</html>", createGotToOptionsListener(mySearchFor));
+            notifyByFindBalloon("<html>Only one usage found.<br>" + createOptionsHtml() + "</html>", createGotToOptionsListener(mySearchFor),
+                                MessageType.INFO);
           }
         }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
@@ -480,9 +482,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
     }
   }
 
-  private void notifyByFindBalloon(@NotNull String text, HyperlinkListener listener) {
+  private void notifyByFindBalloon(@NotNull String text, HyperlinkListener listener, final MessageType info) {
     com.intellij.usageView.UsageViewManager.getInstance(myProject); // in case tool window not registered
-    ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, MessageType.INFO, text, AllIcons.Actions.Find, listener);
+    ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, info, text, AllIcons.Actions.Find, listener);
   }
 
   @NotNull

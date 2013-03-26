@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.util;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
 import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
@@ -40,6 +41,8 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
+import org.jetbrains.plugins.gradle.internal.task.GradleRefreshTasksListTask;
+import org.jetbrains.plugins.gradle.internal.task.GradleResolveProjectTask;
 import org.jetbrains.plugins.gradle.manage.GradleProjectEntityChangeListener;
 import org.jetbrains.plugins.gradle.model.gradle.GradleEntity;
 import org.jetbrains.plugins.gradle.model.gradle.GradleEntityVisitor;
@@ -50,7 +53,7 @@ import org.jetbrains.plugins.gradle.model.intellij.IdeEntityVisitor;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
-import org.jetbrains.plugins.gradle.task.GradleResolveProjectTask;
+import org.jetbrains.plugins.gradle.tasks.GradleTasksModel;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
@@ -59,12 +62,10 @@ import org.jetbrains.plugins.gradle.ui.MatrixControlBuilder;
 import javax.swing.*;
 import javax.swing.tree.TreePath;
 import java.awt.*;
-import java.io.File;
-import java.io.FileFilter;
-import java.io.PrintWriter;
-import java.io.StringWriter;
+import java.io.*;
 import java.util.Arrays;
 import java.util.Collections;
+import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -77,9 +78,11 @@ import java.util.regex.Pattern;
  */
 public class GradleUtil {
 
-  public static final  String  PATH_SEPARATOR            = "/";
-  public static final  String  SYSTEM_DIRECTORY_PATH_KEY = "GRADLE_USER_HOME";
-  private static final Pattern ARTIFACT_PATTERN          = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^\\.]+?)?");
+  public static final  String  PATH_SEPARATOR               = "/";
+  public static final  String  SYSTEM_DIRECTORY_PATH_KEY    = "GRADLE_USER_HOME";
+  private static final String  WRAPPER_VERSION_PROPERTY_KEY = "distributionUrl";
+  private static final Pattern WRAPPER_VERSION_PATTERN      = Pattern.compile(".*gradle-(.+)-bin.zip");
+  private static final Pattern ARTIFACT_PATTERN             = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^\\.]+?)?");
 
   private static final NotNullLazyValue<GradleInstallationManager> INSTALLATION_MANAGER =
     new NotNullLazyValue<GradleInstallationManager>() {
@@ -122,22 +125,34 @@ public class GradleUtil {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static boolean isGradleWrapperDefined(@Nullable String gradleProjectPath) {
+    return !StringUtil.isEmpty(getWrapperVersion(gradleProjectPath));
+  }
+
+  /**
+   * Tries to parse what gradle version should be used with gradle wrapper for the gradle project located at the given path. 
+   *
+   * @param gradleProjectPath  target gradle project path
+   * @return gradle version should be used with gradle wrapper for the gradle project located at the given path
+   *                           if any; <code>null</code> otherwise
+   */
+  @Nullable
+  public static String getWrapperVersion(@Nullable String gradleProjectPath) {
     if (gradleProjectPath == null) {
-      return false;
+      return null;
     }
     File file = new File(gradleProjectPath);
     if (!file.isFile()) {
-      return false;
+      return null;
     }
 
     File gradleDir = new File(file.getParentFile(), "gradle");
     if (!gradleDir.isDirectory()) {
-      return false;
+      return null;
     }
 
     File wrapperDir = new File(gradleDir, "wrapper");
     if (!wrapperDir.isDirectory()) {
-      return false;
+      return null;
     }
 
     File[] candidates = wrapperDir.listFiles(new FileFilter() {
@@ -148,19 +163,48 @@ public class GradleUtil {
     });
     if (candidates == null) {
       GradleLog.LOG.warn("No *.properties file is found at the gradle wrapper directory " + wrapperDir.getAbsolutePath());
-      return false;
+      return null;
     }
     else if (candidates.length != 1) {
       GradleLog.LOG.warn(String.format(
         "%d *.properties files instead of one have been found at the wrapper directory (%s): %s",
         candidates.length, wrapperDir.getAbsolutePath(), Arrays.toString(candidates)
       ));
-      return false;
+      return null;
     }
 
-    // Consider that single *.properties file existence inside 'wrapper' directory is enough to be sure that gradle wrapper
-    // is configured for the target project.
-    return true;
+    Properties props = new Properties();
+    BufferedReader reader = null;
+    try {
+      //noinspection IOResourceOpenedButNotSafelyClosed
+      reader = new BufferedReader(new FileReader(candidates[0]));
+      props.load(reader);
+      String value = props.getProperty(WRAPPER_VERSION_PROPERTY_KEY);
+      if (StringUtil.isEmpty(value)) {
+        return null;
+      }
+      Matcher matcher = WRAPPER_VERSION_PATTERN.matcher(value);
+      if (matcher.matches()) {
+        return matcher.group(1);
+      }
+    }
+    catch (IOException e) {
+      GradleLog.LOG.warn(
+        String.format("I/O exception on reading gradle wrapper properties file at '%s'", candidates[0].getAbsolutePath()),
+        e
+      );
+    }
+    finally {
+      if (reader != null) {
+        try {
+          reader.close();
+        }
+        catch (IOException e) {
+          // Ignore
+        }
+      }
+    }
+    return null;
   }
 
   /**
@@ -290,7 +334,7 @@ public class GradleUtil {
                                              final boolean modal)
   {
     final Ref<GradleProject> gradleProject = new Ref<GradleProject>();
-    final TaskUnderProgress task = new TaskUnderProgress() {
+    final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
       @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
       @Override
       public void execute(@NotNull ProgressIndicator indicator) {
@@ -311,6 +355,15 @@ public class GradleUtil {
         errorDetailsHolder.set(extractDetails(error));
       }
     };
+    
+    final TaskUnderProgress refreshTasksTask = new TaskUnderProgress() {
+      @Override
+      public void execute(@NotNull ProgressIndicator indicator) {
+        final GradleRefreshTasksListTask task = new GradleRefreshTasksListTask(project, gradleProjectPath);
+        task.execute(indicator);
+      }
+    };
+    
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
@@ -318,7 +371,9 @@ public class GradleUtil {
           ProgressManager.getInstance().run(new Task.Modal(project, GradleBundle.message("gradle.import.progress.text"), false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              task.execute(indicator);
+              refreshProjectStructureTask.execute(indicator);
+              setTitle(GradleBundle.message("gradle.task.progress.initial.text"));
+              refreshTasksTask.execute(indicator);
             }
           });
         }
@@ -326,7 +381,9 @@ public class GradleUtil {
           ProgressManager.getInstance().run(new Task.Backgroundable(project, GradleBundle.message("gradle.sync.progress.initial.text")) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
-              task.execute(indicator);
+              refreshProjectStructureTask.execute(indicator);
+              setTitle(GradleBundle.message("gradle.task.progress.initial.text"));
+              refreshTasksTask.execute(indicator);
             }
           });
         }
@@ -464,34 +521,43 @@ public class GradleUtil {
 
   /**
    * Tries to find the current {@link GradleProjectStructureTreeModel} instance.
-   * 
+   *
    * @param context  target context (if defined)
    * @return         current {@link GradleProjectStructureTreeModel} instance (if any has been found); <code>null</code> otherwise
    */
   @Nullable
   public static GradleProjectStructureTreeModel getProjectStructureTreeModel(@Nullable DataContext context) {
+    return getToolWindowElement(GradleProjectStructureTreeModel.class, context, GradleDataKeys.SYNC_TREE_MODEL);
+  }
+  
+  @Nullable
+  public static <T> T getToolWindowElement(@NotNull Class<T> clazz, @Nullable DataContext context, @NotNull DataKey<T> key) {
     if (context != null) {
-      final GradleProjectStructureTreeModel model = GradleDataKeys.SYNC_TREE_MODEL.getData(context);
-      if (model != null) {
-        return model;
+      final T result = key.getData(context);
+      if (result != null) {
+        return result;
       }
     }
 
     if (context == null) {
       return null;
     }
-    
+
     final Project project = PlatformDataKeys.PROJECT.getData(context);
     if (project == null) {
       return null;
     }
 
-    return getProjectStructureTreeModel(project);
+    return getToolWindowElement(clazz, project, key);
   }
 
+  @SuppressWarnings("unchecked")
   @Nullable
-  public static GradleProjectStructureTreeModel getProjectStructureTreeModel(@NotNull Project project) {
+  public static <T> T getToolWindowElement(@NotNull Class<T> clazz, @NotNull Project project, @NotNull DataKey<T> key) {
     final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    if (toolWindowManager == null) {
+      return null;
+    }
     final ToolWindow toolWindow = toolWindowManager.getToolWindow(GradleConstants.TOOL_WINDOW_ID);
     if (toolWindow == null) {
       return null;
@@ -505,15 +571,15 @@ public class GradleUtil {
     for (Content content : contentManager.getContents()) {
       final JComponent component = content.getComponent();
       if (component instanceof DataProvider) {
-        final Object data = ((DataProvider)component).getData(GradleDataKeys.SYNC_TREE_MODEL.getName());
-        if (data instanceof GradleProjectStructureTreeModel) {
-          return (GradleProjectStructureTreeModel)data;
+        final Object data = ((DataProvider)component).getData(key.getName());
+        if (data != null && clazz.isInstance(data)) {
+          return (T)data;
         }
       }
     }
     return null;
   }
-
+  
   /**
    * @return    {@link MatrixControlBuilder} with predefined set of columns ('gradle' and 'intellij')
    */

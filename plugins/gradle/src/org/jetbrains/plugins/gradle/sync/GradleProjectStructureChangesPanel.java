@@ -2,18 +2,24 @@ package org.jetbrains.plugins.gradle.sync;
 
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Alarm;
+import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.config.GradleConfigNotifier;
 import org.jetbrains.plugins.gradle.config.GradleLocalSettings;
 import org.jetbrains.plugins.gradle.config.GradleToolWindowPanel;
+import org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -39,7 +45,7 @@ import java.util.List;
  * @since 11/3/11 3:58 PM
  */
 public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
-
+  
   private static final int COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;
 
   private static final Comparator<TreePath> PATH_COMPARATOR = new Comparator<TreePath>() {
@@ -71,6 +77,59 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     myToolbarControls.add(new GradleProjectStructureFiltersPanel());
     mySettings = GradleLocalSettings.getInstance(project);
     initContent();
+
+    MessageBusConnection connection = project.getMessageBus().connect(project);
+    connection.subscribe(GradleConfigNotifier.TOPIC, new GradleConfigNotifier() {
+
+      private boolean myRefresh;
+      private boolean myInBulk;
+
+      @Override
+      public void onBulkChangeStart() {
+        myInBulk = true;
+      }
+
+      @Override
+      public void onBulkChangeEnd() {
+        myInBulk = false;
+        if (myRefresh) {
+          myRefresh = false;
+          refreshAll();
+        }
+      }
+
+      @Override public void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
+      @Override public void onPreferLocalGradleDistributionToWrapperChange(boolean preferLocalToWrapper) { refreshAll(); }
+      @Override public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
+      @Override public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
+      @Override public void onUseAutoImportChange(boolean oldValue, boolean newValue) {
+        if (newValue) {
+          update();
+        }
+      }
+
+      private void refreshAll() {
+        if (myInBulk) {
+          myRefresh = true;
+          return;
+        }
+        GradleUtil.refreshProject(getProject(), new Consumer<String>() {
+          @Override
+          public void consume(String s) {
+            GradleConfigNotificationManager notificationManager
+              = ServiceManager.getService(getProject(), GradleConfigNotificationManager.class);
+            notificationManager.processRefreshError(s);
+            UIUtil.invokeLaterIfNeeded(new Runnable() {
+              @Override
+              public void run() {
+                update();
+              }
+            });
+          }
+        });
+        update();
+      }
+    });
   }
 
   @NotNull

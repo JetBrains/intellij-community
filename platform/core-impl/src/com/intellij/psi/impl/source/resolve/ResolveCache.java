@@ -35,12 +35,10 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Map;
 import java.util.concurrent.ConcurrentMap;
-import java.util.concurrent.atomic.AtomicInteger;
 
 public class ResolveCache {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.resolve.ResolveCache");
   private final ConcurrentMap[] myMaps = new ConcurrentMap[2*2*2]; //boolean physical, boolean incompleteCode, boolean isPoly
-  private final AtomicInteger myClearCount = new AtomicInteger(0);
   private final RecursionGuard myGuard = RecursionManager.createGuard("resolveCache");
 
   public static ResolveCache getInstance(Project project) {
@@ -81,7 +79,6 @@ public class ResolveCache {
   }
 
   public void clearCache(boolean isPhysical) {
-    myClearCount.incrementAndGet();
     int startIndex = isPhysical ? 0 : 1;
     for (int i=startIndex;i<2;i++)for (int j=0;j<2;j++)for (int k=0;k<2;k++) myMaps[i*4+j*2+k].clear();
   }
@@ -96,7 +93,6 @@ public class ResolveCache {
     ProgressIndicatorProvider.checkCanceled();
     ApplicationManager.getApplication().assertReadAccessAllowed();
 
-    int clearCountOnStart = myClearCount.intValue();
     ConcurrentMap<TRef, Getter<TResult>> map = getMap(isPhysical, incompleteCode, isPoly);
     Getter<TResult> reference = map.get(ref);
     TResult result = reference == null ? null : reference.get();
@@ -114,7 +110,7 @@ public class ResolveCache {
     PsiElement element = result instanceof ResolveResult ? ((ResolveResult)result).getElement() : null;
     LOG.assertTrue(element == null || element.isValid(), result);
 
-    if (stamp.mayCacheNow() && clearCountOnStart == myClearCount.intValue()) {
+    if (stamp.mayCacheNow()) {
       cache(ref, map, result, isPoly);
     }
     return result;

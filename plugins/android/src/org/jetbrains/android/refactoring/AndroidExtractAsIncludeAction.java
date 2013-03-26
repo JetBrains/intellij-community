@@ -10,7 +10,6 @@ import com.intellij.openapi.command.UndoConfirmationPolicy;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -229,12 +228,6 @@ public class AndroidExtractAsIncludeAction extends AndroidBaseLayoutRefactoringA
 
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(project);
     codeStyleManager.reformat(newFile);
-  }
-
-  @NotNull
-  private static String addXmlExtensionIfNecessary(@NotNull String inputString) {
-    final String ext = FileUtil.getExtension(inputString);
-    return "xml".equals(ext) ? inputString : inputString + ".xml";
   }
 
   @NotNull

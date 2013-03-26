@@ -22,6 +22,7 @@ import com.intellij.codeInsight.daemon.impl.UpdateHighlightersUtil;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,6 +79,7 @@ public class GrReferenceHighlighter extends TextEditorHighlightingPass {
 
 
     private void visit(GrReferenceElement element) {
+      ProgressManager.checkCanceled();
       final PsiElement resolved = element.resolve();
       final TextAttributesKey attribute = GrHighlightUtil.getDeclarationHighlightingAttribute(resolved, element);
       if (attribute != null) {

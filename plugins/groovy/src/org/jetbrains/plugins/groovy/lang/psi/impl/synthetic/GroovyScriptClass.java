@@ -33,6 +33,7 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
+import org.jetbrains.plugins.groovy.dsl.GroovyDslFileIndex;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
@@ -157,7 +158,8 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
 
   @NotNull
   public PsiClassType[] getExtendsListTypes() {
-    return new PsiClassType[]{ TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_SCRIPT, this)};
+    final PsiClassType superClassFromDSL = GroovyDslFileIndex.pocessScriptSuperClasses(myFile);
+    return new PsiClassType[]{ superClassFromDSL != null ? superClassFromDSL : TypesUtil.createTypeByFQClassName(GroovyCommonClassNames.GROOVY_LANG_SCRIPT, this)};
   }
 
   @NotNull

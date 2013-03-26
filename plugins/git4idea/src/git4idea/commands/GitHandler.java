@@ -100,7 +100,7 @@ public abstract class GitHandler {
   private long myStartTime; // git execution start timestamp
   private static final long LONG_TIME = 10 * 1000;
   @Nullable private ModalityState myState;
-  @Nullable private GitRemoteProtocol myRemoteProtocol;
+  @Nullable private String myUrl;
 
 
   /**
@@ -220,12 +220,12 @@ public abstract class GitHandler {
     return file;
   }
 
-  public void setRemoteProtocol(@NotNull String url) {
-    myRemoteProtocol = GitRemoteProtocol.fromUrl(url);
+  public void setUrl(@NotNull String url) {
+    myUrl = url;
   }
 
   protected boolean isRemote() {
-    return myRemoteProtocol != null;
+    return myUrl != null;
   }
 
   /**
@@ -420,7 +420,8 @@ public abstract class GitHandler {
       }
 
       // setup environment
-      if (myRemoteProtocol == GitRemoteProtocol.SSH && myProjectSettings.isIdeaSsh()) {
+      GitRemoteProtocol remoteProtocol = GitRemoteProtocol.fromUrl(myUrl);
+      if (remoteProtocol == GitRemoteProtocol.SSH && myProjectSettings.isIdeaSsh()) {
         GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
         myEnv.put(GitSSHHandler.GIT_SSH_ENV, ssh.getScriptPath().getPath());
         myHandlerNo = ssh.registerHandler(new GitSSHGUIHandler(myProject, myState));
@@ -430,10 +431,11 @@ public abstract class GitHandler {
         myEnv.put(GitSSHHandler.SSH_PORT_ENV, Integer.toString(port));
         LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
       }
-      else if (myRemoteProtocol == GitRemoteProtocol.HTTP) {
+      else if (remoteProtocol == GitRemoteProtocol.HTTP) {
         GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
         myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_ENV, service.getScriptPath().getPath());
-        GitHttpAuthenticator httpAuthenticator = new GitHttpAuthenticator(myProject, myState, myCommand);
+        assert myUrl != null : "myUrl can't be null here";
+        GitHttpAuthenticator httpAuthenticator = service.createAuthenticator(myProject, myState, myCommand, myUrl);
         myHandlerNo = service.registerHandler(httpAuthenticator);
         myEnvironmentCleanedUp = false;
         myEnv.put(GitAskPassXmlRpcHandler.GIT_ASK_PASS_HANDLER_ENV, Integer.toString(myHandlerNo));
@@ -531,12 +533,13 @@ public abstract class GitHandler {
    * Cleanup environment
    */
   protected synchronized void cleanupEnv() {
-    if (myRemoteProtocol == GitRemoteProtocol.SSH && !myEnvironmentCleanedUp) {
+    GitRemoteProtocol remoteProtocol = GitRemoteProtocol.fromUrl(myUrl);
+    if (remoteProtocol == GitRemoteProtocol.SSH && !myEnvironmentCleanedUp) {
       GitXmlRpcSshService ssh = ServiceManager.getService(GitXmlRpcSshService.class);
       myEnvironmentCleanedUp = true;
       ssh.unregisterHandler(myHandlerNo);
     }
-    else if (myRemoteProtocol == GitRemoteProtocol.HTTP) {
+    else if (remoteProtocol == GitRemoteProtocol.HTTP) {
       GitHttpAuthService service = ServiceManager.getService(GitHttpAuthService.class);
       myEnvironmentCleanedUp = true;
       service.unregisterHandler(myHandlerNo);

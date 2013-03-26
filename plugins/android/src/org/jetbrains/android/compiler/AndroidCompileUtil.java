@@ -18,28 +18,31 @@ package org.jetbrains.android.compiler;
 import com.intellij.CommonBundle;
 import com.intellij.compiler.CompilerConfiguration;
 import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.CompileContextImpl;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.options.CompileStepBeforeRun;
 import com.intellij.compiler.progress.CompilerTask;
 import com.intellij.execution.configurations.RunConfiguration;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.compiler.*;
 import com.intellij.openapi.compiler.Compiler;
 import com.intellij.openapi.compiler.options.ExcludeEntryDescription;
 import com.intellij.openapi.compiler.options.ExcludedEntriesConfiguration;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
@@ -85,7 +88,6 @@ public class AndroidCompileUtil {
   @NonNls private static final String RESOURCES_CACHE_DIR_NAME = "res-cache";
   @NonNls private static final String GEN_MODULE_PREFIX = "~generated_";
 
-  @NonNls public static final String PROGUARD_CFG_FILE_NAME = "proguard-project.txt";
   @NonNls public static final String OLD_PROGUARD_CFG_FILE_NAME = "proguard.cfg";
   public static final String UNSIGNED_SUFFIX = ".unsigned";
 
@@ -121,7 +123,7 @@ public class AndroidCompileUtil {
     if (root == null) {
       return null;
     }
-    final VirtualFile proguardCfg = root.findChild(PROGUARD_CFG_FILE_NAME);
+    final VirtualFile proguardCfg = root.findChild(AndroidCommonUtils.PROGUARD_CFG_FILE_NAME);
     if (proguardCfg != null) {
       return new Pair<VirtualFile, Boolean>(proguardCfg, true);
     }
@@ -204,8 +206,10 @@ public class AndroidCompileUtil {
     }
   }
 
-  private static void unexcludeRootIfNeccessary(@NotNull VirtualFile root, @NotNull ModuleRootManager manager) {
-    Set<VirtualFile> excludedRoots = new HashSet<VirtualFile>(Arrays.asList(manager.getExcludeRoots()));
+  private static void unexcludeRootIfNecessary(@NotNull VirtualFile root,
+                                               @NotNull ModifiableRootModel model,
+                                               @NotNull Ref<Boolean> modelChangedFlag) {
+    Set<VirtualFile> excludedRoots = new HashSet<VirtualFile>(Arrays.asList(model.getExcludeRoots()));
     VirtualFile excludedRoot = root;
     while (excludedRoot != null && !excludedRoots.contains(excludedRoot)) {
       excludedRoot = excludedRoot.getParent();
@@ -215,7 +219,6 @@ public class AndroidCompileUtil {
     }
     Set<VirtualFile> rootsToExclude = new HashSet<VirtualFile>();
     collectChildrenRecursively(excludedRoot, root, rootsToExclude);
-    final ModifiableRootModel model = manager.getModifiableModel();
     ContentEntry contentEntry = findContentEntryForRoot(model, excludedRoot);
     if (contentEntry != null) {
       ExcludeFolder excludedFolder = null;
@@ -227,19 +230,15 @@ public class AndroidCompileUtil {
       }
       if (excludedFolder != null) {
         contentEntry.removeExcludeFolder(excludedFolder);
+        modelChangedFlag.set(true);
       }
       for (VirtualFile rootToExclude : rootsToExclude) {
         if (!excludedRoots.contains(rootToExclude)) {
           contentEntry.addExcludeFolder(rootToExclude);
+          modelChangedFlag.set(true);
         }
       }
     }
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.commit();
-      }
-    });
   }
 
   @NotNull
@@ -248,7 +247,9 @@ public class AndroidCompileUtil {
   }
 
   @Nullable
-  public static VirtualFile createSourceRootIfNotExist(@NotNull final String path, @NotNull final Module module) {
+  public static VirtualFile createSourceRootIfNotExist(@NotNull final String path,
+                                                       @NotNull final ModifiableRootModel model,
+                                                       @NotNull Ref<Boolean> modelChangedFlag) {
     ApplicationManager.getApplication().assertIsDispatchThread();
 
     final File rootFile = new File(path);
@@ -260,7 +261,7 @@ public class AndroidCompileUtil {
     else {
       created = false;
     }
-
+    final Module module = model.getModule();
     final Project project = module.getProject();
 
     if (project.isDisposed() || module.isDisposed()) {
@@ -275,23 +276,19 @@ public class AndroidCompileUtil {
       root = LocalFileSystem.getInstance().findFileByIoFile(rootFile);
     }
     if (root != null) {
-      final ModuleRootManager manager = ModuleRootManager.getInstance(module);
-      unexcludeRootIfNeccessary(root, manager);
+      unexcludeRootIfNecessary(root, model, modelChangedFlag);
 
       boolean markedAsSource = false;
 
-      for (VirtualFile existingRoot : manager.getSourceRoots()) {
+      for (VirtualFile existingRoot : model.getSourceRoots()) {
         if (Comparing.equal(existingRoot, root)) {
           markedAsSource = true;
         }
       }
 
       if (!markedAsSource) {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          public void run() {
-            addSourceRoot(manager, root);
-          }
-        });
+        addSourceRoot(model, root);
+        modelChangedFlag.set(true);
       }
     }
     return root;
@@ -323,29 +320,23 @@ public class AndroidCompileUtil {
     configuration.addExcludeEntryDescription(new ExcludeEntryDescription(dir, true, false, project));
   }
 
-  private static void removeGenModule(@NotNull final Module libModule) {
-    final String genModuleName = getGenModuleName(libModule);
-    final ModuleManager moduleManager = ModuleManager.getInstance(libModule.getProject());
+  private static void removeGenModule(@NotNull final ModifiableRootModel model, @NotNull Ref<Boolean> modelChangedFlag) {
+    final String genModuleName = getGenModuleName(model.getModule());
+    final Project project = model.getProject();
+    final ModuleManager moduleManager = ModuleManager.getInstance(project);
 
     final Module genModule = moduleManager.findModuleByName(genModuleName);
     if (genModule == null) {
       return;
     }
-    final ModifiableRootModel model = ModuleRootManager.getInstance(libModule).getModifiableModel();
 
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry &&
           genModuleName.equals(((ModuleOrderEntry)entry).getModuleName())) {
         model.removeOrderEntry(entry);
+        modelChangedFlag.set(true);
       }
     }
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        model.commit();
-      }
-    });
     final VirtualFile moduleFile = genModule.getModuleFile();
     moduleManager.disposeModule(genModule);
 
@@ -357,7 +348,7 @@ public class AndroidCompileUtil {
             @Override
             public void run() {
               try {
-                moduleFile.delete(libModule.getProject());
+                moduleFile.delete(project);
               }
               catch (IOException e) {
                 LOG.error(e);
@@ -369,14 +360,12 @@ public class AndroidCompileUtil {
     }
   }
 
-  public static void addSourceRoot(final ModuleRootManager manager, @NotNull final VirtualFile root) {
-    final ModifiableRootModel model = manager.getModifiableModel();
+  public static void addSourceRoot(final ModifiableRootModel model, @NotNull final VirtualFile root) {
     ContentEntry contentEntry = findContentEntryForRoot(model, root);
     if (contentEntry == null) {
       contentEntry = model.addContentEntry(root);
     }
     contentEntry.addSourceFolder(root, false);
-    model.commit();
   }
 
   @Nullable
@@ -412,10 +401,11 @@ public class AndroidCompileUtil {
     }
   }
 
-  public static boolean doGenerate(final Module module, final AndroidAutogeneratorMode mode) {
-    final Project project = module.getProject();
+  public static boolean doGenerate(AndroidFacet facet, final AndroidAutogeneratorMode mode) {
     assert !ApplicationManager.getApplication().isDispatchThread();
     final CompileContext[] contextWrapper = new CompileContext[1];
+    final Module module = facet.getModule();
+    final Project project = module.getProject();
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
       public void run() {
@@ -429,7 +419,7 @@ public class AndroidCompileUtil {
     if (context == null) {
       return false;
     }
-    generate(module, mode, context);
+    generate(facet, mode, context);
     return context.getMessages(CompilerMessageCategory.ERROR).length == 0;
   }
 
@@ -437,26 +427,12 @@ public class AndroidCompileUtil {
     return ArrayUtil.find(context.getCompileScope().getAffectedModules(), module) >= 0;
   }
 
-  public static void generate(final Module module, AndroidAutogeneratorMode mode, final CompileContext context) {
+  public static void generate(AndroidFacet facet,
+                              AndroidAutogeneratorMode mode,
+                              final CompileContext context) {
     if (context == null) {
       return;
     }
-
-    final AndroidFacet facet = AndroidFacet.getInstance(module);
-    if (facet == null) {
-      return;
-    }
-
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        if (facet.getModule().isDisposed() || facet.getModule().getProject().isDisposed()) {
-          return;
-        }
-        AndroidCompileUtil.createGenModulesAndSourceRoots(facet);
-      }
-    }, ModalityState.defaultModalityState());
-
     AndroidAutogenerator.run(mode, facet, context);
   }
 
@@ -641,33 +617,38 @@ public class AndroidCompileUtil {
     compileScope.putUserData(RELEASE_BUILD_KEY, Boolean.TRUE);
   }
 
-  public static void createGenModulesAndSourceRoots(@NotNull final AndroidFacet facet) {
+  public static boolean createGenModulesAndSourceRoots(@NotNull AndroidFacet facet, @NotNull ModifiableRootModel model) {
     final Module module = facet.getModule();
     final GlobalSearchScope moduleScope = facet.getModule().getModuleScope();
+    final Ref<Boolean> modelChangedFlag = Ref.create(false);
 
-    if (facet.getConfiguration().LIBRARY_PROJECT) {
-      removeGenModule(module);
+    if (facet.getProperties().LIBRARY_PROJECT) {
+      removeGenModule(model, modelChangedFlag);
     }
-    initializeGenSourceRoot(module, AndroidRootUtil.getBuildconfigGenSourceRootPath(facet), true, true);
+    initializeGenSourceRoot(model, AndroidRootUtil.getBuildconfigGenSourceRootPath(facet), true, true, modelChangedFlag);
 
-    initializeGenSourceRoot(module, AndroidRootUtil.getRenderscriptGenSourceRootPath(facet),
-                            FileTypeIndex.getFiles(AndroidRenderscriptFileType.INSTANCE, moduleScope).size() > 0, true);
+    initializeGenSourceRoot(model, AndroidRootUtil.getRenderscriptGenSourceRootPath(facet),
+                            FileTypeIndex.getFiles(AndroidRenderscriptFileType.INSTANCE, moduleScope).size() > 0,
+                            true, modelChangedFlag);
 
     if (AndroidAptCompiler.isToCompileModule(module, facet.getConfiguration())) {
-      initializeGenSourceRoot(module, AndroidRootUtil.getAptGenSourceRootPath(facet), true, true);
+      initializeGenSourceRoot(model, AndroidRootUtil.getAptGenSourceRootPath(facet), true, true, modelChangedFlag);
     }
     else {
       // we need to include generated-sources/r to compilation, because it contains R.java generated by Maven,
       // which should be used in Maven-based resource processing mode
-      final VirtualFile aptSourceRoot = initializeGenSourceRoot(module, AndroidRootUtil.getAptGenSourceRootPath(facet), true, false);
-      
+      final VirtualFile aptSourceRoot = initializeGenSourceRoot(model, AndroidRootUtil.getAptGenSourceRootPath(facet),
+                                                                true, false, modelChangedFlag);
+
       if (aptSourceRoot != null) {
         excludeAllBuildConfigsFromCompilation(facet, aptSourceRoot);
       }
       includeAaptGenSourceRootToCompilation(facet);
     }
-    initializeGenSourceRoot(module, AndroidRootUtil.getAidlGenSourceRootPath(facet),
-                            FileTypeIndex.getFiles(AndroidIdlFileType.ourFileType, moduleScope).size() > 0, true);
+    initializeGenSourceRoot(model, AndroidRootUtil.getAidlGenSourceRootPath(facet),
+                            FileTypeIndex.getFiles(AndroidIdlFileType.ourFileType, moduleScope).size() > 0,
+                            true, modelChangedFlag);
+    return modelChangedFlag.get();
   }
 
   private static void excludeAllBuildConfigsFromCompilation(AndroidFacet facet, VirtualFile sourceRoot) {
@@ -705,17 +686,18 @@ public class AndroidCompileUtil {
   }
 
   @Nullable
-  private static VirtualFile initializeGenSourceRoot(@NotNull Module module,
+  private static VirtualFile initializeGenSourceRoot(@NotNull ModifiableRootModel model,
                                                      @Nullable String sourceRootPath,
                                                      boolean createIfNotExist,
-                                                     boolean exclude) {
+                                                     boolean excludeInNonExternalMode,
+                                                     @NotNull Ref<Boolean> modelChangedFlag) {
     if (sourceRootPath == null) {
       return null;
     }
     VirtualFile sourceRoot = null;
 
     if (createIfNotExist) {
-      final VirtualFile root = createSourceRootIfNotExist(sourceRootPath, module);
+      final VirtualFile root = createSourceRootIfNotExist(sourceRootPath, model, modelChangedFlag);
       if (root != null) {
         sourceRoot = root;
       }
@@ -723,8 +705,15 @@ public class AndroidCompileUtil {
     if (sourceRoot == null) {
       sourceRoot = LocalFileSystem.getInstance().findFileByPath(sourceRootPath);
     }
-    if (sourceRoot != null && exclude) {
-      excludeFromCompilation(module.getProject(), sourceRoot);
+    if (sourceRoot != null && excludeInNonExternalMode) {
+      final Module module = model.getModule();
+      final CompilerWorkspaceConfiguration config = CompilerWorkspaceConfiguration.getInstance(module.getProject());
+
+      // In JPS generated roots are excluded by AndroidExcludeJavaSourceRootProvider,
+      // so we don't need to mark them in the project model
+      if (!config.USE_COMPILE_SERVER) {
+        excludeFromCompilation(module.getProject(), sourceRoot);
+      }
     }
     return sourceRoot;
   }
@@ -780,7 +769,7 @@ public class AndroidCompileUtil {
     }
 
     final AndroidFacet facet = AndroidFacet.getInstance(module);
-    if (facet == null || !facet.getConfiguration().LIBRARY_PROJECT) {
+    if (facet == null || !facet.getProperties().LIBRARY_PROJECT) {
       return true;
     }
 
@@ -825,7 +814,7 @@ public class AndroidCompileUtil {
 
     // facet
     final AndroidFacetConfiguration configuration = facet.getConfiguration();
-    if (configuration.RUN_PROGUARD) {
+    if (configuration.getState().RUN_PROGUARD) {
       final VirtualFile proguardCfgFile = AndroidRootUtil.getProguardCfgFile(facet);
       final String proguardCfgPath = proguardCfgFile != null ? FileUtil.toSystemDependentName(proguardCfgFile.getPath()) : null;
       return new ProguardRunningOptions(proguardCfgPath, configuration.isIncludeSystemProguardCfgPath());
@@ -875,7 +864,7 @@ public class AndroidCompileUtil {
   // support for lib<->lib and app<->lib circular dependencies
   // see IDEA-79737 for details
   public static boolean isLibraryWithBadCircularDependency(@NotNull AndroidFacet facet) {
-    if (!facet.getConfiguration().LIBRARY_PROJECT) {
+    if (!facet.getProperties().LIBRARY_PROJECT) {
       return false;
     }
 
@@ -897,7 +886,7 @@ public class AndroidCompileUtil {
       if (depDependencies.contains(facet) &&
           dependencies.contains(depFacet) &&
           (depFacet.getModule().getName().compareTo(facet.getModule().getName()) < 0 ||
-           !depFacet.getConfiguration().LIBRARY_PROJECT)) {
+           !depFacet.getProperties().LIBRARY_PROJECT)) {
         return true;
       }
     }
@@ -906,8 +895,16 @@ public class AndroidCompileUtil {
 
   @Nullable
   public static String getUnsignedApkPath(@NotNull AndroidFacet facet) {
+    final boolean useCompileServer = CompilerWorkspaceConfiguration.getInstance(
+      facet.getModule().getProject()).USE_COMPILE_SERVER;
     final String apkPath = AndroidRootUtil.getApkPath(facet);
-    return apkPath != null ? AndroidCommonUtils.addSuffixToFileName(apkPath, UNSIGNED_SUFFIX) : null;
+
+    if (apkPath != null) {
+      return useCompileServer
+             ? apkPath
+             : AndroidCommonUtils.addSuffixToFileName(apkPath, UNSIGNED_SUFFIX);
+    }
+    return null;
   }
 
   @Nullable
@@ -938,5 +935,51 @@ public class AndroidCompileUtil {
         newF.markDirty();
       }
     }
+  }
+
+  @Nullable
+  public static String getAaptManifestPackage(@NotNull AndroidFacet facet) {
+    if (facet.getProperties().USE_CUSTOM_MANIFEST_PACKAGE) {
+      return facet.getProperties().CUSTOM_MANIFEST_PACKAGE;
+    }
+    final Manifest manifest = facet.getManifest();
+
+    return manifest != null
+           ? manifest.getPackage().getStringValue()
+           : null;
+  }
+
+  public static void createGenModulesAndSourceRoots(@NotNull Project project, @NotNull Collection<AndroidFacet> facets) {
+    if (project.isDisposed()) {
+      return;
+    }
+    final List<ModifiableRootModel> modelsToCommit = new ArrayList<ModifiableRootModel>();
+
+    for (final AndroidFacet facet : facets) {
+      final Module module = facet.getModule();
+
+      if (module.isDisposed()) {
+        continue;
+      }
+      final ModifiableRootModel model = ModuleRootManager.getInstance(module).getModifiableModel();
+
+      if (createGenModulesAndSourceRoots(facet, model)) {
+        modelsToCommit.add(model);
+      }
+      else {
+        model.dispose();
+      }
+    }
+    if (modelsToCommit.size() == 0) {
+      return;
+    }
+    final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
+
+    ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
+      public void run() {
+        ModifiableModelCommitter.multiCommit(modelsToCommit.toArray(new ModifiableRootModel[modelsToCommit.size()]), moduleModel);
+      }
+    });
   }
 }

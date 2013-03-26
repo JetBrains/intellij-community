@@ -2,92 +2,95 @@ package org.jetbrains.jps.android;
 
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.android.util.AndroidBuildTestingManager;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.android.builder.AndroidLibraryPackagingTarget;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
+import org.jetbrains.jps.builders.BuildOutputConsumer;
+import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
-import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
-import org.jetbrains.jps.incremental.*;
+import org.jetbrains.jps.incremental.CompileContext;
+import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.TargetBuilder;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
  */
-// todo: make target based
-public class AndroidLibraryPackagingBuilder extends ModuleLevelBuilder {
+public class AndroidLibraryPackagingBuilder extends TargetBuilder<BuildRootDescriptor, AndroidLibraryPackagingTarget> {
   @NonNls private static final String BUILDER_NAME = "Android Library Packaging";
 
   protected AndroidLibraryPackagingBuilder() {
-    super(BuilderCategory.CLASS_POST_PROCESSOR);
+    super(Collections.singletonList(AndroidLibraryPackagingTarget.MyTargetType.INSTANCE));
   }
 
   @Override
-  public ExitCode build(CompileContext context,
-                        ModuleChunk chunk,
-                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                        OutputConsumer outputConsumer) throws ProjectBuildException {
-    if (chunk.containsTests() || !AndroidJpsUtil.containsAndroidFacet(chunk) || AndroidJpsUtil.isLightBuild(context)) {
-      return ExitCode.NOTHING_DONE;
+  public void build(@NotNull AndroidLibraryPackagingTarget target,
+                    @NotNull DirtyFilesHolder<BuildRootDescriptor, AndroidLibraryPackagingTarget> holder,
+                    @NotNull BuildOutputConsumer outputConsumer,
+                    @NotNull CompileContext context) throws ProjectBuildException, IOException {
+    if (!holder.hasDirtyFiles() && !holder.hasRemovedFiles()) {
+      return;
     }
+    assert !AndroidJpsUtil.isLightBuild(context);
 
-    if (outputConsumer.getCompiledClasses().size() == 0) {
-      return ExitCode.NOTHING_DONE;
-    }
-
-    try {
-      return doBuild(context, chunk);
-    }
-    catch (Exception e) {
-      return AndroidJpsUtil.handleException(context, e, BUILDER_NAME);
+    if (!doBuild(context, target.getModule(), outputConsumer)) {
+      throw new ProjectBuildException();
     }
   }
 
-  private static ModuleLevelBuilder.ExitCode doBuild(CompileContext context, ModuleChunk chunk) throws IOException {
-    boolean success = true;
-    boolean doneSomething = false;
+  private static boolean doBuild(CompileContext context, JpsModule module, BuildOutputConsumer outputConsumer) throws IOException {
+    final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
+    if (extension == null || !extension.isLibrary()) {
+      return true;
+    }
 
-    for (JpsModule module : chunk.getModules()) {
-      final JpsAndroidModuleExtension extension = AndroidJpsUtil.getExtension(module);
-      if (extension == null || !extension.isLibrary()) {
-        continue;
+    File outputDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
+    outputDir = AndroidJpsUtil.createDirIfNotExist(outputDir, context, BUILDER_NAME);
+    if (outputDir == null) {
+      return false;
+    }
+
+    final File classesDir = ProjectPaths.getModuleOutputDir(module, false);
+    if (classesDir == null || !classesDir.isDirectory()) {
+      return true;
+    }
+    final Set<String> subdirs = new HashSet<String>();
+    AndroidJpsUtil.addSubdirectories(classesDir, subdirs);
+
+    if (subdirs.size() > 0) {
+      context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.library.packaging", module.getName())));
+      final File outputJarFile = new File(outputDir, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
+      final List<String> srcFiles;
+
+      try {
+        srcFiles = AndroidCommonUtils.packClassFilesIntoJar(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.toStringArray(subdirs), outputJarFile);
+      }
+      catch (IOException e) {
+        AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
+        return false;
+      }
+      final AndroidBuildTestingManager testingManager = AndroidBuildTestingManager.getTestingManager();
+
+      if (testingManager != null && outputJarFile.isFile()) {
+        testingManager.getCommandExecutor().checkJarContent("library_package_jar", outputJarFile.getPath());
       }
 
-      File outputDir = AndroidJpsUtil.getDirectoryForIntermediateArtifacts(context, module);
-      outputDir = AndroidJpsUtil.createDirIfNotExist(outputDir, context, BUILDER_NAME);
-      if (outputDir == null) {
-        success = false;
-        continue;
-      }
-
-      final File classesDir = ProjectPaths.getModuleOutputDir(module, false);
-      if (classesDir == null || !classesDir.isDirectory()) {
-        continue;
-      }
-      final Set<String> subdirs = new HashSet<String>();
-      AndroidJpsUtil.addSubdirectories(classesDir, subdirs);
-
-      if (subdirs.size() > 0) {
-        context.processMessage(new ProgressMessage(AndroidJpsBundle.message("android.jps.progress.library.packaging", module.getName())));
-        final File outputJarFile = new File(outputDir, AndroidCommonUtils.CLASSES_JAR_FILE_NAME);
-        doneSomething = true;
-        try {
-          AndroidCommonUtils.packClassFilesIntoJar(ArrayUtil.EMPTY_STRING_ARRAY, ArrayUtil.toStringArray(subdirs), outputJarFile);
-        }
-        catch (IOException e) {
-          AndroidJpsUtil.reportExceptionError(context, null, e, BUILDER_NAME);
-          success = false;
-        }
+      if (srcFiles.size() > 0) {
+        outputConsumer.registerOutputFile(outputJarFile, srcFiles);
       }
     }
-    return success ? (doneSomething ? ExitCode.OK : ExitCode.NOTHING_DONE) : ExitCode.ABORT;
+    return true;
   }
 
   @NotNull

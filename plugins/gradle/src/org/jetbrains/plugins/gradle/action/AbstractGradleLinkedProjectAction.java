@@ -42,7 +42,7 @@ public abstract class AbstractGradleLinkedProjectAction extends AnAction {
       e.getPresentation().setVisible(false);
       return;
     }
-    doActionPerformed(project, pair.second);
+    doActionPerformed(e, project, pair.second);
   }
 
   @Nullable
@@ -61,5 +61,5 @@ public abstract class AbstractGradleLinkedProjectAction extends AnAction {
   }
 
   protected abstract void doUpdate(@NotNull AnActionEvent event, @NotNull Project project, @NotNull String linkedProjectPath);
-  protected abstract void doActionPerformed(@NotNull Project project, @NotNull String linkedProjectPath);
+  protected abstract void doActionPerformed(@NotNull AnActionEvent event, @NotNull Project project, @NotNull String linkedProjectPath);
 }

@@ -22,7 +22,6 @@ import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
@@ -56,12 +55,12 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
       final String genRelativePath = FileUtil.getRelativePath(moduleDirPath, genSources, '/');
 
       if (genRelativePath != null) {
-        configuration.GEN_FOLDER_RELATIVE_PATH_APT = '/' + genRelativePath + "/r";
-        configuration.GEN_FOLDER_RELATIVE_PATH_AIDL = '/' + genRelativePath + "/aidl";
+        configuration.getState().GEN_FOLDER_RELATIVE_PATH_APT = '/' + genRelativePath + "/r";
+        configuration.getState().GEN_FOLDER_RELATIVE_PATH_AIDL = '/' + genRelativePath + "/aidl";
       }
       String buildDirectory = FileUtil.toSystemIndependentName(mavenProject.getBuildDirectory());
       String buildDirRelPath = FileUtil.getRelativePath(moduleDirPath, buildDirectory, '/');
-      configuration.APK_PATH = '/' + buildDirRelPath + '/' + AndroidCompileUtil.getApkName(module);
+      configuration.getState().APK_PATH = '/' + buildDirRelPath + '/' + AndroidCompileUtil.getApkName(module);
     }
   }
 
@@ -76,12 +75,12 @@ public class AndroidMavenProviderImpl implements AndroidMavenProvider {
       final String genRelativePath = FileUtil.getRelativePath(moduleDirPath, genSources, '/');
 
       if (genRelativePath != null) {
-        configuration.USE_CUSTOM_APK_RESOURCE_FOLDER = hasApkSources;
-        configuration.CUSTOM_APK_RESOURCE_FOLDER = '/' + genRelativePath + "/combined-resources/" + SdkConstants.FD_RES;
+        configuration.getState().USE_CUSTOM_APK_RESOURCE_FOLDER = hasApkSources;
+        configuration.getState().CUSTOM_APK_RESOURCE_FOLDER = '/' + genRelativePath + "/combined-resources/" + SdkConstants.FD_RES;
       }
     }
 
-    configuration.RUN_PROCESS_RESOURCES_MAVEN_TASK = hasApkSources;
+    configuration.getState().RUN_PROCESS_RESOURCES_MAVEN_TASK = hasApkSources;
   }
 
   static boolean processResources(@NotNull Module module,

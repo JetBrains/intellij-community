@@ -171,14 +171,24 @@
         <option name="FOREGROUND" value="a6a6a6" />
       </value>
     </option>
+    <option name="CSS.COLOR">
+      <value>
+        <option name="FOREGROUND" value="6897bb" />
+      </value>
+    </option>
+    <option name="CSS.COMMENT">
+      <value>
+        <option name="FOREGROUND" value="808080" />
+      </value>
+    </option>
     <option name="CSS.FUNCTION">
       <value>
-        <option name="FOREGROUND" value="da4939" />
+        <option name="FOREGROUND" value="ffc66d" />
       </value>
     </option>
     <option name="CSS.IDENT">
       <value>
-        <option name="FOREGROUND" value="e8bf6a" />
+        <option name="FOREGROUND" value="ffc66d" />
       </value>
     </option>
     <option name="CSS.IMPORTANT">
@@ -189,8 +199,7 @@
     </option>
     <option name="CSS.KEYWORD">
       <value>
-        <option name="FOREGROUND" value="cc7833" />
-        <option name="EFFECT_TYPE" value="1" />
+        <option name="FOREGROUND" value="cc7832" />
       </value>
     </option>
     <option name="CSS.NUMBER">
@@ -200,12 +209,12 @@
     </option>
     <option name="CSS.PROPERTY_NAME">
       <value>
-        <option name="FOREGROUND" value="da4939" />
+        <option name="FOREGROUND" value="9876aa" />
       </value>
     </option>
     <option name="CSS.PROPERTY_VALUE">
       <value>
-        <option name="FOREGROUND" value="a5c261" />
+        <option name="FOREGROUND" value="a9b7c6" />
       </value>
     </option>
     <option name="CSS.STRING">
@@ -215,7 +224,7 @@
     </option>
     <option name="CSS.TAG_NAME">
       <value>
-        <option name="FOREGROUND" value="e8bf6a" />
+        <option name="FOREGROUND" value="cc7832" />
       </value>
     </option>
     <option name="CSS.URL">
@@ -472,7 +481,6 @@
     <option name="ENUM_CONST">
       <value>
         <option name="FOREGROUND" value="9373a5" />
-        <option name="FONT_TYPE" value="1" />
         <option name="EFFECT_TYPE" value="-1" />
       </value>
     </option>
@@ -669,7 +677,6 @@
     <option name="IVAR">
       <value>
         <option name="FOREGROUND" value="9373a5" />
-        <option name="FONT_TYPE" value="1" />
         <option name="EFFECT_TYPE" value="-1" />
       </value>
     </option>
@@ -890,7 +897,11 @@
     <option name="MACRONAME">
       <value>
         <option name="FOREGROUND" value="908b25" />
-        <option name="FONT_TYPE" value="1" />
+        <option name="EFFECT_TYPE" value="-1" />
+      </value>
+    </option>
+    <option name="MACRO_PARAMETER">
+      <value>
         <option name="EFFECT_TYPE" value="-1" />
       </value>
     </option>
@@ -927,16 +938,52 @@
         <option name="FOREGROUND" value="6897bb" />
       </value>
     </option>
+    <option name="OC.CPP_KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="cc7832" />
+      </value>
+    </option>
+    <option name="OC.DIRECTIVE">
+      <value>
+        <option name="FOREGROUND" value="80b000" />
+        <option name="EFFECT_TYPE" value="-1" />
+      </value>
+    </option>
+    <option name="OC.KEYWORD">
+      <value>
+        <option name="FOREGROUND" value="cc7832" />
+      </value>
+    </option>
+    <option name="OC.NUMBER">
+      <value>
+        <option name="FOREGROUND" value="6897bb" />
+      </value>
+    </option>
     <option name="OC.PROPERTY">
       <value>
         <option name="FOREGROUND" value="cdbcac" />
         <option name="EFFECT_TYPE" value="-1" />
       </value>
     </option>
+    <option name="OC.SELFSUPERTHIS">
+      <value>
+        <option name="FOREGROUND" value="cc7832" />
+      </value>
+    </option>
+    <option name="OC.STRING">
+      <value>
+        <option name="FOREGROUND" value="a5c25c" />
+      </value>
+    </option>
     <option name="OC.STRUCT_FIELD">
       <value>
         <option name="FOREGROUND" value="9373a5" />
         <option name="EFFECT_TYPE" value="-1" />
+      </value>
+    </option>
+    <option name="OC_FORMAT_TOKEN">
+      <value>
+        <option name="FOREGROUND" value="cc7832" />
       </value>
     </option>
     <option name="PHP_CONSTANT">

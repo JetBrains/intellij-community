@@ -11,6 +11,7 @@ import org.jetbrains.android.exportSignedPackage.ExportSignedPackageWizard;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.List;
@@ -37,6 +38,7 @@ public class GenerateSignedApkAction extends AnAction {
           init();
         }
 
+        @NotNull
         @Override
         protected Action[] createActions() {
           if (hasError) {

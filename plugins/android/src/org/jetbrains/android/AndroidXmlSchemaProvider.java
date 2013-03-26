@@ -145,7 +145,7 @@ public class AndroidXmlSchemaProvider extends XmlSchemaProvider {
   }
 
   @Nullable
-  private static String getLocalXmlNamespace(@NotNull AndroidFacet facet) {
+  public static String getLocalXmlNamespace(@NotNull AndroidFacet facet) {
     final Manifest manifest = facet.getManifest();
     if (manifest != null) {
       String aPackage = ApplicationManager.getApplication().runReadAction(new Computable<String>() {

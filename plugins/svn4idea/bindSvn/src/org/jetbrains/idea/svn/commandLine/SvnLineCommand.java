@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.AuthenticationCallback;
-import org.jetbrains.idea.svn.Util;
+import org.jetbrains.idea.svn.SvnBindUtil;
 import org.jetbrains.idea.svn.config.SvnBindException;
 
 import java.io.File;
@@ -46,6 +46,8 @@ public class SvnLineCommand extends SvnCommand {
   public static final String AUTHENTICATION_REALM = "Authentication realm:";
   public static final String CERTIFICATE_ERROR = "Error validating server certificate for";
   public static final String PASSPHRASE_FOR = "Passphrase for";
+  // kept for exact text
+  //public static final String CLIENT_CERTIFICATE_FILENAME = "Client certificate filename:";
   /**
    * the partial line from stdout stream
    */
@@ -80,10 +82,14 @@ public class SvnLineCommand extends SvnCommand {
     }
   }
 
-  public static void runAndWaitProcessErrorsIntoExceptions(final String exePath, final File firstFile, SvnCommandName commandName,
-                                                           final LineCommandListener listener, @Nullable AuthenticationCallback authenticationCallback, final String... parameters) throws SvnBindException {
+  public static void runWithAuthenticationAttempt(final String exePath,
+                                                  final File firstFile,
+                                                  SvnCommandName commandName,
+                                                  final LineCommandListener listener,
+                                                  @Nullable AuthenticationCallback authenticationCallback,
+                                                  final String... parameters) throws SvnBindException {
     File base = firstFile.isDirectory() ? firstFile : firstFile.getParentFile();
-    base = Util.correctUpToExistingParent(base);
+    base = SvnBindUtil.correctUpToExistingParent(base);
 
     listener.baseDirectory(base);
 
@@ -193,7 +199,7 @@ public class SvnLineCommand extends SvnCommand {
   }
 
   private static void cleanup(String exePath, SvnCommandName commandName, File base) throws SvnBindException {
-    File wcRoot = Util.getWcRoot(base);
+    File wcRoot = SvnBindUtil.getWcRoot(base);
     if (wcRoot == null) throw new SvnBindException("Can not find working copy root for: " + base.getPath());
 
     //cleanup -> check command type
@@ -225,12 +231,23 @@ public class SvnLineCommand extends SvnCommand {
                                            File base, File configDir,
                                            String... parameters) throws SvnBindException {
     final SvnLineCommand command = new SvnLineCommand(base, commandName, exePath, configDir) {
+      int myErrCnt = 0;
+
       @Override
       protected void onTextAvailable(String text, Key outputType) {
+
         // we won't stop right now if got "authentication realm" -> since we want to get "password" string (that would mean password is expected
         // or certificate maybe is expected
-        if (ProcessOutputTypes.STDERR.equals(outputType) && ! text.trim().startsWith(AUTHENTICATION_REALM)) {
-          destroyProcess();
+        // but for certificate passphrase we get just "Passphrase for ..." - one line without line feed
+
+        // for client certificate (when no path in servers file) we get
+        // Authentication realm: <text>
+        // Client certificate filename:
+        if (ProcessOutputTypes.STDERR.equals(outputType)) {
+          ++ myErrCnt;
+          if (text.trim().startsWith(PASSPHRASE_FOR) || myErrCnt >= 2) {
+            destroyProcess();
+          }
         }
         super.onTextAvailable(text, outputType);
       }
@@ -240,7 +257,7 @@ public class SvnLineCommand extends SvnCommand {
     command.addParameters(parameters);
     final AtomicReference<Throwable> exceptionRef = new AtomicReference<Throwable>();
     // several threads
-    command.addListener(new LineProcessEventListener() {
+    command.addLineListener(new LineProcessEventListener() {
       @Override
       public void onLineAvailable(String line, Key outputType) {
         if (SvnCommand.LOG.isDebugEnabled()) {
@@ -327,7 +344,7 @@ public class SvnLineCommand extends SvnCommand {
     myLineListeners.getMulticaster().onLineAvailable(trimmed, outputType);
   }
 
-  public void addListener(LineProcessEventListener listener) {
+  public void addLineListener(LineProcessEventListener listener) {
     myLineListeners.addListener(listener);
     super.addListener(listener);
   }

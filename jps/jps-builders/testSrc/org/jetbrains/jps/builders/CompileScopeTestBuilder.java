@@ -15,7 +15,6 @@
  */
 package org.jetbrains.jps.builders;
 
-import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.incremental.CompileScope;
 import org.jetbrains.jps.incremental.CompileScopeImpl;
@@ -27,6 +26,7 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 import org.jetbrains.jps.model.module.JpsModule;
 
 import java.io.File;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.HashSet;
 import java.util.Set;
@@ -35,28 +35,24 @@ import java.util.Set;
  * @author nik
  */
 public class CompileScopeTestBuilder {
-  private BuildType myBuildType;
-  private Set<BuildTargetType<?>> myTargetTypes = new HashSet<BuildTargetType<?>>();
-  private Set<BuildTarget<?>> myTargets = new HashSet<BuildTarget<?>>();
+  private final boolean myForceBuild;
+  private final Set<BuildTargetType<?>> myTargetTypes = new HashSet<BuildTargetType<?>>();
+  private final Set<BuildTarget<?>> myTargets = new HashSet<BuildTarget<?>>();
 
   public static CompileScopeTestBuilder rebuild() {
-    return new CompileScopeTestBuilder(BuildType.PROJECT_REBUILD);
+    return new CompileScopeTestBuilder(true);
   }
 
   public static CompileScopeTestBuilder make() {
-    return new CompileScopeTestBuilder(BuildType.MAKE);
+    return new CompileScopeTestBuilder(false);
   }
 
   public static CompileScopeTestBuilder recompile() {
-    return new CompileScopeTestBuilder(BuildType.FORCED_COMPILATION);
+    return new CompileScopeTestBuilder(true);
   }
 
-  private CompileScopeTestBuilder(BuildType buildType) {
-    myBuildType = buildType;
-  }
-
-  public BuildType getBuildType() {
-    return myBuildType;
+  private CompileScopeTestBuilder(boolean forceBuild) {
+    myForceBuild = forceBuild;
   }
 
   public CompileScopeTestBuilder allModules() {
@@ -81,7 +77,8 @@ public class CompileScopeTestBuilder {
   }
 
   public CompileScope build() {
-    return new CompileScopeImpl(myBuildType != BuildType.MAKE, myTargetTypes, myTargets, Collections.<BuildTarget<?>,Set<File>>emptyMap());
+    Collection<BuildTargetType<?>> typesToForceBuild = myForceBuild ? myTargetTypes : Collections.<BuildTargetType<?>>emptyList();
+    return new CompileScopeImpl(myTargetTypes, typesToForceBuild, myTargets, Collections.<BuildTarget<?>,Set<File>>emptyMap());
   }
 
   public CompileScopeTestBuilder all() {

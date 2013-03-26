@@ -26,22 +26,22 @@ public enum CommitEventType {
   deleting("Deleting"),
   sending("Sending"),
   replacing("Replacing"),
-  transmittingDeltas("Transmitting file data");
+  transmittingDeltas("Transmitting file data"),
+  committedRevision("Committed revision");
 
   private final String myText;
 
-  private CommitEventType(String text) {
+  CommitEventType(String text) {
     myText = text;
   }
 
-  private String getText() {
+  public String getText() {
     return myText;
   }
 
   public static CommitEventType create(String text) {
     text = text.trim();
-    final CommitEventType[] values = CommitEventType.values();
-    for (CommitEventType value : values) {
+    for (CommitEventType value : CommitEventType.values()) {
       if (value.getText().equals(text)) return value;
     }
     return null;

@@ -165,20 +165,7 @@ public class StackingPopupDispatcherImpl extends StackingPopupDispatcher impleme
     } else {
       popup = getFocusedPopup();
     }
-
-    if (popup == null) return false;
-
-
-    if (closeRequest) {
-      if (popup.isCancelKeyEnabled()) {
-        popup.cancel();
-        return true;
-      }
-    } else {
-      return popup.dispatchKeyEvent(e);
-    }
-
-    return false;
+    return popup != null && popup.dispatchKeyEvent(e);
   }
 
 

@@ -27,6 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrReflectedMethod
+import org.jetbrains.plugins.groovy.lang.psi.impl.statements.typedef.members.GrMethodImpl
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
@@ -1527,4 +1528,39 @@ myEnum = MyEnum.va<caret>lueOf('FOO')
 
 
   }
+
+  void testContradictingPropertyAccessor() {
+    def method = resolveByText('''\
+class A {
+    def setFoo(Object o) {
+        print 'method'
+    }
+
+    int foo = 5
+}
+
+new A().setF<caret>oo(2)
+''', PsiMethod)
+
+
+    assertInstanceOf(method, GrMethodImpl)
+  }
+
+  void testContradictingPropertyAccessor2() {
+    def method = resolveByText('''\
+class A {
+    def setFoo(Object o) {
+        print 'method'
+    }
+
+    int foo = 5
+}
+
+new A().f<caret>oo = 2
+''', PsiMethod)
+
+
+    assertInstanceOf(method, GrMethodImpl)
+  }
+
 }

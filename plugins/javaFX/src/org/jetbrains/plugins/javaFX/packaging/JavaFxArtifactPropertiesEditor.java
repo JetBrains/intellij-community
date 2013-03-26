@@ -15,30 +15,22 @@
  */
 package org.jetbrains.plugins.javaFX.packaging;
 
-import com.intellij.execution.JavaExecutionUtil;
-import com.intellij.execution.ui.ClassBrowser;
-import com.intellij.ide.util.ClassFilter;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.fileTypes.StdFileTypes;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
-import com.intellij.psi.PsiClass;
-import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.util.Base64Converter;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.text.JTextComponent;
-import java.util.Collections;
-import java.util.Set;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * User: anna
@@ -57,14 +49,30 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private TextFieldWithBrowseButton myHtmlParams;
   private TextFieldWithBrowseButton myParams;
   private JCheckBox myUpdateInBackgroundCB;
+  private JCheckBox myEnableSigningCB;
+  private JButton myEditSignCertificateButton;
+  private JavaFxEditCertificatesDialog myDialog;
 
-  public JavaFxArtifactPropertiesEditor(JavaFxArtifactProperties properties, Project project, Artifact artifact) {
+  public JavaFxArtifactPropertiesEditor(JavaFxArtifactProperties properties, final Project project, Artifact artifact) {
     super();
     myProperties = properties;
     new JavaFxApplicationClassBrowser(project, artifact).setField(myAppClass);
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileDescriptor(StdFileTypes.PROPERTIES);
     myHtmlParams.addBrowseFolderListener("Choose Properties File", "Parameters for the resulting application to run standalone.", project, descriptor);
     myParams.addBrowseFolderListener("Choose Properties File", "Parameters for the resulting application to run in the browser.", project, descriptor);
+    myEditSignCertificateButton.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myDialog = new JavaFxEditCertificatesDialog(myWholePanel, myProperties, project);
+        myDialog.show();
+      }
+    });
+    myEnableSigningCB.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        myEditSignCertificateButton.setEnabled(myEnableSigningCB.isSelected());
+      }
+    });
   }
 
   @Override
@@ -90,6 +98,16 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     if (isModified(myProperties.getParamFile(), myParams)) return true;
     final boolean inBackground = Comparing.strEqual(myProperties.getUpdateMode(), JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND);
     if (inBackground != myUpdateInBackgroundCB.isSelected()) return true;
+    if (myProperties.isEnabledSigning() != myEnableSigningCB.isSelected()) return true;
+    if (myDialog != null) {
+      if (isModified(myProperties.getAlias(), myDialog.myPanel.myAliasTF)) return true;
+      if (isModified(myProperties.getKeystore(), myDialog.myPanel.myKeystore)) return true;
+      final String keypass = myProperties.getKeypass();
+      if (isModified(keypass != null ? Base64Converter.decode(keypass) : "", myDialog.myPanel.myKeypassTF)) return true;
+      final String storepass = myProperties.getStorepass();
+      if (isModified(storepass != null ? Base64Converter.decode(storepass) : "", myDialog.myPanel.myStorePassTF)) return true;
+      if (myProperties.isSelfSigning() != myDialog.myPanel.mySelfSignedRadioButton.isSelected()) return true;
+    }
     return false;
   }
 
@@ -113,6 +131,16 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myProperties.setParamFile(myParams.getText());
     myProperties.setUpdateMode(myUpdateInBackgroundCB.isSelected() ? JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND 
                                                                    : JavaFxPackagerConstants.UPDATE_MODE_ALWAYS);
+    myProperties.setEnabledSigning(myEnableSigningCB.isSelected());
+    if (myDialog != null) {
+      myProperties.setSelfSigning(myDialog.myPanel.mySelfSignedRadioButton.isSelected());
+      myProperties.setAlias(myDialog.myPanel.myAliasTF.getText());
+      myProperties.setKeystore(myDialog.myPanel.myKeystore.getText());
+      final String keyPass = String.valueOf((myDialog.myPanel.myKeypassTF.getPassword()));
+      myProperties.setKeypass(!StringUtil.isEmptyOrSpaces(keyPass) ? Base64Converter.encode(keyPass) : null);
+      final String storePass = String.valueOf(myDialog.myPanel.myStorePassTF.getPassword());
+      myProperties.setStorepass(!StringUtil.isEmptyOrSpaces(storePass) ? Base64Converter.encode(storePass) : null);
+    }
   }
 
   @Override
@@ -126,6 +154,8 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     setText(myHtmlParams, myProperties.getHtmlParamFile());
     setText(myParams, myProperties.getParamFile());
     myUpdateInBackgroundCB.setSelected(Comparing.strEqual(myProperties.getUpdateMode(), JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND));
+    myEnableSigningCB.setSelected(myProperties.isEnabledSigning());
+    myEditSignCertificateButton.setEnabled(myProperties.isEnabledSigning());
   }
 
   private static void setText(TextFieldWithBrowseButton tf, final String title) {
@@ -141,47 +171,9 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   }
 
   @Override
-  public void disposeUIResources() {}
-
-  private static class JavaFxApplicationClassBrowser extends ClassBrowser {
-
-    private final Artifact myArtifact;
-
-    public JavaFxApplicationClassBrowser(Project project, Artifact artifact) {
-      super(project, "Choose Application Class");
-      myArtifact = artifact;
-    }
-
-    @Override
-    protected ClassFilter.ClassFilterWithScope getFilter() throws NoFilterException {
-      return new ClassFilter.ClassFilterWithScope() {
-        @Override
-        public GlobalSearchScope getScope() {
-          return GlobalSearchScope.projectScope(getProject());
-        }
-
-        @Override
-        public boolean isAccepted(PsiClass aClass) {
-          return InheritanceUtil.isInheritor(aClass, "javafx.application.Application");
-        }
-      };
-    }
-
-    @Override
-    protected PsiClass findClass(String className) {
-      final Set<Module> modules = ApplicationManager.getApplication().runReadAction(new Computable<Set<Module>>() {
-        @Override
-        public Set<Module> compute() {
-          return ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(myArtifact), getProject());
-        }
-      });
-      for (Module module : modules) {
-        final PsiClass aClass = JavaExecutionUtil.findMainClass(getProject(), className, GlobalSearchScope.moduleScope(module));
-        if (aClass != null) {
-          return aClass;
-        }
-      }
-      return null;
+  public void disposeUIResources() {
+    if (myDialog != null) {
+      myDialog.myPanel = null;
     }
   }
 }

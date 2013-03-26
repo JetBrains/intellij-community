@@ -108,7 +108,7 @@ class XmlMover extends LineMover {
 
     final TextRange moveDestinationRange = new TextRange(
       document.getLineStartOffset(info.toMove2.startLine),
-      document.getLineStartOffset(info.toMove2.endLine) - 1
+      document.getLineEndOffset(info.toMove2.endLine - 1)
     );
 
     if (movedParent instanceof XmlAttribute) {

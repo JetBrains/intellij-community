@@ -137,7 +137,7 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
   }
 
   @Override
-  public void handle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects) {
+  public void handle(@NotNull CommonActionsPanel.Buttons type, Project project, @NotNull Set<Object> selectedObjects, JComponent component) {
     switch (type) {
       case EDIT:
 
@@ -162,6 +162,11 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
       default: {
       }
     }
+  }
+
+  @Override
+  public int getWeight() {
+    return BOOKMARKS_WEIGHT;
   }
 
   @Override

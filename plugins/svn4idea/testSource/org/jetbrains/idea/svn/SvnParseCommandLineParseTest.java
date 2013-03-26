@@ -611,7 +611,8 @@ public class SvnParseCommandLineParseTest extends TestCase {
   }
 
   private String changePathsIfNix(String s) {
-    s = StringUtil.replace(s, "\\", "/");
+    if (SystemInfo.isWindows) return s;
+    s = FileUtil.toSystemIndependentName(s);
     return StringUtil.replace(s, "C:/", LINUX_ROOT);
   }
 

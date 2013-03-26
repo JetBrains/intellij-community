@@ -17,32 +17,48 @@ package org.jetbrains.plugins.javaFX.packaging.ant;
 
 import com.intellij.compiler.ant.*;
 import com.intellij.compiler.ant.artifacts.DirectoryAntCopyInstructionCreator;
+import com.intellij.compiler.ant.taskdefs.Property;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.AntCopyInstructionCreator;
-import com.intellij.packaging.elements.ArtifactAntGenerationContext;
-import com.intellij.packaging.elements.PackagingElement;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.elements.*;
+import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.Base64Converter;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactProperties;
 import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactPropertiesProvider;
 
+import java.io.File;
+import java.io.FileInputStream;
+import java.io.IOException;
+import java.io.PrintWriter;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 
 /**
  * User: anna
  * Date: 3/14/13
  */
 public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
+
+  @NonNls public static final String ARTIFACT_VENDOR_SIGN_PROPERTY = "artifact.sign.vendor";
+  @NonNls public static final String ARTIFACT_ALIAS_SIGN_PROPERTY = "artifact.sign.alias";
+  @NonNls public static final String ARTIFACT_KEYSTORE_SIGN_PROPERTY = "artifact.sign.keystore";
+  @NonNls public static final String ARTIFACT_STOREPASS_SIGN_PROPERTY = "artifact.sign.storepass";
+  @NonNls public static final String ARTIFACTKEYPASS_SIGN_PROPERTY = "artifact.sign.keypass";
+
   @NotNull
   @Override
   public String[] getTargets(ModuleChunk chunk) {
@@ -51,6 +67,31 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
 
   @Override
   public void process(Project project, ModuleChunk chunk, GenerationOptions genOptions, CompositeGenerator generator) {}
+
+  @Override
+  public void initArtifacts(Project project, GenerationOptions genOptions, CompositeGenerator generator) {
+    final Collection<? extends Artifact> artifacts =
+      ArtifactManager.getInstance(project).getArtifactsByType(JavaFxApplicationArtifactType.getInstance());
+    if (artifacts.isEmpty()) return;
+    final Sdk[] jdks = BuildProperties.getUsedJdks(project);
+    Sdk javaSdk = null;
+    for (Sdk jdk : jdks) {
+      if (jdk.getSdkType() instanceof JavaSdkType) {
+        javaSdk = jdk;
+        break;
+      }
+    }
+    if (javaSdk != null) {
+      final Tag taskdef = new Tag("taskdef",
+                                  new Pair<String, String>("resource", "com/sun/javafx/tools/ant/antlib.xml"),
+                                  new Pair<String, String>("uri", "javafx:com.sun.javafx.tools.ant"),
+                                  new Pair<String, String>("classpath",
+                                                           BuildProperties
+                                                             .propertyRef(BuildProperties.getJdkHomeProperty(javaSdk.getName())) +
+                                                           "/lib/ant-javafx.jar"));
+      generator.add(taskdef);
+    }
+  }
 
   protected List<? extends Generator> computeChildrenGenerators(PackagingElementResolvingContext resolvingContext,
                                                                   final AntCopyInstructionCreator copyInstructionCreator,
@@ -70,80 +111,187 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
                                        ArtifactAntGenerationContext context,
                                        CompositeGenerator generator) {
     if (preprocessing) return;
-    final String artifactName = artifact.getName();
-    String tempPathToFileSet = BuildProperties.propertyRef("artifact.temp.output." + artifactName);
-    final List<PackagingElement<?>> children = artifact.getRootElement().getChildren();
+    if (!(artifact.getArtifactType() instanceof JavaFxApplicationArtifactType)) return;
+
+    final CompositePackagingElement<?> rootElement = artifact.getRootElement();
+
+    final List<PackagingElement<?>> children = new ArrayList<PackagingElement<?>>();
+    String artifactFileName = rootElement.getName();
+    for (PackagingElement<?> child : rootElement.getChildren()) {
+      if (child instanceof ArchivePackagingElement) {
+        artifactFileName = ((ArchivePackagingElement)child).getArchiveFileName();
+        children.addAll(((ArchivePackagingElement)child).getChildren());
+      } else {
+        children.add(child);
+      }
+    }
+
+    final String artifactName = FileUtil.getNameWithoutExtension(artifactFileName);
+
+    final String tempDirPath = BuildProperties.propertyRef(
+      context.createNewTempFileProperty("artifact.temp.output." + artifactName, artifactFileName));
+
     final PackagingElementResolvingContext resolvingContext = ArtifactManager.getInstance(context.getProject()).getResolvingContext();
     for (Generator childGenerator : computeChildrenGenerators(resolvingContext, 
-                                                              new DirectoryAntCopyInstructionCreator(tempPathToFileSet),
+                                                              new DirectoryAntCopyInstructionCreator(tempDirPath),
                                                          context, artifact.getArtifactType(), children)) {
       generator.add(childGenerator);
     }
-    final Sdk[] jdks = BuildProperties.getUsedJdks(context.getProject());
-    Sdk javaSdk = null;
-    for (Sdk jdk : jdks) {
-      if (jdk.getSdkType() instanceof JavaSdkType) {
-        javaSdk = jdk;
-        break;
-      }
+
+    final JavaFxArtifactProperties properties =
+      (JavaFxArtifactProperties)artifact.getProperties(JavaFxArtifactPropertiesProvider.getInstance());
+
+    String preloaderFiles = null;
+    final String preloaderJar = properties.getPreloaderJar(artifact, context.getProject());
+    final String preloaderClass = properties.getPreloaderClass(artifact, context.getProject());
+    if (!StringUtil.isEmptyOrSpaces(preloaderJar) && !StringUtil.isEmptyOrSpaces(preloaderClass)) {
+      preloaderFiles = artifactName + "_preloader_files";
+      generator.add(new Tag("fx:fileset",
+                            new Pair<String, String>("id", preloaderFiles),
+                            new Pair<String, String>("requiredFor", "preloader"),
+                            new Pair<String, String>("dir", tempDirPath),
+                            new Pair<String, String>("includes", preloaderJar)));
     }
-    final String artifactFileName = artifactName + ".jar";
-    if (javaSdk != null) {
-      final Tag taskdef = new Tag("taskdef",
-                                  new Pair<String, String>("resource", "com/sun/javafx/tools/ant/antlib.xml"),
-                                  new Pair<String, String>("uri", "javafx:com.sun.javafx.tools.ant"),
-                                  new Pair<String, String>("classpath", 
-                                                           BuildProperties.propertyRef(BuildProperties.getJdkHomeProperty(javaSdk.getName())) + "/lib/ant-javafx.jar"));
-      generator.add(taskdef);
 
-      final JavaFxArtifactProperties properties =
-        (JavaFxArtifactProperties)artifact.getProperties(JavaFxArtifactPropertiesProvider.getInstance());
-
-      //register application
-      final String appId = artifactName + "_id";
-      final Tag applicationTag = new Tag("fx:application",
-                                         new Pair<String, String>("id", appId),
-                                         new Pair<String, String>("name", artifactName),
-                                         new Pair<String, String>("mainClass", properties.getAppClass()));
-      generator.add(applicationTag);
-
-      //create jar task
-      final Tag createJarTag = new Tag("fx:jar",
-                                       new Pair<String, String>("destfile", tempPathToFileSet + "/" + artifactFileName));
-      createJarTag.add(new Tag("fx:application", new Pair<String, String>("refid", appId)));
-      createJarTag.add(new Tag("fileset", new Pair<String, String>("dir", tempPathToFileSet)));
-      generator.add(createJarTag);
-
-      //deploy task
-      final Tag deployTag = new Tag("fx:deploy",
-                                    new Pair<String, String>("width", properties.getWidth()),
-                                    new Pair<String, String>("height", properties.getHeight()),
-                                    new Pair<String, String>("updatemode", properties.getUpdateMode()),
-                                    new Pair<String, String>("outdir", tempPathToFileSet + "/deploy"),
-                                    new Pair<String, String>("outfile", artifactName));
-      deployTag.add(new Tag("fx:application", new Pair<String, String>("refid", appId)));
-
-      deployTag.add(new Tag("fx:info",
-                            new Pair<String, String>("title", properties.getTitle()),
-                            new Pair<String, String>("vendor", properties.getVendor()),
-                            new Pair<String, String>("description", properties.getDescription())));
-      final Tag deployResourcesTag = new Tag("fx:resources");
-      deployResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("dir", tempPathToFileSet), 
-                                                   new Pair<String, String>("includes", artifactFileName)));
-      deployTag.add(deployResourcesTag);
-
-      generator.add(deployTag);
+    //register application
+    final String appId = artifactName + "_id";
+    Pair[] applicationParams = {new Pair<String, String>("id", appId),
+      new Pair<String, String>("name", artifactName),
+      new Pair<String, String>("mainClass", properties.getAppClass())};
+    if (preloaderFiles != null) {
+      applicationParams = ArrayUtil.append(applicationParams, new Pair<String, String>("preloaderClass", preloaderClass));
     }
     
-    final DirectoryAntCopyInstructionCreator creator = new DirectoryAntCopyInstructionCreator(tempPathToFileSet);
-    generator.add(creator.createDirectoryContentCopyInstruction(tempPathToFileSet + "/deploy"));
+    final Tag applicationTag = new Tag("fx:application", applicationParams);
+
+    appendValuesFromPropertiesFile(applicationTag, properties.getHtmlParamFile(), "fx:htmlParam", false);
+    //also loads fx:argument values
+    appendValuesFromPropertiesFile(applicationTag, properties.getParamFile(), "fx:param", true);
+
+    generator.add(applicationTag);
+
+    //create jar task
+    final Tag createJarTag = new Tag("fx:jar",
+                                     new Pair<String, String>("destfile", tempDirPath + "/" + artifactFileName));
+    createJarTag.add(new Tag("fx:application", new Pair<String, String>("refid", appId)));
+    createJarTag.add(new Tag("fileset", new Pair<String, String>("dir", tempDirPath)));
+    if (preloaderFiles != null) {
+      final Tag createJarResourcesTag = new Tag("fx:resources");
+      createJarResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("refid", preloaderFiles)));
+      createJarTag.add(createJarResourcesTag);
+    }
+    generator.add(createJarTag);
+
+    //deploy task
+    final Tag deployTag = new Tag("fx:deploy",
+                                  new Pair<String, String>("width", properties.getWidth()),
+                                  new Pair<String, String>("height", properties.getHeight()),
+                                  new Pair<String, String>("updatemode", properties.getUpdateMode()),
+                                  new Pair<String, String>("outdir", tempDirPath + "/deploy"),
+                                  new Pair<String, String>("outfile", artifactName));
+    deployTag.add(new Tag("fx:application", new Pair<String, String>("refid", appId)));
+
+    deployTag.add(new Tag("fx:info",
+                          new Pair<String, String>("title", properties.getTitle()),
+                          new Pair<String, String>("vendor", properties.getVendor()),
+                          new Pair<String, String>("description", properties.getDescription())));
+    final Tag deployResourcesTag = new Tag("fx:resources");
+    deployResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("dir", tempDirPath), 
+                                                 new Pair<String, String>("includes", artifactFileName)));
+    if (preloaderFiles != null) {
+      deployResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("refid", preloaderFiles)));
+    }
+    
+    deployTag.add(deployResourcesTag);
+
+    generator.add(deployTag);
+
+    if (properties.isEnabledSigning()) {
+
+      final boolean selfSigning = properties.isSelfSigning();
+      String vendor = properties.getVendor();
+      if (vendor != null) {
+        vendor = vendor.replaceAll(",", "\\\\,")  ;
+      }
+      generator.add(new Property(artifactBasedProperty(ARTIFACT_VENDOR_SIGN_PROPERTY, artifactName), "CN=" + vendor));
+
+      final String alias = selfSigning ? "jb" : properties.getAlias();
+      generator.add(new Property(artifactBasedProperty(ARTIFACT_ALIAS_SIGN_PROPERTY, artifactName), alias));
+
+      final String keystore = selfSigning ? tempDirPath + File.separator + "jb-key.jks" : properties.getKeystore();
+      generator.add(new Property(artifactBasedProperty(ARTIFACT_KEYSTORE_SIGN_PROPERTY, artifactName), keystore));
+
+      final String storepass = selfSigning ? "storepass" : Base64Converter.decode(properties.getStorepass());
+      generator.add(new Property(artifactBasedProperty(ARTIFACT_STOREPASS_SIGN_PROPERTY, artifactName), storepass));
+
+      final String keypass = selfSigning ? "keypass" : Base64Converter.decode(properties.getKeypass());
+      generator.add(new Property(artifactBasedProperty(ARTIFACTKEYPASS_SIGN_PROPERTY, artifactName), keypass));
+      
+      final Pair[] keysDescriptions = createKeysDescriptions(artifactName);
+      if (selfSigning) {
+        generator.add(new Tag("genkey", 
+                              ArrayUtil.prepend(new Pair<String, String>("dname", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_VENDOR_SIGN_PROPERTY, artifactName))), 
+                                                keysDescriptions)));
+      }
+      
+      final Tag signjar = new Tag("signjar", keysDescriptions);
+      final Tag fileset = new Tag("fileset", new Pair<String, String>("dir", tempDirPath + "/deploy"));
+      fileset.add(new Tag("include", new Pair<String, String>("name", artifactFileName)));
+      signjar.add(fileset);
+      generator.add(signjar);
+    }
+
+    final DirectoryAntCopyInstructionCreator creator = new DirectoryAntCopyInstructionCreator(BuildProperties.propertyRef(context.getConfiguredArtifactOutputProperty(artifact)));
+    generator.add(creator.createDirectoryContentCopyInstruction(tempDirPath + "/deploy"));
     final Tag deleteTag = new Tag("delete", new Pair<String, String>("includeemptydirs", "true"));
-    final Tag deleteFileSetTag = new Tag("fileset", new Pair<String, String>("dir", "${artifact.temp.output.unnamed}"));
-    deleteFileSetTag.add(new Tag("exclude", new Pair<String, String>("name", artifactFileName)));
-    deleteFileSetTag.add(new Tag("exclude", new Pair<String, String>("name", artifactName + ".jnlp")));
-    deleteFileSetTag.add(new Tag("exclude", new Pair<String, String>("name", artifactName + ".html")));
-    deleteTag.add(deleteFileSetTag);
+    deleteTag.add(new Tag("fileset", new Pair<String, String>("dir", tempDirPath)));
     generator.add(deleteTag);
+  }
+
+  private static void appendValuesFromPropertiesFile(final Tag applicationTag,
+                                                     final String htmlParamFile,
+                                                     final String paramTagName,
+                                                     final boolean allowNoNamed) {
+    if (!StringUtil.isEmptyOrSpaces(htmlParamFile)) {
+      final Properties htmlProperties = new Properties();
+      try {
+        final FileInputStream paramsInputStream = new FileInputStream(new File(htmlParamFile));
+        try {
+          htmlProperties.load(paramsInputStream);
+          for (Object o : htmlProperties.keySet()) {
+            final String propName = (String)o;
+            final String propValue = htmlProperties.getProperty(propName);
+            if (!StringUtil.isEmptyOrSpaces(propValue)) {
+              applicationTag.add(new Tag(paramTagName, new Pair<String, String>("name", propName), new Pair<String, String>("value", propValue)));
+            } else if (allowNoNamed) {
+              applicationTag.add(new Generator() {
+                @Override
+                public void generate(PrintWriter out) throws IOException {
+                  out.print("<fx:argument>" + propName + "</fx:argument>");
+                }
+              });
+            }
+          }
+        }
+        finally {
+          paramsInputStream.close();
+        }
+      }
+      catch (IOException ignore) {
+      }
+    }
+  }
+
+  private static String artifactBasedProperty(final String property, String artifactName) {
+    return property + "." + artifactName;
+  }
+
+  private static Pair[] createKeysDescriptions(String artifactName) {
+    return new Pair[]{
+      new Pair<String, String>("alias", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_ALIAS_SIGN_PROPERTY, artifactName))),
+      new Pair<String, String>("keystore", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_KEYSTORE_SIGN_PROPERTY, artifactName))),
+      new Pair<String, String>("storepass", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACT_STOREPASS_SIGN_PROPERTY, artifactName))),
+      new Pair<String, String>("keypass", BuildProperties.propertyRef(artifactBasedProperty(ARTIFACTKEYPASS_SIGN_PROPERTY, artifactName)))};
   }
 
   @Nullable

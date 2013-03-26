@@ -20,6 +20,7 @@
 package com.intellij.compiler;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 
@@ -31,14 +32,20 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
     )}
 )
 public class CompilerWorkspaceConfiguration implements PersistentStateComponent<CompilerWorkspaceConfiguration> {
+  private static final Logger LOG = Logger.getInstance("#com.intellij.compiler.CompilerWorkspaceConfiguration");
+  
   public static final int DEFAULT_COMPILE_PROCESS_HEAP_SIZE = 700;
   public static final String DEFAULT_COMPILE_PROCESS_VM_OPTIONS = "-ea -XX:+UseConcMarkSweepGC";
+  private static final int CORES_COUNT = Runtime.getRuntime().availableProcessors();
+  static {
+    LOG.info("Available processors: " + CORES_COUNT);
+  }
 
   public boolean AUTO_SHOW_ERRORS_IN_EDITOR = true;
   @Deprecated public boolean CLOSE_MESSAGE_VIEW_IF_SUCCESS = true;
   public boolean CLEAR_OUTPUT_DIRECTORY = true;
   public boolean USE_COMPILE_SERVER = true;
-  public boolean MAKE_PROJECT_ON_SAVE = true;
+  public boolean MAKE_PROJECT_ON_SAVE = CORES_COUNT > 2;
   public boolean PARALLEL_COMPILATION = false;
   public int COMPILER_PROCESS_HEAP_SIZE = DEFAULT_COMPILE_PROCESS_HEAP_SIZE;
   public String COMPILER_PROCESS_ADDITIONAL_VM_OPTIONS = DEFAULT_COMPILE_PROCESS_VM_OPTIONS;

@@ -37,10 +37,7 @@ import com.intellij.openapi.vcs.actions.VcsContextFactory;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.ContentRevision;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtilCore;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileVisitor;
+import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
 import com.intellij.openapi.wm.StatusBar;
 import com.intellij.util.ConcurrencyUtil;
@@ -57,6 +54,24 @@ import java.util.concurrent.ScheduledThreadPoolExecutor;
 public class VcsUtil {
   protected static final char[] ourCharsToBeChopped = new char[]{'/', '\\'};
   private static final Logger LOG = Logger.getInstance("#com.intellij.vcsUtil.VcsUtil");
+
+  public final static String MAX_VCS_LOADED_SIZE_KB = "idea.max.vcs.loaded.size.kb";
+  private static final int ourMaxLoadedFileSize = computeLoadedFileSize();
+
+  public static int getMaxVcsLoadedFileSize() {
+    return ourMaxLoadedFileSize;
+  }
+
+  private static int computeLoadedFileSize() {
+    int result = (int)PersistentFSConstants.FILE_LENGTH_TO_CACHE_THRESHOLD;
+    final String userLimitKb = System.getProperty(MAX_VCS_LOADED_SIZE_KB);
+    try {
+      return userLimitKb != null ? Math.min(Integer.parseInt(userLimitKb) * 1024, result) : result;
+    }
+    catch (NumberFormatException ignored) {
+      return result;
+    }
+  }
 
   public static void markFileAsDirty(final Project project, final VirtualFile file) {
     VcsDirtyScopeManager.getInstance(project).fileDirty(file);

@@ -15,9 +15,11 @@
  */
 package org.jetbrains.jps.incremental;
 
+import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.builders.BuildTarget;
 import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.ModuleBasedBuildTargetType;
 import org.jetbrains.jps.builders.ModuleBasedTarget;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.model.module.JpsModule;
@@ -31,15 +33,29 @@ import java.util.Set;
  * @author nik
  */
 public class CompileScopeImpl extends CompileScope {
-  protected final boolean myForcedCompilation;
   private final Collection<? extends BuildTargetType<?>> myTypes;
+  private final Collection<BuildTargetType<?>> myTypesToForceBuild;
   private final Collection<BuildTarget<?>> myTargets;
   private final Map<BuildTarget<?>, Set<File>> myFiles;
 
-  public CompileScopeImpl(boolean forcedCompilation, Collection<? extends BuildTargetType<?>> types, Collection<BuildTarget<?>> targets,
-                          Map<BuildTarget<?>, Set<File>> files) {
-    myForcedCompilation = forcedCompilation;
+  public CompileScopeImpl(Collection<? extends BuildTargetType<?>> types,
+                          Collection<? extends BuildTargetType<?>> typesToForceBuild,
+                          Collection<BuildTarget<?>> targets,
+                          @NotNull Map<BuildTarget<?>, Set<File>> files) {
     myTypes = types;
+    myTypesToForceBuild = new HashSet<BuildTargetType<?>>();
+    boolean forceBuildAllModuleBasedTargets = false;
+    for (BuildTargetType<?> type : typesToForceBuild) {
+      myTypesToForceBuild.add(type);
+      forceBuildAllModuleBasedTargets |= type instanceof JavaModuleBuildTargetType;
+    }
+    if (forceBuildAllModuleBasedTargets) {
+      for (BuildTargetType<?> targetType : TargetTypeRegistry.getInstance().getTargetTypes()) {
+        if (targetType instanceof ModuleBasedBuildTargetType<?>) {
+          myTypesToForceBuild.add(targetType);
+        }
+      }
+    }
     myTargets = targets;
     myFiles = files;
   }
@@ -50,8 +66,19 @@ public class CompileScopeImpl extends CompileScope {
   }
 
   @Override
-  public boolean isRecompilationForced(@NotNull BuildTarget<?> target) {
-    return myForcedCompilation && (myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target));
+  public boolean isBuildForced(@NotNull BuildTarget<?> target) {
+    BuildTargetType<?> type = target.getTargetType();
+    return myTypesToForceBuild.contains(type) && myFiles.get(target) == null &&(myTypes.contains(type) || myTargets.contains(target) || isAffectedByAssociatedModule(target));
+  }
+
+  @Override
+  public boolean isBuildForcedForAllTargets(@NotNull BuildTargetType<?> targetType) {
+    return myTypesToForceBuild.contains(targetType) && myTypes.contains(targetType) && myFiles.isEmpty();
+  }
+
+  @Override
+  public boolean isBuildIncrementally(@NotNull BuildTargetType<?> targetType) {
+    return !myTypesToForceBuild.contains(targetType);
   }
 
   @Override
@@ -59,11 +86,11 @@ public class CompileScopeImpl extends CompileScope {
     if (myFiles.isEmpty()) {//optimization
       return true;
     }
-    if (myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target)) {
-      return true;
-    }
     final Set<File> files = myFiles.get(target);
-    return files != null && files.contains(file);
+    if (files != null) {
+      return files.contains(file);
+    }
+    return myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target);
   }
 
   private boolean isAffectedByAssociatedModule(BuildTarget<?> target) {

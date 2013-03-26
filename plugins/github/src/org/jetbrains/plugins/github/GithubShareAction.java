@@ -50,8 +50,6 @@ import git4idea.actions.BasicAction;
 import git4idea.actions.GitInit;
 import git4idea.commands.*;
 import git4idea.i18n.GitBundle;
-import git4idea.jgit.GitHttpAdapter;
-import git4idea.push.GitSimplePushResult;
 import git4idea.repo.GitRepository;
 import git4idea.repo.GitRepositoryManager;
 import git4idea.util.GitFileUtils;
@@ -237,29 +235,15 @@ public class GithubShareAction extends DumbAwareAction {
     new Task.Backgroundable(project, "Pushing to GitHub", false) {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        GitSimplePushResult pushResult = GitHttpAdapter.push(repository, "origin", remoteUrl, "refs/heads/master:refs/heads/master");
-        switch (pushResult.getType()) {
-          case NOT_PUSHED:
-            showPushError(project, "Push failed: <br/>" + pushResult.getOutput());
-            break;
-          case REJECT:
-            showPushError(project, "Push was rejected: <br/>" + pushResult.getOutput());
-            break;
-          case CANCEL:
-            Notificator.getInstance(project).notify(new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "Push cancelled",
-                                                    "The project was created on GitHub but wasn't pushed yet.", NotificationType.WARNING));
-            break;
-          case NOT_AUTHORIZED:
-            showPushError(project, "Push authorization failure: <br/>" + pushResult.getOutput());
-            break;
-          case ERROR:
-            showPushError(project, "Push failed: <br/>" + pushResult.getOutput());
-            break;
-          case SUCCESS:
-            Notificator.getInstance(project).notify(new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "Success",
-                                                                     "Successfully created project ''" + name + "'' on github",
-                                                                     NotificationType.INFORMATION));
-            break;
+        Git git = ServiceManager.getService(Git.class);
+        GitCommandResult result = git.push(repository, "origin", remoteUrl, "refs/heads/master:refs/heads/master");
+        if (result.success()) {
+          Notificator.getInstance(project).notify(new Notification(GithubUtil.GITHUB_NOTIFICATION_GROUP, "Success",
+                                                                   "Successfully created project '" + name + "' on GitHub",
+                                                                   NotificationType.INFORMATION));
+        }
+        else {
+          showPushError(project, "Push failed: <br/>" + result.getErrorOutputAsHtmlString());
         }
       }
     }.queue();

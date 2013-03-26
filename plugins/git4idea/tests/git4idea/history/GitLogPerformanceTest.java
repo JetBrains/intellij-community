@@ -15,21 +15,15 @@
  */
 package git4idea.history;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.util.EmptyRunnable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.ui.ColumnInfo;
-import git4idea.GitPlatformFacade;
-import git4idea.GitUtil;
 import git4idea.history.browser.CachedRefs;
 import git4idea.history.browser.ChangesFilter;
 import git4idea.history.wholeTree.*;
-import git4idea.repo.GitFakeRepositoryManager;
-import git4idea.repo.GitRepository;
-import git4idea.repo.GitRepositoryImpl;
 import git4idea.test.GitTest;
 import org.jetbrains.annotations.Nullable;
 import org.testng.Assert;
@@ -107,12 +101,6 @@ public class GitLogPerformanceTest extends GitTest {
   }
 
   private void impl(RootsHolder rootsHolder, GitLogFilters filters) {
-    for (VirtualFile root : rootsHolder.getRoots()) {
-      final GitRepository repository = GitRepositoryImpl
-        .getLightInstance(root, myProject, ServiceManager.getService(myProject, GitPlatformFacade.class), myProject);
-      ((GitFakeRepositoryManager) GitUtil.getRepositoryManager(myProject)).add(repository);
-    }
-
     final GitCommitsSequentialIndex commitsSequentially = new GitCommitsSequentialIndex();
     final MediatorImpl mediator = new MediatorImpl(myProject, commitsSequentially);
     final LoadController controller = new LoadController(myProject, mediator, null, commitsSequentially);

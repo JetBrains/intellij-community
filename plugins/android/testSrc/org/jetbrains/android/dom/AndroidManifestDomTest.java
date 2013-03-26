@@ -18,11 +18,11 @@ public class AndroidManifestDomTest extends AndroidDomTest {
   }
 
   public void testAttributeNameCompletion1() throws Throwable {
-    doTestCompletionVariants("an1.xml", "android:icon", "android:label", "android:priority");
+    doTestCompletionVariants("an1.xml", "android:icon", "android:label", "android:priority", "android:logo");
   }
 
   public void testAttributeNameCompletion2() throws Throwable {
-    doTestCompletionVariants("an2.xml", "debuggable", "description", "hasCode");
+    doTestCompletionVariants("an2.xml", "debuggable", "description", "hasCode", "vmSafeMode");
   }
 
   public void testAttributeNameCompletion3() throws Throwable {
@@ -58,7 +58,8 @@ public class AndroidManifestDomTest extends AndroidDomTest {
   }
 
   public void testAttributeValueCompletion1() throws Throwable {
-    doTestCompletionVariants("av1.xml", "behind", "landscape", "nosensor", "portrait", "sensor", "unspecified", "user");
+    doTestCompletionVariants("av1.xml", "behind", "landscape", "nosensor", "portrait", "sensor", "unspecified", "user", "fullSensor",
+                             "reverseLandscape", "reversePortrait", "sensorLandscape", "sensorPortrait");
   }
 
   public void testResourceCompletion1() throws Throwable {
@@ -75,7 +76,7 @@ public class AndroidManifestDomTest extends AndroidDomTest {
   }
 
   public void testTagNameCompletion1() throws Throwable {
-    doTestCompletionVariants("tn1.xml", "uses-permission", "uses-sdk", "uses-configuration");
+    doTestCompletionVariants("tn1.xml", "uses-permission", "uses-sdk", "uses-configuration", "uses-feature");
   }
 
   public void testSoftTagsAndAttrs() throws Throwable {
@@ -215,5 +216,17 @@ public class AndroidManifestDomTest extends AndroidDomTest {
 
   public void testNamespaceCompletion1() throws Throwable {
     doTestNamespaceCompletion(true, false);
+  }
+
+  public void testCompatibleScreensCompletion() throws Throwable {
+    doTestCompletion();
+  }
+
+  public void testCompatibleScreensHighlighting() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testHexInteger() throws Throwable {
+    doTestHighlighting();
   }
 }

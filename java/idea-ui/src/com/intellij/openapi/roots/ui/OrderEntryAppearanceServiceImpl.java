@@ -131,7 +131,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
     if (showVersion) {
       String versionString = jdk.getVersionString();
       if (versionString != null && !versionString.equals(name)) {
-        SimpleTextAttributes textAttributes = isInComboBox ? SimpleTextAttributes.SYNTHETIC_ATTRIBUTES :
+        SimpleTextAttributes textAttributes = isInComboBox && !selected ? SimpleTextAttributes.SYNTHETIC_ATTRIBUTES :
                                               SystemInfo.isMac && selected ? new SimpleTextAttributes(SimpleTextAttributes.STYLE_PLAIN, 
                                                                                                       Color.WHITE): SimpleTextAttributes.GRAY_ATTRIBUTES;
         ending.addComment(versionString, textAttributes);
@@ -145,7 +145,7 @@ public class OrderEntryAppearanceServiceImpl extends OrderEntryAppearanceService
     if (!valid) {
       return SimpleTextAttributes.ERROR_ATTRIBUTES;
     }
-    else if (selected) {
+    else if (selected && !(SystemInfo.isWinVistaOrNewer && UIManager.getLookAndFeel().getName().contains("Windows"))) {
       return SimpleTextAttributes.SELECTED_SIMPLE_CELL_ATTRIBUTES;
     }
     else {

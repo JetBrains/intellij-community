@@ -24,9 +24,9 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.containers.*;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.OrderedSet;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
@@ -107,11 +107,14 @@ public class ImportDependenciesUtil {
         modulesToProcess.add(module);
       }
     }
+    doImportDependencies(project, modulesToProcess, updateBackwardDependencies);
+  }
 
+  public static void doImportDependencies(@NotNull Project project, @NotNull List<Module> modules, boolean updateBackwardDependencies) {
     final List<ImportDependenciesTask> tasks = new OrderedSet<ImportDependenciesTask>();
     final List<MyUnresolvedDependency> unresolvedDependencies = new ArrayList<MyUnresolvedDependency>();
 
-    for (Module module : modulesToProcess) {
+    for (Module module : modules) {
       importDependencies(module, updateBackwardDependencies, tasks, unresolvedDependencies);
     }
 

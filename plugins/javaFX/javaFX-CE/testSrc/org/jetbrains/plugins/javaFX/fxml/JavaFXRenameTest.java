@@ -38,6 +38,10 @@ public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
     doTest("newFieldName");
   }
 
+  public void testHandler() throws Exception {
+    doTest("newHandlerName");
+  }
+
   public void testCustomComponentTag() throws Exception {
     doTest("Foo");
   }

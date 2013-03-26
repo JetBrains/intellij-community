@@ -20,12 +20,12 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.android.util.AndroidNativeLibData;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
-import org.jetbrains.jps.util.JpsPathUtil;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 import org.jetbrains.jps.model.module.JpsModule;
+import org.jetbrains.jps.model.serialization.JpsModelSerializationDataService;
+import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
 import java.io.IOException;
@@ -68,7 +68,7 @@ public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModu
   @Override
   public List<AndroidNativeLibData> getAdditionalNativeLibs() {
     final List<AndroidNativeLibData> libDatas = new ArrayList<AndroidNativeLibData>();
-    for (JpsAndroidModuleProperties.AndroidNativeLibData nativeLib : myProperties.myNativeLibs) {
+    for (JpsAndroidModuleProperties.AndroidNativeLibDataEntry nativeLib : myProperties.myNativeLibs) {
       if (nativeLib.myArchitecture != null && nativeLib.myUrl != null && nativeLib.myTargetFileName != null) {
         libDatas.add(new AndroidNativeLibData(nativeLib.myArchitecture, JpsPathUtil.urlToPath(nativeLib.myUrl), nativeLib.myTargetFileName));
       }
@@ -77,48 +77,58 @@ public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModu
   }
 
   @Override
-  public File getResourceDir() throws IOException {
-    File resDir = findFileByRelativeModulePath(myProperties.RES_FOLDER_RELATIVE_PATH, true);
+  public boolean isUseCustomManifestPackage() {
+    return myProperties.USE_CUSTOM_MANIFEST_PACKAGE;
+  }
+
+  @Override
+  public String getCustomManifestPackage() {
+    return myProperties.CUSTOM_MANIFEST_PACKAGE;
+  }
+
+  @Override
+  public File getResourceDir() {
+    File resDir = findFileByRelativeModulePath(myProperties.RES_FOLDER_RELATIVE_PATH, false);
     return resDir != null ? canonizeFilePath(resDir) : null;
   }
 
   @Override
-  public File getResourceDirForCompilation() throws IOException {
+  public File getResourceDirForCompilation() {
     File resDir = findFileByRelativeModulePath(myProperties.CUSTOM_APK_RESOURCE_FOLDER, false);
     return resDir != null ? canonizeFilePath(resDir) : null;
   }
 
   @Override
-  public File getManifestFile() throws IOException {
-    File manifestFile = findFileByRelativeModulePath(myProperties.MANIFEST_FILE_RELATIVE_PATH, true);
+  public File getManifestFile() {
+    File manifestFile = findFileByRelativeModulePath(myProperties.MANIFEST_FILE_RELATIVE_PATH, false);
     return manifestFile != null ? canonizeFilePath(manifestFile) : null;
   }
 
   @Override
-  public File getManifestFileForCompilation() throws IOException {
+  public File getManifestFileForCompilation() {
     File manifestFile = findFileByRelativeModulePath(myProperties.CUSTOM_COMPILER_MANIFEST, false);
     return manifestFile != null ? canonizeFilePath(manifestFile) : null;
   }
 
   @Override
   public File getProguardConfigFile() throws IOException {
-    File proguardFile = findFileByRelativeModulePath(myProperties.PROGUARD_CFG_PATH, false);
+    File proguardFile = findFileByRelativeModulePath(myProperties.PROGUARD_CFG_PATH, true);
     return proguardFile != null ? canonizeFilePath(proguardFile) : null;
   }
 
   @Override
-  public File getAssetsDir() throws IOException {
+  public File getAssetsDir() {
     File manifestFile = findFileByRelativeModulePath(myProperties.ASSETS_FOLDER_RELATIVE_PATH, false);
     return manifestFile != null ? canonizeFilePath(manifestFile) : null;
   }
 
   public File getAaptGenDir() throws IOException {
-    File aaptGenDir = findFileByRelativeModulePath(myProperties.GEN_FOLDER_RELATIVE_PATH_APT, false);
+    File aaptGenDir = findFileByRelativeModulePath(myProperties.GEN_FOLDER_RELATIVE_PATH_APT, true);
     return aaptGenDir != null ? canonizeFilePath(aaptGenDir) : null;
   }
 
   public File getAidlGenDir() throws IOException {
-    File aidlGenDir = findFileByRelativeModulePath(myProperties.GEN_FOLDER_RELATIVE_PATH_AIDL, false);
+    File aidlGenDir = findFileByRelativeModulePath(myProperties.GEN_FOLDER_RELATIVE_PATH_AIDL, true);
     return aidlGenDir != null ? canonizeFilePath(aidlGenDir) : null;
   }
 
@@ -127,17 +137,17 @@ public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModu
   }
 
   @Override
-  public File getNativeLibsDir() throws IOException {
-    File nativeLibsFolder = findFileByRelativeModulePath(myProperties.LIBS_FOLDER_RELATIVE_PATH, false);
+  public File getNativeLibsDir() {
+    File nativeLibsFolder = findFileByRelativeModulePath(myProperties.LIBS_FOLDER_RELATIVE_PATH, true);
     return nativeLibsFolder != null ? canonizeFilePath(nativeLibsFolder) : null;
   }
 
-  private static File canonizeFilePath(@NotNull File file) throws IOException {
+  private static File canonizeFilePath(@NotNull File file) {
     return new File(FileUtil.toCanonicalPath(file.getPath()));
   }
 
   @Nullable
-  private File findFileByRelativeModulePath(String relativePath, boolean lookInContentRoot) {
+  private File findFileByRelativeModulePath(String relativePath, boolean checkExistence) {
     if (relativePath == null || relativePath.length() == 0) {
       return null;
     }
@@ -148,19 +158,8 @@ public class JpsAndroidModuleExtensionImpl extends JpsElementBase<JpsAndroidModu
       String absPath = FileUtil.toSystemDependentName(moduleBaseDir.getAbsolutePath() + relativePath);
       File f = new File(absPath);
 
-      if (f.exists()) {
+      if (!checkExistence || f.exists()) {
         return f;
-      }
-    }
-
-    if (lookInContentRoot) {
-      for (String contentRootUrl : module.getContentRootsList().getUrls()) {
-        String absUrl = contentRootUrl + relativePath;
-        File f = JpsPathUtil.urlToFile(absUrl);
-
-        if (f.exists()) {
-          return f;
-        }
       }
     }
     return null;

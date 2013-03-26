@@ -46,6 +46,11 @@ public class AndroidNativeLibData {
   }
 
   @Override
+  public String toString() {
+    return "[" + myPath + "," + myArchitecture + "," + myTargetFileName + "]";
+  }
+
+  @Override
   public int hashCode() {
     int result = myPath.hashCode();
     result = 31 * result + myArchitecture.hashCode();

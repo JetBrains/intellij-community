@@ -60,7 +60,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
     final List<ProcessingItem> items = new ArrayList<ProcessingItem>();
     for (Module module : ModuleManager.getInstance(context.getProject()).getModules()) {
       AndroidFacet facet = AndroidFacet.getInstance(module);
-      if (facet != null && !facet.getConfiguration().LIBRARY_PROJECT) {
+      if (facet != null && !facet.getProperties().LIBRARY_PROJECT) {
         VirtualFile manifestFile = AndroidRootUtil.getManifestFileForCompiler(facet);
 
         final ArrayList<String> assetDirPathsList = new ArrayList<String>();
@@ -90,7 +90,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
             }
 
             items.add(new MyItem(module, target, platformToolsRevision, manifestFile, resourcesDirPaths, assetDirPaths, outputPath,
-                                 configuration.GENERATE_UNSIGNED_APK, AndroidCompileUtil.isReleaseBuild(context)));
+                                 false, AndroidCompileUtil.isReleaseBuild(context)));
             //items.add(new MyItem(module, target, manifestFile, resourcesDirPaths, assetsDirPath, outputPath + RELEASE_SUFFIX, true));
           }
         }
@@ -186,7 +186,7 @@ public class AndroidResourcesPackagingCompiler implements ClassPostProcessingCom
                                     preprocessedManifestFile.getPath(),
                                     item.myResourceDirPaths,
                                     item.myAssetsDirPaths,
-                                    outputPath, null, !releasePackage, 0, new FileFilter() {
+                                    outputPath, null, !releasePackage, 0, null, new FileFilter() {
           @Override
           public boolean accept(File file) {
             final VirtualFile vFile = LocalFileSystem.getInstance().findFileByIoFile(file);

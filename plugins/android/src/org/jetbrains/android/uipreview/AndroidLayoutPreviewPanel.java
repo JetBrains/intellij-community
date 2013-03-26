@@ -16,6 +16,7 @@
 package org.jetbrains.android.uipreview;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.VerticalFlowLayout;
@@ -25,6 +26,7 @@ import com.intellij.ui.HyperlinkLabel;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.util.ui.AsyncProcessIcon;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +55,7 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
   private BufferedImage myImage;
 
   private final JPanel myMessagesPanel = new JPanel(new VerticalFlowLayout(VerticalFlowLayout.TOP, 0, 0, true, false));
+  private final JPanel myTitlePanel;
 
   private double myZoomFactor = 1.0;
   private boolean myZoomToFit = true;
@@ -105,14 +108,14 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
     progressPanel.add(new JBLabel(" "));
     progressPanel.setOpaque(false);
 
-    final JPanel titlePanel = new JPanel(new BorderLayout());
-    titlePanel.setOpaque(false);
-    titlePanel.add(myFileNameLabel, BorderLayout.CENTER);
-    titlePanel.add(progressPanel, BorderLayout.EAST);
+    myTitlePanel = new JPanel(new BorderLayout());
+    myTitlePanel.setOpaque(false);
+    myTitlePanel.add(myFileNameLabel, BorderLayout.CENTER);
+    myTitlePanel.add(progressPanel, BorderLayout.EAST);
 
     ((CardLayout)myProgressIconWrapper.getLayout()).show(myProgressIconWrapper, EMPTY_CARD_NAME);
 
-    add(titlePanel);
+    add(myTitlePanel);
 
     myMessagesPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 5, 0, 5));
     myMessagesPanel.setOpaque(false);
@@ -206,7 +209,13 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
       myMessagesPanel.add(warningsPanel);
     }
     revalidate();
-    repaint();
+
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
+      public void run() {
+        doRevalidate();
+      }
+    });
   }
 
   private static void showMessage(final FixableIssueMessage message, Icon icon, JPanel panel) {
@@ -295,30 +304,41 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
 
   private Dimension getScaledDimension() {
     if (myZoomToFit) {
-      final Dimension panelSize = getParent().getSize();
-      if (myImage.getWidth() <= panelSize.width && myImage.getHeight() <= panelSize.height) {
+      final double panelSizeHeight = getPanelHeight() - myMessagesPanel.getSize().getHeight() -
+                                     myTitlePanel.getSize().getHeight();
+      final double panelWidth = getPanelWidth();
+
+      if (myImage.getWidth() <= panelWidth && myImage.getHeight() <= panelSizeHeight) {
         return new Dimension(myImage.getWidth(), myImage.getHeight());
       }
 
-      if (myImage.getWidth() <= panelSize.width) {
-        final double f = panelSize.getHeight() / myImage.getHeight();
+      if (myImage.getWidth() <= panelWidth) {
+        final double f = panelSizeHeight / myImage.getHeight();
         return new Dimension((int)(myImage.getWidth() * f), (int)(myImage.getHeight() * f));
       }
-      else if (myImage.getHeight() <= panelSize.height) {
-        final double f = panelSize.getWidth() / myImage.getWidth();
+      else if (myImage.getHeight() <= panelSizeHeight) {
+        final double f = panelWidth / myImage.getWidth();
         return new Dimension((int)(myImage.getWidth() * f), (int)(myImage.getHeight() * f));
       }
 
-      double f = panelSize.getWidth() / myImage.getWidth();
+      double f = panelWidth / myImage.getWidth();
       int candidateWidth = (int)(myImage.getWidth() * f);
       int candidateHeight = (int)(myImage.getHeight() * f);
-      if (candidateWidth <= panelSize.getWidth() && candidateHeight <= panelSize.getHeight()) {
+      if (candidateWidth <= panelWidth && candidateHeight <= panelSizeHeight) {
         return new Dimension(candidateWidth, candidateHeight);
       }
-      f = panelSize.getHeight() / myImage.getHeight();
+      f = panelSizeHeight / myImage.getHeight();
       return new Dimension((int)(myImage.getWidth() * f), (int)(myImage.getHeight() * f));
     }
     return new Dimension((int)(myImage.getWidth() * myZoomFactor), (int)(myImage.getHeight() * myZoomFactor));
+  }
+
+  private double getPanelHeight() {
+    return getParent().getParent().getSize().getHeight() - 5;
+  }
+
+  private double getPanelWidth() {
+    return getParent().getParent().getSize().getWidth() - 5;
   }
 
   private void setZoomFactor(double zoomFactor) {
@@ -346,7 +366,7 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
   }
 
   private double getMinZoomFactor() {
-    return Math.min(1.0, (double)getParent().getWidth() / (double)myImage.getWidth());
+    return Math.min(1.0, getPanelWidth() / (double)myImage.getWidth());
   }
 
   public void zoomIn() {
@@ -386,7 +406,7 @@ public class AndroidLayoutPreviewPanel extends JPanel implements Disposable {
   public void dispose() {
   }
 
-  private class MyImagePanelWrapper extends JLayeredPane {
+  private class MyImagePanelWrapper extends JBLayeredPane {
     public MyImagePanelWrapper() {
       add(myImagePanel);
     }

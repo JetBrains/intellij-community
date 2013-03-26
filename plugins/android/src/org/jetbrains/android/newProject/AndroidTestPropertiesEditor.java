@@ -18,6 +18,7 @@ package org.jetbrains.android.newProject;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
@@ -50,12 +51,17 @@ public class AndroidTestPropertiesEditor {
     if (module == null) {
       throw new ConfigurationException(AndroidBundle.message("android.wizard.specify.tested.module.error"));
     }
-    else if (AndroidFacet.getInstance(module) == null) {
+    final AndroidFacet facet = AndroidFacet.getInstance(module);
+    if (facet == null) {
       throw new ConfigurationException(AndroidBundle.message("android.wizard.tested.module.without.facet.error"));
     }
     String moduleDirPath = AndroidRootUtil.getModuleDirPath(module);
     if (moduleDirPath == null) {
       throw new ConfigurationException(AndroidBundle.message("android.wizard.cannot.find.module.parent.dir.error", module.getName()));
+    }
+    final VirtualFile mainContentRoot = AndroidRootUtil.getMainContentRoot(facet);
+    if (mainContentRoot == null) {
+      throw new ConfigurationException(AndroidBundle.message("android.wizard.cannot.find.main.content.root.error", module.getName()));
     }
   }
 
