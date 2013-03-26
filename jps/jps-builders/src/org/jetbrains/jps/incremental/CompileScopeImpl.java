@@ -41,7 +41,7 @@ public class CompileScopeImpl extends CompileScope {
   public CompileScopeImpl(Collection<? extends BuildTargetType<?>> types,
                           Collection<? extends BuildTargetType<?>> typesToForceBuild,
                           Collection<BuildTarget<?>> targets,
-                          Map<BuildTarget<?>, Set<File>> files) {
+                          @NotNull Map<BuildTarget<?>, Set<File>> files) {
     myTypes = types;
     myTypesToForceBuild = new HashSet<BuildTargetType<?>>();
     boolean forceBuildAllModuleBasedTargets = false;
@@ -68,12 +68,12 @@ public class CompileScopeImpl extends CompileScope {
   @Override
   public boolean isBuildForced(@NotNull BuildTarget<?> target) {
     BuildTargetType<?> type = target.getTargetType();
-    return myTypesToForceBuild.contains(type) && (myTypes.contains(type) || myTargets.contains(target) || isAffectedByAssociatedModule(target));
+    return myTypesToForceBuild.contains(type) && myFiles.get(target) == null &&(myTypes.contains(type) || myTargets.contains(target) || isAffectedByAssociatedModule(target));
   }
 
   @Override
   public boolean isBuildForcedForAllTargets(@NotNull BuildTargetType<?> targetType) {
-    return myTypesToForceBuild.contains(targetType) && myTypes.contains(targetType);
+    return myTypesToForceBuild.contains(targetType) && myTypes.contains(targetType) && myFiles.isEmpty();
   }
 
   @Override
@@ -86,11 +86,11 @@ public class CompileScopeImpl extends CompileScope {
     if (myFiles.isEmpty()) {//optimization
       return true;
     }
-    if (myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target)) {
-      return true;
-    }
     final Set<File> files = myFiles.get(target);
-    return files != null && files.contains(file);
+    if (files != null) {
+      return files.contains(file);
+    }
+    return myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target);
   }
 
   private boolean isAffectedByAssociatedModule(BuildTarget<?> target) {

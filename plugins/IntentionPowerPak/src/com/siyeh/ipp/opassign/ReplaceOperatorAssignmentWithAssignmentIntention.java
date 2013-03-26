@@ -1,5 +1,5 @@
 /*
- * Copyright 2007-2012 Bas Leijdekkers
+ * Copyright 2007-2013 Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package com.siyeh.ipp.opassign;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -28,22 +27,23 @@ import org.jetbrains.annotations.NotNull;
 import java.util.HashMap;
 import java.util.Map;
 
-public class ReplaceOperatorAssignmentWithAssignmentIntention
-  extends MutablyNamedIntention {
+public class ReplaceOperatorAssignmentWithAssignmentIntention extends MutablyNamedIntention {
 
-  private static final Map<IElementType, IElementType> tokenMap = new HashMap<IElementType, IElementType>() {{
-    put(JavaTokenType.PLUSEQ, JavaTokenType.PLUS);
-    put(JavaTokenType.MINUSEQ, JavaTokenType.MINUS);
-    put(JavaTokenType.ASTERISKEQ, JavaTokenType.ASTERISK);
-    put(JavaTokenType.DIVEQ, JavaTokenType.DIV);
-    put(JavaTokenType.ANDEQ, JavaTokenType.AND);
-    put(JavaTokenType.OREQ, JavaTokenType.OR);
-    put(JavaTokenType.XOREQ, JavaTokenType.XOR);
-    put(JavaTokenType.PERCEQ, JavaTokenType.PERC);
-    put(JavaTokenType.LTLTEQ, JavaTokenType.LTLT);
-    put(JavaTokenType.GTGTEQ, JavaTokenType.GTGT);
-    put(JavaTokenType.GTGTGTEQ, JavaTokenType.GTGTGT);
-  }};
+  private static final Map<IElementType, IElementType> tokenMap = new HashMap<IElementType, IElementType>();
+
+  static {
+    tokenMap.put(JavaTokenType.PLUSEQ, JavaTokenType.PLUS);
+    tokenMap.put(JavaTokenType.MINUSEQ, JavaTokenType.MINUS);
+    tokenMap.put(JavaTokenType.ASTERISKEQ, JavaTokenType.ASTERISK);
+    tokenMap.put(JavaTokenType.DIVEQ, JavaTokenType.DIV);
+    tokenMap.put(JavaTokenType.ANDEQ, JavaTokenType.AND);
+    tokenMap.put(JavaTokenType.OREQ, JavaTokenType.OR);
+    tokenMap.put(JavaTokenType.XOREQ, JavaTokenType.XOR);
+    tokenMap.put(JavaTokenType.PERCEQ, JavaTokenType.PERC);
+    tokenMap.put(JavaTokenType.LTLTEQ, JavaTokenType.LTLT);
+    tokenMap.put(JavaTokenType.GTGTEQ, JavaTokenType.GTGT);
+    tokenMap.put(JavaTokenType.GTGTGTEQ, JavaTokenType.GTGTGT);
+  }
 
   @Override
   @NotNull
@@ -53,17 +53,14 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention
 
   @Override
   protected String getTextForElement(PsiElement element) {
-    final PsiAssignmentExpression assignmentExpression =
-      (PsiAssignmentExpression)element;
+    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
     final PsiJavaToken sign = assignmentExpression.getOperationSign();
     final String operator = sign.getText();
-    return IntentionPowerPackBundle.message(
-      "replace.operator.assignment.with.assignment.intention.name",
-      operator);
+    return IntentionPowerPackBundle.message("replace.operator.assignment.with.assignment.intention.name", operator);
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) {
     final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
     final PsiJavaToken sign = assignmentExpression.getOperationSign();
     final PsiExpression lhs = assignmentExpression.getLExpression();
@@ -73,13 +70,13 @@ public class ReplaceOperatorAssignmentWithAssignmentIntention
     final String lhsText = lhs.getText();
     final String rhsText = (rhs == null) ? "" : rhs.getText();
     final boolean parentheses;
-    if (rhs instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)rhs;
+    if (rhs instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression binaryExpression = (PsiPolyadicExpression)rhs;
       final int precedence1 = ParenthesesUtils.getPrecedenceForOperator(binaryExpression.getOperationTokenType());
       final IElementType signTokenType = sign.getTokenType();
       final IElementType newOperatorToken = tokenMap.get(signTokenType);
       final int precedence2 = ParenthesesUtils.getPrecedenceForOperator(newOperatorToken);
-      parentheses = precedence1 >= precedence2 || !ParenthesesUtils.isCommutativeBinaryOperator(newOperatorToken);
+      parentheses = precedence1 >= precedence2 || !ParenthesesUtils.isCommutativeOperator(newOperatorToken);
     }
     else {
       parentheses = false;

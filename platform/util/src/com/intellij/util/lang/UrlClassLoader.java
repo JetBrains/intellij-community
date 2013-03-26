@@ -118,7 +118,7 @@ public class UrlClassLoader extends ClassLoader {
   }
 
   @Nullable
-  protected Class _findClass(final String name) {
+  protected Class _findClass(@NotNull String name) {
     Resource res = myClassPath.getResource(name.replace('.', '/').concat(CLASS_EXTENSION), false);
     if (res == null) {
       return null;

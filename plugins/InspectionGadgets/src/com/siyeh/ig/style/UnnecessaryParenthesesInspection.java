@@ -108,47 +108,19 @@ public class UnnecessaryParenthesesInspection extends BaseInspection {
     @Override
     public void visitParenthesizedExpression(PsiParenthesizedExpression expression) {
       final PsiElement parent = expression.getParent();
-      final PsiExpression child = expression.getExpression();
-      if (child == null) {
+      if (parent instanceof PsiParenthesizedExpression) {
         return;
       }
-      if (!(parent instanceof PsiExpression) || parent instanceof PsiParenthesizedExpression
-          || parent instanceof PsiArrayAccessExpression || parent instanceof PsiArrayInitializerExpression) {
-        registerError(expression);
-        return;
-      }
-      final int parentPrecedence = ParenthesesUtils.getPrecedence((PsiExpression)parent);
-      final int childPrecedence = ParenthesesUtils.getPrecedence(child);
-      if (parentPrecedence > childPrecedence) {
-        if (ignoreClarifyingParentheses) {
-          if (child instanceof PsiPolyadicExpression) {
-            if (parent instanceof PsiPolyadicExpression ||
-                parent instanceof PsiConditionalExpression ||
-                parent instanceof PsiInstanceOfExpression) {
-              return;
-            }
-          }
-          else if (child instanceof PsiInstanceOfExpression) {
-            return;
-          }
-        }
-        if (ignoreParenthesesOnConditionals) {
-          if (parent instanceof PsiConditionalExpression) {
-            final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
-            final PsiExpression condition = conditionalExpression.getCondition();
-            if (expression == condition) {
-              return;
-            }
-          }
-        }
-        registerError(expression);
-        return;
-      }
-      if (parentPrecedence == childPrecedence) {
-        if (!ParenthesesUtils.areParenthesesNeeded(expression, ignoreClarifyingParentheses)) {
-          registerError(expression);
+      if (ignoreParenthesesOnConditionals && parent instanceof PsiConditionalExpression) {
+        final PsiConditionalExpression conditionalExpression = (PsiConditionalExpression)parent;
+        final PsiExpression condition = conditionalExpression.getCondition();
+        if (expression == condition) {
           return;
         }
+      }
+      if (!ParenthesesUtils.areParenthesesNeeded(expression, ignoreClarifyingParentheses)) {
+        registerError(expression);
+        return;
       }
       super.visitParenthesizedExpression(expression);
     }

@@ -107,4 +107,9 @@ public class UnnecessaryParenthesesInspection
     final Object[] objects = {(args.length - 1), 1};
     return args.length > 0 && place.equals(args[(args.length - 1)]);// here are unnecessary parentheses inside args[...]
   }
+
+  void uu() {
+    Object info  = new Object[]{"abc"};
+    String s = (String)((Object[])info)[0];
+  }
 }

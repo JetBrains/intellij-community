@@ -63,6 +63,6 @@ public class HgGetDiffForDirTest extends HgPlatformTest {
       new HgFileRevision(myProject, new HgFile(myRepository, dirFile), r2number, "", null, "", "", null, null, null, null);
     FilePath dirPath = new FilePathImpl(dirFile, true);
     List<Change> changes = HgUtil.getDiff(myProject, myRepository, dirPath, rev1, rev2);
-    assertEquals(changes.size(), 2);
+    assertEquals(2, changes.size());
   }
 }

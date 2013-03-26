@@ -18,6 +18,7 @@ package org.jetbrains.git4idea.http;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtilRt;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.git4idea.GitExternalApp;
 
 /**
  * <p>This is a program that would be called by Git when an HTTP connection is needed, that requires authorization,
@@ -41,7 +42,7 @@ import org.jetbrains.annotations.NotNull;
  *
  * @author Kirill Likhodedov
  */
-public class GitAskPassApp {
+public class GitAskPassApp implements GitExternalApp {
 
   // STDOUT is used to provide credentials to Git process; STDERR is used to print error message to the main IDEA command line.
   @SuppressWarnings("UseOfSystemOutOrSystemErr")

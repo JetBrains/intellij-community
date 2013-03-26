@@ -445,10 +445,9 @@ public class PluginDownloader {
       return (PluginNode)downloader.getDescriptor();
     }
 
-    final PluginNode node = new PluginNode();
     final VirtualFile pluginFile = findPluginFile(downloader.myPluginUrl, host);
     if (pluginFile != null) {
-      node.setId(downloader.getPluginId());
+      final PluginNode node = new PluginNode(PluginId.getId(downloader.getPluginId()));
       node.setName(downloader.getPluginName());
       node.setVersion(downloader.getPluginVersion());
       node.setRepositoryName(host);

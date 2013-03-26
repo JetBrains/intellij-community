@@ -718,13 +718,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     final Element frameElement = new Element(FRAME_ELEMENT);
     element.addContent(frameElement);
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
-    final Project project;
-    if (projects.length > 0) {
-      project = projects[projects.length - 1];
-    }
-    else {
-      project = null;
-    }
+    final Project project = projects.length > 0 ? projects[0] : null;
 
     final IdeFrameImpl frame = getFrame(project);
     if (frame != null) {

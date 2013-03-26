@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.source;
 
+import com.intellij.psi.CommonClassNames;
 import com.intellij.util.CharTable;
 import com.intellij.util.containers.OpenTHashSet;
 import com.intellij.util.text.CharArrayUtil;
@@ -23,6 +24,10 @@ import com.intellij.util.text.CharSequenceHashingStrategy;
 import com.intellij.util.text.CharSequenceSubSequence;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.lang.reflect.Field;
+import java.lang.reflect.Modifier;
 
 /**
  * @author max
@@ -44,7 +49,7 @@ public class CharTableImpl implements CharTable {
 
   @NotNull
   public CharSequence doIntern(@NotNull CharSequence text) {
-    CharSequence interned = STATIC_ENTRIES.get(text);
+    CharSequence interned = getStaticInterned(text.toString());
     if (interned != null) {
       return interned;
     }
@@ -77,6 +82,11 @@ public class CharTableImpl implements CharTable {
     CharArrayUtil.getChars(text, buf, 0);
 
     return StringFactory.createShared(buf); // this way the .toString() doesn't create another instance (as opposed to new CharArrayCharSequence())
+  }
+
+  @Nullable
+  public static CharSequence getStaticInterned(@NotNull String text) {
+    return STATIC_ENTRIES.get(text);
   }
 
   public static void staticIntern(@NotNull String text) {
@@ -183,5 +193,23 @@ public class CharTableImpl implements CharTable {
     r.add("${");
     r.add("");
     return r;
+  }
+
+  static {
+    addStringsFromClassToStatics(CommonClassNames.class);
+  }
+  public static void addStringsFromClassToStatics(@NotNull Class aClass) {
+    for (Field field : aClass.getDeclaredFields()) {
+      if ((field.getModifiers() & Modifier.STATIC) == 0) continue;
+      if ((field.getModifiers() & Modifier.PUBLIC) == 0) continue;
+      String typeName;
+      try {
+        typeName = (String)field.get(null);
+      }
+      catch (Exception e) {
+        continue;
+      }
+      staticIntern(typeName);
+    }
   }
 }

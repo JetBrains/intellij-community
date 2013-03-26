@@ -16,6 +16,7 @@
 package com.intellij.openapi.extensions;
 
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.HashMap;
 import java.util.Map;
@@ -39,6 +40,7 @@ public class PluginId implements Comparable<PluginId> {
     return myIdString.compareTo(o.myIdString);
   }
 
+  @NotNull
   public static PluginId getId(String idString) {
     PluginId pluginId = ourRegisteredIds.get(idString);
     if (pluginId == null) {

@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,50 +17,53 @@ package com.siyeh.ipp.opassign;
 
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.IncorrectOperationException;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.base.MutablyNamedIntention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-public class ReplaceWithOperatorAssignmentIntention
-  extends MutablyNamedIntention {
+public class ReplaceWithOperatorAssignmentIntention extends MutablyNamedIntention {
 
   public String getTextForElement(PsiElement element) {
-    final PsiAssignmentExpression assignmentExpression =
-      (PsiAssignmentExpression)element;
+    final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)element;
     final PsiExpression rhs = assignmentExpression.getRExpression();
-    final PsiBinaryExpression expression =
-      (PsiBinaryExpression)PsiUtil.deparenthesizeExpression(rhs);
+    final PsiPolyadicExpression expression = (PsiPolyadicExpression)PsiUtil.deparenthesizeExpression(rhs);
     assert expression != null;
-    final PsiJavaToken sign = expression.getOperationSign();
+    final PsiJavaToken sign = expression.getTokenBeforeOperand(expression.getOperands()[1]);
+    assert sign != null;
     final String operator = sign.getText();
-    return IntentionPowerPackBundle.message(
-      "replace.assignment.with.operator.assignment.intention.name",
-      operator);
+    return IntentionPowerPackBundle.message("replace.assignment.with.operator.assignment.intention.name", operator);
   }
 
   @NotNull
   public PsiElementPredicate getElementPredicate() {
-    return new AssignmentExpressionReplaceableWithOperatorAssigment();
+    return new ReplaceableWithOperatorAssignmentPredicate();
   }
 
-  public void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
-    final PsiAssignmentExpression expression =
-      (PsiAssignmentExpression)element;
-    final PsiExpression rhs =
-      expression.getRExpression();
-    final PsiBinaryExpression binaryExpression =
-      (PsiBinaryExpression)PsiUtil.deparenthesizeExpression(rhs);
+  public void processIntention(@NotNull PsiElement element){
+    final PsiAssignmentExpression expression = (PsiAssignmentExpression)element;
+    final PsiExpression rhs = expression.getRExpression();
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)PsiUtil.deparenthesizeExpression(rhs);
+    assert polyadicExpression != null;
     final PsiExpression lhs = expression.getLExpression();
     assert rhs != null;
-    final PsiJavaToken sign = binaryExpression.getOperationSign();
-    final String operand = sign.getText();
-    final PsiExpression binaryRhs = binaryExpression.getROperand();
-    assert binaryRhs != null;
-    final String newExpression =
-      lhs.getText() + operand + '=' + binaryRhs.getText();
-    replaceExpression(newExpression, expression);
+    final PsiExpression[] operands = polyadicExpression.getOperands();
+    final PsiJavaToken sign = polyadicExpression.getTokenBeforeOperand(operands[1]);
+    assert sign != null;
+    final String signText = sign.getText();
+    final StringBuilder newExpression = new StringBuilder();
+    newExpression.append(lhs.getText()).append(signText).append('=');
+    boolean token = false;
+    for (int i = 1; i < operands.length; i++) {
+      final PsiExpression operand = operands[i];
+      if (token) {
+        newExpression.append(signText);
+      }
+      else {
+        token = true;
+      }
+      newExpression.append(operand.getText());
+    }
+    replaceExpression(newExpression.toString(), expression);
   }
 }

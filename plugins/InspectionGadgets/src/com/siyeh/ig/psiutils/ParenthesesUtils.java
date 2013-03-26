@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -259,12 +259,15 @@ public class ParenthesesUtils {
       return;
     }
     else if (parent instanceof PsiArrayAccessExpression) {
-      // use addAfter() + delete() instead of replace() to
-      // workaround automatic insertion of parentheses by psi
-      final PsiExpression newExpression = (PsiExpression)parent.addAfter(body, parenthesizedExpression);
-      parenthesizedExpression.delete();
-      removeParentheses(newExpression, ignoreClarifyingParentheses);
-      return;
+      final PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)parent;
+      if (parenthesizedExpression == arrayAccessExpression.getIndexExpression()) {
+        // use addAfter() + delete() instead of replace() to
+        // workaround automatic insertion of parentheses by psi
+        final PsiExpression newExpression = (PsiExpression)parent.addAfter(body, parenthesizedExpression);
+        parenthesizedExpression.delete();
+        removeParentheses(newExpression, ignoreClarifyingParentheses);
+        return;
+      }
     }
     final PsiExpression parentExpression = (PsiExpression)parent;
     final int parentPrecedence = getPrecedence(parentExpression);
@@ -441,18 +444,36 @@ public class ParenthesesUtils {
     if (child == null) {
       return true;
     }
+    if (parent instanceof PsiArrayAccessExpression) {
+      final PsiArrayAccessExpression arrayAccessExpression = (PsiArrayAccessExpression)parent;
+      final PsiExpression indexExpression = arrayAccessExpression.getIndexExpression();
+      if (expression == indexExpression) {
+        return false;
+      }
+    }
     return areParenthesesNeeded(child, (PsiExpression)parent, ignoreClarifyingParentheses);
   }
 
-  public static boolean areParenthesesNeeded(PsiExpression expression, PsiExpression parentExpression,
-                                             boolean ignoreClarifyingParentheses) {
-    if (parentExpression instanceof PsiParenthesizedExpression || parentExpression instanceof PsiArrayAccessExpression ||
-        parentExpression instanceof PsiArrayInitializerExpression) {
+  private static boolean areParenthesesNeeded(PsiExpression expression, PsiExpression parentExpression,
+                                              boolean ignoreClarifyingParentheses) {
+    if (parentExpression instanceof PsiParenthesizedExpression || parentExpression instanceof PsiArrayInitializerExpression) {
       return false;
     }
     final int parentPrecedence = getPrecedence(parentExpression);
     final int childPrecedence = getPrecedence(expression);
     if (parentPrecedence > childPrecedence) {
+      if (ignoreClarifyingParentheses) {
+        if (expression instanceof PsiPolyadicExpression) {
+          if (parentExpression instanceof PsiPolyadicExpression ||
+              parentExpression instanceof PsiConditionalExpression ||
+              parentExpression instanceof PsiInstanceOfExpression) {
+            return true;
+          }
+        }
+        else if (expression instanceof PsiInstanceOfExpression) {
+          return true;
+        }
+      }
       return false;
     }
     if (parentExpression instanceof PsiPolyadicExpression && expression instanceof PsiPolyadicExpression) {
@@ -484,9 +505,11 @@ public class ParenthesesUtils {
         }
       }
       final IElementType parentOperator = parentPolyadicExpression.getOperationTokenType();
-      final IElementType childOperator = childPolyadicExpression.getOperationTokenType();
-      if (ignoreClarifyingParentheses && !childOperator.equals(parentOperator)) {
-        return true;
+      if (ignoreClarifyingParentheses) {
+        final IElementType childOperator = childPolyadicExpression.getOperationTokenType();
+        if (!childOperator.equals(parentOperator)) {
+          return true;
+        }
       }
       final PsiExpression[] parentOperands = parentPolyadicExpression.getOperands();
       if (!PsiTreeUtil.isAncestor(parentOperands[0], expression, false)) {
@@ -494,8 +517,7 @@ public class ParenthesesUtils {
           return true;
         }
       }
-      return false;
     }
-    return parentPrecedence != childPrecedence;
+    return parentPrecedence < childPrecedence;
   }
 }

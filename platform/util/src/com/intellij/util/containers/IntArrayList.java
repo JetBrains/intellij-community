@@ -185,7 +185,7 @@ public class IntArrayList implements Cloneable {
     mySize = 0;
   }
 
-  protected void removeRange(int fromIndex, int toIndex) {
+  public void removeRange(int fromIndex, int toIndex) {
     int numMoved = mySize - toIndex;
     System.arraycopy(myData, toIndex, myData, fromIndex, numMoved);
     mySize -= toIndex - fromIndex;

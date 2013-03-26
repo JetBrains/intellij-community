@@ -951,14 +951,13 @@ public class HighlightUtil extends HighlightUtilBase {
           final String message = JavaErrorMessages.message("illegal.line.end.in.character.literal");
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
-        final StringBuilder chars = StringBuilderSpinAllocator.alloc();
+        StringBuilder chars = new StringBuilder();
         final boolean success = PsiLiteralExpressionImpl.parseStringCharacters(text, chars, null);
         if (!success) {
           final String message = JavaErrorMessages.message("illegal.escape.character.in.character.literal");
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         }
-        final int length = chars.length();
-        StringBuilderSpinAllocator.dispose(chars);
+        int length = chars.length();
         if (length > 1) {
           final String message = JavaErrorMessages.message("too.many.characters.in.character.literal");
           final HighlightInfo info =

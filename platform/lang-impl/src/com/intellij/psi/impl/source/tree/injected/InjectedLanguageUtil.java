@@ -352,8 +352,6 @@ public class InjectedLanguageUtil {
         }
       }
     }
-    //FileDocumentManagerImpl.registerDocument(null, virtualFile);
-    //FileDocumentManagerImpl.registerDocument(documentWindow, null);
   }
 
 

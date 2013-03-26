@@ -16,14 +16,15 @@
 package com.siyeh.ipp.exceptions;
 
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.List;
+import static com.intellij.psi.PsiAnnotation.TargetType;
 
-public class SplitMulticatchIntention extends Intention {
+public class SplitMultiCatchIntention extends Intention {
 
   @NotNull
   @Override
@@ -32,8 +33,7 @@ public class SplitMulticatchIntention extends Intention {
   }
 
   @Override
-  protected void processIntention(@NotNull PsiElement element)
-    throws IncorrectOperationException {
+  protected void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     final PsiElement parent = element.getParent();
     if (!(parent instanceof PsiCatchSection)) {
       return;
@@ -51,22 +51,28 @@ public class SplitMulticatchIntention extends Intention {
     if (!(type instanceof PsiDisjunctionType)) {
       return;
     }
-    final PsiDisjunctionType disjunctionType = (PsiDisjunctionType)type;
-    final List<PsiType> disjunctions = disjunctionType.getDisjunctions();
-    final PsiElementFactory factory =
-      JavaPsiFacade.getElementFactory(element.getProject());
-    for (PsiType disjunction : disjunctions) {
+
+    final PsiModifierList modifierList = parameter.getModifierList();
+    if (modifierList != null) {
+      for (PsiAnnotation annotation : modifierList.getAnnotations()) {
+        if (PsiImplUtil.findApplicableTarget(annotation, TargetType.TYPE_USE) == TargetType.TYPE_USE) {
+          annotation.delete();
+        }
+      }
+    }
+
+    final PsiElementFactory factory = JavaPsiFacade.getElementFactory(element.getProject());
+    for (PsiType disjunction : ((PsiDisjunctionType)type).getDisjunctions()) {
       final PsiCatchSection copy = (PsiCatchSection)catchSection.copy();
       final PsiParameter copyParameter = copy.getParameter();
-      if (copyParameter == null) {
-        continue;
-      }
+      assert copyParameter != null : copy.getText();
       final PsiTypeElement typeElement = copyParameter.getTypeElement();
-      final PsiTypeElement newTypeElement =
-        factory.createTypeElement(disjunction);
+      assert typeElement != null : copyParameter.getText();
+      final PsiTypeElement newTypeElement = factory.createTypeElement(disjunction);
       typeElement.replace(newTypeElement);
       grandParent.addBefore(copy, catchSection);
     }
+
     catchSection.delete();
   }
 }

@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeInspection.resources;
 
+import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
@@ -121,6 +122,7 @@ public class TypeCustomizerInspection extends BaseInspection {
         final String path = VfsUtilCore.getRelativePath(virtualFile, sourceRoot, '/');
         final String sourceRootPath = VfsUtilCore.getRelativePath(sourceRoot, projectRoot, '/');
         CompilerConfiguration.getInstance(project).addResourceFilePattern(sourceRootPath + ':' + path);
+        DaemonCodeAnalyzer.getInstance(project).restart(myFile);
       }
     }
   }

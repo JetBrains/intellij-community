@@ -52,6 +52,7 @@ import java.util.List;
 public class FileReferenceQuickFixProvider {
   private FileReferenceQuickFixProvider() {}
 
+  @NotNull
   public static List<? extends LocalQuickFix> registerQuickFix(final HighlightInfo info, final FileReference reference) {
     final FileReferenceSet fileReferenceSet = reference.getFileReferenceSet();
     int index = reference.getIndex();

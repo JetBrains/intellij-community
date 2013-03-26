@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,12 +15,16 @@
  */
 package com.intellij.codeInsight.intention;
 
-
 import com.intellij.pom.java.LanguageLevel
 import com.intellij.testFramework.IdeaTestUtil
 import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
 
 public class AddImportActionTest extends LightCodeInsightFixtureTestCase {
+  @Override
+  protected void tearDown() {
+    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.HIGHEST)
+    super.tearDown()
+  }
 
   public void testMap15() {
     IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.JDK_1_5)
@@ -42,14 +46,7 @@ public class Foo {
 '''
   }
 
-  @Override
-  protected void tearDown() {
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.HIGHEST)
-    super.tearDown()
-  }
-
   public void testMapLatestLanguageLevel() {
-    IdeaTestUtil.setModuleLanguageLevel(myModule, LanguageLevel.HIGHEST)
     myFixture.configureByText 'a.java', '''\
 public class Foo {
     void foo() {
@@ -83,7 +80,6 @@ public class Foo {
     String<caret>Value sv;
 }
 '''
-
   }
 
   public void testUseContext() {
@@ -102,10 +98,61 @@ public class Foo {
     Lo<caret>g l = bar.LogFactory.log();
 }
 '''
+  }
 
+  public void testAnnotatedImport() {
+    myFixture.configureByText 'a.java', '''
+import java.lang.annotation.*;
+
+@Target(ElementType.TYPE_USE) @interface TA { }
+
+class Test {
+    @TA Collection<caret> c;
+}
+'''
+    importClass();
+    myFixture.checkResult '''
+import java.lang.annotation.*;
+import java.util.Collection;
+
+@Target(ElementType.TYPE_USE) @interface TA { }
+
+class Test {
+    @TA
+    Collection<caret> c;
+}
+'''
+  }
+
+  public void testAnnotatedQualifiedImport() {
+    myFixture.configureByText 'a.java', '''
+import java.lang.annotation.*;
+
+@Target(ElementType.TYPE_USE) @interface TA { }
+
+class Test {
+    java.util.@TA Collection<caret> c;
+}
+'''
+    reimportClass();
+    myFixture.checkResult '''
+import java.lang.annotation.*;
+import java.util.Collection;
+
+@Target(ElementType.TYPE_USE) @interface TA { }
+
+class Test {
+    @TA
+    Collection<caret> c;
+}
+'''
   }
 
   private def importClass() {
     myFixture.launchAction(myFixture.findSingleIntention("Import Class"))
+  }
+
+  private def reimportClass() {
+    myFixture.launchAction(myFixture.findSingleIntention("Replace qualified name with 'import'"))
   }
 }
