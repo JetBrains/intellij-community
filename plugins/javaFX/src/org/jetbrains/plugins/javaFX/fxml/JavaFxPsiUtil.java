@@ -406,15 +406,12 @@ public class JavaFxPsiUtil {
 
   public static String isAbleToInstantiate(final PsiClass psiClass) {
     if(psiClass.getConstructors().length > 0) {
-      final Project project = psiClass.getProject();
-      final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);
-      final PsiMethod noArgConstructor = psiClass
-        .findMethodBySignature(factory.createConstructor(psiClass.getName()), false);
-      if (noArgConstructor == null) {
-        final PsiMethod valueOf = findValueOfMethod(psiClass);
-        if (valueOf == null) {
-          if (!hasBuilder(psiClass)) return "Unable to instantiate";
-        }
+      for (PsiMethod constr : psiClass.getConstructors()) {
+        if (constr.getParameterList().getParametersCount() == 0) return null;
+      }
+      final PsiMethod valueOf = findValueOfMethod(psiClass);
+      if (valueOf == null) {
+        if (!hasBuilder(psiClass)) return "Unable to instantiate";
       }
     }
     return null;
