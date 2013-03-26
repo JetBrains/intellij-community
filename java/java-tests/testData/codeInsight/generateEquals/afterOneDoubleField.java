@@ -13,7 +13,7 @@ class Test {
     }
 
     public int hashCode() {
-        final long temp = d != +0.0d ? Double.doubleToLongBits(d) : 0L;
+        final long temp = Double.doubleToLongBits(d);
         return (int) (temp ^ (temp >>> 32));
     }
 }
