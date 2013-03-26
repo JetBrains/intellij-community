@@ -257,7 +257,8 @@ public class DataFlowRunner {
       if (myClassParent == anchor) {
         DfaMemoryStateImpl copy = (DfaMemoryStateImpl)memState.createCopy();
         copy.flushFields(runner);
-        for (DfaVariableValue value : copy.getVariableStates().keySet()) {
+        Set<DfaVariableValue> vars = new HashSet<DfaVariableValue>(copy.getVariableStates().keySet());
+        for (DfaVariableValue value : vars) {
           copy.flushDependencies(value);
         }
 
