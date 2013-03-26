@@ -79,7 +79,13 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
       }
       return ArrayUtil.toStringArray(enumConstants);
     }
-    return null;
+
+    final String propertyQName = getBoxedPropertyType(getDeclaration());
+    if (CommonClassNames.JAVA_LANG_FLOAT.equals(propertyQName) || CommonClassNames.JAVA_LANG_DOUBLE.equals(propertyQName)) {
+      return new String[] {"Infinity", "-Infinity", "NaN",  "-NaN"};
+    }
+
+    return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
   protected boolean isConstant(PsiField enumField) {
@@ -140,7 +146,7 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
           final XmlAttributeDescriptor attributeDescriptor = ((XmlAttribute)parent).getDescriptor();
           if (attributeDescriptor != null) {
             final PsiElement declaration = attributeDescriptor.getDeclaration();
-            final String boxedQName = getBoxedPropertyType(context, declaration);
+            final String boxedQName = getBoxedPropertyType(declaration);
             if (boxedQName != null) {
               try {
                 final Class<?> aClass = Class.forName(boxedQName);
@@ -164,14 +170,10 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
   }
 
   @Nullable
-  private static String getBoxedPropertyType(XmlElement context, PsiElement declaration) {
+  private static String getBoxedPropertyType(PsiElement declaration) {
     PsiType attrType = null;
     if (declaration instanceof PsiField) {
-      attrType = ((PsiField)declaration).getType();
-      if (InheritanceUtil.isInheritor(attrType, JavaFxCommonClassNames.JAVAFX_BEANS_VALUE_OBSERVABLE_VALUE)) {
-        attrType = JavaFxPsiUtil
-          .getWrappedPropertyType((PsiField)declaration, context.getProject(), JavaFxCommonClassNames.ourWritableMap);
-      }
+      attrType = JavaFxPsiUtil.getWrappedPropertyType((PsiField)declaration, declaration.getProject(), JavaFxCommonClassNames.ourWritableMap);
     } else if (declaration instanceof PsiMethod) {
       final PsiParameter[] parameters = ((PsiMethod)declaration).getParameterList().getParameters();
       if (parameters.length == 2) {
