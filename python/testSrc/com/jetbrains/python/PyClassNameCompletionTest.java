@@ -1,6 +1,7 @@
 package com.jetbrains.python;
 
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.fixtures.PyTestCase;
 
@@ -59,7 +60,7 @@ public class PyClassNameCompletionTest extends PyTestCase {
     myFixture.configureFromTempProjectFile(getTestName(true) + ".py");
     myFixture.complete(CompletionType.BASIC, 2);
     if (myFixture.getLookupElements() != null) {
-      myFixture.finishLookup();
+      myFixture.finishLookup(Lookup.NORMAL_SELECT_CHAR);
     }
     myFixture.checkResultByFile(path + "/" + getTestName(true) + ".after.py", true);
   }
