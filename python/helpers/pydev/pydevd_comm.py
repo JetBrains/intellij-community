@@ -359,8 +359,11 @@ class WriterThread(PyDBDaemonThread):
                         cmd = self.cmdQueue.get(1, 0.1)
                     except PydevQueue.Empty:
                         if self.killReceived:
-                            self.sock.shutdown(SHUT_WR)
-                            self.sock.close()
+                            try:
+                                self.sock.shutdown(SHUT_WR)
+                                self.sock.close()
+                            except:
+                                pass
                             self.stop() #mark thread as stopped to unblock joined threads for sure (they can hang otherwise)
 
                             return #break if queue is empty and killReceived
