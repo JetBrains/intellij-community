@@ -219,6 +219,7 @@ public class NotificationsManagerImpl extends NotificationsManager {
 
             if (!sticky) {
               ((BalloonImpl)balloon).startFadeoutTimer(15000);
+              ((BalloonImpl)balloon).setHideOnClickOutside(true);
             }
             else //noinspection ConstantConditions
               if (noProjects) {
