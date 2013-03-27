@@ -25,9 +25,7 @@ import org.jdom.input.SAXBuilder;
 import java.awt.image.BufferedImage;
 import java.io.*;
 import java.nio.charset.Charset;
-import java.util.HashMap;
-import java.util.Map;
-import java.util.Properties;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -117,6 +115,9 @@ public class LauncherGeneratorMain {
       System.exit(8);
     }
 
+    String companyName = appInfo.getRootElement().getChild("company").getAttributeValue("name");
+    int year = new GregorianCalendar().get(Calendar.YEAR);
+
     LauncherGenerator generator = new LauncherGenerator(template, new File(args[4]));
     try {
       generator.load();
@@ -133,6 +134,8 @@ public class LauncherGeneratorMain {
 
       generator.injectBitmap(resourceIDs.get("IDB_SPLASH"), splashBmpStream.toByteArray());
       generator.injectIcon(resourceIDs.get("IDI_WINLAUNCHER"), iconStream);
+
+      generator.setVersionInfoString("LegalCopyright", "Copyright (C) 2000-" + year + " " + companyName);
 
       generator.generate();
     } catch (IOException e) {

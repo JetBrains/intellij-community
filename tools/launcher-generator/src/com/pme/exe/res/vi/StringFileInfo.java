@@ -26,4 +26,8 @@ public class StringFileInfo extends VersionInfoBin {
       }
     });
   }
+
+  public StringTable getFirstStringTable() {
+    return (StringTable) getMember("StringTable0");
+  }
 }

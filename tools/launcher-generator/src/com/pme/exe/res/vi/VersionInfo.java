@@ -23,11 +23,14 @@ import java.io.DataInput;
 import java.io.IOException;
 
 public class VersionInfo extends VersionInfoBin {
+  private final StringFileInfo myStringFileInfo;
+
   public VersionInfo() {
     super("VersionInfo", "VS_VERSION_INFO");
     addMember(new FixedFileInfo());
     addMember(new Padding(4));
-    addMember(new StringFileInfo());
+    myStringFileInfo = new StringFileInfo();
+    addMember(myStringFileInfo);
     addMember(new VarFileInfo());
   }
 
@@ -44,5 +47,9 @@ public class VersionInfo extends VersionInfoBin {
       assert startOffset + length == offset: "Length specified in version info header (" + length +
           ") does not match actual version info length (" + (offset - startOffset) + ")";
     }
+  }
+
+  public StringFileInfo getStringFileInfo() {
+    return myStringFileInfo;
   }
 }

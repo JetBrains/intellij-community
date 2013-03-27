@@ -4,7 +4,9 @@ import com.pme.exe.Bin;
 import com.pme.util.OffsetTrackingInputStream;
 
 import java.io.DataInput;
+import java.io.DataOutput;
 import java.io.IOException;
+import java.io.RandomAccessFile;
 
 /**
  * @author yole
@@ -52,6 +54,23 @@ public class VersionInfoBin extends Bin.Structure {
         child.read(inputStream);
         addMember(child);
       }
+    }
+  }
+
+  @Override
+  public void write(DataOutput stream) throws IOException {
+    long startOffset = -1;
+    if (stream instanceof RandomAccessFile) {
+      startOffset = ((RandomAccessFile) stream).getFilePointer();
+      assert startOffset % 4 == 0;
+    }
+    super.write(stream);
+    if (stream instanceof RandomAccessFile) {
+      long offset = ((RandomAccessFile) stream).getFilePointer();
+      long realLength = offset - startOffset;
+      long expectedLength = getValue("wLength");
+      assert realLength == expectedLength: "Actual length does not match calculated length for " + getName() +
+          ": expected " + expectedLength + ", actual " + realLength + ", sizeInBytes() " + sizeInBytes();
     }
   }
 }

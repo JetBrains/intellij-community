@@ -27,6 +27,7 @@ import com.pme.exe.res.RawResource;
 import com.pme.exe.res.ResourceSectionReader;
 import com.pme.exe.res.StringTableDirectory;
 import com.pme.exe.res.icon.IconResourceInjector;
+import com.pme.exe.res.vi.StringTable;
 import com.pme.exe.res.vi.VersionInfo;
 import com.pme.util.OffsetTrackingInputStream;
 
@@ -48,7 +49,6 @@ public class LauncherGenerator {
     myTemplate = template;
     myExePath = exePath;
   }
-
 
   public void load() throws  IOException {
     myReader = new ExeReader(myTemplate.getName());
@@ -80,13 +80,29 @@ public class LauncherGenerator {
     myReader.write(exeStream);
     exeStream.close();
 
-    RandomAccessFile versionInfoStream = new RandomAccessFile(myExePath + ".version", "rw");
-    myVersionInfo.resetOffsets(0);
-    myVersionInfo.write(versionInfoStream);
+    String versionInfoPath = myExePath + ".version";
+    RandomAccessFile versionInfoStream = new RandomAccessFile(versionInfoPath, "rw");
+    try {
+      myVersionInfo.resetOffsets(0);
+      myVersionInfo.write(versionInfoStream);
+    }
+    finally {
+      versionInfoStream.close();
+    }
+
+    VersionInfo copy = new VersionInfo();
+    copy.read(new OffsetTrackingInputStream(new DataInputStream(new FileInputStream(versionInfoPath))));
   }
 
   public void setResourceString(int id, String value) {
     myStringTableDirectory.setString(id, value);
+  }
+
+  public void setVersionInfoString(String key, String value) {
+    StringTable stringTable = myVersionInfo.getStringFileInfo().getFirstStringTable();
+    if (stringTable != null) {
+      stringTable.setStringValue(key, value);
+    }
   }
 
   public void injectBitmap(int id, byte[] bitmapData) {

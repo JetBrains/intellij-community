@@ -61,8 +61,12 @@ public abstract class Bin {
 
   public void resetOffsets(long offset) {
     myOffset = offset;
+    updateSizeOffsetHolders();
+  }
+
+  protected void updateSizeOffsetHolders() {
     for (Value holder : myOffsetHolders) {
-      holder.setValue(offset);
+      holder.setValue(myOffset);
     }
     for (Value holder : mySizeHolders) {
       holder.setValue(sizeInBytes());
@@ -127,6 +131,7 @@ public abstract class Bin {
         bin.resetOffsets(offset);
         offset = offset + bin.sizeInBytes();
       }
+      updateSizeOffsetHolders();
     }
 
     public void copyFrom(Bin binStructure) {
@@ -187,7 +192,7 @@ public abstract class Bin {
     }
 
     public Bin getMember(String name) {
-      return (Bin) myMembersMap.get(name);
+      return myMembersMap.get(name);
     }
 
     public Bin.Value getValueMember(String name) {
@@ -389,6 +394,10 @@ public abstract class Bin {
 
     @Override
     public void write(DataOutput stream) throws IOException {
+      int skip = bytesToSkip(getOffset());
+      for (int i = 0; i < skip; i++) {
+        stream.writeByte(0);
+      }
     }
 
     @Override
@@ -502,6 +511,10 @@ public abstract class Bin {
 
     public String getValue() {
       return myValue;
+    }
+
+    public void setValue(String value) {
+      myValue = value;
     }
   }
 

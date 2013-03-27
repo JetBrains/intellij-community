@@ -17,6 +17,8 @@
 
 package com.pme.exe.res.vi;
 
+import com.pme.exe.Bin;
+
 public class StringTable extends VersionInfoBin {
 
   public StringTable(String name) {
@@ -26,5 +28,16 @@ public class StringTable extends VersionInfoBin {
         return new StringTableEntry();
       }
     });
+  }
+
+  public void setStringValue(String key, String value) {
+    for (Bin bin : getMembers()) {
+      if (bin.getName().equals(key)) {
+        StringTableEntry entry = (StringTableEntry) bin;
+        ((WChar) entry.getMember("Value")).setValue(value);
+        return;
+      }
+    }
+    assert false: "Could not find string with key " + key;
   }
 }
