@@ -6,6 +6,6 @@ class UseOfConstant {
         Logger logger = LoggerFactory.getLogger(UseOfConstant.class);
         final String CONST = "const";
         String var = "var";
-        logger.in<caret>fo("string " + var + CONST);
+        logger.in<caret>fo("string " + (var) + CONST);
     }
 }

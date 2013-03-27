@@ -25,6 +25,7 @@ import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.psiutils.ExpressionUtils;
+import com.siyeh.ig.psiutils.ParenthesesUtils;
 import com.siyeh.ig.psiutils.TypeUtils;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
@@ -143,7 +144,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
             final String text = operand.getText();
             final int count = StringUtil.getOccurrenceCount(text, "{}");
             for (int i = 0; i < count && usedArguments + i < arguments.length; i++) {
-              newArguments.add((PsiExpression)arguments[i + usedArguments].copy());
+              newArguments.add(ParenthesesUtils.stripParentheses((PsiExpression)arguments[i + usedArguments].copy()));
             }
             usedArguments += count;
             if (!inStringLiteral) {
@@ -167,7 +168,7 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
           }
         }
         else {
-          newArguments.add((PsiExpression)operand.copy());
+          newArguments.add(ParenthesesUtils.stripParentheses((PsiExpression)operand.copy()));
           if (!inStringLiteral) {
             if (addPlus) {
               newMethodCall.append('+');
@@ -195,13 +196,18 @@ public class StringConcatenationArgumentToLogCallInspection extends BaseInspecti
           else {
             comma =true;
           }
-          newMethodCall.append(newArgument.getText());
+          if (newArgument != null) {
+            newMethodCall.append(newArgument.getText());
+          }
         }
         newMethodCall.append('}');
       }
       else {
         for (PsiExpression newArgument : newArguments) {
-          newMethodCall.append(',').append(newArgument.getText());
+          newMethodCall.append(',');
+          if (newArgument != null) {
+            newMethodCall.append(newArgument.getText());
+          }
         }
       }
       newMethodCall.append(')');
