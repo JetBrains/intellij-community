@@ -163,8 +163,8 @@ public class PyUnionType implements PyType {
   /**
    * Excludes all subtypes of type from the union
    *
-   * @param type type to exclude. If type is a union all subtypes of union members will be excluded from the union
-   *             If type is null only null will be excluded from the union.
+   * @param type    type to exclude. If type is a union all subtypes of union members will be excluded from the union
+   *                If type is null only null will be excluded from the union.
    * @param context
    * @return union with excluded types
    */
@@ -184,6 +184,11 @@ public class PyUnionType implements PyType {
       }
     }
     return union(members);
+  }
+
+  @Nullable
+  public PyType excludeNull() {
+    return exclude(null, null);
   }
 
   private static PyType unit(@Nullable PyType type) {

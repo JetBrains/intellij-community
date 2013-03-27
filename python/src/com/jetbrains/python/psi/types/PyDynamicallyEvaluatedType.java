@@ -30,4 +30,10 @@ public class PyDynamicallyEvaluatedType extends PyUnionType {
     }
     return new PyDynamicallyEvaluatedType(members);
   }
+
+  @Override
+  public String getName() {
+    PyType res = excludeNull();
+    return res != null ? res.getName() : "unknown";
+  }
 }
