@@ -291,6 +291,10 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testReferencePosition() throws Exception {
+    doTest();
+  }
+
   public void testInjectedControllerFields() throws Exception {
     myFixture.addFileToProject("sample.fxml", "<?xml version=\"1.0\" encoding=\"UTF-8\"?>\n" +
                                               "<?import javafx.scene.control.*?>\n" +
