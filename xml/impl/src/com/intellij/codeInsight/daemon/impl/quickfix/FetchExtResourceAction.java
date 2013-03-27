@@ -250,7 +250,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
           resourceUrls.add(s);
         }
 
-        final List<String> newLinks = extractEmbeddedFileReferences(virtualFile, contextFile, psiManager);
+        final Set<String> newLinks = extractEmbeddedFileReferences(virtualFile, contextFile, psiManager);
         for (String u : newLinks) {
           baseUrls.put(u, resourceUrl);
           if (!processedLinks.contains(u)) linksToProcess.add(u);
@@ -390,8 +390,8 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     return true;
   }
 
-  private static List<String> extractEmbeddedFileReferences(XmlFile file, XmlFile context) {
-    final List<String> result = new LinkedList<String>();
+  private static Set<String> extractEmbeddedFileReferences(XmlFile file, XmlFile context) {
+    final Set<String> result = new LinkedHashSet<String>();
     if (context != null) {
       XmlEntityRefImpl.copyEntityCaches(file, context);
     }
@@ -425,23 +425,13 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
             String schemaLocation = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
 
             if (schemaLocation != null) {
-              final PsiReference[] references = tag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT, null).getValueElement().getReferences();
+              final PsiReference[] references = tag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT).getValueElement().getReferences();
               if (references.length > 0) {
-                final String namespace = tag.getAttributeValue("namespace");
-
-                if (namespace != null && schemaLocation.indexOf('/') == -1) {
-                  result.add(namespace.substring(0, namespace.lastIndexOf('/') + 1) + schemaLocation);
-                }
-                else {
-                  result.add(schemaLocation);
-                }
+                result.add(schemaLocation);
               }
             }
-
-            final String prefix = tag.getPrefixByNamespace(XmlUtil.XML_SCHEMA_INSTANCE_URI);
-            if (prefix != null) {
+            else {
               schemaLocation = tag.getAttributeValue("schemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
-
               if (schemaLocation != null) {
                 final StringTokenizer tokenizer = new StringTokenizer(schemaLocation);
 
@@ -449,10 +439,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
                   tokenizer.nextToken();
                   if (!tokenizer.hasMoreTokens()) break;
                   String location = tokenizer.nextToken();
-
-                  if (!result.contains(location)) {
-                    result.add(location);
-                  }
+                  result.add(location);
                 }
               }
             }
@@ -467,10 +454,10 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     return result;
   }
 
-  public static List<String> extractEmbeddedFileReferences(final VirtualFile vFile, @Nullable final VirtualFile contextVFile, final PsiManager psiManager) {
-    return ApplicationManager.getApplication().runReadAction(new Computable<List<String>>() {
+  public static Set<String> extractEmbeddedFileReferences(final VirtualFile vFile, @Nullable final VirtualFile contextVFile, final PsiManager psiManager) {
+    return ApplicationManager.getApplication().runReadAction(new Computable<Set<String>>() {
       @Override
-      public List<String> compute() {
+      public Set<String> compute() {
         PsiFile file = psiManager.findFile(vFile);
 
         if (file instanceof XmlFile) {
@@ -478,7 +465,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
           return extractEmbeddedFileReferences((XmlFile)file, contextFile instanceof XmlFile ? (XmlFile)contextFile : null);
         }
 
-        return Collections.emptyList();
+        return Collections.emptySet();
       }
     });
   }

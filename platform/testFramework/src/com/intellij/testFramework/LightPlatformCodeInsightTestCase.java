@@ -40,6 +40,7 @@ import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.encoding.EncodingProjectManager;
@@ -133,6 +134,14 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
   @NotNull
   protected String getTestDataPath() {
     return PathManagerEx.getTestDataPath();
+  }
+
+  protected VirtualFile getVirtualFile(@NonNls String filePath) {
+    String fullPath = getTestDataPath() + filePath;
+
+    final VirtualFile vFile = LocalFileSystem.getInstance().findFileByPath(fullPath.replace(File.separatorChar, '/'));
+    assertNotNull("file " + fullPath + " not found", vFile);
+    return vFile;
   }
 
   /**
