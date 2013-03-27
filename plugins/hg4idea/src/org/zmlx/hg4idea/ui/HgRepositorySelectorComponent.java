@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.ui;
 
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.IdeBorderFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -52,9 +53,9 @@ public class HgRepositorySelectorComponent {
   }
 
   private class RepositoryDisplay {
-    private final VirtualFile repo;
+    @NotNull private final VirtualFile repo;
 
-    public RepositoryDisplay(VirtualFile repo) {
+    public RepositoryDisplay(@NotNull VirtualFile repo) {
       this.repo = repo;
     }
 
@@ -66,6 +67,11 @@ public class HgRepositorySelectorComponent {
     @Override
     public boolean equals(Object obj) {
       return obj instanceof RepositoryDisplay && this.repo.equals(((RepositoryDisplay)obj).repo);
+    }
+
+    @Override
+    public int hashCode() {
+      return repo.hashCode();
     }
   }
 
