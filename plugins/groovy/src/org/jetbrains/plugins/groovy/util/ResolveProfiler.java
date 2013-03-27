@@ -15,47 +15,69 @@
  */
 package org.jetbrains.plugins.groovy.util;
 
-import com.intellij.util.containers.ConcurrentHashMap;
-
 import java.io.FileWriter;
 import java.io.IOException;
-import java.util.Map;
+import java.util.ArrayDeque;
+import java.util.Deque;
 
 /**
  * @author Max Medvedev
  */
 public class ResolveProfiler {
-  private static final ThreadLocal<String> prefix = new ThreadLocal<String>();
+  private static final boolean DISABLED = true;
 
-  private static final Map<Thread, String> threadMap = new ConcurrentHashMap<Thread, String>();
+  private static final ThreadLocal<ThreadInfo> threadMap = new ThreadLocal<ThreadInfo>();
   private static volatile int fileCount = 0;
 
-  public static void start() {
-    final String cur = prefix.get();
-    if (cur == null) {
-      prefix.set("  ");
+  private static class ThreadInfo {
+    private final String myFileName;
+    private final Deque<Long> myTimeStack = new ArrayDeque<Long>();
+
+    private String myPrefix = "";
+
+    private ThreadInfo(String name) {
+      myFileName = name;
     }
-    else {
-      prefix.set("  " + cur);
+
+    public String getName() {
+      return myFileName;
+    }
+
+    public void start() {
+      myTimeStack.push(System.nanoTime());
+      myPrefix += "  ";
+    }
+
+    public long finish() {
+      myPrefix = myPrefix.substring(2);
+
+      final Long time = myTimeStack.pop();
+      return (System.nanoTime() - time) / 1000;
+    }
+
+    private String getPrefix() {
+      return myPrefix;
     }
   }
 
-  public static void finish() {
-    final String cur = prefix.get();
-    if (cur == null) {
-      assert false;
-    }
-    else {
-      prefix.set(cur.substring(2));
-    }
+  public static void start() {
+    if (DISABLED) return;
+    getThreadInfo().start();
+  }
+
+  public static long finish() {
+    if (DISABLED) return -1;
+    return getThreadInfo().finish();
   }
 
   public static void write(String s) {
-    String name = getName();
+    if (DISABLED) return;
+
+    final ThreadInfo threadInfo = getThreadInfo();
     try {
-      final FileWriter writer = new FileWriter(name, true);
+      final FileWriter writer = new FileWriter(threadInfo.getName(), true);
       try {
-        writer.write(prefix.get());
+        writer.write(threadInfo.getPrefix());
         writer.write(s);
         writer.write('\n');
       }
@@ -67,20 +89,20 @@ public class ResolveProfiler {
       e.printStackTrace();
     }
 
-    if (prefix.get().length() == 0) {
-      synchronized (ResolveProfiler.class) {
-        threadMap.remove(Thread.currentThread());
-      }
+    if (threadInfo.getPrefix().isEmpty()) {
+      threadMap.set(null);
     }
   }
 
-  private synchronized static String getName() {
-    String name = threadMap.get(Thread.currentThread());
-    if (name == null) {
-      name = "out" + fileCount + ".txt";
-      fileCount++;
-      threadMap.put(Thread.currentThread(), name);
+  private static ThreadInfo getThreadInfo() {
+    ThreadInfo info = threadMap.get();
+    if (info == null) {
+      synchronized (ResolveProfiler.class) {
+        info = new ThreadInfo("info/out" + fileCount + ".txt");
+        fileCount++;
+      }
+      threadMap.set(info);
     }
-    return name;
+    return info;
   }
 }
