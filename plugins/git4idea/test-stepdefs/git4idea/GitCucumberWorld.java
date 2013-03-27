@@ -121,14 +121,14 @@ public class GitCucumberWorld {
     virtualCommits = new GitTestVirtualCommitsHolder();
     myAsyncTasks = new ArrayList<Future>();
 
-    assumeSupportedGitVersion();
-
     cd(myProjectRoot);
     myRepository = createRepo(myProjectRoot);
 
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     AbstractVcs vcs = vcsManager.findVcsByName("Git");
     Assert.assertEquals(1, vcsManager.getRootsUnderVcs(vcs).length);
+
+    assumeSupportedGitVersion();
   }
 
   private static void assumeSupportedGitVersion() {
