@@ -1247,7 +1247,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
   @Override
   public <K> void scheduleRebuild(@NotNull final ID<K, ?> indexId, @NotNull final Throwable e) {
-    LOG.info(e);
     requestRebuild(indexId, new Throwable(e));
     try {
       checkRebuild(indexId, false);
@@ -1264,18 +1263,19 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     if (status.compareAndSet(REQUIRES_REBUILD, REBUILD_IN_PROGRESS)) {
       cleanupProcessedFlag();
 
+      try {
+        clearIndex(indexId);
+      } catch (StorageException ex) {
+        requestRebuild(indexId, new Throwable(ex));
+      }
+
       final Runnable rebuildRunnable = new Runnable() {
         @Override
         public void run() {
           try {
-            clearIndex(indexId);
             if (!cleanupOnly) {
               scheduleIndexRebuild(false);
             }
-          }
-          catch (StorageException e) {
-            requestRebuild(indexId);
-            LOG.info(e);
           }
           finally {
             status.compareAndSet(REBUILD_IN_PROGRESS, OK);
@@ -1581,8 +1581,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   @Override
   public void requestRebuild(ID<?, ?> indexId, Throwable throwable) {
     cleanupProcessedFlag();
-    LOG.info("Rebuild requested for index " + indexId, throwable);
-    ourRebuildStatus.get(indexId).compareAndSet(OK, REQUIRES_REBUILD);
+    boolean requiresRebuildWasSet = ourRebuildStatus.get(indexId).compareAndSet(OK, REQUIRES_REBUILD);
+    if (requiresRebuildWasSet) LOG.info("Rebuild requested for index " + indexId, throwable);
   }
 
   private <K, V> UpdatableIndex<K, V, FileContent> getIndex(ID<K, V> indexId) {
