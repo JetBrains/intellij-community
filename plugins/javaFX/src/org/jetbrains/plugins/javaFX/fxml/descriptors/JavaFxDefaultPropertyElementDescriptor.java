@@ -119,8 +119,14 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
         final XmlTag includedRoot = getIncludedRoot(context);
         if (includedRoot != null) {
           final XmlElementDescriptor includedRootDescriptor = includedRoot.getDescriptor();
-          if (includedRootDescriptor != null) {
-            Collections.addAll(descriptors, includedRootDescriptor.getAttributesDescriptors(includedRoot));
+          if (includedRootDescriptor instanceof JavaFxClassBackedElementDescriptor) {
+            ((JavaFxClassBackedElementDescriptor)includedRootDescriptor).collectInstanceProperties(descriptors);
+          } 
+          else if (includedRootDescriptor instanceof JavaFxDefaultPropertyElementDescriptor) {
+            final JavaFxClassBackedElementDescriptor includedRootTagDescriptor = ((JavaFxDefaultPropertyElementDescriptor)includedRootDescriptor).getRootTagDescriptor(includedRoot);
+            if (includedRootTagDescriptor != null) {
+              includedRootTagDescriptor.collectInstanceProperties(descriptors);
+            }
           }
         }
       }
