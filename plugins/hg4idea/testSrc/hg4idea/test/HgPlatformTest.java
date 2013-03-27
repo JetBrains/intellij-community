@@ -18,11 +18,13 @@ package hg4idea.test;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
 import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
+import org.zmlx.hg4idea.HgVcs;
 
 import java.io.File;
 import java.io.IOException;
@@ -49,8 +51,11 @@ public abstract class HgPlatformTest extends UsefulTestCase {
   protected Project myProject;
   protected VirtualFile myProjectRoot;
   protected VirtualFile myRepository;
+  protected MergeProvider myMergeProvider;
 
   private IdeaProjectTestFixture myProjectFixture;
+
+  protected static final String AFILE = "A.txt";
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected HgPlatformTest() {
@@ -72,6 +77,11 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     createRepository(myProjectRoot);
     myRepository = myProjectRoot;
     setUpHgrc(myRepository);
+
+    HgVcs vcs = HgVcs.getInstance(myProject);
+    assertNotNull(vcs);
+    myMergeProvider = vcs.getMergeProvider();
+    assertNotNull(myMergeProvider);
   }
 
   @Override
@@ -107,5 +117,4 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     hg("add file.txt");
     hg("commit -m initial");
   }
-
 }

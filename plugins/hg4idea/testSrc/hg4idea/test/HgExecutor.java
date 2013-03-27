@@ -19,7 +19,6 @@ import com.intellij.dvcs.test.Executor;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 
 import java.io.File;
 import java.util.Arrays;
@@ -65,7 +64,7 @@ public class HgExecutor extends Executor {
   }
 
   public static String hg(String command) {
-    List<String> split = StringUtil.split(command, " ");
+    List<String> split = splitCommandInParameters(command);
     split.add(0, HG_EXECUTABLE);
     log("hg " + command);
     return run(split);
