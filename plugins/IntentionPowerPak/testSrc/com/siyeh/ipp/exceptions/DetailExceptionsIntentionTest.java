@@ -4,6 +4,7 @@ import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
 /**
+ * @see DetailExceptionsIntention
  * @author Bas Leijdekkers
  */
 public class DetailExceptionsIntentionTest extends IPPTestCase {
@@ -12,6 +13,7 @@ public class DetailExceptionsIntentionTest extends IPPTestCase {
   public void testSimple() { doTest(); }
   public void testForeach() { doTest(); }
   public void testTryWithResources() { doTest(); }
+  public void testPolyadicParentheses() { doTest(); }
 
   @Override
   protected String getIntentionName() {
