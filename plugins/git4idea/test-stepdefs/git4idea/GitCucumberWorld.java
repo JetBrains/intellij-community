@@ -49,6 +49,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.dvcs.test.Executor.cd;
 import static junit.framework.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * <p>The container of test environment variables which should be visible from any step definition script.</p>
@@ -67,6 +68,7 @@ public class GitCucumberWorld {
   public static GitRepository myRepository;
   public static GitVcsSettings mySettings;
   public static ChangeListManager myChangeListManager;
+  public static GitVcs myVcs;
 
   public static MockVcsHelper myVcsHelper;
   public static TestNotificator myNotificator;
@@ -111,9 +113,12 @@ public class GitCucumberWorld {
     myVcsHelper = overrideService(myProject, AbstractVcsHelper.class, MockVcsHelper.class);
     myChangeListManager = myPlatformFacade.getChangeListManager(myProject);
     myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);
+    myVcs = GitVcs.getInstance(myProject);
 
     virtualCommits = new GitTestVirtualCommitsHolder();
     myAsyncTasks = new ArrayList<Future>();
+
+    assumeSupportedGitVersion();
 
     cd(myProjectRoot);
     myRepository = createRepo(myProjectRoot);
@@ -121,6 +126,10 @@ public class GitCucumberWorld {
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     AbstractVcs vcs = vcsManager.findVcsByName("Git");
     Assert.assertEquals(1, vcsManager.getRootsUnderVcs(vcs).length);
+  }
+
+  private static void assumeSupportedGitVersion() {
+    assumeTrue(myVcs.getVersion().isSupported());
   }
 
   @NotNull
