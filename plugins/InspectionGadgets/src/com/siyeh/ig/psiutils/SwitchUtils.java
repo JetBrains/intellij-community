@@ -18,6 +18,7 @@ package com.siyeh.ig.psiutils;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -47,7 +48,7 @@ public class SwitchUtils {
     final PsiExpression condition = statement.getCondition();
     final LanguageLevel languageLevel = PsiUtil.getLanguageLevel(statement);
     final PsiExpression possibleSwitchExpression = determinePossibleSwitchExpressions(condition, languageLevel);
-    if (possibleSwitchExpression == null || SideEffectChecker.mayHaveSideEffects(possibleSwitchExpression)) {
+    if (!canBeSwitchExpression(possibleSwitchExpression, languageLevel)) {
       return null;
     }
     int branchCount = 0;
@@ -74,8 +75,8 @@ public class SwitchUtils {
   private static boolean canBeMadeIntoCase(PsiExpression expression, PsiExpression switchExpression, LanguageLevel languageLevel) {
     expression = ParenthesesUtils.stripParentheses(expression);
     if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
-      final PsiExpression stringCaseExpression = determinePossibleStringSwitchExpression(expression);
-      if (EquivalenceChecker.expressionsAreEquivalent(switchExpression, stringCaseExpression)) {
+      final PsiExpression stringSwitchExpression = determinePossibleStringSwitchExpression(expression);
+      if (EquivalenceChecker.expressionsAreEquivalent(switchExpression, stringSwitchExpression)) {
         return true;
       }
     }
@@ -102,41 +103,8 @@ public class SwitchUtils {
     }
   }
 
-  private static PsiExpression determinePossibleSwitchExpressions(PsiExpression expression, LanguageLevel languageLevel) {
-    expression = ParenthesesUtils.stripParentheses(expression);
-    if (expression == null) {
-      return null;
-    }
-    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
-      final PsiExpression jdk17Expression = determinePossibleStringSwitchExpression(expression);
-      if (jdk17Expression != null) {
-        return jdk17Expression;
-      }
-    }
-    if (!(expression instanceof PsiPolyadicExpression)) {
-      return null;
-    }
-    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
-    final IElementType operation = polyadicExpression.getOperationTokenType();
-    final PsiExpression[] operands = polyadicExpression.getOperands();
-    if (operation.equals(JavaTokenType.OROR) && operands.length > 0) {
-      return determinePossibleSwitchExpressions(operands[0], languageLevel);
-    }
-    else if (operation.equals(JavaTokenType.EQEQ) && operands.length == 2) {
-      final PsiExpression lhs = operands[0];
-      final PsiExpression rhs = operands[1];
-      if (canBeCaseLabel(lhs, languageLevel) && canBeSwitchExpression(rhs, languageLevel)) {
-        return rhs;
-      }
-      else if (canBeCaseLabel(rhs, languageLevel) && canBeSwitchExpression(lhs, languageLevel)) {
-        return lhs;
-      }
-    }
-    return null;
-  }
-
   private static boolean canBeSwitchExpression(PsiExpression expression, LanguageLevel languageLevel) {
-    if (expression == null) {
+    if (expression == null || SideEffectChecker.mayHaveSideEffects(expression)) {
       return false;
     }
     final PsiType type = expression.getType();
@@ -160,6 +128,39 @@ public class SwitchUtils {
       }
     }
     return false;
+  }
+
+  private static PsiExpression determinePossibleSwitchExpressions(PsiExpression expression, LanguageLevel languageLevel) {
+    expression = ParenthesesUtils.stripParentheses(expression);
+    if (expression == null) {
+      return null;
+    }
+    if (languageLevel.isAtLeast(LanguageLevel.JDK_1_7)) {
+      final PsiExpression jdk17Expression = determinePossibleStringSwitchExpression(expression);
+      if (jdk17Expression != null) {
+        return jdk17Expression;
+      }
+    }
+    if (!(expression instanceof PsiPolyadicExpression)) {
+      return null;
+    }
+    final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+    final IElementType operation = polyadicExpression.getOperationTokenType();
+    final PsiExpression[] operands = polyadicExpression.getOperands();
+    if (operation.equals(JavaTokenType.OROR) && operands.length > 0) {
+      return determinePossibleSwitchExpressions(operands[0], languageLevel);
+    }
+    else if (operation.equals(JavaTokenType.EQEQ) && operands.length == 2) {
+      final PsiExpression lhs = operands[0];
+      final PsiExpression rhs = operands[1];
+      if (canBeCaseLabel(lhs, languageLevel)) {
+        return rhs;
+      }
+      else if (canBeCaseLabel(rhs, languageLevel)) {
+        return lhs;
+      }
+    }
+    return null;
   }
 
   private static PsiExpression determinePossibleStringSwitchExpression(PsiExpression expression) {
@@ -210,18 +211,12 @@ public class SwitchUtils {
       }
     }
     final PsiType type = expression.getType();
-    return type != null && (PsiType.INT.equals(type) || PsiType.CHAR.equals(type) ||
-            PsiType.SHORT.equals(type) || PsiType.BYTE.equals(type)) && PsiUtil.isConstantExpression(expression);
+    return (PsiType.INT.equals(type) || PsiType.SHORT.equals(type) || PsiType.BYTE.equals(type) || PsiType.CHAR.equals(type)) &&
+           PsiUtil.isConstantExpression(expression);
   }
 
   public static String findUniqueLabelName(PsiStatement statement, @NonNls String baseName) {
-    PsiElement ancestor = statement;
-    while (ancestor.getParent() != null) {
-      if (ancestor instanceof PsiMethod || ancestor instanceof PsiClass || ancestor instanceof PsiFile) {
-        break;
-      }
-      ancestor = ancestor.getParent();
-    }
+    final PsiElement ancestor = PsiTreeUtil.getParentOfType(statement, PsiMember.class);
     if (!checkForLabel(baseName, ancestor)) {
       return baseName;
     }
