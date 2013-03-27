@@ -288,13 +288,15 @@ public class PyPackageManagerImpl extends PyPackageManager {
   }
 
   private void installManagement(String name) throws PyExternalProcessException {
-    final String helpersPath = getHelperPath(name);
+    final String helperPath = getHelperPath(name);
 
-    ProcessOutput output = getHelperOutput(PACKAGING_TOOL, Lists.newArrayList(UNTAR, helpersPath), false, null);
+    ArrayList<String> args = Lists.newArrayList(UNTAR, helperPath);
+
+    ProcessOutput output = getHelperOutput(PACKAGING_TOOL, args, false, null);
 
     if (output.getExitCode() != 0) {
       throw new PyExternalProcessException(output.getExitCode(), PACKAGING_TOOL,
-                                           Lists.newArrayList(UNTAR), output.getStderr());
+                                           args, output.getStderr());
     }
     String dirName = FileUtil.toSystemDependentName(output.getStdout().trim());
     if (!dirName.endsWith(File.separator)) {
