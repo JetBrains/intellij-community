@@ -300,7 +300,7 @@ public abstract class AbstractJavaFxPackager {
     final String manifestAttr = getManifestString();
     if (manifestAttr != null) {
       addParameter(commandLine, "-manifestAttrs");
-      addParameter(commandLine, "\"" + manifestAttr + "\"");
+      addParameter(commandLine, manifestAttr);
     }
   }
 
