@@ -580,6 +580,23 @@ public abstract class Bin {
         writer.write(myBuffer.toString());
       }
     }
+
+    public String getAsWChar() {
+      StringBuilder result = new StringBuilder(myBytes.length/2);
+      ByteArrayInputStream bis = new ByteArrayInputStream(myBytes);
+      DataInputStream dis = new DataInputStream(bis);
+      try {
+        for (int i = 0; i < myBytes.length / 2 - 1; i++) {
+          result.append(BitsUtil.readChar(dis));
+        }
+        char terminator = BitsUtil.readChar(dis);
+        assert terminator == '\0';
+      } catch (IOException e) {
+        throw new RuntimeException(e);
+      }
+
+      return result.toString();
+    }
   }
 
   public static class ArrayOfBins<T extends Bin> extends Bin {

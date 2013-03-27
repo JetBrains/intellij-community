@@ -19,6 +19,9 @@ package com.pme.exe.res.vi;
 
 import com.pme.exe.Bin;
 
+import java.io.DataInput;
+import java.io.IOException;
+
 /**
  * Date: May 10, 2006
  * Time: 1:35:49 PM
@@ -39,5 +42,12 @@ public class FixedFileInfo extends Bin.Structure {
     addMember( new DWord( "dwFileSubtype" ) );
     addMember( new DWord( "dwFileDateMS" ) );
     addMember( new DWord( "dwFileDateLS" ) );
+  }
+
+  @Override
+  public void read(DataInput stream) throws IOException {
+    super.read(stream);
+    long signature = getValue("dwSignature");
+    assert signature == 0xFEEF04BDl : "Incorrect signature; expected " +0xFEEF04BDl + ", found " + signature;
   }
 }

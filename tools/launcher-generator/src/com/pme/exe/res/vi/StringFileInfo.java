@@ -29,7 +29,7 @@ public class StringFileInfo extends Bin.Structure {
     addMember(new Word("wLength"));
     addMember(new Word("wValueLength"));
     addMember(new Word("wType"));
-    addMember(new WChar("szKey"));
+    addMember(new Bytes("szKey", 30));
     addMember(new Padding(4));
   }
 
@@ -38,6 +38,7 @@ public class StringFileInfo extends Bin.Structure {
     OffsetTrackingInputStream inputStream = (OffsetTrackingInputStream) stream;
     long startOffset = inputStream.getOffset();
     super.read(stream);
+    assert ((Bytes) getMember("szKey")).getAsWChar().equals("StringFileInfo");
     long length = getValue("wLength");
     int i = 0;
     while(inputStream.getOffset() < startOffset + length) {

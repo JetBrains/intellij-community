@@ -79,9 +79,8 @@ public class ExeReader extends Bin.Structure{
   }
 
   public SectionReader getSectionReader( String sectionName ){
-    for (int i = 0; i < mySections.length; i++) {
-      SectionReader section = mySections[i];
-      if ( sectionName.equals( section.getSectionName() )){
+    for (SectionReader section : mySections) {
+      if (sectionName.equals(section.getSectionName())) {
         return section;
       }
     }
@@ -123,35 +122,26 @@ public class ExeReader extends Bin.Structure{
     super.resetOffsets(newOffset);
     long mainOffset = myPeHeader.getOffset() + myPeHeader.sizeInBytes() + myBytes.sizeInBytes();
     long offset = 0;
-    for (int i = 0; i < mySections.length; i++) {
-      Bin section = mySections[i];
-      section.resetOffsets( mainOffset + offset );
+    for (SectionReader section : mySections) {
+      section.resetOffsets(mainOffset + offset);
       offset += section.sizeInBytes();
     }
   }
 
   public void write(DataOutput stream) throws IOException {
     super.write(stream);
-    myBytes.write( stream );
-    for (int i = 0; i < mySections.length; i++) {
-      mySections[i].write( stream );
+    myBytes.write(stream);
+    for (SectionReader section : mySections) {
+      section.write(stream);
     }
   }
 
   public void report(OutputStreamWriter writer) throws IOException {
     super.report(writer);
     myBytes.report( writer );
-    mySectionHeaders.report( writer );
-    for ( int i = 0; i < mySections.length; ++i ){
-      mySections[i].report( writer );
+    mySectionHeaders.report(writer);
+    for (SectionReader section : mySections) {
+      section.report(writer);
     }
-  }
-
-  public static void main(String[] args) throws Throwable {
-    ExeReader reader = new ExeReader( "SeaShell.exe" );
-    File file = new File( "C:\\work\\SeaShell.exe" );
-    RandomAccessFile stream = new RandomAccessFile( file, "r" );
-    reader.read( stream );
-    stream.close();
   }
 }
