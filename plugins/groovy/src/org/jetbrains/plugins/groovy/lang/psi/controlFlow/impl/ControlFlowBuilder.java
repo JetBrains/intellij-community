@@ -19,9 +19,7 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.NullableComputable;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.RecursionManager;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -32,6 +30,7 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
+import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrCondition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
@@ -356,13 +355,27 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   }
 
   @Nullable
-  private static PsiType getNominalTypeNoRecursion(final GrExpression exception) {
-    return RecursionManager.doPreventingRecursion(exception, true, new NullableComputable<PsiType>() {
-      @Override
-      public PsiType compute() {
-        return exception.getNominalType();
+  private static PsiType getNominalTypeNoRecursion(@NotNull final GrExpression expression) {
+    if (expression instanceof GrNewExpression) {
+      return expression.getType();
+    }
+    else if (expression instanceof GrReferenceExpression && ((GrReferenceExpression)expression).getQualifier() == null) {
+      return getTypeByRef((GrReferenceExpression)expression);
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PsiType getTypeByRef(@NotNull GrReferenceExpression invoked) {
+
+    final GroovyResolveResult[] results = ControlFlowBuilderUtil.resolveNonQualifiedRefWithoutFlow(invoked);
+    if (results.length == 1) {
+      final PsiElement element = results[0].getElement();
+      if (element instanceof PsiVariable) {
+        return ((PsiVariable)element).getType();
       }
-    });
+    }
+    return null;
   }
 
   private void interruptFlow() {
