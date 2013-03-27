@@ -19,7 +19,6 @@ package com.pme.launcher;
 
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
-import com.pme.exe.Bin;
 import com.pme.exe.ExeReader;
 import com.pme.exe.SectionReader;
 import com.pme.exe.res.DirectoryEntry;
@@ -61,16 +60,28 @@ public class LauncherGenerator {
     DirectoryEntry subDir = myRoot.findSubDir("IRD6");
     myStringTableDirectory = new StringTableDirectory(subDir);
 
-    DirectoryEntry viDir = myRoot.findSubDir("IRD16").findSubDir( "IRD1" );
-    Bin.Bytes viBytes = viDir.getRawResource( 0 ).getBytes();
-    ByteArrayInputStream bytesStream = new ByteArrayInputStream(viBytes.getBytes());
+    RawResource versionInfoResource = getVersionInfoResource();
+    ByteArrayInputStream bytesStream = new ByteArrayInputStream(versionInfoResource.getBytes().getBytes());
 
     myVersionInfo = new VersionInfo();
     myVersionInfo.read(new OffsetTrackingInputStream(new DataInputStream(bytesStream)));
   }
 
+  private RawResource getVersionInfoResource() {
+    DirectoryEntry viDir = myRoot.findSubDir("IRD16").findSubDir( "IRD1" );
+    return viDir.getRawResource(0);
+  }
+
+  private void saveVersionInfo() throws IOException {
+    ByteArrayOutputStream baos = new ByteArrayOutputStream();
+    myVersionInfo.resetOffsets(0);
+    myVersionInfo.write(new DataOutputStream(baos));
+    getVersionInfoResource().setBytes(baos.toByteArray());
+  }
+
   public void generate() throws IOException {
     myStringTableDirectory.save();
+    saveVersionInfo();
 
     myReader.resetOffsets(0);
 
@@ -80,6 +91,10 @@ public class LauncherGenerator {
     myReader.write(exeStream);
     exeStream.close();
 
+//    verifyVersionInfo();
+  }
+
+  private void verifyVersionInfo() throws IOException {
     String versionInfoPath = myExePath + ".version";
     RandomAccessFile versionInfoStream = new RandomAccessFile(versionInfoPath, "rw");
     try {
@@ -121,5 +136,12 @@ public class LauncherGenerator {
     }, f);
     IconResourceInjector iconInjector = new IconResourceInjector();
     iconInjector.injectIcon(f, myRoot, "IRD" + id);
+  }
+
+  public void setVersionNumber(int majorVersion, int minorVersion, int bugfixVersion) {
+    int mostSignificantVersion = majorVersion << 16 | minorVersion;
+    int leastSignificantVersion = bugfixVersion << 16;
+    myVersionInfo.getFixedFileInfo().setFileVersion(mostSignificantVersion, leastSignificantVersion);
+    myVersionInfo.getFixedFileInfo().setProductVersion(mostSignificantVersion, leastSignificantVersion);
   }
 }
