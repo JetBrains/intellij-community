@@ -166,18 +166,26 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
 
     def OnRun(self):
             self.pyDb.SetTrace(None) # no debugging on this thread
-            while True:
+            while not self.killReceived:
                 if not self.pyDb.haveAliveThreads():
-                    pydev_log.debug("No alive threads, finishing debug session")
-                    self.pyDb.FinishDebuggingSession()
-                    threads = threadingEnumerate()
-                    for t in threads:
-                        if hasattr(t, 'doKillPydevThread'):
-                            t.doKillPydevThread()
+                    try:
+                        pydev_log.debug("No alive threads, finishing debug session")
+                        self.pyDb.FinishDebuggingSession()
+                        threads = threadingEnumerate()
+                        for t in threads:
+                            if hasattr(t, 'doKillPydevThread'):
+                                t.doKillPydevThread()
+                    except:
+                        traceback.print_exc()
+
+                    self.stop()
+                    self.killReceived = True
                     return
 
                 time.sleep(0.3)
 
+    def doKillPydevThread(self):
+        pass
 
 if USE_LIB_COPY:
     import _pydev_thread as thread
@@ -276,6 +284,7 @@ class PyDB:
         self._main_lock = threading.Lock()
         self._lock_running_thread_ids = threading.Lock()
         self._finishDebuggingSession = False
+        self._terminationEventSent = False
         self.force_post_mortem_stop = 0
         self.signature_factory = None
         self.SetTrace = pydevd_tracing.SetTrace
@@ -927,12 +936,17 @@ class PyDB:
             pydev_notify_kill
         '''
         try:
-            if self._finishDebuggingSession:
+            if self._finishDebuggingSession and not self._terminationEventSent:
                 #that was not working very well because jython gave some socket errors
-                threads = threadingEnumerate()
-                for t in threads:
-                    if hasattr(t, 'doKillPydevThread'):
-                        t.doKillPydevThread()
+                t = threadingCurrentThread()
+                try:
+                    threads = threadingEnumerate()
+                    for t in threads:
+                        if hasattr(t, 'doKillPydevThread'):
+                            t.doKillPydevThread()
+                except:
+                    traceback.print_exc()
+                self._terminationEventSent = True
                 return None
 
             filename, base = GetFilenameAndBase(frame)
