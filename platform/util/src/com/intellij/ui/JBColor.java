@@ -18,22 +18,136 @@ package com.intellij.ui;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
+import java.awt.color.ColorSpace;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.ColorModel;
 
 /**
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UseJBColor")
 public class JBColor extends Color {
+
+  private static boolean DARK = UIUtil.isUnderDarcula();
+
+  private final Color regularColor;
+  private final Color darkColor;
+
   public JBColor(int rgb, int darkRGB) {
-    super(isDark() ? darkRGB : rgb);
+    this(new Color(rgb), new Color(darkRGB));
   }
 
   public JBColor(Color regular, Color dark) {
     super(isDark() ? dark.getRGB() : regular.getRGB(), (isDark() ? dark : regular).getAlpha() != 255);
+    regularColor = regular;
+    darkColor = dark;
   }
 
   private static boolean isDark() {
-    return UIUtil.isUnderDarcula();
+    return DARK;
+  }
+
+  public static void setDark(boolean dark) {
+    DARK = dark;
+  }
+
+  private Color current() {
+    return DARK ? darkColor : regularColor;
+  }
+  @Override
+  public int getRed() {
+    return current().getRed();
+  }
+
+  @Override
+  public int getGreen() {
+    return current().getGreen();
+  }
+
+  @Override
+  public int getBlue() {
+    return current().getBlue();
+  }
+
+  @Override
+  public int getAlpha() {
+    return current().getAlpha();
+  }
+
+  @Override
+  public int getRGB() {
+    return current().getRGB();
+  }
+
+  @Override
+  public Color brighter() {
+    return new JBColor(regularColor.brighter(), darkColor.brighter());
+  }
+
+  @Override
+  public Color darker() {
+    return new JBColor(regularColor.darker(), darkColor.darker());
+  }
+
+  @Override
+  public int hashCode() {
+    return current().hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return current().equals(obj);
+  }
+
+  @Override
+  public String toString() {
+    return current().toString();
+  }
+
+  @Override
+  public float[] getRGBComponents(float[] compArray) {
+    return current().getRGBComponents(compArray);
+  }
+
+  @Override
+  public float[] getRGBColorComponents(float[] compArray) {
+    return current().getRGBColorComponents(compArray);
+  }
+
+  @Override
+  public float[] getComponents(float[] compArray) {
+    return current().getComponents(compArray);
+  }
+
+  @Override
+  public float[] getColorComponents(float[] compArray) {
+    return current().getColorComponents(compArray);
+  }
+
+  @Override
+  public float[] getComponents(ColorSpace cspace, float[] compArray) {
+    return current().getComponents(cspace, compArray);
+  }
+
+  @Override
+  public float[] getColorComponents(ColorSpace cspace, float[] compArray) {
+    return current().getColorComponents(cspace, compArray);
+  }
+
+  @Override
+  public ColorSpace getColorSpace() {
+    return current().getColorSpace();
+  }
+
+  @Override
+  public synchronized PaintContext createContext(ColorModel cm, Rectangle r, Rectangle2D r2d, AffineTransform xform, RenderingHints hints) {
+    return current().createContext(cm, r, r2d, xform, hints);
+  }
+
+  @Override
+  public int getTransparency() {
+    return current().getTransparency();
   }
 
   public final static JBColor red = new JBColor(Color.red, DarculaColors.RED);

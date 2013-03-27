@@ -71,6 +71,7 @@ public class ActionToolbarImpl extends JPanel implements ActionToolbar {
       for (Component c : toolbar.getComponents()) {
         if (c instanceof ActionButton) {
           ((ActionButton)c).updateToolTipText();
+          ((ActionButton)c).updateIcon();
         }
       }
     }

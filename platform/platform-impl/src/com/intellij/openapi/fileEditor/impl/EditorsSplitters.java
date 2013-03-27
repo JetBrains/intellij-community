@@ -17,6 +17,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
@@ -79,11 +80,6 @@ public class EditorsSplitters extends JBPanel {
 
   public EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
-    if (UIUtil.isUnderDarcula()) {
-      setBackgroundImage(IconLoader.getIcon("/frame_background.png"));
-      String icon = ApplicationInfoEx.getInstanceEx().getEditorBackgroundImageUrl();
-      if (icon != null) setCenterImage(IconLoader.getIcon(icon));
-    }
     setOpaque(false);
     myManager = manager;
     myFocusWatcher = new MyFocusWatcher();
@@ -95,6 +91,25 @@ public class EditorsSplitters extends JBPanel {
       DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), this, false);
       Disposer.register(manager.getProject(), dockable);
       dockManager.register(dockable);
+    }
+
+    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+      @Override
+      public void uiSettingsChanged(UISettings source) {
+        updateBackground();
+      }
+    }, manager.getProject());
+    updateBackground();
+  }
+
+  private void updateBackground() {
+    if (UIUtil.isUnderDarcula()) {
+      setBackgroundImage(IconLoader.getIcon("/frame_background.png"));
+      String icon = ApplicationInfoEx.getInstanceEx().getEditorBackgroundImageUrl();
+      if (icon != null) setCenterImage(IconLoader.getIcon(icon));
+    } else {
+      setBackgroundImage(null);
+      setCenterImage(null);
     }
   }
 
