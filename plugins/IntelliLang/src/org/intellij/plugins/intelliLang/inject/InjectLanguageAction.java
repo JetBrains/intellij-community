@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -114,15 +115,13 @@ public class InjectLanguageAction implements IntentionAction {
   }
 
   private static boolean doChooseLanguageToInject(Editor editor, final Processor<String> onChosen) {
-    final String[] langIds = InjectedLanguage.getAvailableLanguageIDs();
-    Arrays.sort(langIds);
+    final Language[] languages = InjectedLanguage.getAvailableLanguages();
+    Arrays.sort(languages, LanguageUtil.LANGUAGE_COMPARATOR);
 
-    final JList list = new JBList(langIds);
-    list.setCellRenderer(new ListCellRendererWrapper<String>() {
+    final JList list = new JBList(languages);
+    list.setCellRenderer(new ListCellRendererWrapper<Language>() {
       @Override
-      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-        final Language language = InjectedLanguage.findLanguageById(value);
-        assert language != null;
+      public void customize(JList list, Language language, int index, boolean selected, boolean hasFocus) {
         final FileType ft = language.getAssociatedFileType();
         setIcon(ft != null ? ft.getIcon() : EmptyIcon.ICON_16);
         setText(language.getDisplayName() + (ft != null ? " (" + ft.getDescription() + ")" : ""));
@@ -133,7 +132,12 @@ public class InjectLanguageAction implements IntentionAction {
         final String string = (String)list.getSelectedValue();
         onChosen.process(string);
       }
-    }).setFilteringEnabled(new Function.Self<Object, String>())
+    }).setFilteringEnabled(new Function<Object, String>() {
+      @Override
+      public String fun(Object language) {
+        return ((Language)language).getDisplayName();
+      }
+    })
       .createPopup().showInBestPositionFor(editor);
     return true;
   }
