@@ -2314,6 +2314,29 @@ public class StructuralSearchTest extends StructuralSearchTestCase {
     assertEquals("Find not annotated methods, 2",2,findMatchesCount(s9,s10));
     assertEquals("Find not annotated methods, 2",2,findMatchesCount(s9,s10_2));
     assertEquals("Find not annotated methods, 2",2,findMatchesCount(s9,s10_3));
+
+    String s11 = "class A {\n" +
+                 "@Foo(value=baz) int a;\n" +
+                 "@Foo(value=baz2) int a2;\n" +
+                 "@Foo(value=baz2) int a3;\n" +
+                 "@Foo(value2=baz3) int a3;\n" +
+                 "@Foo(value2=baz3) int a3;\n" +
+                 "@Foo(value2=baz3) int a3;\n" +
+                 "@Foo(value2=baz4) int a3;\n" +
+                 "}";
+    String s12 = "@Foo(value=baz) int 'a;)";
+    String s12_2 = "@Foo(value='baz:baz2 ) int 'a;)";
+    String s12_3 = "@Foo('value:value2 = baz3 ) int 'a;)";
+    String s12_4 = "@Foo('value:value2 = 'baz3:baz3 ) int 'a;)";
+    String s12_5 = "@Foo('value:value2 = 'baz3:baz ) int 'a;)";
+    String s12_6 = "@Foo('value:value2 = 'baz3 ) int 'a;)";
+
+    assertEquals("Find anno parameter value",1,findMatchesCount(s11,s12));
+    assertEquals("Find anno parameter value",2,findMatchesCount(s11,s12_2));
+    assertEquals("Find anno parameter value",3,findMatchesCount(s11,s12_3));
+    assertEquals("Find anno parameter value",3,findMatchesCount(s11,s12_4));
+    assertEquals("Find anno parameter value",0,findMatchesCount(s11,s12_5));
+    assertEquals("Find anno parameter value",4,findMatchesCount(s11,s12_6));
   }
 
   public void testBoxingAndUnboxing() {
