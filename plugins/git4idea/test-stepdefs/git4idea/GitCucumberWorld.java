@@ -27,6 +27,7 @@ import git4idea.commands.GitHttpAuthService;
 import git4idea.config.GitVcsSettings;
 import git4idea.remote.GitHttpAuthTestService;
 import git4idea.repo.GitRepository;
+import git4idea.test.GitExecutor;
 import git4idea.test.GitTestInitUtil;
 import git4idea.test.TestNotificator;
 import org.jetbrains.annotations.NotNull;
@@ -108,6 +109,8 @@ public class GitCucumberWorld {
     myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
     myGit = ServiceManager.getService(myProject, Git.class);
     mySettings = myPlatformFacade.getSettings(myProject);
+    mySettings.getAppSettings().setPathToGit(GitExecutor.GIT_EXECUTABLE);
+
     // dynamic overriding is used instead of making it in plugin.xml,
     // because MockVcsHelper is not ready to be a full featured implementation for all tests.
     myVcsHelper = overrideService(myProject, AbstractVcsHelper.class, MockVcsHelper.class);
