@@ -107,6 +107,7 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
           final PsiMethod method = (PsiMethod)conflict.getElement();
           if (method != null) {
             final PsiParameter[] methodParameters = method.getParameterList().getParameters();
+            if (methodParameters.length == 0) continue;
             final PsiParameter param = i < methodParameters.length ? methodParameters[i] : methodParameters[methodParameters.length - 1];
             final PsiType paramType = param.getType();
             if (!LambdaUtil.isAcceptable(lambdaExpression, conflict.getSubstitutor().substitute(paramType), true)) {
