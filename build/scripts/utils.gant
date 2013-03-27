@@ -303,7 +303,7 @@ binding.setVariable("layoutMacApp", { String path, String ch, Map args ->
 
   String vmOptions = "-Dfile.encoding=UTF-8 ${vmOptions()} -Xverify:none"
   if (isEap() && !args.mac_no_yjp) {
-    vmOptions += " -agentlib:yjpagent=disablej2ee,disablealloc,sessionname=${args.system_selector}"
+    vmOptions += " -agentlib:yjpagent=disablej2ee,disablealloc,disabletracing,onlylocal,builtinprobes=none,disableexceptiontelemetry,sessionname=${args.system_selector}"
   }
 
   String minor = p("component.version.minor")
