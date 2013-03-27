@@ -75,9 +75,6 @@ public interface XmlAttribute extends XmlElement, PsiNamedElement {
 
   @Nullable XmlAttributeDescriptor getDescriptor();
 
-  // Tree functions
-
-  // TODO: remove this. For tree functions XmlChildRole.XXX_FINDER should be used.
   // In this case function is also used to get references from attribute value
   @Nullable
   XmlAttributeValue getValueElement();
