@@ -251,11 +251,6 @@ public abstract class Bin {
       myValue = value;
       return this;
     }
-
-    public Value setValue(short value) {
-      myValue = BitsUtil.revertBytesOfShort(value);
-      return this;
-    }
   }
 
   public static class Byte extends Value {
@@ -359,6 +354,43 @@ public abstract class Bin {
     }
     public String toString() {
       return BitsUtil.intToHexString( (int)getValue() );
+    }
+  }
+
+  public static class LongLong extends Value {
+    public LongLong(String name) {
+      super(name);
+    }
+
+    @Override
+    public long getValue() {
+      return BitsUtil.revertBytesOfLong(getRawValue());
+    }
+
+    @Override
+    public Value setValue(long value) {
+      setRawValue(BitsUtil.revertBytesOfLong(value));
+      return this;
+    }
+
+    @Override
+    public long sizeInBytes() {
+      return 8;
+    }
+
+    @Override
+    public void read(DataInput stream) throws IOException {
+      setRawValue(stream.readLong());
+    }
+
+    @Override
+    public void write(DataOutput stream) throws IOException {
+      stream.writeLong(getRawValue());
+    }
+
+    @Override
+    public void report(OutputStreamWriter writer) throws IOException {
+      _report(writer, getDescription() + " : " + Long.toHexString(getValue()));
     }
   }
 

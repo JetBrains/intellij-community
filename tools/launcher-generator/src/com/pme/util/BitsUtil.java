@@ -28,12 +28,20 @@ public class BitsUtil {
   public static int revertBytesOfShort( short shortValue ){
     return ((shortValue << 8) & 0xff00) + ((shortValue >> 8) & 0xff);
   }
+
   public static long revertBytesOfInt( int intValue ){
     long result = (intValue & 0x000000ff);
     result <<= 24;
     result += ((intValue & 0x0000ff00) << 8) + ((intValue & 0x00ff0000) >> 8) + ((intValue >> 24) & 0xff);
     return result;
   }
+
+  public static long revertBytesOfLong(long longValue) {
+    long ms = revertBytesOfInt((int) (longValue >> 32));
+    long ls = revertBytesOfInt((int) longValue);
+    return ms | ls << 32;
+  }
+
   public static int unsignedByte( byte byteValue ){
     int result = byteValue;
     return (result & 0xff);

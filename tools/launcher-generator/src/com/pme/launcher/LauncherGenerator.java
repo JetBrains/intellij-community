@@ -19,6 +19,7 @@ package com.pme.launcher;
 
 import com.google.common.io.Files;
 import com.google.common.io.InputSupplier;
+import com.pme.exe.ExeFormat;
 import com.pme.exe.ExeReader;
 import com.pme.exe.SectionReader;
 import com.pme.exe.res.DirectoryEntry;
@@ -50,8 +51,11 @@ public class LauncherGenerator {
   }
 
   public void load() throws  IOException {
-    myReader = new ExeReader(myTemplate.getName());
     RandomAccessFile stream = new RandomAccessFile(myTemplate, "r");
+    ExeReader formatReader = new ExeReader(myTemplate.getName(), ExeFormat.UNKNOWN);
+    formatReader.read(stream);
+    stream.seek(0L);
+    myReader = new ExeReader(myTemplate.getName(), formatReader.getExeFormat());
     myReader.read(stream);
     stream.close();
     SectionReader sectionReader = myReader.getSectionReader(".rsrc");

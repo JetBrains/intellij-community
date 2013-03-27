@@ -25,15 +25,22 @@ import java.io.OutputStreamWriter;
  * Time: 5:17:01 PM
  */
 public class ImageFileHeader extends Bin.Structure {
+  private final ImageFileHeader.Machine myMachine;
+
   public ImageFileHeader() {
     super("Image File Header");
-    addMember( new Machine( ) );
+    myMachine = new Machine();
+    addMember(myMachine);
     addMember( new Word( "NumberOfSections" ) );
     addMember( new DWord( "TimeDateStamp" ) );
     addMember( new DWord( "PointerToSymbolTable" ) );
     addMember( new DWord( "NumberOfSymbols" ) );
     addMember( new Word( "SizeOfOptionalHeader" ) );
     addMember( new Word( "Characteristics" ) );
+  }
+
+  public long getMachine() {
+    return myMachine.getValue();
   }
 
   class Machine extends Bin.Word{

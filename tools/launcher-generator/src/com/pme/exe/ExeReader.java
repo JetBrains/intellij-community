@@ -19,7 +19,10 @@ package com.pme.exe;
 
 import com.pme.exe.res.ValuesAdd;
 
-import java.io.*;
+import java.io.DataInput;
+import java.io.DataOutput;
+import java.io.IOException;
+import java.io.OutputStreamWriter;
 
 /**
  * Date: Mar 30, 2006
@@ -33,7 +36,8 @@ public class ExeReader extends Bin.Structure{
   private Bin.Bytes myBytes;
   private Bin.Bytes myMsDosStub;
   private MsDosHeader myMsDosHeader;
-  public ExeReader(String name) {
+
+  public ExeReader(String name, ExeFormat exeFormat) {
     super(name);
     myMsDosHeader = new MsDosHeader();
     addMember( myMsDosHeader );
@@ -41,8 +45,11 @@ public class ExeReader extends Bin.Structure{
     ValuesAdd size = new ValuesAdd( member, new DWord("").setValue( myMsDosHeader.sizeInBytes() ) );
     myMsDosStub = new Bytes( "MsDos stub program", size );
     addMember( myMsDosStub );
-    myPeHeader = new PeHeaderReader( member );
+    myPeHeader = new PeHeaderReader(member, exeFormat);
     addMember( myPeHeader );
+    if (exeFormat == ExeFormat.UNKNOWN) {
+      return;
+    }
     myImageOptionalHeader = (ImageOptionalHeader) myPeHeader.getMember("Image Optional Header");
     mySectionHeaders = (ArrayOfBins)myPeHeader.getMember( "ImageSectionHeaders" );
     addSizeHolder( myImageOptionalHeader.getValueMember( "SizeOfImage" ) );  //b164
@@ -89,6 +96,9 @@ public class ExeReader extends Bin.Structure{
 
   public void read(DataInput stream) throws IOException {
     super.read(stream);
+    if (mySectionHeaders == null) {
+      return;
+    }
 
     long filePointer = getOffset() + sizeOfHeaders();
 
@@ -143,5 +153,16 @@ public class ExeReader extends Bin.Structure{
     for (SectionReader section : mySections) {
       section.report(writer);
     }
+  }
+
+  public ExeFormat getExeFormat() {
+    long machine = myPeHeader.getImageFileHeader().getMachine();
+    if (machine == 0x14c) {
+      return ExeFormat.X86;
+    }
+    if (machine == 0x8664) {
+      return ExeFormat.X64;
+    }
+    throw new UnsupportedOperationException("Unsupported machine code " + machine);
   }
 }
