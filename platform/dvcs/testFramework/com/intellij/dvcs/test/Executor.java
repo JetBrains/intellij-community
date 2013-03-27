@@ -25,6 +25,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
@@ -145,6 +146,47 @@ public class Executor {
       log(stdout.trim());
     }
     return stdout;
+  }
+
+  protected static List<String> splitCommandInParameters(String command) {
+    List<String> split = new ArrayList<String>();
+
+    boolean insideParam = false;
+    StringBuilder currentParam = new StringBuilder();
+    for (char c : command.toCharArray()) {
+      boolean flush = false;
+      if (insideParam) {
+        if (c == '\'') {
+          insideParam = false;
+          flush = true;
+        }
+        else {
+          currentParam.append(c);
+        }
+      }
+      else if (c == '\'') {
+        insideParam = true;
+      }
+      else if (c == ' ') {
+        flush = true;
+      }
+      else {
+        currentParam.append(c);
+      }
+
+      if (flush) {
+        if (!StringUtil.isEmptyOrSpaces(currentParam.toString())) {
+          split.add(currentParam.toString());
+        }
+        currentParam = new StringBuilder();
+      }
+    }
+
+    // last flush
+    if (!StringUtil.isEmptyOrSpaces(currentParam.toString())) {
+      split.add(currentParam.toString());
+    }
+    return split;
   }
 
   protected static String findExecutable(String programName, String unixExec, String winExec, Collection<String> pathEnvs) {
