@@ -262,7 +262,7 @@ public class GdkMethodUtil {
   @Nullable
   private static Pair<PsiClassType, GrReferenceExpression> getTypeToMixIn(GrMethodCall methodCall) {
     GrExpression invoked = methodCall.getInvokedExpression();
-    if (invoked instanceof GrReferenceExpression) {
+    if (invoked instanceof GrReferenceExpression && GrImportUtil.acceptName((GrReferenceExpression)invoked, "mixin")) {
       PsiElement resolved = ((GrReferenceExpression)invoked).resolve();
       if (resolved instanceof PsiMethod && isMixinMethod((PsiMethod)resolved)) {
         GrExpression qualifier = ((GrReferenceExpression)invoked).getQualifier();

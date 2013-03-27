@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.processors;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod;
@@ -36,13 +35,13 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
   private final SubstitutorComputer mySubstitutorComputer;
 
 
-  public AccessorResolverProcessor(String accessorName, String propertyName, GroovyPsiElement place, boolean searchForGetter) {
+  public AccessorResolverProcessor(@Nullable String accessorName, @NotNull String propertyName, @NotNull PsiElement place, boolean searchForGetter) {
     this(accessorName, propertyName, place, searchForGetter, false, null, PsiType.EMPTY_ARRAY);
   }
 
-  public AccessorResolverProcessor(String accessorName,
-                                   String propertyName,
-                                   PsiElement place,
+  public AccessorResolverProcessor(@Nullable String accessorName,
+                                   @NotNull String propertyName,
+                                   @NotNull PsiElement place,
                                    boolean searchForGetter,
                                    boolean byShape,
                                    @Nullable PsiType thisType,
@@ -54,7 +53,7 @@ public class AccessorResolverProcessor extends MethodResolverProcessor {
     mySubstitutorComputer = byShape ? null : new SubstitutorComputer(thisType, PsiType.EMPTY_ARRAY, typeArguments, false, place, myPlace);
   }
 
-  public boolean execute(@NotNull PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     final PsiElement resolveContext = state.get(RESOLVE_CONTEXT);
     String importedName = resolveContext instanceof GrImportStatement ? ((GrImportStatement)resolveContext).getImportedName() : null;
     if (mySearchForGetter) {

@@ -220,6 +220,7 @@ public abstract class GitHandler {
     return file;
   }
 
+  @SuppressWarnings("NullableProblems")
   public void setUrl(@NotNull String url) {
     myUrl = url;
   }

@@ -16,12 +16,13 @@
 package com.intellij.cucumber;
 
 import com.intellij.idea.IdeaTestApplication;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import cucumber.io.MultiLoader;
 import cucumber.runtime.Runtime;
 import cucumber.runtime.RuntimeOptions;
+
+import java.awt.*;
 
 /**
  * @author Dennis.Ushakov
@@ -33,25 +34,31 @@ public class CucumberMain {
   }
 
   public static void main(final String[] args) {
-    IdeaTestApplication.getInstance(null);
     final Ref<Throwable> errorRef = new Ref<Throwable>();
     final Ref<Runtime> runtimeRef = new Ref<Runtime>();
-    ApplicationManager.getApplication().invokeAndWait(new Runnable() {
-      @Override
-      public void run() {
-        try {
-          final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
-          RuntimeOptions runtimeOptions = new RuntimeOptions(System.getProperties(), args);
-          cucumber.runtime.Runtime runtime = new Runtime(new MultiLoader(classLoader), classLoader, runtimeOptions);
-          runtimeRef.set(runtime);
-          runtime.writeStepdefsJson();
-          runtime.run();
-        } catch (Throwable throwable) {
-          errorRef.set(throwable);
-          Logger.getInstance(CucumberMain.class).error(throwable);
+    try {
+      EventQueue.invokeAndWait(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            final ClassLoader classLoader = Thread.currentThread().getContextClassLoader();
+            RuntimeOptions runtimeOptions = new RuntimeOptions(System.getProperties(), args);
+            Runtime runtime = new Runtime(new MultiLoader(classLoader), classLoader, runtimeOptions);
+            runtimeRef.set(runtime);
+            runtime.writeStepdefsJson();
+            runtime.run();
+          } catch (Throwable throwable) {
+            errorRef.set(throwable);
+            Logger.getInstance(CucumberMain.class).error(throwable);
+          }
         }
-      }
-    }, ApplicationManager.getApplication().getDefaultModalityState());
+      });
+    }
+    catch (Throwable t) {
+      errorRef.set(t);
+      Logger.getInstance(CucumberMain.class).error(t);
+    }
+
     final Throwable throwable = errorRef.get();
     if (throwable != null) {
       throwable.printStackTrace();

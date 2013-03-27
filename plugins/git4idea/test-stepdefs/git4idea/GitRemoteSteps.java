@@ -15,7 +15,6 @@
  */
 package git4idea;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import cucumber.annotation.en.Then;
 import cucumber.annotation.en.When;
@@ -97,11 +96,11 @@ public class GitRemoteSteps {
     private final CountDownLatch myPasswordSuppliedWaiter = new CountDownLatch(1);
     private final CountDownLatch myUsernameSuppliedWaiter = new CountDownLatch(1);
 
-    private boolean myPasswordAsked;
-    private boolean myUsernameAsked;
+    private volatile boolean myPasswordAsked;
+    private volatile boolean myUsernameAsked;
 
-    private String myPassword;
-    private String myUsername;
+    private volatile String myPassword;
+    private volatile String myUsername;
 
     @NotNull
     @Override

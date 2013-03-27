@@ -24,8 +24,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.concurrent.Callable;
-import java.util.concurrent.Future;
+import java.util.concurrent.*;
 
 public class MockApplication extends MockComponentManager implements Application {
   private ModalityState MODALITY_STATE_NONE;
@@ -88,13 +87,12 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public Future<?> executeOnPooledThread(@NotNull Runnable action) {
-    new Thread(action).start();
-    return null; // ?
+    return ExecutorServiceHolder.ourThreadExecutorsService.submit(action);
   }
 
   @Override
   public <T> Future<T> executeOnPooledThread(@NotNull Callable<T> action) {
-    return null;
+    return ExecutorServiceHolder.ourThreadExecutorsService.submit(action);
   }
 
   @Override
@@ -251,5 +249,20 @@ public class MockApplication extends MockComponentManager implements Application
 
   @Override
   public void saveSettings() {
+  }
+  
+  private static class ExecutorServiceHolder {
+    private static final ExecutorService ourThreadExecutorsService = createServiceImpl();
+  
+    private static ThreadPoolExecutor createServiceImpl() {
+      return new ThreadPoolExecutor(10, Integer.MAX_VALUE, 60L, TimeUnit.SECONDS, new SynchronousQueue<Runnable>(), new ThreadFactory() {
+        @NotNull
+        @Override
+        @SuppressWarnings({"HardCodedStringLiteral"})
+        public Thread newThread(@NotNull Runnable r) {
+          return new Thread(r, "MockApplication pooled thread");
+        }
+      });
+    }
   }
 }

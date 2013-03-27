@@ -25,6 +25,7 @@ public class FlipExpressionIntentionTest extends IPPTestCase {
   public void testPrefix() { doTest(); }
   public void testPolyadic() { doTest(); }
   public void testNoChange() { assertIntentionNotAvailable(); }
+  public void testNoException() { assertIntentionNotAvailable(); }
 
   @Override
   protected String getIntentionName() {

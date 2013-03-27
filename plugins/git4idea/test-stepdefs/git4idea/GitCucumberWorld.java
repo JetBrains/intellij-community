@@ -1,6 +1,7 @@
 package git4idea;
 
 import com.intellij.dvcs.test.MockVcsHelper;
+import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -26,6 +27,7 @@ import git4idea.commands.GitHttpAuthService;
 import git4idea.config.GitVcsSettings;
 import git4idea.remote.GitHttpAuthTestService;
 import git4idea.repo.GitRepository;
+import git4idea.test.GitExecutor;
 import git4idea.test.GitTestInitUtil;
 import git4idea.test.TestNotificator;
 import org.jetbrains.annotations.NotNull;
@@ -48,6 +50,7 @@ import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.dvcs.test.Executor.cd;
 import static junit.framework.Assert.assertNotNull;
+import static org.junit.Assume.assumeTrue;
 
 /**
  * <p>The container of test environment variables which should be visible from any step definition script.</p>
@@ -66,6 +69,7 @@ public class GitCucumberWorld {
   public static GitRepository myRepository;
   public static GitVcsSettings mySettings;
   public static ChangeListManager myChangeListManager;
+  public static GitVcs myVcs;
 
   public static MockVcsHelper myVcsHelper;
   public static TestNotificator myNotificator;
@@ -82,6 +86,7 @@ public class GitCucumberWorld {
   @Order(0)
   public void setUp() throws Throwable {
     System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "PlatformLangXml");
+    IdeaTestApplication.getInstance(null);
 
     String tempFileName = getClass().getName() + "-" + new Random().nextInt();
     myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(tempFileName).getFixture();
@@ -104,11 +109,14 @@ public class GitCucumberWorld {
     myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
     myGit = ServiceManager.getService(myProject, Git.class);
     mySettings = myPlatformFacade.getSettings(myProject);
+    mySettings.getAppSettings().setPathToGit(GitExecutor.GIT_EXECUTABLE);
+
     // dynamic overriding is used instead of making it in plugin.xml,
     // because MockVcsHelper is not ready to be a full featured implementation for all tests.
     myVcsHelper = overrideService(myProject, AbstractVcsHelper.class, MockVcsHelper.class);
     myChangeListManager = myPlatformFacade.getChangeListManager(myProject);
     myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);
+    myVcs = GitVcs.getInstance(myProject);
 
     virtualCommits = new GitTestVirtualCommitsHolder();
     myAsyncTasks = new ArrayList<Future>();
@@ -119,6 +127,12 @@ public class GitCucumberWorld {
     ProjectLevelVcsManagerImpl vcsManager = (ProjectLevelVcsManagerImpl)ProjectLevelVcsManager.getInstance(myProject);
     AbstractVcs vcs = vcsManager.findVcsByName("Git");
     Assert.assertEquals(1, vcsManager.getRootsUnderVcs(vcs).length);
+
+    assumeSupportedGitVersion();
+  }
+
+  private static void assumeSupportedGitVersion() {
+    assumeTrue(myVcs.getVersion().isSupported());
   }
 
   @NotNull

@@ -67,9 +67,7 @@ import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 import java.lang.reflect.Proxy;
 import java.util.*;
-import java.util.concurrent.CountDownLatch;
-import java.util.concurrent.Future;
-import java.util.concurrent.TimeUnit;
+import java.util.concurrent.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -173,6 +171,9 @@ public class IncProjectBuilder {
         myProjectDescriptor.timestamps.getStorage().force();
       }
     });
+    
+    startTempDirectoryCleanupTask();
+    
     CompileContextImpl context = null;
     try {
       context = createContext(scope);
@@ -211,17 +212,35 @@ public class IncProjectBuilder {
     finally {
       memWatcher.stop();
       flushContext(context);
-      // wait for the async tasks
+      // wait for async tasks
+      final CanceledStatus status = context == null? CanceledStatus.NULL : context.getCancelStatus();
       synchronized (myAsyncTasks) {
         for (Future task : myAsyncTasks) {
-          try {
-            task.get();
+          if (status.isCanceled()) {
+            break;
           }
-          catch (Throwable th) {
-            LOG.info(th);
+          waitForTask(status, task);
+        }
+      }
+    }
+  }
+
+  private static void waitForTask(@NotNull CanceledStatus status, Future task) {
+    try {
+      while (true) {
+        try {
+          task.get(500L, TimeUnit.MILLISECONDS);
+          break;
+        }
+        catch (TimeoutException ignored) {
+          if (status.isCanceled()) {
+            break;
           }
         }
       }
+    }
+    catch (Throwable th) {
+      LOG.info(th);
     }
   }
 
@@ -323,6 +342,34 @@ public class IncProjectBuilder {
       context.processMessage(new ProgressMessage("Finished, saving caches..."));
     }
 
+  }
+
+  private void startTempDirectoryCleanupTask() {
+    final File systemRoot = Utils.getSystemRoot();
+    final String tempPath = System.getProperty("java.io.tmpdir", null);
+    if (StringUtil.isEmptyOrSpaces(tempPath)) {
+      return;
+    }
+    final File tempDir = new File(tempPath);
+    if (!FileUtil.isAncestor(systemRoot, tempDir, true)) {
+      // cleanup only 'local' temp
+      return;
+    }
+    final File[] files = tempDir.listFiles();
+    if (files != null && files.length != 0) {
+      final RunnableFuture<Void> task = new FutureTask<Void>(new Runnable() {
+        public void run() {
+          for (File tempFile : files) {
+            FileUtil.delete(tempFile);
+          }
+        }
+      }, null);
+      final Thread thread = new Thread(task, "Temp directory cleanup");
+      thread.setPriority(Thread.MIN_PRIORITY);
+      thread.setDaemon(true);
+      thread.start();
+      myAsyncTasks.add(task);
+    }
   }
 
   private CompileContextImpl createContext(CompileScope scope) throws ProjectBuildException {

@@ -70,6 +70,7 @@ import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
+import org.jetbrains.plugins.groovy.util.ResolveProfiler;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -758,17 +759,24 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       if (propertyCandidates.length > 0) return propertyCandidates;
     }
 
-    switch (getKind()) {
-      case METHOD_OR_PROPERTY:
-        return resolveMethodOrProperty(false, null, genericsMatter);
-      case TYPE_OR_PROPERTY:
-        return resolveTypeOrProperty();
-      case METHOD_OR_PROPERTY_OR_TYPE:
-        GroovyResolveResult[] results = resolveMethodOrProperty(false, null, genericsMatter);
-        if (results.length == 0) results = resolveTypeOrProperty();
-        return results;
-      default:
-        return GroovyResolveResult.EMPTY_ARRAY;
+    try {
+      ResolveProfiler.start();
+      switch (getKind()) {
+        case METHOD_OR_PROPERTY:
+          return resolveMethodOrProperty(false, null, genericsMatter);
+        case TYPE_OR_PROPERTY:
+          return resolveTypeOrProperty();
+        case METHOD_OR_PROPERTY_OR_TYPE:
+          GroovyResolveResult[] results = resolveMethodOrProperty(false, null, genericsMatter);
+          if (results.length == 0) results = resolveTypeOrProperty();
+          return results;
+        default:
+          return GroovyResolveResult.EMPTY_ARRAY;
+      }
+    }
+    finally {
+      final long time = ResolveProfiler.finish();
+      ResolveProfiler.write("ref " + getText() + " " + hashCode() + " : " + time);
     }
   }
 

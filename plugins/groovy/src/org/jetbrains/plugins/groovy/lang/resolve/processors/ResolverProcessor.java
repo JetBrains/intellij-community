@@ -61,8 +61,8 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   private List<GroovyResolveResult> myCandidates;
 
   protected ResolverProcessor(@Nullable String name,
-                              EnumSet<ResolveKind> resolveTargets,
-                              PsiElement place,
+                              @NotNull EnumSet<ResolveKind> resolveTargets,
+                              @NotNull PsiElement place,
                               @NotNull PsiType[] typeArguments) {
     myName = name;
     myResolveTargetKinds = resolveTargets;
@@ -70,7 +70,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     myTypeArguments = typeArguments;
   }
 
-  public boolean execute(@NotNull PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     if (element instanceof PsiLocalVariableImpl) { //todo a better hack
       return true; // the debugger creates a Java code block context and our expressions to evaluate resolve there
     }
@@ -109,7 +109,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     return true;
   }
 
-  protected final void addCandidate(GroovyResolveResult candidate) {
+  protected final void addCandidate(@NotNull GroovyResolveResult candidate) {
     PsiElement element = candidate.getElement();
     assert element == null || element.isValid() : getElementInfo(element);
 
@@ -130,11 +130,12 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
     return "invalid resolve candidate: " + element.getClass() + ", text: " + text;
   }
 
+  @NotNull
   protected List<GroovyResolveResult> getCandidatesInternal() {
     return myCandidates == null ? Collections.<GroovyResolveResult>emptyList() : myCandidates;
   }
 
-  protected boolean isAccessible(PsiNamedElement namedElement) {
+  protected boolean isAccessible(@NotNull PsiNamedElement namedElement) {
     if (namedElement instanceof GrField) {
       final GrField field = (GrField)namedElement;
       if (PsiUtil.isAccessible(myPlace, field)) {
@@ -158,7 +159,7 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
            PsiUtil.isAccessible(myPlace, ((PsiMember)namedElement));
   }
 
-  protected boolean isStaticsOK(PsiNamedElement element, PsiElement resolveContext, boolean filterStaticAfterInstanceQualifier) {
+  protected boolean isStaticsOK(@NotNull PsiNamedElement element, @Nullable PsiElement resolveContext, boolean filterStaticAfterInstanceQualifier) {
     if (resolveContext instanceof GrImportStatement) return true;
 
     if (element instanceof PsiModifierListOwner) {

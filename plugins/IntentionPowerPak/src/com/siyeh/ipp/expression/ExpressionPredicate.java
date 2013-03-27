@@ -31,6 +31,9 @@ class ExpressionPredicate implements PsiElementPredicate {
     }
     final PsiPolyadicExpression expression = (PsiPolyadicExpression)parent;
     final PsiExpression[] operands = expression.getOperands();
+    if (operands.length < 2) {
+      return false;
+    }
     PsiExpression prevOperand = null;
     for (PsiExpression operand : operands) {
       final PsiJavaToken token = expression.getTokenBeforeOperand(operand);

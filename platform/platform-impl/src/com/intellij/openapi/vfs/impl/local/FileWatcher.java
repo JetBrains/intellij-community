@@ -231,11 +231,18 @@ public class FileWatcher {
     final OSProcessHandler processHandler = myProcessHandler;
     if (processHandler != null) {
       if (!processHandler.isProcessTerminated()) {
+        boolean forceQuite = true;
         try {
           writeLine(EXIT_COMMAND);
+          forceQuite = !processHandler.waitFor(500);
+          if (forceQuite) {
+            LOG.warn("File watcher is still alive. Doing a force quit.");
+          }
         }
         catch (IOException ignore) { }
-        processHandler.destroyProcess();
+        if (forceQuite) {
+          processHandler.destroyProcess();
+        }
       }
 
       myProcessHandler = null;

@@ -138,7 +138,9 @@ public class ResolveUtil {
                                      @NotNull final PsiScopeProcessor processor,
                                      @Nullable final PsiScopeProcessor nonCodeProcessor,
                                      @NotNull final ResolveState state) {
-    return PsiTreeUtil.treeWalkUp(place, null, new PairProcessor<PsiElement, PsiElement>() {
+    final GrClosableBlock maxScope = nonCodeProcessor != null ? PsiTreeUtil.getParentOfType(place, GrClosableBlock.class, true, PsiFile.class) : null;
+
+    return PsiTreeUtil.treeWalkUp(place, maxScope, new PairProcessor<PsiElement, PsiElement>() {
       @Override
       public boolean process(PsiElement scope, PsiElement lastParent) {
         if (!doProcessDeclarations(originalPlace, lastParent, scope, substituteProcessor(processor, scope), nonCodeProcessor, state)) {
@@ -158,14 +160,12 @@ public class ResolveUtil {
                                        @NotNull ResolveState state) {
     if (scope instanceof GrClosableBlock && nonCodeProcessor != null) {
       if (!((GrClosableBlock)scope).processClosureDeclarations(plainProcessor, nonCodeProcessor, state, lastParent, place)) return false;
-      if (!processScopeNonCodeMethods(place, lastParent, nonCodeProcessor, scope)) return false;
-      return false;
     }
     else {
       if (!scope.processDeclarations(plainProcessor, state, lastParent, place)) return false;
-      if (nonCodeProcessor != null && !processScopeNonCodeMethods(place, lastParent, nonCodeProcessor, scope)) return false;
-      return true;
     }
+    if (nonCodeProcessor != null && !processScopeNonCodeMethods(place, lastParent, nonCodeProcessor, scope)) return false;
+    return true;
   }
 
   static void issueLevelChangeEvents(PsiScopeProcessor processor, PsiElement run) {

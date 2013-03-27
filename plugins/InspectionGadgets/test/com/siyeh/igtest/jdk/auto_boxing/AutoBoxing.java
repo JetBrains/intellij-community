@@ -45,4 +45,12 @@ public class AutoBoxing {
         Byte s = 8;
         Short j = (byte)7;
     }
+
+    void polyadic() {
+        Integer i = 1 + 2 + 3;
+    }
+
+    void doInstanceof(Object o) {
+        Boolean b = o instanceof String;
+    }
 }

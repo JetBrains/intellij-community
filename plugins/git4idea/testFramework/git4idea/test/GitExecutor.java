@@ -34,7 +34,7 @@ public class GitExecutor extends Executor {
 
   private static final int MAX_RETRIES = 3;
   private static boolean myVersionPrinted;
-  private static final String GIT_EXECUTABLE = findGitExecutable();
+  public static final String GIT_EXECUTABLE = findGitExecutable();
 
   private static String findGitExecutable() {
     return findExecutable("Git", "git", "git.exe", Arrays.asList(GIT_EXECUTABLE_ENV, TEAMCITY_GIT_EXECUTABLE_ENV));

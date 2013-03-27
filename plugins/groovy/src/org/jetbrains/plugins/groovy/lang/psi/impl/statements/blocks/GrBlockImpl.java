@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.CachedValue;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
+import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -46,6 +47,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
+import org.jetbrains.plugins.groovy.util.ResolveProfiler;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -104,12 +106,19 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
       controlFlow = CachedValuesManager.getManager(getProject()).createCachedValue(new CachedValueProvider<Instruction[]>() {
         @Override
         public Result<Instruction[]> compute() {
-          return Result.create(new ControlFlowBuilder(getProject()).buildControlFlow(GrBlockImpl.this), getContainingFile());
+          try {
+            ResolveProfiler.start();
+            final Instruction[] flow = new ControlFlowBuilder(getProject()).buildControlFlow(GrBlockImpl.this);
+            return Result.create(flow, getContainingFile(), PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+          }
+          finally {
+            final long time = ResolveProfiler.finish();
+            ResolveProfiler.write("flow " + GrBlockImpl.this.toString() + " : " + time);
+          }
         }
       }, false);
       controlFlow = putUserDataIfAbsent(CONTROL_FLOW, controlFlow);
     }
-
     return ControlFlowBuilder.assertValidPsi(controlFlow.getValue());
   }
 
