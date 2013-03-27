@@ -63,17 +63,23 @@ public class MethodResolverProcessor extends ResolverProcessor {
 
   private final boolean myTypedContext;
 
-  public MethodResolverProcessor(String name, GroovyPsiElement place, boolean isConstructor, PsiType thisType, @Nullable PsiType[] argumentTypes, PsiType[] typeArguments) {
+  public MethodResolverProcessor(@Nullable String name,
+                                 @NotNull GroovyPsiElement place,
+                                 boolean isConstructor,
+                                 @Nullable PsiType thisType,
+                                 @Nullable PsiType[] argumentTypes,
+                                 @Nullable PsiType[] typeArguments) {
     this(name, place, isConstructor, thisType, argumentTypes, typeArguments, false, false);
   }
 
-  public MethodResolverProcessor(String name,
-                                 PsiElement place,
+  public MethodResolverProcessor(@Nullable String name,
+                                 @NotNull PsiElement place,
                                  boolean isConstructor,
-                                 PsiType thisType,
+                                 @Nullable PsiType thisType,
                                  @Nullable PsiType[] argumentTypes,
-                                 PsiType[] typeArguments,
-                                 boolean allVariants, final boolean byShape) {
+                                 @Nullable PsiType[] typeArguments,
+                                 boolean allVariants,
+                                 final boolean byShape) {
     super(name, RESOLVE_KINDS_METHOD_PROPERTY, place, PsiType.EMPTY_ARRAY);
     myIsConstructor = isConstructor;
     myThisType = thisType;
@@ -86,7 +92,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
   }
 
 
-  public boolean execute(@NotNull PsiElement element, ResolveState state) {
+  public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
     if (myStopExecuting) {
       return false;
     }
@@ -318,7 +324,7 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return true;
   }
 
-  private boolean typesAgree(PsiType type1, PsiType type2) {
+  private boolean typesAgree(@NotNull PsiType type1, @NotNull PsiType type2) {
     if (argumentsSupplied() && type1 instanceof PsiArrayType && !(type2 instanceof PsiArrayType)) {
       type1 = ((PsiArrayType) type1).getComponentType();
     }
