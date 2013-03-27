@@ -125,22 +125,31 @@ public class ResolveUtil {
     }
 
     final PsiScopeProcessor nonCodeProcessor = processNonCodeMethods ? processor : null;
-    return PsiTreeUtil.treeWalkUp(place, null, new PairProcessor<PsiElement, PsiElement>() {
-      @Override
-      public boolean process(PsiElement scope, PsiElement lastParent) {
-        if (!doProcessDeclarations(originalPlace, lastParent, scope, substituteProcessor(processor, scope), nonCodeProcessor, state)) {
-          return false;
-        }
-        if (scope instanceof GrClosableBlock) return false; //closures tree walk up themselves
-        issueLevelChangeEvents(processor, scope);
-        return true;
-      }
-    });
+      return doTreeWalkUp(place, originalPlace, processor, nonCodeProcessor, state);
     }
     catch (StackOverflowError e) {
       LogMessageEx.error(LOG, "StackOverflow", e, place.getContainingFile().getText());
       throw e;
     }
+  }
+
+  public static boolean doTreeWalkUp(@NotNull final PsiElement place,
+                                     @NotNull final PsiElement originalPlace,
+                                     @NotNull final PsiScopeProcessor processor,
+                                     @Nullable final PsiScopeProcessor nonCodeProcessor,
+                                     @NotNull final ResolveState state) {
+    final GrClosableBlock maxScope = nonCodeProcessor != null ? PsiTreeUtil.getParentOfType(place, GrClosableBlock.class, true, PsiFile.class) : null;
+
+    return PsiTreeUtil.treeWalkUp(place, maxScope, new PairProcessor<PsiElement, PsiElement>() {
+      @Override
+      public boolean process(PsiElement scope, PsiElement lastParent) {
+        if (!doProcessDeclarations(originalPlace, lastParent, scope, substituteProcessor(processor, scope), nonCodeProcessor, state)) {
+          return false;
+        }
+        issueLevelChangeEvents(processor, scope);
+        return true;
+      }
+    });
   }
 
   static boolean doProcessDeclarations(@NotNull PsiElement place,
@@ -149,7 +158,12 @@ public class ResolveUtil {
                                        @NotNull PsiScopeProcessor plainProcessor,
                                        @Nullable PsiScopeProcessor nonCodeProcessor,
                                        @NotNull ResolveState state) {
-    if (!scope.processDeclarations(plainProcessor, state, lastParent, place)) return false;
+    if (scope instanceof GrClosableBlock && nonCodeProcessor != null) {
+      if (!((GrClosableBlock)scope).processClosureDeclarations(plainProcessor, nonCodeProcessor, state, lastParent, place)) return false;
+    }
+    else {
+      if (!scope.processDeclarations(plainProcessor, state, lastParent, place)) return false;
+    }
     if (nonCodeProcessor != null && !processScopeNonCodeMethods(place, lastParent, nonCodeProcessor, scope)) return false;
     return true;
   }
@@ -193,11 +207,13 @@ public class ResolveUtil {
     }
 
     if (scope instanceof GrClosableBlock) {
-      PsiClass superClass = getLiteralSuperClass((GrClosableBlock)scope);
-      if (superClass != null && !superClass.processDeclarations(processor, ResolveState.initial(), null, place)) return false;
+      ResolveState state = ResolveState.initial().put(ResolverProcessor.RESOLVE_CONTEXT, scope);
 
-      if (!GdkMethodUtil.categoryIteration((GrClosableBlock)scope, processor, ResolveState.initial())) return false;
-      if (!processNonCodeMembers(TypesUtil.createType(GroovyCommonClassNames.GROOVY_LANG_CLOSURE, place), processor, place, ResolveState.initial())) return false;
+      PsiClass superClass = getLiteralSuperClass((GrClosableBlock)scope);
+      if (superClass != null && !superClass.processDeclarations(processor, state, null, place)) return false;
+
+      if (!GdkMethodUtil.categoryIteration((GrClosableBlock)scope, processor, state)) return false;
+      if (!processNonCodeMembers(GrClosureType.create(((GrClosableBlock)scope), false), processor, place, state)) return false;
     }
 
     if (scope instanceof GrStatementOwner) {
@@ -250,6 +266,14 @@ public class ResolveUtil {
                                                @NotNull PsiScopeProcessor processor,
                                                @NotNull ResolveState state,
                                                @NotNull PsiElement place) {
+    return processAllDeclarationsSeparately(type, processor, processor, state, place);
+  }
+
+  public static boolean processAllDeclarationsSeparately(@NotNull PsiType type,
+                                                          @NotNull PsiScopeProcessor processor,
+                                                          @NotNull PsiScopeProcessor nonCodeProcessor,
+                                                          @NotNull ResolveState state,
+                                                          @NotNull PsiElement place) {
     if (type instanceof PsiClassType) {
       final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)type).resolveGenerics();
       final PsiClass psiClass = resolveResult.getElement();
@@ -259,8 +283,8 @@ public class ResolveUtil {
         if (!psiClass.processDeclarations(processor, state, null, place)) return false;
       }
     }
-    if (!processNonCodeMembers(type, processor, place, state)) return false;
-    if (!processCategoryMembers(place, processor, state)) return false;
+    if (!processNonCodeMembers(type, nonCodeProcessor, place, state)) return false;
+    if (!processCategoryMembers(place, nonCodeProcessor, state)) return false;
     return true;
   }
 

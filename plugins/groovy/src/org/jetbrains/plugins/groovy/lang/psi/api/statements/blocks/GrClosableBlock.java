@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiType;
+import com.intellij.psi.ResolveState;
+import com.intellij.psi.scope.PsiScopeProcessor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrParametersOwner;
@@ -50,4 +52,10 @@ public interface GrClosableBlock extends GrExpression, GrCodeBlock, GrParameters
   PsiElement getArrow();
 
   boolean isVarArgs();
+
+  boolean processClosureDeclarations(final @NotNull PsiScopeProcessor placeProcessor,
+                                     final @NotNull PsiScopeProcessor nonCodeProcessor,
+                                     final @NotNull ResolveState _state,
+                                     final @Nullable PsiElement lastParent,
+                                     final @NotNull PsiElement place);
 }
