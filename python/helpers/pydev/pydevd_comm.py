@@ -86,7 +86,7 @@ else:
         import queue as PydevQueue
     from socket import socket
     from socket import AF_INET, SOCK_STREAM
-    from socket import SHUT_RD
+    from socket import SHUT_RD, SHUT_WR
 
 try:
     from urllib import quote
