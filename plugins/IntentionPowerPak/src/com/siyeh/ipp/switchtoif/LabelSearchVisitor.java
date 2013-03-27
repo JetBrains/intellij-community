@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2005 Dave Griffith
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,10 +15,7 @@
  */
 package com.siyeh.ipp.switchtoif;
 
-import com.intellij.psi.JavaRecursiveElementWalkingVisitor;
-import com.intellij.psi.PsiIdentifier;
-import com.intellij.psi.PsiLabeledStatement;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 
 class LabelSearchVisitor extends JavaRecursiveElementWalkingVisitor {
 
@@ -26,12 +23,15 @@ class LabelSearchVisitor extends JavaRecursiveElementWalkingVisitor {
   private boolean m_used = false;
 
   LabelSearchVisitor(String name) {
-    super();
     m_labelName = name;
   }
 
   @Override
-  public void visitReferenceExpression(PsiReferenceExpression expression) {
+    public void visitElement(PsiElement element) {
+      if (m_used) {
+        return;
+      }
+      super.visitElement(element);
   }
 
   @Override

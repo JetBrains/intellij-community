@@ -18,11 +18,14 @@ package com.siyeh.ipp.switchtoif;
 import com.siyeh.IntentionPowerPackBundle;
 import com.siyeh.ipp.IPPTestCase;
 
+/**
+ * @see ReplaceIfWithSwitchIntention
+ */
 public class ReplaceIfWithSwitchlIntentionTest extends IPPTestCase {
 
-  public void testComments() {
-    doTest();
-  }
+  public void testComments() { doTest(); }
+  public void testLong() { assertIntentionNotAvailable(); }
+  public void testPolyadic() { doTest(); }
 
   @Override
   protected String getIntentionName() {
