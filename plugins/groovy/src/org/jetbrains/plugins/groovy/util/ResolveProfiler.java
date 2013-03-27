@@ -15,6 +15,9 @@
  */
 package org.jetbrains.plugins.groovy.util;
 
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+
 import java.io.FileWriter;
 import java.io.IOException;
 import java.util.ArrayDeque;
@@ -24,6 +27,7 @@ import java.util.Deque;
  * @author Max Medvedev
  */
 public class ResolveProfiler {
+  @NonNls private static final String PATH = "../../resolve_info/";
   private static final boolean DISABLED = true;
 
   private static final ThreadLocal<ThreadInfo> threadMap = new ThreadLocal<ThreadInfo>();
@@ -35,10 +39,11 @@ public class ResolveProfiler {
 
     private String myPrefix = "";
 
-    private ThreadInfo(String name) {
+    private ThreadInfo(@NotNull String name) {
       myFileName = name;
     }
 
+    @NotNull
     public String getName() {
       return myFileName;
     }
@@ -70,7 +75,7 @@ public class ResolveProfiler {
     return getThreadInfo().finish();
   }
 
-  public static void write(String s) {
+  public static void write(@NotNull String s) {
     if (DISABLED) return;
 
     final ThreadInfo threadInfo = getThreadInfo();
@@ -94,11 +99,12 @@ public class ResolveProfiler {
     }
   }
 
+  @NotNull
   private static ThreadInfo getThreadInfo() {
     ThreadInfo info = threadMap.get();
     if (info == null) {
       synchronized (ResolveProfiler.class) {
-        info = new ThreadInfo("info/out" + fileCount + ".txt");
+        info = new ThreadInfo(PATH + "out" + fileCount + ".txt");
         fileCount++;
       }
       threadMap.set(info);
