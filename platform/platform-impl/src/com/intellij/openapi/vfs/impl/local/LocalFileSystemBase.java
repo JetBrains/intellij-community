@@ -374,15 +374,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private static void delete(@NotNull File physicalFile) throws IOException {
-    if (!FileSystemUtil.isSymLink(physicalFile)) {
-      File[] list = physicalFile.listFiles();
-      if (list != null) {
-        for (File aList : list) {
-          delete(aList);
-        }
-      }
-    }
-    if (!physicalFile.delete()) {
+    if (!FileUtil.delete(physicalFile)) {
       throw new IOException(VfsBundle.message("file.delete.error", physicalFile.getPath()));
     }
   }
