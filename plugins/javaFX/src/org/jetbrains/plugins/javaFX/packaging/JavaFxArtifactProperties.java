@@ -26,7 +26,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactProperties;
@@ -36,7 +35,6 @@ import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
-import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -108,11 +106,6 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     final JavaFxArtifactProperties properties =
             (JavaFxArtifactProperties)artifact.getProperties(JavaFxArtifactPropertiesProvider.getInstance());
     
-    if (StringUtil.isEmptyOrSpaces(properties.getAppClass())) {
-      compileContext.addMessage(CompilerMessageCategory.ERROR, "No application class specified for JavaFX package", null, -1, -1);
-      return;
-    }
-
     new JavaFxPackager(artifact, properties, compileContext).createJarAndDeploy(binPath);
   }
 
