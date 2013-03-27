@@ -218,12 +218,7 @@ public class JBTabsImpl extends JComponent
         disposePopupListener();
       }
     };
-    //UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
-    //  @Override
-    //  public void uiSettingsChanged(UISettings source) {
-    //    updateAll(true, true);
-    //  }
-    //}, this);
+
     addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
         if (mySingleRowLayout.myLastSingRowLayout != null &&
