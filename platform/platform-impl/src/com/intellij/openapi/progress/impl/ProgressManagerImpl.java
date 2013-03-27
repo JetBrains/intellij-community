@@ -445,11 +445,9 @@ public class ProgressManagerImpl extends ProgressManager implements Disposable{
   @Override
   public void run(@NotNull final Task task) {
     if (task.isHeadless()) {
-      new TaskRunnable(task, new EmptyProgressIndicator()).run();
-      return;
+      runProcessWithProgressSynchronously(task, null);
     }
-
-    if (task.isModal()) {
+    else if (task.isModal()) {
       runProcessWithProgressSynchronously(task.asModal(), null);
     }
     else {
