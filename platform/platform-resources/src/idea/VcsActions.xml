@@ -221,7 +221,7 @@
       <reference ref="Vcs.ShowTabbedFileHistory"/>
       <reference ref="ChangesView.Rollback"/>
       <separator/>
-      <add-to-group group-id="MainToolBar" relative-to-action="ShowSettings" anchor="before"/>
+      <add-to-group group-id="MainToolBarSettings" relative-to-action="ShowSettings" anchor="before"/>
     </group>
 
     <!-- Window -->
