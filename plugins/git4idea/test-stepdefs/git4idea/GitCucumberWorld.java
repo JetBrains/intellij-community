@@ -1,6 +1,7 @@
 package git4idea;
 
 import com.intellij.dvcs.test.MockVcsHelper;
+import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.components.ServiceManager;
@@ -82,6 +83,7 @@ public class GitCucumberWorld {
   @Order(0)
   public void setUp() throws Throwable {
     System.setProperty(PlatformUtils.PLATFORM_PREFIX_KEY, "PlatformLangXml");
+    IdeaTestApplication.getInstance(null);
 
     String tempFileName = getClass().getName() + "-" + new Random().nextInt();
     myProjectFixture = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(tempFileName).getFixture();
