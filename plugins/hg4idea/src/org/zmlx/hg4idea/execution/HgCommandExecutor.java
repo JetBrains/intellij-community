@@ -52,6 +52,7 @@ import java.util.List;
  * <li>error output is logged to the console and log, if the command is not silent.
  * </p>
  */
+@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class HgCommandExecutor {
 
   private static final Logger LOG = Logger.getInstance(HgCommandExecutor.class.getName());
@@ -208,35 +209,13 @@ public final class HgCommandExecutor {
     result.setWarnings(warnings);
 
     log(operation, arguments, result);
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
-      logToConsole(operation, arguments, result);
-    }
     return result;
   }
 
-  private void logToConsole(@NotNull String operation, @Nullable List<String> arguments, @NotNull HgCommandResult result) {
-    final String cmdString = constructCommandOutput(operation, arguments);
-    if (cmdString == null) {
-      return;
-    }
-    // log command
-    System.out.println(cmdString);
-
-    // log output
-    if (!result.getRawOutput().isEmpty()) {
-      System.out.println(result.getRawOutput());
-    }
-
-    // log error
-    if (!result.getRawError().isEmpty()) {
-      System.out.println(result.getRawError());
-    }
-  }
-
-  @Nullable
-  private String constructCommandOutput(@NotNull String operation, @Nullable List<String> arguments) {
+  // logging to the Version Control console (without extensions and configs)
+  private void log(@NotNull String operation, @Nullable List<String> arguments, @NotNull HgCommandResult result) {
     if (myProject.isDisposed()) {
-      return null;
+      return;
     }
     final HgGlobalSettings settings = myVcs.getGlobalSettings();
     String exeName;
@@ -244,17 +223,13 @@ public final class HgCommandExecutor {
     exeName = settings.getHgExecutable().substring(lastSlashIndex + 1);
 
     final String executable = settings.isRunViaBash() ? "bash -c " + exeName : exeName;
-    return String.format("%s %s %s", executable, operation, arguments == null ? "" : StringUtil.join(arguments, " "));
-  }
+    final String cmdString = String.format("%s %s %s", executable, operation, arguments == null ? "" : StringUtil.join(arguments, " "));
 
-  // logging to the Version Control console (without extensions and configs)
-  private void log(@NotNull String operation, @Nullable List<String> arguments, @NotNull HgCommandResult result) {
-    final String cmdString = constructCommandOutput(operation, arguments);
-    if (cmdString == null) {
-      return;
-    }
-
+    final boolean isUnitTestMode = ApplicationManager.getApplication().isUnitTestMode();
     // log command
+    if (isUnitTestMode) {
+      System.out.print(cmdString + "\n");
+    }
     if (!myIsSilent) {
       LOG.info(cmdString);
       myVcs.showMessageInConsole(cmdString, ConsoleViewContentType.NORMAL_OUTPUT.getAttributes());
@@ -265,6 +240,9 @@ public final class HgCommandExecutor {
 
     // log output if needed
     if (!result.getRawOutput().isEmpty()) {
+      if (isUnitTestMode) {
+        System.out.print(result.getRawOutput() + "\n");
+      }
       if (!myIsSilent && myShowOutput) {
         LOG.info(result.getRawOutput());
         myVcs.showMessageInConsole(result.getRawOutput(), ConsoleViewContentType.SYSTEM_OUTPUT.getAttributes());
@@ -276,6 +254,9 @@ public final class HgCommandExecutor {
 
     // log error
     if (!result.getRawError().isEmpty()) {
+      if (isUnitTestMode) {
+        System.out.print(result.getRawError() + "\n");
+      }
       if (!myIsSilent) {
         LOG.info(result.getRawError());
         myVcs.showMessageInConsole(result.getRawError(), ConsoleViewContentType.ERROR_OUTPUT.getAttributes());
