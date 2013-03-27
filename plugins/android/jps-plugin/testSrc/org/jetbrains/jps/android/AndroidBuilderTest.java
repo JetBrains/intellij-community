@@ -865,7 +865,7 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
     if (androidHomePath != null) {
       return androidHomePath;
     }
-    return new File(PathManager.getHomePath(), "android/android").getPath();
+    return new File(PathManager.getHomePath(), "community/plugins/android").getPath();
   }
 
   private static void createTextFile(@NotNull String path, @NotNull String text) throws IOException {

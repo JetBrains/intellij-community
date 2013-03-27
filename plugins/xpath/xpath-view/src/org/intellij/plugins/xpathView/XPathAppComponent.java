@@ -195,7 +195,7 @@ public class XPathAppComponent implements ApplicationComponent, JDOMExternalizab
         label.setBorder(BorderFactory.createCompoundBorder(
                 BorderFactory.createBevelBorder(BevelBorder.RAISED, Color.WHITE, Gray._128),
                 BorderFactory.createEmptyBorder(3, 5, 3, 5)));
-        label.setForeground(JBColor.foreground);
+        label.setForeground(JBColor.foreground());
         label.setBackground(HintUtil.INFORMATION_COLOR);
         label.setOpaque(true);
         label.setFont(label.getFont().deriveFont(Font.BOLD));

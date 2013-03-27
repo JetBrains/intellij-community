@@ -351,6 +351,8 @@ public abstract class GroovyFileBaseImpl extends PsiFileBase implements GroovyFi
     int start = Math.min(b1, b2);
     int end = Math.max(b1, b2);
 
+    if (start == -1) return 0;
+
     int max = 0;
     int cur = 0;
     for (int i = start; i < end; i++) {

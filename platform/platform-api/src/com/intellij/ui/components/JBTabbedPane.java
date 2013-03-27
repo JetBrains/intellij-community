@@ -92,7 +92,7 @@ public class JBTabbedPane extends JTabbedPane implements HierarchyListener {
         getTabComponentAt(getSelectedIndex()).setForeground(Color.WHITE);
       }
       if (previousSelectedIndex != -1 && getTabComponentAt(previousSelectedIndex) != null) {
-        getTabComponentAt(previousSelectedIndex).setForeground(JBColor.foreground);
+        getTabComponentAt(previousSelectedIndex).setForeground(JBColor.foreground());
       }
     }
   }

@@ -193,4 +193,10 @@ public abstract class CustomAnnotationChecker {
     final PsiType componentType = ((PsiArrayType)type).getComponentType();
     return checkAnnoTypeAssignable(componentType, rtype, context, skipArrays);
   }
+
+  public static void highlightErrors(AnnotationHolder holder, Map<PsiElement, String> errors) {
+    for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
+      holder.createErrorAnnotation(entry.getKey(), entry.getValue());
+    }
+  }
 }

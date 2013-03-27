@@ -765,7 +765,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
         }
       });
       final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, "<html>" + buf.toString()+ "</html>");
-      pane.setForeground(JBColor.foreground);
+      pane.setForeground(JBColor.foreground());
       pane.setBackground(HintUtil.INFORMATION_COLOR);
       pane.setOpaque(true);
       final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(pane);

@@ -79,6 +79,7 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
   private IdeaWideAuthenticator myAuthenticator;
   public transient Getter<PasswordAuthentication> myTestAuthRunnable = new StaticGetter<PasswordAuthentication>(null);
   public transient Getter<PasswordAuthentication> myTestGenericAuthRunnable = new StaticGetter<PasswordAuthentication>(null);
+  public String PROXY_EXCEPTIONS = "";
 
   public static HttpConfigurable getInstance() {
     return ServiceManager.getService(HttpConfigurable.class);

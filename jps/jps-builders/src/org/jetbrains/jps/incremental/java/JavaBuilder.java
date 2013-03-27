@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -152,13 +152,20 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return Collections.singletonList(JAVA_EXTENSION);
   }
 
-  public ExitCode build(final CompileContext context,
-                        final ModuleChunk chunk,
-                        DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
-                        OutputConsumer outputConsumer) throws ProjectBuildException {
+  public ExitCode build(@NotNull CompileContext context,
+                        @NotNull ModuleChunk chunk,
+                        @NotNull DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                        @NotNull OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
     if (!IS_ENABLED.get(context, Boolean.TRUE)) {
       return ExitCode.NOTHING_DONE;
     }
+    return doBuild(context, chunk, dirtyFilesHolder, outputConsumer);
+  }
+
+  public ExitCode doBuild(@NotNull CompileContext context,
+                          @NotNull ModuleChunk chunk,
+                          @NotNull DirtyFilesHolder<JavaSourceRootDescriptor, ModuleBuildTarget> dirtyFilesHolder,
+                          @NotNull OutputConsumer outputConsumer) throws ProjectBuildException, IOException {
     try {
       final Set<File> filesToCompile = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
 
