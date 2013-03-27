@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -48,51 +48,43 @@ public class DivideByZeroInspection extends BaseInspection {
   private static class DivisionByZeroVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(
-      @NotNull PsiBinaryExpression expression) {
-      super.visitBinaryExpression(expression);
-      final PsiExpression rhs = expression.getROperand();
-      if (rhs == null) {
-        return;
-      }
+    public void visitPolyadicExpression(PsiPolyadicExpression expression) {
+      super.visitPolyadicExpression(expression);
       final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.DIV) &&
-          !tokenType.equals(JavaTokenType.PERC)) {
+      if (!JavaTokenType.DIV.equals(tokenType) && !JavaTokenType.PERC.equals(tokenType)) {
         return;
       }
-      final Object value =
-        ConstantExpressionUtil.computeCastTo(rhs, PsiType.DOUBLE);
-      if (!(value instanceof Double)) {
-        return;
-      }
-      final double constantValue = ((Double)value).doubleValue();
-      if (constantValue == 0.0 || constantValue == -0.0) {
-        registerError(expression);
+      final PsiExpression[] operands = expression.getOperands();
+      for (int i = 1; i < operands.length; i++) {
+        final PsiExpression operand = operands[i];
+        if (isZero(operand)) {
+          registerError(operand);
+          return;
+        }
       }
     }
 
     @Override
-    public void visitAssignmentExpression(
-      PsiAssignmentExpression expression) {
+    public void visitAssignmentExpression(PsiAssignmentExpression expression) {
       super.visitAssignmentExpression(expression);
       final PsiExpression rhs = expression.getRExpression();
       if (rhs == null) {
         return;
       }
       final IElementType tokenType = expression.getOperationTokenType();
-      if (!tokenType.equals(JavaTokenType.DIVEQ)
-          && !tokenType.equals(JavaTokenType.PERCEQ)) {
+      if (!tokenType.equals(JavaTokenType.DIVEQ) && !tokenType.equals(JavaTokenType.PERCEQ) || isZero(rhs)) {
         return;
       }
-      final Object value = ConstantExpressionUtil.computeCastTo(rhs,
-                                                                PsiType.DOUBLE);
+      registerError(expression);
+    }
+
+    private static boolean isZero(PsiExpression expression) {
+      final Object value = ConstantExpressionUtil.computeCastTo(expression, PsiType.DOUBLE);
       if (!(value instanceof Double)) {
-        return;
+        return false;
       }
       final double constantValue = ((Double)value).doubleValue();
-      if (constantValue == 0.0 || constantValue == -0.0) {
-        registerError(expression);
-      }
+      return constantValue == 0.0 || constantValue == -0.0;
     }
   }
 }
