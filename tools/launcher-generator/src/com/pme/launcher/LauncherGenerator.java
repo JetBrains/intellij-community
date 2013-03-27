@@ -79,6 +79,10 @@ public class LauncherGenerator {
     RandomAccessFile exeStream = new RandomAccessFile(myExePath, "rw");
     myReader.write(exeStream);
     exeStream.close();
+
+    RandomAccessFile versionInfoStream = new RandomAccessFile(myExePath + ".version", "rw");
+    myVersionInfo.resetOffsets(0);
+    myVersionInfo.write(versionInfoStream);
   }
 
   public void setResourceString(int id, String value) {

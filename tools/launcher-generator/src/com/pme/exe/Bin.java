@@ -367,19 +367,24 @@ public abstract class Bin {
 
     @Override
     public long sizeInBytes() {
-      throw new UnsupportedOperationException();
+      return bytesToSkip(getOffset());
     }
 
     @Override
     public void read(DataInput stream) throws IOException {
       if (stream instanceof OffsetTrackingInputStream) {
         long offset = ((OffsetTrackingInputStream) stream).getOffset();
-        int offsetMask = myBytes-1;
-        long offsetBits = offset & offsetMask;
-        if (offsetBits > 0) {
-          stream.skipBytes((int) (myBytes - offsetBits));
+        int skip = bytesToSkip(offset);
+        if (skip > 0) {
+          stream.skipBytes(skip);
         }
       }
+    }
+
+    private int bytesToSkip(long offset) {
+      int offsetMask = myBytes-1;
+      long offsetBits = offset & offsetMask;
+      return offsetBits == 0 ? 0 : (int) (myBytes - offsetBits);
     }
 
     @Override
@@ -468,7 +473,7 @@ public abstract class Bin {
 
     @Override
     public long sizeInBytes() {
-      throw new UnsupportedOperationException();
+      return myValue.length() * 2 + 2;
     }
 
     @Override
@@ -484,7 +489,10 @@ public abstract class Bin {
 
     @Override
     public void write(DataOutput stream) throws IOException {
-      throw new UnsupportedOperationException();
+      for (int i = 0; i < myValue.length(); i++) {
+        stream.writeShort(BitsUtil.revertBytesOfShort((short) myValue.charAt(i)));
+      }
+      stream.writeShort(0);
     }
 
     @Override
@@ -579,23 +587,6 @@ public abstract class Bin {
         }
         writer.write(myBuffer.toString());
       }
-    }
-
-    public String getAsWChar() {
-      StringBuilder result = new StringBuilder(myBytes.length/2);
-      ByteArrayInputStream bis = new ByteArrayInputStream(myBytes);
-      DataInputStream dis = new DataInputStream(bis);
-      try {
-        for (int i = 0; i < myBytes.length / 2 - 1; i++) {
-          result.append(BitsUtil.readChar(dis));
-        }
-        char terminator = BitsUtil.readChar(dis);
-        assert terminator == '\0';
-      } catch (IOException e) {
-        throw new RuntimeException(e);
-      }
-
-      return result.toString();
     }
   }
 

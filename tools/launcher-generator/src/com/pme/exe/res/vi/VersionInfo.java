@@ -17,20 +17,14 @@
 
 package com.pme.exe.res.vi;
 
-import com.pme.exe.Bin;
 import com.pme.util.OffsetTrackingInputStream;
 
 import java.io.DataInput;
 import java.io.IOException;
 
-public class VersionInfo extends Bin.Structure {
+public class VersionInfo extends VersionInfoBin {
   public VersionInfo() {
-    super("VersionInfo");
-    addMember(new Word("wLength"));
-    addMember(new Word("wValueLength"));
-    addMember(new Word("wType"));
-    addMember(new Bytes("szKey", 32));
-    addMember(new Padding(4));
+    super("VersionInfo", "VS_VERSION_INFO");
     addMember(new FixedFileInfo());
     addMember(new Padding(4));
     addMember(new StringFileInfo());
@@ -44,8 +38,6 @@ public class VersionInfo extends Bin.Structure {
       startOffset = ((OffsetTrackingInputStream) stream).getOffset();
     }
     super.read(stream);
-    String signature = ((Bytes) getMember("szKey")).getAsWChar();
-    assert signature.equals("VS_VERSION_INFO"): "Expected signature VS_VERSION_INFO, found '" + signature + "'";
     if (stream instanceof OffsetTrackingInputStream) {
       long offset = ((OffsetTrackingInputStream) stream).getOffset();
       long length = getValue("wLength");

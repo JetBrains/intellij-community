@@ -17,34 +17,13 @@
 
 package com.pme.exe.res.vi;
 
-import com.pme.exe.Bin;
-import com.pme.util.OffsetTrackingInputStream;
-
-import java.io.DataInput;
-import java.io.IOException;
-
-public class StringFileInfo extends Bin.Structure {
+public class StringFileInfo extends VersionInfoBin {
   public StringFileInfo() {
-    super("StringFileInfo");
-    addMember(new Word("wLength"));
-    addMember(new Word("wValueLength"));
-    addMember(new Word("wType"));
-    addMember(new Bytes("szKey", 30));
-    addMember(new Padding(4));
-  }
-
-  @Override
-  public void read(DataInput stream) throws IOException {
-    OffsetTrackingInputStream inputStream = (OffsetTrackingInputStream) stream;
-    long startOffset = inputStream.getOffset();
-    super.read(stream);
-    assert ((Bytes) getMember("szKey")).getAsWChar().equals("StringFileInfo");
-    long length = getValue("wLength");
-    int i = 0;
-    while(inputStream.getOffset() < startOffset + length) {
-      StringTable stringTableReader = new StringTable("StringTable" + (i++));
-      stringTableReader.read(inputStream);
-      addMember(stringTableReader);
-    }
+    super("StringFileInfo", "StringFileInfo", new VersionInfoFactory() {
+      @Override
+      public VersionInfoBin createChild(int index) {
+        return new StringTable("StringTable" + index);
+      }
+    });
   }
 }
