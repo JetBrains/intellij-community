@@ -296,7 +296,7 @@ public class ButtonlessScrollBarUI extends BasicScrollBarUI {
   protected Color adjustColor(Color c) {
     if (myAnimationColorShift == 0) return c;
     final int sign = UIUtil.isUnderDarcula() ? -1 : 1;
-    return Gray.get(c.getRed() - sign * myAnimationColorShift);
+    return Gray.get(Math.max(0, Math.min(255, c.getRed() - sign * myAnimationColorShift)));
   }
 
   private boolean isVertical() {
