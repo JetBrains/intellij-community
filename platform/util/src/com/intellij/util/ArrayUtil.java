@@ -685,6 +685,21 @@ public class ArrayUtil extends ArrayUtilRt {
     return indexOf(objects, o) >= 0;
   }
 
+  public static boolean contains(@Nullable final String s, final String... strings) {
+    if (s == null) {
+      for (String str : strings) {
+        if (str == null) return true;
+      }
+    }
+    else {
+      for (String str : strings) {
+        if (s.equals(str)) return true;
+      }
+    }
+
+    return false;
+  }
+
   @NotNull
   public static int[] newIntArray(int count) {
     return count == 0 ? EMPTY_INT_ARRAY : new int[count];
