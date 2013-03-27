@@ -52,7 +52,7 @@ public class JBColor extends Color {
     DARK = dark;
   }
 
-  private Color current() {
+  Color current() {
     return DARK ? darkColor : regularColor;
   }
   @Override
@@ -156,10 +156,20 @@ public class JBColor extends Color {
   public final static JBColor blue = new JBColor(Color.blue, DarculaColors.BLUE);
   public final static JBColor BLUE = blue;
 
-  public final static JBColor white = new JBColor(Color.white, UIUtil.getListBackground());
+  public final static JBColor white = new JBColor(Color.white, UIUtil.getListBackground()) {
+    @Override
+    Color current() {
+      return DARK ? UIUtil.getListBackground() : Color.white;
+    }
+  };
   public final static JBColor WHITE = white;
 
-  public final static JBColor black = new JBColor(Color.black, UIUtil.getListForeground());
+  public final static JBColor black = new JBColor(Color.black, UIUtil.getListForeground()) {
+    @Override
+    Color current() {
+      return DARK ? UIUtil.getListForeground() : Color.black;
+    }
+  };
   public final static JBColor BLACK = black;
 
   public final static JBColor gray = new JBColor(Gray._128, Gray._128);
