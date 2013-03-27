@@ -1022,6 +1022,10 @@ public abstract class ChooseByNameBase {
   }
 
   private int detectBestStatisticalPosition() {
+    if (myModel instanceof Comparator) {
+      return 0;
+    }
+
     int best = 0;
     int bestPosition = 0;
     int bestMatch = Integer.MIN_VALUE;
