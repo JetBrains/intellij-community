@@ -238,10 +238,10 @@ public abstract class TabbedLanguageCodeStylePanel extends CodeStyleAbstractPane
 
   @Override
   public void dispose() {
-    super.dispose();
     for (CodeStyleAbstractPanel tab : myTabs) {
       Disposer.dispose(tab);
     }
+    super.dispose();
   }
 
   @Override
