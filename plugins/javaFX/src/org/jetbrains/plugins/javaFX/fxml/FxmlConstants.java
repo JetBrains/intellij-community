@@ -46,7 +46,7 @@ public class FxmlConstants {
   @NonNls public static final String STYLESHEETS = "stylesheets";
 
   public static final List<String> FX_DEFAULT_PROPERTIES = Arrays.asList(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY, FX_CONSTANT);
-  public static final List<String> FX_DEFAULT_ELEMENTS = Arrays.asList(FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT);
+  public static final List<String> FX_DEFAULT_ELEMENTS = Arrays.asList(FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT, FX_ROOT);
 
   public static final String FX_ELEMENT_SOURCE = "source";
 

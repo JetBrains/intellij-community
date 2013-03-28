@@ -77,7 +77,7 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
     final String name = childTag.getName();
     if (FxmlConstants.FX_DEFINE.equals(myName)) {
-      if (FxmlConstants.FX_INCLUDE.equals(name) || FxmlConstants.FX_REFERENCE.equals(name)) {
+      if (FxmlConstants.FX_DEFAULT_ELEMENTS.contains(name)) {
         return new JavaFxDefaultPropertyElementDescriptor(name, childTag);
       }
       return new JavaFxClassBackedElementDescriptor(name, childTag);
@@ -281,15 +281,21 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
 
   @Override
   public void validate(@NotNull XmlTag context, @NotNull ValidationHost host) {
-    final XmlTag referencedTag = getReferencedTag(context);
-    if (referencedTag != null) {
-      final XmlElementDescriptor descriptor = referencedTag.getDescriptor();
-      if (descriptor != null) {
-        final PsiElement declaration = descriptor.getDeclaration();
-        if (declaration instanceof PsiClass) {
-          final String canCoerceError = JavaFxPsiUtil.isClassAcceptable(context.getParentTag(), (PsiClass)declaration);
-          if (canCoerceError != null) {
-            host.addMessage(context.getNavigationElement(), canCoerceError, ValidationHost.ErrorType.ERROR);
+    if (FxmlConstants.FX_ROOT.equals(context.getName())) {
+      if (context.getParentTag() != null) {
+        host.addMessage(context.getNavigationElement(), "<fx:root> is valid only as the root node of an FXML document", ValidationHost.ERROR);
+      }
+    } else {
+      final XmlTag referencedTag = getReferencedTag(context);
+      if (referencedTag != null) {
+        final XmlElementDescriptor descriptor = referencedTag.getDescriptor();
+        if (descriptor != null) {
+          final PsiElement declaration = descriptor.getDeclaration();
+          if (declaration instanceof PsiClass) {
+            final String canCoerceError = JavaFxPsiUtil.isClassAcceptable(context.getParentTag(), (PsiClass)declaration);
+            if (canCoerceError != null) {
+              host.addMessage(context.getNavigationElement(), canCoerceError, ValidationHost.ErrorType.ERROR);
+            }
           }
         }
       }
