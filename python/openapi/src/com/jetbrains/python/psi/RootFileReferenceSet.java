@@ -3,6 +3,7 @@ package com.jetbrains.python.psi;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileTypes.FileType;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -31,6 +32,10 @@ public class RootFileReferenceSet extends FileReferenceSet {
 
   public RootFileReferenceSet(String s, PsiElement element, int offset, PsiReferenceProvider provider, boolean sensitive) {
     super(s, element, offset, provider, sensitive);
+  }
+
+  public boolean isAbsolutePathReference() {
+    return FileUtil.isAbsolute(getPathString());
   }
 
   @NotNull
