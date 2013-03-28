@@ -451,4 +451,9 @@ public class ToolsImpl implements Tools {
   public List<ScopeToolState> getNonDefaultTools() {
     return myTools;
   }
+
+  @Override
+  public String toString() {
+    return myShortName;
+  }
 }
