@@ -16,20 +16,27 @@
 package com.intellij.lang.properties.editor;
 
 import com.intellij.lang.properties.ResourceBundle;
+import com.intellij.lang.properties.editor.actions.AddPropertyKeyAction;
+import com.intellij.lang.properties.editor.actions.RemovePropertyKeyAction;
+import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author cdr
  */
 class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureViewComponent {
+  @NotNull
   private final ResourceBundle myResourceBundle;
 
-  public ResourceBundleStructureViewComponent(Project project, ResourceBundle resourceBundle, ResourceBundleEditor editor) {
+  public ResourceBundleStructureViewComponent(@NotNull Project project, @NotNull ResourceBundle resourceBundle, @NotNull ResourceBundleEditor editor) {
     super(project, editor, new ResourceBundleStructureViewModel(project, resourceBundle));
     myResourceBundle = resourceBundle;
+    showToolbar();
   }
 
+  @Override
   public Object getData(String dataId) {
     if (PlatformDataKeys.VIRTUAL_FILE.is(dataId)) {
       return new ResourceBundleAsVirtualFile(myResourceBundle);
@@ -37,6 +44,14 @@ class ResourceBundleStructureViewComponent extends PropertiesGroupingStructureVi
     return super.getData(dataId);
   }
 
+  @Override
+  protected boolean addCustomActions(@NotNull DefaultActionGroup actionGroup) {
+    actionGroup.add(new AddPropertyKeyAction(myResourceBundle));
+    actionGroup.add(new RemovePropertyKeyAction(myResourceBundle, getTree()));
+    return true;
+  }
+
+  @Override
   protected boolean showScrollToFromSourceActions() {
     return false;
   }

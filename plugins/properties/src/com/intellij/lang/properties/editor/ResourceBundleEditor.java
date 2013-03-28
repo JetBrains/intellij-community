@@ -110,7 +110,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private VirtualFileListener myVfsListener;
   private Editor              mySelectedEditor;
 
-  public ResourceBundleEditor(Project project, ResourceBundle resourceBundle) {
+  public ResourceBundleEditor(Project project, @NotNull ResourceBundle resourceBundle) {
     myProject = project;
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
 
@@ -150,7 +150,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     }
     myDataProviderPanel = new DataProviderPanel(myPanel);
 
-    getSplitter().setAndLoadSplitterProportionKey(getClass() + ".splitter");
     project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
       public void selectionChanged(FileEditorManagerEvent event) {
