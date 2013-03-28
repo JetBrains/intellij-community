@@ -22,6 +22,7 @@ import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -97,7 +98,7 @@ public abstract class ModuleType<T extends ModuleBuilder> {
     return true;
   }
 
-  public static ModuleType get(Module module) {
+  public static ModuleType get(@NotNull Module module) {
     return ModuleTypeManager.getInstance().findByID(module.getOptionValue(Module.ELEMENT_TYPE));
   }
 }
