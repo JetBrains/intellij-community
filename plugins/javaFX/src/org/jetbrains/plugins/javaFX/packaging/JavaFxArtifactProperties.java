@@ -101,12 +101,16 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
       return;
     }
 
-    final String binPath = ((JavaSdk)fxCompatibleSdk.getSdkType()).getBinPath(fxCompatibleSdk);
-
     final JavaFxArtifactProperties properties =
             (JavaFxArtifactProperties)artifact.getProperties(JavaFxArtifactPropertiesProvider.getInstance());
-    
-    new JavaFxPackager(artifact, properties, compileContext).createJarAndDeploy(binPath);
+
+    final JavaFxPackager javaFxPackager = new JavaFxPackager(artifact, properties, project) {
+      @Override
+      protected void registerJavaFxPackagerError(String message) {
+        compileContext.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+      }
+    };
+    javaFxPackager.buildJavaFxArtifact(fxCompatibleSdk.getHomePath());
   }
 
   @Override
@@ -277,15 +281,15 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     return null;
   }
   
-  private static class JavaFxPackager extends AbstractJavaFxPackager {
+  public static abstract class JavaFxPackager extends AbstractJavaFxPackager {
     private final Artifact myArtifact;
     private final JavaFxArtifactProperties myProperties;
-    private final CompileContext myCompileContext;
+    private final Project myProject;
 
-    public JavaFxPackager(Artifact artifact, JavaFxArtifactProperties properties, CompileContext compileContext) {
+    public JavaFxPackager(Artifact artifact, JavaFxArtifactProperties properties, Project project) {
       myArtifact = artifact;
       myProperties = properties;
-      myCompileContext = compileContext;
+      myProject = project;
     }
 
     @Override
@@ -335,17 +339,12 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
 
     @Override
     public String getPreloaderClass() {
-      return myProperties.getPreloaderClass(myArtifact, myCompileContext.getProject());
+      return myProperties.getPreloaderClass(myArtifact, myProject);
     }
 
     @Override
     public String getPreloaderJar() {
-      return myProperties.getPreloaderJar(myArtifact, myCompileContext.getProject());
-    }
-
-    @Override
-    protected void registerJavaFxPackagerError(String message) {
-      myCompileContext.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+      return myProperties.getPreloaderJar(myArtifact, myProject);
     }
 
     @Override
