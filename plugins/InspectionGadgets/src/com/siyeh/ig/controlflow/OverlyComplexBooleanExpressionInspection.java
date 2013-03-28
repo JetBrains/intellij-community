@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2011 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -24,30 +24,23 @@ import com.siyeh.ig.BaseInspectionVisitor;
 import com.siyeh.ig.InspectionGadgetsFix;
 import com.siyeh.ig.fixes.ExtractMethodFix;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-import javax.swing.JComponent;
-import javax.swing.JFormattedTextField;
-import javax.swing.JLabel;
-import javax.swing.JPanel;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
+import javax.swing.*;
+import java.awt.*;
 import java.text.NumberFormat;
 import java.util.HashSet;
 import java.util.Set;
 
-public class OverlyComplexBooleanExpressionInspection
-  extends BaseInspection {
+public class OverlyComplexBooleanExpressionInspection extends BaseInspection {
 
-  private static final Set<String> s_booleanOperators =
-    new HashSet<String>(5);
+  private static final Set<IElementType> s_booleanOperators = new HashSet<IElementType>(5);
 
   static {
-    s_booleanOperators.add("&&");
-    s_booleanOperators.add("||");
-    s_booleanOperators.add("^");
-    s_booleanOperators.add("&");
-    s_booleanOperators.add("|");
+    s_booleanOperators.add(JavaTokenType.ANDAND);
+    s_booleanOperators.add(JavaTokenType.OROR);
+    s_booleanOperators.add(JavaTokenType.XOR);
+    s_booleanOperators.add(JavaTokenType.AND);
+    s_booleanOperators.add(JavaTokenType.OR);
   }
 
   /**
@@ -63,32 +56,28 @@ public class OverlyComplexBooleanExpressionInspection
   @Override
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "overly.complex.boolean.expression.display.name");
+    return InspectionGadgetsBundle.message("overly.complex.boolean.expression.display.name");
   }
 
   @Override
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "overly.complex.boolean.expression.problem.descriptor");
+    final Integer termCount = (Integer)infos[0];
+    return InspectionGadgetsBundle.message("overly.complex.boolean.expression.problem.descriptor", termCount);
   }
 
   @Override
   public JComponent createOptionsPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     final CheckBox ignoreConjunctionsDisjunctionsCheckBox =
-      new CheckBox(InspectionGadgetsBundle.message(
-        "overly.complex.boolean.expression.ignore.option"),
+      new CheckBox(InspectionGadgetsBundle.message("overly.complex.boolean.expression.ignore.option"),
                    this, "m_ignorePureConjunctionsDisjunctions");
     final NumberFormat formatter = NumberFormat.getIntegerInstance();
     formatter.setParseIntegerOnly(true);
-    final JFormattedTextField termLimitTextField =
-      prepareNumberEditor("m_limit");
+    final JFormattedTextField termLimitTextField = prepareNumberEditor("m_limit");
 
     final GridBagConstraints constraints = new GridBagConstraints();
-    final JLabel label = new JLabel(InspectionGadgetsBundle.message(
-      "overly.complex.boolean.expression.max.terms.option"));
+    final JLabel label = new JLabel(InspectionGadgetsBundle.message("overly.complex.boolean.expression.max.terms.option"));
 
     constraints.anchor = GridBagConstraints.BASELINE_LEADING;
     constraints.fill = GridBagConstraints.HORIZONTAL;
@@ -122,26 +111,22 @@ public class OverlyComplexBooleanExpressionInspection
     return new OverlyComplexBooleanExpressionVisitor();
   }
 
-  private class OverlyComplexBooleanExpressionVisitor
-    extends BaseInspectionVisitor {
+  private class OverlyComplexBooleanExpressionVisitor extends BaseInspectionVisitor {
 
     @Override
-    public void visitBinaryExpression(
-      @NotNull PsiBinaryExpression expression) {
-      super.visitBinaryExpression(expression);
+    public void visitPolyadicExpression(@NotNull PsiPolyadicExpression expression) {
+      super.visitPolyadicExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitPrefixExpression(
-      @NotNull PsiPrefixExpression expression) {
+    public void visitPrefixExpression(@NotNull PsiPrefixExpression expression) {
       super.visitPrefixExpression(expression);
       checkExpression(expression);
     }
 
     @Override
-    public void visitParenthesizedExpression(
-      @NotNull PsiParenthesizedExpression expression) {
+    public void visitParenthesizedExpression(@NotNull PsiParenthesizedExpression expression) {
       super.visitParenthesizedExpression(expression);
       checkExpression(expression);
     }
@@ -150,112 +135,78 @@ public class OverlyComplexBooleanExpressionInspection
       if (!isBoolean(expression)) {
         return;
       }
-      if (isParentBoolean(expression)) {
+      final PsiElement parent = expression.getParent();
+      if (parent instanceof PsiExpression && isBoolean((PsiExpression)parent)) {
         return;
       }
       final int numTerms = countTerms(expression);
       if (numTerms <= m_limit) {
         return;
       }
-      if (m_ignorePureConjunctionsDisjunctions &&
-          expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)expression;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final String signText = sign.getText();
-        if (s_booleanOperators.contains(signText)) {
-          if (isPureConjunctionDisJunction(expression, signText)) {
-            return;
-          }
-        }
+      if (m_ignorePureConjunctionsDisjunctions && isPureConjunctionDisjunction(expression)) {
+        return;
       }
-      registerError(expression);
+      registerError(expression, Integer.valueOf(numTerms));
     }
 
     private int countTerms(PsiExpression expression) {
       if (!isBoolean(expression)) {
         return 1;
       }
-      if (expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)expression;
-        final PsiExpression lhs = binaryExpression.getLOperand();
-        final PsiExpression rhs = binaryExpression.getROperand();
-        return countTerms(lhs) + countTerms(rhs);
+      if (expression instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+        final PsiExpression[] operands = polyadicExpression.getOperands();
+        int count = 0;
+        for (PsiExpression operand : operands) {
+          count += countTerms(operand);
+        }
+        return count;
       }
       else if (expression instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression =
-          (PsiPrefixExpression)expression;
-        final PsiExpression operand = prefixExpression.getOperand();
-        return countTerms(operand);
+        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+        return countTerms(prefixExpression.getOperand());
       }
       else if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression =
-          (PsiParenthesizedExpression)expression;
-        final PsiExpression contents =
-          parenthesizedExpression.getExpression();
-        return countTerms(contents);
+        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+        return countTerms(parenthesizedExpression.getExpression());
       }
       return 1;
     }
 
-    private boolean isParentBoolean(PsiExpression expression) {
-      final PsiElement parent = expression.getParent();
-      if (!(parent instanceof PsiExpression)) {
-        return false;
-      }
-      return isBoolean((PsiExpression)parent);
-    }
-
     private boolean isBoolean(PsiExpression expression) {
-      if (expression instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)expression;
-        final PsiJavaToken sign = binaryExpression.getOperationSign();
-        final String signText = sign.getText();
-        return s_booleanOperators.contains(signText);
+      if (expression instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+        return s_booleanOperators.contains(polyadicExpression.getOperationTokenType());
       }
       else if (expression instanceof PsiPrefixExpression) {
-        final PsiPrefixExpression prefixExpression =
-          (PsiPrefixExpression)expression;
-        final IElementType tokenType = prefixExpression.getOperationTokenType();
-        return tokenType.equals(JavaTokenType.EXCL);
+        final PsiPrefixExpression prefixExpression = (PsiPrefixExpression)expression;
+        return JavaTokenType.EXCL.equals(prefixExpression.getOperationTokenType());
       }
       else if (expression instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression =
-          (PsiParenthesizedExpression)expression;
-        final PsiExpression contents =
-          parenthesizedExpression.getExpression();
-        return isBoolean(contents);
+        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)expression;
+        return isBoolean(parenthesizedExpression.getExpression());
       }
       return false;
     }
 
-    private boolean isPureConjunctionDisJunction(
-      @Nullable PsiExpression expression,
-      @NotNull String operator) {
-      if (expression == null) {
+    private boolean isPureConjunctionDisjunction(PsiExpression expression) {
+      if (!(expression instanceof PsiPolyadicExpression)) {
         return false;
       }
-      if (expression instanceof PsiPrefixExpression ||
-          expression instanceof PsiParenthesizedExpression) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      final IElementType sign = polyadicExpression.getOperationTokenType();
+      if (!s_booleanOperators.contains(sign)) {
         return false;
       }
-      if (!(expression instanceof PsiBinaryExpression)) {
-        return true;
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      for (PsiExpression operand : operands) {
+        if (!(operand instanceof PsiReferenceExpression) &&
+            !(operand instanceof PsiMethodCallExpression) &&
+            !(operand instanceof PsiLiteralExpression)) {
+          return false;
+        }
       }
-      final PsiBinaryExpression binaryExpression =
-        (PsiBinaryExpression)expression;
-      final PsiJavaToken sign = binaryExpression.getOperationSign();
-      final String signText = sign.getText();
-      if (s_booleanOperators.contains(signText) &&
-          !operator.equals(signText)) {
-        return false;
-      }
-      final PsiExpression lOperand = binaryExpression.getLOperand();
-      final PsiExpression rOperand = binaryExpression.getROperand();
-      return isPureConjunctionDisJunction(lOperand, operator) &&
-             isPureConjunctionDisJunction(rOperand, operator);
+      return true;
     }
   }
 }
