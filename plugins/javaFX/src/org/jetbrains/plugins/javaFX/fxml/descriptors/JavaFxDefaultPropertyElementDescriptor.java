@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -282,7 +283,8 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
 
   @Override
   public void validate(@NotNull XmlTag context, @NotNull ValidationHost host) {
-    if (FxmlConstants.FX_ROOT.equals(context.getName())) {
+    final String contextName = context.getName();
+    if (FxmlConstants.FX_ROOT.equals(contextName)) {
       if (context.getParentTag() != null) {
         host.addMessage(context.getNavigationElement(), "<fx:root> is valid only as the root node of an FXML document", ValidationHost.ERROR);
       }
@@ -293,9 +295,23 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
         if (descriptor != null) {
           final PsiElement declaration = descriptor.getDeclaration();
           if (declaration instanceof PsiClass) {
-            final String canCoerceError = JavaFxPsiUtil.isClassAcceptable(context.getParentTag(), (PsiClass)declaration);
+            final PsiClass psiClass = (PsiClass)declaration;
+            final String canCoerceError = JavaFxPsiUtil.isClassAcceptable(context.getParentTag(), psiClass);
             if (canCoerceError != null) {
               host.addMessage(context.getNavigationElement(), canCoerceError, ValidationHost.ErrorType.ERROR);
+            }
+            if (FxmlConstants.FX_COPY.equals(contextName)) {
+              boolean copyConstructorFound = false;
+              for (PsiMethod constructor : psiClass.getConstructors()) {
+                final PsiParameter[] parameters = constructor.getParameterList().getParameters();
+                if (parameters.length == 1 && psiClass == PsiUtil.resolveClassInType(parameters[0].getType())) {
+                  copyConstructorFound = true;
+                  break;
+                }
+              }
+              if (!copyConstructorFound) {
+                host.addMessage(context.getNavigationElement(), "Copy constructor not found for \'" + psiClass.getName() + "\'", ValidationHost.ERROR);
+              }
             }
           }
         }
