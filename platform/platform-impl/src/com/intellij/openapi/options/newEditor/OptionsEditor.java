@@ -548,6 +548,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
             ApplicationManager.getApplication().runReadAction(new Runnable() {
               @Override
               public void run() {
+                if (myDisposed) return;
                 initConfigurable(configurable).doWhenDone(new Runnable() {
                   @Override
                   public void run() {
