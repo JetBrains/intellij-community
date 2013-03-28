@@ -3,6 +3,8 @@ import shlex
 import sys
 import pydev_log
 
+helpers = os.path.dirname(__file__)
+
 def is_python(path):
     if path.endswith("'") or path.endswith('"'):
         path = path[1:len(path)-1]
@@ -28,7 +30,7 @@ def patch_args(args):
             host, port = pydevd.dispatch()
 
             if port is not None:
-                args[2] = "import pydevd; pydevd.settrace(host='%s', port=%s, suspend=False); "%(host, port) + args[2]
+                args[2] = "import sys; sys.path.append('%s'); import pydevd; pydevd.settrace(host='%s', port=%s, suspend=False); %s"%(helpers, host, port, args[2])
                 return args
         else:
             new_args.append(args[0])
