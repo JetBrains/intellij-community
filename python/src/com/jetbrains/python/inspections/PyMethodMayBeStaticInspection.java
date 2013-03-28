@@ -57,6 +57,7 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
         @Override
         public void visitPyReferenceExpression(PyReferenceExpression node) {
+          super.visitPyReferenceExpression(node);
           if (PyNames.CANONICAL_SELF.equals(node.getName())) {
             mayBeStatic[0] = false;
           }
