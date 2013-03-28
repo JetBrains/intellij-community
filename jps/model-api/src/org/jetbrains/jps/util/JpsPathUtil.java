@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,7 +42,11 @@ public class JpsPathUtil {
   }
 
   public static File urlToFile(String url) {
-    return new File(FileUtilRt.toSystemDependentName(urlToPath(url)));
+    return new File(urlToOsPath(url));
+  }
+
+  public static String urlToOsPath(String url) {
+    return FileUtilRt.toSystemDependentName(urlToPath(url));
   }
 
   public static String urlToPath(String url) {
