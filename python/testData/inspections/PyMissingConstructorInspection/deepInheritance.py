@@ -6,5 +6,5 @@ class B(A):
     pass
 
 class C(B):
-    def <warning descr="Call to constructor of super class is missed">__init__</warning>(self):
+    def <warning descr="Call to __init__ of super class is missed">__init__</warning>(self):
         print ("Constructor C was called")

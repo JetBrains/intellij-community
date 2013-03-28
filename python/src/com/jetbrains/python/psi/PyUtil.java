@@ -193,7 +193,7 @@ public class PyUtil {
   // TODO: move to a saner place
 
   public static boolean instanceOf(Object obj, Class... possibleClasses) {
-    if (obj == null || possibleClasses == null) return true;
+    if (obj == null || possibleClasses == null) return false;
     for (Class cls : possibleClasses) {
       if (cls.isInstance(obj)) return true;
     }

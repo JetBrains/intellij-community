@@ -36,6 +36,10 @@ public class PyFillParagraphTest extends PyTestCase {
     doTest();
   }
 
+  public void testPrefixPostfix() {
+    doTest();
+  }
+
   private void doTest() {
     String baseName = "/fillParagraph/" + getTestName(true);
     myFixture.configureByFile(baseName + ".py");
