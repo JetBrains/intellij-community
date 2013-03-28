@@ -38,7 +38,7 @@ public class HintUtil {
   public static final Color QUESTION_COLOR = new JBColor(new Color(181, 208, 251), new Color(55, 108, 137));
   public static final Color ERROR_COLOR = new JBColor(new Color(255, 220, 220), new Color(0x781732));
 
-  public static final Color QUESTION_UNDERSCORE_COLOR = JBColor.foreground;
+  public static final Color QUESTION_UNDERSCORE_COLOR = JBColor.foreground();
 
   private HintUtil() {
   }
@@ -60,7 +60,7 @@ public class HintUtil {
 
     if (!hintHint.isAwtTooltip()) {
       label.setBorder(createHintBorder());
-      label.setForeground(JBColor.foreground);
+      label.setForeground(JBColor.foreground());
       label.setFont(getBoldFont());
       label.setBackground(INFORMATION_COLOR);
       label.setOpaque(true);
@@ -109,7 +109,7 @@ public class HintUtil {
 
   public static JComponent createQuestionLabel(String text) {
     HintHint hintHint = new HintHint().setTextBg(QUESTION_COLOR)
-      .setTextFg(JBColor.foreground)
+      .setTextFg(JBColor.foreground())
       .setFont(getBoldFont())
       .setAwtTooltip(true);
 
@@ -119,7 +119,7 @@ public class HintUtil {
 
     if (!hintHint.isAwtTooltip()) {
       label.setBorder(createHintBorder());
-      label.setForeground(JBColor.foreground);
+      label.setForeground(JBColor.foreground());
       label.setFont(getBoldFont());
       label.setBackground(QUESTION_COLOR);
       label.setOpaque(true);
@@ -132,7 +132,7 @@ public class HintUtil {
 
     highlighted.setIcon(icon);
     highlighted.setBackground(INFORMATION_COLOR);
-    highlighted.setForeground(JBColor.foreground);
+    highlighted.setForeground(JBColor.foreground());
     highlighted.setFont(getBoldFont());
     text.appendToComponent(highlighted);
 
@@ -144,7 +144,7 @@ public class HintUtil {
 
   public static JComponent createErrorLabel(String text) {
     HintHint hintHint = new HintHint().setTextBg(ERROR_COLOR)
-      .setTextFg(JBColor.foreground)
+      .setTextFg(JBColor.foreground())
       .setFont(getBoldFont())
       .setAwtTooltip(true);
     HintLabel label = new HintLabel();
@@ -154,7 +154,7 @@ public class HintUtil {
     if (!hintHint.isAwtTooltip()) {
       label.setBorder(createHintBorder()
       );
-      label.setForeground(JBColor.foreground);
+      label.setForeground(JBColor.foreground());
       label.setFont(getBoldFont());
       label.setBackground(ERROR_COLOR);
       label.setOpaque(true);

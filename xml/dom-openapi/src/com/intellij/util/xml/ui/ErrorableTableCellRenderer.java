@@ -80,7 +80,7 @@ public class ErrorableTableCellRenderer<T extends DomElement> extends DefaultTab
     }
     else if (warningProblems.size() > 0) {
       component.setBackground(BaseControl.WARNING_BACKGROUND);
-      if(isSelected) component.setForeground(JBColor.foreground);
+      if(isSelected) component.setForeground(JBColor.foreground());
     }
 
     final List<DomElementProblemDescriptor> errorDescriptors =

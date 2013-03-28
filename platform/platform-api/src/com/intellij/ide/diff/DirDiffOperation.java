@@ -53,6 +53,6 @@ public enum DirDiffOperation {
       case EQUAL:
       case NONE:
     }
-    return JBColor.foreground;
+    return JBColor.foreground();
   }
 }

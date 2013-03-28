@@ -600,7 +600,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   }
 
   public static void setColors(JComponent pane) {
-    pane.setForeground(JBColor.foreground);
+    pane.setForeground(JBColor.foreground());
     pane.setBackground(HintUtil.INFORMATION_COLOR);
     pane.setOpaque(true);
   }
