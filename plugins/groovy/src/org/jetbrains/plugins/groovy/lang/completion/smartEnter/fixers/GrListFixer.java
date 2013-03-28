@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.GroovySmartEnterProcessor;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * @author Maxim.Medvedev
@@ -30,10 +28,10 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 public class GrListFixer extends SmartEnterProcessorWithFixers.Fixer<GroovySmartEnterProcessor> {
   @Override
   public void apply(@NotNull Editor editor, @NotNull GroovySmartEnterProcessor processor, @NotNull PsiElement psiElement) {
-    if (psiElement.getParent() instanceof GrListOrMap) {
-      final PsiElement next = PsiUtil.skipWhitespacesAndComments(psiElement.getNextSibling(), true);
-      if (next != null && !GroovyTokenTypes.mCOMMA.equals(next.getNode().getElementType())) {
-        editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), ",");
+    if (psiElement instanceof GrListOrMap) {
+      final PsiElement brack = ((GrListOrMap)psiElement).getRBrack();
+      if (brack == null) {
+        editor.getDocument().insertString(psiElement.getTextRange().getEndOffset(), "]");
       }
     }
   }

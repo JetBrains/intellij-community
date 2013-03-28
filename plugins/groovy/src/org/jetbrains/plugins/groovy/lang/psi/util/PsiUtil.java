@@ -1031,6 +1031,8 @@ public class PsiUtil {
   }
 
   public static boolean isExpressionStatement(@NotNull PsiElement expr) {
+    if (!(expr instanceof GrStatement)) return false;
+
     final PsiElement parent = expr.getParent();
     if (parent instanceof GrControlFlowOwner || parent instanceof GrCaseSection) return true;
     if (parent instanceof GrIfStatement &&
