@@ -1720,4 +1720,18 @@ class Baz {}''', '', CompletionType.BASIC, CompletionResult.contain, 'xxx', 'yyy
     myFixture.completeBasic()
     myFixture.assertPreferredCompletionItems 0, "message", "messages"
   }
+
+  void testFieldCompletionFromJavaClass() {
+    myFixture.addClass("""\
+class Base {
+    static public Base foo;
+}
+
+class Inheritor extends Base {
+    static public Inheritor foo;
+}
+""")
+
+    doVariantableTest('Inheritor.fo<caret>','', CompletionType.BASIC, CompletionResult.equal, 'foo', 'forName', 'forName')
+  }
 }
