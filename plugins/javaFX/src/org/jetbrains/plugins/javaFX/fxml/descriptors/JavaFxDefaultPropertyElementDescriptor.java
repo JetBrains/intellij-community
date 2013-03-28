@@ -212,13 +212,13 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
     return null;
   }
 
-  private JavaFxClassBackedElementDescriptor getRootTagDescriptor(XmlTag context) {
+  public JavaFxClassBackedElementDescriptor getRootTagDescriptor(XmlTag context) {
     if (context != null && FxmlConstants.FX_ROOT.equals(getName())) {
       final XmlAttribute typeAttr = context.getAttribute(FxmlConstants.TYPE);
       if (typeAttr != null) {
         final String rootClassName = typeAttr.getValue();
         final Project project = context.getProject();
-        final PsiClass rootClass = JavaPsiFacade.getInstance(project).findClass(rootClassName, GlobalSearchScope.allScope(project));
+        final PsiClass rootClass = rootClassName != null ? JavaPsiFacade.getInstance(project).findClass(rootClassName, GlobalSearchScope.allScope(project)) : null;
         if (rootClass != null) {
           return new JavaFxClassBackedElementDescriptor(getName(), rootClass);
         }
