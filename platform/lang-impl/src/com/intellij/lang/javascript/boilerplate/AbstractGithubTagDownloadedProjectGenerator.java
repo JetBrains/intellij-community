@@ -7,6 +7,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.platform.templates.github.*;
 import org.jetbrains.annotations.Nls;
@@ -89,18 +90,43 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
       }
     }
     if (brokenZip) {
-      GithubDownloadUtil.downloadContentToFileWithProgressSynchronously(
-        project,
-        tag.getZipballUrl(),
-        getTitle(),
-        zipArchiveFile,
-        getGithubUserName(),
-        getGithubRepositoryName()
-      );
-      LOG.info("Downloaded " + zipArchiveFile.getAbsolutePath() + " of size " + zipArchiveFile.length() + " bytes");
-      ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir);
+      String primaryUrl = getPrimaryZipArchiveUrlForDownload(tag);
+      boolean downloaded = false;
+      if (primaryUrl != null) {
+        try {
+          downloadAndUnzip(project, primaryUrl, zipArchiveFile, extractToDir, false);
+          downloaded = true;
+        } catch (GeneratorException e) {
+          LOG.info("Can't download " + primaryUrl, e);
+          FileUtil.delete(zipArchiveFile);
+        }
+      }
+      if (!downloaded) {
+        downloadAndUnzip(project, tag.getZipballUrl(), zipArchiveFile, extractToDir, true);
+      }
     }
   }
+
+  private void downloadAndUnzip(@Nullable Project project,
+                                @NotNull String url,
+                                @NotNull File zipArchiveFile,
+                                @NotNull File extractToDir,
+                                boolean retryOnError) throws GeneratorException {
+    GithubDownloadUtil.downloadContentToFileWithProgressSynchronously(
+      project,
+      url,
+      getTitle(),
+      zipArchiveFile,
+      getGithubUserName(),
+      getGithubRepositoryName(),
+      retryOnError
+    );
+    LOG.info("Downloaded " + zipArchiveFile.getAbsolutePath() + " of size " + zipArchiveFile.length() + " bytes");
+    ZipUtil.unzipWithProgressSynchronously(project, getTitle(), zipArchiveFile, extractToDir);
+  }
+
+  @Nullable
+  public abstract String getPrimaryZipArchiveUrlForDownload(@NotNull GithubTagInfo tag);
 
   @NotNull
   private File getCacheFile(@NotNull GithubTagInfo tag) {

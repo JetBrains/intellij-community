@@ -53,7 +53,8 @@ public class GithubDownloadUtil {
     @NotNull String progressTitle,
     @NotNull final File outputFile,
     @NotNull final String userName,
-    @NotNull final String repositoryName) throws GeneratorException
+    @NotNull final String repositoryName,
+    final boolean retryOnError) throws GeneratorException
   {
     Outcome<File> outcome = DownloadUtil.provideDataWithProgressSynchronously(
       project,
@@ -69,6 +70,9 @@ public class GithubDownloadUtil {
       }, new Producer<Boolean>() {
         @Override
         public Boolean produce() {
+          if (!retryOnError) {
+            return false;
+          }
           return IOExceptionDialog.showErrorDialog("Download Error", "Can not download '" + url + "'");
         }
       }
