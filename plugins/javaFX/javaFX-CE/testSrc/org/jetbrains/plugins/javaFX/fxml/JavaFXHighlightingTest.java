@@ -307,6 +307,12 @@ public class JavaFXHighlightingTest extends AbstractJavaFXTestCase {
     doTest();
   }
 
+  public void testCharsetInInclude() throws Exception {
+    myFixture.addFileToProject("sample.fxml", "<?import javafx.scene.layout.GridPane?>\n" +
+                                                 "<fx:root type=\"javafx.scene.layout.GridPane\" xmlns:fx=\"http://javafx.com/fxml\"/>\n");
+    myFixture.testHighlighting(true, false, false, getTestName(true) + ".fxml");
+  }
+
   public void testIncludedForm() throws Exception {
     myFixture.addFileToProject("sample.fxml", "<?import javafx.scene.layout.GridPane?>\n" +
                                               "<fx:root type=\"javafx.scene.layout.GridPane\" xmlns:fx=\"http://javafx.com/fxml\"/>\n");
