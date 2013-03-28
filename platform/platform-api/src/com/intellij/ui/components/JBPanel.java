@@ -71,14 +71,15 @@ public class JBPanel extends JPanel implements TypeSafeDataProvider {
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
 
-    if (myBackgroundImage != null) {
-      final int w = myBackgroundImage.getIconWidth();
-      final int h = myBackgroundImage.getIconHeight();
+    Icon image = getBackgroundImage();
+    if (image != null) {
+      final int w = image.getIconWidth();
+      final int h = image.getIconHeight();
       int x = 0;
       int y = 0;
       while (w > 0 &&  x < getWidth()) {
         while (h > 0 && y < getHeight()) {
-          myBackgroundImage.paintIcon(this, g, x, y);
+          image.paintIcon(this, g, x, y);
           y+=h;
         }
         y=0;
@@ -86,8 +87,9 @@ public class JBPanel extends JPanel implements TypeSafeDataProvider {
       }
     }
 
-    if (myCenterImage != null) {
-      IconUtil.paintInCenterOf(this, g, myCenterImage);
+    Icon centerImage = getCenterImage();
+    if (centerImage != null) {
+      IconUtil.paintInCenterOf(this, g, centerImage);
     }
   }
 
