@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2007 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,30 +42,25 @@ public class DuplicateConditionInspection extends BaseInspection {
 
   @NotNull
   public String getDisplayName() {
-    return InspectionGadgetsBundle.message(
-      "duplicate.condition.display.name");
+    return InspectionGadgetsBundle.message("duplicate.condition.display.name");
   }
 
   @NotNull
   protected String buildErrorString(Object... infos) {
-    return InspectionGadgetsBundle.message(
-      "duplicate.condition.problem.descriptor");
+    return InspectionGadgetsBundle.message("duplicate.condition.problem.descriptor");
   }
 
   @Nullable
   public JComponent createOptionsPanel() {
-    return new SingleCheckboxOptionsPanel(
-      InspectionGadgetsBundle.message(
-        "duplicate.condition.ignore.method.calls.option"),
-      this, "ignoreMethodCalls");
+    return new SingleCheckboxOptionsPanel(InspectionGadgetsBundle.message("duplicate.condition.ignore.method.calls.option"),
+                                          this, "ignoreMethodCalls");
   }
 
   public BaseInspectionVisitor buildVisitor() {
     return new DuplicateConditionVisitor();
   }
 
-  private class DuplicateConditionVisitor
-    extends BaseInspectionVisitor {
+  private class DuplicateConditionVisitor extends BaseInspectionVisitor {
 
     @Override
     public void visitIfStatement(@NotNull PsiIfStatement statement) {
@@ -84,8 +79,7 @@ public class DuplicateConditionInspection extends BaseInspection {
       if (numConditions < 2) {
         return;
       }
-      final PsiExpression[] conditionArray =
-        conditions.toArray(new PsiExpression[numConditions]);
+      final PsiExpression[] conditionArray = conditions.toArray(new PsiExpression[numConditions]);
       final boolean[] matched = new boolean[conditionArray.length];
       Arrays.fill(matched, false);
       for (int i = 0; i < conditionArray.length; i++) {
@@ -98,60 +92,51 @@ public class DuplicateConditionInspection extends BaseInspection {
             continue;
           }
           final PsiExpression testCondition = conditionArray[j];
-          final boolean areEquivalent =
-            EquivalenceChecker.expressionsAreEquivalent(
-              condition, testCondition);
+          final boolean areEquivalent = EquivalenceChecker.expressionsAreEquivalent(condition, testCondition);
           if (areEquivalent) {
+            if (!ignoreMethodCalls || !containsMethodCallExpression(testCondition)) {
+              registerError(testCondition);
+              if (!matched[i]) {
+                registerError(condition);
+              }
+            }
             matched[i] = true;
             matched[j] = true;
-            if (ignoreMethodCalls &&
-                containsMethodCallExpression(testCondition)) {
-              break;
-            }
-            registerError(testCondition);
-            if (!matched[i]) {
-              registerError(condition);
-            }
           }
         }
       }
     }
 
-    private void collectConditionsForIfStatement(
-      PsiIfStatement statement, Set<PsiExpression> conditions, int depth) {
-      if (depth > LIMIT_DEPTH) return;
-
+    private void collectConditionsForIfStatement(PsiIfStatement statement, Set<PsiExpression> conditions, int depth) {
+      if (depth > LIMIT_DEPTH) {
+        return;
+      }
       final PsiExpression condition = statement.getCondition();
       collectConditionsForExpression(condition, conditions);
       final PsiStatement branch = statement.getElseBranch();
       if (branch instanceof PsiIfStatement) {
-        collectConditionsForIfStatement((PsiIfStatement)branch,
-                                        conditions, depth + 1);
+        collectConditionsForIfStatement((PsiIfStatement)branch, conditions, depth + 1);
       }
     }
 
-    private void collectConditionsForExpression(
-      PsiExpression condition, Set<PsiExpression> conditions) {
+    private void collectConditionsForExpression(PsiExpression condition, Set<PsiExpression> conditions) {
       if (condition == null) {
         return;
       }
       if (condition instanceof PsiParenthesizedExpression) {
-        final PsiParenthesizedExpression parenthesizedExpression =
-          (PsiParenthesizedExpression)condition;
-        final PsiExpression contents =
-          parenthesizedExpression.getExpression();
+        final PsiParenthesizedExpression parenthesizedExpression = (PsiParenthesizedExpression)condition;
+        final PsiExpression contents = parenthesizedExpression.getExpression();
         collectConditionsForExpression(contents, conditions);
         return;
       }
-      if (condition instanceof PsiBinaryExpression) {
-        final PsiBinaryExpression binaryExpression =
-          (PsiBinaryExpression)condition;
-        final IElementType tokenType = binaryExpression.getOperationTokenType();
+      if (condition instanceof PsiPolyadicExpression) {
+        final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)condition;
+        final IElementType tokenType = polyadicExpression.getOperationTokenType();
         if (JavaTokenType.OROR.equals(tokenType)) {
-          final PsiExpression lhs = binaryExpression.getLOperand();
-          collectConditionsForExpression(lhs, conditions);
-          final PsiExpression rhs = binaryExpression.getROperand();
-          collectConditionsForExpression(rhs, conditions);
+          final PsiExpression[] operands = polyadicExpression.getOperands();
+          for (PsiExpression operand : operands) {
+            collectConditionsForExpression(operand, conditions);
+          }
           return;
         }
       }
