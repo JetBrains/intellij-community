@@ -15,7 +15,6 @@
  */
 package com.intellij.cucumber;
 
-import com.intellij.idea.IdeaTestApplication;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Ref;
 import cucumber.io.MultiLoader;
