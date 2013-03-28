@@ -126,7 +126,7 @@ public class OpenInSceneBuilderAction extends AnAction {
     }
 
     if (SystemInfo.isMac) {
-      pathToSceneBuilder += "/Contents/MacOS/JavaAppLauncher";
+      pathToSceneBuilder += "/Contents/MacOS/scenebuilder-launcher.sh";
     }
 
     final GeneralCommandLine commandLine = new GeneralCommandLine();
