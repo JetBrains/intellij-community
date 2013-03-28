@@ -240,6 +240,7 @@ class PyDBDaemonThread(threading.Thread):
         threading.Thread.__init__(self)
         self.setDaemon(True)
         self.killReceived = False
+        self.dontTraceMe = True
 
     def run(self):
         if sys.platform.startswith("java"):
@@ -259,6 +260,11 @@ class PyDBDaemonThread(threading.Thread):
 
     def stop(self):
         _Thread_stop(self)
+
+    def stopTrace(self):
+        if self.dontTraceMe:
+            pydevd_tracing.SetTrace(None) # no debugging on this thread
+
 
 #=======================================================================================================================
 # ReaderThread
@@ -282,7 +288,7 @@ class ReaderThread(PyDBDaemonThread):
             pass
 
     def OnRun(self):
-        pydevd_tracing.SetTrace(None) # no debugging on this thread
+        self.stopTrace()
         buffer = ""
         try:
 
@@ -351,7 +357,7 @@ class WriterThread(PyDBDaemonThread):
     def OnRun(self):
         """ just loop and write responses """
 
-        pydevd_tracing.SetTrace(None) # no debugging on this thread
+        self.stopTrace()
         try:
             while True:
                 try:
@@ -439,7 +445,7 @@ def StartClient(host, port):
     sys.stderr.write("Could not connect to %s: %s\n" % (host, port))
     sys.stderr.flush()
     traceback.print_exc()
-    sys.exit(1)
+    sys.exit(1) #TODO: is it safe?
 
 
 

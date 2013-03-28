@@ -2,6 +2,7 @@ import os
 import shlex
 import sys
 import pydev_log
+import traceback
 
 helpers = os.path.dirname(__file__)
 
@@ -16,53 +17,58 @@ def is_python(path):
     return False
 
 def patch_args(args):
-    pydev_log.debug("Patching args: %s"% str(args))
+    try:
+        pydev_log.debug("Patching args: %s"% str(args))
 
-    import sys
-    new_args = []
-    i = 0
-    if len(args) == 0:
-        return args
+        import sys
+        new_args = []
+        i = 0
+        if len(args) == 0:
+            return args
 
-    if is_python(args[0]):
-        if '-c' == args[1]:
-            import pydevd
-            host, port = pydevd.dispatch()
+        if is_python(args[0]):
+            if '-c' == args[1]:
+                import pydevd
+                host, port = pydevd.dispatch()
 
-            if port is not None:
-                args[2] = "import sys; sys.path.append('%s'); import pydevd; pydevd.settrace(host='%s', port=%s, suspend=False); %s"%(helpers, host, port, args[2])
-                return args
+                if port is not None:
+                    args[2] = "import sys; sys.path.append('%s'); import pydevd; pydevd.settrace(host='%s', port=%s, suspend=False); %s"%(helpers, host, port, args[2])
+                    return args
+            else:
+                new_args.append(args[0])
         else:
-            new_args.append(args[0])
-    else:
-        pydev_log.debug("Process is not python, returning.")
-        return args
+            pydev_log.debug("Process is not python, returning.")
+            return args
 
-    i = 1
-    while i < len(args):
-        if args[i].startswith('-'):
+        i = 1
+        while i < len(args):
+            if args[i].startswith('-'):
+                new_args.append(args[i])
+            else:
+                break
+            i+=1
+
+        if args[i].endswith('pydevd.py'): #no need to add pydevd twice
+            return args
+
+        for x in sys.original_argv:
+            if sys.platform == "win32" and not x.endswith('"'):
+                arg = '"%s"'%x
+            else:
+                arg = x
+            new_args.append(arg)
+            if x == '--file':
+                break
+
+        while i < len(args):
             new_args.append(args[i])
-        else:
-            break
-        i+=1
+            i+=1
 
-    if args[i].endswith('pydevd.py'): #no need to add pydevd twice
+        return new_args
+    except:
+        traceback.print_exc()
         return args
 
-    for x in sys.original_argv:
-        if sys.platform == "win32" and not x.endswith('"'):
-            arg = '"%s"'%x
-        else:
-            arg = x
-        new_args.append(arg)
-        if x == '--file':
-            break
-
-    while i < len(args):
-        new_args.append(args[i])
-        i+=1
-
-    return new_args
 
 def args_to_str(args):
     quoted_args = []

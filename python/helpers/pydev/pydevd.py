@@ -136,8 +136,8 @@ class PyDBCommandThread(PyDBDaemonThread):
             if self.killReceived:
                 return
 
-
-        self.pyDb.SetTrace(None) # no debugging on this thread
+        if self.dontTraceMe:
+            self.pyDb.SetTrace(None) # no debugging on this thread
 
         try:
             while not self.killReceived:
@@ -165,7 +165,8 @@ class PyDBCheckAliveThread(PyDBDaemonThread):
         self.setName('pydevd.CheckAliveThread')
 
     def OnRun(self):
-            self.pyDb.SetTrace(None) # no debugging on this thread
+            if self.dontTraceMe:
+                self.pyDb.SetTrace(None) # no debugging on this thread
             while not self.killReceived:
                 if not self.pyDb.haveAliveThreads():
                     try:
@@ -1351,6 +1352,7 @@ class Dispatcher(object):
         self.port = port
         self.client = StartClient(self.host, self.port)
         self.reader = DispatchReader(self)
+        self.reader.dontTraceMe = False #we run reader in the same thread so we don't want to loose tracing
         self.reader.run()
 
     def close(self):
