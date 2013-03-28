@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -674,6 +675,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       handlePossibleReturn(thenBranch);
       thenEnd = myHead;
       interruptFlow();
+      readdPendingEdge(ifStatement);
     }
 
     myHead = reduceAllNegationsIntoInstruction(ifStatement, negations);
@@ -799,6 +801,37 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         }
       }
     }
+  }
+
+  private void readdPendingEdge(GroovyPsiElement newScope) {
+    if (newScope == null) {
+      final ArrayList<Pair<InstructionImpl, GroovyPsiElement>> newPending = ContainerUtil.newArrayList();
+      for (Pair<InstructionImpl, GroovyPsiElement> pair : myPending) {
+        newPending.add(new Pair<InstructionImpl, GroovyPsiElement>(pair.first, null));
+      }
+      myPending = newPending;
+    }
+    else {
+      ArrayList<InstructionImpl> targets = ContainerUtil.newArrayList();
+
+      for (int i = myPending.size() - 1; i >= 0; i--) {
+        final Pair<InstructionImpl, GroovyPsiElement> pair = myPending.get(i);
+        final PsiElement scopeWhenToAdd = pair.getSecond();
+        if (scopeWhenToAdd == null) continue;
+        if (!PsiTreeUtil.isAncestor(scopeWhenToAdd, newScope, false)) {
+          targets.add(pair.getFirst());
+          myPending.remove(i);
+        }
+        else {
+          break;
+        }
+      }
+
+      for (InstructionImpl target : targets) {
+        addPendingEdge(newScope, target);
+      }
+    }
+
   }
 
   //add edge when instruction.getElement() is not contained in scopeWhenAdded
