@@ -15,19 +15,14 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.util;
 
-import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.util.CachedValue;
-import com.intellij.psi.util.CachedValueProvider;
-import com.intellij.psi.util.CachedValuesManager;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.MultiMap;
+import com.intellij.util.containers.MultiMapBasedOnSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.Collection;
 
@@ -35,6 +30,8 @@ import java.util.Collection;
  * @author Max Medvedev
  */
 public class GrImportUtil {
+  private static final LightCacheKey<MultiMapBasedOnSet<String, String>> KEY = LightCacheKey.createByFileModificationCount();
+
   public static boolean acceptName(GrReferenceElement ref, String expected) {
     final String actual = ref.getReferenceName();
     if (expected.equals(actual)) return true;
@@ -43,20 +40,13 @@ public class GrImportUtil {
 
     final PsiFile file = ref.getContainingFile();
     if (file instanceof GroovyFile) {
-      CachedValue<MultiMap<String, String>> data = file.getCopyableUserData(KEY);
+      MultiMapBasedOnSet<String, String> data = KEY.getCachedValue(file);
       if (data == null) {
-        data = CachedValuesManager.getManager(ref.getProject()).createCachedValue(new CachedValueProvider<MultiMap<String, String>>() {
-          @Override
-          public Result<MultiMap<String, String>> compute() {
-            MultiMap<String, String> aliases = collectAliases((GroovyFile)file);
-
-            return Result.create(aliases, PsiDocumentManager.getInstance(file.getProject()).getDocument(file));
-          }
-        }, false);
+        data = collectAliases((GroovyFile)file);
+        KEY.putCachedValue(file, data);
       }
 
-      final MultiMap<String, String> map = data.getValue();
-      final Collection<String> aliases = map.get(expected);
+      final Collection<String> aliases = data.get(expected);
       return aliases.contains(actual);
     }
 
@@ -65,13 +55,8 @@ public class GrImportUtil {
   }
 
   @NotNull
-  private static MultiMap<String, String> collectAliases(@NotNull GroovyFile file) {
-    MultiMap<String, String> aliases = new MultiMap<String, String>() {
-      @Override
-      protected Collection<String> createCollection() {
-        return ContainerUtil.newHashSet();
-      }
-    };
+  private static MultiMapBasedOnSet<String, String> collectAliases(@NotNull GroovyFile file) {
+    MultiMapBasedOnSet<String, String> aliases = new MultiMapBasedOnSet<String, String>();
 
     for (GrImportStatement anImport : file.getImportStatements()) {
       if (anImport.isAliasedImport()) {
@@ -86,6 +71,4 @@ public class GrImportUtil {
     }
     return aliases;
   }
-
-  private static final Key<CachedValue<MultiMap<String, String>>> KEY = Key.create("aliases_key");
 }
