@@ -825,7 +825,7 @@
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.GrReassignedInClosureLocalVarInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="UnnecessaryQualifiedReference"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"
-                     key="unnecessary.qualified.reference" groupName="Potentially confusing code constructs" enabledByDefault="false"
+                     key="unnecessary.qualified.reference" groupName="Potentially confusing code constructs" enabledByDefault="true"
                      level="WARNING"
                      implementationClass="org.jetbrains.plugins.groovy.codeInspection.confusing.UnnecessaryQualifiedReferenceInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovyEmptyStatementBody" displayName="Statement with empty body"
