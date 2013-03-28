@@ -1,0 +1,234 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
+package org.jetbrains.plugins.javaFX.packaging;
+
+import com.intellij.testFramework.UsefulTestCase;
+
+import java.io.File;
+import java.util.Collections;
+import java.util.List;
+import java.util.Map;
+
+/**
+ * User: anna
+ * Date: 3/28/13
+ */
+public class JavaFxAntTaskTest extends UsefulTestCase{
+  public void testJarDeployNoInfo() throws Exception {
+    doTest("<fx:application id=\"jarDeployNoInfo_id\" name=\"jarDeployNoInfo\" mainClass=\"Main\">\n" +
+                 "</fx:application>\n" +
+                 "<fx:jar destfile=\"temp" + File.separator + "jarDeployNoInfo.jar\">\n" +
+                 "<fx:application refid=\"jarDeployNoInfo_id\">\n" +
+                 "</fx:application>\n" +
+                 "<fileset dir=\"temp\">\n" +
+                 "</fileset>\n" +
+                 "</fx:jar>\n" +
+                 "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp" + File.separator + "deploy\" outfile=\"jarDeployNoInfo\">\n" +
+                 "<fx:application refid=\"jarDeployNoInfo_id\">\n" +
+                 "</fx:application>\n" +
+                 "<fx:resources>\n" +
+                 "<fx:fileset dir=\"temp\" includes=\"jarDeployNoInfo.jar\">\n" +
+                 "</fx:fileset>\n" +
+                 "</fx:resources>\n" +
+                 "</fx:deploy>\n", Collections.<String, String>emptyMap());
+  }
+
+  public void testJarDeployTitle() throws Exception {
+    doTest("<fx:application id=\"jarDeployTitle_id\" name=\"jarDeployTitle\" mainClass=\"Main\">\n" +
+           "</fx:application>\n" +
+           "<fx:jar destfile=\"temp" + File.separator + "jarDeployTitle.jar\">\n" +
+           "<fx:application refid=\"jarDeployTitle_id\">\n" +
+           "</fx:application>\n" +
+           "<fileset dir=\"temp\">\n" +
+           "</fileset>\n" +
+           "</fx:jar>\n" +
+           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp" + File.separator + "deploy\" outfile=\"jarDeployTitle\">\n" +
+           "<fx:application refid=\"jarDeployTitle_id\">\n" +
+           "</fx:application>\n" +
+           "<fx:info title=\"My App\">\n" +
+           "</fx:info>\n" +
+           "<fx:resources>\n" +
+           "<fx:fileset dir=\"temp\" includes=\"jarDeployTitle.jar\">\n" +
+           "</fx:fileset>\n" +
+           "</fx:resources>\n" +
+           "</fx:deploy>\n", Collections.singletonMap("title", "My App"));
+  }
+
+  private void doTest(final String expected, Map<String, String> options) {
+    final String artifactName = getTestName(true);
+    final String artifactFileName = artifactName + ".jar";
+    final MockJavaFxPackager packager = new MockJavaFxPackager(artifactName + File.separator + artifactFileName);
+    if (options.containsKey("title")) {
+      packager.setTitle(options.get("title"));
+    }
+    
+    final List<JavaFxAntGenerator.SimpleTag> temp = JavaFxAntGenerator
+      .createJarAndDeployTasks(packager, artifactFileName, artifactName, "temp");
+    final StringBuilder buf = new StringBuilder();
+    for (JavaFxAntGenerator.SimpleTag tag : temp) {
+      tag.generate(buf);
+    }
+    assertEquals(expected, buf.toString());
+  }
+
+  private static class MockJavaFxPackager extends AbstractJavaFxPackager {
+
+    private String myOutputPath;
+    private String myTitle;
+    private String myVendor;
+    private String myDescription;
+    private String myHtmlParams;
+    private String myParams;
+    private String myPreloaderClass;
+    private String myPreloaderJar;
+
+    private MockJavaFxPackager(String outputPath) {
+      myOutputPath = outputPath;
+    }
+
+    private void setTitle(String title) {
+      myTitle = title;
+    }
+
+    private void setVendor(String vendor) {
+      myVendor = vendor;
+    }
+
+    private void setDescription(String description) {
+      myDescription = description;
+    }
+
+    private void setHtmlParams(String htmlParams) {
+      myHtmlParams = htmlParams;
+    }
+
+    private void setParams(String params) {
+      myParams = params;
+    }
+
+    private void setPreloaderClass(String preloaderClass) {
+      myPreloaderClass = preloaderClass;
+    }
+
+    private void setPreloaderJar(String preloaderJar) {
+      myPreloaderJar = preloaderJar;
+    }
+
+    @Override
+    protected String getArtifactOutputPath() {
+      return new File(myOutputPath).getParent();
+    }
+
+    @Override
+    protected String getArtifactOutputFilePath() {
+      return myOutputPath;
+    }
+
+    @Override
+    protected String getAppClass() {
+      return "Main";
+    }
+
+    @Override
+    protected String getTitle() {
+      return myTitle;
+    }
+
+    @Override
+    protected String getVendor() {
+      return myVendor;
+    }
+
+    @Override
+    protected String getDescription() {
+      return myDescription;
+    }
+
+    @Override
+    protected String getWidth() {
+      return "800";
+    }
+
+    @Override
+    protected String getHeight() {
+      return "400";
+    }
+
+    @Override
+    protected String getHtmlParamFile() {
+      return myHtmlParams;
+    }
+
+    @Override
+    protected String getParamFile() {
+      return myParams;
+    }
+
+    @Override
+    protected String getUpdateMode() {
+      return JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND;
+    }
+
+    @Override
+    protected void registerJavaFxPackagerError(String message) {
+    }
+
+    @Override
+    protected String prepareParam(String param) {
+      return param;
+    }
+
+    @Override
+    public String getKeypass() {
+      return null;
+    }
+
+    @Override
+    public String getStorepass() {
+      return null;
+    }
+
+    @Override
+    public String getKeystore() {
+      return null;
+    }
+
+    @Override
+    public String getAlias() {
+      return null;
+    }
+
+    @Override
+    public boolean isSelfSigning() {
+      return true;
+    }
+
+    @Override
+    public boolean isEnabledSigning() {
+      return false;
+    }
+
+    @Override
+    public String getPreloaderClass() {
+      return myPreloaderClass;
+    }
+
+    @Override
+    public String getPreloaderJar() {
+      return myPreloaderJar;
+    }
+  }
+}
