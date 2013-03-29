@@ -119,12 +119,11 @@ public abstract class AbstractJavaFxPackager {
   }
 
   private void copyLibraries(String zipPath, File tempUnzippedArtifactOutput) throws IOException {
-    final File[] artifactFiles = new File(getArtifactOutputPath()).listFiles();
-    if (artifactFiles != null) {
-      for (File file : artifactFiles) {
-        if (file.isFile() && !zipPath.equals(file.getPath())) {
-          FileUtil.copy(file, new File(tempUnzippedArtifactOutput, file.getName()));
-        }
+    final String preloaderJar = getPreloaderJar();
+    if (preloaderJar != null) {
+      final File preloaderJarFile = new File(getArtifactOutputPath(), preloaderJar);
+      if (preloaderJarFile.isFile()) {
+        FileUtil.copy(preloaderJarFile, new File(tempUnzippedArtifactOutput, preloaderJarFile.getName()));
       }
     }
   }
