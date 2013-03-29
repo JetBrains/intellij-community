@@ -300,7 +300,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
       addAnnotations(result, externalName, file, fileData);
       if (oldExternalName != null && !externalName.equals(oldExternalName)) {
-        addAnnotations(result, externalName, file, fileData);
+        addAnnotations(result, oldExternalName, file, fileData);
       }
     }
     if (result.isEmpty()) {
@@ -319,7 +319,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       if (result.contains(ad)) {
         // there can be compatible annotations in different files
         if (Comparing.equal(ad.virtualFile, file.getVirtualFile())) {
-          LOG.error("Duplicate signature:\n" + externalName + "; in  " + file);
+          LOG.error("Duplicate signature: '" + externalName + "'; in  " + file.getVirtualFile());
         }
       }
       else {
