@@ -36,18 +36,18 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
   public void testJarDeployNoInfo() throws Exception {
     doTest("<fx:application id=\"jarDeployNoInfo_id\" name=\"jarDeployNoInfo\" mainClass=\"Main\">\n" +
                  "</fx:application>\n" +
-                 "<fx:jar destfile=\"temp/jarDeployNoInfo.jar\">\n" +
+                 "<fx:jar destfile=\"temp\\jarDeployNoInfo.jar\">\n" +
                  "<fx:application refid=\"jarDeployNoInfo_id\">\n" +
                  "</fx:application>\n" +
-                 "<fileset dir=\"temp\">\n" +
+                 "<fileset dir=\"temp\" excludes=\"*.jar\">\n" +
                  "</fileset>\n" +
+                 "<fx:resources>\n" +
+                 "</fx:resources>\n" +
                  "</fx:jar>\n" +
-                 "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployNoInfo\">\n" +
+                 "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp\\deploy\" outfile=\"jarDeployNoInfo\">\n" +
                  "<fx:application refid=\"jarDeployNoInfo_id\">\n" +
                  "</fx:application>\n" +
                  "<fx:resources>\n" +
-                 "<fx:fileset dir=\"temp\" includes=\"jarDeployNoInfo.jar\">\n" +
-                 "</fx:fileset>\n" +
                  "</fx:resources>\n" +
                  "</fx:deploy>\n", Collections.<String, String>emptyMap());
   }
@@ -58,8 +58,10 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "<fx:jar destfile=\"temp/jarDeployTitle.jar\">\n" +
            "<fx:application refid=\"jarDeployTitle_id\">\n" +
            "</fx:application>\n" +
-           "<fileset dir=\"temp\">\n" +
+           "<fileset dir=\"temp\" excludes=\"*.jar\">\n" +
            "</fileset>\n" +
+           "<fx:resources>\n" +
+           "</fx:resources>\n" +
            "</fx:jar>\n" +
            "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployTitle\">\n" +
            "<fx:application refid=\"jarDeployTitle_id\">\n" +
@@ -67,8 +69,6 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "<fx:info title=\"My App\">\n" +
            "</fx:info>\n" +
            "<fx:resources>\n" +
-           "<fx:fileset dir=\"temp\" includes=\"jarDeployTitle.jar\">\n" +
-           "</fx:fileset>\n" +
            "</fx:resources>\n" +
            "</fx:deploy>\n", Collections.singletonMap(TITLE, "My App"));
   }
@@ -81,22 +81,20 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "</fx:fileset>\n" +
            "<fx:application id=\"jarDeployPreloader_id\" name=\"jarDeployPreloader\" mainClass=\"Main\" preloaderClass=\"MyPreloader\">\n" +
            "</fx:application>\n" +
-           "<fx:jar destfile=\"temp/jarDeployPreloader.jar\">\n" +
+           "<fx:jar destfile=\"temp\\jarDeployPreloader.jar\">\n" +
            "<fx:application refid=\"jarDeployPreloader_id\">\n" +
            "</fx:application>\n" +
-           "<fileset dir=\"temp\" excludes=\"preloader.jar\">\n" +
+           "<fileset dir=\"temp\" excludes=\"*.jar\">\n" +
            "</fileset>\n" +
            "<fx:resources>\n" +
            "<fx:fileset refid=\"jarDeployPreloader_preloader_files\">\n" +
            "</fx:fileset>\n" +
            "</fx:resources>\n" +
            "</fx:jar>\n" +
-           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployPreloader\">\n" +
+           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp\\deploy\" outfile=\"jarDeployPreloader\">\n" +
            "<fx:application refid=\"jarDeployPreloader_id\">\n" +
            "</fx:application>\n" +
            "<fx:resources>\n" +
-           "<fx:fileset dir=\"temp\" includes=\"jarDeployPreloader.jar\">\n" +
-           "</fx:fileset>\n" +
            "<fx:fileset refid=\"jarDeployPreloader_preloader_files\">\n" +
            "</fx:fileset>\n" +
            "</fx:resources>\n" +

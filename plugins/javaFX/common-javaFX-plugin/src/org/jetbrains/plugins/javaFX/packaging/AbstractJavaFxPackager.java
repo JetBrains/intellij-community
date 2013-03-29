@@ -119,11 +119,15 @@ public abstract class AbstractJavaFxPackager {
   }
 
   private void copyLibraries(String zipPath, File tempUnzippedArtifactOutput) throws IOException {
-    final String preloaderJar = getPreloaderJar();
-    if (preloaderJar != null) {
-      final File preloaderJarFile = new File(getArtifactOutputPath(), preloaderJar);
-      if (preloaderJarFile.isFile()) {
-        FileUtil.copy(preloaderJarFile, new File(tempUnzippedArtifactOutput, preloaderJarFile.getName()));
+    final File[] outFiles = new File(getArtifactOutputPath()).listFiles();
+    if (outFiles != null) {
+      for (File file : outFiles) {
+        if (file.isFile()) {
+          final String fileName = file.getName();
+          if (fileName.endsWith(".jar") && !zipPath.equals(fileName)) {
+            FileUtil.copy(file, new File(tempUnzippedArtifactOutput, fileName));
+          }
+        }
       }
     }
   }
@@ -140,10 +144,13 @@ public abstract class AbstractJavaFxPackager {
     final boolean selfSigning = isSelfSigning();
     final int genResult = selfSigning ? genKey(binPath) : 0;
     if (genResult == 0) {
-      sign(binPath, selfSigning, tempDirectory.getPath() + File.separator + getArtifactRootName());
-      final String preloaderJar = getPreloaderJar();
-      if (preloaderJar != null) {
-        sign(binPath, selfSigning, tempDirectory.getPath() + File.separator + preloaderJar);
+      final File[] files = tempDirectory.listFiles();
+      if (files != null) {
+        for (File file : files) {
+          if (file.isFile() && file.getName().endsWith(".jar")) {
+            sign(binPath, selfSigning, file.getPath());
+          }
+        }
       }
     } else {
       registerJavaFxPackagerError("JavaFX generate certificate task has failed.");
@@ -161,7 +168,7 @@ public abstract class AbstractJavaFxPackager {
 
     final int signedResult = startProcess(signCommandLine);
     if (signedResult != 0) {
-      registerJavaFxPackagerError("JavaFX sign task has failed.");
+      registerJavaFxPackagerError("JavaFX sign task has failed for: " + jar2Sign + ".");
     }
   }
 
