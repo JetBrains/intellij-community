@@ -46,16 +46,17 @@ public class LauncherGeneratorMain {
       System.exit(2);
     }
 
-    InputStream appInfoStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(args[1]);
+    String appInfoFileName = args[1];
+    InputStream appInfoStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(appInfoFileName);
     if (appInfoStream == null) {
-      System.err.println("Application info file " + appInfoStream + " not found");
+      System.err.println("Application info file " + appInfoFileName + " not found");
       System.exit(3);
     }
     Document appInfo;
     try {
       appInfo = new SAXBuilder().build(appInfoStream);
     } catch (Exception e) {
-      System.err.println("Error loading application info file " + args[1] + ": " + e.getMessage());
+      System.err.println("Error loading application info file " + appInfoFileName + ": " + e.getMessage());
       System.exit(4);
       return;
     }
@@ -83,7 +84,7 @@ public class LauncherGeneratorMain {
 
     String icoUrl = appInfoRoot.getChild("icon").getAttributeValue("ico");
     if (icoUrl == null) {
-      System.err.println(".ico file URL not specified in application info file " + args[1]);
+      System.err.println(".ico file URL not specified in application info file " + appInfoFileName);
       System.exit(11);
     }
     InputStream iconStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(icoUrl);
