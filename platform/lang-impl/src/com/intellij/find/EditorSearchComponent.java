@@ -151,10 +151,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
   private void updateReplaceButton() {
     if (myReplaceButton != null) {
-      myReplaceButton.setEnabled(mySearchResults != null && mySearchResults.getCursor() != null &&
-                                 !myLivePreviewController.isReplaceDenied() && (mySearchResults.getFindModel().isGlobal() ||
-                                                                                !mySearchResults.getEditor().getSelectionModel()
-                                                                                  .hasBlockSelection()));
+      myReplaceButton.setEnabled(canReplaceCurrent());
     }
   }
 
@@ -602,6 +599,10 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     myFindModel.setStringToReplace(myReplaceField.getText());
   }
 
+  private boolean canReplaceCurrent() {
+    return myLivePreviewController != null && myLivePreviewController.canReplace();
+  }
+
   public void replaceCurrent() {
     if (mySearchResults.getCursor() != null) {
       myLivePreviewController.performReplace();
@@ -917,9 +918,24 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
       }
     }
 
+    public boolean canReplace() {
+      if (mySearchResults != null && mySearchResults.getCursor() != null &&
+          !myLivePreviewController.isReplaceDenied() && (mySearchResults.getFindModel().isGlobal() ||
+                                                         !mySearchResults.getEditor().getSelectionModel()
+                                                           .hasBlockSelection()) ) {
+
+        final String replacement = getStringToReplace(myEditor, mySearchResults.getCursor());
+        return replacement != null;
+      }
+      return false;
+    }
+
     public void performReplace() {
       mySuppressUpdate = true;
       String replacement = getStringToReplace(myEditor, mySearchResults.getCursor());
+      if (replacement == null) {
+        return;
+      }
       final TextRange textRange = performReplace(mySearchResults.getCursor(), replacement, myEditor);
       if (textRange == null) {
         mySuppressUpdate = false;
