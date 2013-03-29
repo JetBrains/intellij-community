@@ -21,6 +21,7 @@ import com.intellij.openapi.components.PathMacroManager;
 import com.intellij.openapi.options.BaseSchemeProcessor;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
@@ -88,10 +89,10 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
             }
           }
           if (COMMAND.equals(name)) {
-            tool.setProgram(macroManager.expandPath(ToolManager.convertString(value)));
+            tool.setProgram(macroManager.expandPath(StringUtil.nullize(value, true)));
           }
           if (PARAMETERS.equals(name)) {
-            tool.setParameters(macroManager.expandPath(ToolManager.convertString(value)));
+            tool.setParameters(macroManager.expandPath(StringUtil.nullize(value, true)));
           }
         }
       }
@@ -112,8 +113,8 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
   }
 
   protected void readToolAttributes(Element element, T tool) {
-    tool.setName(ToolManager.convertString(element.getAttributeValue(NAME)));
-    tool.setDescription(ToolManager.convertString(element.getAttributeValue(DESCRIPTION)));
+    tool.setName(StringUtil.nullize(element.getAttributeValue(NAME), true));
+    tool.setDescription(StringUtil.nullize(element.getAttributeValue(DESCRIPTION), true));
     tool.setShownInMainMenu(Boolean.valueOf(element.getAttributeValue(SHOW_IN_MAIN_MENU)).booleanValue());
     tool.setShownInEditor(Boolean.valueOf(element.getAttributeValue(SHOW_IN_EDITOR)).booleanValue());
     tool.setShownInProjectViews(Boolean.valueOf(element.getAttributeValue(SHOW_IN_PROJECT)).booleanValue());
