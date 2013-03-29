@@ -46,6 +46,14 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       final PyClass containingClass = node.getContainingClass();
       if (containingClass == null) return;
 
+      final PyDecoratorList decoratorList = node.getDecoratorList();
+      if (decoratorList != null) {
+        for (PyDecorator decorator : decoratorList.getDecorators()) {
+          if (PyNames.STATICMETHOD.equals(decorator.getName()))
+            return;
+        }
+      }
+
       final PyStatementList statementList = node.getStatementList();
       if (statementList == null) return;
 
