@@ -5499,7 +5499,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
           mySelectionModel.setSelection(caretOffset, caretOffset);
         }
         else {
-          if (!e.isPopupTrigger()) {
+          if (!e.isPopupTrigger() && eventArea == EditorMouseEventArea.EDITING_AREA) {
             switch (e.getClickCount()) {
               case 2:
                 selectWordAtCaret(mySettings.isMouseClickSelectionHonorsCamelWords() && mySettings.isCamelWords());
