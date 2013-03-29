@@ -454,12 +454,14 @@ public class SrcFileAnnotator implements Disposable {
       markupModel.addLineHighlighter(lineNumberInCurrent, HighlighterLayer.SELECTION - 1, textAttributes);
     final Function<Integer, Integer> newToOldConverter = new Function<Integer, Integer>() {
       public Integer fun(final Integer newLine) {
+        if (myEditor == null) return -1;
         final TIntIntHashMap oldLineMapping = getNewToOldLineMapping(date);
         return oldLineMapping != null ? oldLineMapping.get(newLine.intValue()) : newLine.intValue();
       }
     };
     final Function<Integer, Integer> oldToNewConverter = new Function<Integer, Integer>() {
       public Integer fun(final Integer newLine) {
+        if (myEditor == null) return -1;
         final TIntIntHashMap newLineMapping = getOldToNewLineMapping(date);
         return newLineMapping != null ? newLineMapping.get(newLine.intValue()) : newLine.intValue();
       }
