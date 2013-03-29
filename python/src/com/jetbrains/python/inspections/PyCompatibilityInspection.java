@@ -7,6 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.JDOMExternalizableStringList;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
@@ -128,14 +129,22 @@ public class PyCompatibilityInspection extends PyInspection {
     @Override
     protected final void registerProblem(@Nullable final PsiElement element,
                                        @NotNull final String message,
-                                       @Nullable final LocalQuickFix quickFix, final boolean asError){
-      if (element == null || element.getTextLength() == 0){
-          return;
+                                       @Nullable final LocalQuickFix quickFix, final boolean asError) {
+      if (element == null) return;
+      registerProblem(element, element.getTextRange(), message, quickFix, asError);
+    }
+
+    @Override
+    protected void registerProblem(@NotNull final PsiElement element, @NotNull TextRange range, String message,
+                                   @Nullable LocalQuickFix quickFix, boolean asError) {
+      if (element.getTextLength() == 0) {
+        return;
       }
+      range = TextRange.create(range.getStartOffset() - element.getTextOffset(), range.getEndOffset() - element.getTextOffset());
       if (quickFix != null)
-        myHolder.registerProblem(element, message, quickFix);
+        myHolder.registerProblem(element, range, message, quickFix);
       else
-        myHolder.registerProblem(element, message);
+        myHolder.registerProblem(element, range, message);
     }
 
     @Override

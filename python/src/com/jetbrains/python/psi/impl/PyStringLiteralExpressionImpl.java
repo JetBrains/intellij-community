@@ -13,6 +13,7 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.codeInsight.regexp.PythonVerboseRegexpLanguage;
+import com.jetbrains.python.lexer.PyStringLiteralLexer;
 import com.jetbrains.python.lexer.PythonHighlightingLexer;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.types.PyType;
@@ -100,34 +101,20 @@ public class PyStringLiteralExpressionImpl extends PyElementImpl implements PySt
 
   public static int getPrefixLength(String text) {
     int startOffset = 0;
-    startOffset = skipEncodingPrefix(text, startOffset);
-    startOffset = skipRawPrefix(text, startOffset);
-    return startOffset;
-  }
-
-  private static int skipRawPrefix(String text, int startOffset) {
-    char c = Character.toUpperCase(text.charAt(startOffset));
-    if (c == 'R') {
-      startOffset++;
-    }
-    return startOffset;
-  }
-
-  private static int skipEncodingPrefix(String text, int startOffset) {
-    char c = Character.toUpperCase(text.charAt(startOffset));
-    if (c == 'U' || c == 'B' || c == 'C') {
-      startOffset++;
-    }
+    startOffset = PyStringLiteralLexer.skipEncodingPrefix(text, startOffset);
+    startOffset = PyStringLiteralLexer.skipRawPrefix(text, startOffset);
+    startOffset = PyStringLiteralLexer.skipEncodingPrefix(text, startOffset);
+    startOffset = PyStringLiteralLexer.skipRawPrefix(text, startOffset);
     return startOffset;
   }
 
   private static boolean isRaw(String text) {
-    int startOffset = skipEncodingPrefix(text, 0);
-    return skipRawPrefix(text, startOffset) > startOffset;
+    int startOffset = PyStringLiteralLexer.skipEncodingPrefix(text, 0);
+    return PyStringLiteralLexer.skipRawPrefix(text, startOffset) > startOffset;
   }
 
   private static boolean isUnicode(String text) {
-    return text.length() > 0 && Character.toUpperCase(text.charAt(0)) == 'U';
+    return text.length() > 0 && Character.toUpperCase(text.charAt(0)) == 'U';                       //TODO[ktisha]
   } 
 
   private static boolean isBytes(String text) {

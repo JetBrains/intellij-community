@@ -69,7 +69,7 @@ public class PyIntentionTest extends PyTestCase {
   }
 
   public void testRemoveLeadingU() {
-    doTest(PyBundle.message("INTN.remove.leading.u"), LanguageLevel.PYTHON30);
+    doTest(PyBundle.message("INTN.remove.leading.$0", "U"), LanguageLevel.PYTHON30);
   }
 
   public void testRemoveTrailingL() {

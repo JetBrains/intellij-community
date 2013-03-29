@@ -57,27 +57,39 @@ public class PyStringLiteralLexer extends LexerBase {
 
     // the following could be parsing steps if we wanted this info as tokens
     int i = myStart;
-    // unicode flag
-    char c = buffer.charAt(i);
 
-    if (c == 'u' || c == 'U' || c == 'b' || c == 'B' || c == 'c' || c == 'C')
-      i += 1;
-
-    // raw flag
-    c = buffer.charAt(i);
-    if (c == 'r' || c == 'R') {
-      myIsRaw = true;
-      i += 1;
-    }
-    else myIsRaw = false; 
+    i = skipEncodingPrefix(buffer, i);
+    int offset = skipRawPrefix(buffer, i);
+    if (offset > i) myIsRaw = true;
+    i = offset;
+    i = skipEncodingPrefix(buffer, i);
+    offset = skipRawPrefix(buffer, i);
+    if (offset > i) myIsRaw = true;
+    i = offset;
 
     // which quote char?
-    c = buffer.charAt(i);
+    char c = buffer.charAt(i);
     assert (c == '"') || (c == '\'') : "String must be quoted by single or double quote";
     myQuoteChar = c;
 
     // calculate myEnd at last
     myEnd = locateToken(myStart);
+  }
+
+  public static int skipRawPrefix(CharSequence text, int startOffset) {
+    char c = Character.toUpperCase(text.charAt(startOffset));
+    if (c == 'R') {
+      startOffset++;
+    }
+    return startOffset;
+  }
+
+  public static int skipEncodingPrefix(CharSequence text, int startOffset) {
+    char c = Character.toUpperCase(text.charAt(startOffset));
+    if (c == 'U' || c == 'B' || c == 'C') {
+      startOffset++;
+    }
+    return startOffset;
   }
 
   public int getState() {

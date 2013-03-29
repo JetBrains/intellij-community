@@ -5,7 +5,7 @@ a = <error descr="Python version 3.0 does not support this syntax. It requires '
 a = 0X43
 a = 0b1
 a = 0.0
-s = <error descr="Python version 3.0 does not support a leading 'u' or 'U'.">u"text"</error>
+s = <error descr="Python version 3.0 does not support a 'U' prefix">u</error>"text"
 <error descr="Python version 3.0 does not support this syntax.">raise a, b, c</error>
 <error descr="Python version 3.0 does not support this syntax.">raise a, b</error>
 

@@ -7,6 +7,7 @@ import com.intellij.psi.PsiElement;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.PyElementGenerator;
 import com.jetbrains.python.psi.PyStringLiteralExpression;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -15,16 +16,23 @@ import org.jetbrains.annotations.NotNull;
  * Date:   06.03.2010
  * Time:   16:50:53
  */
-public class RemoveLeadingUQuickFix implements LocalQuickFix {
+public class RemovePrefixQuickFix implements LocalQuickFix {
+  private final String myPrefix;
+
+  public RemovePrefixQuickFix(String prefix) {
+    myPrefix = prefix;
+  }
+
   @NotNull
+
   @Override
   public String getName() {
-    return PyBundle.message("INTN.remove.leading.u");
+    return PyBundle.message("INTN.remove.leading.$0", myPrefix);
   }
 
   @NotNull
   public String getFamilyName() {
-    return getName();
+    return PyBundle.message("INTN.remove.leading.prefix");
   }
 
   @Override
@@ -32,7 +40,8 @@ public class RemoveLeadingUQuickFix implements LocalQuickFix {
     PsiElement stringLiteralExpression = descriptor.getPsiElement();
     if (stringLiteralExpression instanceof PyStringLiteralExpression) {
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      stringLiteralExpression.replace(elementGenerator.createExpressionFromText(stringLiteralExpression.getText().substring(1)));
+      final int length = PyStringLiteralExpressionImpl.getPrefixLength(stringLiteralExpression.getText());
+      stringLiteralExpression.replace(elementGenerator.createExpressionFromText(stringLiteralExpression.getText().substring(length)));
     }
   }
 }

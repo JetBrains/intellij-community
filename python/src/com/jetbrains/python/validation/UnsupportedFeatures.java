@@ -7,11 +7,13 @@ import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyElement;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -31,20 +33,26 @@ public class UnsupportedFeatures extends CompatibilityVisitor {
   }
 
   @Override
-  protected void registerProblem(PsiElement node, String message, LocalQuickFix localQuickFix, boolean asError) {
-    if (node == null || node.getTextLength() == 0){
-          return;
+  protected void registerProblem(@Nullable final PsiElement node, String message, LocalQuickFix localQuickFix, boolean asError) {
+    if (node == null) return;
+    registerProblem(node, node.getTextRange(), message, localQuickFix, asError);
+  }
+
+  @Override
+  protected void registerProblem(PsiElement node, TextRange range, String message, LocalQuickFix localQuickFix, boolean asError) {
+    if (range.isEmpty()){
+      return;
     }
     if (localQuickFix != null)
       if (asError)
-        getHolder().createErrorAnnotation(node, message).registerFix(createIntention(node, message, localQuickFix));
+        getHolder().createErrorAnnotation(range, message).registerFix(createIntention(node, message, localQuickFix));
       else
-        getHolder().createWarningAnnotation(node, message).registerFix(createIntention(node, message, localQuickFix));
+        getHolder().createWarningAnnotation(range, message).registerFix(createIntention(node, message, localQuickFix));
     else
       if (asError)
-        getHolder().createErrorAnnotation(node, message);
+        getHolder().createErrorAnnotation(range, message);
       else
-        getHolder().createWarningAnnotation(node, message);
+        getHolder().createWarningAnnotation(range, message);
   }
 
   @NotNull
@@ -57,10 +65,14 @@ public class UnsupportedFeatures extends CompatibilityVisitor {
   }
 
   private static IntentionAction createIntention(PsiElement node, String message, LocalQuickFix fix) {
+    return createIntention(node, node.getTextRange(), message, fix);
+  }
+
+  private static IntentionAction createIntention(PsiElement node, TextRange range, String message, LocalQuickFix fix) {
     LocalQuickFix[] quickFixes = {fix};
     CommonProblemDescriptorImpl descr = new ProblemDescriptorImpl(node, node, message,
                                                                   quickFixes, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, true,
-                                                                  node.getTextRange(), true);
+                                                                  range, true);
     return QuickFixWrapper.wrap((ProblemDescriptor)descr, 0);
   }
 }

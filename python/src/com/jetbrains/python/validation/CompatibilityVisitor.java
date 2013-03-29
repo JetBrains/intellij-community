@@ -1,8 +1,12 @@
 package com.jetbrains.python.validation;
 
+import com.google.common.collect.Maps;
+import com.google.common.collect.Sets;
 import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.lang.ASTNode;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
@@ -12,12 +16,10 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.inspections.quickfix.*;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
+import com.jetbrains.python.psi.impl.PyStringLiteralExpressionImpl;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.List;
-import java.util.Set;
-import java.util.Stack;
+import java.util.*;
 
 /**
  * User : catherine
@@ -25,6 +27,19 @@ import java.util.Stack;
 public abstract class CompatibilityVisitor extends PyAnnotator {
   protected List<LanguageLevel> myVersionsToProcess;
   private String myCommonMessage = "Python version ";
+
+  private static final Map<LanguageLevel, Set<String>> AVAILABLE_PREFIXES = Maps.newHashMap();
+
+  static {
+    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON24, Sets.newHashSet("R", "U", "UR"));
+    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON25, Sets.newHashSet("R", "U", "UR"));
+    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON26, Sets.newHashSet("R", "U", "UR", "B", "BR"));
+    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON27, Sets.newHashSet("R", "U", "UR", "B", "BR"));
+    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON30, Sets.newHashSet("R", "B"));
+    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON31, Sets.newHashSet("R", "B", "BR"));
+    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON32, Sets.newHashSet("R", "B", "BR"));
+    AVAILABLE_PREFIXES.put(LanguageLevel.PYTHON33, Sets.newHashSet("R", "U", "B", "BR", "RB"));
+  }
 
   public CompatibilityVisitor(List<LanguageLevel> versionsToProcess) {
     myVersionsToProcess = versionsToProcess;
@@ -213,19 +228,25 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   @Override
   public void visitPyStringLiteralExpression(final PyStringLiteralExpression node) {
     super.visitPyStringLiteralExpression(node);
-    int len = 0;
-    StringBuilder message = new StringBuilder(myCommonMessage);
-    for (int i = 0; i != myVersionsToProcess.size(); ++i) {
-      LanguageLevel languageLevel = myVersionsToProcess.get(i);
+    List<ASTNode> stringNodes = node.getStringNodes();
 
-      if (languageLevel.isAtLeast(LanguageLevel.PYTHON30) && languageLevel.isOlderThan(LanguageLevel.PYTHON33)) {
-        final String text = node.getText();
-        if (text.startsWith("u") || text.startsWith("U")) {
+    for (ASTNode stringNode : stringNodes) {
+      int len = 0;
+      StringBuilder message = new StringBuilder(myCommonMessage);
+      String nodeText = stringNode.getText();
+      int index = PyStringLiteralExpressionImpl.getPrefixLength(nodeText);
+      String prefix = nodeText.substring(0, index).toUpperCase();
+      final TextRange range = TextRange.create(stringNode.getStartOffset(), stringNode.getStartOffset() + index);
+      for (int i = 0; i != myVersionsToProcess.size(); ++i) {
+        LanguageLevel languageLevel = myVersionsToProcess.get(i);
+        if (prefix.isEmpty()) continue;
+
+        final Set<String> prefixes = AVAILABLE_PREFIXES.get(languageLevel);
+        if (!prefixes.contains(prefix))
           len = appendLanguageLevel(message, len, languageLevel);
-        }
       }
+      commonRegisterProblem(message, " not support a '" + prefix + "' prefix", len, node, range, new RemovePrefixQuickFix(prefix));
     }
-    commonRegisterProblem(message, " not support a leading \'u\' or \'U\'.", len, node, new RemoveLeadingUQuickFix());
   }
 
   @Override
@@ -552,6 +573,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
   }
 
   protected abstract void registerProblem(PsiElement node, String s, @Nullable LocalQuickFix localQuickFix, boolean asError);
+  protected abstract void registerProblem(PsiElement node, TextRange range, String s, @Nullable LocalQuickFix localQuickFix, boolean asError);
 
   protected void registerProblem(final PsiElement node, final String s, @Nullable final LocalQuickFix localQuickFix) {
     registerProblem(node, s, localQuickFix, true);
@@ -567,7 +589,22 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
 
   protected void commonRegisterProblem(StringBuilder initMessage, String suffix,
                                        int len, PyElement node, LocalQuickFix localQuickFix) {
-    commonRegisterProblem(initMessage, suffix, len, node, localQuickFix, true);
+    commonRegisterProblem(initMessage, suffix, len, node, node.getTextRange(), localQuickFix, true);
+  }
+
+  protected void commonRegisterProblem(StringBuilder initMessage, String suffix,
+                                       int len, PyElement node, TextRange range, LocalQuickFix localQuickFix) {
+    commonRegisterProblem(initMessage, suffix, len, node, range, localQuickFix, true);
+  }
+
+  protected void commonRegisterProblem(StringBuilder initMessage, String suffix,
+                                       int len, PyElement node, TextRange range, @Nullable LocalQuickFix localQuickFix, boolean asError) {
+    initMessage.append(" do");
+    if (len == 1)
+      initMessage.append("es");
+    initMessage.append(suffix);
+    if (len != 0)
+      registerProblem(node, range, initMessage.toString(), localQuickFix, asError);
   }
 
   protected void commonRegisterProblem(StringBuilder initMessage, String suffix,
@@ -577,7 +614,7 @@ public abstract class CompatibilityVisitor extends PyAnnotator {
       initMessage.append("es");
     initMessage.append(suffix);
     if (len != 0)
-      registerProblem(node, initMessage.toString(), localQuickFix, asError);
+      registerProblem(node, node.getTextRange(), initMessage.toString(), localQuickFix, asError);
   }
 
   protected static int appendLanguageLevel(StringBuilder message, int len, LanguageLevel languageLevel) {
