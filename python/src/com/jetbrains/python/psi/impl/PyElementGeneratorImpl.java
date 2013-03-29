@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
@@ -13,6 +14,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.PythonStringUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +66,16 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
 
   public PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped) {
     return createStringLiteralFromString(null, unescaped);
+  }
+
+  public PyStringLiteralExpression createStringLiteral(@NotNull PyStringLiteralExpression oldElement, @NotNull String unescaped) {
+    Pair<String, String> quotes = PythonStringUtil.getQuotes(oldElement.getText());
+    if (quotes != null) {
+      return createStringLiteralAlreadyEscaped(quotes.first + unescaped + quotes.second);
+    }
+    else {
+      return createStringLiteralFromString(unescaped);
+    }
   }
 
   public PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination, @NotNull String unescaped) {
@@ -253,18 +265,20 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
   public PyNamedParameter createParameter(@NotNull String name, @Nullable String defaultValue, @Nullable String annotation,
                                           @NotNull LanguageLevel languageLevel) {
     String parameterText = name;
-    if (annotation != null)
+    if (annotation != null) {
       parameterText += ": " + annotation;
-    if (defaultValue != null)
+    }
+    if (defaultValue != null) {
       parameterText += " = " + defaultValue;
+    }
 
     return createFromText(languageLevel, PyNamedParameter.class, "def f(" + parameterText + "): pass", PATH_PARAMETER);
   }
 
   @Override
   public PyKeywordArgument createKeywordArgument(LanguageLevel languageLevel, String keyword, String value) {
-    PyCallExpression callExpression = (PyCallExpression) createExpressionFromText(languageLevel, "foo(" + keyword + "=" + value + ")");
-    return (PyKeywordArgument) callExpression.getArguments()[0];
+    PyCallExpression callExpression = (PyCallExpression)createExpressionFromText(languageLevel, "foo(" + keyword + "=" + value + ")");
+    return (PyKeywordArgument)callExpression.getArguments()[0];
   }
 
   @NotNull

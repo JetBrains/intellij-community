@@ -33,6 +33,8 @@ public abstract class PyElementGenerator {
   public abstract PyStringLiteralExpression createStringLiteralFromString(@Nullable PsiFile destination, String unescaped);
   public abstract PyStringLiteralExpression createStringLiteralFromString(@NotNull String unescaped);
 
+  public abstract PyStringLiteralExpression createStringLiteral(@NotNull PyStringLiteralExpression oldElement, @NotNull String unescaped);
+
   public abstract PyListLiteralExpression createListLiteral();
 
   public abstract ASTNode createComma();
