@@ -18,10 +18,7 @@ package com.intellij.ui.popup.util;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.JBPopupListener;
-import com.intellij.openapi.ui.popup.LightweightWindowEvent;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
+import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.*;
@@ -185,7 +182,7 @@ public class MasterDetailPopupBuilder implements MasterController {
         });
       }
       else {
-        builder.setCommandButton(new InplaceButton("Close", AllIcons.Actions.CloseNew, actionListener));
+        builder.setCommandButton(new InplaceButton(new IconButton("Close", AllIcons.Actions.CloseNew, AllIcons.Actions.CloseNewHovered), actionListener));
       }
     }
 
@@ -282,8 +279,9 @@ public class MasterDetailPopupBuilder implements MasterController {
     return this;
   }
 
-  public void setDoneRunnable(Runnable doneRunnable) {
+  public MasterDetailPopupBuilder setDoneRunnable(Runnable doneRunnable) {
     myDoneRunnable = doneRunnable;
+    return this;
   }
 
   public void setCancelOnClickOutside(boolean cancelOnClickOutside) {
