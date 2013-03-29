@@ -122,7 +122,17 @@ public class PackageFileActionTest extends ArtifactCompilerTestCase {
 
     assertOutput(b, fs().dir("y").dir("x").file("a.txt", "123"));
   }
-  
+
+  public void testDoNotCopyFileToItself() throws IOException {
+    VirtualFile file = createFile("dir/a.txt", "123");
+    Artifact a = addArtifact(root().dirCopy(file.getParent()));
+    ArtifactsTestUtil.setOutput(myProject, a.getName(), file.getParent().getPath());
+    assertOutput(a, fs().file("a.txt", "123"));
+    changeFile(file, "456");
+    packageFile(file);
+    assertOutput(a, fs().file("a.txt", "456"));
+  }
+
   public void testFileInIncludedArchiveArtifact() throws Exception {
     final VirtualFile file = createFile("a.txt", "xxx");
     final Artifact a = addArtifact("a", archive("a.jar").file(file));
