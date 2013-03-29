@@ -15,9 +15,11 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * Class comment
@@ -29,21 +31,20 @@ public class JDClassComment extends JDParamListOwnerComment {
     super(formatter);
   }
 
-  private ArrayList authorsList;
+  private List<String> authorsList;
   private String version;
 
   @Override
   protected void generateSpecial(String prefix, @NonNls StringBuffer sb) {
     super.generateSpecial(prefix, sb);
-    if (!isNull(authorsList)) {
-      for (Object aAuthorsList : authorsList) {
-        String s = (String)aAuthorsList;
+    if (authorsList != null) {
+      for (String author : authorsList) {
         sb.append(prefix);
         sb.append("@author ");
-        sb.append(myFormatter.getParser().splitIntoCLines(s, prefix + "        ", false));
+        sb.append(myFormatter.getParser().splitIntoCLines(author, prefix + "        ", false));
       }
     }
-    if (!isNull(version)) {
+    if (!StringUtil.isEmptyOrSpaces(version)) {
       sb.append(prefix);
       sb.append("@version ");
       sb.append(myFormatter.getParser().splitIntoCLines(version, prefix + "         ", false));
@@ -52,17 +53,13 @@ public class JDClassComment extends JDParamListOwnerComment {
 
   public void addAuthor(String author) {
     if (authorsList == null) {
-      authorsList = new ArrayList();
+      authorsList = new ArrayList<String>();
     }
     authorsList.add(author);
   }
 
-  public ArrayList getAuthorsList() {
+  public List<String> getAuthorsList() {
     return authorsList;
-  }
-
-  public void setAuthorsList(ArrayList authorsList) {
-    this.authorsList = authorsList;
   }
 
   public String getVersion() {

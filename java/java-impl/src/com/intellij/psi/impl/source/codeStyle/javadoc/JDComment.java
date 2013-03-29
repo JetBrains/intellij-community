@@ -15,9 +15,11 @@
  */
 package com.intellij.psi.impl.source.codeStyle.javadoc;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author max
@@ -30,8 +32,8 @@ public class JDComment {
   protected CommentFormatter myFormatter;
 
   String description;
-  protected ArrayList unknownList;
-  protected ArrayList seeAlsoList;
+  protected List<String> unknownList;
+  protected List<String> seeAlsoList;
   protected String since;
   String deprecated;
 
@@ -39,14 +41,6 @@ public class JDComment {
 
   public JDComment(CommentFormatter formatter) {
     myFormatter = formatter;
-  }
-
-  protected static boolean isNull(String s) {
-    return s == null || s.trim().length() == 0;
-  }
-
-  protected static boolean isNull(ArrayList l) {
-    return l == null || l.size() == 0;
   }
 
   public String generate(String indent) {
@@ -62,7 +56,7 @@ public class JDComment {
 
     int start = sb.length();
 
-    if (!isNull(description)) {
+    if (!StringUtil.isEmptyOrSpaces(description)) {
       sb.append(myFormatter.getParser().splitIntoCLines(description, prefix));
 
       if (myFormatter.getSettings().JD_ADD_BLANK_AFTER_DESCRIPTION) {
@@ -73,10 +67,9 @@ public class JDComment {
 
     generateSpecial(prefix, sb);
 
-    if (!isNull(unknownList) && myFormatter.getSettings().JD_KEEP_INVALID_TAGS) {
-      for (Object aUnknownList : unknownList) {
-        String s = (String)aUnknownList;
-        sb.append(myFormatter.getParser().splitIntoCLines(s, prefix));
+    if (unknownList != null && myFormatter.getSettings().JD_KEEP_INVALID_TAGS) {
+      for (String aUnknownList : unknownList) {
+        sb.append(myFormatter.getParser().splitIntoCLines(aUnknownList, prefix));
       }
     }
 
@@ -96,16 +89,15 @@ public class JDComment {
     }
     }*/
 
-    if (!isNull(seeAlsoList)) {
-      for (Object aSeeAlsoList : seeAlsoList) {
-        String s = (String)aSeeAlsoList;
+    if (seeAlsoList != null) {
+      for (String aSeeAlsoList : seeAlsoList) {
         sb.append(prefix);
         sb.append("@see ");
-        sb.append(myFormatter.getParser().splitIntoCLines(s, prefix + "     ", false));
+        sb.append(myFormatter.getParser().splitIntoCLines(aSeeAlsoList, prefix + "     ", false));
       }
     }
 
-    if (!isNull(since)) {
+    if (!StringUtil.isEmptyOrSpaces(since)) {
       sb.append(prefix);
       sb.append("@since ");
       sb.append(myFormatter.getParser().splitIntoCLines(since, prefix + "       ", false));
@@ -144,14 +136,14 @@ public class JDComment {
 
   public void addSeeAlso(String seeAlso) {
     if (seeAlsoList == null) {
-      seeAlsoList = new ArrayList();
+      seeAlsoList = new ArrayList<String>();
     }
     seeAlsoList.add(seeAlso);
   }
 
   public void addUnknownTag(String unknownTag) {
     if (unknownList == null) {
-      unknownList = new ArrayList();
+      unknownList = new ArrayList<String>();
     }
     unknownList.add(unknownTag);
   }
@@ -173,19 +165,11 @@ public class JDComment {
         return getXdocTagList(desc.getName());
     }
 */
-  public ArrayList getSeeAlsoList() {
+  public List<String> getSeeAlsoList() {
     return seeAlsoList;
   }
 
-  public void setUnknownList(ArrayList unknownList) {
-    this.unknownList = unknownList;
-  }
-
-  public void setSeeAlsoList(ArrayList seeAlsoList) {
-    this.seeAlsoList = seeAlsoList;
-  }
-
-  public ArrayList getUnknownList() {
+  public List<String> getUnknownList() {
     return unknownList;
   }
 
