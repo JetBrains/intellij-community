@@ -34,7 +34,7 @@ def smart_str(s):
     return s
 
 class TeamcityTestResult(TestResult):
-  def __init__(self, stream=sys.stdout, **kwargs):
+  def __init__(self, stream=sys.stdout, *args, **kwargs):
     TestResult.__init__(self)
     for arg, value in kwargs.items():
       setattr(self, arg, value)
