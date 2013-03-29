@@ -140,21 +140,28 @@ public abstract class AbstractJavaFxPackager {
     final boolean selfSigning = isSelfSigning();
     final int genResult = selfSigning ? genKey(binPath) : 0;
     if (genResult == 0) {
-
-      final List<String> signCommandLine = new ArrayList<String>();
-      addParameter(signCommandLine, FileUtil.toSystemDependentName(binPath + File.separator + "jarsigner"));
-
-      collectStoreParams(selfSigning, signCommandLine);
-
-      addParameter(signCommandLine, tempDirectory.getPath() + File.separator + getArtifactRootName());
-      addParameter(signCommandLine, getAlias(selfSigning));
-
-      final int signedResult = startProcess(signCommandLine);
-      if (signedResult != 0) {
-        registerJavaFxPackagerError("JavaFX sign task has failed.");
+      sign(binPath, selfSigning, tempDirectory.getPath() + File.separator + getArtifactRootName());
+      final String preloaderJar = getPreloaderJar();
+      if (preloaderJar != null) {
+        sign(binPath, selfSigning, tempDirectory.getPath() + File.separator + preloaderJar);
       }
     } else {
       registerJavaFxPackagerError("JavaFX generate certificate task has failed.");
+    }
+  }
+
+  private void sign(String binPath, boolean selfSigning, final String jar2Sign) {
+    final List<String> signCommandLine = new ArrayList<String>();
+    addParameter(signCommandLine, FileUtil.toSystemDependentName(binPath + File.separator + "jarsigner"));
+
+    collectStoreParams(selfSigning, signCommandLine);
+
+    addParameter(signCommandLine, jar2Sign);
+    addParameter(signCommandLine, getAlias(selfSigning));
+
+    final int signedResult = startProcess(signCommandLine);
+    if (signedResult != 0) {
+      registerJavaFxPackagerError("JavaFX sign task has failed.");
     }
   }
 
