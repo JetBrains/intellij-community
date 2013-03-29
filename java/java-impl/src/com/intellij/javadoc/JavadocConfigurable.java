@@ -16,10 +16,11 @@
 package com.intellij.javadoc;
 
 import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiKeyword;
 
 import javax.swing.*;
-import java.io.File;
 
 public final class JavadocConfigurable implements Configurable {
   private JavadocGenerationPanel myPanel;
@@ -29,18 +30,19 @@ public final class JavadocConfigurable implements Configurable {
     myConfiguration = configuration;
   }
 
+  @Override
   public JComponent createComponent() {
     myPanel = new JavadocGenerationPanel();
     return myPanel.myPanel;
   }
 
   public void applyTo(JavadocConfiguration configuration) {
-    configuration.OUTPUT_DIRECTORY = toSystemIndependentFormat(myPanel.myTfOutputDir.getText());
-    configuration.OTHER_OPTIONS = convertString(myPanel.myOtherOptionsField.getText());
-    configuration.HEAP_SIZE = convertString(myPanel.myHeapSizeField.getText());
-    configuration.LOCALE = convertString(myPanel.myLocaleTextField.getText());
+    configuration.OUTPUT_DIRECTORY = StringUtil.isEmptyOrSpaces(myPanel.myTfOutputDir.getText()) ? null : FileUtilRt.toSystemIndependentName(myPanel.myTfOutputDir.getText());
+    configuration.OTHER_OPTIONS = StringUtil.nullize(myPanel.myOtherOptionsField.getText(), true);
+    configuration.HEAP_SIZE = StringUtil.nullize(myPanel.myHeapSizeField.getText(), true);
+    configuration.LOCALE = StringUtil.nullize(myPanel.myLocaleTextField.getText(), true);
     configuration.OPEN_IN_BROWSER = myPanel.myOpenInBrowserCheckBox.isSelected();
-    configuration.OPTION_SCOPE = convertString(myPanel.getScope());
+    configuration.OPTION_SCOPE = StringUtil.nullize(myPanel.getScope(), true);
     configuration.OPTION_HIERARCHY = myPanel.myHierarchy.isSelected();
     configuration.OPTION_NAVIGATOR = myPanel.myNavigator.isSelected();
     configuration.OPTION_INDEX = myPanel.myIndex.isSelected();
@@ -54,7 +56,8 @@ public final class JavadocConfigurable implements Configurable {
   }
 
   public void loadFrom(JavadocConfiguration configuration) {
-    myPanel.myTfOutputDir.setText(toUserSystemFormat(configuration.OUTPUT_DIRECTORY));
+    myPanel.myTfOutputDir.setText(
+      configuration.OUTPUT_DIRECTORY == null ? "" : FileUtilRt.toSystemDependentName(configuration.OUTPUT_DIRECTORY));
     myPanel.myOtherOptionsField.setText(configuration.OTHER_OPTIONS);
     myPanel.myHeapSizeField.setText(configuration.HEAP_SIZE);
     myPanel.myLocaleTextField.setText(configuration.LOCALE);
@@ -76,15 +79,19 @@ public final class JavadocConfigurable implements Configurable {
     myPanel.myIncludeLibraryCb.setSelected(configuration.OPTION_INCLUDE_LIBS);
   }
 
+  @Override
   public boolean isModified() {
     boolean isModified;
 
     final JavadocConfiguration configuration = myConfiguration;
-    isModified = !compareStrings(myPanel.myTfOutputDir.getText(), toUserSystemFormat(configuration.OUTPUT_DIRECTORY));
-    isModified |= !compareStrings(myPanel.myOtherOptionsField.getText(), configuration.OTHER_OPTIONS);
-    isModified |= !compareStrings(myPanel.myHeapSizeField.getText(), configuration.HEAP_SIZE);
+    isModified = !StringUtil.equals(myPanel.myTfOutputDir.getText(), configuration.OUTPUT_DIRECTORY == null
+                                                                     ? ""
+                                                                     : FileUtilRt.toSystemDependentName(configuration.OUTPUT_DIRECTORY));
+    isModified |= !StringUtil.equals(myPanel.myOtherOptionsField.getText(), configuration.OTHER_OPTIONS);
+    isModified |= !StringUtil.equals(myPanel.myHeapSizeField.getText(), configuration.HEAP_SIZE);
     isModified |= myPanel.myOpenInBrowserCheckBox.isSelected() != configuration.OPEN_IN_BROWSER;
-    isModified |= !compareStrings(myPanel.getScope(), (configuration.OPTION_SCOPE == null ? PsiKeyword.PROTECTED : configuration.OPTION_SCOPE));
+    String string2 = (configuration.OPTION_SCOPE == null ? PsiKeyword.PROTECTED : configuration.OPTION_SCOPE);
+    isModified |= !StringUtil.equals(myPanel.getScope(), string2);
     isModified |= myPanel.myHierarchy.isSelected() != configuration.OPTION_HIERARCHY;
     isModified |= myPanel.myNavigator.isSelected() != configuration.OPTION_NAVIGATOR;
     isModified |= myPanel.myIndex.isSelected() != configuration.OPTION_INDEX;
@@ -99,53 +106,27 @@ public final class JavadocConfigurable implements Configurable {
     return isModified;
   }
 
+  @Override
   public final void apply() {
     applyTo(myConfiguration);
   }
 
+  @Override
   public void reset() {
     loadFrom(myConfiguration);
   }
 
-  private static boolean compareStrings(String string1, String string2) {
-    if (string1 == null) {
-      string1 = "";
-    }
-    if (string2 == null) {
-      string2 = "";
-    }
-    return string1.equals(string2);
-  }
-
+  @Override
   public void disposeUIResources() {
     myPanel = null;
   }
 
-  private static String convertString(String s) {
-    if (s != null && s.trim().length() == 0) {
-      return null;
-    }
-    return s;
-  }
-
-  private static String toSystemIndependentFormat(String directory) {
-    if (directory.length() == 0) {
-      return null;
-    }
-    return directory.replace(File.separatorChar, '/');
-  }
-
-  private static String toUserSystemFormat(String directory) {
-    if (directory == null) {
-      return "";
-    }
-    return directory.replace('/', File.separatorChar);
-  }
-
+  @Override
   public String getDisplayName() {
     return null;
   }
 
+  @Override
   public String getHelpTopic() {
     return "project.propJavaDoc";
   }

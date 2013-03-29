@@ -18,6 +18,7 @@ package com.intellij.tools;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.JDOMExternalizable;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 
@@ -97,14 +98,14 @@ public class FilterInfo implements JDOMExternalizable {
 
       if (FILTER_NAME.equals(name)) {
         if (value != null) {
-          myName = convertString(value);
+          myName = StringUtil.nullize(value, true);
         }
       }
       if (FILTER_DESCRIPTION.equals(name)) {
-        myDescription = convertString(value);
+        myDescription = StringUtil.nullize(value, true);
       }
       if (FILTER_REGEXP.equals(name)) {
-        myRegExp = convertString(value);
+        myRegExp = StringUtil.nullize(value, true);
       }
     }
   }
@@ -130,9 +131,5 @@ public class FilterInfo implements JDOMExternalizable {
     if (myRegExp != null) {
       option.setAttribute(ATTRIBUTE_VALUE, myRegExp);
     }
-  }
-
-  public static String convertString(String s) {
-    return ToolManager.convertString(s);
   }
 }

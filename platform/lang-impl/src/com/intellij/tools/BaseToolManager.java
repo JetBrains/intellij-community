@@ -20,11 +20,12 @@ package com.intellij.tools;
 import com.intellij.openapi.actionSystem.ex.ActionManagerEx;
 import com.intellij.openapi.components.ExportableApplicationComponent;
 import com.intellij.openapi.components.RoamingType;
-import com.intellij.openapi.options.*;
+import com.intellij.openapi.options.SchemeProcessor;
+import com.intellij.openapi.options.SchemesManager;
+import com.intellij.openapi.options.SchemesManagerFactory;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.util.ArrayList;
@@ -49,12 +50,6 @@ public abstract class BaseToolManager<T extends Tool> implements ExportableAppli
   protected abstract String getSchemesPath();
 
   protected abstract SchemeProcessor<ToolsGroup<T>> createProcessor();
-
-  @Nullable
-  public static String convertString(String s) {
-    if (s != null && s.trim().length() == 0) return null;
-    return s;
-  }
 
   @NotNull
   public File[] getExportFiles() {

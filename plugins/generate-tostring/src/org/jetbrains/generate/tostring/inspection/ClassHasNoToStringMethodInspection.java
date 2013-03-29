@@ -24,7 +24,6 @@ import com.intellij.util.ui.CheckBox;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.generate.tostring.GenerateToStringContext;
 import org.jetbrains.generate.tostring.GenerateToStringUtils;
-import org.jetbrains.generate.tostring.util.StringUtil;
 
 import javax.swing.*;
 import javax.swing.event.DocumentEvent;
@@ -99,7 +98,7 @@ public class ClassHasNoToStringMethodInspection extends AbstractToStringInspecti
                 }
 
                 // if it is an excluded class - then skip
-                if (StringUtil.isNotEmpty(excludeClassNames)) {
+              if (!com.intellij.openapi.util.text.StringUtil.isEmptyOrSpaces(excludeClassNames)) {
                     String name = clazz.getName();
                     if (name != null && name.matches(excludeClassNames)) {
                         return;

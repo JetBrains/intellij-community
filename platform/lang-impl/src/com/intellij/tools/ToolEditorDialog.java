@@ -32,6 +32,8 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DocumentAdapter;
@@ -48,7 +50,6 @@ import javax.swing.text.BadLocationException;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
 import java.util.List;
 
 public class ToolEditorDialog extends DialogWrapper {
@@ -420,9 +421,9 @@ public class ToolEditorDialog extends DialogWrapper {
   public Tool getData() {
     Tool tool = createTool();
 
-    tool.setName(convertString(myNameField.getText()));
-    tool.setDescription(convertString(myDescriptionField.getText()));
-    tool.setGroup(myGroupCombo.getSelectedItem() != null ? convertString(myGroupCombo.getSelectedItem().toString()) : null);
+    tool.setName(StringUtil.nullize(myNameField.getText(), true));
+    tool.setDescription(StringUtil.nullize(myDescriptionField.getText(), true));
+    tool.setGroup(myGroupCombo.getSelectedItem() != null ? StringUtil.nullize(myGroupCombo.getSelectedItem().toString(), true) : null);
     tool.setShownInMainMenu(myShowInMainMenuCheckbox.isSelected());
     tool.setShownInEditor(myShowInEditorCheckbox.isSelected());
     tool.setShownInProjectViews(myShowInProjectTreeCheckbox.isSelected());
@@ -433,9 +434,9 @@ public class ToolEditorDialog extends DialogWrapper {
     tool.setFilesSynchronizedAfterRun(mySynchronizedAfterRunCheckbox.isSelected());
     tool.setEnabled(myEnabled);
 
-    tool.setWorkingDirectory(toSystemIndependentFormat(myTfCommandWorkingDirectory.getText()));
-    tool.setProgram(convertString(myTfCommand.getText()));
-    tool.setParameters(convertString(myParametersField.getText()));
+    tool.setWorkingDirectory(StringUtil.isEmptyOrSpaces(myTfCommandWorkingDirectory.getText()) ? null : FileUtilRt.toSystemIndependentName(myTfCommandWorkingDirectory.getText()));
+    tool.setProgram(StringUtil.nullize(myTfCommand.getText(), true));
+    tool.setParameters(StringUtil.nullize(myParametersField.getText(), true));
 
     tool.setOutputFilters(myOutputFilters);
 
@@ -474,7 +475,7 @@ public class ToolEditorDialog extends DialogWrapper {
     myShowConsoleOnStdErrCheckbox.setSelected(tool.isShowConsoleOnStdErr());
     mySynchronizedAfterRunCheckbox.setSelected(tool.synchronizeAfterExecution());
     myEnabled = tool.isEnabled();
-    myTfCommandWorkingDirectory.setText(toCurrentSystemFormat(tool.getWorkingDirectory()));
+    myTfCommandWorkingDirectory.setText(StringUtil.isEmptyOrSpaces(tool.getWorkingDirectory()) ? null : FileUtilRt.toSystemDependentName(tool.getWorkingDirectory()));
     myTfCommand.setText(tool.getProgram());
     myParametersField.setText(tool.getParameters());
     myOutputFilters = tool.getOutputFilters();
@@ -505,25 +506,6 @@ public class ToolEditorDialog extends DialogWrapper {
     panel.add(myShowConsoleOnStdOutCheckbox);
     panel.add(myShowConsoleOnStdErrCheckbox, "spanx 2");
     return panel;
-  }
-
-  private String convertString(String s) {
-    if (s != null && s.trim().length() == 0) return null;
-    return s;
-  }
-
-  private String toSystemIndependentFormat(String s) {
-    if (s == null) return null;
-    s = s.trim();
-    if (s.length() == 0) return null;
-    return s.replace(File.separatorChar, '/');
-  }
-
-  private String toCurrentSystemFormat(String s) {
-    if (s == null) return null;
-    s = s.trim();
-    if (s.length() == 0) return null;
-    return s.replace('/', File.separatorChar);
   }
 
   public Project getProject() {

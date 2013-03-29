@@ -480,12 +480,12 @@ public class MavenUtil {
 
   @Nullable
   public static File resolveMavenHomeDirectory(@Nullable String overrideMavenHome) {
-    if (!isEmptyOrSpaces(overrideMavenHome)) {
+    if (!StringUtil.isEmptyOrSpaces(overrideMavenHome)) {
       return new File(overrideMavenHome);
     }
 
     String m2home = System.getenv(ENV_M2_HOME);
-    if (!isEmptyOrSpaces(m2home)) {
+    if (!StringUtil.isEmptyOrSpaces(m2home)) {
       final File homeFromEnv = new File(m2home);
       if (isValidMavenHome(homeFromEnv)) {
         return homeFromEnv;
@@ -493,7 +493,7 @@ public class MavenUtil {
     }
 
     String mavenHome = System.getenv("MAVEN_HOME");
-    if (!isEmptyOrSpaces(mavenHome)) {
+    if (!StringUtil.isEmptyOrSpaces(mavenHome)) {
       final File mavenHomeFile = new File(mavenHome);
       if (isValidMavenHome(mavenHomeFile)) {
         return mavenHomeFile;
@@ -501,7 +501,7 @@ public class MavenUtil {
     }
 
     String userHome = SystemProperties.getUserHome();
-    if (!isEmptyOrSpaces(userHome)) {
+    if (!StringUtil.isEmptyOrSpaces(userHome)) {
       final File underUserHome = new File(userHome, M2_DIR);
       if (isValidMavenHome(underUserHome)) {
         return underUserHome;
@@ -588,10 +588,6 @@ public class MavenUtil {
     return isValidMavenHome(file) ? file : null;
   }
 
-  public static boolean isEmptyOrSpaces(@Nullable String str) {
-    return str == null || str.length() == 0 || str.trim().length() == 0;
-  }
-
   public static boolean isValidMavenHome(File home) {
     return getMavenConfFile(home).exists();
   }
@@ -630,7 +626,7 @@ public class MavenUtil {
 
   @NotNull
   public static File resolveUserSettingsFile(@Nullable String overriddenUserSettingsFile) {
-    if (!isEmptyOrSpaces(overriddenUserSettingsFile)) return new File(overriddenUserSettingsFile);
+    if (!StringUtil.isEmptyOrSpaces(overriddenUserSettingsFile)) return new File(overriddenUserSettingsFile);
     return new File(resolveM2Dir(), SETTINGS_XML);
   }
 
@@ -644,7 +640,7 @@ public class MavenUtil {
                                             @Nullable String overriddenMavenHome,
                                             @Nullable String overriddenUserSettingsFile) {
     File result = null;
-    if (!isEmptyOrSpaces(overriddenLocalRepository)) result = new File(overriddenLocalRepository);
+    if (!StringUtil.isEmptyOrSpaces(overriddenLocalRepository)) result = new File(overriddenLocalRepository);
     if (result == null) {
       result = doResolveLocalRepository(resolveUserSettingsFile(overriddenUserSettingsFile),
                                         resolveGlobalSettingsFile(overriddenMavenHome));
