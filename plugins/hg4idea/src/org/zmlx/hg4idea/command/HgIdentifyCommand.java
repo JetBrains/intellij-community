@@ -1,6 +1,8 @@
 package org.zmlx.hg4idea.command;
 
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandExecutor;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -26,10 +28,10 @@ public class HgIdentifyCommand {
   }
 
   @Nullable
-  public HgCommandResult execute() {
+  public HgCommandResult execute(@NotNull ModalityState state) {
     final List<String> arguments = new LinkedList<String>();
     arguments.add(source);
-    final HgCommandExecutor executor = new HgCommandExecutor(project, source);
+    final HgCommandExecutor executor = new HgCommandExecutor(project, source, state);
     executor.setSilent(true);
     return executor.executeInCurrentThread(null, "identify", arguments);
   }

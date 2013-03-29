@@ -14,6 +14,7 @@ package org.zmlx.hg4idea.execution;
 
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
@@ -66,15 +67,21 @@ public final class HgCommandExecutor {
   private boolean myIsSilent = false;
   private boolean myShowOutput = false;
   private List<String> myOptions = DEFAULT_OPTIONS;
+  @Nullable private ModalityState myState;
 
   public HgCommandExecutor(Project project) {
     this(project, null);
   }
 
   public HgCommandExecutor(Project project, @Nullable String destination) {
+    this(project, destination, null);
+  }
+
+  public HgCommandExecutor(Project project, @Nullable String destination, @Nullable ModalityState state) {
     myProject = project;
     myVcs = HgVcs.getInstance(project);
     myDestination = destination;
+    myState = state;
   }
 
   public void setCharset(Charset charset) {
@@ -147,7 +154,7 @@ public final class HgCommandExecutor {
     }
 
     WarningReceiver warningReceiver = new WarningReceiver();
-    PassReceiver passReceiver = new PassReceiver(myProject, forceAuthorization);
+    PassReceiver passReceiver = new PassReceiver(myProject, forceAuthorization, myState);
 
     SocketServer promptServer = new SocketServer(new PromptReceiver(handler));
     SocketServer warningServer = new SocketServer(warningReceiver);
@@ -371,10 +378,12 @@ public final class HgCommandExecutor {
     private final Project myProject;
     private HgCommandAuthenticator myAuthenticator;
     private boolean myForceAuthorization;
+    @Nullable private ModalityState myState;
 
-    private PassReceiver(Project project, boolean forceAuthorization) {
+    private PassReceiver(Project project, boolean forceAuthorization, @Nullable ModalityState state) {
       myProject = project;
       myForceAuthorization = forceAuthorization;
+      myState = state;
     }
 
     @Override
@@ -389,7 +398,7 @@ public final class HgCommandExecutor {
       String proposedLogin = new String(readDataBlock(dataInputStream));
 
       HgCommandAuthenticator authenticator = new HgCommandAuthenticator(myProject, myForceAuthorization);
-      boolean ok = authenticator.promptForAuthentication(myProject, proposedLogin, uri, path);
+      boolean ok = authenticator.promptForAuthentication(myProject, proposedLogin, uri, path, myState);
       if (ok) {
         myAuthenticator = authenticator;
         sendDataBlock(out, authenticator.getUserName().getBytes());

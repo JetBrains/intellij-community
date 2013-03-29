@@ -15,7 +15,7 @@
  */
 package org.zmlx.hg4idea.ui;
 
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -185,22 +185,17 @@ public class HgCloneDialog extends DialogWrapper {
     testButton.addActionListener(new ActionListener() {
       public void actionPerformed(final ActionEvent e) {
         testURL = repositoryURL.getText();
-        ProgressManager.getInstance().run(new Task.Backgroundable(project,HgVcsMessages.message("hg4idea.clone.test.progress", testURL), true) {
+        ProgressManager.getInstance().run(new Task.Modal(project, HgVcsMessages.message("hg4idea.clone.test.progress", testURL), true) {
           @Override
           public void run(@NotNull ProgressIndicator indicator) {
-            testResult = testRepository(project, testURL);
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                if (testResult && testButton.getParent().isShowing()) {
-                  Messages.showInfoMessage(testButton, HgVcsMessages.message("hg4idea.clone.test.success.message", testURL),
-                                           HgVcsMessages.message("hg4idea.clone.test.success"));
-                }
-                updateCloneButton();
-              }
-            });
+            testResult = testRepository(project, testURL, indicator.getModalityState());
           }
         });
+        if (testResult) {
+          Messages.showInfoMessage(testButton, HgVcsMessages.message("hg4idea.clone.test.success.message", testURL),
+                                   HgVcsMessages.message("hg4idea.clone.test.success"));
+        }
+        updateCloneButton();
       }
     });
 
@@ -346,10 +341,10 @@ public class HgCloneDialog extends DialogWrapper {
     return "reference.mercurial.clone.mercurial.repository";
   }
 
-  private static boolean testRepository(Project project, final String repositoryUrl) {
+  private static boolean testRepository(Project project, final String repositoryUrl, @NotNull ModalityState state) {
     final HgIdentifyCommand identifyCommand = new HgIdentifyCommand(project);
     identifyCommand.setSource(repositoryUrl);
-    final HgCommandResult result = identifyCommand.execute();
+    final HgCommandResult result = identifyCommand.execute(state);
     return result != null && result.getExitValue() == 0;
   }
 
