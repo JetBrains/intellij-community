@@ -120,7 +120,7 @@ public class PackageFileWorker {
   private void copyFile(String outputPath, List<CompositePackagingElement<?>> parents) throws IOException {
     if (parents.isEmpty()) {
       final String fullOutputPath = DeploymentUtil.appendToPath(outputPath, myRelativeOutputPath);
-      File target = new File(FileUtil.toSystemDependentName(fullOutputPath));
+      File target = new File(fullOutputPath);
       if (FileUtil.filesEqual(myFile, target)) {
         LOG.debug("  skipping copying file to itself");
       }
@@ -143,7 +143,7 @@ public class PackageFileWorker {
   }
 
   private void packFile(String archivePath, String pathInArchive, List<CompositePackagingElement<?>> parents) throws IOException {
-    final File archiveFile = new File(FileUtil.toSystemDependentName(archivePath));
+    final File archiveFile = new File(archivePath);
     if (parents.isEmpty()) {
       LOG.debug("  adding to archive " + archivePath);
       JBZipFile file = getOrCreateZipFile(archiveFile);
