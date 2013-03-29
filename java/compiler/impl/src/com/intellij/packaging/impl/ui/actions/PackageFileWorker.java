@@ -120,8 +120,14 @@ public class PackageFileWorker {
   private void copyFile(String outputPath, List<CompositePackagingElement<?>> parents) throws IOException {
     if (parents.isEmpty()) {
       final String fullOutputPath = DeploymentUtil.appendToPath(outputPath, myRelativeOutputPath);
-      LOG.debug("  copying to " + fullOutputPath);
-      FileUtil.copy(myFile, new File(FileUtil.toSystemDependentName(fullOutputPath)));
+      File target = new File(FileUtil.toSystemDependentName(fullOutputPath));
+      if (FileUtil.filesEqual(myFile, target)) {
+        LOG.debug("  skipping copying file to itself");
+      }
+      else {
+        LOG.debug("  copying to " + fullOutputPath);
+        FileUtil.copy(myFile, target);
+      }
       return;
     }
 
