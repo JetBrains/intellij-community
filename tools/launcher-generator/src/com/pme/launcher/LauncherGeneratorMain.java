@@ -47,7 +47,14 @@ public class LauncherGeneratorMain {
     }
 
     String appInfoFileName = args[1];
-    InputStream appInfoStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(appInfoFileName);
+    InputStream appInfoStream;
+    try {
+      appInfoStream = new FileInputStream(appInfoFileName);
+    }
+    catch (FileNotFoundException e) {
+      appInfoStream = LauncherGeneratorMain.class.getClassLoader().getResourceAsStream(appInfoFileName);
+    }
+
     if (appInfoStream == null) {
       System.err.println("Application info file " + appInfoFileName + " not found");
       System.exit(3);
