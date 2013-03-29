@@ -54,7 +54,6 @@ public class PythonRunConfiguration extends AbstractPythonRunConfiguration
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     List<Filter> filters = Lists.newArrayList();
     filters.add(new PythonTracebackFilter(getProject(), getWorkingDirectory()));
-    filters.add(new UrlFilter());
 
     return new PythonScriptCommandLineState(this, env, filters);
   }

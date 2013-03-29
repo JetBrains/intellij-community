@@ -10,6 +10,7 @@ import com.intellij.execution.configurations.*;
 import com.intellij.execution.filters.Filter;
 import com.intellij.execution.filters.TextConsoleBuilder;
 import com.intellij.execution.filters.TextConsoleBuilderFactory;
+import com.intellij.execution.filters.UrlFilter;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
 import com.intellij.execution.runners.ExecutionEnvironment;
@@ -87,7 +88,12 @@ public abstract class PythonCommandLineState extends CommandLineState {
   public PythonCommandLineState(AbstractPythonRunConfiguration runConfiguration, ExecutionEnvironment env, List<Filter> filters) {
     super(env);
     myConfig = runConfiguration;
-    myFilters = filters;
+    myFilters = Lists.newArrayList(filters);
+    addDefaultFilters();
+  }
+
+  protected void addDefaultFilters() {
+    myFilters.add(new UrlFilter());
   }
 
   @Nullable
