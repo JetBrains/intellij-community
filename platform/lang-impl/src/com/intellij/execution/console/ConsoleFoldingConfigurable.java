@@ -1,10 +1,13 @@
 package com.intellij.execution.console;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.ui.InputValidator;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AddEditDeleteListPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +33,8 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable, Confi
       myMainComponent = new JPanel(new BorderLayout());
       Splitter splitter = new Splitter(true);
       myMainComponent.add(splitter);
-      myPositivePanel = new MyAddDeleteListPanel("Fold console lines that contain", "Enter a substring of a console line you'd like to see folded:");
+      myPositivePanel =
+        new MyAddDeleteListPanel("Fold console lines that contain", "Enter a substring of a console line you'd like to see folded:");
       myNegativePanel = new MyAddDeleteListPanel("Exceptions", "Enter a substring of a console line you don't want to fold:");
       splitter.setFirstComponent(myPositivePanel);
       splitter.setSecondComponent(myNegativePanel);
@@ -101,7 +105,26 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable, Confi
 
     @Nullable
     private String showEditDialog(final String initialValue) {
-      return Messages.showInputDialog(this, myQuery, "Folding pattern", Messages.getQuestionIcon(), initialValue, null);
+      return Messages.showInputDialog(this, myQuery, "Folding pattern", Messages.getQuestionIcon(), initialValue, new InputValidator() {
+        @Override
+        public boolean checkInput(String inputString) {
+           return true;
+        }
+
+        @Override
+        public boolean canClose(String inputString) {
+          if (StringUtil.isEmpty(inputString)) {
+            ApplicationManager.getApplication().invokeLater(new Runnable() {
+              @Override
+              public void run() {
+                Messages.showErrorDialog("Console folding rule string cannot be empty", "Console Folding Rule Adding Error");
+              }
+            });
+            return false;
+          }
+          return true;
+        }
+      });
     }
 
     void resetFrom(List<String> patterns) {
