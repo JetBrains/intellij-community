@@ -26,26 +26,6 @@ public class StringUtil {
     private StringUtil() {
     }
 
-    /**
-     * Is the string empty (null, or contains just whitespace)
-     *
-     * @param s string to test.
-     * @return true if it's an empty string.
-     */
-    public static boolean isEmpty(String s) {
-        return s == null || s.trim().length() == 0;
-    }
-
-    /**
-     * Does the string contain some chars (whitespace is consideres as empty)
-     *
-     * @param s string to test.
-     * @return true if it's NOT an empty string.
-     */
-    public static boolean isNotEmpty(String s) {
-        return ! isEmpty(s);
-    }
-
   /**
      * Does the string have an uppercase character?
      * @param s  the string to test.
