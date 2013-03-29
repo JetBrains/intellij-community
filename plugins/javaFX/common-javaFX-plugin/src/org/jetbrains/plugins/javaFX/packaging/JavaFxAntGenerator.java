@@ -71,7 +71,12 @@ public class JavaFxAntGenerator {
     final SimpleTag createJarTag = new SimpleTag("fx:jar",
                                      new Pair<String, String>("destfile", tempDirPath + File.separator + artifactFileName));
     createJarTag.add(new SimpleTag("fx:application", new Pair<String, String>("refid", appId)));
-    createJarTag.add(new SimpleTag("fileset", new Pair<String, String>("dir", tempDirPath)));
+    final List<Pair> fileset2Jar = new ArrayList<Pair>();
+    fileset2Jar.add(new Pair<String, String>("dir", tempDirPath));
+    if (preloaderJar != null) {
+      fileset2Jar.add(new Pair<String, String>("excludes", preloaderJar));
+    }
+    createJarTag.add(new SimpleTag("fileset", fileset2Jar.toArray(new Pair[fileset2Jar.size()])));
     if (preloaderFiles != null) {
       final SimpleTag createJarResourcesTag = new SimpleTag("fx:resources");
       createJarResourcesTag.add(new SimpleTag("fx:fileset", new Pair<String, String>("refid", preloaderFiles)));

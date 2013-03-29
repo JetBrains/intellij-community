@@ -19,6 +19,7 @@ import com.intellij.testFramework.UsefulTestCase;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
@@ -27,16 +28,21 @@ import java.util.Map;
  * Date: 3/28/13
  */
 public class JavaFxAntTaskTest extends UsefulTestCase{
+
+  private static final String PRELOADER_CLASS = "preloaderClass";
+  private static final String TITLE = "title";
+  private static final String PRELOADER_JAR = "preloaderJar";
+
   public void testJarDeployNoInfo() throws Exception {
     doTest("<fx:application id=\"jarDeployNoInfo_id\" name=\"jarDeployNoInfo\" mainClass=\"Main\">\n" +
                  "</fx:application>\n" +
-                 "<fx:jar destfile=\"temp" + File.separator + "jarDeployNoInfo.jar\">\n" +
+                 "<fx:jar destfile=\"temp/jarDeployNoInfo.jar\">\n" +
                  "<fx:application refid=\"jarDeployNoInfo_id\">\n" +
                  "</fx:application>\n" +
                  "<fileset dir=\"temp\">\n" +
                  "</fileset>\n" +
                  "</fx:jar>\n" +
-                 "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp" + File.separator + "deploy\" outfile=\"jarDeployNoInfo\">\n" +
+                 "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployNoInfo\">\n" +
                  "<fx:application refid=\"jarDeployNoInfo_id\">\n" +
                  "</fx:application>\n" +
                  "<fx:resources>\n" +
@@ -49,13 +55,13 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
   public void testJarDeployTitle() throws Exception {
     doTest("<fx:application id=\"jarDeployTitle_id\" name=\"jarDeployTitle\" mainClass=\"Main\">\n" +
            "</fx:application>\n" +
-           "<fx:jar destfile=\"temp" + File.separator + "jarDeployTitle.jar\">\n" +
+           "<fx:jar destfile=\"temp/jarDeployTitle.jar\">\n" +
            "<fx:application refid=\"jarDeployTitle_id\">\n" +
            "</fx:application>\n" +
            "<fileset dir=\"temp\">\n" +
            "</fileset>\n" +
            "</fx:jar>\n" +
-           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp" + File.separator + "deploy\" outfile=\"jarDeployTitle\">\n" +
+           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployTitle\">\n" +
            "<fx:application refid=\"jarDeployTitle_id\">\n" +
            "</fx:application>\n" +
            "<fx:info title=\"My App\">\n" +
@@ -64,15 +70,57 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "<fx:fileset dir=\"temp\" includes=\"jarDeployTitle.jar\">\n" +
            "</fx:fileset>\n" +
            "</fx:resources>\n" +
-           "</fx:deploy>\n", Collections.singletonMap("title", "My App"));
+           "</fx:deploy>\n", Collections.singletonMap(TITLE, "My App"));
+  }
+
+  public void testJarDeployPreloader() throws Exception {
+    final HashMap<String, String> options = new HashMap<String, String>();
+    options.put(PRELOADER_CLASS, "MyPreloader");
+    options.put(PRELOADER_JAR, "preloader.jar");
+    doTest("<fx:fileset id=\"jarDeployPreloader_preloader_files\" requiredFor=\"preloader\" dir=\"temp\" includes=\"preloader.jar\">\n" +
+           "</fx:fileset>\n" +
+           "<fx:application id=\"jarDeployPreloader_id\" name=\"jarDeployPreloader\" mainClass=\"Main\" preloaderClass=\"MyPreloader\">\n" +
+           "</fx:application>\n" +
+           "<fx:jar destfile=\"temp/jarDeployPreloader.jar\">\n" +
+           "<fx:application refid=\"jarDeployPreloader_id\">\n" +
+           "</fx:application>\n" +
+           "<fileset dir=\"temp\" excludes=\"preloader.jar\">\n" +
+           "</fileset>\n" +
+           "<fx:resources>\n" +
+           "<fx:fileset refid=\"jarDeployPreloader_preloader_files\">\n" +
+           "</fx:fileset>\n" +
+           "</fx:resources>\n" +
+           "</fx:jar>\n" +
+           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp/deploy\" outfile=\"jarDeployPreloader\">\n" +
+           "<fx:application refid=\"jarDeployPreloader_id\">\n" +
+           "</fx:application>\n" +
+           "<fx:resources>\n" +
+           "<fx:fileset dir=\"temp\" includes=\"jarDeployPreloader.jar\">\n" +
+           "</fx:fileset>\n" +
+           "<fx:fileset refid=\"jarDeployPreloader_preloader_files\">\n" +
+           "</fx:fileset>\n" +
+           "</fx:resources>\n" +
+           "</fx:deploy>\n", options);
   }
 
   private void doTest(final String expected, Map<String, String> options) {
     final String artifactName = getTestName(true);
     final String artifactFileName = artifactName + ".jar";
     final MockJavaFxPackager packager = new MockJavaFxPackager(artifactName + File.separator + artifactFileName);
-    if (options.containsKey("title")) {
-      packager.setTitle(options.get("title"));
+
+    final String title = options.get(TITLE);
+    if (title != null) {
+      packager.setTitle(title);
+    }
+
+    final String preloaderClass = options.get(PRELOADER_CLASS);
+    if (preloaderClass != null) {
+      packager.setPreloaderClass(preloaderClass);
+    }
+
+    final String preloaderJar = options.get(PRELOADER_JAR);
+    if (preloaderJar != null) {
+      packager.setPreloaderJar(preloaderJar);
     }
     
     final List<JavaFxAntGenerator.SimpleTag> temp = JavaFxAntGenerator
@@ -81,7 +129,10 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     for (JavaFxAntGenerator.SimpleTag tag : temp) {
       tag.generate(buf);
     }
-    assertEquals(expected, buf.toString());
+    assertEquals(expected
+                   .replaceAll("temp/deploy", "temp\\" + File.separator + "deploy")
+                   .replaceAll("temp/" + artifactFileName, "temp\\" + File.separator + artifactFileName), 
+                 buf.toString());
   }
 
   private static class MockJavaFxPackager extends AbstractJavaFxPackager {
