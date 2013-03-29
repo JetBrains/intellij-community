@@ -2,6 +2,7 @@ package com.jetbrains.python.inspections;
 
 import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
@@ -11,6 +12,7 @@ import com.jetbrains.python.psi.impl.PyCallExpressionHelper;
 import com.jetbrains.python.psi.impl.PyClassImpl;
 import com.jetbrains.python.psi.types.PyClassType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.testing.PythonUnitTestUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,13 +52,24 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
     public void visitPyFunction(PyFunction node) {
       final PyClass containingClass = node.getContainingClass();
       if (containingClass == null) return;
+      if (PythonUnitTestUtil.isUnitTestCaseClass(containingClass) || ApplicationManager.getApplication().isUnitTestMode()) {
+        final String functionName = node.getName();
+        if (functionName != null && functionName.startsWith("setUp"))
+          return;
+      }
 
       Map<String, PyTargetExpression> attributesInInit = new HashMap<String, PyTargetExpression>();
       final PyFunction initMethod = containingClass.findMethodByName(PyNames.INIT, false);
       if (initMethod != null) {
         PyClassImpl.collectInstanceAttributes(initMethod, attributesInInit);
-
         collectAttributesFromSuper(attributesInInit, initMethod);
+      }
+      else {
+        for (PyClass superClass : containingClass.iterateAncestorClasses()) {
+          final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, false);
+          if (superInit != null)
+            PyClassImpl.collectInstanceAttributes(superInit, attributesInInit);
+        }
       }
 
       Map<String, PyTargetExpression> attributes = new HashMap<String, PyTargetExpression>();
