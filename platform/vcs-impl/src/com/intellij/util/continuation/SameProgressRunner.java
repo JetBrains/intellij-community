@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProcessCanceledException;
+import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.WaitForProgressToShow;
@@ -42,10 +43,11 @@ public class SameProgressRunner extends GeneralRunner {
     if (! application.isUnitTestMode()) {
       assert ! application.isDispatchThread();
     }
-    myIndicator = ProgressManager.getInstance().getProgressIndicator();
-    if (myIndicator == null) {
-      myIndicator = new EmptyProgressIndicator();
+    ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
+    if (indicator == null) {
+      indicator = new EmptyProgressIndicator();
     }
+    setIndicator(indicator);
     myInitThread = Thread.currentThread();
     mySemaphore = new Semaphore();
   }
@@ -96,7 +98,7 @@ public class SameProgressRunner extends GeneralRunner {
       } catch (ProcessCanceledException ignored) {
       } catch (Throwable t) {
         LOG.error(t);
-        myIndicator.cancel();
+        cancelIndicator();
       }
     }
   }
