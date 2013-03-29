@@ -37,12 +37,15 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFxSettings;
 import org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: anna
@@ -50,6 +53,7 @@ import java.io.File;
  */
 public class OpenInSceneBuilderAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#" + OpenInSceneBuilderAction.class.getName());
+  public static final String ORACLE = "Oracle";
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -160,38 +164,52 @@ public class OpenInSceneBuilderAction extends AnAction {
   private static VirtualFile getPredefinedPath() {
     String path = null;
     if (SystemInfo.isWindows) {
+      String programFilesPath = null;
       final String property = System.getProperty("java.home");
-      if (property == null) return null;
+      if (property != null) {
+        final File jdkDir = new File(property).getParentFile();
+        if (jdkDir != null) {
+          final File javaDir = jdkDir.getParentFile();
+          if (javaDir != null) {
+            final File programFilesDir = javaDir.getParentFile();
+            if (programFilesDir != null) {
+              programFilesPath = programFilesDir.getPath();
+            }
+          }
+        }
+      }
 
-      final File jdkDir = new File(property).getParentFile();
-      if (jdkDir == null) return null;
-
-      final File javaDir = jdkDir.getParentFile();
-      if (javaDir == null) return null;
-
-      final File programFilesDir = javaDir.getParentFile();
-      if (programFilesDir == null) return null;
-
-      final File oracleDir = new File(programFilesDir, "Oracle");
-      if (!oracleDir.isDirectory()) return null;
-
-      final File sb = FileUtil.findFirstThatExist(oracleDir.getPath() + File.separator + "JavaFX Scene Builder 1.1" + File.separator + "JavaFX Scene Builder 1.1.exe", 
-                                                  oracleDir.getPath() + File.separator + "JavaFX Scene Builder 1.0" + File.separator + "JavaFX Scene Builder 1.0.exe");
+      final String sb11 = File.separator + "JavaFX Scene Builder 1.1" + File.separator + "JavaFX Scene Builder 1.1.exe";
+      final String sb10 = File.separator + "JavaFX Scene Builder 1.0" + File.separator + "JavaFX Scene Builder 1.0.exe";
+      final List<String> suspiciousPaths = new ArrayList<String>();
+      if (programFilesPath != null && new File(programFilesPath, ORACLE).isDirectory()) {
+        fillPaths(programFilesPath, sb11, sb10, suspiciousPaths);
+      } else {
+        final String programFiles = "C:\\Program Files";
+        fillPaths(programFiles, sb11, sb10, suspiciousPaths);
+        fillPaths(programFiles + " (x86)", sb11, sb10, suspiciousPaths);
+      }
+      final File sb = FileUtil.findFirstThatExist(ArrayUtil.toStringArray(suspiciousPaths));
       if (sb != null) {
         path = sb.getPath();
       }
     }
     else if (SystemInfo.isMac) {
-      final File sb = FileUtil.findFirstThatExist("/Application/JavaFX Scene Builder 1.1.app", 
-                                                  "/Application/JavaFX Scene Builder 1.0.app");
+      final File sb = FileUtil.findFirstThatExist("/Application/JavaFX\\ Scene\\ Builder\\ 1.1.app", 
+                                                  "/Application/JavaFX\\ Scene\\ Builder\\ 1.0.app");
       if (sb != null) {
         path = sb.getPath();
       }
     } 
     else if (SystemInfo.isUnix) {
       path = "/opt/JavaFXSceneBuilder1.1/JavaFXSceneBuilder1.1";
-    } 
-        
-    return path != null ? LocalFileSystem.getInstance().findFileByPath(path) : null;
+    }
+
+    return path != null ? LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path)) : null;
+  }
+
+  private static void fillPaths(String programFilesPath, String sb11, String sb10, List<String> suspiciousPaths) {
+    suspiciousPaths.add(new File(programFilesPath, ORACLE).getPath() + sb11);
+    suspiciousPaths.add(new File(programFilesPath, ORACLE).getPath() + sb10);
   }
 }
