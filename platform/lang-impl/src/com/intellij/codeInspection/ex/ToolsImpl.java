@@ -39,6 +39,7 @@ import com.intellij.psi.search.scope.packageSet.PackageSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
 import java.util.ArrayList;
 import java.util.Collections;
@@ -55,10 +56,15 @@ public class ToolsImpl implements Tools {
   private List<ScopeToolState> myTools;
   private boolean myEnabled;
 
-  public ToolsImpl(@NotNull InspectionProfileEntry tool, HighlightDisplayLevel level, boolean enabled) {
+  public ToolsImpl(@NotNull InspectionProfileEntry tool, HighlightDisplayLevel level, boolean enabled, boolean enabledByDefault) {
     myShortName = tool.getShortName();
     myEnabled = enabled;
-    myDefaultState = new ScopeToolState(DefaultScopesProvider.getAllScope(), tool, enabled, level);
+    myDefaultState = new ScopeToolState(DefaultScopesProvider.getAllScope(), tool, enabledByDefault, level);
+  }
+
+  @TestOnly
+  public ToolsImpl(@NotNull InspectionProfileEntry tool, HighlightDisplayLevel level, boolean enabled) {
+    this(tool, level, enabled, enabled);
   }
 
   public ScopeToolState addTool(NamedScope scope, @NotNull InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
