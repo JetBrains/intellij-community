@@ -46,6 +46,7 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.testFramework.PlatformTestUtil;
+import com.intellij.testFramework.ProjectViewTestUtil;
 
 import javax.swing.*;
 import java.io.IOException;
@@ -58,11 +59,11 @@ public class NavigateFromSourceTest extends BaseProjectViewTestCase {
     sortClassesByName(classes);
     PsiClass psiClass = classes[0];
 
-    final AbstractProjectViewPSIPane pane = createPane();
+    final AbstractProjectViewPSIPane pane = myStructure.createPane();
     final PsiFile containingFile = psiClass.getContainingFile();
     final VirtualFile virtualFile = containingFile.getVirtualFile();
 
-    checkNavigateFromSourceBehaviour(psiClass, virtualFile, pane);
+    ProjectViewTestUtil.checkNavigateFromSourceBehaviour(psiClass, virtualFile, pane);
 
     PlatformTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
                                                      " -PsiDirectory: showClassMembers\n" +
