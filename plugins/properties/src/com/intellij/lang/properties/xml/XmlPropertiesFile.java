@@ -138,6 +138,12 @@ public class XmlPropertiesFile implements PropertiesFile {
     return null;
   }
 
+  @Nullable
+  @Override
+  public void removeProperties(@NotNull String key) {
+    throw new UnsupportedOperationException();
+  }
+
   @Override
   public IProperty addProperty(String key, String value) {
     XmlTag rootTag = myFile.getRootTag();

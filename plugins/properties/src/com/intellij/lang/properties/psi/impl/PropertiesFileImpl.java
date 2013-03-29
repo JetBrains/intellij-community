@@ -146,6 +146,21 @@ public class PropertiesFileImpl extends PsiFileBase implements PropertiesFile {
   }
 
   @Override
+  public void removeProperties(@NotNull String key) {
+    for(IProperty property : findPropertiesByKey(key)) {
+      final ASTNode node = property.getPsiElement().getNode();
+      final ASTNode next = node.getTreeNext();
+
+      getPropertiesList().removeChild(node);
+
+      // remove new line
+      if(next != null && next.getText().equals("\n")) {
+        getPropertiesList().removeChild(next);
+      }
+    }
+  }
+
+  @Override
   @NotNull
   public PsiElement addPropertyAfter(@NotNull final Property property, @Nullable final Property anchor) throws IncorrectOperationException {
     final TreeElement copy = ChangeUtil.copyToElement(property);

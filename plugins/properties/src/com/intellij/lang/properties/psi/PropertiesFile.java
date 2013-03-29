@@ -91,6 +91,8 @@ public interface PropertiesFile {
 
   IProperty addProperty(String key, String value);
 
+  void removeProperties(@NotNull String key);
+
   /**
    * @return Property key to the property value map.
    * Do not modify this map. It's no use anyway.

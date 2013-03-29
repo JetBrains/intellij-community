@@ -32,6 +32,8 @@ public class PropertiesFileStructureViewComponent extends PropertiesGroupingStru
   public PropertiesFileStructureViewComponent(Project project, PropertiesFileImpl propertiesFile, FileEditor editor) {
     super(project, editor, new PropertiesFileStructureViewModel(propertiesFile));
     myPropertiesFile = propertiesFile;
+
+    showToolbar();
   }
 
   public Object getData(String dataId) {

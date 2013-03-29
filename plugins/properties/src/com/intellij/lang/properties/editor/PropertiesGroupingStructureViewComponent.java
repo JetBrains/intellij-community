@@ -35,7 +35,6 @@ public class PropertiesGroupingStructureViewComponent extends StructureViewCompo
                                                   FileEditor editor,
                                                   PropertiesGroupingStructureViewModel structureViewModel) {
     super(editor, structureViewModel, project);
-    showToolbar();
   }
 
   @Override
