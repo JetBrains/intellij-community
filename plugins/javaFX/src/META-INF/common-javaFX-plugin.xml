@@ -41,6 +41,7 @@
     <packaging.artifactType implementation="org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactType"/>
     <packaging.artifactPropertiesProvider implementation="org.jetbrains.plugins.javaFX.packaging.preloader.JavaFxPreloaderArtifactPropertiesProvider"/>
     <implicitUsageProvider implementation="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxImplicitUsageProvider"/>
+    <referencesSearch implementation="org.jetbrains.plugins.javaFX.fxml.refs.JavaFxControllerFieldSearcher"/>
   </extensions>
 
   <actions>
