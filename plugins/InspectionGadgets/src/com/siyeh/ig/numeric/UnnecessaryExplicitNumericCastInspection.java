@@ -180,10 +180,7 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
     else if (parent instanceof PsiAssignmentExpression) {
       final PsiAssignmentExpression assignmentExpression = (PsiAssignmentExpression)parent;
       final PsiType lhsType = assignmentExpression.getType();
-      if (!castType.equals(lhsType)) {
-        return true;
-      }
-      return !isLegalAssignmentConversion(operand, lhsType);
+      return !castType.equals(lhsType) || !isLegalAssignmentConversion(operand, lhsType);
     }
     else if (parent instanceof PsiVariable) {
       final PsiVariable variable = (PsiVariable)parent;
@@ -235,12 +232,9 @@ public class UnnecessaryExplicitNumericCastInspection extends BaseInspection {
       if (targetMethod != newMethodCall.resolveMethod()) {
         return true;
       }
-      return false;
     }
-    else {
-      final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
-      return !castType.equals(expectedType) || !isLegalWideningConversion(operand, castType);
-    }
+    final PsiType expectedType = ExpectedTypeUtils.findExpectedType(expression, false);
+    return !castType.equals(expectedType) || !isLegalWideningConversion(operand, castType);
   }
 
   static boolean isLegalWideningConversion(PsiExpression expression, PsiType requiredType) {

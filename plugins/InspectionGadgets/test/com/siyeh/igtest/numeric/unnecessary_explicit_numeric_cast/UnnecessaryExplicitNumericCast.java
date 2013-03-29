@@ -48,4 +48,9 @@ public class UnnecessaryExplicitNumericCast {
     void target(int c) {}
     void target(char c) {}
     void target2(int d) {}
+
+    void foo() {
+        float x = 2;
+        target((int) x);  // this line complains: 'x' unnecessarily cast to 'int'
+    }
 }
