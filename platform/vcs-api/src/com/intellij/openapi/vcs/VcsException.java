@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.vcs;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
 
@@ -81,5 +82,11 @@ public class VcsException extends Exception {
 
   public boolean isWarning() {
     return isWarning;
+  }
+
+  @Override
+  public String getMessage() {
+    final String message = super.getMessage();
+    return (message == null ? "" : (message + " ")) + StringUtil.join(myMessages, ", ");
   }
 }
