@@ -62,8 +62,14 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
       final PyFunction initMethod = containingClass.findMethodByName(PyNames.INIT, false);
       if (initMethod != null) {
         PyClassImpl.collectInstanceAttributes(initMethod, attributesInInit);
-
         collectAttributesFromSuper(attributesInInit, initMethod);
+      }
+      else {
+        for (PyClass superClass : containingClass.iterateAncestorClasses()) {
+          final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, false);
+          if (superInit != null)
+            PyClassImpl.collectInstanceAttributes(superInit, attributesInInit);
+        }
       }
 
       Map<String, PyTargetExpression> attributes = new HashMap<String, PyTargetExpression>();

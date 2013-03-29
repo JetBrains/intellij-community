@@ -23,6 +23,10 @@ public class PyAttributeOutsideInitInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testFromSuperClassWithoutInit() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("inspections/PyAttributeOutsideInitInspection/" + getTestName(true) + ".py");
     myFixture.enableInspections(PyAttributeOutsideInitInspection.class);
