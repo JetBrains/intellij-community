@@ -215,7 +215,8 @@ public class SvnIntegrateChangesTask extends Task.Backgroundable {
 
   private void finishActions(final boolean wasCanceled) {
     if (! wasCanceled) {
-      if ((! myDryRun) && (myExceptions.isEmpty()) && (! myAccomulatedFiles.containErrors()) &&
+      if (! ApplicationManager.getApplication().isUnitTestMode() &&
+          (! myDryRun) && (myExceptions.isEmpty()) && (! myAccomulatedFiles.containErrors()) &&
           ((! myAccomulatedFiles.isEmpty()) || (myMergeTarget != null))) {
         if (myInfo.isUnderProjectRoot()) {
           showLocalCommit();
