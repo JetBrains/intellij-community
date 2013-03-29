@@ -173,17 +173,20 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   public boolean validate(final Project currentProject, final Project dstProject) {
     final Ref<Exception> refEx = new Ref<Exception>();
     final HashSet<String> variables = new HashSet<String>();
-    final Set<String> naturesNames = new HashSet<String>();
+    final Map<String, String> naturesNames = new HashMap<String, String>();  
+    final List<String> projectsToConvert = getParameters().projectsToConvert;
+    final boolean oneProjectToConvert = projectsToConvert.size() == 1;
+    final String separator = oneProjectToConvert ? "<br>" : ", ";
     ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
       public void run() {
         try {
-          for (String path : getParameters().projectsToConvert) {
+          for (String path : projectsToConvert) {
             final File classpathfile = new File(path, EclipseXml.DOT_CLASSPATH_EXT);
             if (classpathfile.exists()) {
               final Element classpathElement = JDOMUtil.loadDocument(classpathfile).getRootElement();
               EclipseClasspathReader.collectVariables(variables, classpathElement, path);
             }
-            collectUnknownNatures(path, naturesNames);
+            collectUnknownNatures(path, naturesNames, separator);
           }
         }
         catch (IOException e) {
@@ -208,7 +211,19 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
       public void run() {
         if (!naturesNames.isEmpty()) {
           final String title = "Unknown Natures Detected";
-          Notifications.Bus.notify(new Notification(title, title, "Imported projects contain unknown natures:<br>" + StringUtil.join(naturesNames, "<br>")+ "<br>" +
+          final String naturesByProject;
+          if (oneProjectToConvert) {
+            naturesByProject = naturesNames.values().iterator().next();
+          }
+          else {
+            naturesByProject = StringUtil.join(naturesNames.keySet(), new Function<String, String>() {
+              @Override
+              public String fun(String projectPath) {
+                return projectPath + "(" + naturesNames.get(projectPath) + ")";
+              }
+            }, "<br>");
+          }
+          Notifications.Bus.notify(new Notification(title, title, "Imported projects contain unknown natures:<br>" + naturesByProject + "<br>" +
                                                                   "Some settings may be lost after import.", NotificationType.WARNING));
         }
       }
@@ -495,12 +510,16 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
     return parameters;
   }
 
-  public static void collectUnknownNatures(String path, Set<String> naturesNames) {
-    naturesNames.addAll(collectNatures(path));
+  public static void collectUnknownNatures(String path, Map<String, String> naturesNames, String separator) {
+    final Set<String> natures = collectNatures(path);
     naturesNames.remove("org.eclipse.jdt.core.javanature");
 
     for (EclipseNatureImporter importer : EclipseNatureImporter.EP_NAME.getExtensions()) {
       naturesNames.remove(importer.getNatureName());
+    }
+
+    if (!natures.isEmpty()) {
+      naturesNames.put(path, StringUtil.join(natures, separator));
     }
   }
 
