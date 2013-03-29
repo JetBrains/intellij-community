@@ -36,7 +36,7 @@ abstract class GeneralRunner implements ContinuationContext {
   protected final List<TaskDescriptor> myQueue;
   protected final Object myQueueLock;
   private boolean myTriggerSuspend;
-  protected ProgressIndicator myIndicator;
+  private ProgressIndicator myIndicator;
   protected final Map<Object, Object> myDisasters;
   private final List<Consumer<TaskDescriptor>> myTasksPatchers;
   private final Map<Class<? extends Exception>, Consumer<Exception>> myHandlersMap;
@@ -60,9 +60,24 @@ abstract class GeneralRunner implements ContinuationContext {
           if (!clazz.isAssignableFrom(e.getClass())) {
             throw new RuntimeException(e);
           }
+          //noinspection unchecked
           consumer.consume((T)e);
         }
       });
+    }
+  }
+
+  protected void setIndicator(final ProgressIndicator indicator) {
+    synchronized (myQueueLock) {
+      myIndicator = indicator;
+    }
+  }
+
+  protected void cancelIndicator() {
+    synchronized (myQueueLock) {
+      if (myIndicator != null){
+        myIndicator.cancel();
+      }
     }
   }
 
@@ -104,14 +119,19 @@ abstract class GeneralRunner implements ContinuationContext {
   @CalledInAny
   public void cancelEverything() {
     synchronized (myQueueLock) {
+      for (TaskDescriptor descriptor : myQueue) {
+        descriptor.canceled();
+      }
       myQueue.clear();
       myIndicator = null;
     }
   }
 
   public void cancelCurrent() {
-    if (myIndicator != null) {
-      myIndicator.cancel();
+    synchronized (myQueueLock) {
+      if (myIndicator != null) {
+        myIndicator.cancel();
+      }
     }
   }
 
@@ -268,7 +288,6 @@ abstract class GeneralRunner implements ContinuationContext {
         // check if some tasks were scheduled after disaster was thrown, anyway, they should also be checked for cure
         if (! current.isHaveMagicCure()) {
           if (myIndicator != null && myIndicator.isCanceled()) {
-            current = null;
             continue;
           } else {
             for (Map.Entry<Object, Object> entry : myDisasters.entrySet()) {
@@ -281,6 +300,12 @@ abstract class GeneralRunner implements ContinuationContext {
         }
         if (current != null) return current;
       }
+    }
+  }
+
+  public ProgressIndicator getIndicator() {
+    synchronized (myQueueLock) {
+      return myIndicator;
     }
   }
 }
