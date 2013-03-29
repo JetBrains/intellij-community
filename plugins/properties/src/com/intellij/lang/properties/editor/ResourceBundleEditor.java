@@ -53,7 +53,6 @@ import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
 import com.intellij.psi.*;
-import com.intellij.ui.GuiUtils;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.JBSplitter;
@@ -102,17 +101,25 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   private final Alarm               myUpdateEditorAlarm    = new Alarm();
   private final Alarm               mySelectionChangeAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
 
-  private JPanel              myPanel;
   private JPanel              myValuesPanel;
   private JPanel              myStructureViewPanel;
-  private JPanel              mySplitParent;
+
   private boolean             myDisposed;
   private VirtualFileListener myVfsListener;
   private Editor              mySelectedEditor;
 
   public ResourceBundleEditor(Project project, @NotNull ResourceBundle resourceBundle) {
     myProject = project;
-    GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
+
+    JPanel panel = new JPanel(new BorderLayout());
+    JBSplitter splitter = new JBSplitter();
+    splitter.setSplitterProportionKey(getClass().getName() + ".splitter");
+
+    myStructureViewPanel = new JPanel();
+    splitter.setFirstComponent(myStructureViewPanel);
+    myValuesPanel = new JPanel();
+    splitter.setSecondComponent(myValuesPanel);
+    panel.add(splitter, BorderLayout.CENTER);
 
     myResourceBundle = resourceBundle;
     myStructureViewComponent = new ResourceBundleStructureViewComponent(project, myResourceBundle, this);
@@ -148,7 +155,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       String propName = ((ResourceBundlePropertyStructureViewElement)child).getValue();
       setState(new ResourceBundleEditorState(propName));
     }
-    myDataProviderPanel = new DataProviderPanel(myPanel);
+    myDataProviderPanel = new DataProviderPanel(panel);
 
     project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
@@ -695,10 +702,6 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
   @NotNull
   public ResourceBundleEditorState getState(@NotNull FileEditorStateLevel level) {
     return new ResourceBundleEditorState(getSelectedPropertyName());
-  }
-
-  private JBSplitter getSplitter() {
-    return (JBSplitter)mySplitParent.getComponents()[0];
   }
 
   @Override
