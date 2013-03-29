@@ -727,7 +727,7 @@ private void fixIdeaPropertiesEol(List paths, String eol) {
   }
 }
 
-binding.setVariable("buildWinLauncher", { String ch, String inputPath, String outputPath, String appInfo, String launcherProperties ->
+binding.setVariable("buildWinLauncher", { String ch, String inputPath, String outputPath, String appInfo, String launcherProperties, List resourcePaths ->
   projectBuilder.stage("winLauncher")
 
   ant.java(jar: "$ch/build/lib/launcher-generator.jar", fork: "true") {
@@ -741,6 +741,9 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
         include(name: "guava*.jar")
         include(name: "jdom.jar")
         include(name: "sanselan*.jar")
+      }
+      resourcePaths.each {
+        pathelement(location: it)
       }
     }
   }

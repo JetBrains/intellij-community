@@ -152,8 +152,9 @@ private layoutWin(Map args, String home, Paths paths) {
   winScripts(target, home, "idea.bat", args)
   winVMOptions(target, null, "idea.exe", "idea64.exe")
   String launcherProperties = "$home/build/conf/ideaCE-launcher.properties"
-  buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher.exe", "$target/bin/idea.exe", appInfoFile(), launcherProperties)
-  buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher64.exe", "$target/bin/idea64.exe", appInfoFile(), launcherProperties)
+  List resourcePaths = ["$home/community-resources/src", "$home/platform/icons/src"]
+  buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher.exe", "$target/bin/idea.exe", appInfoFile(), launcherProperties, resourcePaths)
+  buildWinLauncher(home, "$home/bin/WinLauncher/WinLauncher64.exe", "$target/bin/idea64.exe", appInfoFile(), launcherProperties, resourcePaths)
 }
 
 private layoutMac(Map _args, String home, Paths paths) {
