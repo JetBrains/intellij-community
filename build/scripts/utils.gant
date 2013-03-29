@@ -730,13 +730,14 @@ private void fixIdeaPropertiesEol(List paths, String eol) {
 binding.setVariable("buildWinLauncher", { String ch, String inputPath, String outputPath, String appInfo, String launcherProperties, List resourcePaths ->
   projectBuilder.stage("winLauncher")
 
-  ant.java(jar: "$ch/build/lib/launcher-generator.jar", fork: "true") {
+  ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true") {
     arg(value: inputPath)
     arg(value: appInfo)
     arg(value: "$ch/native/WinLauncher/WinLauncher/resource.h")
     arg(value: launcherProperties)
     arg(value: outputPath)
     classpath {
+      pathelement(location: "$ch/build/lib/launcher-generator.jar")
       fileset(dir: "$ch/lib") {
         include(name: "guava*.jar")
         include(name: "jdom.jar")
