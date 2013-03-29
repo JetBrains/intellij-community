@@ -124,10 +124,13 @@ public class LauncherGenerator {
     }
   }
 
-  public void injectBitmap(int id, byte[] bitmapData) {
+  public void injectBitmap(int id, byte[] bitmapFileData) {
     DirectoryEntry subDirBmp = myRoot.findSubDir("IRD2").findSubDir("IRD" + id);
     RawResource bmpRes = subDirBmp.getRawResource(0);
-    bmpRes.setBytes(bitmapData);
+    // strip off BITMAPFILEHEADER
+    byte[] bitmapResourceData = new byte[bitmapFileData.length-14];
+    System.arraycopy(bitmapFileData, 14, bitmapResourceData, 0, bitmapResourceData.length);
+    bmpRes.setBytes(bitmapResourceData);
   }
 
   public void injectIcon(int id, final InputStream iconStream) throws IOException {
