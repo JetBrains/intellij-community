@@ -775,7 +775,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
       set.addAll(ContainerUtil.map(dependentTools, new Function<InspectionProfileEntry, ToolsImpl>() {
         @Override
         public ToolsImpl fun(InspectionProfileEntry entry) {
-          return new ToolsImpl(entry, entry.getDefaultLevel(), true);
+          return new ToolsImpl(entry, entry.getDefaultLevel(), true, true);
         }
       }));
       return new ArrayList<ToolsImpl>(set);

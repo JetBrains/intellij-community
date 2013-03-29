@@ -19,7 +19,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.containers.hash.HashMap;
 import com.intellij.util.containers.hash.HashSet;
@@ -34,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrRefere
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrRangeType;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrTupleType;
-import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
@@ -49,10 +47,10 @@ import static com.intellij.psi.CommonClassNames.JAVA_IO_FILE;
  * @author peter
  */
 public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
-  private final Map<String, String> simpleTypes = new HashMap<String, String>();
-  private final Set<String> iterations = new HashSet<String>();
+  private static final Map<String, String> simpleTypes = new HashMap<String, String>();
+  private static final Set<String> iterations = new HashSet<String>();
 
-  public ClosureParameterEnhancer() {
+  static {
     simpleTypes.put("times", "java.lang.Integer");
     simpleTypes.put("upto", "java.lang.Integer");
     simpleTypes.put("downto", "java.lang.Integer");
@@ -105,22 +103,25 @@ public class ClosureParameterEnhancer extends AbstractClosureParameterEnhancer {
     iterations.add("findIndexValues");
     iterations.add("findIndexOf");
     iterations.add("count");
-
   }
 
   @Override
   @Nullable
   protected PsiType getClosureParameterType(GrClosableBlock closure, int index) {
-    final PsiMember containingMember = PsiTreeUtil.getParentOfType(closure, PsiMember.class);
-    if (containingMember != null && GroovyPsiManager.getInstance(closure.getProject()).isCompileStatic(containingMember)) {
+    if (org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil.isCompileStatic(closure)) {
       return null;
     }
 
+    return inferType(closure, index);
+  }
+
+  @Nullable
+  public static PsiType inferType(@NotNull GrClosableBlock closure, int index) {
     PsiElement parent = closure.getParent();
     if (parent instanceof GrStringInjection && index == 0) {
       return TypesUtil.createTypeByFQClassName("java.io.StringWriter", closure);
     }
-    
+
     if (parent instanceof GrArgumentList) parent = parent.getParent();
     if (!(parent instanceof GrMethodCall)) {
       return null;

@@ -374,15 +374,7 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   }
 
   private static void delete(@NotNull File physicalFile) throws IOException {
-    if (!FileSystemUtil.isSymLink(physicalFile)) {
-      File[] list = physicalFile.listFiles();
-      if (list != null) {
-        for (File aList : list) {
-          delete(aList);
-        }
-      }
-    }
-    if (!physicalFile.delete()) {
+    if (!FileUtil.delete(physicalFile)) {
       throw new IOException(VfsBundle.message("file.delete.error", physicalFile.getPath()));
     }
   }
@@ -451,7 +443,9 @@ public abstract class LocalFileSystemBase extends LocalFileSystem {
   public byte[] contentsToByteArray(@NotNull final VirtualFile file) throws IOException {
     final FileInputStream stream = new FileInputStream(convertToIOFileAndCheck(file));
     try {
-      final int length = (int)file.getLength();
+      long l = file.getLength();
+      if (l > Integer.MAX_VALUE) throw new IOException("File is too large: " + l + ", " + file);
+      final int length = (int)l;
       if (length < 0) throw new IOException("Invalid file length: " + length + ", " + file);
       return FileUtil.loadBytes(stream, length);
     }

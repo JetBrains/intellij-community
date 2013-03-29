@@ -168,4 +168,11 @@
     <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
     <description>Implicit numeric conversion of &lt;code&gt;(byte)1&lt;/code&gt; from 'byte' to 'int' #loc</description>
   </problem>
+
+  <problem>
+    <file>ImplicitNumericConversion.java</file>
+    <line>84</line>
+    <problem_class severity="WARNING" attribute_key="WARNING_ATTRIBUTES">Implicit numeric conversion</problem_class>
+    <description>Implicit numeric conversion of &lt;code&gt;1 + 2 + 3&lt;/code&gt; from 'int' to 'long' #loc</description>
+  </problem>
 </problems>

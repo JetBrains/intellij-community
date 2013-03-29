@@ -15,12 +15,15 @@
  */
 package hg4idea.test.merge;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.merge.MergeData;
-import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import hg4idea.test.HgPlatformTest;
-import org.zmlx.hg4idea.HgVcs;
+import hg4idea.test.HgTestUtil;
+import org.testng.Assert;
+
+import java.io.IOException;
 
 import static com.intellij.dvcs.test.Executor.*;
 import static hg4idea.test.HgExecutor.hg;
@@ -29,69 +32,175 @@ import static hg4idea.test.HgExecutor.hg;
  * @author Nadya Zabrodina
  */
 public class HgMergeProviderTest extends HgPlatformTest {
-  private MergeProvider myMergeProvider;
 
   @Override
   protected void setUp() throws Exception {
     super.setUp();
-    HgVcs vcs = HgVcs.getInstance(myProject);
-    assertNotNull(vcs);
-    myMergeProvider = vcs.getMergeProvider();
-    assertNotNull(myMergeProvider);
   }
 
-  public void testMerge2BranchesIfFileCreatedSeparatelyInBoth() {
+  public void testMerge2BranchesIfFileCreatedSeparatelyInBoth() throws VcsException {
     cd(myRepository);
-    hg("branch branchB");
-    hg("commit -m \"create branchB\"");
     hg("branch branchA");
-    hg("commit -m \"create branchA\"");
-    touch("A.txt", "a");
-    hg("add A.txt");
-    hg("commit -m \"create A.txt in branchA\"");
-    echo("A.txt", "aaa");
-    hg("commit -m \"modify A.txt in branchA\"");
-    hg("up branchB");
-    touch("A.txt", "b");
-    hg("add A.txt");
-    hg("commit -m \"create A.txt in branchB\"");
-    echo("A.txt", "bbb");
-    hg("commit -m \"modify A.txt in branchB\"");
+    hg("commit -m 'create branchA' ");
+    touch(AFILE, "a");
+    hg("add " + AFILE);
+    hg("commit -m 'create file in branchA' ");
+    hg("up default");
+    touch(AFILE, "default");
+    hg("add " + AFILE);
+    hg("commit -m 'create file in default branch'");
     hg("merge branchA");
-    verifyMergeData(myRepository.findChild("A.txt"), "", "bbbb", "aaaa");
+    verifyMergeData(myRepository.findChild(AFILE), "", "default", "a");
   }
 
-  public void testMerge2Branches() {
+  public void testMerge2Branches() throws VcsException {
     cd(myRepository);
-    touch("A.txt", "base");
-    hg("add A.txt");
-    hg("commit -m \"create A.txt \"");
-    hg("branch branchB");
-    hg("commit -m \"create branchB\"");
+    String FILENAME = "A.txt";
+    touch(FILENAME, "base");
+    hg("add " + FILENAME);
+    hg("commit -m 'create file'");
     hg("branch branchA");
-    hg("commit -m \"create branchA\"");
-    echo("A.txt", "a");
-    hg("commit -m \"modify A.txt in branchA\"");
-    echo("A.txt", "aaa");
-    hg("commit -m \"modify A.txt in branchA\"");
-    hg("up branchB");
-    echo("A.txt", "b");
-    hg("commit -m \"modify A.txt in branchB\"");
-    echo("A.txt", "bbb");
-    hg("commit -m \"modify A.txt in branchB\"");
+    hg("commit -m 'create branchA'");
+    echo(FILENAME, " modify with a");
+    hg("commit -m 'modify file in branchA'");
+    hg("up default");
+    echo(FILENAME, " modify with b");
+    hg("commit -m 'modify file in default'");
     hg("merge branchA");
-    verifyMergeData(myRepository.findChild("A.txt"), "base", "basebbbb", "baseaaaa");
+    verifyMergeData(myRepository.findChild(FILENAME), "base", "base modify with b", "base modify with a");
   }
 
-  private void verifyMergeData(final VirtualFile file, String expectedBase, String expectedLocal, String expectedServer) {
-    try {
-      final MergeData mergeData = myMergeProvider.loadRevisions(file);
-      assertEquals(expectedLocal, new String(mergeData.CURRENT));
-      assertEquals(expectedServer, new String(mergeData.LAST));
-      assertEquals(expectedBase, new String(mergeData.ORIGINAL));
-    }
-    catch (VcsException e) {
-      fail("Failed to load revisions");
-    }
+  /**
+   * Start with a file in both repositories.
+   * 1. Edit the file in parent repository, commit the change.
+   * 2. Edit the file in child repository, commit the change.
+   * 3. Update.
+   * 4. Test the MergeData from the MergeProvider to have correct data.
+   */
+  public void testMergeWithCommittedLocalChange() throws Exception {
+    final Pair<VirtualFile, VirtualFile> files = prepareFileInBothRepositories();
+    final VirtualFile parentFile = files.first;
+    final VirtualFile childFile = files.second;
+    cd(myRepository);
+    HgTestUtil.printToFile(parentFile, "server");
+    hg("commit -m " + COMMIT_MESSAGE);
+    // committing conflicting change
+    cd(myChildRepo);
+    HgTestUtil.printToFile(childFile, "local");
+    hg("commit -m " + COMMIT_MESSAGE);
+    hg("pull");
+    hg("update");
+    hg("merge");
+    verifyMergeData(myChildRepo.findChild(childFile.getName()), "basic", "local", "server");
+  }
+
+  /**
+   * Start with a file in both repositories.
+   * 1. Edit the file in parent repository, commit the change.
+   * 2. Edit the file in child repository, don't commit the change.
+   * 3. Update.
+   * 4. Test the MergeData from the MergeProvider to have correct data.
+   */
+  public void testMergeWithUncommittedLocalChange() throws Exception {
+    final Pair<VirtualFile, VirtualFile> files = prepareFileInBothRepositories();
+    final VirtualFile parentFile = files.first;
+    final VirtualFile childFile = files.second;
+    cd(myRepository);
+    HgTestUtil.printToFile(parentFile, "server");
+    hg("commit -m " + COMMIT_MESSAGE);
+
+    // uncommitted conflicting change
+    cd(myChildRepo);
+    HgTestUtil.printToFile(childFile, "local");
+    hg("pull");
+    hg("update");
+    hg("merge");
+
+    verifyMergeData(myChildRepo.findChild(childFile.getName()), "basic", "local", "server");
+  }
+
+  /**
+   * Start with a non fresh repository.
+   * 1. Add a file in parent repository, commit.
+   * 2. Add a file with the same name, but different content in child repository, commit.
+   * 3. Update.
+   * 4. Test the MergeData from the MergeProvider to have correct data (there is no basic version, but it shouldn't be null - just empty).
+   */
+  public void testFileAddedAndCommitted() throws Exception {
+    // this is needed to have the same root changeset - otherwise conflicting root changeset will cause
+    // an error during 'hg pull': "abort: repository is unrelated"
+    prepareFileInBothRepositories();
+    cd(myRepository);
+    touch(BFILE, "server");
+    hg("add " + BFILE);
+    hg("commit -m " + COMMIT_MESSAGE);
+
+    cd(myChildRepo);
+    touch(BFILE, "local");
+    hg("add " + BFILE);
+    hg("commit -m " + COMMIT_MESSAGE);
+
+    hg("pull");
+    hg("update");
+    hg("merge");
+
+    verifyMergeData(myChildRepo.findChild(BFILE), "", "local", "server");
+  }
+
+  /**
+   * Start with a non fresh repository.
+   * 1. Add a file in parent repository, commit.
+   * 2. Add a file with the same name, but different content in child repository, don't commit.
+   * 3. Update.
+   * 4. Test the MergeData from the MergeProvider to have correct data (there is no basic version, but it shouldn't be null - just empty).
+   */
+  public void testFileAddedNotCommited() throws Exception {
+    // this is needed to have the same root changeset - otherwise conflicting root changeset will cause
+    // an error during 'hg pull': "abort: repository is unrelated"
+    prepareFileInBothRepositories();
+    cd(myRepository);
+    touch(BFILE, "server");
+    hg("add " + BFILE);
+    hg("commit -m " + COMMIT_MESSAGE);
+
+    cd(myChildRepo);
+    touch(BFILE, "local");
+    hg("add " + BFILE);
+
+    hg("pull");
+    hg("update");
+    hg("merge");
+
+    verifyMergeData(myChildRepo.findChild(BFILE), "", "local", "server");
+  }
+
+
+  /**
+   * Creates a file with initial content in the parent repository, pulls & updates it to the child repository.
+   *
+   * @return References to the files in parent and child repositories respectively.
+   */
+  private Pair<VirtualFile, VirtualFile> prepareFileInBothRepositories() throws IOException {
+    cd(myRepository);
+    touch(AFILE, "basic");
+    hg("add " + AFILE);
+    hg("commit -m 'create file' ");
+    cd(myChildRepo);
+    hg("pull");
+    hg("update");
+    final VirtualFile childFile = myChildRepo.findChild(AFILE);
+    return Pair.create(myRepository.findChild(AFILE), childFile);
+  }
+
+  private void verifyMergeData(final VirtualFile file, String expectedBase, String expectedLocal, String expectedServer)
+    throws VcsException {
+    final MergeData mergeData = myMergeProvider.loadRevisions(file);
+    assertEquals(expectedBase, mergeData.ORIGINAL);
+    assertEquals(expectedServer, mergeData.LAST);
+    assertEquals(expectedLocal, mergeData.CURRENT);
+  }
+
+  private static void assertEquals(String s, byte[] bytes) {
+    Assert.assertEquals(s, new String(bytes));
   }
 }

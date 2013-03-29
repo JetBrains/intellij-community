@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,14 +35,15 @@ public class DetailExceptionsIntention extends Intention {
   @Override
   public void processIntention(@NotNull PsiElement element) throws IncorrectOperationException {
     final PsiJavaToken token = (PsiJavaToken)element;
-    final PsiTryStatement tryStatement = (PsiTryStatement)token.getParent();
-    if (tryStatement == null) {
+    PsiElement parent = token.getParent();
+    if (parent instanceof PsiCatchSection) {
+      parent = parent.getParent();
+    }
+    if (!(parent instanceof PsiTryStatement)) {
       return;
     }
-    final String text = tryStatement.getText();
-    final int length = text.length();
-    @NonNls final StringBuilder newTryStatement = new StringBuilder(length);
-    newTryStatement.append("try");
+    final PsiTryStatement tryStatement = (PsiTryStatement)parent;
+    @NonNls final StringBuilder newTryStatement = new StringBuilder("try");
     final Set<PsiType> exceptionsThrown = new HashSet<PsiType>();
     final PsiResourceList resourceList = tryStatement.getResourceList();
     if (resourceList != null) {
@@ -74,24 +75,15 @@ public class DetailExceptionsIntention extends Intention {
         exceptionsToExpand.removeAll(exceptionsAlreadyEmitted);
         Collections.sort(exceptionsToExpand, comparator);
         for (PsiType thrownType : exceptionsToExpand) {
-          newTryStatement.append("catch(");
-          final String exceptionType = thrownType.getCanonicalText();
-          newTryStatement.append(exceptionType);
-          newTryStatement.append(' ');
-          final String parameterName = parameter.getName();
-          newTryStatement.append(parameterName);
-          newTryStatement.append(')');
-          final String blockText = block.getText();
-          newTryStatement.append(blockText);
+          newTryStatement.append("catch(").append(thrownType.getCanonicalText()).append(' ').append(parameter.getName()).append(')');
+          newTryStatement.append(block.getText());
           exceptionsAlreadyEmitted.add(thrownType);
         }
       }
     }
     final PsiCodeBlock finallyBlock = tryStatement.getFinallyBlock();
     if (finallyBlock != null) {
-      newTryStatement.append("finally");
-      final String finallyBlockText = finallyBlock.getText();
-      newTryStatement.append(finallyBlockText);
+      newTryStatement.append("finally").append(finallyBlock.getText());
     }
     final String newStatement = newTryStatement.toString();
     replaceStatementAndShorten(newStatement, tryStatement);

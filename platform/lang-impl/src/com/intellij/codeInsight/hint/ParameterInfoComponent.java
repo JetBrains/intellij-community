@@ -40,7 +40,7 @@ class ParameterInfoComponent extends JPanel{
   private final OneElementComponent[] myPanels;
 
   private static final Color BACKGROUND_COLOR = HintUtil.INFORMATION_COLOR;
-  private static final Color FOREGROUND_COLOR = JBColor.foreground;
+  private static final Color FOREGROUND_COLOR = JBColor.foreground();
 //  private static final Color DISABLED_BACKGROUND_COLOR = HintUtil.INFORMATION_COLOR;
   private static final Color DISABLED_FOREGROUND_COLOR = Gray._128;
   private static final Color HIGHLIGHTED_BORDER_COLOR = new JBColor(new Color(231, 254, 234), Gray._100);

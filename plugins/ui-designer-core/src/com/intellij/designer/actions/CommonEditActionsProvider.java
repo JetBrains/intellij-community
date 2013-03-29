@@ -96,31 +96,11 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
         }
 
         myDesigner.getToolProvider().loadDefaultTool();
-
         List<RadComponent> components = RadComponent.getPureSelection(selection);
-
-        RadComponent newSelection = getNewSelection(components.get(0), selection);
-        if (newSelection == null) {
-          area.deselectAll();
-        }
-        else {
-          area.select(newSelection);
-        }
-
+        updateSelectionBeforeDelete(area, components.get(0), selection);
         handleDeletion(components);
       }
     }, DesignerBundle.message("command.delete.selection"), true);
-  }
-
-  private static void deleteComponents(List<RadComponent> components) throws Exception {
-    if (components.get(0) instanceof IGroupDeleteComponent) {
-      ((IGroupDeleteComponent)components.get(0)).delete(components);
-    }
-    else {
-      for (RadComponent component : components) {
-        component.delete();
-      }
-    }
   }
 
   private static void handleDeletion(@NotNull List<RadComponent> components) throws Exception {
@@ -136,9 +116,35 @@ public class CommonEditActionsProvider implements DeleteProvider, CopyProvider, 
         IComponentDeletionParticipant handler = (IComponentDeletionParticipant)parent;
         finished = handler.deleteChildren(parent, children);
       }
+      else if (parent.getLayout() instanceof IComponentDeletionParticipant) {
+        IComponentDeletionParticipant handler = (IComponentDeletionParticipant)parent.getLayout();
+        finished = handler.deleteChildren(parent, children);
+      }
+
       if (!finished) {
         deleteComponents(children);
       }
+    }
+  }
+
+  private static void deleteComponents(List<RadComponent> components) throws Exception {
+    if (components.get(0) instanceof IGroupDeleteComponent) {
+      ((IGroupDeleteComponent)components.get(0)).delete(components);
+    }
+    else {
+      for (RadComponent component : components) {
+        component.delete();
+      }
+    }
+  }
+
+  public static void updateSelectionBeforeDelete(EditableArea area, RadComponent component, List<RadComponent> excludes) {
+    RadComponent newSelection = getNewSelection(component, excludes);
+    if (newSelection == null) {
+      area.deselectAll();
+    }
+    else {
+      area.select(newSelection);
     }
   }
 

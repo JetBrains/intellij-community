@@ -1,5 +1,5 @@
 /*
- * Copyright 2003-2012 Dave Griffith, Bas Leijdekkers
+ * Copyright 2003-2013 Dave Griffith, Bas Leijdekkers
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,10 +31,13 @@ class DetailExceptionsPredicate implements PsiElementPredicate {
       return false;
     }
     final IElementType tokenType = ((PsiJavaToken)element).getTokenType();
-    if (!JavaTokenType.TRY_KEYWORD.equals(tokenType)) {
+    if (!JavaTokenType.TRY_KEYWORD.equals(tokenType) && !JavaTokenType.CATCH_KEYWORD.equals(tokenType)) {
       return false;
     }
-    final PsiElement parent = element.getParent();
+    PsiElement parent = element.getParent();
+    if (parent instanceof PsiCatchSection) {
+      parent = parent.getParent();
+    }
     if (!(parent instanceof PsiTryStatement)) {
       return false;
     }

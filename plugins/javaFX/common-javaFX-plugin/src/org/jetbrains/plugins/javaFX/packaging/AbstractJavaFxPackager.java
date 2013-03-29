@@ -66,6 +66,10 @@ public abstract class AbstractJavaFxPackager {
 
 
   public void createJarAndDeploy(final String binPath) {
+    if (!checkNotEmpty(getAppClass(), "Application class")) return;
+    if (!checkNotEmpty(getWidth(), "Width")) return;
+    if (!checkNotEmpty(getHeight(), "Height")) return;
+
     final String zipPath = getArtifactOutputFilePath();
 
     final File tempUnzippedArtifactOutput;
@@ -112,7 +116,17 @@ public abstract class AbstractJavaFxPackager {
     final int result = startProcess(commandLine);
     if (result == 0) {
       deploy(binPath, tempDirWithJar, tempUnzippedArtifactOutput);
+    } else {
+      registerJavaFxPackagerError("JavaFX createJar task has failed.");
     }
+  }
+
+  private boolean checkNotEmpty(final String text, final String title) {
+    if (StringUtil.isEmptyOrSpaces(text)) {
+      registerJavaFxPackagerError("Unable to build JavaFX artifact. " + title + " should be specified in artifact's settings.");
+      return false;
+    }
+    return true;
   }
 
   private void appendPreloader(List<String> commandLine, boolean appendPreloaderJar) {
@@ -172,26 +186,32 @@ public abstract class AbstractJavaFxPackager {
       registerJavaFxPackagerError(e);
       return;
     }
-    addParameter(commandLine, tempDirectory.getPath());
+    try {
+      addParameter(commandLine, tempDirectory.getPath());
 
-    addParameter(commandLine, "-outfile");
-    addParameter(commandLine, artifactName);
+      addParameter(commandLine, "-outfile");
+      addParameter(commandLine, artifactName);
 
-    addParameter(commandLine, "-srcdir");
-    addParameter(commandLine, tempDirWithCreatedJar.getPath());
+      addParameter(commandLine, "-srcdir");
+      addParameter(commandLine, tempDirWithCreatedJar.getPath());
 
-    addParameter(commandLine, "-v");
+      addParameter(commandLine, "-v");
 
-    final int result = startProcess(commandLine);
-    if (result == 0) {
-      if (isEnabledSigning()) {
-        signApp(binPath, tempDirectory);
+      final int result = startProcess(commandLine);
+      if (result == 0) {
+        if (isEnabledSigning()) {
+          signApp(binPath, tempDirectory);
+        }
+      } else {
+        registerJavaFxPackagerError("JavaFX deploy task has failed.");
       }
     }
-    FileUtil.delete(tempUnzippedArtifactOutput);
-    FileUtil.delete(new File(getArtifactOutputFilePath()));
-    copyResultsToArtifactsOutput(tempDirWithCreatedJar);
-    copyResultsToArtifactsOutput(tempDirectory);
+    finally {
+      FileUtil.delete(tempUnzippedArtifactOutput);
+      FileUtil.delete(new File(getArtifactOutputFilePath()));
+      copyResultsToArtifactsOutput(tempDirWithCreatedJar);
+      copyResultsToArtifactsOutput(tempDirectory);
+    }
   }
 
   private void signApp(String binPath, File tempDirectory) {
@@ -208,6 +228,11 @@ public abstract class AbstractJavaFxPackager {
       addParameter(signCommandLine, getAlias(selfSigning));
 
       final int signedResult = startProcess(signCommandLine);
+      if (signedResult != 0) {
+        registerJavaFxPackagerError("JavaFX sign task has failed.");
+      }
+    } else {
+      registerJavaFxPackagerError("JavaFX generate certificate task has failed.");
     }
   }
 
@@ -300,14 +325,17 @@ public abstract class AbstractJavaFxPackager {
     final String manifestAttr = getManifestString();
     if (manifestAttr != null) {
       addParameter(commandLine, "-manifestAttrs");
-      addParameter(commandLine, "\"" + manifestAttr + "\"");
+      addParameter(commandLine, manifestAttr);
     }
   }
 
   private int startProcess(List<String> commands) {
     try {
       final Process process = new ProcessBuilder(commands).start();
-      LOG.info(new String(FileUtil.loadBytes(process.getErrorStream())));
+      final String message = new String(FileUtil.loadBytes(process.getErrorStream()));
+      if (!StringUtil.isEmptyOrSpaces(message)) {
+        registerJavaFxPackagerError(message);
+      }
       return process.waitFor();
     }
     catch (Exception e) {

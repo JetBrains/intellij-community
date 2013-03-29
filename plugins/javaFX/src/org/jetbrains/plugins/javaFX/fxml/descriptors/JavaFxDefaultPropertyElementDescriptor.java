@@ -20,6 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
@@ -76,14 +77,14 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
   @Override
   public XmlElementDescriptor getElementDescriptor(XmlTag childTag, XmlTag contextTag) {
     final String name = childTag.getName();
-    if (myName.equals(FxmlConstants.FX_DEFINE)) {
-      if (name.equals(FxmlConstants.FX_INCLUDE)) {
+    if (FxmlConstants.FX_DEFINE.equals(myName)) {
+      if (FxmlConstants.FX_DEFAULT_ELEMENTS.contains(name)) {
         return new JavaFxDefaultPropertyElementDescriptor(name, childTag);
       }
       return new JavaFxClassBackedElementDescriptor(name, childTag);
     }
 
-    if (myName.equals(FxmlConstants.FX_ROOT)) {
+    if (FxmlConstants.FX_ROOT.equals(myName)) {
       final JavaFxClassBackedElementDescriptor tagDescriptor = getRootTagDescriptor(contextTag);
       if (tagDescriptor != null) {
         return tagDescriptor.getElementDescriptor(childTag, contextTag);
@@ -119,8 +120,14 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
         final XmlTag includedRoot = getIncludedRoot(context);
         if (includedRoot != null) {
           final XmlElementDescriptor includedRootDescriptor = includedRoot.getDescriptor();
-          if (includedRootDescriptor != null) {
-            Collections.addAll(descriptors, includedRootDescriptor.getAttributesDescriptors(includedRoot));
+          if (includedRootDescriptor instanceof JavaFxClassBackedElementDescriptor) {
+            ((JavaFxClassBackedElementDescriptor)includedRootDescriptor).collectInstanceProperties(descriptors);
+          } 
+          else if (includedRootDescriptor instanceof JavaFxDefaultPropertyElementDescriptor) {
+            final JavaFxClassBackedElementDescriptor includedRootTagDescriptor = ((JavaFxDefaultPropertyElementDescriptor)includedRootDescriptor).getRootTagDescriptor(includedRoot);
+            if (includedRootTagDescriptor != null) {
+              includedRootTagDescriptor.collectInstanceProperties(descriptors);
+            }
           }
         }
       }
@@ -130,8 +137,9 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
   }
 
   @Nullable
-  private static XmlTag getReferencedTag(XmlTag tag) {
-    if (FxmlConstants.FX_REFERENCE.equals(tag.getName())) {
+  protected static XmlTag getReferencedTag(XmlTag tag) {
+    final String tagName = tag.getName();
+    if (FxmlConstants.FX_REFERENCE.equals(tagName) || FxmlConstants.FX_COPY.equals(tagName)) {
       final XmlAttribute attribute = tag.getAttribute(FxmlConstants.FX_ELEMENT_SOURCE);
       if (attribute != null) {
         final XmlAttributeValue valueElement = attribute.getValueElement();
@@ -206,13 +214,13 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
     return null;
   }
 
-  private JavaFxClassBackedElementDescriptor getRootTagDescriptor(XmlTag context) {
+  public JavaFxClassBackedElementDescriptor getRootTagDescriptor(XmlTag context) {
     if (context != null && FxmlConstants.FX_ROOT.equals(getName())) {
       final XmlAttribute typeAttr = context.getAttribute(FxmlConstants.TYPE);
       if (typeAttr != null) {
         final String rootClassName = typeAttr.getValue();
         final Project project = context.getProject();
-        final PsiClass rootClass = JavaPsiFacade.getInstance(project).findClass(rootClassName, GlobalSearchScope.allScope(project));
+        final PsiClass rootClass = rootClassName != null ? JavaPsiFacade.getInstance(project).findClass(rootClassName, GlobalSearchScope.allScope(project)) : null;
         if (rootClass != null) {
           return new JavaFxClassBackedElementDescriptor(getName(), rootClass);
         }
@@ -275,15 +283,36 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
 
   @Override
   public void validate(@NotNull XmlTag context, @NotNull ValidationHost host) {
-    final XmlTag referencedTag = getReferencedTag(context);
-    if (referencedTag != null) {
-      final XmlElementDescriptor descriptor = referencedTag.getDescriptor();
-      if (descriptor != null) {
-        final PsiElement declaration = descriptor.getDeclaration();
-        if (declaration instanceof PsiClass) {
-          final String canCoerceError = JavaFxPsiUtil.isClassAcceptable(context.getParentTag(), (PsiClass)declaration);
-          if (canCoerceError != null) {
-            host.addMessage(context.getNavigationElement(), canCoerceError, ValidationHost.ErrorType.ERROR);
+    final String contextName = context.getName();
+    if (FxmlConstants.FX_ROOT.equals(contextName)) {
+      if (context.getParentTag() != null) {
+        host.addMessage(context.getNavigationElement(), "<fx:root> is valid only as the root node of an FXML document", ValidationHost.ERROR);
+      }
+    } else {
+      final XmlTag referencedTag = getReferencedTag(context);
+      if (referencedTag != null) {
+        final XmlElementDescriptor descriptor = referencedTag.getDescriptor();
+        if (descriptor != null) {
+          final PsiElement declaration = descriptor.getDeclaration();
+          if (declaration instanceof PsiClass) {
+            final PsiClass psiClass = (PsiClass)declaration;
+            final String canCoerceError = JavaFxPsiUtil.isClassAcceptable(context.getParentTag(), psiClass);
+            if (canCoerceError != null) {
+              host.addMessage(context.getNavigationElement(), canCoerceError, ValidationHost.ErrorType.ERROR);
+            }
+            if (FxmlConstants.FX_COPY.equals(contextName)) {
+              boolean copyConstructorFound = false;
+              for (PsiMethod constructor : psiClass.getConstructors()) {
+                final PsiParameter[] parameters = constructor.getParameterList().getParameters();
+                if (parameters.length == 1 && psiClass == PsiUtil.resolveClassInType(parameters[0].getType())) {
+                  copyConstructorFound = true;
+                  break;
+                }
+              }
+              if (!copyConstructorFound) {
+                host.addMessage(context.getNavigationElement(), "Copy constructor not found for \'" + psiClass.getName() + "\'", ValidationHost.ERROR);
+              }
+            }
           }
         }
       }

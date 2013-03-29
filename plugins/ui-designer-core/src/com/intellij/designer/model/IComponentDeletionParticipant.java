@@ -18,5 +18,5 @@ public interface IComponentDeletionParticipant {
    *         a RelativeLayout handler could remove constraints pointing to now deleted components,
    *         but leave the overall deletion of the elements to the core designer.
    */
-  boolean deleteChildren(@NotNull RadComponent parent, @NotNull List<RadComponent> deleted);
+  boolean deleteChildren(@NotNull RadComponent parent, @NotNull List<RadComponent> deleted) throws Exception;
 }

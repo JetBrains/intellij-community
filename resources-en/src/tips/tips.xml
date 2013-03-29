@@ -151,4 +151,12 @@
   <tip file="RunConfigFolders.html"/>
   <tip file="SpeedSearchinLiveTemplates.html"/>
   <tip file="EditRegExp.html"/>
+
+  <tip file="Emmet.html"/>
+  <tip file="EscapeCharactersInResourceBundle.html"/>
+  <tip file="LineEndings.html"/>
+  <tip file="LineEndingsFolder.html"/>
+  <tip file="RefactorThis.html"/>
+  <tip file="FavoritesToolWindow1.html"/>
+  <tip file="FavoritesToolWindow2.html"/>
 </tips>

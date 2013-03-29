@@ -241,7 +241,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     if (locked != null) {
       myLockedProfile = Boolean.parseBoolean(locked);
     }
-    myBaseProfile = getDefaultProfile();
+    if (!ApplicationManager.getApplication().isUnitTestMode() || myBaseProfile == null) {
+      // todo remove this strange side effect
+      myBaseProfile = getDefaultProfile();
+    }
     final String version = element.getAttributeValue(VERSION_TAG);
     if (version == null || !version.equals(VALID_VERSION)) {
       try {
@@ -528,9 +531,9 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       }
 
       LOG.assertTrue(key != null, shortName + " ; number of initialized tools: " + myTools.size());
-      final ToolsImpl toolsList =
-        new ToolsImpl(tool, myBaseProfile != null ? myBaseProfile.getErrorLevel(key) : tool.getDefaultLevel(),
-                      !myLockedProfile && (myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : tool.isEnabledByDefault()));
+      HighlightDisplayLevel level = myBaseProfile != null ? myBaseProfile.getErrorLevel(key) : tool.getDefaultLevel();
+      boolean enabled = myBaseProfile != null ? myBaseProfile.isToolEnabled(key) : tool.isEnabledByDefault();
+      final ToolsImpl toolsList = new ToolsImpl(tool, level, !myLockedProfile && enabled, enabled);
       final Element element = myDeinstalledInspectionsSettings.remove(tool.getShortName());
       if (element != null) {
         try {

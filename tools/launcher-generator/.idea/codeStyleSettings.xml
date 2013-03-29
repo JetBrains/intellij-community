@@ -16,6 +16,9 @@
           </value>
         </option>
         <option name="FIELD_NAME_PREFIX" value="my" />
+        <XML>
+          <option name="XML_LEGACY_SETTINGS_IMPORTED" value="true" />
+        </XML>
         <codeStyleSettings language="JAVA">
           <indentOptions>
             <option name="INDENT_SIZE" value="2" />

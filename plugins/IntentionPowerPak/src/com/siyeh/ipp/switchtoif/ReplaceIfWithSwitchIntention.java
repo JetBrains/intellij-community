@@ -223,20 +223,22 @@ public class ReplaceIfWithSwitchIntention extends Intention {
         values.addCaseExpression(argument);
       }
     }
-    else if (expression instanceof PsiBinaryExpression) {
-      final PsiBinaryExpression binaryExpression = (PsiBinaryExpression)expression;
-      final PsiExpression lhs = binaryExpression.getLOperand();
-      final PsiExpression rhs = binaryExpression.getROperand();
-      final IElementType tokenType = binaryExpression.getOperationTokenType();
+    else if (expression instanceof PsiPolyadicExpression) {
+      final PsiPolyadicExpression polyadicExpression = (PsiPolyadicExpression)expression;
+      final PsiExpression[] operands = polyadicExpression.getOperands();
+      final IElementType tokenType = polyadicExpression.getOperationTokenType();
       if (JavaTokenType.OROR.equals(tokenType)) {
-        extractCaseExpressions(lhs, switchExpression, values);
-        extractCaseExpressions(rhs, switchExpression, values);
+        for (PsiExpression operand : operands) {
+          extractCaseExpressions(operand, switchExpression, values);
+        }
       }
-      else {
+      else if (JavaTokenType.EQEQ.equals(tokenType) && operands.length == 2) {
+        final PsiExpression lhs = operands[0];
+        final PsiExpression rhs = operands[1];
         if (EquivalenceChecker.expressionsAreEquivalent(switchExpression, rhs)) {
           values.addCaseExpression(lhs);
         }
-        else {
+        else if (EquivalenceChecker.expressionsAreEquivalent(switchExpression, lhs)){
           values.addCaseExpression(rhs);
         }
       }

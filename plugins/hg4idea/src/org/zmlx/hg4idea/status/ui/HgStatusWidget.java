@@ -146,7 +146,7 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
 
         int maxLength = MAX_STRING.length();
         myText = StringUtil.shortenTextWithEllipsis(myText, maxLength, 5);
-        if (!isDisposed()) {
+        if (!isDisposed() && myStatusBar != null) {
           myStatusBar.updateWidget(ID());
         }
       }

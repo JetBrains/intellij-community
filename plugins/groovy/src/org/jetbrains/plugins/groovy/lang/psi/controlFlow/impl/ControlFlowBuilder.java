@@ -23,6 +23,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -674,6 +675,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
       handlePossibleReturn(thenBranch);
       thenEnd = myHead;
       interruptFlow();
+      readdPendingEdge(ifStatement);
     }
 
     myHead = reduceAllNegationsIntoInstruction(ifStatement, negations);
@@ -776,28 +778,45 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
     }
   }
 
-  private void checkPending(InstructionImpl instruction) {
-    final PsiElement element = instruction.getElement();
-    if (element == null) {
-      //add all
-      for (Pair<InstructionImpl, GroovyPsiElement> pair : myPending) {
-        addEdge(pair.getFirst(), instruction);
-      }
-      myPending.clear();
+
+  @NotNull
+  private List<Pair<InstructionImpl, GroovyPsiElement>> collectCorrespondingPendingEdges(@Nullable PsiElement currentScope) {
+    if (currentScope == null) {
+      List<Pair<InstructionImpl, GroovyPsiElement>> result = myPending;
+      myPending = ContainerUtil.newArrayList();
+      return result;
     }
     else {
+      ArrayList<Pair<InstructionImpl, GroovyPsiElement>> targets = ContainerUtil.newArrayList();
+
       for (int i = myPending.size() - 1; i >= 0; i--) {
         final Pair<InstructionImpl, GroovyPsiElement> pair = myPending.get(i);
         final PsiElement scopeWhenToAdd = pair.getSecond();
         if (scopeWhenToAdd == null) continue;
-        if (!PsiTreeUtil.isAncestor(scopeWhenToAdd, element, false)) {
-          addEdge(pair.getFirst(), instruction);
+        if (!PsiTreeUtil.isAncestor(scopeWhenToAdd, currentScope, false)) {
+          targets.add(pair);
           myPending.remove(i);
         }
         else {
           break;
         }
       }
+      return targets;
+    }
+  }
+
+  private void checkPending(@NotNull InstructionImpl instruction) {
+    final PsiElement element = instruction.getElement();
+    List<Pair<InstructionImpl, GroovyPsiElement>> target = collectCorrespondingPendingEdges(element);
+    for (Pair<InstructionImpl, GroovyPsiElement> pair : target) {
+      addEdge(pair.getFirst(), instruction);
+    }
+  }
+
+  private void readdPendingEdge(@Nullable GroovyPsiElement newScope) {
+    final List<Pair<InstructionImpl, GroovyPsiElement>> targets = collectCorrespondingPendingEdges(newScope);
+    for (Pair<InstructionImpl, GroovyPsiElement> target : targets) {
+      addPendingEdge(newScope, target.getFirst());
     }
   }
 

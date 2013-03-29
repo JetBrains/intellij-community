@@ -131,19 +131,25 @@ public class PluginManager {
   }
 
   private static void logPlugins() {
-    List<String> loaded = new ArrayList<String>();
+    List<String> loadedBundled = new ArrayList<String>();
     List<String> disabled = new ArrayList<String>();
+    List<String> loadedCustom = new ArrayList<String>();
+
     for (IdeaPluginDescriptorImpl descriptor : ourPlugins) {
       final String version = descriptor.getVersion();
       String s = descriptor.getName() + (version != null ? " (" + version + ")" : "");
       if (descriptor.isEnabled()) {
-        loaded.add(s);
+        if (descriptor.isBundled()) loadedBundled.add(s);
+        else loadedCustom.add(s);
       }
       else {
         disabled.add(s);
       }
     }
-    getLogger().info("Loaded plugins:" + StringUtil.join(loaded, ", "));
+    getLogger().info("Loaded bundled plugins: " + StringUtil.join(loadedBundled, ", "));
+    if (!loadedCustom.isEmpty()) {
+      getLogger().info("Loaded custom plugins: " + StringUtil.join(loadedCustom, ", "));
+    }
     if (!disabled.isEmpty()) {
       getLogger().info("Disabled plugins: " + StringUtil.join(disabled, ", "));
     }

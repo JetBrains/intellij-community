@@ -83,6 +83,12 @@ public class BookmarksAction extends AnAction implements DumbAware, MasterDetail
       .setList(list)
       .setDetailView(new DetailViewImpl(project))
       .setCloseOnEnter(false)
+      .setDoneRunnable(new Runnable() {
+        @Override
+        public void run() {
+          myPopup.cancel();
+        }
+      })
       .setDelegate(this).createMasterDetailPopup();
     new AnAction() {
       @Override

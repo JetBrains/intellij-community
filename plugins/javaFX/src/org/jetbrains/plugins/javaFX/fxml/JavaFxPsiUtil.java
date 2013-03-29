@@ -37,6 +37,7 @@ import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxClassBackedElementDescriptor;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyElementDescriptor;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescriptor;
 
 import java.util.*;
@@ -453,7 +454,11 @@ public class JavaFxPsiUtil {
       return null;
     }
     if (aClass != null && aClass.isValid()) {
-      final XmlElementDescriptor descriptor = parentTag.getDescriptor();
+      XmlElementDescriptor descriptor = parentTag.getDescriptor();
+      if (descriptor instanceof JavaFxDefaultPropertyElementDescriptor) {
+        descriptor = ((JavaFxDefaultPropertyElementDescriptor)descriptor).getRootTagDescriptor(parentTag);
+      }
+
       if (descriptor instanceof JavaFxPropertyElementDescriptor) {
         final PsiElement declaration = descriptor.getDeclaration();
         if (declaration instanceof PsiField) {

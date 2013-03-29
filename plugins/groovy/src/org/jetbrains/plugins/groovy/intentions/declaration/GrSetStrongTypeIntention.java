@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,10 +23,7 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiClassType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiManager;
-import com.intellij.psi.PsiType;
+import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,12 +33,16 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.SupertypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.expectedTypes.TypeConstraint;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
+import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.template.expressions.ChooseTypeExpression;
 
@@ -70,6 +71,10 @@ public class GrSetStrongTypeIntention extends Intention {
       variables = ((GrVariableDeclaration)parent).getVariables();
       elementToBuildTemplate = parent;
     }
+    else if (parent instanceof GrParameter && parent.getParent() instanceof GrParameterList) {
+      variables = new GrVariable[]{(GrVariable)parent};
+      elementToBuildTemplate = parent.getParent().getParent();
+    }
     else if (parent instanceof GrVariable) {
       variables = new GrVariable[]{((GrVariable)parent)};
       elementToBuildTemplate = parent;
@@ -88,6 +93,13 @@ public class GrSetStrongTypeIntention extends Intention {
         GrExpression initializer = variable.getInitializerGroovy();
         if (initializer != null) {
           PsiType type = initializer.getType();
+          if (type != null) {
+            types.add(SupertypeConstraint.create(type));
+          }
+        }
+        if (variable instanceof GrParameter) {
+          final PsiParameter parameter = (PsiParameter)variable;
+          final PsiType type = getClosureParameterType(parameter);
           if (type != null) {
             types.add(SupertypeConstraint.create(type));
           }
@@ -114,6 +126,19 @@ public class GrSetStrongTypeIntention extends Intention {
 
     TemplateManager templateManager = TemplateManager.getInstance(project);
     templateManager.startTemplate(editor, template);
+  }
+
+  @Nullable
+  private static PsiType getClosureParameterType(@NotNull PsiParameter parameter) {
+    final PsiElement scope = parameter.getDeclarationScope();
+    final PsiType type;
+    if (scope instanceof GrClosableBlock) {
+      type = ClosureParameterEnhancer.inferType((GrClosableBlock)scope, ((GrParameterList)parameter.getParent()).getParameterIndex(parameter));
+    }
+    else {
+      type = null;
+    }
+    return type;
   }
 
   @Nullable
@@ -186,6 +211,9 @@ public class GrSetStrongTypeIntention extends Intention {
         }
         else if (pparent instanceof GrForInClause) {
           return PsiUtil.extractIteratedType((GrForInClause)pparent) != null;
+        }
+        else if (parent instanceof GrParameter && pparent instanceof GrParameterList) {
+          return getClosureParameterType((PsiParameter)parent) != null;
         }
         else {
           return isVarDeclaredWithInitializer((GrVariable)parent);

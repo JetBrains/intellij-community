@@ -17,6 +17,7 @@ package org.apache.xmlrpc;
 
 import java.io.IOException;
 import java.net.InetAddress;
+import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
@@ -108,7 +109,10 @@ public class IdeaAwareWebServer extends WebServer {
   public void shutdown() {
     super.shutdown();
     try {
-      serverSocket.close();
+      ServerSocket socket = serverSocket;
+      if (socket != null) {
+        socket.close();
+      }
     }
     catch (IOException e) {
       //pass

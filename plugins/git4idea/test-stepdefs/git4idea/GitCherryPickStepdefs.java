@@ -31,6 +31,7 @@ import cucumber.annotation.en.Given;
 import cucumber.annotation.en.Then;
 import cucumber.annotation.en.When;
 import git4idea.cherrypick.GitCherryPicker;
+import git4idea.config.GitVersionSpecialty;
 import git4idea.history.browser.GitCommit;
 import git4idea.history.browser.SHAHash;
 import git4idea.history.wholeTree.AbstractHash;
@@ -154,13 +155,22 @@ public class GitCherryPickStepdefs {
   public void git_log_should_return(int commitNum, String messages) throws Throwable {
     List<String> expectedMessages = Arrays.asList(messages.split("-----"));
 
+
     final String RECORD_SEPARATOR = "@";
-    String output = git("log -%s --pretty=%%B%s", String.valueOf(commitNum), RECORD_SEPARATOR);
-    List<String> actualMessages = Arrays.asList(output.split("@"));
+    boolean fullBody = GitVersionSpecialty.STARTED_USING_RAW_BODY_IN_FORMAT.existsIn(myVcs.getVersion());
+    String data= fullBody ? "%B" : "%s%b";
+    String output = git("log -%s --pretty=%s%s", String.valueOf(commitNum), data, RECORD_SEPARATOR);
+    List<String> actualMessages = Arrays.asList(output.split(RECORD_SEPARATOR));
 
     for (int i = 0; i < expectedMessages.size(); i++) {
       String expectedMessage = expectedMessages.get(i).trim();
       String actualMessage = actualMessages.get(i).trim();
+      if (!fullBody) {
+        // the subject (%s) somehow contains both "fix #1" and "cherry-picked from <hash>" in a single line
+        // which is probably Git misbehavior, so let's compare without taking line breaks and spaces into consideration
+        expectedMessage = expectedMessage.replace("\n", "").replace(" ", "");
+        actualMessage = actualMessage.replace("\n", "").replace(" ", "");
+      }
       expectedMessage = virtualCommits.replaceVirtualHashes(expectedMessage);
       assertEquals("Commit doesn't match", expectedMessage, trimHash(actualMessage));
     }

@@ -106,6 +106,16 @@ public class GrListOrMapImpl extends GrExpressionImpl implements GrListOrMap {
     return findChildByType(MAP_LITERAL_TOKEN_SET) != null;
   }
 
+  @Override
+  public PsiElement getLBrack() {
+    return findChildByType(GroovyTokenTypes.mLBRACK);
+  }
+
+  @Override
+  public PsiElement getRBrack() {
+    return findChildByType(GroovyTokenTypes.mRBRACK);
+  }
+
   @NotNull
   public GrExpression[] getInitializers() {
     List<GrExpression> result = new ArrayList<GrExpression>();

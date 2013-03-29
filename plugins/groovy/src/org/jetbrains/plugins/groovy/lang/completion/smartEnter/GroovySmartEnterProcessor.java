@@ -31,15 +31,18 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.fixers.*;
 import org.jetbrains.plugins.groovy.lang.completion.smartEnter.processors.GroovyPlainEnterProcessor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
-import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrCatchClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrForStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 import java.util.Arrays;
@@ -137,48 +140,25 @@ public class GroovySmartEnterProcessor extends SmartEnterProcessorWithFixers {
 
   @Override
   public boolean doNotStepInto(PsiElement element) {
-    return element instanceof PsiClass || element instanceof GrCodeBlock || element instanceof GrStatement || element instanceof GrMethod;
+    return element instanceof PsiClass ||
+           element instanceof GrCodeBlock ||
+           element instanceof GrStatement && !(element instanceof GrExpression) ||
+           PsiUtil.isExpressionStatement(element) ||
+           element instanceof GrMethod;
   }
 
   @Nullable
   protected PsiElement getStatementAtCaret(Editor editor, PsiFile psiFile) {
-    final PsiElement atCaret = super.getStatementAtCaret(editor, psiFile);
+    PsiElement atCaret = super.getStatementAtCaret(editor, psiFile);
 
     if (atCaret instanceof PsiWhiteSpace) return null;
-    if (atCaret == null) return null;
 
-    GrCodeBlock codeBlock = PsiTreeUtil.getParentOfType(atCaret, GrCodeBlock.class, false, GrControlStatement.class);
-    if (codeBlock instanceof GrClosableBlock && "{}".equals(codeBlock.getText())) {
-      codeBlock = PsiTreeUtil.getParentOfType(codeBlock, GrCodeBlock.class, true, GrControlStatement.class);
-    }
-    if (codeBlock != null) {
-      for (GrStatement statement : codeBlock.getStatements()) {
-        if (PsiTreeUtil.isAncestor(statement, atCaret, true)) {
-          return statement;
-        }
-      }
+    while (atCaret != null && !PsiUtil.isExpressionStatement(atCaret)) {
+      if (atCaret instanceof PsiMethod || atCaret instanceof GrDocComment) return atCaret;
+      atCaret = atCaret.getParent();
     }
 
-    PsiElement statementAtCaret = PsiTreeUtil.getParentOfType(atCaret,
-                                                              GrStatement.class,
-                                                              GrCodeBlock.class,
-                                                              PsiMember.class,
-                                                              GrDocComment.class
-    );
-
-    if (statementAtCaret instanceof GrBlockStatement) return null;
-    if (statementAtCaret == null) return null;
-
-    GrControlStatement controlStatement = PsiTreeUtil.getParentOfType(statementAtCaret, GrControlStatement.class, false);
-
-    if (controlStatement != null && !PsiTreeUtil.hasErrorElements(statementAtCaret)) {
-      return controlStatement;
-    }
-
-    return statementAtCaret instanceof GrStatement ||
-           statementAtCaret instanceof GrMember
-           ? statementAtCaret
-           : null;
+    return atCaret;
   }
 
   @Override

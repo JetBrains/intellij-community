@@ -17,6 +17,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.ide.actions.ShowFilePathAction;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.actionSystem.KeyboardShortcut;
 import com.intellij.openapi.actionSystem.Shortcut;
 import com.intellij.openapi.application.ApplicationManager;
@@ -79,11 +80,6 @@ public class EditorsSplitters extends JBPanel {
 
   public EditorsSplitters(final FileEditorManagerImpl manager, DockManager dockManager, boolean createOwnDockableContainer) {
     super(new BorderLayout());
-    if (UIUtil.isUnderDarcula()) {
-      setBackgroundImage(IconLoader.getIcon("/frame_background.png"));
-      String icon = ApplicationInfoEx.getInstanceEx().getEditorBackgroundImageUrl();
-      if (icon != null) setCenterImage(IconLoader.getIcon(icon));
-    }
     setOpaque(false);
     myManager = manager;
     myFocusWatcher = new MyFocusWatcher();
@@ -95,6 +91,25 @@ public class EditorsSplitters extends JBPanel {
       DockableEditorTabbedContainer dockable = new DockableEditorTabbedContainer(myManager.getProject(), this, false);
       Disposer.register(manager.getProject(), dockable);
       dockManager.register(dockable);
+    }
+
+    UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
+      @Override
+      public void uiSettingsChanged(UISettings source) {
+        updateBackground();
+      }
+    }, manager.getProject());
+    updateBackground();
+  }
+
+  private void updateBackground() {
+    if (UIUtil.isUnderDarcula()) {
+      setBackgroundImage(IconLoader.getIcon("/frame_background.png"));
+      String icon = ApplicationInfoEx.getInstanceEx().getEditorBackgroundImageUrl();
+      if (icon != null) setCenterImage(IconLoader.getIcon(icon));
+    } else {
+      setBackgroundImage(null);
+      setCenterImage(null);
     }
   }
 
@@ -130,11 +145,11 @@ public class EditorsSplitters extends JBPanel {
     return null;
   }
 
-  
+
   private boolean showEmptyText() {
     return (myCurrentWindow == null || myCurrentWindow.getFiles().length == 0);
   }
-  
+
   private boolean isProjectViewVisible() {
     final Window frame = SwingUtilities.getWindowAncestor(this);
     if (frame instanceof IdeFrameImpl) {
@@ -145,10 +160,10 @@ public class EditorsSplitters extends JBPanel {
         return toolWindow != null && toolWindow.isVisible();
       }
     }
-    
+
     return false;
   }
-  
+
   @Override
   protected void paintComponent(Graphics g) {
     super.paintComponent(g);
@@ -157,7 +172,7 @@ public class EditorsSplitters extends JBPanel {
       g.setColor(UIUtil.isUnderDarcula()? UIUtil.getBorderColor() : new Color(0, 0, 0, 50));
       g.drawLine(0, 0, getWidth(), 0);
     }
-    
+
     if (showEmptyText()) {
       UIUtil.applyRenderingHints(g);
       g.setColor(new JBColor(Gray._100, Gray._160));
@@ -168,7 +183,7 @@ public class EditorsSplitters extends JBPanel {
 
       if (!isProjectViewVisible()) {
         painter.appendLine("Open Project View with " + KeymapUtil.getShortcutText(new KeyboardShortcut(
-            KeyStroke.getKeyStroke((SystemInfo.isMac ? "meta" : "alt") + " 1"), null))).smaller().withBullet();
+          KeyStroke.getKeyStroke((SystemInfo.isMac ? "meta" : "alt") + " 1"), null))).smaller().withBullet();
       }
 
       painter.appendLine("Open a file by name with " + getActionShortcutText("GotoFile")).smaller().withBullet()
@@ -531,7 +546,7 @@ public class EditorsSplitters extends JBPanel {
       JPanel panel = (JPanel) getComponent(0);
       return getSplitCount(panel);
     }
-    return 0;    
+    return 0;
   }
 
   private static int getSplitCount(JComponent component) {

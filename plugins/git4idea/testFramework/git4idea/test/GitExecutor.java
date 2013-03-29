@@ -16,10 +16,8 @@
 package git4idea.test;
 
 import com.intellij.dvcs.test.Executor;
-import com.intellij.openapi.util.text.StringUtil;
 import git4idea.repo.GitRepository;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
@@ -59,46 +57,6 @@ public class GitExecutor extends Executor {
     throw new RuntimeException("fatal error during execution of Git command: $command");
   }
 
-  private static List<String> splitCommandInParameters(String command) {
-    List<String> split = new ArrayList<String>();
-
-    boolean insideParam = false;
-    StringBuilder currentParam = new StringBuilder();
-    for (char c : command.toCharArray()) {
-      boolean flush = false;
-      if (insideParam) {
-        if (c == '\'') {
-          insideParam = false;
-          flush = true;
-        }
-        else {
-          currentParam.append(c);
-        }
-      }
-      else if (c == '\'') {
-        insideParam = true;
-      }
-      else if (c == ' ') {
-        flush = true;
-      }
-      else {
-        currentParam.append(c);
-      }
-
-      if (flush) {
-        if (!StringUtil.isEmptyOrSpaces(currentParam.toString())) {
-          split.add(currentParam.toString());
-        }
-        currentParam = new StringBuilder();
-      }
-    }
-
-    // last flush
-    if (!StringUtil.isEmptyOrSpaces(currentParam.toString())) {
-      split.add(currentParam.toString());
-    }
-    return split;
-  }
 
   public static String git(GitRepository repository, String command) {
     if (repository != null) {

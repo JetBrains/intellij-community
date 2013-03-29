@@ -18,6 +18,7 @@ package org.intellij.plugins.intelliLang.inject;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.injected.editor.EditorWindow;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageUtil;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -79,12 +80,12 @@ public class InjectLanguageAction implements IntentionAction {
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    doChooseLanguageToInject(editor, new Processor<String>() {
-      public boolean process(final String languageId) {
+    doChooseLanguageToInject(editor, new Processor<Language>() {
+      public boolean process(final Language language) {
         if (project.isDisposed()) return false;
         ApplicationManager.getApplication().runReadAction(new Runnable() {
           public void run() {
-            invokeImpl(project, editor, file, languageId);
+            invokeImpl(project, editor, file, language);
           }
         });
         return false;
@@ -92,12 +93,10 @@ public class InjectLanguageAction implements IntentionAction {
     });
   }
 
-  private static void invokeImpl(Project project, Editor editor, PsiFile file, String languageId) {
+  private static void invokeImpl(Project project, Editor editor, PsiFile file, Language language) {
     final PsiLanguageInjectionHost host = findInjectionHost(editor, file);
     if (host == null) return;
-    if (defaultFunctionalityWorked(host, languageId)) return;
-    Language language = InjectedLanguage.findLanguageById(languageId);
-    if (language == null) return;
+    if (defaultFunctionalityWorked(host, language)) return;
     try {
       for (LanguageInjectionSupport support : InjectorUtils.getActiveInjectionSupports()) {
         if (support.addInjectionInPlace(language, host)) return;
@@ -109,20 +108,18 @@ public class InjectLanguageAction implements IntentionAction {
     }
   }
 
-  private static boolean defaultFunctionalityWorked(final PsiLanguageInjectionHost host, final String languageId) {
-    return Configuration.getProjectInstance(host.getProject()).setHostInjectionEnabled(host, Collections.singleton(languageId), true);
+  private static boolean defaultFunctionalityWorked(final PsiLanguageInjectionHost host, final Language language) {
+    return Configuration.getProjectInstance(host.getProject()).setHostInjectionEnabled(host, Collections.singleton(language.getID()), true);
   }
 
-  private static boolean doChooseLanguageToInject(Editor editor, final Processor<String> onChosen) {
-    final String[] langIds = InjectedLanguage.getAvailableLanguageIDs();
-    Arrays.sort(langIds);
+  private static boolean doChooseLanguageToInject(Editor editor, final Processor<Language> onChosen) {
+    final Language[] languages = InjectedLanguage.getAvailableLanguages();
+    Arrays.sort(languages, LanguageUtil.LANGUAGE_COMPARATOR);
 
-    final JList list = new JBList(langIds);
-    list.setCellRenderer(new ListCellRendererWrapper<String>() {
+    final JList list = new JBList(languages);
+    list.setCellRenderer(new ListCellRendererWrapper<Language>() {
       @Override
-      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
-        final Language language = InjectedLanguage.findLanguageById(value);
-        assert language != null;
+      public void customize(JList list, Language language, int index, boolean selected, boolean hasFocus) {
         final FileType ft = language.getAssociatedFileType();
         setIcon(ft != null ? ft.getIcon() : EmptyIcon.ICON_16);
         setText(language.getDisplayName() + (ft != null ? " (" + ft.getDescription() + ")" : ""));
@@ -130,10 +127,14 @@ public class InjectLanguageAction implements IntentionAction {
     });
     new PopupChooserBuilder(list).setItemChoosenCallback(new Runnable() {
       public void run() {
-        final String string = (String)list.getSelectedValue();
-        onChosen.process(string);
+        onChosen.process((Language)list.getSelectedValue());
       }
-    }).setFilteringEnabled(new Function.Self<Object, String>())
+    }).setFilteringEnabled(new Function<Object, String>() {
+      @Override
+      public String fun(Object language) {
+        return ((Language)language).getDisplayName();
+      }
+    })
       .createPopup().showInBestPositionFor(editor);
     return true;
   }
