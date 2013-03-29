@@ -298,9 +298,28 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
       MostlySingularMultiMap<String, AnnotationData> fileData = getDataFromFile(file);
 
-      addAnnotations(result, externalName, file, fileData);
+      Iterable<AnnotationData> data = fileData.get(externalName);
+      for (AnnotationData ad : data) {
+        if (result.contains(ad)) {
+          // there can be compatible annotations in different files
+          if (Comparing.equal(ad.virtualFile, file.getVirtualFile())) {
+            LOG.error("Duplicate signature:\n" + externalName + "; in  " + file);
+          }
+        }
+        else {
+          result.add(ad);
+        }
+      }
       if (oldExternalName != null && !externalName.equals(oldExternalName)) {
-        addAnnotations(result, externalName, file, fileData);
+        Iterable<AnnotationData> oldCollection = fileData.get(oldExternalName);
+        for (AnnotationData ad : oldCollection) {
+          if (result.contains(ad)) {
+            LOG.error("Duplicate signature o:\n" + oldExternalName + "; in  " + toVirtualFiles(files));
+          }
+          else {
+            result.add(ad);
+          }
+        }
       }
     }
     if (result.isEmpty()) {
@@ -310,22 +329,13 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return result;
   }
 
-  private static void addAnnotations(@NotNull List<AnnotationData> result,
-                                     @NotNull String externalName,
-                                     @NotNull PsiFile file,
-                                     @NotNull MostlySingularMultiMap<String, AnnotationData> fileData) {
-    Iterable<AnnotationData> data = fileData.get(externalName);
-    for (AnnotationData ad : data) {
-      if (result.contains(ad)) {
-        // there can be compatible annotations in different files
-        if (Comparing.equal(ad.virtualFile, file.getVirtualFile())) {
-          LOG.error("Duplicate signature:\n" + externalName + "; in  " + file);
-        }
+  static List<VirtualFile> toVirtualFiles(List<PsiFile> files) {
+    return ContainerUtil.map(files, new Function<PsiFile, VirtualFile>() {
+      @Override
+      public VirtualFile fun(PsiFile file) {
+        return file.getVirtualFile();
       }
-      else {
-        result.add(ad);
-      }
-    }
+    });
   }
 
   @Override
