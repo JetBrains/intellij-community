@@ -177,11 +177,7 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
       
       final Tag signjar = new Tag("signjar", keysDescriptions);
       final Tag fileset = new Tag("fileset", new Pair<String, String>("dir", tempDirPath + "/deploy"));
-      fileset.add(new Tag("include", new Pair<String, String>("name", artifactFileName)));
-      final String preloaderJar = properties.getPreloaderJar(artifact, context.getProject());
-      if (preloaderJar != null) {
-        fileset.add(new Tag("include", new Pair<String, String>("name", preloaderJar)));
-      }
+      fileset.add(new Tag("include", new Pair<String, String>("name", "*.jar")));
       signjar.add(fileset);
       generator.add(signjar);
     }
