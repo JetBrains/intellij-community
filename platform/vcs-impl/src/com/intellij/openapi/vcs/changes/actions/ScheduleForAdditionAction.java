@@ -28,8 +28,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.openapi.vcs.FileStatusManager;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -85,7 +87,9 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
       return unversionedFiles;
     }
     for (VirtualFile file : files) {
-      if (file != null && FileStatusManager.getInstance(project).getStatus(file) == FileStatus.UNKNOWN) {
+      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
+      if (vcs != null && !vcs.areDirectoriesVersionedItems() && file.isDirectory() ||
+          FileStatusManager.getInstance(project).getStatus(file) == FileStatus.UNKNOWN) {
         unversionedFiles.add(file);
       }
     }
