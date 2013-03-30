@@ -228,6 +228,13 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     if (dndAware) {
       tree = new DnDAwareTree(new DefaultTreeModel(new DefaultMutableTreeNode(""))) {
         @Override
+        public void addNotify() {
+          super.addNotify();
+          if (ScreenUtil.isStandardAddRemoveNotify(this))
+            myRefreshAction.registerShortcutOn(this);
+        }
+
+        @Override
         public void removeNotify() {
           super.removeNotify();
           if (ScreenUtil.isStandardAddRemoveNotify(this))
@@ -288,7 +295,14 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       }
     }
     else {
-      tree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode("")))  {
+      tree = new Tree(new DefaultTreeModel(new DefaultMutableTreeNode(""))) {
+        @Override
+        public void addNotify() {
+          super.addNotify();
+          if (ScreenUtil.isStandardAddRemoveNotify(this))
+            myRefreshAction.registerShortcutOn(this);
+        }
+
         @Override
         public void removeNotify() {
           super.removeNotify();
@@ -309,7 +323,6 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
     }
     configureTree(tree);
     EditSourceOnDoubleClickHandler.install(tree);
-    myRefreshAction.registerShortcutOn(this);
 
     return tree;
   }
@@ -671,7 +684,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
       for(String name: getValidScopeNames()) {
         group.add(new MenuAction(name));
       }
-      
+
       group.add(new ConfigureScopesAction());
 
       return group;
@@ -730,7 +743,7 @@ public abstract class HierarchyBrowserBaseEx extends HierarchyBrowserBase implem
         selectScope(myScopeType);
       }
     }
-    
+
     private final class ConfigureScopesAction extends AnAction {
       private ConfigureScopesAction() {
         super("Configure...");
