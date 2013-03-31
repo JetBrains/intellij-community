@@ -13,14 +13,35 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.idea.svn.dialogs;
+package org.jetbrains.idea.svn.mergeinfo;
+
+import icons.SvnIcons;
+import org.jetbrains.annotations.Nullable;
+
+import javax.swing.*;
 
 /**
- * Created with IntelliJ IDEA.
- * User: Irina.Chernushina
- * Date: 3/27/13
- * Time: 7:53 PM
- */
-public enum QuickMergeContentsVariants {
-  all, select, cancel, showLatest
+* Created with IntelliJ IDEA.
+* User: Irina.Chernushina
+* Date: 3/30/13
+* Time: 2:41 PM
+*/
+public enum ListMergeStatus {
+  COMMON(SvnIcons.Common),
+  MERGED(SvnIcons.Integrated),
+  NOT_MERGED(SvnIcons.Notintegrated),
+  ALIEN(null),
+  REFRESHING(SvnIcons.IntegrationStatusUnknown);
+
+  @Nullable
+  private final Icon myIcon;
+
+  ListMergeStatus(@Nullable final Icon icon) {
+    myIcon = icon;
+  }
+
+  @Nullable
+  public Icon getIcon() {
+    return myIcon;
+  }
 }

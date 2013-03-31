@@ -39,10 +39,12 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
   private final WCInfo myWCInfo;
   // subpath [file] (local) to (subpathURL - merged FROM - to ranges list)
   private final AreaMap<String, Map<String, SVNMergeRangeList>> myDataMap;
-  private String myFromUrlRelative;
+  private final Object myLock;
+  private final String myFromUrlRelative;
 
   public OneRecursiveShotMergeInfoWorker(final Project project, final WCInfo WCInfo, final String fromUrl) {
     myProject = project;
+    myLock = new Object();
     myWCInfo = WCInfo;
     
     myDataMap = AreaMap.create(new PairProcessor<String, String>() {
@@ -68,7 +70,9 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
                          depth, new ISVNPropertyHandler() {
         public void handleProperty(File path, SVNPropertyData property) throws SVNException {
           final String key = keyFromFile(path);
-          myDataMap.put(key, SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(replaceSeparators(property.getValue().getString())), null));
+          synchronized (myLock) {
+            myDataMap.put(key, SVNMergeInfoUtil.parseMergeInfo(new StringBuffer(replaceSeparators(property.getValue().getString())), null));
+          }
         }
 
         public void handleProperty(SVNURL url, SVNPropertyData property) throws SVNException {
@@ -84,7 +88,9 @@ public class OneRecursiveShotMergeInfoWorker implements MergeInfoWorker {
     if (relativeToWc == null) return SvnMergeInfoCache.MergeCheckResult.NOT_EXISTS;
 
     final InfoProcessor processor = new InfoProcessor(relativeToWc, myFromUrlRelative, revisionNumber);
-    myDataMap.getSimiliar(keyFromPath(relativeToWc), processor);
+    synchronized (myLock) {
+      myDataMap.getSimiliar(keyFromPath(relativeToWc), processor);
+    }
     return SvnMergeInfoCache.MergeCheckResult.getInstance(processor.isMerged());
   }
 
