@@ -4,6 +4,7 @@ import org.hanuna.gitalk.graph.Graph;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.elements.NodeRow;
+import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNodeRow;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -22,15 +23,18 @@ public class MutableGraph implements Graph {
             return true;
         }
 
+        @NotNull
         @Override
-        public Edge getHideFragmentDownEdge(@NotNull Node node) {
-            return null;
+        public List<Edge> getDownEdges(@NotNull Node node, @NotNull List<Edge> innerDownEdges) {
+            return innerDownEdges;
         }
 
+        @NotNull
         @Override
-        public Edge getHideFragmentUpEdge(@NotNull Node node) {
-            return null;
+        public List<Edge> getUpEdges(@NotNull Node node, @NotNull List<Edge> innerUpEdges) {
+            return innerUpEdges;
         }
+
     };
 
     private final List<MutableNodeRow> allRows = new ArrayList<MutableNodeRow>();

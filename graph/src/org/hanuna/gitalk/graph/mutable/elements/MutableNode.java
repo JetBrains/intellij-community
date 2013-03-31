@@ -63,6 +63,8 @@ public class MutableNode implements Node {
     @NotNull
     @Override
     public List<Edge> getUpEdges() {
+        return nodeRow.getGraphDecorator().getUpEdges(this, upEdges);
+        /*
         GraphDecorator decorator = nodeRow.getGraphDecorator();
         Edge edge = decorator.getHideFragmentUpEdge(this);
         if (edge != null) {
@@ -71,16 +73,19 @@ public class MutableNode implements Node {
 
         List<Edge> visibleEdge = new ArrayList<Edge>();
         for (Edge upEdge : upEdges) {
-            if (decorator.isVisibleNode(upEdge.getUpNode())) {
+            if (decorator.isVisibleNode((MutableNode) upEdge.getUpNode())) {
                 visibleEdge.add(upEdge);
             }
         }
         return visibleEdge;
+        */
     }
 
     @NotNull
     @Override
     public List<Edge> getDownEdges() {
+        return nodeRow.getGraphDecorator().getDownEdges(this, downEdges);
+        /*
         GraphDecorator decorator = nodeRow.getGraphDecorator();
         Edge edge = decorator.getHideFragmentDownEdge(this);
         if (edge != null) {
@@ -95,8 +100,8 @@ public class MutableNode implements Node {
             }
         }
         return visibleEdge;
-        */
         return Collections.unmodifiableList(downEdges);
+        */
     }
 
     @NotNull
