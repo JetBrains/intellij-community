@@ -1,10 +1,9 @@
 package com.intellij.execution.console;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
-import com.intellij.openapi.ui.InputValidator;
+import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.text.StringUtil;
@@ -105,24 +104,24 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable, Confi
 
     @Nullable
     private String showEditDialog(final String initialValue) {
-      return Messages.showInputDialog(this, myQuery, "Folding pattern", Messages.getQuestionIcon(), initialValue, new InputValidator() {
+      return Messages.showInputDialog(this, myQuery, "Folding pattern", Messages.getQuestionIcon(), initialValue, new InputValidatorEx() {
         @Override
         public boolean checkInput(String inputString) {
-           return true;
+           return !StringUtil.isEmpty(inputString);
         }
 
         @Override
         public boolean canClose(String inputString) {
-          if (StringUtil.isEmpty(inputString)) {
-            ApplicationManager.getApplication().invokeLater(new Runnable() {
-              @Override
-              public void run() {
-                Messages.showErrorDialog("Console folding rule string cannot be empty", "Console Folding Rule Adding Error");
-              }
-            });
-            return false;
+          return !StringUtil.isEmpty(inputString);
+        }
+
+        @Nullable
+        @Override
+        public String getErrorText(String inputString) {
+          if (!checkInput(inputString)) {
+            return "Console folding rule string cannot be empty";
           }
-          return true;
+          return null;
         }
       });
     }
