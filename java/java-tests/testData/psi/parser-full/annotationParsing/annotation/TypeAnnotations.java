@@ -65,6 +65,8 @@ class SpecSamples {
     @NonNegative int @NonEmpty [] ints = new @NonNegative int @MinSize(2) [2];
   }
 
+  int m() @Slowpoke [] @Slowbro [] { return null; }
+
   //
   // 4. A type annotation is permitted in front of a constructor declaration ...
   //
