@@ -108,6 +108,8 @@ class Outer {
     new Boolean @<error descr="Duplicate annotation">TA</error> @<error descr="Duplicate annotation">TA</error> [42];
   }
 
+  int @TA [] mixedArrays() @TA [] <error descr="Annotations are not allowed here">@TA</error> { return new int[0][0]; }
+
   @TA Outer() { }
 
   class MyClass<@TA @TPA T> { }

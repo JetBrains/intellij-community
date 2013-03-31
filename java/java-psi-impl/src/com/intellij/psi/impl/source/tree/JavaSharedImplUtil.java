@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,7 +27,12 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.SmartList;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 public class JavaSharedImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.JavaSharedImplUtil");
@@ -35,7 +40,6 @@ public class JavaSharedImplUtil {
   private JavaSharedImplUtil() { }
 
   public static PsiType getType(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor, @NotNull PsiElement context) {
-    int cStyleArrayCount = countBrackets(anchor);
     PsiType type;
     if (typeElement instanceof PsiTypeElementImpl) {
       type = ((PsiTypeElementImpl)typeElement).getDetachedType(context);
@@ -43,34 +47,61 @@ public class JavaSharedImplUtil {
     else {
       type = typeElement.getType();
     }
-    for (int i = 0; i < cStyleArrayCount; i++) {
-      type = type.createArrayType();
+
+    List<PsiAnnotation[]> allAnnotations = collectAnnotations(anchor);
+    for (PsiAnnotation[] annotations : allAnnotations) {
+      type = type.createArrayType(annotations);
     }
+
     return type;
   }
 
   public static PsiType getTypeNoResolve(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor, @NotNull PsiElement context) {
-    int cStyleArrayCount = countBrackets(anchor);
     PsiType type = typeElement.getTypeNoResolve(context);
-    for (int i = 0; i < cStyleArrayCount; i++) {
-      type = type.createArrayType();
+
+    List<PsiAnnotation[]> allAnnotations = collectAnnotations(anchor);
+    for (PsiAnnotation[] annotations : allAnnotations) {
+      type = type.createArrayType(annotations);
     }
+
     return type;
   }
 
-  private static int countBrackets(PsiElement anchor) {
-    int cStyleArrayCount = 0;
-    ASTNode name = SourceTreeToPsiMap.psiToTreeNotNull(anchor);
-    for (ASTNode child = name.getTreeNext(); child != null; child = child.getTreeNext()) {
-      IElementType i = child.getElementType();
+  private static List<PsiAnnotation[]> collectAnnotations(PsiElement anchor) {
+    List<PsiAnnotation[]> annotations = new SmartList<PsiAnnotation[]>();
+
+    List<PsiAnnotation> current = null;
+    for (PsiElement child = anchor.getNextSibling(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PsiAnnotation) {
+        if (current == null) current = new SmartList<PsiAnnotation>();
+        current.add((PsiAnnotation)child);
+        continue;
+      }
+
+      IElementType i = child.getNode().getElementType();
       if (i == JavaTokenType.LBRACKET) {
-        cStyleArrayCount++;
+        annotations.add(ContainerUtil.toArray(current, PsiAnnotation.ARRAY_FACTORY));
+        current = null;
       }
       else if (i != JavaTokenType.RBRACKET && !ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(i)) {
         break;
       }
     }
-    return cStyleArrayCount;
+
+    return annotations;
+  }
+
+  @Nullable
+  public static PsiType findAnnotatedSubtype(@Nullable PsiType type, @NotNull PsiAnnotation annotation) {
+    while (type instanceof PsiArrayType) {
+      for (PsiAnnotation a : type.getAnnotations()) {
+        if (a == annotation) {
+          return type;
+        }
+      }
+      type = ((PsiArrayType)type).getComponentType();
+    }
+    return null;
   }
 
   public static void normalizeBrackets(PsiVariable variable) {
