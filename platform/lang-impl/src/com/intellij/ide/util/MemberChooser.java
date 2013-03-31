@@ -21,12 +21,12 @@ import com.intellij.icons.AllIcons;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.keymap.KeymapManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.ui.*;
@@ -302,15 +302,13 @@ public class MemberChooser<T extends ClassMember> extends DialogWrapper implemen
 
     ExpandAllAction expandAllAction = new ExpandAllAction();
     expandAllAction.registerCustomShortcutSet(
-      new CustomShortcutSet(
-        KeyStroke.getKeyStroke(KeyEvent.VK_EQUALS, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
+      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_EXPAND_ALL)),
       myTree);
     group.add(expandAllAction);
 
     CollapseAllAction collapseAllAction = new CollapseAllAction();
     collapseAllAction.registerCustomShortcutSet(
-      new CustomShortcutSet(
-        KeyStroke.getKeyStroke(KeyEvent.VK_MINUS, SystemInfo.isMac ? InputEvent.META_MASK : InputEvent.CTRL_MASK)),
+      new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_COLLAPSE_ALL)),
       myTree);
     group.add(collapseAllAction);
 
