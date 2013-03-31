@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.integrate;
 
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogBuilder;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
@@ -24,11 +25,9 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.idea.svn.dialogs.IntersectingLocalChangesPanel;
-import org.jetbrains.idea.svn.dialogs.LocalChangesAction;
-import org.jetbrains.idea.svn.dialogs.QuickMergeContentsVariants;
-import org.jetbrains.idea.svn.dialogs.ToBeMergedDialog;
+import org.jetbrains.idea.svn.dialogs.*;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
 import java.util.Collections;
@@ -55,19 +54,15 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
 
   @Override
   public QuickMergeContentsVariants selectMergeVariant() {
-    final int code = Messages.showYesNoCancelDialog(myProject, "Merge all?", myTitle,
-                                                      "Merge &all", "&Select revisions to merge", "Cancel", Messages.getQuestionIcon());
-    // numbers here are numbers of options in show...Dialog call
-    if (0 == code) {
-      return QuickMergeContentsVariants.all;
-    }
-    if (1 == code) {
-      return QuickMergeContentsVariants.select;
-    }
-    if (2 == code) {
-      return QuickMergeContentsVariants.cancel;
-    }
-    throw new IllegalStateException();
+    final QuickMergeWayOptionsPanel panel = new QuickMergeWayOptionsPanel();
+    final DialogBuilder builder = new DialogBuilder(myProject);
+    builder.removeAllActions();
+    builder.setTitle("Select Merge Variant");
+    builder.setCenterPanel(panel.getMainPanel());
+    panel.setWrapper(builder.getDialogWrapper());
+    builder.show();
+
+    return panel.getVariant();
   }
 
   @Override
@@ -86,7 +81,7 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   @NotNull
   @Override
   public SelectMergeItemsResult selectMergeItems(List<CommittedChangeList> lists, String mergeTitle, MergeChecker mergeChecker) {
-    final ToBeMergedDialog dialog = new ToBeMergedDialog(myProject, lists, mergeTitle, mergeChecker);
+    final ToBeMergedDialog dialog = new ToBeMergedDialog(myProject, lists, mergeTitle, mergeChecker, null);
     dialog.show();
     return new SelectMergeItemsResult() {
       @Override
@@ -132,7 +127,8 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
 
   @Override
   public void showError(@NotNull Exception exception) {
-    AbstractVcsHelper.getInstance(myProject).showErrors(Collections.singletonList(new VcsException(exception)), exception.getMessage());
+    AbstractVcsHelper.getInstance(myProject).showErrors(Collections.singletonList(new VcsException(exception)),
+      exception.getMessage() == null ? exception.getClass().getName() : exception.getMessage());
   }
 
   @Override
@@ -143,6 +139,23 @@ public class QuickMergeInteractionImpl implements QuickMergeInteraction {
   @Override
   public void showErrors(String message, boolean isError) {
     VcsBalloonProblemNotifier.showOverChangesView(myProject, message, isError ? MessageType.ERROR : MessageType.WARNING);
+  }
+
+  @Override
+  public List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
+                                                               @NotNull String mergeTitle,
+                                                               @NotNull MergeChecker mergeChecker,
+                                                               @NotNull PairConsumer<Long, MergeDialogI> loader,
+                                                               boolean everyThingLoaded) {
+    final ToBeMergedDialog dialog = new ToBeMergedDialog(myProject, list, mergeTitle, mergeChecker, loader);
+    if (everyThingLoaded) {
+      dialog.setEverythingLoaded(true);
+    }
+    dialog.show();
+    if (DialogWrapper.OK_EXIT_CODE == dialog.getExitCode()) {
+      return dialog.getSelected();
+    }
+    return null;
   }
 
   private boolean prompt(final String question) {

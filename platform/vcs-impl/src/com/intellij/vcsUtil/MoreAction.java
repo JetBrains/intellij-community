@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package git4idea.history.wholeTree;
+package com.intellij.vcsUtil;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -38,10 +38,14 @@ public abstract class MoreAction  extends AnAction implements CustomComponentAct
   private JButton myLoadMoreBtn;
 
   protected MoreAction() {
+    this(LOAD_MORE);
+  }
+
+  protected MoreAction(final String name) {
     myPanel = new JPanel();
     final BoxLayout layout = new BoxLayout(myPanel, BoxLayout.X_AXIS);
     myPanel.setLayout(layout);
-    myLoadMoreBtn = new JButton(LOAD_MORE);
+    myLoadMoreBtn = new JButton(name);
     myLoadMoreBtn.setMargin(new Insets(2, 2, 2, 2));
     myLoadMoreBtn.addActionListener(new ActionListener() {
       @Override
@@ -65,8 +69,6 @@ public abstract class MoreAction  extends AnAction implements CustomComponentAct
     myEnabled = enabled;
     myLoadMoreBtn.setVisible(myEnabled);
     myLabel.setVisible(! myEnabled);
-    //myLabel.setText(myEnabled ? "Load more" : "Loading...");
-    //myLabel.setForeground(myEnabled ? UIUtil.getTextFieldForeground() : UIUtil.getInactiveTextColor());
   }
 
   @Override

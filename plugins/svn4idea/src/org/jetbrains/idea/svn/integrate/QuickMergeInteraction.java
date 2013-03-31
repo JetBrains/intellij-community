@@ -18,8 +18,10 @@ package org.jetbrains.idea.svn.integrate;
 import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.dialogs.LocalChangesAction;
+import org.jetbrains.idea.svn.dialogs.MergeDialogI;
 import org.jetbrains.idea.svn.dialogs.QuickMergeContentsVariants;
 import org.jetbrains.idea.svn.mergeinfo.MergeChecker;
 
@@ -53,6 +55,11 @@ public interface QuickMergeInteraction {
   void showError(@NotNull Exception exception);
   void showErrors(final String message, final List<VcsException> exceptions);
   void showErrors(final String message, final boolean isError);
+
+  List<CommittedChangeList> showRecentListsForSelection(@NotNull List<CommittedChangeList> list,
+                                                        @NotNull String mergeTitle,
+                                                        @NotNull MergeChecker mergeChecker,
+                                                        @NotNull PairConsumer<Long, MergeDialogI> loader, boolean everyThingLoaded);
 
   interface SelectMergeItemsResult {
     QuickMergeContentsVariants getResultCode();

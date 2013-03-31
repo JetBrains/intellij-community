@@ -22,6 +22,8 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -163,6 +165,18 @@ public class QuickMerge {
       tasks.addAll(Arrays.asList(finalTasks));
     }
 
+    myContinuation.addExceptionHandler(VcsException.class, new Consumer<VcsException>() {
+      @Override
+      public void consume(VcsException e) {
+        myInteraction.showErrors(myTitle, Collections.singletonList(e));
+      }
+    });
+    myContinuation.addExceptionHandler(SVNException.class, new Consumer<SVNException>() {
+      @Override
+      public void consume(SVNException e) {
+        myInteraction.showErrors(myTitle, Collections.singletonList(new VcsException(e)));
+      }
+    });
     myContinuation.addExceptionHandler(RuntimeException.class, new Consumer<RuntimeException>() {
       @Override
       public void consume(RuntimeException e) {
@@ -170,6 +184,69 @@ public class QuickMerge {
       }
     });
     myContinuation.run(tasks);
+  }
+
+  private class ShowRecentInDialog extends TaskDescriptor {
+    private final LoadRecentBranchRevisions myLoader;
+
+    private ShowRecentInDialog(LoadRecentBranchRevisions loader) {
+      super("", Where.AWT);
+      myLoader = loader;
+    }
+
+    @Override
+    public void run(ContinuationContext context) {
+      final PairConsumer<Long, MergeDialogI> loader = new PairConsumer<Long, MergeDialogI>() {
+        @Override
+        public void consume(Long bunchSize, final MergeDialogI dialog) {
+          final LoadRecentBranchRevisions loader =
+            new LoadRecentBranchRevisions(myBranchName, dialog.getLastNumber(), myWcInfo, myVcs, mySourceUrl);
+          loader.setBunchSize(bunchSize.intValue());
+          final TaskDescriptor updater = new TaskDescriptor("", Where.AWT) {
+            @Override
+            public void run(ContinuationContext context) {
+              dialog.addMoreLists(loader.getCommittedChangeLists());
+              if (loader.isLastLoaded()) {
+                dialog.setEverythingLoaded(true);
+              }
+            }
+
+            @Override
+            public void canceled() {
+              dialog.addMoreLists(Collections.<CommittedChangeList>emptyList());
+              dialog.setEverythingLoaded(true);
+            }
+          };
+          final Continuation fragmented = Continuation.createFragmented(myProject, true);
+          fragmented.addExceptionHandler(VcsException.class, new Consumer<VcsException>() {
+            @Override
+            public void consume(VcsException e) {
+              PopupUtil.showBalloonForActiveComponent(e.getMessage() == null ? e.getClass().getName() : e.getMessage(), MessageType.ERROR);
+            }
+          });
+          fragmented.run(loader, updater);
+        }
+      };
+      final List<CommittedChangeList> lists = myInteraction.showRecentListsForSelection(myLoader.getCommittedChangeLists(),
+        myTitle, myLoader.getHelper(), loader, myLoader.isLastLoaded());
+
+      if (lists != null && ! lists.isEmpty()){
+          final MergerFactory factory = new ChangeListsMergerFactory(lists) {
+            @Override
+            public IMerger createMerger(SvnVcs vcs, File target, UpdateEventHandler handler, SVNURL currentBranchUrl, String branchName) {
+              return new GroupMerger(vcs, lists, target, handler, currentBranchUrl, branchName, false, false, false);
+            }
+          };
+        // fictive branch point, just for
+        final SvnBranchPointsCalculator.BranchCopyData copyData =
+          new SvnBranchPointsCalculator.BranchCopyData(myWcInfo.getUrl().toString(), -1, mySourceUrl, -1);
+        context.next(new LocalChangesPrompt(false, lists,
+            new SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>(false, copyData)),
+            new MergeTask(factory, myTitle));
+      } else {
+        context.cancelEverything();
+      }
+    }
   }
 
   private class MergeAllOrSelectedChooser extends TaskDescriptor {
@@ -183,6 +260,12 @@ public class QuickMerge {
       if (QuickMergeContentsVariants.cancel == variant) return;
       if (QuickMergeContentsVariants.all == variant) {
         insertMergeAll(context);
+        return;
+      }
+      if (QuickMergeContentsVariants.showLatest == variant) {
+        final LoadRecentBranchRevisions loader = new LoadRecentBranchRevisions(myBranchName, -1, myWcInfo, myVcs, mySourceUrl);
+        final ShowRecentInDialog dialog = new ShowRecentInDialog(loader);
+        context.next(loader, dialog);
         return;
       }
 
@@ -200,7 +283,7 @@ public class QuickMerge {
   }
 
   private void insertMergeAll(final ContinuationContext context) {
-    final List<TaskDescriptor> queue = new LinkedList<TaskDescriptor>();
+    final List<TaskDescriptor> queue = new ArrayList<TaskDescriptor>();
     insertMergeAll(queue);
     context.next(queue);
   }
@@ -380,6 +463,56 @@ public class QuickMerge {
     }
   }
 
+  // true if errors found
+  static boolean checkListForPaths(String relativeLocal,
+                                   String relativeBranch, Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>> pair) {
+    final List<TreeStructureNode<SVNLogEntry>> children = pair.getSecond().getChildren();
+    boolean localChange = false;
+    for (TreeStructureNode<SVNLogEntry> child : children) {
+      if (checkForSubtree(child, relativeLocal, relativeBranch)) {
+        localChange = true;
+        break;
+      }
+    }
+    if (! localChange) {
+      // check self
+      return checkForEntry(pair.getSecond().getMe(), relativeLocal, relativeBranch);
+    }
+    return localChange;
+  }
+
+  // true if errors found
+  private static boolean checkForSubtree(final TreeStructureNode<SVNLogEntry> tree,
+                                         String relativeBranch, final String localURL) {
+    final LinkedList<TreeStructureNode<SVNLogEntry>> queue = new LinkedList<TreeStructureNode<SVNLogEntry>>();
+    queue.addLast(tree);
+
+    while (! queue.isEmpty()) {
+      final TreeStructureNode<SVNLogEntry> element = queue.removeFirst();
+      ProgressManager.checkCanceled();
+
+      if (checkForEntry(element.getMe(), localURL, relativeBranch)) return true;
+      queue.addAll(element.getChildren());
+    }
+    return false;
+  }
+
+  // true if errors found
+  private static boolean checkForEntry(final SVNLogEntry entry, final String localURL, String relativeBranch) {
+    boolean atLeastOneUnderBranch = false;
+    final Map map = entry.getChangedPaths();
+    for (Object o : map.values()) {
+      final SVNLogEntryPath path = (SVNLogEntryPath) o;
+      if (SVNPathUtil.isAncestor(localURL, path.getPath())) {
+        return true;
+      }
+      if (! atLeastOneUnderBranch && SVNPathUtil.isAncestor(relativeBranch, path.getPath())) {
+        atLeastOneUnderBranch = true;
+      }
+    }
+    return ! atLeastOneUnderBranch;
+  }
+
   private class MergeCalculator extends TaskDescriptor implements
                      Consumer<TransparentlyFailedValueI<SvnBranchPointsCalculator.WrapperInvertor<SvnBranchPointsCalculator.BranchCopyData>, SVNException>> {
     private final static String ourOneShotStrategy = "svn.quickmerge.oneShotStrategy";
@@ -447,6 +580,8 @@ public class QuickMerge {
 
       String local = SVNPathUtil.getRelativePath(myWcInfo.getRepositoryRoot(), myWcInfo.getRootUrl());
       final String relativeLocal = (local.startsWith("/") ? local : "/" + local);
+      String relativeBranch = SVNPathUtil.getRelativePath(myWcInfo.getRepositoryRoot(), mySourceUrl);
+      relativeBranch = (relativeBranch.startsWith("/") ? relativeBranch : "/" + relativeBranch);
 
       final LinkedList<Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>>> list =
         new LinkedList<Pair<SvnChangeList, TreeStructureNode<SVNLogEntry>>>();
@@ -473,14 +608,7 @@ public class QuickMerge {
 
         if (SvnMergeInfoCache.MergeCheckResult.NOT_MERGED.equals(checkResult)) {
           // additionally check for being 'local'
-          final List<TreeStructureNode<SVNLogEntry>> children = pair.getSecond().getChildren();
-          boolean localChange = false;
-          for (TreeStructureNode<SVNLogEntry> child : children) {
-            if (isLocalRevisionMergeIteration(child, relativeLocal, indicator)) {
-              localChange = true;
-              break;
-            }
-          }
+          boolean localChange = checkListForPaths(relativeLocal, relativeBranch, pair);
 
           if (! localChange) {
             myNotMerged.add(svnList);
@@ -493,29 +621,6 @@ public class QuickMerge {
         return;
       }
       context.next(new ShowRevisionSelector(copyDataValue));
-    }
-
-    private boolean isLocalRevisionMergeIteration(final TreeStructureNode<SVNLogEntry> tree,
-                                                  final String localURL,
-                                                  ProgressIndicator indicator) {
-      final LinkedList<TreeStructureNode<SVNLogEntry>> queue = new LinkedList<TreeStructureNode<SVNLogEntry>>();
-      queue.addLast(tree);
-
-      while (! queue.isEmpty()) {
-        final TreeStructureNode<SVNLogEntry> element = queue.removeFirst();
-        indicator.checkCanceled();
-        
-        final Map map = element.getMe().getChangedPaths();
-        for (Object o : map.values()) {
-          final SVNLogEntryPath path = (SVNLogEntryPath) o;
-          if (SVNPathUtil.isAncestor(localURL, path.getPath())) {
-            return true;
-          }
-          break;  // do not check all. first should match or fail
-        }
-        queue.addAll(element.getChildren());
-      }
-      return false;
     }
 
     private class ShowRevisionSelector extends TaskDescriptor {

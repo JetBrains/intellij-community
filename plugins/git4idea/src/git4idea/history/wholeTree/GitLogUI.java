@@ -61,6 +61,7 @@ import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.AdjustComponentWhenShown;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.vcsUtil.MoreAction;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
 import git4idea.branch.GitBranchUtil;

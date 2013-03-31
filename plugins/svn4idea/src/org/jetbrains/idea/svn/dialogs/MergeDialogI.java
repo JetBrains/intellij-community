@@ -15,12 +15,20 @@
  */
 package org.jetbrains.idea.svn.dialogs;
 
+import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
+
+import java.util.List;
+
 /**
  * Created with IntelliJ IDEA.
  * User: Irina.Chernushina
- * Date: 3/27/13
- * Time: 7:53 PM
+ * Date: 3/30/13
+ * Time: 8:11 PM
  */
-public enum QuickMergeContentsVariants {
-  all, select, cancel, showLatest
+public interface MergeDialogI {
+  void setEverythingLoaded(boolean everythingLoaded);
+
+  long getLastNumber();
+
+  void addMoreLists(List<CommittedChangeList> list);
 }
