@@ -3,9 +3,9 @@
     <CLASSES>
       <root url="jar://$PROJECT_DIR$/lib/swingx-1.6.1.jar!/" />
     </CLASSES>
-    <JAVADOC>
-      <root url="file://$PROJECT_DIR$/lib/swingx-1.6.2-sources/docs" />
-    </JAVADOC>
-    <SOURCES />
+    <JAVADOC />
+    <SOURCES>
+      <root url="jar://$PROJECT_DIR$/lib/swingx-all-1.6.4-sources.jar!/" />
+    </SOURCES>
   </library>
 </component>
