@@ -1,11 +1,13 @@
 package org.hanuna.gitalk.graphmodel.fragment;
 
+import org.hanuna.gitalk.common.Function;
 import org.hanuna.gitalk.common.compressedlist.UpdateRequest;
 import org.hanuna.gitalk.graph.GraphTestUtils;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
+import org.hanuna.gitalk.graphmodel.impl.GraphDecoratorImpl;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Test;
 
@@ -34,7 +36,13 @@ public class FragmentManagerTest {
                 graph.updateVisibleRows();
             }
         });
-        graph.setGraphDecorator(fragmentManager.getGraphDecorator());
+        graph.setGraphDecorator(new GraphDecoratorImpl(fragmentManager.getGraphPreDecorator(), new Function<Node, Boolean>() {
+            @NotNull
+            @Override
+            public Boolean get(@NotNull Node key) {
+                return true;
+            }
+        }));
 
         Node node = getCommitNode(graph, hideNodeRowIndex);
         GraphFragment fragment = fragmentManager.relateFragment(node);

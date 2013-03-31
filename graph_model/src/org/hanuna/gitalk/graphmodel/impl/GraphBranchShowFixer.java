@@ -6,6 +6,7 @@ import org.hanuna.gitalk.graph.mutable.GraphDecorator;
 import org.hanuna.gitalk.graph.mutable.MutableGraph;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
 import org.hanuna.gitalk.graph.mutable.elements.MutableNodeRow;
+import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.hanuna.gitalk.graphmodel.fragment.FragmentManagerImpl;
 import org.jetbrains.annotations.NotNull;
@@ -23,7 +24,7 @@ public class GraphBranchShowFixer {
 
     private Set<Node> prevVisibleNodes;
     private Set<Node> newVisibleNodes;
-    private GraphDecorator fragmentGraphDecorator;
+    private FragmentManager.GraphPreDecorator fragmentGraphDecorator;
 
     public GraphBranchShowFixer(MutableGraph graph, FragmentManagerImpl fragmentManager) {
         this.graph = graph;
@@ -33,7 +34,7 @@ public class GraphBranchShowFixer {
     public void fixCrashBranches(@NotNull Set<Node> prevVisibleNodes, @NotNull Set<Node> newVisibleNodes) {
         this.prevVisibleNodes = prevVisibleNodes;
         this.newVisibleNodes = newVisibleNodes;
-        fragmentGraphDecorator = fragmentManager.getGraphDecorator();
+        fragmentGraphDecorator = fragmentManager.getGraphPreDecorator();
         Set<Node> badHiddenNode = new HashSet<Node>();
         for (MutableNodeRow row : graph.getAllRows()) {
             for (MutableNode node : row.getInnerNodeList()) {

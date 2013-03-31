@@ -4,16 +4,19 @@ import org.hanuna.gitalk.common.MultiMap;
 import org.hanuna.gitalk.graph.elements.Edge;
 import org.hanuna.gitalk.graph.elements.Node;
 import org.hanuna.gitalk.graph.mutable.GraphDecorator;
+import org.hanuna.gitalk.graph.mutable.elements.MutableNode;
+import org.hanuna.gitalk.graphmodel.FragmentManager;
 import org.hanuna.gitalk.graphmodel.GraphFragment;
 import org.hanuna.gitalk.graphmodel.fragment.elements.HideFragmentEdge;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
 
 /**
  * @author erokhins
  */
-public class FragmentGraphDecorator implements GraphDecorator {
+public class GraphFragmentController implements FragmentManager.GraphPreDecorator {
     private final Set<Node> hideNodes = new HashSet<Node>();
     private final Map<Edge, GraphFragment> hideFragments = new HashMap<Edge, GraphFragment>();
     private final MultiMap<Node, Edge> upNodeEdges = new MultiMap<Node, Edge>();
@@ -25,6 +28,7 @@ public class FragmentGraphDecorator implements GraphDecorator {
     }
 
     @Override
+    @Nullable
     public Edge getHideFragmentUpEdge(@NotNull Node node) {
         List<Edge> edges = downNodeEdges.get(node);
         for (Edge edge : edges) {
@@ -36,6 +40,7 @@ public class FragmentGraphDecorator implements GraphDecorator {
     }
 
     @Override
+    @Nullable
     public Edge getHideFragmentDownEdge(@NotNull Node node) {
         List<Edge> edges = upNodeEdges.get(node);
         for (Edge edge : edges) {

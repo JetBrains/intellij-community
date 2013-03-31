@@ -53,23 +53,13 @@ public class GraphModelImpl implements GraphModel {
         this.visibleNodes = new BranchVisibleNodes(graph);
         visibleNodes.setVisibleNodes(visibleNodes.generateVisibleBranchesNodes(isStartedBranchVisibilityNode));
         branchShowFixer = new GraphBranchShowFixer(graph, fragmentManager);
-        graph.setGraphDecorator(new GraphDecorator() {
-            private final GraphDecorator decorator = fragmentManager.getGraphDecorator();
+        graph.setGraphDecorator(new GraphDecoratorImpl(fragmentManager.getGraphPreDecorator(), new Function<Node, Boolean>() {
+            @NotNull
             @Override
-            public boolean isVisibleNode(@NotNull Node node) {
-                return visibleNodes.isVisibleNode(node) && decorator.isVisibleNode(node);
+            public Boolean get(@NotNull Node key) {
+                return visibleNodes.isVisibleNode(key);
             }
-
-            @Override
-            public Edge getHideFragmentDownEdge(@NotNull Node node) {
-                return decorator.getHideFragmentDownEdge(node);
-            }
-
-            @Override
-            public Edge getHideFragmentUpEdge(@NotNull Node node) {
-                return decorator.getHideFragmentUpEdge(node);
-            }
-        });
+        }));
         graph.updateVisibleRows();
     }
 

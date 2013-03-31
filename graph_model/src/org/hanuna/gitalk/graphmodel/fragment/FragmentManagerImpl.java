@@ -21,7 +21,7 @@ import java.util.Collections;
 public class FragmentManagerImpl implements FragmentManager {
     private final MutableGraph graph;
     private final FragmentGenerator fragmentGenerator;
-    private final FragmentGraphDecorator graphDecorator = new FragmentGraphDecorator();
+    private final GraphFragmentController graphDecorator = new GraphFragmentController();
     private final CallBackFunction callBackFunction;
 
     private boolean updateFlag = true;
@@ -45,7 +45,7 @@ public class FragmentManagerImpl implements FragmentManager {
 
     @NotNull
     @Override
-    public GraphDecorator getGraphDecorator() {
+    public GraphPreDecorator getGraphPreDecorator() {
         return graphDecorator;
     }
 
