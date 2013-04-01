@@ -13,16 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.util.dom.generator;
 
-import org.apache.xerces.xni.parser.XMLEntityResolver;
+/*
+ * XSD/DTD Model generator tool
+ *
+ * By Gregory Shrago
+ * 2002 - 2006
+ */
+package org.jetbrains.idea.devkit.dom.generator;
 
 import java.io.File;
-import java.util.Collection;
 
 /**
  * @author Konstantin Bulenkov
  */
-public interface ModelLoader {
-  void loadModel(ModelDesc model, Collection<File> files, XMLEntityResolver resolver) throws Exception;
+public interface FileManager {
+  public File releaseOutputFile(File outFile);
+  public File getOutputFile(File target);
 }

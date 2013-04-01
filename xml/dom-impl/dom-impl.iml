@@ -18,7 +18,6 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="xml-openapi" />
-    <orderEntry type="library" name="DTDParser" level="project" />
     <orderEntry type="module" module-name="platform-resources" />
   </component>
   <component name="copyright">

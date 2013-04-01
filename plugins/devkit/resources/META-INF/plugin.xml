@@ -140,6 +140,10 @@
 
       <action internal="true" class="org.jetbrains.idea.devkit.actions.ShowSerializedXmlAction" text="Show Serialized XML for Class"
               id="ShowSerializedXml"/>
+
+      <action internal="true" class="org.jetbrains.idea.devkit.dom.generator.GenerateDomModelAction" text="Generate Dom Model"
+              id="GenerateDomModel"/>
+
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 
