@@ -143,7 +143,7 @@ public class GitUtil {
       }
       pathToDir = FileUtil.toSystemIndependentName(canonicalPath);
     }
-    return VcsUtil.getVirtualFile(pathToDir);
+    return VcsUtil.getVirtualFileWithRefresh(new File(pathToDir));
   }
 
   /**
