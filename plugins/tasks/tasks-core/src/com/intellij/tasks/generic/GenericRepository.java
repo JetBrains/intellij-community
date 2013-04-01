@@ -84,7 +84,6 @@ public class GenericRepository extends BaseRepositoryImpl {
     httpClient.executeMethod(method);
     if (method.getStatusCode() != 200) throw new Exception("Cannot get tasks: HTTP status code " + method.getStatusCode());
     final String response = method.getResponseBodyAsString();
-    System.out.println(response);
     return parseResponse(query, max, response);
   }
 
