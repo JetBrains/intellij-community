@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,15 +30,17 @@ import java.io.File;
  */
 public class ProjectViewSelectInExplorerTarget implements SelectInTarget, DumbAware {
   @Override
-  public boolean canSelect(final SelectInContext context) {
-    final VirtualFile file = context.getVirtualFile();
-    return RevealFileAction.isLocalFile(file);
+  public boolean canSelect(SelectInContext context) {
+    VirtualFile file = ShowFilePathAction.findLocalFile(context.getVirtualFile());
+    return file != null;
   }
 
   @Override
-  public void selectIn(final SelectInContext context, final boolean requestFocus) {
-    final VirtualFile file = context.getVirtualFile();
-    ShowFilePathAction.openFile(new File(file.getPresentableUrl()));
+  public void selectIn(SelectInContext context, boolean requestFocus) {
+    VirtualFile file = ShowFilePathAction.findLocalFile(context.getVirtualFile());
+    if (file != null) {
+      ShowFilePathAction.openFile(new File(file.getPresentableUrl()));
+    }
   }
 
   @Override
