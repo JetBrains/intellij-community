@@ -34,6 +34,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.wm.IdeRootPaneNorthExtension;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -111,7 +112,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
     return myWrapperPanel;
   }
-  
+
   public static class NavBarWrapperPanel extends JPanel {
     public NavBarWrapperPanel(LayoutManager layout) {
       super(layout);
@@ -243,9 +244,12 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         Graphics2D g2d = (Graphics2D) g.create();
         g2d.translate(r.x, r.y);
 
-        Rectangle rectangle =
-          new Rectangle(0, 0, r.width + insets.left + insets.right, r.height + insets.top + insets.bottom);
+        Rectangle rectangle = new Rectangle(0, 0, r.width + insets.left + insets.right, r.height + insets.top + insets.bottom);
         NavBarUIManager.getUI().doPaintNavBarPanel(g2d, rectangle, isMainToolbarVisible(), isUndocked());
+        if (UIUtil.isUnderAquaLookAndFeel() && isUndocked()) {
+          Rectangle bounds = getParent().getBounds();
+          NavBarUIManager.getUI().doPaintWrapperPanel(g2d, bounds, false);
+        }
         
         g2d.dispose();
       }
