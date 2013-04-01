@@ -52,13 +52,17 @@ import com.intellij.packaging.impl.elements.ManifestFileUtil;
 import com.intellij.packaging.ui.ManifestFileConfiguration;
 import com.intellij.ui.*;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ThreeStateCheckBox;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.CompoundBorder;
+import javax.swing.border.EmptyBorder;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -199,13 +203,23 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
     Splitter splitter = new Splitter(false);
     final JPanel leftPanel = new JPanel(new BorderLayout());
-    leftPanel.add(myLayoutTreeComponent.getTreePanel(), BorderLayout.CENTER);
-    leftPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 0));
+    JPanel treePanel = myLayoutTreeComponent.getTreePanel();
+    if (UIUtil.isUnderDarcula()) {
+      treePanel.setBorder(new EmptyBorder(3, 0, 0, 0));
+    }
+    leftPanel.add(treePanel, BorderLayout.CENTER);
+    if (UIUtil.isUnderDarcula()) {
+      CompoundBorder border =
+        new CompoundBorder(new CustomLineBorder(UIUtil.getBorderColor(), 0, 0, 0, 1), BorderFactory.createEmptyBorder(0, 0, 0, 0));
+      leftPanel.setBorder(border);
+    } else {
+      leftPanel.setBorder(BorderFactory.createEmptyBorder(3, 3, 3, 0));
+    }
     splitter.setFirstComponent(leftPanel);
 
     final JPanel rightPanel = new JPanel(new BorderLayout());
     final JPanel rightTopPanel = new JPanel(new BorderLayout());
-    final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 0, 0));
+    final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
     labelPanel.add(new JLabel("Available Elements"));
     final HyperlinkLabel link = new HyperlinkLabel("");
     link.setIcon(AllIcons.General.Help);
@@ -223,8 +237,17 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     labelPanel.add(link);
     rightTopPanel.add(labelPanel, BorderLayout.SOUTH);
     rightPanel.add(rightTopPanel, BorderLayout.NORTH);
-    rightPanel.add(ScrollPaneFactory.createScrollPane(mySourceItemsTree), BorderLayout.CENTER);
-    rightPanel.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 3));
+    JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(mySourceItemsTree, UIUtil.isUnderDarcula());
+    JPanel scrollPaneWrap = new JPanel(new BorderLayout());
+    scrollPaneWrap.add(scrollPane, BorderLayout.CENTER);
+    scrollPaneWrap.setBorder(new EmptyBorder(3, 0, 0, 0));
+
+    rightPanel.add(scrollPaneWrap, BorderLayout.CENTER);
+    if (UIUtil.isUnderDarcula()) {
+      rightPanel.setBorder(new CompoundBorder(new CustomLineBorder(0, 1, 0, 0), BorderFactory.createEmptyBorder(0, 0, 0, 0)));
+    } else {
+      rightPanel.setBorder(BorderFactory.createEmptyBorder(3, 0, 3, 3));
+    }
     splitter.setSecondComponent(rightPanel);
 
 
@@ -245,9 +268,13 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     });
 
     ActionToolbar toolbar = ActionManager.getInstance().createActionToolbar(ActionPlaces.UNKNOWN, createToolbarActionGroup(), true);
-    leftPanel.add(toolbar.getComponent(), BorderLayout.NORTH);
+    JComponent toolbarComponent = toolbar.getComponent();
+    if (UIUtil.isUnderDarcula()) {
+      toolbarComponent.setBorder(new CustomLineBorder(0,0,1,0));
+    }
+    leftPanel.add(toolbarComponent, BorderLayout.NORTH);
     toolbar.updateActionsImmediately();
-    rightTopPanel.setPreferredSize(new Dimension(-1, toolbar.getComponent().getPreferredSize().height));
+    rightTopPanel.setPreferredSize(new Dimension(-1, toolbarComponent.getPreferredSize().height));
 
     myTabbedPane = new TabbedPaneWrapper(this);
     myTabbedPane.addTab("Output Layout", splitter);
