@@ -30,6 +30,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColorIcon;
@@ -39,6 +40,8 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
+import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxWrapWithDefineIntention;
+import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyElementDescriptor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -72,11 +75,29 @@ public class JavaFxAnnotator implements Annotator {
         attachColorIcon(element, holder, StringUtil.stripQuotesAroundValue(element.getText()));
       }
     } else if (element instanceof XmlAttribute) {
-      final String attributeName = ((XmlAttribute)element).getName();
-      if (!FxmlConstants.FX_DEFAULT_PROPERTIES.contains(attributeName) && 
-          !((XmlAttribute)element).isNamespaceDeclaration() &&
-          JavaFxPsiUtil.isReadOnly(attributeName,  ((XmlAttribute)element).getParent())) {
+      final XmlAttribute attribute = (XmlAttribute)element;
+      final String attributeName = attribute.getName();
+      if (!FxmlConstants.FX_DEFAULT_PROPERTIES.contains(attributeName) &&
+          !attribute.isNamespaceDeclaration() &&
+          JavaFxPsiUtil.isReadOnly(attributeName, attribute.getParent())) {
         holder.createErrorAnnotation(element.getNavigationElement(), "Property '" + attributeName + "' is read-only");
+      }
+      if (FxmlConstants.FX_ELEMENT_SOURCE.equals(attributeName)) {
+        final XmlAttributeValue valueElement = attribute.getValueElement();
+        if (valueElement != null) {
+          final XmlTag xmlTag = attribute.getParent();
+          if (xmlTag != null) {
+            final XmlTag referencedTag = JavaFxDefaultPropertyElementDescriptor.getReferencedTag(xmlTag);
+            if (referencedTag != null) {
+              if (referencedTag.getTextOffset() > xmlTag.getTextOffset()) {
+                holder.createErrorAnnotation(valueElement.getValueTextRange(), valueElement.getValue() + " not found");
+              } else if (xmlTag.getParentTag() == referencedTag.getParentTag()) {
+                final Annotation annotation = holder.createErrorAnnotation(valueElement.getValueTextRange(), "Duplicate child added");
+                annotation.registerFix(new JavaFxWrapWithDefineIntention(referencedTag, valueElement.getValue()));
+              }
+            }
+          }
+        }
       }
     }
   }
