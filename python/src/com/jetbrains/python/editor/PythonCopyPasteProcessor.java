@@ -16,10 +16,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStatementList;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +40,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
                                   Editor editor,
                                   String text,
                                   RawText rawText) {
-    if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE) {
+    if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE || file.getLanguage() != PythonLanguage.getInstance()) {
       return text;
     }
     final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
