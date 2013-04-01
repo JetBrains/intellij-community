@@ -8,6 +8,7 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -33,6 +34,20 @@ public class JavaFxTagNameReference extends TagNameReference{
 
   public JavaFxTagNameReference(ASTNode element, boolean startTagFlag) {
     super(element, startTagFlag);
+  }
+
+  @Override
+  public TextRange getRangeInElement() {
+    final TextRange rangeInElement = super.getRangeInElement();
+    final XmlTag tagElement = getTagElement();
+    if (tagElement != null) {
+      final String tagElementName = tagElement.getName();
+      final int dotIdx = tagElementName.indexOf(".");
+      if (dotIdx > -1 && dotIdx + 2 < rangeInElement.getEndOffset()) {
+        return new TextRange(rangeInElement.getStartOffset() + dotIdx + 1, rangeInElement.getEndOffset());
+      }
+    }
+    return rangeInElement;
   }
 
   @Override
