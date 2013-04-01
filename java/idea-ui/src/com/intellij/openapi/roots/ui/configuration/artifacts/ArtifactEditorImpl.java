@@ -63,6 +63,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import javax.swing.border.CompoundBorder;
 import javax.swing.border.EmptyBorder;
+import javax.swing.border.LineBorder;
 import javax.swing.event.HyperlinkEvent;
 import java.awt.*;
 import java.awt.event.ActionEvent;
@@ -206,6 +207,8 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
     JPanel treePanel = myLayoutTreeComponent.getTreePanel();
     if (UIUtil.isUnderDarcula()) {
       treePanel.setBorder(new EmptyBorder(3, 0, 0, 0));
+    } else {
+      treePanel.setBorder(new LineBorder(UIUtil.getBorderColor()));
     }
     leftPanel.add(treePanel, BorderLayout.CENTER);
     if (UIUtil.isUnderDarcula()) {
@@ -219,8 +222,9 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
 
     final JPanel rightPanel = new JPanel(new BorderLayout());
     final JPanel rightTopPanel = new JPanel(new BorderLayout());
-    final JPanel labelPanel = new JPanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
-    labelPanel.add(new JLabel("Available Elements"));
+    final JPanel labelPanel = new JPanel();
+    labelPanel.setLayout(new BoxLayout(labelPanel, BoxLayout.X_AXIS));
+    labelPanel.add(new JLabel("Available Elements "));
     final HyperlinkLabel link = new HyperlinkLabel("");
     link.setIcon(AllIcons.General.Help);
     link.setUseIconAsLink(true);
@@ -235,12 +239,16 @@ public class ArtifactEditorImpl implements ArtifactEditorEx {
       }
     });
     labelPanel.add(link);
-    rightTopPanel.add(labelPanel, BorderLayout.SOUTH);
+    rightTopPanel.add(labelPanel, BorderLayout.CENTER);
     rightPanel.add(rightTopPanel, BorderLayout.NORTH);
     JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(mySourceItemsTree, UIUtil.isUnderDarcula());
     JPanel scrollPaneWrap = new JPanel(new BorderLayout());
     scrollPaneWrap.add(scrollPane, BorderLayout.CENTER);
-    scrollPaneWrap.setBorder(new EmptyBorder(3, 0, 0, 0));
+    if (UIUtil.isUnderDarcula()) {
+      scrollPaneWrap.setBorder(new EmptyBorder(3, 0, 0, 0));
+    } else {
+      scrollPaneWrap.setBorder(new LineBorder(UIUtil.getBorderColor()));
+    }
 
     rightPanel.add(scrollPaneWrap, BorderLayout.CENTER);
     if (UIUtil.isUnderDarcula()) {
