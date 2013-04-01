@@ -44,7 +44,6 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.LinkedHashSet;
-import java.util.Set;
 
 /**
  * User: anna
@@ -113,7 +112,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getRootProfile();
     LinkedHashSet<InspectionProfileEntry> allEntries = new LinkedHashSet<InspectionProfileEntry>();
     allEntries.add(baseTool);
-    GlobalInspectionContextImpl.collectDependentInspections(baseTool, allEntries, rootProfile);
+    rootProfile.collectDependentInspections(baseTool, allEntries);
     InspectionProfileEntry[] toolsArray = allEntries.toArray(new InspectionProfileEntry[allEntries.size()]);
     final InspectionProfileImpl model = InspectionProfileImpl.createSimple(baseTool.getDisplayName(), toolsArray);
     try {
