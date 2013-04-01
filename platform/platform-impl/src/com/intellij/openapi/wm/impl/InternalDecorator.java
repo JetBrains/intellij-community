@@ -58,7 +58,7 @@ import java.util.Map;
  */
 public final class InternalDecorator extends JPanel implements Queryable, TypeSafeDataProvider {
 
-  private static final int DIVIDER_WIDTH = 5;
+  private static final int DIVIDER_WIDTH = UIUtil.isUnderDarcula() ? 2 : 5;
 
   private Project myProject;
   private WindowInfoImpl myInfo;
