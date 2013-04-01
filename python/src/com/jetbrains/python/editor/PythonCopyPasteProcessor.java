@@ -10,6 +10,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -44,13 +45,15 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE) {
       return text;
     }
-    final boolean useTabs =
-      CodeStyleSettingsManager.getSettings(project).useTabCharacter(PythonFileType.INSTANCE);
+    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
+    final boolean useTabs = codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE);
+    final int indentSize = codeStyleSettings.getIndentSize(PythonFileType.INSTANCE);
     CharFilter NOT_INDENT_FILTER = new CharFilter() {
       public boolean accept(char ch) {
         return useTabs? ch != '\t' : ch != ' ';
       }
     };
+    final String indentChar = useTabs ? "\t" : " ";
 
     final CaretModel caretModel = editor.getCaretModel();
     final SelectionModel selectionModel = editor.getSelectionModel();
@@ -60,6 +63,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final int lineNumber = document.getLineNumber(caretOffset);
     final int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
 
+    text = addLeadingSpaces(text, NOT_INDENT_FILTER, indentSize, indentChar);
     final String indentText = getIndentText(file, document, caretOffset, lineNumber);
 
     int toRemove = calculateIndentToRemove(text, NOT_INDENT_FILTER);
@@ -72,7 +76,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     String newText = "";
     if (StringUtil.isEmptyOrSpaces(indentText)) {
       for (String s : strings) {
-        newText += indentText + StringUtil.trimStart(s, StringUtil.repeat(useTabs? "\t" : " ", toRemove));
+        newText += indentText + StringUtil.trimStart(s, StringUtil.repeat(indentChar, toRemove));
       }
     }
     else {
@@ -83,6 +87,19 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     if (addLinebreak(text, toString, useTabs) && selectionModel.getSelectionStart() == selectionModel.getSelectionEnd())
       newText += "\n";
     return newText;
+  }
+
+  private static String addLeadingSpaces(String text, final CharFilter filter, int indentSize, String indentChar) {
+    final List<String> strings = StringUtil.split(text, "\n", false);
+    if (strings.size() > 1) {
+      int firstLineIndent = StringUtil.findFirst(strings.get(0), filter);
+      int secondLineIndent = StringUtil.findFirst(strings.get(1), filter);
+      final int diff = secondLineIndent - firstLineIndent;
+      if (diff > indentSize) {
+        text = StringUtil.repeat(indentChar, diff - indentSize) + text;
+      }
+    }
+    return text;
   }
 
   private static String getIndentText(@NotNull final PsiFile file,
@@ -143,13 +160,9 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
 
   private static boolean inStatementList(@NotNull final PsiFile file, int caretOffset) {
     final PsiElement element = file.findElementAt(caretOffset);
-    final PsiElement element1 = file.findElementAt(caretOffset);
     return PsiTreeUtil.getParentOfType(element, PyStatementList.class) != null ||
-           PsiTreeUtil.getParentOfType(element1, PyStatementList.class) != null ||
            PsiTreeUtil.getParentOfType(element, PyFunction.class) != null ||
-           PsiTreeUtil.getParentOfType(element1, PyFunction.class) != null ||
-           PsiTreeUtil.getParentOfType(element, PyClass.class) != null ||
-           PsiTreeUtil.getParentOfType(element1, PyClass.class) != null;
+           PsiTreeUtil.getParentOfType(element, PyClass.class) != null;
   }
 
   private static boolean addLinebreak(@NotNull String text, @NotNull String toString, boolean useTabs) {

@@ -297,6 +297,10 @@ public class PyCopyPasteTest extends PyTestCase {
     doTest();
   }
 
+  public void testInnerToOuterFunction() {
+    doTest();
+  }
+
   private void doTestTabs() {
     final CommonCodeStyleSettings.IndentOptions indentOptions =
       CodeStyleSettingsManager.getSettings(myFixture.getProject()).getIndentOptions(PythonFileType.INSTANCE);
