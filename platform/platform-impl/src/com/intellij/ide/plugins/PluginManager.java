@@ -169,6 +169,7 @@ public class PluginManager {
     try {
       //noinspection HardCodedStringLiteral
       ThreadGroup threadGroup = new ThreadGroup("Idea Thread Group") {
+        @Override
         public void uncaughtException(Thread t, Throwable e) {
           if (!(e instanceof ProcessCanceledException)) {
             getLogger().error(e);
@@ -177,6 +178,7 @@ public class PluginManager {
       };
 
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           try {
             ClassloaderUtil.clearJarURLCache();
@@ -448,9 +450,8 @@ public class PluginManager {
   }
 
   public static boolean isIncompatible(final IdeaPluginDescriptor descriptor) {
-    BuildNumber buildNumber;
     try {
-      buildNumber = getBuildNumber();
+      BuildNumber buildNumber = getBuildNumber();
       if (!StringUtil.isEmpty(descriptor.getSinceBuild())) {
         BuildNumber sinceBuild = BuildNumber.fromString(descriptor.getSinceBuild(), descriptor.getName());
         if (sinceBuild.compareTo(buildNumber) > 0) {
@@ -480,6 +481,7 @@ public class PluginManager {
     */
     final Comparator<PluginId> idComparator = builder.comparator();
     return new Comparator<IdeaPluginDescriptor>() {
+      @Override
       public int compare(IdeaPluginDescriptor o1, IdeaPluginDescriptor o2) {
         return idComparator.compare(o1.getPluginId(), o2.getPluginId());
       }
@@ -491,15 +493,18 @@ public class PluginManager {
     // this magic ensures that the dependent plugins always follow their dependencies in lexicographic order
     // needed to make sure that extensions are always in the same order
     Collections.sort(ids, new Comparator<PluginId>() {
+      @Override
       public int compare(PluginId o1, PluginId o2) {
         return o2.getIdString().compareTo(o1.getIdString());
       }
     });
     return GraphGenerator.create(CachingSemiGraph.create(new GraphGenerator.SemiGraph<PluginId>() {
+      @Override
       public Collection<PluginId> getNodes() {
         return ids;
       }
 
+      @Override
       public Iterator<PluginId> getIn(PluginId pluginId) {
         final IdeaPluginDescriptor descriptor = idToDescriptorMap.get(pluginId);
         ArrayList<PluginId> plugins = new ArrayList<PluginId>();
@@ -730,10 +735,12 @@ public class PluginManager {
     for (final Iterator<IdeaPluginDescriptorImpl> it = result.iterator(); it.hasNext();) {
       final IdeaPluginDescriptorImpl pluginDescriptor = it.next();
       checkDependants(pluginDescriptor, new Function<PluginId, IdeaPluginDescriptor>() {
+        @Override
         public IdeaPluginDescriptor fun(final PluginId pluginId) {
           return idToDescriptorMap.get(pluginId);
         }
       }, new Condition<PluginId>() {
+        @Override
         public boolean value(final PluginId pluginId) {
           if (!idToDescriptorMap.containsKey(pluginId)) {
             pluginDescriptor.setEnabled(false);
@@ -896,8 +903,8 @@ public class PluginManager {
        Arrays.sort(files, new Comparator<File>() {
          @Override
          public int compare(File o1, File o2) {
-           if (o2.getName().startsWith((file.getName()))) return Integer.MAX_VALUE;
-           if (o1.getName().startsWith((file.getName()))) return -Integer.MAX_VALUE;
+           if (o2.getName().startsWith(file.getName())) return Integer.MAX_VALUE;
+           if (o1.getName().startsWith(file.getName())) return -Integer.MAX_VALUE;
            if (o2.getName().startsWith("resources")) return -Integer.MAX_VALUE;
            if (o1.getName().startsWith("resources")) return Integer.MAX_VALUE;
            return 0;
@@ -1204,6 +1211,7 @@ public class PluginManager {
     if (pluginId != null && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       final boolean success = disablePlugin(pluginId.getIdString());
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           JOptionPane.showMessageDialog(JOptionPane.getRootFrame(),
                                         "Incompatible plugin detected: " + pluginId.getIdString() +
@@ -1225,26 +1233,32 @@ public class PluginManager {
   }
 
   private static class IdeaLogProvider implements LogProvider {
+    @Override
     public void error(String message) {
       getLogger().error(message);
     }
 
+    @Override
     public void error(String message, Throwable t) {
       getLogger().error(message, t);
     }
 
+    @Override
     public void error(Throwable t) {
       getLogger().error(t);
     }
 
+    @Override
     public void warn(String message) {
       getLogger().info(message);
     }
 
+    @Override
     public void warn(String message, Throwable t) {
       getLogger().info(message, t);
     }
 
+    @Override
     public void warn(Throwable t) {
       getLogger().info(t);
     }
