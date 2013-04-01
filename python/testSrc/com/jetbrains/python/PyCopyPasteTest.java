@@ -301,6 +301,14 @@ public class PyCopyPasteTest extends PyTestCase {
     doTest();
   }
 
+  public void testEmptyLineInList() {
+    doTest();
+  }
+
+  public void testCaretAtTheBeginningOfIndent() {
+    doTest();
+  }
+
   private void doTestTabs() {
     final CommonCodeStyleSettings.IndentOptions indentOptions =
       CodeStyleSettingsManager.getSettings(myFixture.getProject()).getIndentOptions(PythonFileType.INSTANCE);
