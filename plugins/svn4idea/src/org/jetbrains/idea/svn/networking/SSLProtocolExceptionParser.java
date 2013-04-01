@@ -82,6 +82,6 @@ public class SSLProtocolExceptionParser {
     catch (IllegalAccessException e) {
       return false;
     }
-    return false;
+    return true;
   }
 }
