@@ -512,10 +512,10 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
 
   public static void collectUnknownNatures(String path, Map<String, String> naturesNames, String separator) {
     final Set<String> natures = collectNatures(path);
-    naturesNames.remove("org.eclipse.jdt.core.javanature");
+    natures.remove("org.eclipse.jdt.core.javanature");
 
     for (EclipseNatureImporter importer : EclipseNatureImporter.EP_NAME.getExtensions()) {
-      naturesNames.remove(importer.getNatureName());
+      natures.remove(importer.getNatureName());
     }
 
     if (!natures.isEmpty()) {
