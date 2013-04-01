@@ -17,6 +17,7 @@ package org.jetbrains.idea.svn.commandLine;
 
 import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.LineHandlerHelper;
@@ -31,6 +32,8 @@ import org.jetbrains.idea.svn.SvnBindUtil;
 import org.jetbrains.idea.svn.config.SvnBindException;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 import java.util.Iterator;
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -46,6 +49,9 @@ public class SvnLineCommand extends SvnCommand {
   public static final String AUTHENTICATION_REALM = "Authentication realm:";
   public static final String CERTIFICATE_ERROR = "Error validating server certificate for";
   public static final String PASSPHRASE_FOR = "Passphrase for";
+  public static final String UNABLE_TO_CONNECT = "svn: E170001:";
+  public static final String CANNOT_AUTHENTICATE_TO_PROXY = "Could not authenticate to proxy server";
+
   // kept for exact text
   //public static final String CLIENT_CERTIFICATE_FILENAME = "Client certificate filename:";
   /**
@@ -94,6 +100,25 @@ public class SvnLineCommand extends SvnCommand {
     listener.baseDirectory(base);
 
     File configDir = null;
+
+    // for IDEA proxy case
+    if (authenticationCallback != null && authenticationCallback.haveDataForTmpConfig()) {
+      try {
+        if (! authenticationCallback.persistDataToTmpConfig(base)) {
+          throw new SvnBindException("Can not persist " + ApplicationNamesInfo.getInstance().getProductName() +
+                                     " HTTP proxy information into tmp config directory");
+        }
+      }
+      catch (IOException e) {
+        throw new SvnBindException(e);
+      }
+      catch (URISyntaxException e) {
+        throw new SvnBindException(e);
+      }
+      assert authenticationCallback.getSpecialConfigDir() != null;
+      configDir = authenticationCallback.getSpecialConfigDir();
+    }
+
     while (true) {
       final SvnLineCommand command = runCommand(exePath, commandName, listener, base, configDir, parameters);
       if (command.myErr.length() > 0) {
@@ -131,7 +156,21 @@ public class SvnLineCommand extends SvnCommand {
     if (errText.startsWith(PASSPHRASE_FOR)) {
       return new PassphraseCallback(callback, base);
     }
+    if (errText.startsWith(UNABLE_TO_CONNECT) && errText.contains(CANNOT_AUTHENTICATE_TO_PROXY)) {
+      return new ProxyCallback(callback, base);
+    }
     return null;
+  }
+
+  private static class ProxyCallback extends AuthCallbackCase {
+    protected ProxyCallback(AuthenticationCallback callback, File base) {
+      super(callback, base);
+    }
+
+    @Override
+    boolean getCredentials(String errText) throws SvnBindException {
+      return myAuthenticationCallback.askProxyCredentials(myBase);
+    }
   }
 
   private static class CredentialsCallback extends AuthCallbackCase {
@@ -245,7 +284,13 @@ public class SvnLineCommand extends SvnCommand {
         // Client certificate filename:
         if (ProcessOutputTypes.STDERR.equals(outputType)) {
           ++ myErrCnt;
-          if (text.trim().startsWith(PASSPHRASE_FOR) || myErrCnt >= 2) {
+          final String trim = text.trim();
+          if (trim.startsWith(UNABLE_TO_CONNECT)) {
+            // wait for 3 lines of text then
+            if (myErrCnt >= 3) {
+              destroyProcess();
+            }
+          } else if (trim.startsWith(PASSPHRASE_FOR) || myErrCnt >= 2) {
             destroyProcess();
           }
         }
