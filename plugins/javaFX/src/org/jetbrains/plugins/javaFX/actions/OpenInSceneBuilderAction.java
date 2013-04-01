@@ -195,8 +195,8 @@ public class OpenInSceneBuilderAction extends AnAction {
       }
     }
     else if (SystemInfo.isMac) {
-      final File sb = FileUtil.findFirstThatExist("/Application/JavaFX\\ Scene\\ Builder\\ 1.1.app", 
-                                                  "/Application/JavaFX\\ Scene\\ Builder\\ 1.0.app");
+      final File sb = FileUtil.findFirstThatExist("/Applications/JavaFX Scene Builder 1.1.app", 
+                                                  "/Applications/JavaFX Scene Builder 1.0.app");
       if (sb != null) {
         path = sb.getPath();
       }
