@@ -407,7 +407,7 @@ public class PluginManager {
   private static <T extends IdeaPluginDescriptor> void addModulesAsDependents(final Map<PluginId, T> map) {
     for (String module : ourAvailableModules) {
       // fake plugin descriptors to satisfy dependencies
-      map.put(PluginId.getId(module), (T) new IdeaPluginDescriptorImpl(null));
+      map.put(PluginId.getId(module), (T) new IdeaPluginDescriptorImpl());
     }
   }
 

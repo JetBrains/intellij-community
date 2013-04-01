@@ -99,6 +99,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     myPath = pluginPath;
   }
 
+  IdeaPluginDescriptorImpl() {
+  }
+
   public void setPath(@NotNull File path) {
     myPath = path;
   }
