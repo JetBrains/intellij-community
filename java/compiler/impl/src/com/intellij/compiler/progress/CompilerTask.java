@@ -89,13 +89,16 @@ public class CompilerTask extends Task.Backgroundable {
   private Runnable myCompileWork;
   private final AtomicBoolean myMessageViewWasPrepared = new AtomicBoolean(false);
   private Runnable myRestartWork;
+  private final boolean myCompilationStartedAutomatically;
 
-  public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync, boolean waitForPreviousSession) {
+  public CompilerTask(@NotNull Project project, String contentName, final boolean headlessMode, boolean forceAsync,
+                      boolean waitForPreviousSession, boolean compilationStartedAutomatically) {
     super(project, contentName);
     myContentName = contentName;
     myHeadlessMode = headlessMode;
     myForceAsyncExecution = forceAsync;
     myWaitForPreviousSession = waitForPreviousSession;
+    myCompilationStartedAutomatically = compilationStartedAutomatically;
   }
 
   public void setContentIdKey(Key<Key<?>> contentIdKey) {
@@ -219,7 +222,7 @@ public class CompilerTask extends Task.Backgroundable {
               if (myErrorCount > 0) {
                 appIcon.setErrorBadge(myProject, String.valueOf(myErrorCount));
                 appIcon.requestAttention(myProject, true);
-              } else {
+              } else if (!myCompilationStartedAutomatically) {
                 appIcon.setOkBadge(myProject, true);
                 appIcon.requestAttention(myProject, false);
               }

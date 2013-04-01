@@ -380,6 +380,7 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "    m(@A6 C::m);\n" +
            "    @A7 T @A8[] @A9[] a = new @A7 T @A8[0] @A9[0];\n" +
            "  }\n" +
+           "  int @A [] v() @A [] { }\n" +
            "}",
 
            "PsiJavaFileStub []\n" +
@@ -447,7 +448,16 @@ public class JavaStubBuilderTest extends LightIdeaTestCase {
            "      ANNOTATION:PsiAnnotationStub[@A8]\n" +
            "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
            "      ANNOTATION:PsiAnnotationStub[@A9]\n" +
-           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n");
+           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
+           "    METHOD:PsiMethodStub[v:int[][]]\n" +
+           "      MODIFIER_LIST:PsiModifierListStub[mask=4096]\n" +
+           "      TYPE_PARAMETER_LIST:PsiTypeParameterListStub\n" +
+           "      ANNOTATION:PsiAnnotationStub[@A]\n" +
+           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
+           "      PARAMETER_LIST:PsiParameterListStub\n" +
+           "      ANNOTATION:PsiAnnotationStub[@A]\n" +
+           "        ANNOTATION_PARAMETER_LIST:PsiAnnotationParameterListStubImpl\n" +
+           "      THROWS_LIST:PsiRefListStub[THROWS_LIST:]\n");
   }
 
   public void testSOEProof() {
