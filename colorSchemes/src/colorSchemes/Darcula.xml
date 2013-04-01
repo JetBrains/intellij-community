@@ -1429,6 +1429,16 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option name="Scala Type Alias">
+      <value>
+        <option name="FOREGROUND" value="4e807d" />
+      </value>
+    </option>
+    <option name="Scala Type parameter">
+      <value>
+        <option name="FOREGROUND" value="4e807d" />
+      </value>
+    </option>
     <option name="Static field">
       <value>
         <option name="FOREGROUND" value="d0d0ff" />
