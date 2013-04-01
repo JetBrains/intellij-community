@@ -20,7 +20,7 @@
  * By Gregory Shrago
  * 2002 - 2006
  */
-package com.intellij.util.dom.generator;
+package org.jetbrains.idea.devkit.dom.generator;
 
 import org.apache.xerces.xs.*;
 import org.apache.xerces.impl.xs.XSComplexTypeDecl;
