@@ -51,7 +51,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
    * Note that classes' and instances' member list can change during execution, so it is important to construct an instance of PyClassType
    * right in the place of reference, so that such changes could possibly be accounted for.
    *
-   * @param source        PyClass which defines this type. For builtin or external classes, skeleton files contain the definitions.
+   * @param source       PyClass which defines this type. For builtin or external classes, skeleton files contain the definitions.
    * @param isDefinition whether this type describes an instance or a definition of the class.
    */
   public PyClassTypeImpl(@NotNull PyClass source, boolean isDefinition) {
@@ -77,21 +77,26 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   /**
    * @return whether this type refers to an instance or a definition of the class.
    */
-  @Override public boolean isDefinition() {
+  @Override
+  public boolean isDefinition() {
     return myIsDefinition;
   }
 
-  @Override public PyClassType toInstance() {
+  @Override
+  public PyClassType toInstance() {
     return myIsDefinition ? new PyClassTypeImpl(myClass, false) : this;
   }
 
-  @Override@Nullable
+  @Override
+  @Nullable
   public String getClassQName() {
     return myClass.getQualifiedName();
   }
 
   @Nullable
-  public List<? extends RatedResolveResult> resolveMember(@NotNull final String name, @Nullable PyExpression location, AccessDirection direction,
+  public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
+                                                          @Nullable PyExpression location,
+                                                          AccessDirection direction,
                                                           PyResolveContext resolveContext) {
     final Set<Pair<PyClass, String>> resolving = ourResolveMemberStack.get();
     final Pair<PyClass, String> key = Pair.create(myClass, name);
@@ -112,6 +117,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                              @Nullable PyExpression location,
                                                              @NotNull AccessDirection direction,
                                                              @NotNull PyResolveContext resolveContext) {
+    PsiElement classMember = resolveByOverridingMembersProviders(this, name); //overriding members provers have priority to normal resolve
+    if (classMember != null) {
+      return ResolveResultList.to(classMember);
+    }
+
     if (resolveContext.allowProperties()) {
       Property property = myClass.findProperty(name);
       if (property != null) {
@@ -150,7 +160,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    PsiElement classMember = resolveClassMember(myClass, myIsDefinition, name, location);
+    classMember = resolveClassMember(myClass, myIsDefinition, name, location);
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
@@ -272,7 +282,22 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
-  private static PsiElement resolveInner(@NotNull PyClass cls, boolean isDefinition, @NotNull String name, @Nullable PyExpression location) {
+  private static PsiElement resolveByOverridingMembersProviders(PyClassType aClass, String name) {
+    for (PyClassMembersProvider provider : Extensions.getExtensions(PyClassMembersProvider.EP_NAME)) {
+      if (provider instanceof PyOverridingClassMembersProvider) {
+        final PsiElement resolveResult = provider.resolveMember(aClass, name);
+        if (resolveResult != null) return resolveResult;
+      }
+    }
+
+    return null;
+  }
+
+  @Nullable
+  private static PsiElement resolveInner(@NotNull PyClass cls,
+                                         boolean isDefinition,
+                                         @NotNull String name,
+                                         @Nullable PyExpression location) {
     final ResolveProcessor processor = new ResolveProcessor(name);
     if (!isDefinition) {
       if (!cls.processInstanceLevelDeclarations(processor, location)) {
