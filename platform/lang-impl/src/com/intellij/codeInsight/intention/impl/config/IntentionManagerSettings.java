@@ -26,6 +26,7 @@ package com.intellij.codeInsight.intention.impl.config;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.ide.ui.search.SearchableOptionsRegistrar;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
@@ -55,7 +56,7 @@ public class IntentionManagerSettings implements PersistentStateComponent<Elemen
 
   private static class MetaDataKey extends Pair<String, String> {
     private MetaDataKey(@NotNull String[] categoryNames, @NotNull final String familyName) {
-      super(StringUtil.join(categoryNames, ":"), familyName);
+      super(StringUtil.join(categoryNames, ":"), IdeaPluginDescriptorImpl.intern(familyName));
     }
   }
 
