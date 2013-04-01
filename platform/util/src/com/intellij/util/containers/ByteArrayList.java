@@ -302,6 +302,16 @@ public class ByteArrayList implements  Cloneable {
         System.arraycopy(_data, offset, values, valOffset, length);
     }
 
+    public void copy(int source, int destination, int length) {
+        if (source < 0 || source + length > _pos) {
+            throw new ArrayIndexOutOfBoundsException(source);
+        }
+        if (destination < 0 || destination + length > _pos) {
+            throw new ArrayIndexOutOfBoundsException(destination);
+        }
+        System.arraycopy(_data, source, _data, destination, length);
+    }
+
     /**
      * Sets the value at the specified offset without doing any bounds
      * checking.
