@@ -20,7 +20,9 @@ import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
+import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
 import com.intellij.testFramework.PsiTestUtil;
+import com.intellij.testFramework.fixtures.CodeInsightTestUtil;
 import org.jetbrains.annotations.NotNull;
 
 public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
@@ -47,15 +49,23 @@ public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
   }
 
   public void testCustomComponentTag() throws Exception {
-    doTest("Foo");
+    doTest("Foo", true);
   }
 
   private void doTest(final String newName) throws Exception {
+    doTest(newName, false);
+  }
+
+  private void doTest(final String newName, boolean inline) throws Exception {
     configureByFiles(null, getTestName(true) + ".fxml", getTestName(false) + ".java");
     PsiElement element = TargetElementUtilBase
       .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull(element);
-    new RenameProcessor(getProject(), element, newName, true, true).run();
+    if (inline) {
+      CodeInsightTestUtil.doInlineRename(new MemberInplaceRenameHandler(), newName, getEditor(), element);
+    } else {
+      new RenameProcessor(getProject(), element, newName, true, true).run();
+    }
     checkResultByFile(getTestName(true) + "_after.fxml");
   }
 
