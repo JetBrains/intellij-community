@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -304,10 +304,6 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   }
 
   @Override
-  public void visitAttribute(final Attribute attr) {
-  }
-
-  @Override
   public void visitInnerClass(final String name, final String outerName, final String innerName, final int access) {
     if ((access & Opcodes.ACC_SYNTHETIC) != 0) return;
     if (!isCorrectName(innerName)) return;
@@ -339,13 +335,15 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
   @Override
   @Nullable
-  public FieldVisitor visitField(final int access, final String name, final String desc, final String signature, final Object value) {
+  public FieldVisitor visitField(int access, String name, String desc, String signature, Object value) {
     if ((access & Opcodes.ACC_SYNTHETIC) != 0) return null;
     if (!isCorrectName(name)) return null;
 
-    final byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0, false);
-    final PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, fieldType(desc, signature), constToString(value), flags);
-    final PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packFieldFlags(access));
+    byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0, false);
+    TypeInfo type = fieldType(desc, signature);
+    String initializer = constToString(value, "boolean".equals(type.text.getString()));
+    PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, type, initializer, flags);
+    PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packFieldFlags(access));
     return new AnnotationCollectingVisitor(modList);
   }
 
@@ -358,7 +356,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       catch (ClsFormatException e) {
         return fieldTypeViaDescription(desc);
       }
-    } else {
+    }
+    else {
       return fieldTypeViaDescription(desc);
     }
   }
@@ -536,7 +535,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     @Override
     public void visit(final String name, final Object value) {
       valuePairPrefix(name);
-      myBuilder.append(constToString(value));
+      myBuilder.append(constToString(value, false));
     }
 
     @Override
@@ -696,12 +695,20 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   }
 
   @Nullable
-  private static String constToString(@Nullable Object value) {
+  private static String constToString(@Nullable Object value, boolean isBoolean) {
     if (value == null) return null;
 
     if (value instanceof String) return "\"" + StringUtil.escapeStringCharacters((String)value) + "\"";
-    if (value instanceof Integer || value instanceof Boolean) return value.toString();
+    if (value instanceof Boolean) return value.toString();
     if (value instanceof Long) return value.toString() + "L";
+
+    if (value instanceof Integer) {
+      if (isBoolean) {
+        if (value.equals(0)) return "false";
+        if (value.equals(1)) return "true";
+      }
+      return value.toString();
+    }
 
     if (value instanceof Double) {
       final double d = ((Double)value).doubleValue();
