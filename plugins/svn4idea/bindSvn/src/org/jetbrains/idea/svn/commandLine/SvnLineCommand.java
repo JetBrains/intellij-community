@@ -101,8 +101,46 @@ public class SvnLineCommand extends SvnCommand {
 
     File configDir = null;
 
-    // for IDEA proxy case
-    if (authenticationCallback != null && authenticationCallback.haveDataForTmpConfig()) {
+    try {
+      // for IDEA proxy case
+      if (authenticationCallback != null) {
+        writeIdeaConfig2SubversionConfig(authenticationCallback, base);
+        configDir = authenticationCallback.getSpecialConfigDir();
+      }
+
+      while (true) {
+        final SvnLineCommand command = runCommand(exePath, commandName, listener, base, configDir, parameters);
+        if (command.myErr.length() > 0) {
+          final String errText = command.myErr.toString().trim();
+          if (authenticationCallback != null) {
+            final AuthCallbackCase callback = createCallback(errText, authenticationCallback, base);
+            if (callback != null) {
+              cleanup(exePath, commandName, base);
+              if (callback.getCredentials(errText)) {
+                if (authenticationCallback.getSpecialConfigDir() != null) {
+                  configDir = authenticationCallback.getSpecialConfigDir();
+                }
+                continue;
+              }
+            }
+          }
+          throw new SvnBindException(errText);
+        }
+        final Integer exitCode = command.myExitCode.get();
+        if (exitCode != 0) {
+          throw new SvnBindException("Svn process exited with error code: " + exitCode);
+        }
+        return;
+      }
+    } finally {
+      if (authenticationCallback != null) {
+        authenticationCallback.reset();
+      }
+    }
+  }
+
+  private static void writeIdeaConfig2SubversionConfig(@NotNull AuthenticationCallback authenticationCallback, @NotNull File base) throws SvnBindException {
+    if (authenticationCallback.haveDataForTmpConfig()) {
       try {
         if (! authenticationCallback.persistDataToTmpConfig(base)) {
           throw new SvnBindException("Can not persist " + ApplicationNamesInfo.getInstance().getProductName() +
@@ -116,34 +154,7 @@ public class SvnLineCommand extends SvnCommand {
         throw new SvnBindException(e);
       }
       assert authenticationCallback.getSpecialConfigDir() != null;
-      configDir = authenticationCallback.getSpecialConfigDir();
     }
-
-    while (true) {
-      final SvnLineCommand command = runCommand(exePath, commandName, listener, base, configDir, parameters);
-      if (command.myErr.length() > 0) {
-        final String errText = command.myErr.toString().trim();
-        if (authenticationCallback != null) {
-          final AuthCallbackCase callback = createCallback(errText, authenticationCallback, base);
-          if (callback != null) {
-            cleanup(exePath, commandName, base);
-            if (callback.getCredentials(errText)) {
-              if (authenticationCallback.getSpecialConfigDir() != null) {
-                configDir = authenticationCallback.getSpecialConfigDir();
-              }
-              continue;
-            }
-          }
-        }
-        throw new SvnBindException(errText);
-      }
-      final Integer exitCode = command.myExitCode.get();
-      if (exitCode != 0) {
-        throw new SvnBindException("Svn process exited with error code: " + exitCode);
-      }
-      return;
-    }
-    //ok
   }
 
   private static AuthCallbackCase createCallback(final String errText, final AuthenticationCallback callback, final File base) {

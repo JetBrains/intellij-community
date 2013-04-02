@@ -106,4 +106,6 @@ public interface AuthenticationCallback {
    * @return false if authentication was canceled or related calculations were unsuccessful
    */
   boolean askProxyCredentials(File base);
+
+  void reset();
 }
