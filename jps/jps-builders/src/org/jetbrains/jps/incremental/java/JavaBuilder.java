@@ -391,7 +391,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
     return JavaCompilers.ECLIPSE_ID.equalsIgnoreCase(compilerId) || JavaCompilers.ECLIPSE_EMBEDDED_ID.equalsIgnoreCase(compilerId);
   }
 
-  private void submitAsyncTask(CompileContext context, final Runnable taskRunnable) {
+  private void submitAsyncTask(final CompileContext context, final Runnable taskRunnable) {
     final TasksCounter counter = COUNTER_KEY.get(context);
 
     assert counter != null;
@@ -401,6 +401,9 @@ public class JavaBuilder extends ModuleLevelBuilder {
       public void run() {
         try {
           taskRunnable.run();
+        }
+        catch (Throwable e) {
+          context.processMessage(new CompilerMessage(BUILDER_NAME, e));
         }
         finally {
           counter.decTaskCounter();
