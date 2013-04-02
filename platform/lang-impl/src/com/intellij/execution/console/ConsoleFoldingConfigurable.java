@@ -3,8 +3,10 @@ package com.intellij.execution.console;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.options.SearchableConfigurable;
+import com.intellij.openapi.ui.InputValidatorEx;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.Splitter;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.AddEditDeleteListPanel;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -30,7 +32,8 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable, Confi
       myMainComponent = new JPanel(new BorderLayout());
       Splitter splitter = new Splitter(true);
       myMainComponent.add(splitter);
-      myPositivePanel = new MyAddDeleteListPanel("Fold console lines that contain", "Enter a substring of a console line you'd like to see folded:");
+      myPositivePanel =
+        new MyAddDeleteListPanel("Fold console lines that contain", "Enter a substring of a console line you'd like to see folded:");
       myNegativePanel = new MyAddDeleteListPanel("Exceptions", "Enter a substring of a console line you don't want to fold:");
       splitter.setFirstComponent(myPositivePanel);
       splitter.setSecondComponent(myNegativePanel);
@@ -101,7 +104,26 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable, Confi
 
     @Nullable
     private String showEditDialog(final String initialValue) {
-      return Messages.showInputDialog(this, myQuery, "Folding pattern", Messages.getQuestionIcon(), initialValue, null);
+      return Messages.showInputDialog(this, myQuery, "Folding pattern", Messages.getQuestionIcon(), initialValue, new InputValidatorEx() {
+        @Override
+        public boolean checkInput(String inputString) {
+           return !StringUtil.isEmpty(inputString);
+        }
+
+        @Override
+        public boolean canClose(String inputString) {
+          return !StringUtil.isEmpty(inputString);
+        }
+
+        @Nullable
+        @Override
+        public String getErrorText(String inputString) {
+          if (!checkInput(inputString)) {
+            return "Console folding rule string cannot be empty";
+          }
+          return null;
+        }
+      });
     }
 
     void resetFrom(List<String> patterns) {
