@@ -86,8 +86,8 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
   private JTextComponent mySearchField;
   private JTextComponent myReplaceField;
-  private TextComponentUndoProvider mySearchUndo;
-  private TextComponentUndoProvider myReplaceUndo;
+  private MyUndoProvider mySearchUndo;
+  private MyUndoProvider myReplaceUndo;
 
   private Getter<JTextComponent> mySearchFieldGetter = new Getter<JTextComponent>() {
     @Override
@@ -279,7 +279,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
       mySearchUndo.dispose();
     }
     mySearchField = createTextField(myLeadPanel);
-    mySearchUndo = new TextComponentUndoProvider(mySearchField);
+    mySearchUndo = new MyUndoProvider(mySearchField);
 
     setupSearchFieldListener();
 
@@ -507,7 +507,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
       myReplaceUndo.dispose();
     }
     myReplaceField = createTextField(myReplacementPane);
-    myReplaceUndo = new TextComponentUndoProvider(myReplaceField);
+    myReplaceUndo = new MyUndoProvider(myReplaceField);
 
     //if (myToolbarComponent instanceof ActionToolbarImpl) {
     //  new ShowMoreOptions(myToolbarComponent, myReplaceField);
@@ -904,6 +904,34 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     return insets;
   }
 
+  private static class MyUndoProvider extends TextComponentUndoProvider {
+    private boolean myEnabled = true;
+    public MyUndoProvider(JTextComponent textComponent) {
+      super(textComponent);
+      textComponent.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
+        @Override
+        protected void textChanged(javax.swing.event.DocumentEvent e) {
+          myEnabled = true;
+        }
+      });
+    }
+
+    @Override
+    protected boolean canUndo() {
+      return super.canUndo() && myEnabled;
+    }
+
+    @Override
+    protected boolean canRedo() {
+      return super.canRedo() && myEnabled;
+    }
+
+    public void disable() {
+      myEnabled = false;
+      myUndoManager.discardAllEdits();
+    }
+  }
+
   private class MyLivePreviewController extends LivePreviewControllerBase {
     public MyLivePreviewController() {
       super(EditorSearchComponent.this.mySearchResults, EditorSearchComponent.this.myLivePreview);
@@ -941,7 +969,8 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
         mySuppressUpdate = false;
       }
       //getFocusBack();
-      addTextToRecent(myReplaceField) ;
+      addTextToRecent(myReplaceField);
+      clearUndoInTextFields();
     }
 
     public void exclude() {
@@ -951,5 +980,10 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     public void performReplaceAll() {
       performReplaceAll(myEditor);
     }
+  }
+
+  private void clearUndoInTextFields() {
+    myReplaceUndo.disable();
+    mySearchUndo.disable();
   }
 }
