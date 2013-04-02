@@ -118,15 +118,21 @@ public abstract class SvnCommand {
 
   /**
    * Wait for process termination
+   * @param timeout
    */
-  public void waitFor() {
+  public boolean waitFor(int timeout) {
     checkStarted();
     final OSProcessHandler handler;
     synchronized (myLock) {
-      if (myIsDestroyed) return;
+      if (myIsDestroyed) return true;
       handler = myHandler;
     }
-    handler.waitFor();
+    if (timeout == -1) {
+      return handler.waitFor();
+    }
+    else {
+      return handler.waitFor(timeout);
+    }
   }
 
   protected abstract void processTerminated(int exitCode);
@@ -173,8 +179,10 @@ public abstract class SvnCommand {
 
   public void destroyProcess() {
     synchronized (myLock) {
-      myIsDestroyed = true;
-      myHandler.destroyProcess();
+      if (! myIsDestroyed) {
+        myIsDestroyed = true;
+        myHandler.destroyProcess();
+      }
     }
   }
 
