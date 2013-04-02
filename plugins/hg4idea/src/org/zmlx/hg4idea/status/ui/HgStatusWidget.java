@@ -102,12 +102,6 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
     return StringUtil.isEmpty(text) ? "" : "hg: " + text;
   }
 
-  @NotNull
-  @Override
-  public String getMaxPossibleText() {
-    return MAX_STRING;
-  }
-
   @Override
   public float getAlignment() {
     return Component.LEFT_ALIGNMENT;

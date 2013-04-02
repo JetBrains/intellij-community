@@ -66,9 +66,6 @@ public interface StatusBarWidget extends Disposable {
     @NotNull
     String getText();
 
-    @NotNull
-    String getMaxPossibleText();
-
     float getAlignment();
   }
 
@@ -79,8 +76,6 @@ public interface StatusBarWidget extends Disposable {
     @Nullable
     String getSelectedValue();
 
-    @NotNull
-    String getMaxValue();
   }
 
   class WidgetBorder implements Border {

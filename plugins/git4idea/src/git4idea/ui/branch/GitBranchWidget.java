@@ -108,12 +108,6 @@ public class GitBranchWidget extends EditorBasedWidget implements StatusBarWidge
     return StringUtil.isEmpty(text) ? "" : "Git: " + text;
   }
 
-  @NotNull
-  @Override
-  public String getMaxValue() {
-    return myMaxString;
-  }
-
   @Override
   public String getTooltipText() {
     return myTooltip;

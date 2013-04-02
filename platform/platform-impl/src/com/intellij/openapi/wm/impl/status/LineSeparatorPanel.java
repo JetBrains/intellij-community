@@ -61,7 +61,7 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
   public LineSeparatorPanel(@NotNull final Project project) {
     super(project);
 
-    myComponent = new TextPanel(LineSeparator.CRLF.toString()) {
+    myComponent = new TextPanel() {
       @Override
       protected void paintComponent(@NotNull final Graphics g) {
         super.paintComponent(g);
