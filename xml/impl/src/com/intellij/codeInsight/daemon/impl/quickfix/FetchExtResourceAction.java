@@ -356,6 +356,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
         FileTypeManager.getInstance().getFileTypeByExtension(resourceUrl.substring(lastDoPosInResourceUrl + 1)) == FileTypes.UNKNOWN) {
       // remote url does not contain file with extension
       final String extension =
+        result.contentType != null &&
         result.contentType.contains(HTML_MIME) ? StdFileTypes.HTML.getDefaultExtension() : StdFileTypes.XML.getDefaultExtension();
       resPath += "." + extension;
     }
@@ -427,7 +428,14 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
             if (schemaLocation != null) {
               final PsiReference[] references = tag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT).getValueElement().getReferences();
               if (references.length > 0) {
-                result.add(schemaLocation);
+                final String namespace = tag.getAttributeValue("namespace");
+
+                if (namespace != null && schemaLocation.indexOf('/') == -1) {
+                  result.add(namespace.substring(0, namespace.lastIndexOf('/') + 1) + schemaLocation);
+                }
+                else {
+                  result.add(schemaLocation);
+                }
               }
             }
             else {
