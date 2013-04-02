@@ -1123,7 +1123,9 @@ public class FSRecords implements Forceable {
       int page;
       try {
         r.lock();
-        page = findContentPage(fileId, false);
+        checkFileIsValid(fileId);
+
+        page = getContentRecordId(fileId);
         if (page == 0) return null;
       }
       finally {
@@ -1170,20 +1172,6 @@ public class FSRecords implements Forceable {
     int page = findAttributePage(fileId, attId, false);
     if (page == 0) return null;
     return getAttributesStorage().readStream(page);
-  }
-
-  private static int findContentPage(int fileId, boolean toWrite) throws IOException {
-    checkFileIsValid(fileId);
-
-    int recordId = getContentRecordId(fileId);
-    if (toWrite) {
-      if (recordId == 0 || getContentStorage().getRefCount(recordId) > 1) {
-        recordId = getContentStorage().acquireNewRecord();
-        setContentRecordId(fileId, recordId);
-      }
-    }
-
-    return recordId;
   }
 
   private static int findAttributePage(int fileId, @NotNull String attrId, boolean toWrite) throws IOException {
@@ -1304,56 +1292,14 @@ public class FSRecords implements Forceable {
     return new AttributeOutputStream(fileId, attId, fixedSize);
   }
 
-  private static class ContentOutputStream extends BaseOutputStream {
-    private ContentOutputStream(final int fileId, boolean readOnly) {
-      super(fileId, readOnly);
-    }
-
-    @Override
-    protected int findOrCreatePage() throws IOException {
-      return findContentPage(myFileId, true);
-    }
-
-    @Override
-    protected AbstractStorage getStorage() {
-      return getContentStorage();
-    }
-  }
-
-  private static class AttributeOutputStream extends BaseOutputStream {
-    private final String myAttributeId;
-
-    private AttributeOutputStream(final int fileId, @NotNull String attributeId, boolean fixedSize) {
-      super(fileId, fixedSize);
-      myAttributeId = attributeId;
-    }
-
-    @Override
-    protected void doFlush() throws IOException {
-      synchronized (myAttributeId) {
-        super.doFlush();
-      }
-    }
-
-    @Override
-    protected int findOrCreatePage() throws IOException {
-      return findAttributePage(myFileId, myAttributeId, true);
-    }
-
-    @Override
-    protected AbstractStorage getStorage() {
-      return getAttributesStorage();
-    }
-  }
-
-  private abstract static class BaseOutputStream extends DataOutputStream {
+  private static class ContentOutputStream extends DataOutputStream {
     protected final int myFileId;
     protected final boolean myFixedSize;
 
-    private BaseOutputStream(final int fileId, boolean fixedSize) {
+    private ContentOutputStream(final int fileId, boolean readOnly) {
       super(new BufferExposingByteArrayOutputStream());
       myFileId = fileId;
-      myFixedSize = fixedSize;
+      myFixedSize = readOnly;
     }
 
     @Override
@@ -1361,35 +1307,74 @@ public class FSRecords implements Forceable {
       super.close();
 
       try {
-        doFlush();
+        final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
+        writeBytes(new ByteSequence(_out.getInternalBuffer(), 0, _out.size()), myFileId);
       }
       catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
 
-    protected void doFlush() throws IOException {
-      final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
-      writeBytes(new ByteSequence(_out.getInternalBuffer(), 0, _out.size()), myFileId);
-    }
-
     public void writeBytes(ByteSequence bytes, int fileId) throws IOException {
       final int page;
+      RefCountingStorage contentStorage = getContentStorage();
       try {
         w.lock();
         incModCount(fileId);
-        page = findOrCreatePage();
+
+        checkFileIsValid(myFileId);
+
+        int recordId = getContentRecordId(myFileId);
+        if (recordId == 0 || contentStorage.getRefCount(recordId) > 1) {
+          recordId = contentStorage.acquireNewRecord();
+          setContentRecordId(myFileId, recordId);
+        }
+
+        page = recordId;
       }
       finally {
         w.unlock();
       }
 
-      getStorage().writeBytes(page, bytes, myFixedSize);
+      contentStorage.writeBytes(page, bytes, myFixedSize);
+    }
+  }
+
+  private static class AttributeOutputStream extends DataOutputStream {
+    private final String myAttributeId;
+    private final int myFileId;
+    private final boolean myFixedSize;
+
+    private AttributeOutputStream(final int fileId, @NotNull String attributeId, boolean fixedSize) {
+      super(new BufferExposingByteArrayOutputStream());
+      myFileId = fileId;
+      myFixedSize = fixedSize;
+      myAttributeId = attributeId;
     }
 
-    protected abstract int findOrCreatePage() throws IOException;
+    @Override
+    public void close() throws IOException {
+      super.close();
 
-    protected abstract AbstractStorage getStorage();
+      try {
+        synchronized (myAttributeId) {
+          final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
+          final int page;
+          try {
+            w.lock();
+            incModCount(myFileId);
+            page = findAttributePage(myFileId, myAttributeId, true);
+          }
+          finally {
+            w.unlock();
+          }
+          getAttributesStorage().writeBytes(page, new ByteSequence(_out.getInternalBuffer(), 0, _out.size()), myFixedSize);
+        }
+      }
+      catch (Throwable e) {
+        throw DbConnection.handleError(e);
+      }
+    }
   }
 
   public static void dispose() {
