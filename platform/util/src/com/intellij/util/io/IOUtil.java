@@ -85,7 +85,7 @@ public class IOUtil {
       boolean isAscii = true;
       for (int i = 0; i < len; i++) {
         char c = value.charAt(i);
-        if (c < 0 || c >= 128) {
+        if (c >= 128) {
           isAscii = false;
           break;
         }
@@ -124,16 +124,14 @@ public class IOUtil {
   }
 
   public static boolean isAscii(final String str) {
-    int length = str.length();
-    for (int i = 0; i != length; ++ i) {
-      final char c = str.charAt(i);
-      if (!isAscii(c)) return false;
+    for (int i = 0, length = str.length(); i < length; ++ i) {
+      if (str.charAt(i) >= 128) return false;
     }
     return true;
   }
 
   public static boolean isAscii(char c) {
-    return c >= 0 && c < 128;
+    return c < 128;
   }
 
   public static boolean deleteWithSubordinates(File file) {
