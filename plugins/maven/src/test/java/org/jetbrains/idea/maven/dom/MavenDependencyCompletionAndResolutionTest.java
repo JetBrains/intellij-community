@@ -29,6 +29,7 @@ import org.jetbrains.idea.maven.dom.intentions.ChooseFileIntentionAction;
 import org.jetbrains.idea.maven.dom.model.MavenDomDependency;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
 
+import java.io.File;
 import java.util.Arrays;
 import java.util.List;
 
@@ -408,6 +409,33 @@ public class MavenDependencyCompletionAndResolutionTest extends MavenDomWithIndi
                      "    <version>4.0</version>" +
                      "  </dependency>" +
                      "</dependencies>");
+
+    String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
+    VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
+    assertResolved(myProjectPom, findPsiFile(f));
+  }
+
+  public void testResolveManagedDependency() throws Exception {
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+
+                  "<dependencyManagement>" +
+                  "  <dependencies>" +
+                  "    <dependency>" +
+                  "      <groupId>junit</groupId>" +
+                  "      <artifactId>junit</artifactId>" +
+                  "      <version>4.0</version>" +
+                  "    </dependency>" +
+                  "  </dependencies>" +
+                  "</dependencyManagement>" +
+
+                  "<dependencies>" +
+                  "  <dependency>" +
+                  "    <groupId>junit</groupId>" +
+                  "    <artifactId>junit<caret></artifactId>" +
+                  "  </dependency>" +
+                  "</dependencies>");
 
     String filePath = myIndicesFixture.getRepositoryHelper().getTestDataPath("local1/junit/junit/4.0/junit-4.0.pom");
     VirtualFile f = LocalFileSystem.getInstance().refreshAndFindFileByPath(filePath);
