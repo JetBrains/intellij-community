@@ -35,6 +35,7 @@ import java.io.File;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.Iterator;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -280,6 +281,7 @@ public class SvnLineCommand extends SvnCommand {
                                            final LineCommandListener listener,
                                            File base, File configDir,
                                            String... parameters) throws SvnBindException {
+    final AtomicBoolean errorReceived = new AtomicBoolean(false);
     final SvnLineCommand command = new SvnLineCommand(base, commandName, exePath, configDir) {
       int myErrCnt = 0;
 
@@ -296,6 +298,8 @@ public class SvnLineCommand extends SvnCommand {
         if (ProcessOutputTypes.STDERR.equals(outputType)) {
           ++ myErrCnt;
           final String trim = text.trim();
+          // should end in 1 second
+          errorReceived.set(true);
           if (trim.startsWith(UNABLE_TO_CONNECT)) {
             // wait for 3 lines of text then
             if (myErrCnt >= 3) {
@@ -348,7 +352,17 @@ public class SvnLineCommand extends SvnCommand {
       }
     });
     command.start();
-    command.waitFor();
+    boolean finished;
+    do {
+      finished = command.waitFor(500);
+      if (!finished && errorReceived.get()) {
+        command.waitFor(1000);
+        command.destroyProcess();
+        break;
+      }
+    }
+    while (!finished);
+
     if (exceptionRef.get() != null) {
       throw new SvnBindException(exceptionRef.get());
     }
