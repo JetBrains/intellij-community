@@ -1,4 +1,4 @@
-java.util.Date date = new java.util.Date(2011, 4, 9);
+java.util.Date date = new java.util.Date(2011, 04, 09);
 if (org.codehaus.groovy.runtime.DefaultGroovyMethods.isCase(new java.util.Date(20, 11, 23), date)) {
 print("aaa");
 print("bbb");
