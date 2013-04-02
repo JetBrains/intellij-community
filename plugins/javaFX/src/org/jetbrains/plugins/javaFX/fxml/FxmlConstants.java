@@ -41,19 +41,22 @@ public class FxmlConstants {
   @NonNls public static final String FX_INCLUDE = "fx:include";
   @NonNls public static final String FX_ROOT = "fx:root";
   @NonNls public static final String TYPE = "type";
-  
+  @NonNls public static final String RESOURCES = "resources";
+  @NonNls public static final String CHARSET = "charset";
+
   @NonNls public static final String STYLE_CLASS = "styleClass";
   @NonNls public static final String STYLESHEETS = "stylesheets";
 
   public static final List<String> FX_DEFAULT_PROPERTIES = Arrays.asList(FX_ID, FX_CONTROLLER, VALUE, FX_VALUE, FX_FACTORY, FX_CONSTANT);
-  public static final List<String> FX_DEFAULT_ELEMENTS = Arrays.asList(FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT);
+  public static final List<String> FX_DEFAULT_ELEMENTS = Arrays.asList(FX_INCLUDE, FX_REFERENCE, FX_COPY, FX_DEFINE, FX_SCRIPT, FX_ROOT);
 
   public static final String FX_ELEMENT_SOURCE = "source";
 
   public static final Map<String, List<String>> FX_ELEMENT_ATTRIBUTES = new HashMap<String, List<String>>();
   static {
-    FX_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Arrays.asList(FX_ELEMENT_SOURCE, FX_ID));
+    FX_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Arrays.asList(FX_ELEMENT_SOURCE, FX_ID, RESOURCES, CHARSET));
     FX_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Arrays.asList(FX_ELEMENT_SOURCE));
+    FX_ELEMENT_ATTRIBUTES.put(FX_COPY, Arrays.asList(FX_ELEMENT_SOURCE));
     FX_ELEMENT_ATTRIBUTES.put(FX_SCRIPT, Arrays.asList(FX_ELEMENT_SOURCE));
     FX_ELEMENT_ATTRIBUTES.put(FX_ROOT, Arrays.asList(TYPE));
   }
@@ -63,6 +66,7 @@ public class FxmlConstants {
   static {
     FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_INCLUDE, Arrays.asList(FX_ELEMENT_SOURCE));
     FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_REFERENCE, Arrays.asList(FX_ELEMENT_SOURCE));
+    FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_COPY, Arrays.asList(FX_ELEMENT_SOURCE));
     FX_REQUIRED_ELEMENT_ATTRIBUTES.put(FX_ROOT, Arrays.asList(TYPE));
   }
 

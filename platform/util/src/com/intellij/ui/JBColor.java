@@ -18,22 +18,131 @@ package com.intellij.ui;
 import com.intellij.util.ui.UIUtil;
 
 import java.awt.*;
+import java.awt.color.ColorSpace;
+import java.awt.geom.AffineTransform;
+import java.awt.geom.Rectangle2D;
+import java.awt.image.ColorModel;
 
 /**
  * @author Konstantin Bulenkov
  */
 @SuppressWarnings("UseJBColor")
 public class JBColor extends Color {
+
+  private static boolean DARK = UIUtil.isUnderDarcula();
+
+  private final Color darkColor;
+
   public JBColor(int rgb, int darkRGB) {
-    super(isDark() ? darkRGB : rgb);
+    this(new Color(rgb), new Color(darkRGB));
   }
 
   public JBColor(Color regular, Color dark) {
-    super(isDark() ? dark.getRGB() : regular.getRGB(), (isDark() ? dark : regular).getAlpha() != 255);
+    super(regular.getRGB(), regular.getAlpha() != 255);
+    darkColor = dark;
   }
 
-  private static boolean isDark() {
-    return UIUtil.isUnderDarcula();
+  public static void setDark(boolean dark) {
+    DARK = dark;
+  }
+
+  Color getDarkVariant() {
+    return darkColor;
+  }
+
+  @Override
+  public int getRed() {
+    return DARK ? getDarkVariant().getRed() : super.getRed();
+  }
+
+  @Override
+  public int getGreen() {
+    return DARK ? getDarkVariant().getGreen() : super.getGreen();
+  }
+
+  @Override
+  public int getBlue() {
+    return DARK ? getDarkVariant().getBlue() : super.getBlue();
+  }
+
+  @Override
+  public int getAlpha() {
+    return DARK ? getDarkVariant().getAlpha() : super.getAlpha();
+  }
+
+  @Override
+  public int getRGB() {
+    return DARK ? getDarkVariant().getRGB() : super.getRGB();
+  }
+
+  @Override
+  public Color brighter() {
+    return new JBColor(super.brighter(), getDarkVariant().brighter());
+  }
+
+  @Override
+  public Color darker() {
+    return new JBColor(super.darker(), getDarkVariant().darker());
+  }
+
+  @Override
+  public int hashCode() {
+    return DARK ? getDarkVariant().hashCode() : super.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return DARK ? getDarkVariant().equals(obj) : super.equals(obj);
+  }
+
+  @Override
+  public String toString() {
+    return DARK ? getDarkVariant().toString() : super.toString();
+  }
+
+  @Override
+  public float[] getRGBComponents(float[] compArray) {
+    return DARK ? getDarkVariant().getRGBComponents(compArray) : super.getRGBComponents(compArray);
+  }
+
+  @Override
+  public float[] getRGBColorComponents(float[] compArray) {
+    return DARK ? getDarkVariant().getRGBColorComponents(compArray) : super.getRGBComponents(compArray);
+  }
+
+  @Override
+  public float[] getComponents(float[] compArray) {
+    return DARK ? getDarkVariant().getComponents(compArray) : super.getComponents(compArray);
+  }
+
+  @Override
+  public float[] getColorComponents(float[] compArray) {
+    return DARK ? getDarkVariant().getColorComponents(compArray) : super.getColorComponents(compArray);
+  }
+
+  @Override
+  public float[] getComponents(ColorSpace cspace, float[] compArray) {
+    return DARK ? getDarkVariant().getComponents(cspace, compArray) : super.getComponents(cspace, compArray);
+  }
+
+  @Override
+  public float[] getColorComponents(ColorSpace cspace, float[] compArray) {
+    return DARK ? getDarkVariant().getColorComponents(cspace, compArray) : super.getColorComponents(cspace, compArray);
+  }
+
+  @Override
+  public ColorSpace getColorSpace() {
+    return DARK ? getDarkVariant().getColorSpace() : super.getColorSpace();
+  }
+
+  @Override
+  public synchronized PaintContext createContext(ColorModel cm, Rectangle r, Rectangle2D r2d, AffineTransform xform, RenderingHints hints) {
+    return DARK ? getDarkVariant().createContext(cm, r, r2d, xform, hints) : super.createContext(cm, r, r2d, xform, hints);
+  }
+
+  @Override
+  public int getTransparency() {
+    return DARK ? getDarkVariant().getTransparency() : super.getTransparency();
   }
 
   public final static JBColor red = new JBColor(Color.red, DarculaColors.RED);
@@ -42,10 +151,20 @@ public class JBColor extends Color {
   public final static JBColor blue = new JBColor(Color.blue, DarculaColors.BLUE);
   public final static JBColor BLUE = blue;
 
-  public final static JBColor white = new JBColor(Color.white, UIUtil.getListBackground());
+  public final static JBColor white = new JBColor(Color.white, UIUtil.getListBackground()) {
+    @Override
+    Color getDarkVariant() {
+      return UIUtil.getListBackground();
+    }
+  };
   public final static JBColor WHITE = white;
 
-  public final static JBColor black = new JBColor(Color.black, UIUtil.getListForeground());
+  public final static JBColor black = new JBColor(Color.black, UIUtil.getListForeground()) {
+    @Override
+    Color getDarkVariant() {
+      return UIUtil.getListForeground();
+    }
+  };
   public final static JBColor BLACK = black;
 
   public final static JBColor gray = new JBColor(Gray._128, Gray._128);
@@ -75,9 +194,7 @@ public class JBColor extends Color {
   public final static Color cyan = new JBColor(Color.cyan, new Color(0, 137, 137));
   public final static Color CYAN = cyan;
 
-  public static Color foreground = UIUtil.getLabelForeground();
-  public static Color FOREGROUND = foreground;
+  public static Color foreground() {return UIUtil.getLabelForeground();}
 
-  public static Color background = UIUtil.getListBackground();
-  public static Color BACKGROUND = background;
+  public static Color background() {return UIUtil.getListBackground();}
 }

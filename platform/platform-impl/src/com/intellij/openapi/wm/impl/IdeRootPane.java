@@ -42,7 +42,6 @@ import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanel;
-import com.intellij.util.IconUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -188,21 +187,38 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return p;
   }
 
+  @Override
+  public void setLayout(LayoutManager mgr) {
+    //First time mgr comes from createRootLayout(), it's OK. But then Alloy spoils it and breaks FullScreen mode under Windows
+    if (getLayout() != null && UIUtil.isUnderAlloyLookAndFeel()) return;
+    super.setLayout(mgr);
+  }
+
   protected final Container createContentPane(){
-    myContentPane = new JBPanel(new BorderLayout()){
+    myContentPane = new JBPanel(new BorderLayout()) {
+      @Nullable
       @Override
-      protected void paintComponent(Graphics g) {
-        super.paintComponent(g);
+      public Icon getCenterImage() {
         if (UIUtil.isUnderDarcula()) {
-          String icon = ApplicationInfoEx.getInstanceEx().getEditorBackgroundImageUrl();
-          if (icon != null) IconUtil.paintInCenterOf(this, g, IconLoader.getIcon(icon));
+          String url = ApplicationInfoEx.getInstanceEx().getEditorBackgroundImageUrl();
+          if (url != null) {
+            return IconLoader.getIcon(url);
+          }
         }
+        return null;
+      }
+
+      @Nullable
+      @Override
+      public Icon getBackgroundImage() {
+        return UIUtil.isUnderDarcula() ? BG : null;
+      }
+
+      @Override
+      public Color getBackground() {
+        return UIUtil.isUnderDarcula() ? super.getBackground() : JBColor.GRAY;
       }
     };
-    if (UIUtil.isUnderDarcula()) {
-      myContentPane.setBackgroundImage(BG);
-    }
-    myContentPane.setBackground(JBColor.GRAY);
 
     return myContentPane;
   }

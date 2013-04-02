@@ -14,6 +14,8 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgPusher;
 
 public class HgPushAction extends HgAction {
@@ -22,8 +24,8 @@ public class HgPushAction extends HgAction {
   }
 
   @Override
-  public void execute(final Project project) {
-    new HgPusher(project).showDialogAndPush();
+  public void execute(final Project project, @Nullable final VirtualFile selectedRepo) {
+    new HgPusher(project).showDialogAndPush(selectedRepo);
   }
 
 }

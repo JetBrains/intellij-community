@@ -179,6 +179,12 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     doTest("layoutY");
   }
 
+  public void testIncludedRootRootAttributes() throws Exception {
+    myFixture.addFileToProject("sample.fxml", "?import javafx.scene.layout.GridPane?>\n" +
+                                              "<fx:root type=\"javafx.scene.layout.GridPane\" xmlns:fx=\"http://javafx.com/fxml\" />");
+    doTest("blendMode");
+  }
+
   public void testAllowPropertyTypeClass() throws Exception {
     doTest("ColumnConstraints");
   }

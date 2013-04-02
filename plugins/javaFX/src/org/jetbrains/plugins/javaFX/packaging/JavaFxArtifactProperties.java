@@ -26,7 +26,6 @@ import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactProperties;
@@ -36,7 +35,6 @@ import com.intellij.packaging.impl.elements.ArchivePackagingElement;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.ui.ArtifactEditorContext;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
-import com.intellij.util.PathUtil;
 import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -103,17 +101,16 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
       return;
     }
 
-    final String binPath = ((JavaSdk)fxCompatibleSdk.getSdkType()).getBinPath(fxCompatibleSdk);
-
     final JavaFxArtifactProperties properties =
             (JavaFxArtifactProperties)artifact.getProperties(JavaFxArtifactPropertiesProvider.getInstance());
-    
-    if (StringUtil.isEmptyOrSpaces(properties.getAppClass())) {
-      compileContext.addMessage(CompilerMessageCategory.ERROR, "No application class specified for JavaFX package", null, -1, -1);
-      return;
-    }
 
-    new JavaFxPackager(artifact, properties, compileContext).createJarAndDeploy(binPath);
+    final JavaFxPackager javaFxPackager = new JavaFxPackager(artifact, properties, project) {
+      @Override
+      protected void registerJavaFxPackagerError(String message) {
+        compileContext.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+      }
+    };
+    javaFxPackager.buildJavaFxArtifact(fxCompatibleSdk.getHomePath());
   }
 
   @Override
@@ -284,15 +281,15 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     return null;
   }
   
-  private static class JavaFxPackager extends AbstractJavaFxPackager {
+  public static abstract class JavaFxPackager extends AbstractJavaFxPackager {
     private final Artifact myArtifact;
     private final JavaFxArtifactProperties myProperties;
-    private final CompileContext myCompileContext;
+    private final Project myProject;
 
-    public JavaFxPackager(Artifact artifact, JavaFxArtifactProperties properties, CompileContext compileContext) {
+    public JavaFxPackager(Artifact artifact, JavaFxArtifactProperties properties, Project project) {
       myArtifact = artifact;
       myProperties = properties;
-      myCompileContext = compileContext;
+      myProject = project;
     }
 
     @Override
@@ -342,17 +339,12 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
 
     @Override
     public String getPreloaderClass() {
-      return myProperties.getPreloaderClass(myArtifact, myCompileContext.getProject());
+      return myProperties.getPreloaderClass(myArtifact, myProject);
     }
 
     @Override
     public String getPreloaderJar() {
-      return myProperties.getPreloaderJar(myArtifact, myCompileContext.getProject());
-    }
-
-    @Override
-    protected void registerJavaFxPackagerError(String message) {
-      myCompileContext.addMessage(CompilerMessageCategory.ERROR, message, null, -1, -1);
+      return myProperties.getPreloaderJar(myArtifact, myProject);
     }
 
     @Override

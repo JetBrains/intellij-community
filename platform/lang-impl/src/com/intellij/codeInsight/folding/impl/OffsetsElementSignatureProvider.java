@@ -16,6 +16,7 @@
 package com.intellij.codeInsight.folding.impl;
 
 import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.FileViewProvider;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
@@ -76,29 +77,32 @@ public class OffsetsElementSignatureProvider extends AbstractElementSignaturePro
     }
 
     PsiElement result = null;
-    PsiElement element = file.findElementAt(start);
-    if (element != null) {
-      result = findElement(start, end, index, element, processingInfoStorage);
-      if (result == null && processingInfoStorage != null) {
-        processingInfoStorage.append(String.format(
-          "Failed to find an element by the given offsets. Started by the element '%s' (%s)", element, element.getText()
-        ));
+    FileViewProvider viewProvider = file.getViewProvider();
+    for (PsiFile psiFile : viewProvider.getAllFiles()) {
+      PsiElement element = viewProvider.findElementAt(start, psiFile.getLanguage());
+      if (element != null) {
+        result = findElement(start, end, index, element, processingInfoStorage);
+        if (result != null) {
+          break;
+        }
+        else if (processingInfoStorage != null) {
+          processingInfoStorage.append(String.format(
+            "Failed to find an element by the given offsets for language %s. Started by the element '%s' (%s)",
+            psiFile.getLanguage(), element, element.getText()
+          ));
+        }
+        final PsiElement injectedStartElement = InjectedLanguageUtil.findElementAtNoCommit(psiFile, start);
+        if (processingInfoStorage != null) {
+          processingInfoStorage.append(String.format(
+            "Trying to find injected element starting from the '%s'%s%n",
+            injectedStartElement, injectedStartElement == null ? "" : String.format("(%s)", injectedStartElement.getText())
+          ));
+        }
+        if (injectedStartElement != null && injectedStartElement != element) {
+          result = findElement(start, end, index, injectedStartElement, processingInfoStorage);
+        }
       }
     }
-
-    if (result == null) {
-      final PsiElement injectedStartElement = InjectedLanguageUtil.findElementAtNoCommit(file, start);
-      if (processingInfoStorage != null) {
-        processingInfoStorage.append(String.format(
-          "Trying to find injected element starting from the '%s'%s%n",
-          injectedStartElement, injectedStartElement == null ? "" : String.format("(%s)", injectedStartElement.getText())
-        ));
-      }
-      if (injectedStartElement != null && injectedStartElement != element) {
-        result = findElement(start, end, index, injectedStartElement, processingInfoStorage);
-      } 
-    }
-
     return result;
   }
 

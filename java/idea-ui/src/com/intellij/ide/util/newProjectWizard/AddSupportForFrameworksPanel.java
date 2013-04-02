@@ -164,8 +164,8 @@ public class AddSupportForFrameworksPanel implements Disposable {
       }
 
       FrameworkSupportOptionsComponent optionsComponent = new FrameworkSupportOptionsComponent(myModel, myLibrariesContainer, this,
-                                                                                               node.getConfigurable(),
-                                                                                               node.getTitle() + " Settings");
+                                                                                               node.getProvider(), node.getConfigurable()
+      );
       final String id = node.getProvider().getFrameworkType().getId();
       myOptionsPanel.add(id, optionsComponent.getMainPanel());
       myInitializedOptionsComponents.put(node, optionsComponent);

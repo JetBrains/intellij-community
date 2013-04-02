@@ -15,10 +15,9 @@ package org.zmlx.hg4idea.ui;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.command.HgTagBranch;
-import org.zmlx.hg4idea.command.HgTagBranchCommand;
-import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgBranchesAndTags;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -43,6 +42,7 @@ public class HgUpdateToDialog extends DialogWrapper {
   private JComboBox tagSelector;
   private HgRepositorySelectorComponent hgRepositorySelectorComponent;
   private Map<VirtualFile, List<HgTagBranch>> branchesForRepos;
+  private Map<VirtualFile, List<HgTagBranch>> tagsForRepos;
 
   public HgUpdateToDialog(Project project) {
     super(project, false);
@@ -67,9 +67,12 @@ public class HgUpdateToDialog extends DialogWrapper {
     init();
   }
 
-  public void setRoots(Collection<VirtualFile> repos, Map<VirtualFile, List<HgTagBranch>> branchesForRepos) {
+  public void setRoots(Collection<VirtualFile> repos,
+                       @Nullable VirtualFile selectedRepo, HgBranchesAndTags branchesAndTags) {
     hgRepositorySelectorComponent.setRoots(repos);
-    this.branchesForRepos = branchesForRepos;
+    branchesForRepos = branchesAndTags.getBranchesForRepos();
+    tagsForRepos = branchesAndTags.getTagsForRepos();
+    hgRepositorySelectorComponent.setSelectedRoot(selectedRepo);
     updateRepository();
   }
 
@@ -119,20 +122,13 @@ public class HgUpdateToDialog extends DialogWrapper {
   }
 
   private void loadBranches(VirtualFile root) {
-    assert branchesForRepos.get(root) != null;
+    assert branchesForRepos.get(root) != null : "No inforamtion about root " + root;
     branchSelector.setModel(new DefaultComboBoxModel(branchesForRepos.get(root).toArray()));
   }
 
   private void loadTags(VirtualFile root) {
-    HgCommandResult tagsResult = new HgTagBranchCommand(project, root).collectTags();
-    assert tagsResult != null;
-    final List<HgTagBranch> tags = HgTagBranchCommand.parseResult(tagsResult);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        tagSelector.setModel(new DefaultComboBoxModel(tags.toArray()));
-      }
-    });
+    assert tagsForRepos.get(root) != null : "No inforamtion about root " + root;
+    tagSelector.setModel(new DefaultComboBoxModel(tagsForRepos.get(root).toArray()));
   }
 
   protected JComponent createCenterPanel() {

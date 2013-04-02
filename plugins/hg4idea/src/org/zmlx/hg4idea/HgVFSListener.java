@@ -99,7 +99,7 @@ public class HgVFSListener extends VcsVFSListener {
           pi.setText(repo.getPresentableUrl());
           try {
             untrackedFiles
-              .addAll(new HgStatusCommand.Builder(false).includeUnknown(true).build(myProject)
+              .addAll(new HgStatusCommand.Builder(false).unknown(true).build(myProject)
                         .getHgUntrackedFiles(repo, new ArrayList<VirtualFile>(files)));
           }
           catch (final VcsException ex) {
@@ -148,7 +148,7 @@ public class HgVFSListener extends VcsVFSListener {
         LOG.assertTrue(myProject != null, "Project is null");
         Collection<VirtualFile> unversionedAndIgnoredFiles = new ArrayList<VirtualFile>();
         final Map<VirtualFile, Collection<VirtualFile>> sortedSourceFilesByRepos = HgUtil.sortByHgRoots(myProject, copyFromMap.values());
-        HgStatusCommand statusCommand = new HgStatusCommand.Builder(false).includeUnknown(true).includeIgnored(true).build(myProject);
+        HgStatusCommand statusCommand = new HgStatusCommand.Builder(false).unknown(true).ignored(true).build(myProject);
         for (VirtualFile repo : sortedSourceFilesByRepos.keySet()) {
           Set<HgChange> changes = statusCommand.execute(repo);
           for (HgChange change : changes) {

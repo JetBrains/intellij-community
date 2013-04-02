@@ -220,12 +220,7 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       final String name = context.getName();
       if (Comparing.equal(name, getName()) && myPsiClass != null) {
         final List<XmlAttributeDescriptor> simpleAttrs = new ArrayList<XmlAttributeDescriptor>();
-        collectProperties(simpleAttrs, new Function<PsiField, XmlAttributeDescriptor>() {
-          @Override
-          public XmlAttributeDescriptor fun(PsiField field) {
-            return new JavaFxPropertyAttributeDescriptor(field.getName(), myPsiClass);
-          }
-        }, true);
+        collectInstanceProperties(simpleAttrs);
         collectStaticAttributesDescriptors(context, simpleAttrs);
         for (String defaultProperty : FxmlConstants.FX_DEFAULT_PROPERTIES) {
           simpleAttrs.add(new JavaFxDefaultAttributeDescriptor(defaultProperty, myPsiClass));
@@ -234,6 +229,15 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
       }
     }
     return XmlAttributeDescriptor.EMPTY;
+  }
+
+  protected void collectInstanceProperties(List<XmlAttributeDescriptor> simpleAttrs) {
+    collectProperties(simpleAttrs, new Function<PsiField, XmlAttributeDescriptor>() {
+      @Override
+      public XmlAttributeDescriptor fun(PsiField field) {
+        return new JavaFxPropertyAttributeDescriptor(field.getName(), myPsiClass);
+      }
+    }, true);
   }
 
   private <T> void collectProperties(final List<T> children, final Function<PsiField, T> factory, final boolean acceptPrimitive) {

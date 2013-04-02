@@ -27,11 +27,8 @@ public final class HgErrorUtil {
       return true;
     }
     final List<String> errorLines = result.getErrorLines();
-    if (errorLines.isEmpty()) {
-      return false;
-    }
     for (String line : errorLines) {
-      if (!StringUtil.isEmptyOrSpaces(line) && line.startsWith("abort:")) {
+      if (!StringUtil.isEmptyOrSpaces(line) && line.trim().startsWith("abort:")) {
         return true;
       }
     }

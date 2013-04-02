@@ -124,7 +124,7 @@ class DeclarationCacheKey {
       @Override
       public boolean process(PsiElement scope, PsiElement lastParent) {
         result.add(collectScopeDeclarations(scope, lastParent));
-        if (scope instanceof GrClosableBlock) return false; //closures tree walk up themselves
+        if (nonCode && scope instanceof GrClosableBlock) return false; //closures tree walk up themselves if non code declarataions are acepted
         return true;
       }
     });

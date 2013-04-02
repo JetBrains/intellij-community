@@ -47,9 +47,7 @@ public class AnnotationCollectorChecker extends CustomAnnotationChecker {
     if (clazz == null) return true;
     final GrAnnotationNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     CustomAnnotationChecker.checkAnnotationArguments(errors, clazz, annotation.getClassReference(), attributes, false);
-    for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
-      holder.createErrorAnnotation(entry.getKey(), entry.getValue());
-    }
+    highlightErrors(holder, errors);
 
     return true;
   }

@@ -17,6 +17,9 @@ package org.zmlx.hg4idea.action;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
 
@@ -38,8 +41,9 @@ public abstract class HgAction extends AnAction {
     if (project == null) {
       return;
     }
-
-    execute(project);
+    VirtualFile file = event.getData(PlatformDataKeys.VIRTUAL_FILE);
+    VirtualFile repo = file != null ? HgUtil.getHgRootOrNull(project, file) : null;
+    execute(project, repo);
   }
 
   @Override
@@ -53,6 +57,6 @@ public abstract class HgAction extends AnAction {
     }
   }
 
-  public abstract void execute(Project project);
+  public abstract void execute(Project project, @Nullable VirtualFile selectedRepo);
 
 }

@@ -12,10 +12,13 @@
 // limitations under the License.
 package org.zmlx.hg4idea.ui;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.HgFile;
 import org.zmlx.hg4idea.command.HgResolveCommand;
 import org.zmlx.hg4idea.command.HgResolveStatusEnum;
@@ -50,8 +53,9 @@ public class HgRunConflictResolverDialog extends DialogWrapper {
     return repositorySelector.getRepository();
   }
 
-  public void setRoots(Collection<VirtualFile> repos) {
+  public void setRoots(Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo) {
     repositorySelector.setRoots(repos);
+    repositorySelector.setSelectedRoot(selectedRepo);
     onChangeRepository();
   }
 
@@ -62,20 +66,27 @@ public class HgRunConflictResolverDialog extends DialogWrapper {
   private void onChangeRepository() {
     VirtualFile repo = repositorySelector.getRepository();
     HgResolveCommand command = new HgResolveCommand(project);
+    final ModalityState modalityState = ApplicationManager.getApplication().getModalityStateForComponent(getRootPane());
     command.list(repo, new Consumer<Map<HgFile, HgResolveStatusEnum>>() {
       @Override
       public void consume(Map<HgFile, HgResolveStatusEnum> status) {
-        DefaultListModel model = new DefaultListModel();
+        final DefaultListModel model = new DefaultListModel();
         for (Map.Entry<HgFile, HgResolveStatusEnum> entry : status.entrySet()) {
           if (entry.getValue() == HgResolveStatusEnum.UNRESOLVED) {
             model.addElement(entry.getKey().getRelativePath());
           }
         }
-        setOKActionEnabled(!model.isEmpty());
-        if (model.isEmpty()) {
-          model.addElement("No conflicts to resolve");
-        }
-        conflictsList.setModel(model);
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+
+          @Override
+          public void run() {
+            setOKActionEnabled(!model.isEmpty());
+            if (model.isEmpty()) {
+              model.addElement("No conflicts to resolve");
+            }
+            conflictsList.setModel(model);
+          }
+        }, modalityState);
       }
     });
   }

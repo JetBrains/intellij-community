@@ -272,7 +272,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     @Override
     public Color getForeground() {
       if (getModel().isSelected()) {
-        return JBColor.foreground;
+        return JBColor.foreground();
       } else if (getModel().isRollover()) {
         return JBColor.GRAY;
       } else {

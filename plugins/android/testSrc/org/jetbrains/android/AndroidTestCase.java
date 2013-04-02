@@ -20,7 +20,7 @@ import com.android.SdkConstants;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.ModifiableFacetModel;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -51,6 +51,7 @@ import java.util.List;
 
 @SuppressWarnings({"JUnitTestCaseWithNonTrivialConstructors"})
 public abstract class AndroidTestCase extends UsefulTestCase {
+
   protected JavaCodeInsightTestFixture myFixture;
   protected Module myModule;
   protected List<Module> myAdditionalModules;
@@ -74,7 +75,7 @@ public abstract class AndroidTestCase extends UsefulTestCase {
   protected static String getTestDataPath() {
     String androidHomePath = System.getProperty("android.home.path");
     if (androidHomePath == null) {
-      androidHomePath = new File(PathManager.getHomePath(), "android/android").getPath();
+      androidHomePath = PluginPathManager.getPluginHomePath("android");
     }
     return androidHomePath + "/testData";
   }

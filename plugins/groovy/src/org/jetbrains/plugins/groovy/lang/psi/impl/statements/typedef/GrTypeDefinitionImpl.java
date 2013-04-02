@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -331,8 +331,11 @@ public abstract class GrTypeDefinitionImpl extends GrStubElementBase<GrTypeDefin
   private List<GrField> getSyntheticFields() {
     List<GrField> fields = AST_TRANSFORM_FIELD.getCachedValue(this);
     if (fields == null) {
+      final RecursionGuard.StackStamp stamp = ourGuard.markStack();
       fields = AstTransformContributor.runContributorsForFields(this);
-      fields = AST_TRANSFORM_FIELD.putCachedValue(this, fields);
+      if (stamp.mayCacheNow()) {
+        fields = AST_TRANSFORM_FIELD.putCachedValue(this, fields);
+      }
     }
 
     return fields;

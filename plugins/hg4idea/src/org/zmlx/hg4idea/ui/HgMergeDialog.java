@@ -22,9 +22,8 @@ import org.zmlx.hg4idea.HgRevisionNumber;
 import org.zmlx.hg4idea.HgVcsMessages;
 import org.zmlx.hg4idea.command.HgHeadsCommand;
 import org.zmlx.hg4idea.command.HgTagBranch;
-import org.zmlx.hg4idea.command.HgTagBranchCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
-import org.zmlx.hg4idea.execution.HgCommandResult;
+import org.zmlx.hg4idea.util.HgBranchesAndTags;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -53,12 +52,16 @@ public class HgMergeDialog extends DialogWrapper {
 
   private HgRevisionNumber otherHead;
   private Map<VirtualFile, List<HgTagBranch>> branchesForRepos;
+  private Map<VirtualFile, List<HgTagBranch>> tagsForRepos;
 
-  public HgMergeDialog(Project project, Collection<VirtualFile> roots, Map<VirtualFile, List<HgTagBranch>> branchesForRepos) {
+  public HgMergeDialog(Project project,
+                       Collection<VirtualFile> roots,
+                       @Nullable VirtualFile selectedRepo, HgBranchesAndTags branchesAndTags) {
     super(project, false);
     this.project = project;
-    this.branchesForRepos = branchesForRepos;
-    setRoots(roots);
+    branchesForRepos = branchesAndTags.getBranchesForRepos();
+    tagsForRepos = branchesAndTags.getTagsForRepos();
+    setRoots(roots, selectedRepo);
     hgRepositorySelectorComponent.setTitle("Select repository to merge");
     hgRepositorySelectorComponent.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
@@ -79,8 +82,9 @@ public class HgMergeDialog extends DialogWrapper {
     init();
   }
 
-  public void setRoots(Collection<VirtualFile> repos) {
+  public void setRoots(Collection<VirtualFile> repos, @Nullable VirtualFile selectedRepo) {
     hgRepositorySelectorComponent.setRoots(repos);
+    hgRepositorySelectorComponent.setSelectedRoot(selectedRepo);
     updateRepository();
   }
 
@@ -118,20 +122,13 @@ public class HgMergeDialog extends DialogWrapper {
   }
 
   private void loadBranches(VirtualFile root) {
-    assert branchesForRepos.get(root) != null;
+    assert branchesForRepos.get(root) != null : "No inforamtion about root " + root;
     branchSelector.setModel(new DefaultComboBoxModel(branchesForRepos.get(root).toArray()));
   }
 
   private void loadTags(VirtualFile root) {
-    HgCommandResult tagsResult = new HgTagBranchCommand(project, root).collectTags();
-    assert tagsResult != null;
-    final List<HgTagBranch> tags = HgTagBranchCommand.parseResult(tagsResult);
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        tagSelector.setModel(new DefaultComboBoxModel(tags.toArray()));
-      }
-    });
+    assert tagsForRepos.get(root) != null : "No inforamtion about root " + root;
+    tagSelector.setModel(new DefaultComboBoxModel(tagsForRepos.get(root).toArray()));
   }
 
   private void loadHeads(final VirtualFile root) {

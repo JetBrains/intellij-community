@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.packaging;
 
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -22,8 +23,8 @@ import com.intellij.util.Base64Converter;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.io.ZipUtil;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -65,149 +66,109 @@ public abstract class AbstractJavaFxPackager {
   protected abstract void registerJavaFxPackagerError(final String message);
 
 
-  public void createJarAndDeploy(final String binPath) {
+  public void buildJavaFxArtifact(final String homePath) {
+    if (!checkNotEmpty(getAppClass(), "Application class")) return;
+    if (!checkNotEmpty(getWidth(), "Width")) return;
+    if (!checkNotEmpty(getHeight(), "Height")) return;
+
     final String zipPath = getArtifactOutputFilePath();
 
     final File tempUnzippedArtifactOutput;
     try {
       tempUnzippedArtifactOutput = FileUtil.createTempDirectory("artifact", "unzipped");
       ZipUtil.extract(new File(zipPath), tempUnzippedArtifactOutput, null);
+      copyLibraries(zipPath, tempUnzippedArtifactOutput);
     }
     catch (IOException e) {
       registerJavaFxPackagerError(e);
       return;
     }
 
-    final List<String> commandLine = new ArrayList<String>();
-    addParameter(commandLine, FileUtil.toSystemDependentName(binPath + File.separator + "javafxpackager"));
-
-    addParameter(commandLine, "-createJar");
-    addParameter(commandLine, "-appclass");
-    addParameter(commandLine, getAppClass());
-
-    appendPreloader(commandLine, true);
-
-    addParameter(commandLine, "-srcdir");
-    addParameter(commandLine, tempUnzippedArtifactOutput.getPath());
-    addParameter(commandLine, "-outdir");
-
-    final File tempDirWithJar;
+    final File tempDirectory = new File(tempUnzippedArtifactOutput, "deploy");
     try {
-      tempDirWithJar = FileUtil.createTempDirectory("javafxpackager", "out");
+
+      final StringBuilder buf = new StringBuilder();
+      buf.append("<project default=\"build artifact\">\n");
+      buf.append("<taskdef resource=\"com/sun/javafx/tools/ant/antlib.xml\" uri=\"javafx:com.sun.javafx.tools.ant\" ")
+         .append("classpath=\"").append(homePath).append("/lib/ant-javafx.jar\"/>\n");
+      buf.append("<target name=\"build artifact\" xmlns:fx=\"javafx:com.sun.javafx.tools.ant\">");
+      final String artifactFileName = getArtifactRootName();
+      final String artifactName = FileUtil.getNameWithoutExtension(artifactFileName);
+      final List<JavaFxAntGenerator.SimpleTag> tags = 
+        JavaFxAntGenerator.createJarAndDeployTasks(this, artifactFileName, artifactName, tempUnzippedArtifactOutput.getPath());
+      for (JavaFxAntGenerator.SimpleTag tag : tags) {
+        tag.generate(buf);
+      }
+      buf.append("</target>");
+      buf.append("</project>");
+
+      final int result = startAntTarget(buf.toString(), homePath);
+      if (result == 0) {
+        if (isEnabledSigning()) {
+          signApp(homePath + File.separator + "bin", tempDirectory);
+        }
+      }
+      else {
+        registerJavaFxPackagerError("fx:deploy task has failed.");
+      }
     }
-    catch (IOException e) {
-      registerJavaFxPackagerError(e);
-      return;
-    }
-    addParameter(commandLine, tempDirWithJar.getPath());
-    addParameter(commandLine, "-outfile");
-
-    addParameter(commandLine, getArtifactRootName());
-    addParameter(commandLine, "-v");
-
-    addParameter(commandLine, "-nocss2bin");
-
-    appendManifestProperties(commandLine);
-
-    final int result = startProcess(commandLine);
-    if (result == 0) {
-      deploy(binPath, tempDirWithJar, tempUnzippedArtifactOutput);
+    finally {
+      copyResultsToArtifactsOutput(tempDirectory);
+      FileUtil.delete(tempUnzippedArtifactOutput);
     }
   }
 
-  private void appendPreloader(List<String> commandLine, boolean appendPreloaderJar) {
-    final String preloaderClass = getPreloaderClass();
-    final String preloaderJar = getPreloaderJar();
-    if (!StringUtil.isEmptyOrSpaces(preloaderClass) && !StringUtil.isEmptyOrSpaces(preloaderJar)) {
-      addParameter(commandLine, "-preloader");
-      addParameter(commandLine, preloaderClass);
-
-      if (appendPreloaderJar) {
-        addParameter(commandLine, "-classpath");
-        addParameter(commandLine, new File(preloaderJar).getName());
+  private void copyLibraries(String zipPath, File tempUnzippedArtifactOutput) throws IOException {
+    final File[] outFiles = new File(getArtifactOutputPath()).listFiles();
+    if (outFiles != null) {
+      for (File file : outFiles) {
+        if (file.isFile()) {
+          final String fileName = file.getName();
+          if (fileName.endsWith(".jar") && !zipPath.equals(fileName)) {
+            FileUtil.copy(file, new File(tempUnzippedArtifactOutput, fileName));
+          }
+        }
       }
     }
   }
 
-  private void deploy(final String binPath,
-                      final File tempDirWithCreatedJar,
-                      final File tempUnzippedArtifactOutput) {
-    final String artifactName = FileUtil.getNameWithoutExtension(getArtifactRootName());
-    final List<String> commandLine = new ArrayList<String>();
-    addParameter(commandLine, FileUtil.toSystemDependentName(binPath + File.separator + "javafxpackager"));
-
-    addParameter(commandLine, "-deploy");
-
-    appendIfNotEmpty(commandLine, "-title", getTitle());
-    appendIfNotEmpty(commandLine, "-vendor", getVendor());
-    appendIfNotEmpty(commandLine, "-description", getDescription());
-
-    addParameter(commandLine, "-appclass");
-    addParameter(commandLine, getAppClass());
-
-    appendPreloader(commandLine, false);
-
-    addParameter(commandLine, "-width");
-    addParameter(commandLine, getWidth());
-    addParameter(commandLine, "-height");
-    addParameter(commandLine, getHeight());
-
-    appendIfNotEmpty(commandLine, "-htmlparamfile", getHtmlParamFile());
-    appendIfNotEmpty(commandLine, "-paramfile", getParamFile());
-
-    addParameter(commandLine, "-updatemode");
-    addParameter(commandLine, getUpdateMode());
-
-    addParameter(commandLine, "-name");
-    addParameter(commandLine, artifactName);
-
-
-    addParameter(commandLine, "-outdir");
-
-    final File tempDirectory;
-    try {
-      tempDirectory = FileUtil.createTempDirectory("javafxpackager", "out");
+  private boolean checkNotEmpty(final String text, final String title) {
+    if (StringUtil.isEmptyOrSpaces(text)) {
+      registerJavaFxPackagerError("Unable to build JavaFX artifact. " + title + " should be specified in artifact's settings.");
+      return false;
     }
-    catch (IOException e) {
-      registerJavaFxPackagerError(e);
-      return;
-    }
-    addParameter(commandLine, tempDirectory.getPath());
-
-    addParameter(commandLine, "-outfile");
-    addParameter(commandLine, artifactName);
-
-    addParameter(commandLine, "-srcdir");
-    addParameter(commandLine, tempDirWithCreatedJar.getPath());
-
-    addParameter(commandLine, "-v");
-
-    final int result = startProcess(commandLine);
-    if (result == 0) {
-      if (isEnabledSigning()) {
-        signApp(binPath, tempDirectory);
-      }
-    }
-    FileUtil.delete(tempUnzippedArtifactOutput);
-    FileUtil.delete(new File(getArtifactOutputFilePath()));
-    copyResultsToArtifactsOutput(tempDirWithCreatedJar);
-    copyResultsToArtifactsOutput(tempDirectory);
+    return true;
   }
 
   private void signApp(String binPath, File tempDirectory) {
     final boolean selfSigning = isSelfSigning();
     final int genResult = selfSigning ? genKey(binPath) : 0;
     if (genResult == 0) {
+      final File[] files = tempDirectory.listFiles();
+      if (files != null) {
+        for (File file : files) {
+          if (file.isFile() && file.getName().endsWith(".jar")) {
+            sign(binPath, selfSigning, file.getPath());
+          }
+        }
+      }
+    } else {
+      registerJavaFxPackagerError("JavaFX generate certificate task has failed.");
+    }
+  }
 
-      final List<String> signCommandLine = new ArrayList<String>();
-      addParameter(signCommandLine, FileUtil.toSystemDependentName(binPath + File.separator + "jarsigner"));
+  private void sign(String binPath, boolean selfSigning, final String jar2Sign) {
+    final List<String> signCommandLine = new ArrayList<String>();
+    addParameter(signCommandLine, FileUtil.toSystemDependentName(binPath + File.separator + "jarsigner"));
 
-      collectStoreParams(selfSigning, signCommandLine);
+    collectStoreParams(selfSigning, signCommandLine);
 
-      addParameter(signCommandLine, tempDirectory.getPath() + File.separator + getArtifactRootName());
-      addParameter(signCommandLine, getAlias(selfSigning));
+    addParameter(signCommandLine, jar2Sign);
+    addParameter(signCommandLine, getAlias(selfSigning));
 
-      final int signedResult = startProcess(signCommandLine);
+    final int signedResult = startProcess(signCommandLine);
+    if (signedResult != 0) {
+      registerJavaFxPackagerError("JavaFX sign task has failed for: " + jar2Sign + ".");
     }
   }
 
@@ -249,14 +210,6 @@ public abstract class AbstractJavaFxPackager {
     addParameter(signCommandLine, getKeypass(selfSigning));
   }
 
- 
-  private void appendIfNotEmpty(List<String> commandLine, final String propName, String title) {
-    if (!StringUtil.isEmptyOrSpaces(title)) {
-      addParameter(commandLine, propName);
-      addParameter(commandLine, title);
-    }
-  }
-
   private void copyResultsToArtifactsOutput(final File tempDirectory) {
     try {
       final File resultedJar = new File(getArtifactOutputPath());
@@ -266,23 +219,6 @@ public abstract class AbstractJavaFxPackager {
       LOG.info(e);
     }
     FileUtil.delete(tempDirectory);
-  }
-
-  private String getManifestString() {
-    final StringBuilder buf = new StringBuilder();
-    final String title = getTitle();
-    if (!StringUtil.isEmptyOrSpaces(title)) {
-      buf.append("Implementation-Title=").append(title).append(";");
-    }
-    final String vendor = getVendor();
-    if (!StringUtil.isEmptyOrSpaces(vendor)) {
-      buf.append("Implementation-Vendor=").append(vendor).append(";");
-    }
-    final int lastIdx = buf.length() - 1;
-    if (lastIdx > 0 && buf.charAt(lastIdx) == ';') {
-      buf.deleteCharAt(lastIdx);
-    }
-    return buf.length() == 0 ? null : buf.toString();
   }
 
   private void registerJavaFxPackagerError(Exception ex) {
@@ -296,24 +232,76 @@ public abstract class AbstractJavaFxPackager {
     }
   }
 
-  private void appendManifestProperties(List<String> commandLine) {
-    final String manifestAttr = getManifestString();
-    if (manifestAttr != null) {
-      addParameter(commandLine, "-manifestAttrs");
-      addParameter(commandLine, "\"" + manifestAttr + "\"");
-    }
-  }
-
   private int startProcess(List<String> commands) {
     try {
       final Process process = new ProcessBuilder(commands).start();
-      LOG.info(new String(FileUtil.loadBytes(process.getErrorStream())));
+      final String message = new String(FileUtil.loadBytes(process.getErrorStream()));
+      if (!StringUtil.isEmptyOrSpaces(message)) {
+        registerJavaFxPackagerError(message);
+      }
       return process.waitFor();
     }
     catch (Exception e) {
       registerJavaFxPackagerError(e);
       return -1;
     }
+  }
+
+  private int startAntTarget(String buildText, String javaHome) {
+    final String antHome = getAntHome();
+    if (antHome == null) {
+      registerJavaFxPackagerError("Bundled ant not found.");
+      return -1;
+    }
+    final ArrayList<String> commands = new ArrayList<String>();
+    commands.add(javaHome + File.separator + "bin" + File.separator + "java");
+
+    commands.add("-Dant.home=" + antHome);
+
+    commands.add("-classpath");
+    commands.add(antHome + "/lib/ant.jar" + File.pathSeparator + 
+                 antHome + "/lib/ant-launcher.jar" + File.pathSeparator +
+                 javaHome + "/lib/ant-javafx.jar");
+    commands.add("org.apache.tools.ant.launch.Launcher");
+    commands.add("-f");
+    try {
+      File tempFile = FileUtil.createTempFile("build", ".xml");
+      tempFile.deleteOnExit();
+      OutputStream outputStream = new FileOutputStream(tempFile.getAbsolutePath());
+      try {
+        outputStream.write(buildText.getBytes(Charset.defaultCharset()));
+      }
+      finally {
+        outputStream.close();
+      }
+      commands.add(tempFile.getCanonicalPath());
+    }
+    catch (IOException e) {
+      registerJavaFxPackagerError(e);
+      return -1;
+    }
+    return startProcess(commands);
+  }
+
+  private static String getAntHome() {
+    final String appHome = PathManager.getHomePath();
+    if (appHome == null) {
+      return null;
+    }
+
+    File antHome = new File(appHome, "lib" + File.separator + "ant");
+    if (!antHome.exists()) {
+      File communityAntHome = new File(appHome, "community" + File.separator + "lib" + File.separator + "ant");
+      if (communityAntHome.exists()) {
+        antHome = communityAntHome;
+      }
+    }
+
+    if (!antHome.exists()) {
+      return null;
+    }
+
+    return antHome.getPath();
   }
 
   private String getAlias(boolean selfSigning) {

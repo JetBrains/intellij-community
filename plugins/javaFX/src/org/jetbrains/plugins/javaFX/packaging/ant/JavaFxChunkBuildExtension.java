@@ -23,7 +23,6 @@ import com.intellij.openapi.projectRoots.JavaSdkType;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactType;
@@ -34,18 +33,14 @@ import com.intellij.util.Base64Converter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.packaging.JavaFxApplicationArtifactType;
-import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactProperties;
-import org.jetbrains.plugins.javaFX.packaging.JavaFxArtifactPropertiesProvider;
+import org.jetbrains.plugins.javaFX.packaging.*;
 
 import java.io.File;
-import java.io.FileInputStream;
 import java.io.IOException;
 import java.io.PrintWriter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Properties;
 
 /**
  * User: anna
@@ -141,70 +136,16 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
     final JavaFxArtifactProperties properties =
       (JavaFxArtifactProperties)artifact.getProperties(JavaFxArtifactPropertiesProvider.getInstance());
 
-    String preloaderFiles = null;
-    final String preloaderJar = properties.getPreloaderJar(artifact, context.getProject());
-    final String preloaderClass = properties.getPreloaderClass(artifact, context.getProject());
-    if (!StringUtil.isEmptyOrSpaces(preloaderJar) && !StringUtil.isEmptyOrSpaces(preloaderClass)) {
-      preloaderFiles = artifactName + "_preloader_files";
-      generator.add(new Tag("fx:fileset",
-                            new Pair<String, String>("id", preloaderFiles),
-                            new Pair<String, String>("requiredFor", "preloader"),
-                            new Pair<String, String>("dir", tempDirPath),
-                            new Pair<String, String>("includes", preloaderJar)));
+    final JavaFxArtifactProperties.JavaFxPackager javaFxPackager =
+      new JavaFxArtifactProperties.JavaFxPackager(artifact, properties, context.getProject()) {
+        @Override
+        protected void registerJavaFxPackagerError(String message) {}
+      };
+    final List<JavaFxAntGenerator.SimpleTag> tags = 
+      JavaFxAntGenerator.createJarAndDeployTasks(javaFxPackager, artifactFileName, artifactName, tempDirPath);
+    for (JavaFxAntGenerator.SimpleTag tag : tags) {
+      buildTags(generator, tag);
     }
-
-    //register application
-    final String appId = artifactName + "_id";
-    Pair[] applicationParams = {new Pair<String, String>("id", appId),
-      new Pair<String, String>("name", artifactName),
-      new Pair<String, String>("mainClass", properties.getAppClass())};
-    if (preloaderFiles != null) {
-      applicationParams = ArrayUtil.append(applicationParams, new Pair<String, String>("preloaderClass", preloaderClass));
-    }
-    
-    final Tag applicationTag = new Tag("fx:application", applicationParams);
-
-    appendValuesFromPropertiesFile(applicationTag, properties.getHtmlParamFile(), "fx:htmlParam", false);
-    //also loads fx:argument values
-    appendValuesFromPropertiesFile(applicationTag, properties.getParamFile(), "fx:param", true);
-
-    generator.add(applicationTag);
-
-    //create jar task
-    final Tag createJarTag = new Tag("fx:jar",
-                                     new Pair<String, String>("destfile", tempDirPath + "/" + artifactFileName));
-    createJarTag.add(new Tag("fx:application", new Pair<String, String>("refid", appId)));
-    createJarTag.add(new Tag("fileset", new Pair<String, String>("dir", tempDirPath)));
-    if (preloaderFiles != null) {
-      final Tag createJarResourcesTag = new Tag("fx:resources");
-      createJarResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("refid", preloaderFiles)));
-      createJarTag.add(createJarResourcesTag);
-    }
-    generator.add(createJarTag);
-
-    //deploy task
-    final Tag deployTag = new Tag("fx:deploy",
-                                  new Pair<String, String>("width", properties.getWidth()),
-                                  new Pair<String, String>("height", properties.getHeight()),
-                                  new Pair<String, String>("updatemode", properties.getUpdateMode()),
-                                  new Pair<String, String>("outdir", tempDirPath + "/deploy"),
-                                  new Pair<String, String>("outfile", artifactName));
-    deployTag.add(new Tag("fx:application", new Pair<String, String>("refid", appId)));
-
-    deployTag.add(new Tag("fx:info",
-                          new Pair<String, String>("title", properties.getTitle()),
-                          new Pair<String, String>("vendor", properties.getVendor()),
-                          new Pair<String, String>("description", properties.getDescription())));
-    final Tag deployResourcesTag = new Tag("fx:resources");
-    deployResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("dir", tempDirPath), 
-                                                 new Pair<String, String>("includes", artifactFileName)));
-    if (preloaderFiles != null) {
-      deployResourcesTag.add(new Tag("fx:fileset", new Pair<String, String>("refid", preloaderFiles)));
-    }
-    
-    deployTag.add(deployResourcesTag);
-
-    generator.add(deployTag);
 
     if (properties.isEnabledSigning()) {
 
@@ -236,7 +177,7 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
       
       final Tag signjar = new Tag("signjar", keysDescriptions);
       final Tag fileset = new Tag("fileset", new Pair<String, String>("dir", tempDirPath + "/deploy"));
-      fileset.add(new Tag("include", new Pair<String, String>("name", artifactFileName)));
+      fileset.add(new Tag("include", new Pair<String, String>("name", "*.jar")));
       signjar.add(fileset);
       generator.add(signjar);
     }
@@ -248,38 +189,23 @@ public class JavaFxChunkBuildExtension extends ChunkBuildExtension {
     generator.add(deleteTag);
   }
 
-  private static void appendValuesFromPropertiesFile(final Tag applicationTag,
-                                                     final String htmlParamFile,
-                                                     final String paramTagName,
-                                                     final boolean allowNoNamed) {
-    if (!StringUtil.isEmptyOrSpaces(htmlParamFile)) {
-      final Properties htmlProperties = new Properties();
-      try {
-        final FileInputStream paramsInputStream = new FileInputStream(new File(htmlParamFile));
-        try {
-          htmlProperties.load(paramsInputStream);
-          for (Object o : htmlProperties.keySet()) {
-            final String propName = (String)o;
-            final String propValue = htmlProperties.getProperty(propName);
-            if (!StringUtil.isEmptyOrSpaces(propValue)) {
-              applicationTag.add(new Tag(paramTagName, new Pair<String, String>("name", propName), new Pair<String, String>("value", propValue)));
-            } else if (allowNoNamed) {
-              applicationTag.add(new Generator() {
-                @Override
-                public void generate(PrintWriter out) throws IOException {
-                  out.print("<fx:argument>" + propName + "</fx:argument>");
-                }
-              });
-            }
-          }
-        }
-        finally {
-          paramsInputStream.close();
+  private static void buildTags(CompositeGenerator generator, final JavaFxAntGenerator.SimpleTag tag) {
+    final Tag newTag = new Tag(tag.getName(), tag.getPairs()){
+      @Override
+      public void generate(PrintWriter out) throws IOException {
+        final String value = tag.getValue();
+        if (value == null) {
+          super.generate(out);
+        } else {
+          out.print("<" + tag.getName() + ">" + value + "</" + tag.getName() + ">");
         }
       }
-      catch (IOException ignore) {
-      }
+    };
+
+    for (JavaFxAntGenerator.SimpleTag simpleTag : tag.getSubTags()) {
+      buildTags(newTag, simpleTag);
     }
+    generator.add(newTag);
   }
 
   private static String artifactBasedProperty(final String property, String artifactName) {

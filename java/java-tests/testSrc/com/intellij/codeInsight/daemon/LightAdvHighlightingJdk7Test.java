@@ -102,6 +102,10 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testHighlightInaccessibleFromClassModifierList() throws Exception { doTest(false, false); }
   public void testInnerInTypeArguments() throws Exception { doTest(false, false); }
 
+  public void testIncompleteDiamonds() throws Exception {
+    doTest(false, false);
+  }
+
   public void testDynamicallyAddIgnoredAnnotations() throws Exception {
     ExtensionPoint<EntryPoint> point = Extensions.getRootArea().getExtensionPoint(ExtensionPoints.DEAD_CODE_TOOL);
     EntryPoint extension = new EntryPoint() {

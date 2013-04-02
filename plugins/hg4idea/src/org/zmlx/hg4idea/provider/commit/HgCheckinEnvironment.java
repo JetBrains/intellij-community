@@ -72,7 +72,8 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
                                    @NotNull NullableFunction<Object, Object> parametersHolder,
                                    Set<String> feedback) {
     List<VcsException> exceptions = new LinkedList<VcsException>();
-    for (Map.Entry<VirtualFile, Set<HgFile>> entry : getFilesByRepository(changes).entrySet()) {
+    Map<VirtualFile, Set<HgFile>> repositoriesMap = getFilesByRepository(changes);
+    for (Map.Entry<VirtualFile, Set<HgFile>> entry : repositoriesMap.entrySet()) {
 
       VirtualFile repo = entry.getKey();
       Set<HgFile> selectedFiles = entry.getValue();
@@ -117,9 +118,10 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
 
     // push if needed
     if (myNextCommitIsPushed && exceptions.isEmpty()) {
+      final VirtualFile preselectedRepo = repositoriesMap.size() == 1 ? repositoriesMap.keySet().iterator().next() : null;
       UIUtil.invokeLaterIfNeeded(new Runnable() {
         public void run() {
-          new HgPusher(myProject).showDialogAndPush();
+          new HgPusher(myProject).showDialogAndPush(preselectedRepo);
         }
       });
     }
@@ -134,8 +136,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
   private Set<HgFile> getChangedFilesNotInCommit(VirtualFile repo, Set<HgFile> selectedFiles) {
     List<HgRevisionNumber> parents = new HgWorkingCopyRevisionsCommand(myProject).parents(repo);
 
-    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).includeUnknown(false).includeIgnored(false).build(myProject);
-    statusCommand.setBaseRevision(parents.get(0));
+    HgStatusCommand statusCommand = new HgStatusCommand.Builder(true).unknown(false).ignored(false).baseRevision(parents.get(0)).build(myProject);
     Set<HgChange> allChangedFilesInRepo = statusCommand.execute(repo);
 
     Set<HgFile> filesNotIncluded = new HashSet<HgFile>();
@@ -209,6 +210,7 @@ public class HgCheckinEnvironment implements CheckinEnvironment {
     return false;
   }
 
+  @NotNull
   private Map<VirtualFile, Set<HgFile>> getFilesByRepository(List<Change> changes) {
     Map<VirtualFile, Set<HgFile>> result = new HashMap<VirtualFile, Set<HgFile>>();
     for (Change change : changes) {

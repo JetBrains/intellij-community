@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -220,7 +220,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
 
       @Override
-      public void inlineUsage(UsageInfo usage, PsiElement referenced) {
+      public void inlineUsage(@NotNull UsageInfo usage, @NotNull PsiElement referenced) {
         if (usage instanceof NonCodeUsageInfo) return;
 
         throw new UnsupportedOperationException(
@@ -434,7 +434,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
             } else if (element instanceof PsiImportStaticReferenceElement) {
               imports2Delete.add(PsiTreeUtil.getParentOfType(element, PsiImportStaticStatement.class));
             }
-            else {
+            else if (JavaLanguage.INSTANCE != element.getLanguage()) {
               GenericInlineHandler.inlineReference(usage, myMethod, myInliners);
             }
           }

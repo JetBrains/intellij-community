@@ -91,28 +91,22 @@ public class XmlBlock extends AbstractXmlBlock {
         return result;
       }
       return splitComment();
-    }
-
-    if (myNode.getElementType() == XmlElementType.XML_TEXT) {
-      if (myXmlFormattingPolicy.getShouldKeepWhiteSpaces()) {
-        return EMPTY;
-      }
-
-      final ASTNode treeParent = myNode.getTreeParent();
-      final XmlTag tag = getTag(treeParent);
-      if (tag != null) {
-        if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(tag)) {
-          return EMPTY;
-        }
-      }
-    }
+    } 
 
     if (myNode.getFirstChildNode() != null) {
+      boolean keepWhitespaces = shouldKeepWhitespaces();
       final ArrayList<Block> result = new ArrayList<Block>(5);
       ASTNode child = myNode.getFirstChildNode();
       while (child != null) {
-        if (!containsWhiteSpacesOnly(child) && child.getTextLength() > 0) {
-          child = processChild(result, child, getDefaultWrap(child), null, getChildDefaultIndent());
+        if (child.getTextLength() > 0) {
+          if (containsWhiteSpacesOnly(child)) {
+            if (keepWhitespaces) {
+              result.add(new ReadOnlyBlock(child));
+            }
+          }
+          else {
+            child = processChild(result, child, getDefaultWrap(child), null, getChildDefaultIndent());
+          }
         }
         if (child != null) {
           LOG.assertTrue(child.getTreeParent() == myNode);
@@ -124,6 +118,24 @@ public class XmlBlock extends AbstractXmlBlock {
     else {
       return EMPTY;
     }
+  }
+
+  private boolean shouldKeepWhitespaces() {
+    if (myNode.getElementType() == XmlElementType.XML_TEXT) {
+      if (myXmlFormattingPolicy.getShouldKeepWhiteSpaces()) {
+        return true;
+      }
+      else {
+        final ASTNode treeParent = myNode.getTreeParent();
+        final XmlTag tag = getTag(treeParent);
+        if (tag != null) {
+          if (myXmlFormattingPolicy.keepWhiteSpacesInsideTag(tag)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 
 

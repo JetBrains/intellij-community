@@ -44,7 +44,7 @@ public class TitlePanel extends CaptionPanel {
     if (UIUtil.isUnderAquaLookAndFeel()) {
       myLabel.setFont(myLabel.getFont().deriveFont(12f));
     }
-    myLabel.setForeground(JBColor.foreground);
+    myLabel.setForeground(JBColor.foreground());
     myLabel.setHorizontalAlignment(SwingConstants.CENTER);
     myLabel.setVerticalAlignment(SwingConstants.CENTER);
     myLabel.setBorder(new EmptyBorder(1, 2, 2, 2));

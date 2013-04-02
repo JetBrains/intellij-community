@@ -18,6 +18,7 @@ package com.intellij.ide.util.newProjectWizard;
 import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
+import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelAdapter;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
@@ -41,19 +42,20 @@ public class FrameworkSupportOptionsComponent {
   private final FrameworkSupportModelBase myModel;
   private LibraryCompositionSettings myLibraryCompositionSettings;
   private LibraryOptionsPanel myLibraryOptionsPanel;
-  private FrameworkSupportInModuleConfigurable myConfigurable;
+  private final FrameworkSupportInModuleConfigurable myConfigurable;
+  private final JPanel myLibraryOptionsPanelWrapper;
 
-  public FrameworkSupportOptionsComponent(FrameworkSupportModelBase model, LibrariesContainer container, Disposable parentDisposable,
-                                          final FrameworkSupportInModuleConfigurable configurable, final @Nullable String title) {
+  public FrameworkSupportOptionsComponent(FrameworkSupportModelBase model,
+                                          LibrariesContainer container,
+                                          Disposable parentDisposable,
+                                          FrameworkSupportInModuleProvider provider,
+                                          final FrameworkSupportInModuleConfigurable configurable) {
     myModel = model;
     myConfigurable = configurable;
     VerticalFlowLayout layout = new VerticalFlowLayout();
     layout.setVerticalFill(true);
     myMainPanel = new JPanel(layout);
-
-    //if (title != null) {
-    //  myMainPanel.setBorder(IdeBorderFactory.createTitledBorder(title, true));
-    //}
+    myModel.registerOptionsComponent(provider, this);
 
     final JComponent component = myConfigurable.createComponent();
     if (component != null) {
@@ -61,8 +63,8 @@ public class FrameworkSupportOptionsComponent {
     }
 
     final boolean addSeparator = component != null;
-    final JPanel librariesOptionsPanelWrapper = new JPanel(new BorderLayout());
-    myMainPanel.add(librariesOptionsPanelWrapper);
+    myLibraryOptionsPanelWrapper = new JPanel(new BorderLayout());
+    myMainPanel.add(myLibraryOptionsPanelWrapper);
     if (myConfigurable instanceof OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper) {
       ((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)myConfigurable).getConfigurable().addListener(
         new FrameworkSupportConfigurableListener() {
@@ -86,17 +88,18 @@ public class FrameworkSupportOptionsComponent {
       if (addSeparator) {
         JComponent separator1 = SeparatorFactory.createSeparator("Libraries", null);
         separator1.setBorder(IdeBorderFactory.createEmptyBorder(5, 0, 5, 5));
-        librariesOptionsPanelWrapper.add(BorderLayout.NORTH, separator1);
+        myLibraryOptionsPanelWrapper.add(BorderLayout.NORTH, separator1);
       }
-      librariesOptionsPanelWrapper.add(BorderLayout.CENTER, myLibraryOptionsPanel.getMainPanel());
+      myLibraryOptionsPanelWrapper.add(BorderLayout.CENTER, myLibraryOptionsPanel.getMainPanel());
+      myLibraryOptionsPanelWrapper.setVisible(myConfigurable.isVisible());
     }
   }
 
-  private void updateLibrariesPanel() {
+  public void updateLibrariesPanel() {
     if (myLibraryOptionsPanel != null) {
       myLibraryOptionsPanel.changeBaseDirectoryPath(myModel.getBaseDirectoryForLibrariesPath());
       myLibraryOptionsPanel.setVersionFilter(myConfigurable.getLibraryVersionFilter());
-      myLibraryOptionsPanel.getMainPanel().setVisible(myConfigurable.isVisible());
+      myLibraryOptionsPanelWrapper.setVisible(myConfigurable.isVisible());
     }
   }
 

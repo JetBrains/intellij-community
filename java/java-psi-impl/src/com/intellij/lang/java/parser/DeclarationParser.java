@@ -405,7 +405,7 @@ public class DeclarationParser {
   private PsiBuilder.Marker parseMethodFromLeftParenth(PsiBuilder builder, PsiBuilder.Marker declaration, boolean anno, boolean constructor) {
     parseParameterList(builder);
 
-    eatBrackets(builder, constructor, "expected.semicolon");
+    eatBrackets(builder, constructor ? "expected.semicolon" : null);
 
     myParser.getReferenceParser().parseReferenceList(builder, JavaTokenType.THROWS_KEYWORD, JavaElementType.THROWS_LIST, JavaTokenType.COMMA);
 
@@ -600,7 +600,7 @@ public class DeclarationParser {
 
     if (expect(builder, JavaTokenType.IDENTIFIER)) {
       if (!resource) {
-        eatBrackets(builder, typeInfo != null && typeInfo.isVarArg, "expected.rparen");
+        eatBrackets(builder, typeInfo != null && typeInfo.isVarArg ? "expected.rparen" : null);
         done(param, JavaElementType.PARAMETER);
         return param;
       }
@@ -644,7 +644,7 @@ public class DeclarationParser {
     while (true) {
       shouldRollback = true;
 
-      if (!eatBrackets(builder, false, null)) {
+      if (!eatBrackets(builder, null)) {
         unclosed = true;
       }
 
@@ -706,26 +706,33 @@ public class DeclarationParser {
     return declaration;
   }
 
-  private static boolean eatBrackets(final PsiBuilder builder, final boolean isError,
-                                     @Nullable @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String errorKey) {
-    if (builder.getTokenType() != JavaTokenType.LBRACKET) return true;
+  private boolean eatBrackets(PsiBuilder builder, @Nullable @PropertyKey(resourceBundle = JavaErrorMessages.BUNDLE) String errorKey) {
+    IElementType tokenType = builder.getTokenType();
+    if (tokenType != JavaTokenType.LBRACKET && tokenType != JavaTokenType.AT) return true;
 
-    final PsiBuilder.Marker marker = isError ? builder.mark() : null;
+    PsiBuilder.Marker marker = errorKey != null ? builder.mark() : null;
 
-    boolean result = true;
-    while (expect(builder, JavaTokenType.LBRACKET)) {
-      if (!expect(builder, JavaTokenType.RBRACKET)) {
-        if (!isError) error(builder, JavaErrorMessages.message("expected.rbracket"));
-        result = false;
+    int count = 0;
+    while (true) {
+      parseAnnotations(builder);
+      if (!expect(builder, JavaTokenType.LBRACKET)) {
         break;
       }
+      ++count;
+      if (!expect(builder, JavaTokenType.RBRACKET)) {
+        break;
+      }
+      ++count;
     }
 
-    if (marker != null && errorKey != null) {
+    boolean paired = count % 2 == 0;
+    if (marker != null) {
       marker.error(JavaErrorMessages.message(errorKey));
     }
-
-    return result;
+    else if (!paired) {
+      error(builder, JavaErrorMessages.message("expected.rbracket"));
+    }
+    return paired;
   }
 
   @Nullable

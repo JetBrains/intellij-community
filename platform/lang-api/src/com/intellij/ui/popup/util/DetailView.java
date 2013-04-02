@@ -56,7 +56,7 @@ public interface DetailView extends UserDataHolder {
     public static PreviewEditorState EMPTY = new PreviewEditorState(null, null, null);
 
     public static PreviewEditorState create(VirtualFile file, int line) {
-      return new PreviewEditorState(file, new LogicalPosition(line, 0), null);
+      return new PreviewEditorState(file, line < 0 ? null : new LogicalPosition(line, 0), null);
     }
 
     public static PreviewEditorState create(VirtualFile file, int line, TextAttributes attributes) {
