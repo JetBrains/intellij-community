@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.javaFX.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -141,7 +140,7 @@ public class OpenInSceneBuilderAction extends AnAction {
       commandLine.addParameter(path);
       commandLine.createProcess();
     }
-    catch (ExecutionException ex) {
+    catch (Exception ex) {
       Messages.showErrorDialog("Failed to start SceneBuilder: " + commandLine.getCommandLineString(), CommonBundle.getErrorTitle());
     }
   }
@@ -164,31 +163,12 @@ public class OpenInSceneBuilderAction extends AnAction {
   private static VirtualFile getPredefinedPath() {
     String path = null;
     if (SystemInfo.isWindows) {
-      String programFilesPath = null;
-      final String property = System.getProperty("java.home");
-      if (property != null) {
-        final File jdkDir = new File(property).getParentFile();
-        if (jdkDir != null) {
-          final File javaDir = jdkDir.getParentFile();
-          if (javaDir != null) {
-            final File programFilesDir = javaDir.getParentFile();
-            if (programFilesDir != null) {
-              programFilesPath = programFilesDir.getPath();
-            }
-          }
-        }
-      }
-
       final String sb11 = File.separator + "JavaFX Scene Builder 1.1" + File.separator + "JavaFX Scene Builder 1.1.exe";
-      final String sb10 = File.separator + "JavaFX Scene Builder 1.0" + File.separator + "JavaFX Scene Builder 1.0.exe";
+      final String sb10 = File.separator + "JavaFX Scene Builder 1.0" + File.separator + "bin" + File.separator + "scenebuilder.exe";
       final List<String> suspiciousPaths = new ArrayList<String>();
-      if (programFilesPath != null && new File(programFilesPath, ORACLE).isDirectory()) {
-        fillPaths(programFilesPath, sb11, sb10, suspiciousPaths);
-      } else {
-        final String programFiles = "C:\\Program Files";
-        fillPaths(programFiles, sb11, sb10, suspiciousPaths);
-        fillPaths(programFiles + " (x86)", sb11, sb10, suspiciousPaths);
-      }
+      final String programFiles = "C:\\Program Files";
+      fillPaths(programFiles, sb11, sb10, suspiciousPaths);
+      fillPaths(programFiles + " (x86)", sb11, sb10, suspiciousPaths);
       final File sb = FileUtil.findFirstThatExist(ArrayUtil.toStringArray(suspiciousPaths));
       if (sb != null) {
         path = sb.getPath();
