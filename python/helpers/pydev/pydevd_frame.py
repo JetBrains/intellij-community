@@ -176,16 +176,20 @@ class PyDBFrame:
                     # lets do the conditional stuff here
                     breakpoint = breakpoints_for_file[line]
 
-                    if breakpoint.condition is not None:
-                        try:
-                            val = eval(breakpoint.condition, frame.f_globals, frame.f_locals)
-                            if not val:
+                    stop = True
+                    if info.pydev_step_cmd == CMD_STEP_OVER and info.pydev_step_stop is frame and event in ('line', 'return'):
+                        stop = False #we don't stop on breakpoint if we have to stop by step-over (it will be processed later)
+                    else:
+                        if breakpoint.condition is not None:
+                            try:
+                                val = eval(breakpoint.condition, frame.f_globals, frame.f_locals)
+                                if not val:
+                                    return self.trace_dispatch
+
+                            except:
+                                pydev_log.info('Error while evaluating condition \'%s\': %s\n' % (breakpoint.condition, sys.exc_info()[1]))
+
                                 return self.trace_dispatch
-
-                        except:
-                            pydev_log.info('Error while evaluating condition \'%s\': %s\n' % (breakpoint.condition, sys.exc_info()[1]))
-
-                            return self.trace_dispatch
 
                     if breakpoint.expression is not None:
                         try:
@@ -197,7 +201,8 @@ class PyDBFrame:
                             if val is not None:
                                 thread.additionalInfo.message = val
 
-                    self.setSuspend(thread, CMD_SET_BREAK)
+                    if stop:
+                        self.setSuspend(thread, CMD_SET_BREAK)
 
                 # if thread has a suspend flag, we suspend with a busy wait
                 if info.pydev_state == STATE_SUSPEND:
