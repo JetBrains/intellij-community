@@ -737,7 +737,6 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
       propertiesContent = propertiesContent.replace("__PRODUCT_PATHS_SELECTOR__", pathsSelector)
       launcherPropertiesTempFile = File.createTempFile("launcher", ".properties")
       launcherPropertiesTempFile.write(propertiesContent)
-      launcherPropertiesTempFile.close()
       launcherProperties = launcherPropertiesTempFile.getAbsolutePath()
     }
   }
