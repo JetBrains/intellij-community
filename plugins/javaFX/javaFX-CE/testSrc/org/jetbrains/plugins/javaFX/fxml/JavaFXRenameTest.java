@@ -51,6 +51,15 @@ public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
   public void testCustomComponentTag() throws Exception {
     doTest("Foo", true);
   }
+  
+  public void testIdWithRefs() throws Exception {
+    configureByFiles(null, getTestName(true) + ".fxml");
+    PsiElement element = TargetElementUtilBase
+      .findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
+    assertNotNull(element);
+    new RenameProcessor(getProject(), element, "lb1", true, true).run();
+    checkResultByFile(getTestName(true) + "_after.fxml");
+  }
 
   private void doTest(final String newName) throws Exception {
     doTest(newName, false);

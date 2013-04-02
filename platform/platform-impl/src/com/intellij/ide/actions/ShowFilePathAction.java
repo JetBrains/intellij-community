@@ -42,6 +42,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.ui.EmptyIcon;
 import org.jetbrains.annotations.NotNull;
@@ -390,5 +391,21 @@ public class ShowFilePathAction extends AnAction {
                                     IdeBundle.message("action.close"), Messages.getInformationIcon(), option) == 0) {
       openFile(file);
     }
+  }
+
+  @Nullable
+  public static VirtualFile findLocalFile(@Nullable VirtualFile file) {
+    if (file == null) return null;
+
+    if (file.isInLocalFileSystem()) {
+      return file;
+    }
+
+    VirtualFileSystem fs = file.getFileSystem();
+    if (fs instanceof JarFileSystem && file.getParent() == null) {
+      return  ((JarFileSystem)fs).getLocalVirtualFileFor(file);
+    }
+
+    return null;
   }
 }

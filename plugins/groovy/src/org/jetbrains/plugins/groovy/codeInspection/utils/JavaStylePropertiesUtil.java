@@ -62,7 +62,9 @@ public class JavaStylePropertiesUtil {
     String oldNameStr = refExpr.getReferenceNameElement().getText();
     String newRefExpr = StringUtil.trimEnd(refExpr.getText(), oldNameStr) + name;
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(call.getProject());
-    return (GrAssignmentExpression)factory.createStatementFromText(newRefExpr + " = " + value.getText(), call);
+    final GrAssignmentExpression assignment = (GrAssignmentExpression)factory.createStatementFromText(newRefExpr + " = xxx", call);
+    assignment.getRValue().replaceWithExpression(value, true);
+    return assignment;
   }
 
   private static GrExpression genRefForGetter(GrMethodCall call, String accessorName) {

@@ -347,7 +347,9 @@ public class RepositoryAttachHandler {
   private static List<MavenRemoteRepository> convertRepositories(Collection<MavenRepositoryInfo> infos) {
     List<MavenRemoteRepository> result = new ArrayList<MavenRemoteRepository>(infos.size());
     for (MavenRepositoryInfo each : infos) {
-      result.add(new MavenRemoteRepository(each.getId(), each.getName(), each.getUrl(), null, null, null));
+      if (each.getUrl() != null) {
+        result.add(new MavenRemoteRepository(each.getId(), each.getName(), each.getUrl(), null, null, null));
+      }
     }
     return result;
   }

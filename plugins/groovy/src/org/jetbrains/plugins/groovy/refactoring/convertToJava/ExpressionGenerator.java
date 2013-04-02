@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -1353,11 +1354,7 @@ public class ExpressionGenerator extends Generator {
 
         final boolean castNeeded = isCastNeeded(caller, method, this.context);
         if (castNeeded) {
-          builder.append('(');
-          final PsiType type = caller.getType();
-          builder.append('(');
-          writeType(builder, type, context);
-          builder.append(')');
+          writeCastForMethod(caller, method, context);
         }
         caller.accept(this);
         if (castNeeded) {
@@ -1369,6 +1366,35 @@ public class ExpressionGenerator extends Generator {
     builder.append(method.getName());
     final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
     new ArgumentListGenerator(builder, this.context).generate(signature, exprs, namedArgs, closures, context);
+  }
+
+  private void writeCastForMethod(@NotNull GrExpression caller, @NotNull PsiMethod method, @NotNull GroovyPsiElement context) {
+    final PsiType type = inferCastType(caller, method, context);
+    if (type == null) return;
+
+    builder.append('(');
+    builder.append('(');
+    writeType(builder, type, context);
+    builder.append(')');
+  }
+
+  @Nullable
+  private static PsiType inferCastType(@NotNull GrExpression caller, @NotNull PsiMethod method, @NotNull GroovyPsiElement context) {
+    final PsiType type = caller.getType();
+    if (type instanceof PsiIntersectionType) {
+      final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
+      for (PsiType conjunct : conjuncts) {
+        final CheckProcessElement processor = new CheckProcessElement(method);
+        ResolveUtil.processAllDeclarationsSeparately(conjunct, processor, new BaseScopeProcessor() {
+          @Override
+          public boolean execute(@NotNull PsiElement element, ResolveState state) {
+            return false;
+          }
+        }, ResolveState.initial(), context);
+        if (processor.isFound()) return conjunct;
+      }
+    }
+    return type;
   }
 
 

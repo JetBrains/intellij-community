@@ -20,14 +20,17 @@
  * By Gregory Shrago
  * 2002 - 2006
  */
-package com.intellij.util.dom.generator;
+package org.jetbrains.idea.devkit.dom.generator;
 
 import java.io.File;
 
 /**
  * @author Konstantin Bulenkov
  */
-public interface FileManager {
-  public File releaseOutputFile(File outFile);
-  public File getOutputFile(File target);
+public interface Emitter {
+  String JDOC_OPEN = "/**";
+  String JDOC_CONT = " * ";
+  String JDOC_CLOSE = " */";
+
+  void emit(FileManager fileManager, ModelDesc model, File outputRoot);
 }

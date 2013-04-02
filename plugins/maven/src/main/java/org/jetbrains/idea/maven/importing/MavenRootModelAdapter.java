@@ -285,10 +285,31 @@ public class MavenRootModelAdapter {
     return myModuleModel.findModuleByName(moduleName);
   }
 
+  public void addSystemDependency(MavenArtifact artifact, DependencyScope scope) {
+    assert MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope());
+
+    String libraryName = artifact.getLibraryName();
+
+    Library library = myRootModel.getModuleLibraryTable().getLibraryByName(libraryName);
+    if (library == null) {
+      library = myRootModel.getModuleLibraryTable().createLibrary(libraryName);
+    }
+
+    LibraryOrderEntry orderEntry = myRootModel.findLibraryOrderEntry(library);
+    assert orderEntry != null;
+    orderEntry.setScope(scope);
+
+    Library.ModifiableModel modifiableModel = library.getModifiableModel();
+    updateUrl(modifiableModel, OrderRootType.CLASSES, artifact, null, null, true);
+    modifiableModel.commit();
+  }
+
   public void addLibraryDependency(MavenArtifact artifact,
                                    DependencyScope scope,
                                    MavenModifiableModelsProvider provider,
                                    MavenProject project) {
+    assert !MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope()); // System dependencies must be added ad module library, not as project wide library.
+
     String libraryName = artifact.getLibraryName();
 
     Library library = provider.getLibraryByName(libraryName);
@@ -298,10 +319,8 @@ public class MavenRootModelAdapter {
     Library.ModifiableModel libraryModel = provider.getLibraryModel(library);
 
     updateUrl(libraryModel, OrderRootType.CLASSES, artifact, null, null, true);
-    if (!MavenConstants.SCOPE_SYSTEM.equals(artifact.getScope())) {
-      updateUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenExtraArtifactType.SOURCES, project, false);
-      updateUrl(libraryModel, JavadocOrderRootType.getInstance(), artifact, MavenExtraArtifactType.DOCS, project, false);
-    }
+    updateUrl(libraryModel, OrderRootType.SOURCES, artifact, MavenExtraArtifactType.SOURCES, project, false);
+    updateUrl(libraryModel, JavadocOrderRootType.getInstance(), artifact, MavenExtraArtifactType.DOCS, project, false);
 
     LibraryOrderEntry e = myRootModel.addLibraryEntry(library);
     e.setScope(scope);

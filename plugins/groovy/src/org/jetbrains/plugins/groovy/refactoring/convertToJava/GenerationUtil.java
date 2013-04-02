@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
+import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.util.containers.HashMap;
@@ -545,23 +546,49 @@ public class GenerationUtil {
     PsiType declared = getDeclaredType(qualifier, context);
     if (declared == null) return false;
 
-    final PsiManager manager = PsiManager.getInstance(context.project);
-    return ResolveUtil.processAllDeclarations(declared, new PsiScopeProcessor() {
+    final CheckProcessElement checker = new CheckProcessElement(member);
+    ResolveUtil.processAllDeclarationsSeparately(declared, checker, new BaseScopeProcessor() {
       @Override
       public boolean execute(@NotNull PsiElement element, ResolveState state) {
-        if (manager.areElementsEquivalent(element, member)) return false;
-        return true;
-      }
-
-      @Override
-      public <T> T getHint(@NotNull Key<T> hintKey) {
-        return null;
-      }
-
-      @Override
-      public void handleEvent(Event event, Object associated) {
+        return false;
       }
     }, ResolveState.initial(), qualifier);
+    return !checker.isFound();
+  }
+
+  static class CheckProcessElement implements PsiScopeProcessor {
+
+    private final PsiElement myMember;
+    private final PsiManager myManager;
+
+    private boolean myResult = false;
+
+    public CheckProcessElement(@NotNull PsiElement member) {
+      myMember = member;
+      myManager = member.getManager();
+    }
+
+    @Override
+    public boolean execute(@NotNull PsiElement element, ResolveState state) {
+      if (myManager.areElementsEquivalent(element, myMember)) {
+        myResult = true;
+        return false;
+      }
+      return true;
+    }
+
+    @Override
+    public <T> T getHint(@NotNull Key<T> hintKey) {
+      return null;
+    }
+
+    @Override
+    public void handleEvent(Event event, Object associated) {
+    }
+
+    public boolean isFound() {
+      return myResult;
+    }
   }
 
   @Nullable

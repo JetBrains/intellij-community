@@ -36,6 +36,7 @@ import com.intellij.util.Function;
 import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.JavaFxControllerClassIndex;
+import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
@@ -104,6 +105,7 @@ public class JavaFxRelatedItemLineMarkerProvider extends RelatedItemLineMarkerPr
           final XmlAttributeValue attributeValue = (XmlAttributeValue)referenceElement;
           final PsiElement parent = attributeValue.getParent();
           if (!(parent instanceof XmlAttribute)) return true;
+          if (!FxmlConstants.FX_ID.equals(((XmlAttribute)parent).getName())) return true;
           targets.add(fun.fun(parent));
           return !stopAtFirst;
         }

@@ -366,6 +366,10 @@ public abstract class BreakpointPropertiesPanel {
         updateCheckboxes();
       }
     };
+
+    ButtonGroup checkboxesGroup = new ButtonGroup();
+    checkboxesGroup.add(myPassCountCheckbox);
+    checkboxesGroup.add(myConditionCheckbox);
     myPassCountCheckbox.addActionListener(updateListener);
     myInstanceFiltersCheckBox.addActionListener(updateListener);
     myClassFiltersCheckBox.addActionListener(updateListener);
@@ -782,20 +786,15 @@ public abstract class BreakpointPropertiesPanel {
   }
 
   protected void updateCheckboxes() {
-    JCheckBox [] checkBoxes = {myConditionCheckbox, myInstanceFiltersCheckBox, myClassFiltersCheckBox };
     boolean passCountApplicable = true;
-    for (JCheckBox checkBox : checkBoxes) {
-      if (checkBox.isSelected()) {
-        passCountApplicable = false;
-        break;
-      }
+    if (myInstanceFiltersCheckBox.isSelected() || myClassFiltersCheckBox.isSelected()) {
+      passCountApplicable = false;
     }
     myPassCountCheckbox.setEnabled(passCountApplicable);
 
     final boolean passCountSelected = myPassCountCheckbox.isSelected();
-    for (JCheckBox checkBox : checkBoxes) {
-      checkBox.setEnabled(!passCountSelected);
-    }
+    myInstanceFiltersCheckBox.setEnabled(!passCountSelected);
+    myClassFiltersCheckBox.setEnabled(!passCountSelected);
 
     myPassCountField.setEditable(myPassCountCheckbox.isSelected());
     myPassCountField.setEnabled (myPassCountCheckbox.isSelected());

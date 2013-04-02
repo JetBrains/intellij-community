@@ -742,32 +742,12 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
     }
   }
 
-  public static void collectDependentInspections(@NotNull InspectionProfileEntry profileEntry,
-                                                 @NotNull Set<InspectionProfileEntry> dependentEntries,
-                                                 @NotNull InspectionProfileImpl rootProfile) {
-    String mainToolId = profileEntry.getMainToolId();
-
-    if (mainToolId != null) {
-      InspectionProfileEntry dependentEntry = rootProfile.getInspectionTool(mainToolId);
-
-      if (dependentEntry != null) {
-        if (!dependentEntries.contains(dependentEntry)) {
-          dependentEntries.add(dependentEntry);
-          collectDependentInspections(dependentEntry, dependentEntries, rootProfile);
-        }
-      }
-      else {
-        LOG.error("Can't find main tool: " + mainToolId);
-      }
-    }
-  }
-
   protected List<ToolsImpl> getUsedTools() {
     InspectionProfileImpl profile = new InspectionProfileImpl((InspectionProfileImpl)getCurrentProfile());
     List<ToolsImpl> tools = profile.getAllEnabledInspectionTools(myProject);
     Set<InspectionProfileEntry> dependentTools = new LinkedHashSet<InspectionProfileEntry>();
     for (ToolsImpl tool : tools) {
-      collectDependentInspections(tool.getTool(), dependentTools, profile);
+      profile.collectDependentInspections(tool.getTool(), dependentTools);
     }
 
     if (!dependentTools.isEmpty()) {

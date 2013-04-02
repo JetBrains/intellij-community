@@ -162,7 +162,9 @@ public class MavenModuleImporter {
           addAttachArtifactDependency(buildHelperCfg, scope, depProject, artifact);
         }
       }
-      else {
+      else if ("system".equals(artifact.getScope())) {
+        myRootModelAdapter.addSystemDependency(artifact, scope);
+      } else {
         myRootModelAdapter.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject);
       }
     }

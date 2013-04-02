@@ -23,6 +23,7 @@ package com.intellij.refactoring.changeSignature;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.refactoring.util.CanonicalTypes;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
@@ -156,7 +157,9 @@ public class ParameterInfoImpl implements JavaParameterInfo {
   @Nullable
   public PsiExpression getValue(final PsiCallExpression expr) throws IncorrectOperationException {
     if (StringUtil.isEmpty(defaultValue)) return null;
-    return JavaPsiFacade.getInstance(expr.getProject()).getElementFactory().createExpressionFromText(defaultValue, expr);
+    final PsiExpression expression =
+      JavaPsiFacade.getInstance(expr.getProject()).getElementFactory().createExpressionFromText(defaultValue, expr);
+    return (PsiExpression)JavaCodeStyleManager.getInstance(expr.getProject()).shortenClassReferences(expression);
   }
 
   public boolean isUseAnySingleVariable() {

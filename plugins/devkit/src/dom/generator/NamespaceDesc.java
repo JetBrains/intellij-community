@@ -20,7 +20,7 @@
  * By Gregory Shrago
  * 2002 - 2006
  */
-package com.intellij.util.dom.generator;
+package org.jetbrains.idea.devkit.dom.generator;
 
 import java.util.Map;
 import java.util.HashMap;
