@@ -10,8 +10,8 @@ class Foo implements Comparable<Foo> {
 
     @Override
     int compareTo(Foo o) {
-        return 0  //To change body of implemented methods use File | Settings | File Templates.
+        <selection>return 0  //To change body of implemented methods use File | Settings | File Templates.</selection>
     }
 }
 
-print new Foo().<caret>.new Foo()
+print new Foo()..new Foo()
