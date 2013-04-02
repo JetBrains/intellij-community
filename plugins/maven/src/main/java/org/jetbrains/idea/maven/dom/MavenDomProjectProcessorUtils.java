@@ -315,27 +315,25 @@ public class MavenDomProjectProcessorUtils {
     SearchProcessor<MavenDomDependency, MavenDomDependencies> processor = new SearchProcessor<MavenDomDependency, MavenDomDependencies>() {
       @Override
       protected MavenDomDependency find(MavenDomDependencies mavenDomDependencies) {
-        if (!model.equals(mavenDomDependencies.getParentOfType(MavenDomProjectModel.class, true))) {
-          for (MavenDomDependency domDependency : mavenDomDependencies.getDependencies()) {
-            if (artifactId.equals(domDependency.getArtifactId().getStringValue()) &&
-                groupId.equals(domDependency.getGroupId().getStringValue())) {
-              return domDependency;
-            }
+        for (MavenDomDependency domDependency : mavenDomDependencies.getDependencies()) {
+          if (artifactId.equals(domDependency.getArtifactId().getStringValue()) &&
+              groupId.equals(domDependency.getGroupId().getStringValue())) {
+            return domDependency;
+          }
 
-            if ("import".equals(domDependency.getScope().getRawText())) {
-              GenericDomValue<String> version = domDependency.getVersion();
-              if (version.getXmlElement() != null) {
-                GenericDomValueReference reference = new GenericDomValueReference(version);
-                PsiElement resolve = reference.resolve();
+          if ("import".equals(domDependency.getScope().getRawText())) {
+            GenericDomValue<String> version = domDependency.getVersion();
+            if (version.getXmlElement() != null) {
+              GenericDomValueReference reference = new GenericDomValueReference(version);
+              PsiElement resolve = reference.resolve();
 
-                if (resolve instanceof XmlFile) {
-                  MavenDomProjectModel dependModel = MavenDomUtil.getMavenDomModel((PsiFile)resolve, MavenDomProjectModel.class);
-                  if (dependModel != null) {
-                    for (MavenDomDependency dep : dependModel.getDependencyManagement().getDependencies().getDependencies()) {
-                      if (artifactId.equals(dep.getArtifactId().getStringValue()) &&
-                          groupId.equals(dep.getGroupId().getStringValue())) {
-                        return domDependency;
-                      }
+              if (resolve instanceof XmlFile) {
+                MavenDomProjectModel dependModel = MavenDomUtil.getMavenDomModel((PsiFile)resolve, MavenDomProjectModel.class);
+                if (dependModel != null) {
+                  for (MavenDomDependency dep : dependModel.getDependencyManagement().getDependencies().getDependencies()) {
+                    if (artifactId.equals(dep.getArtifactId().getStringValue()) &&
+                        groupId.equals(dep.getGroupId().getStringValue())) {
+                      return domDependency;
                     }
                   }
                 }
