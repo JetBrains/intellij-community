@@ -4,26 +4,20 @@ import com.google.common.cache.CacheBuilder;
 import com.google.common.cache.CacheLoader;
 import com.google.common.cache.LoadingCache;
 import com.google.common.collect.Lists;
-import com.google.common.hash.HashFunction;
 import com.google.common.hash.Hashing;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.util.text.StringHash;
 import com.intellij.remotesdk.RemoteInterpreterException;
+import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.python.debug.PyTestTask;
 import com.jetbrains.python.remote.PyRemoteInterpreterManagerImpl;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
-import gnu.trove.HashFunctions;
 import org.apache.commons.lang.StringUtils;
-import org.jetbrains.annotations.NonNls;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.io.IOException;
-import java.util.List;
 import java.util.concurrent.ExecutionException;
 
 /**
@@ -67,8 +61,15 @@ public class PyTestRemoteSdkProvider {
   private Sdk createSdk(String interpreterPath) throws RemoteInterpreterException {
     try {
       PyRemoteSdkAdditionalData data = createRemoteSdkData(interpreterPath);
-      Sdk sdk = myInterpreterManager.createRemoteSdk(myProject, data, null, Lists.<Sdk>newArrayList());
-      myInterpreterManager.initSdk(sdk, myProject, null);
+
+      final Sdk sdk = myInterpreterManager.createRemoteSdk(myProject, data, null, Lists.<Sdk>newArrayList());
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          myInterpreterManager.initSdk(sdk, myProject, null);
+        }
+      });
+
       return sdk;
     }
     catch (Exception e) {
