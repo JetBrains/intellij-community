@@ -72,13 +72,19 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(member.getProject());
 
     final PsiElement prev = member.getPrevSibling();
-    if (prev!=null && GroovyTokenTypes.mNLS == prev.getNode().getElementType()) {
+    if (prev != null && GroovyTokenTypes.mNLS == prev.getNode().getElementType()) {
       prev.replace(factory.createLineTerminator(1));
+    }
+    else if (prev instanceof PsiMember) {
+      member.getParent().getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", member.getNode());
     }
 
     final PsiElement next = member.getNextSibling();
     if (next != null && GroovyTokenTypes.mNLS == next.getNode().getElementType()) {
       next.replace(factory.createLineTerminator(1));
+    }
+    else if (next instanceof PsiMember) {
+      member.getParent().getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", next.getNode());
     }
 
     if (member instanceof GrMethod) {
