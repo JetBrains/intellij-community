@@ -25,6 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.PythonFileType;
 import com.jetbrains.python.debugger.PySignature;
+import com.jetbrains.python.debugger.PySignatureCacheManager;
 import com.jetbrains.python.debugger.PySignatureUtil;
 import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -232,7 +233,7 @@ public class PyDocstringGenerator {
     if (whitespace != null) {
       String[] spaces = whitespace.getText().split("\n");
       if (spaces.length > 0) {
-        ws += spaces[spaces.length-1];
+        ws += spaces[spaces.length - 1];
       }
     }
     else {
@@ -426,6 +427,15 @@ public class PyDocstringGenerator {
       prefix = "@";
     }
     return prefix;
+  }
+
+  public PyDocstringGenerator withSignatures() {
+    if (myFunction != null) {
+      PySignature signature = PySignatureCacheManager.getInstance(myProject).findSignature(myFunction);
+
+      addFunctionArguments(myFunction, signature);
+    }
+    return this;
   }
 }
 

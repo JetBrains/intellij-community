@@ -20,6 +20,9 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyCodeInsightSettings;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.PydevDocumentationProvider;
+import com.jetbrains.python.debugger.PySignature;
+import com.jetbrains.python.debugger.PySignatureCacheManager;
+import com.jetbrains.python.debugger.PySignatureUtil;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
@@ -531,10 +534,6 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     }
   }
 
-  public static void insertDocStub(PyFunction function, Project project, Editor editor) {
-    insertDocStub(function, function.getStatementList(), project, editor);
-  }
-
   public String generateDocumentationContentStub(PyFunction element, boolean checkReturn) {
     PsiWhiteSpace whitespace = PsiTreeUtil.getPrevSiblingOfType(element.getStatementList(), PsiWhiteSpace.class);
     String ws = "\n";
@@ -547,27 +546,38 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
     return generateDocumentationContentStub(element, ws, checkReturn);
   }
 
-  private static String generateContent(PyFunction element, String offset, String prefix, boolean checkReturn) {
-    PyParameter[] list = element.getParameterList().getParameters();
+  private static String generateContent(PyFunction function, String offset, String prefix, boolean checkReturn) {
+    //TODO: this code duplicates PyDocstringGenerator in some parts
+
+    PyParameter[] list = function.getParameterList().getParameters();
     StringBuilder builder = new StringBuilder(offset);
+    PySignature signature = PySignatureCacheManager.getInstance(function.getProject()).findSignature(function);
+
     for (PyParameter p : list) {
       if (p.getText().equals(PyNames.CANONICAL_SELF) || p.getName() == null) {
         continue;
       }
-      builder.append(prefix);
-      builder.append("param ");
-      builder.append(p.getName());
-      builder.append(": ");
-      builder.append(offset);
-      if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB) {
+      String argType = signature == null ? null : signature.getArgTypeQualifiedName(p.getName());
+
+      if (argType == null) {
         builder.append(prefix);
-        builder.append("type ");
+        builder.append("param ");
         builder.append(p.getName());
         builder.append(": ");
         builder.append(offset);
       }
+      if (PyCodeInsightSettings.getInstance().INSERT_TYPE_DOCSTUB || argType != null) {
+        builder.append(prefix);
+        builder.append("type ");
+        builder.append(p.getName());
+        builder.append(": ");
+        if (signature != null) {
+          builder.append(PySignatureUtil.getShortestImportableName(function, argType));
+        }
+        builder.append(offset);
+      }
     }
-    builder.append(generateRaiseOrReturn(element, offset, prefix, checkReturn));
+    builder.append(generateRaiseOrReturn(function, offset, prefix, checkReturn));
     return builder.toString();
   }
 
