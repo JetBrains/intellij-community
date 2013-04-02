@@ -3,24 +3,15 @@ package com.jetbrains.env.python;
 import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Lists;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.JarFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
-import com.jetbrains.django.util.VirtualFileUtil;
 import com.jetbrains.env.python.debug.PyDebuggerTask;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.ut.PyUnitTestTask;
 import com.jetbrains.python.console.pydev.PydevCompletionVariant;
 import com.jetbrains.python.debugger.PyExceptionBreakpointProperties;
 import com.jetbrains.python.debugger.PyExceptionBreakpointType;
-import com.jetbrains.python.sdk.PySdkUtil;
-import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
-import org.junit.Assert;
 
 import java.util.List;
 import java.util.Set;
@@ -427,6 +418,25 @@ public class PythonDebuggerTest extends PyEnvTestCase {
         waitForPause();
         eval("ret").hasValue("16");
         resume();
+      }
+    });
+  }
+
+  public void testStepOverConditionalBreakpoint() throws Exception {
+    runPythonTest(new PyDebuggerTask("/debug", "test_stepOverCondition.py") {
+      @Override
+      public void before() throws Exception {
+        toggleBreakpoint(getScriptPath(), 1);
+        toggleBreakpoint(getScriptPath(), 2);
+        XDebuggerTestUtil.setBreakpointCondition(getProject(), 2, "y == 3");
+      }
+
+      @Override
+      public void testing() throws Exception {
+        waitForPause();
+        stepOver();
+        waitForPause();
+        eval("y").hasValue("2");
       }
     });
   }
