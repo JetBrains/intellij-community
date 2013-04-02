@@ -231,8 +231,8 @@ public class PyDocstringGenerator {
     String ws = "\n";
     if (whitespace != null) {
       String[] spaces = whitespace.getText().split("\n");
-      if (spaces.length > 1) {
-        ws += whitespace.getText().split("\n")[1];
+      if (spaces.length > 0) {
+        ws += spaces[spaces.length-1];
       }
     }
     else {
