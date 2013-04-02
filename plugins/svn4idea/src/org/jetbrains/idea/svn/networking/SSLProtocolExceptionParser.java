@@ -16,6 +16,7 @@
 package org.jetbrains.idea.svn.networking;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.Field;
 import java.util.List;
@@ -32,7 +33,7 @@ public class SSLProtocolExceptionParser {
   private byte myFieldValue;
   private String myFieldName;
 
-  public SSLProtocolExceptionParser(String message) {
+  public SSLProtocolExceptionParser(@NotNull String message) {
     myMessage = message;
   }
 
@@ -42,6 +43,7 @@ public class SSLProtocolExceptionParser {
     myFieldName = null;
 
     final List<String> words = StringUtil.split(myMessage.trim(), " ");
+    if (words.isEmpty()) return;
     // we'll try to parse by last word - it's just an attempt so ok if failed - just will show the real message
 
     final String[] possiblePlaces = {"com.sun.net.ssl.internal.ssl.Alerts", "sun.security.ssl.Alerts"};

@@ -23,6 +23,7 @@ import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.ModuleChunk;
 import org.jetbrains.jps.ProjectPaths;
+import org.jetbrains.jps.builders.BuildRootIndex;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.dependencyView.Callbacks;
 import org.jetbrains.jps.builders.java.dependencyView.Mappings;
@@ -283,15 +284,17 @@ public class JavaBuilderUtil {
     private final CompileContext myContext;
     private final Set<JpsModule> myChunkModules;
     private final Map<JpsModule, Set<JpsModule>> myCache = new HashMap<JpsModule, Set<JpsModule>>();
+    private final BuildRootIndex myBuildRootIndex;
 
     private ModulesBasedFileFilter(CompileContext context, ModuleChunk chunk) {
       myContext = context;
       myChunkModules = chunk.getModules();
+      myBuildRootIndex = context.getProjectDescriptor().getBuildRootIndex();
     }
 
     @Override
     public boolean accept(File file) {
-      final JavaSourceRootDescriptor rd = myContext.getProjectDescriptor().getBuildRootIndex().findJavaRootDescriptor(myContext, file);
+      final JavaSourceRootDescriptor rd = myBuildRootIndex.findJavaRootDescriptor(myContext, file);
       if (rd == null) {
         return true;
       }
@@ -305,6 +308,12 @@ public class JavaBuilderUtil {
         myCache.put(moduleOfFile, moduleOfFileWithDependencies);
       }
       return Utils.intersects(moduleOfFileWithDependencies, myChunkModules);
+    }
+
+    @Override
+    public boolean belongsToCurrentChunk(File file) {
+      final JavaSourceRootDescriptor rd = myBuildRootIndex.findJavaRootDescriptor(myContext, file);
+      return rd != null && myChunkModules.contains(rd.target.getModule());
     }
   }
 }

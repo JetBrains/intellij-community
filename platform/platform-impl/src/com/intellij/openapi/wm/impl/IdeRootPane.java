@@ -37,6 +37,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
@@ -212,8 +213,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
       public Icon getBackgroundImage() {
         return UIUtil.isUnderDarcula() ? BG : null;
       }
+
+      @Override
+      public Color getBackground() {
+        return UIUtil.isUnderDarcula() ? super.getBackground() : JBColor.GRAY;
+      }
     };
-    //myContentPane.setBackground(JBColor.GRAY);
 
     return myContentPane;
   }

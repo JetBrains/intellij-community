@@ -151,14 +151,29 @@
         <option name="EFFECT_TYPE" value="-1" />
       </value>
     </option>
+    <option name="CONSOLE_BLUE_OUTPUT">
+      <value>
+        <option name="FOREGROUND" value="5394ec" />
+      </value>
+    </option>
+    <option name="CONSOLE_CYAN_OUTPUT">
+      <value>
+        <option name="FOREGROUND" value="6969" />
+      </value>
+    </option>
     <option name="CONSOLE_ERROR_OUTPUT">
       <value>
         <option name="FOREGROUND" value="ff6b68" />
       </value>
     </option>
+    <option name="CONSOLE_MAGENTA_OUTPUT">
+      <value>
+        <option name="FOREGROUND" value="983498" />
+      </value>
+    </option>
     <option name="CONSOLE_NORMAL_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="f7f7f7" />
+        <option name="FOREGROUND" value="bbbbbb" />
       </value>
     </option>
     <option name="CONSOLE_OUTPUT">
@@ -166,9 +181,14 @@
         <option name="BACKGROUND" value="454545" />
       </value>
     </option>
+    <option name="CONSOLE_RED_OUTPUT">
+      <value>
+        <option name="FOREGROUND" value="ff6b68" />
+      </value>
+    </option>
     <option name="CONSOLE_SYSTEM_OUTPUT">
       <value>
-        <option name="FOREGROUND" value="a6a6a6" />
+        <option name="FOREGROUND" value="bbbbbb" />
       </value>
     </option>
     <option name="CSS.COLOR">
@@ -888,6 +908,11 @@
         <option name="FOREGROUND" value="d0d0ff" />
       </value>
     </option>
+    <option name="LOG_ERROR_OUTPUT">
+      <value>
+        <option name="FOREGROUND" value="ff6b68" />
+      </value>
+    </option>
     <option name="List/map to object conversion">
       <value>
         <option name="FOREGROUND" value="e8bf6a" />
@@ -1437,6 +1462,16 @@
         <option name="FONT_TYPE" value="2" />
       </value>
     </option>
+    <option name="Scala Type Alias">
+      <value>
+        <option name="FOREGROUND" value="4e807d" />
+      </value>
+    </option>
+    <option name="Scala Type parameter">
+      <value>
+        <option name="FOREGROUND" value="4e807d" />
+      </value>
+    </option>
     <option name="Static field">
       <value>
         <option name="FOREGROUND" value="d0d0ff" />
@@ -1511,7 +1546,7 @@
     </option>
     <option name="TYPO">
       <value>
-        <option name="EFFECT_COLOR" value="505233" />
+        <option name="EFFECT_COLOR" value="867f27" />
         <option name="EFFECT_TYPE" value="2" />
       </value>
     </option>
