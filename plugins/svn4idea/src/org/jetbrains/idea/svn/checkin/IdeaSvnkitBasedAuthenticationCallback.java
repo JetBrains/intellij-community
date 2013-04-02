@@ -60,9 +60,11 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback");
   private File myTempDirectory;
   private boolean myProxyCredentialsWereReturned;
+  private SvnConfiguration myConfiguration;
 
   public IdeaSvnkitBasedAuthenticationCallback(SvnVcs vcs) {
     myVcs = vcs;
+    myConfiguration = SvnConfiguration.getInstance(myVcs.getProject());
   }
 
   @Override
@@ -174,6 +176,14 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     }
     if (authentication != null) {
       myProxyCredentialsWereReturned = true;
+      // for 'generic' proxy variant (suppose user defined proxy in Subversion config but no password)
+      try {
+        initTmpDir(SvnConfiguration.getInstance(myVcs.getProject()));
+      }
+      catch (IOException e) {
+        PopupUtil.showBalloonForActiveComponent("Failed to authenticate to proxy: " + e.getMessage(), MessageType.ERROR);
+        return false;
+      }
       return SvnConfiguration.putProxyCredentialsIntoServerFile(myTempDirectory, url.getHost(), authentication);
     }
     return false;
@@ -570,7 +580,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   @Nullable
   @Override
   public File getSpecialConfigDir() {
-    return myTempDirectory;
+    return myTempDirectory != null ? myTempDirectory : new File(myConfiguration.getConfigurationDirectory());
   }
 
   private String getFromType(SVNAuthentication authentication) {
