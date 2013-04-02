@@ -342,6 +342,9 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
         @Override
         public void run() {
           WindowManagerEx.getInstanceEx().setFullScreen(IdeFrameImpl.this, true);
+          if (SystemInfo.isMacOSLion) {
+            setBounds(ScreenUtil.getScreenRectangle(getLocationOnScreen()));
+          }
           myRestoreFullScreen = false;
         }
       });
