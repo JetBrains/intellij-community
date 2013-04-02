@@ -18,6 +18,7 @@ package org.jetbrains.plugins.javaFX.fxml;
 import com.intellij.codeInsight.TargetElementUtilBase;
 import com.intellij.codeInsight.daemon.DaemonAnalyzerTestCase;
 import com.intellij.openapi.application.PluginPathManager;
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.rename.RenameProcessor;
 import com.intellij.refactoring.rename.inplace.MemberInplaceRenameHandler;
@@ -51,7 +52,15 @@ public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
   public void testCustomComponentTag() throws Exception {
     doTest("Foo", true);
   }
-  
+
+  public void testFromReference() throws Exception {
+    final String newName = "lbl1";
+    doTest(newName);
+    final PsiClass controllerClass = findClass(getTestName(false));
+    assertNotNull(controllerClass);
+    assertNotNull(controllerClass.findFieldByName(newName, false));
+  }
+
   public void testIdWithRefs() throws Exception {
     configureByFiles(null, getTestName(true) + ".fxml");
     PsiElement element = TargetElementUtilBase
