@@ -63,6 +63,6 @@ public class AssemblaIntegrationTest extends TaskManagerTestCase {
                                                                                                "</tickets>");
 
     assertEquals(1, tasks.length);
-    assertEquals("Привет", tasks[0].getSummary());
+    assertEquals("\u041F\u0440\u0438\u0432\u0435\u0442", tasks[0].getSummary());
   }
 }
