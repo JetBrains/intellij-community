@@ -785,9 +785,16 @@ public class Mappings {
       public boolean accept(File file) {
         return true;
       }
+
+      @Override
+      public boolean belongsToCurrentChunk(File file) {
+        return true;
+      }
     };
 
     boolean accept(File file);
+    
+    boolean belongsToCurrentChunk(File file);
   }
 
   private class Differential {
@@ -955,7 +962,7 @@ public class Mappings {
                          final Collection<File> filesToCompile,
                          final Collection<File> compiledFiles,
                          final Collection<File> affectedFiles,
-                         final DependentFilesFilter filter,
+                         @NotNull final DependentFilesFilter filter,
                          @Nullable final Callbacks.ConstantAffectionResolver constantSearch) {
       delta.myRemovedFiles = removed;
 
@@ -1757,21 +1764,19 @@ public class Mappings {
 
       debug("Processing added classes:");
 
-      if (!myEasyMode) {
+      if (!myEasyMode && myFilter != null) {
         // checking if this newly added class duplicates already existing one
         for (ClassRepr c : addedClasses) {
           if (!c.isLocal() && !c.isAnonymous() && isEmpty(c.getOuterClassName())) {
             final File currentlyMappedTo = myClassToSourceFile.get(c.name);
-            if (currentlyMappedTo != null && !FileUtil.filesEqual(currentlyMappedTo, srcFile) && currentlyMappedTo.exists()) {
-              if (myFilter == null || myFilter.accept(currentlyMappedTo)) {
-                // Same classes from different source files.
-                // Schedule for recompilation both to make possible 'duplicate sources' error evident
-                debug("Scheduling for recompilation duplicated sources: ", currentlyMappedTo.getPath() + "; " + srcFile.getPath());
-                myAffectedFiles.add(currentlyMappedTo);
-                myAffectedFiles.add(srcFile);
-                myCompiledFiles.remove(srcFile); // this will force sending the file to compilation again
-                return; // do not process this file because it should not be integrated
-              }
+            if (currentlyMappedTo != null && !FileUtil.filesEqual(currentlyMappedTo, srcFile) && currentlyMappedTo.exists() && myFilter.belongsToCurrentChunk(currentlyMappedTo)) {
+              // Same classes from different source files.
+              // Schedule for recompilation both to make possible 'duplicate sources' error evident
+              debug("Scheduling for recompilation duplicated sources: ", currentlyMappedTo.getPath() + "; " + srcFile.getPath());
+              myAffectedFiles.add(currentlyMappedTo);
+              myAffectedFiles.add(srcFile);
+              myCompiledFiles.remove(srcFile); // this will force sending the file to compilation again
+              return; // do not process this file because it should not be integrated
             }
             break;
           }
@@ -1948,7 +1953,7 @@ public class Mappings {
      final Collection<File> filesToCompile,
      final Collection<File> compiledFiles,
      final Collection<File> affectedFiles,
-     final DependentFilesFilter filter,
+     @NotNull final DependentFilesFilter filter,
      @Nullable final Callbacks.ConstantAffectionResolver constantSearch) {
     return new Differential(delta, removed, filesToCompile, compiledFiles, affectedFiles, filter, constantSearch).differentiate();
   }

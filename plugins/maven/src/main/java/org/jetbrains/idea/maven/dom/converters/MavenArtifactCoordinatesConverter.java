@@ -18,6 +18,8 @@ package org.jetbrains.idea.maven.dom.converters;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.RecursionManager;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -25,15 +27,14 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.xml.ConvertContext;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomUtil;
-import com.intellij.util.xml.ResolvingConverter;
+import com.intellij.util.xml.*;
+import com.intellij.util.xml.impl.GenericDomValueReference;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
+import org.jetbrains.idea.maven.dom.MavenDomProjectProcessorUtils;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.*;
 import org.jetbrains.idea.maven.indices.MavenProjectIndicesManager;
@@ -79,7 +80,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     Project p = getProject(context);
     MavenId id = MavenArtifactCoordinatesHelper.getId(context);
 
-    PsiFile result = selectStrategy(context).resolve(p, id);
+    PsiFile result = selectStrategy(context).resolve(p, id, context);
     return result != null ? result : super.resolve(o, context);
   }
 
@@ -178,7 +179,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return doGetVariants(id, manager);
     }
 
-    public PsiFile resolve(Project project, MavenId id) {
+    public PsiFile resolve(Project project, MavenId id, ConvertContext context) {
       MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
       PsiManager psiManager = PsiManager.getInstance(project);
 
@@ -224,7 +225,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
   private class ProjectStrategy extends ConverterStrategy {
     @Override
-    public PsiFile resolve(Project project, MavenId id) {
+    public PsiFile resolve(Project project, MavenId id, ConvertContext context) {
       return null;
     }
 
@@ -265,6 +266,31 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     @Override
+    public PsiFile resolve(Project project, MavenId id, ConvertContext context) {
+      if (id.getVersion() == null && id.getGroupId() != null && id.getArtifactId() != null) {
+        DomElement parent = context.getInvocationElement().getParent();
+        if (parent instanceof MavenDomDependency) {
+          MavenDomDependency managedDependency = MavenDomProjectProcessorUtils.searchManagingDependency((MavenDomDependency)parent);
+          if (managedDependency != null && !"import".equals(managedDependency.getScope().getStringValue())) {
+            final GenericDomValue<String> managedDependencyArtifactId = managedDependency.getArtifactId();
+            PsiElement res = RecursionManager.doPreventingRecursion(managedDependencyArtifactId, false, new Computable<PsiElement>() {
+              @Override
+              public PsiElement compute() {
+                return new GenericDomValueReference(managedDependencyArtifactId).resolve();
+              }
+            });
+
+            if (res instanceof PsiFile) {
+              return (PsiFile)res;
+            }
+          }
+        }
+      }
+
+      return super.resolve(project, id, context);
+    }
+
+    @Override
     public PsiFile resolveBySpecifiedPath() {
       return myDependency.getSystemPath().getValue();
     }
@@ -287,7 +313,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
   private class ExclusionStrategy extends ConverterStrategy {
     @Override
-    public PsiFile resolve(Project project, MavenId id) {
+    public PsiFile resolve(Project project, MavenId id, ConvertContext context) {
       return null;
     }
 
