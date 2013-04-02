@@ -132,9 +132,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     emptyPanel.setPreferredSize(new Dimension(0, 0));
 
     myPropertiesPanelWrapper = new JPanel(new CardLayout());
-    if (UIUtil.isUnderDarcula()) {
-      myPropertiesPanel.setBorder(new CustomLineBorder(UIUtil.getBorderColor(), 1, 0, 0, 0));
-    }
+    myPropertiesPanel.setBorder(new CustomLineBorder(UIUtil.getBorderColor(), 1, 0, 0, 0));
     myPropertiesPanelWrapper.add(EMPTY_CARD, emptyPanel);
     myPropertiesPanelWrapper.add(PROPERTIES_CARD, myPropertiesPanel);
   }
@@ -614,7 +612,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
         myCurrentPanel = element.getType().createElementPropertiesPanel(myElement, myContext);
         myPropertiesPanel.removeAll();
         if (myCurrentPanel != null) {
-          myPropertiesPanel.add(BorderLayout.CENTER, ScrollPaneFactory.createScrollPane(myCurrentPanel.createComponent(), UIUtil.isUnderDarcula()));
+          myPropertiesPanel.add(BorderLayout.CENTER, ScrollPaneFactory.createScrollPane(myCurrentPanel.createComponent(), true));
           myCurrentPanel.reset();
           myPropertiesPanel.revalidate();
         }
