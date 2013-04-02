@@ -277,28 +277,23 @@ public class BuildMain {
     });
   }
 
-  private static void ensureLogConfigExists(final File logConfig) {
+  private static void ensureLogConfigExists(final File logConfig) throws IOException {
     if (!logConfig.exists()) {
       FileUtil.createIfDoesntExist(logConfig);
-      try {
-        final InputStream in = BuildMain.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG);
-        if (in != null) {
+      final InputStream in = BuildMain.class.getResourceAsStream("/" + DEFAULT_LOGGER_CONFIG);
+      if (in != null) {
+        try {
+          final FileOutputStream out = new FileOutputStream(logConfig);
           try {
-            final FileOutputStream out = new FileOutputStream(logConfig);
-            try {
-              FileUtil.copy(in, out);
-            }
-            finally {
-              out.close();
-            }
+            FileUtil.copy(in, out);
           }
           finally {
-            in.close();
+            out.close();
           }
         }
-      }
-      catch (IOException e) {
-        LOG.error(e);
+        finally {
+          in.close();
+        }
       }
     }
   }
