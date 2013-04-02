@@ -1,7 +1,9 @@
 package com.intellij.tasks.generic;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.xml.XmlTag;
@@ -105,8 +107,15 @@ public class GenericRepository extends BaseRepositoryImpl {
       String id = matcher.group(placeholders.indexOf(ID_PLACEHOLDER) + 1);
       String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
       if (myResponseType == ResponseType.XML && summary != null) {
-        XmlTag text = XmlElementFactory.getInstance(ProjectManager.getInstance().getDefaultProject()).createTagFromText("<a>" + summary + "</a>");
-        summary = XmlUtil.decode(text.getValue().getTrimmedText());
+        final String finalSummary = summary;
+        summary = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+          @Override
+          public String compute() {
+            XmlElementFactory factory = XmlElementFactory.getInstance(ProjectManager.getInstance().getDefaultProject());
+            XmlTag text = factory.createTagFromText("<a>" + finalSummary + "</a>");
+            return XmlUtil.decode(text.getValue().getTrimmedText());
+          }
+        });
       }
       tasks.add(new GenericTask(id, summary, this));
     }
