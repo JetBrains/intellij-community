@@ -32,7 +32,7 @@ import com.intellij.openapi.wm.WindowManager;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.SvnStatusUtil;
 import org.jetbrains.idea.svn.SvnVcs;
-import org.jetbrains.idea.svn.dialogs.CopyDialog;
+import org.jetbrains.idea.svn.dialogs.CreateBranchOrTagDialog;
 import org.tmatesoft.svn.core.SVNCommitInfo;
 import org.tmatesoft.svn.core.SVNErrorCode;
 import org.tmatesoft.svn.core.SVNException;
@@ -43,7 +43,7 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.List;
 
-public class CopyAction extends BasicAction {
+public class CreateBranchOrTagAction extends BasicAction {
   protected String getActionName(AbstractVcs vcs) {
     return SvnBundle.message("action.Subversion.Copy.text");
   }
@@ -65,7 +65,7 @@ public class CopyAction extends BasicAction {
 
   protected void perform(final Project project, final SvnVcs activeVcs, VirtualFile file, DataContext context)
     throws VcsException {
-    CopyDialog dialog = new CopyDialog(project, true, new File(file.getPath()));
+    CreateBranchOrTagDialog dialog = new CreateBranchOrTagDialog(project, true, new File(file.getPath()));
     dialog.show();
     if (dialog.isOK()) {
       final String dstURL = dialog.getToURL();
