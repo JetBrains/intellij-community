@@ -73,6 +73,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticPara
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightLocalVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -896,32 +897,37 @@ public class ExpressionGenerator extends Generator {
   public void visitLiteralExpression(GrLiteral literal) {
     final TypeConstraint[] constraints = GroovyExpectedTypesProvider.calculateTypeConstraints(literal);
 
-    final String text = literal.getText();
-    final Object value;
-    if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
-      String string = ((String)literal.getValue());
-      LOG.assertTrue(string != null);
-      string = string.replace("\n", "\\n").replace("\r", "\\r");
-      value = string;
-    }
-    else {
-      value = literal.getValue();
-    }
-
     boolean isChar = false;
     for (TypeConstraint constraint : constraints) {
       if (constraint instanceof SubtypeConstraint && TypesUtil.unboxPrimitiveTypeWrapper(constraint.getDefaultType()) == PsiType.CHAR) {
         isChar = true;
       }
     }
-    if (isChar) {
-      builder.append('\'').append(StringUtil.escapeQuotes(String.valueOf(value))).append('\'');
+
+    final String text = literal.getText();
+    final Object value;
+    if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
+      String string = GrStringUtil.removeQuotes(text).replace("\n", "\\n").replace("\r", "\\r");
+      builder.append('"').append(string).append('"');
     }
-    else if (value instanceof String) {
-      builder.append('"').append(StringUtil.escapeQuotes((String)value)).append('"');
+    else if (text.startsWith("'")) {
+      if (isChar) {
+        builder.append(text);
+      }
+      else {
+        builder.append('"').append(StringUtil.escapeQuotes(StringUtil.trimEnd(text.substring(1, text.length()), "'"))).append('"');
+      }
+    }
+    else if (text.startsWith("\"")) {
+      if (isChar) {
+        builder.append('\'').append(StringUtil.escapeQuotes(StringUtil.trimEnd(text.substring(1, text.length()), "\""))).append('\'');
+      }
+      else {
+        builder.append(text);
+      }
     }
     else {
-      builder.append(value);
+      builder.append(text);
     }
   }
 
