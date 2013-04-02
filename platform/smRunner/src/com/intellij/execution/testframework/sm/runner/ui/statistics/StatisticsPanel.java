@@ -32,7 +32,9 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.TableUtil;
+import com.intellij.ui.table.BaseTableView;
 import com.intellij.ui.table.TableView;
+import com.intellij.util.config.Storage;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -53,6 +55,7 @@ public class StatisticsPanel implements DataProvider {
 
   private TableView<SMTestProxy> myStatisticsTableView;
   private JPanel myContentPane;
+  private final Storage.PropertiesComponentStorage myStorage = new Storage.PropertiesComponentStorage("sm_test_statistics_table_columns");
 
   private final StatisticsTableModel myTableModel;
   private final List<PropagateSelectionHandler> myPropagateSelectionHandlers = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -136,6 +139,7 @@ public class StatisticsPanel implements DataProvider {
       private void updateAndRestoreSelection() {
         SMRunnerUtil.addToInvokeLater(new Runnable() {
           public void run() {
+            BaseTableView.restore(myStorage, myStatisticsTableView);
             // statisticsTableView can be null in JUnit tests
             final SMTestProxy oldSelection = myStatisticsTableView.getSelectedObject();
 
@@ -305,5 +309,9 @@ public class StatisticsPanel implements DataProvider {
   private void showInTableAndSelectRow(final SMTestProxy suite, final SMTestProxy suiteProxy) {
     selectProxy(suite);
     selectRowOf(suiteProxy);
+  }
+
+  public void doDispose() {
+    BaseTableView.store(myStorage, myStatisticsTableView);
   }
 }
