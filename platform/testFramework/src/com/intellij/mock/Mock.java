@@ -423,6 +423,10 @@ public class Mock {
     public int getWindowSplitCount() {
       return 0;
     }
+
+    @Override
+    public void setSelectedEditor(VirtualFile file, String fileEditorProviderId) {
+    }
   }
 
   public static class MyVirtualFile extends VirtualFile {

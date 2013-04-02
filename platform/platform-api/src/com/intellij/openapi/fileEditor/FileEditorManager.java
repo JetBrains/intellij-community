@@ -176,4 +176,11 @@ public abstract class FileEditorManager {
 
   public abstract void registerExtraEditorDataProvider(@NotNull EditorDataProvider provider, Disposable parentDisposable);
 
+  /**
+   * Selects a specified file editor tab for the specified editor.
+   * @param file a file to switch the file editor tab for. The function does nothing if the file is not currently open in the editor.
+   * @param fileEditorProviderId the ID of the file editor to open; matches the return value of
+   * {@link com.intellij.openapi.fileEditor.FileEditorProvider#getEditorTypeId()}
+   */
+  public abstract void setSelectedEditor(VirtualFile file, String fileEditorProviderId);
 }
