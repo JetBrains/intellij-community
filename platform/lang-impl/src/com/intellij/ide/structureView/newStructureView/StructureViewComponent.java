@@ -413,8 +413,8 @@ public class StructureViewComponent extends SimpleToolWindowPanel implements Tre
 
   public AnAction[] getTitleActions() {
     return new AnAction[]{
-      CommonActionsManager.getInstance().createCollapseAllHeaderAction(getTree()),
       CommonActionsManager.getInstance().createExpandAllHeaderAction(getTree()),
+      CommonActionsManager.getInstance().createCollapseAllHeaderAction(getTree()),
     };
   }
 
