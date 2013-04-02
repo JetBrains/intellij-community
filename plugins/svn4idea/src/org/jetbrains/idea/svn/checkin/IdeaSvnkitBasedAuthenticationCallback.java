@@ -18,11 +18,14 @@ package org.jetbrains.idea.svn.checkin;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.messages.MessageBusConnection;
+import com.intellij.util.net.HttpConfigurable;
+import com.intellij.util.proxy.CommonProxy;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.tmatesoft.svn.core.*;
@@ -37,6 +40,7 @@ import org.tmatesoft.svn.core.wc.SVNRevision;
 import java.io.ByteArrayInputStream;
 import java.io.File;
 import java.io.IOException;
+import java.net.*;
 import java.security.cert.CertificateEncodingException;
 import java.security.cert.CertificateException;
 import java.security.cert.CertificateFactory;
@@ -55,9 +59,12 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   private final SvnVcs myVcs;
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.idea.svn.checkin.IdeaSvnkitBasedAuthenticationCallback");
   private File myTempDirectory;
+  private boolean myProxyCredentialsWereReturned;
+  private SvnConfiguration myConfiguration;
 
   public IdeaSvnkitBasedAuthenticationCallback(SvnVcs vcs) {
     myVcs = vcs;
+    myConfiguration = SvnConfiguration.getInstance(myVcs.getProject());
   }
 
   @Override
@@ -92,6 +99,94 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     for (String kind : kinds) {
       configuration.clearCredentials(kind, realm);
     }
+  }
+
+  @Override
+  public boolean haveDataForTmpConfig() {
+    final HttpConfigurable instance = HttpConfigurable.getInstance();
+    return SvnConfiguration.getInstance(myVcs.getProject()).isIsUseDefaultProxy() &&
+           (instance.USE_HTTP_PROXY || instance.USE_PROXY_PAC);
+  }
+
+  @Override
+  public boolean persistDataToTmpConfig(final File baseFile) throws IOException, URISyntaxException {
+    final File base = getExistingParent(baseFile);
+    if (base == null) return false;
+    final SVNURL url = SvnUtil.getCommittedURL(myVcs, base);
+    if (url == null) return false;
+
+    final SvnConfiguration configuration = SvnConfiguration.getInstance(myVcs.getProject());
+    initTmpDir(configuration);
+
+    final Proxy proxy = getIdeaDefinedProxy(url);
+    if (proxy != null){
+      SvnConfiguration.putProxyIntoServersFile(myTempDirectory, url.getHost(), proxy);
+    }
+    return true;
+  }
+
+  @Nullable
+  private static Proxy getIdeaDefinedProxy(final SVNURL url) throws URISyntaxException {
+    final List<Proxy> proxies = CommonProxy.getInstance().select(new URI(url.toString()));
+    if (proxies != null && ! proxies.isEmpty()) {
+      for (Proxy proxy : proxies) {
+        if (HttpConfigurable.isRealProxy(proxy) && Proxy.Type.HTTP.equals(proxy.type())) {
+          return proxy;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Override
+  public boolean askProxyCredentials(File baseFile) {
+    final File base = getExistingParent(baseFile);
+    if (base == null) return false;
+    final SVNURL url = SvnUtil.getCommittedURL(myVcs, base);
+    if (url == null) return false;
+
+    final Proxy proxy;
+    try {
+      proxy = getIdeaDefinedProxy(url);
+    }
+    catch (URISyntaxException e) {
+      LOG.info(e);
+      return false;
+    }
+    if (proxy == null) return false;
+    if (myProxyCredentialsWereReturned){
+      // ask loud
+      final HttpConfigurable instance = HttpConfigurable.getInstance();
+      if (instance.USE_HTTP_PROXY || instance.USE_PROXY_PAC) {
+        PopupUtil.showBalloonForActiveComponent("Failed to authenticate to proxy. You can change proxy credentials in HTTP proxy settings.", MessageType.ERROR);
+      } else {
+        PopupUtil.showBalloonForActiveComponent("Failed to authenticate to proxy.", MessageType.ERROR);
+      }
+      return false;
+    }
+    final InetSocketAddress address = (InetSocketAddress)proxy.address();
+    final PasswordAuthentication authentication;
+    try {
+      authentication = Authenticator.requestPasswordAuthentication(url.getHost(), address.getAddress(),
+                                                                   url.getPort(), url.getProtocol(), url.getHost(), url.getProtocol(),
+                                                                   new URL(url.toString()), Authenticator.RequestorType.PROXY);
+    } catch (MalformedURLException e) {
+      LOG.info(e);
+      return false;
+    }
+    if (authentication != null) {
+      myProxyCredentialsWereReturned = true;
+      // for 'generic' proxy variant (suppose user defined proxy in Subversion config but no password)
+      try {
+        initTmpDir(SvnConfiguration.getInstance(myVcs.getProject()));
+      }
+      catch (IOException e) {
+        PopupUtil.showBalloonForActiveComponent("Failed to authenticate to proxy: " + e.getMessage(), MessageType.ERROR);
+        return false;
+      }
+      return SvnConfiguration.putProxyCredentialsIntoServerFile(myTempDirectory, url.getHost(), authentication);
+    }
+    return false;
   }
 
   @Override
@@ -136,9 +231,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
           return acknowledge(manager, svnAuthentication);
         } else {
           if (myTmpDirManager == null) {
-            if (myTempDirectory == null) {
-              myTempDirectory = FileUtil.createTempDirectory("tmp", "Subversion");
-            }
+            initTmpDir(configuration);
             myTmpDirManager = createTmpManager();
           }
           myTmpDirManager.setArtificialSaving(true);
@@ -164,6 +257,13 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
     protected abstract T getWithPassive(SvnAuthenticationManager passive) throws SVNException;
     protected abstract T getWithActive(SvnAuthenticationManager active) throws SVNException;
     protected abstract boolean acknowledge(SvnAuthenticationManager manager, T svnAuthentication) throws SVNException;
+  }
+
+  private void initTmpDir(SvnConfiguration configuration) throws IOException {
+    if (myTempDirectory == null) {
+      myTempDirectory = FileUtil.createTempDirectory("tmp", "Subversion");
+      FileUtil.copyDir(new File(configuration.getConfigurationDirectory()), myTempDirectory);
+    }
   }
 
   private void doWithSubscribeToAuthProvider(SvnAuthenticationManager.ISVNAuthenticationProviderListener listener,
@@ -480,7 +580,7 @@ public class IdeaSvnkitBasedAuthenticationCallback implements AuthenticationCall
   @Nullable
   @Override
   public File getSpecialConfigDir() {
-    return myTempDirectory;
+    return myTempDirectory != null ? myTempDirectory : new File(myConfiguration.getConfigurationDirectory());
   }
 
   private String getFromType(SVNAuthentication authentication) {

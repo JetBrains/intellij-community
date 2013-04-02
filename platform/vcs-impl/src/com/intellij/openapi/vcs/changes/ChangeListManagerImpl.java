@@ -1136,7 +1136,9 @@ public class ChangeListManagerImpl extends ChangeListManagerEx implements Projec
             final Processor<VirtualFile> addProcessor = new Processor<VirtualFile>() {
               @Override
               public boolean process(VirtualFile file) {
-                descendant.add(file);
+                if (getStatus(file) == FileStatus.UNKNOWN) {
+                  descendant.add(file);
+                }
                 return true;
               }
             };

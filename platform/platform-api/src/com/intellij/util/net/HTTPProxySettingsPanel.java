@@ -274,6 +274,9 @@ public class HTTPProxySettingsPanel implements SearchableConfigurable, Configura
 
   public void apply () {
     HttpConfigurable httpConfigurable = myHttpConfigurable;
+    if (isModified()){
+      httpConfigurable.AUTHENTICATION_CANCELLED = false;
+    }
     httpConfigurable.USE_PROXY_PAC = myAutoDetectProxyRb.isSelected();
     httpConfigurable.USE_HTTP_PROXY = myUseHTTPProxyRb.isSelected();
     httpConfigurable.PROXY_TYPE_IS_SOCKS = mySocks.isSelected();

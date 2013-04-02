@@ -20,15 +20,14 @@ import com.intellij.openapi.actionSystem.ActionToolbarPosition;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.MultiLineLabelUI;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.AnActionButton;
-import com.intellij.ui.AnActionButtonRunnable;
-import com.intellij.ui.DocumentAdapter;
-import com.intellij.ui.ToolbarDecorator;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.*;
 import org.jetbrains.idea.svn.branchConfig.InfoReliability;
@@ -54,11 +53,11 @@ public class BranchConfigurationDialog extends DialogWrapper {
   private TextFieldWithBrowseButton myTrunkLocationTextField;
   private JList myLocationList;
   private JPanel myListPanel;
+  private JLabel myErrorPrompt;
   private final SvnBranchConfigManager mySvnBranchConfigManager;
   private final VirtualFile myRoot;
 
-  public BranchConfigurationDialog(final Project project, final SvnBranchConfigurationNew configuration, final String rootUrl,
-                                   final VirtualFile root) {
+  public BranchConfigurationDialog(@NotNull final Project project, @NotNull final SvnBranchConfigurationNew configuration, final @NotNull String rootUrl, @NotNull final VirtualFile root, @NotNull String url) {
     super(project, true);
     myRoot = root;
     init();
@@ -66,7 +65,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
 
     final String trunkUrl = configuration.getTrunkUrl();
     if (trunkUrl == null || trunkUrl.trim().length() == 0) {
-      configuration.setTrunkUrl(rootUrl);
+      configuration.setTrunkUrl(url);
     }
 
     mySvnBranchConfigManager = SvnBranchConfigurationManager.getInstance(project).getSvnBranchConfigManager();
@@ -84,6 +83,9 @@ public class BranchConfigurationDialog extends DialogWrapper {
     final TrunkUrlValidator trunkUrlValidator = new TrunkUrlValidator(rootUrl, configuration);
     myTrunkLocationTextField.getTextField().getDocument().addDocumentListener(trunkUrlValidator);
     trunkUrlValidator.textChanged(null);
+
+    myErrorPrompt.setUI(new MultiLineLabelUI());
+    myErrorPrompt.setForeground(SimpleTextAttributes.ERROR_ATTRIBUTES.getFgColor());
 
     final MyListModel listModel = new MyListModel(configuration);
     myLocationList = new JBList(listModel);
@@ -142,11 +144,10 @@ public class BranchConfigurationDialog extends DialogWrapper {
           (currentValue.length() > myRootUrlPrefix.length());
 
       myTrunkLocationTextField.getButton().setEnabled(valueOk);
-      setOKActionEnabled(prefixOk);
       if (prefixOk) {
         myConfiguration.setTrunkUrl(currentValue.endsWith("/") ? currentValue.substring(0, currentValue.length() - 1) : currentValue);
       }
-      setErrorText(prefixOk ? null : SvnBundle.message("configure.branches.error.wrong.url"));
+      myErrorPrompt.setText(prefixOk ? "" : SvnBundle.message("configure.branches.error.wrong.url", myRootUrl));
     }
   }
 
@@ -197,7 +198,7 @@ public class BranchConfigurationDialog extends DialogWrapper {
     }
 
     final SvnBranchConfigurationNew clonedConfiguration = configuration.copy();
-    BranchConfigurationDialog dlg = new BranchConfigurationDialog(project, clonedConfiguration, rootUrl, vcsRoot);
+    BranchConfigurationDialog dlg = new BranchConfigurationDialog(project, clonedConfiguration, rootUrl, vcsRoot, wcRoot.getUrl());
     dlg.show();
     if (dlg.isOK()) {
       SvnBranchConfigurationManager.getInstance(project).setConfiguration(vcsRoot, clonedConfiguration);

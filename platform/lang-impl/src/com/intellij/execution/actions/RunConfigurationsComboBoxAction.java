@@ -221,10 +221,12 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
 
     public void actionPerformed(final AnActionEvent e) {
       final Project project = e.getData(PlatformDataKeys.PROJECT);
-      RunConfiguration configuration = chooseTempConfiguration(project);
-      if (project != null && configuration != null) {
-        final RunManager runManager = RunManager.getInstance(project);
-        runManager.makeStable(configuration);
+      if (project != null) {
+        RunConfiguration configuration = chooseTempConfiguration(project);
+        if (configuration != null) {
+          final RunManager runManager = RunManager.getInstance(project);
+          runManager.makeStable(configuration);
+        }
       }
     }
 
@@ -253,7 +255,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
 
     @Nullable
-    private static RunConfiguration chooseTempConfiguration(Project project) {
+    private static RunConfiguration chooseTempConfiguration(@NotNull Project project) {
       final RunConfiguration[] tempConfigurations = RunManager.getInstance(project).getTempConfigurations();
       if (tempConfigurations.length > 0) {
         RunnerAndConfigurationSettings selectedConfiguration = RunManager.getInstance(project).getSelectedConfiguration();

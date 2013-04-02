@@ -55,6 +55,14 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     doTest("Create Field 'btn'", ".java");
   }
 
+  public void testWrapWithDefine() throws Exception {
+    final IntentionAction intention =
+      myFixture.getAvailableIntention("Wrap \"lb\" with fx:define", getTestName(true) + ".fxml");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile(getTestName(true) + "_after.fxml");
+  }
+
   private void doTest(final String actionName, final String extension) throws Exception {
     String path = getTestName(true) + ".fxml";
     final IntentionAction intention =

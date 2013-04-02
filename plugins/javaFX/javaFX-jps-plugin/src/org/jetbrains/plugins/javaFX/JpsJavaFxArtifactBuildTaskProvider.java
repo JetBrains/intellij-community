@@ -78,7 +78,7 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
         context.processMessage(new CompilerMessage(COMPILER_NAME, BuildMessage.Kind.ERROR, "Java version 7 or higher is required to build JavaFX package"));
         return;
       }
-      new JpsJavaFxPackager(myProps, context, myArtifact).createJarAndDeploy(javaSdk.getHomePath() + File.separator + "bin");
+      new JpsJavaFxPackager(myProps, context, myArtifact).buildJavaFxArtifact(javaSdk.getHomePath());
     }
   }
 

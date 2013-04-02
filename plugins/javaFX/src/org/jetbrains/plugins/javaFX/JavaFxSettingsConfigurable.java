@@ -95,7 +95,7 @@ public class JavaFxSettingsConfigurable implements SearchableConfigurable, Confi
   }
 
   public static FileChooserDescriptor createSceneBuilderDescriptor() {
-    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileNoJarsDescriptor();
+    final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFileOrExecutableAppDescriptor();
     descriptor.setTitle("SceneBuilder Configuration");
     descriptor.setDescription("Select path to SceneBuilder executable");
     return descriptor;

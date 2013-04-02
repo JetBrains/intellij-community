@@ -324,12 +324,29 @@ public class ArrangementEngine {
     if (wrappers.isEmpty()) {
       return;
     }
-    Map<E, ArrangementEntryWrapper<E>> map = new LinkedHashMap<E, ArrangementEntryWrapper<E>>();
-    for (ArrangementEntryWrapper<E> wrapper : wrappers) {
-      map.put(wrapper.getEntry(), wrapper);
-    }
-    List<E> arranged = arrange(map.keySet(), context.rules);
 
+    Map<E, ArrangementEntryWrapper<E>> map = ContainerUtilRt.newHashMap();
+    List<E> arranged = ContainerUtilRt.newArrayList();
+    List<E> toArrange = ContainerUtilRt.newArrayList(); 
+    for (ArrangementEntryWrapper<E> wrapper : wrappers) {
+      E entry = wrapper.getEntry();
+      map.put(wrapper.getEntry(), wrapper);
+      if (!entry.canBeMatched()) {
+        // Split entries to arrange by 'can not be matched' rules.
+        // See IDEA-104046 for a problem use-case example.
+        if (toArrange.isEmpty()) {
+          arranged.addAll(arrange(toArrange, context.rules));
+        }
+        arranged.add(entry);
+        toArrange.clear();
+      }
+      else {
+        toArrange.add(entry);
+      }
+    }
+    if (!toArrange.isEmpty()) {
+      arranged.addAll(arrange(toArrange, context.rules));
+    }
 
     context.changer.prepare(wrappers, context);
     // We apply changes from the last position to the first position in order not to bother with offsets shifts.

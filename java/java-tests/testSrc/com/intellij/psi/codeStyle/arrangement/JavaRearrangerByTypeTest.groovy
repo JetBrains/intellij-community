@@ -326,4 +326,44 @@ class Test {
 }'''
     )
   }
+  
+  void "test anonymous class and siblings"() {
+    doTest(
+      initial: '''\
+class Test {
+  void test() {
+    new MyClass(new Object() {
+      @Override
+      public String toString() {
+        return null;
+      }
+    }) {
+      @Override
+      public int hashCode() {
+        return 1;
+      }
+      private int field;
+    }
+  };
+}''',
+      rules: [rule(FIELD), rule(METHOD)],
+      expected: '''\
+class Test {
+  void test() {
+    new MyClass(new Object() {
+      @Override
+      public String toString() {
+        return null;
+      }
+    }) {
+      private int field;
+      @Override
+      public int hashCode() {
+        return 1;
+      }
+    }
+  };
+}'''
+    )
+  }
 }

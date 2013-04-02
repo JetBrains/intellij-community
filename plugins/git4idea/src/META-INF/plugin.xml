@@ -19,8 +19,8 @@
     </action>
 
     <group id="GitFileActions">
-      <action id="Git.Add" class="git4idea.actions.GitAdd" text="Add" icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
       <reference ref="CheckinFiles"/>
+      <reference ref="ChangesView.AddUnversioned"/>
       <separator/>
       <reference ref="Annotate"/>
       <reference ref="Show.Current.Revision"/>

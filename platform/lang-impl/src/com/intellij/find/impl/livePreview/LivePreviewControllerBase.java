@@ -172,21 +172,13 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     if (myReplaceDenied || !ReadonlyStatusHandler.ensureDocumentWritable(editor.getProject(), editor.getDocument())) return null;
     TextRange range = occurrence.getPrimaryRange();
     FindModel findModel = mySearchResults.getFindModel();
-    TextRange result = null;
-    try {
-      FindManager findManager = FindManager.getInstance(editor.getProject());
-      String stringToReplace = findManager.getStringToReplace(editor.getDocument().getText(range), findModel);
-      result = FindUtil.doReplace(editor.getProject(),
-                                  editor.getDocument(),
-                                  findModel,
-                                  new FindResultImpl(range.getStartOffset(), range.getEndOffset()),
-                                  stringToReplace,
-                                  true,
-                                  new ArrayList<Pair<TextRange, String>>());
-    }
-    catch (FindManager.MalformedReplacementStringException e) {
-      /**/
-    }
+    TextRange result = FindUtil.doReplace(editor.getProject(),
+                                editor.getDocument(),
+                                findModel,
+                                new FindResultImpl(range.getStartOffset(), range.getEndOffset()),
+                                replacement,
+                                true,
+                                new ArrayList<Pair<TextRange, String>>());
     if (myReplaceListener != null) {
       myReplaceListener.replacePerformed(occurrence, replacement, editor);
     }

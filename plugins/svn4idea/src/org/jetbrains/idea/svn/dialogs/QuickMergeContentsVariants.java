@@ -22,5 +22,5 @@ package org.jetbrains.idea.svn.dialogs;
  * Time: 7:53 PM
  */
 public enum QuickMergeContentsVariants {
-  all, select, cancel
+  all, select, cancel, showLatest
 }

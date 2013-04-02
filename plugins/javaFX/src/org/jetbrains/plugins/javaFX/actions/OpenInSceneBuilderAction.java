@@ -16,7 +16,6 @@
 package org.jetbrains.plugins.javaFX.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.PathEnvironmentVariableUtil;
@@ -35,12 +34,17 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.JavaFxSettings;
 import org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: anna
@@ -48,6 +52,7 @@ import java.io.File;
  */
 public class OpenInSceneBuilderAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#" + OpenInSceneBuilderAction.class.getName());
+  public static final String ORACLE = "Oracle";
 
   @Override
   public void actionPerformed(AnActionEvent e) {
@@ -58,7 +63,7 @@ public class OpenInSceneBuilderAction extends AnAction {
     final JavaFxSettings settings = JavaFxSettings.getInstance();
     String pathToSceneBuilder = settings.getPathToSceneBuilder();
     if (StringUtil.isEmptyOrSpaces(settings.getPathToSceneBuilder())){
-      final VirtualFile sceneBuilderFile = FileChooser.chooseFile(JavaFxSettingsConfigurable.createSceneBuilderDescriptor(), e.getProject(), null);
+      final VirtualFile sceneBuilderFile = FileChooser.chooseFile(JavaFxSettingsConfigurable.createSceneBuilderDescriptor(), e.getProject(), getPredefinedPath());
       if (sceneBuilderFile == null) return;
 
       pathToSceneBuilder = sceneBuilderFile.getPath();
@@ -126,7 +131,7 @@ public class OpenInSceneBuilderAction extends AnAction {
     }
 
     if (SystemInfo.isMac) {
-      pathToSceneBuilder += "/Contents/MacOS/JavaAppLauncher";
+      pathToSceneBuilder += "/Contents/MacOS/scenebuilder-launcher.sh";
     }
 
     final GeneralCommandLine commandLine = new GeneralCommandLine();
@@ -135,7 +140,7 @@ public class OpenInSceneBuilderAction extends AnAction {
       commandLine.addParameter(path);
       commandLine.createProcess();
     }
-    catch (ExecutionException ex) {
+    catch (Exception ex) {
       Messages.showErrorDialog("Failed to start SceneBuilder: " + commandLine.getCommandLineString(), CommonBundle.getErrorTitle());
     }
   }
@@ -152,5 +157,39 @@ public class OpenInSceneBuilderAction extends AnAction {
       presentation.setEnabled(true);
       presentation.setVisible(true);
     }
+  }
+
+  @Nullable
+  private static VirtualFile getPredefinedPath() {
+    String path = null;
+    if (SystemInfo.isWindows) {
+      final String sb11 = File.separator + "JavaFX Scene Builder 1.1" + File.separator + "JavaFX Scene Builder 1.1.exe";
+      final String sb10 = File.separator + "JavaFX Scene Builder 1.0" + File.separator + "bin" + File.separator + "scenebuilder.exe";
+      final List<String> suspiciousPaths = new ArrayList<String>();
+      final String programFiles = "C:\\Program Files";
+      fillPaths(programFiles, sb11, sb10, suspiciousPaths);
+      fillPaths(programFiles + " (x86)", sb11, sb10, suspiciousPaths);
+      final File sb = FileUtil.findFirstThatExist(ArrayUtil.toStringArray(suspiciousPaths));
+      if (sb != null) {
+        path = sb.getPath();
+      }
+    }
+    else if (SystemInfo.isMac) {
+      final File sb = FileUtil.findFirstThatExist("/Applications/JavaFX Scene Builder 1.1.app", 
+                                                  "/Applications/JavaFX Scene Builder 1.0.app");
+      if (sb != null) {
+        path = sb.getPath();
+      }
+    } 
+    else if (SystemInfo.isUnix) {
+      path = "/opt/JavaFXSceneBuilder1.1/JavaFXSceneBuilder1.1";
+    }
+
+    return path != null ? LocalFileSystem.getInstance().findFileByPath(FileUtil.toSystemIndependentName(path)) : null;
+  }
+
+  private static void fillPaths(String programFilesPath, String sb11, String sb10, List<String> suspiciousPaths) {
+    suspiciousPaths.add(new File(programFilesPath, ORACLE).getPath() + sb11);
+    suspiciousPaths.add(new File(programFilesPath, ORACLE).getPath() + sb10);
   }
 }

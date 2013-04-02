@@ -1158,7 +1158,7 @@
         <option name="FONT_TYPE" value="1" />
       </value>
     </option>
-    <option name="SQL_SYNTETIC_ENTITY">
+    <option name="SQL_SYNTHETIC_ENTITY">
       <value>
         <option name="FOREGROUND" value="ffff00" />
       </value>

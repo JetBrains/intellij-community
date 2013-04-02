@@ -21,6 +21,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
+import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
@@ -72,6 +73,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticPara
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightLocalVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
+import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
@@ -895,32 +897,37 @@ public class ExpressionGenerator extends Generator {
   public void visitLiteralExpression(GrLiteral literal) {
     final TypeConstraint[] constraints = GroovyExpectedTypesProvider.calculateTypeConstraints(literal);
 
-    final String text = literal.getText();
-    final Object value;
-    if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
-      String string = ((String)literal.getValue());
-      LOG.assertTrue(string != null);
-      string = string.replace("\n", "\\n").replace("\r", "\\r");
-      value = string;
-    }
-    else {
-      value = literal.getValue();
-    }
-
     boolean isChar = false;
     for (TypeConstraint constraint : constraints) {
       if (constraint instanceof SubtypeConstraint && TypesUtil.unboxPrimitiveTypeWrapper(constraint.getDefaultType()) == PsiType.CHAR) {
         isChar = true;
       }
     }
-    if (isChar) {
-      builder.append('\'').append(StringUtil.escapeQuotes(String.valueOf(value))).append('\'');
+
+    final String text = literal.getText();
+    final Object value;
+    if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
+      String string = GrStringUtil.removeQuotes(text).replace("\n", "\\n").replace("\r", "\\r");
+      builder.append('"').append(string).append('"');
     }
-    else if (value instanceof String) {
-      builder.append('"').append(StringUtil.escapeQuotes((String)value)).append('"');
+    else if (text.startsWith("'")) {
+      if (isChar) {
+        builder.append(text);
+      }
+      else {
+        builder.append('"').append(StringUtil.escapeQuotes(StringUtil.trimEnd(text.substring(1, text.length()), "'"))).append('"');
+      }
+    }
+    else if (text.startsWith("\"")) {
+      if (isChar) {
+        builder.append('\'').append(StringUtil.escapeQuotes(StringUtil.trimEnd(text.substring(1, text.length()), "\""))).append('\'');
+      }
+      else {
+        builder.append(text);
+      }
     }
     else {
-      builder.append(value);
+      builder.append(text);
     }
   }
 
@@ -1353,11 +1360,7 @@ public class ExpressionGenerator extends Generator {
 
         final boolean castNeeded = isCastNeeded(caller, method, this.context);
         if (castNeeded) {
-          builder.append('(');
-          final PsiType type = caller.getType();
-          builder.append('(');
-          writeType(builder, type, context);
-          builder.append(')');
+          writeCastForMethod(caller, method, context);
         }
         caller.accept(this);
         if (castNeeded) {
@@ -1369,6 +1372,35 @@ public class ExpressionGenerator extends Generator {
     builder.append(method.getName());
     final GrClosureSignature signature = GrClosureSignatureUtil.createSignature(method, substitutor);
     new ArgumentListGenerator(builder, this.context).generate(signature, exprs, namedArgs, closures, context);
+  }
+
+  private void writeCastForMethod(@NotNull GrExpression caller, @NotNull PsiMethod method, @NotNull GroovyPsiElement context) {
+    final PsiType type = inferCastType(caller, method, context);
+    if (type == null) return;
+
+    builder.append('(');
+    builder.append('(');
+    writeType(builder, type, context);
+    builder.append(')');
+  }
+
+  @Nullable
+  private static PsiType inferCastType(@NotNull GrExpression caller, @NotNull PsiMethod method, @NotNull GroovyPsiElement context) {
+    final PsiType type = caller.getType();
+    if (type instanceof PsiIntersectionType) {
+      final PsiType[] conjuncts = ((PsiIntersectionType)type).getConjuncts();
+      for (PsiType conjunct : conjuncts) {
+        final CheckProcessElement processor = new CheckProcessElement(method);
+        ResolveUtil.processAllDeclarationsSeparately(conjunct, processor, new BaseScopeProcessor() {
+          @Override
+          public boolean execute(@NotNull PsiElement element, ResolveState state) {
+            return false;
+          }
+        }, ResolveState.initial(), context);
+        if (processor.isFound()) return conjunct;
+      }
+    }
+    return type;
   }
 
 

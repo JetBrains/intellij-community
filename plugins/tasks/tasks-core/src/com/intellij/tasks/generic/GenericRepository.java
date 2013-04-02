@@ -1,13 +1,19 @@
 package com.intellij.tasks.generic;
 
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.XmlElementFactory;
+import com.intellij.psi.xml.XmlTag;
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskRepositoryType;
 import com.intellij.tasks.actions.TaskSearchSupport;
 import com.intellij.tasks.impl.BaseRepositoryImpl;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.xmlb.annotations.Tag;
+import com.intellij.xml.util.XmlUtil;
 import org.apache.commons.httpclient.HttpClient;
 import org.apache.commons.httpclient.HttpMethod;
 import org.apache.commons.httpclient.methods.GetMethod;
@@ -76,15 +82,19 @@ public class GenericRepository extends BaseRepositoryImpl {
 
     if (!isLoginAnonymously() && !isUseHttpAuthentication()) login(httpClient);
 
-    final List<String> placeholders = getPlaceholders(getTaskPattern());
-    if (!placeholders.contains(ID_PLACEHOLDER) || !placeholders.contains(SUMMARY_PLACEHOLDER)) {
-      throw new Exception("Incorrect Task Pattern");
-    }
-
     final HttpMethod method = getTaskListsMethod(query != null ? query : "", max);
     httpClient.executeMethod(method);
     if (method.getStatusCode() != 200) throw new Exception("Cannot get tasks: HTTP status code " + method.getStatusCode());
     final String response = method.getResponseBodyAsString();
+    return parseResponse(query, max, response);
+  }
+
+  public Task[] parseResponse(String query, int max, String response) throws Exception {
+
+    final List<String> placeholders = getPlaceholders(getTaskPattern());
+    if (!placeholders.contains(ID_PLACEHOLDER) || !placeholders.contains(SUMMARY_PLACEHOLDER)) {
+      throw new Exception("Incorrect Task Pattern");
+    }
 
     final String taskPatternWithoutPlaceholders = getTaskPattern().replaceAll("\\{.+?\\}", "");
     Matcher matcher = Pattern
@@ -94,8 +104,19 @@ public class GenericRepository extends BaseRepositoryImpl {
 
     List<Task> tasks = new ArrayList<Task>();
     while (matcher.find()) {
-      final String id = matcher.group(placeholders.indexOf(ID_PLACEHOLDER) + 1);
-      final String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
+      String id = matcher.group(placeholders.indexOf(ID_PLACEHOLDER) + 1);
+      String summary = matcher.group(placeholders.indexOf(SUMMARY_PLACEHOLDER) + 1);
+      if (myResponseType == ResponseType.XML && summary != null) {
+        final String finalSummary = summary;
+        summary = ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+          @Override
+          public String compute() {
+            XmlElementFactory factory = XmlElementFactory.getInstance(ProjectManager.getInstance().getDefaultProject());
+            XmlTag text = factory.createTagFromText("<a>" + finalSummary + "</a>");
+            return XmlUtil.decode(text.getValue().getTrimmedText());
+          }
+        });
+      }
       tasks.add(new GenericTask(id, summary, this));
     }
 

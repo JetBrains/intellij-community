@@ -338,6 +338,39 @@ class Inheritor extends Base {
 ''')
   }
 
+  void testGetterInTheEnd() {
+    myFixture.configureByText 'a.groovy', '''
+class GrImportStatementStub {
+    private final String myAlias;
+    private final String mySymbolName;
+
+    protected GrImportStatementStub(String symbolName, String alias) {
+    }
+    <caret>
+}
+'''
+    generateGetter()
+
+    myFixture.checkResult '''
+class GrImportStatementStub {
+    private final String myAlias;
+    private final String mySymbolName;
+
+    protected GrImportStatementStub(String symbolName, String alias) {
+    }
+
+    String getMyAlias() {
+        return myAlias
+    }
+
+    String getMySymbolName() {
+        return mySymbolName
+    }
+}
+'''
+
+  }
+
   private void generateGetter() {
     //noinspection GroovyResultOfObjectAllocationIgnored
     new GroovyGenerateGetterSetterAction() //don't remove it!!!

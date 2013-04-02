@@ -20,7 +20,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlElement;
-import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
@@ -86,19 +85,6 @@ public class JavaFxDefaultAttributeDescriptor extends JavaFxPropertyAttributeDes
             final PsiMethod method = JavaFxPsiUtil.findValueOfMethod(tagClass);
             if (method == null) {
               return "Unable to coerce '" + value + "' to " + tagClass.getQualifiedName() + ".";
-            }
-          }
-        } else if (FxmlConstants.FX_ELEMENT_SOURCE.equals(attributeName)) {
-          final XmlTag xmlTag = attribute.getParent();
-          if (xmlTag != null) {
-            final XmlTag referencedTag = JavaFxDefaultPropertyElementDescriptor.getReferencedTag(xmlTag);
-            if (referencedTag != null) {
-              if (referencedTag.getTextOffset() > xmlTag.getTextOffset()) {
-                return ((XmlAttributeValue)context).getValue() + " not found";
-              }
-              if (xmlTag.getParentTag() == referencedTag.getParentTag()) {
-                return "Duplicate child added";
-              }
             }
           }
         }

@@ -18,6 +18,8 @@ package org.jetbrains.idea.svn;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
+import java.io.IOException;
+import java.net.URISyntaxException;
 
 /**
  * Passed for authentication purpose to SvnLineCommand
@@ -80,4 +82,30 @@ public interface AuthenticationCallback {
    * @param password - whether password credential should be deleted or certificate, if protocol might demand certificate
    */
   void clearPassiveCredentials(String realm, File base, boolean password);
+
+  /**
+   * @return true if there's something from IDEA config that should be persisted into Subversion tmp config directory
+   * for successful call
+   * (now it's IDEA proxy settings)
+   */
+  boolean haveDataForTmpConfig();
+
+  /**
+   * writes IDEA config settings (that should be written) into tmp config directory
+   * (now it's IDEA proxy settings)
+   * @return true if have written data, false if wasn't able to determine parameters etc
+   * @throws IOException
+   * @throws URISyntaxException
+   */
+  boolean persistDataToTmpConfig(File baseFile) throws IOException, URISyntaxException;
+
+  /**
+   * Ask for IDEA-defined proxy credentials, using standard authenticator
+   * Store data into tmp config
+   *
+   * @return false if authentication was canceled or related calculations were unsuccessful
+   */
+  boolean askProxyCredentials(File base);
+
+  void reset();
 }

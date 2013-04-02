@@ -10,6 +10,7 @@ import com.intellij.openapi.vcs.AbstractVcs;
 import com.intellij.openapi.vcs.AbstractVcsHelper;
 import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.changes.ChangeListManager;
+import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.VcsDirtyScopeManager;
 import com.intellij.openapi.vcs.impl.ProjectLevelVcsManagerImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -49,6 +50,7 @@ import java.util.concurrent.TimeoutException;
 import java.util.concurrent.atomic.AtomicReference;
 
 import static com.intellij.dvcs.test.Executor.cd;
+import static com.intellij.dvcs.test.Executor.mkdir;
 import static junit.framework.Assert.assertNotNull;
 import static org.junit.Assume.assumeTrue;
 
@@ -62,13 +64,14 @@ public class GitCucumberWorld {
 
   public static String myTestRoot;
   public static String myProjectRoot;
+  public static VirtualFile myProjectDir;
   public static Project myProject;
 
   public static GitPlatformFacade myPlatformFacade;
   public static Git myGit;
   public static GitRepository myRepository;
   public static GitVcsSettings mySettings;
-  public static ChangeListManager myChangeListManager;
+  public static ChangeListManagerImpl myChangeListManager;
   public static GitVcs myVcs;
 
   public static MockVcsHelper myVcsHelper;
@@ -104,6 +107,7 @@ public class GitCucumberWorld {
     ((ProjectComponent)VcsDirtyScopeManager.getInstance(myProject)).projectOpened();
 
     myProjectRoot = myProject.getBasePath();
+    myProjectDir = myProject.getBaseDir();
     myTestRoot = myProjectRoot;
 
     myPlatformFacade = ServiceManager.getService(myProject, GitPlatformFacade.class);
@@ -114,7 +118,7 @@ public class GitCucumberWorld {
     // dynamic overriding is used instead of making it in plugin.xml,
     // because MockVcsHelper is not ready to be a full featured implementation for all tests.
     myVcsHelper = overrideService(myProject, AbstractVcsHelper.class, MockVcsHelper.class);
-    myChangeListManager = myPlatformFacade.getChangeListManager(myProject);
+    myChangeListManager = (ChangeListManagerImpl)myPlatformFacade.getChangeListManager(myProject);
     myNotificator = (TestNotificator)ServiceManager.getService(myProject, Notificator.class);
     myVcs = GitVcs.getInstance(myProject);
 
@@ -153,6 +157,14 @@ public class GitCucumberWorld {
     // default port will be occupied by main idea instance => define the custom default to avoid searching of free port
     System.setProperty(WebServerManagerImpl.PROPERTY_RPC_PORT, "64463");
     myHttpAuthService = (GitHttpAuthTestService)ServiceManager.getService(GitHttpAuthService.class);
+  }
+
+  @Before("@nestedroot")
+  @Order(2)
+  public void setUpStandardMultipleRootsConfig() {
+    cd(myProjectRoot);
+    String community = mkdir("community");
+    createRepo(community);
   }
 
   @After("@remote")

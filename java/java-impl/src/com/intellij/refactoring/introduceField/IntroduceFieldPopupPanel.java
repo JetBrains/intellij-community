@@ -66,7 +66,7 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
     }
 
     final PsiMethod setUpMethod = TestFrameworks.getInstance().findSetUpMethod(myParentClass);
-    final boolean setupEnabled = myInitialisersPlaceModel.getIndexOf(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD) > -1;
+    final boolean setupEnabled = hasSetUpChoice();
     if (ourLastInitializerPlace == BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD && 
         setupEnabled && (myInitializerExpression != null && PsiTreeUtil.isAncestor(setUpMethod, myInitializerExpression, false) ||
                          TestFrameworks.getInstance().isTestClass(myParentClass))) {
@@ -187,11 +187,20 @@ public class IntroduceFieldPopupPanel extends IntroduceFieldCentralPanel {
   }
 
   @Override
-  protected boolean updateInitializationPlaceModel() {
+  protected boolean updateInitializationPlaceModel(boolean initializedInSetup) {
     myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_FIELD_DECLARATION);
     myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_CONSTRUCTOR);
-    myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
+    if (!initializedInSetup) {
+      myInitialisersPlaceModel.removeElement(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD);
+    } else {
+      return true;
+    }
     return false;
+  }
+
+  @Override
+  protected boolean hasSetUpChoice() {
+    return myInitialisersPlaceModel.getIndexOf(BaseExpressionToFieldHandler.InitializationPlace.IN_SETUP_METHOD) > -1;
   }
 
   public void setInitializeInFieldDeclaration() {

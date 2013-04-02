@@ -24,14 +24,12 @@ import com.intellij.openapi.vcs.changes.committed.DecoratorManager;
 import com.intellij.openapi.vcs.versionBrowser.CommittedChangeList;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.Consumer;
-import icons.SvnIcons;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.svn.SvnBundle;
 import org.jetbrains.idea.svn.dialogs.WCInfoWithBranches;
 import org.jetbrains.idea.svn.dialogs.WCPaths;
 import org.jetbrains.idea.svn.history.SvnChangeList;
 
-import javax.swing.*;
 import java.awt.*;
 import java.io.File;
 import java.util.HashMap;
@@ -162,25 +160,6 @@ public class MergeInfoHolder {
           myManager.repaintTree();
         }
       });
-    }
-  }
-
-  public static enum ListMergeStatus {
-    COMMON(SvnIcons.Common),
-    MERGED(SvnIcons.Integrated),
-    NOT_MERGED(SvnIcons.Notintegrated),
-    //ALIEN(IconLoader.getIcon("/icons/OnDefault.png")),
-    ALIEN(null),
-    REFRESHING(SvnIcons.IntegrationStatusUnknown);
-
-    private final Icon myIcon;
-
-    private ListMergeStatus(final Icon icon) {
-      myIcon = icon;
-    }
-
-    public Icon getIcon() {
-      return myIcon;
     }
   }
 

@@ -125,4 +125,6 @@ public enum A {
   void testReflectedMethodWithEllipsis() { doTest() }
 
   void testMapAccess2() { doTest() }
+
+  void testMutualCasts() { doTest() }
 }

@@ -40,12 +40,14 @@ import com.intellij.packaging.ui.PackagingElementPropertiesPanel;
 import com.intellij.packaging.ui.PackagingSourceItem;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.awt.RelativeRectangle;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.ui.treeStructure.SimpleTreeBuilder;
 import com.intellij.ui.treeStructure.SimpleTreeStructure;
 import com.intellij.ui.treeStructure.WeightBasedComparator;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -130,6 +132,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
     emptyPanel.setPreferredSize(new Dimension(0, 0));
 
     myPropertiesPanelWrapper = new JPanel(new CardLayout());
+    myPropertiesPanel.setBorder(new CustomLineBorder(UIUtil.getBorderColor(), 1, 0, 0, 0));
     myPropertiesPanelWrapper.add(EMPTY_CARD, emptyPanel);
     myPropertiesPanelWrapper.add(PROPERTIES_CARD, myPropertiesPanel);
   }
@@ -609,7 +612,7 @@ public class LayoutTreeComponent implements DnDTarget, Disposable {
         myCurrentPanel = element.getType().createElementPropertiesPanel(myElement, myContext);
         myPropertiesPanel.removeAll();
         if (myCurrentPanel != null) {
-          myPropertiesPanel.add(BorderLayout.CENTER, ScrollPaneFactory.createScrollPane(myCurrentPanel.createComponent()));
+          myPropertiesPanel.add(BorderLayout.CENTER, ScrollPaneFactory.createScrollPane(myCurrentPanel.createComponent(), true));
           myCurrentPanel.reset();
           myPropertiesPanel.revalidate();
         }

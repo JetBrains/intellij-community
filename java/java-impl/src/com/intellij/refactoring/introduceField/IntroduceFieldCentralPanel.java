@@ -15,15 +15,19 @@
  */
 package com.intellij.refactoring.introduceField;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
+import com.intellij.psi.search.LocalSearchScope;
+import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.TypeSelectorManager;
 import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.ui.StateRestoringCheckBox;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.TestOnly;
 
 import javax.swing.*;
@@ -93,7 +97,7 @@ public abstract class IntroduceFieldCentralPanel {
              refElement instanceof PsiParameter ||
              (refElement instanceof PsiField && !((PsiField)refElement).hasInitializer())) &&
             !PsiTreeUtil.isAncestor(initializer, refElement, true)) {
-          return updateInitializationPlaceModel();
+          return updateInitializationPlaceModel(initializedInSetUp(refElement));
         }
       }
     }
@@ -102,6 +106,28 @@ public abstract class IntroduceFieldCentralPanel {
       if (!setEnabledInitializationPlaces(child, initializer)) return false;
     }
     return true;
+  }
+
+  private boolean initializedInSetUp(PsiElement refElement) {
+    if (refElement instanceof PsiField && hasSetUpChoice()) {
+      final PsiMethod setUpMethod = TestFrameworks.getInstance().findSetUpMethod(((PsiField)refElement).getContainingClass());
+      if (setUpMethod != null) {
+        final Processor<PsiReference> initializerSearcher = new Processor<PsiReference>() {
+          @Override
+          public boolean process(PsiReference reference) {
+            final PsiElement referenceElement = reference.getElement();
+            if (referenceElement instanceof PsiExpression) {
+              return !PsiUtil.isAccessedForWriting((PsiExpression)referenceElement);
+            }
+            return true;
+          }
+        };
+        if (!ReferencesSearch.search(refElement, new LocalSearchScope(setUpMethod)).forEach(initializerSearcher)) {
+          return true;
+        }
+      }
+    }
+    return false;
   }
 
   public abstract BaseExpressionToFieldHandler.InitializationPlace getInitializerPlace();
@@ -279,5 +305,7 @@ public abstract class IntroduceFieldCentralPanel {
     }
   }
 
-  protected abstract boolean updateInitializationPlaceModel();
+  protected abstract boolean updateInitializationPlaceModel(boolean initializedInsetup);
+
+  protected abstract boolean hasSetUpChoice();
 }

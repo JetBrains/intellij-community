@@ -328,6 +328,24 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     }
   }
 
+  public void collectDependentInspections(@NotNull InspectionProfileEntry profileEntry, @NotNull Set<InspectionProfileEntry> dependentEntries) {
+    String mainToolId = profileEntry.getMainToolId();
+
+    if (mainToolId != null) {
+      InspectionProfileEntry dependentEntry = getInspectionTool(mainToolId);
+
+      if (dependentEntry != null) {
+        if (!dependentEntries.contains(dependentEntry)) {
+          dependentEntries.add(dependentEntry);
+          collectDependentInspections(dependentEntry, dependentEntries);
+        }
+      }
+      else {
+        LOG.error("Can't find main tool: " + mainToolId);
+      }
+    }
+  }
+
   @Override
   @Nullable
   public InspectionProfileEntry getInspectionTool(@NotNull String shortName, @NotNull PsiElement element) {

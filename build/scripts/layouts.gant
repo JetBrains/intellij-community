@@ -434,6 +434,9 @@ public def layoutCommunityPlugins(String home) {
           module("devkit-jps-plugin")
         }
       }
+      fileset(dir: "${home}/plugins/devkit/lib") {
+        include(name: "**/*.jar")
+      }
     }
     layoutPlugin("eclipse") {
       jar("eclipse-jps-plugin.jar") {

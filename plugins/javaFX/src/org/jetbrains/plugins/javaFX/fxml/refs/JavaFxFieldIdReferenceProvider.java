@@ -23,7 +23,6 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
 
 import java.util.ArrayList;
@@ -73,7 +72,7 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
           final XmlFile xmlFile = (XmlFile)myXmlAttributeValue.getContainingFile();
           final XmlTag rootTag = xmlFile.getRootTag();
           if (rootTag != null) {
-            if (!JavaFxPsiUtil.isOutOfHierarchy(myXmlAttributeValue) && !FxmlConstants.FX_ROOT.equals(rootTag.getName())) {
+            if (!JavaFxPsiUtil.isOutOfHierarchy(myXmlAttributeValue)) {
               return null;
             }
           }

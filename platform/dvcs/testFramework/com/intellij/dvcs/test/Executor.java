@@ -63,13 +63,15 @@ public class Executor {
     return ourCurrentDir;
   }
 
-  public static String touch(String fileName) {
+  public static String touch(String filePath) {
     try {
-      File file = child(fileName);
+      File file = child(filePath);
       assert !file.exists() : "File " + file + " shouldn't exist yet";
+      //noinspection ResultOfMethodCallIgnored
+      new File(file.getParent()).mkdirs(); // ensure to create the directories
       boolean fileCreated = file.createNewFile();
       assert fileCreated;
-      log("touch " + fileName);
+      log("touch " + filePath);
       return file.getPath();
     }
     catch (IOException e) {

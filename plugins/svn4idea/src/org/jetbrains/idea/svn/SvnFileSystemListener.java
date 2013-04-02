@@ -228,6 +228,8 @@ public class SvnFileSystemListener extends CommandAdapter implements LocalFileOp
   }
 
   public boolean rename(VirtualFile file, String newName) throws IOException {
+    FileDocumentManager.getInstance().saveAllDocuments();
+
     File srcFile = getIOFile(file);
     File dstFile = new File(srcFile.getParentFile(), newName);
     SvnVcs vcs = getVCS(file);

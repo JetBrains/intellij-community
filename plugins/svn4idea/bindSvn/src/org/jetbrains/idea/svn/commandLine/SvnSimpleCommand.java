@@ -87,7 +87,7 @@ public class SvnSimpleCommand extends SvnCommand {
     });
     start();
     if (isStarted()) {//if wasn't started, exception is stored into a field, don't wait for process
-      waitFor();
+      waitFor(-1);
     }
 
     synchronized (myDataLock) {

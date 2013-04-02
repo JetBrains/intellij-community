@@ -104,7 +104,7 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   private final ButtonPanel myButtonPanel = new ButtonPanel();
   private volatile boolean isDisposed;
   private volatile boolean myChangesDetected = false;
-  static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
+  public static final Comparator<Usage> USAGE_COMPARATOR = new Comparator<Usage>() {
     @Override
     public int compare(final Usage o1, final Usage o2) {
       if (o1 == NULL_NODE || o2 == NULL_NODE) return -1;

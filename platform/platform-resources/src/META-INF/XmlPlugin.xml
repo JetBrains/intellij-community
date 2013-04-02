@@ -311,7 +311,7 @@
     <referenceProviderType key="Schema references provider"
                            implementationClass="com.intellij.psi.impl.source.resolve.reference.impl.providers.SchemaReferencesProvider"/>
 
-    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameXmlAttributeProcessor"/>
+    <renamePsiElementProcessor implementation="com.intellij.refactoring.rename.RenameXmlAttributeProcessor" id="xmlAttribute"/>
     <lang.importOptimizer id="XML" language="XML" implementationClass="com.intellij.refactoring.XmlImportOptimizer"/>
 
     <readWriteAccessDetector implementation="com.intellij.codeInsight.highlighting.XmlReadWriteAccessDetector"/>
