@@ -25,6 +25,7 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="platform-impl" />
     <orderEntry type="module" module-name="ant-jps-plugin" />
+    <orderEntry type="module" module-name="dom-impl" />
   </component>
   <component name="copyright">
     <Base>
