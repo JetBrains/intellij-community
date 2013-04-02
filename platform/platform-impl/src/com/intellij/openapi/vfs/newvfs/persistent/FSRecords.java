@@ -44,6 +44,8 @@ import java.io.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
+import static com.intellij.util.io.IOUtil.deleteWithSubordinates;
+
 @SuppressWarnings({"PointlessArithmeticExpression", "HardCodedStringLiteral"})
 public class FSRecords implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
@@ -302,25 +304,6 @@ public class FSRecords implements Forceable {
     private static String getCachesDir() {
       String dir = System.getProperty("caches_dir");
       return dir == null ? PathManager.getSystemPath() + "/caches/" : dir;
-    }
-
-    private static boolean deleteWithSubordinates(File file) {
-      final String baseName = file.getName();
-      final File[] files = file.getParentFile().listFiles(new FileFilter() {
-        @Override
-        public boolean accept(final File pathname) {
-          return pathname.getName().startsWith(baseName);
-        }
-      });
-
-      boolean ok = true;
-      if (files != null) {
-        for (File f : files) {
-          ok &= FileUtil.delete(f);
-        }
-      }
-
-      return ok;
     }
 
     private static void markDirty() {

@@ -284,18 +284,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   public static void deleteFilesStartingWith(@NotNull File prefixFile) {
-    final String baseName = prefixFile.getName();
-    final File[] files = prefixFile.getParentFile().listFiles(new FileFilter() {
-      @Override
-      public boolean accept(@NotNull final File pathName) {
-        return pathName.getName().startsWith(baseName);
-      }
-    });
-    if (files != null) {
-      for (File f : files) {
-        FileUtil.delete(f);
-      }
-    }
+    IOUtil.deleteWithSubordinates(prefixFile);
   }
 
   @NotNull

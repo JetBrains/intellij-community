@@ -15,13 +15,11 @@
  */
 package com.intellij.util.io;
 
+import com.intellij.openapi.util.io.FileUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.io.DataInput;
-import java.io.DataOutput;
-import java.io.IOException;
-import java.io.UTFDataFormatException;
+import java.io.*;
 import java.nio.charset.Charset;
 
 public class IOUtil {
@@ -136,5 +134,24 @@ public class IOUtil {
 
   public static boolean isAscii(char c) {
     return c >= 0 && c < 128;
+  }
+
+  public static boolean deleteWithSubordinates(File file) {
+    final String baseName = file.getName();
+    final File[] files = file.getParentFile().listFiles(new FileFilter() {
+      @Override
+      public boolean accept(final File pathname) {
+        return pathname.getName().startsWith(baseName);
+      }
+    });
+
+    boolean ok = true;
+    if (files != null) {
+      for (File f : files) {
+        ok &= FileUtil.delete(f);
+      }
+    }
+
+    return ok;
   }
 }
