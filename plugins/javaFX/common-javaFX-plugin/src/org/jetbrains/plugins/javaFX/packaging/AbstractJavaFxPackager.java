@@ -261,7 +261,8 @@ public abstract class AbstractJavaFxPackager {
     commands.add("-classpath");
     commands.add(antHome + "/lib/ant.jar" + File.pathSeparator + 
                  antHome + "/lib/ant-launcher.jar" + File.pathSeparator +
-                 javaHome + "/lib/ant-javafx.jar");
+                 javaHome + "/lib/ant-javafx.jar" + File.pathSeparator + 
+                 javaHome + "/jre/lib/jfxrt.jar");
     commands.add("org.apache.tools.ant.launch.Launcher");
     commands.add("-f");
     try {
@@ -335,4 +336,6 @@ public abstract class AbstractJavaFxPackager {
   public abstract String getPreloaderClass();
 
   public abstract String getPreloaderJar();
+
+  public abstract boolean convertCss2Bin();
 }

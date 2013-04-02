@@ -67,6 +67,12 @@ public class JavaFxAntGenerator {
 
     topLevelTagsCollector.add(applicationTag);
 
+    if (packager.convertCss2Bin()) {
+      final SimpleTag css2binTag = new SimpleTag("fx:csstobin", new Pair<String, String>("outdir", tempDirPath));
+      css2binTag.add(new SimpleTag("fileset", new Pair<String, String>("dir", tempDirPath), new Pair<String, String>("includes", "**/*.css")));
+      topLevelTagsCollector.add(css2binTag);
+    }
+
     //create jar task
     final SimpleTag createJarTag = new SimpleTag("fx:jar",
                                      new Pair<String, String>("destfile", tempDirPath + File.separator + artifactFileName));
