@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -118,7 +118,7 @@ public class RedundantCastUtil {
 
     @Override
     protected void addToResults(@NotNull PsiTypeCastExpression typeCast){
-      if (!isTypeCastSemantical(typeCast)) {
+      if (!isTypeCastSemantic(typeCast)) {
         myFoundCasts.add(typeCast);
       }
     }
@@ -140,7 +140,7 @@ public class RedundantCastUtil {
     }
 
     protected void addToResults(@NotNull PsiTypeCastExpression typeCast){
-      if (!isTypeCastSemantical(typeCast)) {
+      if (!isTypeCastSemantic(typeCast)) {
         isRedundant = true;
       }
     }
@@ -446,7 +446,7 @@ public class RedundantCastUtil {
       if (parent instanceof PsiReturnStatement) return;
       if (parent instanceof PsiTypeCastExpression) return;
 
-      if (isTypeCastSemantical(typeCast)) return;
+      if (isTypeCastSemantic(typeCast)) return;
 
       PsiTypeElement typeElement = typeCast.getCastType();
       if (typeElement == null) return;
@@ -511,7 +511,13 @@ public class RedundantCastUtil {
     return result.get().booleanValue();
   }
 
+  /** @deprecated use {@link #isTypeCastSemantic(PsiTypeCastExpression)} (to remove in IDEA 14) */
+  @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
   public static boolean isTypeCastSemantical(PsiTypeCastExpression typeCast) {
+    return isTypeCastSemantic(typeCast);
+  }
+
+  public static boolean isTypeCastSemantic(PsiTypeCastExpression typeCast) {
     PsiExpression operand = typeCast.getOperand();
     if (operand == null) return false;
 
