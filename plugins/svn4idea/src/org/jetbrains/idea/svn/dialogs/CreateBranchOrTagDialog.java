@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComboboxWithBrowseButton;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.svn.RootUrlInfo;
@@ -58,7 +59,7 @@ import java.io.File;
  * Date: 05.07.2005
  * Time: 23:35:12
  */
-public class CopyDialog extends DialogWrapper {
+public class CreateBranchOrTagDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.idea.svn.dialogs.CopyDialog");
 
   private final File mySrcFile;
@@ -81,19 +82,21 @@ public class CopyDialog extends DialogWrapper {
   private JRadioButton myAnyLocationRadioButton;
   private JButton myProjectButton;
   private JLabel myErrorLabel;
+  private JLabel myUseThisVariantToLabel;
 
   @NonNls private static final String HELP_ID = "vcs.subversion.branch";
   private SvnBranchConfigurationNew myBranchConfiguration;
   private final VirtualFile mySrcVirtualFile;
   private final String myWcRootUrl;
 
-  public CopyDialog(final Project project, boolean canBeParent, File file) throws VcsException {
+  public CreateBranchOrTagDialog(final Project project, boolean canBeParent, File file) throws VcsException {
     super(project, canBeParent);
     mySrcFile = file;
     myProject = project;
     setResizable(true);
     setTitle(SvnBundle.message("dialog.title.branch"));
     getHelpAction().setEnabled(true);
+    myUseThisVariantToLabel.setBorder(BorderFactory.createEmptyBorder(0,0,10,0));
     myProjectButton.setIcon(AllIcons.Nodes.IdeaProject);
     myBranchTagBaseComboBox.setPreferredSize(new Dimension(myBranchTagBaseComboBox.getPreferredSize().width,
                                                            myWorkingCopyField.getPreferredSize().height));
@@ -242,6 +245,7 @@ public class CopyDialog extends DialogWrapper {
     myBranchTagBaseComboBox.setEnabled(myBranchOrTagRadioButton.isSelected());
     myBranchTextField.setEnabled(myBranchOrTagRadioButton.isSelected());
     myToURLText.setEnabled(myAnyLocationRadioButton.isSelected());
+    myUseThisVariantToLabel.setForeground(myWorkingCopyRadioButton.isSelected() ? UIUtil.getActiveTextColor() : UIUtil.getInactiveTextColor());
 
     getOKAction().setEnabled(isOKActionEnabled());
   }
