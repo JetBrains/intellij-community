@@ -175,7 +175,7 @@ public class AllIcons {
   }
   
   public static class Css {
-    public static final Icon AtRule = IconLoader.getIcon("/css/atrule.png"); // 16x16
+    public static final Icon Atrule = IconLoader.getIcon("/css/atrule.png"); // 16x16
     public static final Icon Property = IconLoader.getIcon("/css/property.png"); // 16x16
     public static final Icon Pseudo_element = IconLoader.getIcon("/css/pseudo-element.png"); // 16x16
 
