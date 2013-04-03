@@ -219,7 +219,7 @@ public final class ScriptRunnerUtil {
     }
 
     LOG.debug("Command line: " + commandLine.getCommandLineString());
-    LOG.debug("Command line env: " + commandLine.getEnvParams());
+    LOG.debug("Command line env: " + commandLine.getEnvParamsNotNull());
 
     final OSProcessHandler processHandler = new ColoredProcessHandler(commandLine.createProcess(), commandLine.getCommandLineString(),
                                                                       EncodingManager.getInstance().getDefaultCharset());
