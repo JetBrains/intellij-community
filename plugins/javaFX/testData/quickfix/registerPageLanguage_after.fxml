@@ -1,0 +1,8 @@
+<?language javascript?>
+
+<?import javafx.scene.layout.GridPane?>
+<GridPane xmlns:fx="http://javafx.com/fxml">
+  <fx:script>
+    var foo;
+  </fx:script>
+</GridPane>

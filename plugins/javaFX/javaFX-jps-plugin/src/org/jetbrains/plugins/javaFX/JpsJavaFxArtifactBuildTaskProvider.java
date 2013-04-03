@@ -17,6 +17,7 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.plugins.javaFX.packaging.AbstractJavaFxPackager;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxPackagerConstants;
 import org.jetbrains.plugins.javaFX.preloader.JpsJavaFxPreloaderArtifactProperties;
 import org.jetbrains.plugins.javaFX.preloader.JpsJavaFxPreloaderArtifactType;
 
@@ -164,6 +165,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     }
 
     @Override
+    protected JavaFxPackagerConstants.NativeBundles getNativeBundle() {
+      return myProperties.myState.myNativeBundle;
+    }
+
+    @Override
     public String getKeypass() {
       return myProperties.myState.getKeypass();
     }
@@ -210,6 +216,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
         return ((JpsArchivePackagingElement)artifact.getRootElement()).getArchiveName();
       }
       return null;
+    }
+
+    @Override
+    public boolean convertCss2Bin() {
+      return myProperties.myState.isConvertCss2Bin();
     }
 
     private JpsArtifact getPreloaderArtifact() {

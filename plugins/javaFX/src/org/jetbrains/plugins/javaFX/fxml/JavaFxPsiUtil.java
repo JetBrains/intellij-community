@@ -252,7 +252,8 @@ public class JavaFxPsiUtil {
   private static PsiClass findControllerClass(PsiFile containingFile, Project project, XmlAttribute attribute) {
     final String attributeValue = attribute.getValue();
     if (!StringUtil.isEmptyOrSpaces(attributeValue)) {
-      return  JavaPsiFacade.getInstance(project).findClass(attributeValue, containingFile.getResolveScope());
+      final GlobalSearchScope customScope = GlobalSearchScope.projectScope(project).intersectWith(containingFile.getResolveScope());
+      return  JavaPsiFacade.getInstance(project).findClass(attributeValue, customScope);
     }
     return null;
   }

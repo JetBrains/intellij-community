@@ -20,6 +20,8 @@ import com.intellij.openapi.application.PluginPathManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolvedFxIdReferenceInspection;
 
+import java.util.List;
+
 /**
  * User: anna
  * Date: 1/10/13
@@ -33,6 +35,12 @@ public class JavaFXUnresolvedFxIdReferenceInspectionTest extends AbstractJavaFXQ
 
   public void testUnknownRef() throws Exception {
     doTest("Controller");
+  }
+
+  public void testRootType() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    final List<IntentionAction> intentionActions = myFixture.filterAvailableIntentions(getHint("unknown"));
+    assertEmpty(intentionActions);
   }
 
   private void doTest(final String controllerName) {

@@ -137,7 +137,7 @@ public class JavaFxDefaultPropertyElementDescriptor implements XmlElementDescrip
   }
 
   @Nullable
-  protected static XmlTag getReferencedTag(XmlTag tag) {
+  public static XmlTag getReferencedTag(XmlTag tag) {
     final String tagName = tag.getName();
     if (FxmlConstants.FX_REFERENCE.equals(tagName) || FxmlConstants.FX_COPY.equals(tagName)) {
       final XmlAttribute attribute = tag.getAttribute(FxmlConstants.FX_ELEMENT_SOURCE);
