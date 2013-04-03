@@ -319,11 +319,11 @@ public class PsiImplUtil {
   }
 
   @Nullable
-  public static PsiAnnotation findAnnotation(@NotNull PsiAnnotationOwner annotationOwner, @NotNull String qualifiedName) {
+  public static PsiAnnotation findAnnotation(@Nullable PsiAnnotationOwner annotationOwner, @NotNull String qualifiedName) {
+    if (annotationOwner == null) return null;
+
     PsiAnnotation[] annotations = annotationOwner.getAnnotations();
-    if (annotations.length == 0) {
-      return null;
-    }
+    if (annotations.length == 0) return null;
 
     String shortName = StringUtil.getShortName(qualifiedName);
     for (PsiAnnotation annotation : annotations) {
