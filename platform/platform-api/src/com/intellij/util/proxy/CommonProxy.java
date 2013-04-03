@@ -213,7 +213,7 @@ public class CommonProxy extends ProxySelector {
     try {
       ourReenterDefence.set(Boolean.TRUE);
       final String host = uri.getHost() == null ? "" : uri.getHost();
-      final int port = uri.getPort();
+      final int port = correctPortByProtocol(uri);
       final String protocol = uri.getScheme();
       if ("localhost".equals(host) || "127.0.0.1".equals(host) || "::1".equals(host)) {
         return NO_PROXY_LIST;
@@ -239,6 +239,17 @@ public class CommonProxy extends ProxySelector {
     } finally {
       ourReenterDefence.remove();
     }
+  }
+
+  private int correctPortByProtocol(@NotNull URI uri) {
+    if (uri.getPort() == -1) {
+      if ("http".equals(uri.getScheme())) {
+        return 80;
+      } else if ("https".equals(uri.getScheme())) {
+        return 443;
+      }
+    }
+    return uri.getPort();
   }
 
   @Override

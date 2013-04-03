@@ -499,8 +499,14 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
 
   public ISVNProxyManager getProxyManager(SVNURL url) throws SVNException {
     SSLExceptionsHelper.addInfo("Accessing URL: " + url.toString());
-    CommonProxy.getInstance().noProxy(url.getProtocol(), url.getHost(), url.getPort());
     ourThreadLocalProvider.set(myProvider);
+    // in proxy creation, we need proxy information from common proxy. but then we should forbid common proxy to intercept
+    final ISVNProxyManager proxy = createProxy(url);
+    CommonProxy.getInstance().noProxy(url.getProtocol(), url.getHost(), url.getPort());
+    return proxy;
+  }
+
+  private ISVNProxyManager createProxy(SVNURL url) {
     // this code taken from default manager (changed for system properties reading)
     String host = url.getHost();
 
@@ -528,26 +534,25 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       }
       return null;
     }
-      String proxyExceptions = getServersPropertyIdea(host, "http-proxy-exceptions");
-      String proxyExceptionsSeparator = ",";
-      if (proxyExceptions == null) {
-          proxyExceptions = System.getProperty("http.nonProxyHosts");
-          proxyExceptionsSeparator = "|";
+    String proxyExceptions = getServersPropertyIdea(host, "http-proxy-exceptions");
+    String proxyExceptionsSeparator = ",";
+    if (proxyExceptions == null) {
+        proxyExceptions = System.getProperty("http.nonProxyHosts");
+        proxyExceptionsSeparator = "|";
+    }
+    if (proxyExceptions != null) {
+      for(StringTokenizer exceptions = new StringTokenizer(proxyExceptions, proxyExceptionsSeparator); exceptions.hasMoreTokens();) {
+          String exception = exceptions.nextToken().trim();
+          if (DefaultSVNOptions.matches(exception, host)) {
+              return null;
+          }
       }
-      if (proxyExceptions != null) {
-        for(StringTokenizer exceptions = new StringTokenizer(proxyExceptions, proxyExceptionsSeparator); exceptions.hasMoreTokens();) {
-            String exception = exceptions.nextToken().trim();
-            if (DefaultSVNOptions.matches(exception, host)) {
-                return null;
-            }
-        }
-      }
-      String proxyPort = getServersPropertyIdea(host, HTTP_PROXY_PORT);
-      String proxyUser = getServersPropertyIdea(host, HTTP_PROXY_USERNAME);
-      String proxyPassword = getServersPropertyIdea(host, HTTP_PROXY_PASSWORD);
-      return new MySimpleProxyManager(proxyHost, proxyPort, proxyUser, proxyPassword);
+    }
+    String proxyPort = getServersPropertyIdea(host, HTTP_PROXY_PORT);
+    String proxyUser = getServersPropertyIdea(host, HTTP_PROXY_USERNAME);
+    String proxyPassword = getServersPropertyIdea(host, HTTP_PROXY_PASSWORD);
+    return new MySimpleProxyManager(proxyHost, proxyPort, proxyUser, proxyPassword);
   }
-
 
 
   private static class MyPromptingProxyManager extends MySimpleProxyManager {
