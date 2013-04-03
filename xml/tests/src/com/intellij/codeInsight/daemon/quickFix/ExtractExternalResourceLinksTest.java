@@ -1,6 +1,7 @@
 package com.intellij.codeInsight.daemon.quickFix;
 
 import com.intellij.codeInsight.daemon.impl.quickfix.FetchExtResourceAction;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.LightCodeInsightTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
@@ -51,12 +52,6 @@ public class ExtractExternalResourceLinksTest extends LightCodeInsightTestCase {
       "http://www.springframework.org/schema/aop/spring-aop.xsd",
       "http://www.springframework.org/schema/tx/spring-tx.xsd");
 
-    doExtractionOfEmbeddedFiles(
-      "5.xml",
-      "geronimo-naming-1.1.xsd",
-      "geronimo-security-1.1.xsd",
-      "geronimo-module-1.1.xsd");
-
   }
 
   public void testSeamImport() throws Exception {
@@ -72,22 +67,33 @@ public class ExtractExternalResourceLinksTest extends LightCodeInsightTestCase {
 
   }
 
+  public void testGeronimo() throws Exception {
+    doExtractionOfEmbeddedFiles("web-1.1",
+                                "http://geronimo.apache.org/xml/ns/geronimo-naming-1.1.xsd",
+                                "http://geronimo.apache.org/xml/ns/geronimo-security-1.1.xsd",
+                                "http://geronimo.apache.org/xml/ns/geronimo-module-1.1.xsd");
+  }
+
   private void doExtractionOfEmbeddedFiles(String shortFileName,String... expectedFileNames) throws Exception {
     doExtractionOfEmbeddedFiles(new String[] {shortFileName}, new String[][] {expectedFileNames} );
   }
 
   private void doExtractionOfEmbeddedFiles(String[] shortFileName,String[][] expectedFileNames) throws Exception {
     final List<VirtualFile> files = new ArrayList<VirtualFile>(shortFileName.length);
-    for(String s:shortFileName) {
+    for(String s: shortFileName) {
+      if (FileUtilRt.getExtension(s).length() < 3) {
+        s += ".xsd";
+      }
       files.add(getVirtualFile( getBasePath() + "/"+ s ));
     }
 
     int fileIndex = 0;
 
-    for(String[] expectedFileNameArray:expectedFileNames) {
+    for (int i = 0; i < expectedFileNames.length; i++) {
+      String[] expectedFileNameArray = expectedFileNames[i];
       Set<String> strings = FetchExtResourceAction.extractEmbeddedFileReferences(
-        files.get(fileIndex), fileIndex != 0 ? files.get(0) : null, getPsiManager()
-      );
+        files.get(fileIndex), fileIndex != 0 ? files.get(0) : null, getPsiManager(),
+        shortFileName[i]);
 
       assertEquals(expectedFileNameArray.length, strings.size());
       int index = 0;

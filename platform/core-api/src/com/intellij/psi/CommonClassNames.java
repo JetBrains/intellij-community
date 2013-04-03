@@ -47,6 +47,8 @@ public interface CommonClassNames {
   @NonNls String JAVA_LANG_ANNOTATION_TARGET = "java.lang.annotation.Target";
   @NonNls String JAVA_LANG_ANNOTATION_INHERITED = "java.lang.annotation.Inherited";
   @NonNls String JAVA_LANG_ANNOTATION_ANNOTATION = "java.lang.annotation.Annotation";
+  @NonNls String JAVA_LANG_ANNOTATION_RETENTION = "java.lang.annotation.Retention";
+  @NonNls String JAVA_LANG_ANNOTATION_REPEATABLE = "java.lang.annotation.Repeatable";
 
   @NonNls String JAVA_LANG_REFLECT_ARRAY = "java.lang.reflect.Array";
 

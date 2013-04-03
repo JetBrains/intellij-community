@@ -44,7 +44,7 @@ import java.io.*;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
-import static com.intellij.util.io.IOUtil.deleteWithSubordinates;
+import static com.intellij.util.io.IOUtil.deleteAllFilesStartingWith;
 
 @SuppressWarnings({"PointlessArithmeticExpression", "HardCodedStringLiteral"})
 public class FSRecords implements Forceable {
@@ -237,10 +237,10 @@ public class FSRecords implements Forceable {
           closeFiles();
 
           boolean deleted = FileUtil.delete(getCorruptionMarkerFile());
-          deleted &= deleteWithSubordinates(namesFile);
+          deleted &= deleteAllFilesStartingWith(namesFile);
           deleted &= AbstractStorage.deleteFiles(attributesFile.getCanonicalPath());
           deleted &= AbstractStorage.deleteFiles(contentsFile.getCanonicalPath());
-          deleted &= deleteWithSubordinates(recordsFile);
+          deleted &= deleteAllFilesStartingWith(recordsFile);
 
           if (!deleted) {
             throw new IOException("Cannot delete filesystem storage files");

@@ -34,6 +34,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -210,7 +211,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
       Set<String> processedLinks = new HashSet<String>();
       Map<String, String> baseUrls = new HashMap<String, String>();
       VirtualFile contextFile = virtualFile;
-      linksToProcess.addAll(extractEmbeddedFileReferences(virtualFile, null, psiManager));
+      linksToProcess.addAll(extractEmbeddedFileReferences(virtualFile, null, psiManager, url));
 
       while (!linksToProcess.isEmpty()) {
         String s = linksToProcess.iterator().next();
@@ -250,7 +251,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
           resourceUrls.add(s);
         }
 
-        final Set<String> newLinks = extractEmbeddedFileReferences(virtualFile, contextFile, psiManager);
+        final Set<String> newLinks = extractEmbeddedFileReferences(virtualFile, contextFile, psiManager, resourceUrl);
         for (String u : newLinks) {
           baseUrls.put(u, resourceUrl);
           if (!processedLinks.contains(u)) linksToProcess.add(u);
@@ -391,7 +392,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     return true;
   }
 
-  private static Set<String> extractEmbeddedFileReferences(XmlFile file, XmlFile context) {
+  private static Set<String> extractEmbeddedFileReferences(XmlFile file, XmlFile context, final String url) {
     final Set<String> result = new LinkedHashSet<String>();
     if (context != null) {
       XmlEntityRefImpl.copyEntityCaches(file, context);
@@ -428,9 +429,11 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
             if (schemaLocation != null) {
               final PsiReference[] references = tag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT).getValueElement().getReferences();
               if (references.length > 0) {
+                String extension = FileUtilRt.getExtension(new File(url).getName());
                 final String namespace = tag.getAttributeValue("namespace");
-
-                if (namespace != null && schemaLocation.indexOf('/') == -1) {
+                if (namespace != null &&
+                    schemaLocation.indexOf('/') == -1 &&
+                    !extension.equals(FileUtilRt.getExtension(schemaLocation))) {
                   result.add(namespace.substring(0, namespace.lastIndexOf('/') + 1) + schemaLocation);
                 }
                 else {
@@ -462,7 +465,10 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
     return result;
   }
 
-  public static Set<String> extractEmbeddedFileReferences(final VirtualFile vFile, @Nullable final VirtualFile contextVFile, final PsiManager psiManager) {
+  public static Set<String> extractEmbeddedFileReferences(final VirtualFile vFile,
+                                                          @Nullable final VirtualFile contextVFile,
+                                                          final PsiManager psiManager,
+                                                          final String url) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Set<String>>() {
       @Override
       public Set<String> compute() {
@@ -470,7 +476,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
 
         if (file instanceof XmlFile) {
           PsiFile contextFile = contextVFile != null ? psiManager.findFile(contextVFile) : null;
-          return extractEmbeddedFileReferences((XmlFile)file, contextFile instanceof XmlFile ? (XmlFile)contextFile : null);
+          return extractEmbeddedFileReferences((XmlFile)file, contextFile instanceof XmlFile ? (XmlFile)contextFile : null, url);
         }
 
         return Collections.emptySet();

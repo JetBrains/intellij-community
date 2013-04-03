@@ -284,7 +284,7 @@ public class PersistentHashMap<Key, Value> extends PersistentEnumeratorDelegate<
   }
 
   public static void deleteFilesStartingWith(@NotNull File prefixFile) {
-    IOUtil.deleteWithSubordinates(prefixFile);
+    IOUtil.deleteAllFilesStartingWith(prefixFile);
   }
 
   @NotNull
