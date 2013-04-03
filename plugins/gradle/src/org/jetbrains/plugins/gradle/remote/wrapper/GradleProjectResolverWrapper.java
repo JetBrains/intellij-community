@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.gradle.remote.wrapper;
 
+import com.intellij.openapi.externalSystem.model.project.ExternalProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
@@ -35,7 +35,7 @@ public class GradleProjectResolverWrapper extends AbstractRemoteGradleServiceWra
 
   @Override
   @Nullable
-  public GradleProject resolveProjectInfo(@NotNull GradleTaskId id, @NotNull String projectPath, boolean downloadLibraries)
+  public ExternalProject resolveProjectInfo(@NotNull GradleTaskId id, @NotNull String projectPath, boolean downloadLibraries)
     throws RemoteException, GradleApiException, IllegalArgumentException, IllegalStateException
   {
     myNotificationManager.onQueued(id);

@@ -1,8 +1,11 @@
 package org.jetbrains.plugins.gradle.util;
 
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNodeDescriptor;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import org.jetbrains.annotations.NonNls;
-import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
+import com.intellij.openapi.externalSystem.model.project.id.GradleSyntheticId;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Holds object representation of icons used at the <code>Gradle</code> plugin.
@@ -11,6 +14,8 @@ import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
  * @since 8/1/11 3:10 PM
  */
 public class GradleConstants {
+
+  @NotNull public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId("GRADLE");
 
   @NonNls public static final String NEWLY_IMPORTED_PROJECT = "gradle.newly.imported";
 
@@ -37,14 +42,14 @@ public class GradleConstants {
   @NonNls public static final String REGISTRY_RECENT_TASKS_NUMBER_KEY = "gradle.recent.tasks.number";
   @NonNls public static final String REGISTRY_DEBUG_ON_TASK_CLICK_KEY = "gradle.debug.task.on.double.click";
 
-  public static final GradleProjectStructureNodeDescriptor<GradleSyntheticId> DEPENDENCIES_NODE_DESCRIPTOR
-    = GradleUtil.buildSyntheticDescriptor(GradleBundle.message("gradle.project.structure.tree.node.dependencies"));
+  public static final ProjectStructureNodeDescriptor<GradleSyntheticId> DEPENDENCIES_NODE_DESCRIPTOR
+    = GradleUtil.buildSyntheticDescriptor(ExternalSystemBundle.message("gradle.project.structure.tree.node.dependencies"));
 
-  public static final GradleProjectStructureNodeDescriptor<GradleSyntheticId> MODULES_NODE_DESCRIPTOR
-    = GradleUtil.buildSyntheticDescriptor(GradleBundle.message("gradle.import.structure.tree.node.modules"));
+  public static final ProjectStructureNodeDescriptor<GradleSyntheticId> MODULES_NODE_DESCRIPTOR
+    = GradleUtil.buildSyntheticDescriptor(ExternalSystemBundle.message("gradle.import.structure.tree.node.modules"));
 
-  public static final GradleProjectStructureNodeDescriptor<GradleSyntheticId> LIBRARIES_NODE_DESCRIPTOR
-    = GradleUtil.buildSyntheticDescriptor(GradleBundle.message("gradle.import.structure.tree.node.libraries"));
+  public static final ProjectStructureNodeDescriptor<GradleSyntheticId> LIBRARIES_NODE_DESCRIPTOR
+    = GradleUtil.buildSyntheticDescriptor(ExternalSystemBundle.message("gradle.import.structure.tree.node.libraries"));
 
   private GradleConstants() {
   }

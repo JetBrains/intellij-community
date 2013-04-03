@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.manage.wizard.select;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.MessageType;
 import org.jetbrains.annotations.NotNull;
@@ -8,7 +9,6 @@ import org.jetbrains.plugins.gradle.config.GradleConfigurable;
 import org.jetbrains.plugins.gradle.config.GradleHomeSettingType;
 import org.jetbrains.plugins.gradle.manage.GradleProjectImportBuilder;
 import org.jetbrains.plugins.gradle.manage.wizard.AbstractImportFromGradleWizardStep;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -69,7 +69,7 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
         GradleUtil.showBalloon(
           myConfigurable.getGradleHomePathField(),
           MessageType.ERROR,
-          GradleBundle.message("gradle.home.setting.type.explicit.incorrect")
+          ExternalSystemBundle.message("gradle.home.setting.type.explicit.incorrect")
         );
         return false;
       }
@@ -77,7 +77,7 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
         GradleUtil.showBalloon(
           myConfigurable.getGradleHomePathField(),
           MessageType.ERROR,
-          GradleBundle.message("gradle.home.setting.type.unknown")
+          ExternalSystemBundle.message("gradle.home.setting.type.unknown")
         );
         return false;
       }

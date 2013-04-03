@@ -1,13 +1,13 @@
 package org.jetbrains.plugins.gradle.testutil
 
-import org.jetbrains.plugins.gradle.model.gradle.GradleProject
-import org.jetbrains.plugins.gradle.model.gradle.GradleModule
-import org.jetbrains.plugins.gradle.model.gradle.GradleLibraryDependency
-import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary
-import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType
+import com.intellij.openapi.externalSystem.model.project.ExternalProject
+import com.intellij.openapi.externalSystem.model.project.ExternalModule
+import com.intellij.openapi.externalSystem.model.project.ExternalLibraryDependency
+import com.intellij.openapi.externalSystem.model.project.ExternalLibrary
+import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import com.intellij.pom.java.LanguageLevel
-import org.jetbrains.plugins.gradle.model.gradle.GradleModuleDependency
-import org.jetbrains.plugins.gradle.model.gradle.GradleContentRoot
+import com.intellij.openapi.externalSystem.model.project.ExternalModuleDependency
+import com.intellij.openapi.externalSystem.model.project.ExternalContentRoot
 
 /** 
  * @author Denis Zhdanov
@@ -17,7 +17,7 @@ class GradleProjectBuilder extends AbstractProjectBuilder {
 
   @Override
   protected createProject(String name, LanguageLevel languageLevel) {
-    def result = new GradleProject(same, same)
+    def result = new ExternalProject(same, same, id)
     result.name = name
     result.languageLevel = languageLevel
     result
@@ -25,7 +25,7 @@ class GradleProjectBuilder extends AbstractProjectBuilder {
 
   @Override
   protected createModule(String name) {
-    registerModule(new GradleModule(name, unique))
+    registerModule(new ExternalModule(name, unique))
   }
 
   @Override
@@ -36,14 +36,14 @@ class GradleProjectBuilder extends AbstractProjectBuilder {
 
   @Override
   protected createContentRoot(module, rootPath, Map paths) {
-    def result = new GradleContentRoot(module, rootPath)
+    def result = new ExternalContentRoot(module, rootPath)
     module.addContentRoot(result)
     return result
   }
 
   @Override
   protected createModuleDependency(ownerModule, targetModule, scope, boolean exported) {
-    def result = new GradleModuleDependency(ownerModule, targetModule)
+    def result = new ExternalModuleDependency(ownerModule, targetModule)
     ownerModule.addDependency(result)
     result.setScope(scope)
     result.setExported(exported)
@@ -52,14 +52,14 @@ class GradleProjectBuilder extends AbstractProjectBuilder {
 
   @Override
   protected createLibrary(String name, Map paths) {
-    def result = new GradleLibrary(name)
+    def result = new ExternalLibrary(name)
     applyLibraryPaths(result, paths)
     result
   }
 
   @Override
   protected createLibraryDependency(module, library, scope, boolean exported) {
-    def result = new GradleLibraryDependency(module, library)
+    def result = new ExternalLibraryDependency(module, library)
     module.addDependency(result)
     result.setScope(scope)
     result.setExported(exported)

@@ -1,5 +1,10 @@
 package org.jetbrains.plugins.gradle.ui;
 
+import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
+import com.intellij.openapi.externalSystem.service.project.ProjectStructureServices;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNodeDescriptor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -9,13 +14,10 @@ import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.GradleEntityOwner;
-import org.jetbrains.plugins.gradle.model.GradleEntityType;
-import org.jetbrains.plugins.gradle.model.gradle.*;
-import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
-import org.jetbrains.plugins.gradle.model.intellij.IdeEntityVisitor;
-import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
-import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.ProjectEntityType;
+import com.intellij.openapi.externalSystem.util.IdeEntityVisitor;
+import com.intellij.openapi.externalSystem.service.project.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.Comparator;
@@ -28,7 +30,7 @@ import java.util.Comparator;
  * @author Denis Zhdanov
  * @since 2/21/12 2:44 PM
  */
-public class GradleProjectStructureNodeComparator implements Comparator<GradleProjectStructureNode<?>> {
+public class GradleProjectStructureNodeComparator implements Comparator<ProjectStructureNode<?>> {
 
   private static final int PROJECT_WEIGHT            = 0;
   private static final int MODULE_WEIGHT             = 1;
@@ -40,90 +42,90 @@ public class GradleProjectStructureNodeComparator implements Comparator<GradlePr
   private static final int JAR_WEIGHT                = 7;
   private static final int UNKNOWN_WEIGHT            = 20;
 
-  @NotNull private final GradleProjectStructureContext myContext;
+  @NotNull private final ProjectStructureServices myContext;
 
-  public GradleProjectStructureNodeComparator(@NotNull GradleProjectStructureContext context) {
+  public GradleProjectStructureNodeComparator(@NotNull ProjectStructureServices context) {
     myContext = context;
   }
 
   @Override
-  public int compare(GradleProjectStructureNode<?> n1, GradleProjectStructureNode<?> n2) {
-    final GradleProjectStructureNodeDescriptor<? extends GradleEntityId> d1 = n1.getDescriptor();
-    final GradleEntityId id1 = d1.getElement();
+  public int compare(ProjectStructureNode<?> n1, ProjectStructureNode<?> n2) {
+    final ProjectStructureNodeDescriptor<? extends ProjectEntityId> d1 = n1.getDescriptor();
+    final ProjectEntityId id1 = d1.getElement();
 
-    final GradleProjectStructureNodeDescriptor<? extends GradleEntityId> d2 = n2.getDescriptor();
-    final GradleEntityId id2 = d2.getElement();
+    final ProjectStructureNodeDescriptor<? extends ProjectEntityId> d2 = n2.getDescriptor();
+    final ProjectEntityId id2 = d2.getElement();
 
     // Put 'gradle-local' nodes at the top.
-    if (id1.getOwner() == GradleEntityOwner.GRADLE && id2.getOwner() == GradleEntityOwner.IDE) {
+    if (id1.getOwner() == ProjectSystemId.GRADLE && id2.getOwner() == ProjectSystemId.IDE) {
       return -1;
     }
-    else if (id1.getOwner() == GradleEntityOwner.IDE && id2.getOwner() == GradleEntityOwner.GRADLE) {
+    else if (id1.getOwner() == ProjectSystemId.IDE && id2.getOwner() == ProjectSystemId.GRADLE) {
       return 1;
     }
-    
+
     // Compare by weight.
     int weight1 = getWeight(id1);
     int weight2 = getWeight(id2);
     if (weight1 != weight2) {
       return weight1 - weight2;
     }
-    
+
     // Compare by name.
     return d1.getName().compareTo(d2.getName());
   }
-  
-  private int getWeight(@NotNull GradleEntityId id) {
-    if (id.getType() == GradleEntityType.SYNTHETIC) {
+
+  private int getWeight(@NotNull ProjectEntityId id) {
+    if (id.getType() == ProjectEntityType.SYNTHETIC) {
       return SYNTHETIC_WEIGHT;
     }
-    else if (id.getType() == GradleEntityType.JAR) {
+    else if (id.getType() == ProjectEntityType.JAR) {
       return JAR_WEIGHT;
     }
     Object entity = id.mapToEntity(myContext);
-    if (entity instanceof AbstractGradleCompositeEntity) {
-      entity = ((AbstractGradleCompositeEntity)entity).getIdeEntity();
+    if (entity instanceof AbstractExternalCompositeEntity) {
+      entity = ((AbstractExternalCompositeEntity)entity).getIdeEntity();
     }
     final Ref<Integer> result = new Ref<Integer>();
-    if (entity instanceof GradleEntity) {
-      ((GradleEntity)entity).invite(new GradleEntityVisitor() {
+    if (entity instanceof ExternalEntity) {
+      ((ExternalEntity)entity).invite(new ExternalEntityVisitor() {
         @Override
-        public void visit(@NotNull GradleProject project) {
+        public void visit(@NotNull ExternalProject project) {
           result.set(PROJECT_WEIGHT);
         }
 
         @Override
-        public void visit(@NotNull GradleModule module) {
+        public void visit(@NotNull ExternalModule module) {
           result.set(MODULE_WEIGHT);
         }
 
         @Override
-        public void visit(@NotNull GradleContentRoot contentRoot) {
+        public void visit(@NotNull ExternalContentRoot contentRoot) {
           result.set(CONTENT_ROOT_WEIGHT);
         }
 
         @Override
-        public void visit(@NotNull GradleLibrary library) {
+        public void visit(@NotNull ExternalLibrary library) {
           result.set(LIBRARY_WEIGHT);
         }
 
         @Override
-        public void visit(@NotNull GradleJar jar) {
+        public void visit(@NotNull Jar jar) {
           result.set(JAR_WEIGHT);
         }
 
         @Override
-        public void visit(@NotNull GradleModuleDependency dependency) {
+        public void visit(@NotNull ExternalModuleDependency dependency) {
           result.set(MODULE_DEPENDENCY_WEIGHT);
         }
 
         @Override
-        public void visit(@NotNull GradleLibraryDependency dependency) {
+        public void visit(@NotNull ExternalLibraryDependency dependency) {
           result.set(LIBRARY_DEPENDENCY_WEIGHT);
         }
 
         @Override
-        public void visit(@NotNull GradleCompositeLibraryDependency dependency) {
+        public void visit(@NotNull ExternalCompositeLibraryDependency dependency) {
           result.set(LIBRARY_DEPENDENCY_WEIGHT);
         }
       });

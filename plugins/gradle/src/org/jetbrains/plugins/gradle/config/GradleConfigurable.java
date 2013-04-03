@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
@@ -78,9 +79,10 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
 
   @NotNull private GradleHomeSettingType myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
 
-  @NotNull private final JLabel myLinkedProjectLabel    = new JBLabel(GradleBundle.message("gradle.settings.label.select.project"));
-  @NotNull private final JLabel myGradleHomeLabel       = new JBLabel(GradleBundle.message("gradle.settings.text.home.path"));
-  @NotNull private final JLabel myServiceDirectoryLabel = new JBLabel(GradleBundle.message("gradle.settings.text.service.dir.path"));
+  @NotNull private final JLabel myLinkedProjectLabel    = new JBLabel(ExternalSystemBundle.message("gradle.settings.label.select.project"));
+  @NotNull private final JLabel myGradleHomeLabel       = new JBLabel(ExternalSystemBundle.message("gradle.settings.text.home.path"));
+  @NotNull private final JLabel myServiceDirectoryLabel =
+    new JBLabel(ExternalSystemBundle.message("gradle.settings.text.service.dir.path"));
 
   @NotNull private TextFieldWithBrowseButton myLinkedGradleProjectPathField;
   @NotNull private TextFieldWithBrowseButton myGradleHomePathField;
@@ -127,7 +129,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
   @Nls
   @Override
   public String getDisplayName() {
-    return GradleBundle.message("gradle.name");
+    return ExternalSystemBundle.message("gradle.name");
   }
 
   @NotNull
@@ -181,7 +183,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     initWrapperVsLocalControls();
     initGradleHome(testMode);
     initServiceDirectoryHome();
-    myUseAutoImportBox = new JBCheckBox(GradleBundle.message("gradle.settings.use.auto.import"));
+    myUseAutoImportBox = new JBCheckBox(ExternalSystemBundle.message("gradle.settings.use.auto.import"));
     assert myComponent != null;
 
     GridBag pathLabelConstraints = new GridBag().anchor(GridBagConstraints.WEST).weightx(0);
@@ -263,7 +265,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     
     myLinkedGradleProjectPathField.addBrowseFolderListener(
       "",
-      GradleBundle.message("gradle.settings.label.select.project"),
+      ExternalSystemBundle.message("gradle.settings.label.select.project"),
       myProject,
       fileChooserDescriptor,
       TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
@@ -291,11 +293,11 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     String linkedProjectPath = myLinkedGradleProjectPathField.getText();
     if (StringUtil.isEmpty(linkedProjectPath) || !myHelper.isGradleWrapperDefined(linkedProjectPath)) {
       myUseWrapperButton.setEnabled(false);
-      myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper.disabled"));
+      myUseWrapperButton.setText(ExternalSystemBundle.message("gradle.config.text.use.wrapper.disabled"));
       myUseLocalDistributionButton.setSelected(true);
     }
     else {
-      myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper"));
+      myUseWrapperButton.setText(ExternalSystemBundle.message("gradle.config.text.use.wrapper"));
       myUseWrapperButton.setEnabled(true);
       myUseWrapperButton.setSelected(true);
       myGradleHomePathField.setEnabled(false);
@@ -316,9 +318,9 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
         }
       }
     };
-    myUseWrapperButton = new JBRadioButton(GradleBundle.message("gradle.config.text.use.wrapper"), true);
+    myUseWrapperButton = new JBRadioButton(ExternalSystemBundle.message("gradle.config.text.use.wrapper"), true);
     myUseWrapperButton.addActionListener(listener);
-    myUseLocalDistributionButton = new JBRadioButton(GradleBundle.message("gradle.config.text.use.local.distribution"));
+    myUseLocalDistributionButton = new JBRadioButton(ExternalSystemBundle.message("gradle.config.text.use.local.distribution"));
     myUseLocalDistributionButton.addActionListener(listener);
     ButtonGroup group = new ButtonGroup();
     group.add(myUseWrapperButton);
@@ -333,7 +335,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     
     myGradleHomePathField.addBrowseFolderListener(
       "",
-      GradleBundle.message("gradle.settings.text.home.path"),
+      ExternalSystemBundle.message("gradle.settings.text.home.path"),
       null,
       fileChooserDescriptor,
       TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
@@ -362,7 +364,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     myServiceDirectoryPathField = new TextFieldWithBrowseButton();
     myServiceDirectoryPathField.addBrowseFolderListener(
       "",
-      GradleBundle.message("gradle.settings.title.service.dir.path"),
+      ExternalSystemBundle.message("gradle.settings.title.service.dir.path"),
       myProject,
       new FileChooserDescriptor(false, true, false, false, false, false),
       TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,
@@ -538,7 +540,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
     else if (linkedProjectPath != null) {
       if (myHelper.isGradleWrapperDefined(linkedProjectPath)) {
         myUseWrapperButton.setEnabled(true);
-        myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper"));
+        myUseWrapperButton.setText(ExternalSystemBundle.message("gradle.config.text.use.wrapper"));
         if (myProject.isDefault() || !settings.isPreferLocalInstallationToWrapper()) {
           myUseWrapperButton.setSelected(true);
           myGradleHomePathField.setEnabled(false);
@@ -549,7 +551,7 @@ public class GradleConfigurable implements SearchableConfigurable, Configurable.
         }
       }
       else {
-        myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper.disabled"));
+        myUseWrapperButton.setText(ExternalSystemBundle.message("gradle.config.text.use.wrapper.disabled"));
         myUseWrapperButton.setEnabled(false);
         myUseLocalDistributionButton.setSelected(true);
       }

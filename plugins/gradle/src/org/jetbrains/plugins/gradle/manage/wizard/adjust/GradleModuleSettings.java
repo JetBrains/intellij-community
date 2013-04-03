@@ -1,15 +1,15 @@
 package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.externalSystem.model.project.ExternalModule;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
-import org.jetbrains.plugins.gradle.model.gradle.SourceType;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
+import com.intellij.openapi.externalSystem.model.project.SourceType;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
@@ -17,7 +17,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 /**
- * Manages settings of {@link GradleModule gradle module} component.
+ * Manages settings of {@link com.intellij.openapi.externalSystem.model.project.ExternalModule gradle module} component.
  * 
  * @author Denis Zhdanov
  * @since 8/12/11 3:39 PM
@@ -25,13 +25,13 @@ import java.awt.event.ItemListener;
 public class GradleModuleSettings implements GradleProjectStructureNodeSettings {
 
   private final JComponent                myComponent;
-  private final GradleModule              myModule;
+  private final ExternalModule myModule;
   private final JRadioButton              myInheritProjectCompileOutputPathButton;
   private final JRadioButton              myUseModuleCompileOutputPathButton;
   private final TextFieldWithBrowseButton myOutputLocationField;
   private final TextFieldWithBrowseButton myTestOutputLocationField;
 
-  public GradleModuleSettings(@NotNull GradleModule module) {
+  public GradleModuleSettings(@NotNull ExternalModule module) {
     myModule = module;
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
     Pair<JRadioButton, JRadioButton> pair = setupCompileOutput(builder);
@@ -90,7 +90,7 @@ public class GradleModuleSettings implements GradleProjectStructureNodeSettings 
         GradleUtil.showBalloon(
           myOutputLocationField,
           MessageType.ERROR,
-          GradleBundle.message("gradle.import.text.error.file.module.compile.output.location")
+          ExternalSystemBundle.message("gradle.import.text.error.file.module.compile.output.location")
         );
         return false;
       }
@@ -99,7 +99,7 @@ public class GradleModuleSettings implements GradleProjectStructureNodeSettings 
         GradleUtil.showBalloon(
           myTestOutputLocationField,
           MessageType.ERROR,
-          GradleBundle.message("gradle.import.text.error.file.module.test.output.location")
+          ExternalSystemBundle.message("gradle.import.text.error.file.module.test.output.location")
         );
         return false;
       }

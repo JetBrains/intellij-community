@@ -4,6 +4,10 @@ import com.intellij.ProjectTopics;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.project.ExternalProject;
+import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
+import com.intellij.openapi.externalSystem.service.project.change.ExternalProjectStructureChangeListener;
+import com.intellij.openapi.externalSystem.service.project.change.ProjectStructureChangesModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
 import com.intellij.openapi.roots.ModuleRootEvent;
@@ -12,12 +16,10 @@ import com.intellij.util.Alarm;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.autoimport.GradleAutoImporter;
-import org.jetbrains.plugins.gradle.autoimport.GradleUserProjectChangesCalculator;
+import com.intellij.openapi.externalSystem.service.project.change.AutoImporter;
+import com.intellij.openapi.externalSystem.service.project.change.user.GradleUserProjectChangesCalculator;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
-import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
-import org.jetbrains.plugins.gradle.manage.GradleProjectEntityChangeListener;
-import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
+import com.intellij.openapi.externalSystem.service.project.manage.GradleProjectEntityChangeListener;
 import org.jetbrains.plugins.gradle.internal.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
@@ -34,7 +36,7 @@ import java.util.concurrent.atomic.AtomicLong;
  * @author Denis Zhdanov
  * @since 11/3/11 3:57 PM
  */
-public class GradleProjectStructureChangesDetector implements GradleProjectStructureChangeListener {
+public class GradleProjectStructureChangesDetector implements ExternalProjectStructureChangeListener {
 
   private static final int REFRESH_DELAY_MILLIS = (int)500;
 
@@ -44,15 +46,15 @@ public class GradleProjectStructureChangesDetector implements GradleProjectStruc
   private final AtomicInteger  myImportCounter      = new AtomicInteger();
   private final AtomicBoolean  myNewChangesDetected = new AtomicBoolean();
 
-  @NotNull private final GradleProjectStructureChangesModel myChangesModel;
+  @NotNull private final ProjectStructureChangesModel       myChangesModel;
   @NotNull private final Project                            myProject;
   @NotNull private final GradleUserProjectChangesCalculator myUserProjectChangesCalculator;
-  @NotNull private final GradleAutoImporter                 myAutoImporter;
+  @NotNull private final AutoImporter                       myAutoImporter;
 
   public GradleProjectStructureChangesDetector(@NotNull Project project,
-                                               @NotNull GradleProjectStructureChangesModel model,
+                                               @NotNull ProjectStructureChangesModel model,
                                                @NotNull GradleUserProjectChangesCalculator calculator,
-                                               @NotNull GradleAutoImporter importer)
+                                               @NotNull AutoImporter importer)
   {
     myProject = project;
     myChangesModel = model;
@@ -77,7 +79,7 @@ public class GradleProjectStructureChangesDetector implements GradleProjectStruc
 
           myUserProjectChangesCalculator.updateCurrentProjectState();
 
-          GradleProject project = myChangesModel.getGradleProject();
+          ExternalProject project = myChangesModel.getExternalProject();
           if (project != null) {
             myChangesModel.update(project, true);
           }
@@ -111,8 +113,8 @@ public class GradleProjectStructureChangesDetector implements GradleProjectStruc
   }
 
   @Override
-  public void onChanges(@NotNull Collection<GradleProjectStructureChange> oldChanges,
-                        @NotNull Collection<GradleProjectStructureChange> currentChanges)
+  public void onChanges(@NotNull Collection<ExternalProjectStructureChange> oldChanges,
+                        @NotNull Collection<ExternalProjectStructureChange> currentChanges)
   {
     myNewChangesDetected.set(true); 
   }
@@ -132,7 +134,7 @@ public class GradleProjectStructureChangesDetector implements GradleProjectStruc
     //
     // The idea is to check are there any new project structure changes comparing to the gradle project structure used last time.
     // We don't do anything in case no new changes have been detected.
-    GradleProject project = myChangesModel.getGradleProject();
+    ExternalProject project = myChangesModel.getExternalProject();
     if (project != null) {
       myNewChangesDetected.set(false);
       myChangesModel.update(project, true);

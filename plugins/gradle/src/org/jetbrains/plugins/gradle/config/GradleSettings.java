@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -34,26 +34,14 @@ import org.jetbrains.annotations.Nullable;
       @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/gradle.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class GradleSettings implements PersistentStateComponent<GradleSettings> {
+public class GradleSettings extends AbstractExternalSystemSettings<GradleSettingsListener, GradleSettings> {
 
-  /** Holds information about 'expand/collapse' status of the 'sync project structure tree' nodes. */
-  //private final AtomicReference<Set<GradleProjectStructureChange>>             myAcceptedChanges
-  //  = new AtomicReference<Set<GradleProjectStructureChange>>();
-
-  private String  myLinkedProjectPath;
   private String  myGradleHome;
   private String  myServiceDirectoryPath;
   private boolean myPreferLocalInstallationToWrapper;
-  private boolean myUseAutoImport = true; // Turned on by default.
 
-  @Override
-  public GradleSettings getState() {
-    return this;
-  }
-
-  @Override
-  public void loadState(GradleSettings state) {
-    XmlSerializerUtil.copyBean(state, this);
+  public GradleSettings(@NotNull Project project) {
+    super(GradleSettingsListener.TOPIC, project);
   }
 
   @NotNull
@@ -67,35 +55,11 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings> 
   }
 
   @SuppressWarnings("UnusedDeclaration")
-  public void setGradleHome(@Nullable String gradleHome) { // Necessary for the serialization.
-    myGradleHome = gradleHome;
-  }
-
-  public static void applyGradleHome(@Nullable String newPath, @NotNull Project project) {
-    final GradleSettings settings = getInstance(project);
-    final String oldPath = settings.myGradleHome;
-    if (!Comparing.equal(oldPath, newPath)) {
-      settings.myGradleHome = newPath;
-      project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onGradleHomeChange(oldPath, newPath);
-    }
-  }
-
-  @Nullable
-  public String getLinkedProjectPath() {
-    return myLinkedProjectPath;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  public void setLinkedProjectPath(@Nullable String linkedProjectPath) { // Necessary for the serialization.
-    myLinkedProjectPath = linkedProjectPath;
-  }
-
-  public static void applyLinkedProjectPath(@Nullable String path, @NotNull Project project) {
-    final GradleSettings settings = getInstance(project);
-    final String oldPath = settings.myLinkedProjectPath;
-    if (!Comparing.equal(oldPath, path)) {
-      settings.myLinkedProjectPath = path;
-      project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onLinkedProjectPathChange(oldPath, path);
+  public void setGradleHome(@Nullable String gradleHome) {
+    if (!Comparing.equal(myGradleHome, gradleHome)) {
+      final String oldHome = myGradleHome;
+      myGradleHome = gradleHome;
+      getPublisher().onGradleHomeChange(oldHome, myGradleHome);
     }
   }
 
@@ -103,17 +67,11 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings> 
     return myPreferLocalInstallationToWrapper;
   }
 
-  public static void applyPreferLocalInstallationToWrapper(boolean preferLocal, @NotNull Project project) {
-    final GradleSettings settings = getInstance(project);
-    boolean oldValue = settings.isPreferLocalInstallationToWrapper();
-    if (oldValue != preferLocal) {
-      settings.setPreferLocalInstallationToWrapper(preferLocal);
-      project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onPreferLocalGradleDistributionToWrapperChange(preferLocal);
-    }
-  }
-  
   public void setPreferLocalInstallationToWrapper(boolean preferLocalInstallationToWrapper) {
-    myPreferLocalInstallationToWrapper = preferLocalInstallationToWrapper;
+    if (myPreferLocalInstallationToWrapper != preferLocalInstallationToWrapper) {
+      myPreferLocalInstallationToWrapper = preferLocalInstallationToWrapper;
+      getPublisher().onPreferLocalGradleDistributionToWrapperChange(preferLocalInstallationToWrapper);
+    }
   }
 
   /**
@@ -127,59 +85,36 @@ public class GradleSettings implements PersistentStateComponent<GradleSettings> 
     return myServiceDirectoryPath;
   }
 
-  public void setServiceDirectoryPath(@Nullable String serviceDirectoryPath) {
-    myServiceDirectoryPath = serviceDirectoryPath;
+  public void setServiceDirectoryPath(@Nullable String path) {
+    if (!Comparing.equal(myServiceDirectoryPath, path)) {
+      final String oldPath = myServiceDirectoryPath;
+      getPublisher().onServiceDirectoryPathChange(oldPath, path);
+    } 
   }
 
-  public static void applyServiceDirectoryPath(@Nullable String path, @NotNull Project project) {
-    final GradleSettings settings = getInstance(project);
-    final String oldPath = settings.getServiceDirectoryPath();
-    if (!Comparing.equal(oldPath, path)) {
-      settings.setServiceDirectoryPath(path);
-      project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onServiceDirectoryPathChange(oldPath, path);
-    }
-  }
-
-  public boolean isUseAutoImport() {
-    return myUseAutoImport;
-  }
-
-  public void setUseAutoImport(boolean useAutoImport) {
-    myUseAutoImport = useAutoImport;
-  }
-
-  public static void applyUseAutoImport(boolean useAutoImport, @NotNull Project project) {
-    final GradleSettings settings = getInstance(project);
-    final boolean oldValue = settings.isUseAutoImport();
-    if (oldValue != useAutoImport) {
-      settings.setUseAutoImport(useAutoImport);
-      project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC).onUseAutoImportChange(oldValue, useAutoImport);
-    }
-  }
-
-  public static void applySettings(@Nullable String linkedProjectPath,
-                                   @Nullable String gradleHomePath,
-                                   boolean preferLocalInstallationToWrapper,
-                                   boolean useAutoImport,
-                                   @Nullable String serviceDirectoryPath,
-                                   @NotNull Project project)
+  public void applySettings(@Nullable String linkedProjectPath,
+                            @Nullable String gradleHomePath,
+                            boolean preferLocalInstallationToWrapper,
+                            boolean useAutoImport,
+                            @Nullable String serviceDirectoryPath)
   {
-    GradleConfigNotifier notifier = project.getMessageBus().syncPublisher(GradleConfigNotifier.TOPIC);
-    notifier.onBulkChangeStart();
+    
+    GradleSettingsListener publisher = getPublisher();
+    publisher.onBulkChangeStart();
     try {
-      applyLinkedProjectPath(linkedProjectPath, project);
-      applyGradleHome(gradleHomePath, project);
-      applyPreferLocalInstallationToWrapper(preferLocalInstallationToWrapper, project);
-      applyUseAutoImport(useAutoImport, project);
-      applyServiceDirectoryPath(serviceDirectoryPath, project);
+      setLinkedProjectPath(linkedProjectPath);
+      setGradleHome(gradleHomePath);
+      setPreferLocalInstallationToWrapper(preferLocalInstallationToWrapper);
+      setUseAutoImport(useAutoImport);
+      setServiceDirectoryPath(serviceDirectoryPath);
     }
     finally {
-      notifier.onBulkChangeEnd();
+      publisher.onBulkChangeEnd();
     }
   }
 
   @Override
   public String toString() {
-    return "home: " + myGradleHome + ", path: " + myLinkedProjectPath;
+    return "home: " + myGradleHome + ", path: " + getLinkedProjectPath();
   }
 }

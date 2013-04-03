@@ -1,19 +1,21 @@
 package org.jetbrains.plugins.gradle.diff.project;
 
+import com.intellij.openapi.externalSystem.model.project.ExternalProject;
+import com.intellij.openapi.externalSystem.model.project.ExternalModule;
+import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
+import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChangesCalculator;
+import com.intellij.openapi.externalSystem.model.project.change.LanguageLevelChange;
+import com.intellij.openapi.externalSystem.model.project.change.GradleProjectRenameChange;
+import com.intellij.openapi.externalSystem.service.project.change.ExternalProjectChangesCalculationContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.config.PlatformFacade;
-import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
+import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import org.jetbrains.plugins.gradle.diff.GradleDiffUtil;
-import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
-import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.diff.library.GradleLibraryStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalculator;
-import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
-import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 
 import java.util.Arrays;
 import java.util.Collection;
@@ -27,7 +29,9 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since 11/3/11 3:55 PM
  */
-public class GradleProjectStructureChangesCalculator implements GradleStructureChangesCalculator<GradleProject, Project> {
+public class GradleProjectStructureChangesCalculator implements
+                                                     ExternalProjectStructureChangesCalculator<ExternalProject, Project>
+{
 
   @NotNull private final GradleModuleStructureChangesCalculator myModuleChangesCalculator;
   @NotNull private final GradleLibraryStructureChangesCalculator myLibraryChangesCalculator;
@@ -43,13 +47,13 @@ public class GradleProjectStructureChangesCalculator implements GradleStructureC
   }
 
   @Override
-  public void calculate(@NotNull GradleProject gradleEntity,
+  public void calculate(@NotNull ExternalProject gradleEntity,
                         @NotNull Project ideEntity,
-                        @NotNull GradleChangesCalculationContext context)
+                        @NotNull ExternalProjectChangesCalculationContext context)
   {
     calculateProjectChanges(gradleEntity, ideEntity, context.getCurrentChanges());
 
-    final Set<? extends GradleModule> gradleSubEntities = gradleEntity.getModules();
+    final Set<? extends ExternalModule> gradleSubEntities = gradleEntity.getModules();
     final Collection<Module> intellijSubEntities = myPlatformFacade.getModules(ideEntity);
     GradleDiffUtil.calculate(myModuleChangesCalculator, gradleSubEntities, intellijSubEntities, context);
     
@@ -65,21 +69,21 @@ public class GradleProjectStructureChangesCalculator implements GradleStructureC
 
   @NotNull
   @Override
-  public Object getGradleKey(@NotNull GradleProject entity, @NotNull GradleChangesCalculationContext context) {
+  public Object getGradleKey(@NotNull ExternalProject entity, @NotNull ExternalProjectChangesCalculationContext context) {
     return entity.getName();
   }
 
-  private void calculateProjectChanges(@NotNull GradleProject gradleProject,
+  private void calculateProjectChanges(@NotNull ExternalProject gradleProject,
                                        @NotNull Project intellijProject,
-                                       @NotNull Set<GradleProjectStructureChange> currentChanges)
+                                       @NotNull Set<ExternalProjectStructureChange> currentChanges)
   {
     checkName(gradleProject, intellijProject, currentChanges);
     checkLanguageLevel(gradleProject, intellijProject, currentChanges);
   }
 
-  private static void checkName(@NotNull GradleProject gradleProject,
+  private static void checkName(@NotNull ExternalProject gradleProject,
                                 @NotNull Project intellijProject,
-                                @NotNull Set<GradleProjectStructureChange> currentChanges)
+                                @NotNull Set<ExternalProjectStructureChange> currentChanges)
   {
     String gradleName = gradleProject.getName();
     String intellijName = intellijProject.getName();
@@ -88,14 +92,14 @@ public class GradleProjectStructureChangesCalculator implements GradleStructureC
     }
   }
 
-  private void checkLanguageLevel(@NotNull GradleProject gradleProject,
+  private void checkLanguageLevel(@NotNull ExternalProject gradleProject,
                                   @NotNull Project intellijProject,
-                                  @NotNull Set<GradleProjectStructureChange> currentChanges)
+                                  @NotNull Set<ExternalProjectStructureChange> currentChanges)
   {
     LanguageLevel gradleLevel = gradleProject.getLanguageLevel();
     LanguageLevel intellijLevel = myPlatformFacade.getLanguageLevel(intellijProject);
     if (gradleLevel != intellijLevel) {
-      currentChanges.add(new GradleLanguageLevelChange(gradleLevel, intellijLevel));
+      currentChanges.add(new LanguageLevelChange(gradleLevel, intellijLevel));
     }
   }
 }

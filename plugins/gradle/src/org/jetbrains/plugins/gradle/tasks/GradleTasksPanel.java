@@ -22,6 +22,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -43,7 +44,6 @@ import org.jetbrains.plugins.gradle.config.GradleToolWindowPanel;
 import org.jetbrains.plugins.gradle.execution.GradleTaskLocation;
 import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
@@ -102,14 +102,14 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     int recentTasksNumber = Registry.intValue(GradleConstants.REGISTRY_RECENT_TASKS_NUMBER_KEY, 5);
     myRecentTasksModel.ensureSize(recentTasksNumber);
     myRecentTasksList.setVisibleRowCount(recentTasksNumber);
-    addListPanel(myRecentTasksList, result, GradleBundle.message("gradle.task.recent.title"), false);
+    addListPanel(myRecentTasksList, result, ExternalSystemBundle.message("gradle.task.recent.title"), false);
     
     myAllTasksModel.clear();
     Collection<GradleTaskDescriptor> tasks = myLocalSettings.getAvailableTasks();
     if (!tasks.isEmpty()) {
       myAllTasksModel.setTasks(tasks);
     }
-    addListPanel(myAllTasksList, result, GradleBundle.message("gradle.task.all.title"), true);
+    addListPanel(myAllTasksList, result, ExternalSystemBundle.message("gradle.task.all.title"), true);
 
     return result;
   }
@@ -121,7 +121,7 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
 
     setupMouseListener(list);
     CustomizationUtil.installPopupHandler(list, GradleConstants.ACTION_GROUP_TASKS, GradleConstants.TASKS_CONTEXT_MENU_PLACE);
-    list.setEmptyText(GradleBundle.message("gradle.text.loading"));
+    list.setEmptyText(ExternalSystemBundle.message("gradle.text.loading"));
     JBScrollPane scrollPane = new JBScrollPane(list);
     scrollPane.setBorder(null);
     panel.add(scrollPane, BorderLayout.CENTER);

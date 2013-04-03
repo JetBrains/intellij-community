@@ -21,6 +21,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -44,7 +45,6 @@ import org.jetbrains.plugins.gradle.execution.GradleTaskLocation;
 import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
 import org.jetbrains.plugins.gradle.tasks.GradleTasksList;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -188,8 +188,8 @@ public class GradleScriptType extends GroovyScriptType {
         final GradleInstallationManager libraryManager = ServiceManager.getService(GradleInstallationManager.class);
         if (libraryManager.getGradleHome(module, project) == null) {
           int result = Messages.showOkCancelDialog(
-            GradleBundle.message("gradle.run.no.sdk.text"),
-            GradleBundle.message("gradle.run.no.sdk.title"),
+            ExternalSystemBundle.message("gradle.run.no.sdk.text"),
+            ExternalSystemBundle.message("gradle.run.no.sdk.title"),
             GradleIcons.Gradle
           );
           if (result == 0) {

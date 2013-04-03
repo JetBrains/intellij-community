@@ -4,16 +4,16 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.EditorNotifications;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleConfigNotifier;
-import org.jetbrains.plugins.gradle.config.GradleConfigNotifierAdapter;
+import org.jetbrains.plugins.gradle.config.GradleSettingsListener;
+import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
 import org.jetbrains.plugins.gradle.config.GradleConfigurable;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -35,7 +35,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class GradleConfigNotificationManager {
 
   @NotNull private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup(
-    GradleBundle.message("gradle.notification.group.display.warning"), GradleConstants.TOOL_WINDOW_ID, true
+    ExternalSystemBundle.message("gradle.notification.group.display.warning"), GradleConstants.TOOL_WINDOW_ID, true
   );
 
   @NotNull private final AtomicReference<Notification> myNotification = new AtomicReference<Notification>();
@@ -46,14 +46,14 @@ public class GradleConfigNotificationManager {
   public GradleConfigNotificationManager(@NotNull final Project project, @NotNull GradleInstallationManager manager) {
     myProject = project;
     myLibraryManager = manager;
-    final GradleConfigNotifierAdapter handler = new GradleConfigNotifierAdapter() {
+    final GradleSettingsListenerAdapter handler = new GradleSettingsListenerAdapter() {
       @Override
       public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath) {
         processGradleHomeChange();
       }
     };
-    project.getMessageBus().connect(project).subscribe(GradleConfigNotifier.TOPIC, handler);
-    ProjectManager.getInstance().getDefaultProject().getMessageBus().connect(project).subscribe(GradleConfigNotifier.TOPIC, handler);
+    project.getMessageBus().connect(project).subscribe(GradleSettingsListener.TOPIC, handler);
+    ProjectManager.getInstance().getDefaultProject().getMessageBus().connect(project).subscribe(GradleSettingsListener.TOPIC, handler);
   }
 
   private void processGradleHomeChange() {
@@ -71,8 +71,8 @@ public class GradleConfigNotificationManager {
 
   public void processRefreshError(@NotNull String message) {
     final Notification notification = NOTIFICATION_GROUP.createNotification(
-      GradleBundle.message("gradle.notification.refresh.fail.description", message),
-      GradleBundle.message("gradle.notification.action.show.settings"),
+      ExternalSystemBundle.message("gradle.notification.refresh.fail.description", message),
+      ExternalSystemBundle.message("gradle.notification.action.show.settings"),
       NotificationType.WARNING,
       new NotificationListener() {
         @Override
@@ -90,8 +90,8 @@ public class GradleConfigNotificationManager {
   
   public void processUnknownGradleHome() {
     final Notification notification = NOTIFICATION_GROUP.createNotification(
-      GradleBundle.message("gradle.notification.gradle.home.undefined.description"),
-      GradleBundle.message("gradle.notification.action.show.settings"),
+      ExternalSystemBundle.message("gradle.notification.gradle.home.undefined.description"),
+      ExternalSystemBundle.message("gradle.notification.action.show.settings"),
       NotificationType.WARNING,
       new NotificationListener() {
         @Override

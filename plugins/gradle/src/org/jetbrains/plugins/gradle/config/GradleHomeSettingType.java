@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.gradle.config;
 
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 /**
  * Enumerates possible types of 'gradle home' location setting.
@@ -25,8 +25,8 @@ public enum GradleHomeSettingType {
   
   private final String myDescription;
 
-  GradleHomeSettingType(@NotNull @PropertyKey(resourceBundle = GradleBundle.PATH_TO_BUNDLE) String description) {
-    myDescription = GradleBundle.message(description);
+  GradleHomeSettingType(@NotNull @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) String description) {
+    myDescription = ExternalSystemBundle.message(description);
   }
 
   /**

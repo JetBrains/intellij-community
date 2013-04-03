@@ -1,11 +1,11 @@
 package org.jetbrains.plugins.gradle.remote.impl;
 
+import com.intellij.openapi.externalSystem.model.project.ExternalLibrary;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
-import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
+import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 
 import java.io.File;
 import java.util.*;
@@ -59,10 +59,10 @@ public class GradleLibraryNamesMixer {
    * @param libraries  libraries to process
    */
   @SuppressWarnings("MethodMayBeStatic")
-  public void mixNames(@NotNull Iterable<? extends GradleLibrary> libraries) {
+  public void mixNames(@NotNull Iterable<? extends ExternalLibrary> libraries) {
     Map<String, Wrapped> names = new HashMap<String, Wrapped>();
     List<Wrapped> data = new ArrayList<Wrapped>();
-    for (GradleLibrary library : libraries) {
+    for (ExternalLibrary library : libraries) {
       Wrapped wrapped = new Wrapped(library);
       data.add(wrapped);
     }
@@ -191,9 +191,9 @@ public class GradleLibraryNamesMixer {
     /** File that was used for the current name generation. */
     public File currentFile;
     /** Target library. */
-    public GradleLibrary library;
+    public ExternalLibrary library;
 
-    Wrapped(@NotNull GradleLibrary library) {
+    Wrapped(@NotNull ExternalLibrary library) {
       this.library = library;
       for (LibraryPathType pathType : LibraryPathType.values()) {
         for (String path : library.getPaths(pathType)) {

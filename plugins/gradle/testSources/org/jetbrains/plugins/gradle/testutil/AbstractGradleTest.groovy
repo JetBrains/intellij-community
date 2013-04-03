@@ -2,39 +2,41 @@ package org.jetbrains.plugins.gradle.testutil
 
 import com.intellij.openapi.components.ServiceManager
 import com.intellij.openapi.editor.colors.TextAttributesKey
+import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper
+import com.intellij.openapi.externalSystem.service.project.ProjectStructureServices
 import com.intellij.openapi.project.Project
 import com.intellij.openapi.roots.OrderRootType
 import com.intellij.openapi.roots.libraries.Library
 import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.action.AbstractGradleSyncTreeFilterAction
-import org.jetbrains.plugins.gradle.autoimport.GradleAutoImporter
+import com.intellij.openapi.externalSystem.service.project.change.AutoImporter
 import org.jetbrains.plugins.gradle.config.GradleColorAndFontDescriptorsProvider
 import org.jetbrains.plugins.gradle.config.GradleLocalSettings
 import org.jetbrains.plugins.gradle.config.GradleSettings
-import org.jetbrains.plugins.gradle.config.PlatformFacade
-import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator
+import com.intellij.openapi.externalSystem.service.project.PlatformFacade
+import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChangesCalculator
 import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootStructureChangesCalculator
 import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyStructureChangesCalculator
 import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyStructureChangesCalculator
 import org.jetbrains.plugins.gradle.diff.library.GradleLibraryStructureChangesCalculator
 import org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalculator
 import org.jetbrains.plugins.gradle.diff.project.GradleProjectStructureChangesCalculator
-import org.jetbrains.plugins.gradle.manage.GradleDependencyManager
-import org.jetbrains.plugins.gradle.manage.GradleEntityManageHelper
-import org.jetbrains.plugins.gradle.manage.GradleJarManager
-import org.jetbrains.plugins.gradle.manage.GradleLibraryManager
-import org.jetbrains.plugins.gradle.manage.GradleProjectManager
-import org.jetbrains.plugins.gradle.model.GradleEntityOwner
-import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary
-import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType
-import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper
-import org.jetbrains.plugins.gradle.model.id.GradleJarId
-import org.jetbrains.plugins.gradle.model.id.GradleLibraryId
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalDependencyManager
+import com.intellij.openapi.externalSystem.service.project.manage.EntityManageHelper
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalJarManager
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalLibraryManager
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectManager
+import com.intellij.openapi.externalSystem.model.ProjectSystemId
+import com.intellij.openapi.externalSystem.model.project.ExternalLibrary
+import com.intellij.openapi.externalSystem.model.project.LibraryPathType
+import com.intellij.openapi.externalSystem.model.project.id.EntityIdMapper
+import com.intellij.openapi.externalSystem.model.project.id.JarId
+import com.intellij.openapi.externalSystem.model.project.id.LibraryId
 import org.jetbrains.plugins.gradle.sync.GradleDuplicateLibrariesPreProcessor
-import org.jetbrains.plugins.gradle.sync.GradleMovedJarsPostProcessor
-import org.jetbrains.plugins.gradle.sync.GradleOutdatedLibraryVersionPostProcessor
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper
+import com.intellij.openapi.externalSystem.service.project.change.MovedJarsPostProcessor
+import com.intellij.openapi.externalSystem.service.project.change.OutdatedLibraryVersionPostProcessor
+import com.intellij.openapi.externalSystem.service.project.change.ProjectStructureChangesModel
+import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeFilter
 import org.jetbrains.plugins.gradle.util.*
@@ -50,7 +52,7 @@ import static org.junit.Assert.fail
  */
 public abstract class AbstractGradleTest {
   
-  GradleProjectStructureChangesModel changesModel
+  ProjectStructureChangesModel changesModel
   GradleProjectStructureTreeModel treeModel
   GradleProjectBuilder gradle
   IntellijProjectBuilder intellij
@@ -80,35 +82,35 @@ public abstract class AbstractGradleTest {
     }
     container.registerComponentInstance(Project, intellij.project)
     container.registerComponentInstance(PlatformFacade, intellij.platformFacade as PlatformFacade)
-    container.registerComponentImplementation(GradleProjectStructureChangesModel)
+    container.registerComponentImplementation(ProjectStructureChangesModel)
     container.registerComponentImplementation(GradleProjectStructureTreeModel)
-    container.registerComponentImplementation(GradleProjectStructureHelper)
-    container.registerComponentImplementation(GradleStructureChangesCalculator, GradleProjectStructureChangesCalculator)
+    container.registerComponentImplementation(ProjectStructureHelper)
+    container.registerComponentImplementation(ExternalProjectStructureChangesCalculator, GradleProjectStructureChangesCalculator)
     container.registerComponentImplementation(GradleModuleStructureChangesCalculator)
     container.registerComponentImplementation(GradleContentRootStructureChangesCalculator)
     container.registerComponentImplementation(GradleModuleDependencyStructureChangesCalculator)
     container.registerComponentImplementation(GradleLibraryDependencyStructureChangesCalculator)
     container.registerComponentImplementation(GradleLibraryStructureChangesCalculator)
-    container.registerComponentImplementation(GradleEntityIdMapper)
-    container.registerComponentImplementation(GradleProjectStructureContext)
-    container.registerComponentImplementation(GradleLibraryPathTypeMapper, TestGradleLibraryPathTypeMapper)
-    container.registerComponentImplementation(GradleDependencyManager)
-    container.registerComponentImplementation(GradleLibraryManager)
-    container.registerComponentImplementation(GradleJarManager, TestGradleJarManager)
-    container.registerComponentImplementation(GradleProjectManager)
+    container.registerComponentImplementation(EntityIdMapper)
+    container.registerComponentImplementation(ProjectStructureServices)
+    container.registerComponentImplementation(ExternalLibraryPathTypeMapper, TestExternalLibraryPathTypeMapper)
+    container.registerComponentImplementation(ExternalDependencyManager)
+    container.registerComponentImplementation(ExternalLibraryManager)
+    container.registerComponentImplementation(ExternalJarManager, TestExternalJarManager)
+    container.registerComponentImplementation(ExternalProjectManager)
     container.registerComponentImplementation(GradleDuplicateLibrariesPreProcessor)
-    container.registerComponentImplementation(GradleMovedJarsPostProcessor, TestGradleMovedJarsPostProcessor)
-    container.registerComponentImplementation(GradleOutdatedLibraryVersionPostProcessor)
-    container.registerComponentImplementation(GradleAutoImporter)
+    container.registerComponentImplementation(MovedJarsPostProcessor, TestMovedJarsPostProcessor)
+    container.registerComponentImplementation(OutdatedLibraryVersionPostProcessor)
+    container.registerComponentImplementation(AutoImporter)
     container.registerComponentImplementation(GradleSettings)
     container.registerComponentImplementation(GradleLocalSettings)
-    container.registerComponentImplementation(GradleEntityManageHelper)
+    container.registerComponentImplementation(EntityManageHelper)
     configureContainer(container)
     
     intellij.projectStub.getComponent = { clazz -> container.getComponentInstance(clazz) }
     intellij.projectStub.getPicoContainer = { container }
 
-    changesModel = container.getComponentInstance(GradleProjectStructureChangesModel) as GradleProjectStructureChangesModel
+    changesModel = container.getComponentInstance(ProjectStructureChangesModel) as ProjectStructureChangesModel
     
     for (d in GradleColorAndFontDescriptorsProvider.DESCRIPTORS) {
       treeFilters[d.key] = AbstractGradleSyncTreeFilterAction.createFilter(d.key)
@@ -119,8 +121,8 @@ public abstract class AbstractGradleTest {
   }
 
   protected void clearChangePostProcessors() {
-    changesModel.preProcessors.clear()
-    changesModel.postProcessors.clear()
+    changesModel.commonPreProcessors.clear()
+    changesModel.commonPostProcessors.clear()
   }
 
   protected void configureContainer(MutablePicoContainer container) {
@@ -200,12 +202,12 @@ public abstract class AbstractGradleTest {
   }
   
   @NotNull
-  protected GradleJarId findJarId(@NotNull String path) {
+  protected JarId findJarId(@NotNull String path) {
     String pathToUse = GradleUtil.toCanonicalPath(path)
-    for (GradleLibrary library in (gradle.libraries.values() as Collection<GradleLibrary>)) {
+    for (ExternalLibrary library in (gradle.libraries.values() as Collection<ExternalLibrary>)) {
       for (libPath in library.getPaths(LibraryPathType.BINARY)) {
         if (libPath == pathToUse) {
-          return new GradleJarId(pathToUse, LibraryPathType.BINARY, new GradleLibraryId(GradleEntityOwner.GRADLE, library.name))
+          return new JarId(pathToUse, LibraryPathType.BINARY, new LibraryId(ProjectSystemId.GRADLE, library.name))
         }
       }
     }
@@ -213,7 +215,7 @@ public abstract class AbstractGradleTest {
     for (Library library in (intellij.libraries.values() as Collection<Library>)) {
       for (jarFile in library.getFiles(OrderRootType.CLASSES)) {
         if (pathToUse == jarFile.path) {
-          return new GradleJarId(pathToUse, LibraryPathType.BINARY, new GradleLibraryId(GradleEntityOwner.IDE, library.name))
+          return new JarId(pathToUse, LibraryPathType.BINARY, new LibraryId(ProjectSystemId.IDE, library.name))
         }
       }
     }
@@ -221,7 +223,7 @@ public abstract class AbstractGradleTest {
     String errorMessage = """
 Can't build an id object for given jar path ($path).
   Available gradle libraries:
-    ${gradle.libraries.values().collect { GradleLibrary lib -> "${lib.name}: ${lib.getPaths(LibraryPathType.BINARY)}" }.join('\n    ') }
+    ${gradle.libraries.values().collect { ExternalLibrary lib -> "${lib.name}: ${lib.getPaths(LibraryPathType.BINARY)}" }.join('\n    ') }
   Available intellij libraries:
     ${intellij.libraries.values().collect { Library lib -> "${lib.name}: ${lib.getFiles(OrderRootType.CLASSES).collect{it.path}}" }
     .join('\n    ')}
@@ -231,7 +233,7 @@ Can't build an id object for given jar path ($path).
   }
 
   @NotNull
-  protected GradleLibraryId findLibraryId(@NotNull String name, boolean gradleLibrary) {
+  protected LibraryId findLibraryId(@NotNull String name, boolean gradleLibrary) {
     def libraries = gradleLibrary ? gradle.libraries : intellij.libraries
     def library = libraries[name]
     if (library == null) {
@@ -239,6 +241,6 @@ Can't build an id object for given jar path ($path).
         "Can't find ${gradleLibrary ? 'gradle' : 'ide'} library with name '$name'. Available libraries: ${libraries.keySet()}"
       throw new IllegalArgumentException(errorMessage)
     }
-    new GradleLibraryId(gradleLibrary ? GradleEntityOwner.GRADLE : GradleEntityOwner.IDE, name)
+    new LibraryId(gradleLibrary ? ProjectSystemId.GRADLE : ProjectSystemId.IDE, name)
   }
 }

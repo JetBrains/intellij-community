@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.components.*;
+import com.intellij.openapi.externalSystem.model.project.change.user.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -8,7 +9,6 @@ import com.intellij.util.xmlb.XmlSerializerUtil;
 import com.intellij.util.xmlb.annotations.AbstractCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.autoimport.*;
 import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
 
 import java.util.*;
@@ -32,8 +32,8 @@ public class GradleLocalSettings implements PersistentStateComponent<GradleLocal
   private final AtomicReference<Map<String/*tree path*/, Boolean/*expanded*/>> myWorkingExpandStates
     = new AtomicReference<Map<String, Boolean>>(new HashMap<String, Boolean>());
 
-  private final AtomicReference<Set<GradleUserProjectChange>> myUserChanges
-    = new AtomicReference<Set<GradleUserProjectChange>>(new HashSet<GradleUserProjectChange>());
+  private final AtomicReference<Set<UserProjectChange>> myUserChanges
+    = new AtomicReference<Set<UserProjectChange>>(new HashSet<UserProjectChange>());
 
   private final AtomicReference<List<GradleTaskDescriptor>>       myRecentTasks    =
     new AtomicReference<List<GradleTaskDescriptor>>(ContainerUtilRt.<GradleTaskDescriptor>newArrayList());
@@ -91,19 +91,19 @@ public class GradleLocalSettings implements PersistentStateComponent<GradleLocal
   @AbstractCollection(
     surroundWithTag = false,
     elementTypes = {
-      GradleAddModuleUserChange.class, GradleRemoveModuleUserChange.class,
-      GradleAddModuleDependencyUserChange.class, GradleRemoveModuleDependencyUserChange.class,
-      GradleAddLibraryDependencyUserChange.class, GradleRemoveLibraryDependencyUserChange.class,
-      GradleModuleDependencyExportedChange.class, GradleModuleDependencyScopeUserChange.class,
-      GradleLibraryDependencyExportedChange.class, GradleLibraryDependencyScopeUserChange.class
+      AddModuleUserChange.class, RemoveModuleUserChange.class,
+      AddModuleDependencyUserChange.class, RemoveModuleDependencyUserChange.class,
+      AddLibraryDependencyUserChange.class, RemoveLibraryDependencyUserChange.class,
+      ModuleDependencyExportedChange.class, ModuleDependencyScopeUserChange.class,
+      LibraryDependencyExportedChange.class, LibraryDependencyScopeUserChange.class
     }
   )
   @NotNull
-  public Set<GradleUserProjectChange> getUserProjectChanges() {
+  public Set<UserProjectChange> getUserProjectChanges() {
     return myUserChanges.get();
   }
 
-  public void setUserProjectChanges(@Nullable Set<GradleUserProjectChange> changes) {
+  public void setUserProjectChanges(@Nullable Set<UserProjectChange> changes) {
     myUserChanges.set(changes);
   }
 

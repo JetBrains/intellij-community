@@ -8,18 +8,16 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.project.ExternalProject;
+import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
-import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.module.Module;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.OrderRootType;
-import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
@@ -27,7 +25,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -36,27 +33,17 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
-import com.intellij.util.PathUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.internal.task.GradleRefreshTasksListTask;
 import org.jetbrains.plugins.gradle.internal.task.GradleResolveProjectTask;
-import org.jetbrains.plugins.gradle.manage.GradleProjectEntityChangeListener;
-import org.jetbrains.plugins.gradle.model.gradle.GradleEntity;
-import org.jetbrains.plugins.gradle.model.gradle.GradleEntityVisitor;
-import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
-import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
-import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
-import org.jetbrains.plugins.gradle.model.intellij.IdeEntityVisitor;
-import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
+import com.intellij.openapi.externalSystem.model.project.id.GradleSyntheticId;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
-import org.jetbrains.plugins.gradle.tasks.GradleTasksModel;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNodeDescriptor;
 import org.jetbrains.plugins.gradle.ui.MatrixControlBuilder;
 
 import javax.swing.*;
@@ -64,7 +51,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.io.*;
 import java.util.Arrays;
-import java.util.Collections;
 import java.util.Properties;
 import java.util.concurrent.TimeUnit;
 import java.util.regex.Matcher;
@@ -78,11 +64,9 @@ import java.util.regex.Pattern;
  */
 public class GradleUtil {
 
-  public static final  String  PATH_SEPARATOR               = "/";
   public static final  String  SYSTEM_DIRECTORY_PATH_KEY    = "GRADLE_USER_HOME";
   private static final String  WRAPPER_VERSION_PROPERTY_KEY = "distributionUrl";
   private static final Pattern WRAPPER_VERSION_PATTERN      = Pattern.compile(".*gradle-(.+)-bin.zip");
-  private static final Pattern ARTIFACT_PATTERN             = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^\\.]+?)?");
 
   private static final NotNullLazyValue<GradleInstallationManager> INSTALLATION_MANAGER =
     new NotNullLazyValue<GradleInstallationManager>() {
@@ -112,15 +96,6 @@ public class GradleUtil {
   @NotNull
   public static FileChooserDescriptor getGradleHomeFileChooserDescriptor() {
     return DescriptorHolder.GRADLE_HOME_FILE_CHOOSER_DESCRIPTOR;
-  }
-
-  /**
-   * @param path    target path
-   * @return absolute path that points to the same location as the given one and that uses only slashes
-   */
-  @NotNull
-  public static String toCanonicalPath(@NotNull String path) {
-    return PathUtil.getCanonicalPath(new File(path).getAbsolutePath());
   }
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
@@ -326,14 +301,14 @@ public class GradleUtil {
    * @return                   the most up-to-date gradle project (if any)
    */
   @Nullable
-  public static GradleProject refreshProject(@NotNull final Project project,
+  public static ExternalProject refreshProject(@NotNull final Project project,
                                              @NotNull final String gradleProjectPath,
                                              @NotNull final Ref<String> errorMessageHolder,
                                              @NotNull final Ref<String> errorDetailsHolder,
                                              final boolean resolveLibraries,
                                              final boolean modal)
   {
-    final Ref<GradleProject> gradleProject = new Ref<GradleProject>();
+    final Ref<ExternalProject> gradleProject = new Ref<ExternalProject>();
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
       @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
       @Override
@@ -368,21 +343,22 @@ public class GradleUtil {
       @Override
       public void run() {
         if (modal) {
-          ProgressManager.getInstance().run(new Task.Modal(project, GradleBundle.message("gradle.import.progress.text"), false) {
+          ProgressManager.getInstance().run(new Task.Modal(project, ExternalSystemBundle.message("gradle.import.progress.text"), false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               refreshProjectStructureTask.execute(indicator);
-              setTitle(GradleBundle.message("gradle.task.progress.initial.text"));
+              setTitle(ExternalSystemBundle.message("gradle.task.progress.initial.text"));
               refreshTasksTask.execute(indicator);
             }
           });
         }
         else {
-          ProgressManager.getInstance().run(new Task.Backgroundable(project, GradleBundle.message("gradle.sync.progress.initial.text")) {
+          ProgressManager.getInstance().run(new Task.Backgroundable(project, ExternalSystemBundle
+            .message("gradle.sync.progress.initial.text")) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               refreshProjectStructureTask.execute(indicator);
-              setTitle(GradleBundle.message("gradle.task.progress.initial.text"));
+              setTitle(ExternalSystemBundle.message("gradle.task.progress.initial.text"));
               refreshTasksTask.execute(indicator);
             }
           });
@@ -392,65 +368,18 @@ public class GradleUtil {
     return gradleProject.get();
   }
   
-  public static void dispatch(@Nullable Object entity, @NotNull GradleEntityVisitor gradleVisitor, @NotNull IdeEntityVisitor ideVisitor) {
-    if (entity instanceof GradleEntity) {
-      ((GradleEntity)entity).invite(gradleVisitor);
-    }
-    else {
-      dispatch(entity, ideVisitor);
-    }
-  }
-  
-  /**
-   * Tries to dispatch given entity via the given visitor.
-   * 
-   * @param entity   intellij project entity candidate to dispatch
-   * @param visitor  dispatch callback to use for the given entity
-   */
-  public static void dispatch(@Nullable Object entity, @NotNull IdeEntityVisitor visitor) {
-    if (entity instanceof Project) {
-      visitor.visit(((Project)entity));
-    }
-    else if (entity instanceof Module) {
-      visitor.visit(((Module)entity));
-    }
-    else if (entity instanceof ModuleAwareContentRoot) {
-      visitor.visit(((ModuleAwareContentRoot)entity));
-    }
-    else if (entity instanceof LibraryOrderEntry) {
-      visitor.visit(((LibraryOrderEntry)entity));
-    }
-    else if (entity instanceof ModuleOrderEntry) {
-      visitor.visit(((ModuleOrderEntry)entity));
-    }
-    else if (entity instanceof Library) {
-      visitor.visit(((Library)entity));
-    }
-  }
-
   @NotNull
-  public static <T extends GradleEntityId> GradleProjectStructureNodeDescriptor<T> buildDescriptor(@NotNull T id, @NotNull String name) {
-    return new GradleProjectStructureNodeDescriptor<T>(id, name, id.getType().getIcon());
+  public static <T extends ProjectEntityId> ProjectStructureNodeDescriptor<T> buildDescriptor(@NotNull T id, @NotNull String name) {
+    return new ProjectStructureNodeDescriptor<T>(id, name, id.getType().getIcon());
   }
   
   @NotNull
-  public static GradleProjectStructureNodeDescriptor<GradleSyntheticId> buildSyntheticDescriptor(@NotNull String text) {
+  public static ProjectStructureNodeDescriptor<GradleSyntheticId> buildSyntheticDescriptor(@NotNull String text) {
     return buildSyntheticDescriptor(text, null);
   }
   
-  public static GradleProjectStructureNodeDescriptor<GradleSyntheticId> buildSyntheticDescriptor(@NotNull String text, @Nullable Icon icon) {
-    return new GradleProjectStructureNodeDescriptor<GradleSyntheticId>(new GradleSyntheticId(text), text, icon);
-  }
-
-  @NotNull
-  public static String getLocalFileSystemPath(@NotNull VirtualFile file) {
-    if (file.getFileType() == FileTypes.ARCHIVE) {
-      final VirtualFile jar = JarFileSystem.getInstance().getVirtualFileForJar(file);
-      if (jar != null) {
-        return jar.getPath();
-      }
-    }
-    return file.getPath();
+  public static ProjectStructureNodeDescriptor<GradleSyntheticId> buildSyntheticDescriptor(@NotNull String text, @Nullable Icon icon) {
+    return new ProjectStructureNodeDescriptor<GradleSyntheticId>(new GradleSyntheticId(text), text, icon);
   }
 
   /**
@@ -462,61 +391,17 @@ public class GradleUtil {
    *              <code>null</code> otherwise
    */
   @Nullable
-  public static Point getHintPosition(@NotNull GradleProjectStructureNode<?> node, @NotNull Tree tree) {
+  public static Point getHintPosition(@NotNull ProjectStructureNode<?> node, @NotNull Tree tree) {
     final Rectangle bounds = tree.getPathBounds(new TreePath(node.getPath()));
     if (bounds == null) {
       return null;
     }
-    final Icon icon = ((GradleProjectStructureNode)node).getDescriptor().getIcon();
+    final Icon icon = ((ProjectStructureNode)node).getDescriptor().getIcon();
     int xAdjustment = 0;
     if (icon != null) {
       xAdjustment = icon.getIconWidth();
     }
     return new Point(bounds.x + xAdjustment, bounds.y + bounds.height);
-  }
-
-  @NotNull
-  public static String getLibraryName(@NotNull Library library) {
-    final String result = library.getName();
-    if (result != null) {
-      return result;
-    }
-    for (OrderRootType type : OrderRootType.getAllTypes()) {
-      for (String url : library.getUrls(type)) {
-        String candidate = extractNameFromPath(url);
-        if (!StringUtil.isEmpty(candidate)) {
-          return candidate;
-        }
-      }
-    }
-    assert false;
-    return "unknown-lib";
-  }
-
-  @NotNull
-  public static String extractNameFromPath(@NotNull String path) {
-    String strippedPath = stripPath(path);
-    final int i = strippedPath.lastIndexOf(PATH_SEPARATOR);
-    final String result;
-    if (i < 0 || i >= strippedPath.length() - 1) {
-      result = strippedPath;
-    }
-    else {
-      result = strippedPath.substring(i + 1);
-    }
-    return result;
-  }
-
-  @NotNull
-  private static String stripPath(@NotNull String path) {
-    String[] endingsToStrip = { "/", "!", ".jar" };
-    StringBuilder buffer = new StringBuilder(path);
-    for (String ending : endingsToStrip) {
-      if (buffer.lastIndexOf(ending) == buffer.length() - ending.length()) {
-        buffer.setLength(buffer.length() - ending.length());
-      }
-    }
-    return buffer.toString();
   }
 
   /**
@@ -585,8 +470,8 @@ public class GradleUtil {
    */
   @NotNull
   public static MatrixControlBuilder getConflictChangeBuilder() {
-    final String gradle = GradleBundle.message("gradle.name");
-    final String intellij = GradleBundle.message("gradle.ide");
+    final String gradle = ExternalSystemBundle.message("gradle.name");
+    final String intellij = ExternalSystemBundle.message("gradle.ide");
     return new MatrixControlBuilder(gradle, intellij);
   }
   
@@ -598,75 +483,6 @@ public class GradleUtil {
       }
     }
     return INSTALLATION_MANAGER.getValue().getGradleHome(project) != null;
-  }
-
-  
-  public static void executeProjectChangeAction(@NotNull Project project, @NotNull Object entityToChange, @NotNull Runnable task) {
-    executeProjectChangeAction(project, entityToChange, false, task);
-  }
-
-  public static void executeProjectChangeAction(@NotNull Project project,
-                                                @NotNull Object entityToChange,
-                                                boolean synchronous,
-                                                @NotNull Runnable task)
-  {
-    executeProjectChangeAction(project, Collections.singleton(entityToChange), synchronous, task);
-  }
-
-  public static void executeProjectChangeAction(@NotNull final Project project,
-                                                @NotNull final Iterable<?> entitiesToChange,
-                                                @NotNull final Runnable task)
-  {
-    executeProjectChangeAction(project, entitiesToChange, false, task);
-  }
-  
-  public static void executeProjectChangeAction(@NotNull final Project project,
-                                                @NotNull final Iterable<?> entitiesToChange,
-                                                boolean synchronous,
-                                                @NotNull final Runnable task)
-  {
-    Runnable wrappedTask = new Runnable() {
-      public void run() {
-        ApplicationManager.getApplication().runWriteAction(new Runnable() {
-          @Override
-          public void run() {
-            final GradleProjectEntityChangeListener publisher = project.getMessageBus().syncPublisher(GradleProjectEntityChangeListener.TOPIC);
-            for (Object e : entitiesToChange) {
-              publisher.onChangeStart(e);
-            }
-            try {
-              task.run();
-            }
-            finally {
-              for (Object e : entitiesToChange) {
-                publisher.onChangeEnd(e);
-              }
-            }
-          }
-        });
-      }
-    };
-
-    if (synchronous) {
-      if (ApplicationManager.getApplication().isDispatchThread()) {
-        wrappedTask.run();
-      }
-      else {
-        UIUtil.invokeAndWaitIfNeeded(wrappedTask);
-      }
-    }
-    else {
-      UIUtil.invokeLaterIfNeeded(wrappedTask);
-    }
-  }
-
-  @Nullable
-  public static GradleArtifactInfo parseArtifactInfo(@NotNull String fileName) {
-    Matcher matcher = ARTIFACT_PATTERN.matcher(fileName);
-    if (!matcher.matches()) {
-      return null;
-    }
-    return new GradleArtifactInfo(matcher.group(1), null, matcher.group(2));
   }
 
   @NotNull

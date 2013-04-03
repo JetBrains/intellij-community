@@ -2,8 +2,8 @@ package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.gradle.util.TextIcon;
 
@@ -14,9 +14,9 @@ import org.jetbrains.plugins.gradle.util.TextIcon;
 public class GradleResetTreeFiltersAction extends ToggleAction {
 
   public GradleResetTreeFiltersAction() {
-    getTemplatePresentation().setText(GradleBundle.message("gradle.action.reset.tree.filters.text"));
-    getTemplatePresentation().setDescription(GradleBundle.message("gradle.action.reset.tree.filters.description"));
-    getTemplatePresentation().setIcon(new TextIcon(GradleBundle.message("gradle.action.reset.tree.filters.icon")));
+    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.reset.tree.filters.text"));
+    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.reset.tree.filters.description"));
+    getTemplatePresentation().setIcon(new TextIcon(ExternalSystemBundle.message("gradle.action.reset.tree.filters.icon")));
   }
 
   @Override

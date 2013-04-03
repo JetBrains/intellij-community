@@ -15,20 +15,20 @@
  */
 package org.jetbrains.plugins.gradle.diff.module;
 
+import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChangesCalculator;
+import com.intellij.openapi.externalSystem.service.project.change.ExternalProjectChangesCalculationContext;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.RootPolicy;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
 import org.jetbrains.plugins.gradle.diff.GradleDiffUtil;
-import org.jetbrains.plugins.gradle.diff.GradleStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyStructureChangesCalculator;
 import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyStructureChangesCalculator;
-import org.jetbrains.plugins.gradle.model.gradle.*;
-import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
+import com.intellij.openapi.externalSystem.service.project.ModuleAwareContentRoot;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -42,7 +42,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 11/14/11 6:30 PM
  */
-public class GradleModuleStructureChangesCalculator implements GradleStructureChangesCalculator<GradleModule, Module> {
+public class GradleModuleStructureChangesCalculator implements ExternalProjectStructureChangesCalculator<ExternalModule, Module> {
   
   @NotNull private final GradleLibraryDependencyStructureChangesCalculator myLibraryDependencyCalculator;
   @NotNull private final GradleModuleDependencyStructureChangesCalculator myModuleDependencyCalculator;
@@ -58,12 +58,12 @@ public class GradleModuleStructureChangesCalculator implements GradleStructureCh
   }
 
   @Override
-  public void calculate(@NotNull GradleModule gradleEntity,
+  public void calculate(@NotNull ExternalModule gradleEntity,
                         @NotNull Module ideEntity,
-                        @NotNull GradleChangesCalculationContext context)
+                        @NotNull ExternalProjectChangesCalculationContext context)
   {
     // Content roots.
-    final Collection<GradleContentRoot> gradleContentRoots = gradleEntity.getContentRoots();
+    final Collection<ExternalContentRoot> gradleContentRoots = gradleEntity.getContentRoots();
     final Collection<ModuleAwareContentRoot> intellijContentRoots = context.getPlatformFacade().getContentRoots(ideEntity);
     GradleDiffUtil.calculate(myContentRootCalculator, gradleContentRoots, intellijContentRoots, context);
     
@@ -79,13 +79,13 @@ public class GradleModuleStructureChangesCalculator implements GradleStructureCh
 
   @NotNull
   @Override
-  public Object getGradleKey(@NotNull GradleModule entity, @NotNull GradleChangesCalculationContext context) {
+  public Object getGradleKey(@NotNull ExternalModule entity, @NotNull ExternalProjectChangesCalculationContext context) {
     return entity.getName();
   }
 
-  private void checkDependencies(@NotNull GradleModule gradleModule,
+  private void checkDependencies(@NotNull ExternalModule gradleModule,
                                  @NotNull Module intellijModule,
-                                 @NotNull GradleChangesCalculationContext context)
+                                 @NotNull ExternalProjectChangesCalculationContext context)
   {
     // Prepare intellij part.
     final List<ModuleOrderEntry> intellijModuleDependencies = new ArrayList<ModuleOrderEntry>();
@@ -108,20 +108,20 @@ public class GradleModuleStructureChangesCalculator implements GradleStructureCh
     }
 
     // Prepare gradle part.
-    final List<GradleModuleDependency> gradleModuleDependencies = new ArrayList<GradleModuleDependency>();
-    final List<GradleLibraryDependency> gradleLibraryDependencies = new ArrayList<GradleLibraryDependency>();
-    GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
+    final List<ExternalModuleDependency> gradleModuleDependencies = new ArrayList<ExternalModuleDependency>();
+    final List<ExternalLibraryDependency> gradleLibraryDependencies = new ArrayList<ExternalLibraryDependency>();
+    ExternalEntityVisitor visitor = new ExternalEntityVisitorAdapter() {
       @Override
-      public void visit(@NotNull GradleModuleDependency dependency) {
+      public void visit(@NotNull ExternalModuleDependency dependency) {
         gradleModuleDependencies.add(dependency);
       }
 
       @Override
-      public void visit(@NotNull GradleLibraryDependency dependency) {
+      public void visit(@NotNull ExternalLibraryDependency dependency) {
         gradleLibraryDependencies.add(dependency);
       }
     };
-    for (GradleDependency dependency : gradleModule.getDependencies()) {
+    for (ExternalDependency dependency : gradleModule.getDependencies()) {
       dependency.invite(visitor);
     }
 

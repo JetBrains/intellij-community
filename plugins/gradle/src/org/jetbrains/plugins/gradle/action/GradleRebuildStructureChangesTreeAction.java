@@ -2,8 +2,8 @@ package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 /**
@@ -13,8 +13,8 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 public class GradleRebuildStructureChangesTreeAction extends AnAction {
 
   public GradleRebuildStructureChangesTreeAction() {
-    getTemplatePresentation().setText(GradleBundle.message("gradle.action.rebuild.sync.tree.text"));
-    getTemplatePresentation().setDescription(GradleBundle.message("gradle.action.rebuild.sync.tree.description"));
+    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.rebuild.sync.tree.text"));
+    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.rebuild.sync.tree.description"));
   }
 
   @Override

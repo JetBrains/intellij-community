@@ -1,11 +1,11 @@
 package org.jetbrains.plugins.gradle.testutil
 
-import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootPresenceChange
-import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange
-import org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyPresenceChange
-import org.jetbrains.plugins.gradle.diff.library.GradleOutdatedLibraryVersionChange
-import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange
-import org.jetbrains.plugins.gradle.diff.module.GradleModulePresenceChange
+import com.intellij.openapi.externalSystem.model.project.change.ContentRootPresenceChange
+import com.intellij.openapi.externalSystem.model.project.change.LibraryDependencyPresenceChange
+import com.intellij.openapi.externalSystem.model.project.change.ModuleDependencyPresenceChange
+import com.intellij.openapi.externalSystem.model.project.change.OutdatedLibraryVersionChange
+import com.intellij.openapi.externalSystem.model.project.change.JarPresenceChange
+import com.intellij.openapi.externalSystem.model.project.change.ModulePresenceChange
 
 /**
  * @author Denis Zhdanov
@@ -31,20 +31,20 @@ public class ChangeBuilder extends BuilderSupport {
   protected Object createNode(Object name, Map attributes) {
     switch (name) {
       case "module":
-        changes.addAll attributes.gradle.collect { new GradleModulePresenceChange(it, null)}
-        changes.addAll attributes.intellij.collect { new GradleModulePresenceChange(null, it)}
+        changes.addAll attributes.gradle.collect { new ModulePresenceChange(it, null)}
+        changes.addAll attributes.intellij.collect { new ModulePresenceChange(null, it)}
         return changes
       case "moduleDependency":
-        changes.addAll attributes.gradle.collect { new GradleModuleDependencyPresenceChange(it, null) }
-        changes.addAll attributes.intellij.collect { new GradleModuleDependencyPresenceChange(null, it) }
+        changes.addAll attributes.gradle.collect { new ModuleDependencyPresenceChange(it, null) }
+        changes.addAll attributes.intellij.collect { new ModuleDependencyPresenceChange(null, it) }
         return changes
       case "library":
-        changes.addAll attributes.gradle.collect { new GradleLibraryDependencyPresenceChange(it, null)}
-        changes.addAll attributes.intellij.collect { new GradleLibraryDependencyPresenceChange(null, it)}
+        changes.addAll attributes.gradle.collect { new LibraryDependencyPresenceChange(it, null)}
+        changes.addAll attributes.intellij.collect { new LibraryDependencyPresenceChange(null, it)}
         return changes
       case "libraryDependency":
-        changes.addAll attributes.gradle.collect { new GradleLibraryDependencyPresenceChange(it, null)}
-        changes.addAll attributes.intellij.collect { new GradleLibraryDependencyPresenceChange(null, it)}
+        changes.addAll attributes.gradle.collect { new LibraryDependencyPresenceChange(it, null)}
+        changes.addAll attributes.intellij.collect { new LibraryDependencyPresenceChange(null, it)}
         return changes
       case "libraryConflict":
         def library = attributes.entity
@@ -53,15 +53,15 @@ public class ChangeBuilder extends BuilderSupport {
         }
         return library
       case "contentRoot":
-        changes.addAll attributes.gradle.collect { new GradleContentRootPresenceChange(it, null)}
-        changes.addAll attributes.intellij.collect { new GradleContentRootPresenceChange(null, it)}
+        changes.addAll attributes.gradle.collect { new ContentRootPresenceChange(it, null)}
+        changes.addAll attributes.intellij.collect { new ContentRootPresenceChange(null, it)}
         return changes
       case "jar":
-        changes.addAll attributes.gradle.collect { new GradleJarPresenceChange(it, null) }
-        changes.addAll attributes.intellij.collect { new GradleJarPresenceChange(null, it) }
+        changes.addAll attributes.gradle.collect { new JarPresenceChange(it, null) }
+        changes.addAll attributes.intellij.collect { new JarPresenceChange(null, it) }
         return changes
       case "libraryVersion":
-        changes.add(new GradleOutdatedLibraryVersionChange(
+        changes.add(new OutdatedLibraryVersionChange(
           attributes.name, attributes.gradleLibraryId, attributes.gradleVersion, attributes.ideLibraryId, attributes.ideVersion
         ))
     }

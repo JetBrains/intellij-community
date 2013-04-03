@@ -1,6 +1,10 @@
 package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.components.JBScrollPane;
@@ -9,11 +13,7 @@ import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.manage.GradleProjectImportBuilder;
 import org.jetbrains.plugins.gradle.manage.wizard.AbstractImportFromGradleWizardStep;
-import org.jetbrains.plugins.gradle.model.gradle.*;
-import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
-import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
+import com.intellij.openapi.externalSystem.model.project.id.GradleSyntheticId;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
@@ -42,17 +42,17 @@ import java.util.List;
 public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWizardStep {
 
   private static final String EMPTY_CARD_NAME = "EMPTY";
-  
+
   private final GradleProjectStructureFactory myFactory            = GradleProjectStructureFactory.INSTANCE;
   private final JPanel                        myComponent          = new JPanel(new GridLayout(1, 2));
   private final DefaultTreeModel              myTreeModel          = new DefaultTreeModel(new DefaultMutableTreeNode("unnamed"));
   private final Tree                          myTree               = new Tree(myTreeModel);
   private final CardLayout                    mySettingsCardLayout = new CardLayout();
   private final JPanel                        mySettingsPanel      = new JPanel(mySettingsCardLayout);
-  
-  private final Map<GradleProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>> myCards =
-    new HashMap<GradleProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>>();
-  
+
+  private final Map<ProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>> myCards =
+    new HashMap<ProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>>();
+
   private boolean myOnValidateAttempt;
 
   public GradleAdjustImportSettingsStep(WizardContext context) {
@@ -63,6 +63,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
       private boolean myIgnore;
+
       @SuppressWarnings("SuspiciousMethodCalls")
       @Override
       public void valueChanged(TreeSelectionEvent e) {
@@ -79,14 +80,14 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
         if (oldNode == null) {
           onNodeChange();
           return;
-        } 
-        
+        }
+
         Pair<String, GradleProjectStructureNodeSettings> pair = myCards.get(oldNode);
         if (pair == null || pair.second.validate()) {
           onNodeChange();
           return;
         }
-        
+
         myIgnore = true;
         try {
           myTree.getSelectionModel().setSelectionPath(oldPath);
@@ -108,18 +109,18 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
         mySettingsCardLayout.show(mySettingsPanel, cardName);
       }
     });
-    
+
     // Setup GUI.
     JPanel leftPanel = new JPanel(new GridBagLayout());
     JPanel rightPanel = new JPanel(new GridBagLayout());
-    
+
     GridBagConstraints constraints = new GridBagConstraints();
     constraints.weightx = 1;
     constraints.anchor = GridBagConstraints.NORTHWEST;
     constraints.fill = GridBagConstraints.HORIZONTAL;
     constraints.insets = new Insets(5, 5, 5, 5);
     constraints.gridwidth = GridBagConstraints.REMAINDER;
-    leftPanel.add(new JLabel(GradleBundle.message("gradle.import.label.project.structure")), constraints);
+    leftPanel.add(new JLabel(ExternalSystemBundle.message("gradle.import.label.project.structure")), constraints);
     
     constraints = new GridBagConstraints();
     constraints.weightx = constraints.weighty = 1;
@@ -135,7 +136,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     constraints.fill = GridBagConstraints.HORIZONTAL;
     constraints.insets = new Insets(5, 10, 5, 5);
     constraints.gridwidth = GridBagConstraints.REMAINDER;
-    rightPanel.add(new JLabel(GradleBundle.message("gradle.import.label.details")), constraints);
+    rightPanel.add(new JLabel(ExternalSystemBundle.message("gradle.import.label.details")), constraints);
 
     constraints = new GridBagConstraints();
     constraints.weightx = constraints.weighty = 1;
@@ -172,7 +173,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     if (builder == null) {
       return;
     }
-    GradleProject project = builder.getGradleProject();
+    ExternalProject project = builder.getGradleProject();
     if (project == null) {
       throw new IllegalStateException(String.format(
         "Can't init 'adjust importing settings' step. Reason: no project is defined. Context: '%s', builder: '%s'",
@@ -180,47 +181,47 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
       ));
     }
 
-    Map<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>> entity2nodes
-      = new HashMap<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>>();
+    Map<ExternalEntity, Pair<String, Collection<ProjectStructureNode>>> entity2nodes
+      = new HashMap<ExternalEntity, Pair<String, Collection<ProjectStructureNode>>>();
     int counter = 0;
-    GradleProjectStructureNode<GradleEntityId> root = buildNode(project, entity2nodes, counter++);
+    ProjectStructureNode<ProjectEntityId> root = buildNode(project, entity2nodes, counter++);
 
-    List<GradleModule> modules = new ArrayList<GradleModule>(project.getModules());
+    List<ExternalModule> modules = new ArrayList<ExternalModule>(project.getModules());
     Collections.sort(modules, Named.COMPARATOR);
     List<MutableTreeNode> moduleNodes = new ArrayList<MutableTreeNode>();
     
-    for (GradleModule module : modules) {
-      GradleProjectStructureNode<GradleEntityId> moduleNode = buildNode(module, entity2nodes, counter++);
+    for (ExternalModule module : modules) {
+      ProjectStructureNode<ProjectEntityId> moduleNode = buildNode(module, entity2nodes, counter++);
       moduleNodes.add(moduleNode);
-      for (GradleContentRoot contentRoot : module.getContentRoots()) {
+      for (ExternalContentRoot contentRoot : module.getContentRoots()) {
         moduleNode.add(buildNode(contentRoot, entity2nodes, counter++));
       }
-      Collection<GradleDependency> dependencies = module.getDependencies();
+      Collection<ExternalDependency> dependencies = module.getDependencies();
       if (!dependencies.isEmpty()) {
-        GradleProjectStructureNode<GradleSyntheticId> dependenciesNode
-          = new GradleProjectStructureNode<GradleSyntheticId>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR);
-        final List<GradleModuleDependency> moduleDependencies = new ArrayList<GradleModuleDependency>();
-        final List<GradleLibraryDependency> libraryDependencies = new ArrayList<GradleLibraryDependency>();
-        GradleEntityVisitor visitor = new GradleEntityVisitorAdapter() {
+        ProjectStructureNode<GradleSyntheticId> dependenciesNode
+          = new ProjectStructureNode<GradleSyntheticId>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR);
+        final List<ExternalModuleDependency> moduleDependencies = new ArrayList<ExternalModuleDependency>();
+        final List<ExternalLibraryDependency> libraryDependencies = new ArrayList<ExternalLibraryDependency>();
+        ExternalEntityVisitor visitor = new ExternalEntityVisitorAdapter() {
           @Override
-          public void visit(@NotNull GradleModuleDependency dependency) {
+          public void visit(@NotNull ExternalModuleDependency dependency) {
             moduleDependencies.add(dependency);
           }
 
           @Override
-          public void visit(@NotNull GradleLibraryDependency dependency) {
+          public void visit(@NotNull ExternalLibraryDependency dependency) {
             libraryDependencies.add(dependency);
           }
         };
-        for (GradleDependency dependency : dependencies) {
+        for (ExternalDependency dependency : dependencies) {
           dependency.invite(visitor);
         }
-        Collections.sort(moduleDependencies, GradleModuleDependency.COMPARATOR);
+        Collections.sort(moduleDependencies, ExternalModuleDependency.COMPARATOR);
         Collections.sort(libraryDependencies, Named.COMPARATOR);
-        for (GradleModuleDependency dependency : moduleDependencies) {
+        for (ExternalModuleDependency dependency : moduleDependencies) {
           dependenciesNode.add(buildNode(dependency, entity2nodes, counter++));
         }
-        for (GradleLibraryDependency dependency : libraryDependencies) {
+        for (ExternalLibraryDependency dependency : libraryDependencies) {
           dependenciesNode.add(buildNode(dependency, entity2nodes, counter++));
         }
         moduleNode.add(dependenciesNode);
@@ -230,7 +231,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     myTreeModel.setRoot(root);
     myTree.setSelectionPath(new TreePath(root));
     
-    Collection<? extends GradleLibrary> libraries = project.getLibraries();
+    Collection<? extends ExternalLibrary> libraries = project.getLibraries();
     if (libraries.isEmpty()) {
       for (MutableTreeNode node : moduleNodes) {
         root.add(node);
@@ -238,18 +239,18 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     }
     else {
       // Insert intermediate 'modules' and 'libraries' nodes if the project has both libraries and nodes.
-      GradleProjectStructureNode<GradleSyntheticId> modulesNode
-        = new GradleProjectStructureNode<GradleSyntheticId>(GradleConstants.MODULES_NODE_DESCRIPTOR);
+      ProjectStructureNode<GradleSyntheticId> modulesNode
+        = new ProjectStructureNode<GradleSyntheticId>(GradleConstants.MODULES_NODE_DESCRIPTOR);
       for (MutableTreeNode node : moduleNodes) {
         modulesNode.add(node);
       }
       root.add(modulesNode);
 
-      List<GradleLibrary> sortedLibraries = new ArrayList<GradleLibrary>(libraries);
+      List<ExternalLibrary> sortedLibraries = new ArrayList<ExternalLibrary>(libraries);
       Collections.sort(sortedLibraries, Named.COMPARATOR);
-      GradleProjectStructureNode<GradleSyntheticId> librariesNode
-        = new GradleProjectStructureNode<GradleSyntheticId>(GradleConstants.LIBRARIES_NODE_DESCRIPTOR);
-      for (GradleLibrary library : sortedLibraries) {
+      ProjectStructureNode<GradleSyntheticId> librariesNode
+        = new ProjectStructureNode<GradleSyntheticId>(GradleConstants.LIBRARIES_NODE_DESCRIPTOR);
+      for (ExternalLibrary library : sortedLibraries) {
         librariesNode.add(buildNode(library, entity2nodes, counter++));
       }
       root.add(librariesNode);
@@ -261,26 +262,26 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     myTree.expandPath(new TreePath(root.getPath()));
   }
 
-  private GradleProjectStructureNode<GradleEntityId> buildNode(
-    @NotNull GradleEntity entity, @NotNull Map<GradleEntity, Pair<String, Collection<GradleProjectStructureNode>>> processed, int counter)
+  private ProjectStructureNode<ProjectEntityId> buildNode(
+    @NotNull ExternalEntity entity, @NotNull Map<ExternalEntity, Pair<String, Collection<ProjectStructureNode>>> processed, int counter)
   {
     // We build tree node, its settings control and map them altogether. The only trick here is that nodes can reuse the same
     // settings control (e.g. more than one node may have the same library as a dependency, so, library dependency node for
     // every control will use the same settings control).
-    GradleProjectStructureNode<GradleEntityId> result = new GradleProjectStructureNode<GradleEntityId>(myFactory.buildDescriptor(entity));
-    Pair<String, Collection<GradleProjectStructureNode>> pair = processed.get(entity);
+    ProjectStructureNode<ProjectEntityId> result = new ProjectStructureNode<ProjectEntityId>(myFactory.buildDescriptor(entity));
+    Pair<String, Collection<ProjectStructureNode>> pair = processed.get(entity);
     if (pair == null) {
       String cardName = String.valueOf(counter);
-      List<GradleProjectStructureNode> nodes = new ArrayList<GradleProjectStructureNode>();
+      List<ProjectStructureNode> nodes = new ArrayList<ProjectStructureNode>();
       nodes.add(result);
-      processed.put(entity, new Pair<String, Collection<GradleProjectStructureNode>>(cardName, nodes));
+      processed.put(entity, new Pair<String, Collection<ProjectStructureNode>>(cardName, nodes));
       GradleProjectStructureNodeSettings settings = myFactory.buildSettings(entity, myTreeModel, nodes);
       myCards.put(result, new Pair<String, GradleProjectStructureNodeSettings>(cardName, settings));
       mySettingsPanel.add(settings.getComponent(), cardName);
     } 
     else {
       pair.second.add(result);
-      for (GradleProjectStructureNode node : pair.second) {
+      for (ProjectStructureNode node : pair.second) {
         Pair<String, GradleProjectStructureNodeSettings> settingsPair = myCards.get(node);
         if (settingsPair != null) {
           myCards.put(result, settingsPair);
@@ -307,7 +308,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
       return false;
     }
 
-    for (Map.Entry<GradleProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>> entry : myCards.entrySet()) {
+    for (Map.Entry<ProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>> entry : myCards.entrySet()) {
       if (!entry.getValue().second.validate()) {
         myTree.getSelectionModel().setSelectionPath(new TreePath(entry.getKey().getPath()));
         myOnValidateAttempt = true;

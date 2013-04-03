@@ -2,29 +2,26 @@ package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.externalSystem.model.project.ExternalProject;
+import com.intellij.openapi.externalSystem.model.project.ExternalContentRoot;
+import com.intellij.openapi.externalSystem.model.project.ExternalModule;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
-import org.jetbrains.plugins.gradle.model.gradle.GradleContentRoot;
-import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
-import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
@@ -32,17 +29,17 @@ import java.util.*;
 import java.util.List;
 
 /**
- * Manages settings of {@link GradleProject gradle project} component.
+ * Manages settings of {@link ExternalProject gradle project} component.
  * 
  * @author Denis Zhdanov
  * @since 8/12/11 2:58 PM
  */
 public class GradleProjectSettings implements GradleProjectStructureNodeSettings {
-  
+
   private static final String KEEP_IML_AT_MODULE_DIR_PROPERTY_KEY = "gradle.iml.at.module.dir";
-  
+
   @NotNull private final JComponent                myComponent;
-  @NotNull private final GradleProject             myProject;
+  @NotNull private final ExternalProject           myProject;
   @NotNull private final JComboBox                 myLanguageLevelComboBox;
   @NotNull private final DefaultComboBoxModel      mySdkModel;
   @NotNull private final TextFieldWithBrowseButton myProjectConfigLocationField;
@@ -50,7 +47,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
   @NotNull private final JRadioButton              myImlAtModuleContentRootsButton;
   @NotNull private final JRadioButton              myImlAtProjectDirButton;
 
-  public GradleProjectSettings(@NotNull GradleProject project) {
+  public GradleProjectSettings(@NotNull ExternalProject project) {
     myProject = project;
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
     myLanguageLevelComboBox = setupLanguageLevelControls(builder);
@@ -58,8 +55,10 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
     myProjectConfigLocationField = setupProjectConfigLocation(builder);
     myProjectCompileOutputLocationField = setupProjectCompileOutputLocation(builder);
     filterSdksByLanguageLevel();
-    myImlAtModuleContentRootsButton = new JBRadioButton(GradleBundle.message("gradle.import.structure.settings.label.iml.location.per.module"));
-    myImlAtProjectDirButton = new JBRadioButton(GradleBundle.message("gradle.import.structure.settings.label.iml.location.project.dir"));
+    myImlAtModuleContentRootsButton =
+      new JBRadioButton(ExternalSystemBundle.message("gradle.import.structure.settings.label.iml.location.per.module"));
+    myImlAtProjectDirButton = new JBRadioButton(
+      ExternalSystemBundle.message("gradle.import.structure.settings.label.iml.location.project.dir"));
     setModuleFilesLocationControl(builder);
     myComponent = builder.build();
     refresh();
@@ -100,7 +99,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
     }
 
     if (matchedRegisteredSdks.isEmpty()) {
-      mySdkModel.addElement(GradleBundle.message("gradle.import.structure.settings.no.sdk.for.language.level.text"));
+      mySdkModel.addElement(ExternalSystemBundle.message("gradle.import.structure.settings.no.sdk.for.language.level.text"));
     }
 
     for (Sdk sdk : matchedRegisteredSdks) {
@@ -137,7 +136,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
   @NotNull
   private TextFieldWithBrowseButton setupProjectConfigLocation(@NotNull GradleProjectSettingsBuilder builder) {
     TextFieldWithBrowseButton result = new TextFieldWithBrowseButton();
-    String title = GradleBundle.message("gradle.import.structure.settings.title.project.config.location");
+    String title = ExternalSystemBundle.message("gradle.import.structure.settings.title.project.config.location");
     result.addBrowseFolderListener(title, "", null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
     result.setText(myProject.getProjectFileDirectoryPath());
     builder.add("gradle.import.structure.settings.label.project.config.location", result);
@@ -147,7 +146,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
   @NotNull
   private TextFieldWithBrowseButton setupProjectCompileOutputLocation(@NotNull GradleProjectSettingsBuilder builder) {
     TextFieldWithBrowseButton result = new TextFieldWithBrowseButton();
-    String title = GradleBundle.message("gradle.import.structure.settings.title.project.compile.output.location");
+    String title = ExternalSystemBundle.message("gradle.import.structure.settings.title.project.compile.output.location");
     result.addBrowseFolderListener(title, "", null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
     result.setText(myProject.getCompileOutputPath());
     builder.add("gradle.import.structure.settings.label.project.compile.output.location", result);
@@ -167,8 +166,8 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
         if (e.getStateChange() != ItemEvent.SELECTED) {
           return;
         }
-        for (GradleModule module : myProject.getModules()) {
-          Collection<GradleContentRoot> contentRoots = module.getContentRoots();
+        for (ExternalModule module : myProject.getModules()) {
+          Collection<ExternalContentRoot> contentRoots = module.getContentRoots();
           if (contentRoots.isEmpty()) {
             continue;
           }
@@ -191,7 +190,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
         if (!goodDir) {
           return;
         }
-        for (GradleModule module : myProject.getModules()) {
+        for (ExternalModule module : myProject.getModules()) {
           module.setModuleFileDirectoryPath(dirPath);
         }
         PropertiesComponent.getInstance().setValue(KEEP_IML_AT_MODULE_DIR_PROPERTY_KEY, String.valueOf(false));
@@ -235,16 +234,16 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
 
   private static boolean validateDirLocation(
     @NotNull TextFieldWithBrowseButton dataHolder,
-    @NotNull @PropertyKey(resourceBundle = GradleBundle.PATH_TO_BUNDLE)String undefinedPathMessageKey,
-    @NotNull @PropertyKey(resourceBundle = GradleBundle.PATH_TO_BUNDLE) String filePathMessageKey)
+    @NotNull @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE)String undefinedPathMessageKey,
+    @NotNull @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) String filePathMessageKey)
   {
     String path = dataHolder.getText();
     if (path == null || path.trim().isEmpty()) {
-      GradleUtil.showBalloon(dataHolder, MessageType.ERROR, GradleBundle.message(undefinedPathMessageKey));
+      GradleUtil.showBalloon(dataHolder, MessageType.ERROR, ExternalSystemBundle.message(undefinedPathMessageKey));
       return false;
     }
     else if (new File(path).isFile()) {
-      GradleUtil.showBalloon(dataHolder, MessageType.ERROR, GradleBundle.message(filePathMessageKey));
+      GradleUtil.showBalloon(dataHolder, MessageType.ERROR, ExternalSystemBundle.message(filePathMessageKey));
       return false;
     }
     return true;

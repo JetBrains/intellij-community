@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.sync;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.service.project.ProjectStructureServices;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
@@ -16,14 +17,13 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleConfigNotifier;
+import org.jetbrains.plugins.gradle.config.GradleSettingsListener;
 import org.jetbrains.plugins.gradle.config.GradleLocalSettings;
 import org.jetbrains.plugins.gradle.config.GradleToolWindowPanel;
 import org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
@@ -45,7 +45,7 @@ import java.util.List;
  * @since 11/3/11 3:58 PM
  */
 public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
-  
+
   private static final int COLLAPSE_STATE_PROCESSING_DELAY_MILLIS = 200;
 
   private static final Comparator<TreePath> PATH_COMPARATOR = new Comparator<TreePath>() {
@@ -63,14 +63,14 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
 
   private final GradleLocalSettings mySettings;
 
-  private                Tree                            myTree;
-  private                GradleProjectStructureTreeModel myTreeModel;
-  private GradleProjectStructureContext myContext;
-  private Object  myNodeUnderMouse;
-  private boolean mySuppressCollapseTracking;
+  private Tree                            myTree;
+  private GradleProjectStructureTreeModel myTreeModel;
+  private ProjectStructureServices        myContext;
+  private Object                          myNodeUnderMouse;
+  private boolean                         mySuppressCollapseTracking;
 
   public GradleProjectStructureChangesPanel(@NotNull Project project,
-                                            @NotNull GradleProjectStructureContext context)
+                                            @NotNull ProjectStructureServices context)
   {
     super(project, GradleConstants.TOOL_WINDOW_TOOLBAR_PLACE);
     myContext = context;
@@ -79,7 +79,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     initContent();
 
     MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(GradleConfigNotifier.TOPIC, new GradleConfigNotifier() {
+    connection.subscribe(GradleSettingsListener.TOPIC, new GradleSettingsListener() {
 
       private boolean myRefresh;
       private boolean myInBulk;
@@ -98,11 +98,20 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
         }
       }
 
-      @Override public void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
-      @Override public void onPreferLocalGradleDistributionToWrapperChange(boolean preferLocalToWrapper) { refreshAll(); }
-      @Override public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
-      @Override public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
-      @Override public void onUseAutoImportChange(boolean oldValue, boolean newValue) {
+      @Override
+      public void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
+
+      @Override
+      public void onPreferLocalGradleDistributionToWrapperChange(boolean currentValue) { refreshAll(); }
+
+      @Override
+      public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
+
+      @Override
+      public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
+
+      @Override
+      public void onUseAutoImportChange(boolean oldValue, boolean newValue) {
         if (newValue) {
           update();
         }
@@ -219,9 +228,9 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
       if (paths == null) {
         return null;
       }
-      List<GradleProjectStructureNode<?>> result = new ArrayList<GradleProjectStructureNode<?>>();
+      List<ProjectStructureNode<?>> result = new ArrayList<ProjectStructureNode<?>>();
       for (TreePath path : paths) {
-        result.add((GradleProjectStructureNode<?>)path.getLastPathComponent());
+        result.add((ProjectStructureNode<?>)path.getLastPathComponent());
       }
       return result;
     }

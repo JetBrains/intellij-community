@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.sync
 
-import org.jetbrains.plugins.gradle.config.GradleTextAttributes
+import com.intellij.openapi.externalSystem.settings.ExternalSystemTextAttributes
 import org.jetbrains.plugins.gradle.testutil.AbstractGradleTest
 import org.junit.Test
 
@@ -110,7 +110,7 @@ class GradleOutdatedLibraryVersionTest extends AbstractGradleTest {
               library('lib-1', bin: ['jar1-1', 'jar2-1']) } } } }        
     )
 
-    applyTreeFilter(GradleTextAttributes.OUTDATED_ENTITY)
+    applyTreeFilter(ExternalSystemTextAttributes.OUTDATED_ENTITY)
     checkTree {
       project {
         module1 {
@@ -121,7 +121,7 @@ class GradleOutdatedLibraryVersionTest extends AbstractGradleTest {
           dependencies {
             'lib (1 -> 2)' ('outdated') } } } }
     
-    resetTreeFilter(GradleTextAttributes.OUTDATED_ENTITY)
+    resetTreeFilter(ExternalSystemTextAttributes.OUTDATED_ENTITY)
     checkTree {
       project {
         module1 {
@@ -234,7 +234,7 @@ class GradleOutdatedLibraryVersionTest extends AbstractGradleTest {
           dependencies {
             library('lib-1') } } } }
     init(gradle: initialProject, intellij: initialProject)
-    applyTreeFilter(GradleTextAttributes.OUTDATED_ENTITY)
+    applyTreeFilter(ExternalSystemTextAttributes.OUTDATED_ENTITY)
     setState(gradle: {
       project {
         module {

@@ -3,6 +3,7 @@ package org.jetbrains.plugins.gradle.action;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -13,7 +14,6 @@ import org.jetbrains.plugins.gradle.internal.task.GradleTaskManager;
 import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
 import org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 /**
@@ -29,8 +29,8 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
   private final Ref<String> myErrorMessage = new Ref<String>();
 
   public GradleRefreshProjectAction() {
-    getTemplatePresentation().setText(GradleBundle.message("gradle.action.refresh.project.text"));
-    getTemplatePresentation().setDescription(GradleBundle.message("gradle.action.refresh.project.description"));
+    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.refresh.project.text"));
+    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.refresh.project.description"));
   }
 
   @Override

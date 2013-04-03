@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.project.DumbAware;
@@ -10,7 +11,6 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 /**
  * Forces the IntelliJ IDEA to open {@link GradleSettings#getLinkedProjectPath() linked gradle project} at the editor
@@ -25,8 +25,8 @@ public class GradleOpenScriptAction extends AbstractGradleLinkedProjectAction im
   private static final Logger LOG = Logger.getInstance("#" + GradleOpenScriptAction.class.getName());
   
   public GradleOpenScriptAction() {
-    getTemplatePresentation().setText(GradleBundle.message("gradle.action.open.script.text"));
-    getTemplatePresentation().setDescription(GradleBundle.message("gradle.action.open.script.description"));
+    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.open.script.text"));
+    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.open.script.description"));
   }
 
   @Override

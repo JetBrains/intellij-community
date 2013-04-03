@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.remote.impl;
 
 import com.intellij.execution.rmi.RemoteObject;
+import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -15,7 +16,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.internal.task.GradleTaskId;
 import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
-import org.jetbrains.plugins.gradle.model.gradle.*;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
@@ -41,13 +41,13 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
 
   @NotNull
   @Override
-  public GradleProject resolveProjectInfo(@NotNull final GradleTaskId id, @NotNull final String projectPath, final boolean downloadLibraries)
+  public ExternalProject resolveProjectInfo(@NotNull final GradleTaskId id, @NotNull final String projectPath, final boolean downloadLibraries)
     throws RemoteException, GradleApiException, IllegalArgumentException, IllegalStateException
   {
-    return myHelper.execute(id, GradleTaskType.RESOLVE_PROJECT, projectPath, new Function<ProjectConnection, GradleProject>() {
+    return myHelper.execute(id, GradleTaskType.RESOLVE_PROJECT, projectPath, new Function<ProjectConnection, ExternalProject>() {
       @Nullable
       @Override
-      public GradleProject fun(ProjectConnection connection) {
+      public ExternalProject fun(ProjectConnection connection) {
         return doResolveProjectInfo(id, projectPath, connection, downloadLibraries);
       }
     });
@@ -65,7 +65,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
 
   @NotNull
-  private GradleProject doResolveProjectInfo(@NotNull final GradleTaskId id,
+  private ExternalProject doResolveProjectInfo(@NotNull final GradleTaskId id,
                                              @NotNull String projectPath,
                                              @NotNull ProjectConnection connection,
                                              boolean downloadLibraries)
@@ -73,21 +73,21 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   {
     ModelBuilder<? extends IdeaProject> modelBuilder = myHelper.getModelBuilder(id, connection, downloadLibraries);
     IdeaProject project = modelBuilder.get();
-    GradleProject result = populateProject(project, projectPath);
+    ExternalProject result = populateProject(project, projectPath);
 
     // We need two different steps ('create' and 'populate') in order to handle module dependencies, i.e. when one module is
     // configured to be dependency for another one, corresponding dependency module object should be available during
     // populating dependent module object.
-    Map<String, Pair<GradleModule, IdeaModule>> modules = createModules(project, result);
+    Map<String, Pair<ExternalModule, IdeaModule>> modules = createModules(project, result);
     populateModules(modules.values(), result);
     myLibraryNamesMixer.mixNames(result.getLibraries());
     return result;
   }
 
-  private static GradleProject populateProject(@NotNull IdeaProject project, @NotNull String projectPath) {
+  private static ExternalProject populateProject(@NotNull IdeaProject project, @NotNull String projectPath) {
     String projectDirPath = GradleUtil.toCanonicalPath(PathUtil.getParentPath(projectPath));
     // Gradle API doesn't expose project compile output path yet.
-    GradleProject result = new GradleProject(projectDirPath, projectDirPath + "/out");
+    ExternalProject result = new ExternalProject(projectDirPath, projectDirPath + "/out", id);
     result.setName(project.getName());
     result.setJdkVersion(project.getJdkName());
     result.setLanguageLevel(project.getLanguageLevel().getLevel());
@@ -95,15 +95,15 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
 
   @NotNull
-  private static Map<String, Pair<GradleModule, IdeaModule>> createModules(@NotNull IdeaProject gradleProject,
-                                                                           @NotNull GradleProject intellijProject)
+  private static Map<String, Pair<ExternalModule, IdeaModule>> createModules(@NotNull IdeaProject gradleProject,
+                                                                           @NotNull ExternalProject intellijProject)
     throws IllegalStateException
   {
     DomainObjectSet<? extends IdeaModule> gradleModules = gradleProject.getModules();
     if (gradleModules == null || gradleModules.isEmpty()) {
       throw new IllegalStateException("No modules found for the target project: " + gradleProject);
     }
-    Map<String, Pair<GradleModule, IdeaModule>> result = new HashMap<String, Pair<GradleModule, IdeaModule>>();
+    Map<String, Pair<ExternalModule, IdeaModule>> result = new HashMap<String, Pair<ExternalModule, IdeaModule>>();
     for (IdeaModule gradleModule : gradleModules) {
       if (gradleModule == null) {
         continue;
@@ -112,31 +112,31 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
       if (moduleName == null) {
         throw new IllegalStateException("Module with undefined name detected: " + gradleModule);
       }
-      GradleModule intellijModule = new GradleModule(moduleName, intellijProject.getProjectFileDirectoryPath());
-      Pair<GradleModule, IdeaModule> previouslyParsedModule = result.get(moduleName);
+      ExternalModule intellijModule = new ExternalModule(moduleName, intellijProject.getProjectFileDirectoryPath());
+      Pair<ExternalModule, IdeaModule> previouslyParsedModule = result.get(moduleName);
       if (previouslyParsedModule != null) {
         throw new IllegalStateException(
           String.format("Modules with duplicate name (%s) detected: '%s' and '%s'", moduleName, intellijModule, previouslyParsedModule)
         );
       }
-      result.put(moduleName, new Pair<GradleModule, IdeaModule>(intellijModule, gradleModule));
+      result.put(moduleName, new Pair<ExternalModule, IdeaModule>(intellijModule, gradleModule));
       intellijProject.addModule(intellijModule);
     }
     return result;
   }
 
-  private static void populateModules(@NotNull Iterable<Pair<GradleModule,IdeaModule>> modules, 
-                                      @NotNull GradleProject intellijProject)
+  private static void populateModules(@NotNull Iterable<Pair<ExternalModule,IdeaModule>> modules, 
+                                      @NotNull ExternalProject intellijProject)
     throws IllegalArgumentException, IllegalStateException
   {
-    for (Pair<GradleModule, IdeaModule> pair : modules) {
+    for (Pair<ExternalModule, IdeaModule> pair : modules) {
       populateModule(pair.second, pair.first, intellijProject);
     }
   }
 
   private static void populateModule(@NotNull IdeaModule gradleModule,
-                                     @NotNull GradleModule intellijModule,
-                                     @NotNull GradleProject intellijProject)
+                                     @NotNull ExternalModule intellijModule,
+                                     @NotNull ExternalProject intellijProject)
     throws IllegalArgumentException, IllegalStateException
   {
     populateContentRoots(gradleModule, intellijModule);
@@ -145,14 +145,14 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
 
   /**
-   * Populates {@link GradleModule#getContentRoots() content roots} of the given intellij module on the basis of the information
+   * Populates {@link com.intellij.openapi.externalSystem.model.project.ExternalModule#getContentRoots() content roots} of the given intellij module on the basis of the information
    * contained at the given gradle module.
    * 
    * @param gradleModule    holder of the module information received from the gradle tooling api
    * @param intellijModule  corresponding module from intellij gradle plugin domain
    * @throws IllegalArgumentException   if given gradle module contains invalid data
    */
-  private static void populateContentRoots(@NotNull IdeaModule gradleModule, @NotNull GradleModule intellijModule)
+  private static void populateContentRoots(@NotNull IdeaModule gradleModule, @NotNull ExternalModule intellijModule)
     throws IllegalArgumentException
   {
     DomainObjectSet<? extends IdeaContentRoot> contentRoots = gradleModule.getContentRoots();
@@ -167,7 +167,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
       if (rootDirectory == null) {
         continue;
       }
-      GradleContentRoot intellijContentRoot = new GradleContentRoot(intellijModule, rootDirectory.getAbsolutePath());
+      ExternalContentRoot intellijContentRoot = new ExternalContentRoot(intellijModule, rootDirectory.getAbsolutePath());
       populateContentRoot(intellijContentRoot, SourceType.SOURCE, gradleContentRoot.getSourceDirectories());
       populateContentRoot(intellijContentRoot, SourceType.TEST, gradleContentRoot.getTestDirectories());
       Set<File> excluded = gradleContentRoot.getExcludeDirectories();
@@ -186,9 +186,9 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
    * @param contentRoot  target paths info holder
    * @param type         type of data located at the given directories
    * @param dirs         directories which paths should be stored at the given content root
-   * @throws IllegalArgumentException   if specified by {@link GradleContentRoot#storePath(SourceType, String)} 
+   * @throws IllegalArgumentException   if specified by {@link com.intellij.openapi.externalSystem.model.project.ExternalContentRoot#storePath(SourceType, String)} 
    */
-  private static void populateContentRoot(@NotNull GradleContentRoot contentRoot,
+  private static void populateContentRoot(@NotNull ExternalContentRoot contentRoot,
                                           @NotNull SourceType type,
                                           @Nullable Iterable<? extends IdeaSourceDirectory> dirs)
     throws IllegalArgumentException
@@ -202,7 +202,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
   
   private static void populateCompileOutputSettings(@Nullable IdeaCompilerOutput gradleSettings,
-                                                    @NotNull GradleModule intellijModule)
+                                                    @NotNull ExternalModule intellijModule)
   {
     if (gradleSettings == null) {
       return;
@@ -223,8 +223,8 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
 
   private static void populateDependencies(@NotNull IdeaModule gradleModule,
-                                           @NotNull GradleModule intellijModule, 
-                                           @NotNull GradleProject intellijProject)
+                                           @NotNull ExternalModule intellijModule, 
+                                           @NotNull ExternalProject intellijProject)
   {
     DomainObjectSet<? extends IdeaDependency> dependencies = gradleModule.getDependencies();
     if (dependencies == null) {
@@ -234,7 +234,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
       if (dependency == null) {
         continue;
       }
-      AbstractGradleDependency intellijDependency = null;
+      AbstractExternalDependency intellijDependency = null;
       if (dependency instanceof IdeaModuleDependency) {
         intellijDependency = buildDependency(intellijModule, (IdeaModuleDependency)dependency, intellijProject);
       }
@@ -256,9 +256,9 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
 
   @NotNull
-  private static AbstractGradleDependency buildDependency(@NotNull GradleModule ownerModule,
+  private static AbstractExternalDependency buildDependency(@NotNull ExternalModule ownerModule,
                                                           @NotNull IdeaModuleDependency dependency,
-                                                          @NotNull GradleProject intellijProject)
+                                                          @NotNull ExternalProject intellijProject)
     throws IllegalStateException
   {
     IdeaModule module = dependency.getDependencyModule();
@@ -276,10 +276,10 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     }
     
     Set<String> registeredModuleNames = new HashSet<String>();
-    for (GradleModule gradleModule : intellijProject.getModules()) {
+    for (ExternalModule gradleModule : intellijProject.getModules()) {
       registeredModuleNames.add(gradleModule.getName());
       if (gradleModule.getName().equals(moduleName)) {
-        return new GradleModuleDependency(ownerModule, gradleModule);
+        return new ExternalModuleDependency(ownerModule, gradleModule);
       }
     }
     throw new IllegalStateException(String.format(
@@ -289,9 +289,9 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
   }
 
   @NotNull
-  private static AbstractGradleDependency buildDependency(@NotNull GradleModule ownerModule,
+  private static AbstractExternalDependency buildDependency(@NotNull ExternalModule ownerModule,
                                                           @NotNull IdeaSingleEntryLibraryDependency dependency, 
-                                                          @NotNull GradleProject intellijProject)
+                                                          @NotNull ExternalProject intellijProject)
     throws IllegalStateException
   {
     File binaryPath = dependency.getFile();
@@ -302,7 +302,7 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     }
     
     // Gradle API doesn't provide library name at the moment.
-    GradleLibrary library = new GradleLibrary(FileUtil.getNameWithoutExtension(binaryPath));
+    ExternalLibrary library = new ExternalLibrary(FileUtil.getNameWithoutExtension(binaryPath));
     library.addPath(LibraryPathType.BINARY, binaryPath.getAbsolutePath());
 
     File sourcePath = dependency.getSource();
@@ -316,14 +316,14 @@ public class GradleProjectResolverImpl extends RemoteObject implements GradlePro
     }
 
     if (!intellijProject.addLibrary(library)) {
-      for (GradleLibrary registeredLibrary : intellijProject.getLibraries()) {
+      for (ExternalLibrary registeredLibrary : intellijProject.getLibraries()) {
         if (registeredLibrary.equals(library)) {
-          return new GradleLibraryDependency(ownerModule, registeredLibrary);
+          return new ExternalLibraryDependency(ownerModule, registeredLibrary);
         }
       }
     }
     
-    return new GradleLibraryDependency(ownerModule, library);
+    return new ExternalLibraryDependency(ownerModule, library);
   }
 
   @Nullable

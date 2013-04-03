@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -71,8 +71,8 @@ public class GradleProjectSettingsBuilder {
    * @param labelKey  bundle key to use for retrieving setting's label name
    * @param control   GUI control for managing target setting's value
    */
-  public void add(@NotNull @PropertyKey(resourceBundle = GradleBundle.PATH_TO_BUNDLE) String labelKey, @NotNull JComponent control) {
-    myResult.add(new JLabel(GradleBundle.message(labelKey)), myKeyConstraint);
+  public void add(@NotNull @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) String labelKey, @NotNull JComponent control) {
+    myResult.add(new JLabel(ExternalSystemBundle.message(labelKey)), myKeyConstraint);
     myResult.add(control, myValueConstraint);
   }
 

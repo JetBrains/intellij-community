@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -26,7 +27,6 @@ import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
 import org.jetbrains.plugins.gradle.remote.GradleBuildManager;
 import org.jetbrains.plugins.gradle.tasks.GradleTasksModel;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.Collection;
@@ -82,6 +82,6 @@ public class GradleRefreshTasksListTask extends AbstractGradleTask {
   @Override
   @NotNull
   protected String wrapProgressText(@NotNull String text) {
-    return GradleBundle.message("gradle.tasks.progress.update.text", text);
+    return ExternalSystemBundle.message("gradle.tasks.progress.update.text", text);
   }
 }

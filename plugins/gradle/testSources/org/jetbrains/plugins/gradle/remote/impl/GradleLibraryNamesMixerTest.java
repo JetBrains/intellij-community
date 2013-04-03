@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.gradle.remote.impl;
 
+import com.intellij.openapi.externalSystem.model.project.ExternalLibrary;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
-import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
+import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import org.junit.Before;
 import org.junit.Test;
 
@@ -37,17 +37,17 @@ public class GradleLibraryNamesMixerTest {
   }
 
   private void doTest(TestDataEntry... entries) {
-    Map<GradleLibrary, String> expected = new IdentityHashMap<GradleLibrary, String>();
-    List<GradleLibrary> libraries = new ArrayList<GradleLibrary>();
+    Map<ExternalLibrary, String> expected = new IdentityHashMap<ExternalLibrary, String>();
+    List<ExternalLibrary> libraries = new ArrayList<ExternalLibrary>();
     for (TestDataEntry entry : entries) {
-      GradleLibrary library = new GradleLibrary(entry.initialName);
+      ExternalLibrary library = new ExternalLibrary(entry.initialName);
       library.addPath(LibraryPathType.BINARY, entry.path);
       libraries.add(library);
       expected.put(library, entry.expectedName);
     }
     
     myMixer.mixNames(libraries);
-    for (GradleLibrary library : libraries) {
+    for (ExternalLibrary library : libraries) {
       assertEquals(expected.get(library), library.getName());
     }
   }

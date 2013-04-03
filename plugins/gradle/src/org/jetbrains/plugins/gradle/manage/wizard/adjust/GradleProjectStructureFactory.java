@@ -1,13 +1,13 @@
 package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
+import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.project.id.EntityIdMapper;
+import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.gradle.*;
-import org.jetbrains.plugins.gradle.model.id.GradleEntityId;
-import org.jetbrains.plugins.gradle.model.id.GradleEntityIdMapper;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNodeDescriptor;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.tree.DefaultTreeModel;
@@ -32,101 +32,101 @@ public class GradleProjectStructureFactory {
 
   @SuppressWarnings({"MethodMayBeStatic", "unchecked"})
   @NotNull
-  public <T extends GradleEntity> GradleProjectStructureNodeDescriptor<GradleEntityId> buildDescriptor(@NotNull T entity) {
+  public <T extends ExternalEntity> ProjectStructureNodeDescriptor<ProjectEntityId> buildDescriptor(@NotNull T entity) {
     final Ref<String> text = new Ref<String>();
-    entity.invite(new GradleEntityVisitor() {
+    entity.invite(new ExternalEntityVisitor() {
       @Override
-      public void visit(@NotNull GradleProject project) {
+      public void visit(@NotNull ExternalProject project) {
         text.set(project.getName());
       }
 
       @Override
-      public void visit(@NotNull GradleModule module) {
+      public void visit(@NotNull ExternalModule module) {
         text.set(module.getName());
       }
 
       @Override
-      public void visit(@NotNull GradleContentRoot contentRoot) {
-        text.set(GradleBundle.message("gradle.import.structure.tree.node.content.root"));
+      public void visit(@NotNull ExternalContentRoot contentRoot) {
+        text.set(ExternalSystemBundle.message("gradle.import.structure.tree.node.content.root"));
       }
 
       @Override
-      public void visit(@NotNull GradleLibrary library) {
+      public void visit(@NotNull ExternalLibrary library) {
         text.set(library.getName());
       }
 
       @Override
-      public void visit(@NotNull GradleJar jar) {
+      public void visit(@NotNull Jar jar) {
         text.set(GradleUtil.extractNameFromPath(jar.getPath()));
       }
 
       @Override
-      public void visit(@NotNull GradleModuleDependency dependency) {
+      public void visit(@NotNull ExternalModuleDependency dependency) {
         visit(dependency.getTarget());
       }
 
       @Override
-      public void visit(@NotNull GradleLibraryDependency dependency) {
+      public void visit(@NotNull ExternalLibraryDependency dependency) {
         visit(dependency.getTarget());
       }
 
       @Override
-      public void visit(@NotNull GradleCompositeLibraryDependency dependency) {
+      public void visit(@NotNull ExternalCompositeLibraryDependency dependency) {
         assert false; // We don't expect outdated library during importing project.
       }
     });
-    return GradleUtil.buildDescriptor(GradleEntityIdMapper.mapEntityToId(entity), text.get());
+    return GradleUtil.buildDescriptor(EntityIdMapper.mapEntityToId(entity), text.get());
   }
 
   @SuppressWarnings("MethodMayBeStatic")
   @NotNull
-  public GradleProjectStructureNodeSettings buildSettings(@NotNull GradleEntity entity,
+  public GradleProjectStructureNodeSettings buildSettings(@NotNull ExternalEntity entity,
                                                           @NotNull final DefaultTreeModel treeModel,
-                                                          @NotNull final Collection<GradleProjectStructureNode> treeNodes)
+                                                          @NotNull final Collection<ProjectStructureNode> treeNodes)
   {
     final Ref<GradleProjectStructureNodeSettings> result = new Ref<GradleProjectStructureNodeSettings>();
-    entity.invite(new GradleEntityVisitor() {
+    entity.invite(new ExternalEntityVisitor() {
       @Override
-      public void visit(@NotNull GradleProject project) {
+      public void visit(@NotNull ExternalProject project) {
         setupController(project, treeModel, treeNodes);
         result.set(new GradleProjectSettings(project));
       }
 
       @Override
-      public void visit(@NotNull GradleModule module) {
+      public void visit(@NotNull ExternalModule module) {
         setupController(module, treeModel, treeNodes);
         result.set(new GradleModuleSettings(module)); 
       }
 
       @Override
-      public void visit(@NotNull GradleContentRoot contentRoot) {
+      public void visit(@NotNull ExternalContentRoot contentRoot) {
         result.set(new GradleContentRootSettings(contentRoot));
       }
 
       @Override
-      public void visit(@NotNull GradleLibrary library) {
+      public void visit(@NotNull ExternalLibrary library) {
         result.set(new GradleLibrarySettings()); 
       }
 
       @Override
-      public void visit(@NotNull GradleJar jar) {
+      public void visit(@NotNull Jar jar) {
         result.set(new GradleJarSettings(jar)); 
       }
 
       @Override
-      public void visit(@NotNull GradleModuleDependency dependency) {
+      public void visit(@NotNull ExternalModuleDependency dependency) {
         setupController(dependency, treeModel, treeNodes);
         result.set(new GradleModuleDependencySettings(dependency));
       }
 
       @Override
-      public void visit(@NotNull GradleLibraryDependency dependency) {
+      public void visit(@NotNull ExternalLibraryDependency dependency) {
         setupController(dependency, treeModel, treeNodes);
         result.set(new GradleLibraryDependencySettings(dependency));
       }
 
       @Override
-      public void visit(@NotNull GradleCompositeLibraryDependency dependency) {
+      public void visit(@NotNull ExternalCompositeLibraryDependency dependency) {
         assert false; // We don't expect outdated library during importing project. 
       }
     });
@@ -141,8 +141,8 @@ public class GradleProjectStructureFactory {
    * @param treeNodes       tree nodes that represent the given entity
    */
   @SuppressWarnings("unchecked")
-  private static void setupController(@NotNull final GradleEntity entity, @NotNull final DefaultTreeModel model,
-                                       @NotNull final Collection<GradleProjectStructureNode> treeNodes)
+  private static void setupController(@NotNull final ExternalEntity entity, @NotNull final DefaultTreeModel model,
+                                       @NotNull final Collection<ProjectStructureNode> treeNodes)
   {
     
     entity.addPropertyChangeListener(new PropertyChangeListener() {
@@ -151,7 +151,7 @@ public class GradleProjectStructureFactory {
         if (!Named.NAME_PROPERTY.equals(evt.getPropertyName())) {
           return;
         }
-        for (GradleProjectStructureNode node : treeNodes) {
+        for (ProjectStructureNode node : treeNodes) {
           node.getDescriptor().setName(evt.getNewValue().toString());
           model.nodeChanged(node);
         }

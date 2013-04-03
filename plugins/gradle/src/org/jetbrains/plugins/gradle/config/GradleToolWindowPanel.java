@@ -4,6 +4,7 @@ import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.text.StringUtil;
@@ -16,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector;
 import org.jetbrains.plugins.gradle.ui.RichTextControlBuilder;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;
 import java.awt.*;
@@ -59,7 +59,7 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     setContent(myContent);
 
     MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(GradleConfigNotifier.TOPIC, new GradleConfigNotifierAdapter() {
+    connection.subscribe(GradleSettingsListener.TOPIC, new GradleSettingsListenerAdapter() {
       
       @Override public void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath) {
         if (StringUtil.isEmpty(newPath)) {
@@ -99,7 +99,7 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     builder.setBackgroundColor(payloadControl.getBackground());
     builder.setForegroundColor(UIUtil.getInactiveTextColor());
     builder.setFont(payloadControl.getFont());
-    builder.setText(GradleBundle.message("gradle.toolwindow.text.no.linked.project"));
+    builder.setText(ExternalSystemBundle.message("gradle.toolwindow.text.no.linked.project"));
     final JComponent noLinkedProjectControl = builder.build();
     myContent.add(noLinkedProjectControl, NON_LINKED_CARD_NAME);
     update();

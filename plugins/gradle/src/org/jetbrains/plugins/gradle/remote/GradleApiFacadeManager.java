@@ -18,6 +18,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.*;
@@ -42,7 +43,6 @@ import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManag
 import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl;
 import org.jetbrains.plugins.gradle.remote.impl.GradleApiFacadeImpl;
 import org.jetbrains.plugins.gradle.remote.wrapper.GradleApiFacadeWrapper;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -162,12 +162,12 @@ public class GradleApiFacadeManager {
         // Gradle plugin jars
         ContainerUtil.addIfNotNull(PathUtil.getJarPathForClass(getClass()), classPath);
         addBundle(params.getClassPath(), "messages.CommonBundle");
-        addBundle(params.getClassPath(), GradleBundle.PATH_TO_BUNDLE);
+        addBundle(params.getClassPath(), ExternalSystemBundle.PATH_TO_BUNDLE);
         
         // Gradle tool jars.
         String toolingApiPath = PathManager.getJarPathForClass(ProjectConnection.class);
         if (toolingApiPath == null) {
-          GradleLog.LOG.warn(GradleBundle.message("gradle.generic.text.error.jar.not.found"));
+          GradleLog.LOG.warn(ExternalSystemBundle.message("gradle.generic.text.error.jar.not.found"));
           throw new ExecutionException("Can't find gradle libraries");
         }
         File gradleJarsDir = new File(toolingApiPath).getParentFile();
@@ -178,7 +178,7 @@ public class GradleApiFacadeManager {
           }
         });
         if (gradleJars == null) {
-          GradleLog.LOG.warn(GradleBundle.message("gradle.generic.text.error.jar.not.found"));
+          GradleLog.LOG.warn(ExternalSystemBundle.message("gradle.generic.text.error.jar.not.found"));
           throw new ExecutionException("Can't find gradle libraries at " + gradleJarsDir.getAbsolutePath());
         }
         for (String jar : gradleJars) {

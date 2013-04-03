@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.gradle.remote;
 
+import com.intellij.openapi.externalSystem.model.project.ExternalProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
 import org.jetbrains.plugins.gradle.internal.task.GradleTaskId;
 import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
@@ -23,7 +23,7 @@ public interface GradleProjectResolver extends RemoteGradleService {
   /** <a href="http://en.wikipedia.org/wiki/Null_Object_pattern">Null object</a> for {@link GradleProjectResolver}. */
   GradleProjectResolver NULL_OBJECT = new GradleProjectResolver() {
     @Override
-    public GradleProject resolveProjectInfo(@NotNull GradleTaskId id, @NotNull String projectPath, boolean downloadLibraries) {
+    public ExternalProject resolveProjectInfo(@NotNull GradleTaskId id, @NotNull String projectPath, boolean downloadLibraries) {
       return null;
     }
 
@@ -46,18 +46,18 @@ public interface GradleProjectResolver extends RemoteGradleService {
       return Collections.emptyMap();
     }
   };
-  
+
   /**
    * Builds object-level representation of the gradle project file contained at the target directory (dependencies are not resolved
    * during that).
    * <p/>
    * <b>Note:</b> gradle api doesn't allow to explicitly define project file to use though it's possible to do that via
    * command-line switch. So, we want to treat the argument as a target project file name when that is supported.
-   * 
+   *
    * @param id                id of the current 'resolve project info' task
    * @param projectPath       absolute path to the gradle project file
    * @param downloadLibraries flag that specifies if third-party libraries that are not available locally should be resolved (downloaded)
-   * @return                  object-level representation of the target gradle project; <code>null</code> if it's not possible to
+   * @return object-level representation of the target gradle project; <code>null</code> if it's not possible to
    *                          resolve the project due to the objective reasons (e.g. gradle location is unknown)
    * @throws RemoteException            in case of unexpected exception during remote communications
    * @throws GradleApiException      in case of unexpected exception thrown from Gradle API
@@ -66,6 +66,6 @@ public interface GradleProjectResolver extends RemoteGradleService {
    * @throws IllegalStateException      if it's not possible to resolve target project info
    */
   @Nullable
-  GradleProject resolveProjectInfo(@NotNull GradleTaskId id, @NotNull String projectPath, boolean downloadLibraries)
+  ExternalProject resolveProjectInfo(@NotNull GradleTaskId id, @NotNull String projectPath, boolean downloadLibraries)
     throws RemoteException, GradleApiException, IllegalArgumentException, IllegalStateException;
 }

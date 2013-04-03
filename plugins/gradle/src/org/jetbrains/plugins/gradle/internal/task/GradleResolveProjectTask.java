@@ -1,14 +1,14 @@
 package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.project.ExternalProject;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
 import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
+import com.intellij.openapi.externalSystem.service.project.change.ProjectStructureChangesModel;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -19,12 +19,12 @@ import java.util.concurrent.atomic.AtomicReference;
  * @since 1/24/12 7:21 AM
  */
 public class GradleResolveProjectTask extends AbstractGradleTask {
-  
-  private final AtomicReference<GradleProject> myGradleProject = new AtomicReference<GradleProject>();
-  
+
+  private final AtomicReference<ExternalProject> myGradleProject = new AtomicReference<ExternalProject>();
+
   @NotNull private final String  myProjectPath;
-  private final boolean myResolveLibraries;
-  
+  private final          boolean myResolveLibraries;
+
   public GradleResolveProjectTask(@Nullable Project project, @NotNull String projectPath, boolean resolveLibraries) {
     super(project, GradleTaskType.RESOLVE_PROJECT);
     myProjectPath = projectPath;
@@ -37,11 +37,11 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
     GradleProjectResolver resolver = manager.getFacade(ideProject).getResolver();
     setState(GradleTaskState.IN_PROGRESS);
 
-    GradleProjectStructureChangesModel model = null;
+    ProjectStructureChangesModel model = null;
     if (ideProject != null && !ideProject.isDisposed()) {
-      model = ServiceManager.getService(ideProject, GradleProjectStructureChangesModel.class);
+      model = ServiceManager.getService(ideProject, ProjectStructureChangesModel.class);
     }
-    final GradleProject project;
+    final ExternalProject project;
     try {
       project = resolver.resolveProjectInfo(getId(), myProjectPath, myResolveLibraries);
     }
@@ -67,13 +67,13 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
   }
 
   @Nullable
-  public GradleProject getGradleProject() {
+  public ExternalProject getGradleProject() {
     return myGradleProject.get();
   }
 
   @Override
   @NotNull
   protected String wrapProgressText(@NotNull String text) {
-    return GradleBundle.message("gradle.sync.progress.update.text", text);
+    return ExternalSystemBundle.message("gradle.sync.progress.update.text", text);
   }
 }

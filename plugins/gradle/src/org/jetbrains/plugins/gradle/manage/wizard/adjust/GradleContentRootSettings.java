@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
 import com.intellij.ide.util.projectWizard.NamePathComponent;
+import com.intellij.openapi.externalSystem.model.project.ExternalContentRoot;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.gradle.GradleContentRoot;
-import org.jetbrains.plugins.gradle.model.gradle.SourceType;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
+import com.intellij.openapi.externalSystem.model.project.SourceType;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -19,15 +19,15 @@ public class GradleContentRootSettings implements GradleProjectStructureNodeSett
 
   private static final Map<SourceType, String> ROOT_TYPE_TITLES = new EnumMap<SourceType, String>(SourceType.class);
   static {
-    ROOT_TYPE_TITLES.put(SourceType.SOURCE, GradleBundle.message("gradle.import.structure.settings.label.root.source"));
-    ROOT_TYPE_TITLES.put(SourceType.TEST, GradleBundle.message("gradle.import.structure.settings.label.root.test"));
-    ROOT_TYPE_TITLES.put(SourceType.EXCLUDED, GradleBundle.message("gradle.import.structure.settings.label.root.excluded"));
+    ROOT_TYPE_TITLES.put(SourceType.SOURCE, ExternalSystemBundle.message("gradle.import.structure.settings.label.root.source"));
+    ROOT_TYPE_TITLES.put(SourceType.TEST, ExternalSystemBundle.message("gradle.import.structure.settings.label.root.test"));
+    ROOT_TYPE_TITLES.put(SourceType.EXCLUDED, ExternalSystemBundle.message("gradle.import.structure.settings.label.root.excluded"));
     assert ROOT_TYPE_TITLES.size() == SourceType.values().length;
   }
 
   @NotNull private final JComponent myComponent;
 
-  public GradleContentRootSettings(@NotNull GradleContentRoot contentRoot) {
+  public GradleContentRootSettings(@NotNull ExternalContentRoot contentRoot) {
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
     for (SourceType sourceType : SourceType.values()) {
       Collection<String> paths = contentRoot.getPaths(sourceType);

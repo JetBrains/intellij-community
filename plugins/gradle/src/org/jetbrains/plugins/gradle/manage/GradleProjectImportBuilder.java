@@ -2,6 +2,13 @@ package org.jetbrains.plugins.gradle.manage;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.project.ExternalProject;
+import com.intellij.openapi.externalSystem.model.project.ExternalLibrary;
+import com.intellij.openapi.externalSystem.model.project.ExternalModule;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalDependencyManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalLibraryManager;
+import com.intellij.openapi.externalSystem.service.project.manage.ExternalModuleManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
@@ -28,16 +35,12 @@ import com.intellij.util.ui.UIUtil;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.autoimport.GradleUserProjectChangesCalculator;
+import com.intellij.openapi.externalSystem.service.project.change.user.GradleUserProjectChangesCalculator;
 import org.jetbrains.plugins.gradle.config.GradleConfigurable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
-import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
-import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
-import org.jetbrains.plugins.gradle.model.gradle.GradleProject;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesModel;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureHelper;
+import com.intellij.openapi.externalSystem.service.project.change.ProjectStructureChangesModel;
+import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import org.jetbrains.plugins.gradle.internal.task.GradleResolveProjectTask;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleLog;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -56,18 +59,18 @@ import java.util.Set;
  * @since 8/1/11 1:29 PM
  */
 @SuppressWarnings("MethodMayBeStatic")
-public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProject> {
+public class GradleProjectImportBuilder extends ProjectImportBuilder<ExternalProject> {
 
-  @NotNull private final GradleModuleManager     myModuleManager;
-  @NotNull private final GradleLibraryManager    myLibraryManager;
-  @NotNull private final GradleDependencyManager myDependencyManager;
+  @NotNull private final ExternalModuleManager     myModuleManager;
+  @NotNull private final ExternalLibraryManager    myLibraryManager;
+  @NotNull private final ExternalDependencyManager myDependencyManager;
 
-  private GradleProject      myGradleProject;
+  private ExternalProject    myGradleProject;
   private GradleConfigurable myConfigurable;
 
-  public GradleProjectImportBuilder(@NotNull GradleModuleManager moduleManager,
-                                    @NotNull GradleLibraryManager libraryManager,
-                                    @NotNull GradleDependencyManager manager)
+  public GradleProjectImportBuilder(@NotNull ExternalModuleManager moduleManager,
+                                    @NotNull ExternalLibraryManager libraryManager,
+                                    @NotNull ExternalDependencyManager manager)
   {
     myModuleManager = moduleManager;
     myLibraryManager = libraryManager;
@@ -77,7 +80,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
   @NotNull
   @Override
   public String getName() {
-    return GradleBundle.message("gradle.name");
+    return ExternalSystemBundle.message("gradle.name");
   }
 
   @Override
@@ -86,17 +89,17 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
   }
 
   @Override
-  public List<GradleProject> getList() {
+  public List<ExternalProject> getList() {
     return Arrays.asList(myGradleProject);
   }
 
   @Override
-  public boolean isMarked(GradleProject element) {
+  public boolean isMarked(ExternalProject element) {
     return true;
   }
 
   @Override
-  public void setList(List<GradleProject> gradleProjects) {
+  public void setList(List<ExternalProject> gradleProjects) {
   }
 
   @Override
@@ -127,7 +130,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
                              ModifiableArtifactModel artifactModel)
   {
     System.setProperty(GradleConstants.NEWLY_IMPORTED_PROJECT, Boolean.TRUE.toString());
-    final GradleProject gradleProject = getGradleProject();
+    final ExternalProject gradleProject = getGradleProject();
     if (gradleProject != null) {
       final LanguageLevel gradleLanguageLevel = gradleProject.getLanguageLevel();
       final LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
@@ -167,12 +170,12 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
             @Override
             public void run() {
               ProgressManager.getInstance().run(
-                new Task.Backgroundable(project, GradleBundle.message("gradle.library.resolve.progress.text"), false) {
+                new Task.Backgroundable(project, ExternalSystemBundle.message("gradle.library.resolve.progress.text"), false) {
                   @Override
                   public void run(@NotNull final ProgressIndicator indicator) {
                     GradleResolveProjectTask task = new GradleResolveProjectTask(project, linkedProjectPath, true);
                     task.execute(indicator);
-                    GradleProject projectWithResolvedLibraries = task.getGradleProject();
+                    ExternalProject projectWithResolvedLibraries = task.getGradleProject();
                     if (projectWithResolvedLibraries == null) {
                       return;
                     }
@@ -209,8 +212,8 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
    * @param project                       current intellij project which should be configured by libraries and module library
    *                                      dependencies information available at the given gradle project
    */
-  private void setupLibraries(final GradleProject projectWithResolvedLibraries, final Project project) {
-    final Set<? extends GradleLibrary> libraries = projectWithResolvedLibraries.getLibraries();
+  private void setupLibraries(final ExternalProject projectWithResolvedLibraries, final Project project) {
+    final Set<? extends ExternalLibrary> libraries = projectWithResolvedLibraries.getLibraries();
     GradleUtil.executeProjectChangeAction(project, libraries, new Runnable() {
       @Override
       public void run() {
@@ -238,14 +241,14 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
 
             // Register libraries.
             myLibraryManager.importLibraries(projectWithResolvedLibraries.getLibraries(), project, false);
-            GradleProjectStructureHelper helper = ServiceManager.getService(project, GradleProjectStructureHelper.class);
-            for (GradleModule module : projectWithResolvedLibraries.getModules()) {
+            ProjectStructureHelper helper = ServiceManager.getService(project, ProjectStructureHelper.class);
+            for (ExternalModule module : projectWithResolvedLibraries.getModules()) {
               Module intellijModule = helper.findIdeModule(module);
               assert intellijModule != null;
               myDependencyManager.importDependencies(module.getDependencies(), intellijModule, false);
             }
 
-            GradleProjectStructureChangesModel changesModel = ServiceManager.getService(project, GradleProjectStructureChangesModel.class);
+            ProjectStructureChangesModel changesModel = ServiceManager.getService(project, ProjectStructureChangesModel.class);
             changesModel.update(projectWithResolvedLibraries);
           }
         });
@@ -278,10 +281,10 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
   public void ensureProjectIsDefined(@NotNull WizardContext wizardContext) throws ConfigurationException {
     File projectFile = getProjectFile();
     if (projectFile == null) {
-      throw new ConfigurationException(GradleBundle.message("gradle.import.text.error.project.undefined"));
+      throw new ConfigurationException(ExternalSystemBundle.message("gradle.import.text.error.project.undefined"));
     }
     if (projectFile.isDirectory()) {
-      throw new ConfigurationException(GradleBundle.message("gradle.import.text.error.directory.instead.file"));
+      throw new ConfigurationException(ExternalSystemBundle.message("gradle.import.text.error.directory.instead.file"));
     }
     final Ref<String> errorReason = new Ref<String>();
     final Ref<String> errorDetails = new Ref<String>();
@@ -290,7 +293,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
       myGradleProject = GradleUtil.refreshProject(project, projectFile.getAbsolutePath(), errorReason, errorDetails, false, true);
     }
     catch (IllegalArgumentException e) {
-      throw new ConfigurationException(e.getMessage(), GradleBundle.message("gradle.import.text.error.cannot.parse.project"));
+      throw new ConfigurationException(e.getMessage(), ExternalSystemBundle.message("gradle.import.text.error.cannot.parse.project"));
     }
     if (myGradleProject == null) {
       final String details = errorDetails.get();
@@ -300,17 +303,17 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<GradleProje
       String errorMessage;
       String reason = errorReason.get();
       if (reason == null) {
-        errorMessage = GradleBundle.message("gradle.import.text.error.resolve.generic.without.reason", projectFile.getPath());
+        errorMessage = ExternalSystemBundle.message("gradle.import.text.error.resolve.generic.without.reason", projectFile.getPath());
       }
       else {
-        errorMessage = GradleBundle.message("gradle.import.text.error.resolve.with.reason", reason);
+        errorMessage = ExternalSystemBundle.message("gradle.import.text.error.resolve.with.reason", reason);
       }
-      throw new ConfigurationException(errorMessage, GradleBundle.message("gradle.import.title.error.resolve.generic"));
+      throw new ConfigurationException(errorMessage, ExternalSystemBundle.message("gradle.import.title.error.resolve.generic"));
     } 
   }
 
   @Nullable
-  public GradleProject getGradleProject() {
+  public ExternalProject getGradleProject() {
     return myGradleProject;
   }
 

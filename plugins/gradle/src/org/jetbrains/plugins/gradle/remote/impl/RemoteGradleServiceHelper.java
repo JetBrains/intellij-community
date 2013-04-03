@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.remote.impl;
 
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.ConcurrentHashSet;
@@ -31,7 +32,6 @@ import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.remote.RemoteGradleProcessSettings;
 import org.jetbrains.plugins.gradle.remote.RemoteGradleService;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import java.io.File;
 import java.io.IOException;
@@ -155,7 +155,7 @@ public class RemoteGradleServiceHelper implements RemoteGradleService {
   private ProjectConnection getConnection(@NotNull String projectPath) throws IllegalStateException {
     File projectFile = new File(projectPath);
     if (!projectFile.isFile()) {
-      throw new IllegalArgumentException(GradleBundle.message("gradle.import.text.error.invalid.path", projectPath));
+      throw new IllegalArgumentException(ExternalSystemBundle.message("gradle.import.text.error.invalid.path", projectPath));
     }
     File projectDir = projectFile.getParentFile();
     GradleConnector connector = GradleConnector.newConnector();

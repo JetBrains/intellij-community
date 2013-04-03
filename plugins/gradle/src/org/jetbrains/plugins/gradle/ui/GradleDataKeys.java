@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.ui;
 
 import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
 import org.jetbrains.plugins.gradle.tasks.GradleTasksList;
@@ -21,15 +22,15 @@ public class GradleDataKeys {
   public static final DataKey<GradleProjectStructureTreeModel> SYNC_TREE_MODEL = DataKey.create("gradle.sync.tree.model");
 
   /** Key for obtaining currently selected nodes at the gradle 'sync project structure' tree. */
-  public static final DataKey<Collection<GradleProjectStructureNode<?>>> SYNC_TREE_SELECTED_NODE
+  public static final DataKey<Collection<ProjectStructureNode<?>>> SYNC_TREE_SELECTED_NODE
     = DataKey.create("gradle.sync.tree.node.selected");
 
   /** Key for obtaining node under mouse cursor at the gradle 'sync project structure' tree. */
-  public static final DataKey<GradleProjectStructureNode<?>> SYNC_TREE_NODE_UNDER_MOUSE
+  public static final DataKey<ProjectStructureNode<?>> SYNC_TREE_NODE_UNDER_MOUSE
     = DataKey.create("gradle.sync.tree.node.under.mouse");
 
   public static final DataKey<GradleTasksList> RECENT_TASKS_LIST = DataKey.create("gradle.recent.tasks.list");
-  
+
   public static final DataKey<GradleTasksModel> ALL_TASKS_MODEL = DataKey.create("gradle.all.tasks.model");
 
   private GradleDataKeys() {

@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeFilter;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -115,7 +115,7 @@ public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
     }
 
     @Override
-    public boolean isVisible(@NotNull GradleProjectStructureNode<?> node) {
+    public boolean isVisible(@NotNull ProjectStructureNode<?> node) {
       return myKey.equals(node.getDescriptor().getAttributes());
     }
   }

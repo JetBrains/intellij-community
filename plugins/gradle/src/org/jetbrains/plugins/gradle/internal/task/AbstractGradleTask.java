@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
@@ -13,7 +14,6 @@ import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListenerAdapter;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacade;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -127,7 +127,7 @@ public abstract class AbstractGradleTask implements GradleTask {
 
   @NotNull
   protected String wrapProgressText(@NotNull String text) {
-    return GradleBundle.message("gradle.general.progress.update.text", text);
+    return ExternalSystemBundle.message("gradle.general.progress.update.text", text);
   }
   
   @Override

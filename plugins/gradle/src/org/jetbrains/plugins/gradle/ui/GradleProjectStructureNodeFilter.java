@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.gradle.ui;
 
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -8,5 +9,5 @@ import org.jetbrains.annotations.NotNull;
  */
 public interface GradleProjectStructureNodeFilter {
 
-  boolean isVisible(@NotNull GradleProjectStructureNode<?> node);
+  boolean isVisible(@NotNull ProjectStructureNode<?> node);
 }
