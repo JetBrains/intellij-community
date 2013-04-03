@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumTypeDe
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
@@ -126,21 +127,18 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
       final GrEnumConstantList enumConstants = ((GrEnumTypeDefinition)targetClass).getEnumConstantList();
       added = (GrVariableDeclaration)targetClass.addAfter(declaration, enumConstants);
     }
+    else if (targetClass instanceof GrTypeDefinition) {
+      PsiElement anchor = getAnchorAfter((GrTypeDefinition)targetClass);
+      added = (GrVariableDeclaration)targetClass.addAfter(declaration, anchor);
+    }
     else {
-      if (targetClass instanceof GrTypeDefinition) {
-        final PsiMethod[] methods = targetClass.getMethods();
-        PsiElement anchor = getFirstElement(methods);
-        added = (GrVariableDeclaration)targetClass.addBefore(declaration, anchor);
-      }
-      else {
-        assert targetClass instanceof GroovyScriptClass;
-        final GroovyFile file = (GroovyFile)targetClass.getContainingFile();
-        PsiElement[] elements = file.getMethods();
-        if (elements.length == 0) elements = file.getStatements();
-        final PsiElement anchor = getFirstElement(elements);
-        added = (GrVariableDeclaration)file.addBefore(declaration, anchor);
+      assert targetClass instanceof GroovyScriptClass;
+      final GroovyFile file = (GroovyFile)targetClass.getContainingFile();
+      PsiElement[] elements = file.getMethods();
+      if (elements.length == 0) elements = file.getStatements();
+      final PsiElement anchor = getFirstElement(elements);
+      added = (GrVariableDeclaration)file.addBefore(declaration, anchor);
 //        GrReferenceAdjuster.shortenReferences(added.getModifierList());
-      }
     }
 
     final GrVariable field = added.getVariables()[0];
@@ -176,6 +174,18 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
       }
     }
     return field;
+  }
+
+  @Nullable
+  private static PsiElement getAnchorAfter(@NotNull GrTypeDefinition targetClass) {
+    PsiElement anchor = targetClass.getBody().getLBrace();
+
+    final GrMembersDeclaration[] declarations = targetClass.getMemberDeclarations();
+    for (GrMembersDeclaration declaration : declarations) {
+      if (declaration instanceof GrVariableDeclaration) anchor = declaration;
+      if (!(declaration instanceof GrVariableDeclaration)) return anchor;
+    }
+    return anchor;
   }
 
   @Override
