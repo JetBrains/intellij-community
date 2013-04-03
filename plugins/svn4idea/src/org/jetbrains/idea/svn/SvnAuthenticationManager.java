@@ -515,7 +515,7 @@ public class SvnAuthenticationManager extends DefaultSVNAuthenticationManager im
       if (getConfig().isIsUseDefaultProxy()) {
         // ! use common proxy if it is set
         try {
-          final List<Proxy> proxies = CommonProxy.getInstance().select(new URI(url.toString()));
+          final List<Proxy> proxies = HttpConfigurable.getInstance().getOnlyBySettingsSelector().select(new URI(url.toString()));
           if (proxies != null && ! proxies.isEmpty()) {
             for (Proxy proxy : proxies) {
               if (HttpConfigurable.isRealProxy(proxy) && Proxy.Type.HTTP.equals(proxy.type())) {
