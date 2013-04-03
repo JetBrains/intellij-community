@@ -458,9 +458,11 @@ public class AnnotationsHighlightUtil {
   public static HighlightInfo checkTargetAnnotationDuplicates(PsiAnnotation annotation) {
     PsiJavaCodeReferenceElement nameRef = annotation.getNameReferenceElement();
     if (nameRef == null) return null;
+
     PsiElement resolved = nameRef.resolve();
-    if (!(resolved instanceof PsiClass) ||
-        !CommonClassNames.TARGET_ANNOTATION_FQ_NAME.equals(((PsiClass) resolved).getQualifiedName())) return null;
+    if (!(resolved instanceof PsiClass) || !CommonClassNames.JAVA_LANG_ANNOTATION_TARGET.equals(((PsiClass)resolved).getQualifiedName())) {
+      return null;
+    }
 
     PsiNameValuePair[] attributes = annotation.getParameterList().getAttributes();
     if (attributes.length < 1) return null;
@@ -483,6 +485,7 @@ public class AnnotationsHighlightUtil {
     return null;
   }
 
+  @Nullable
   public static HighlightInfo checkFunctionalInterface(PsiAnnotation annotation) {
     final String errorMessage = LambdaUtil.checkFunctionalInterface(annotation);
     if (errorMessage != null) {

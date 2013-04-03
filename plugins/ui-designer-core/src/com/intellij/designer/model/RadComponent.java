@@ -76,6 +76,10 @@ public abstract class RadComponent extends PropertiesContainer {
     return myParent;
   }
 
+  public final <T extends RadComponent> T getParent(Class<T> clazz) {
+    return (T)myParent;
+  }
+
   public final void setParent(RadComponent parent) {
     myParent = parent;
   }

@@ -621,7 +621,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     private final StatusBarWidget.MultipleTextValuesPresentation myPresentation;
 
     private MultipleTextValuesPresentationWrapper(@NotNull final StatusBarWidget.MultipleTextValuesPresentation presentation) {
-      super(presentation.getMaxValue());
+      super();
       myPresentation = presentation;
 
       putClientProperty(UIUtil.CENTER_TOOLTIP_DEFAULT, Boolean.TRUE);
@@ -679,7 +679,7 @@ public class IdeStatusBarImpl extends JComponent implements StatusBarEx {
     private boolean myMouseOver;
 
     private TextPresentationWrapper(@NotNull final StatusBarWidget.TextPresentation presentation) {
-      super(presentation.getMaxPossibleText());
+      super();
       myPresentation = presentation;
       myClickConsumer = myPresentation.getClickConsumer();
 

@@ -376,7 +376,7 @@ public class PsiImplUtil {
     if (!annotationType.isAnnotationType()) return null;
     PsiModifierList modifierList = annotationType.getModifierList();
     if (modifierList == null) return null;
-    PsiAnnotation target = modifierList.findAnnotation(CommonClassNames.TARGET_ANNOTATION_FQ_NAME);
+    PsiAnnotation target = modifierList.findAnnotation(CommonClassNames.JAVA_LANG_ANNOTATION_TARGET);
     if (target == null) return DEFAULT_TARGETS;  // if omitted it is applicable to all but Java 8 TYPE_USE/TYPE_PARAMETERS targets
 
     PsiAnnotationMemberValue value = target.findAttributeValue(null);

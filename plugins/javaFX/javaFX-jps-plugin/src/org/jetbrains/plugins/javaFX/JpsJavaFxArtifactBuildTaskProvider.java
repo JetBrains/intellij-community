@@ -212,6 +212,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
       return null;
     }
 
+    @Override
+    public boolean convertCss2Bin() {
+      return myProperties.myState.isConvertCss2Bin();
+    }
+
     private JpsArtifact getPreloaderArtifact() {
       for (JpsPackagingElement element : myArtifact.getRootElement().getChildren()) {
         if (element instanceof JpsArtifactOutputPackagingElement) {

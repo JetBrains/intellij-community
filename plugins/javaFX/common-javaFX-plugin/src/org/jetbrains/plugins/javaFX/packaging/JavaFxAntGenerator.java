@@ -39,6 +39,8 @@ public class JavaFxAntGenerator {
     final String preloaderJar = packager.getPreloaderJar();
     final String preloaderClass = packager.getPreloaderClass();
     String preloaderFiles = null;
+    String allButPreloader = null;
+    
     if (!StringUtil.isEmptyOrSpaces(preloaderJar) && !StringUtil.isEmptyOrSpaces(preloaderClass)) {
       preloaderFiles = artifactName + "_preloader_files";
       topLevelTagsCollector.add(new SimpleTag("fx:fileset",
@@ -46,7 +48,23 @@ public class JavaFxAntGenerator {
                                               new Pair<String, String>("requiredFor", "preloader"),
                                               new Pair<String, String>("dir", tempDirPath),
                                               new Pair<String, String>("includes", preloaderJar)));
+
+      allButPreloader = "all_but_preloader_" + artifactName;
+      topLevelTagsCollector.add(new SimpleTag("fx:fileset", new Pair<String, String>("id", allButPreloader),
+                                                            new Pair<String, String>("dir", tempDirPath),
+                                                            new Pair<String, String>("excludes", preloaderJar),
+                                                            new Pair<String, String>("includes", "*.jar")));
     }
+
+    final String allButSelf = "all_but_" + artifactName;
+    final SimpleTag allButSelfAndPreloader = new SimpleTag("fx:fileset", new Pair<String, String>("id", allButSelf),
+                                                                         new Pair<String, String>("dir", tempDirPath),
+                                                                         new Pair<String, String>("includes", "*.jar"));
+    allButSelfAndPreloader.add(new SimpleTag("exclude", new Pair<String, String>("name", artifactFileName)));
+    if (preloaderJar != null) {
+      allButSelfAndPreloader.add(new SimpleTag("exclude", new Pair<String, String>("name", preloaderJar)));
+    }
+    topLevelTagsCollector.add(allButSelfAndPreloader);
 
     //register application
     final String appId = artifactName + "_id";
@@ -67,6 +85,12 @@ public class JavaFxAntGenerator {
 
     topLevelTagsCollector.add(applicationTag);
 
+    if (packager.convertCss2Bin()) {
+      final SimpleTag css2binTag = new SimpleTag("fx:csstobin", new Pair<String, String>("outdir", tempDirPath));
+      css2binTag.add(new SimpleTag("fileset", new Pair<String, String>("dir", tempDirPath), new Pair<String, String>("includes", "**/*.css")));
+      topLevelTagsCollector.add(css2binTag);
+    }
+
     //create jar task
     final SimpleTag createJarTag = new SimpleTag("fx:jar",
                                      new Pair<String, String>("destfile", tempDirPath + File.separator + artifactFileName));
@@ -77,7 +101,7 @@ public class JavaFxAntGenerator {
     fileset2Jar.add(new Pair<String, String>("excludes", "*.jar"));
     createJarTag.add(new SimpleTag("fileset", fileset2Jar.toArray(new Pair[fileset2Jar.size()])));
 
-    createJarTag.add(createResourcesTag(tempDirPath, preloaderFiles, artifactFileName, preloaderJar, false));
+    createJarTag.add(createResourcesTag(preloaderFiles, false, allButPreloader, allButSelf));
     
     topLevelTagsCollector.add(createJarTag);
 
@@ -97,29 +121,22 @@ public class JavaFxAntGenerator {
     if (!infoPairs.isEmpty()) {
       deployTag.add(new SimpleTag("fx:info", infoPairs.toArray(new Pair[infoPairs.size()])));
     }
-    deployTag.add(createResourcesTag(tempDirPath, preloaderFiles, artifactFileName, preloaderJar, true));
+    deployTag.add(createResourcesTag(preloaderFiles, true, allButPreloader, allButSelf));
 
     topLevelTagsCollector.add(deployTag);
     return topLevelTagsCollector;
   }
 
-  private static SimpleTag createResourcesTag(String tempDirPath, String preloaderFiles, 
-                                              String artifactFileName,
-                                              String preloaderJar,
-                                              boolean includeSelf) {
+  private static SimpleTag createResourcesTag(String preloaderFiles,
+                                              boolean includeSelf, 
+                                              String allButPreloader, 
+                                              String allButSelf) {
     final SimpleTag resourcesTag = new SimpleTag("fx:resources");
     if (preloaderFiles != null) {
       resourcesTag.add(new SimpleTag("fx:fileset", new Pair<String, String>("refid", preloaderFiles)));
-    }
-    final File[] files = new File(tempDirPath).listFiles();
-    if (files != null) {
-      for (File file : files) {
-        final String fileName = file.getName();
-        if (!fileName.equals(preloaderJar) && (includeSelf || !fileName.equals(artifactFileName))) {
-          resourcesTag.add(new SimpleTag("fx:fileset", new Pair<String, String>("dir", tempDirPath), new Pair<String, String>("includes", fileName)));
-        }
-
-      }
+      resourcesTag.add(new SimpleTag("fx:fileset", new Pair<String, String>("refid", includeSelf ? allButPreloader : allButSelf)));
+    } else if (!includeSelf) {
+      resourcesTag.add(new SimpleTag("fx:fileset", new Pair<String, String>("refid", allButSelf)));
     }
     return resourcesTag;
   }

@@ -311,7 +311,6 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
               }
               catch (IncorrectOperationException e) {
                 resultExpression = null;
-                LOG.error("lExpr: " + lExpr.getText() + "; op: " + javaToken.getText() + "; rExpr: " + operand.getText() + "; top: " + expression.getText());
               }
             }
             else {

@@ -35,7 +35,6 @@ import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiDocumentManager;
@@ -482,5 +481,9 @@ import java.util.Map;
   @Override
   public ActionCallback getReady(@NotNull Object requestor) {
     return new ActionCallback.Done();
+  }
+
+  @Override
+  public void setSelectedEditor(VirtualFile file, String fileEditorProviderId) {
   }
 }

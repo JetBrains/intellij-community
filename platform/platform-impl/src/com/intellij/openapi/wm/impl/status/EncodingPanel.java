@@ -50,7 +50,6 @@ import com.intellij.ui.ClickListener;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.UIUtil;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -71,7 +70,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   public EncodingPanel(@NotNull final Project project) {
     super(project);
 
-    myComponent = new TextPanel(getMaxValue()) {
+    myComponent = new TextPanel() {
       @Override
       protected void paintComponent(@NotNull final Graphics g) {
         super.paintComponent(g);
@@ -129,12 +128,6 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   @Override
   public WidgetPresentation getPresentation(@NotNull PlatformType type) {
     return null;
-  }
-
-  @NonNls
-  @NotNull
-  private static String getMaxValue() {
-    return "windows-1251";
   }
 
   @Override

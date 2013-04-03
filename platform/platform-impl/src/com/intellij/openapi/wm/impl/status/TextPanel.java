@@ -27,8 +27,6 @@ public class TextPanel extends JComponent {
   @Nullable private String  myText;
   @Nullable private Color myCustomColor;
 
-  private final String myMaxPossibleString;
-
   private Integer   myPrefHeight;
   private Dimension myExplicitSize;
 
@@ -36,19 +34,13 @@ public class TextPanel extends JComponent {
   private float myAlignment;
 
   protected TextPanel() {
-    this(null);
+    setFont(SystemInfo.isMac ? UIUtil.getLabelFont().deriveFont(11.0f) : UIUtil.getLabelFont());
+    setOpaque(false);
   }
 
   protected TextPanel(final boolean decorate) {
-    this(null);
+    this();
     myDecorate = decorate;
-  }
-
-  protected TextPanel(@Nullable final String maxPossibleString) {
-    myMaxPossibleString = maxPossibleString;
-
-    setFont(SystemInfo.isMac ? UIUtil.getLabelFont().deriveFont(11.0f) : UIUtil.getLabelFont());
-    setOpaque(false);
   }
 
   public void recomputeSize() {
@@ -144,6 +136,8 @@ public class TextPanel extends JComponent {
 
   public final void setText(@Nullable final String text) {
     myText = text == null ? "" : text;
+    setPreferredSize(getPanelDimensionFromFontMetrics(myText));
+    revalidate();
     repaint();
   }
 
@@ -156,15 +150,15 @@ public class TextPanel extends JComponent {
       return myExplicitSize;
     }
 
-    int max = 0;
     String text = getTextForPreferredSize();
-    if (text != null) max = getFontMetrics(getFont()).stringWidth(text);
+    return getPanelDimensionFromFontMetrics(text);
+  }
 
-    if (myPrefHeight != null) {
-      return new Dimension(20 + max, myPrefHeight);
-    }
+  private Dimension getPanelDimensionFromFontMetrics (String text) {
+    int width = (text == null) ? 0 : 20 + getFontMetrics(getFont()).stringWidth(text);
+    int height = (myPrefHeight == null) ? getMinimumSize().height : myPrefHeight;
 
-    return new Dimension(20 + max, getMinimumSize().height);
+    return new Dimension(width, height);
   }
 
   /**
@@ -172,7 +166,7 @@ public class TextPanel extends JComponent {
    */
   @Nullable
   protected String getTextForPreferredSize() {
-    return myMaxPossibleString;
+    return myText;
   }
 
   public void setExplicitSize(@Nullable Dimension explicitSize) {

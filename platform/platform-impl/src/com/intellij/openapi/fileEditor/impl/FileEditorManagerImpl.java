@@ -945,6 +945,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     });
   }
 
+  @Override
   public void setSelectedEditor(VirtualFile file, String fileEditorProviderId) {
     EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite == null) {

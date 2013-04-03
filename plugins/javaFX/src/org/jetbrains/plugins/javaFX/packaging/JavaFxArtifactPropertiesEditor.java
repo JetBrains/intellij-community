@@ -51,6 +51,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private JCheckBox myUpdateInBackgroundCB;
   private JCheckBox myEnableSigningCB;
   private JButton myEditSignCertificateButton;
+  private JCheckBox myConvertCssToBinCheckBox;
   private JavaFxEditCertificatesDialog myDialog;
 
   public JavaFxArtifactPropertiesEditor(JavaFxArtifactProperties properties, final Project project, Artifact artifact) {
@@ -99,6 +100,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     final boolean inBackground = Comparing.strEqual(myProperties.getUpdateMode(), JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND);
     if (inBackground != myUpdateInBackgroundCB.isSelected()) return true;
     if (myProperties.isEnabledSigning() != myEnableSigningCB.isSelected()) return true;
+    if (myProperties.isConvertCss2Bin() != myConvertCssToBinCheckBox.isSelected()) return true;
     if (myDialog != null) {
       if (isModified(myProperties.getAlias(), myDialog.myPanel.myAliasTF)) return true;
       if (isModified(myProperties.getKeystore(), myDialog.myPanel.myKeystore)) return true;
@@ -132,6 +134,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     myProperties.setUpdateMode(myUpdateInBackgroundCB.isSelected() ? JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND 
                                                                    : JavaFxPackagerConstants.UPDATE_MODE_ALWAYS);
     myProperties.setEnabledSigning(myEnableSigningCB.isSelected());
+    myProperties.setConvertCss2Bin(myConvertCssToBinCheckBox.isSelected());
     if (myDialog != null) {
       myProperties.setSelfSigning(myDialog.myPanel.mySelfSignedRadioButton.isSelected());
       myProperties.setAlias(myDialog.myPanel.myAliasTF.getText());
@@ -155,6 +158,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     setText(myParams, myProperties.getParamFile());
     myUpdateInBackgroundCB.setSelected(Comparing.strEqual(myProperties.getUpdateMode(), JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND));
     myEnableSigningCB.setSelected(myProperties.isEnabledSigning());
+    myConvertCssToBinCheckBox.setSelected(myProperties.isConvertCss2Bin());
     myEditSignCertificateButton.setEnabled(myProperties.isEnabledSigning());
   }
 

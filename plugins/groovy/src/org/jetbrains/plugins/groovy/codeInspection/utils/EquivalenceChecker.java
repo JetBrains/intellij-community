@@ -172,7 +172,8 @@ public class EquivalenceChecker {
   }
 
   private static boolean assertStatementsAreEquivalent(GrAssertStatement statement1, GrAssertStatement statement2) {
-    return expressionsAreEquivalent(statement1.getAssertion(), statement2.getAssertion());
+    return expressionsAreEquivalent(statement1.getAssertion(), statement2.getAssertion()) &&
+      expressionsAreEquivalent(statement1.getErrorMessage(), statement2.getErrorMessage());
   }
 
   private static boolean synchronizedStatementsAreEquivalent(GrSynchronizedStatement statement1,

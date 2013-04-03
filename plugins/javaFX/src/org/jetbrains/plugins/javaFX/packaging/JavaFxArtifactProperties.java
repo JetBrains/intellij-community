@@ -68,6 +68,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myKeystore;
   private String myStorepass;
   private String myKeypass;
+  private boolean myConvertCss2Bin;
 
   @Override
   public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
@@ -249,6 +250,14 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     myKeypass = keypass;
   }
 
+  public boolean isConvertCss2Bin() {
+    return myConvertCss2Bin;
+  }
+
+  public void setConvertCss2Bin(boolean convertCss2Bin) {
+    myConvertCss2Bin = convertCss2Bin;
+  }
+
   public String getPreloaderClass(Artifact rootArtifact, Project project) {
     final Artifact artifact = getPreloaderArtifact(rootArtifact, project);
     if (artifact != null) {
@@ -345,6 +354,11 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     @Override
     public String getPreloaderJar() {
       return myProperties.getPreloaderJar(myArtifact, myProject);
+    }
+
+    @Override
+    public boolean convertCss2Bin() {
+      return myProperties.isConvertCss2Bin();
     }
 
     @Override

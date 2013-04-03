@@ -52,8 +52,8 @@ binding.setVariable("isEap", {
   return "true" == p("component.version.eap")
 })
 
-binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=64m -XX:+UseCodeCacheFlushing -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+UseParNewGC")
-binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=96m -XX:+UseCodeCacheFlushing -XX:+UseConcMarkSweepGC -XX:+CMSIncrementalMode -XX:+UseParNewGC")
+binding.setVariable("mem32", "-server -Xms128m -Xmx512m -XX:MaxPermSize=250m -XX:ReservedCodeCacheSize=64m -XX:+UseCodeCacheFlushing -XX:+UseConcMarkSweepGC -XX:+UseParNewGC")
+binding.setVariable("mem64", "-Xms128m -Xmx750m -XX:MaxPermSize=350m -XX:ReservedCodeCacheSize=96m -XX:+UseCodeCacheFlushing -XX:+UseConcMarkSweepGC -XX:+UseParNewGC")
 binding.setVariable("common_vmoptions", "-ea -Dsun.io.useCanonCaches=false -Djava.net.preferIPv4Stack=true")
 
 binding.setVariable("vmOptions", { "$common_vmoptions ${isEap() ? '-XX:+HeapDumpOnOutOfMemoryError' : ''}".trim() })
@@ -727,8 +727,19 @@ private void fixIdeaPropertiesEol(List paths, String eol) {
   }
 }
 
-binding.setVariable("buildWinLauncher", { String ch, String inputPath, String outputPath, String appInfo, String launcherProperties, List resourcePaths ->
+binding.setVariable("buildWinLauncher", { String ch, String inputPath, String outputPath, String appInfo, String launcherProperties, String pathsSelector, List resourcePaths ->
   projectBuilder.stage("winLauncher")
+
+  File launcherPropertiesTempFile = null;
+  if (pathsSelector != null) {
+    String propertiesContent = new File(launcherProperties).text
+    if (propertiesContent.contains("__PRODUCT_PATHS_SELECTOR__")) {
+      propertiesContent = propertiesContent.replace("__PRODUCT_PATHS_SELECTOR__", pathsSelector)
+      launcherPropertiesTempFile = File.createTempFile("launcher", ".properties")
+      launcherPropertiesTempFile.write(propertiesContent)
+      launcherProperties = launcherPropertiesTempFile.getAbsolutePath()
+    }
+  }
 
   ant.java(classname: "com.pme.launcher.LauncherGeneratorMain", fork: "true") {
     arg(value: inputPath)
@@ -747,5 +758,9 @@ binding.setVariable("buildWinLauncher", { String ch, String inputPath, String ou
         pathelement(location: it)
       }
     }
+  }
+
+  if (launcherPropertiesTempFile != null) {
+    launcherPropertiesTempFile.delete()
   }
 })
