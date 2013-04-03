@@ -70,8 +70,7 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
 
   @Override
   public void initPythonPath(GeneralCommandLine cmd, Collection<String> path) {
-    Map<String,String> env = getEnv(cmd);
-    initPythonPath(path, env);
+    initPythonPath(path, cmd.getEnvParamsNotNull());
   }
 
   @Override

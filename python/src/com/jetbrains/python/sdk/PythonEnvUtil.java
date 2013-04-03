@@ -71,13 +71,13 @@ public class PythonEnvUtil {
     return value;
   }
 
-  public static void addToEnv(Map<String, String> envs, String key, Collection<String> values) {
+  public static void addToEnv(@NotNull Map<String, String> envs, String key, @NotNull Collection<String> values) {
     for (String val : values) {
       addPathToEnv(envs, key, val);
     }
   }
 
-  public static void addPathToEnv(Map<String, String> envs, String key, String value) {
+  public static void addPathToEnv(@NotNull Map<String, String> envs, String key, String value) {
     if (!StringUtil.isEmpty(value)) {
       if (envs.containsKey(key)) {
         envs.put(key, appendToPathEnvVar(envs.get(key), value));
@@ -88,11 +88,11 @@ public class PythonEnvUtil {
     }
   }
 
-  public static void addToPythonPath(Map<String, String> envs, Collection<String> values) {
+  public static void addToPythonPath(@NotNull Map<String, String> envs, @NotNull Collection<String> values) {
     addToEnv(envs, PYTHONPATH, values);
   }
 
-  public static void addToPythonPath(Map<String, String> envs, String value) {
+  public static void addToPythonPath(@NotNull Map<String, String> envs, String value) {
     addPathToEnv(envs, PYTHONPATH, value);
   }
 
@@ -102,7 +102,7 @@ public class PythonEnvUtil {
     return getPathListFromEnv(envs, PYTHONPATH);
   }
 
-  public static List<String> getPathListFromEnv(Map<String, String> envs, String envKey) {
+  public static List<String> getPathListFromEnv(@NotNull Map<String, String> envs, String envKey) {
     String pythonPath = envs.get(envKey);
     if (pythonPath != null) {
       String[] paths = pythonPath.split(Character.toString(File.pathSeparatorChar));
