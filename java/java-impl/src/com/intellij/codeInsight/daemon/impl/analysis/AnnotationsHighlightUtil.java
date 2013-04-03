@@ -517,15 +517,15 @@ public class AnnotationsHighlightUtil {
     public Boolean visitClassType(PsiClassType classType) {
       if (classType.getParameters().length > 0) {
         PsiClassType rawType = classType.rawType();
-        if (rawType.equalsToText("java.lang.Class")) {
-          return Boolean.TRUE;
-        }
-        return Boolean.FALSE;
+        return rawType.equalsToText(CommonClassNames.JAVA_LANG_CLASS);
       }
-      PsiClass aClass = classType.resolve();
-      if (aClass != null && (aClass.isAnnotationType() || aClass.isEnum())) return Boolean.TRUE;
 
-      return classType.equalsToText("java.lang.Class") || classType.equalsToText("java.lang.String") ? Boolean.TRUE : Boolean.FALSE;
+      PsiClass aClass = classType.resolve();
+      if (aClass != null && (aClass.isAnnotationType() || aClass.isEnum())) {
+        return Boolean.TRUE;
+      }
+
+      return classType.equalsToText(CommonClassNames.JAVA_LANG_CLASS) || classType.equalsToText(CommonClassNames.JAVA_LANG_STRING);
     }
   }
 
