@@ -42,7 +42,12 @@ public class VcsInitialization {
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
-        execute();
+        ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
+          public void run() {
+            execute();
+          }
+        });
       }
     });
   }
