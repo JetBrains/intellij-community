@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -96,8 +96,8 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
 
 
   @Override
-  protected String getLineBreaker(PsiElement token) {
-    final String text = token.getText();
+  protected String getLineBreaker(@NotNull PsiElement token) {
+    final String text = token.getParent().getText();
     if (text.contains("'''") || text.contains("\"\"\"")) {
       return "\n";
     }
