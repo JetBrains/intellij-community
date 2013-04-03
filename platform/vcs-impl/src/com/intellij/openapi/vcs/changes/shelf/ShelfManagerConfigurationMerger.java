@@ -22,6 +22,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.options.StreamProvider;
 import org.jdom.Attribute;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.*;
@@ -41,6 +42,7 @@ public class ShelfManagerConfigurationMerger implements XmlConfigurationMerger {
     myFileProcessor = new CompoundShelfFileProcessor(streamProviders, configPath);
   }
 
+  @NotNull
   public Element merge(final Element serverElement, final Element localElement) {
 
     Map<Date, ShelvedChangeList> result = new LinkedHashMap<Date, ShelvedChangeList>();
