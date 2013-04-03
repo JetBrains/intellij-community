@@ -133,7 +133,14 @@ target('default': "Build artifacts") {
 
   ant.echo(message: buildName, file: "${paths.sandbox}/layout/build.txt")
 
-  buildExe("$home/python/build/pycharm.exe4j", system_selector)
+  def launcher = "${paths.distWin}/bin/pycharm.exe"
+  List resourcePaths = ["$home/community/community-resources/src",
+                        "$home/community/platform/icons/src",
+                        "$home/python/resources"]
+  buildWinLauncher("$home/community", "$home/community/bin/WinLauncher/WinLauncher.exe", launcher,
+                   appInfoFile(), "$home/python/build/pycharm_launcher.properties", system_selector, resourcePaths)
+  signExe(launcher)
+
   buildWinZip("${paths.artifacts}/pycharm${buildName}.zip", [paths.distAll, paths.distWin])
   buildNSIS([paths.distAll, paths.distWin],
             "$home/python/build/strings.nsi", "$home/python/build/paths.nsi",
