@@ -44,6 +44,7 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testPackageAnnotationNotInPackageInfo() { doTest(BASE_PATH + "/" + getTestName(true) + "/notPackageInfo.java", false, false); }
 
   public void testTypeAnnotations() { doTest8(false); }
+  public void testRepeatable() { doTest8(false); }
 
   private void doTest(boolean checkWarnings) {
     setLanguageLevel(LanguageLevel.JDK_1_7);
