@@ -287,7 +287,11 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
       initToolbar();
     }
 
-    myLeadPanel.add(myToolbarComponent);
+    JPanel centerPanel = new JPanel(new BorderLayout());
+    centerPanel.setOpaque(false);
+    centerPanel.add(myToolbarComponent, BorderLayout.CENTER);
+
+    add(centerPanel, BorderLayout.CENTER);
 
     if (secondaryActionsAvailable()) {
       if (myToolbarComponent instanceof ActionToolbarImpl) {
@@ -297,9 +301,10 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
 
     JPanel tailPanel = new NonOpaquePanel(new BorderLayout(5, 0));
+    tailPanel.setPreferredSize(new Dimension(100, -1));
     JPanel tailContainer = new NonOpaquePanel(new BorderLayout(5, 0));
     tailContainer.add(tailPanel, BorderLayout.EAST);
-    add(tailContainer, BorderLayout.CENTER);
+    centerPanel.add(tailContainer, BorderLayout.EAST);
 
     myMatchInfoLabel = new JLabel();
     setSmallerFontAndOpaque(myMatchInfoLabel);
