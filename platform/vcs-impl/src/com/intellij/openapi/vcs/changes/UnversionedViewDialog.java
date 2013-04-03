@@ -122,6 +122,9 @@ public class UnversionedViewDialog extends DialogWrapper {
     actions.add(collapseAction);
     actions.add(new ToggleShowFlattenAction());
     actions.add(new ScheduleForAdditionAction() {
+      {
+        getTemplatePresentation().setIcon(AllIcons.General.Add);
+      }
       @Override
       public void actionPerformed(AnActionEvent e) {
         super.actionPerformed(e);
