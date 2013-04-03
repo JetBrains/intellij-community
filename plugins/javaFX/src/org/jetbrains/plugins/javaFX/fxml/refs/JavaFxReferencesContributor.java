@@ -15,20 +15,13 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
-import com.intellij.openapi.vfs.VirtualFileSystem;
-import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.position.FilterPattern;
-import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.util.ProcessingContext;
-import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.javaFX.JavaFxFileReferenceProvider;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
-
-import java.util.Collection;
-import java.util.Collections;
 
 import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
 
@@ -79,25 +72,6 @@ public class JavaFxReferencesContributor extends PsiReferenceContributor {
       public boolean isClassAcceptable(Class hintClass) {
         return true;
       }
-    })), new PsiReferenceProvider() {
-      @NotNull
-      @Override
-      public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
-        final Object value = ((PsiLiteralExpression)element).getValue();
-        final PsiDirectory directory = element.getContainingFile().getParent();
-        if (!(value instanceof String) || directory == null) return PsiReference.EMPTY_ARRAY;
-        final VirtualFileSystem fs = directory.getVirtualFile().getFileSystem();
-        return new FileReferenceSet((String)value, element, 1, null, ((NewVirtualFileSystem)fs).isCaseSensitive()) {
-          @NotNull
-          @Override
-          public Collection<PsiFileSystemItem> getDefaultContexts() {
-            if (!directory.isValid()) {
-              return super.getDefaultContexts();
-            }
-            return Collections.<PsiFileSystemItem>singletonList(directory);
-          }
-        }.getAllReferences();
-      }
-    });
+    })), new JavaFxFileReferenceProvider());
   }
 }
