@@ -134,14 +134,15 @@ public class IOUtil {
     return c < 128;
   }
 
-  public static boolean deleteWithSubordinates(File file) {
+  public static boolean deleteAllFilesStartingWith(File file) {
     final String baseName = file.getName();
-    final File[] files = file.getParentFile().listFiles(new FileFilter() {
+    File parentFile = file.getParentFile();
+    final File[] files = parentFile != null ? parentFile.listFiles(new FileFilter() {
       @Override
       public boolean accept(final File pathname) {
         return pathname.getName().startsWith(baseName);
       }
-    });
+    }): null;
 
     boolean ok = true;
     if (files != null) {
