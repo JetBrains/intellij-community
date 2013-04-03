@@ -186,7 +186,7 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
   }
 
   @Override
-  public PsiElement addAfter(@NotNull PsiElement element, PsiElement anchor) throws IncorrectOperationException {
+  public PsiElement addAfter(@NotNull PsiElement element, @Nullable PsiElement anchor) throws IncorrectOperationException {
     if (element instanceof GrExpression || element instanceof GrNamedArgument) {
       final boolean insertComma = getAllArguments().length != 0;
 
@@ -215,12 +215,20 @@ public class GrArgumentListImpl extends GroovyPsiElementImpl implements GrArgume
     if (element instanceof GrExpression || element instanceof GrNamedArgument) {
       ASTNode prev = TreeUtil.skipElementsBack(child.getTreePrev(), TokenSets.WHITE_SPACES_OR_COMMENTS);
       if (prev != null && prev.getElementType() == mCOMMA) {
+        final ASTNode pprev = prev.getTreePrev();
+        if (pprev != null && TokenSets.WHITE_SPACES_SET.contains(pprev.getElementType())) {
+          super.deleteChildInternal(pprev);
+        }
         super.deleteChildInternal(prev);
       }
       else {
         ASTNode next = TreeUtil.skipElements(child.getTreeNext(), TokenSets.WHITE_SPACES_OR_COMMENTS);
         if (next != null && next.getElementType() == mCOMMA) {
-          deleteChildInternal(next);
+          final ASTNode nnext = next.getTreeNext();
+          if (nnext != null && TokenSets.WHITE_SPACES_SET.contains(nnext.getElementType())) {
+            super.deleteChildInternal(nnext);
+          }
+          super.deleteChildInternal(next);
         }
       }
     }
