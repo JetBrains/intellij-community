@@ -109,6 +109,11 @@ public class HttpConfigurable implements PersistentStateComponent<HttpConfigurab
     CommonProxy.getInstance().setCustomAuth(name, myAuthenticator);
   }
 
+  @NotNull
+  public ProxySelector getOnlyBySettingsSelector() {
+    return mySelector;
+  }
+
   @Override
   public void disposeComponent() {
     final String name = getClass().getName();
