@@ -66,7 +66,7 @@ except AttributeError:
     except:
         IS_64_BITS = False
 
-SUPPORT_GEVENT = False
+SUPPORT_GEVENT = os.getenv('GEVENT_SUPPORT', 'False') == 'True'
 
 USE_LIB_COPY = SUPPORT_GEVENT and not IS_PY3K and sys.version_info[1] >= 6
 

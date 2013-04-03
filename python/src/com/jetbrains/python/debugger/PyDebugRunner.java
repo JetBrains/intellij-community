@@ -1,7 +1,6 @@
 package com.jetbrains.python.debugger;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionResult;
 import com.intellij.execution.Executor;
@@ -17,7 +16,6 @@ import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,7 +24,6 @@ import com.intellij.xdebugger.XDebugProcess;
 import com.intellij.xdebugger.XDebugProcessStarter;
 import com.intellij.xdebugger.XDebugSession;
 import com.intellij.xdebugger.XDebuggerManager;
-import com.jetbrains.appengine.util.StringUtils;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PythonConsoleView;
 import com.jetbrains.python.console.PythonDebugConsoleCommunication;
@@ -41,9 +38,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
 import java.net.ServerSocket;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author yole
@@ -56,6 +51,7 @@ public class PyDebugRunner extends GenericProgramRunner {
   public static final String PORT_PARAM = "--port";
   public static final String FILE_PARAM = "--file";
   public static final String PYCHARM_PROJECT_ROOTS = "PYCHARM_PROJECT_ROOTS";
+  public static final String GEVENT_SUPPORT = "GEVENT_SUPPORT";
 
   @NotNull
   public String getRunnerId() {
@@ -197,6 +193,10 @@ public class PyDebugRunner extends GenericProgramRunner {
       addProjectRootsToEnv(project, generalCommandLine);
     }
 
+    if (PyDebuggerOptionsProvider.getInstance(project).isSupportGeventDebugging()) {
+      generalCommandLine.getEnvParamsNotNull().put(GEVENT_SUPPORT, "True");
+    }
+
     final String[] debuggerArgs = new String[]{
       CLIENT_PARAM, "127.0.0.1",
       PORT_PARAM, String.valueOf(serverLocalPort),
@@ -208,18 +208,12 @@ public class PyDebugRunner extends GenericProgramRunner {
   }
 
   private static void addProjectRootsToEnv(@NotNull Project project, @NotNull GeneralCommandLine commandLine) {
-    Map<String, String> params = commandLine.getEnvParams();
-
-    if (params == null) {
-      params = Maps.newHashMap();
-      commandLine.setEnvParams(params);
-    }
 
     List<String> roots = Lists.newArrayList();
     for (VirtualFile contentRoot : ProjectRootManager.getInstance(project).getContentRoots()) {
       roots.add(contentRoot.getPath());
     }
 
-    params.put(PYCHARM_PROJECT_ROOTS, StringUtil.join(roots, File.pathSeparator));
+    commandLine.getEnvParamsNotNull().put(PYCHARM_PROJECT_ROOTS, StringUtil.join(roots, File.pathSeparator));
   }
 }
