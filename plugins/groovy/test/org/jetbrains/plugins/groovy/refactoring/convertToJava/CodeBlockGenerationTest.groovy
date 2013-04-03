@@ -191,4 +191,6 @@ public final class Matcher {
   void testComparisonToNull() { doTest() }
 
   void testStringConverting() { doTest() }
+
+  void testInWitchClassCheck() { doTest() }
 }

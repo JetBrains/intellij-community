@@ -23,6 +23,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightElement;
 import com.intellij.psi.scope.BaseScopeProcessor;
 import com.intellij.psi.tree.IElementType;
+import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
@@ -659,6 +660,12 @@ public class ExpressionGenerator extends Generator {
       return;
     }
 
+    if (op == kIN && right instanceof GrReferenceExpression && InheritanceUtil.isInheritor(right.getType(), CommonClassNames.JAVA_LANG_CLASS)) {
+      final PsiType type = com.intellij.psi.util.PsiUtil.substituteTypeParameter(right.getType(), CommonClassNames.JAVA_LANG_CLASS, 0, true);
+      writeInstanceof(left, type, expression);
+      return;
+    }
+
     if (shouldNotReplaceOperatorWithMethod(ltype, right, op)) {
       writeSimpleBinaryExpression(token, left, right);
       return;
@@ -905,7 +912,6 @@ public class ExpressionGenerator extends Generator {
     }
 
     final String text = literal.getText();
-    final Object value;
     if (text.startsWith("'''") || text.startsWith("\"\"\"")) {
       String string = GrStringUtil.removeQuotes(text).replace("\n", "\\n").replace("\r", "\\r");
       builder.append('"').append(string).append('"');
@@ -1227,11 +1233,15 @@ public class ExpressionGenerator extends Generator {
   public void visitInstanceofExpression(GrInstanceOfExpression expression) {
     final GrExpression operand = expression.getOperand();
     final GrTypeElement typeElement = expression.getTypeElement();
+    writeInstanceof(operand, typeElement != null ? typeElement.getType() : null, expression);
+  }
+
+  private void writeInstanceof(@NotNull GrExpression operand, @Nullable PsiType type, @NotNull PsiElement context) {
     operand.accept(this);
     builder.append(" instanceof ");
 
-    if (typeElement != null) {
-      writeType(builder, typeElement.getType(), expression);
+    if (type != null) {
+      writeType(builder, type, context);
     }
   }
 
