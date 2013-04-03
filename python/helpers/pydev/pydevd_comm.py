@@ -68,7 +68,7 @@ if USE_LIB_COPY:
         import _pydev_thread as thread
     except ImportError:
         import _thread as thread #Py3K changed it.
-    import _pydev_Queue as PydevQueue
+    import _pydev_Queue as _queue
     from _pydev_socket import socket
     from _pydev_socket import AF_INET, SOCK_STREAM
     from _pydev_socket import SHUT_RD, SHUT_WR
@@ -81,9 +81,9 @@ else:
         import _thread as thread #Py3K changed it.
 
     try:
-        import Queue as PydevQueue
+        import Queue as _queue
     except ImportError:
-        import queue as PydevQueue
+        import queue as _queue
     from socket import socket
     from socket import AF_INET, SOCK_STREAM
     from socket import SHUT_RD, SHUT_WR
@@ -343,7 +343,7 @@ class WriterThread(PyDBDaemonThread):
         self.setDaemon(False)  #writer isn't daemon to be able to deliver all messages after main thread terminated
         self.sock = sock
         self.setName("pydevd.Writer")
-        self.cmdQueue = PydevQueue.Queue()
+        self.cmdQueue = _queue.Queue()
         if pydevd_vm_type.GetVmType() == 'python':
             self.timeout = 0
         else:
@@ -363,7 +363,7 @@ class WriterThread(PyDBDaemonThread):
                 try:
                     try:
                         cmd = self.cmdQueue.get(1, 0.1)
-                    except PydevQueue.Empty:
+                    except _queue.Empty:
                         if self.killReceived:
                             try:
                                 self.sock.shutdown(SHUT_WR)

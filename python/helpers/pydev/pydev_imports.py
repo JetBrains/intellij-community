@@ -29,8 +29,8 @@ except NameError:
     from _pydev_execfile import execfile
 try:
     if USE_LIB_COPY:
-        import _pydev_Queue as Queue
+        import _pydev_Queue as _queue
     else:
-        import Queue
+        import Queue as _queue
 except:
-    import queue as Queue
+    import queue as _queue

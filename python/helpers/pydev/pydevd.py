@@ -46,7 +46,7 @@ from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          NetCommand, \
                          NetCommandFactory, \
                          PyDBDaemonThread, \
-                         PydevQueue, \
+                         _queue, \
                          ReaderThread, \
                          SetGlobalDebugger, \
                          WriterThread, \
@@ -84,6 +84,7 @@ DONT_TRACE = {
               #commonly used things from the stdlib that we don't want to trace
               'threading.py':1,
               'Queue.py':1,
+              'queue.py':1,
               'socket.py':1,
 
               #things from pydev that we don't want to trace
@@ -343,7 +344,7 @@ class PyDB:
         try:
             return self._cmd_queue[thread_id]
         except KeyError:
-            return self._cmd_queue.setdefault(thread_id, PydevQueue.Queue()) #@UndefinedVariable
+            return self._cmd_queue.setdefault(thread_id, _queue.Queue()) #@UndefinedVariable
 
 
     def postInternalCommand(self, int_cmd, thread_id):
@@ -428,7 +429,7 @@ class PyDB:
                                     PydevdLog(2, "NOT processing internal command ", str(int_cmd))
                                     cmdsToReadd.append(int_cmd)
 
-                        except PydevQueue.Empty: #@UndefinedVariable
+                        except _queue.Empty: #@UndefinedVariable
                             for int_cmd in cmdsToReadd:
                                 queue.put(int_cmd)
                             # this is how we exit

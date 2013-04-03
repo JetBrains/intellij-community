@@ -7,11 +7,11 @@ from pydevd_constants import USE_LIB_COPY
 
 try:
     if USE_LIB_COPY:
-        import _pydev_Queue as Queue
+        import _pydev_Queue as _queue
     else:
-        import Queue
+        import Queue as _queue
 except:
-    import queue as Queue
+    import queue as _queue
 
 try:
     if USE_LIB_COPY:
@@ -129,7 +129,7 @@ class BaseInterpreterInterface:
     def __init__(self, mainThread):
         self.mainThread = mainThread
         self.interruptable = False
-        self.exec_queue = Queue.Queue(0)
+        self.exec_queue = _queue.Queue(0)
         self.buffer = []
 
     def needMore(self, buffer, line):

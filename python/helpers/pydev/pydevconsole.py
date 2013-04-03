@@ -17,11 +17,11 @@ import traceback
 
 try:
     if USE_LIB_COPY:
-        import _pydev_Queue as Queue
+        import _pydev_Queue as _queue
     else:
-        import Queue
+        import Queue as _queue
 except:
-    import queue as Queue
+    import queue as _queue
 
 try:
     import __builtin__
@@ -174,7 +174,7 @@ def process_exec_queue(interpreter):
         try:
             try:
                 line = interpreter.exec_queue.get(block=True, timeout=0.05)
-            except Queue.Empty:
+            except _queue.Empty:
                 continue
 
             if not interpreter.addExec(line):     #TODO: think about locks here
