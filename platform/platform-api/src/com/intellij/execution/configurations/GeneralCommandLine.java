@@ -26,6 +26,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -42,13 +43,16 @@ import java.util.Map;
 
 /**
  * OS-independent way of executing external processes with complex parameters.
- *
+ * <p/>
  * Main idea of the class is to accept parameters "as-is", just as they should look to an external process, and quote/escape them
  * as required by the underlying platform.
  */
 public class GeneralCommandLine implements UserDataHolder {
-  /** @deprecated use {@linkplain #inescapableQuote(String)} (to remove in IDEA 13) */
-  @SuppressWarnings("UnusedDeclaration") public static Key<Boolean> DO_NOT_ESCAPE_QUOTES = Key.create("GeneralCommandLine.do.not.escape.quotes");
+  /**
+   * @deprecated use {@linkplain #inescapableQuote(String)} (to remove in IDEA 13)
+   */
+  @SuppressWarnings("UnusedDeclaration") public static Key<Boolean> DO_NOT_ESCAPE_QUOTES =
+    Key.create("GeneralCommandLine.do.not.escape.quotes");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.GeneralCommandLine");
   private static final char QUOTE = '\uEFEF';
@@ -63,7 +67,8 @@ public class GeneralCommandLine implements UserDataHolder {
   private boolean myRedirectErrorStream = false;
   private Map<Object, Object> myUserData = null;
 
-  public GeneralCommandLine() { }
+  public GeneralCommandLine() {
+  }
 
   public GeneralCommandLine(final String... command) {
     this(Arrays.asList(command));
@@ -101,6 +106,14 @@ public class GeneralCommandLine implements UserDataHolder {
 
   @Nullable
   public Map<String, String> getEnvParams() {
+    return myEnvParams;
+  }
+
+  @NotNull
+  public Map<String, String> getEnvParamsNotNull() {
+    if (myEnvParams == null) {
+      myEnvParams = new HashMap<String, String>();
+    }
     return myEnvParams;
   }
 
@@ -245,7 +258,8 @@ public class GeneralCommandLine implements UserDataHolder {
       return;
     }
     if (!myWorkDirectory.exists()) {
-      throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory.getAbsolutePath()));
+      throw new ExecutionException(
+        IdeBundle.message("run.configuration.error.working.directory.does.not.exist", myWorkDirectory.getAbsolutePath()));
     }
     if (!myWorkDirectory.isDirectory()) {
       throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.not.directory"));
