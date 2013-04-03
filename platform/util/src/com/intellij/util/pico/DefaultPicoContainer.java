@@ -49,6 +49,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     this(new DefaultComponentAdapterFactory(), null);
   }
 
+  @Override
   public Collection<ComponentAdapter> getComponentAdapters() {
     return componentAdapters.getImmutableSet();
   }
@@ -62,6 +63,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     return nonAssignableComponentAdapters.get().getReversedList();
   }
 
+  @Override
   @Nullable
   public final ComponentAdapter getComponentAdapter(Object componentKey) {
     ComponentAdapter adapter = getFromCache(componentKey);
@@ -84,6 +86,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     return null;
   }
 
+  @Override
   @Nullable
   public ComponentAdapter getComponentAdapterOfType(Class componentType) {
     // See http://jira.codehaus.org/secure/ViewIssue.jspa?key=PICO-115
@@ -101,9 +104,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
       if (parent != null) {
         return parent.getComponentAdapterOfType(componentType);
       }
-      else {
-        return null;
-      }
+      return null;
     }
     else {
       Class[] foundClasses = new Class[found.size()];
@@ -115,6 +116,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     }
   }
 
+  @Override
   public List getComponentAdaptersOfType(Class componentType) {
     if (componentType == null) {
       return Collections.emptyList();
@@ -130,6 +132,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     return found;
   }
 
+  @Override
   public ComponentAdapter registerComponent(ComponentAdapter componentAdapter) {
     Object componentKey = componentAdapter.getComponentKey();
     if (componentKeyToAdapterCache.containsKey(componentKey)) {
@@ -156,6 +159,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     return componentAdapter;
   }
 
+  @Override
   public ComponentAdapter unregisterComponent(Object componentKey) {
     ComponentAdapter adapter = componentKeyToAdapterCache.remove(componentKey);
 
@@ -171,10 +175,12 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     }
   }
 
+  @Override
   public List getComponentInstances() throws PicoException {
     return getComponentInstancesOfType(Object.class);
   }
 
+  @Override
   public List getComponentInstancesOfType(Class componentType) {
     if (componentType == null) {
       return Collections.emptyList();
@@ -204,17 +210,14 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     return result;
   }
 
+  @Override
   @Nullable
   public Object getComponentInstance(Object componentKey) {
     ComponentAdapter componentAdapter = getComponentAdapter(componentKey);
-    if (componentAdapter != null) {
-      return getInstance(componentAdapter);
-    }
-    else {
-      return null;
-    }
+    return componentAdapter == null ? null : getInstance(componentAdapter);
   }
 
+  @Override
   @Nullable
   public Object getComponentInstanceOfType(Class componentType) {
     final ComponentAdapter componentAdapter = getComponentAdapterOfType(componentType);
@@ -228,7 +231,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     if (isLocal) {
       return getLocalInstance(componentAdapter);
     }
-    else if (parent != null) {
+    if (parent != null) {
       return parent.getComponentInstance(componentAdapter.getComponentKey());
     }
 
@@ -263,6 +266,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   }
 
 
+  @Override
   @Nullable
   public ComponentAdapter unregisterComponentByInstance(Object componentInstance) {
     Collection<ComponentAdapter> adapters = getComponentAdapters();
@@ -276,36 +280,44 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     return null;
   }
 
+  @Override
   public void verify() throws PicoVerificationException {
     new VerifyingVisitor().traverse(this);
   }
 
+  @Override
   public void start() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void stop() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void dispose() {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public MutablePicoContainer makeChildContainer() {
     DefaultPicoContainer pc = new DefaultPicoContainer(componentAdapterFactory, this);
     addChildContainer(pc);
     return pc;
   }
 
+  @Override
   public boolean addChildContainer(PicoContainer child) {
     return children.add(child);
   }
 
+  @Override
   public boolean removeChildContainer(PicoContainer child) {
     return children.remove(child);
   }
 
+  @Override
   public void accept(PicoVisitor visitor) {
     visitor.visitContainer(this);
     final List<ComponentAdapter> adapters = new ArrayList<ComponentAdapter>(getComponentAdapters());
@@ -318,27 +330,33 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     }
   }
 
+  @Override
   public ComponentAdapter registerComponentInstance(@NotNull Object component) {
     return registerComponentInstance(component.getClass(), component);
   }
 
+  @Override
   public ComponentAdapter registerComponentInstance(@NotNull Object componentKey, @NotNull Object componentInstance) {
     return registerComponent(new InstanceComponentAdapter(componentKey, componentInstance));
   }
 
+  @Override
   public ComponentAdapter registerComponentImplementation(@NotNull Class componentImplementation) {
     return registerComponentImplementation(componentImplementation, componentImplementation);
   }
 
+  @Override
   public ComponentAdapter registerComponentImplementation(@NotNull Object componentKey, @NotNull Class componentImplementation) {
     return registerComponentImplementation(componentKey, componentImplementation, null);
   }
 
+  @Override
   public ComponentAdapter registerComponentImplementation(@NotNull Object componentKey, @NotNull Class componentImplementation, Parameter[] parameters) {
     ComponentAdapter componentAdapter = componentAdapterFactory.createComponentAdapter(componentKey, componentImplementation, parameters);
     return registerComponent(componentAdapter);
   }
 
+  @Override
   public PicoContainer getParent() {
     return parent;
   }
