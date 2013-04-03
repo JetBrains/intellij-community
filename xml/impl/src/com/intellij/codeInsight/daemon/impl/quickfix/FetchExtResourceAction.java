@@ -356,6 +356,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
         FileTypeManager.getInstance().getFileTypeByExtension(resourceUrl.substring(lastDoPosInResourceUrl + 1)) == FileTypes.UNKNOWN) {
       // remote url does not contain file with extension
       final String extension =
+        result.contentType != null &&
         result.contentType.contains(HTML_MIME) ? StdFileTypes.HTML.getDefaultExtension() : StdFileTypes.XML.getDefaultExtension();
       resPath += "." + extension;
     }
