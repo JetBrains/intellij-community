@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -100,6 +100,13 @@ public class HgStatusWidget extends EditorBasedWidget implements StatusBarWidget
   public String getText() {
     final String text = myText;
     return StringUtil.isEmpty(text) ? "" : "hg: " + text;
+  }
+
+  @NotNull
+  @Override
+  @Deprecated
+  public String getMaxPossibleText() {
+    return MAX_STRING;
   }
 
   @Override
