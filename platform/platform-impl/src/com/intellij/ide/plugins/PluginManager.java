@@ -141,13 +141,18 @@ public class PluginManager {
       final String version = descriptor.getVersion();
       String s = descriptor.getName() + (version != null ? " (" + version + ")" : "");
       if (descriptor.isEnabled()) {
-        if (descriptor.isBundled()) loadedBundled.add(s);
-        else if (!SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) loadedCustom.add(s);
+        if (descriptor.isBundled() || SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) loadedBundled.add(s);
+        else loadedCustom.add(s);
       }
       else {
         disabled.add(s);
       }
     }
+
+    Collections.sort(loadedBundled);
+    Collections.sort(loadedCustom);
+    Collections.sort(disabled);
+
     getLogger().info("Loaded bundled plugins: " + StringUtil.join(loadedBundled, ", "));
     if (!loadedCustom.isEmpty()) {
       getLogger().info("Loaded custom plugins: " + StringUtil.join(loadedCustom, ", "));
