@@ -662,6 +662,8 @@
     <projectService serviceInterface="com.jetbrains.django.lang.template.DjangoWebUrlEvaluator"
                     serviceImplementation="com.jetbrains.django.lang.template.DjangoWebUrlEvaluator"/>
 
+    <renamePsiElementProcessor implementation="com.jetbrains.django.refactoring.DjangoStaticPrefixRenameProcessor"/>
+
     <!-- App Engine -->
     <facetType implementation="com.jetbrains.appengine.facet.AppEngineFacetType"/>
     <framework.detector implementation="com.jetbrains.appengine.facet.AppEngineFrameworkDetector"/>
