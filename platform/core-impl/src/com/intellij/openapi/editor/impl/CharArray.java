@@ -16,6 +16,7 @@
 package com.intellij.openapi.editor.impl;
 
 import com.intellij.diagnostic.Dumpable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.text.StringUtil;
@@ -41,6 +42,7 @@ import java.util.concurrent.locks.ReentrantLock;
  */
 abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
   private static final Logger LOG = Logger.getInstance("#" + CharArray.class.getName());
+  private static final boolean CHECK = ApplicationManager.getApplication().isUnitTestMode();
 
   @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
   private static final boolean DISABLE_DEFERRED_PROCESSING = Boolean.getBoolean("idea.document.deny.deferred.changes");
@@ -184,6 +186,7 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
   }
 
   private void assertConsistency() {
+    if (!CHECK) return;
     if (isDeferredChangeMode()) {
       assert myOriginalSequence == null;
     }
