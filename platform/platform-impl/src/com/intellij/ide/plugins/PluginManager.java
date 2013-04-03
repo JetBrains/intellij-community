@@ -80,6 +80,7 @@ public class PluginManager {
   @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
   private static final Object PLUGIN_CLASSES_LOCK = new Object();
   @NonNls public static final String INSTALLED_TXT = "installed.txt";
+  @NonNls private static final String SPECIAL_IDEA_PLUGIN = "IDEA CORE";
   private static String myPluginError = null;
   private static List<String> myPlugins2Disable = null;
   private static LinkedHashSet<String> myPlugins2Enable = null;
@@ -140,13 +141,18 @@ public class PluginManager {
       final String version = descriptor.getVersion();
       String s = descriptor.getName() + (version != null ? " (" + version + ")" : "");
       if (descriptor.isEnabled()) {
-        if (descriptor.isBundled()) loadedBundled.add(s);
+        if (descriptor.isBundled() || SPECIAL_IDEA_PLUGIN.equals(descriptor.getName())) loadedBundled.add(s);
         else loadedCustom.add(s);
       }
       else {
         disabled.add(s);
       }
     }
+
+    Collections.sort(loadedBundled);
+    Collections.sort(loadedCustom);
+    Collections.sort(disabled);
+
     getLogger().info("Loaded bundled plugins: " + StringUtil.join(loadedBundled, ", "));
     if (!loadedCustom.isEmpty()) {
       getLogger().info("Loaded custom plugins: " + StringUtil.join(loadedCustom, ", "));
@@ -661,7 +667,7 @@ public class PluginManager {
           }
 
           IdeaPluginDescriptorImpl pluginDescriptor = loadDescriptor(file, PLUGIN_XML);
-          if (platformPrefix != null && pluginDescriptor != null && pluginDescriptor.getName().equals("IDEA CORE")) {
+          if (platformPrefix != null && pluginDescriptor != null && pluginDescriptor.getName().equals(SPECIAL_IDEA_PLUGIN)) {
             continue;
           }
           if (pluginDescriptor != null && !result.contains(pluginDescriptor)) {
