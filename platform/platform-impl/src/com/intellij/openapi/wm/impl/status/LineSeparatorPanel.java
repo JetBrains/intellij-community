@@ -89,29 +89,26 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        String lineSeparator = null;
         VirtualFile file = getSelectedFile();
-        if (file == null || !file.isWritable()) {
-          myActionEnabled = false;
-        }
-        else {
-          lineSeparator = LoadTextUtil.detectLineSeparator(file, true);
-        }
+        myActionEnabled = false;
 
-        myComponent.resetColor();
-        if (lineSeparator == null) {
-          myComponent.setText("");
-        }
-        else {
-          myActionEnabled = true;
+        if (file != null) {
+          myActionEnabled = (file.isWritable());
+
+          String lineSeparator = LoadTextUtil.detectLineSeparator(file, true);
+
+          if (lineSeparator == null) {
+            lineSeparator = "";
+          }
+
+          myComponent.resetColor();
           myComponent.setToolTipText(String.format("Line separator: %s%nClick to change", StringUtil.escapeLineBreak(lineSeparator)));
           myComponent.setText(LineSeparator.fromString(lineSeparator).toString());
         }
 
         if (myActionEnabled) {
           myComponent.setForeground(UIUtil.getActiveTextColor());
-        }
-        else {
+        } else {
           myComponent.setForeground(UIUtil.getInactiveTextColor());
         }
 

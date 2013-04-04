@@ -125,7 +125,7 @@ public class ControlFlowUtils {
     }
     boolean hasDefaultCase = false;
     for (GrCaseSection clause : caseClauses) {
-      if (clause.getCaseLabel().isDefault()) {
+      if (clause.isDefault()) {
         hasDefaultCase = true;
       }
     }

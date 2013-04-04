@@ -226,14 +226,14 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       }
       buf.append("&nbsp;<br>&nbsp;");
       buf.append(DebuggerBundle.message("breakpoint.property.name.suspend.policy")).append(" : ");
-      if (DebuggerSettings.SUSPEND_ALL.equals(SUSPEND_POLICY)) {
+      if (DebuggerSettings.SUSPEND_NONE.equals(SUSPEND_POLICY) || !SUSPEND) {
+        buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.none"));
+      }
+      else if (DebuggerSettings.SUSPEND_ALL.equals(SUSPEND_POLICY)) {
         buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.all"));
       }
       else if (DebuggerSettings.SUSPEND_THREAD.equals(SUSPEND_POLICY)) {
         buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.thread"));
-      }
-      else if (DebuggerSettings.SUSPEND_NONE.equals(SUSPEND_POLICY)) {
-        buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.none"));
       }
       buf.append("&nbsp;<br>&nbsp;");
       buf.append(DebuggerBundle.message("breakpoint.property.name.log.message")).append(": ");
@@ -433,7 +433,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   private void setupGutterRenderer(@NotNull RangeHighlighter highlighter) {
-    MyGutterIconRenderer renderer = new MyGutterIconRenderer(getIcon(), getDescription());
+    MyGutterIconRenderer renderer = new MyGutterIconRenderer(this);
     highlighter.setGutterIconRenderer(renderer);
   }
 
@@ -597,23 +597,21 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   private class MyGutterIconRenderer extends GutterIconRenderer {
-    private final Icon myIcon;
-    private final String myDescription;
+    private BreakpointWithHighlighter myBreakpoint;
 
-    public MyGutterIconRenderer(@NotNull Icon icon, @NotNull String description) {
-      myIcon = icon;
-      myDescription = description;
+    public MyGutterIconRenderer(BreakpointWithHighlighter breakpoint) {
+      myBreakpoint = breakpoint;
     }
 
     @Override
     @NotNull
     public Icon getIcon() {
-      return myIcon;
+      return myBreakpoint.getIcon();
     }
 
     @Override
     public String getTooltipText() {
-      return myDescription;
+      return myBreakpoint.getDescription();
     }
 
     @Override

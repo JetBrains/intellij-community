@@ -1239,7 +1239,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return mySoftWrapModel.offsetToLogicalPosition(offset);
     }
     int line = offsetToLogicalLine(offset, false);
-    int column = calcColumnNumber(offset, line, false);
+    int column = calcColumnNumber(offset, line, false, myDocument.getCharsSequence());
     return new LogicalPosition(line, column);
   }
 
@@ -3718,7 +3718,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     LOG.assertTrue(lineIndex >= 0 && lineIndex < myDocument.getLineCount());
 
     if (softWrapAware && getSoftWrapModel().isSoftWrappingEnabled()) {
-      int column = calcColumnNumber(offset, lineIndex, false);
+      int column = calcColumnNumber(offset, lineIndex, false, myDocument.getCharsSequence());
       return mySoftWrapModel.adjustLogicalPosition(new LogicalPosition(lineIndex, column), offset).line;
     }
     else {
@@ -3728,16 +3728,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int calcColumnNumber(int offset, int lineIndex) {
-    return calcColumnNumber(offset, lineIndex, true);
+    return calcColumnNumber(offset, lineIndex, true, myDocument.getCharsSequence());
   }
 
-  public int calcColumnNumber(int offset, int lineIndex, boolean softWrapAware) {
+  public int calcColumnNumber(int offset, int lineIndex, boolean softWrapAware, CharSequence documentCharSequence) {
     if (myDocument.getTextLength() == 0) return 0;
 
     int start = myDocument.getLineStartOffset(lineIndex);
     if (start == offset) return 0;
-    CharSequence text = myDocument.getCharsSequence();
-    int column = EditorUtil.calcColumnNumber(this, text, start, offset, EditorUtil.getTabSize(this));
+    int column = EditorUtil.calcColumnNumber(this, documentCharSequence, start, offset, EditorUtil.getTabSize(this));
 
     if (softWrapAware) {
       int line = offsetToLogicalLine(offset, false);
