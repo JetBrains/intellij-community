@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -160,7 +160,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           final PsiWildcardType wildcard = ((PsiCapturedWildcardType)newBound).getWildcard();
           if (wildcardType.isExtends() != wildcard.isExtends()) {
             if (wildcard.isBounded()) {
-              return wildcardType.isExtends() ? PsiWildcardType.createExtends(wildcardType.getManager(), newBound) 
+              return wildcardType.isExtends() ? PsiWildcardType.createExtends(wildcardType.getManager(), newBound)
                                               : PsiWildcardType.createSuper(wildcardType.getManager(), newBound);
             }
             else {
@@ -170,7 +170,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
           if (!wildcard.isBounded()) return PsiWildcardType.createUnbounded(wildcardType.getManager());
         }
 
-        return PsiWildcardType.changeBound(wildcardType, newBound);
+        return rebound(wildcardType, newBound);
       }
     }
 
@@ -178,10 +178,27 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
       if (bound.isExtends() == wildcardType.isExtends()) {
         final PsiType newBoundBound = bound.getBound();
         if (newBoundBound != null) {
-          return PsiWildcardType.changeBound(wildcardType, newBoundBound);
+          return rebound(wildcardType, newBoundBound);
         }
       }
       return PsiWildcardType.createUnbounded(wildcardType.getManager());
+    }
+
+    private static PsiWildcardType rebound(PsiWildcardType type, PsiType newBound) {
+      LOG.assertTrue(type.getBound() != null);
+      LOG.assertTrue(newBound.isValid());
+
+      if (type.isExtends()) {
+        if (newBound.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+          return PsiWildcardType.createUnbounded(type.getManager());
+        }
+        else {
+          return PsiWildcardType.createExtends(type.getManager(), newBound);
+        }
+      }
+      else {
+        return PsiWildcardType.createSuper(type.getManager(), newBound);
+      }
     }
 
     @Override
@@ -359,7 +376,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
 
     if (captureContext != null) {
       LOG.assertTrue(substituted instanceof PsiWildcardType);
-      substituted = oldSubstituted instanceof PsiCapturedWildcardType && substituted == ((PsiCapturedWildcardType)oldSubstituted).getWildcard() 
+      substituted = oldSubstituted instanceof PsiCapturedWildcardType && substituted == ((PsiCapturedWildcardType)oldSubstituted).getWildcard()
                     ? oldSubstituted : PsiCapturedWildcardType.create((PsiWildcardType)substituted, captureContext);
     }
     return substituted;

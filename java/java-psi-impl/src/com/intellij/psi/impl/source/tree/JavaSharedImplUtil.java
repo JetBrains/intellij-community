@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.PsiTypeElementImpl;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -40,13 +39,7 @@ public class JavaSharedImplUtil {
   private JavaSharedImplUtil() { }
 
   public static PsiType getType(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor, @NotNull PsiElement context) {
-    PsiType type;
-    if (typeElement instanceof PsiTypeElementImpl) {
-      type = ((PsiTypeElementImpl)typeElement).getDetachedType(context);
-    }
-    else {
-      type = typeElement.getType();
-    }
+    PsiType type = typeElement.getType();
 
     List<PsiAnnotation[]> allAnnotations = collectAnnotations(anchor);
     for (PsiAnnotation[] annotations : allAnnotations) {
