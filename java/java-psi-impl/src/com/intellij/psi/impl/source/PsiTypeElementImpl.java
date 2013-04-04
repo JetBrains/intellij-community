@@ -17,9 +17,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.tree.*;
@@ -191,33 +189,9 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
     });
   }
 
-  private static final Function<PsiAnnotation, String> ANNOTATION_TEXT = new Function<PsiAnnotation, String>() {
-    @Override
-    public String fun(PsiAnnotation psiAnnotation) {
-      return psiAnnotation.getText();
-    }
-  };
-
   @Override
   public PsiType getTypeNoResolve(@NotNull PsiElement context) {
-    PsiFile file = getContainingFile();
-    String text;
-    if (PsiUtil.isLanguageLevel8OrHigher(file)) {
-      String combinedAnnotations = StringUtil.join(getAnnotations(), ANNOTATION_TEXT, " ");
-      text = combinedAnnotations.isEmpty() ? getText().trim() : combinedAnnotations + " " + getText().trim();
-    }
-    else {
-      text = getText().trim();
-    }
-    try {
-      return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(text, context);
-    }
-    catch (IncorrectOperationException e) {
-      String s = "Parent: " + DebugUtil.psiToString(getParent(), false);
-      s += "Context: " + DebugUtil.psiToString(context, false);
-      LOG.error(s, e);
-      return null;
-    }
+    return getType();
   }
 
   @Override

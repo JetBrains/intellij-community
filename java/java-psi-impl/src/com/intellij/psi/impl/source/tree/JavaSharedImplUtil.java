@@ -38,19 +38,8 @@ public class JavaSharedImplUtil {
 
   private JavaSharedImplUtil() { }
 
-  public static PsiType getType(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor, @NotNull PsiElement context) {
+  public static PsiType getType(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor) {
     PsiType type = typeElement.getType();
-
-    List<PsiAnnotation[]> allAnnotations = collectAnnotations(anchor);
-    for (PsiAnnotation[] annotations : allAnnotations) {
-      type = type.createArrayType(annotations);
-    }
-
-    return type;
-  }
-
-  public static PsiType getTypeNoResolve(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor, @NotNull PsiElement context) {
-    PsiType type = typeElement.getTypeNoResolve(context);
 
     List<PsiAnnotation[]> allAnnotations = collectAnnotations(anchor);
     for (PsiAnnotation[] annotations : allAnnotations) {

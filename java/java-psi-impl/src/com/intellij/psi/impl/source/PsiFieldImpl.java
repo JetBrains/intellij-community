@@ -124,28 +124,12 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
 
   @Override
   public PsiType getTypeNoResolve() {
-    final PsiFieldStub stub = getStub();
-    if (stub != null) {
-      String typeText = TypeInfo.createTypeText(stub.getType(false));
-      try {
-        final PsiType type = JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
-        myCachedType = new SoftReference<PsiType>(type);
-        return type;
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return null;
-      }
-    }
-
-    PsiTypeElement typeElement = getTypeElement();
-    PsiIdentifier nameIdentifier = getNameIdentifier();
-    return JavaSharedImplUtil.getTypeNoResolve(typeElement, nameIdentifier, this);
+    return getType();
   }
 
   @Override
   @NotNull
-  public PsiType getType(){
+  public PsiType getType() {
     final PsiFieldStub stub = getStub();
     if (stub != null) {
       SoftReference<PsiType> cachedType = myCachedType;
@@ -167,7 +151,7 @@ public class PsiFieldImpl extends JavaStubPsiElement<PsiFieldStub> implements Ps
     }
 
     myCachedType = null;
-    return JavaSharedImplUtil.getType(getTypeElement(), getNameIdentifier(), this);
+    return JavaSharedImplUtil.getType(getTypeElement(), getNameIdentifier());
   }
 
   @Override
