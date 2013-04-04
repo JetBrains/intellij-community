@@ -24,6 +24,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
@@ -69,8 +70,25 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
   }
 
   @NotNull
+  @Override
   public GrCaseLabel getCaseLabel() {
     return findNotNullChildByClass(GrCaseLabel.class);
+  }
+
+  @NotNull
+  @Override
+  public GrCaseLabel[] getCaseLabels() {
+    final List<GrCaseLabel> labels = findChildrenByType(GroovyElementTypes.CASE_LABEL);
+    return labels.toArray(new GrCaseLabel[labels.size()]);
+  }
+
+  @Override
+  public boolean isDefault() {
+    final List<GrCaseLabel> labels = findChildrenByType(GroovyElementTypes.CASE_LABEL);
+    for (GrCaseLabel label : labels) {
+      if (label.isDefault()) return true;
+    }
+    return false;
   }
 
   @NotNull
