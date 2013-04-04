@@ -18,3 +18,10 @@ To develop IntelliJ IDEA, you can use either IntelliJ IDEA Community Edition or 
 
 Pull requests are welcome. Please make sure that you follow the [IntelliJ Coding Guidelines](http://www.jetbrains.org/display/IJOS/IntelliJ+Coding+Guidelines).
 Note that you'll need to submit a [Contributor Agreement](http://www.jetbrains.org/display/IJOS/Contributor+Agreement) before we can accept your pull request.
+
+See http://www.jetbrains.org/ for more information.
+
+## Developer Documentation
+
+You can find information on the internal architecture of IntelliJ IDEA and plugin development at the
+[PluginDevelopment](http://confluence.jetbrains.com/display/IDEADEV/PluginDevelopment) site.
