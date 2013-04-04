@@ -22,7 +22,10 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -30,7 +33,6 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.SmartList;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -281,18 +283,8 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
   @Override
   @NotNull
   public PsiAnnotation[] getAnnotations() {
-    List<PsiAnnotation> result = null;
-    for (ASTNode child = getFirstChildNode(); child != null; child = child.getTreeNext()) {
-      if (child.getElementType() != JavaElementType.ANNOTATION) continue;
-      ASTNode next = TreeUtil.skipElements(child.getTreeNext(), ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET);
-      if (next != null && next.getElementType() == JavaTokenType.LBRACKET) continue; //annotation on array dimension
-      if (result == null) result = new SmartList<PsiAnnotation>();
-      PsiElement element = child.getPsi();
-      assert element != null;
-      result.add((PsiAnnotation)element);
-    }
-
-    return result== null ?  PsiAnnotation.EMPTY_ARRAY : toAnnotationsArray(result);
+    PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(this, PsiAnnotation.class);
+    return annotations != null ? annotations : PsiAnnotation.EMPTY_ARRAY;
   }
 
   @Override

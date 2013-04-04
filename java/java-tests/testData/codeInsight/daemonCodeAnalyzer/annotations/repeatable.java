@@ -33,4 +33,12 @@ class C5 { }
 class DupTypeAnno {
   List<@<error descr="Duplicate annotation. The declaration of 'TA' does not have a valid java.lang.annotation.Repeatable annotation">TA</error> @<error descr="Duplicate annotation. The declaration of 'TA' does not have a valid java.lang.annotation.Repeatable annotation">TA</error> String> l = null;
   Boolean[] b = new Boolean @<error descr="Duplicate annotation. The declaration of 'TA' does not have a valid java.lang.annotation.Repeatable annotation">TA</error> @<error descr="Duplicate annotation. The declaration of 'TA' does not have a valid java.lang.annotation.Repeatable annotation">TA</error> [42];
+
+  {
+    this.<@TA String @<error descr="Duplicate annotation. The declaration of 'TA' does not have a valid java.lang.annotation.Repeatable annotation">TA</error> @<error descr="Duplicate annotation. The declaration of 'TA' does not have a valid java.lang.annotation.Repeatable annotation">TA</error> []>m();
+    this.<@<error descr="Duplicate annotation. The declaration of 'TA' does not have a valid java.lang.annotation.Repeatable annotation">TA</error> @<error descr="Duplicate annotation. The declaration of 'TA' does not have a valid java.lang.annotation.Repeatable annotation">TA</error> String @TA []>m();
+    this.<@TA String @TA [] @TA []>m();
+  }
+
+  static <T> void m() { }
 }
