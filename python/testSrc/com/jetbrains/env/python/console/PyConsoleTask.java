@@ -344,7 +344,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        getConsoleView().getLanguageConsole().addTextToCurrentEditor(text);
+        getConsoleView().getLanguageConsole().addTextToConsoleEditor(text);
         PsiDocumentManager.getInstance(getProject()).commitAllDocuments();
       }
     }
