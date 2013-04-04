@@ -95,13 +95,13 @@ public class Extensions {
   @NotNull
   @SuppressWarnings({"unchecked"})
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName) {
-    return getExtensions(extensionPointName.getName(), null);
+    return (T[])getExtensions(extensionPointName.getName(), null);
   }
 
   @NotNull
   @SuppressWarnings({"unchecked"})
   public static <T> T[] getExtensions(@NotNull ExtensionPointName<T> extensionPointName, AreaInstance areaInstance) {
-    return getExtensions(extensionPointName.getName(), areaInstance);
+    return Extensions.<T>getExtensions(extensionPointName.getName(), areaInstance);
   }
 
   @NotNull
