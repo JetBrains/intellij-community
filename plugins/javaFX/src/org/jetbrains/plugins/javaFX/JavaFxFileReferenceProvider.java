@@ -20,6 +20,10 @@ public class JavaFxFileReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
     final Object value = ((PsiLiteralExpression)element).getValue();
+    return getReferences(element, value);
+  }
+
+  public static PsiReference[] getReferences(final PsiElement element, final Object value) {
     final PsiDirectory directory = element.getContainingFile().getOriginalFile().getParent();
     if (!(value instanceof String) || directory == null) return PsiReference.EMPTY_ARRAY;
     final boolean startsWithSlash = ((String)value).startsWith("/");
