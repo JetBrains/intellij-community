@@ -281,11 +281,6 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
   @Override
   protected String getCommandName() {
-    PsiNamedElement variable = getVariable();
-    if (variable == null) {
-      LOG.error(myElementToRename);
-      return "Rename";
-    }
     return RefactoringBundle.message("renaming.command.name", myInitialName);
   }
 
