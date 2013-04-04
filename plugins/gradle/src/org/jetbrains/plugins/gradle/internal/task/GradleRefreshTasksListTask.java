@@ -16,13 +16,13 @@
 package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.config.GradleLocalSettings;
-import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
 import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
 import org.jetbrains.plugins.gradle.remote.GradleBuildManager;
 import org.jetbrains.plugins.gradle.tasks.GradleTasksModel;
@@ -51,7 +51,7 @@ public class GradleRefreshTasksListTask extends AbstractGradleTask {
     GradleBuildManager buildManager = manager.getFacade(project).getBuildManager();
     setState(GradleTaskState.IN_PROGRESS);
     try {
-      final Collection<GradleTaskDescriptor> descriptors = buildManager.listTasks(getId(), myProjectPath);
+      final Collection<ExternalSystemTaskDescriptor> descriptors = buildManager.listTasks(getId(), myProjectPath);
       if (descriptors == null || descriptors.isEmpty()) {
         return;
       }

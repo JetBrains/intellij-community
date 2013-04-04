@@ -15,14 +15,16 @@
  */
 package com.intellij.openapi.externalSystem.service.project.change;
 
-import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
+import com.intellij.openapi.externalSystem.model.project.change.user.UserProjectChange;
+import com.intellij.openapi.externalSystem.service.project.manage.EntityManageHelper;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.config.GradleLocalSettings;
-import org.jetbrains.plugins.gradle.config.GradleSettings;
-import org.jetbrains.plugins.gradle.manage.GradleEntityManageHelper;
 
 import java.util.Collection;
 import java.util.Set;
@@ -39,11 +41,11 @@ import java.util.concurrent.atomic.AtomicBoolean;
  * <pre>
  * <ol>
  *   <li>
- *     Check if there is an {@link GradleUserProjectChange explicitly made project structure change} for the current project
+ *     Check if there is an {@link UserProjectChange explicitly made project structure change} for the current project
  *     structure change;
  *   </li>
  *   <li>
- *     {@link GradleEntityManageHelper#eliminateChange(Collection, Set, boolean) Resolve the change} if it doesn't occur
+ *     {@link EntityManageHelper#eliminateChange(Project, Collection, Set, boolean) Resolve the change} if it doesn't occur
  *     because of user actions (e.g. we don't want to auto-remove a module which is absent at gradle but presents at IDE);
  *   </li>
  * </ol>
@@ -56,25 +58,39 @@ public class AutoImporter implements ExternalProjectStructureChangesPostProcesso
 
   @NotNull private final AtomicBoolean myInProgress = new AtomicBoolean();
 
+  @NotNull private final ExternalSystemSettingsManager mySettingsManager;
+  @NotNull private final EntityManageHelper            myEntityManageHelper;
+
+  public AutoImporter(@NotNull ExternalSystemSettingsManager manager, @NotNull EntityManageHelper helper) {
+    mySettingsManager = manager;
+    myEntityManageHelper = helper;
+  }
+
   public boolean isInProgress() {
     return myInProgress.get();
   }
-  
+
+  @SuppressWarnings("unchecked")
   @Override
   public void processChanges(@NotNull Collection<ExternalProjectStructureChange> changes,
+                             @NotNull ProjectSystemId externalSystemId,
                              @NotNull Project project,
                              boolean onIdeProjectStructureChange)
   {
-    GradleSettings s = GradleSettings.getInstance(project);
-    if (onIdeProjectStructureChange || !s.isUseAutoImport() || StringUtil.isEmpty(s.getLinkedProjectPath())) {
+    if (onIdeProjectStructureChange) {
       return;
     }
-    GradleLocalSettings settings = GradleLocalSettings.getInstance(project);
-    GradleEntityManageHelper manageHelper = ServiceManager.getService(project, GradleEntityManageHelper.class);
+    AbstractExternalSystemSettings<?, ?> settings = mySettingsManager.getSettings(project, externalSystemId);
+    if (!settings.isUseAutoImport() || StringUtil.isEmpty(settings.getLinkedProjectPath())) {
+      return;
+    }
+
+    AbstractExternalSystemLocalSettings localSettings = mySettingsManager.getLocalSettings(project, externalSystemId);
     Set<ExternalProjectStructureChange> nonProcessed;
     myInProgress.set(true);
     try {
-      nonProcessed = manageHelper.eliminateChange(changes, settings.getUserProjectChanges(), true);
+      Set<UserProjectChange<?>> userChanges = localSettings.getUserProjectChanges();
+      nonProcessed = myEntityManageHelper.eliminateChange(project, changes, userChanges, true);
     }
     finally {
       myInProgress.set(false);

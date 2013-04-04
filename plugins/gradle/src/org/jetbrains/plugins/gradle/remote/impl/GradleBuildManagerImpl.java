@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.remote.impl;
 
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
 import org.gradle.tooling.BuildLauncher;
@@ -28,7 +29,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.internal.task.GradleTaskId;
 import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
-import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.remote.GradleBuildManager;
@@ -46,18 +46,18 @@ public class GradleBuildManagerImpl implements GradleBuildManager {
   private final RemoteGradleServiceHelper myHelper = new RemoteGradleServiceHelper();
 
   @Override
-  public Collection<GradleTaskDescriptor> listTasks(@NotNull final GradleTaskId id, @NotNull final String projectPath) {
-    Function<ProjectConnection, Collection<GradleTaskDescriptor>> f = new Function<ProjectConnection, Collection<GradleTaskDescriptor>>() {
+  public Collection<ExternalSystemTaskDescriptor> listTasks(@NotNull final GradleTaskId id, @NotNull final String projectPath) {
+    Function<ProjectConnection, Collection<ExternalSystemTaskDescriptor>> f = new Function<ProjectConnection, Collection<ExternalSystemTaskDescriptor>>() {
       @Nullable
       @Override
-      public Collection<GradleTaskDescriptor> fun(ProjectConnection connection) {
+      public Collection<ExternalSystemTaskDescriptor> fun(ProjectConnection connection) {
         ModelBuilder<? extends IdeaProject> modelBuilder = myHelper.getModelBuilder(id, connection, false);
         IdeaProject project = modelBuilder.get();
         DomainObjectSet<? extends IdeaModule> modules = project.getModules();
         if (modules == null) {
           return Collections.emptyList();
         }
-        Set<GradleTaskDescriptor> result = new HashSet<GradleTaskDescriptor>();
+        Set<ExternalSystemTaskDescriptor> result = new HashSet<ExternalSystemTaskDescriptor>();
         for (IdeaModule module : modules) {
           for (GradleTask task : module.getGradleProject().getTasks()) {
             String name = task.getName();
@@ -68,7 +68,7 @@ public class GradleBuildManagerImpl implements GradleBuildManager {
             if (s.contains("idea") || s.contains("eclipse")) {
               continue;
             }
-            result.add(new GradleTaskDescriptor(name, task.getDescription()));
+            result.add(new ExternalSystemTaskDescriptor(name, task.getDescription()));
           }
         }
         return result;

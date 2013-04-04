@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.model.gradle;
+package com.intellij.openapi.externalSystem.model.task;
 
 import com.intellij.openapi.util.Comparing;
 import org.jetbrains.annotations.NotNull;
@@ -25,7 +25,7 @@ import java.io.Serializable;
  * @author Denis Zhdanov
  * @since 3/15/13 1:01 PM
  */
-public class GradleTaskDescriptor implements Serializable, Comparable<GradleTaskDescriptor> {
+public class ExternalSystemTaskDescriptor implements Serializable, Comparable<ExternalSystemTaskDescriptor> {
 
   private static final long serialVersionUID = 1L;
 
@@ -36,11 +36,11 @@ public class GradleTaskDescriptor implements Serializable, Comparable<GradleTask
   @Nullable private String myExecutorId;
 
   @SuppressWarnings("UnusedDeclaration")
-  public GradleTaskDescriptor() {
+  public ExternalSystemTaskDescriptor() {
     // Necessary for IJ serialization
   }
 
-  public GradleTaskDescriptor(@NotNull String name, @Nullable String description) {
+  public ExternalSystemTaskDescriptor(@NotNull String name, @Nullable String description) {
     setName(name);
     setDescription(description);
   }
@@ -72,7 +72,7 @@ public class GradleTaskDescriptor implements Serializable, Comparable<GradleTask
   }
 
   @Override
-  public int compareTo(GradleTaskDescriptor that) {
+  public int compareTo(@NotNull ExternalSystemTaskDescriptor that) {
     int cmp = myName.compareTo(that.myName);
     if (cmp == 0) {
       return Comparing.compare(myExecutorId, that.myExecutorId);
@@ -93,7 +93,7 @@ public class GradleTaskDescriptor implements Serializable, Comparable<GradleTask
     if (this == o) return true;
     if (o == null || getClass() != o.getClass()) return false;
 
-    GradleTaskDescriptor that = (GradleTaskDescriptor)o;
+    ExternalSystemTaskDescriptor that = (ExternalSystemTaskDescriptor)o;
 
     if (!myName.equals(that.myName)) return false;
     if (myExecutorId != null ? !myExecutorId.equals(that.myExecutorId) : that.myExecutorId != null) return false;

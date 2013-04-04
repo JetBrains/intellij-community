@@ -15,9 +15,9 @@
  */
 package org.jetbrains.plugins.gradle.tasks;
 
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
 
 import javax.swing.*;
 import java.util.*;
@@ -27,24 +27,24 @@ import java.util.*;
  * @since 3/15/13 12:50 PM
  */
 public class GradleTasksModel extends DefaultListModel {
-  
-  public static final Comparator<GradleTaskDescriptor> BY_NAME_COMPARATOR = new Comparator<GradleTaskDescriptor>() {
+
+  public static final Comparator<ExternalSystemTaskDescriptor> BY_NAME_COMPARATOR = new Comparator<ExternalSystemTaskDescriptor>() {
     @Override
-    public int compare(GradleTaskDescriptor d1, GradleTaskDescriptor d2) {
+    public int compare(ExternalSystemTaskDescriptor d1, ExternalSystemTaskDescriptor d2) {
       return d1.getName().compareTo(d2.getName());
     }
   };
 
-  public void setTasks(@NotNull Collection<GradleTaskDescriptor> taskDescriptors) {
+  public void setTasks(@NotNull Collection<ExternalSystemTaskDescriptor> taskDescriptors) {
     clear();
-    ArrayList<GradleTaskDescriptor> descriptorsToUse = ContainerUtilRt.newArrayList(taskDescriptors);
+    ArrayList<ExternalSystemTaskDescriptor> descriptorsToUse = ContainerUtilRt.newArrayList(taskDescriptors);
     Collections.sort(descriptorsToUse, BY_NAME_COMPARATOR);
-    for (GradleTaskDescriptor descriptor : descriptorsToUse) {
+    for (ExternalSystemTaskDescriptor descriptor : descriptorsToUse) {
       addElement(descriptor);
     }
   }
 
-  public void setFirst(@NotNull GradleTaskDescriptor descriptor) {
+  public void setFirst(@NotNull ExternalSystemTaskDescriptor descriptor) {
     insertElementAt(descriptor, 0);
     for (int i = 1; i < size(); i++) {
       if (descriptor.equals(getElementAt(i))) {
@@ -59,12 +59,12 @@ public class GradleTasksModel extends DefaultListModel {
   }
 
   @NotNull
-  public List<GradleTaskDescriptor> getTasks() {
-    List<GradleTaskDescriptor> result = ContainerUtilRt.newArrayList();
+  public List<ExternalSystemTaskDescriptor> getTasks() {
+    List<ExternalSystemTaskDescriptor> result = ContainerUtilRt.newArrayList();
     for (int i = 0; i < size(); i++) {
       Object e = getElementAt(i);
-      if (e instanceof GradleTaskDescriptor) {
-        result.add((GradleTaskDescriptor)e);
+      if (e instanceof ExternalSystemTaskDescriptor) {
+        result.add((ExternalSystemTaskDescriptor)e);
       }
     }
     return result;

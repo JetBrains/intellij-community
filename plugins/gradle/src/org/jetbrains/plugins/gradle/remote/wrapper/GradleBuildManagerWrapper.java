@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.remote.wrapper;
 
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
 import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.remote.GradleBuildManager;
@@ -40,7 +40,7 @@ public class GradleBuildManagerWrapper extends AbstractRemoteGradleServiceWrappe
   }
 
   @Override
-  public Collection<GradleTaskDescriptor> listTasks(@NotNull GradleTaskId id, @NotNull String projectPath)
+  public Collection<ExternalSystemTaskDescriptor> listTasks(@NotNull GradleTaskId id, @NotNull String projectPath)
     throws RemoteException, GradleApiException
   {
     myNotificationManager.onQueued(id);

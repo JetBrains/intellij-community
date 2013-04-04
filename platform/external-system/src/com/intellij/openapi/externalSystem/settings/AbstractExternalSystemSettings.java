@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.messages.Topic;
@@ -24,7 +25,11 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
- * 
+ * Common base class for external system settings. Defines a minimal api which is necessary for the common external system
+ * support codebase.
+ * <p/>
+ * <b>Note:</b> non-abstract sub-classes of this class are expected to be marked by {@link State} annotation configured as necessary.
+ *  
  * @author Denis Zhdanov
  * @since 4/3/13 4:04 PM
  */
@@ -33,7 +38,7 @@ public abstract class AbstractExternalSystemSettings<L extends ExternalSystemSet
 {
 
   @NotNull private final Topic<L> myChangesTopic;
-  @NotNull private final Project                                         myProject;
+  @NotNull private final Project  myProject;
 
   @Nullable private String myLinkedProjectPath;
 
@@ -53,7 +58,7 @@ public abstract class AbstractExternalSystemSettings<L extends ExternalSystemSet
 
   @Override
   public void loadState(S state) {
-    XmlSerializerUtil.copyBean(state, this); 
+    XmlSerializerUtil.copyBean(state, this);
   }
 
   @Nullable

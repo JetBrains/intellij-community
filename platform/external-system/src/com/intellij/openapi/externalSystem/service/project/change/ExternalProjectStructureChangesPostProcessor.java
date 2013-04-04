@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project.change;
 
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -40,11 +41,13 @@ public interface ExternalProjectStructureChangesPostProcessor {
    * given changes collection's modification is immediately visible to the calling code.
    * 
    * @param changes                      current changes which might be adjusted
+   * @param externalSystemId             target external system against which given project changes have been detected
    * @param project                      current ide project
    * @param onIdeProjectStructureChange  a flag which identifies if current update is triggered by ide project structure
    *                                     change (an alternative is a manual project structure changes refresh implied by a user)
    */
   void processChanges(@NotNull Collection<ExternalProjectStructureChange> changes,
+                      @NotNull ProjectSystemId externalSystemId,
                       @NotNull Project project,
                       boolean onIdeProjectStructureChange);
 }

@@ -176,7 +176,7 @@ public class EntityManageHelper {
    */
   public Set<ExternalProjectStructureChange> eliminateChange(@NotNull Project project,
                                                              @NotNull Collection<ExternalProjectStructureChange> changesToEliminate,
-                                                             @NotNull final Set<UserProjectChange> changesToPreserve,
+                                                             @NotNull final Set<UserProjectChange<?>> changesToPreserve,
                                                              boolean synchronous)
   {
     
@@ -391,7 +391,7 @@ public class EntityManageHelper {
     @NotNull final Set<Object>                         entitiesToRemove    = ContainerUtilRt.newHashSet();
     @NotNull final Set<ExternalEntity>                 entitiesToImport    = ContainerUtilRt.newHashSet();
     @NotNull final Set<ExternalProjectStructureChange> nonProcessedChanges = ContainerUtilRt.newHashSet();
-    @NotNull final Set<UserProjectChange>              changesToPreserve   = ContainerUtilRt.newHashSet();
+    @NotNull final Set<UserProjectChange<?>>           changesToPreserve   = ContainerUtilRt.newHashSet();
 
     @NotNull final Project                   project;
     @NotNull final ProjectStructureHelper    projectStructureHelper;
@@ -452,7 +452,7 @@ public class EntityManageHelper {
 
     EliminateChangesContext(@NotNull Project project,
                             @NotNull ProjectStructureHelper projectStructureHelper,
-                            @NotNull Set<UserProjectChange> changesToPreserve,
+                            @NotNull Set<UserProjectChange<?>> changesToPreserve,
                             @NotNull ExternalProjectManager projectManager,
                             @NotNull ExternalDependencyManager dependencyManager,
                             boolean synchronous)

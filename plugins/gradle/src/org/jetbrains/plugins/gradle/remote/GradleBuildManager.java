@@ -15,8 +15,8 @@
  */
 package org.jetbrains.plugins.gradle.remote;
 
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
 import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
 import org.jetbrains.plugins.gradle.internal.task.GradleTaskId;
 import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
@@ -34,7 +34,7 @@ public interface GradleBuildManager extends RemoteGradleService {
 
   GradleBuildManager NULL_OBJECT = new GradleBuildManager() {
     @Override
-    public Collection<GradleTaskDescriptor> listTasks(@NotNull GradleTaskId id, @NotNull String projectPath) {
+    public Collection<ExternalSystemTaskDescriptor> listTasks(@NotNull GradleTaskId id, @NotNull String projectPath) {
       return Collections.emptySet();
     }
 
@@ -64,7 +64,7 @@ public interface GradleBuildManager extends RemoteGradleService {
     }
   };
 
-  Collection<GradleTaskDescriptor> listTasks(@NotNull GradleTaskId id, @NotNull String projectPath)
+  Collection<ExternalSystemTaskDescriptor> listTasks(@NotNull GradleTaskId id, @NotNull String projectPath)
     throws RemoteException, GradleApiException;
 
   void executeTasks(@NotNull GradleTaskId id, @NotNull List<String> taskNames, @NotNull String projectPath)

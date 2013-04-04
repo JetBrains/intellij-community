@@ -21,6 +21,7 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
@@ -42,7 +43,6 @@ import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.GradleTaskLocation;
-import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
 import org.jetbrains.plugins.gradle.tasks.GradleTasksList;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
@@ -178,7 +178,7 @@ public class GradleScriptType extends GroovyScriptType {
           if (parameters != null) {
             GradleTasksList list = GradleUtil.getToolWindowElement(GradleTasksList.class, project, GradleDataKeys.RECENT_TASKS_LIST);
             if (list != null) {
-              GradleTaskDescriptor descriptor = new GradleTaskDescriptor(parameters, null);
+              ExternalSystemTaskDescriptor descriptor = new ExternalSystemTaskDescriptor(parameters, null);
               descriptor.setExecutorId(executor.getId());
               list.setFirst(descriptor);
               GradleLocalSettings.getInstance(project).setRecentTasks(list.getModel().getTasks());

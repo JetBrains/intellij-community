@@ -22,6 +22,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
@@ -42,7 +43,6 @@ import org.jetbrains.plugins.gradle.config.GradleLocalSettings;
 import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.gradle.config.GradleToolWindowPanel;
 import org.jetbrains.plugins.gradle.execution.GradleTaskLocation;
-import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -105,7 +105,7 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     addListPanel(myRecentTasksList, result, ExternalSystemBundle.message("gradle.task.recent.title"), false);
     
     myAllTasksModel.clear();
-    Collection<GradleTaskDescriptor> tasks = myLocalSettings.getAvailableTasks();
+    Collection<ExternalSystemTaskDescriptor> tasks = myLocalSettings.getAvailableTasks();
     if (!tasks.isEmpty()) {
       myAllTasksModel.setTasks(tasks);
     }
@@ -160,11 +160,11 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
         }
 
         Object element = model.getElementAt(row);
-        if (!(element instanceof GradleTaskDescriptor)) {
+        if (!(element instanceof ExternalSystemTaskDescriptor)) {
           return;
         }
 
-        String executorId = ((GradleTaskDescriptor)element).getExecutorId();
+        String executorId = ((ExternalSystemTaskDescriptor)element).getExecutorId();
         if (StringUtil.isEmpty(executorId)) {
           executorId = DefaultRunExecutor.EXECUTOR_ID;
         }
@@ -256,8 +256,8 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     final List<String> tasks = ContainerUtilRt.newArrayList();
     for (int index : selectedIndices) {
       Object data = list.getModel().getElementAt(index);
-      if (data instanceof GradleTaskDescriptor) {
-        tasks.add(((GradleTaskDescriptor)data).getName());
+      if (data instanceof ExternalSystemTaskDescriptor) {
+        tasks.add(((ExternalSystemTaskDescriptor)data).getName());
       }
     }
     return tasks.isEmpty() ? null : tasks;
