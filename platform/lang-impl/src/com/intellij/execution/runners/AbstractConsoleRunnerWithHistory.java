@@ -30,7 +30,6 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
@@ -180,9 +179,13 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(defaultExecutor.getId());
     window.activate(new Runnable() {
       public void run() {
-        IdeFocusManager.getInstance(myProject).requestFocus(getLanguageConsole().getCurrentEditor().getContentComponent(), true);
+        requestFocus();
       }
     });
+  }
+
+  public void requestFocus() {
+    IdeFocusManager.getInstance(myProject).requestFocus(getLanguageConsole().getConsoleEditor().getContentComponent(), true);
   }
 
   protected void finishConsole() {
