@@ -8,6 +8,6 @@ import static java.lang.annotation.ElementType.*;
 class C {
   {
     Object o = null;
-    @TA <caret>List<@TA ? extends @TA String> l = (@TA List<? extends @TA String>) o;
+    @TA List<@TA ? extends @TA String> l = (@TA List<@TA ? extends @TA String>) o;
   }
 }

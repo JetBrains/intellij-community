@@ -244,7 +244,12 @@ public abstract class PsiType implements PsiAnnotationOwner {
 
   @Override
   public PsiAnnotation findAnnotation(@NotNull @NonNls String qualifiedName) {
-    return null; //todo
+    for (PsiAnnotation annotation : myAnnotations) {
+      if (qualifiedName.equals(annotation.getQualifiedName())) {
+        return annotation;
+      }
+    }
+    return null;
   }
 
   @Override

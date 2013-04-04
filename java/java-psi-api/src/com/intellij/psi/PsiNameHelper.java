@@ -16,11 +16,14 @@
 package com.intellij.psi;
 
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * Service for validating and parsing Java identifiers.
@@ -103,13 +106,54 @@ public abstract class PsiNameHelper {
     return sub.length() == referenceText.length() ? sub : new String(sub);
   }
 
-  public static String getPresentableText(PsiJavaCodeReferenceElement ref) {
-    final String referenceName = ref.getReferenceName();
-    PsiType[] typeParameters = ref.getTypeParameters();
-    return getPresentableText(referenceName, typeParameters);
+  @NotNull
+  public static String getPresentableText(@NotNull PsiJavaCodeReferenceElement ref) {
+    String name = ref.getReferenceName();
+
+    PsiAnnotation[] children = PsiTreeUtil.getChildrenOfType(ref, PsiAnnotation.class);
+    PsiAnnotation[] annotations = notNull(children, PsiAnnotation.EMPTY_ARRAY);
+
+    PsiReferenceParameterList parameterList = ref.getParameterList();
+    PsiTypeElement[] typeElements = parameterList != null ? parameterList.getTypeParameterElements() : PsiTypeElement.EMPTY_ARRAY;
+
+    return getPresentableText(name, annotations, typeElements);
   }
 
-  public static String getPresentableText(final String referenceName, final PsiType[] typeParameters) {
+  @NotNull
+  public static String getPresentableText(@Nullable String referenceName,
+                                          @NotNull PsiAnnotation[] annotations,
+                                          @NotNull PsiTypeElement[] typeElements) {
+    if (typeElements.length == 0 && annotations.length == 0) {
+      return referenceName != null ? referenceName : "";
+    }
+
+    StringBuilder buffer = new StringBuilder();
+
+    if (annotations.length > 0) {
+      for (PsiAnnotation annotation : annotations) {
+        buffer.append(annotation.getText()).append(' ');
+      }
+    }
+
+    buffer.append(referenceName);
+
+    if (typeElements.length > 0) {
+      buffer.append("<");
+      for (int i = 0; i < typeElements.length; i++) {
+        PsiType type = typeElements[i].getType();
+        if (!(type instanceof PsiDiamondType)) {
+          buffer.append(type.getPresentableText());
+          if (i < typeElements.length - 1) buffer.append(", ");
+        }
+      }
+      buffer.append(">");
+    }
+
+    return buffer.toString();
+  }
+
+  /** deprecated use {@link #getPresentableText(String, PsiAnnotation[], PsiTypeElement[])} (to remove in IDEA 13) */
+  public static String getPresentableText(@Nullable String referenceName, @NotNull PsiType[] typeParameters) {
     if (typeParameters.length > 0) {
       StringBuilder buffer = new StringBuilder();
       buffer.append(referenceName);
