@@ -148,6 +148,7 @@ public class XBreakpointPanelProvider extends BreakpointPanelProvider<XBreakpoin
 
     @Override
     public void breakpointChanged(@NotNull XBreakpoint<?> breakpoint) {
+      myListener.breakpointsChanged();
     }
   }
 

@@ -245,16 +245,19 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       @Override
       public void rootsChanged() {
         myBuilder.updateFromRoot();
+        myTree.repaint();
       }
 
       @Override
       public void listAdded(String listName) {
         myBuilder.updateFromRoot();
+        myTree.repaint();
       }
 
       @Override
       public void listRemoved(String listName) {
         myBuilder.updateFromRoot();
+        myTree.repaint();
       }
     });
   }

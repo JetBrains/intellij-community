@@ -13,7 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.debugger.ui.breakpoints;
+package com.intellij.xdebugger.impl.breakpoints;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.favoritesTreeView.AbstractFavoritesListProvider;
@@ -29,9 +29,6 @@ import com.intellij.xdebugger.XDebuggerManager;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroup;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.impl.DebuggerSupport;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointManagerImpl;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
-import com.intellij.xdebugger.impl.breakpoints.XBreakpointsDialogState;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointPanelProvider;
 import com.intellij.xdebugger.impl.breakpoints.ui.tree.BreakpointItemsTreeController;
@@ -75,20 +72,12 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
     myTreeController = new BreakpointItemsTreeController(myRulesAvailable);
     myTree = new BreakpointsSimpleTree(myProject, myTreeController);
     myTreeController.setTreeView(myTree);
+    updateChildren();
   }
 
   @Override
   public void breakpointsChanged() {
-    List<BreakpointItem> items = new ArrayList<BreakpointItem>();
-    for (final BreakpointPanelProvider provider : myBreakpointPanelProviders) {
-      provider.provideBreakpointItems(myProject, items);
-    }
-    getEnabledGroupingRules(myRulesEnabled);
-    myTreeController.setGroupingRules(myRulesEnabled);
-    myTreeController.rebuildTree(items);
-
     updateChildren();
-    FavoritesManager.getInstance(myProject).fireListeners(getListName(myProject));
   }
 
   private void getEnabledGroupingRules(Collection<XBreakpointGroupingRule> rules) {
@@ -103,7 +92,16 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
   }
 
   private void updateChildren() {
+    List<BreakpointItem> items = new ArrayList<BreakpointItem>();
+    for (final BreakpointPanelProvider provider : myBreakpointPanelProviders) {
+      provider.provideBreakpointItems(myProject, items);
+    }
+    getEnabledGroupingRules(myRulesEnabled);
+    myTreeController.setGroupingRules(myRulesEnabled);
+    myTreeController.rebuildTree(items);
+
     myChildren.clear();
+
     CheckedTreeNode root = myTreeController.getRoot();
     for (int i = 0; i < root.getChildCount(); i++) {
       TreeNode child = root.getChildAt(i);
@@ -111,6 +109,7 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
         replicate((DefaultMutableTreeNode)child, myNode, myChildren);
       }
     }
+    FavoritesManager.getInstance(myProject).fireListeners(getListName(myProject));
   }
 
   private void replicate(DefaultMutableTreeNode source, AbstractTreeNode destination, final List<AbstractTreeNode<Object>> destinationChildren) {
