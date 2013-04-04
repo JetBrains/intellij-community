@@ -539,8 +539,8 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
     scheduleDisposeOnClose(new Disposable() {
       @Override
       public void dispose() {
-        collapseAllAction.unregisterCustomShortcutSet(component);
         expandAllAction.unregisterCustomShortcutSet(component);
+        collapseAllAction.unregisterCustomShortcutSet(component);
       }
     });
 

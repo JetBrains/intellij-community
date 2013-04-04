@@ -21,6 +21,10 @@ import com.intellij.ide.projectView.impl.AbstractProjectViewPSIPane;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.testFramework.ProjectViewTestUtil;
+import junit.framework.Assert;
 
 public class TestProjectTreeStructure extends AbstractProjectTreeStructure implements Disposable {
   protected boolean myShowMembers = false;
@@ -30,6 +34,15 @@ public class TestProjectTreeStructure extends AbstractProjectTreeStructure imple
   public TestProjectTreeStructure(Project project, Disposable parentDisposable) {
     super(project);
     Disposer.register(parentDisposable, this);
+  }
+
+  public void checkNavigateFromSourceBehaviour(PsiElement element, VirtualFile virtualFile, AbstractProjectViewPSIPane pane) {
+    Disposer.dispose(pane);
+    pane.createComponent();
+    Disposer.register(this, pane);
+    Assert.assertNull(ProjectViewTestUtil.getNodeForElement(element, pane));
+    pane.select(element, virtualFile, true);
+    Assert.assertTrue(ProjectViewTestUtil.isExpanded(element, pane));
   }
 
   public AbstractProjectViewPSIPane createPane() {

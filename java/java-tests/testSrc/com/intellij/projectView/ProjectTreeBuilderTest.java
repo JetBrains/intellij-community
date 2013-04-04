@@ -26,7 +26,7 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
 
     PsiFile element = aClass.getContainingFile();
 
-    ProjectViewTestUtil.checkNavigateFromSourceBehaviour(element, element.getVirtualFile(), myStructure.createPane());
+    myStructure.checkNavigateFromSourceBehaviour(element, element.getVirtualFile(), myStructure.createPane());
   }
 
   public void testShowClassMembers() throws IncorrectOperationException, IOException {
@@ -51,7 +51,7 @@ public class ProjectTreeBuilderTest extends BaseProjectViewTestCase {
 
     final AbstractProjectViewPSIPane pane = myStructure.createPane();
 
-    ProjectViewTestUtil.checkNavigateFromSourceBehaviour(innerClass2Field, innerClass2Field.getContainingFile().getVirtualFile(), pane);
+    myStructure.checkNavigateFromSourceBehaviour(innerClass2Field, innerClass2Field.getContainingFile().getVirtualFile(), pane);
 
     IdeaTestUtil.assertTreeEqual(pane.getTree(), "-Project\n" +
                                                  " -PsiDirectory: showClassMembers\n" +

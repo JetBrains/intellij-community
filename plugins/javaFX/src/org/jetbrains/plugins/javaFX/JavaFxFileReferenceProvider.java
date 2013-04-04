@@ -15,22 +15,28 @@ import java.util.Collections;
 * Date: 4/3/13
 */
 public class JavaFxFileReferenceProvider extends PsiReferenceProvider {
+  
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
     final Object value = ((PsiLiteralExpression)element).getValue();
     final PsiDirectory directory = element.getContainingFile().getOriginalFile().getParent();
     if (!(value instanceof String) || directory == null) return PsiReference.EMPTY_ARRAY;
+    final boolean startsWithSlash = ((String)value).startsWith("/");
     final VirtualFileSystem fs = directory.getVirtualFile().getFileSystem();
-    return new FileReferenceSet((String)value, element, 1, null, ((NewVirtualFileSystem)fs).isCaseSensitive()) {
+    final FileReferenceSet fileReferenceSet = new FileReferenceSet((String)value, element, 1, null, ((NewVirtualFileSystem)fs).isCaseSensitive()) {
       @NotNull
       @Override
       public Collection<PsiFileSystemItem> getDefaultContexts() {
-        if (!directory.isValid()) {
+        if (startsWithSlash || !directory.isValid()) {
           return super.getDefaultContexts();
         }
         return Collections.<PsiFileSystemItem>singletonList(directory);
       }
-    }.getAllReferences();
+    };
+    if (startsWithSlash) {
+      fileReferenceSet.addCustomization(FileReferenceSet.DEFAULT_PATH_EVALUATOR_OPTION, FileReferenceSet.ABSOLUTE_TOP_LEVEL);
+    }
+    return fileReferenceSet.getAllReferences();
   }
 }

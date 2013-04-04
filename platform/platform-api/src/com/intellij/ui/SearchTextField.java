@@ -100,7 +100,9 @@ public class SearchTextField extends JPanel {
       @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-          if (myPopup == null || !myPopup.isVisible()) {
+          if (hasNativeLeopardSearchControl()) {
+            myNativeSearchPopup.show(myTextField, 5, myTextField.getHeight());
+          } else if (myPopup == null || !myPopup.isVisible()) {
             showPopup();
           }
         }
@@ -372,7 +374,7 @@ public class SearchTextField extends JPanel {
   }
 
   protected void showPopup() {
-    if (myPopup == null) {
+    if (myPopup == null || !myPopup.isVisible()) {
       final JList list = new JBList(myModel);
       final Runnable chooseRunnable = createItemChosenCallback(list);
       myPopup = JBPopupFactory.getInstance().createListPopupBuilder(list)
