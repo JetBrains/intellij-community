@@ -64,7 +64,7 @@ public class PyConsoleUtil {
         // Change console editor prompt if required
         final String currentPrompt = languageConsole.getPrompt();
         final String trimmedPrompt = prompt.trim();
-        if (!currentPrompt.equals(trimmedPrompt)) {
+        if (currentPrompt != null && !currentPrompt.equals(trimmedPrompt)) {
           languageConsole.setPrompt(trimmedPrompt);
           scrollDown(languageConsole.getCurrentEditor());
         }
