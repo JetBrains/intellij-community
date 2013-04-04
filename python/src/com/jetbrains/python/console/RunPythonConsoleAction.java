@@ -8,6 +8,7 @@ import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.DumbAware;
@@ -57,6 +58,8 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
   @NotNull
   public static PydevConsoleRunner runPythonConsole(Project project, Module contextModule) {
     assert project != null : "Project is null";
+
+    FileDocumentManager.getInstance().saveAllDocuments();
 
     Pair<Sdk, Module> sdkAndModule = findPythonSdkAndModule(project, contextModule);
 
