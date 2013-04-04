@@ -21,7 +21,6 @@ import com.intellij.ide.projectView.impl.nodes.BasePsiNode;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
 import com.intellij.ide.util.treeView.AbstractTreeStructure;
 import com.intellij.openapi.ui.Queryable;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
@@ -126,7 +125,7 @@ public class ProjectViewTestUtil {
     return pane.getTree().isExpanded(path.getParentPath());
   }
 
-  protected static DefaultMutableTreeNode getNodeForElement(PsiElement element, AbstractProjectViewPSIPane pane) {
+  public static DefaultMutableTreeNode getNodeForElement(PsiElement element, AbstractProjectViewPSIPane pane) {
     JTree tree = pane.getTree();
     TreeModel model = tree.getModel();
     Object root = model.getRoot();
@@ -146,14 +145,6 @@ public class ProjectViewTestUtil {
       }
     }
     return null;
-  }
-
-  public static void checkNavigateFromSourceBehaviour(PsiElement element, VirtualFile virtualFile, AbstractProjectViewPSIPane pane) {
-    Disposer.dispose(pane);
-    pane.createComponent();
-    Assert.assertNull(getNodeForElement(element, pane));
-    pane.select(element, virtualFile, true);
-    Assert.assertTrue(isExpanded(element, pane));
   }
 
   public static boolean isExpanded(PsiElement element, AbstractProjectViewPSIPane pane) {
