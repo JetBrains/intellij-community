@@ -953,7 +953,9 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     public void optimizeImports() {
       final List<PsiElement> elementsToDelete = collectUnusedImportElements();
       for (PsiElement element : elementsToDelete) {
-        element.delete();
+        if (element.isValid()) {
+          element.delete();
+        }
       }
     }
   }
