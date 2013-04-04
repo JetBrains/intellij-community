@@ -80,7 +80,7 @@ public abstract class AbstractConvertContext extends ConvertContext {
             scope = module.getModuleRuntimeScope(tests);
           }
           else {
-            scope.union(module.getModuleRuntimeScope(tests));
+            scope = scope.union(module.getModuleRuntimeScope(tests));
           }
         }
       }
