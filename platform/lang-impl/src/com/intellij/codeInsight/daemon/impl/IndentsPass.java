@@ -27,6 +27,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.editor.highlighter.HighlighterIterator;
+import com.intellij.openapi.editor.impl.EditorImpl;
 import com.intellij.openapi.editor.markup.CustomHighlighterRenderer;
 import com.intellij.openapi.editor.markup.HighlighterTargetArea;
 import com.intellij.openapi.editor.markup.MarkupModel;
@@ -476,12 +477,11 @@ public class IndentsPass extends TextEditorHighlightingPass implements DumbAware
         int lineStart = myDocument.getLineStartOffset(line);
         int lineEnd = myDocument.getLineEndOffset(line);
         final int nonWhitespaceOffset = CharArrayUtil.shiftForward(myChars, lineStart, lineEnd, " \t");
-        final int column;
         if (nonWhitespaceOffset == lineEnd) {
           lineIndents[line] = -1; // Blank line marker
         }
         else {
-          column = myEditor.calcColumnNumber(nonWhitespaceOffset, line);
+          final int column = ((EditorImpl)myEditor).calcColumnNumber(nonWhitespaceOffset, line, true, myChars);
           if (prevLineIndent > 0 && prevLineIndent > column) {
             lineIndents[line] = calcIndent(line, nonWhitespaceOffset, lineEnd, column);
           }
