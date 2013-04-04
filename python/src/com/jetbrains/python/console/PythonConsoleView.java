@@ -99,16 +99,15 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
 
 
   private void doExecute(String code) {
-    executeInConsole(PyConsoleIndentUtil.normalize(code));
+    executeInConsole(PyConsoleIndentUtil.normalize(code, myExecuteActionHandler.getCurrentIndentSize()));
   }
 
   public void executeInConsole(final String code) {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        getPythonLanguageConsole().addTextToCurrentEditor(code);
+        getPythonLanguageConsole().addTextToConsoleEditor(code);
         myExecuteActionHandler.runExecuteAction(getPythonLanguageConsole());
-        myExecuteActionHandler.finishExecution();
       }
     });
   }

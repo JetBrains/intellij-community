@@ -22,6 +22,7 @@ import com.jetbrains.python.console.pydev.ConsoleCommunication;
 import com.jetbrains.python.console.pydev.ConsoleCommunicationListener;
 import com.jetbrains.python.console.pydev.ICallback;
 import com.jetbrains.python.console.pydev.InterpreterResponse;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Scanner;
@@ -35,7 +36,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
   private String myInMultilineStringState = null;
   private StringBuilder myInputBuffer;
-  private int myCurrentIndentSize = -1;
+  private int myCurrentIndentSize = 0;
 
   private final ConsoleCommunication myConsoleCommunication;
   private boolean myEnabled = false;
@@ -51,10 +52,11 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
   @Override
   public void processLine(final String text) {
-    processLine(text, false);
+    processLine(text, true);
   }
 
   public void processLine(final String text, boolean execAnyway) {
+    int indentBefore = myCurrentIndentSize;
     if (text.isEmpty()) {
       processOneLine(text);
     }
@@ -65,7 +67,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
         processOneLine(line);
       }
     }
-    if (execAnyway && myCurrentIndentSize > 0) {
+    if (execAnyway && myCurrentIndentSize > 0 && indentBefore == 0) { //if code was indented and we need to exec anyway
       finishExecution();
     }
   }
@@ -76,7 +78,10 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     if (StringUtil.isEmptyOrSpaces(line)) {
       doProcessLine("\n");
     }
-    else if (indentSize == 0 && indentSize < myCurrentIndentSize && !PyConsoleIndentUtil.shouldIndent(line) && !myConsoleCommunication.isWaitingForInput()) {
+    else if (indentSize == 0 &&
+             indentSize < myCurrentIndentSize &&
+             !PyConsoleIndentUtil.shouldIndent(line) &&
+             !myConsoleCommunication.isWaitingForInput()) {
       doProcessLine("\n");
       doProcessLine(line);
     }
@@ -170,7 +175,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
           // Handle prompt
           if (interpreterResponse.more) {
             more(console, currentEditor);
-            if (myCurrentIndentSize == -1) {
+            if (myCurrentIndentSize == 0) {
               // compute current indentation
               setCurrentIndentSize(IndentHelperImpl.getIndent(getProject(), PythonFileType.INSTANCE, line, false) + getPythonIndent());
               // In this case we can insert indent automatically
@@ -181,7 +186,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
             if (!myConsoleCommunication.isWaitingForInput()) {
               ordinaryPrompt(console, currentEditor);
             }
-            setCurrentIndentSize(-1);
+            setCurrentIndentSize(0);
           }
 
           return null;
@@ -327,7 +332,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
     }
   }
 
-  private static boolean shouldCopyToHistory(LanguageConsoleImpl console) {
+  private static boolean shouldCopyToHistory(@NotNull LanguageConsoleImpl console) {
     return !PyConsoleUtil.isPagingPrompt(console.getPrompt());
   }
 

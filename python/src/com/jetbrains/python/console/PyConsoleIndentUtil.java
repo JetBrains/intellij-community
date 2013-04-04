@@ -19,6 +19,10 @@ public class PyConsoleIndentUtil {
   }
 
   public static String normalize(@NotNull String codeFragment) {
+    return normalize(codeFragment, 0);
+  }
+
+  public static String normalize(@NotNull String codeFragment, int addIndent) {
     Scanner s = new Scanner(codeFragment);
 
     List<String> lines = Lists.newArrayList();
@@ -46,6 +50,10 @@ public class PyConsoleIndentUtil {
     int[] indentArray = ArrayUtil.toIntArray(indents);
 
     shiftLeftAll(indentArray, lines);
+
+    for (int i = 0; i < indentArray.length; i++) {
+      indentArray[i] += addIndent;
+    }
 
     shiftToParentOnUnindent(indentArray);
 
@@ -90,8 +98,8 @@ public class PyConsoleIndentUtil {
     boolean lastIndented = false;
     for (int i = 0; i < indentArray.length; i++) {
       if (!StringUtil.isEmpty(lines.get(i))) {
-        if (i>0 && shouldSkipNext(lines.get(i-1))) {
-          indentArray[i]-=indent;
+        if (i > 0 && shouldSkipNext(lines.get(i - 1))) {
+          indentArray[i] -= indent;
           continue;
         }
         if (indentArray[i] < indent || indentArray[i] > lastIndent && !lastIndented) {

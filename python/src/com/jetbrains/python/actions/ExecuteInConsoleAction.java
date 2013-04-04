@@ -20,10 +20,11 @@ import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -44,40 +45,112 @@ public class ExecuteInConsoleAction extends AnAction {
   }
 
   public void actionPerformed(AnActionEvent e) {
-    final String selectionText = getSelectionText(e);
-    if (selectionText != null) {
-      findCodeExecutor(e, new Consumer<PyCodeExecutor>() {
-        @Override
-        public void consume(PyCodeExecutor codeExecutor) {
-          executeInConsole(codeExecutor, selectionText);
+    Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
+    if (editor != null) {
+      final String selectionText = getSelectionText(editor);
+      if (selectionText != null) {
+        execute(e, selectionText);
+      }
+      else {
+        String line = getLineUnderCaret(editor);
+        if (line != null) {
+          execute(e, line);
+          moveCaretDown(editor);
         }
-      });
+      }
     }
+  }
+
+  private static void moveCaretDown(Editor editor) {
+    VisualPosition pos = editor.getCaretModel().getVisualPosition();
+    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcSurroundingRange(editor, pos, pos);
+    int offset = editor.getCaretModel().getOffset();
+
+    LogicalPosition lineStart = lines.first;
+    LogicalPosition nextLineStart = lines.second;
+
+    int start = editor.logicalPositionToOffset(lineStart);
+    int end = editor.logicalPositionToOffset(nextLineStart);
+
+    Document document = editor.getDocument();
+
+    if (nextLineStart.line < document.getLineCount()) {
+
+      int newOffset = end + offset - start;
+
+      int nextLineEndOffset = document.getLineEndOffset(nextLineStart.line);
+      if (newOffset >= nextLineEndOffset) {
+        newOffset = nextLineEndOffset;
+      }
+
+      editor.getCaretModel().moveToOffset(newOffset);
+      editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
+    }
+  }
+
+  private static void execute(AnActionEvent e, final String selectionText) {
+    findCodeExecutor(e, new Consumer<PyCodeExecutor>() {
+      @Override
+      public void consume(PyCodeExecutor codeExecutor) {
+        executeInConsole(codeExecutor, selectionText);
+      }
+    });
+  }
+
+  private static String getLineUnderCaret(Editor editor) {
+    VisualPosition caretPos = editor.getCaretModel().getVisualPosition();
+
+    Pair<LogicalPosition, LogicalPosition> lines = EditorUtil.calcSurroundingRange(editor, caretPos, caretPos);
+
+    LogicalPosition lineStart = lines.first;
+    LogicalPosition nextLineStart = lines.second;
+    int start = editor.logicalPositionToOffset(lineStart);
+    int end = editor.logicalPositionToOffset(nextLineStart);
+    if (end <= start) {
+      return null;
+    }
+    return editor.getDocument().getCharsSequence().subSequence(start, end).toString();
+  }
+
+  private static String getTextToExecute(@NotNull Editor editor) {
+    String text = getSelectionText(editor);
+    if (text != null) {
+      return text;
+    }
+
+    return getLineUnderCaret(editor);
   }
 
   @Nullable
-  private static String getSelectionText(AnActionEvent e) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
-    if (editor != null) {
+  private static String getSelectionText(@NotNull Editor editor) {
+    if (editor.getSelectionModel().hasSelection()) {
       SelectionModel model = editor.getSelectionModel();
+
       return model.getSelectedText();
     }
-    return null;
+    else {
+      return null;
+    }
   }
 
   public void update(AnActionEvent e) {
-    boolean enabled = !StringUtil.isEmpty(getSelectionText(e)) && isPython(e);
+    Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
+
+    boolean enabled = editor != null && !StringUtil.isEmpty(getTextToExecute(editor)) && isPython(editor);
 
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(enabled);
     presentation.setVisible(enabled);
   }
 
-  private static boolean isPython(AnActionEvent e) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+  private static boolean isPython(Editor editor) {
+    if (editor == null) {
+      return false;
+    }
 
-    if (project == null || editor == null) {
+    Project project = editor.getProject();
+
+    if (project == null) {
       return false;
     }
 

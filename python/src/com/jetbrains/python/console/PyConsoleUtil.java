@@ -9,6 +9,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author traff
@@ -36,8 +37,8 @@ public class PyConsoleUtil {
   private PyConsoleUtil() {
   }
 
-  public static boolean isPagingPrompt(@NotNull String prompt) {
-    return IPYTHON_PAGING_PROMPT.equals(prompt.trim());
+  public static boolean isPagingPrompt(@Nullable String prompt) {
+    return prompt != null && IPYTHON_PAGING_PROMPT.equals(prompt.trim());
   }
 
   static String processPrompts(final LanguageConsoleImpl languageConsole, String string) {

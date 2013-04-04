@@ -10,7 +10,7 @@ import java.io.IOException;
 /**
  * @author traff
  */
-public class PyConsoleIndentTest extends UsefulTestCase{
+public class PyConsoleIndentTest extends UsefulTestCase {
   public void testIndent1() {
     doTest();
   }
@@ -35,12 +35,20 @@ public class PyConsoleIndentTest extends UsefulTestCase{
     doTest();
   }
 
+  public void testIndent7() {
+    doTest(2);
+  }
+
   private void doTest() {
+    doTest(0);
+  }
+
+  private void doTest(int indent) {
     String name = getTestName(true);
     try {
       String fileText = FileUtil.loadFile(new File(getTestDataPath() + name + ".py"));
       String expected = FileUtil.loadFile(new File(getTestDataPath() + name + ".after.py"));
-      assertEquals(expected, PyConsoleIndentUtil.normalize(fileText));
+      assertEquals(expected, PyConsoleIndentUtil.normalize(fileText, indent));
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -51,3 +59,4 @@ public class PyConsoleIndentTest extends UsefulTestCase{
     return PythonTestUtil.getTestDataPath() + "/console/";
   }
 }
+
