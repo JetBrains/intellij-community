@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="duplicates" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="php" />
+    <orderEntry type="module" module-name="php-openapi" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="structuralsearch-tests" scope="TEST" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
