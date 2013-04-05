@@ -274,7 +274,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
       public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
         notification.expire();
         if (restartCapable) {
-          app.restart();
+          app.restart(true);
         }
         else {
           app.exit(true);
