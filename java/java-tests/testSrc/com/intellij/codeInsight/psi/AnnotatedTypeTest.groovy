@@ -47,8 +47,8 @@ class E2 extends Exception { }
     psi = javaFacade.elementFactory.createStatementFromText("Class<@TA(1) ?> c", context)
     assertEquals("Class<@TA(1) ?>", psi.declaredElements[0].type.presentableText)
 
-    psi = javaFacade.elementFactory.createStatementFromText("Class cs = new Class<>()", context)
-    assertEquals("Class<>", psi.declaredElements[0].initializer.type.presentableText)
+    psi = javaFacade.elementFactory.createStatementFromText("Class<@TA String> cs = new Class<>()", context)
+    assertEquals("Class<@TA String>", psi.declaredElements[0].initializer.type.presentableText)
 
     psi = javaFacade.elementFactory.createStatementFromText("@A @TA(1) String s", context)
     assertEquals("@TA(1) String", psi.declaredElements[0].type.presentableText)

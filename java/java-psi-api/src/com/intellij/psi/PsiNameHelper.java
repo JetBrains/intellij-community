@@ -109,22 +109,14 @@ public abstract class PsiNameHelper {
   @NotNull
   public static String getPresentableText(@NotNull PsiJavaCodeReferenceElement ref) {
     String name = ref.getReferenceName();
-
-    PsiAnnotation[] children = PsiTreeUtil.getChildrenOfType(ref, PsiAnnotation.class);
-    PsiAnnotation[] annotations = notNull(children, PsiAnnotation.EMPTY_ARRAY);
-
-    PsiReferenceParameterList parameterList = ref.getParameterList();
-    PsiTypeElement[] typeElements = parameterList != null ? parameterList.getTypeParameterElements() : PsiTypeElement.EMPTY_ARRAY;
-
-    return getPresentableText(name, annotations, typeElements);
+    PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(ref, PsiAnnotation.class);
+    return getPresentableText(name, notNull(annotations, PsiAnnotation.EMPTY_ARRAY), ref.getTypeParameters());
   }
 
   @NotNull
-  public static String getPresentableText(@Nullable String referenceName,
-                                          @NotNull PsiAnnotation[] annotations,
-                                          @NotNull PsiTypeElement[] typeElements) {
-    if (typeElements.length == 0 && annotations.length == 0) {
-      return referenceName != null ? referenceName : "";
+  public static String getPresentableText(@Nullable String refName, @NotNull PsiAnnotation[] annotations, @NotNull PsiType[] typeParameters) {
+    if (typeParameters.length == 0 && annotations.length == 0) {
+      return refName != null ? refName : "";
     }
 
     StringBuilder buffer = new StringBuilder();
@@ -135,16 +127,13 @@ public abstract class PsiNameHelper {
       }
     }
 
-    buffer.append(referenceName);
+    buffer.append(refName);
 
-    if (typeElements.length > 0) {
+    if (typeParameters.length > 0) {
       buffer.append("<");
-      for (int i = 0; i < typeElements.length; i++) {
-        PsiType type = typeElements[i].getType();
-        if (!(type instanceof PsiDiamondType)) {
-          buffer.append(type.getPresentableText());
-          if (i < typeElements.length - 1) buffer.append(", ");
-        }
+      for (int i = 0; i < typeParameters.length; i++) {
+        buffer.append(typeParameters[i].getPresentableText());
+        if (i < typeParameters.length - 1) buffer.append(", ");
       }
       buffer.append(">");
     }
@@ -152,21 +141,9 @@ public abstract class PsiNameHelper {
     return buffer.toString();
   }
 
-  /** deprecated use {@link #getPresentableText(String, PsiAnnotation[], PsiTypeElement[])} (to remove in IDEA 13) */
+  /** deprecated use {@link #getPresentableText(String, PsiAnnotation[], PsiType[])} (to remove in IDEA 13) */
   public static String getPresentableText(@Nullable String referenceName, @NotNull PsiType[] typeParameters) {
-    if (typeParameters.length > 0) {
-      StringBuilder buffer = new StringBuilder();
-      buffer.append(referenceName);
-      buffer.append("<");
-      for (int i = 0; i < typeParameters.length; i++) {
-        buffer.append(typeParameters[i].getPresentableText());
-        if (i < typeParameters.length - 1) buffer.append(", ");
-      }
-      buffer.append(">");
-      return buffer.toString();
-    }
-
-    return referenceName != null ? referenceName : "";
+    return getPresentableText(referenceName, PsiAnnotation.EMPTY_ARRAY, typeParameters);
   }
 
   @NotNull
