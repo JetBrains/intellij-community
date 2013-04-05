@@ -17,6 +17,7 @@ package com.intellij.psi.tree;
 
 import com.intellij.lang.Language;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.containers.Predicate;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -42,9 +43,9 @@ public class IElementType {
    *
    * @see #enumerate(Predicate)
    */
-  public static final Predicate TRUE = new Predicate() {
+  public static final Predicate<IElementType> TRUE = new Predicate<IElementType>() {
     @Override
-    public boolean matches(IElementType type) {
+    public boolean apply(IElementType type) {
       return true;
     }
   };
@@ -149,15 +150,6 @@ public class IElementType {
     }
   }
 
-  /**
-   * Predicate for matching element types.
-   *
-   * @see IElementType#enumerate(Predicate)
-   */
-  public interface Predicate {
-    boolean matches(IElementType type);
-  }
-
   static short getAllocatedTypesCount() {
     return ourCounter;
   }
@@ -177,7 +169,7 @@ public class IElementType {
 
     List<IElementType> matches = new ArrayList<IElementType>();
     for (IElementType value : copy) {
-      if (p.matches(value)) {
+      if (p.apply(value)) {
         matches.add(value);
       }
     }

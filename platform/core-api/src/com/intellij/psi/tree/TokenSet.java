@@ -201,7 +201,7 @@ public class TokenSet {
     return andNot(this, t);
   }
 
-  /** @deprecated please use {@linkplain IElementType#enumerate(com.intellij.psi.tree.IElementType.Predicate)} (to remove in IDEA 13) */
+  /** @deprecated please use {@linkplain IElementType#enumerate(com.intellij.util.containers.Predicate)} (to remove in IDEA 13) */
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public static TokenSet not(@NotNull TokenSet set) {
