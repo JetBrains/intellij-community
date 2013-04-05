@@ -107,7 +107,11 @@ class Outer {
     new Boolean @TA [2] <error descr="Annotations are not allowed here">@TA</error>;
   }
 
-  int @TA [] mixedArrays() @TA [] <error descr="Annotations are not allowed here">@TA</error> { return new int[0][0]; }
+  int @TA [] mixedArrays @TA [] <error descr="Annotations are not allowed here">@TA</error> = new int[0][0];
+  int @TA [] mixedArrays(int @TA [] p @TA [] <error descr="Annotations are not allowed here">@TA</error>) @TA [] <error descr="Annotations are not allowed here">@TA</error> {
+    int @TA [] a @TA [] <error descr="Annotations are not allowed here">@TA</error> = (p != null ? p : mixedArrays);
+    return a;
+  }
 
   @TA Outer() { }
 

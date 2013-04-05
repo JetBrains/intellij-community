@@ -21,8 +21,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.CharTable;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
@@ -40,9 +40,14 @@ public class JavaSharedImplUtil {
   private JavaSharedImplUtil() { }
 
   public static PsiType getType(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor) {
+    return getType(typeElement, anchor, null);
+  }
+
+  public static PsiType getType(@NotNull PsiTypeElement typeElement, @NotNull PsiElement anchor, @Nullable PsiAnnotation stopAt) {
     PsiType type = typeElement.getType();
 
-    List<PsiAnnotation[]> allAnnotations = collectAnnotations(anchor);
+    List<PsiAnnotation[]> allAnnotations = collectAnnotations(anchor, stopAt);
+    if (allAnnotations == null) return null;
     for (PsiAnnotation[] annotations : allAnnotations) {
       type = type.createArrayType(annotations);
     }
@@ -50,41 +55,33 @@ public class JavaSharedImplUtil {
     return type;
   }
 
-  private static List<PsiAnnotation[]> collectAnnotations(PsiElement anchor) {
+  private static List<PsiAnnotation[]> collectAnnotations(PsiElement anchor, PsiAnnotation stopAt) {
     List<PsiAnnotation[]> annotations = new SmartList<PsiAnnotation[]>();
 
     List<PsiAnnotation> current = null;
+    boolean stop = false;
     for (PsiElement child = anchor.getNextSibling(); child != null; child = child.getNextSibling()) {
+      if (child instanceof PsiComment || child instanceof PsiWhiteSpace) continue;
+
       if (child instanceof PsiAnnotation) {
         if (current == null) current = new SmartList<PsiAnnotation>();
         current.add((PsiAnnotation)child);
+        if (child == stopAt) stop = true;
         continue;
       }
 
-      IElementType i = child.getNode().getElementType();
-      if (i == JavaTokenType.LBRACKET) {
+      if (PsiUtil.isJavaToken(child, JavaTokenType.LBRACKET)) {
         annotations.add(ContainerUtil.toArray(current, PsiAnnotation.ARRAY_FACTORY));
         current = null;
+        if (stop) return annotations;
       }
-      else if (i != JavaTokenType.RBRACKET && !ElementType.JAVA_COMMENT_OR_WHITESPACE_BIT_SET.contains(i)) {
+      else if (!PsiUtil.isJavaToken(child, JavaTokenType.RBRACKET)) {
         break;
       }
     }
 
-    return annotations;
-  }
-
-  @Nullable
-  public static PsiType findAnnotatedSubtype(@Nullable PsiType type, @NotNull PsiAnnotation annotation) {
-    while (type instanceof PsiArrayType) {
-      for (PsiAnnotation a : type.getAnnotations()) {
-        if (a == annotation) {
-          return type;
-        }
-      }
-      type = ((PsiArrayType)type).getComponentType();
-    }
-    return null;
+    // stop == true means annotation is misplaced
+    return stop ? null : annotations;
   }
 
   public static void normalizeBrackets(@NotNull PsiVariable variable) {
