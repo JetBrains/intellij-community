@@ -21,7 +21,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.GeneratedMarkerVisitor;
 import com.intellij.psi.impl.PsiImplUtil;
-import com.intellij.psi.impl.source.SourceTreeToPsiMap;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.util.CharTable;
@@ -35,6 +34,8 @@ import java.util.List;
 
 public class JavaSharedImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.tree.JavaSharedImplUtil");
+
+  private static final TokenSet BRACKETS = TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET);
 
   private JavaSharedImplUtil() { }
 
@@ -86,8 +87,8 @@ public class JavaSharedImplUtil {
     return null;
   }
 
-  public static void normalizeBrackets(PsiVariable variable) {
-    CompositeElement variableElement = (CompositeElement)SourceTreeToPsiMap.psiElementToTree(variable);
+  public static void normalizeBrackets(@NotNull PsiVariable variable) {
+    CompositeElement variableElement = (CompositeElement)variable.getNode();
 
     PsiTypeElement typeElement = variable.getTypeElement();
     PsiIdentifier nameElement = variable.getNameIdentifier();
@@ -136,7 +137,7 @@ public class JavaSharedImplUtil {
     }
   }
 
-  public static void setInitializer(PsiVariable variable, final PsiExpression initializer) throws IncorrectOperationException {
+  public static void setInitializer(PsiVariable variable, PsiExpression initializer) throws IncorrectOperationException {
     PsiExpression oldInitializer = variable.getInitializer();
     if (oldInitializer != null) {
       oldInitializer.delete();
@@ -149,11 +150,12 @@ public class JavaSharedImplUtil {
     if (eq == null) {
       final CharTable charTable = SharedImplUtil.findCharTableByTree(variableElement);
       eq = Factory.createSingleLeafElement(JavaTokenType.EQ, "=", 0, 1, charTable, variable.getManager());
-      PsiElement element = variable.getNameIdentifier();
-      final ASTNode node = PsiImplUtil.skipWhitespaceCommentsAndTokens(element.getNode().getTreeNext(),
-                                                                       TokenSet.create(JavaTokenType.LBRACKET, JavaTokenType.RBRACKET));
+      PsiElement identifier = variable.getNameIdentifier();
+      assert identifier != null : variable;
+      ASTNode node = PsiImplUtil.skipWhitespaceCommentsAndTokens(identifier.getNode().getTreeNext(), BRACKETS);
       variableElement.addInternal((TreeElement)eq, eq, node, Boolean.TRUE);
       eq = variableElement.findChildByRole(ChildRole.INITIALIZER_EQ);
+      assert eq != null : variable;
     }
     variable.addAfter(initializer, eq.getPsi());
   }
