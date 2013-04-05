@@ -731,20 +731,17 @@ public class PsiImplUtil {
     return null;
   }
 
-  public static void addTypeUseAnnotationsFromModifierList(@NotNull PsiElement member, @NotNull List<PsiAnnotation> annotations) {
-    if (member instanceof PsiModifierListOwner) {
-      PsiModifierList modifierList = ((PsiModifierListOwner)member).getModifierList();
-      if (modifierList != null) {
-        addTypeUseAnnotations(modifierList, annotations);
-      }
-    }
-  }
+  @Nullable
+  public static List<PsiAnnotation> getTypeUseAnnotations(@NotNull PsiModifierList modifierList) {
+    SmartList<PsiAnnotation> result = null;
 
-  public static void addTypeUseAnnotations(@NotNull PsiModifierList modifierList, @NotNull List<PsiAnnotation> annotations) {
     for (PsiAnnotation annotation : modifierList.getAnnotations()) {
       if (findApplicableTarget(annotation, TargetType.TYPE_USE) == TargetType.TYPE_USE) {
-        annotations.add(annotation);
+        if (result == null) result = new SmartList<PsiAnnotation>();
+        result.add(annotation);
       }
     }
+
+    return result;
   }
 }

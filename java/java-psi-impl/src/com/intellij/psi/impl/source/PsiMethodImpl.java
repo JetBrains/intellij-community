@@ -189,26 +189,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
 
   @Override
   public PsiType getReturnTypeNoResolve() {
-    if (isConstructor()) return null;
-
-    final PsiMethodStub stub = getStub();
-    if (stub != null) {
-      final String typeText = TypeInfo.createTypeText(stub.getReturnTypeText(false));
-      if (typeText == null) return null;
-
-      try {
-        return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(typeText, this);
-      }
-      catch(IncorrectOperationException e){
-        LOG.error(e);
-        return null;
-      }
-    }
-
-    PsiTypeElement typeElement = getReturnTypeElement();
-    if (typeElement == null) return null;
-    PsiParameterList parameterList = getParameterList();
-    return JavaSharedImplUtil.getTypeNoResolve(typeElement, parameterList, this);
+    return getReturnType();
   }
 
   @Override
@@ -241,7 +222,7 @@ public class PsiMethodImpl extends JavaStubPsiElement<PsiMethodStub> implements 
     PsiTypeElement typeElement = getReturnTypeElement();
     if (typeElement == null) return null;
     PsiParameterList parameterList = getParameterList();
-    return JavaSharedImplUtil.getType(typeElement, parameterList, this);
+    return JavaSharedImplUtil.getType(typeElement, parameterList);
   }
 
   @Override

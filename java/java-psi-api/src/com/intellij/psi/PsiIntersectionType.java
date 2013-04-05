@@ -15,31 +15,37 @@
  */
 package com.intellij.psi;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.TypeConversionUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.Arrays;
-import java.util.Iterator;
-import java.util.NoSuchElementException;
-import java.util.Set;
+import java.util.*;
 
 /**
+ * Intersection types arise in a process of computing least upper bound.
+ *
  * @author ven
  */
-
-// Intersection types arise in the process of computing lub.
 public class PsiIntersectionType extends PsiType {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.PsiIntersectionType");
   private final PsiType[] myConjuncts;
 
   private PsiIntersectionType(@NotNull PsiType[] conjuncts) {
-    super(PsiAnnotation.EMPTY_ARRAY);//todo
-    LOG.assertTrue(conjuncts.length != 0);
-    LOG.assertTrue(conjuncts.length > 1);
+    super(PsiAnnotation.EMPTY_ARRAY);
     myConjuncts = conjuncts;
+  }
+
+  @NotNull
+  public static PsiType createIntersection(@NotNull List<PsiType> conjuncts) {
+    return createIntersection(conjuncts.toArray(new PsiType[conjuncts.size()]));
+  }
+
+  @NotNull
+  public static PsiType createIntersection(PsiType... conjuncts) {
+    assert conjuncts.length > 0;
+    conjuncts = flattenAndRemoveDuplicates(conjuncts);
+    if (conjuncts.length == 1) return conjuncts[0];
+    return new PsiIntersectionType(conjuncts);
   }
 
   private static PsiType[] flattenAndRemoveDuplicates(PsiType[] conjuncts) {
@@ -64,7 +70,7 @@ public class PsiIntersectionType extends PsiType {
     }
     if (types.size() > 1) {
       PsiType[] array = types.toArray(new PsiType[types.size()]);
-      for (Iterator<PsiType> iterator = types.iterator(); iterator.hasNext();) {
+      for (Iterator<PsiType> iterator = types.iterator(); iterator.hasNext(); ) {
         PsiType type = iterator.next();
 
         for (PsiType existing : array) {
@@ -136,13 +142,6 @@ public class PsiIntersectionType extends PsiType {
   @NotNull
   public PsiType[] getSuperTypes() {
     return myConjuncts;
-  }
-
-  public static PsiType createIntersection(PsiType... conjuncts) {
-    LOG.assertTrue(conjuncts.length >= 1);
-    conjuncts = flattenAndRemoveDuplicates(conjuncts);
-    if (conjuncts.length == 1) return conjuncts[0];
-    return new PsiIntersectionType(conjuncts);
   }
 
   public PsiType getRepresentative() {
