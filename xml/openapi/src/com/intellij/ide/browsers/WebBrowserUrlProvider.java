@@ -22,9 +22,6 @@ import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author spleaner
- */
 public abstract class WebBrowserUrlProvider {
   public static ExtensionPointName<WebBrowserUrlProvider> EP_NAME = ExtensionPointName.create("com.intellij.webBrowserUrlProvider");
 
@@ -37,19 +34,8 @@ public abstract class WebBrowserUrlProvider {
     }
   }
 
-  /**
-   * Invariant: element has not null containing psi file with not null virtual file
-   * @deprecated
-   */
   @NotNull
-  public String getUrl(@NotNull PsiElement element) throws BrowserException {
-    throw new AbstractMethodError();
-  }
-
-  @NotNull
-  public String getUrl(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException {
-    return getUrl(element);
-  }
+  public abstract String getUrl(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException;
 
   /**
    * Invariant: element has not null containing psi file with not null virtual file
