@@ -63,6 +63,8 @@ public abstract class AbstractJavaFxPackager {
 
   protected abstract String getUpdateMode();
 
+  protected abstract JavaFxPackagerConstants.NativeBundles getNativeBundle();
+
   protected abstract void registerJavaFxPackagerError(final String message);
 
 

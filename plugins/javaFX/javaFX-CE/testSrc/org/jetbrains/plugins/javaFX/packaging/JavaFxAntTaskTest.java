@@ -257,6 +257,11 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     }
 
     @Override
+    protected JavaFxPackagerConstants.NativeBundles getNativeBundle() {
+      return JavaFxPackagerConstants.NativeBundles.none;
+    }
+
+    @Override
     protected void registerJavaFxPackagerError(String message) {
     }
 
