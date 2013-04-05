@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.util.Pair;
 import com.intellij.util.ArrayUtil;
 import gnu.trove.THashMap;
+import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenResource;
 import org.jetbrains.idea.maven.project.MavenImportingSettings;
@@ -120,6 +121,8 @@ public class MavenFoldersImporter {
       testFolders.add(each.getDirectory());
     }
 
+    addBuilderHelperPaths("add-source", sourceFolders);
+    addBuilderHelperPaths("add-test-source", testFolders);
 
     List<Pair<Path, Boolean>> allFolders = new ArrayList<Pair<Path, Boolean>>(sourceFolders.size() + testFolders.size());
     for (String each : sourceFolders) {
@@ -131,6 +134,19 @@ public class MavenFoldersImporter {
 
     for (Pair<Path, Boolean> each : normalize(allFolders)) {
       myModel.addSourceFolder(each.first.getPath(), each.second);
+    }
+  }
+
+  private void addBuilderHelperPaths(String goal, List<String> folders) {
+    final Element configurationElement = myMavenProject.getPluginGoalConfiguration("org.codehaus.mojo", "build-helper-maven-plugin", goal);
+    if (configurationElement != null) {
+      final Element sourcesElement = configurationElement.getChild("sources");
+      if (sourcesElement != null) {
+        //noinspection unchecked
+        for (Element element : (List<Element>)sourcesElement.getChildren()) {
+          folders.add(element.getTextTrim());
+        }
+      }
     }
   }
 
