@@ -984,6 +984,12 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </group>
 
+    <action id="com.jetbrains.python.console.PyOpenDebugConsoleAction"
+            class="com.jetbrains.python.console.PyOpenDebugConsoleAction"
+            text="Open Debug Command Line" description="Opens debug command line for running process">
+      <add-to-group group-id="ToolsMenu" anchor="last"/>
+    </action>
+
 
     <action id="ExecuteInPyConsoleAction"
             class="com.jetbrains.python.actions.ExecuteInConsoleAction"

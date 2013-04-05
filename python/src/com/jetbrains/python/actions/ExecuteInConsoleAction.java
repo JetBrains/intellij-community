@@ -158,12 +158,11 @@ public class ExecuteInConsoleAction extends AnAction {
     return psi instanceof PyFile;
   }
 
-  private static void selectConsole(@NotNull Project project,
-                                    @NotNull Editor editor,
+  private static void selectConsole(@NotNull DataContext dataContext, @NotNull Project project,
                                     final Consumer<PyCodeExecutor> consumer) {
     Collection<RunContentDescriptor> consoles = getConsoles(project);
 
-    ExecutionHelper.selectContentDescriptor(editor, consoles, "Select console to execute in", new Consumer<RunContentDescriptor>() {
+    ExecutionHelper.selectContentDescriptor(dataContext, project, consoles, "Select console to execute in", new Consumer<RunContentDescriptor>() {
       @Override
       public void consume(RunContentDescriptor descriptor) {
         if (descriptor != null && descriptor.getExecutionConsole() instanceof PyCodeExecutor) {
@@ -193,7 +192,7 @@ public class ExecuteInConsoleAction extends AnAction {
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     if (project != null && editor != null) {
       if (canFindConsole(e)) {
-        selectConsole(project, editor, consumer);
+        selectConsole(e.getDataContext(), project, consumer);
       }
       else {
         startConsole(project, consumer, e.getData(LangDataKeys.MODULE));
