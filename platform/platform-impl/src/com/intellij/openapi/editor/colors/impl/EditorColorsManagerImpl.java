@@ -30,6 +30,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.options.*;
 import com.intellij.openapi.util.*;
 import com.intellij.util.EventDispatcher;
@@ -173,6 +174,23 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
         }
       }
     }
+    loadSchemesFromBeans();
+  }
+
+  private void loadSchemesFromBeans() {
+    for (BundledColorSchemeEP schemeEP : Extensions.getExtensions(BundledColorSchemeEP.EP_NAME)) {
+      String fileName = schemeEP.path + ".xml";
+      InputStream stream = schemeEP.getLoaderForClass().getResourceAsStream(fileName);
+      try {
+        EditorColorsSchemeImpl scheme = loadSchemeFromStream(fileName, stream);
+        if (scheme != null) {
+          mySchemesManager.addNewScheme(scheme, false);
+        }
+      }
+      catch (final Exception e) {
+        LOG.error("Cannot read scheme from " + fileName + ": " + e.getLocalizedMessage(), e);
+      }
+    }
   }
 
   private void loadAdditionalTextAttributes() {
@@ -198,6 +216,11 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
                                                    final BundledColorSchemesProvider provider)
     throws IOException, JDOMException, InvalidDataException {
     final InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, schemePath);
+    return loadSchemeFromStream(schemePath, inputStream);
+  }
+
+  private static EditorColorsSchemeImpl loadSchemeFromStream(String schemePath, InputStream inputStream)
+    throws IOException, JDOMException, InvalidDataException {
     if (inputStream == null) {
       // Error shouldn't occur during this operation
       // thus we report error instead of info
