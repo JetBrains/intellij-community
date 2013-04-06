@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -15,17 +15,16 @@
  */
 package com.intellij.featureStatistics;
 
+import com.intellij.openapi.extensions.AbstractExtensionPointBean;
 import com.intellij.openapi.extensions.ExtensionPointName;
-
-import java.util.ResourceBundle;
+import com.intellij.util.xmlb.annotations.Attribute;
 
 /**
- * @author Konstantin Bulenkov
- * @author Roman.Chernyatchik
- * @deprecated use FeatureStatisticsBundleEP instead
+ * @author yole
  */
-public interface FeatureStatisticsBundleProvider {
-  ExtensionPointName<FeatureStatisticsBundleProvider> EP_NAME = new ExtensionPointName<FeatureStatisticsBundleProvider>("com.intellij.featureStatBundle");
+public class FeatureStatisticsBundleEP extends AbstractExtensionPointBean {
+  public static final ExtensionPointName<FeatureStatisticsBundleEP> EP_NAME = ExtensionPointName.create("com.intellij.featureStatisticsBundle");
 
-  ResourceBundle getBundle();
+  @Attribute("qualifiedName")
+  public String qualifiedName;
 }
