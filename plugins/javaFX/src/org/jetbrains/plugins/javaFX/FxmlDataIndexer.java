@@ -17,17 +17,13 @@ package org.jetbrains.plugins.javaFX;
 
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
+import com.intellij.util.xml.NanoXmlUtil;
+import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFXNamespaceProvider;
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import java.io.StringReader;
 import java.util.*;
 
@@ -36,17 +32,6 @@ import java.util.*;
 * Date: 3/14/13
 */
 public class FxmlDataIndexer implements DataIndexer<String, Set<String>, FileContent> {
-  private static final SAXParser SAX_PARSER = createParser();
-
-  private static SAXParser createParser() {
-    try {
-      return SAXParserFactory.newInstance().newSAXParser();
-    }
-    catch (Exception e) {
-      return null;
-    }
-  }
-
   @Override
   @NotNull
   public Map<String, Set<String>> map(final FileContent inputData) {
@@ -64,25 +49,23 @@ public class FxmlDataIndexer implements DataIndexer<String, Set<String>, FileCon
     }
 
     final Map<String, Set<String>> map = new HashMap<String, Set<String>>();
-    try {
-      SAX_PARSER.parse(new InputSource(new StringReader(content)), createParseHandler(path, map));
-    }
-    catch (Exception e) {
-      // Do nothing.
-    }
-
+    final IXMLBuilder handler = createParseHandler(path, map);
+    NanoXmlUtil.parse(new StringReader(content), handler);
+    endDocument(path, map, handler);
     return map;
   }
+  
+  protected void endDocument(String math, Map<String, Set<String>> map, IXMLBuilder handler){}
 
-  protected DefaultHandler createParseHandler(final String path, final Map<String, Set<String>> map) {
-    return new DefaultHandler() {
-      public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-        final String attributesValue = attributes.getValue(FxmlConstants.FX_ID);
-        if (attributesValue != null) {
-          Set<String> paths = map.get(attributesValue);
+  protected IXMLBuilder createParseHandler(final String path, final Map<String, Set<String>> map) {
+    return new NanoXmlUtil.IXMLBuilderAdapter() {
+      @Override
+      public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
+        if (value != null && FxmlConstants.FX_ID.equals(nsPrefix + ":" + key)) {
+          Set<String> paths = map.get(value);
           if (paths == null) {
             paths = new HashSet<String>();
-            map.put(attributesValue, paths);
+            map.put(value, paths);
           }
           paths.add(path);
         }

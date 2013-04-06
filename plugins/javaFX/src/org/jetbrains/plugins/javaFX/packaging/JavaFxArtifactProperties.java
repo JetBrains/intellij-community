@@ -69,6 +69,7 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
   private String myStorepass;
   private String myKeypass;
   private boolean myConvertCss2Bin;
+  private JavaFxPackagerConstants.NativeBundles myNativeBundle = JavaFxPackagerConstants.NativeBundles.none;
 
   @Override
   public void onBuildFinished(@NotNull final Artifact artifact, @NotNull final CompileContext compileContext) {
@@ -289,7 +290,15 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     }
     return null;
   }
-  
+
+  public JavaFxPackagerConstants.NativeBundles getNativeBundle() {
+    return myNativeBundle;
+  }
+
+  public void setNativeBundle(JavaFxPackagerConstants.NativeBundles nativeBundle) {
+    myNativeBundle = nativeBundle;
+  }
+
   public static abstract class JavaFxPackager extends AbstractJavaFxPackager {
     private final Artifact myArtifact;
     private final JavaFxArtifactProperties myProperties;
@@ -379,6 +388,11 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     @Override
     protected String getUpdateMode() {
       return myProperties.getUpdateMode();
+    }
+
+    @Override
+    protected JavaFxPackagerConstants.NativeBundles getNativeBundle() {
+      return myProperties.getNativeBundle();
     }
 
     @Override

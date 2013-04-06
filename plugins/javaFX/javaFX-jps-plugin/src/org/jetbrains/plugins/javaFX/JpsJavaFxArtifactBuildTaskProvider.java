@@ -17,6 +17,7 @@ import org.jetbrains.jps.model.java.JpsJavaSdkType;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkType;
 import org.jetbrains.plugins.javaFX.packaging.AbstractJavaFxPackager;
+import org.jetbrains.plugins.javaFX.packaging.JavaFxPackagerConstants;
 import org.jetbrains.plugins.javaFX.preloader.JpsJavaFxPreloaderArtifactProperties;
 import org.jetbrains.plugins.javaFX.preloader.JpsJavaFxPreloaderArtifactType;
 
@@ -161,6 +162,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     @Override
     protected String getUpdateMode() {
       return myProperties.myState.getUpdateMode();
+    }
+
+    @Override
+    protected JavaFxPackagerConstants.NativeBundles getNativeBundle() {
+      return myProperties.myState.myNativeBundle;
     }
 
     @Override

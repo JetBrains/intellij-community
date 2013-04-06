@@ -63,7 +63,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
             final PsiClass controllerClass = JavaFxPsiUtil.getControllerClass(attribute.getContainingFile());
             if (controllerClass != null) {
               final PsiReference reference = valueElement.getReference();
-              if (reference instanceof JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef && reference.resolve() == null) {
+              if (reference instanceof JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef && ((JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef)reference).isUnresolved()) {
                 final PsiClass fieldClass =
                   checkContext(((JavaFxFieldIdReferenceProvider.JavaFxControllerFieldRef)reference).getXmlAttributeValue());
                 if (fieldClass != null) {

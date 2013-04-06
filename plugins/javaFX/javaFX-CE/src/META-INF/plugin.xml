@@ -6,6 +6,5 @@
   <description>
     This plugin provides JavaFX2 support.
   </description>
-  <depends>com.intellij.modules.java</depends>
   <xi:include href="/META-INF/common-javaFX-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>

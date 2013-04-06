@@ -24,6 +24,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.ui.ArtifactPropertiesEditor;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Base64Converter;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,6 +32,8 @@ import javax.swing.*;
 import javax.swing.text.JTextComponent;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * User: anna
@@ -52,6 +55,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
   private JCheckBox myEnableSigningCB;
   private JButton myEditSignCertificateButton;
   private JCheckBox myConvertCssToBinCheckBox;
+  private JComboBox myNativeBundleCB;
   private JavaFxEditCertificatesDialog myDialog;
 
   public JavaFxArtifactPropertiesEditor(JavaFxArtifactProperties properties, final Project project, Artifact artifact) {
@@ -74,6 +78,12 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
         myEditSignCertificateButton.setEnabled(myEnableSigningCB.isSelected());
       }
     });
+
+    final List<String> bundleNames = new ArrayList<String>();
+    for (JavaFxPackagerConstants.NativeBundles bundle : JavaFxPackagerConstants.NativeBundles.values()) {
+      bundleNames.add(bundle.name());
+    }
+    myNativeBundleCB.setModel(new DefaultComboBoxModel(ArrayUtil.toObjectArray(bundleNames)));
   }
 
   @Override
@@ -97,6 +107,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     if (isModified(myProperties.getAppClass(), myAppClass)) return true;
     if (isModified(myProperties.getHtmlParamFile(), myHtmlParams)) return true;
     if (isModified(myProperties.getParamFile(), myParams)) return true;
+    if (!Comparing.equal(myNativeBundleCB.getSelectedItem(), myProperties.getNativeBundle().name())) return true;
     final boolean inBackground = Comparing.strEqual(myProperties.getUpdateMode(), JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND);
     if (inBackground != myUpdateInBackgroundCB.isSelected()) return true;
     if (myProperties.isEnabledSigning() != myEnableSigningCB.isSelected()) return true;
@@ -135,6 +146,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
                                                                    : JavaFxPackagerConstants.UPDATE_MODE_ALWAYS);
     myProperties.setEnabledSigning(myEnableSigningCB.isSelected());
     myProperties.setConvertCss2Bin(myConvertCssToBinCheckBox.isSelected());
+    myProperties.setNativeBundle(JavaFxPackagerConstants.NativeBundles.valueOf((String)myNativeBundleCB.getSelectedItem()));
     if (myDialog != null) {
       myProperties.setSelfSigning(myDialog.myPanel.mySelfSignedRadioButton.isSelected());
       myProperties.setAlias(myDialog.myPanel.myAliasTF.getText());
@@ -156,6 +168,7 @@ public class JavaFxArtifactPropertiesEditor extends ArtifactPropertiesEditor {
     setText(myAppClass, myProperties.getAppClass());
     setText(myHtmlParams, myProperties.getHtmlParamFile());
     setText(myParams, myProperties.getParamFile());
+    myNativeBundleCB.setSelectedItem(myProperties.getNativeBundle().name());
     myUpdateInBackgroundCB.setSelected(Comparing.strEqual(myProperties.getUpdateMode(), JavaFxPackagerConstants.UPDATE_MODE_BACKGROUND));
     myEnableSigningCB.setSelected(myProperties.isEnabledSigning());
     myConvertCssToBinCheckBox.setSelected(myProperties.isConvertCss2Bin());

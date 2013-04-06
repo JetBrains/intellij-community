@@ -35,6 +35,7 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     myState.setStorepass(state.myStorepass);
     myState.setAlias(state.myAlias);
     myState.setConvertCss2Bin(state.myConvertCss2Bin);
+    myState.setNativeBundle(state.myNativeBundle);
   }
 
   @NotNull
@@ -65,6 +66,7 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
     private String myStorepass;
     private String myKeypass;
     private boolean myConvertCss2Bin;
+    public JavaFxPackagerConstants.NativeBundles myNativeBundle = JavaFxPackagerConstants.NativeBundles.none;
 
     public String getTitle() {
       return myTitle;
@@ -192,6 +194,14 @@ public class JpsJavaFxArtifactProperties extends JpsElementBase<JpsJavaFxArtifac
 
     public void setConvertCss2Bin(boolean convertCss2Bin) {
       myConvertCss2Bin = convertCss2Bin;
+    }
+
+    public JavaFxPackagerConstants.NativeBundles getNativeBundle() {
+      return myNativeBundle;
+    }
+
+    public void setNativeBundle(JavaFxPackagerConstants.NativeBundles nativeBundle) {
+      myNativeBundle = nativeBundle;
     }
   }
 }

@@ -208,13 +208,6 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
   @Override
   public PsiAnnotationOwner getOwner(@NotNull PsiAnnotation annotation) {
-    assert annotation.getParent() == this : annotation.getParent();
-
-    PsiElement next = PsiTreeUtil.skipSiblingsForward(annotation, PsiComment.class, PsiWhiteSpace.class, PsiAnnotation.class);
-    if (PsiUtil.isJavaToken(next, JavaTokenType.LBRACKET)) {
-      return JavaSharedImplUtil.findAnnotatedSubtype(getType(), annotation);
-    }
-
     return this;
   }
 

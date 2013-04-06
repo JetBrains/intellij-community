@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,6 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
@@ -38,43 +37,19 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Map;
 
 public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements PsiJavaCodeReferenceElement {
-  private static final ClsTypeElementImpl[] EMPTY_ARRAY = new ClsTypeElementImpl[0];
-  @NonNls private static final String EXTENDS_PREFIX = "?extends";
-  @NonNls private static final String SUPER_PREFIX = "?super";
-
   private final PsiElement myParent;
   private final String myCanonicalText;
   private final String myQualifiedName;
-  private final ClsTypeElementImpl[] myTypeParameters;  // in right-to-left order
-  private volatile PsiType[] myTypeParametersCachedTypes = null; // in left-to-right-order
+  private final PsiReferenceParameterList myRefParameterList;
 
   public ClsJavaCodeReferenceElementImpl(PsiElement parent, String canonicalText) {
     myParent = parent;
 
     myCanonicalText = canonicalText;
-    final String[] classParametersText = PsiNameHelper.getClassParametersText(canonicalText);
-    int length = classParametersText.length;
-    myTypeParameters = length == 0 ? EMPTY_ARRAY : new ClsTypeElementImpl[length];
-    for (int i = 0; i < length; i++) {
-      String s = classParametersText[length - i - 1];
-      char variance = ClsTypeElementImpl.VARIANCE_NONE;
-      if (s.startsWith(EXTENDS_PREFIX)) {
-        variance = ClsTypeElementImpl.VARIANCE_EXTENDS;
-        s = s.substring(EXTENDS_PREFIX.length());
-      }
-      else if (s.startsWith(SUPER_PREFIX)) {
-        variance = ClsTypeElementImpl.VARIANCE_SUPER;
-        s = s.substring(SUPER_PREFIX.length());
-      }
-      else if (StringUtil.startsWithChar(s, '?')) {
-        variance = ClsTypeElementImpl.VARIANCE_INVARIANT;
-        s = s.substring(1);
-      }
-
-      myTypeParameters[i] = new ClsTypeElementImpl(this, s, variance);
-    }
-
     myQualifiedName = PsiNameHelper.getQualifiedClassName(myCanonicalText, false);
+
+    String[] classParameters = PsiNameHelper.getClassParametersText(canonicalText);
+    myRefParameterList = classParameters.length == 0 ? null : new ClsReferenceParameterListImpl(this, classParameters);
   }
 
   @Override
@@ -121,19 +96,23 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   }
 
   private JavaResolveResult advancedResolveImpl() {
-    final PsiElement resolve = resolveElement();
+    PsiTypeElement[] typeElements = myRefParameterList == null ? PsiTypeElement.EMPTY_ARRAY : myRefParameterList.getTypeParameterElements();
+    PsiElement resolve = resolveElement();
+
     if (resolve instanceof PsiClass) {
-      final Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
+      Map<PsiTypeParameter, PsiType> substitutionMap = new HashMap<PsiTypeParameter, PsiType>();
       int index = 0;
       for (PsiTypeParameter parameter : PsiUtil.typeParametersIterable((PsiClass)resolve)) {
-        if (index >= myTypeParameters.length) {
-          final PsiTypeParameterListOwner parameterOwner = parameter.getOwner();
+        if (index >= typeElements.length) {
+          PsiTypeParameterListOwner parameterOwner = parameter.getOwner();
           if (parameterOwner == resolve) {
             substitutionMap.put(parameter, null);
-          } else if (parameterOwner instanceof PsiClass) {
+          }
+          else if (parameterOwner instanceof PsiClass) {
             PsiElement containingClass = myParent;
             while ((containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class, true)) != null) {
-              final PsiSubstitutor superClassSubstitutor = TypeConversionUtil.getClassSubstitutor((PsiClass)parameterOwner, (PsiClass)containingClass, PsiSubstitutor.EMPTY);
+              PsiSubstitutor superClassSubstitutor =
+                TypeConversionUtil.getClassSubstitutor((PsiClass)parameterOwner, (PsiClass)containingClass, PsiSubstitutor.EMPTY);
               if (superClassSubstitutor != null) {
                 substitutionMap.put(parameter, superClassSubstitutor.substitute(parameter));
                 break;
@@ -142,7 +121,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
           }
         }
         else {
-          substitutionMap.put(parameter, myTypeParameters[index].getType());
+          substitutionMap.put(parameter, typeElements[index].getType());
         }
         index++;
       }
@@ -228,7 +207,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
 
   @Override
   public PsiReferenceParameterList getParameterList() {
-    return null;
+    return myRefParameterList;
   }
 
   @Override
@@ -307,15 +286,7 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   @Override
   @NotNull
   public PsiType[] getTypeParameters() {
-    PsiType[] cachedTypes = myTypeParametersCachedTypes;
-    if (cachedTypes == null) {
-      cachedTypes = myTypeParameters.length == 0 ? PsiType.EMPTY_ARRAY : new PsiType[myTypeParameters.length];
-      for (int i = 0; i < cachedTypes.length; i++) {
-        cachedTypes[cachedTypes.length - i - 1] = myTypeParameters[i].getType();
-      }
-      myTypeParametersCachedTypes = cachedTypes;
-    }
-    return cachedTypes;
+    return myRefParameterList == null ? PsiType.EMPTY_ARRAY : myRefParameterList.getTypeArguments();
   }
 
   @Override

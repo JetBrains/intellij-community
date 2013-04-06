@@ -26,4 +26,8 @@ public class JavaFxPackagerConstants {
   @NonNls public static final String UPDATE_MODE_ALWAYS = "always";
   @NonNls public static final String DEFAULT_HEIGHT = "400";
   @NonNls public static final String DEFAULT_WEIGHT = "600";
+
+  public enum NativeBundles {
+    none, all, deb, dmg, exe, image, msi, rpm
+  } 
 }

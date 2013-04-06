@@ -15,34 +15,46 @@
  */
 package com.intellij.codeInsight.psi
 
-import com.intellij.psi.*
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightIdeaTestCase
 
+@SuppressWarnings(["GrUnresolvedAccess"])
 class AnnotatedTypeTest extends LightIdeaTestCase {
-  @SuppressWarnings("GrUnresolvedAccess")
+
   public void testTypeComposition() {
-    def context = createFile("typeCompositionTest.java", """
+    PsiFile context = createFile("typeCompositionTest.java", """
 import java.lang.annotation.*;
 import static java.lang.annotation.ElementType.*;
 
 @interface A { }
-@Target({TYPE_USE}) @interface TA { }
+@Target({TYPE_USE}) @interface TA { int value() default 42; }
 
 class E1 extends Exception { }
 class E2 extends Exception { }
 """)
-    def factory = JavaPsiFacade.getInstance(getProject()).getElementFactory(), psi
+    PsiElement psi
 
-    psi = factory.createStatementFromText("@TA int @TA [] a = null", context)
-    assertEquals("@TA int @TA []", psi.declaredElements[0].type.presentableText)
+    psi = javaFacade.elementFactory.createStatementFromText("@A @TA(1) int @TA(2) [] a", context)
+    assertEquals("@TA(1) int @TA(2) []", psi.declaredElements[0].type.presentableText)
 
-    psi = factory.createStatementFromText("@A int @TA [] a = null", context)
-    assertEquals("int @TA []", psi.declaredElements[0].type.presentableText)
+    psi = javaFacade.elementFactory.createStatementFromText("try { } catch (@A @TA(1) E1 | @TA(2) E2 e) { }", context)
+    assertEquals("@TA(1) E1 | @TA(2) E2", psi.catchBlockParameters[0].type.presentableText)
 
-    psi = factory.createStatementFromText("try { } catch (@TA E1 | @TA E2 e) { }", context)
-    assertEquals("@TA E1 | @TA E2", psi.catchBlockParameters[0].type.presentableText)
+    psi = javaFacade.elementFactory.createStatementFromText("@A @TA(1) String @TA(2) [] f @TA(3) []", context)
+    assertEquals("@TA(1) String @TA(2) [] @TA(3) []", psi.declaredElements[0].type.presentableText)
 
-    psi = factory.createFieldFromText("@TA String @TA [] f @TA []", context)
-    assertEquals("@TA String @TA [] @TA []", psi.type.presentableText)
+    psi = javaFacade.elementFactory.createStatementFromText("Class<@TA(1) ?> c", context)
+    assertEquals("Class<@TA(1) ?>", psi.declaredElements[0].type.presentableText)
+
+    psi = javaFacade.elementFactory.createStatementFromText("Class<@TA String> cs = new Class<>()", context)
+    assertEquals("Class<@TA String>", psi.declaredElements[0].initializer.type.presentableText)
+
+    psi = javaFacade.elementFactory.createStatementFromText("@A @TA(1) String s", context)
+    assertEquals("@TA(1) String", psi.declaredElements[0].type.presentableText)
+
+    psi = javaFacade.elementFactory.createStatementFromText("@A java.lang.@TA(1) String s", context)
+    assertEquals("@TA(1) String", psi.declaredElements[0].type.presentableText)
   }
+
 }

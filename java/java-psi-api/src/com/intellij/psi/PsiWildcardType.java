@@ -96,38 +96,19 @@ public class PsiWildcardType extends PsiType {
 
   @Override
   public String getPresentableText() {
-    if (myBound == null) return "?";
-    if (myIsExtending) {
-      return EXTENDS_PREFIX + myBound.getPresentableText();
-    }
-    else {
-      //noinspection HardCodedStringLiteral
-      return "? super " + myBound.getPresentableText();
-    }
+    return getAnnotationsTextPrefix(false, false, true) +
+           (myBound == null ? "?" : (myIsExtending ? EXTENDS_PREFIX : SUPER_PREFIX) + myBound.getPresentableText());
   }
 
   @Override
   public String getCanonicalText() {
-    if (myBound == null) return "?";
-    if (myIsExtending) {
-      return EXTENDS_PREFIX + myBound.getCanonicalText();
-    }
-    else {
-      //noinspection HardCodedStringLiteral
-      return "? super " + myBound.getCanonicalText();
-    }
+    return (myBound == null ? "?" : (myIsExtending ? EXTENDS_PREFIX : SUPER_PREFIX) + myBound.getCanonicalText());
   }
 
   @Override
   public String getInternalCanonicalText() {
-    if (myBound == null) return "?";
-    if (myIsExtending) {
-      return EXTENDS_PREFIX + myBound.getInternalCanonicalText();
-    }
-    else {
-      //noinspection HardCodedStringLiteral
-      return "? super " + myBound.getInternalCanonicalText();
-    }
+    return getAnnotationsTextPrefix(true, false, true) +
+           (myBound == null ? "?" : (myIsExtending ? EXTENDS_PREFIX : SUPER_PREFIX) + myBound.getInternalCanonicalText());
   }
 
   @Override
