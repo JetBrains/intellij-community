@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -198,28 +198,57 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
       @Override
       public void run() {
         VirtualFile file = getSelectedFile();
-        String fromBytes = file == null ? null : LoadTextUtil.wasCharsetDetectedFromBytes(file);
-        Charset charset = fromBytes == null ? cachedCharsetFromContent(file) : null;
-        if (charset == null && file != null) charset = file.getCharset();
+        actionEnabled = false;
+        String charsetName = null;
+        Pair<Charset,String> check = null;
 
-        String text = charset == null ? "" : charset.displayName();
-        Pair<Charset,String> check = file == null ? null : EncodingUtil.checkSomeActionEnabled(file);
-        String failReason = check == null ? null : check.second;
-        Charset currentCharset = check == null ? null : check.first;
-        actionEnabled = failReason == null;
+        if (file != null) {
+          check = EncodingUtil.checkSomeActionEnabled(file);
+          Charset charset = null;
 
-        String toolTip = "File Encoding" +
-                         (currentCharset == null ? "" : ": "+currentCharset.displayName()) +
-                         (actionEnabled ? "" : " (change disabled: " + failReason + ")");
-        myComponent.setToolTipText(toolTip);
-        myComponent.setText(text);
+          if (LoadTextUtil.wasCharsetDetectedFromBytes(file) != null)
+          {
+            charset = cachedCharsetFromContent(file);
+          }
+
+          if (charset == null) {
+            charset = file.getCharset();
+          }
+
+          actionEnabled = (check == null || check.second == null);
+
+          if (!actionEnabled) {
+            charset = check.first;
+          }
+
+          if (charset != null) {
+            charsetName = charset.displayName();
+          }
+        }
+
+        if (charsetName == null) {
+          charsetName = "n/a";
+        }
+
+        String toolTipText;
 
         if (actionEnabled) {
+          toolTipText = String.format(
+            "File Encoding%n%s", charsetName);
+
           myComponent.setForeground(UIUtil.getActiveTextColor());
-        }
-        else {
+          myComponent.setTextAlignment(Component.LEFT_ALIGNMENT);
+        } else {
+          String failReason = (check == null) ? "" : check.second;
+          toolTipText = String.format("File encoding is disabled%n%s",
+                                      failReason);
+
           myComponent.setForeground(UIUtil.getInactiveTextColor());
+          myComponent.setTextAlignment(Component.CENTER_ALIGNMENT);
         }
+
+        myComponent.setToolTipText(toolTipText);
+        myComponent.setText(charsetName);
 
         if (myStatusBar != null) {
           myStatusBar.updateWidget(ID());
