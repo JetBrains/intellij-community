@@ -631,11 +631,14 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * If this file is a directory the set of its children is refreshed. If recursive value is <code>true</code> all
    * children are refreshed recursively.
    * <p/>
-   * This method should be only called within write-action.
-   * See {@link com.intellij.openapi.application.Application#runWriteAction}.
+   * When invoking synchronous refresh from a thread other than the event dispatch thread, the current thread must
+   * NOT be in a read action, otherwise a deadlock may occur.
    *
-   * @param asynchronous if <code>true</code> then the operation will be performed in a separate thread,
-   *                     otherwise will be performed immediately
+   * @param asynchronous if <code>true</code>, the method will return immediately and the refresh will be processed
+   *                     in the background. If <code>false</code>, the method will return only after the refresh
+   *                     is done and the VFS change events caused by the refresh have been fired and processed
+   *                     in the event dispatch thread. Instead of synchronous refreshes, it's recommended to use
+   *                     asynchronous refreshes with a <code>postRunnable</code> whenever possible.
    * @param recursive    whether to refresh all the files in this directory recursively
    */
   public void refresh(boolean asynchronous, boolean recursive) {
