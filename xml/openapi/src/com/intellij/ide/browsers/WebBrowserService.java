@@ -28,11 +28,8 @@ public abstract class WebBrowserService {
   public abstract boolean canOpenInBrowser(@NotNull PsiElement psiElement);
 
   @Nullable
-  public abstract String getUrlToOpen(@NotNull PsiElement psiElement);
+  public abstract Url getUrlToOpen(@NotNull PsiElement psiElement);
 
   @Nullable
-  /**
-   * URL is not encoded (space as is)
-   */
-  public abstract String getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
+  public abstract Url getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
 }

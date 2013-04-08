@@ -107,4 +107,40 @@ public final class UrlImpl implements Url {
   public String toString() {
     return raw;
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof UrlImpl)) {
+      return false;
+    }
+
+    UrlImpl url = (UrlImpl)o;
+    if (!scheme.equals(url.scheme)) {
+      return false;
+    }
+    if (authority != null ? !authority.equals(url.authority) : url.authority != null) {
+      return false;
+    }
+    if (parameters != null ? !parameters.equals(url.parameters) : url.parameters != null) {
+      return false;
+    }
+    String decodedPath = getPath();
+    if (decodedPath != null ? !decodedPath.equals(url.getPath()) : url.path != null) {
+      return false;
+    }
+    return true;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = scheme.hashCode();
+    result = 31 * result + (authority != null ? authority.hashCode() : 0);
+    String decodedPath = getPath();
+    result = 31 * result + (decodedPath != null ? decodedPath.hashCode() : 0);
+    result = 31 * result + (parameters != null ? parameters.hashCode() : 0);
+    return result;
+  }
 }
