@@ -123,6 +123,22 @@ public class ArtifactUtil {
     return true;
   }
 
+  public static void processRecursivelySkippingIncludedArtifacts(Artifact artifact,
+                                                                 final Processor<PackagingElement<?>> processor,
+                                                                 PackagingElementResolvingContext context) {
+    processPackagingElements(artifact.getRootElement(), null, new PackagingElementProcessor<PackagingElement<?>>() {
+      @Override
+      public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
+        return processor.process(element);
+      }
+
+      @Override
+      public boolean shouldProcessSubstitution(ComplexPackagingElement<?> element) {
+        return !(element instanceof ArtifactPackagingElement);
+      }
+    }, context, true, artifact.getArtifactType());
+  }
+
   private static <E extends PackagingElement<?>> boolean processElementRecursively(@NotNull PackagingElement<?> element, @Nullable PackagingElementType<E> type,
                                                                          @NotNull PackagingElementProcessor<? super E> processor,
                                                                          @NotNull PackagingElementResolvingContext resolvingContext,
