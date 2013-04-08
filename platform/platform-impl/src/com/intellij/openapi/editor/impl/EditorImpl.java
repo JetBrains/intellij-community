@@ -3249,9 +3249,14 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       g.setColor(myScheme.getColor(EditorColors.WHITESPACES_COLOR));
       final FontMetrics metrics = g.getFontMetrics();
       int halfSpaceWidth = metrics.charWidth(' ') / 2;
+      int wideSpaceWidth = metrics.charWidth('\u3000');
+      int charHeight = getCharHeight();
       for (int i = start; i < end; i++) {
         if (data[i] == ' ') {
           g.fillRect(x + halfSpaceWidth, y, 1, 1);
+        }
+        else if (data[i] == '\u3000') {
+          g.drawRect(x + 2, y - charHeight, wideSpaceWidth - 6, charHeight);
         }
         x += metrics.charWidth(data[i]);
       }
