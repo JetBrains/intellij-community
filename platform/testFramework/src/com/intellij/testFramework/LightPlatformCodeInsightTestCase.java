@@ -631,7 +631,11 @@ public abstract class LightPlatformCodeInsightTestCase extends LightPlatformTest
           return getFile();
         }
         if (LangDataKeys.PSI_ELEMENT.is(dataId)) {
-          return getFile().findElementAt(getEditor().getCaretModel().getOffset());
+          PsiFile file = getFile();
+          if (file == null) return null;
+          Editor editor = getEditor();
+          if (editor == null) return null;
+          return file.findElementAt(editor.getCaretModel().getOffset());
         }
         return defaultContext.getData(dataId);
       }
