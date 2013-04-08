@@ -42,6 +42,9 @@ public class OpenModuleSettingsAction extends EditSourceAction {
       final Module module = LangDataKeys.MODULE.getData(e.getDataContext());
       if (project != null && module != null) {
         final VirtualFile moduleFolder = PlatformDataKeys.VIRTUAL_FILE.getData(e.getDataContext());
+        if (moduleFolder == null) {
+          return false;
+        }
         if (ProjectRootsUtil.isModuleContentRoot(moduleFolder, project)
             || ProjectRootsUtil.isSourceOrTestRoot(moduleFolder, project)) {
           return true;
