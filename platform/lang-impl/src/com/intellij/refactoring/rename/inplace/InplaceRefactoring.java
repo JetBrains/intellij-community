@@ -270,7 +270,7 @@ public abstract class InplaceRefactoring {
 
     boolean subrefOnPrimaryElement = false;
     for (PsiReference ref : refs) {
-      if (isReferenceAtCaret(nameIdentifier, ref)) {
+      if (isReferenceAtCaret(selectedElement, ref)) {
         builder.replaceElement(ref, PRIMARY_VARIABLE_NAME, createLookupExpression(), true);
         subrefOnPrimaryElement = true;
         continue;
