@@ -30,9 +30,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class WebBrowserServiceImpl extends WebBrowserService {
   @Override
   public boolean canOpenInBrowser(@NotNull PsiElement psiElement) {
@@ -69,7 +66,7 @@ public class WebBrowserServiceImpl extends WebBrowserService {
         }
       }
     }
-    return VfsUtil.toUri(virtualFile).toASCIIString();
+    return VfsUtil.toUri(virtualFile).toString();
   }
 
   @Nullable

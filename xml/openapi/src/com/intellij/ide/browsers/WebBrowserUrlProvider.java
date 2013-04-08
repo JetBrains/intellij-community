@@ -35,6 +35,9 @@ public abstract class WebBrowserUrlProvider {
   }
 
   @NotNull
+  /**
+   * URL must not be encoded (space as is)
+   */
   public abstract String getUrl(@NotNull PsiElement element, @NotNull PsiFile psiFile, @NotNull VirtualFile virtualFile) throws BrowserException;
 
   /**
