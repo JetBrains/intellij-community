@@ -70,6 +70,7 @@ public class ActionStub extends AnAction{
     return myIconPath;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e){
     throw new UnsupportedOperationException();
   }
