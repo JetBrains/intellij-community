@@ -56,7 +56,7 @@ public class CoreProjectEnvironment {
     preregisterServices();
 
     myFileIndexFacade = createFileIndexFacade();
-    myMessageBus = new MessageBusImpl();
+    myMessageBus = new MessageBusImpl("CoreProjectEnvironment", null);
 
     PsiModificationTrackerImpl modificationTracker = new PsiModificationTrackerImpl(myProject);
     myProject.registerService(PsiModificationTracker.class, modificationTracker);

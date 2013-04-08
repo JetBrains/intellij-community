@@ -69,7 +69,7 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   private final ModuleScopeProvider myModuleScopeProvider;
 
   public ModuleImpl(@NotNull String filePath, @NotNull Project project) {
-    super(project);
+    super(project, "Module " + moduleNameByFileName(PathUtil.getFileName(filePath)));
 
     getPicoContainer().registerComponentInstance(Module.class, this);
 
@@ -81,9 +81,9 @@ public class ModuleImpl extends ComponentManagerImpl implements ModuleEx {
   }
 
   @Override
-  protected void bootstrapPicoContainer() {
+  protected void bootstrapPicoContainer(@NotNull String name) {
     Extensions.instantiateArea(ExtensionAreas.IDEA_MODULE, this, (AreaInstance)getParentComponentManager());
-    super.bootstrapPicoContainer();
+    super.bootstrapPicoContainer(name);
     getPicoContainer().registerComponentImplementation(IComponentStore.class, ModuleStoreImpl.class);
     getPicoContainer().registerComponentImplementation(ModulePathMacroManager.class);
   }
