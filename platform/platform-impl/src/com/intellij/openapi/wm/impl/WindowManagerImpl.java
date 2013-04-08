@@ -843,10 +843,12 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
           frame.dispose();
           frame.setUndecorated(fullScreen);
 
-          if (fullScreen) {
-            device.setFullScreenWindow(frame);
-          } else {
-            device.setFullScreenWindow(null);
+          if (SystemInfo.isLinux) {
+            if (fullScreen) {
+              device.setFullScreenWindow(frame);
+            } else {
+              device.setFullScreenWindow(null);
+            }
           }
 
         }
