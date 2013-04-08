@@ -25,14 +25,12 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
 import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.ComplexPackagingElement;
 import com.intellij.packaging.elements.PackagingElement;
 import com.intellij.packaging.elements.PackagingElementResolvingContext;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
-import com.intellij.packaging.impl.artifacts.PackagingElementPath;
-import com.intellij.packaging.impl.artifacts.PackagingElementProcessor;
 import com.intellij.packaging.impl.elements.ArtifactPackagingElement;
 import com.intellij.packaging.impl.elements.ModuleOutputPackagingElement;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -122,14 +120,9 @@ public class ArtifactsGenerator {
   private Target createArtifactTarget(Artifact artifact) {
     final StringBuilder depends = new StringBuilder(INIT_ARTIFACTS_TARGET);
 
-    ArtifactUtil.processPackagingElements(artifact, null, new PackagingElementProcessor<PackagingElement<?>>() {
+    ArtifactUtil.processRecursivelySkippingIncludedArtifacts(artifact, new Processor<PackagingElement<?>>() {
       @Override
-      public boolean shouldProcessSubstitution(ComplexPackagingElement<?> element) {
-        return !(element instanceof ArtifactPackagingElement);
-      }
-
-      @Override
-      public boolean process(@NotNull PackagingElement<?> packagingElement, @NotNull PackagingElementPath path) {
+      public boolean process(@NotNull PackagingElement<?> packagingElement) {
         if (packagingElement instanceof ArtifactPackagingElement) {
           final Artifact included = ((ArtifactPackagingElement)packagingElement).findArtifact(myResolvingContext);
           if (included != null) {
@@ -146,7 +139,7 @@ public class ArtifactsGenerator {
         }
         return true;
       }
-    }, myResolvingContext, true);
+    }, myResolvingContext);
 
     final Pair<String, String> xmlNs = getArtifactXmlNs(artifact.getArtifactType());
     final Target artifactTarget =

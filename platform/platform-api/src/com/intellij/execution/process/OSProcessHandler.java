@@ -98,9 +98,4 @@ public class OSProcessHandler extends BaseOSProcessHandler {
     }
     return destroyed;
   }
-
-  /**
-   * Marker interface that represents a process that kills itself, for example a remote process, that can't be killed by the local OS
-   */
-  public interface SelfKiller {}
 }
