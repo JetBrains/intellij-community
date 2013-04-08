@@ -71,7 +71,7 @@ public class PyOpenDebugConsoleAction extends AnAction implements DumbAware {
       @NotNull
       @Override
       public Boolean fun(RunContentDescriptor dom) {
-        return dom.getExecutionConsole() instanceof PyCodeExecutor && isAlive(dom);
+        return dom.getExecutionConsole() instanceof PythonDebugLanguageConsoleView && isAlive(dom);
       }
     });
   }
