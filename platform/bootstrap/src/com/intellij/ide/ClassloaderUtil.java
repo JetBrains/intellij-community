@@ -35,12 +35,14 @@ import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Field;
 import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Modifier;
 import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
+import java.util.Map;
 import java.util.regex.Pattern;
 
 public class ClassloaderUtil {
@@ -55,28 +57,26 @@ public class ClassloaderUtil {
 
   public static void clearJarURLCache() {
     try {
-      /*
-      new URLConnection(null) {
-        public void connect() throws IOException {
-          throw new UnsupportedOperationException();
-        }
-      }.setDefaultUseCaches(false);
-      */
-
       Class jarFileFactory = Class.forName("sun.net.www.protocol.jar.JarFileFactory");
 
-      Field fileCache = jarFileFactory.getDeclaredField(FILE_CACHE);
-      Field urlCache = jarFileFactory.getDeclaredField(URL_CACHE);
-
-      fileCache.setAccessible(true);
-      fileCache.set(null, new HashMap());
-
-      urlCache.setAccessible(true);
-      urlCache.set(null, new HashMap());
+      clearMap(jarFileFactory.getDeclaredField(FILE_CACHE));
+      clearMap(jarFileFactory.getDeclaredField(URL_CACHE));
     }
     catch (Exception e) {
       System.out.println("Failed to clear URL cache");
+      e.printStackTrace();
       // Do nothing.
+    }
+  }
+
+  private static void clearMap(Field cache) throws IllegalAccessException {
+    cache.setAccessible(true);
+    if ((cache.getModifiers() & Modifier.FINAL) == 0) {
+      cache.set(null, new HashMap());
+    }
+    else {
+      Map map = (Map)cache.get(null);
+      map.clear();
     }
   }
 
