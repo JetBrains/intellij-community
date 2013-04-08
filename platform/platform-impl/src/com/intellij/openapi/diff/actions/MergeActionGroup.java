@@ -19,6 +19,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diff.DiffBundle;
 import com.intellij.openapi.diff.impl.DiffPanelImpl;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -30,6 +31,7 @@ public class MergeActionGroup extends ActionGroup {
     myOperations = new MergeOperations(diffPanel, side);
   }
 
+  @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     ArrayList<MergeOperations.Operation> operations = myOperations.getOperations();
     AnAction[] actions = new AnAction[operations.size() + 2];
