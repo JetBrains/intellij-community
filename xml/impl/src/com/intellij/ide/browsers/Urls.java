@@ -36,10 +36,11 @@ public final class Urls {
       // nodejs debug — files only in local filesystem
       return new LocalFileUrl(url);
     }
-    return parseNormalizedUrl(VfsUtil.toIdeaUrl(url), true);
+    return parseUrl(VfsUtil.toIdeaUrl(url), true);
   }
 
-  private static Url parseNormalizedUrl(String url, boolean urlAsRaw) {
+  @Nullable
+  private static Url parseUrl(String url, boolean urlAsRaw) {
     Matcher matcher = URI_PATTERN.matcher(url);
     if (!matcher.matches()) {
       LOG.warn("Cannot parse url " + url);
@@ -56,16 +57,15 @@ public final class Urls {
     return new UrlImpl(urlAsRaw ? url : null, scheme, authority, path, parameters);
   }
 
-  // URL must not contain fragment part
   // java.net.URI.create cannot parse "file:///Test Stuff" - but you don't need to worry about it - this method is aware
-  public static Url newFromIdea(@NotNull String urlWithoutFragment) {
-    int index = urlWithoutFragment.indexOf("://");
+  public static Url newFromIdea(@NotNull String url) {
+    int index = url.indexOf("://");
     if (index < 0) {
       // nodejs debug — files only in local filesystem
-      return new LocalFileUrl(urlWithoutFragment);
+      return new LocalFileUrl(url);
     }
     else {
-      return parseNormalizedUrl(VfsUtil.toIdeaUrl(urlWithoutFragment), false);
+      return parseUrl(VfsUtil.toIdeaUrl(url), false);
     }
   }
 
@@ -76,7 +76,7 @@ public final class Urls {
       return new UrlImpl(null, file.getFileSystem().getProtocol(), null, path, null);
     }
     else {
-      return parseNormalizedUrl(file.getUrl(), false);
+      return parseUrl(file.getUrl(), false);
     }
   }
 }

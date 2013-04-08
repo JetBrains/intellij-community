@@ -1,6 +1,5 @@
 package com.intellij.ide.browsers;
 
-import com.intellij.ide.browsers.Url;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -49,5 +48,21 @@ public final class LocalFileUrl implements Url {
   @Override
   public String getParametersPart() {
     return null;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) {
+      return true;
+    }
+    if (!(o instanceof LocalFileUrl)) {
+      return false;
+    }
+    return path.equals(((LocalFileUrl)o).path);
+  }
+
+  @Override
+  public int hashCode() {
+    return path.hashCode();
   }
 }
