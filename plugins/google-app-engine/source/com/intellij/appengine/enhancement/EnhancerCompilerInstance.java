@@ -139,7 +139,7 @@ public class EnhancerCompilerInstance extends GenericCompilerInstance<Enhancemen
       final JavaParameters javaParameters = new JavaParameters();
       new ReadAction() {
         protected void run(final Result result) throws Throwable {
-          myContext.getProgressIndicator().setText2("'" + facet.getModule().getName() + "' module, '" + facet.getWebFacet().getName() + "' facet, processing " + items.size() + " classes...");
+          myContext.getProgressIndicator().setText2("'" + facet.getModule().getName() + "' module, processing " + items.size() + " classes...");
           javaParameters.configureByModule(facet.getModule(), JavaParameters.JDK_AND_CLASSES);
 
           final PathsList classPath = javaParameters.getClassPath();
