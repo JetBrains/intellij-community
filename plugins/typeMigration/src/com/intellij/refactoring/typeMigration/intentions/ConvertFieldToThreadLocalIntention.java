@@ -90,9 +90,6 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
     final PsiClassType toType = elementFactory.createType(threadLocalClass, elementFactory.createSubstitutor(substitutor));
 
     try {
-      psiField.getTypeElement().replace(elementFactory.createTypeElement(toType));
-
-
       final TypeMigrationRules rules = new TypeMigrationRules(fromType);
       rules.setMigrationRootType(toType);
       rules.setBoundScope(GlobalSearchScope.fileScope(element.getContainingFile()));
@@ -121,6 +118,8 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
           elementFactory.createExpressionFromText("new " + PsiDiamondTypeUtil.getCollapsedType(toType, psiField) + "()", psiField);
         psiField.setInitializer(defaultInitializer);
       }
+
+      psiField.getTypeElement().replace(elementFactory.createTypeElement(toType));
     }
     catch (IncorrectOperationException e) {
       LOG.error(e);
