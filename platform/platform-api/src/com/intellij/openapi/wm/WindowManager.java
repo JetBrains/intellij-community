@@ -128,6 +128,6 @@ public abstract class WindowManager {
    * @return <code>true</code> if full screen mode is supported in current OS.
    */
   public boolean isFullScreenSupportedInCurrentOS() {
-    return SystemInfo.isMacOSLion || SystemInfo.isWindows;
+    return SystemInfo.isMacOSLion || SystemInfo.isWindows || (SystemInfo.isLinux && SystemInfo.isJavaVersionAtLeast("1.7"));
   }
 }

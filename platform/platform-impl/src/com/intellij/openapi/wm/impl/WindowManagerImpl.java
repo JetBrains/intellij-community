@@ -832,7 +832,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         return;
       }
 
-      if (SystemInfo.isWindows) {
+      if (SystemInfo.isWindows || SystemInfo.isLinux) {
         GraphicsDevice device = ScreenUtil.getScreenDevice(frame.getBounds());
         if (device == null) return;
         try {
@@ -842,12 +842,19 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
           }
           frame.dispose();
           frame.setUndecorated(fullScreen);
+
+          if (fullScreen) {
+            device.setFullScreenWindow(frame);
+          } else {
+            device.setFullScreenWindow(null);
+          }
+
         }
         finally {
           if (fullScreen) {
-            frame.setBounds(device.getDefaultConfiguration().getBounds());
-          }
-          else {
+            if (SystemInfo.isWindows)
+              frame.setBounds(device.getDefaultConfiguration().getBounds());
+          } else {
             Object o = frame.getRootPane().getClientProperty("oldBounds");
             if (o instanceof Rectangle) {
               frame.setBounds((Rectangle)o);
