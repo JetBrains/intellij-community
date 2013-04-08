@@ -129,7 +129,7 @@ public abstract class ActionGroup extends AnAction {
   /**
    * Returns the children of the group.
    *
-   * @return An array represting children of this group. All returned children must be not <code>null</code>.
+   * @return An array representing children of this group. All returned children must be not <code>null</code>.
    */
   @NotNull
   public abstract AnAction[] getChildren(@Nullable AnActionEvent e);
