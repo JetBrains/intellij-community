@@ -177,28 +177,17 @@ public class AppEngineUploader {
     final CompilerManager compilerManager = CompilerManager.getInstance(myProject);
     final CompileScope moduleScope = compilerManager.createModuleCompileScope(myAppEngineFacet.getModule(), true);
     final CompileScope compileScope = ArtifactCompileScope.createScopeWithArtifacts(moduleScope, Collections.singletonList(myArtifact), true);
-    if (!compilerManager.isUpToDate(compileScope)) {
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        public void run() {
-          final int answer = Messages.showYesNoDialog(myProject, "Output directory may be out of date. Do you want to build it?", "Upload Application", null);
-          if (answer == 0) {
-            compilerManager.make(compileScope, new CompileStatusNotification() {
-              public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
-                if (!aborted && errors == 0) {
-                  startUploading.run();
-                }
-              }
-            });
+    ApplicationManager.getApplication().invokeLater(new Runnable() {
+      public void run() {
+        compilerManager.make(compileScope, new CompileStatusNotification() {
+          public void finished(boolean aborted, int errors, int warnings, CompileContext compileContext) {
+            if (!aborted && errors == 0) {
+              startUploading.run();
+            }
           }
-          else {
-            startUploading.run();
-          }
-        }
-      });
-    }
-    else {
-      startUploading.run();
-    }
+        });
+      }
+    });
   }
 
   private void startUploadingProcess() {
@@ -211,7 +200,6 @@ public class AppEngineUploader {
       parameters.setMainClass("com.google.appengine.tools.admin.AppCfg");
       parameters.getClassPath().add(mySdk.getToolsApiJarFile().getAbsolutePath());
 
-      HttpConfigurable httpConfigurable = HttpConfigurable.getInstance();
       final List<KeyValue<String,String>> list = HttpConfigurable.getJvmPropertiesList(false, null);
       if (! list.isEmpty()) {
         final ParametersList parametersList = parameters.getVMParametersList();
