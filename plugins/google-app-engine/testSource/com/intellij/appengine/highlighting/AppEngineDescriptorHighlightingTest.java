@@ -19,7 +19,7 @@ public class AppEngineDescriptorHighlightingTest extends AppEngineCodeInsightTes
     checkXmlHighlighting();
   }
 
-  private void checkXmlHighlighting() throws Exception {
+  private void checkXmlHighlighting() {
     myCodeInsightFixture.enableInspections(CheckXmlFileWithXercesValidatorInspection.class);
     myCodeInsightFixture.checkHighlighting();
   }
