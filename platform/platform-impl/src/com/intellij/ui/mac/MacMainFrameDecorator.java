@@ -31,8 +31,6 @@ import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.Function;
 import com.sun.jna.Callback;
 import org.jetbrains.annotations.NotNull;
-import sun.lwawt.LWWindowPeer;
-import sun.lwawt.macosx.CPlatformWindow;
 
 import javax.swing.*;
 import java.awt.*;
@@ -40,7 +38,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.awt.peer.ComponentPeer;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
@@ -254,19 +251,7 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
     if (myInFullScreen != state) {
       final ID window = MacUtil.findWindowForTitle(myFrame.getTitle());
       if (window == null) return;
-      if (SystemInfo.isJavaVersionAtLeast("1.7")) {
-        requestToggleFullScreen(myFrame);
-      } else {
-        invoke(window, "toggleFullScreen:", window);
-      }
+      invoke(window, "toggleFullScreen:", window);
     }
-  }
-
-  private static void requestToggleFullScreen(final Window window) {
-    @SuppressWarnings("deprecation") final ComponentPeer peer = window.getPeer();
-    if (!(peer instanceof LWWindowPeer)) return;
-    Object platformWindow = ((LWWindowPeer) peer).getPlatformWindow();
-    if (!(platformWindow instanceof CPlatformWindow)) return;
-    ((CPlatformWindow)platformWindow).toggleFullScreen();
   }
 }
