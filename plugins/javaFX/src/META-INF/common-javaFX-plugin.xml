@@ -23,6 +23,7 @@
     <applicationConfigurable instance="org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.JavaFxControllerClassIndex"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.JavaFxIdsIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.JavaFxCustomComponentsIndex"/>
     <intentionAction>
       <className>org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxCollapseSubTagToAttributeIntention</className>
       <category>JavaFX</category>

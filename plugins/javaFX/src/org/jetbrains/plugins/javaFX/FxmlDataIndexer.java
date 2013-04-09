@@ -50,7 +50,10 @@ public class FxmlDataIndexer implements DataIndexer<String, Set<String>, FileCon
 
     final Map<String, Set<String>> map = new HashMap<String, Set<String>>();
     final IXMLBuilder handler = createParseHandler(path, map);
-    NanoXmlUtil.parse(new StringReader(content), handler);
+    try {
+      NanoXmlUtil.parse(new StringReader(content), handler);
+    }
+    catch (StopException ignore) {}
     endDocument(path, map, handler);
     return map;
   }
@@ -72,4 +75,6 @@ public class FxmlDataIndexer implements DataIndexer<String, Set<String>, FileCon
       }
     };
   }
+
+  protected static class StopException extends RuntimeException {}
 }
