@@ -304,11 +304,6 @@
     <option name="DEFAULT_BRACKETS">
       <value />
     </option>
-    <option name="DEFAULT_CLASS_NAME">
-      <value>
-        <option name="FOREGROUND" value="da4939" />
-      </value>
-    </option>
     <option name="DEFAULT_CLASS_REFERENCE">
       <value>
         <option name="FOREGROUND" value="769aa5" />
