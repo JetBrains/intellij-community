@@ -28,9 +28,10 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.DumbAware;
 import org.jetbrains.annotations.Nullable;
 
-public abstract class EditorToggleDecorationAction extends ToggleAction {
+public abstract class EditorToggleDecorationAction extends ToggleAction implements DumbAware {
   @Override
   public final void setSelected(AnActionEvent e, boolean state) {
     final Editor editor = getEditor(e);
