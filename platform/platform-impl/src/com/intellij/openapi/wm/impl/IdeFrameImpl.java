@@ -362,7 +362,7 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
 
     final EncodingPanel encodingPanel = new EncodingPanel(project);
     statusBar.addWidget(encodingPanel, "after Position");
-    
+
     final LineSeparatorPanel lineSeparatorPanel = new LineSeparatorPanel(project);
     statusBar.addWidget(lineSeparatorPanel, "before " + encodingPanel.ID());
 
@@ -483,9 +483,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     if (SystemInfo.isMacOSLion) {
       return myFrameDecorator != null && myFrameDecorator.isInFullScreen();
     }
-    if (SystemInfo.isWindows) {
+    else if (SystemInfo.isWindows) {
       GraphicsDevice device = ScreenUtil.getScreenDevice(getBounds());
       return (device != null && device.getDefaultConfiguration().getBounds().equals(getBounds()) && isUndecorated());
+    }
+    else if (SystemInfo.isXWindow) {
+      return XlibUiUtil.isInFullScreenMode(this);
     }
     return false;
   }
