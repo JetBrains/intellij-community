@@ -185,7 +185,20 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   }
 
   public void requestFocus() {
-    IdeFocusManager.getInstance(myProject).requestFocus(getLanguageConsole().getConsoleEditor().getContentComponent(), true);
+    final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
+    requestFocus(focusManager);
+
+    focusManager.doWhenFocusSettlesDown(new Runnable() {
+      @Override
+      public void run() {
+        requestFocus(focusManager);
+      }
+    });
+
+  }
+
+  private void requestFocus(IdeFocusManager focusManager) {
+    focusManager.requestFocus(getLanguageConsole().getConsoleEditor().getContentComponent(), true);
   }
 
   protected void finishConsole() {
