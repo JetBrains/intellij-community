@@ -6,6 +6,10 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
 import com.intellij.remotesdk.RemoteCredentials;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.HashMap;
@@ -20,8 +24,6 @@ import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
 import java.util.Map;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
 
 /**
  * A more flexible cousin of SdkVersionUtil.
@@ -184,5 +186,22 @@ public class PySdkUtil {
 
   public static boolean isRemote(@Nullable Sdk sdk) {
     return sdk != null && sdk.getSdkAdditionalData() instanceof RemoteCredentials;
+  }
+
+  public static boolean isElementInSkeletons(@NotNull final PsiElement element) {
+    final PsiFile file = element.getContainingFile();
+    if (file != null) {
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (virtualFile != null) {
+        final Sdk sdk = PythonSdkType.getSdk(element);
+        if (sdk != null) {
+          final VirtualFile skeletonsDir = PythonSdkType.findSkeletonsDir(sdk);
+          if (skeletonsDir != null && VfsUtilCore.isAncestor(skeletonsDir, virtualFile, false)) {
+            return true;
+          }
+        }
+      }
+    }
+    return false;
   }
 }
