@@ -1,5 +1,6 @@
 package com.intellij.compiler.artifacts;
 
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Pair;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.CompositePackagingElement;
@@ -62,6 +63,14 @@ public class ArtifactUtilTest extends PackagingElementsTestCase {
     assertEquals("war:web.war\n" +
                  "ear:ear.ear/web.war\n", processor.getLog());
 
+  }
+
+  public void testGetArtifactsContainingModuleOutput() {
+    Module m = addModule("m", null);
+    Artifact a = addArtifact("a", root().dir("d").module(m));
+    Artifact b = addArtifact("b", root().artifact(a));
+    addArtifact("c", root().file(createFile("x.txt")));
+    assertSameElements(ArtifactUtil.getArtifactsContainingModuleOutput(m), a, b);
   }
 
 
