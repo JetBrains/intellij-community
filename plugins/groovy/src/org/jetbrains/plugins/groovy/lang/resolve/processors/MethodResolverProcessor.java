@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUt
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
+import org.jetbrains.plugins.groovy.lang.resolve.GrMethodComparator;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
 import java.util.*;
@@ -43,7 +44,7 @@ import java.util.*;
 /**
  * @author ven
  */
-public class MethodResolverProcessor extends ResolverProcessor {
+public class MethodResolverProcessor extends ResolverProcessor implements GrMethodComparator.Context {
   private final PsiType myThisType;
 
   @Nullable
@@ -250,13 +251,17 @@ public class MethodResolverProcessor extends ResolverProcessor {
     }
     return type;
   }
-  
 
+
+  //method1 has more general parameter types thn method2
   private boolean dominated(PsiMethod method1,
                             PsiSubstitutor substitutor1,
                             PsiMethod method2,
-                            PsiSubstitutor substitutor2) {  //method1 has more general parameter types thn method2
+                            PsiSubstitutor substitutor2) {
     if (!method1.getName().equals(method2.getName())) return false;
+
+    final Boolean custom = GrMethodComparator.checkDominated(method1, substitutor1, method2, substitutor2, this);
+    if (custom != null) return custom;
 
     PsiType[] argTypes = myArgumentTypes;
     if (method1 instanceof GrGdkMethod && method2 instanceof GrGdkMethod) {
@@ -351,6 +356,12 @@ public class MethodResolverProcessor extends ResolverProcessor {
     return myArgumentTypes;
   }
 
+  @Nullable
+  @Override
+  public PsiType[] getTypeArguments() {
+    return mySubstitutorComputer.getTypeArguments();
+  }
+
   @Override
   public void handleEvent(Event event, Object associated) {
     super.handleEvent(event, associated);
@@ -358,4 +369,17 @@ public class MethodResolverProcessor extends ResolverProcessor {
       myStopExecuting = true;
     }
   }
+
+  @Nullable
+  @Override
+  public PsiType getThisType() {
+    return myThisType;
+  }
+
+  @NotNull
+  @Override
+  public PsiElement getPlace() {
+    return myPlace;
+  }
+
 }
