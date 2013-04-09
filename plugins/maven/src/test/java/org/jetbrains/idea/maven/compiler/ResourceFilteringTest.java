@@ -81,6 +81,26 @@ public abstract class ResourceFilteringTest extends MavenImportingTestCase {
                                                    "time=---");
   }
 
+  public void testResolveSettingProperty() throws Exception {
+    createProjectSubFile("resources/file.properties", "value=${settings.localRepository}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>" +
+                  "<build>" +
+                  "  <resources>" +
+                  "    <resource>" +
+                  "      <directory>resources</directory>" +
+                  "      <filtering>true</filtering>" +
+                  "    </resource>" +
+                  "  </resources>" +
+                  "</build>");
+
+    compileModules("project");
+
+    assert !loadResult(myProjectPom, "target/classes/file.properties").contains("settings.localRepository");
+  }
+
   public void testCustomDelimiter() throws Exception {
     createProjectSubFile("resources/file.properties", "value1=${project.version}\n" +
                                                       "value2=@project.version@\n" +
@@ -1018,16 +1038,20 @@ public abstract class ResourceFilteringTest extends MavenImportingTestCase {
     assertResult(myProjectPom, relativePath, content);
   }
 
-  private void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {
+  private String loadResult(VirtualFile pomFile, String relativePath) throws IOException {
     if (useJps()) {
       File file = new File(pomFile.getParent().getPath(), relativePath);
       assertTrue("file not found: " + relativePath, file.exists());
-      assertEquals(content, new String(FileUtil.loadFileText(file)));
+      return new String(FileUtil.loadFileText(file));
     }
     else {
       VirtualFile file = pomFile.getParent().findFileByRelativePath(relativePath);
       assertNotNull("file not found: " + relativePath, file);
-      assertEquals(content, VfsUtil.loadText(file));
+      return VfsUtil.loadText(file);
     }
+  }
+
+  private void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {
+    assertEquals(content, loadResult(pomFile, relativePath));
   }
 }
