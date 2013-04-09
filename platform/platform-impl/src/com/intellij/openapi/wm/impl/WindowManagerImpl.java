@@ -31,7 +31,6 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
@@ -42,6 +41,7 @@ import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.X11FullscreenHelper;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.messages.MessageBus;
@@ -836,24 +836,27 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       if (SystemInfo.isWindows || SystemInfo.isLinux) {
         GraphicsDevice device = ScreenUtil.getScreenDevice(frame.getBounds());
         if (device == null) return;
-        if (SystemInfo.isLinux && !device.isFullScreenSupported()) {
-          Messages.showWarningDialog("Sorry but yours Window Manager is not support Fullscreen mode", "Unsupported Window Manager");
-          return;
-        }
         try {
           frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
           if (fullScreen) {
             frame.getRootPane().putClientProperty("oldBounds", frame.getBounds());
           }
+          // setUndecorated working only with not created window yet
           frame.dispose();
           frame.setUndecorated(fullScreen);
 
           if (SystemInfo.isLinux) {
+            // prevent resize of fullscreen window, to make sure that nothing bad will not happen =)
             frame.setResizable(!fullScreen);
-            device.setFullScreenWindow(fullScreen ? frame : null);
+            // Set window bounds to screen size
+            frame.setBounds(device.getDefaultConfiguration().getBounds());
+            // Since we take from frame it's peer we need to make sure that it's was created
+            // for this we create frame and reinitialize internal stuff by calling validate
+            frame.setVisible(true);
             frame.validate();
+            // going to fullscreen and store result of operation in fullScreen state
+            fullScreen = X11FullscreenHelper.setFullScreenWindow(frame, fullScreen);
           }
-
         }
         finally {
           if (fullScreen) {
