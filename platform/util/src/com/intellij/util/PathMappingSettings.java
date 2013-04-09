@@ -200,7 +200,7 @@ public class PathMappingSettings implements Cloneable {
     element.addContent(XmlSerializer.serialize(mappings));
   }
 
-  public void addAll(PathMappingSettings settings) {
+  public void addAll(@NotNull PathMappingSettings settings) {
     myPathMappings.addAll(settings.getPathMappings());
   }
 
