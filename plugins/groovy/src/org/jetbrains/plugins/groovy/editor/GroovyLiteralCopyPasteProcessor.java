@@ -157,7 +157,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     }
 
     if (tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL) {
-      return GrStringUtil.escapeSymbolsForGString(s, !token.getText().contains("\"\"\""), false);
+      return GrStringUtil.escapeSymbolsForGString(s, !token.getParent().getText().contains("\"\"\""), false);
     }
 
     if (tokenType == mSTRING_LITERAL) {
