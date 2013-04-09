@@ -158,7 +158,11 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
 
     @Override
     public boolean isApplicable(@NotNull PsiElement[] elements) {
-      return elements.length > 0 && LanguageFolding.INSTANCE.forLanguage(elements[0].getLanguage()) instanceof CustomFoldingBuilder;
+      if (elements.length == 0) return false;
+      for (FoldingBuilder each : LanguageFolding.INSTANCE.allForLanguage(elements[0].getLanguage())) {
+        if (each instanceof CustomFoldingBuilder) return true;
+      }
+      return false;
     }
 
     @Override
