@@ -388,7 +388,16 @@ public class PyQualifiedReference extends PyReferenceImpl {
         }
       }
     }
-    for (ResolveResult result : copyWithoutImplicits().multiResolve(false)) {
+    PyResolveContext resolveContext = myContext.withoutImplicits();
+    if (resolveContext.getTypeEvalContext().getOrigin() == null) {
+      final PsiFile containingFile = myElement.getContainingFile();
+      if (containingFile instanceof StubBasedPsiElement) {
+        assert ((StubBasedPsiElement)containingFile).getStub() == null : "Stub origin for type eval context in isReferenceTo()";
+      }
+      final TypeEvalContext context = TypeEvalContext.fastStubOnly(containingFile);
+      resolveContext = resolveContext.withTypeEvalContext(context);
+    }
+    for (ResolveResult result : copyWithResolveContext(resolveContext).multiResolve(false)) {
       LOG.assertTrue(!(result instanceof ImplicitResolveResult));
       PsiElement resolveResult = result.getElement();
       if (isResolvedToResult(element, resolveResult)) {
@@ -399,8 +408,9 @@ public class PyQualifiedReference extends PyReferenceImpl {
     return false;
   }
 
-  protected PyQualifiedReference copyWithoutImplicits() {
-    return new PyQualifiedReference(myElement, myContext.withoutImplicits());
+  @NotNull
+  protected PyQualifiedReference copyWithResolveContext(PyResolveContext context) {
+    return new PyQualifiedReference(myElement, context);
   }
 
   private boolean isResolvedToResult(PsiElement element, PsiElement resolveResult) {
