@@ -33,7 +33,7 @@ public class DomGenDialog extends DialogWrapper{
     panel = new DomGenPanel(project);
     comp = panel.getComponent();
     panel.restore();
-    setTitle("Generate Dom Model from XSD or DTD");
+    setTitle("Generate DOM Model From XSD or DTD");
     init();
     getOKAction().putValue(Action.NAME, "Generate");
   }

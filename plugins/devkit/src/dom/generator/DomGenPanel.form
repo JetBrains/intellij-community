@@ -9,7 +9,7 @@
     <clientProperties>
       <BorderFactoryClass class="java.lang.String" value="com.intellij.ui.IdeBorderFactory$PlainSmallWithIndent"/>
     </clientProperties>
-    <border type="none" title="Dom Generator Config"/>
+    <border type="none" title="DOM Generator Config"/>
     <children>
       <component id="29b47" class="javax.swing.JLabel">
         <constraints>
