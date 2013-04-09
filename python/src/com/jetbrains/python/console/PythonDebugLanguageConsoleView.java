@@ -16,6 +16,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -23,6 +24,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.Disposer;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.awt.*;
@@ -64,9 +66,9 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
   }
 
   @Override
-  public void executeCode(@NotNull String code) {
+  public void executeCode(@NotNull String code, @Nullable Editor e) {
     showDebugConsole(true);
-    getPydevConsoleView().executeCode(code);
+    getPydevConsoleView().executeCode(code, e);
   }
 
   private static PythonConsoleView createConsoleView(Project project, Sdk sdk) {
@@ -253,6 +255,4 @@ public class PythonDebugLanguageConsoleView extends JPanel implements ConsoleVie
       }
     }
   }
-
-
 }

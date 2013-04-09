@@ -1,5 +1,6 @@
 package com.jetbrains.python.console;
 
+import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.execution.console.LanguageConsoleImpl;
 import com.intellij.execution.console.LanguageConsoleViewImpl;
 import com.intellij.execution.filters.OpenFileHyperlinkInfo;
@@ -7,6 +8,7 @@ import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.ui.ConsoleViewContentType;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -77,12 +79,24 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
   }
 
   @Override
-  public void executeCode(final @NotNull String code) {
+  public void executeCode(final @NotNull String code, @Nullable final Editor editor) {
     ProgressManager.getInstance().run(new Task.Backgroundable(null, "Executing code in console...", false) {
       public void run(@NotNull final ProgressIndicator indicator) {
+        long time = System.currentTimeMillis();
         while (!myExecuteActionHandler.isEnabled() || !myExecuteActionHandler.canExecuteNow()) {
           if (indicator.isCanceled()) {
             break;
+          }
+          if (System.currentTimeMillis() - time > 1000) {
+            if (editor != null) {
+              UIUtil.invokeLaterIfNeeded(new Runnable() {
+                @Override
+                public void run() {
+                  HintManager.getInstance().showErrorHint(editor, myExecuteActionHandler.getConsoleIsNotEnabledMessage());
+                }
+              });
+            }
+            return;
           }
           try {
             Thread.sleep(300);

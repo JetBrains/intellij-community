@@ -88,11 +88,11 @@ public class ExecuteInConsoleAction extends AnAction {
     }
   }
 
-  private static void execute(AnActionEvent e, final String selectionText) {
+  private static void execute(final AnActionEvent e, final String selectionText) {
     findCodeExecutor(e, new Consumer<PyCodeExecutor>() {
       @Override
       public void consume(PyCodeExecutor codeExecutor) {
-        executeInConsole(codeExecutor, selectionText);
+        executeInConsole(codeExecutor, selectionText, e);
       }
     });
   }
@@ -162,14 +162,15 @@ public class ExecuteInConsoleAction extends AnAction {
                                     final Consumer<PyCodeExecutor> consumer) {
     Collection<RunContentDescriptor> consoles = getConsoles(project);
 
-    ExecutionHelper.selectContentDescriptor(dataContext, project, consoles, "Select console to execute in", new Consumer<RunContentDescriptor>() {
-      @Override
-      public void consume(RunContentDescriptor descriptor) {
-        if (descriptor != null && descriptor.getExecutionConsole() instanceof PyCodeExecutor) {
-          consumer.consume((PyCodeExecutor)descriptor.getExecutionConsole());
+    ExecutionHelper
+      .selectContentDescriptor(dataContext, project, consoles, "Select console to execute in", new Consumer<RunContentDescriptor>() {
+        @Override
+        public void consume(RunContentDescriptor descriptor) {
+          if (descriptor != null && descriptor.getExecutionConsole() instanceof PyCodeExecutor) {
+            consumer.consume((PyCodeExecutor)descriptor.getExecutionConsole());
+          }
         }
-      }
-    });
+      });
   }
 
   private static Collection<RunContentDescriptor> getConsoles(Project project) {
@@ -225,7 +226,7 @@ public class ExecuteInConsoleAction extends AnAction {
     }
   }
 
-  private static void executeInConsole(@NotNull PyCodeExecutor codeExecutor, @NotNull String text) {
-    codeExecutor.executeCode(text);
+  private static void executeInConsole(@NotNull PyCodeExecutor codeExecutor, @NotNull String text, AnActionEvent e) {
+    codeExecutor.executeCode(text, PlatformDataKeys.EDITOR.getData(e.getDataContext()));
   }
 }
