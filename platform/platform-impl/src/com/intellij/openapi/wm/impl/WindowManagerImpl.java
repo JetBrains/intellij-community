@@ -31,6 +31,7 @@ import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NamedJDOMExternalizable;
@@ -835,6 +836,10 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       if (SystemInfo.isWindows || SystemInfo.isLinux) {
         GraphicsDevice device = ScreenUtil.getScreenDevice(frame.getBounds());
         if (device == null) return;
+        if (!device.isFullScreenSupported()) {
+          Messages.showWarningDialog("Sorry but yours Window Manager is not support Fullscreen mode", "Unsupported Window Manager");
+          return;
+        }
         try {
           frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
           if (fullScreen) {
@@ -844,7 +849,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
           frame.setUndecorated(fullScreen);
 
           if (SystemInfo.isLinux) {
+            frame.setResizable(!fullScreen);
             device.setFullScreenWindow(fullScreen ? frame : null);
+            frame.validate();
           }
 
         }
@@ -858,7 +865,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
               frame.setBounds((Rectangle)o);
             }
           }
-          frame.setVisible(true);
+          if (!frame.isVisible()) frame.setVisible(true);
           frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
         }
       }
