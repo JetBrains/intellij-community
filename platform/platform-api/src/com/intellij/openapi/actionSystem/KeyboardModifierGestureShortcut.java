@@ -46,10 +46,12 @@ public class KeyboardModifierGestureShortcut extends Shortcut {
     return myType;
   }
 
+  @Override
   public boolean isKeyboard() {
     return true;
   }
 
+  @Override
   public boolean startsWith(final Shortcut sc) {
     if (!(sc instanceof KeyboardModifierGestureShortcut)) return false;
 

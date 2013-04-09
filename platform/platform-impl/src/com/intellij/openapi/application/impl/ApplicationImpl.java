@@ -189,8 +189,8 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   };
 
   @Override
-  protected void bootstrapPicoContainer() {
-    super.bootstrapPicoContainer();
+  protected void bootstrapPicoContainer(@NotNull String name) {
+    super.bootstrapPicoContainer(name);
     getPicoContainer().registerComponentImplementation(IComponentStore.class, StoresFactory.getApplicationStoreClass());
     getPicoContainer().registerComponentImplementation(ApplicationPathMacroManager.class);
   }

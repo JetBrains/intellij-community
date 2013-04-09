@@ -18,13 +18,17 @@ package com.intellij.facet.pointers;
 
 import com.intellij.facet.Facet;
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author nik
  */
-public abstract class FacetPointersManager {
+public abstract class FacetPointersManager extends AbstractProjectComponent {
+  protected FacetPointersManager(Project project) {
+    super(project);
+  }
 
   public static FacetPointersManager getInstance(Project project) {
     return project.getComponent(FacetPointersManager.class);

@@ -41,6 +41,7 @@ public final class Separator extends AnAction implements DumbAware {
     return ourInstance;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e){
     throw new UnsupportedOperationException();
   }

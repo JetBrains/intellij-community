@@ -18,7 +18,6 @@ package com.intellij.psi.util;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -168,23 +167,15 @@ public class ClassUtil {
     return result[0];
   }
 
-  private static String getDigitPrefix(final String indexName) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      for (int i = 0; i < indexName.length(); i++) {
-        final char c = indexName.charAt(i);
-        if (Character.isDigit(c)) {
-          builder.append(c);
-        }
-        else {
-          break;
-        }
+  private static String getDigitPrefix(@NotNull String indexName) {
+    int i;
+    for (i = 0; i < indexName.length(); i++) {
+      final char c = indexName.charAt(i);
+      if (!Character.isDigit(c)) {
+        break;
       }
-      return builder.toString();
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    return i == 0 ? "" : indexName.substring(0, i);
   }
 
 
