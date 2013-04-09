@@ -40,14 +40,14 @@ public class PyClassHasNoInitInspection extends PyInspection {
 
     @Override
     public void visitPyClass(PyClass node) {
-      final PyFunction init = node.findMethodByName(PyNames.INIT, false);
-      if (init == null) {
+      final PyFunction init = node.findInitOrNew(true);
+      if (init == null || PyNames.NEW.equals(init.getName())) {
         registerProblem(node.getNameIdentifier(), PyBundle.message("INSP.class.has.no.init"),
                         new AddMethodQuickFix("__init__", new PyClassTypeImpl(node, false), false));
       }
       for (PyClass ancestor : node.iterateAncestorClasses()) {
-        final PyFunction ancestorInit = ancestor.findMethodByName(PyNames.INIT, false);
-        if (ancestorInit == null) {
+        final PyFunction ancestorInit = ancestor.findInitOrNew(false);
+        if (ancestorInit == null || PyNames.NEW.equals(ancestorInit.getName())) {
           registerProblem(node.getNameIdentifier(), PyBundle.message("INSP.parent.$0.has.no.init", ancestor.getName()),
                           new AddMethodQuickFix("__init__", new PyClassTypeImpl(ancestor, false), false));
         }
