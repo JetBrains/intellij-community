@@ -836,7 +836,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
       if (SystemInfo.isWindows || SystemInfo.isLinux) {
         GraphicsDevice device = ScreenUtil.getScreenDevice(frame.getBounds());
         if (device == null) return;
-        if (!device.isFullScreenSupported()) {
+        if (SystemInfo.isLinux && !device.isFullScreenSupported()) {
           Messages.showWarningDialog("Sorry but yours Window Manager is not support Fullscreen mode", "Unsupported Window Manager");
           return;
         }
