@@ -970,8 +970,14 @@ class PyDB:
 
             try:
                 additionalInfo = t.additionalInfo
+                if additionalInfo is None:
+                    raise AttributeError()
             except:
-                additionalInfo = t.additionalInfo = PyDBAdditionalThreadInfo()
+                t.additionalInfo = PyDBAdditionalThreadInfo()
+                additionalInfo = t.additionalInfo
+
+            if additionalInfo is None:
+                return None
 
             if additionalInfo.is_tracing:
                 f = frame
