@@ -13,11 +13,8 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-
-import java.util.Collection;
 
 /**
  * @author nik
@@ -32,10 +29,6 @@ public class AppEngineFacet extends Facet<AppEngineFacetConfiguration> {
     super(facetType, module, name, configuration, null);
   }
 
-  public static Collection<AppEngineFacet> getInstances(Module module) {
-    return FacetManager.getInstance(module).getFacetsByType(ID);
-  }
-
   public static FacetType<AppEngineFacet, AppEngineFacetConfiguration> getFacetType() {
     return FacetTypeRegistry.getInstance().findFacetType(ID);
   }
@@ -43,7 +36,7 @@ public class AppEngineFacet extends Facet<AppEngineFacetConfiguration> {
   @Nullable
   public static AppEngineFacet getAppEngineFacetByModule(@Nullable Module module) {
     if (module == null) return null;
-    return ContainerUtil.getFirstItem(getInstances(module));
+    return FacetManager.getInstance(module).getFacetByType(ID);
   }
 
   @NotNull

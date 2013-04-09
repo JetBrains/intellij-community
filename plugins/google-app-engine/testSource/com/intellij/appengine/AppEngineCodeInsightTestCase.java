@@ -3,7 +3,6 @@ package com.intellij.appengine;
 import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.impl.FacetUtil;
-import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.javaee.web.facet.WebFacetType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
@@ -45,8 +44,8 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
   protected abstract String getBaseDirectoryPath();
 
   private static void addAppEngineSupport(Module module, String version) {
-    final WebFacet webFacet = FacetUtil.addFacet(module, WebFacetType.getInstance());
-    final AppEngineFacet appEngine = FacetManager.getInstance(module).addFacet(AppEngineFacet.getFacetType(), "AppEngine", webFacet);
+    FacetUtil.addFacet(module, WebFacetType.getInstance());
+    final AppEngineFacet appEngine = FacetManager.getInstance(module).addFacet(AppEngineFacet.getFacetType(), "AppEngine", null);
     final String sdkPath = FileUtil.toSystemIndependentName(getTestDataPath()) + "sdk/" + version;
     appEngine.getConfiguration().setSdkHomePath(sdkPath);
 

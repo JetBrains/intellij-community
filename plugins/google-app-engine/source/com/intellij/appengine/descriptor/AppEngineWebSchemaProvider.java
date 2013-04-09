@@ -42,7 +42,8 @@ public class AppEngineWebSchemaProvider extends XmlSchemaProvider {
     }
 
     if (url.startsWith("http://appengine.google.com/ns/")) {
-      for (AppEngineFacet facet : AppEngineFacet.getInstances(module)) {
+      AppEngineFacet facet = AppEngineFacet.getAppEngineFacetByModule(module);
+      if (facet != null) {
         final File file = facet.getSdk().getWebSchemeFile();
         final VirtualFile virtualFile = LocalFileSystem.getInstance().findFileByIoFile(file);
         if (virtualFile != null) {
