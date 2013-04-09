@@ -67,7 +67,7 @@ public class PyConsoleUtil {
         final String trimmedPrompt = prompt.trim();
         if (currentPrompt != null && !currentPrompt.equals(trimmedPrompt)) {
           languageConsole.setPrompt(trimmedPrompt);
-          scrollDown(languageConsole.getCurrentEditor());
+          scrollDown(languageConsole.getConsoleEditor());
         }
         break;
       }

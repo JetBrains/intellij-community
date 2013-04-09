@@ -1,7 +1,6 @@
 package com.jetbrains.python.console;
 
 import com.google.common.base.CharMatcher;
-import com.google.common.collect.Lists;
 import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.ExecutionHelper;
@@ -38,6 +37,8 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.source.tree.FileElement;
+import com.intellij.remotesdk.RemoteSdkData;
+import com.intellij.remotesdk.RemoteSshProcess;
 import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IJSwingUtilities;
@@ -45,8 +46,6 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.net.NetUtils;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.django.run.ProcessRunner;
-import com.intellij.remotesdk.RemoteSdkData;
-import com.intellij.remotesdk.RemoteSshProcess;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.completion.PydevConsoleElement;
 import com.jetbrains.python.console.parsing.PythonConsoleData;
@@ -376,6 +375,9 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
           }
 
           fireConsoleInitializedEvent(consoleView);
+
+
+          requestFocus();
         }
       });
     }

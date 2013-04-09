@@ -92,7 +92,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
   public void doProcessLine(final String line) {
     final LanguageConsoleImpl console = myConsoleView.getConsole();
-    final Editor currentEditor = console.getCurrentEditor();
+    final Editor currentEditor = console.getConsoleEditor();
 
     if (myInputBuffer == null) {
       myInputBuffer = new StringBuilder();
@@ -230,14 +230,14 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   @Override
   public void executionFinished() {
     final LanguageConsoleImpl console = myConsoleView.getConsole();
-    final Editor currentEditor = console.getCurrentEditor();
+    final Editor currentEditor = console.getConsoleEditor();
     ordinaryPrompt(console, currentEditor);
   }
 
   @Override
   public void inputRequested() {
     final LanguageConsoleImpl console = myConsoleView.getConsole();
-    final Editor currentEditor = console.getCurrentEditor();
+    final Editor currentEditor = console.getConsoleEditor();
 
     if (!PyConsoleUtil.INPUT_PROMPT.equals(console.getPrompt()) && !PyConsoleUtil.HELP_PROMPT.equals(console.getPrompt())) {
       console.setPrompt(PyConsoleUtil.INPUT_PROMPT);
@@ -249,7 +249,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   @Override
   public void finishExecution() {
     final LanguageConsoleImpl console = myConsoleView.getConsole();
-    final Editor currentEditor = console.getCurrentEditor();
+    final Editor currentEditor = console.getConsoleEditor();
 
     if (myInputBuffer != null) {
       processLine("\n");
@@ -327,7 +327,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
       copyToHistoryAndExecute(languageConsole);
     }
     else {
-      final Document document = languageConsole.getCurrentEditor().getDocument();
+      final Document document = languageConsole.getConsoleEditor().getDocument();
       processLine(document.getText());
     }
   }
