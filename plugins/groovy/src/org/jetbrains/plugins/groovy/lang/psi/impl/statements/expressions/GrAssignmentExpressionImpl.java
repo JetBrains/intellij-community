@@ -237,15 +237,15 @@ public class GrAssignmentExpressionImpl extends GrExpressionImpl implements GrAs
 
         final GrExpression lValue = assignmentExpression.getLValue();
         final PsiType lType;
-        if (!(lValue instanceof GrIndexProperty)) {
-          lType = lValue.getType();
-        }
-        else {
+        if (lValue instanceof GrIndexProperty) {
           /*
           now we have something like map[i] += 2. It equals to map.putAt(i, map.getAt(i).plus(2))
           by default map[i] resolves to putAt, but we need getAt(). so this hack is for it =)
            */
-          lType = ((GrExpression)lValue.copy()).getType();
+          lType = ((GrIndexProperty)lValue).getGetterType();
+        }
+        else {
+          lType = lValue.getType();
         }
         if (lType == null) return GroovyResolveResult.EMPTY_ARRAY;
 
