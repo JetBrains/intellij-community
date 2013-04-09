@@ -117,4 +117,18 @@ baz<caret>
 """
 '''
   }
+
+  void testPasteQuotestoTripleGString() {
+    doTest('<selection>"bar" + 2</selection>', '''
+"""
+$foo
+<caret>
+"""
+''', '''
+"""
+$foo
+"bar" + 2<caret>
+"""
+''')
+  }
 }
