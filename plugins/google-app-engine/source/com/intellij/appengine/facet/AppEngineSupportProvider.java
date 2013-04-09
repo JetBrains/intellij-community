@@ -7,22 +7,16 @@ import com.intellij.appengine.server.run.AppEngineServerConfigurationType;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.configurations.ConfigurationFactory;
-import com.intellij.facet.FacetManager;
 import com.intellij.facet.ui.FacetBasedFrameworkSupportProvider;
 import com.intellij.facet.ui.ValidationResult;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.util.frameworkSupport.*;
-import com.intellij.javaee.JavaeePersistenceDescriptorsConstants;
 import com.intellij.javaee.appServerIntegrations.ApplicationServer;
-import com.intellij.javaee.artifact.JavaeeArtifactUtil;
 import com.intellij.javaee.run.configuration.CommonModel;
 import com.intellij.javaee.run.configuration.J2EEConfigurationFactory;
 import com.intellij.javaee.web.artifact.WebArtifactUtil;
-import com.intellij.javaee.web.facet.WebFacet;
-import com.intellij.jpa.facet.JpaFacet;
-import com.intellij.jpa.facet.JpaFacetType;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -39,13 +33,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
-import com.intellij.packaging.artifacts.ArtifactManager;
-import com.intellij.packaging.artifacts.ArtifactType;
-import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.run.BuildArtifactsBeforeRunTaskProvider;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkLabel;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.appengine.model.PersistenceApi;
@@ -56,8 +47,6 @@ import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author nik
@@ -65,6 +54,7 @@ import java.util.List;
 public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider<AppEngineFacet> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.facet.AppEngineSupportProvider");
   private static final String JPA_PROVIDER_ID = "facet:jpa";
+  private static final String WEB_PROVIDER_ID = "facet:web";
 
   public AppEngineSupportProvider() {
     super(AppEngineFacet.getFacetType());
@@ -72,15 +62,10 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
 
   @Override
   public String[] getPrecedingFrameworkProviderIds() {
-    return new String[]{JPA_PROVIDER_ID};
+    return new String[]{JPA_PROVIDER_ID, WEB_PROVIDER_ID};
   }
 
   protected void setupConfiguration(AppEngineFacet facet, ModifiableRootModel rootModel, FrameworkVersion version) {
-    final WebFacet webFacet = facet.getWebFacet();
-    final VirtualFile webXml = webFacet.getWebXmlDescriptor().getVirtualFile();
-    if (webXml == null) return;
-
-    createFileFromTemplate(AppEngineTemplateGroupDescriptorFactory.APP_ENGINE_WEB_XML_TEMPLATE, webXml.getParent(), AppEngineUtil.APP_ENGINE_WEB_XML_NAME);
   }
 
   @Nullable
@@ -104,12 +89,19 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
 
   private void addSupport(final Module module, final ModifiableRootModel rootModel, String sdkPath, @Nullable PersistenceApi persistenceApi) {
     super.addSupport(module, rootModel, null, null);
-    final AppEngineFacet appEngineFacet = FacetManager.getInstance(module).getFacetByType(AppEngineFacet.ID);
+    final VirtualFile descriptorDir = AppEngineWebIntegration.getInstance().suggestParentDirectoryForAppEngineWebXml(module, rootModel);
+    if (descriptorDir != null) {
+      createFileFromTemplate(AppEngineTemplateGroupDescriptorFactory.APP_ENGINE_WEB_XML_TEMPLATE, descriptorDir,
+                             AppEngineUtil.APP_ENGINE_WEB_XML_NAME);
+    }
+
+
+    final AppEngineFacet appEngineFacet = AppEngineFacet.getAppEngineFacetByModule(module);
     LOG.assertTrue(appEngineFacet != null);
     final AppEngineFacetConfiguration facetConfiguration = appEngineFacet.getConfiguration();
     facetConfiguration.setSdkHomePath(sdkPath);
     final AppEngineSdk sdk = appEngineFacet.getSdk();
-    final Artifact artifact = findContainingArtifact(module, appEngineFacet);
+    final Artifact artifact = findContainingArtifact(appEngineFacet);
 
     final ApplicationServer appServer = sdk.getOrCreateAppServer();
     final Project project = module.getProject();
@@ -150,12 +142,7 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
         else {
           final VirtualFile file = createFileFromTemplate(AppEngineTemplateGroupDescriptorFactory.APP_ENGINE_JPA_CONFIG_TEMPLATE, metaInf, AppEngineUtil.JPA_CONFIG_XML_NAME);
           if (file != null) {
-            JpaFacet facet = FacetManager.getInstance(module).getFacetByType(JpaFacet.ID);
-            if (facet == null) {
-              final JpaFacet jpaFacet = FacetManager.getInstance(module).addFacet(
-                JpaFacetType.getInstance(), JpaFacetType.getInstance().getDefaultFacetName(), null);
-              jpaFacet.getDescriptorsContainer().getConfiguration().replaceConfigFile(JavaeePersistenceDescriptorsConstants.PERSISTENCE_XML_META_DATA, file.getUrl());
-            }
+            AppEngineWebIntegration.getInstance().setupJpaSupport(module, file);
           }
         }
       }
@@ -171,13 +158,14 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
   }
 
   @Nullable
-  private static Artifact findContainingArtifact(Module module, AppEngineFacet appEngineFacet) {
-    final PackagingElementResolvingContext context = ArtifactManager.getInstance(module.getProject()).getResolvingContext();
-    final List<ArtifactType> artifactTypes =
-      Collections.singletonList(WebArtifactUtil.getInstance().getExplodedWarArtifactType());
-    final Collection<Artifact> artifacts = JavaeeArtifactUtil.getInstance().getArtifactsContainingFacet(appEngineFacet.getWebFacet(), context,
-                                                                                                        artifactTypes, true);
-    return ContainerUtil.getFirstItem(artifacts, null);
+  private static Artifact findContainingArtifact(AppEngineFacet appEngineFacet) {
+    final Collection<Artifact> artifacts = ArtifactUtil.getArtifactsContainingModuleOutput(appEngineFacet.getModule());
+    for (Artifact artifact : artifacts) {
+      if (AppEngineWebIntegration.getInstance().getAppEngineTargetArtifactType().equals(artifact.getArtifactType())) {
+        return artifact;
+      }
+    }
+    return null;
   }
 
   private static Library addProjectLibrary(final Module module, final String name, final String path, final VirtualFile[] sources) {

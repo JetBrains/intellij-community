@@ -3,7 +3,7 @@ package com.intellij.appengine.descriptor;
 import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -31,9 +31,8 @@ public class AppEngineWebSchemaProvider extends XmlSchemaProvider {
     if (!FILE_NAMES.contains(file.getName())) {
       return false;
     }
-    final Module module = ModuleUtil.findModuleForPsiElement(file);
-    if (module == null) return false;
-    return !AppEngineFacet.getInstances(module).isEmpty();
+    final Module module = ModuleUtilCore.findModuleForPsiElement(file);
+    return AppEngineFacet.getAppEngineFacetByModule(module) != null;
   }
 
   @Override

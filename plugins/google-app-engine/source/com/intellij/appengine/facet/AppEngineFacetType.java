@@ -2,7 +2,6 @@ package com.intellij.appengine.facet;
 
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetType;
-import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleType;
@@ -17,7 +16,7 @@ import javax.swing.*;
  */
 public class AppEngineFacetType extends FacetType<AppEngineFacet,  AppEngineFacetConfiguration> {
   public AppEngineFacetType() {
-    super(AppEngineFacet.ID, "google-app-engine", "Google App Engine", WebFacet.ID);
+    super(AppEngineFacet.ID, "google-app-engine", "Google App Engine");
   }
 
   public AppEngineFacetConfiguration createDefaultConfiguration() {
@@ -28,7 +27,7 @@ public class AppEngineFacetType extends FacetType<AppEngineFacet,  AppEngineFace
                                     String name,
                                     @NotNull AppEngineFacetConfiguration configuration,
                                     @Nullable Facet underlyingFacet) {
-    return new AppEngineFacet(this, module, name, configuration, underlyingFacet);
+    return new AppEngineFacet(this, module, name, configuration);
   }
 
   public boolean isSuitableModuleType(ModuleType moduleType) {

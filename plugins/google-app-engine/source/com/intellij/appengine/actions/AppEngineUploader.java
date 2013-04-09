@@ -45,7 +45,11 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.KeyValue;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.elements.PackagingElementResolvingContext;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.packaging.impl.compiler.ArtifactCompileScope;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
@@ -105,7 +109,9 @@ public class AppEngineUploader {
       return null;
     }
 
-    final AppEngineWebApp root = appEngineFacet.getDescriptorRoot();
+    PackagingElementResolvingContext context = ArtifactManager.getInstance(project).getResolvingContext();
+    VirtualFile descriptorFile = ArtifactUtil.findSourceFileByOutputPath(artifact, "WEB-INF/appengine-web.xml", context);
+    final AppEngineWebApp root = AppEngineFacet.getDescriptorRoot(descriptorFile, appEngineFacet.getModule().getProject());
     if (root != null) {
       final GenericDomValue<String> application = root.getApplication();
       if (StringUtil.isEmptyOrSpaces(application.getValue())) {

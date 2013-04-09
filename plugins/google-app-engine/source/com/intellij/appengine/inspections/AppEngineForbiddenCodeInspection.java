@@ -4,9 +4,8 @@ import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.*;
-import com.intellij.facet.FacetManager;
-import com.intellij.javaee.facet.JavaeeFacetUtil;
-import com.intellij.javaee.web.facet.WebFacet;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.JdkOrderEntry;
 import com.intellij.openapi.roots.OrderEntry;
@@ -33,12 +32,8 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
   @Override
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
     final Project project = manager.getProject();
-    final WebFacet webFacet = JavaeeFacetUtil.getInstance().getJavaeeFacet(file.getVirtualFile(), WebFacet.ID, project);
-    if (webFacet == null) {
-      return null;
-    }
-
-    final AppEngineFacet appEngineFacet = FacetManager.getInstance(webFacet.getModule()).getFacetByType(webFacet, AppEngineFacet.ID);
+    Module module = ModuleUtilCore.findModuleForPsiElement(file);
+    final AppEngineFacet appEngineFacet = AppEngineFacet.getAppEngineFacetByModule(module);
     if (appEngineFacet == null) {
       return null;
     }

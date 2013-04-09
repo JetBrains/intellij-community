@@ -1,16 +1,15 @@
 package com.intellij.appengine.util;
 
+import com.intellij.appengine.facet.AppEngineWebIntegration;
 import com.intellij.appengine.facet.AppEngineFacet;
-import com.intellij.facet.FacetManager;
-import com.intellij.javaee.artifact.JavaeeArtifactUtil;
-import com.intellij.javaee.web.artifact.WebArtifactUtil;
-import com.intellij.javaee.web.facet.WebFacet;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootModel;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.ui.ListCellRendererWrapper;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -19,9 +18,9 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.File;
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author nik
@@ -54,7 +53,8 @@ public class AppEngineUtil {
   public static List<Artifact> collectWebArtifacts(@NotNull Project project, final boolean withAppEngineFacetOnly) {
     final List<Artifact> artifacts = new ArrayList<Artifact>();
     if (project.isDefault()) return artifacts;
-    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifactsByType(WebArtifactUtil.getInstance().getExplodedWarArtifactType())) {
+    for (Artifact artifact : ArtifactManager.getInstance(project).getArtifactsByType(
+      AppEngineWebIntegration.getInstance().getAppEngineTargetArtifactType())) {
       if (!withAppEngineFacetOnly || findAppEngineFacet(project, artifact) != null) {
         artifacts.add(artifact);
       }
@@ -65,9 +65,9 @@ public class AppEngineUtil {
 
   @Nullable
   public static AppEngineFacet findAppEngineFacet(@NotNull Project project, @NotNull Artifact artifact) {
-    final Collection<WebFacet> facets = JavaeeArtifactUtil.getInstance().getFacetsIncludedInArtifact(project, artifact, WebFacet.ID);
-    for (WebFacet webFacet : facets) {
-      final AppEngineFacet appEngineFacet = FacetManager.getInstance(webFacet.getModule()).getFacetByType(webFacet, AppEngineFacet.ID);
+    final Set<Module> modules = ArtifactUtil.getModulesIncludedInArtifacts(Collections.singletonList(artifact), project);
+    for (Module module : modules) {
+      final AppEngineFacet appEngineFacet = AppEngineFacet.getAppEngineFacetByModule(module);
       if (appEngineFacet != null) {
         return appEngineFacet;
       }

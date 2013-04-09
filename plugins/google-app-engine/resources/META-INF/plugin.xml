@@ -33,6 +33,9 @@
     <applicationService serviceInterface="com.intellij.appengine.sdk.AppEngineSdkManager"
                         serviceImplementation="com.intellij.appengine.sdk.impl.AppEngineSdkManagerImpl"/>
 
+    <applicationService serviceInterface="com.intellij.appengine.facet.AppEngineWebIntegration"
+                        serviceImplementation="com.intellij.appengine.facet.impl.AppEngineUltimateWebIntegration"/>
+
     <frameworkSupport implementation="com.intellij.appengine.facet.AppEngineSupportProvider"/>
     <fileTemplateGroup implementation="com.intellij.appengine.facet.AppEngineTemplateGroupDescriptorFactory"/>
     <facetType implementation="com.intellij.appengine.facet.AppEngineFacetType"/>
