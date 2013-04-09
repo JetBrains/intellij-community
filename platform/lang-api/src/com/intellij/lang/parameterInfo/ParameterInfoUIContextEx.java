@@ -20,7 +20,7 @@ import java.awt.*;
 import java.util.EnumSet;
 
 /**
- * Richer interface for decribing a popup hint contents.
+ * Richer interface for describing a popup hint contents.
  * User: dcheryasov
  * Date: Sep 6, 2008
  */
