@@ -44,6 +44,7 @@ import java.awt.event.*;
 public class CoverageView extends JPanel implements DataProvider, Disposable {
   @NonNls private static final String ACTION_DRILL_DOWN = "DrillDown";
   @NonNls private static final String ACTION_GO_UP = "GoUp";
+  @NonNls private static final String HELP_ID = "reference.toolWindows.Coverage";
 
   private CoverageTableModel myModel;
   private JBTable myTable;
@@ -156,7 +157,7 @@ public class CoverageView extends JPanel implements DataProvider, Disposable {
         CoverageDataManager.getInstance(myProject).chooseSuitesBundle(null);
       }
     });
-    actionGroup.add(new ContextHelpAction("reference.toolWindows.Coverage"));
+    actionGroup.add(new ContextHelpAction(HELP_ID));
     return actionGroup;
   }
 
@@ -232,6 +233,9 @@ public class CoverageView extends JPanel implements DataProvider, Disposable {
   public Object getData(@NonNls String dataId) {
     if (PlatformDataKeys.NAVIGATABLE.is(dataId)) {
       return getSelectedValue();
+    }
+    if (PlatformDataKeys.HELP_ID.is(dataId)) {
+      return HELP_ID;
     }
     return null;
   }
