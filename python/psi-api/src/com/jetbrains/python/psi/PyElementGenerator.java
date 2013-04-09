@@ -91,4 +91,7 @@ public abstract class PyElementGenerator {
 
   public abstract PyExpressionStatement createDocstring(String content);
   public abstract PyPassStatement createPassStatement();
+
+  @NotNull
+  public abstract PyDecoratorList createDecoratorList(@NotNull final String... decoratorTexts);
 }
