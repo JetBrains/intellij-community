@@ -40,8 +40,11 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Collection;
 
 public class ExecuteInConsoleAction extends AnAction {
+
+  public static final String EXECUTE_SELECTION_IN_CONSOLE = "Execute selection in console";
+
   public ExecuteInConsoleAction() {
-    super("Execute selection in console");
+    super(EXECUTE_SELECTION_IN_CONSOLE);
   }
 
   public void actionPerformed(AnActionEvent e) {
@@ -112,15 +115,6 @@ public class ExecuteInConsoleAction extends AnAction {
     return editor.getDocument().getCharsSequence().subSequence(start, end).toString();
   }
 
-  private static String getTextToExecute(@NotNull Editor editor) {
-    String text = getSelectionText(editor);
-    if (text != null) {
-      return text;
-    }
-
-    return getLineUnderCaret(editor);
-  }
-
   @Nullable
   private static String getSelectionText(@NotNull Editor editor) {
     if (editor.getSelectionModel().hasSelection()) {
@@ -135,10 +129,23 @@ public class ExecuteInConsoleAction extends AnAction {
 
   public void update(AnActionEvent e) {
     Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
-
-    boolean enabled = editor != null && !StringUtil.isEmpty(getTextToExecute(editor)) && isPython(editor);
-
     Presentation presentation = e.getPresentation();
+
+    boolean enabled = false;
+    if (editor != null && isPython(editor)) {
+      String text = getSelectionText(editor);
+      if (text != null) {
+        presentation.setText(EXECUTE_SELECTION_IN_CONSOLE);
+      }
+
+      text = getLineUnderCaret(editor);
+      if (text != null) {
+        presentation.setText("Execute line in console");
+      }
+
+      enabled = !StringUtil.isEmpty(text);
+    }
+
     presentation.setEnabled(enabled);
     presentation.setVisible(enabled);
   }
