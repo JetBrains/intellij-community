@@ -52,6 +52,9 @@ public abstract class CreateFileFromTemplateAction extends CreateFromTemplateAct
                                                @NotNull FileTemplate template,
                                                @NotNull PsiDirectory dir,
                                                @Nullable String defaultTemplateProperty) {
+    CreateFileAction.MkDirs mkdirs = new CreateFileAction.MkDirs(name, dir);
+    name = mkdirs.newName;
+    dir = mkdirs.directory;
     PsiElement element;
     Project project = dir.getProject();
     try {
