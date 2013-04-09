@@ -12,6 +12,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import gnu.trove.THashMap;
@@ -30,7 +31,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
   private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.sdk.impl.AppEngineSdkImpl");
   private Map<String, Set<String>> myClassesWhiteList;
   private Map<String, Set<String>> myMethodsBlackList;
-  private String myHomePath;
+  private final String myHomePath;
 
   public AppEngineSdkImpl(String homePath) {
     myHomePath = homePath;
@@ -145,10 +146,10 @@ public class AppEngineSdkImpl implements AppEngineSdk {
     final AppEngineServerIntegration integration = AppEngineServerIntegration.getInstance();
 
     final List<ApplicationServer> servers = serversManager.getApplicationServers(integration);
-    File sdkHomeFile = new File(FileUtil.toSystemDependentName(myHomePath));
+    File sdkHomeFile = new File(myHomePath);
     for (ApplicationServer server : servers) {
       final String path = ((AppEngineServerData)server.getPersistentData()).getSdkPath();
-      if (sdkHomeFile.equals(new File(FileUtil.toSystemDependentName(path)))) {
+      if (FileUtil.filesEqual(sdkHomeFile, new File(path))) {
         return server;
       }
     }
@@ -181,7 +182,7 @@ public class AppEngineSdkImpl implements AppEngineSdk {
         }
       }
     }
-    return VfsUtil.toVirtualFileArray(roots);
+    return VfsUtilCore.toVirtualFileArray(roots);
   }
 
   public String getLibUserDirectoryPath() {

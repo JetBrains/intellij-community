@@ -203,10 +203,10 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
 
   private class AppEngineSupportConfigurable extends FrameworkSupportConfigurableBase implements FrameworkSupportModelListener {
     private JPanel myMainPanel;
-    private AppEngineSdkEditor mySdkEditor;
+    private final AppEngineSdkEditor mySdkEditor;
     private JComboBox myPersistenceApiComboBox;
     private JPanel mySdkPanel;
-    private HyperlinkLabel myErrorLabel;
+    private final HyperlinkLabel myErrorLabel;
     private JPanel myErrorPanel;
 
     private AppEngineSupportConfigurable(FrameworkSupportModel model) {

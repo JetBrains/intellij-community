@@ -18,11 +18,11 @@ import java.util.Map;
  * @author nik
  */
 public class AppEngineSdkManagerImpl extends AppEngineSdkManager {
-  private Map<String, AppEngineSdkImpl> myPath2Sdk = new THashMap<String, AppEngineSdkImpl>();
+  private final Map<String, AppEngineSdkImpl> myPath2Sdk = new THashMap<String, AppEngineSdkImpl>();
 
   @NotNull
   @Override
-  public AppEngineSdk findSdk(String sdkPath) {
+  public AppEngineSdk findSdk(@NotNull String sdkPath) {
     sdkPath = StringUtil.trimEnd(sdkPath, "/");
     if (!myPath2Sdk.containsKey(sdkPath)) {
       myPath2Sdk.put(sdkPath, new AppEngineSdkImpl(sdkPath));

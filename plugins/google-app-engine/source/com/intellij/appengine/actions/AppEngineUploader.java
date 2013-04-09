@@ -68,7 +68,7 @@ import java.util.List;
  */
 public class AppEngineUploader {
   private static final Logger LOG = Logger.getInstance("#com.intellij.appengine.actions.AppEngineUploader");
-  private Project myProject;
+  private final Project myProject;
   private final Artifact myArtifact;
   private final AppEngineFacet myAppEngineFacet;
   private final AppEngineSdk mySdk;

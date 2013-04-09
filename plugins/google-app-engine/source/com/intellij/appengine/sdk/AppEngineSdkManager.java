@@ -15,7 +15,7 @@ public abstract class AppEngineSdkManager {
   }
 
   @NotNull
-  public abstract AppEngineSdk findSdk(String sdkPath);
+  public abstract AppEngineSdk findSdk(@NotNull String sdkPath);
 
   @NotNull
   public abstract List<? extends AppEngineSdk> getValidSdks();
