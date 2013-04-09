@@ -4,11 +4,14 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
+import com.jetbrains.python.psi.Callable;
 import com.jetbrains.python.psi.PyAssignmentStatement;
 import com.jetbrains.python.psi.PyCallExpression;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.types.PyNoneType;
 import com.jetbrains.python.psi.types.PyType;
+import com.jetbrains.python.psi.types.PyTypeChecker;
+import com.jetbrains.python.sdk.PySdkUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,8 +51,14 @@ public class PyNoneFunctionAssignmentInspection extends PyInspection {
       if (value instanceof PyCallExpression) {
         final PyType type = myTypeEvalContext.getType(value);
         final PyExpression callee = ((PyCallExpression)value).getCallee();
+
         if (type instanceof PyNoneType && callee != null) {
-          registerProblem(node, PyBundle.message("INSP.none.function.assignment", callee.getName()));
+          final PyTypeChecker.AnalyzeCallResults analyzeCallResults = PyTypeChecker.analyzeCall(((PyCallExpression)value), myTypeEvalContext);
+          if (analyzeCallResults != null) {
+            final Callable callable = analyzeCallResults.getCallable();
+            if (PySdkUtil.isElementInSkeletons(callable)) return;
+            registerProblem(node, PyBundle.message("INSP.none.function.assignment", callee.getName()));
+          }
         }
       }
     }

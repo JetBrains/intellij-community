@@ -17,6 +17,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -34,6 +35,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.remotesdk.RemoteSdkData;
 import com.intellij.remotesdk.RemoteSdkDataHolder;
 import com.intellij.ui.awt.RelativePoint;
@@ -438,7 +440,7 @@ public class PythonSdkType extends SdkType {
   }
 
   @Nullable
-  public static VirtualFile findSkeletonsDir(Sdk sdk) {
+  public static VirtualFile findSkeletonsDir(@NotNull final Sdk sdk) {
     final VirtualFile[] virtualFiles = sdk.getRootProvider().getFiles(BUILTIN_ROOT_TYPE);
     for (VirtualFile virtualFile : virtualFiles) {
       if (virtualFile.isValid() && virtualFile.getPath().contains(SKELETON_DIR_NAME)) {
@@ -881,6 +883,15 @@ public class PythonSdkType extends SdkType {
       }
     }
     return false;
+  }
+
+  @Nullable
+  public static Sdk getSdk(@NotNull final PsiElement element) {
+    Module module = ModuleUtilCore.findModuleForPsiElement(element);
+    if (module == null) {
+      return null;
+    }
+    return ModuleRootManager.getInstance(module).getSdk();
   }
 }
 

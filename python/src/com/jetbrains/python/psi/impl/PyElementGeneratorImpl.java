@@ -324,6 +324,22 @@ public class PyElementGeneratorImpl extends PyElementGenerator {
     return (PyPassStatement)statementList.getStatements()[0];
   }
 
+  @NotNull
+  @Override
+  public PyDecoratorList createDecoratorList(@NotNull final String... decoratorTexts) {
+    assert decoratorTexts.length > 0;
+    StringBuilder functionText = new StringBuilder();
+    for (String decoText : decoratorTexts) {
+      functionText.append(decoText).append("\n");
+    }
+    functionText.append("def foo():\n\tpass");
+    final PyFunction function = createFromText(LanguageLevel.getDefault(), PyFunction.class,
+                                               functionText.toString());
+    final PyDecoratorList decoratorList = function.getDecoratorList();
+    assert decoratorList != null;
+    return decoratorList;
+  }
+
   private PyStatementList createPassStatementList() {
     final PyFunction function = createFromText(LanguageLevel.getDefault(), PyFunction.class, "def foo():\n\tpass");
     return function.getStatementList();

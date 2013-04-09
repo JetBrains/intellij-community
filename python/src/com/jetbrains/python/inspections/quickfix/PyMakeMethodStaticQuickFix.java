@@ -10,6 +10,9 @@ import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.ArrayList;
+import java.util.List;
+
 /**
  * User: ktisha
  */
@@ -32,18 +35,26 @@ public class PyMakeMethodStaticQuickFix implements LocalQuickFix {
     final PsiElement element = descriptor.getPsiElement();
     final PyFunction problemFunction = PsiTreeUtil.getParentOfType(element, PyFunction.class);
     if (problemFunction == null) return;
-    if (!PyUtil.deleteParameter(problemFunction, 0)) return;
+    PyUtil.deleteParameter(problemFunction, 0);
+
+    final PyDecoratorList problemDecoratorList = problemFunction.getDecoratorList();
+    List<String> decoTexts = new ArrayList<String>();
+    decoTexts.add("@staticmethod");
+    if (problemDecoratorList != null) {
+      final PyDecorator[] decorators = problemDecoratorList.getDecorators();
+      for (PyDecorator deco : decorators) {
+        decoTexts.add(deco.getText());
+      }
+    }
 
     PyElementGenerator generator = PyElementGenerator.getInstance(project);
-    final PyFunction function =
-      generator.createFromText(LanguageLevel.forElement(problemFunction), PyFunction.class, "@staticmethod\ndef foo():\n\tpass");
-    final PyDecoratorList decoratorList = function.getDecoratorList();
-    assert decoratorList != null;
-    final PyDecorator[] decorators = decoratorList.getDecorators();
-    final PyDecorator decorator = decorators[0];
-    problemFunction.addBefore(decorator, problemFunction.getFirstChild());
+    final PyDecoratorList decoratorList = generator.createDecoratorList(decoTexts.toArray(new String[decoTexts.size()]));
 
-
-
+    if (problemDecoratorList != null) {
+      problemDecoratorList.replace(decoratorList);
+    }
+    else {
+      problemFunction.addBefore(decoratorList, problemFunction.getFirstChild());
+    }
   }
 }

@@ -20,4 +20,16 @@ public class PyMakeMethodStaticQuickFixTest extends PyQuickFixTestCase {
     doInspectionTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
   }
 
+  public void testFunctionWithDeco() {
+    doInspectionTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
+  }
+
+  public void testDecoWithParams() {
+    doInspectionTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
+  }
+
+  public void testNoSelf() {
+    doInspectionTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.static"));
+  }
+
 }

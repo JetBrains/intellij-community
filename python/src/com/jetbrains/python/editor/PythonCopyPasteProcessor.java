@@ -10,15 +10,14 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.codeStyle.CodeStyleSettings;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonFileType;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyFunction;
-import com.jetbrains.python.psi.PyStatementList;
-import com.jetbrains.python.psi.PyUtil;
+import com.jetbrains.python.PythonLanguage;
+import com.jetbrains.python.psi.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -41,16 +40,18 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
                                   Editor editor,
                                   String text,
                                   RawText rawText) {
-    if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE) {
+    if (!CodeInsightSettings.getInstance().INDENT_TO_CARET_ON_PASTE || file.getLanguage() != PythonLanguage.getInstance()) {
       return text;
     }
-    final boolean useTabs =
-      CodeStyleSettingsManager.getSettings(project).useTabCharacter(PythonFileType.INSTANCE);
+    final CodeStyleSettings codeStyleSettings = CodeStyleSettingsManager.getSettings(project);
+    final boolean useTabs = codeStyleSettings.useTabCharacter(PythonFileType.INSTANCE);
+    final int indentSize = codeStyleSettings.getIndentSize(PythonFileType.INSTANCE);
     CharFilter NOT_INDENT_FILTER = new CharFilter() {
       public boolean accept(char ch) {
         return useTabs? ch != '\t' : ch != ' ';
       }
     };
+    final String indentChar = useTabs ? "\t" : " ";
 
     final CaretModel caretModel = editor.getCaretModel();
     final SelectionModel selectionModel = editor.getSelectionModel();
@@ -60,7 +61,9 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     final int lineNumber = document.getLineNumber(caretOffset);
     final int lineStartOffset = getLineStartSafeOffset(document, lineNumber);
 
-    final String indentText = getIndentText(file, document, caretOffset, lineNumber);
+    text = addLeadingSpaces(text, NOT_INDENT_FILTER, indentSize, indentChar);
+    int firstLineIndent = StringUtil.findFirst(text, NOT_INDENT_FILTER);
+    final String indentText = getIndentText(file, document, caretOffset, lineNumber, firstLineIndent);
 
     int toRemove = calculateIndentToRemove(text, NOT_INDENT_FILTER);
     if (StringUtil.isEmptyOrSpaces(indentText) && isApplicable(file, text, caretOffset)) {
@@ -72,7 +75,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     String newText = "";
     if (StringUtil.isEmptyOrSpaces(indentText)) {
       for (String s : strings) {
-        newText += indentText + StringUtil.trimStart(s, StringUtil.repeat(useTabs? "\t" : " ", toRemove));
+        newText += indentText + StringUtil.trimStart(s, StringUtil.repeat(indentChar, toRemove));
       }
     }
     else {
@@ -85,10 +88,23 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     return newText;
   }
 
+  private static String addLeadingSpaces(String text, final CharFilter filter, int indentSize, String indentChar) {
+    final List<String> strings = StringUtil.split(text, "\n", false);
+    if (strings.size() > 1) {
+      int firstLineIndent = StringUtil.findFirst(strings.get(0), filter);
+      int secondLineIndent = StringUtil.findFirst(strings.get(1), filter);
+      final int diff = secondLineIndent - firstLineIndent;
+      if (diff > indentSize) {
+        text = StringUtil.repeat(indentChar, diff - indentSize) + text;
+      }
+    }
+    return text;
+  }
+
   private static String getIndentText(@NotNull final PsiFile file,
                                       @NotNull final Document document,
                                       int caretOffset,
-                                      int lineNumber) {
+                                      int lineNumber, int firstLineIndent) {
 
     PsiElement nonWS = PyUtil.findNextAtOffset(file, caretOffset, PsiWhiteSpace.class);
     if (nonWS != null) {
@@ -115,6 +131,8 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
           indentText = strings.get(0);
         }
       }
+      if (indentText.length() == firstLineIndent)
+        return "";
     }
     return indentText;
   }
@@ -124,7 +142,7 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
     int minIndent = StringUtil.findFirst(text, filter);
     for (String  s : strings) {
       final int indent = StringUtil.findFirst(s, filter);
-      if (indent < minIndent)
+      if (indent < minIndent && !StringUtil.isEmptyOrSpaces(s))
         minIndent = indent;
     }
     return minIndent;
@@ -143,13 +161,9 @@ public class PythonCopyPasteProcessor implements CopyPastePreProcessor {
 
   private static boolean inStatementList(@NotNull final PsiFile file, int caretOffset) {
     final PsiElement element = file.findElementAt(caretOffset);
-    final PsiElement element1 = file.findElementAt(caretOffset);
     return PsiTreeUtil.getParentOfType(element, PyStatementList.class) != null ||
-           PsiTreeUtil.getParentOfType(element1, PyStatementList.class) != null ||
            PsiTreeUtil.getParentOfType(element, PyFunction.class) != null ||
-           PsiTreeUtil.getParentOfType(element1, PyFunction.class) != null ||
-           PsiTreeUtil.getParentOfType(element, PyClass.class) != null ||
-           PsiTreeUtil.getParentOfType(element1, PyClass.class) != null;
+           PsiTreeUtil.getParentOfType(element, PyClass.class) != null;
   }
 
   private static boolean addLinebreak(@NotNull String text, @NotNull String toString, boolean useTabs) {

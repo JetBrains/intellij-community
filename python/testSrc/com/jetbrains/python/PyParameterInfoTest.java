@@ -543,28 +543,28 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
       assertEquals("Signature", text, StringUtil.join(myTexts, ""));
       StringBuilder wrongs = new StringBuilder();
       // see if highlighted matches
-      Set<String> highlight_set = new HashSet<String>();
-      ContainerUtil.addAll(highlight_set, highlighted);
+      Set<String> highlightSet = new HashSet<String>();
+      ContainerUtil.addAll(highlightSet, highlighted);
       for (int i = 0; i < myTexts.length; i += 1) {
-        if (myFlags[i].contains(Flag.HIGHLIGHT) && !highlight_set.contains(myTexts[i])) {
+        if (myFlags[i].contains(Flag.HIGHLIGHT) && !highlightSet.contains(myTexts[i])) {
           wrongs.append("Highlighted unexpected '").append(myTexts[i]).append("'. ");
         }
       }
       for (int i = 0; i < myTexts.length; i += 1) {
-        if (!myFlags[i].contains(Flag.HIGHLIGHT) && highlight_set.contains(myTexts[i])) {
+        if (!myFlags[i].contains(Flag.HIGHLIGHT) && highlightSet.contains(myTexts[i])) {
           wrongs.append("Not highlighted expected '").append(myTexts[i]).append("'. ");
         }
       }
       // see if disabled matches
-      Set<String> disabled_set = new HashSet<String>();
-      ContainerUtil.addAll(disabled_set, disabled);
+      Set<String> disabledSet = new HashSet<String>();
+      ContainerUtil.addAll(disabledSet, disabled);
       for (int i = 0; i < myTexts.length; i += 1) {
-        if (myFlags[i].contains(Flag.DISABLE) && !disabled_set.contains(myTexts[i])) {
+        if (myFlags[i].contains(Flag.DISABLE) && !disabledSet.contains(myTexts[i])) {
           wrongs.append("Highlighted a disabled '").append(myTexts[i]).append("'. ");
         }
       }
       for (int i = 0; i < myTexts.length; i += 1) {
-        if (!myFlags[i].contains(Flag.DISABLE) && disabled_set.contains(myTexts[i])) {
+        if (!myFlags[i].contains(Flag.DISABLE) && disabledSet.contains(myTexts[i])) {
           wrongs.append("Not disabled expected '").append(myTexts[i]).append("'. ");
         }
       }

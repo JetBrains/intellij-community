@@ -24,7 +24,7 @@ public class TypeEvalContext {
   private final boolean myAllowStubToAST;
   private List<String> myTrace;
   private String myTraceIndent = "";
-  private final PsiFile myOrigin;
+  @Nullable private final PsiFile myOrigin;
 
   private final Map<PyTypedElement, PyType> myEvaluated = new HashMap<PyTypedElement, PyType>();
   private final ThreadLocal<Set<PyTypedElement>> myEvaluating = new ThreadLocal<Set<PyTypedElement>>() {
@@ -34,7 +34,7 @@ public class TypeEvalContext {
     }
   };
 
-  private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, PsiFile origin) {
+  private TypeEvalContext(boolean allowDataFlow, boolean allowStubToAST, @Nullable PsiFile origin) {
     myAllowDataFlow = allowDataFlow;
     myAllowStubToAST = allowStubToAST;
     myOrigin = origin;
@@ -138,5 +138,10 @@ public class TypeEvalContext {
 
   public boolean maySwitchToAST(@NotNull StubBasedPsiElement element) {
     return myAllowStubToAST || (element.getStub() == null && (myOrigin == null || myOrigin == element.getContainingFile()));
+  }
+
+  @Nullable
+  public PsiFile getOrigin() {
+    return myOrigin;
   }
 }
