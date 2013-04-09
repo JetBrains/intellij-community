@@ -1,7 +1,6 @@
 package com.intellij.appengine.sdk;
 
 import com.intellij.execution.configurations.ParametersList;
-import com.intellij.javaee.appServerIntegrations.ApplicationServer;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 
@@ -26,8 +25,6 @@ public interface AppEngineSdk {
   boolean isMethodInBlacklist(@NotNull String className, @NotNull String methodName);
 
   boolean isValid();
-
-  ApplicationServer getOrCreateAppServer();
 
   String getOrmLibDirectoryPath();
 

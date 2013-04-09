@@ -1,16 +1,12 @@
 package com.intellij.appengine.sdk.impl;
 
+import com.intellij.appengine.facet.AppEngineWebIntegration;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.sdk.AppEngineSdkManager;
-import com.intellij.appengine.server.integration.AppEngineServerData;
-import com.intellij.appengine.server.integration.AppEngineServerIntegration;
-import com.intellij.javaee.appServerIntegrations.ApplicationServer;
-import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.util.text.StringUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 
@@ -33,14 +29,6 @@ public class AppEngineSdkManagerImpl extends AppEngineSdkManager {
   @NotNull
   @Override
   public List<? extends AppEngineSdk> getValidSdks() {
-    final List<ApplicationServer> servers = ApplicationServersManager.getInstance().getApplicationServers(AppEngineServerIntegration.getInstance());
-    List<AppEngineSdk> sdkList = new ArrayList<AppEngineSdk>();
-    for (ApplicationServer server : servers) {
-      final AppEngineSdk sdk = ((AppEngineServerData)server.getPersistentData()).getSdk();
-      if (sdk.isValid()) {
-        sdkList.add(sdk);
-      }
-    }
-    return sdkList;
+    return AppEngineWebIntegration.getInstance().getSdkForConfiguredDevServers();
   }
 }

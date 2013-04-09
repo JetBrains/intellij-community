@@ -1,12 +1,8 @@
 package com.intellij.appengine.sdk.impl;
 
 import com.intellij.appengine.sdk.AppEngineSdk;
-import com.intellij.appengine.server.integration.AppEngineServerData;
-import com.intellij.appengine.server.integration.AppEngineServerIntegration;
 import com.intellij.appengine.util.AppEngineUtil;
 import com.intellij.execution.configurations.ParametersList;
-import com.intellij.javaee.appServerIntegrations.ApplicationServer;
-import com.intellij.javaee.serverInstances.ApplicationServersManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
@@ -18,7 +14,6 @@ import com.intellij.openapi.vfs.VirtualFileManager;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.appengine.model.impl.JpsAppEngineModuleExtensionImpl;
 
 import java.io.*;
@@ -137,24 +132,6 @@ public class AppEngineSdkImpl implements AppEngineSdk {
 
   public boolean isValid() {
     return getToolsApiJarFile().exists() && getAppCfgFile().exists();
-  }
-
-  @Nullable
-  public ApplicationServer getOrCreateAppServer() {
-    if (!isValid()) return null;
-    final ApplicationServersManager serversManager = ApplicationServersManager.getInstance();
-    final AppEngineServerIntegration integration = AppEngineServerIntegration.getInstance();
-
-    final List<ApplicationServer> servers = serversManager.getApplicationServers(integration);
-    File sdkHomeFile = new File(myHomePath);
-    for (ApplicationServer server : servers) {
-      final String path = ((AppEngineServerData)server.getPersistentData()).getSdkPath();
-      if (FileUtil.filesEqual(sdkHomeFile, new File(path))) {
-        return server;
-      }
-    }
-
-    return ApplicationServersManager.getInstance().createServer(integration, new AppEngineServerData(myHomePath));
   }
 
   public String getOrmLibDirectoryPath() {

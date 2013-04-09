@@ -137,7 +137,7 @@ public class AppEngineFacetEditor extends FacetEditorTab {
 
   @Override
   public void onFacetInitialized(@NotNull Facet facet) {
-    ((AppEngineFacet)facet).getSdk().getOrCreateAppServer();
+    AppEngineWebIntegration.getInstance().setupDevServer(((AppEngineFacet)facet).getSdk());
   }
 
   private class FilesListCellRenderer extends DefaultListCellRenderer {
