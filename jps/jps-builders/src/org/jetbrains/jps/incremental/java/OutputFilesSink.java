@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.java;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +40,7 @@ import java.util.Set;
 *         Date: 2/16/12
 */
 class OutputFilesSink implements OutputFileConsumer {
+  private static final Logger LOG = Logger.getInstance("#org.jetbrains.jps.incremental.java.OutputFilesSink");
   private final CompileContext myContext;
   private final ModuleLevelBuilder.OutputConsumer myOutputConsumer;
   private final Callbacks.Backend myMappingsCallback;
@@ -84,8 +86,18 @@ class OutputFilesSink implements OutputFileConsumer {
 
       if (!isTemp && outKind == JavaFileObject.Kind.CLASS && !Utils.errorsDetected(myContext)) {
         // register in mappings any non-temp class file
-        final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
-        myMappingsCallback.associate(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()), sourcePath, reader);
+        try {
+          final ClassReader reader = new ClassReader(content.getBuffer(), content.getOffset(), content.getLength());
+          myMappingsCallback.associate(FileUtil.toSystemIndependentName(fileObject.getFile().getPath()), sourcePath, reader);
+        }
+        catch (Throwable e) {
+          // need this to make sure that unexpected errors in, for example, ASM will not ruin the compilation  
+          final String message = "Class dependency information may be incomplete! Error parsing generated class " + fileObject.getFile().getPath();
+          LOG.info(message, e);
+          myContext.processMessage(new CompilerMessage(
+            JavaBuilder.BUILDER_NAME, BuildMessage.Kind.WARNING, message + "\n" + CompilerMessage.getTextFromThrowable(e), sourcePath)
+          );
+        }
       }
     }
 
