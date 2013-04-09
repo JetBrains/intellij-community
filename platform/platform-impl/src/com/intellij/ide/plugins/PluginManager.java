@@ -197,8 +197,15 @@ public class PluginManager {
             method.invoke(null, new Object[]{args});
           }
           catch (Exception e) {
-            e.printStackTrace();
-            getLogger().error("Error while accessing " + mainClass + "." + methodName + " with arguments: " + Arrays.asList(args), e);
+            e.printStackTrace(System.err);
+            String message = "Error while accessing " + mainClass + "." + methodName + " with arguments: " + Arrays.asList(args);
+            if ("true".equals(System.getProperty("java.awt.headless"))) {
+              //noinspection UseOfSystemOutOrSystemErr
+              System.err.println(message);
+            }
+            else {
+              JOptionPane.showMessageDialog(null, message + ": " + e.getClass().getName() + ": " + e.getMessage(), "Error starting IntelliJ Platform", JOptionPane.ERROR_MESSAGE);
+            }
           }
         }
       };

@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import org.jetbrains.plugins.javaFX.JavaFxFileReferenceProvider;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
+import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 
 import static com.intellij.patterns.PsiJavaPatterns.literalExpression;
 
@@ -111,7 +112,7 @@ public class JavaFxReferencesContributor extends PsiReferenceContributor {
 
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
-    registrar.registerReferenceProvider(FXML_PATTERN, new JavaFxFileReferenceProvider());
-    registrar.registerReferenceProvider(STYLESHEET_PATTERN, new JavaFxFileReferenceProvider());
+    registrar.registerReferenceProvider(FXML_PATTERN, new JavaFxFileReferenceProvider(JavaFxFileTypeFactory.FXML_EXTENSION));
+    registrar.registerReferenceProvider(STYLESHEET_PATTERN, new JavaFxFileReferenceProvider("css"));
   }
 }

@@ -39,7 +39,7 @@ import java.util.List;
  */
 public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference, ReferencesSearch.SearchParameters>{
   @Override
-  public boolean execute(@NotNull ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiReference> consumer) {
+  public boolean execute(@NotNull final ReferencesSearch.SearchParameters queryParameters, @NotNull final Processor<PsiReference> consumer) {
     final PsiElement elementToSearch = queryParameters.getElementToSearch();
     if (elementToSearch instanceof PsiField) {
       final PsiField field = (PsiField)elementToSearch;
@@ -57,7 +57,12 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
           final String fieldName = field.getName();
           for (PsiFile file : fxmlWithController) {
             final VirtualFile virtualFile = file.getViewProvider().getVirtualFile();
-            final SearchScope searchScope = queryParameters.getEffectiveSearchScope();
+            final SearchScope searchScope = ApplicationManager.getApplication().runReadAction(new Computable<SearchScope>() {
+              @Override
+              public SearchScope compute() {
+                return queryParameters.getEffectiveSearchScope();
+              }
+            });
             if (searchScope instanceof LocalSearchScope) {
               if (!((LocalSearchScope)searchScope).isInScope(virtualFile)) continue;
             } else if (searchScope instanceof GlobalSearchScope) {

@@ -268,6 +268,10 @@ public class MavenPropertyResolver {
     result = mavenProject.getProperties().getProperty(propName);
     if (result != null) return result;
 
+    if ("settings.localRepository".equals(propName)) {
+      return mavenProject.getLocalRepository().getAbsolutePath();
+    }
+
     return null;
   }
 }

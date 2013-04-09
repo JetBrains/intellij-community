@@ -94,13 +94,15 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
 
   public static Key<Long> CREATION_TIME = Key.create("ProjectImpl.CREATION_TIME");
 
-  protected ProjectImpl(ProjectManagerImpl manager, String filePath, boolean isOptimiseTestLoadSpeed, String projectName) {
-    super(ApplicationManager.getApplication());
+  protected ProjectImpl(@NotNull ProjectManagerImpl manager, @NotNull String filePath, boolean isOptimiseTestLoadSpeed, String projectName) {
+    super(ApplicationManager.getApplication(), "Project "+(projectName == null ? filePath : projectName));
     putUserData(CREATION_TIME, System.nanoTime());
 
     getPicoContainer().registerComponentInstance(Project.class, this);
 
-    getStateStore().setProjectFilePath(filePath);
+    if (!isDefault()) {
+      getStateStore().setProjectFilePath(filePath);
+    }
 
     myOptimiseTestLoadSpeed = isOptimiseTestLoadSpeed;
 
@@ -133,9 +135,9 @@ public class ProjectImpl extends ComponentManagerImpl implements ProjectEx {
   }
 
   @Override
-  protected void bootstrapPicoContainer() {
+  protected void bootstrapPicoContainer(@NotNull String name) {
     Extensions.instantiateArea(ExtensionAreas.IDEA_PROJECT, this, null);
-    super.bootstrapPicoContainer();
+    super.bootstrapPicoContainer(name);
     final MutablePicoContainer picoContainer = getPicoContainer();
 
     final ProjectStoreClassProvider projectStoreClassProvider = (ProjectStoreClassProvider)picoContainer.getComponentInstanceOfType(ProjectStoreClassProvider.class);

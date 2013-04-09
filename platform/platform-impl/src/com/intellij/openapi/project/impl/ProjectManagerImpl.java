@@ -207,7 +207,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Override
   @Nullable
-  public Project newProject(final String projectName, String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
+  public Project newProject(final String projectName, @NotNull String filePath, boolean useDefaultProjectSettings, boolean isDummy) {
     filePath = toCanonicalName(filePath);
 
     //noinspection ConstantConditions
@@ -288,11 +288,10 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
   }
 
   private ProjectImpl createProject(@Nullable String projectName,
-                                    @Nullable String filePath,
+                                    @NotNull String filePath,
                                     boolean isDefault,
                                     boolean isOptimiseTestLoadSpeed) {
-    assert isDefault || filePath != null : filePath;
-    return isDefault ? new DefaultProject(this, null, isOptimiseTestLoadSpeed, projectName)
+    return isDefault ? new DefaultProject(this, "", isOptimiseTestLoadSpeed, projectName)
                      : new ProjectImpl(this, filePath, isOptimiseTestLoadSpeed, projectName);
   }
 
@@ -314,7 +313,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Override
   @Nullable
-  public Project loadProject(String filePath) throws IOException, JDOMException, InvalidDataException {
+  public Project loadProject(@NotNull String filePath) throws IOException, JDOMException, InvalidDataException {
     try {
       ProjectImpl project = createProject(null, filePath, false, false);
       initProject(project, null);
@@ -348,7 +347,7 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
     LOG.assertTrue(!myDefaultProjectWasDisposed, "Default project has been already disposed!");
     if (myDefaultProject == null) {
       try {
-        myDefaultProject = createProject(null, null, true, ApplicationManager.getApplication().isUnitTestMode());
+        myDefaultProject = createProject("Default project", "Default project", true, ApplicationManager.getApplication().isUnitTestMode());
         initProject(myDefaultProject, null);
         myDefaultProjectRootElement = null;
       }

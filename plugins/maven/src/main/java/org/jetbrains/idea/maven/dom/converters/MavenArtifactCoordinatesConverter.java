@@ -213,7 +213,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
     }
 
     protected File makeLocalRepositoryFile(MavenId id, File localRepostory) {
-      String relPath = ("" + id.getGroupId()).replace(".", "/");
+      String relPath = (StringUtil.notNullize(id.getGroupId(), "null")).replace(".", "/");
 
       relPath += "/" + id.getArtifactId();
       relPath += "/" + id.getVersion();

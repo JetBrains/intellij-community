@@ -38,6 +38,8 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "<exclude name=\"jarDeployNoInfo.jar\">\n" +
            "</exclude>\n" +
            "</fx:fileset>\n" +
+           "<fx:fileset id=\"all_jarDeployNoInfo\" dir=\"temp\" includes=\"*.jar\">\n" +
+           "</fx:fileset>\n" +
            "<fx:application id=\"jarDeployNoInfo_id\" name=\"jarDeployNoInfo\" mainClass=\"Main\">\n" +
            "</fx:application>\n" +
            "<fx:jar destfile=\"temp/jarDeployNoInfo.jar\">\n" +
@@ -54,6 +56,8 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "<fx:application refid=\"jarDeployNoInfo_id\">\n" +
            "</fx:application>\n" +
            "<fx:resources>\n" +
+           "<fx:fileset refid=\"all_jarDeployNoInfo\">\n" +
+           "</fx:fileset>\n" +
            "</fx:resources>\n" +
            "</fx:deploy>\n", Collections.<String, String>emptyMap());
   }
@@ -62,6 +66,8 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     doTest("<fx:fileset id=\"all_but_jarDeployTitle\" dir=\"temp\" includes=\"*.jar\">\n" +
            "<exclude name=\"jarDeployTitle.jar\">\n" +
            "</exclude>\n" +
+           "</fx:fileset>\n" +
+           "<fx:fileset id=\"all_jarDeployTitle\" dir=\"temp\" includes=\"*.jar\">\n" +
            "</fx:fileset>\n" +
            "<fx:application id=\"jarDeployTitle_id\" name=\"jarDeployTitle\" mainClass=\"Main\">\n" +
            "</fx:application>\n" +
@@ -81,6 +87,8 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "<fx:info title=\"My App\">\n" +
            "</fx:info>\n" +
            "<fx:resources>\n" +
+           "<fx:fileset refid=\"all_jarDeployTitle\">\n" +
+           "</fx:fileset>\n" +
            "</fx:resources>\n" +
            "</fx:deploy>\n", Collections.singletonMap(TITLE, "My App"));
   }
@@ -98,6 +106,8 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "</exclude>\n" +
            "<exclude name=\"preloader.jar\">\n" +
            "</exclude>\n" +
+           "</fx:fileset>\n" +
+           "<fx:fileset id=\"all_jarDeployPreloader\" dir=\"temp\" includes=\"*.jar\">\n" +
            "</fx:fileset>\n" +
            "<fx:application id=\"jarDeployPreloader_id\" name=\"jarDeployPreloader\" mainClass=\"Main\" preloaderClass=\"MyPreloader\">\n" +
            "</fx:application>\n" +

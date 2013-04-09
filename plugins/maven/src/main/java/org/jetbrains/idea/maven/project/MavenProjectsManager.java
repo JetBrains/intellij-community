@@ -1183,6 +1183,9 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
     }
 
     properties.putAll(mavenProject.getProperties());
+
+    properties.put("settings.localRepository", mavenProject.getLocalRepository().getAbsolutePath());
+
     return properties;
   }
 

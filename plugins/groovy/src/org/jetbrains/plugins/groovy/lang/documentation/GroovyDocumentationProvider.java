@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,6 +47,8 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
@@ -211,13 +213,22 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     }
   }
 
-  private static void appendInferredType(@NotNull PsiElement originalElement, GrVariable variable, StringBuilder buffer) {
+  private static void appendInferredType(PsiElement originalElement, GrVariable variable, StringBuilder buffer) {
     PsiType inferredType = null;
+    if (TokenSets.WHITE_SPACES_SET.contains(originalElement.getNode().getElementType())) {
+      originalElement = PsiTreeUtil.prevLeaf(originalElement);
+    }
+    if (originalElement != null && originalElement.getNode().getElementType() == GroovyTokenTypes.mIDENT) {
+      originalElement = originalElement.getParent();
+    }
     if (originalElement instanceof GrReferenceExpression) {
       inferredType = ((GrReferenceExpression)originalElement).getType();
     }
     else if (originalElement instanceof GrVariableDeclaration) {
       inferredType = variable.getTypeGroovy();
+    }
+    else if (originalElement instanceof GrVariable) {
+      inferredType = ((GrVariable)originalElement).getTypeGroovy();
     }
 
     if (inferredType != null) {

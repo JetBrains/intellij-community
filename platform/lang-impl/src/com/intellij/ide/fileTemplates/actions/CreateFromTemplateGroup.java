@@ -31,6 +31,7 @@ import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiDirectory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
@@ -51,6 +52,7 @@ public class CreateFromTemplateGroup extends ActionGroup implements DumbAware {
     presentation.setEnabled(false);
   }
 
+  @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e){
     FileTemplateManager manager = FileTemplateManager.getInstance();
     FileTemplate[] templates = manager.getAllTemplates();

@@ -163,6 +163,12 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
   @Override
   protected int restoreCaretOffset(int offset) {
+    if (myCaretRangeMarker.isValid()) {
+      if (myCaretRangeMarker.getStartOffset() <= offset && myCaretRangeMarker.getEndOffset() >= offset) {
+        return offset;
+      }
+      return myCaretRangeMarker.getEndOffset();
+    }
     return offset;
   }
 

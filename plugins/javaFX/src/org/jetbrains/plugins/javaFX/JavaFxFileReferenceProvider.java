@@ -1,9 +1,12 @@
 package org.jetbrains.plugins.javaFX;
 
+import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileSystem;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFileSystem;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.reference.impl.providers.FileReferenceSet;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,15 +18,21 @@ import java.util.Collections;
 * Date: 4/3/13
 */
 public class JavaFxFileReferenceProvider extends PsiReferenceProvider {
-  
+
+  private final String myAcceptedExtension;
+
+  public JavaFxFileReferenceProvider(String acceptedExtension) {
+    myAcceptedExtension = acceptedExtension;
+  }
+
   @NotNull
   @Override
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
     final Object value = ((PsiLiteralExpression)element).getValue();
-    return getReferences(element, value);
+    return getReferences(element, value, myAcceptedExtension);
   }
 
-  public static PsiReference[] getReferences(final PsiElement element, final Object value) {
+  public static PsiReference[] getReferences(final PsiElement element, final Object value, final String acceptedExtension) {
     final PsiDirectory directory = element.getContainingFile().getOriginalFile().getParent();
     if (!(value instanceof String) || directory == null) return PsiReference.EMPTY_ARRAY;
     final boolean startsWithSlash = ((String)value).startsWith("/");
@@ -36,6 +45,18 @@ public class JavaFxFileReferenceProvider extends PsiReferenceProvider {
           return super.getDefaultContexts();
         }
         return Collections.<PsiFileSystemItem>singletonList(directory);
+      }
+
+      @Override
+      protected Condition<PsiFileSystemItem> getReferenceCompletionFilter() {
+        return new Condition<PsiFileSystemItem>() {
+          @Override
+          public boolean value(PsiFileSystemItem item) {
+            if (item instanceof PsiDirectory) return true;
+            final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(item);
+            return virtualFile != null && acceptedExtension.equals(virtualFile.getExtension());
+          }
+        };
       }
     };
     if (startsWithSlash) {

@@ -35,15 +35,18 @@ public abstract class AsyncUpdateAction<T> extends AnAction {
   private static final ExecutorService ourUpdaterService = ConcurrencyUtil.newSingleThreadExecutor("Action Updater");
 
   // Async update
+  @Override
   public final void update(AnActionEvent e) {
     final T data = prepareDataFromContext(e);
     final Presentation originalPresentation = e.getPresentation();
     if (!forceSyncUpdate(e) && isDumbAware()) {
       final Presentation realPresentation = (Presentation)originalPresentation.clone();
       ourUpdaterService.submit(new Runnable() {
+        @Override
         public void run() {
           performUpdate(realPresentation, data);
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               if (originalPresentation.isVisible() != realPresentation.isVisible()) {
                 LOG.error("Async update is not supported for actions that change their visibility." +
@@ -65,6 +68,7 @@ public abstract class AsyncUpdateAction<T> extends AnAction {
   }
 
   // Sync update
+  @Override
   public final void beforeActionPerformedUpdate(@NotNull AnActionEvent e) {
     performUpdate(e.getPresentation(), prepareDataFromContext(e));
   }

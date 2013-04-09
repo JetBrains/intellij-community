@@ -393,6 +393,7 @@ public class SMTestRunnerResultsForm extends TestResultsPanel
     super.dispose();
     myShowStatisticForProxyHandler = null;
     myEventListeners.clear();
+    myStatisticsPane.doDispose();
   }
 
   public void showStatisticsForSelectedProxy() {

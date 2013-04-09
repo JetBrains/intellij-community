@@ -30,6 +30,7 @@ import com.intellij.openapi.diff.impl.patch.apply.GenericPatchApplier;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.*;
 import com.intellij.openapi.vcs.changes.*;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
@@ -56,7 +57,8 @@ public class ShelvedChange {
   public ShelvedChange(final String patchPath, final String beforePath, final String afterPath, final FileStatus fileStatus) {
     myPatchPath = patchPath;
     myBeforePath = beforePath;
-    myAfterPath = afterPath;
+    // optimisation: memory
+    myAfterPath = Comparing.equal(beforePath, afterPath) ? beforePath : afterPath;
     myFileStatus = fileStatus;
     myIsConflicting = new AtomicReference<Boolean>();
   }
@@ -122,21 +124,22 @@ public class ShelvedChange {
 
   public Change getChange(Project project) {
     if (myChange == null) {
-      ContentRevision beforeRevision = null;
-      ContentRevision afterRevision = null;
       File baseDir = new File(project.getBaseDir().getPath());
 
       File file = getAbsolutePath(baseDir, myBeforePath);
       final FilePathImpl beforePath = new FilePathImpl(file, false);
       beforePath.refresh();
+      ContentRevision beforeRevision = null;
       if (myFileStatus != FileStatus.ADDED) {
         beforeRevision = new CurrentContentRevision(beforePath) {
+          @Override
           @NotNull
           public VcsRevisionNumber getRevisionNumber() {
             return new TextRevisionNumber(VcsBundle.message("local.version.title"));
           }
         };
       }
+      ContentRevision afterRevision = null;
       if (myFileStatus != FileStatus.DELETED) {
         final FilePathImpl afterPath = new FilePathImpl(getAbsolutePath(baseDir, myAfterPath), false);
         afterRevision = new PatchedContentRevision(project, beforePath, afterPath);
@@ -205,6 +208,7 @@ public class ShelvedChange {
       myAfterFilePath = afterFilePath;
     }
 
+    @Override
     @Nullable
     public String getContent() throws VcsException {
       if (myContent == null) {
@@ -248,11 +252,13 @@ public class ShelvedChange {
       return doc.getText();
     }
 
+    @Override
     @NotNull
     public FilePath getFile() {
       return myAfterFilePath;
     }
 
+    @Override
     @NotNull
     public VcsRevisionNumber getRevisionNumber() {
       return new TextRevisionNumber(VcsBundle.message("shelved.version.name"));

@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -41,6 +42,11 @@ public class CompositeFoldingBuilder extends FoldingBuilderEx implements DumbAwa
 
   CompositeFoldingBuilder(List<FoldingBuilder> builders) {    
     myBuilders = builders;
+  }
+
+  @NotNull
+  public List<FoldingBuilder> getAllBuilders() {
+    return Collections.unmodifiableList(myBuilders);
   }
 
   @NotNull

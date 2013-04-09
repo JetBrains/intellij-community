@@ -19,6 +19,7 @@ package com.intellij.uiDesigner.actions;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -37,6 +38,7 @@ public class SurroundActionGroup extends ActionGroup {
     myChildren [3] = new SurroundAction(JTabbedPane.class.getName());
   }
 
+  @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     return myChildren;
   }

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.StringSetSpinAllocator;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -36,6 +37,7 @@ public final class AntBuildGroup extends ActionGroup implements DumbAware {
     presentation.setVisible(project != null);
   }
 
+  @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
