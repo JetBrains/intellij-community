@@ -34,7 +34,7 @@ public class GetCompletionsCommand extends AbstractFrameCommand {
   protected void processResponse(ProtocolFrame response) throws PyDebuggerException {
     super.processResponse(response);
     try {
-      myCompletions = PydevXmlUtils.xmlToCompletions(response.getPayload());
+      myCompletions = PydevXmlUtils.xmlToCompletions(response.getPayload(), myActionToken);
     }
     catch (Exception e) {
       throw new PyDebuggerException("cant obtain completions", e);

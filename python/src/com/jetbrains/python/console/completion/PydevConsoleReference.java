@@ -1,6 +1,6 @@
 package com.jetbrains.python.console.completion;
 
-import com.google.common.collect.Lists;
+import com.google.common.collect.Maps;
 import com.intellij.codeInsight.completion.CompletionInitializationContext;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
@@ -25,6 +25,7 @@ import com.jetbrains.python.psi.PyReferenceExpression;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author oleg
@@ -48,7 +49,7 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
 
   @NotNull
   public Object[] getVariants() {
-    List<LookupElement> variants = Lists.newArrayList();
+    Map<String, LookupElement> variants = Maps.newHashMap();
     try {
       final List<PydevCompletionVariant> completions = myCommunication.getCompletions(getText(), myPrefix);
       for (PydevCompletionVariant completion : completions) {
@@ -83,13 +84,13 @@ public class PydevConsoleReference extends PsiPolyVariantReferenceBase<PyReferen
         if (type == IToken.TYPE_FUNCTION || args.endsWith(")")) {
           builder = builder.withInsertHandler(ParenthesesInsertHandler.WITH_PARAMETERS);
         }
-        variants.add(builder);
+        variants.put(name, builder);
       }
     }
     catch (Exception e) {
       //LOG.error(e);
     }
-    return variants.toArray();
+    return variants.values().toArray();
   }
 
   private String getText() {

@@ -51,7 +51,7 @@ public class PydevXmlUtils {
     return null;
   }
 
-  public static List<PydevCompletionVariant> decodeCompletions(Object fromServer) {
+  public static List<PydevCompletionVariant> decodeCompletions(Object fromServer, String actTok) {
     final List<PydevCompletionVariant> ret = new ArrayList<PydevCompletionVariant>();
 
     List completionList = objectToList(fromServer);
@@ -64,7 +64,13 @@ public class PydevXmlUtils {
       final String args = AbstractPyCodeCompletion.getArgs((String)comp.get(2), type,
                                                            AbstractPyCodeCompletion.LOOKING_FOR_INSTANCED_VARIABLE);
 
-      ret.add(new PydevCompletionVariant((String)comp.get(0), (String)comp.get(1), args, type));
+      String name = (String)comp.get(0);
+
+      if (name.contains(".") && name.startsWith(actTok)) {
+        name = name.substring(actTok.length());
+      }
+
+      ret.add(new PydevCompletionVariant(name, (String)comp.get(1), args, type));
     }
     return ret;
   }
@@ -128,11 +134,11 @@ public class PydevXmlUtils {
   }
 
 
-  public static List<PydevCompletionVariant> xmlToCompletions(String payload) throws Exception {
+  public static List<PydevCompletionVariant> xmlToCompletions(String payload, String actionToken) throws Exception {
     SAXParser parser = getSAXParser();
     XMLToCompletionsInfo info = new XMLToCompletionsInfo();
     parser.parse(new ByteArrayInputStream(payload.getBytes()), info);
-    return decodeCompletions(info.getCompletions());
+    return decodeCompletions(info.getCompletions(), actionToken);
   }
 }
 

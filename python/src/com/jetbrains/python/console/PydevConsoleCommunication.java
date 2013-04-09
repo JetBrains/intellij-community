@@ -266,7 +266,7 @@ public class PydevConsoleCommunication extends AbstractConsoleCommunication impl
     }
     final Object fromServer = myClient.execute(GET_COMPLETIONS, new Object[]{text, actTok});
 
-    return PydevXmlUtils.decodeCompletions(fromServer);
+    return PydevXmlUtils.decodeCompletions(fromServer, actTok);
   }
 
   /**
