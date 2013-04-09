@@ -276,10 +276,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     return AnAction.EMPTY_ARRAY;
   }
 
-  public void addTextToConsoleEditor(final String text) {
+  public void setTextToEditor(final String text) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       public void run() {
-        myConsoleEditor.getDocument().insertString(0, text);
+        myConsoleEditor.getDocument().setText(text);
       }
     });
     queueUiUpdate(true);
