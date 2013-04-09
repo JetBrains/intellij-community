@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,6 +97,7 @@ public class TabLabel extends JPanel {
 
     addMouseListener(new MouseAdapter() {
       public void mousePressed(final MouseEvent e) {
+        if (UIUtil.isCloseClick(e, MouseEvent.MOUSE_PRESSED)) return;
         if (JBTabsImpl.isSelectionClick(e, false) && myInfo.isEnabled()) {
           final TabInfo selectedInfo = myTabs.getSelectedInfo();
           if (selectedInfo != myInfo) {
