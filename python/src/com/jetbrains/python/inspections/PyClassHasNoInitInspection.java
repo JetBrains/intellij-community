@@ -4,7 +4,6 @@ import com.intellij.codeInspection.LocalInspectionToolSession;
 import com.intellij.codeInspection.ProblemsHolder;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
-import com.jetbrains.python.PyNames;
 import com.jetbrains.python.inspections.quickfix.AddMethodQuickFix;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFunction;
@@ -41,13 +40,13 @@ public class PyClassHasNoInitInspection extends PyInspection {
     @Override
     public void visitPyClass(PyClass node) {
       final PyFunction init = node.findInitOrNew(true);
-      if (init == null || PyNames.NEW.equals(init.getName())) {
+      if (init == null) {
         registerProblem(node.getNameIdentifier(), PyBundle.message("INSP.class.has.no.init"),
                         new AddMethodQuickFix("__init__", new PyClassTypeImpl(node, false), false));
       }
       for (PyClass ancestor : node.iterateAncestorClasses()) {
         final PyFunction ancestorInit = ancestor.findInitOrNew(false);
-        if (ancestorInit == null || PyNames.NEW.equals(ancestorInit.getName())) {
+        if (ancestorInit == null) {
           registerProblem(node.getNameIdentifier(), PyBundle.message("INSP.parent.$0.has.no.init", ancestor.getName()),
                           new AddMethodQuickFix("__init__", new PyClassTypeImpl(ancestor, false), false));
         }

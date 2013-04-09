@@ -23,6 +23,10 @@ public class PyClassHasNoInitInspectionTest extends PyTestCase {
     doTest();
   }
 
+  public void testNew() {
+    doTest();
+  }
+
   private void doTest() {
     myFixture.configureByFile("inspections/PyClassHasNoInitInspection/" + getTestName(true) + ".py");
     myFixture.enableInspections(PyClassHasNoInitInspection.class);
