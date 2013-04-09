@@ -3241,6 +3241,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return true;
   }
 
+  private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
+
   private void drawChars(@NotNull Graphics g, char[] data, int start, int end, int x, int y) {
     g.drawChars(data, start, end - start, x, y);
 
@@ -3249,23 +3251,18 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       g.setColor(myScheme.getColor(EditorColors.WHITESPACES_COLOR));
       final FontMetrics metrics = g.getFontMetrics();
 
-      int halfSpaceWidth = metrics.charWidth(' ') / 2;
-      final int UNDEFINED_WIDTH = -1;
-      int wideSpaceWidth = UNDEFINED_WIDTH;
-      final int charHeight = getCharHeight();
-      final char IDEOGRAPHIC_SPACE = '\u3000';
-
       for (int i = start; i < end; i++) {
-        char c = data[i];
-        if (c == ' ') {
-          g.fillRect(x + halfSpaceWidth, y, 1, 1);
-        } else if (c == IDEOGRAPHIC_SPACE) {
-          if (wideSpaceWidth == UNDEFINED_WIDTH) wideSpaceWidth = metrics.charWidth(IDEOGRAPHIC_SPACE);
+        final char c = data[i];
+        final int charWidth = metrics.charWidth(c);
 
-          g.drawRect(x + 2, y - charHeight, wideSpaceWidth - 4, charHeight);
+        if (c == ' ') {
+          g.fillRect(x + (charWidth >> 1), y, 1, 1);
+        } else if (c == IDEOGRAPHIC_SPACE) {
+          final int charHeight = getCharHeight();
+          g.drawRect(x + 2, y - charHeight, charWidth - 4, charHeight);
         }
 
-        x += metrics.charWidth(c);
+        x += charWidth;
       }
       g.setColor(oldColor);
     }
