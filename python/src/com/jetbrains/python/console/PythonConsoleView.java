@@ -120,8 +120,14 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        getPythonLanguageConsole().addTextToConsoleEditor(code);
+        String text = getPythonLanguageConsole().getConsoleEditor().getDocument().getText();
+
+        getPythonLanguageConsole().setTextToEditor(code);
         myExecuteActionHandler.runExecuteAction(getPythonLanguageConsole());
+
+        if (!StringUtil.isEmpty(text)) {
+          getPythonLanguageConsole().setTextToEditor(text);
+        }
       }
     });
   }
