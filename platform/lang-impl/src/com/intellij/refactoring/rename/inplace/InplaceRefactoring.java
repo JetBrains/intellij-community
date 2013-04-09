@@ -270,7 +270,7 @@ public abstract class InplaceRefactoring {
 
     boolean subrefOnPrimaryElement = false;
     for (PsiReference ref : refs) {
-      if (isReferenceAtCaret(selectedElement, ref)) {
+      if (isReferenceAtCaret(nameIdentifier, ref, offset)) {
         builder.replaceElement(ref, PRIMARY_VARIABLE_NAME, createLookupExpression(), true);
         subrefOnPrimaryElement = true;
         continue;
@@ -327,8 +327,12 @@ public abstract class InplaceRefactoring {
     return true;
   }
 
-  protected boolean isReferenceAtCaret(PsiElement nameIdentifier, PsiReference ref) {
-    return nameIdentifier != null && ref.getElement() == nameIdentifier.getParent();
+  protected boolean isReferenceAtCaret(PsiElement nameIdentifier, PsiReference ref, int offset) {
+    if (nameIdentifier != null && ref.getElement() == nameIdentifier.getParent()) {
+      final TextRange textRange = nameIdentifier.getTextRange();
+      return textRange != null && contains(textRange, offset);
+    }
+    return false;
   }
 
   protected void beforeTemplateStart() {
