@@ -332,7 +332,7 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
   }
 
   protected void execNoWait(String command) {
-    myConsoleView.executeCode(command);
+    myConsoleView.executeCode(command, null);
   }
 
   protected void interrupt() {
