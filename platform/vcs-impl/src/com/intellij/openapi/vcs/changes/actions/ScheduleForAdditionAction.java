@@ -36,14 +36,16 @@ import com.intellij.openapi.vcs.changes.ChangeListManagerImpl;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Collections;
 import java.util.List;
 
 public class ScheduleForAdditionAction extends AnAction implements DumbAware {
 
   public void update(AnActionEvent e) {
-    final boolean enabled = e.getData(PlatformDataKeys.PROJECT) != null && thereAreUnversionedFiles(e);
+    final boolean enabled = thereAreUnversionedFiles(e);
     e.getPresentation().setEnabled(enabled);
     final String place = e.getPlace();
     if (ActionPlaces.ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION.equals(place) || ActionPlaces.CHANGES_VIEW_POPUP.equals(place) ) {
@@ -61,35 +63,63 @@ public class ScheduleForAdditionAction extends AnAction implements DumbAware {
   }
 
   private static boolean thereAreUnversionedFiles(AnActionEvent e) {
-    return !getUnversionedFiles(e).isEmpty();
+    List<VirtualFile> unversionedFiles = getFromChangesView(e);
+    if (unversionedFiles != null && !unversionedFiles.isEmpty()) {
+      return true;
+    }
+    VirtualFile[] files = getFromSelection(e);
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (files == null || project == null) {
+      return false;
+    }
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
+    for (VirtualFile file : files) {
+      if (isFileUnversioned(file, vcsManager, fileStatusManager)) {
+        return true;
+      }
+    }
+    return false;
   }
 
   @NotNull
   private static List<VirtualFile> getUnversionedFiles(final AnActionEvent e) {
-    // first get from the ChangeListView
-    List<VirtualFile> unversionedFiles = e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
+    List<VirtualFile> unversionedFiles = getFromChangesView(e);
     if (unversionedFiles != null && !unversionedFiles.isEmpty()) {
       return unversionedFiles;
     }
 
-    unversionedFiles = new ArrayList<VirtualFile>();
-    // then get from selection    
-    final VirtualFile[] files = PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
-    if (files == null) {
-      return unversionedFiles;
-    }
+    final VirtualFile[] files = getFromSelection(e);
     final Project project = e.getData(PlatformDataKeys.PROJECT);
-    if (project == null) {
-      return unversionedFiles;
+    if (files == null || project == null) {
+      return Collections.emptyList();
     }
+    ProjectLevelVcsManager vcsManager = ProjectLevelVcsManager.getInstance(project);
+    FileStatusManager fileStatusManager = FileStatusManager.getInstance(project);
+    unversionedFiles = new ArrayList<VirtualFile>();
     for (VirtualFile file : files) {
-      AbstractVcs vcs = ProjectLevelVcsManager.getInstance(project).getVcsFor(file);
-      if (vcs != null && !vcs.areDirectoriesVersionedItems() && file.isDirectory() ||
-          FileStatusManager.getInstance(project).getStatus(file) == FileStatus.UNKNOWN) {
+      if (isFileUnversioned(file, vcsManager, fileStatusManager)) {
         unversionedFiles.add(file);
       }
     }
     return unversionedFiles;
+  }
+
+  private static boolean isFileUnversioned(@NotNull VirtualFile file,
+                                           @NotNull ProjectLevelVcsManager vcsManager, @NotNull FileStatusManager fileStatusManager) {
+    AbstractVcs vcs = vcsManager.getVcsFor(file);
+    return vcs != null && !vcs.areDirectoriesVersionedItems() && file.isDirectory() ||
+           fileStatusManager.getStatus(file) == FileStatus.UNKNOWN;
+  }
+
+  @Nullable
+  private static List<VirtualFile> getFromChangesView(AnActionEvent e) {
+    return e.getData(ChangesListView.UNVERSIONED_FILES_DATA_KEY);
+  }
+
+  @Nullable
+  private static VirtualFile[] getFromSelection(AnActionEvent e) {
+    return PlatformDataKeys.VIRTUAL_FILE_ARRAY.getData(e.getDataContext());
   }
 
 }
