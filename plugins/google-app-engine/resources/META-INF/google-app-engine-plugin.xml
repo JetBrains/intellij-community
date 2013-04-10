@@ -1,40 +1,10 @@
 <idea-plugin>
-  <name>Google App Engine Integration</name>
-  <id>com.intellij.appengine</id>
-  <description>
-    <![CDATA[
-    Provides support for developing Google App Engine applications. The following features are available:
-    <ul>
-     <li> option on "Technologies" page of the module wizard to quickly create an AppEngine project
-     <li> inspection to report forbidden code in App Engine application
-     <li> run configuration for Google App Engine Dev server
-     <li> option to run JDO/JPA Enhancer on make (in Google App Engine Facet settings)
-     <li> action for uploading an application to Google (Tools | Upload App Engine Application)
-     <li> integration with GWT Dev Mode run configurations
-    </ul>
-   ]]>
-  </description>
-  <version>1.1.4</version>
-  <depends>com.intellij.javaee</depends>
-  <depends optional="true" config-file="gwt-integration.xml">com.intellij.gwt</depends>
-  <depends>com.intellij.modules.ultimate</depends>
-  <vendor>JetBrains</vendor>
-  <category>Web/JavaEE Technologies</category>
-
   <extensionPoints>
     <extensionPoint name="forbiddenCodeHandler" interface="com.intellij.appengine.inspections.AppEngineForbiddenCodeHandler"/>
   </extensionPoints>
-
   <extensions defaultExtensionNs="com.intellij">
-    <javaee.appServerIntegration implementation="com.intellij.appengine.server.integration.AppEngineServerIntegration"/>
-    <configurationType implementation="com.intellij.appengine.server.run.AppEngineServerConfigurationType"/>
-    <configurationProducer implementation="com.intellij.appengine.server.run.AppEngineServerConfigurationProducer"/>
-
     <applicationService serviceInterface="com.intellij.appengine.sdk.AppEngineSdkManager"
                         serviceImplementation="com.intellij.appengine.sdk.impl.AppEngineSdkManagerImpl"/>
-
-    <applicationService serviceInterface="com.intellij.appengine.facet.AppEngineWebIntegration"
-                        serviceImplementation="com.intellij.appengine.facet.impl.AppEngineUltimateWebIntegration"/>
 
     <frameworkSupport implementation="com.intellij.appengine.facet.AppEngineSupportProvider"/>
     <fileTemplateGroup implementation="com.intellij.appengine.facet.AppEngineTemplateGroupDescriptorFactory"/>
@@ -49,7 +19,6 @@
     <localInspection language="JAVA" shortName="AppEngineForbiddenCode" displayName="Forbidden code in App Engine applications"
                      groupName="Google App Engine" enabledByDefault="true" level="ERROR"
                      implementationClass="com.intellij.appengine.inspections.AppEngineForbiddenCodeInspection"/>
-
   </extensions>
 
   <actions>
@@ -58,4 +27,5 @@
       <add-to-group group-id="ToolsMenu" anchor="last"/>
     </action>
   </actions>
+
 </idea-plugin>

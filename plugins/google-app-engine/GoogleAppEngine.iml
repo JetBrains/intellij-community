@@ -13,24 +13,19 @@
     <orderEntry type="module" module-name="execution-openapi" />
     <orderEntry type="module" module-name="platform-api" />
     <orderEntry type="module" module-name="util" />
-    <orderEntry type="module" module-name="jsp-openapi" />
-    <orderEntry type="module" module-name="j2ee-openapi" />
-    <orderEntry type="module" module-name="web-openapi" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="openapi" />
     <orderEntry type="module" module-name="idea" />
-    <orderEntry type="module" module-name="J2EE" />
-    <orderEntry type="module" module-name="web-impl" />
-    <orderEntry type="module" module-name="jpa-openapi" />
-    <orderEntry type="module" module-name="jpa-impl" />
     <orderEntry type="module" module-name="debugger-openapi" />
-    <orderEntry type="module" module-name="GwtStudio" />
     <orderEntry type="module" module-name="codeInsight-tests" scope="TEST" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="library" scope="TEST" name="JUnit4" level="project" />
     <orderEntry type="module" module-name="xml" scope="TEST" />
     <orderEntry type="module" module-name="appEngine-runtime" />
     <orderEntry type="module" module-name="google-app-engine-jps-plugin" />
+    <orderEntry type="module" module-name="jam-support-openapi" />
+    <orderEntry type="module" module-name="compiler-impl" />
+    <orderEntry type="module" module-name="dom-openapi" />
   </component>
 </module>
 

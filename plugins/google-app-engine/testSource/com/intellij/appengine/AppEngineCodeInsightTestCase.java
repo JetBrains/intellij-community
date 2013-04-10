@@ -2,8 +2,6 @@ package com.intellij.appengine;
 
 import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.facet.FacetManager;
-import com.intellij.facet.impl.FacetUtil;
-import com.intellij.javaee.web.facet.WebFacetType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
@@ -15,6 +13,7 @@ import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.testFramework.builders.JavaModuleFixtureBuilder;
 import com.intellij.testFramework.fixtures.*;
 import com.intellij.util.CommonProcessors;
+import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 
 /**
@@ -44,7 +43,6 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
   protected abstract String getBaseDirectoryPath();
 
   private static void addAppEngineSupport(Module module, String version) {
-    FacetUtil.addFacet(module, WebFacetType.getInstance());
     final AppEngineFacet appEngine = FacetManager.getInstance(module).addFacet(AppEngineFacet.getFacetType(), "AppEngine", null);
     final String sdkPath = FileUtil.toSystemIndependentName(getTestDataPath()) + "sdk/" + version;
     appEngine.getConfiguration().setSdkHomePath(sdkPath);
@@ -66,7 +64,7 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
     myModuleBuilder.addSourceContentRoot(tempDir.getTempDirPath());
     codeInsightFixture.setUp();
     final VirtualFile dir = LocalFileSystem.getInstance().refreshAndFindFileByPath(testDataPath);
-    assertNotNull("Test data directory not found: " + testDataPath, dir);
+    Assert.assertNotNull("Test data directory not found: " + testDataPath, dir);
     VfsUtil.processFilesRecursively(dir, new CommonProcessors.CollectProcessor<VirtualFile>());
     dir.refresh(false, true);
     tempDir.copyAll(testDataPath, "", new VirtualFileFilter() {
