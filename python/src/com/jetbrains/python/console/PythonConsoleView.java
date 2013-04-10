@@ -232,6 +232,10 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
     return outputType;
   }
 
+  public void setSdk(Sdk sdk) {
+    getPythonLanguageConsole().setSdk(sdk);
+  }
+
   private static class PythonLanguageConsole extends LanguageConsoleImpl {
     private PythonConsoleView myPythonConsoleView;
 
@@ -265,6 +269,10 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
     protected void appendToHistoryDocument(@NotNull Document history, @NotNull String text) {
       myPythonConsoleView.beforeExternalAddContentToDocument(text.length(), ConsoleViewContentType.NORMAL_OUTPUT);
       super.appendToHistoryDocument(history, text);
+    }
+
+    public void setSdk(Sdk sdk) {
+      myFile.putCopyableUserData(PydevConsoleRunner.CONSOLE_SDK, sdk);
     }
   }
 

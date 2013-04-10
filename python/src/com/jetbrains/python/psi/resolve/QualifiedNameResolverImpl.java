@@ -62,6 +62,10 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     myContext.setFromElement(foothold);
     if (PydevConsoleRunner.isInPydevConsole(foothold)) {
       withAllModules();
+      Sdk sdk = PydevConsoleRunner.getConsoleSdk(foothold);
+      if (sdk != null) {
+        myContext.setSdk(sdk);
+      }
     }
     return this;
   }
@@ -228,7 +232,14 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
 
     if (myVisitAllModules) {
       for (Module mod : ModuleManager.getInstance(myContext.getProject()).getModules()) {
-        RootVisitorHost.visitRoots(mod, false, this);
+        RootVisitorHost.visitRoots(mod, true, this);
+      }
+
+      if (myContext.getSdk() != null) {
+        RootVisitorHost.visitSdkRoots(myContext.getSdk(), this);
+      }
+      else if (myContext.getFootholdFile() != null) {
+        RootVisitorHost.visitSdkRoots(myContext.getFootholdFile(), this);
       }
     }
     else if (myContext.getModule() != null) {

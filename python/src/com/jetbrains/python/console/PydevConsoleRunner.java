@@ -90,6 +90,8 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
   public static Key<ConsoleCommunication> CONSOLE_KEY = new Key<ConsoleCommunication>("PYDEV_CONSOLE_KEY");
 
+  public static Key<Sdk> CONSOLE_SDK = new Key<Sdk>("PYDEV_CONSOLE_SDK_KEY");
+
   private static final String PYTHON_ENV_COMMAND = "import sys; print('Python %s on %s' % (sys.version, sys.platform))\n";
 
   private static final long APPROPRIATE_TO_WAIT = 60000;
@@ -358,6 +360,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
           final PythonConsoleView consoleView = getConsoleView();
 
           consoleView.setConsoleCommunication(myPydevConsoleCommunication);
+          consoleView.setSdk(mySdk);
           consoleView.setExecutionHandler(myConsoleExecuteActionHandler);
           myProcessHandler.addProcessListener(new ProcessAdapter() {
             @Override
@@ -581,6 +584,12 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
   public static ConsoleCommunication getConsoleCommunication(final PsiElement element) {
     final PsiFile containingFile = element.getContainingFile();
     return containingFile != null ? containingFile.getCopyableUserData(CONSOLE_KEY) : null;
+  }
+
+  @Nullable
+  public static Sdk getConsoleSdk(final PsiElement element) {
+    final PsiFile containingFile = element.getContainingFile();
+    return containingFile != null ? containingFile.getCopyableUserData(CONSOLE_SDK) : null;
   }
 
   @Override
