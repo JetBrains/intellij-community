@@ -33,10 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import javax.swing.*;
 import javax.swing.border.Border;
 import java.awt.*;
-import java.util.Comparator;
-import java.util.EnumSet;
-import java.util.Map;
-import java.util.TreeMap;
+import java.util.*;
 
 class ParameterInfoComponent extends JPanel {
   private final Object[] myObjects;
@@ -65,9 +62,12 @@ class ParameterInfoComponent extends JPanel {
   private static final Comparator<TextRange> TEXT_RANGE_COMPARATOR = new Comparator<TextRange>() {
     @Override
     public int compare(TextRange o1, TextRange o2) {
-      if (o1.getStartOffset() < o2.getStartOffset()) return -1;
+      if (o1.getStartOffset() == o2.getStartOffset()) {
+        return o1.getEndOffset() > o2.getEndOffset() ? 1 : -1;
+      }
+      if (o1.getStartOffset() < o2.getStartOffset()) return 1;
       if (o1.getEndOffset() > o2.getEndOffset()) return 1;
-      return 0;
+      return -1;
     }
   };
 
@@ -312,18 +312,19 @@ class ParameterInfoComponent extends JPanel {
       myLabel.setOpaque(true);
       myLabel.setFont(NORMAL_FONT);
 
-      add(myLabel, new GridBagConstraints(0, 0, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE,
+      add(myLabel, new GridBagConstraints(0, 0, 1, 1, 1, 1, GridBagConstraints.WEST, GridBagConstraints.NONE,
                                           new Insets(0, 0, 0, 0), 0, 0));
     }
 
     private void setup(String text, int startOffset, int endOffset, boolean isDisabled, boolean isStrikeout, Color background) {
-      final TextRange disabled = isDisabled ? TextRange.create(0, text.length()) : TextRange.EMPTY_RANGE;
-      final TextRange strikeOut = isStrikeout ? TextRange.create(0, text.length()) : TextRange.EMPTY_RANGE;
-
       Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap = new TreeMap<TextRange, ParameterInfoUIContextEx.Flag>(TEXT_RANGE_COMPARATOR);
-      flagsMap.put(TextRange.create(startOffset, endOffset), ParameterInfoUIContextEx.Flag.HIGHLIGHT);
-      flagsMap.put(disabled, ParameterInfoUIContextEx.Flag.DISABLE);
-      flagsMap.put(strikeOut, ParameterInfoUIContextEx.Flag.STRIKEOUT);
+      final TextRange highlight = TextRange.create(startOffset, endOffset);
+      if (!highlight.isEmpty())
+        flagsMap.put(highlight, ParameterInfoUIContextEx.Flag.HIGHLIGHT);
+      if (isDisabled)
+        flagsMap.put(TextRange.create(0, text.length()), ParameterInfoUIContextEx.Flag.DISABLE);
+      if (isStrikeout)
+        flagsMap.put(TextRange.create(0, text.length()), ParameterInfoUIContextEx.Flag.STRIKEOUT);
       setup(text, flagsMap, background);
     }
 
@@ -341,40 +342,53 @@ class ParameterInfoComponent extends JPanel {
         myLabel.setText(labelText);
       }
     }
-
     private String buildLabelText(@NotNull final String text, @NotNull final Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
-      StringBuilder labelText = new StringBuilder("<html>");
-      int index = 0;
+      final StringBuilder labelText = new StringBuilder(text);
       final String disabledTag = FLAG_TO_TAG.get(ParameterInfoUIContextEx.Flag.DISABLE);
+      int fault = 0;
       if (isDisabledBeforeHighlight) {
-        addTag(labelText, disabledTag);
+        final String tag = getTag(disabledTag);
+        labelText.insert(0, tag);
+        fault += tag.length();
       }
 
-      for (Map.Entry<TextRange, ParameterInfoUIContextEx.Flag> entry : flagsMap.entrySet()) {
-        TextRange highlightRange = entry.getKey();
+      final Map<TextRange, ParameterInfoUIContextEx.Flag> reverseOrderedMap =
+        new TreeMap<TextRange, ParameterInfoUIContextEx.Flag>(Collections.reverseOrder(TEXT_RANGE_COMPARATOR));
+      reverseOrderedMap.putAll(flagsMap);
+      for (Map.Entry<TextRange, ParameterInfoUIContextEx.Flag> entry : reverseOrderedMap.entrySet()) {
+        final TextRange highlightRange = entry.getKey();
         final ParameterInfoUIContextEx.Flag flag = entry.getValue();
 
-        String tagValue = FLAG_TO_TAG.get(flag);
-        labelText.append(text.substring(index, highlightRange.getStartOffset()));
         if (flag == ParameterInfoUIContextEx.Flag.HIGHLIGHT && isDisabledBeforeHighlight) {
-          addClosingTag(labelText, disabledTag);
+          final String tag = getClosingTag(disabledTag);
+          labelText.insert(highlightRange.getStartOffset() + fault, tag);
+          fault += tag.length();
         }
-        addTag(labelText, tagValue);
-        labelText.append(text.substring(highlightRange.getStartOffset(), highlightRange.getEndOffset()));
-        addClosingTag(labelText, tagValue);
-        index = highlightRange.getEndOffset();
+
+        final String tagValue = FLAG_TO_TAG.get(flag);
+        final String tag = getTag(tagValue);
+        labelText.insert(highlightRange.getStartOffset() + fault, tag);
+        fault += tag.length();
       }
-      labelText.append(text.substring(index, text.length()));
-      labelText.append("</html>");
-      return labelText.toString();
+      for (Map.Entry<TextRange, ParameterInfoUIContextEx.Flag> entry : flagsMap.entrySet()) {
+        final TextRange highlightRange = entry.getKey();
+        final ParameterInfoUIContextEx.Flag flag = entry.getValue();
+
+        final String tagValue = FLAG_TO_TAG.get(flag);
+        final String endTag = getClosingTag(tagValue);
+        int end = highlightRange.getEndOffset() + fault;
+        labelText.insert(end, endTag);
+        fault += endTag.length();
+      }
+      return "<html>" + labelText.toString() + "</html>";
     }
 
-    private void addClosingTag(@NotNull final StringBuilder labelText, @NotNull final String tagText) {
-      labelText.append("</").append(tagText).append(">");
+    private String getTag(@NotNull final String tagValue) {
+      return "<" + tagValue + ">";
     }
 
-    private void addTag(@NotNull final StringBuilder labelText, @NotNull final String disabledTag) {
-      labelText.append("<").append(disabledTag).append(">");
+    private String getClosingTag(@NotNull final String tagValue) {
+      return "</" + tagValue + ">";
     }
 
     public void setDisabledBeforeHighlight() {
