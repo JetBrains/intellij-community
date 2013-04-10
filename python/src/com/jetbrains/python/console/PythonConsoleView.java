@@ -92,7 +92,7 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
               UIUtil.invokeLaterIfNeeded(new Runnable() {
                 @Override
                 public void run() {
-                  HintManager.getInstance().showErrorHint(editor, myExecuteActionHandler.getConsoleIsNotEnabledMessage());
+                  HintManager.getInstance().showErrorHint(editor, myExecuteActionHandler.getCantExecuteMessage());
                 }
               });
             }

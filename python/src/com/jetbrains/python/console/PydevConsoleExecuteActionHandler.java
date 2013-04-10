@@ -224,7 +224,7 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
   }
 
   public static String getPrevCommandRunningMessage() {
-    return "Previous command is still running. Please wait or press Ctrl+C to interrupt.";
+    return "Previous command is still running. Please wait or press Ctrl+C in console to interrupt.";
   }
 
   @Override
@@ -305,6 +305,18 @@ public class PydevConsoleExecuteActionHandler extends ConsoleExecuteActionHandle
 
   private Project getProject() {
     return myConsoleView.getConsole().getProject();
+  }
+
+  public String getCantExecuteMessage() {
+    if (!isEnabled()) {
+      return getConsoleIsNotEnabledMessage();
+    }
+    else if (!canExecuteNow()) {
+      return getPrevCommandRunningMessage();
+    }
+    else {
+      return "Can't execute the command";
+    }
   }
 
   @Override
