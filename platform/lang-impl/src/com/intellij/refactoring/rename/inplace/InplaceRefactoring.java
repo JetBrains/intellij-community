@@ -270,7 +270,7 @@ public abstract class InplaceRefactoring {
 
     boolean subrefOnPrimaryElement = false;
     for (PsiReference ref : refs) {
-      if (isReferenceAtCaret(nameIdentifier, ref, offset)) {
+      if (isReferenceAtCaret(selectedElement, ref)) {
         builder.replaceElement(ref, PRIMARY_VARIABLE_NAME, createLookupExpression(), true);
         subrefOnPrimaryElement = true;
         continue;
@@ -327,12 +327,8 @@ public abstract class InplaceRefactoring {
     return true;
   }
 
-  protected boolean isReferenceAtCaret(PsiElement nameIdentifier, PsiReference ref, int offset) {
-    if (nameIdentifier != null && ref.getElement() == nameIdentifier.getParent()) {
-      final TextRange textRange = nameIdentifier.getTextRange();
-      return textRange != null && contains(textRange, offset);
-    }
-    return false;
+  protected boolean isReferenceAtCaret(PsiElement selectedElement, PsiReference ref) {
+    return selectedElement != null && selectedElement.getTextRange().contains(ref.getElement().getTextRange());
   }
 
   protected void beforeTemplateStart() {
@@ -613,7 +609,7 @@ public abstract class InplaceRefactoring {
                            final TemplateBuilderImpl builder,
                            int offset) {
     if (reference.getElement() == selectedElement &&
-        contains(reference.getRangeInElement().shiftRight(selectedElement.getTextRange().getStartOffset()), offset)) {
+        reference.getRangeInElement().shiftRight(selectedElement.getTextRange().getStartOffset()).containsOffset(offset)) {
       builder.replaceElement(reference, PRIMARY_VARIABLE_NAME, createLookupExpression(), true);
     }
     else {
@@ -672,27 +668,24 @@ public abstract class InplaceRefactoring {
                                                 final Collection<PsiReference> refs,
                                                 Collection<Pair<PsiElement, TextRange>> stringUsages,
                                                 final int offset) {
-    if (nameIdentifier != null) {
-      final TextRange range = nameIdentifier.getTextRange();
-      if (range != null && contains(range, offset)) return nameIdentifier;
-    }
-
+    //prefer reference in case of self-references
     for (PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
-      if (contains(ref.getRangeInElement().shiftRight(element.getTextRange().getStartOffset()), offset)) return element;
+      if (ref.getRangeInElement().shiftRight(element.getTextRange().getStartOffset()).containsOffset(offset)) return element;
+    }
+
+    if (nameIdentifier != null) {
+      final TextRange range = nameIdentifier.getTextRange();
+      if (range != null && range.containsOffset(offset)) return nameIdentifier;
     }
 
     for (Pair<PsiElement, TextRange> stringUsage : stringUsages) {
       final PsiElement element = stringUsage.first;
-      if (contains(stringUsage.second.shiftRight(element.getTextRange().getStartOffset()), offset)) return element;
+      if (stringUsage.second.shiftRight(element.getTextRange().getStartOffset()).containsOffset(offset)) return element;
     }
 
     LOG.error(nameIdentifier + " by " + this.getClass().getName());
     return null;
-  }
-
-  private static boolean contains(final TextRange range, final int offset) {
-    return range.getStartOffset() <= offset && offset <= range.getEndOffset();
   }
 
   protected boolean isRestart() {
