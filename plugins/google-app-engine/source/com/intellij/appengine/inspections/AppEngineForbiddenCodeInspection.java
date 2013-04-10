@@ -30,8 +30,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.javadoc.PsiDocComment;
-import com.intellij.psi.jsp.JavaJspRecursiveElementVisitor;
-import com.intellij.psi.jsp.JspFile;
 import com.intellij.psi.util.ClassUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -59,13 +57,9 @@ public class AppEngineForbiddenCodeInspection extends BaseJavaLocalInspectionToo
 
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
-    file.accept(new JavaJspRecursiveElementVisitor() {
+    file.accept(new JavaRecursiveElementVisitor() {
       @Override
       public void visitDocComment(PsiDocComment comment) {
-      }
-
-      @Override
-      public void visitJspFile(JspFile file) {
       }
 
       @Override
