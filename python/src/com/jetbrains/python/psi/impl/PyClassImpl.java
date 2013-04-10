@@ -935,32 +935,34 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       return;
     }
     final PyFunctionStub methodStub = method.getStub();
-    if (methodStub != null) {
-      final PyTargetExpression[] targets = methodStub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY);
-      for (PyTargetExpression target : targets) {
-        if (!result.containsKey(target.getName())) {
-          result.put(target.getName(), target);
-        }
-      }
-    }
-    else {
-      final PyStatementList statementList = method.getStatementList();
-      if (statementList != null) {
-        statementList.accept(new PyRecursiveElementVisitor() {
-          public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
-            collectNewTargets(result, node);
-          }
-        });
+    for (PyTargetExpression target : getTargetExpressions(method)) {
+      if (methodStub != null || PyUtil.isInstanceAttribute(target)) {
+        result.put(target.getName(), target);
       }
     }
   }
 
-  private static void collectNewTargets(Map<String, PyTargetExpression> collected, PyAssignmentStatement node) {
-    final PyExpression[] targets = node.getTargets();
-    for (PyExpression target : targets) {
-      if (target instanceof PyTargetExpression && PyUtil.isInstanceAttribute(target)) {
-        collected.put(target.getName(), (PyTargetExpression)target);
+  @NotNull
+  private static List<PyTargetExpression> getTargetExpressions(@NotNull PyFunction function) {
+    final PyFunctionStub stub = function.getStub();
+    if (stub != null) {
+      return Arrays.asList(stub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY));
+    }
+    else {
+      final PyStatementList statementList = function.getStatementList();
+      final List<PyTargetExpression> result = new ArrayList<PyTargetExpression>();
+      if (statementList != null) {
+        statementList.accept(new PyRecursiveElementVisitor() {
+          public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
+            for (PyExpression expression : node.getTargets()) {
+              if (expression instanceof PyTargetExpression) {
+                result.add((PyTargetExpression)expression);
+              }
+            }
+          }
+        });
       }
+      return result;
     }
   }
 
