@@ -150,9 +150,11 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
         myProject.putUserData(LAST_AUTO_MAKE_NOFITICATION, null);
       }
     }
-    final ProblemsView view = ProblemsView.SERVICE.getInstance(myProject);
-    view.clearProgress();
-    view.clearOldMessages(null, sessionId);
+    if (!myProject.isDisposed()) {
+      final ProblemsView view = ProblemsView.SERVICE.getInstance(myProject);
+      view.clearProgress();
+      view.clearOldMessages(null, sessionId);
+    }
   }
 
   private void informWolf(Project project, CmdlineRemoteProto.Message.BuilderMessage.CompileMessage message) {
