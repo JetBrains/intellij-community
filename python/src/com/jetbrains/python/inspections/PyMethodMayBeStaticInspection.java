@@ -49,8 +49,12 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
       final PyDecoratorList decoratorList = node.getDecoratorList();
       if (decoratorList != null) {
         for (PyDecorator decorator : decoratorList.getDecorators()) {
-          if (PyNames.STATICMETHOD.equals(decorator.getName()))
+          final String decoratorName = decorator.getName();
+          if (PyNames.STATICMETHOD.equals(decoratorName) || PyNames.CLASSMETHOD.equals(decoratorName)) {
             return;
+          }
+          final Property property = containingClass.findPropertyByCallable(node);
+          if (property != null) return;
         }
       }
 
@@ -61,12 +65,23 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
 
       if (statements.length == 1 && statements[0] instanceof PyPassStatement) return;
 
+      final PyParameter[] parameters = node.getParameterList().getParameters();
+
+      final String selfName;
+      if (parameters.length > 0) {
+        final String name = parameters[0].getName();
+        selfName = name != null ? name : parameters[0].getText();
+      }
+      else {
+        selfName = PyNames.CANONICAL_SELF;
+      }
+
       final boolean[] mayBeStatic = {true};
       PyRecursiveElementVisitor visitor = new PyRecursiveElementVisitor() {
         @Override
         public void visitPyReferenceExpression(PyReferenceExpression node) {
           super.visitPyReferenceExpression(node);
-          if (PyNames.CANONICAL_SELF.equals(node.getName())) {
+          if (selfName.equals(node.getName())) {
             mayBeStatic[0] = false;
           }
         }
