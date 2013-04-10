@@ -239,7 +239,12 @@ public final class GitPusher {
     
     GitCommitsByRepoAndBranch commits = pushInfo.getCommits();
     for (GitRepository repository : commits.getRepositories()) {
-      if (commits.get(repository).getAllCommits().size() == 0) {  // don't push repositories where there is nothing to push. Note that when a branch is created, several recent commits are stored in the pushInfo.
+      GitCommitsByBranch commitsForRepo = commits.get(repository);
+      GitLocalBranch sourceBranch = pushInfo.getPushSpecs().get(repository).getSource();
+      if (commitsForRepo.get(sourceBranch).getType() == GitPushBranchInfo.Type.STANDARD &&
+          commitsForRepo.getAllCommits().size() == 0) {
+         // don't push repositories where there is nothing to push.
+         // however, do push if new branch is created, even without commits
         continue;
       }
       GitPushRepoResult repoResult = pushRepository(pushInfo, commits, repository);
