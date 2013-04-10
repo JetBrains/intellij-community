@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,12 +22,14 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.RefactoringActionHandler;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringBundle;
+
+import java.util.Set;
 
 /**
  * @author Maxim.Medvedev
@@ -50,16 +52,24 @@ public class ConvertToJavaHandler implements RefactoringActionHandler {
   }
 
   private static void invokeInner(Project project, PsiElement[] elements, Editor editor) {
+    Set<GroovyFile> files = ContainerUtil.newHashSet();
+
     for (PsiElement element : elements) {
-      if (!(element instanceof GroovyFile)) {
+      if (!(element instanceof PsiFile)) {
+        element = element.getContainingFile();
+      }
+
+      if (element instanceof GroovyFile) {
+        files.add((GroovyFile)element);
+      }
+      else {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {
-          CommonRefactoringUtil.showErrorHint(project, editor, GroovyRefactoringBundle.message("convert.to.java.can.work.only.with.groovy"), REFACTORING_NAME, HelpID.EXTRACT_METHOD);
+          CommonRefactoringUtil.showErrorHint(project, editor, GroovyRefactoringBundle.message("convert.to.java.can.work.only.with.groovy"), REFACTORING_NAME, null);
           return;
         }
       }
     }
-    GroovyFile[] files = new GroovyFile[elements.length];
-    System.arraycopy(elements, 0, files, 0, elements.length);
-    new ConvertToJavaProcessor(project, files).run();
+
+    new ConvertToJavaProcessor(project, files.toArray(new GroovyFile[files.size()])).run();
   }
 }
