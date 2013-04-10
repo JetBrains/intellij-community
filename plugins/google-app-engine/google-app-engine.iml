@@ -24,6 +24,7 @@
     <orderEntry type="module" module-name="google-app-engine-jps-plugin" />
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="dom-openapi" />
+    <orderEntry type="module" module-name="java-impl" />
   </component>
 </module>
 
