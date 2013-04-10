@@ -802,12 +802,7 @@ public class ScopeTreeViewPanel extends JPanel implements Disposable {
         final PackageDependenciesNode node = (PackageDependenciesNode)path.getLastPathComponent();
         if (!node.isValid()) return null;
         if (node instanceof DirectoryNode) {
-          DirectoryNode directoryNode = (DirectoryNode)node;
-          while (directoryNode.getCompactedDirNode() != null) {
-            directoryNode = directoryNode.getCompactedDirNode();
-            LOG.assertTrue(directoryNode != null);
-          }
-          return (PsiDirectory)directoryNode.getPsiElement();
+          return (PsiDirectory)node.getPsiElement();
         }
         else if (node instanceof BasePsiNode) {
           final PsiElement psiElement = node.getPsiElement();
