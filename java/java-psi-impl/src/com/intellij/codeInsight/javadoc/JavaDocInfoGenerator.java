@@ -39,6 +39,7 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -464,6 +465,17 @@ public class JavaDocInfoGenerator {
 
     if (generatePrologueAndEpilogue)
       generateEpilogue(buffer);
+  }
+
+  public static void enumConstantOrdinal(StringBuilder buffer, PsiField field, PsiClass parentClass, final String newLine) {
+    if (parentClass != null && field instanceof PsiEnumConstant) {
+      final PsiField[] fields = parentClass.getFields();
+      final int idx = ArrayUtilRt.find(fields, field);
+      if (idx >= 0) {
+        buffer.append(newLine);
+        buffer.append("Enum constant ordinal: ").append(idx);
+      }
+    }
   }
 
   // not a javadoc in fact..
