@@ -70,7 +70,7 @@ public class IndexInfrastructure {
 
   private static volatile long ourLastStamp; // ensure any file index stamp increases
 
-  public static void rewriteVersion(final File file, final int version) throws IOException {
+  public static synchronized void rewriteVersion(final File file, final int version) throws IOException {
     final long prevLastModifiedValue = file.lastModified();
     if (file.exists()) {
       FileUtil.delete(file);
