@@ -118,9 +118,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return ourInterner.intern(s);
   }
 
+  public static void internJDOMElement(@NotNull Element rootElement) {
+    JDOMUtil.internElement(rootElement, ourInterner);
+  }
+
   public void readExternal(@NotNull Document document, @NotNull URL url) throws InvalidDataException, FileNotFoundException {
     document = JDOMXIncluder.resolve(document, url.toExternalForm());
-    JDOMUtil.internElement(document.getRootElement(), ourInterner);
+    Element rootElement = document.getRootElement();
+    internJDOMElement(rootElement);
     readExternal(document.getRootElement());
   }
 
@@ -235,7 +240,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       List<Element> result = new ArrayList<Element>();
       for (Element extensionsRoot : elements) {
         for (final Object o : extensionsRoot.getChildren()) {
-          result.add((Element)o);
+          Element element = (Element)o;
+          internJDOMElement(element);
+          result.add(element);
         }
       }
       return result;
