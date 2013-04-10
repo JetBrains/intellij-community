@@ -3,11 +3,10 @@ package org.jetbrains.plugins.gradle.util;
 import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
 import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DataKey;
-import com.intellij.openapi.actionSystem.DataProvider;
-import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.project.ExternalProject;
 import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
 import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
@@ -26,23 +25,18 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.awt.RelativePoint;
-import com.intellij.ui.content.Content;
-import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleSettings;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.internal.task.GradleRefreshTasksListTask;
 import org.jetbrains.plugins.gradle.internal.task.GradleResolveProjectTask;
 import com.intellij.openapi.externalSystem.model.project.id.GradleSyntheticId;
-import org.jetbrains.plugins.gradle.remote.GradleApiException;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
-import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
+import com.intellij.openapi.externalSystem.ui.ExternalProjectStructureTreeModel;
 import com.intellij.openapi.externalSystem.ui.ProjectStructureNodeDescriptor;
 import org.jetbrains.plugins.gradle.ui.MatrixControlBuilder;
 
@@ -256,36 +250,12 @@ public class GradleUtil {
     refreshProject(project, linkedProjectPath, errorMessageHolder, errorDetailsHolder, true, false);
   }
 
-  /**
-   * {@link RemoteUtil#unwrap(Throwable) unwraps} given exception if possible and builds error message for it.
-   *
-   * @param e  exception to process
-   * @return   error message for the given exception
-   */
-  @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
-  @NotNull
-  public static String buildErrorMessage(@NotNull Throwable e) {
-    Throwable unwrapped = RemoteUtil.unwrap(e);
-    String reason = unwrapped.getLocalizedMessage();
-    if (!StringUtil.isEmpty(reason)) {
-      return reason;
-    }
-    else if (unwrapped.getClass() == GradleApiException.class) {
-      return String.format("gradle api threw an exception: %s", ((GradleApiException)unwrapped).getOriginalReason());
-    }
-    else {
-      StringWriter writer = new StringWriter();
-      unwrapped.printStackTrace(new PrintWriter(writer));
-      return writer.toString();
-    }
-  }
-
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
   @Nullable
   private static String extractDetails(@NotNull Throwable e) {
     final Throwable unwrapped = RemoteUtil.unwrap(e);
-    if (unwrapped instanceof GradleApiException) {
-      return ((GradleApiException)unwrapped).getOriginalReason();
+    if (unwrapped instanceof ExternalSystemException) {
+      return ((ExternalSystemException)unwrapped).getOriginalReason();
     }
     return null;
   }
@@ -405,64 +375,14 @@ public class GradleUtil {
   }
 
   /**
-   * Tries to find the current {@link GradleProjectStructureTreeModel} instance.
+   * Tries to find the current {@link ExternalProjectStructureTreeModel} instance.
    *
    * @param context  target context (if defined)
-   * @return         current {@link GradleProjectStructureTreeModel} instance (if any has been found); <code>null</code> otherwise
+   * @return         current {@link ExternalProjectStructureTreeModel} instance (if any has been found); <code>null</code> otherwise
    */
   @Nullable
-  public static GradleProjectStructureTreeModel getProjectStructureTreeModel(@Nullable DataContext context) {
-    return getToolWindowElement(GradleProjectStructureTreeModel.class, context, GradleDataKeys.SYNC_TREE_MODEL);
-  }
-  
-  @Nullable
-  public static <T> T getToolWindowElement(@NotNull Class<T> clazz, @Nullable DataContext context, @NotNull DataKey<T> key) {
-    if (context != null) {
-      final T result = key.getData(context);
-      if (result != null) {
-        return result;
-      }
-    }
-
-    if (context == null) {
-      return null;
-    }
-
-    final Project project = PlatformDataKeys.PROJECT.getData(context);
-    if (project == null) {
-      return null;
-    }
-
-    return getToolWindowElement(clazz, project, key);
-  }
-
-  @SuppressWarnings("unchecked")
-  @Nullable
-  public static <T> T getToolWindowElement(@NotNull Class<T> clazz, @NotNull Project project, @NotNull DataKey<T> key) {
-    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
-    if (toolWindowManager == null) {
-      return null;
-    }
-    final ToolWindow toolWindow = toolWindowManager.getToolWindow(GradleConstants.TOOL_WINDOW_ID);
-    if (toolWindow == null) {
-      return null;
-    }
-
-    final ContentManager contentManager = toolWindow.getContentManager();
-    if (contentManager == null) {
-      return null;
-    }
-
-    for (Content content : contentManager.getContents()) {
-      final JComponent component = content.getComponent();
-      if (component instanceof DataProvider) {
-        final Object data = ((DataProvider)component).getData(key.getName());
-        if (data != null && clazz.isInstance(data)) {
-          return (T)data;
-        }
-      }
-    }
-    return null;
+  public static ExternalProjectStructureTreeModel getProjectStructureTreeModel(@Nullable DataContext context) {
+    return getToolWindowElement(ExternalProjectStructureTreeModel.class, context, ExternalSystemDataKeys.PROJECT_TREE_MODEL);
   }
   
   /**
@@ -485,11 +405,6 @@ public class GradleUtil {
     return INSTALLATION_MANAGER.getValue().getGradleHome(project) != null;
   }
 
-  @NotNull
-  public static String getOutdatedEntityName(@NotNull String entityName, @NotNull String gradleVersion, @NotNull String ideVersion) {
-    return String.format("%s (%s -> %s)", entityName, ideVersion, gradleVersion);
-  }
-  
   private interface TaskUnderProgress {
     void execute(@NotNull ProgressIndicator indicator);
   }

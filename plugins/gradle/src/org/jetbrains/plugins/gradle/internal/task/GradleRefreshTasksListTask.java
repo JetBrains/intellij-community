@@ -16,17 +16,18 @@
 package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
+import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleLocalSettings;
-import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
-import org.jetbrains.plugins.gradle.remote.GradleBuildManager;
+import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
+import com.intellij.openapi.externalSystem.build.ExternalSystemBuildManager;
 import org.jetbrains.plugins.gradle.tasks.GradleTasksModel;
-import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.Collection;
@@ -40,15 +41,15 @@ public class GradleRefreshTasksListTask extends AbstractGradleTask {
   @NotNull private final String myProjectPath;
 
   public GradleRefreshTasksListTask(@Nullable Project project, @NotNull String projectPath) {
-    super(project, GradleTaskType.REFRESH_TASKS_LIST);
+    super(project, ExternalSystemTaskType.REFRESH_TASKS_LIST);
     myProjectPath = projectPath;
   }
 
   @Override
   protected void doExecute() throws Exception {
-    final GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
+    final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     Project project = getIdeProject();
-    GradleBuildManager buildManager = manager.getFacade(project).getBuildManager();
+    ExternalSystemBuildManager buildManager = manager.getFacade(project).getBuildManager();
     setState(GradleTaskState.IN_PROGRESS);
     try {
       final Collection<ExternalSystemTaskDescriptor> descriptors = buildManager.listTasks(getId(), myProjectPath);
@@ -63,7 +64,7 @@ public class GradleRefreshTasksListTask extends AbstractGradleTask {
       GradleLocalSettings settings = GradleLocalSettings.getInstance(project);
       settings.setAvailableTasks(descriptors);
       
-      final GradleTasksModel tasksModel = GradleUtil.getToolWindowElement(GradleTasksModel.class, project, GradleDataKeys.ALL_TASKS_MODEL);
+      final GradleTasksModel tasksModel = GradleUtil.getToolWindowElement(GradleTasksModel.class, project, ExternalSystemDataKeys.ALL_TASKS_MODEL);
       if (tasksModel == null) {
         return;
       }

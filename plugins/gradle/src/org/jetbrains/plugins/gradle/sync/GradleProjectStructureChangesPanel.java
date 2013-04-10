@@ -3,7 +3,9 @@ package org.jetbrains.plugins.gradle.sync;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureServices;
+import com.intellij.openapi.externalSystem.ui.ExternalProjectStructureTreeModel;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
@@ -17,11 +19,10 @@ import com.intellij.util.ui.tree.TreeUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleSettingsListener;
-import org.jetbrains.plugins.gradle.config.GradleLocalSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
+import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
 import org.jetbrains.plugins.gradle.config.GradleToolWindowPanel;
 import org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager;
-import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
@@ -63,11 +64,11 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
 
   private final GradleLocalSettings mySettings;
 
-  private Tree                            myTree;
-  private GradleProjectStructureTreeModel myTreeModel;
-  private ProjectStructureServices        myContext;
-  private Object                          myNodeUnderMouse;
-  private boolean                         mySuppressCollapseTracking;
+  private Tree                              myTree;
+  private ExternalProjectStructureTreeModel myTreeModel;
+  private ProjectStructureServices          myContext;
+  private Object                            myNodeUnderMouse;
+  private boolean                           mySuppressCollapseTracking;
 
   public GradleProjectStructureChangesPanel(@NotNull Project project,
                                             @NotNull ProjectStructureServices context)
@@ -142,7 +143,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   }
 
   @NotNull
-  public GradleProjectStructureTreeModel getTreeModel() {
+  public ExternalProjectStructureTreeModel getTreeModel() {
     return myTreeModel;
   }
 
@@ -150,7 +151,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   @Override
   protected JComponent buildContent() {
     JPanel result = new JPanel(new GridBagLayout());
-    myTreeModel = new GradleProjectStructureTreeModel(getProject(), myContext, false);
+    myTreeModel = new ExternalProjectStructureTreeModel(getProject(), myContext, false);
     myTree = new Tree(myTreeModel);
     myTree.addTreeWillExpandListener(new TreeWillExpandListener() {
       @Override
@@ -217,13 +218,13 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (GradleDataKeys.SYNC_TREE.is(dataId)) {
+    if (ExternalSystemDataKeys.PROJECT_TREE.is(dataId)) {
       return myTree;
     }
-    else if (GradleDataKeys.SYNC_TREE_MODEL.is(dataId)) {
+    else if (ExternalSystemDataKeys.PROJECT_TREE_MODEL.is(dataId)) {
       return myTreeModel;
     }
-    else if (GradleDataKeys.SYNC_TREE_SELECTED_NODE.is(dataId)) {
+    else if (ExternalSystemDataKeys.PROJECT_TREE_SELECTED_NODE.is(dataId)) {
       TreePath[] paths = myTree.getSelectionPaths();
       if (paths == null) {
         return null;
@@ -234,7 +235,7 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
       }
       return result;
     }
-    else if (GradleDataKeys.SYNC_TREE_NODE_UNDER_MOUSE.is(dataId)) {
+    else if (ExternalSystemDataKeys.SYNC_TREE_NODE_UNDER_MOUSE.is(dataId)) {
       return myNodeUnderMouse;
     }
     else if (PlatformDataKeys.HELP_ID.is(dataId)) {

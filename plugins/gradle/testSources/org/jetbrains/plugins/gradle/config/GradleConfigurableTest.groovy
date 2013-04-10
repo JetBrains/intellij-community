@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.config
 
 import com.intellij.openapi.project.Project
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.Before
 import org.junit.Test
 

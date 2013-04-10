@@ -2,18 +2,20 @@ package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
+import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
+import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager;
-import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationEvent;
-import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
-import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListenerAdapter;
-import org.jetbrains.plugins.gradle.remote.GradleApiFacade;
-import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListenerAdapter;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -32,16 +34,16 @@ public abstract class AbstractGradleTask implements GradleTask {
   private final AtomicReference<GradleTaskState> myState = new AtomicReference<GradleTaskState>(GradleTaskState.NOT_STARTED);
   private final AtomicReference<Throwable>       myError = new AtomicReference<Throwable>();
 
-  @Nullable transient private final Project      myIdeProject;
-  @NotNull private final            GradleTaskId myId;
+  @Nullable transient private final Project              myIdeProject;
+  @NotNull private final            ExternalSystemTaskId myId;
 
-  protected AbstractGradleTask(@Nullable Project project, @NotNull GradleTaskType type) {
+  protected AbstractGradleTask(@Nullable Project project, @NotNull ExternalSystemTaskType type) {
     myIdeProject = project;
-    myId = GradleTaskId.create(type);
+    myId = ExternalSystemTaskId.create(type);
   }
 
   @NotNull
-  public GradleTaskId getId() {
+  public ExternalSystemTaskId getId() {
     return myId;
   }
 
@@ -68,9 +70,9 @@ public abstract class AbstractGradleTask implements GradleTask {
     if (getState() != GradleTaskState.IN_PROGRESS) {
       return;
     }
-    final GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
+    final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     try {
-      final GradleApiFacade facade = manager.getFacade(myIdeProject);
+      final RemoteExternalSystemFacade facade = manager.getFacade(myIdeProject);
       setState(facade.isTaskInProgress(getId()) ? GradleTaskState.IN_PROGRESS : GradleTaskState.FAILED);
     }
     catch (Throwable e) {
@@ -81,31 +83,31 @@ public abstract class AbstractGradleTask implements GradleTask {
       }
     }
   }
-  
+
   @Override
-  public void execute(@NotNull final ProgressIndicator indicator, @NotNull GradleTaskNotificationListener ... listeners) {
+  public void execute(@NotNull final ProgressIndicator indicator, @NotNull ExternalSystemTaskNotificationListener... listeners) {
     indicator.setIndeterminate(true);
-    GradleTaskNotificationListenerAdapter adapter = new GradleTaskNotificationListenerAdapter() {
+    ExternalSystemTaskNotificationListenerAdapter adapter = new ExternalSystemTaskNotificationListenerAdapter() {
       @Override
-      public void onStatusChange(@NotNull GradleTaskNotificationEvent event) {
+      public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
         indicator.setText(wrapProgressText(event.getDescription()));
       }
     };
-    final GradleTaskNotificationListener[] ls;
+    final ExternalSystemTaskNotificationListener[] ls;
     if (listeners.length > 0) {
       ls = ArrayUtil.append(listeners, adapter);
     }
     else {
-      ls = new GradleTaskNotificationListener[] { adapter };
+      ls = new ExternalSystemTaskNotificationListener[] { adapter };
     }
     
     execute(ls);
   }
   
   @Override
-  public void execute(@NotNull GradleTaskNotificationListener... listeners) {
-    GradleProgressNotificationManager progressManager = ServiceManager.getService(GradleProgressNotificationManager.class);
-    for (GradleTaskNotificationListener listener : listeners) {
+  public void execute(@NotNull ExternalSystemTaskNotificationListener... listeners) {
+    ExternalSystemProgressNotificationManager progressManager = ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
+    for (ExternalSystemTaskNotificationListener listener : listeners) {
       progressManager.addNotificationListener(getId(), listener);
     }
     try {
@@ -117,7 +119,7 @@ public abstract class AbstractGradleTask implements GradleTask {
       LOG.warn(e);
     }
     finally {
-      for (GradleTaskNotificationListener listener : listeners) {
+      for (ExternalSystemTaskNotificationListener listener : listeners) {
         progressManager.removeNotificationListener(listener);
       }
     }

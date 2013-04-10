@@ -6,14 +6,14 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.Presentation;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.internal.task.GradleTaskManager;
-import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
-import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
+import com.intellij.openapi.externalSystem.service.task.ExternalSystemTaskManager;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.util.Collection;
@@ -52,8 +52,8 @@ public abstract class AbstractGradleSyncTreeNodeAction extends AnAction {
     }
     helper.updatePresentation(nodes, e.getPresentation());
     if (e.getPresentation().isEnabled()) {
-      final GradleTaskManager taskManager = ServiceManager.getService(GradleTaskManager.class);
-      if (taskManager != null && taskManager.hasTaskOfTypeInProgress(GradleTaskType.RESOLVE_PROJECT)) {
+      final ExternalSystemTaskManager taskManager = ServiceManager.getService(ExternalSystemTaskManager.class);
+      if (taskManager != null && taskManager.hasTaskOfTypeInProgress(ExternalSystemTaskType.RESOLVE_PROJECT)) {
         e.getPresentation().setEnabled(false);
       }
     }
@@ -73,7 +73,7 @@ public abstract class AbstractGradleSyncTreeNodeAction extends AnAction {
     if (nodes == null || nodes.isEmpty()) {
       return;
     }
-    final Tree tree = GradleDataKeys.SYNC_TREE.getData(e.getDataContext());
+    final Tree tree = ExternalSystemDataKeys.PROJECT_TREE.getData(e.getDataContext());
     if (tree != null) {
       doActionPerformed(nodes, project, tree);
     }
@@ -107,7 +107,7 @@ public abstract class AbstractGradleSyncTreeNodeAction extends AnAction {
     @Nullable
     @Override
     public Collection<ProjectStructureNode<?>> getTargetNodes(@NotNull AnActionEvent e) {
-      return GradleDataKeys.SYNC_TREE_SELECTED_NODE.getData(e.getDataContext());
+      return ExternalSystemDataKeys.PROJECT_TREE_SELECTED_NODE.getData(e.getDataContext());
     }
 
     @Override

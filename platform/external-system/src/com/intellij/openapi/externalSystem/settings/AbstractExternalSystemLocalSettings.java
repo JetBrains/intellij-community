@@ -17,16 +17,17 @@ package com.intellij.openapi.externalSystem.settings;
 
 import com.intellij.openapi.components.PersistentStateComponent;
 import com.intellij.openapi.components.State;
-import com.intellij.openapi.externalSystem.model.project.change.user.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.xmlb.XmlSerializerUtil;
-import com.intellij.util.xmlb.annotations.AbstractCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.Collection;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -54,9 +55,6 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
   /** @see #getWorkingExpandStates() */
   private final AtomicReference<Map<String/*tree path*/, Boolean/*expanded*/>> myWorkingExpandStates
     = new AtomicReference<Map<String, Boolean>>(new HashMap<String, Boolean>());
-
-  private final AtomicReference<Set<UserProjectChange<?>>> myUserChanges
-    = new AtomicReference<Set<UserProjectChange<?>>>(new HashSet<UserProjectChange<?>>());
 
   private final AtomicReference<List<ExternalSystemTaskDescriptor>> myRecentTasks    =
     new AtomicReference<List<ExternalSystemTaskDescriptor>>(ContainerUtilRt.<ExternalSystemTaskDescriptor>newArrayList());
@@ -106,25 +104,6 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
       myExpandStates.get().putAll(state);
       myWorkingExpandStates.get().putAll(state);
     }
-  }
-
-  @AbstractCollection(
-    surroundWithTag = false,
-    elementTypes = {
-      AddModuleUserChange.class, RemoveModuleUserChange.class,
-      AddModuleDependencyUserChange.class, RemoveModuleDependencyUserChange.class,
-      AddLibraryDependencyUserChange.class, RemoveLibraryDependencyUserChange.class,
-      ModuleDependencyExportedChange.class, ModuleDependencyScopeUserChange.class,
-      LibraryDependencyExportedChange.class, LibraryDependencyScopeUserChange.class
-    }
-  )
-  @NotNull
-  public Set<UserProjectChange<?>> getUserProjectChanges() {
-    return myUserChanges.get();
-  }
-
-  public void setUserProjectChanges(@Nullable Set<UserProjectChange<?>> changes) {
-    myUserChanges.set(changes);
   }
 
   @NotNull

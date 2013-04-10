@@ -42,15 +42,6 @@ public class GradleConstants {
   @NonNls public static final String REGISTRY_RECENT_TASKS_NUMBER_KEY = "gradle.recent.tasks.number";
   @NonNls public static final String REGISTRY_DEBUG_ON_TASK_CLICK_KEY = "gradle.debug.task.on.double.click";
 
-  public static final ProjectStructureNodeDescriptor<GradleSyntheticId> DEPENDENCIES_NODE_DESCRIPTOR
-    = GradleUtil.buildSyntheticDescriptor(ExternalSystemBundle.message("gradle.project.structure.tree.node.dependencies"));
-
-  public static final ProjectStructureNodeDescriptor<GradleSyntheticId> MODULES_NODE_DESCRIPTOR
-    = GradleUtil.buildSyntheticDescriptor(ExternalSystemBundle.message("gradle.import.structure.tree.node.modules"));
-
-  public static final ProjectStructureNodeDescriptor<GradleSyntheticId> LIBRARIES_NODE_DESCRIPTOR
-    = GradleUtil.buildSyntheticDescriptor(ExternalSystemBundle.message("gradle.import.structure.tree.node.libraries"));
-
   private GradleConstants() {
   }
 }

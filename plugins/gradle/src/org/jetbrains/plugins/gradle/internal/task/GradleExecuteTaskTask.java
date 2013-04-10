@@ -16,11 +16,12 @@
 package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
+import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
-import org.jetbrains.plugins.gradle.remote.GradleBuildManager;
+import com.intellij.openapi.externalSystem.build.ExternalSystemBuildManager;
 
 import java.util.List;
 
@@ -34,16 +35,16 @@ public class GradleExecuteTaskTask extends AbstractGradleTask {
   @NotNull private final String       myGradleProjectPath;
 
   public GradleExecuteTaskTask(@Nullable Project project, @NotNull String gradleProjectPath, @NotNull List<String> tasksToExecute) {
-    super(project, GradleTaskType.EXECUTE_TASK);
+    super(project, ExternalSystemTaskType.EXECUTE_TASK);
     myGradleProjectPath = gradleProjectPath;
     myTasksToExecute = tasksToExecute;
   }
 
   @Override
   protected void doExecute() throws Exception {
-    final GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
+    final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     Project project = getIdeProject();
-    GradleBuildManager buildManager = manager.getFacade(project).getBuildManager();
+    ExternalSystemBuildManager buildManager = manager.getFacade(project).getBuildManager();
     setState(GradleTaskState.IN_PROGRESS);
     try {
       buildManager.executeTasks(getId(), myTasksToExecute, myGradleProjectPath);

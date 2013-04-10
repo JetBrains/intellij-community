@@ -15,12 +15,20 @@
  */
 package com.intellij.openapi.externalSystem.util;
 
+import com.intellij.execution.rmi.RemoteUtil;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.DataKey;
+import com.intellij.openapi.actionSystem.DataProvider;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ExternalEntity;
 import com.intellij.openapi.externalSystem.model.project.ExternalEntityVisitor;
 import com.intellij.openapi.externalSystem.service.project.ModuleAwareContentRoot;
-import com.intellij.openapi.externalSystem.service.project.manage.GradleProjectEntityChangeListener;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectEntityChangeListener;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -28,16 +36,28 @@ import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.content.Content;
+import com.intellij.ui.content.ContentManager;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.io.File;
+import java.io.PrintWriter;
+import java.io.StringWriter;
 import java.util.Collections;
+import java.util.Map;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -50,6 +70,19 @@ public class ExternalSystemUtil {
   @NotNull public static final String PATH_SEPARATOR = "/";
 
   @NotNull private static final Pattern ARTIFACT_PATTERN = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^\\.]+?)?");
+
+  @NotNull private static final NotNullLazyValue<Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?>>> MANAGERS =
+    new AtomicNotNullLazyValue<Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?>>>() {
+      @NotNull
+      @Override
+      protected Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?>> compute() {
+        Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?>> result = ContainerUtilRt.newHashMap();
+        for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
+          result.put(manager.getSystemId(), manager);
+        }
+        return result;
+      }
+    };
 
   private ExternalSystemUtil() {
   }
@@ -178,26 +211,33 @@ public class ExternalSystemUtil {
     }
   }
 
-  public static void executeProjectChangeAction(@NotNull Project project, @NotNull Object entityToChange, @NotNull Runnable task) {
-    executeProjectChangeAction(project, entityToChange, false, task);
+  public static void executeProjectChangeAction(@NotNull Project project,
+                                                @NotNull final ProjectSystemId externalSystemId,
+                                                @NotNull Object entityToChange,
+                                                @NotNull Runnable task)
+  {
+    executeProjectChangeAction(project, externalSystemId, entityToChange, false, task);
   }
 
   public static void executeProjectChangeAction(@NotNull Project project,
+                                                @NotNull final ProjectSystemId externalSystemId,
                                                 @NotNull Object entityToChange,
                                                 boolean synchronous,
                                                 @NotNull Runnable task)
   {
-    executeProjectChangeAction(project, Collections.singleton(entityToChange), synchronous, task);
+    executeProjectChangeAction(project, externalSystemId, Collections.singleton(entityToChange), synchronous, task);
   }
 
   public static void executeProjectChangeAction(@NotNull final Project project,
+                                                @NotNull final ProjectSystemId externalSystemId,
                                                 @NotNull final Iterable<?> entitiesToChange,
                                                 @NotNull final Runnable task)
   {
-    executeProjectChangeAction(project, entitiesToChange, false, task);
+    executeProjectChangeAction(project, externalSystemId, entitiesToChange, false, task);
   }
 
   public static void executeProjectChangeAction(@NotNull final Project project,
+                                                @NotNull final ProjectSystemId externalSystemId,
                                                 @NotNull final Iterable<?> entitiesToChange,
                                                 boolean synchronous,
                                                 @NotNull final Runnable task)
@@ -207,16 +247,16 @@ public class ExternalSystemUtil {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            final GradleProjectEntityChangeListener publisher = project.getMessageBus().syncPublisher(GradleProjectEntityChangeListener.TOPIC);
+            final ProjectEntityChangeListener publisher = project.getMessageBus().syncPublisher(ProjectEntityChangeListener.TOPIC);
             for (Object e : entitiesToChange) {
-              publisher.onChangeStart(e);
+              publisher.onChangeStart(e, externalSystemId);
             }
             try {
               task.run();
             }
             finally {
               for (Object e : entitiesToChange) {
-                publisher.onChangeEnd(e);
+                publisher.onChangeEnd(e, externalSystemId);
               }
             }
           }
@@ -234,6 +274,119 @@ public class ExternalSystemUtil {
     }
     else {
       UIUtil.invokeLaterIfNeeded(wrappedTask);
+    }
+  }
+
+  @NotNull
+  public static String getOutdatedEntityName(@NotNull String entityName, @NotNull String gradleVersion, @NotNull String ideVersion) {
+    return String.format("%s (%s -> %s)", entityName, ideVersion, gradleVersion);
+  }
+
+  @Nullable
+  public static <T> T getToolWindowElement(@NotNull Class<T> clazz,
+                                           @Nullable DataContext context,
+                                           @NotNull DataKey<T> key,
+                                           @NotNull ProjectSystemId externalSystemId)
+  {
+    // TODO den use external system
+    if (context != null) {
+      final T result = key.getData(context);
+      if (result != null) {
+        return result;
+      }
+    }
+
+    if (context == null) {
+      return null;
+    }
+
+    final Project project = PlatformDataKeys.PROJECT.getData(context);
+    if (project == null) {
+      return null;
+    }
+
+    return getToolWindowElement(clazz, project, key, externalSystemId);
+  }
+
+  @SuppressWarnings("unchecked")
+  @Nullable
+  public static <T> T getToolWindowElement(@NotNull Class<T> clazz,
+                                           @NotNull Project project,
+                                           @NotNull DataKey<T> key,
+                                           @NotNull ProjectSystemId externalSystemId)
+  {
+    final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
+    if (toolWindowManager == null) {
+      return null;
+    }
+    // TODO den use external system.
+    final ToolWindow toolWindow = null;
+//    final ToolWindow toolWindow = toolWindowManager.getToolWindow(GradleConstants.TOOL_WINDOW_ID);
+    if (toolWindow == null) {
+      return null;
+    }
+
+    final ContentManager contentManager = toolWindow.getContentManager();
+    if (contentManager == null) {
+      return null;
+    }
+
+    for (Content content : contentManager.getContents()) {
+      final JComponent component = content.getComponent();
+      if (component instanceof DataProvider) {
+        final Object data = ((DataProvider)component).getData(key.getName());
+        if (data != null && clazz.isInstance(data)) {
+          return (T)data;
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static ExternalSystemManager<?, ?, ?, ?> getManager(@NotNull ProjectSystemId externalSystemId) {
+    return MANAGERS.getValue().get(externalSystemId);
+  }
+
+  /**
+   * Configures given classpath to reference target i18n bundle file(s).
+   * 
+   * @param classPath     process classpath
+   * @param bundlePath    path to the target bundle file
+   * @param contextClass  class from the same content root as the target bundle file
+   */
+  public static void addBundle(@NotNull PathsList classPath, @NotNull String bundlePath, @NotNull Class<?> contextClass) {
+    String pathToUse = bundlePath.replace('.', '/');
+    if (!pathToUse.endsWith(".properties")) {
+      pathToUse += ".properties";
+    }
+    if (!pathToUse.startsWith("/")) {
+      pathToUse = '/' + pathToUse;
+    }
+    classPath.add(PathManager.getResourceRoot(contextClass, pathToUse));
+  }
+
+  /**
+   * {@link RemoteUtil#unwrap(Throwable) unwraps} given exception if possible and builds error message for it.
+   *
+   * @param e  exception to process
+   * @return   error message for the given exception
+   */
+  @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
+  @NotNull
+  public static String buildErrorMessage(@NotNull Throwable e) {
+    Throwable unwrapped = RemoteUtil.unwrap(e);
+    String reason = unwrapped.getLocalizedMessage();
+    if (!StringUtil.isEmpty(reason)) {
+      return reason;
+    }
+    else if (unwrapped.getClass() == ExternalSystemException.class) {
+      return String.format("exception during working with external system: %s", ((ExternalSystemException)unwrapped).getOriginalReason());
+    }
+    else {
+      StringWriter writer = new StringWriter();
+      unwrapped.printStackTrace(new PrintWriter(writer));
+      return writer.toString();
     }
   }
 }

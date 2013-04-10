@@ -3,6 +3,7 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ExternalModule;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
@@ -73,15 +74,15 @@ public class ExternalModuleManager {
           @Override
           public void run() {
             final ModuleManager moduleManager = ModuleManager.getInstance(project);
-            final GradleProjectEntityChangeListener publisher
-              = project.getMessageBus().syncPublisher(GradleProjectEntityChangeListener.TOPIC);
+            final ProjectEntityChangeListener publisher
+              = project.getMessageBus().syncPublisher(ProjectEntityChangeListener.TOPIC);
             for (ExternalModule module : modules) {
-              publisher.onChangeStart(module);
+              publisher.onChangeStart(module, module.getOwner());
               try {
                 importModule(moduleManager, module);
               }
               finally {
-                publisher.onChangeEnd(module);
+                publisher.onChangeEnd(module, module.getOwner());
               }
             }
           }
@@ -139,7 +140,7 @@ public class ExternalModuleManager {
     if (modules.isEmpty()) {
       return;
     }
-    ExternalSystemUtil.executeProjectChangeAction(project, modules, true, new Runnable() {
+    ExternalSystemUtil.executeProjectChangeAction(project, modules.iterator().next().getOwner(), modules, true, new Runnable() {
       @Override
       public void run() {
         LocalFileSystem fileSystem = LocalFileSystem.getInstance();
@@ -165,7 +166,7 @@ public class ExternalModuleManager {
       return;
     }
     Project project = modules.iterator().next().getProject();
-    ExternalSystemUtil.executeProjectChangeAction(project, modules, synchronous, new Runnable() {
+    ExternalSystemUtil.executeProjectChangeAction(project, ProjectSystemId.IDE, modules, synchronous, new Runnable() {
       @Override
       public void run() {
         for (Module module : modules) {

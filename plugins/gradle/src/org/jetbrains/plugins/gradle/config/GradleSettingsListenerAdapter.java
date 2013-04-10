@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.config;
 
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 
 /**
  * @author Denis Zhdanov

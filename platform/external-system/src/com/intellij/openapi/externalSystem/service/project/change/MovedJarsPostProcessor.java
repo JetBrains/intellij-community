@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service.project.change;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.Jar;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChangeVisitor;
@@ -71,6 +72,7 @@ public class MovedJarsPostProcessor implements ExternalProjectStructureChangesPo
 
   @Override
   public void processChanges(@NotNull final Collection<ExternalProjectStructureChange> changes,
+                             @NotNull ProjectSystemId externalSystemId,
                              @NotNull final Project project,
                              boolean onIdeProjectStructureChange)
   {
@@ -93,7 +95,7 @@ public class MovedJarsPostProcessor implements ExternalProjectStructureChangesPo
         }
       }
     };
-    doMerge(mergeTask, project);
+    doMerge(mergeTask, project); 
   }
 
   /**
@@ -103,7 +105,7 @@ public class MovedJarsPostProcessor implements ExternalProjectStructureChangesPo
    * @param project    target project
    */
   public void doMerge(@NotNull final Runnable mergeTask, @NotNull final Project project) {
-    ExternalSystemUtil.executeProjectChangeAction(project, mergeTask, true, new Runnable() {
+    ExternalSystemUtil.executeProjectChangeAction(project,ProjectSystemId.IDE, mergeTask, true, new Runnable() {
       @Override
       public void run() {
         ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(mergeTask);

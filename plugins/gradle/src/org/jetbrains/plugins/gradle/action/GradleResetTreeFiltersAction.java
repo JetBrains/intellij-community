@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.action;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
+import com.intellij.openapi.externalSystem.ui.ExternalProjectStructureTreeModel;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.gradle.util.TextIcon;
 
@@ -21,13 +21,13 @@ public class GradleResetTreeFiltersAction extends ToggleAction {
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    final GradleProjectStructureTreeModel model = GradleUtil.getProjectStructureTreeModel(e.getDataContext());
+    final ExternalProjectStructureTreeModel model = GradleUtil.getProjectStructureTreeModel(e.getDataContext());
     return model == null || !model.hasAnyFilter();
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    final GradleProjectStructureTreeModel treeModel = GradleUtil.getProjectStructureTreeModel(e.getDataContext());
+    final ExternalProjectStructureTreeModel treeModel = GradleUtil.getProjectStructureTreeModel(e.getDataContext());
     if (treeModel != null) {
       treeModel.removeAllFilters();
     }

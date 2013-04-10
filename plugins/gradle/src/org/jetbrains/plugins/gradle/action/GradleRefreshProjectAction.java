@@ -3,17 +3,17 @@ package org.jetbrains.plugins.gradle.action;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.config.GradleSettings;
-import org.jetbrains.plugins.gradle.internal.task.GradleTaskManager;
-import org.jetbrains.plugins.gradle.internal.task.GradleTaskType;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import com.intellij.openapi.externalSystem.service.task.ExternalSystemTaskManager;
 import org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
+import com.intellij.openapi.externalSystem.ui.ExternalProjectStructureTreeModel;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 /**
@@ -37,7 +37,7 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
   protected void doUpdate(@NotNull AnActionEvent event, @NotNull Project project, @NotNull String linkedProjectPath) {
     String message = myErrorMessage.get();
     if (message != null) {
-      GradleProjectStructureTreeModel model = GradleUtil.getProjectStructureTreeModel(event.getDataContext());
+      ExternalProjectStructureTreeModel model = GradleUtil.getProjectStructureTreeModel(event.getDataContext());
       if (model != null) {
         model.rebuild();
       }
@@ -46,9 +46,9 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
       myErrorMessage.set(null);
     }
     boolean enabled = false;
-    final GradleTaskManager taskManager = ServiceManager.getService(project, GradleTaskManager.class);
+    final ExternalSystemTaskManager taskManager = ServiceManager.getService(project, ExternalSystemTaskManager.class);
     if (taskManager != null) {
-      enabled = !taskManager.hasTaskOfTypeInProgress(GradleTaskType.RESOLVE_PROJECT);
+      enabled = !taskManager.hasTaskOfTypeInProgress(ExternalSystemTaskType.RESOLVE_PROJECT);
     }
     event.getPresentation().setEnabled(enabled);
   }

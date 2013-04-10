@@ -15,21 +15,17 @@
  */
 package com.intellij.openapi.externalSystem.service.project.change;
 
-import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
-import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChangeVisitor;
-import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChangeVisitorAdapter;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.change.*;
 import com.intellij.openapi.externalSystem.model.project.id.JarId;
 import com.intellij.openapi.externalSystem.model.project.id.LibraryDependencyId;
+import com.intellij.openapi.externalSystem.util.ArtifactInfo;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyPresenceChange;
-import org.jetbrains.plugins.gradle.diff.library.GradleJarPresenceChange;
-import org.jetbrains.plugins.gradle.diff.library.GradleOutdatedLibraryVersionChange;
 import com.intellij.openapi.externalSystem.model.project.id.LibraryId;
-import org.jetbrains.plugins.gradle.util.GradleArtifactInfo;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.util.Collection;
 import java.util.Map;
@@ -60,30 +56,31 @@ public class OutdatedLibraryVersionPostProcessor implements ExternalProjectStruc
 
   @Override
   public void processChanges(@NotNull Collection<ExternalProjectStructureChange> changes,
+                             @NotNull ProjectSystemId externalSystemId,
                              @NotNull Project project,
                              boolean onIdeProjectStructureChange)
   {
     if (SKIP) {
       return;
     }
-    
+
     final Map<String /* library name */, Info> gradleData = ContainerUtilRt.newHashMap();
     final Map<String /* library name */, Info> ideData = ContainerUtilRt.newHashMap();
-    final Set<GradleJarPresenceChange> jarPresenceChanges = ContainerUtilRt.newHashSet();
+    final Set<JarPresenceChange> jarPresenceChanges = ContainerUtilRt.newHashSet();
 
     //region Collect library dependency-local changes.
     ExternalProjectStructureChangeVisitor visitor = new ExternalProjectStructureChangeVisitorAdapter() {
       @Override
-      public void visit(@NotNull GradleLibraryDependencyPresenceChange change) {
+      public void visit(@NotNull LibraryDependencyPresenceChange change) {
         Map<String /* library name */, Info> container = gradleData;
-        LibraryDependencyId libraryDependencyId = change.getGradleEntity();
+        LibraryDependencyId libraryDependencyId = change.getExternalEntity();
         if (libraryDependencyId == null) {
           container = ideData;
           libraryDependencyId = change.getIdeEntity();
         }
         assert libraryDependencyId != null;
         LibraryId libraryId = libraryDependencyId.getLibraryId();
-        GradleArtifactInfo artifactInfo = GradleUtil.parseArtifactInfo(libraryId.getLibraryName());
+        ArtifactInfo artifactInfo = ExternalSystemUtil.parseArtifactInfo(libraryId.getLibraryName());
         if (artifactInfo == null) {
           return;
         }
@@ -100,7 +97,7 @@ public class OutdatedLibraryVersionPostProcessor implements ExternalProjectStruc
       }
 
       @Override
-      public void visit(@NotNull GradleJarPresenceChange change) {
+      public void visit(@NotNull JarPresenceChange change) {
         jarPresenceChanges.add(change);
       }
     };
@@ -118,25 +115,25 @@ public class OutdatedLibraryVersionPostProcessor implements ExternalProjectStruc
         continue;
       }
       Info gradleInfo = entry.getValue();
-      changes.add(new GradleOutdatedLibraryVersionChange(
+      changes.add(new OutdatedLibraryVersionChange(
         ideInfo.libraryName, gradleInfo.libraryId, gradleInfo.libraryVersion, ideInfo.libraryId, ideInfo.libraryVersion
       ));
       libraryIds.add(gradleInfo.libraryId);
       libraryIds.add(ideInfo.libraryId);
-      
+
       // There is a possible situation that gradle project has more than one module which depend on the same library
       // but some of the corresponding ide modules doesn't have that library dependency at all. We want to show it as
       // gradle-local for it then. The same is true for the opposite situation (ide-local outdated library).
-      Map<String /* module name */, GradleLibraryDependencyPresenceChange> gradleLibraryDependencies = ContainerUtilRt.newHashMap();
-      for (GradleLibraryDependencyPresenceChange c : gradleInfo.dependencyPresenceChanges) {
-        LibraryDependencyId e = c.getGradleEntity();
+      Map<String /* module name */, LibraryDependencyPresenceChange> gradleLibraryDependencies = ContainerUtilRt.newHashMap();
+      for (LibraryDependencyPresenceChange c : gradleInfo.dependencyPresenceChanges) {
+        LibraryDependencyId e = c.getExternalEntity();
         assert e != null;
         gradleLibraryDependencies.put(e.getOwnerModuleName(), c);
       }
-      for (GradleLibraryDependencyPresenceChange c : ideInfo.dependencyPresenceChanges) {
+      for (LibraryDependencyPresenceChange c : ideInfo.dependencyPresenceChanges) {
         LibraryDependencyId e = c.getIdeEntity();
         assert e != null;
-        GradleLibraryDependencyPresenceChange gradleChange = gradleLibraryDependencies.remove(e.getOwnerModuleName());
+        LibraryDependencyPresenceChange gradleChange = gradleLibraryDependencies.remove(e.getOwnerModuleName());
         if (gradleChange != null) {
           changes.remove(gradleChange);
           changes.remove(c);
@@ -146,8 +143,8 @@ public class OutdatedLibraryVersionPostProcessor implements ExternalProjectStruc
     //endregion
 
     //region Drop information about jar presence changes for outdated libraries.
-    for (GradleJarPresenceChange change : jarPresenceChanges) {
-      JarId jarId = change.getGradleEntity();
+    for (JarPresenceChange change : jarPresenceChanges) {
+      JarId jarId = change.getExternalEntity();
       if (jarId == null) {
         jarId = change.getIdeEntity();
       }
@@ -157,11 +154,12 @@ public class OutdatedLibraryVersionPostProcessor implements ExternalProjectStruc
       }
     }
     //endregion
+
   }
-  
+
   private static class Info {
 
-    @NotNull public final Set<GradleLibraryDependencyPresenceChange> dependencyPresenceChanges = ContainerUtilRt.newHashSet();
+    @NotNull public final Set<LibraryDependencyPresenceChange> dependencyPresenceChanges = ContainerUtilRt.newHashSet();
 
     @NotNull public final LibraryId libraryId;
     @NotNull public final String    libraryName;

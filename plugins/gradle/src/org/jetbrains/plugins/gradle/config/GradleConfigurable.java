@@ -33,6 +33,8 @@ import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Alarm;
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.*;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.*;
 
 import javax.swing.*;

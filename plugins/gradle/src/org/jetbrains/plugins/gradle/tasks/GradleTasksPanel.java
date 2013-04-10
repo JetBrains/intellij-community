@@ -22,6 +22,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
@@ -39,11 +40,10 @@ import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleLocalSettings;
-import org.jetbrains.plugins.gradle.config.GradleSettings;
+import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.config.GradleToolWindowPanel;
 import org.jetbrains.plugins.gradle.execution.GradleTaskLocation;
-import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
@@ -203,10 +203,10 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (GradleDataKeys.ALL_TASKS_MODEL.is(dataId)) {
+    if (ExternalSystemDataKeys.ALL_TASKS_MODEL.is(dataId)) {
       return myAllTasksModel;
     }
-    else if (GradleDataKeys.RECENT_TASKS_LIST.is(dataId)) {
+    else if (ExternalSystemDataKeys.RECENT_TASKS_LIST.is(dataId)) {
       return myRecentTasksList;
     }
     else if (Location.DATA_KEY.is(dataId)) {

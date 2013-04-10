@@ -5,6 +5,7 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.project.ExternalProject;
 import com.intellij.openapi.externalSystem.model.project.ExternalLibrary;
 import com.intellij.openapi.externalSystem.model.project.ExternalModule;
+import com.intellij.openapi.externalSystem.service.project.change.user.UserProjectChangesCalculator;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalDependencyManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalLibraryManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalModuleManager;
@@ -35,9 +36,8 @@ import com.intellij.util.ui.UIUtil;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.externalSystem.service.project.change.user.GradleUserProjectChangesCalculator;
 import org.jetbrains.plugins.gradle.config.GradleConfigurable;
-import org.jetbrains.plugins.gradle.config.GradleSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import com.intellij.openapi.externalSystem.service.project.change.ProjectStructureChangesModel;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import org.jetbrains.plugins.gradle.internal.task.GradleResolveProjectTask;
@@ -252,7 +252,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<ExternalPro
             changesModel.update(projectWithResolvedLibraries);
           }
         });
-        ServiceManager.getService(project, GradleUserProjectChangesCalculator.class).updateCurrentProjectState();
+        ServiceManager.getService(project, UserProjectChangesCalculator.class).updateCurrentProjectState();
       }
     });
   }

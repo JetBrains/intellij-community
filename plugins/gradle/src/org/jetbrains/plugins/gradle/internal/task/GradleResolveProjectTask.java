@@ -2,12 +2,13 @@ package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.project.ExternalProject;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
+import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolverImpl;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager;
-import org.jetbrains.plugins.gradle.remote.GradleProjectResolver;
 import com.intellij.openapi.externalSystem.service.project.change.ProjectStructureChangesModel;
 
 import java.util.concurrent.atomic.AtomicReference;
@@ -26,15 +27,15 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
   private final          boolean myResolveLibraries;
 
   public GradleResolveProjectTask(@Nullable Project project, @NotNull String projectPath, boolean resolveLibraries) {
-    super(project, GradleTaskType.RESOLVE_PROJECT);
+    super(project, ExternalSystemTaskType.RESOLVE_PROJECT);
     myProjectPath = projectPath;
     myResolveLibraries = resolveLibraries;
   }
 
   protected void doExecute() throws Exception {
-    final GradleApiFacadeManager manager = ServiceManager.getService(GradleApiFacadeManager.class);
+    final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     Project ideProject = getIdeProject();
-    GradleProjectResolver resolver = manager.getFacade(ideProject).getResolver();
+    RemoteExternalSystemProjectResolverImpl resolver = manager.getFacade(ideProject).getResolver();
     setState(GradleTaskState.IN_PROGRESS);
 
     ProjectStructureChangesModel model = null;

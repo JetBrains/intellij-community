@@ -60,10 +60,10 @@
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.change.AutoImporter"/>
 
     <!--Generic application services-->
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.remote.GradleApiFacadeManager"/>
-    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.util.GradleInstallationManager"/>
-    <applicationService serviceInterface="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManager"
-                        serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleProgressNotificationManagerImpl"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager"/>
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
+    <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager"
+                        serviceImplementation="com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.PlatformFacade"
                         serviceImplementation="org.jetbrains.plugins.gradle.config.PlatformFacadeImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper"
@@ -74,8 +74,8 @@
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleProjectConflictControlFactory"/>
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleCommonDependencyConflictControlFactory"/>
 
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleSettings"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.config.GradleLocalSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
+    <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.change.ProjectStructureChangesModel"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.OutdatedLibraryManager"/>
@@ -83,10 +83,10 @@
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ProjectStructureServices"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.GradleLocalNodeManageHelper"/>
     <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.EntityManageHelper"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector"/>
-    <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.change.user.GradleUserProjectChangesCalculator"/>
+    <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ProjectStructureChangesDetector"/>
+    <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.change.user.UserProjectChangesCalculator"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager"/>
-    <projectService serviceImplementation="org.jetbrains.plugins.gradle.internal.task.GradleTaskManager"/>
+    <projectService serviceImplementation="com.intellij.openapi.externalSystem.service.task.ExternalSystemTaskManager"/>
 
     <toolWindow id="JetGradle" anchor="right" icon="GradleIcons.ToolWindowGradle"
                 factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"/>

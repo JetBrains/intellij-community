@@ -3,7 +3,7 @@ package org.jetbrains.plugins.gradle.action;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
+import com.intellij.openapi.externalSystem.ui.ExternalProjectStructureTreeModel;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 /**
@@ -19,7 +19,7 @@ public class GradleRebuildStructureChangesTreeAction extends AnAction {
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    final GradleProjectStructureTreeModel model = GradleUtil.getProjectStructureTreeModel(e.getDataContext());
+    final ExternalProjectStructureTreeModel model = GradleUtil.getProjectStructureTreeModel(e.getDataContext());
     if (model != null) {
       model.rebuild();
     }

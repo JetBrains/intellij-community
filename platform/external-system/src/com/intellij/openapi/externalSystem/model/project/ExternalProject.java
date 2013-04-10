@@ -33,8 +33,6 @@ public class ExternalProject extends AbstractNamedExternalEntity {
   private final Set<ExternalModule>  myModules   = new HashSet<ExternalModule>();
   private final Set<ExternalLibrary> myLibraries = new HashSet<ExternalLibrary>();
   
-  @NotNull private final ProjectSystemId mySystemId;
-  
   private String myProjectFileDirectoryPath;
   private JavaSdkVersion myJdkVersion    = DEFAULT_JDK_VERSION;
   private LanguageLevel  myLanguageLevel = DEFAULT_LANGUAGE_LEVEL;
@@ -44,18 +42,11 @@ public class ExternalProject extends AbstractNamedExternalEntity {
 
   public ExternalProject(@NotNull ProjectSystemId owner,
                          @NotNull String projectFileDirectoryPath,
-                         @NotNull String compileOutputPath,
-                         @NotNull ProjectSystemId id)
+                         @NotNull String compileOutputPath)
   {
     super(owner, "unnamed");
-    mySystemId = id;
     myProjectFileDirectoryPath = ExternalSystemUtil.toCanonicalPath(projectFileDirectoryPath);
     myCompileOutputPath = ExternalSystemUtil.toCanonicalPath(compileOutputPath);
-  }
-
-  @NotNull
-  public ProjectSystemId getSystemId() {
-    return mySystemId;
   }
 
   @NotNull
@@ -184,7 +175,6 @@ public class ExternalProject extends AbstractNamedExternalEntity {
     result = 31 * result + myCompileOutputPath.hashCode();
     result = 31 * result + myJdkVersion.hashCode();
     result = 31 * result + myLanguageLevel.hashCode();
-    result = 31 * result + mySystemId.hashCode();
     return result;
   }
 
@@ -196,7 +186,6 @@ public class ExternalProject extends AbstractNamedExternalEntity {
     if (!myCompileOutputPath.equals(that.myCompileOutputPath)) return false;
     if (!myJdkVersion.equals(that.myJdkVersion)) return false;
     if (myLanguageLevel != that.myLanguageLevel) return false;
-    if (!mySystemId.equals(that.mySystemId)) return false;
     if (!myModules.equals(that.myModules)) return false;
 
     return true;
@@ -205,13 +194,13 @@ public class ExternalProject extends AbstractNamedExternalEntity {
   @Override
   public String toString() {
     return String.format("%s project '%s':jdk='%s'|language level='%s'|modules=%s",
-                         mySystemId.toString().toLowerCase(), getName(), getJdkVersion(), getLanguageLevel(), getModules());
+                         getOwner().toString().toLowerCase(), getName(), getJdkVersion(), getLanguageLevel(), getModules());
   }
 
   @NotNull
   @Override
   public ExternalProject clone(@NotNull ExternalEntityCloneContext context) {
-    ExternalProject result = new ExternalProject(getOwner(), getProjectFileDirectoryPath(), getCompileOutputPath(), mySystemId);
+    ExternalProject result = new ExternalProject(getOwner(), getProjectFileDirectoryPath(), getCompileOutputPath());
     result.setName(getName());
     result.setJdkVersion(getJdkVersion());
     result.setLanguageLevel(getLanguageLevel());

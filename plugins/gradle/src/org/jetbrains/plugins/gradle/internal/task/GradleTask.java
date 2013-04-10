@@ -1,9 +1,10 @@
 package org.jetbrains.plugins.gradle.internal.task;
 
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
 
 /**
  * @author Denis Zhdanov
@@ -12,7 +13,7 @@ import org.jetbrains.plugins.gradle.notification.GradleTaskNotificationListener;
 public interface GradleTask {
 
   @NotNull
-  GradleTaskId getId();
+  ExternalSystemTaskId getId();
 
   @NotNull
   GradleTaskState getState();
@@ -29,14 +30,14 @@ public interface GradleTask {
    * @param indicator  target progress indicator
    * @param listeners  callbacks to be notified on task execution update
    */
-  void execute(@NotNull ProgressIndicator indicator, @NotNull GradleTaskNotificationListener ... listeners);
+  void execute(@NotNull ProgressIndicator indicator, @NotNull ExternalSystemTaskNotificationListener... listeners);
   
   /**
    * Executes current task at the calling thread, i.e. the call to this method blocks.
    * 
    * @param listeners  callbacks to be notified about the task execution update
    */
-  void execute(@NotNull GradleTaskNotificationListener ... listeners);
+  void execute(@NotNull ExternalSystemTaskNotificationListener... listeners);
 
   /**
    * Forces current task to refresh {@link #getState() its state}.

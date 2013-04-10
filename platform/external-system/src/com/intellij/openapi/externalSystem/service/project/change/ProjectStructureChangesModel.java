@@ -7,8 +7,8 @@ import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectS
 import com.intellij.openapi.externalSystem.service.DisposableExternalSystemService;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
+import com.intellij.openapi.externalSystem.util.IntegrationKey;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ConcurrentHashSet;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -31,14 +31,10 @@ import java.util.concurrent.ConcurrentMap;
  */
 public class ProjectStructureChangesModel implements DisposableExternalSystemService {
 
-  private final ConcurrentMap<ProjectSystemId, Set<ExternalProjectStructureChangeListener>> myListeners =
-    ContainerUtil.newConcurrentMap();
+  private final Set<ExternalProjectStructureChangeListener> myListeners = new ConcurrentHashSet<ExternalProjectStructureChangeListener>();
 
-  private final ConcurrentMap<Pair<ProjectSystemId, String /* ide project id */>, Set<ExternalProjectStructureChange>> myChanges =
-    ContainerUtil.newConcurrentMap();
-
-  private final ConcurrentMap<Pair<ProjectSystemId, String /* ide project id */>, ExternalProject> myExternalProjects =
-    ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<IntegrationKey, Set<ExternalProjectStructureChange>> myChanges          = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<IntegrationKey, ExternalProject>                     myExternalProjects = ContainerUtil.newConcurrentMap();
 
   private final Collection<ExternalProjectStructureChangesPreProcessor>  myCommonPreProcessors  = ContainerUtilRt.createEmptyCOWList();
   private final Collection<ExternalProjectStructureChangesPostProcessor> myCommonPostProcessors = ContainerUtilRt.createEmptyCOWList();
@@ -74,17 +70,17 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
    * <ol>
    *  <li>This method is called;</li>
    *  <li>
-   *    The model process given project state within the {@link #getChanges() registered changes} and calculates resulting difference
-   *    between external system and ide projects;
+   *    The model process given project state within the {@link #getChanges(ProjectSystemId, Project) registered changes} and calculates
+   *    resulting difference between external system and ide projects;
    *  </li>
    *  <li>
-   *    {@link #addListener(ProjectSystemId, ExternalProjectStructureChangeListener)}  Registered listeners} are notified
+   *    {@link #addListener(ExternalProjectStructureChangeListener) Registered listeners} are notified
    *    if any new change is detected;
    *  </li>
    * </ol>
    * <p/>
-   * <b>Note:</b> the listeners are notified <b>after</b> the actual state change, i.e. {@link #getChanges()} during the update
-   * returns up-to-date data.
+   * <b>Note:</b> the listeners are notified <b>after</b> the actual state change, i.e. {@link #getChanges(ProjectSystemId, Project)}
+   * during the update returns up-to-date data.
    *
    * @param externalProject              external project to sync with
    * @param ideProject                   target ide project
@@ -96,8 +92,8 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
     for (ExternalProjectStructureChangesPreProcessor preProcessor : myCommonPreProcessors) {
       externalProjectToUse = preProcessor.preProcess(externalProjectToUse, ideProject);
     }
-    ProjectSystemId externalSystemId = externalProject.getSystemId();
-    Pair<ProjectSystemId, String> key = key(externalSystemId, ideProject);
+    ProjectSystemId externalSystemId = externalProject.getOwner();
+    IntegrationKey key = new IntegrationKey(ideProject, externalSystemId);
     myExternalProjects.putIfAbsent(key, externalProjectToUse);
     final ExternalProjectChangesCalculationContext context = getCurrentChangesContext(
       externalProjectToUse, ideProject, onIdeProjectStructureChange
@@ -106,11 +102,8 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
       return;
     }
     myChanges.put(key, context.getCurrentChanges());
-    Set<ExternalProjectStructureChangeListener> listeners = myListeners.get(externalSystemId);
-    if (listeners != null) {
-      for (ExternalProjectStructureChangeListener listener : listeners) {
-        listener.onChanges(ideProject, externalSystemId, context.getKnownChanges(), context.getCurrentChanges());
-      }
+    for (ExternalProjectStructureChangeListener listener : myListeners) {
+      listener.onChanges(ideProject, externalSystemId, context.getKnownChanges(), context.getCurrentChanges());
     }
   }
 
@@ -146,7 +139,7 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
   @SuppressWarnings("unchecked")
   @Nullable
   public <T extends ExternalProject> T getExternalProject(@NotNull ProjectSystemId id, @NotNull Project ideProject) {
-    ExternalProject result = myExternalProjects.get(key(id, ideProject));
+    ExternalProject result = myExternalProjects.get(new IntegrationKey(ideProject, id));
     if (result == null) {
       return null;
     }
@@ -168,18 +161,12 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
   /**
    * Registers given listener within the current model.
    * 
-   * @param id        id of the target external system which project changes should be delivered to the given listener
    * @param listener  listener to register
    * @return          <code>true</code> if given listener was not registered before;
    *                  <code>false</code> otherwise
    */
-  public boolean addListener(@NotNull ProjectSystemId id, @NotNull ExternalProjectStructureChangeListener listener) {
-    Set<ExternalProjectStructureChangeListener> listeners = myListeners.get(id);
-    while (listeners == null) {
-      myListeners.putIfAbsent(id, new ConcurrentHashSet<ExternalProjectStructureChangeListener>());
-      listeners = myListeners.get(id);
-    }
-    return listeners.add(listener);
+  public boolean addListener(@NotNull ExternalProjectStructureChangeListener listener) {
+    return myListeners.add(listener);
   }
 
   @NotNull
@@ -187,17 +174,17 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
                                                                            @NotNull Project ideProject,
                                                                            boolean onIdeProjectStructureChange)
   {
-    Pair<ProjectSystemId, String> key = key(externalProject.getSystemId(), ideProject);
+    IntegrationKey key = new IntegrationKey(ideProject, externalProject.getOwner());
     ExternalProjectChangesCalculationContext context
       = new ExternalProjectChangesCalculationContext(myChanges.get(key), myPlatformFacade, myLibraryPathTypeMapper);
     myChangesCalculator.calculate(externalProject, ideProject, context);
     for (ExternalProjectStructureChangesPostProcessor processor : myCommonPostProcessors) {
-      processor.processChanges(context.getCurrentChanges(), ideProject, onIdeProjectStructureChange);
+      processor.processChanges(context.getCurrentChanges(), externalProject.getOwner(), ideProject, onIdeProjectStructureChange);
     }
-    Set<ExternalProjectStructureChangesPostProcessor> postProcessors = mySpecificPostProcessors.get(externalProject.getSystemId());
+    Set<ExternalProjectStructureChangesPostProcessor> postProcessors = mySpecificPostProcessors.get(externalProject.getOwner());
     if (postProcessors != null)
     for (ExternalProjectStructureChangesPostProcessor processor : myCommonPostProcessors) {
-      processor.processChanges(context.getCurrentChanges(), ideProject, onIdeProjectStructureChange);
+      processor.processChanges(context.getCurrentChanges(), externalProject.getOwner(), ideProject, onIdeProjectStructureChange);
     }
     return context;
   }
@@ -209,20 +196,14 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
    */
   @NotNull
   public Set<ExternalProjectStructureChange> getChanges(@NotNull ProjectSystemId id, @NotNull Project ideProject) {
-    Set<ExternalProjectStructureChange> result = myChanges.get(key(id, ideProject));
+    Set<ExternalProjectStructureChange> result = myChanges.get(new IntegrationKey(ideProject, id));
     return result == null ? Collections.<ExternalProjectStructureChange>emptySet() : result;
   }
 
   @Override
   public void onExternalSystemUnlinked(@NotNull ProjectSystemId externalSystemId, @NotNull Project ideProject) {
-    Pair<ProjectSystemId, String> key = key(externalSystemId, ideProject);
-    myListeners.remove(externalSystemId);
+    IntegrationKey key = new IntegrationKey(ideProject, externalSystemId);
     myChanges.remove(key);
     myExternalProjects.remove(key);
-  }
-
-  @NotNull
-  private static Pair<ProjectSystemId, String> key(@NotNull ProjectSystemId externalSystemId, @NotNull Project ideProject) {
-    return Pair.create(externalSystemId, ideProject.getName() + ideProject.getLocationHash());
   }
 }

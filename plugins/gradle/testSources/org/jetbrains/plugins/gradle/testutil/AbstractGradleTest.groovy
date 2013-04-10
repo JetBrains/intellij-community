@@ -11,8 +11,8 @@ import org.jetbrains.annotations.NotNull
 import org.jetbrains.plugins.gradle.action.AbstractGradleSyncTreeFilterAction
 import com.intellij.openapi.externalSystem.service.project.change.AutoImporter
 import org.jetbrains.plugins.gradle.config.GradleColorAndFontDescriptorsProvider
-import org.jetbrains.plugins.gradle.config.GradleLocalSettings
-import org.jetbrains.plugins.gradle.config.GradleSettings
+import org.jetbrains.plugins.gradle.settings.GradleLocalSettings
+import org.jetbrains.plugins.gradle.settings.GradleSettings
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChangesCalculator
 import org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootStructureChangesCalculator
@@ -37,8 +37,8 @@ import com.intellij.openapi.externalSystem.service.project.change.MovedJarsPostP
 import com.intellij.openapi.externalSystem.service.project.change.OutdatedLibraryVersionPostProcessor
 import com.intellij.openapi.externalSystem.service.project.change.ProjectStructureChangesModel
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeFilter
+import com.intellij.openapi.externalSystem.ui.ExternalProjectStructureTreeModel
+import com.intellij.openapi.externalSystem.ui.ExternalProjectStructureNodeFilter
 import org.jetbrains.plugins.gradle.util.*
 import org.junit.Before
 import org.picocontainer.MutablePicoContainer
@@ -53,13 +53,13 @@ import static org.junit.Assert.fail
 public abstract class AbstractGradleTest {
   
   ProjectStructureChangesModel changesModel
-  GradleProjectStructureTreeModel treeModel
+  ExternalProjectStructureTreeModel treeModel
   GradleProjectBuilder gradle
   IntellijProjectBuilder intellij
   ChangeBuilder changesBuilder
   ProjectStructureChecker treeChecker
   def container
-  private Map<TextAttributesKey, GradleProjectStructureNodeFilter> treeFilters = [:]
+  private Map<TextAttributesKey, ExternalProjectStructureNodeFilter> treeFilters = [:]
 
   @Before
   public void setUp() {
@@ -83,7 +83,7 @@ public abstract class AbstractGradleTest {
     container.registerComponentInstance(Project, intellij.project)
     container.registerComponentInstance(PlatformFacade, intellij.platformFacade as PlatformFacade)
     container.registerComponentImplementation(ProjectStructureChangesModel)
-    container.registerComponentImplementation(GradleProjectStructureTreeModel)
+    container.registerComponentImplementation(ExternalProjectStructureTreeModel)
     container.registerComponentImplementation(ProjectStructureHelper)
     container.registerComponentImplementation(ExternalProjectStructureChangesCalculator, GradleProjectStructureChangesCalculator)
     container.registerComponentImplementation(GradleModuleStructureChangesCalculator)
@@ -130,7 +130,7 @@ public abstract class AbstractGradleTest {
   
   @SuppressWarnings("GroovyAssignabilityCheck")
   protected def init(map = [:]) {
-    treeModel = container.getComponentInstance(GradleProjectStructureTreeModel) as GradleProjectStructureTreeModel
+    treeModel = container.getComponentInstance(ExternalProjectStructureTreeModel) as ExternalProjectStructureTreeModel
     treeModel.processChangesAtTheSameThread = true;
     setState(map, false)
     treeModel.rebuild()

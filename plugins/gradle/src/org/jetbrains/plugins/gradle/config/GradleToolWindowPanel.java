@@ -15,7 +15,9 @@ import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesDetector;
+import com.intellij.openapi.externalSystem.service.project.ProjectStructureChangesDetector;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 import org.jetbrains.plugins.gradle.ui.RichTextControlBuilder;
 
 import javax.swing.*;
@@ -128,7 +130,7 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     if (!NON_LINKED_CARD_NAME.equals(cardToShow)) {
       updateContent();
       // Ensure that changes detector service is loaded.
-      ServiceManager.getService(myProject, GradleProjectStructureChangesDetector.class);
+      ServiceManager.getService(myProject, ProjectStructureChangesDetector.class);
     }
   }
 
