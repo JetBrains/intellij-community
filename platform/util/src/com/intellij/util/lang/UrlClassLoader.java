@@ -75,7 +75,7 @@ public class UrlClassLoader extends ClassLoader {
     try {
       final String protocol = url.getProtocol();
       if ("file".equals(protocol) || "jar".equals(protocol)) {
-        return new URL(protocol, url.getHost(), url.getPort(), url.getFile());
+        return new URL(protocol.intern(), url.getHost(), url.getPort(), url.getFile());
       }
       return url;
     }
