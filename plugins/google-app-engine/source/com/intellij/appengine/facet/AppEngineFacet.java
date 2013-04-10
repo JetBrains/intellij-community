@@ -19,7 +19,6 @@ import com.intellij.appengine.descriptor.dom.AppEngineWebApp;
 import com.intellij.appengine.sdk.AppEngineSdk;
 import com.intellij.appengine.sdk.AppEngineSdkManager;
 import com.intellij.facet.*;
-import com.intellij.javaee.util.JamCommonUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
@@ -28,6 +27,11 @@ import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.ReflectionCache;
+import com.intellij.util.xml.DomElement;
+import com.intellij.util.xml.DomFileElement;
+import com.intellij.util.xml.DomManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -69,8 +73,21 @@ public class AppEngineFacet extends Facet<AppEngineFacetConfiguration> {
     PsiFile psiFile = PsiManager.getInstance(project).findFile(descriptorFile);
     if (psiFile == null) return null;
 
-    return JamCommonUtil.getRootElement(psiFile, AppEngineWebApp.class, module);
+    return getRootElement(psiFile, AppEngineWebApp.class, module);
   }
+
+  //todo[nik] copied from JamCommonUtil
+  @Nullable
+  private static <T> T getRootElement(final PsiFile file, final Class<T> domClass, final Module module) {
+    if (!(file instanceof XmlFile)) return null;
+    final DomManager domManager = DomManager.getDomManager(file.getProject());
+    final DomFileElement<DomElement> element = domManager.getFileElement((XmlFile)file, DomElement.class);
+    if (element == null) return null;
+    final DomElement root = element.getRootElement();
+    if (!ReflectionCache.isAssignable(domClass, root.getClass())) return null;
+    return (T)root;
+  }
+
 
   public boolean shouldRunEnhancerFor(@NotNull VirtualFile file) {
     for (String path : getConfiguration().getFilesToEnhance()) {

@@ -15,7 +15,6 @@
     <orderEntry type="module" module-name="util" />
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="openapi" />
-    <orderEntry type="module" module-name="idea" />
     <orderEntry type="module" module-name="debugger-openapi" />
     <orderEntry type="module" module-name="codeInsight-tests" scope="TEST" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
@@ -23,7 +22,6 @@
     <orderEntry type="module" module-name="xml" scope="TEST" />
     <orderEntry type="module" module-name="appEngine-runtime" />
     <orderEntry type="module" module-name="google-app-engine-jps-plugin" />
-    <orderEntry type="module" module-name="jam-support-openapi" />
     <orderEntry type="module" module-name="compiler-impl" />
     <orderEntry type="module" module-name="dom-openapi" />
   </component>
