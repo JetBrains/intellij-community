@@ -480,9 +480,12 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     if (SystemInfo.isMacOSLion) {
       return myFrameDecorator != null && myFrameDecorator.isInFullScreen();
     }
-    if (SystemInfo.isWindows || SystemInfo.isLinux) {
+    if (SystemInfo.isWindows) {
       GraphicsDevice device = ScreenUtil.getScreenDevice(getBounds());
       return (device != null && device.getDefaultConfiguration().getBounds().equals(getBounds()) && isUndecorated());
+    }
+    if (SystemInfo.isLinux) {
+      return X11FullscreenHelper.isInFullscreen();
     }
     return false;
   }

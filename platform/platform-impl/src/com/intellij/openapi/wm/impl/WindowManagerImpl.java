@@ -51,6 +51,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.awt.X11.XToolkit;
 
 import javax.swing.*;
 import java.awt.*;
@@ -833,7 +834,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         return;
       }
 
-      if (SystemInfo.isWindows || SystemInfo.isLinux) {
+      if (SystemInfo.isWindows) {
         GraphicsDevice device = ScreenUtil.getScreenDevice(frame.getBounds());
         if (device == null) return;
         try {
@@ -844,32 +845,29 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
           // setUndecorated working only with not created window yet
           frame.dispose();
           frame.setUndecorated(fullScreen);
-
-          if (SystemInfo.isLinux) {
-            // prevent resize of fullscreen window, to make sure that nothing bad will not happen =)
-            frame.setResizable(!fullScreen);
-            // Set window bounds to screen size
-            frame.setBounds(device.getDefaultConfiguration().getBounds());
-            // Since we take from frame it's peer we need to make sure that it's was created
-            // for this we create frame and reinitialize internal stuff by calling validate
-            frame.setVisible(true);
-            frame.validate();
-            // going to fullscreen and store result of operation in fullScreen state
-            fullScreen = X11FullscreenHelper.setFullScreenWindow(frame, fullScreen);
-          }
         }
         finally {
           if (fullScreen) {
-            if (SystemInfo.isWindows)
-              frame.setBounds(device.getDefaultConfiguration().getBounds());
+            frame.setBounds(device.getDefaultConfiguration().getBounds());
           } else {
             Object o = frame.getRootPane().getClientProperty("oldBounds");
             if (o instanceof Rectangle) {
               frame.setBounds((Rectangle)o);
             }
           }
-          if (!frame.isVisible()) frame.setVisible(true);
+          frame.setVisible(true);
           frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
+        }
+      }
+      if (SystemInfo.isLinux) {
+        // going to fullscreen using native X11 bindings
+        // make sure that AWT thread will do nothing with window while it's going to fullscreen
+        XToolkit.awtLock();
+        try {
+          X11FullscreenHelper.setFullScreenWindow(frame, fullScreen);
+        } finally {
+          // unlock AWT thread after finishing fullscreen switch
+          XToolkit.awtUnlock();
         }
       }
     }

@@ -18,8 +18,6 @@ package com.intellij.ui;
 import com.sun.jna.Native;
 import com.sun.jna.NativeLong;
 import com.sun.jna.platform.unix.X11;
-import sun.awt.X11.XAtom;
-import sun.awt.X11.XBaseWindow;
 
 import java.awt.*;
 
@@ -34,6 +32,9 @@ import java.awt.*;
  */
 
 public class X11FullscreenHelper {
+
+  private static boolean isFullScreenMode = false;
+
   /**
    * Ask the window manager to make a window full-screen.
    * <p>
@@ -59,19 +60,20 @@ public class X11FullscreenHelper {
       display = x.XOpenDisplay(null);
       // Send the message
 
-      // Send change property before going to Fullscreen to make sure that WM will know that window going to Fullscreen
-      // Workaround for http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7057287
-      XAtom.get("_NET_WM_STATE").setAtomListProperty((XBaseWindow)w.getPeer(), new XAtom[] {XAtom.get("_NET_WM_STATE_FULLSCREEN"), XAtom.get("_NET_WM_STATE_ABOVE")});
-
       int result = sendClientMessage(
         display,
         Native.getWindowID(w),
         "_NET_WM_STATE",
-        new NativeLong(fullScreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE),
-        x.XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", false),
-        x.XInternAtom(display, "_NET_WM_STATE_ABOVE", false)
+        new NativeLong[]{
+          new NativeLong(fullScreen ? _NET_WM_STATE_ADD : _NET_WM_STATE_REMOVE),
+          x.XInternAtom(display, "_NET_WM_STATE_FULLSCREEN", false),
+          x.XInternAtom(display, "_NET_WM_STATE_ABOVE", false),
+          new NativeLong(0L),
+          new NativeLong(0L)
+        }
       );
-      return result != 0;
+      isFullScreenMode = (result != 0) && fullScreen;
+      return (result != 0);
     }
     finally {
       if(display != null) {
@@ -91,8 +93,9 @@ public class X11FullscreenHelper {
    * @param data1 message data
    * @return <code>1</code> if the message was successfully sent to the window; <code>0</code> otherwise
    */
-  private static int sendClientMessage(X11.Display display, long wid, String msg, NativeLong data0, NativeLong data1, NativeLong data2) {
+  private static int sendClientMessage(X11.Display display, long wid, String msg, NativeLong[] data) {
     // Use the JNA platform X11 binding
+    assert (data.length < 5);
     X11 x = X11.INSTANCE;
     // Create and populate a client-event structure
     X11.XEvent event = new X11.XEvent();
@@ -107,11 +110,7 @@ public class X11FullscreenHelper {
     event.xclient.format = 32;
     // Select the proper union structure for the event data and populate it
     event.xclient.data.setType(NativeLong[].class);
-    event.xclient.data.l[0] = data0;
-    event.xclient.data.l[1] = data1;
-    event.xclient.data.l[2] = data2;
-    event.xclient.data.l[3] = new NativeLong(0L);
-    event.xclient.data.l[4] = new NativeLong(0L);
+    System.arraycopy(data, 0, event.xclient.data.l, 0, 5);
 
     // Send the event
     NativeLong mask = new NativeLong(X11.SubstructureRedirectMask | X11.SubstructureNotifyMask);
@@ -120,6 +119,10 @@ public class X11FullscreenHelper {
     x.XFlush(display);
     // Finally, return the result of sending the event
     return result;
+  }
+
+  public static boolean isInFullscreen() {
+    return isFullScreenMode;
   }
 
   // X window message definitions
