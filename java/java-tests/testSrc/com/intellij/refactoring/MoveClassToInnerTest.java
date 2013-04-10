@@ -17,7 +17,6 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -47,6 +46,10 @@ public class MoveClassToInnerTest extends RefactoringTestCase {
   }
 
   public void testInnerImport() throws Exception {
+    doTest(new String[] { "pack1.Class1" }, "pack2.A");
+  }
+
+  public void testInnerInsideMoved() throws Exception {
     doTest(new String[] { "pack1.Class1" }, "pack2.A");
   }
 

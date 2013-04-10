@@ -301,6 +301,9 @@ public class MoveClassToInnerProcessor extends BaseRefactoringProcessor {
       ReferencesSearch.search(member).forEach(new Processor<PsiReference>() {
         public boolean process(final PsiReference psiReference) {
           PsiElement element = psiReference.getElement();
+          for (PsiClass psiClass : myClassesToMove) {
+            if (PsiTreeUtil.isAncestor(psiClass, element, false)) return true;
+          }
           if (isInaccessibleFromTarget(element, PsiModifier.PACKAGE_LOCAL)) {
             collector.addConflict(psiReference.resolve(), element);
           }
