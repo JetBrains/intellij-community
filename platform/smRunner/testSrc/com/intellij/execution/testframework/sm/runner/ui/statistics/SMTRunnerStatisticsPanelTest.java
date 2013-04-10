@@ -53,7 +53,8 @@ public class SMTRunnerStatisticsPanelTest extends BaseSMTRunnerTestCase {
                                                 consoleProperties,
                                                 environment.getRunnerSettings(),
                                                 environment.getConfigurationSettings());
-    myStatisticsPanel = new StatisticsPanel(getProject(), myResultsForm);
+    myResultsForm.initUI();
+    myStatisticsPanel = myResultsForm.getStatisticsPane();
     myTestEventsListener = myStatisticsPanel.createTestEventsListener();
   }
 
