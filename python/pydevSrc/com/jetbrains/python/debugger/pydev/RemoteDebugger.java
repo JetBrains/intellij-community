@@ -431,6 +431,9 @@ public class RemoteDebugger implements ProcessDebugger {
         String line;
         while ((line = reader.readLine()) != null) {
           processResponse(line);
+          if (myClosing) {
+            break;
+          }
         }
       }
       catch (SocketException ignore) {
@@ -441,6 +444,7 @@ public class RemoteDebugger implements ProcessDebugger {
       }
       finally {
         closeReader(reader);
+        fireExitEvent();
       }
     }
 
@@ -624,7 +628,7 @@ public class RemoteDebugger implements ProcessDebugger {
 
   private void fireExitEvent() {
     for (RemoteDebuggerCloseListener listener : myCloseListeners) {
-      listener.exitEvent();
+      listener.detached();
     }
   }
 }

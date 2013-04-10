@@ -428,7 +428,7 @@ public class MultiProcessDebugger implements ProcessDebugger {
         }
 
         @Override
-        public void exitEvent() {
+        public void detached() {
           notifyThreadsClosed(debugger);
         }
       });

@@ -105,12 +105,12 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
       @Override
       public void communicationError() {
-        handleCommunicationError();
+        detachDebuggedProcess();
       }
 
       @Override
-      public void exitEvent() {
-        handleCommunicationError();
+      public void detached() {
+        detachDebuggedProcess();
       }
     });
 
@@ -145,8 +145,8 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
     return debugger;
   }
 
-  protected void handleCommunicationError() {
-    getSession().stop();
+  protected void detachDebuggedProcess() {
+    handleStop(); //in case of normal debug we stop the session
   }
 
   protected void handleStop() {
@@ -193,7 +193,6 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
 
   @Override
   public void sessionInitialized() {
-    super.sessionInitialized();
     waitForConnection(getConnectionMessage(), getConnectionTitle());
   }
 
@@ -214,7 +213,9 @@ public class PyDebugProcess extends XDebugProcess implements IPyDebugProcess, Pr
         }
         catch (final Exception e) {
           myWaitingForConnection = false;
-          myProcessHandler.destroyProcess();
+          if (myProcessHandler != null) {
+            myProcessHandler.destroyProcess();
+          }
           if (!myClosing) {
             invokeLater(new Runnable() {
               public void run() {
