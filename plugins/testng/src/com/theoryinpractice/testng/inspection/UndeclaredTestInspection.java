@@ -27,7 +27,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -47,6 +46,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
 
 public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#" + UndeclaredTestInspection.class.getName());
@@ -77,23 +79,24 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
       final Project project = aClass.getProject();
       final String qName = aClass.getQualifiedName();
       if (qName == null) return null;
-      final String packageQName = ((PsiJavaFile)aClass.getContainingFile()).getPackageName();
-      final String packageName = StringUtil.getShortName(packageQName);
-      final String[] names;
-      if (packageQName.length() > 0) {
-        final String pName = packageName.length() > 0 ? packageName : packageQName;
-        names = new String[]{qName, pName};
+
+      final List<String> names = new ArrayList<String>();
+      for(int i = 0; i < qName.length(); i++) {
+        if (qName.charAt(i) == '.') {
+          names.add(qName.substring(0, i));
+        }
       }
-      else {
-        names = new String[]{qName};
-      }
+      names.add(qName);
+      Collections.reverse(names);
+
       for (final String name : names) {
+        final boolean isFullName = qName.equals(name);
         final boolean[] found = new boolean[]{false};
         PsiSearchHelper.SERVICE.getInstance(project)
           .processUsagesInNonJavaFiles(name, new PsiNonJavaFileReferenceProcessor() {
             public boolean process(final PsiFile file, final int startOffset, final int endOffset) {
               if (file.findReferenceAt(startOffset) != null) {
-                if (packageQName.endsWith(name)) { //special package tag required
+                if (!isFullName) { //special package tag required
                   final XmlTag tag = PsiTreeUtil.getParentOfType(file.findElementAt(startOffset), XmlTag.class);
                   if (tag == null || !tag.getName().equals("package")) {
                     return true;
@@ -102,7 +105,7 @@ public class UndeclaredTestInspection extends BaseJavaLocalInspectionTool {
                   if (attribute == null) return true;
                   final String value = attribute.getValue();
                   if (value == null) return true;
-                  if (!(value.equals(StringUtil.getQualifiedName(packageQName, "*")) || value.equals(packageQName))) return true;
+                  if (!value.endsWith(".*")) return true;
                 }
                 found[0] = true;
                 return false;

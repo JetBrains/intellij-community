@@ -23,6 +23,7 @@ package com.theoryinpractice.testng.inspection;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.InspectionTestCase;
 import com.intellij.util.ui.UIUtil;
+import com.theoryinpractice.testng.util.TestNGUtil;
 import org.jetbrains.annotations.NonNls;
 import org.testng.annotations.AfterMethod;
 import org.testng.annotations.BeforeMethod;
@@ -73,7 +74,7 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
 
   @DataProvider
   public Object[][] data() {
-    return new Object[][]{{"declared"}, {"undeclared"}, {"packageDeclared"}, {"packageNonDeclared"}, {"commented"}, {"commented1"}};
+    return new Object[][]{{"declared"}, {"undeclared"}, {"packageDeclared"}, {"inSubPackage"}, {"incorrectSubPackage"}, {"packageNonDeclared"}, {"commented"}, {"commented1"}};
   }
 
   @Test(dataProvider = "data")
@@ -82,6 +83,7 @@ public class UndeclaredTestsInspectionTest extends InspectionTestCase {
       @Override
       public void run() {
         try {
+          TestNGUtil.hasDocTagsSupport = true;
           doTest("undeclaredTests/" + name, new UndeclaredTestInspection());
         }
         catch (Exception e) {
