@@ -27,7 +27,10 @@ import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.RoamingType;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.EditorColorsListener;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.colors.EditorColorsScheme;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.Extensions;
@@ -41,14 +44,12 @@ import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStream;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
-import java.util.Map;
 
 public class EditorColorsManagerImpl extends EditorColorsManager implements NamedJDOMExternalizable, ExportableComponent, NamedComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.editor.colors.impl.EditorColorsManagerImpl");
@@ -75,9 +76,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
     addDefaultSchemes();
 
-    // Change some attributes of default schema using special extension
-    extendDefaultScheme();
-
     // Load default schemes from providers
     loadAdditionalDefaultSchemes();
 
@@ -95,54 +93,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     // incorrect highlighting with "traces" of color scheme which was active during IDE startup.
     final EditorColorsScheme defaultColorScheme = getScheme(dark ? "Darcula" : EditorColorsScheme.DEFAULT_SCHEME_NAME);
     return defaultColorScheme.getAttributes(key);
-  }
-
-  private void extendDefaultScheme() {
-    final EditorColorsScheme defaultColorsScheme = mySchemesManager.findSchemeByName("Default");
-
-    //Get color scheme from EPs
-    for (BundledColorSchemesProvider provider : BundledColorSchemesProvider.EP_NAME.getExtensions()) {
-      final String extensionPath;
-      try {
-        extensionPath = provider.getDefaultSchemaExtensionPath();
-      }
-      catch (AbstractMethodError e) {
-        continue;
-      }
-      if (extensionPath == null) {
-        continue;
-      }
-      try {
-        final EditorColorsSchemeImpl extScheme = loadScheme(extensionPath, provider);
-        if (extScheme != null) {
-          // copy text attrs from extension to default scheme
-          for (Map.Entry<TextAttributesKey, TextAttributes> keyTextAttributesEntry : extScheme.myAttributesMap.entrySet()) {
-            final TextAttributesKey key = keyTextAttributesEntry.getKey();
-            final TextAttributes attrs = keyTextAttributesEntry.getValue();
-            ((AbstractColorsScheme)defaultColorsScheme).myAttributesMap.put(key, attrs);
-          }
-
-          // copy colors
-          for (Map.Entry<ColorKey, Color> keyColorEntry : extScheme.myColorsMap.entrySet()) {
-            final ColorKey key = keyColorEntry.getKey();
-            final Color color = keyColorEntry.getValue();
-            ((AbstractColorsScheme)defaultColorsScheme).myColorsMap.put(key, color);
-          }
-        }
-      }
-      catch (final Exception e) {
-        ApplicationManager.getApplication().invokeLater(
-          new Runnable(){
-            @Override
-            public void run() {
-              // Error shouldn't occur during this operation
-              // thus we report error instead of info
-              LOG.error("Cannot read scheme from " + extensionPath + ": " + e.getLocalizedMessage(), e);
-            }
-          }
-        );
-      }
-    }
   }
 
   private void loadAdditionalDefaultSchemes() {

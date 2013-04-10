@@ -34,9 +34,4 @@ public class IdeaColorSchemesProvider implements BundledColorSchemesProvider {
 
     return null;
   }
-
-  @Override
-  public String getDefaultSchemaExtensionPath() {
-    return null;
-  }
 }

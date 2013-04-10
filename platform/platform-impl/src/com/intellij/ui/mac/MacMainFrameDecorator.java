@@ -262,6 +262,7 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
   }
 
   private static void requestToggleFullScreen(final Window window) {
+    LOG.assertTrue(SystemInfo.isJavaVersionAtLeast("1.7"));
     try {
       //Load Application class from the jdk not from our eawtstub.jar
       Class<?> applicationClass = window.getClass().getClassLoader().loadClass("com.apple.eawt.Application");

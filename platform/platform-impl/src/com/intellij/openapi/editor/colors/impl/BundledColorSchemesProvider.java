@@ -31,7 +31,4 @@ public interface BundledColorSchemesProvider {
    */
   @Nullable
   String[] getBundledSchemesRelativePaths();
-
-  @Nullable
-  String getDefaultSchemaExtensionPath();
 }
