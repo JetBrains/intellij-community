@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,7 +126,7 @@ public class GrReferenceAdjuster {
     if (resolved instanceof PsiClass) {
       final PsiClass clazz = (PsiClass)resolved;
       final String qName = clazz.getQualifiedName();
-      if (qName != null && addImports && checkIsInnerClass(clazz) && mayInsertImport(ref)) {
+      if (qName != null && addImports && checkIsInnerClass(clazz, ref) && mayInsertImport(ref)) {
         final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
         final GrImportStatement added = file.addImportForClass(clazz);
         if (copy.isReferenceTo(resolved)) return true;
@@ -137,10 +137,11 @@ public class GrReferenceAdjuster {
     return false;
   }
 
-  private static boolean checkIsInnerClass(@NotNull PsiClass resolved) {
+  private static <Qualifier extends PsiElement> boolean checkIsInnerClass(@NotNull PsiClass resolved, GrQualifiedReference<Qualifier> ref) {
     final PsiClass containingClass = resolved.getContainingClass();
-    return containingClass == null || CodeStyleSettingsManager.getSettings(resolved.getProject())
-      .getCustomSettings(GroovyCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS;
+    return containingClass == null ||
+           PsiTreeUtil.isAncestor(containingClass, ref, true) ||
+           CodeStyleSettingsManager.getSettings(resolved.getProject()).getCustomSettings(GroovyCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS;
   }
 
   @Nullable
