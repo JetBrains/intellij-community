@@ -948,7 +948,6 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       if (statementList != null) {
         statementList.accept(new PyRecursiveElementVisitor() {
           public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
-            super.visitPyAssignmentStatement(node);
             collectNewTargets(result, node);
           }
         });
