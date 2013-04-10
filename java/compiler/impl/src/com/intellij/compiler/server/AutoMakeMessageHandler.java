@@ -110,6 +110,9 @@ class AutoMakeMessageHandler extends DefaultMessageHandler {
 
   @Override
   public void handleFailure(UUID sessionId, CmdlineRemoteProto.Message.Failure failure) {
+    if (myProject.isDisposed()) {
+      return;
+    }
     String descr = failure.hasDescription() ? failure.getDescription() : null;
     if (descr == null) {
       descr = failure.hasStacktrace()? failure.getStacktrace() : "";
