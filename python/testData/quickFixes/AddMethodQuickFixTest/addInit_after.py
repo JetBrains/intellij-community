@@ -1,5 +1,5 @@
 __author__ = 'ktisha'
-class A(object):
+class A:
     def __init__(self):
         pass
 
