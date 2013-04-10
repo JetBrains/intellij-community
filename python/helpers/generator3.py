@@ -24,7 +24,7 @@ but seemingly no one uses them in C extensions yet anyway.
 # * re.search-bound, ~30% time, in likes of builtins and _gtk with complex docstrings.
 # None of this can seemingly be easily helped. Maybe there's a simpler and faster parser library?
 
-VERSION = "1.124" # Must be a number-dot-number string, updated with each change that affects generated skeletons
+VERSION = "1.125"  # Must be a number-dot-number string, updated with each change that affects generated skeletons
 # Note: DON'T FORGET TO UPDATE!
 
 import sys
@@ -959,6 +959,9 @@ class ModuleRedeclarator(object):
         ("itertools", "groupby", "__init__"): ("(self, iterable, key=None)", None),
         ("itertools", None, "groupby"): ("(iterable, key=None)", LIST_LIT),
 
+        ("cStringIO", "OutputType", "seek"): ("(self, position, mode=0)", None),
+        ("cStringIO", "InputType", "seek"): ("(self, position, mode=0)", None),
+
         # NOTE: here we stand on shaky ground providing sigs for 3rd-party modules, though well-known
         ("numpy.core.multiarray", "ndarray", "__array__"): ("(self, dtype=None)", None),
         ("numpy.core.multiarray", None, "arange"): ("(start=None, stop=None, step=None, dtype=None)", None),
@@ -1609,7 +1612,7 @@ class ModuleRedeclarator(object):
             params = ['self'] + params
         return self.buildSignature(p_name, params), None
 
-    def redoFunction(self, out, p_func, p_name, indent, p_class=None, p_modname=None, seen=None):
+    def redoFunction(self, out, p_func, p_name, indent, p_class=None, p_modname=None, classname=None, seen=None):
         """
         Restore function argument list as best we can.
         @param out output function of a Buf
@@ -1632,7 +1635,8 @@ class ModuleRedeclarator(object):
             else:
                 seen[id(p_func)] = p_name
             # real work
-        classname = p_class and p_class.__name__ or None
+        if classname is None:
+            classname = p_class and p_class.__name__ or None
         if p_class and hasattr(p_class, '__mro__'):
             sip_generated = [t for t in p_class.__mro__ if 'sip.simplewrapper' in str(t)]
         else:
@@ -1860,7 +1864,7 @@ class ModuleRedeclarator(object):
         for item_name in sortedNoCase(methods.keys()):
             item = methods[item_name]
             try:
-                self.redoFunction(out, item, item_name, indent + 1, p_class, p_modname, seen=seen_funcs)
+                self.redoFunction(out, item, item_name, indent + 1, p_class, p_modname, classname=p_name, seen=seen_funcs)
             except:
                 self.handle_error_func(item_name, out)
             #
