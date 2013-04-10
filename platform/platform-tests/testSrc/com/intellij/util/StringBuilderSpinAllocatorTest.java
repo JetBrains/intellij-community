@@ -20,6 +20,7 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 
 import java.util.Collections;
+import java.util.Random;
 
 import static org.junit.Assume.assumeTrue;
 
@@ -63,29 +64,21 @@ public class StringBuilderSpinAllocatorTest extends PlatformTestCase {
   }
 
   static final int count = 100000;
-  static Runnable spinAlloc0 = new Runnable() {
-    @Override
-    public void run() {
-      //for (int i = 0; i < count; ++i) {
-      StringBuilder builder = null;
-      try {
-        builder = StringBuilderSpinAllocator.alloc();
-        if (builder.length() > 10) builder.reverse();
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(builder);
-      }
-      //}
-    }
-  };
   static final int iter = 1000;
   static Runnable spinAlloc = new Runnable() {
     @Override
     public void run() {
       for (int i = 0; i < iter; ++i) {
-      StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      if (builder.length() > 10) builder.reverse();
-      StringBuilderSpinAllocator.dispose(builder);
+        StringBuilder builder = null;
+        try {
+          builder = StringBuilderSpinAllocator.alloc();
+          if (randomField == 0x78962343) {
+            System.out.println("xxx"+builder);
+          }
+        }
+        finally {
+          StringBuilderSpinAllocator.dispose(builder);
+        }
       }
     }
   };
@@ -93,19 +86,22 @@ public class StringBuilderSpinAllocatorTest extends PlatformTestCase {
     @Override
     public void run() {
       for (int i = 0; i < iter; ++i) {
-      StringBuilder builder = new StringBuilder();
-      if (builder.length() > 10) builder.reverse();
+        StringBuilder builder = new StringBuilder();
+        if (randomField == 0x78962343) {
+          System.out.println("xxx"+builder);
+        }
       }
     }
   };
+  private static volatile int randomField = new Random().nextInt();
 
   private static long time(int count, final Runnable action) {
-    long start;
-    start = System.nanoTime();
+    long start = System.nanoTime();
     for (int i = 0; i < count; ++i) {
-    action.run();
+      action.run();
     }
     long spinTime = (System.nanoTime() - start) / 1000;
+    randomField++;
     return spinTime;
   }
 
