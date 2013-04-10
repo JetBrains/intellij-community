@@ -54,8 +54,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -106,24 +104,6 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       else {
         generateVariableInfo(originalElement, buffer, variable);
       }
-      return buffer.toString();
-    }
-    else if (element instanceof GrReferenceExpression) {
-      GrReferenceExpression refExpr = (GrReferenceExpression)element;
-      StringBuilder buffer = new StringBuilder();
-      PsiType type = null;
-      if (refExpr.getParent() instanceof GrAssignmentExpression) {
-        GrAssignmentExpression assignment = (GrAssignmentExpression)refExpr.getParent();
-        if (refExpr.equals(assignment.getLValue())) {
-          GrExpression rvalue = assignment.getRValue();
-          if (rvalue != null) {
-            type = rvalue.getType();
-          }
-        }
-      }
-      appendTypeString(buffer, type, originalElement);
-      buffer.append(" ");
-      buffer.append(refExpr.getReferenceName());
       return buffer.toString();
     }
     else if (element instanceof PsiMethod) {
