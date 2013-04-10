@@ -2,9 +2,9 @@ package com.intellij.appengine;
 
 import com.intellij.appengine.facet.AppEngineFacet;
 import com.intellij.facet.FacetManager;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
+import com.intellij.openapi.application.ex.PathManagerEx;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -42,7 +42,7 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
 
   protected abstract String getBaseDirectoryPath();
 
-  private static void addAppEngineSupport(Module module, String version) {
+  private void addAppEngineSupport(Module module, String version) {
     final AppEngineFacet appEngine = FacetManager.getInstance(module).addFacet(AppEngineFacet.getFacetType(), "AppEngine", null);
     final String sdkPath = FileUtil.toSystemIndependentName(getTestDataPath()) + "sdk/" + version;
     appEngine.getConfiguration().setSdkHomePath(sdkPath);
@@ -76,7 +76,7 @@ public abstract class AppEngineCodeInsightTestCase extends UsefulTestCase {
     return codeInsightFixture;
   }
 
-  private static String getTestDataPath() {
-    return PathManager.getHomePath() + FileUtil.toSystemDependentName("/plugins/GoogleAppEngine/testData/");
+  private String getTestDataPath() {
+    return PathManagerEx.getHomePath(getClass()) + FileUtil.toSystemDependentName("/plugins/google-app-engine/testData/");
   }
 }

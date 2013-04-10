@@ -11,7 +11,7 @@ import org.jetbrains.jps.model.serialization.JpsSerializationTestCase;
  * @author nik
  */
 public class JpsAppEngineSerializationTest extends JpsSerializationTestCase {
-  public static final String PROJECT_PATH = "plugins/GoogleAppEngine/jps-plugin/testData/serialization/appEngine";
+  public static final String PROJECT_PATH = "plugins/google-app-engine/jps-plugin/testData/serialization/appEngine";
 
   public void testLoad() {
     loadProject(PROJECT_PATH + "/appEngine.ipr");
