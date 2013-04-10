@@ -521,7 +521,7 @@
     <localInspection shortName="GroovyUnusedDeclaration" displayName="Unused declaration"
                  groupPath="Groovy"
                  groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"
-                 implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection"/>
+                 implementationClass="org.jetbrains.plugins.groovy.codeInspection.GroovyUnusedDeclarationInspection" unfair="true"/>
 
     <localInspection language="Groovy" groupPath="Groovy" shortName="SecondUnsafeCall"
                      bundle="org.jetbrains.plugins.groovy.codeInspection.GroovyInspectionBundle"

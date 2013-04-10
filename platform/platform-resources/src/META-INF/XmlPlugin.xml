@@ -350,7 +350,7 @@
                      implementationClass="com.intellij.xml.util.CheckValidXmlInScriptBodyInspection"/>
     <localInspection language="XML" shortName="CheckXmlFileWithXercesValidator" bundle="messages.XmlBundle" key="xml.inspections.check.file.with.xerces"
                      groupName="XML" enabledByDefault="true" level="ERROR"
-                     implementationClass="com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection"/>
+                     implementationClass="com.intellij.xml.util.CheckXmlFileWithXercesValidatorInspection" unfair="true"/>
 
     <localInspection language="XML" bundle="messages.XmlBundle" key="xml.inspections.duplicate.id"
                      groupKey="xml.inspections.group.name" enabledByDefault="true" level="ERROR" runForWholeFile="true" unfair="true"

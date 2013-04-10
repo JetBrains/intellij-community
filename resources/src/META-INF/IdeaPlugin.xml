@@ -568,7 +568,7 @@
                      groupName="Declaration redundancy" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.unusedSymbol.UnusedSymbolLocalInspection" unfair="true"/>
     <localInspection language="JAVA" shortName="UNUSED_IMPORT" displayName="Unused import (editor light)" groupName="Imports" enabledByDefault="true"
-                     level="WARNING" implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection" />
+                     level="WARNING" implementationClass="com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection" unfair="true"/>
 
     <localInspection language="JAVA" suppressId="unchecked" shortName="UNCHECKED_WARNING" displayName="Unchecked warning" groupName=""
                      enabledByDefault="true" level="WARNING"
