@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,15 +33,15 @@ import java.awt.event.*;
 public class ButtonlessScrollBarUI extends BasicScrollBarUI {
 
   public static JBColor getGradientLightColor() {
-    return new JBColor(Gray._251, Gray._90);
+    return new JBColor(Gray._251, Gray._95);
   }
 
   public static JBColor getGradientDarkColor() {
-    return new JBColor(Gray._215, Gray._70);
+    return new JBColor(Gray._215, Gray._80);
   }
 
   private static JBColor getGradientThumbBorderColor() {
-    return new JBColor(Gray._201, Gray._75);
+    return new JBColor(Gray._201, Gray._85);
   }
 
   public static JBColor getTrackBackground() {

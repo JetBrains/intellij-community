@@ -116,9 +116,9 @@ public class ReplaceConstructorWithFactoryHandler
       CommonRefactoringUtil.showErrorHint(myProject, editor, message, REFACTORING_NAME, HelpID.REPLACE_CONSTRUCTOR_WITH_FACTORY);
       return;
     }
-    final int answer = Messages.showYesNoCancelDialog(myProject,
-                                                      RefactoringBundle.message("would.you.like.to.replace.default.constructor.of.0.with.factory.method", aClass.getQualifiedName()),
-                                                      REFACTORING_NAME, Messages.getQuestionIcon()
+    final int answer = Messages.showYesNoDialog(myProject,
+                                                RefactoringBundle.message("would.you.like.to.replace.default.constructor.of.0.with.factory.method", aClass.getQualifiedName()),
+                                                REFACTORING_NAME, Messages.getQuestionIcon()
     );
     if (answer != 0) return;
     if (!CommonRefactoringUtil.checkReadOnlyStatus(myProject, aClass)) return;

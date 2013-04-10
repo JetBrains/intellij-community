@@ -22,7 +22,6 @@ package com.intellij.openapi.editor.colors.impl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.ex.DecodeDefaultsUtil;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.NamedComponent;
 import com.intellij.openapi.components.RoamingType;
@@ -77,7 +76,9 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     addDefaultSchemes();
 
     // Load default schemes from providers
-    loadAdditionalDefaultSchemes();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      loadSchemesFromBeans();
+    }
 
     loadAllSchemes();
 
@@ -93,38 +94,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     // incorrect highlighting with "traces" of color scheme which was active during IDE startup.
     final EditorColorsScheme defaultColorScheme = getScheme(dark ? "Darcula" : EditorColorsScheme.DEFAULT_SCHEME_NAME);
     return defaultColorScheme.getAttributes(key);
-  }
-
-  private void loadAdditionalDefaultSchemes() {
-    //Get color schemes from EPs
-    for (BundledColorSchemesProvider provider : BundledColorSchemesProvider.EP_NAME.getExtensions()) {
-      final String[] schemesPaths = provider.getBundledSchemesRelativePaths();
-      if (schemesPaths == null) {
-        continue;
-      }
-
-      for (final String schemePath : schemesPaths) {
-        try {
-          final EditorColorsSchemeImpl scheme = loadScheme(schemePath, provider);
-          if (scheme != null) {
-            mySchemesManager.addNewScheme(scheme, false);
-          }
-        }
-        catch (final Exception e) {
-          ApplicationManager.getApplication().invokeLater(
-            new Runnable(){
-              @Override
-              public void run() {
-                // Error shouldn't occur during this operation
-                // thus we report error instead of info
-                LOG.error("Cannot read scheme from " + schemePath + ": " + e.getLocalizedMessage(), e);
-              }
-            }
-          );
-        }
-      }
-    }
-    loadSchemesFromBeans();
   }
 
   private void loadSchemesFromBeans() {
@@ -160,13 +129,6 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
         LOG.error(e1);
       }
     }
-  }
-
-  private static EditorColorsSchemeImpl loadScheme(@NotNull final String schemePath,
-                                                   final BundledColorSchemesProvider provider)
-    throws IOException, JDOMException, InvalidDataException {
-    final InputStream inputStream = DecodeDefaultsUtil.getDefaultsInputStream(provider, schemePath);
-    return loadSchemeFromStream(schemePath, inputStream);
   }
 
   private static EditorColorsSchemeImpl loadSchemeFromStream(String schemePath, InputStream inputStream)

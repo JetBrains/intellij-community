@@ -78,8 +78,9 @@ public abstract class AbstractJavaFxPackager {
     final File tempUnzippedArtifactOutput;
     try {
       tempUnzippedArtifactOutput = FileUtil.createTempDirectory("artifact", "unzipped");
-      ZipUtil.extract(new File(zipPath), tempUnzippedArtifactOutput, null);
-      copyLibraries(zipPath, tempUnzippedArtifactOutput);
+      final File artifactOutputFile = new File(zipPath);
+      ZipUtil.extract(artifactOutputFile, tempUnzippedArtifactOutput, null);
+      copyLibraries(artifactOutputFile.getName(), tempUnzippedArtifactOutput);
     }
     catch (IOException e) {
       registerJavaFxPackagerError(e);

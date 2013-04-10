@@ -116,12 +116,15 @@ public class CompileServerClasspathManager {
   @Nullable
   private static File getPluginDir(IdeaPluginDescriptor plugin) {
     String pluginDirName = StringUtil.getShortName(plugin.getPluginId().getIdString());
-    List<String> roots = Arrays.asList(new File(PathManager.getHomePath(), "plugins").getPath(),
-                                       new File(PathManager.getHomePath(), "community/plugins").getPath());
     String extraDir = System.getProperty("idea.external.build.development.plugins.dir");
     if (extraDir != null) {
-      roots.add(extraDir);
+      File extraDirFile = new File(extraDir, pluginDirName);
+      if (extraDirFile.isDirectory()) {
+        return extraDirFile;
+      }
     }
+    List<String> roots = Arrays.asList(new File(PathManager.getHomePath(), "plugins").getPath(),
+                                       new File(PathManager.getHomePath(), "community/plugins").getPath());
     for (String root : roots) {
       File pluginDir = new File(root, pluginDirName);
       if (pluginDir.isDirectory()) {

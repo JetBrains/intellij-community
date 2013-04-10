@@ -16,6 +16,7 @@
 package com.intellij.ui;
 
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComponentWithBrowseButton;
@@ -35,12 +36,26 @@ public class EditorTextFieldWithBrowseButton extends ComponentWithBrowseButton<E
     super(createEditorTextField(project, isClassAccepted, visibilityChecker), null);
   }
 
+  public EditorTextFieldWithBrowseButton(Project project,
+                                         boolean isClassAccepted,
+                                         final JavaCodeFragment.VisibilityChecker visibilityChecker,
+                                         FileType fileType) {
+    super(createEditorTextField(project, isClassAccepted, visibilityChecker, fileType), null);
+  }
+
   private static EditorTextField createEditorTextField(Project project,
                                                        boolean isClassAccepted,
                                                        JavaCodeFragment.VisibilityChecker visibilityChecker) {
+    return createEditorTextField(project, isClassAccepted, visibilityChecker, StdFileTypes.JAVA);
+  }
+
+  private static EditorTextField createEditorTextField(Project project,
+                                                       boolean isClassAccepted,
+                                                       JavaCodeFragment.VisibilityChecker visibilityChecker,
+                                                       final FileType fileType) {
     if (project.isDefault()) return new EditorTextField();
     return new EditorTextField(createDocument("", project, isClassAccepted,
-                                             visibilityChecker), project, StdFileTypes.JAVA);
+                                             visibilityChecker), project, fileType);
   }
 
   private static Document createDocument(final String text,
