@@ -20,6 +20,7 @@
 package com.intellij.openapi.editor.colors.impl;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ExportableComponent;
 import com.intellij.openapi.components.NamedComponent;
@@ -75,7 +76,9 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     addDefaultSchemes();
 
     // Load default schemes from providers
-    loadSchemesFromBeans();
+    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+      loadSchemesFromBeans();
+    }
 
     loadAllSchemes();
 
