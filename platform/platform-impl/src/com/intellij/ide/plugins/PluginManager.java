@@ -46,6 +46,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -204,7 +205,7 @@ public class PluginManager {
               System.err.println(message);
             }
             else {
-              JOptionPane.showMessageDialog(null, message + ": " + e.getClass().getName() + ": " + e.getMessage(), "Error starting IntelliJ Platform", JOptionPane.ERROR_MESSAGE);
+              JOptionPane.showMessageDialog(null, message + ": " + e.getClass().getName() + ": " + e.getMessage() + "\n" + ExceptionUtil.getThrowableText(e), "Error starting IntelliJ Platform", JOptionPane.ERROR_MESSAGE);
             }
           }
         }
