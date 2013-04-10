@@ -34,7 +34,10 @@ public class FinallyFuture<V> implements AsyncFuture<V> {
 
   @Override
   public boolean cancel(boolean mayInterruptIfRunning) {
-    return myInner.cancel(mayInterruptIfRunning);
+    boolean cancel = myInner.cancel(mayInterruptIfRunning);
+    if (cancel)
+      myFinallyBlock.execute();
+    return cancel;
   }
 
   @Override
