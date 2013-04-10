@@ -32,11 +32,13 @@ import java.util.List;
 */
 public class BuildResult implements MessageHandler {
   private final List<BuildMessage> myErrorMessages;
+  private final List<BuildMessage> myWarnMessages;
   private final List<BuildMessage> myInfoMessages;
   private boolean myUpToDate = true;
 
   public BuildResult() {
     myErrorMessages = new ArrayList<BuildMessage>();
+    myWarnMessages = new ArrayList<BuildMessage>();
     myInfoMessages = new ArrayList<BuildMessage>();
   }
 
@@ -45,6 +47,9 @@ public class BuildResult implements MessageHandler {
     if (msg.getKind() == BuildMessage.Kind.ERROR) {
       myErrorMessages.add(msg);
       myUpToDate = false;
+    }
+    else if (msg.getKind() == BuildMessage.Kind.WARNING) {
+      myWarnMessages.add(msg);
     }
     else {
       myInfoMessages.add(msg);
@@ -75,5 +80,10 @@ public class BuildResult implements MessageHandler {
   @NotNull
   public List<BuildMessage> getErrorMessages() {
     return Collections.unmodifiableList(myErrorMessages);
+  }
+
+  @NotNull
+  public List<BuildMessage> getWarnMessages() {
+    return myWarnMessages;
   }
 }
