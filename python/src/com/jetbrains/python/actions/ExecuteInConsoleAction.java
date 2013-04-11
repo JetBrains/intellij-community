@@ -41,7 +41,7 @@ import java.util.Collection;
 
 public class ExecuteInConsoleAction extends AnAction {
 
-  public static final String EXECUTE_SELECTION_IN_CONSOLE = "Execute selection in console";
+  public static final String EXECUTE_SELECTION_IN_CONSOLE = "Execute Selection in Console";
 
   public ExecuteInConsoleAction() {
     super(EXECUTE_SELECTION_IN_CONSOLE);
@@ -137,10 +137,11 @@ public class ExecuteInConsoleAction extends AnAction {
       if (text != null) {
         presentation.setText(EXECUTE_SELECTION_IN_CONSOLE);
       }
-
-      text = getLineUnderCaret(editor);
-      if (text != null) {
-        presentation.setText("Execute line in console");
+      else {
+        text = getLineUnderCaret(editor);
+        if (text != null) {
+          presentation.setText("Execute Line in Console");
+        }
       }
 
       enabled = !StringUtil.isEmpty(text);
