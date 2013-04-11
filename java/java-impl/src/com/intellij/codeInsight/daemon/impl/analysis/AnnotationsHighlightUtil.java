@@ -465,6 +465,24 @@ public class AnnotationsHighlightUtil {
     return false;
   }
 
+  public static HighlightInfo checkClashesWithSuperMethods(@NotNull PsiAnnotationMethod psiMethod) {
+    final PsiIdentifier nameIdentifier = psiMethod.getNameIdentifier();
+    if (nameIdentifier != null) {
+      final PsiMethod[] methods = psiMethod.findDeepestSuperMethods();
+      for (PsiMethod method : methods) {
+        final PsiClass containingClass = method.getContainingClass();
+        if (containingClass != null) {
+          final String qualifiedName = containingClass.getQualifiedName();
+          if (CommonClassNames.JAVA_LANG_OBJECT.equals(qualifiedName) || CommonClassNames.JAVA_LANG_ANNOTATION_ANNOTATION.equals(qualifiedName)) {
+            return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(nameIdentifier).descriptionAndTooltip(
+              "@interface member clashes with '" + HighlightUtil.formatMethod(method) + "' in " + HighlightUtil.formatClass(containingClass)).create();
+          }
+        }
+      }
+    }
+    return null;
+  }
+  
   @Nullable
   public static HighlightInfo checkAnnotationDeclaration(final PsiElement parent, final PsiReferenceList list) {
     if (PsiUtil.isAnnotationMethod(parent)) {
