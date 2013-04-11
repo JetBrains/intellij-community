@@ -95,7 +95,7 @@ public class X11FullscreenHelper {
    */
   private static int sendClientMessage(X11.Display display, long wid, String msg, NativeLong[] data) {
     // Use the JNA platform X11 binding
-    assert (data.length < 5);
+    assert (data.length == 5);
     X11 x = X11.INSTANCE;
     // Create and populate a client-event structure
     X11.XEvent event = new X11.XEvent();
