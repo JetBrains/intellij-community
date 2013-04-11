@@ -15,6 +15,7 @@ import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.EnumSet;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -96,30 +97,47 @@ public class PyArgumentListInspection extends PyInspection {
   }
 
   private static void highlightIncorrectArguments(ProblemsHolder holder, CallArgumentsMapping result) {
-    for (Map.Entry<PyExpression, EnumSet<CallArgumentsMapping.ArgFlag>> arg_entry : result.getArgumentFlags().entrySet()) {
-    EnumSet<CallArgumentsMapping.ArgFlag> flags = arg_entry.getValue();
-    if (!flags.isEmpty()) { // something's wrong
-      PyExpression arg = arg_entry.getKey();
-      if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP)) {
-        holder.registerProblem(arg, PyBundle.message("INSP.duplicate.argument"));
-      }
-      if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_KWD)) {
-        holder.registerProblem(arg, PyBundle.message("INSP.duplicate.doublestar.arg"));
-      }
-      if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_TUPLE)) {
-        holder.registerProblem(arg, PyBundle.message("INSP.duplicate.star.arg"));
-      }
-      if (flags.contains(CallArgumentsMapping.ArgFlag.IS_POS_PAST_KWD)) {
-        holder.registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"));
-      }
-      if (flags.contains(CallArgumentsMapping.ArgFlag.IS_UNMAPPED)) {
-        holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"));
-      }
-      if (flags.contains(CallArgumentsMapping.ArgFlag.IS_TOO_LONG)) {
-        holder.registerProblem(arg, PyBundle.message("INSP.more.args.that.pos.params"));
+    for (Map.Entry<PyExpression, EnumSet<CallArgumentsMapping.ArgFlag>> argEntry : result.getArgumentFlags().entrySet()) {
+      EnumSet<CallArgumentsMapping.ArgFlag> flags = argEntry.getValue();
+      if (!flags.isEmpty()) { // something's wrong
+        PyExpression arg = argEntry.getKey();
+        if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP)) {
+          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.argument"));
+        }
+        if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_KWD)) {
+          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.doublestar.arg"));
+        }
+        if (flags.contains(CallArgumentsMapping.ArgFlag.IS_DUP_TUPLE)) {
+          holder.registerProblem(arg, PyBundle.message("INSP.duplicate.star.arg"));
+        }
+        if (flags.contains(CallArgumentsMapping.ArgFlag.IS_POS_PAST_KWD)) {
+          holder.registerProblem(arg, PyBundle.message("INSP.cannot.appear.past.keyword.arg"));
+        }
+        if (flags.contains(CallArgumentsMapping.ArgFlag.IS_UNMAPPED)) {
+          holder.registerProblem(arg, PyBundle.message("INSP.unexpected.arg"));
+        }
+        if (flags.contains(CallArgumentsMapping.ArgFlag.IS_TOO_LONG)) {
+          final PyCallExpression.PyMarkedCallee markedCallee = result.getMarkedCallee();
+          String parameterName = null;
+          if (markedCallee != null) {
+            final PyParameter[] parameters = markedCallee.getCallable().getParameterList().getParameters();
+            for (int i = parameters.length - 1; i >= 0; --i) {
+              final PyParameter param = parameters[i];
+              if (param instanceof PyNamedParameter) {
+                final List<PyNamedParameter> unmappedParams = result.getUnmappedParams();
+                if (!((PyNamedParameter)param).isPositionalContainer() && !((PyNamedParameter)param).isKeywordContainer() &&
+                    param.getDefaultValue() == null && !unmappedParams.contains(param)) {
+                  parameterName = param.getName();
+                  break;
+                }
+              }
+            }
+            holder.registerProblem(arg, parameterName != null ? PyBundle.message("INSP.multiple.values.resolve.to.positional.$0", parameterName)
+                                                              : PyBundle.message("INSP.more.args.that.pos.params"));
+          }
+        }
       }
     }
-  }
   }
 
   private static void highlightStarArgumentTypeMismatch(PyArgumentList node, ProblemsHolder holder, TypeEvalContext context) {
