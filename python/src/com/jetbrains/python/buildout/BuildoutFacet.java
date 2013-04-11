@@ -99,14 +99,15 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
   /**
    * Generates a <code>sys.path[0:0] = [...]</code> with paths that buildout script wants.
    *
+   * @param additionalPythonPath
    * @param module to get a buildout facet from
    * @return the statement, or null if there's no buildout facet.
    */
   @Nullable
-  public String getPathPrependStatement() {
-    BuildoutFacet buildout_facet = this;
+  public String getPathPrependStatement(List<String> additionalPythonPath) {
+    BuildoutFacet buildoutFacet = this;
     StringBuilder sb = new StringBuilder("sys.path[0:0]=[");
-    for (String s : buildout_facet.getAdditionalPythonPath()) {
+    for (String s : additionalPythonPath) {
       sb.append("'").append(s).append("',");
       // NOTE: we assume that quotes and spaces are escaped in paths back in the buildout script we extracted them from.
     }

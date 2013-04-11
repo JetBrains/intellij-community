@@ -19,13 +19,18 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.buildout.BuildoutFacet;
+import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
+import com.jetbrains.python.remote.PythonRemoteInterpreterManager;
 import com.jetbrains.python.run.PythonCommandLineState;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 
 /**
  * @author oleg
@@ -66,18 +71,26 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
     Module module = sdkAndModule.second;
     Sdk sdk = sdkAndModule.first;
 
-    String[] setup_fragment;
+    assert sdk != null;
+
+    PathMappingSettings mappingSettings = getMappings(project, sdk);
+
+    String[] setupFragment;
 
     PyConsoleOptionsProvider.PyConsoleSettings settingsProvider = PyConsoleOptionsProvider.getInstance(project).getPythonConsoleSettings();
     Collection<String> pythonPath = PythonCommandLineState.collectPythonPath(module, settingsProvider.addContentRoots(),
                                                                              settingsProvider.addSourceRoots());
 
-    String self_path_append = constructPythonPathCommand(pythonPath);
+    if (mappingSettings != null) {
+      pythonPath = mappingSettings.convertToRemote(pythonPath);
+    }
+
+    String selfPathAppend = constructPythonPathCommand(pythonPath);
 
     String customStartScript = settingsProvider.getCustomStartScript();
 
     if (customStartScript.trim().length() > 0) {
-      self_path_append += "\n" + customStartScript.trim();
+      selfPathAppend += "\n" + customStartScript.trim();
     }
 
     String workingDir = settingsProvider.getWorkingDirectory();
@@ -95,19 +108,41 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
       }
     }
 
+    if (mappingSettings != null) {
+      workingDir = mappingSettings.convertToRemote(workingDir);
+    }
+
     BuildoutFacet facet = null;
     if (module != null) {
       facet = BuildoutFacet.getInstance(module);
     }
+
     if (facet != null) {
-      setup_fragment = new String[]{facet.getPathPrependStatement(), self_path_append};
+      List<String> path = facet.getAdditionalPythonPath();
+      if (mappingSettings != null) {
+        path = mappingSettings.convertToRemote(path);
+      }
+      String prependStatement = facet.getPathPrependStatement(path);
+      setupFragment = new String[]{prependStatement, selfPathAppend};
     }
     else {
-      setup_fragment = new String[]{self_path_append};
+      setupFragment = new String[]{selfPathAppend};
     }
 
     return PydevConsoleRunner
-      .createAndRun(project, sdk, PyConsoleType.PYTHON, workingDir, Maps.newHashMap(settingsProvider.getEnvs()), setup_fragment);
+      .createAndRun(project, sdk, PyConsoleType.PYTHON, workingDir, Maps.newHashMap(settingsProvider.getEnvs()), setupFragment);
+  }
+
+  public static PathMappingSettings getMappings(Project project, Sdk sdk) {
+    PathMappingSettings mappingSettings = null;
+    if (PySdkUtil.isRemote(sdk)) {
+      PythonRemoteInterpreterManager instance = PythonRemoteInterpreterManager.getInstance();
+      if (instance != null) {
+        mappingSettings =
+          instance.setupMappings(project, (PyRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), null);
+      }
+    }
+    return mappingSettings;
   }
 
   @NotNull

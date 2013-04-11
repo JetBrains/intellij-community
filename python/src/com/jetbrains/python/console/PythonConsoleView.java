@@ -68,6 +68,8 @@ public class PythonConsoleView extends LanguageConsoleViewImpl implements PyCode
 
   public void requestFocus() {
     IdeFocusManager.findInstance().requestFocus(getPythonLanguageConsole().getConsoleEditor().getContentComponent(), true);
+    updateUI();
+    getLanguageConsole().getHistoryViewer().getComponent().updateUI();
   }
 
   private PythonLanguageConsole getPythonLanguageConsole() {

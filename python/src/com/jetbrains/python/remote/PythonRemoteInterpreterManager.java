@@ -11,7 +11,10 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.remotesdk.*;
+import com.intellij.remotesdk.RemoteInterpreterException;
+import com.intellij.remotesdk.RemoteSdkData;
+import com.intellij.remotesdk.RemoteSdkFactory;
+import com.intellij.remotesdk.RemoteSshProcess;
 import com.intellij.util.NullableConsumer;
 import com.intellij.util.PathMappingSettings;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -115,6 +118,10 @@ public abstract class PythonRemoteInterpreterManager implements RemoteSdkFactory
     }
     newMappingSettings.addMapping(PythonHelpersLocator.getHelpersRoot().getPath(), data.getHelpersPath());
   }
+
+  public abstract PathMappingSettings setupMappings(@Nullable Project project,
+                                                    @NotNull PyRemoteSdkAdditionalData data,
+                                                    @Nullable PathMappingSettings mappingSettings);
 
   public static class PyRemoteInterpreterExecutionException extends ExecutionException {
 
