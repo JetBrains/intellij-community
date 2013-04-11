@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.google.common.collect.Lists;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -26,6 +27,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.List;
 
 /**
@@ -54,6 +56,14 @@ public class PathMappingSettings implements Cloneable {
 
   public PathMappingSettings() {
     myPathMappings = ContainerUtil.newArrayList();
+  }
+
+  public List<String> convertToRemote(Collection<String> paths) {
+    List<String> result = Lists.newArrayList();
+    for (String p: paths) {
+      result.add(convertToRemote(p));
+    }
+    return result;
   }
 
   private static class BestMappingSelector {
