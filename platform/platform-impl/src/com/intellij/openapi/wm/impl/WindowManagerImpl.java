@@ -41,6 +41,7 @@ import com.intellij.openapi.wm.WindowManagerListener;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.X11FullscreenHelper;
 import com.intellij.util.Alarm;
 import com.intellij.util.EventDispatcher;
 import com.intellij.util.messages.MessageBus;
@@ -50,6 +51,7 @@ import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.awt.X11.XToolkit;
 
 import javax.swing.*;
 import java.awt.*;
@@ -840,14 +842,14 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
           if (fullScreen) {
             frame.getRootPane().putClientProperty("oldBounds", frame.getBounds());
           }
+          // setUndecorated working only with not created window yet
           frame.dispose();
           frame.setUndecorated(fullScreen);
         }
         finally {
           if (fullScreen) {
             frame.setBounds(device.getDefaultConfiguration().getBounds());
-          }
-          else {
+          } else {
             Object o = frame.getRootPane().getClientProperty("oldBounds");
             if (o instanceof Rectangle) {
               frame.setBounds((Rectangle)o);
@@ -855,6 +857,17 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
           }
           frame.setVisible(true);
           frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
+        }
+      }
+      if (SystemInfo.isLinux) {
+        // going to fullscreen using native X11 bindings
+        // make sure that AWT thread will do nothing with window while it's going to fullscreen
+        XToolkit.awtLock();
+        try {
+          X11FullscreenHelper.setFullScreenWindow(frame, fullScreen);
+        } finally {
+          // unlock AWT thread after finishing fullscreen switch
+          XToolkit.awtUnlock();
         }
       }
     }
