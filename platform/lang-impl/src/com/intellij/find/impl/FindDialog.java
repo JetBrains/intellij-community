@@ -221,7 +221,9 @@ public class FindDialog extends DialogWrapper {
   private void updateReplaceVisibility() {
     myReplacePrompt.setVisible(myModel.isReplaceState());
     myReplaceComboBox.setVisible(myModel.isReplaceState());
-    myCbToSkipResultsWhenOneUsage.setVisible(myModel.isReplaceState());
+    if (myCbToSkipResultsWhenOneUsage != null) {
+      myCbToSkipResultsWhenOneUsage.setVisible(myModel.isReplaceState());
+    }
     myCbPreserveCase.setVisible(myModel.isReplaceState());
   }
 
