@@ -178,16 +178,16 @@ public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentLi
     // highlight the next parameter to be filled
     if (canOfferNext) {
       int highlightIndex = Integer.MAX_VALUE; // initially beyond reason = no highlight
-      if (lastParamIndex < parameterList.size() - 1) { // lastParamIndex not at end, or no args
+      if (isArgsEmpty) {
+        highlightIndex = marked.getImplicitOffset(); // no args, highlight first (PY-3690)
+      }
+      else if (lastParamIndex < parameterList.size() - 1) { // lastParamIndex not at end, or no args
         if (namedParameters.get(lastParamIndex).isPositionalContainer()) {
           highlightIndex = lastParamIndex; // stick to *arg
         }
         else {
           highlightIndex = lastParamIndex + 1; // highlight next
         }
-      }
-      else if (isArgsEmpty) {
-        highlightIndex = marked.getImplicitOffset(); // no args, highlight first (PY-3690)
       }
       else if (lastParamIndex == parameterList.size() - 1) { // we're right after the end of param list
         if (namedParameters.get(lastParamIndex).isPositionalContainer() || namedParameters.get(lastParamIndex).isKeywordContainer()) {

@@ -375,6 +375,11 @@ public class PyParameterInfoTest extends LightMarkedTestCase {
     feignCtrlP(marks.get("<arg4>").getTextOffset()).check("*arg, a=1, b=2", new String[]{"a=1, "});
   }
 
+  public void testNoArgs() {
+    Map<String, PsiElement> marks = loadTest(1);
+    feignCtrlP(marks.get("<arg1>").getTextOffset()).check("a, b, c", new String[]{"a, "});
+  }
+
   /**
    * Imitates pressing of Ctrl+P; fails if results are not as expected.
    * @param offset offset of 'cursor' where ^P is pressed.
