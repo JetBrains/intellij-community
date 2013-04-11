@@ -199,7 +199,7 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
 
   public String getVersionName() {
     final String fullName = ApplicationNamesInfo.getInstance().getFullProductName();
-    if (myEAP) {
+    if (myEAP && !StringUtil.isEmptyOrSpaces(myCodeName)) {
       return fullName + " (" + myCodeName + ")";
     }
     return fullName;

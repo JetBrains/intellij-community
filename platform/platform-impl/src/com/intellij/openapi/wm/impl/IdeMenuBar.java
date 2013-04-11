@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,7 +30,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.util.ui.Animator;
@@ -289,8 +289,8 @@ public class IdeMenuBar extends JMenuBar {
     super.addNotify();
     updateMenuActions();
     Window window = SwingUtilities.getWindowAncestor(this);
-    if (SystemInfo.isWindows && window instanceof IdeFrameImpl) {
-      boolean fullScreen = WindowManagerEx.getInstanceEx().isFullScreen((IdeFrameImpl)window);
+    if (SystemInfo.isWindows && window instanceof IdeFrameEx) {
+      boolean fullScreen = ((IdeFrameEx)window).isInFullScreen();
       if (fullScreen) {
         setState(State.COLLAPSING);
         restartAnimator();

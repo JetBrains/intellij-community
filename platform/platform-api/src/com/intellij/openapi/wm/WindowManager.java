@@ -17,7 +17,6 @@ package com.intellij.openapi.wm;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -127,7 +126,5 @@ public abstract class WindowManager {
   /**
    * @return <code>true</code> if full screen mode is supported in current OS.
    */
-  public boolean isFullScreenSupportedInCurrentOS() {
-    return SystemInfo.isMacOSLion || SystemInfo.isWindows;
-  }
+  public abstract boolean isFullScreenSupportedInCurrentOS();
 }

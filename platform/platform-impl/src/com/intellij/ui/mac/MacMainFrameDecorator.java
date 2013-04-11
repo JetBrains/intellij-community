@@ -19,10 +19,9 @@ import com.apple.eawt.*;
 import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.wm.impl.IdeFrameDecorator;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.ui.CustomProtocolHandler;
 import com.intellij.ui.mac.foundation.Foundation;
@@ -47,7 +46,7 @@ import static com.intellij.ui.mac.foundation.Foundation.invoke;
 /**
  * User: spLeaner
  */
-public class MacMainFrameDecorator implements UISettingsListener, Disposable {
+public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
 
   public static final String FULL_SCREEN = "Idea.Is.In.FullScreen.Mode.Now";
@@ -116,10 +115,9 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
   private static CustomProtocolHandler ourProtocolHandler = null;
 
   private boolean myInFullScreen;
-  private IdeFrameImpl myFrame;
 
   public MacMainFrameDecorator(@NotNull final IdeFrameImpl frame, final boolean navBar) {
-    myFrame = frame;
+    super(frame);
 
     final ID window = MacUtil.findWindowForTitle(frame.getTitle());
     if (window == null) return;
@@ -148,6 +146,8 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
     try {
       if (SystemInfo.isMacOSLion) {
         if (!FULL_SCREEN_AVAILABLE) return;
+
+        FullScreenUtilities.setWindowCanFullScreen(frame, true);
 
         FullScreenUtilities.addFullScreenListenerTo(frame, new FullScreenAdapter() {
           @Override
@@ -227,11 +227,6 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
     }
   }
 
-  public void remove() {
-    // TODO: clean up?
-    Disposer.dispose(this);
-  }
-
   @Override
   public void uiSettingsChanged(final UISettings source) {
     if (CURRENT_GETTER != null) {
@@ -240,14 +235,11 @@ public class MacMainFrameDecorator implements UISettingsListener, Disposable {
   }
 
   @Override
-  public void dispose() {
-    myFrame = null;
-  }
-
   public boolean isInFullScreen() {
     return myInFullScreen;
   }
 
+  @Override
   public void toggleFullScreen(boolean state) {
     if (!SystemInfo.isMacOSLion || myFrame == null) return;
     if (myInFullScreen != state) {
