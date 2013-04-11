@@ -155,8 +155,8 @@ public class ReplaceInProjectManager {
                                   UsageViewPresentation presentation,
                                   FindUsagesProcessPresentation processPresentation,
                                   final FindManager findManager) {
-    final ReplaceContext[] context = new ReplaceContext[1];
     presentation.setMergeDupLinesAvailable(false);
+    final ReplaceContext[] context = new ReplaceContext[1];
     manager.searchAndShowUsages(new UsageTarget[]{new FindInProjectUtil.StringUsageTarget(findModelCopy.getStringToFind())},
                                 usageSearcherFactory, processPresentation, presentation, new UsageViewManager.UsageViewStateListener() {
         @Override
@@ -335,16 +335,15 @@ public class ReplaceInProjectManager {
     replaceContext.getUsageView().addButtonToLowerPane(replaceSelectedRunnable, FindBundle.message("find.replace.selected.action"));
   }
 
-  private boolean replaceUsages(final ReplaceContext replaceContext, Collection<Usage> usages) {
-    boolean success = true;
-    int replacedCount = 0;
+  private boolean replaceUsages(@NotNull ReplaceContext replaceContext, @NotNull Collection<Usage> usages) {
     if (!ensureUsagesWritable(replaceContext, usages)) {
       return true;
     }
+    int replacedCount = 0;
+    boolean success = true;
     for (final Usage usage : usages) {
       try {
         if (replaceUsage(usage, replaceContext.getFindModel(), replaceContext.getExcludedSetCached(), false)) {
-          replaceContext.getUsageView().removeUsage(usage);
           replacedCount++;
         }
       }
@@ -353,6 +352,7 @@ public class ReplaceInProjectManager {
         success = false;
       }
     }
+    replaceContext.getUsageView().removeUsagesBulk(usages);
     reportNumberReplacedOccurrences(myProject, replacedCount);
     return success;
   }
@@ -386,7 +386,7 @@ public class ReplaceInProjectManager {
         final Document document = ((UsageInfo2UsageAdapter)usage).getDocument();
         if (!document.isWritable()) return false;
 
-        return ((UsageInfo2UsageAdapter)usage).processRangeMarkers(new Processor<Segment>() {
+        boolean result = ((UsageInfo2UsageAdapter)usage).processRangeMarkers(new Processor<Segment>() {
           @Override
           public boolean process(Segment segment) {
             final int textOffset = segment.getStartOffset();
@@ -405,6 +405,7 @@ public class ReplaceInProjectManager {
             return true;
           }
         });
+        return result;
       }
     });
 
@@ -493,7 +494,8 @@ public class ReplaceInProjectManager {
     if (usageView.getUsages().isEmpty()) {
       usageView.close();
       return true;
-    } else if (!success) {
+    }
+    if (!success) {
       NOTIFICATION_GROUP.createNotification("One or more malformed replacement strings", MessageType.ERROR).notify(myProject);
     }
     return false;

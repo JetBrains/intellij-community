@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.MutableTreeNode;
 import javax.swing.tree.TreeNode;
 import java.util.*;
 
@@ -153,6 +154,35 @@ public class GroupNode extends Node implements Navigatable, Comparable<GroupNode
     }
 
     return false;
+  }
+
+  public boolean removeUsagesBulk(@NotNull Set<UsageNode> usages) {
+    boolean removed;
+    synchronized (lock) {
+      removed = myUsageNodes.removeAll(usages);
+    }
+
+    Collection<GroupNode> groupNodes = mySubgroupNodes.values();
+
+    for (Iterator<GroupNode> iterator = groupNodes.iterator(); iterator.hasNext(); ) {
+      GroupNode groupNode = iterator.next();
+
+      if (groupNode.removeUsagesBulk(usages)) {
+        if (groupNode.getRecursiveUsageCount() == 0) {
+          MutableTreeNode parent = (MutableTreeNode)groupNode.getParent();
+          int childIndex = parent.getIndex(groupNode);
+          if (childIndex != -1) {
+            parent.remove(childIndex);
+          }
+          iterator.remove();
+        }
+        removed = true;
+      }
+    }
+    if (removed) {
+      --myRecursiveUsageCount;
+    }
+    return removed;
   }
 
   private void doUpdate() {

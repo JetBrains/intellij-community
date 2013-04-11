@@ -860,6 +860,36 @@ public class UsageViewImpl implements UsageView, UsageModelTracker.UsageModelTra
   }
 
   @Override
+  public void removeUsagesBulk(@NotNull Collection<Usage> usages) {
+    final Set<UsageNode> nodes = new THashSet<UsageNode>(usages.size());
+    for (Usage usage : usages) {
+      UsageNode node = myUsageNodes.remove(usage);
+      if (node != null && node != NULL_NODE) {
+        nodes.add(node);
+      }
+    }
+    if (!nodes.isEmpty() && !myPresentation.isDetachedMode()) {
+      UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          if (isDisposed) return;
+          DefaultTreeModel treeModel = (DefaultTreeModel)myTree.getModel();
+          for (UsageNode node : nodes) {
+            MutableTreeNode parent = (MutableTreeNode)node.getParent();
+            int childIndex = parent.getIndex(node);
+            if (childIndex != -1) {
+              parent.remove(childIndex);
+            }
+          }
+          ((GroupNode)myTree.getModel().getRoot()).removeUsagesBulk(nodes);
+
+          treeModel.reload();
+        }
+      });
+    }
+  }
+
+  @Override
   public void includeUsages(@NotNull Usage[] usages) {
     List<TreeNode> nodes = new ArrayList<TreeNode>(usages.length);
     for (Usage usage : usages) {
