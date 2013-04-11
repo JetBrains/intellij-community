@@ -291,6 +291,7 @@ class ParameterInfoComponent extends JPanel {
         curOffset += line.length();
         if (text.trim().endsWith(line.trim())) {
           myOneLineComponents[index] = new OneLineComponent();
+          setBackground(background);
           myOneLineComponents[index].setup(text, flagsMap, background);
           add(myOneLineComponents[index], new GridBagConstraints(0, index, 1, 1, 1, 0, GridBagConstraints.WEST,
                                                                  GridBagConstraints.NONE, new Insets(0, 0, 0, 0), 0, 0));
