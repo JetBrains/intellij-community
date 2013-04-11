@@ -18,7 +18,9 @@ package com.intellij.projectImport;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.util.ElementsChooser;
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.uiDesigner.core.GridConstraints;
 import com.intellij.uiDesigner.core.GridLayoutManager;
@@ -48,14 +50,33 @@ public abstract class SelectImportedProjectsStep<T> extends ProjectImportWizardS
       }
     };
 
-    panel = new JPanel(new GridLayoutManager(2, 1, new Insets(0, 0, 0, 0), -1, -1));
+    panel = new JPanel(new GridLayoutManager(3, 1, new Insets(0, 0, 0, 0), -1, -1));
 
     panel.add(fileChooser, new GridConstraints(0, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_BOTH,
                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
                                                GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW, null, null,
                                                null));
+
+    final AnAction selectAllAction = new AnAction(RefactoringBundle.message("select.all.button")) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        fileChooser.setAllElementsMarked(true);
+      }
+    };
+    final AnAction unselectAllAction = new AnAction(RefactoringBundle.message("unselect.all.button")) {
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+        fileChooser.setAllElementsMarked(false);
+      }
+    };
+    final JComponent actionToolbar =
+      ActionManager.getInstance().createButtonToolbar(ActionPlaces.UNKNOWN, new DefaultActionGroup(selectAllAction, unselectAllAction));
+    panel.add(actionToolbar, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_NORTH, GridConstraints.FILL_HORIZONTAL,
+                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
+                                                 GridConstraints.SIZEPOLICY_CAN_SHRINK, null, null, null));
+
     openModuleSettingsCheckBox = new JCheckBox(IdeBundle.message("project.import.show.settings.after"));
-    panel.add(openModuleSettingsCheckBox, new GridConstraints(1, 0, 1, 1, GridConstraints.ANCHOR_SOUTH, GridConstraints.FILL_HORIZONTAL,
+    panel.add(openModuleSettingsCheckBox, new GridConstraints(2, 0, 1, 1, GridConstraints.ANCHOR_SOUTH, GridConstraints.FILL_HORIZONTAL,
                                                               GridConstraints.SIZEPOLICY_CAN_SHRINK | GridConstraints.SIZEPOLICY_WANT_GROW,
                                                               GridConstraints.SIZEPOLICY_FIXED, null, null, null));
   }
