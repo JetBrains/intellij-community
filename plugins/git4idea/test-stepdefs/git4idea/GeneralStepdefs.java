@@ -77,8 +77,7 @@ public class GeneralStepdefs {
 
   private static void assertNotificationContent(String expected, String actual) {
     expected = virtualCommits.replaceVirtualHashes(expected);
-    assertEquals("Notification content is incorrect", expected, adjustNotificationContent(actual));
-
+    assertEquals("Notification content is incorrect", StringUtil.convertLineSeparators(expected), StringUtil.convertLineSeparators(adjustNotificationContent(actual)));
   }
 
   private static String adjustNotificationContent(String content) {
