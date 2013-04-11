@@ -65,7 +65,7 @@ class ParameterInfoComponent extends JPanel {
       if (o1.getStartOffset() == o2.getStartOffset()) {
         return o1.getEndOffset() > o2.getEndOffset() ? 1 : -1;
       }
-      if (o1.getStartOffset() < o2.getStartOffset()) return 1;
+      if (o1.getStartOffset() > o2.getStartOffset()) return 1;
       if (o1.getEndOffset() > o2.getEndOffset()) return 1;
       return -1;
     }
@@ -346,40 +346,46 @@ class ParameterInfoComponent extends JPanel {
     private String buildLabelText(@NotNull final String text, @NotNull final Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap) {
       final StringBuilder labelText = new StringBuilder(text);
       final String disabledTag = FLAG_TO_TAG.get(ParameterInfoUIContextEx.Flag.DISABLE);
-      int fault = 0;
+
+      final Map<Integer, Integer> faultMap = new HashMap<Integer, Integer>();
       if (isDisabledBeforeHighlight) {
         final String tag = getTag(disabledTag);
         labelText.insert(0, tag);
-        fault += tag.length();
+        faultMap.put(0, tag.length());
       }
 
-      final Map<TextRange, ParameterInfoUIContextEx.Flag> reverseOrderedMap =
-        new TreeMap<TextRange, ParameterInfoUIContextEx.Flag>(Collections.reverseOrder(TEXT_RANGE_COMPARATOR));
-      reverseOrderedMap.putAll(flagsMap);
-      for (Map.Entry<TextRange, ParameterInfoUIContextEx.Flag> entry : reverseOrderedMap.entrySet()) {
-        final TextRange highlightRange = entry.getKey();
-        final ParameterInfoUIContextEx.Flag flag = entry.getValue();
-
-        if (flag == ParameterInfoUIContextEx.Flag.HIGHLIGHT && isDisabledBeforeHighlight) {
-          final String tag = getClosingTag(disabledTag);
-          labelText.insert(highlightRange.getStartOffset() + fault, tag);
-          fault += tag.length();
-        }
-
-        final String tagValue = FLAG_TO_TAG.get(flag);
-        final String tag = getTag(tagValue);
-        labelText.insert(highlightRange.getStartOffset() + fault, tag);
-        fault += tag.length();
-      }
       for (Map.Entry<TextRange, ParameterInfoUIContextEx.Flag> entry : flagsMap.entrySet()) {
         final TextRange highlightRange = entry.getKey();
         final ParameterInfoUIContextEx.Flag flag = entry.getValue();
 
         final String tagValue = FLAG_TO_TAG.get(flag);
+        final String tag = getTag(tagValue);
+
+        int startOffset = highlightRange.getStartOffset();
+        int endOffset = highlightRange.getEndOffset() + tag.length();
+
+        for (Map.Entry<Integer, Integer> entry1 : faultMap.entrySet()) {
+          if (entry1.getKey() < highlightRange.getStartOffset()) {
+            startOffset += entry1.getValue();
+          }
+          if (entry1.getKey() < highlightRange.getEndOffset()) {
+            endOffset += entry1.getValue();
+          }
+        }
+
+        if (flag == ParameterInfoUIContextEx.Flag.HIGHLIGHT && isDisabledBeforeHighlight) {
+          final String disableCloseTag = getClosingTag(disabledTag);
+          labelText.insert(startOffset, disableCloseTag);
+          faultMap.put(highlightRange.getStartOffset(), disableCloseTag.length());
+        }
+
+        labelText.insert(startOffset, tag);
+        faultMap.put(highlightRange.getStartOffset(), tag.length());
+
         final String endTag = getClosingTag(tagValue);
-        int end = highlightRange.getEndOffset() + fault;
-        labelText.insert(end, endTag);
-        fault += endTag.length();
+        labelText.insert(endOffset, endTag);
+        faultMap.put(highlightRange.getEndOffset(), endTag.length());
+
       }
       return "<html>" + labelText.toString() + "</html>";
     }
