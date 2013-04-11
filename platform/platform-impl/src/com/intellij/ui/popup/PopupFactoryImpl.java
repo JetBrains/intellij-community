@@ -243,6 +243,7 @@ public class PopupFactoryImpl extends JBPopupFactory {
                                             Condition<AnAction> preselectActionCondition,
                                             @Nullable String actionPlace) {
       final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(dataContext);
+      LOG.assertTrue(component != null, "dataContext has no component for new ListPopupStep");
 
       final ActionStepBuilder builder =
         new ActionStepBuilder(dataContext, showNumbers, useAlphaAsNumbers, showDisabledActions, honorActionMnemonics);
