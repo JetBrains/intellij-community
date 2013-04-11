@@ -226,11 +226,14 @@ public class ParametersList implements Cloneable {
   }
 
   public void addAll(final String... parameters) {
-    ContainerUtil.addAll(myParameters, parameters);
+    addAll(Arrays.asList(parameters));
   }
 
   public void addAll(final List<String> parameters) {
-    myParameters.addAll(parameters);
+    // Don't use myParameters.addAll(parameters) , it does not call expandMacros(parameter)
+    for (String parameter : parameters) {
+      add(parameter);
+    }
   }
 
   @Override
