@@ -172,11 +172,11 @@ public class HighlightNamesUtil {
     if (method.isConstructor()) {
       return isDeclaration ? HighlightInfoType.CONSTRUCTOR_DECLARATION : HighlightInfoType.CONSTRUCTOR_CALL;
     }
-    if (isInheritedMethod) return HighlightInfoType.INHERITED_METHOD;
     if (isDeclaration) return HighlightInfoType.METHOD_DECLARATION;
     if (method.hasModifierProperty(PsiModifier.STATIC)) {
       return HighlightInfoType.STATIC_METHOD;
     }
+    if (isInheritedMethod) return HighlightInfoType.INHERITED_METHOD;
     if(method.hasModifierProperty(PsiModifier.ABSTRACT)) {
       return HighlightInfoType.ABSTRACT_METHOD;
     }
