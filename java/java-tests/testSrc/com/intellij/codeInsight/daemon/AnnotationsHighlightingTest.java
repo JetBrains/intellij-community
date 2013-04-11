@@ -45,6 +45,8 @@ public class AnnotationsHighlightingTest extends LightDaemonAnalyzerTestCase {
 
   public void testTypeAnnotations() { doTest8(false); }
 
+  public void testPingPongAnnotationTypesDependencies() { doTest(false);}
+
   private void doTest(boolean checkWarnings) {
     setLanguageLevel(LanguageLevel.JDK_1_7);
     doTest(BASE_PATH + "/" + getTestName(true) + ".java", checkWarnings, false);

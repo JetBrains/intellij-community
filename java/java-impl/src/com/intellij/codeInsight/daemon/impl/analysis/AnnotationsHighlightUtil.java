@@ -412,11 +412,27 @@ public class AnnotationsHighlightUtil {
   public static HighlightInfo checkCyclicMemberType(PsiTypeElement typeElement, PsiClass aClass) {
     LOG.assertTrue(aClass.isAnnotationType());
     PsiType type = typeElement.getType();
-    if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == aClass) {
+    final Set<PsiClass> checked = new HashSet<PsiClass>();
+    if (cyclicDependencies(aClass, type, checked)) {
       String description = JavaErrorMessages.message("annotation.cyclic.element.type");
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
     }
     return null;
+  }
+
+  private static boolean cyclicDependencies(PsiClass aClass, PsiType type, Set<PsiClass> checked) {
+    final PsiClass resolvedClass = PsiUtil.resolveClassInType(type);
+    if (resolvedClass != null && resolvedClass.isAnnotationType()) {
+      if (aClass == resolvedClass) {
+        return true;
+      }
+      if (!checked.add(resolvedClass) || !resolvedClass.getManager().isInProject(resolvedClass)) return false;
+      final PsiMethod[] methods = resolvedClass.getMethods();
+      for (PsiMethod method : methods) {
+        if (cyclicDependencies(aClass, method.getReturnType(), checked)) return true;
+      }
+    }
+    return false;
   }
 
   @Nullable
