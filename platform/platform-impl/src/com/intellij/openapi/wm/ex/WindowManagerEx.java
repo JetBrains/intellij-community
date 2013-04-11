@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -33,12 +33,11 @@ import java.awt.event.ComponentEvent;
  * @author Vladimir Kondratyev
  */
 public abstract class WindowManagerEx extends WindowManager {
-  public static enum WindowShadowMode { NORMAL, SMALL, DISABLED }
+  public enum WindowShadowMode { NORMAL, SMALL, DISABLED }
 
   public static WindowManagerEx getInstanceEx(){
     return (WindowManagerEx)WindowManager.getInstance();
   }
-
 
   public abstract IdeFrameImpl getFrame(@Nullable Project project);
 
@@ -85,16 +84,12 @@ public abstract class WindowManagerEx extends WindowManager {
 
   /**
    * @return union of bounds of all default screen devices. Note that <code>x</code> and/or <code>y</code>
-   * coordinates can be negative. It depends on phisical configuration of graphics devices.
+   * coordinates can be negative. It depends on physical configuration of graphics devices.
    * For example, the left monitor has negative coordinates on Win32 platform with dual monitor support
    * (right monitor is the primer one) .
    */
   public abstract Rectangle getScreenBounds();
 
-
-  public abstract boolean isFullScreen(@NotNull Frame frame);
-
-  public abstract void setFullScreen(IdeFrameImpl frame, boolean fullScreen);
   /**
    * @return bounds for the screen device for the given project frame
    */
@@ -114,6 +109,4 @@ public abstract class WindowManagerEx extends WindowManager {
   public abstract void hideDialog(JDialog dialog, Project project);
 
   public abstract void adjustContainerWindow(Component c, Dimension oldSize, Dimension newSize);
-
-
 }

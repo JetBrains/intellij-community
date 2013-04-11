@@ -225,9 +225,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   @Override
   public JFrame findVisibleFrame() {
     IdeFrameImpl[] frames = getAllProjectFrames();
-
-    if (frames.length > 0) return frames[0];
-    return (JFrame)WelcomeFrame.getInstance();
+    return frames.length > 0 ? frames[0] : (JFrame)WelcomeFrame.getInstance();
   }
 
   @Override
@@ -241,11 +239,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   public final Rectangle getScreenBounds() {
     return myScreenBounds;
-  }
-
-  @Override
-  public boolean isFullScreen(@NotNull Frame frame) {
-    return frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isInFullScreen();
   }
 
   @Override
@@ -726,7 +719,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
         }
       }
       boolean isMaximized = extendedState == Frame.MAXIMIZED_BOTH ||
-                            isFullScreenSupportedInCurrentOS() && WindowManagerEx.getInstanceEx().isFullScreen(frame);
+                            isFullScreenSupportedInCurrentOS() && frame.isInFullScreen();
       boolean usePreviousBounds = isMaximized &&
                                   myFrameBounds != null &&
                                   frame.getBounds().contains(new Point((int)myFrameBounds.getCenterX(), (int)myFrameBounds.getCenterY()));
@@ -817,50 +810,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   public WindowWatcher getWindowWatcher() {
     return myWindowWatcher;
-  }
-
-  public void setFullScreen(IdeFrameImpl frame, boolean fullScreen) {
-    if (!isFullScreenSupportedInCurrentOS() || frame.isInFullScreen() == fullScreen) {
-      return;
-    }
-
-    try {
-      if (SystemInfo.isMacOSLion) {
-        frame.getFrameDecorator().toggleFullScreen(fullScreen);
-      }
-      else if (SystemInfo.isXWindow) {
-        XlibUiUtil.toggleFullScreenMode(frame);
-      }
-      else if (SystemInfo.isWindows) {
-        GraphicsDevice device = ScreenUtil.getScreenDevice(frame.getBounds());
-        if (device == null) return;
-
-        try {
-          frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
-          if (fullScreen) {
-            frame.getRootPane().putClientProperty("oldBounds", frame.getBounds());
-          }
-          frame.dispose();
-          frame.setUndecorated(fullScreen);
-        }
-        finally {
-          if (fullScreen) {
-            frame.setBounds(device.getDefaultConfiguration().getBounds());
-          }
-          else {
-            Object o = frame.getRootPane().getClientProperty("oldBounds");
-            if (o instanceof Rectangle) {
-              frame.setBounds((Rectangle)o);
-            }
-          }
-          frame.setVisible(true);
-          frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
-        }
-      }
-    }
-    finally {
-      frame.storeFullScreenStateIfNeeded(fullScreen);
-    }
   }
 
   public boolean isFullScreenSupportedInCurrentOS() {

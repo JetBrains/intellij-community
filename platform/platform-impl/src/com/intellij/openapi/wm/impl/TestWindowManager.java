@@ -51,14 +51,6 @@ public final class TestWindowManager extends WindowManagerEx implements Applicat
   public final void doNotSuggestAsParent(final Window window) { }
 
   @Override
-  public boolean isFullScreen(@NotNull Frame frame) {
-    return false;
-  }
-
-  @Override
-  public void setFullScreen(IdeFrameImpl frame, boolean fullScreen) { }
-
-  @Override
   public StatusBar getStatusBar(@NotNull Component c, @Nullable Project project) {
     return null;
   }

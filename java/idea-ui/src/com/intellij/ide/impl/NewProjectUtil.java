@@ -47,7 +47,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.wm.*;
-import com.intellij.openapi.wm.ex.WindowManagerEx;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.ui.UIUtil;
@@ -55,7 +55,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.awt.*;
 import java.io.File;
 import java.io.IOException;
 
@@ -175,6 +174,7 @@ public class NewProjectUtil {
       StartupManager.getInstance(newProject).registerPostStartupActivity(new Runnable() {
         public void run() {
           // ensure the dialog is shown after all startup activities are done
+          //noinspection SSBasedInspection
           SwingUtilities.invokeLater(new Runnable() {
             public void run() {
               if (newProject.isDisposed() || ApplicationManager.getApplication().isUnitTestMode()) return;
@@ -201,8 +201,8 @@ public class NewProjectUtil {
         if (WindowManager.getInstance().isFullScreenSupportedInCurrentOS()) {
           IdeFocusManager instance = IdeFocusManager.findInstance();
           IdeFrame lastFocusedFrame = instance.getLastFocusedFrame();
-          if (lastFocusedFrame != null) {
-            boolean fullScreen = WindowManagerEx.getInstanceEx().isFullScreen((Frame)lastFocusedFrame);
+          if (lastFocusedFrame instanceof IdeFrameEx) {
+            boolean fullScreen = ((IdeFrameEx)lastFocusedFrame).isInFullScreen();
             if (fullScreen) {
               newProject.putUserData(IdeFrameImpl.SHOULD_OPEN_IN_FULL_SCREEN, Boolean.TRUE);
             }

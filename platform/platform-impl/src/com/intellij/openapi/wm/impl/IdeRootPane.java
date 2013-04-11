@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,6 +35,7 @@ import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.*;
+import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
 import com.intellij.ui.JBColor;
@@ -112,12 +113,12 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     if (SystemInfo.isWindows) {
       menuBar = new IdeMenuBar(actionManager, dataManager);
       getLayeredPane().add(menuBar, new Integer(JLayeredPane.DEFAULT_LAYER - 1));
-      if (frame instanceof IdeFrameImpl) {
-        final PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
+      if (frame instanceof IdeFrameEx) {
+        PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
           @Override
           public void propertyChange(PropertyChangeEvent evt) {
-            if (evt.getNewValue() == null) {//fullscreen state has been just changed
-              myFullScreen = ((IdeFrameImpl)frame).isInFullScreen();
+            if (evt.getNewValue() == null) { // full-screen state has been just changed
+              myFullScreen = ((IdeFrameEx)frame).isInFullScreen();
             }
           }
         };
@@ -232,7 +233,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     updateToolbarVisibility();
     myContentPane.revalidate();
   }
-  
+
   void updateNorthComponents() {
     for (IdeRootPaneNorthExtension northComponent : myNorthComponents) {
       northComponent.revalidate();
@@ -261,7 +262,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     return toolBar.getComponent();
   }
- 
+
   private void createStatusBar(IdeFrame frame) {
     myUISettings.addUISettingsListener(this, myApplication);
 
