@@ -20,7 +20,7 @@ import static com.jetbrains.python.psi.PyCallExpression.PyMarkedCallee;
  * @author dcheryasov
  */
 public class PyParameterInfoHandler implements ParameterInfoHandler<PyArgumentList, CallArgumentsMapping> {
-  private static  final String NO_PARAMS_MSG = "<No parameters>";
+  private static  final String NO_PARAMS_MSG = "&lt;No parameters&gt;";
 
   public boolean couldShowInLookup() {
     return true;
