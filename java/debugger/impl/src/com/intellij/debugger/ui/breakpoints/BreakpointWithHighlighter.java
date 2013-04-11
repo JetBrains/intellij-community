@@ -433,7 +433,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   private void setupGutterRenderer(@NotNull RangeHighlighter highlighter) {
-    MyGutterIconRenderer renderer = new MyGutterIconRenderer(this);
+    MyGutterIconRenderer renderer = new MyGutterIconRenderer(getIcon(), getDescription());
     highlighter.setGutterIconRenderer(renderer);
   }
 
@@ -597,21 +597,23 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
   }
 
   private class MyGutterIconRenderer extends GutterIconRenderer {
-    private BreakpointWithHighlighter myBreakpoint;
+    private final Icon myIcon;
+    private final String myDescription;
 
-    public MyGutterIconRenderer(BreakpointWithHighlighter breakpoint) {
-      myBreakpoint = breakpoint;
+    public MyGutterIconRenderer(@NotNull Icon icon, @NotNull String description) {
+      myIcon = icon;
+      myDescription = description;
     }
 
     @Override
     @NotNull
     public Icon getIcon() {
-      return myBreakpoint.getIcon();
+      return myIcon;
     }
 
     @Override
     public String getTooltipText() {
-      return myBreakpoint.getDescription();
+      return myDescription;
     }
 
     @Override
