@@ -4,5 +4,5 @@
   <description>
       This fake plugin descriptor is used to run tests
   </description>
-  <!--<xi:include href="/META-INF/google-app-engine-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>-->
+  <xi:include href="/META-INF/google-app-engine-plugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
 </idea-plugin>
