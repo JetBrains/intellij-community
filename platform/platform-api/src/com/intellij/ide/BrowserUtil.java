@@ -51,8 +51,10 @@ import java.lang.reflect.InvocationTargetException;
 import java.net.MalformedURLException;
 import java.net.URI;
 import java.net.URL;
-import java.util.*;
+import java.util.Arrays;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 import java.util.zip.ZipEntry;
@@ -178,7 +180,8 @@ public class BrowserUtil {
 
     String browserPath = getGeneralSettingsInstance().getBrowserPath();
     if (StringUtil.isEmptyOrSpaces(browserPath)) {
-      showErrorMessage(IdeBundle.message("error.please.specify.path.to.web.browser"), IdeBundle.message("title.browser.not.found"));
+      showErrorMessage(IdeBundle.message("error.please.specify.path.to.web.browser", IdeBundle.settingsActionPath()),
+                       IdeBundle.message("title.browser.not.found"));
       return;
     }
 
