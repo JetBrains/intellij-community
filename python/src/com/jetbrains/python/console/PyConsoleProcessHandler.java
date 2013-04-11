@@ -25,7 +25,7 @@ public class PyConsoleProcessHandler extends PythonProcessHandler {
   }
 
   @Override
-  protected void textAvailable(final String text, final Key attributes) {
+  public void coloredTextAvailable(final String text, final Key attributes) {
     final String string = PyConsoleUtil.processPrompts(getConsole(), StringUtil.convertLineSeparators(text));
 
     myConsoleView.print(string, attributes);
