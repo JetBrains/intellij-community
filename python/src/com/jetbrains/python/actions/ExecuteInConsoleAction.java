@@ -92,12 +92,16 @@ public class ExecuteInConsoleAction extends AnAction {
   }
 
   private static void execute(final AnActionEvent e, final String selectionText) {
+    final Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
+    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+    Module module = e.getData(LangDataKeys.MODULE);
+
     findCodeExecutor(e, new Consumer<PyCodeExecutor>() {
       @Override
       public void consume(PyCodeExecutor codeExecutor) {
-        executeInConsole(codeExecutor, selectionText, e);
+        executeInConsole(codeExecutor, selectionText, editor);
       }
-    });
+    }, editor, project, module);
   }
 
   private static String getLineUnderCaret(Editor editor) {
@@ -196,15 +200,13 @@ public class ExecuteInConsoleAction extends AnAction {
     return processHandler != null && !processHandler.isProcessTerminated();
   }
 
-  private static void findCodeExecutor(AnActionEvent e, Consumer<PyCodeExecutor> consumer) {
-    Editor editor = PlatformDataKeys.EDITOR.getData(e.getDataContext());
-    Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
+  private static void findCodeExecutor(AnActionEvent e, Consumer<PyCodeExecutor> consumer, Editor editor, Project project, Module module) {
     if (project != null && editor != null) {
       if (canFindConsole(e)) {
         selectConsole(e.getDataContext(), project, consumer);
       }
       else {
-        startConsole(project, consumer, e.getData(LangDataKeys.MODULE));
+        startConsole(project, consumer, module);
       }
     }
   }
@@ -234,7 +236,7 @@ public class ExecuteInConsoleAction extends AnAction {
     }
   }
 
-  private static void executeInConsole(@NotNull PyCodeExecutor codeExecutor, @NotNull String text, AnActionEvent e) {
-    codeExecutor.executeCode(text, PlatformDataKeys.EDITOR.getData(e.getDataContext()));
+  private static void executeInConsole(@NotNull PyCodeExecutor codeExecutor, @NotNull String text, Editor editor) {
+    codeExecutor.executeCode(text, editor);
   }
 }
