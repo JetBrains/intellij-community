@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -276,7 +276,7 @@ public class GrClassImplUtil {
   public static boolean processDeclarations(@NotNull GrTypeDefinition grType,
                                             @NotNull PsiScopeProcessor processor,
                                             @NotNull ResolveState state,
-                                            PsiElement lastParent,
+                                            @Nullable PsiElement lastParent,
                                             @NotNull PsiElement place) {
     for (final PsiTypeParameter typeParameter : grType.getTypeParameters()) {
       if (!ResolveUtil.processElement(processor, typeParameter, state)) return false;
@@ -356,7 +356,7 @@ public class GrClassImplUtil {
     final GrTypeDefinitionBody body = grType.getBody();
     if (body != null) {
       if (classHint == null || classHint.shouldProcess(ClassHint.ResolveKind.CLASS)) {
-        for (PsiClass innerClass : getInnerClassesForResolve(grType, lastParent)) {
+        for (PsiClass innerClass : getInnerClassesForResolve(grType, lastParent, place)) {
           final String innerClassName = innerClass.getName();
           if (nameHint != null && !innerClassName.equals(nameHint.getName(state))) {
             continue;
@@ -373,26 +373,32 @@ public class GrClassImplUtil {
     return true;
   }
 
-  private static List<PsiClass> getInnerClassesForResolve(final GrTypeDefinition grType, PsiElement lastParent) {
-    if (lastParent instanceof GrReferenceList) {
+  @NotNull
+  private static List<PsiClass> getInnerClassesForResolve(@NotNull final GrTypeDefinition grType,
+                                                          @Nullable final PsiElement lastParent,
+                                                          @NotNull final PsiElement place) {
+    if (lastParent instanceof GrReferenceList || PsiTreeUtil.getParentOfType(place, GrReferenceList.class) != null) {
       return Arrays.asList(grType.getInnerClasses());
     }
-    
+
     List<PsiClass> classes = RecursionManager.doPreventingRecursion(grType, true, new Computable<List<PsiClass>>() {
       @Override
       public List<PsiClass> compute() {
         List<PsiClass> result = new ArrayList<PsiClass>();
         for (CandidateInfo info : CollectClassMembersUtil.getAllInnerClasses(grType, false).values()) {
-          ContainerUtil.addIfNotNull(result, (PsiClass)info.getElement());
+          final PsiClass inner = (PsiClass)info.getElement();
+          if (lastParent == null || !inner.getContainingClass().isInterface()) {
+            ContainerUtil.addIfNotNull(result, inner);
+          }
         }
         return result;
       }
     });
-    
+
     if (classes == null) {
       return Arrays.asList(grType.getInnerClasses());
     }
-    
+
     return classes;
   }
 

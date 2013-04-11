@@ -110,7 +110,9 @@ public class ResolveClassTest extends GroovyResolveTestCase {
   public void testInnerEnum() throws Throwable { doTest(); }
   public void testInnerClass()throws Throwable {doTest();}
   public void testInnerClassInSubclass()throws Throwable {doTest();}
-  public void testInnerClassUsageInsideOuterSubclass() throws Throwable{doTest();}
+  public void testInnerClassUsageInsideOuterSubclass() throws Throwable { doTest() }
+  public void testInnerClassOfInterface() { assertNull(resolve()) }
+  public void testInnerClassOfClassInSubClass1() { assertNull(resolve()) }
 
   public void testAliasedImportVsImplicitImport() throws Exception {
     PsiReference ref = configureByFile("aliasedImportVsImplicitImport/Test.groovy");
@@ -143,6 +145,12 @@ public class ResolveClassTest extends GroovyResolveTestCase {
     final PsiReference ref = configureByFile("aliasedImportedClassFromDefaultPackage/Test.groovy");
     final PsiElement resolved = ref.resolve();
     assertNotNull(resolved);
+  }
+
+  public void testQualifiedRefToInnerClass() {
+    myFixture.addFileToProject('A.groovy', 'class A {class Bb {}}')
+    final PsiReference ref = configureByText('b.groovy', 'A.B<ref>b b = new A.Bb()')
+    assertNotNull(ref.resolve())
   }
 
   public void testClassVsPropertyGetter() {

@@ -30,6 +30,7 @@ public class OverrideImplementExploreUtil {
 
   @NotNull
   public static Collection<MethodSignature> getMethodSignaturesToOverride(@NotNull PsiClass aClass) {
+    if (aClass.isInterface()) return Collections.emptySet();
     return getMapToOverrideImplement(aClass, false).keySet();
   }
 

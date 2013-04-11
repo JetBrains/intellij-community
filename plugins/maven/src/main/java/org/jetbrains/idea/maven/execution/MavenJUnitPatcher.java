@@ -60,12 +60,16 @@ public class MavenJUnitPatcher extends JUnitPatcher {
 
     Element systemPropertyVariables = config.getChild("systemPropertyVariables");
     if (systemPropertyVariables != null) {
-      for (Element element : (List<Element>)systemPropertyVariables.getChildren()) {
-        String propertyName = element.getName();
-        String value = element.getValue();
+      List<Element> propertiesDefinitions = (List<Element>)systemPropertyVariables.getChildren();
 
-        javaParameters.getVMParametersList().addProperty(propertyName, value);
+      String[] params = new String[propertiesDefinitions.size()];
+
+      int i = 0;
+      for (Element element : propertiesDefinitions) {
+        params[i++] = "-D" + element.getName() + "=" + element.getValue();
       }
+
+      javaParameters.getVMParametersList().prependAll(params);
     }
 
     Element environmentVariables = config.getChild("environmentVariables");

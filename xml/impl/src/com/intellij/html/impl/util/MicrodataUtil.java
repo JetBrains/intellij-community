@@ -37,6 +37,7 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.PairFunction;
 import com.intellij.util.text.StringTokenizer;
+import com.intellij.xml.util.HtmlUtil;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.Nls;
@@ -55,9 +56,6 @@ public class MicrodataUtil {
   public static final String ITEM_TYPE = "itemtype";
   public static final String ITEM_PROP = "itemprop";
   public static final String ITEM_ID = "itemid";
-
-  @NonNls private static final String HTTP = "http://";
-  @NonNls private static final String HTTPS = "https://";
 
   public static boolean hasScopeTag(@Nullable XmlTag tag) {
     return findScopeTag(tag) != null;
@@ -130,7 +128,7 @@ public class MicrodataUtil {
       @Nullable
       @Override
       public PsiReference fun(String token, Integer offset) {
-        if (isUrl(token)) {
+        if (HtmlUtil.hasHtmlPrefix(token)) {
           final TextRange range = TextRange.from(offset, token.length());
           final URLReference urlReference = new URLReference(element, range, true);
           return new URIReferenceProvider.DependentNSReference(element, range, urlReference) {
@@ -165,10 +163,6 @@ public class MicrodataUtil {
       }
     }
     return result.toArray(new PsiReference[result.size()]);
-  }
-
-  private static boolean isUrl(String url) {
-    return url.startsWith(HTTP) || url.startsWith(HTTPS);
   }
 
   @Nullable

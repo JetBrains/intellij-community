@@ -157,7 +157,7 @@ public class ExpressionGenerator extends Generator {
         );
         return;
       }
-      else if (resolved instanceof GrReferenceExpression || resolved == null) {
+      else if (resolved == null) {
         final GrExpression qualifier = ((GrReferenceExpression)invoked).getQualifier();
         final GrExpression[] args =
           generateArgsForInvokeMethod(((GrReferenceExpression)invoked).getReferenceName(), exprs, namedArgs, clArgs, methodCallExpression);

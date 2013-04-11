@@ -137,7 +137,7 @@ public class Executor {
     CapturingProcessHandler handler = new CapturingProcessHandler(clientProcess, CharsetToolkit.getDefaultSystemCharset());
     ProcessOutput result = handler.runProcess(30*1000);
     if (result.isTimeout()) {
-      throw new RuntimeException("Timeout waiting for Git execution");
+      throw new RuntimeException("Timeout waiting for the command execution. Command: " + StringUtil.join(params, " "));
     }
 
     if (result.getExitCode() != 0) {

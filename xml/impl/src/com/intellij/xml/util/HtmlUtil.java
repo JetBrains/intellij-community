@@ -597,6 +597,13 @@ public class HtmlUtil {
     return isHtmlFile(file) || file.getViewProvider() instanceof TemplateLanguageFileViewProvider;
   }
 
+  public static boolean hasHtmlPrefix(@NotNull String url) {
+    return url.startsWith("http://") ||
+           url.startsWith("https://") ||
+           url.startsWith("//") || //Protocol-relative URL
+           url.startsWith("ftp://");
+  }
+
   public static boolean isHtmlFile(PsiElement element) {
     Language language = element.getLanguage();
     return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE;

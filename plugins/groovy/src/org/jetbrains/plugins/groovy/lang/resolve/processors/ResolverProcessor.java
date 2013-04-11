@@ -28,7 +28,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
@@ -221,7 +220,6 @@ public class ResolverProcessor implements PsiScopeProcessor, NameHint, ClassHint
   @Nullable
   private static ResolveKind getResolveKind(PsiElement element) {
     if (element instanceof PsiVariable) return PROPERTY;
-    if (element instanceof GrReferenceExpression) return PROPERTY;
     if (element instanceof PsiMethod) return METHOD;
     if (element instanceof PsiPackage) return PACKAGE;
     if (element instanceof PsiClass) return CLASS;

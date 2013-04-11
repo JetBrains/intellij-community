@@ -360,7 +360,6 @@ public class CompleteReferenceExpression {
     private final boolean myFieldPointerOperator;
     private final boolean myMethodPointerOperator;
     private final boolean myIsMap;
-    private Set<String> myNonDeclaredVars = new com.intellij.util.containers.HashSet<String>();
     private final SubstitutorComputer mySubstitutorComputer;
 
     protected CompleteReferenceProcessor(GrReferenceExpression place, Consumer<LookupElement> consumer, @NotNull PrefixMatcher matcher, CompletionParameters parameters) {
@@ -390,7 +389,7 @@ public class CompleteReferenceExpression {
     }
 
     @Override
-    public boolean execute(@NotNull PsiElement element, ResolveState state) {
+    public boolean execute(@NotNull PsiElement element, @NotNull ResolveState state) {
       if (element instanceof PsiMethod && ((PsiMethod)element).isConstructor()) return true;
       if (element instanceof PsiNamedElement) {
 
@@ -426,10 +425,6 @@ public class CompleteReferenceExpression {
       PsiElement element = result.getElement();
       if (element instanceof PsiVariable && !myMatcher.prefixMatches(((PsiVariable)element).getName())) {
         return;
-      }
-      if (element instanceof GrReferenceExpression) {
-        String name = ((GrReferenceExpression)element).getReferenceName();
-        if (!myNonDeclaredVars.add(name)) return;
       }
 
       if (element instanceof GrReflectedMethod) {

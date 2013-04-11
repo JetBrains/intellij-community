@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight;
 
+import com.intellij.codeInsight.generation.JavaOverrideMethodsHandler;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
 import com.intellij.codeInsight.intention.impl.ImplementAbstractMethodHandler;
@@ -127,6 +128,16 @@ public class OverrideImplementTest extends LightCodeInsightTestCase {
     final PsiField[] fields = aClass.getFields();
     new ImplementAbstractMethodHandler(getProject(), getEditor(), psiMethod).implementInClass(fields);
     checkResultByFile(BASE_DIR + "after" + name + ".java");
+  }
+
+  public void testInAnnotationType() {
+    String name = getTestName(false);
+    configureByFile(BASE_DIR + "before" + name + ".java");
+    int offset = getEditor().getCaretModel().getOffset();
+    PsiElement context = getFile().findElementAt(offset);
+    final PsiClass aClass = PsiTreeUtil.getParentOfType(context, PsiClass.class);
+    assertTrue(aClass != null && aClass.isAnnotationType());
+    assertFalse(new JavaOverrideMethodsHandler().isValidFor(getEditor(), getFile()));
   }
 
   private void doTest(boolean copyJavadoc) { doTest(copyJavadoc, null); }

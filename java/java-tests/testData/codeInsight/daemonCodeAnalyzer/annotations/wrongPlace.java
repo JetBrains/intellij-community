@@ -1,7 +1,7 @@
 import java.util.Collection;
 
 @interface Anno {
-  Anno[] nested() default {};
+  <error descr="Cyclic annotation element type">Anno[]</error> nested() default {};
 }
 
 abstract class C {

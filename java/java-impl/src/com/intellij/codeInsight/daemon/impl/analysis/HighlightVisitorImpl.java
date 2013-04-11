@@ -217,6 +217,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     myHolder.add(AnnotationsHighlightUtil.checkValidAnnotationType(method.getReturnTypeElement()));
     myHolder.add(AnnotationsHighlightUtil.checkCyclicMemberType(method.getReturnTypeElement(), method.getContainingClass()));
+    myHolder.add(AnnotationsHighlightUtil.checkClashesWithSuperMethods(method));
   }
 
   @Override public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {
