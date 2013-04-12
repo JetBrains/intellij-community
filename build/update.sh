@@ -22,8 +22,9 @@ fi
 echo "Updating $WORK_IDEA_HOME from compiled classes in $DEV_IDEA_HOME"
 
 ANT_HOME="$DEV_IDEA_HOME/lib/ant"
+ANT_CLASSPATH="$DEV_IDEA_HOME/build/lib/gant/lib/jps.jar"
 java -Xms64m -Xmx512m -Dant.home="$ANT_HOME" -classpath "$ANT_HOME/lib/ant-launcher.jar" org.apache.tools.ant.launch.Launcher \
- -f build/update.xml $TARGET
+ -lib "$ANT_CLASSPATH" -f $DEV_IDEA_HOME/build/update.xml $TARGET
 
 rm -rf $WORK_IDEA_HOME/lib
 rm -rf $WORK_IDEA_HOME/plugins
