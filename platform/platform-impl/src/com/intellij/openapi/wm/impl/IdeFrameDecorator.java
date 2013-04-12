@@ -58,7 +58,7 @@ public abstract class IdeFrameDecorator implements Disposable {
     return null;
   }
 
-  // Swing-based decorator
+  // AWT-based decorator
   private static class WinMainFrameDecorator extends IdeFrameDecorator {
     private WinMainFrameDecorator(@NotNull IdeFrameImpl frame) {
       super(frame);
