@@ -32,6 +32,12 @@ public final class LocalFileUrl implements Url {
     return path;
   }
 
+  @NotNull
+  @Override
+  public String toExternalForm(boolean skipQueryAndFragment) {
+    return toExternalForm();
+  }
+
   @Nullable
   @Override
   public String getScheme() {

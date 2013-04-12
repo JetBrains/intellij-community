@@ -14,6 +14,9 @@ public interface Url {
   @NotNull
   String toExternalForm();
 
+  @NotNull
+  String toExternalForm(boolean skipQueryAndFragment);
+
   @Nullable
   String getScheme();
 

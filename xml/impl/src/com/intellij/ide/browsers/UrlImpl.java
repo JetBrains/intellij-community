@@ -83,24 +83,35 @@ public final class UrlImpl implements Url {
 
   @Override
   @NotNull
-  public String toExternalForm() {
-    if (raw == null) {
-      try {
-        String externalPath = path;
-        boolean inLocalFileSystem = isInLocalFileSystem();
-        if (inLocalFileSystem && SystemInfo.isWindows && externalPath.charAt(0) != '/') {
-          externalPath = '/' + externalPath;
-        }
-        raw = new URI(scheme, inLocalFileSystem ? "" : authority, externalPath, null, null).toASCIIString();
-        if (parameters != null) {
-          raw += parameters;
-        }
-      }
-      catch (URISyntaxException e) {
-        throw new RuntimeException(e);
-      }
+  public String toExternalForm(boolean skipQueryAndFragment) {
+    if (raw != null && (parameters == null || !skipQueryAndFragment)) {
+      return raw;
     }
-    return raw;
+
+    try {
+      String externalPath = path;
+      boolean inLocalFileSystem = isInLocalFileSystem();
+      if (inLocalFileSystem && SystemInfo.isWindows && externalPath.charAt(0) != '/') {
+        externalPath = '/' + externalPath;
+      }
+      String result = new URI(scheme, inLocalFileSystem ? "" : authority, externalPath, null, null).toASCIIString();
+      if (!skipQueryAndFragment) {
+        if (parameters != null) {
+          result += parameters;
+        }
+        raw = result;
+      }
+      return result;
+    }
+    catch (URISyntaxException e) {
+      throw new RuntimeException(e);
+    }
+  }
+
+  @NotNull
+  @Override
+  public String toExternalForm() {
+    return toExternalForm(false);
   }
 
   @Override
@@ -128,7 +139,7 @@ public final class UrlImpl implements Url {
       return false;
     }
     String decodedPath = getPath();
-    if (decodedPath != null ? !decodedPath.equals(url.getPath()) : url.path != null) {
+    if (!decodedPath.equals(url.getPath())) {
       return false;
     }
     return true;
@@ -139,7 +150,7 @@ public final class UrlImpl implements Url {
     int result = scheme.hashCode();
     result = 31 * result + (authority != null ? authority.hashCode() : 0);
     String decodedPath = getPath();
-    result = 31 * result + (decodedPath != null ? decodedPath.hashCode() : 0);
+    result = 31 * result + decodedPath.hashCode();
     result = 31 * result + (parameters != null ? parameters.hashCode() : 0);
     return result;
   }
