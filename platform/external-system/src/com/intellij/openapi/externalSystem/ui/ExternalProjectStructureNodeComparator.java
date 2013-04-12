@@ -82,49 +82,49 @@ public class ExternalProjectStructureNodeComparator implements Comparator<Projec
       return JAR_WEIGHT;
     }
     Object entity = id.mapToEntity(myContext, myProject);
-    if (entity instanceof AbstractExternalCompositeEntity) {
-      entity = ((AbstractExternalCompositeEntity)entity).getIdeEntity();
+    if (entity instanceof AbstractCompositeData) {
+      entity = ((AbstractCompositeData)entity).getIdeEntity();
     }
     final Ref<Integer> result = new Ref<Integer>();
-    if (entity instanceof ExternalEntity) {
-      ((ExternalEntity)entity).invite(new ExternalEntityVisitor() {
+    if (entity instanceof ProjectEntityData) {
+      ((ProjectEntityData)entity).invite(new ExternalEntityVisitor() {
         @Override
-        public void visit(@NotNull ExternalProject project) {
+        public void visit(@NotNull ProjectData project) {
           result.set(PROJECT_WEIGHT);
         }
 
         @Override
-        public void visit(@NotNull ExternalModule module) {
+        public void visit(@NotNull ModuleData module) {
           result.set(MODULE_WEIGHT);
         }
 
         @Override
-        public void visit(@NotNull ExternalContentRoot contentRoot) {
+        public void visit(@NotNull ContentRootData contentRoot) {
           result.set(CONTENT_ROOT_WEIGHT);
         }
 
         @Override
-        public void visit(@NotNull ExternalLibrary library) {
+        public void visit(@NotNull LibraryData library) {
           result.set(LIBRARY_WEIGHT);
         }
 
         @Override
-        public void visit(@NotNull Jar jar) {
+        public void visit(@NotNull JarData jar) {
           result.set(JAR_WEIGHT);
         }
 
         @Override
-        public void visit(@NotNull ExternalModuleDependency dependency) {
+        public void visit(@NotNull ModuleDependencyData dependency) {
           result.set(MODULE_DEPENDENCY_WEIGHT);
         }
 
         @Override
-        public void visit(@NotNull ExternalLibraryDependency dependency) {
+        public void visit(@NotNull LibraryDependencyData dependency) {
           result.set(LIBRARY_DEPENDENCY_WEIGHT);
         }
 
         @Override
-        public void visit(@NotNull ExternalCompositeLibraryDependency dependency) {
+        public void visit(@NotNull CompositeLibraryDependencyData dependency) {
           result.set(LIBRARY_DEPENDENCY_WEIGHT);
         }
       });

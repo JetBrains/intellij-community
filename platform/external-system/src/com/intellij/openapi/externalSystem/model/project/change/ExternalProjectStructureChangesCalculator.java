@@ -1,6 +1,6 @@
 package com.intellij.openapi.externalSystem.model.project.change;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalEntity;
+import com.intellij.openapi.externalSystem.model.project.ProjectEntityData;
 import com.intellij.openapi.externalSystem.service.project.change.ExternalProjectChangesCalculationContext;
 import org.jetbrains.annotations.NotNull;
 
@@ -15,7 +15,7 @@ import org.jetbrains.annotations.NotNull;
  * @param <I>   target intellij entity type
  * @param <G>   target gradle entity type
  */
-public interface ExternalProjectStructureChangesCalculator<G extends ExternalEntity, I> {
+public interface ExternalProjectStructureChangesCalculator<G extends ProjectEntityData, I> {
 
   /**
    * Calculates changes between the given entities.

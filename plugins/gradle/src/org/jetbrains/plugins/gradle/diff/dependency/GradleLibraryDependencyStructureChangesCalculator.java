@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.gradle.diff.dependency;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalLibraryDependency;
+import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
 import com.intellij.openapi.externalSystem.service.project.change.ExternalProjectChangesCalculationContext;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
@@ -12,7 +12,7 @@ import org.jetbrains.plugins.gradle.diff.library.GradleLibraryStructureChangesCa
  * @since 1/24/12 1:37 PM
  */
 public class GradleLibraryDependencyStructureChangesCalculator
-  extends AbstractGradleDependencyStructureChangesCalculator<ExternalLibraryDependency, LibraryOrderEntry>
+  extends AbstractGradleDependencyStructureChangesCalculator<LibraryDependencyData, LibraryOrderEntry>
 {
   
   private final GradleLibraryStructureChangesCalculator myLibraryCalculator;
@@ -22,7 +22,7 @@ public class GradleLibraryDependencyStructureChangesCalculator
   }
 
   @Override
-  public void doCalculate(@NotNull ExternalLibraryDependency gradleEntity,
+  public void doCalculate(@NotNull LibraryDependencyData gradleEntity,
                           @NotNull LibraryOrderEntry intellijEntity,
                           @NotNull ExternalProjectChangesCalculationContext context)
   {
@@ -45,7 +45,7 @@ public class GradleLibraryDependencyStructureChangesCalculator
 
   @NotNull
   @Override
-  public Object getGradleKey(@NotNull ExternalLibraryDependency entity, @NotNull ExternalProjectChangesCalculationContext context) {
+  public Object getGradleKey(@NotNull LibraryDependencyData entity, @NotNull ExternalProjectChangesCalculationContext context) {
     return myLibraryCalculator.getGradleKey(entity.getTarget(), context);
   }
 }

@@ -47,31 +47,31 @@ public class GradleDiffUtil {
    * @param entity   target gradle-local entity
    * @param context  changes calculation context to use
    */
-  public static void buildLocalChanges(@NotNull ExternalEntity entity, @NotNull final ExternalProjectChangesCalculationContext context) {
+  public static void buildLocalChanges(@NotNull ProjectEntityData entity, @NotNull final ExternalProjectChangesCalculationContext context) {
     entity.invite(new ExternalEntityVisitor() {
       @Override
-      public void visit(@NotNull ExternalProject project) {
+      public void visit(@NotNull ProjectData project) {
         assert false;
       }
 
       @Override
-      public void visit(@NotNull ExternalModule module) {
+      public void visit(@NotNull ModuleData module) {
         context.register(new ModulePresenceChange(module, null));
-        for (ExternalContentRoot root : module.getContentRoots()) {
+        for (ContentRootData root : module.getContentRoots()) {
           root.invite(this);
         }
-        for (ExternalDependency dependency : module.getDependencies()) {
+        for (DependencyData dependency : module.getDependencies()) {
           dependency.invite(this);
         }
       }
 
       @Override
-      public void visit(@NotNull ExternalContentRoot contentRoot) {
+      public void visit(@NotNull ContentRootData contentRoot) {
         context.register(new ContentRootPresenceChange(contentRoot, null)); 
       }
 
       @Override
-      public void visit(@NotNull ExternalLibrary library) {
+      public void visit(@NotNull LibraryData library) {
         for (LibraryPathType pathType : LibraryPathType.values()) {
           for (String path : library.getPaths(pathType)) {
             JarId jarId = new JarId(path, pathType, new LibraryId(ProjectSystemId.GRADLE, library.getName()));
@@ -81,22 +81,22 @@ public class GradleDiffUtil {
       }
 
       @Override
-      public void visit(@NotNull Jar jar) {
+      public void visit(@NotNull JarData jar) {
         context.register(new JarPresenceChange(jar.getId(), null));
       }
 
       @Override
-      public void visit(@NotNull ExternalModuleDependency dependency) {
+      public void visit(@NotNull ModuleDependencyData dependency) {
         context.register(new ModuleDependencyPresenceChange(dependency, null));
       }
 
       @Override
-      public void visit(@NotNull ExternalLibraryDependency dependency) {
+      public void visit(@NotNull LibraryDependencyData dependency) {
         context.register(new LibraryDependencyPresenceChange(dependency, null));
       }
 
       @Override
-      public void visit(@NotNull ExternalCompositeLibraryDependency dependency) {
+      public void visit(@NotNull CompositeLibraryDependencyData dependency) {
         // We expect such composite entities for outdated libraries to appear as 'low-level' project structure changes processing
         // result.
         assert false;
@@ -111,8 +111,8 @@ public class GradleDiffUtil {
    * @param context  changes calculation context to use
    */
   public static void buildLocalChanges(@NotNull Object entity, @NotNull final ExternalProjectChangesCalculationContext context) {
-    if (entity instanceof ExternalEntity) {
-      buildLocalChanges((ExternalEntity)entity, context);
+    if (entity instanceof ProjectEntityData) {
+      buildLocalChanges((ProjectEntityData)entity, context);
     }
     else {
       GradleUtil.dispatch(entity, new IdeEntityVisitor() {
@@ -175,7 +175,7 @@ public class GradleDiffUtil {
    * @param <I>               target ide entity type
    * @param <G>               target gradle entity type
    */
-  public static <I, G extends ExternalEntity> void calculate(
+  public static <I, G extends ProjectEntityData> void calculate(
     @NotNull ExternalProjectStructureChangesCalculator<G, I> calculator,
     @NotNull Iterable<? extends G> gradleEntities,
     @NotNull Iterable<? extends I> ideEntities,

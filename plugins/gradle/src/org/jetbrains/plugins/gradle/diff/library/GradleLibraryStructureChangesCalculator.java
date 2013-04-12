@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.gradle.diff.library;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalLibrary;
+import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChangesCalculator;
 import com.intellij.openapi.externalSystem.model.project.change.JarPresenceChange;
@@ -22,7 +22,7 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since 2/3/12 11:17 AM
  */
-public class GradleLibraryStructureChangesCalculator implements ExternalProjectStructureChangesCalculator<ExternalLibrary, Library> {
+public class GradleLibraryStructureChangesCalculator implements ExternalProjectStructureChangesCalculator<LibraryData, Library> {
   
   private final PlatformFacade myPlatformFacade;
 
@@ -31,7 +31,7 @@ public class GradleLibraryStructureChangesCalculator implements ExternalProjectS
   }
 
   @Override
-  public void calculate(@NotNull ExternalLibrary gradleEntity,
+  public void calculate(@NotNull LibraryData gradleEntity,
                         @NotNull Library ideEntity,
                         @NotNull ExternalProjectChangesCalculationContext context)
   {
@@ -40,7 +40,7 @@ public class GradleLibraryStructureChangesCalculator implements ExternalProjectS
     }
   }
 
-  private void doCalculate(@NotNull ExternalLibrary gradleEntity,
+  private void doCalculate(@NotNull LibraryData gradleEntity,
                            @NotNull LibraryPathType gradleType,
                            @NotNull OrderRootType ideType,
                            @NotNull Library ideEntity,
@@ -78,7 +78,7 @@ public class GradleLibraryStructureChangesCalculator implements ExternalProjectS
 
   @NotNull
   @Override
-  public Object getGradleKey(@NotNull ExternalLibrary entity, @NotNull ExternalProjectChangesCalculationContext context) {
+  public Object getGradleKey(@NotNull LibraryData entity, @NotNull ExternalProjectChangesCalculationContext context) {
     return entity.getName();
   }
 }

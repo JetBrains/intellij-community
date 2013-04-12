@@ -1,5 +1,6 @@
 package com.intellij.openapi.externalSystem.model.project.id;
 
+import com.intellij.openapi.externalSystem.model.DataHolder;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.service.project.ModuleAwareContentRoot;
@@ -36,8 +37,8 @@ public class EntityIdMapper {
   @NotNull
   public static <T extends ProjectEntityId> T mapEntityToId(@NotNull Object entity) {
     final ProjectSystemId owner;
-    if (entity instanceof ExternalEntity) {
-      owner = ((ExternalEntity)entity).getOwner();
+    if (entity instanceof ProjectEntityData) {
+      owner = ((ProjectEntityData)entity).getOwner();
     }
     else {
       owner = ProjectSystemId.IDE;
@@ -58,61 +59,11 @@ public class EntityIdMapper {
     throws IllegalArgumentException
   {
     final Ref<ProjectEntityId> result = new Ref<ProjectEntityId>();
-    if (entity instanceof ExternalEntity) {
-      ((ExternalEntity)entity).invite(new ExternalEntityVisitor() {
-        @Override
-        public void visit(@NotNull ExternalProject project) {
-          result.set(new ProjectId(owner));
-        }
-
-        @Override
-        public void visit(@NotNull ExternalModule module) {
-          result.set(new ModuleId(owner, module.getName()));
-        }
-
-        @Override
-        public void visit(@NotNull ExternalModuleDependency dependency) {
-          result.set(new ModuleDependencyId(owner, dependency.getOwnerModule().getName(), dependency.getName()));
-        }
-
-        @Override
-        public void visit(@NotNull ExternalLibraryDependency dependency) {
-          result.set(new LibraryDependencyId(owner, dependency.getOwnerModule().getName(), dependency.getName()));
-        }
-
-        @Override
-        public void visit(@NotNull ExternalContentRoot contentRoot) {
-          result.set(new ContentRootId(owner, contentRoot.getOwnerModule().getName(), contentRoot.getRootPath())); 
-        }
-
-        @Override
-        public void visit(@NotNull ExternalLibrary library) {
-          result.set(new LibraryId(owner, library.getName())); 
-        }
-
-        @Override
-        public void visit(@NotNull Jar jar) {
-          result.set(jar.getId());
-        }
-
-        @Override
-        public void visit(@NotNull ExternalCompositeLibraryDependency dependency) {
-          Library library = dependency.getIdeEntity().getLibrary();
-          assert library != null;
-          result.set(new CompositeLibraryDependencyId(
-            new LibraryDependencyId(
-              owner,
-              dependency.getExternalEntity().getOwnerModule().getName(),
-              dependency.getExternalEntity().getName()
-            ),
-            new LibraryDependencyId(
-              ProjectSystemId.IDE,
-              dependency.getIdeEntity().getOwnerModule().getName(),
-              ExternalSystemUtil.getLibraryName(library)
-            )
-          ));
-        }
-      });
+    if (entity instanceof DataHolder) {
+      Object data = ((DataHolder)entity).getData();
+      if (data instanceof ProjectEntityData) {
+        return (T)((ProjectEntityData)data).getId((DataHolder<T>)entity);
+      }
     }
 
     if (result.get() == null) {

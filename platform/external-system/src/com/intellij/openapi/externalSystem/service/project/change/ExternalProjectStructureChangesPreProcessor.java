@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project.change;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalProject;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,5 +30,5 @@ import org.jetbrains.annotations.NotNull;
 public interface ExternalProjectStructureChangesPreProcessor {
 
   @NotNull
-  ExternalProject preProcess(@NotNull ExternalProject externalProject, @NotNull Project ideProject);
+  ProjectData preProcess(@NotNull ProjectData externalProject, @NotNull Project ideProject);
 }

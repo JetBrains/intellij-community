@@ -1,7 +1,10 @@
 package com.intellij.openapi.externalSystem.model.project;
 
+import com.intellij.openapi.externalSystem.model.DataHolder;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
@@ -18,10 +21,19 @@ import java.io.Serializable;
  * @author Denis Zhdanov
  * @since 8/12/11 12:50 PM
  */
-public interface ExternalEntity extends Serializable {
-  
+public interface ProjectEntityData extends Serializable {
+
   @NotNull
   ProjectSystemId getOwner();
+
+  /**
+   * Allows to map current data to its id.
+   * 
+   * @param dataHolder  data holder which holds current data (if any)
+   * @return            current data id
+   */
+  @NotNull
+  ProjectEntityId getId(@Nullable DataHolder<?> dataHolder);
   
   /**
    * Follows contract of {@link PropertyChangeSupport#addPropertyChangeListener(PropertyChangeListener)}  
@@ -29,9 +41,4 @@ public interface ExternalEntity extends Serializable {
    * @param listener  target listener
    */
   void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
-  
-  void invite(@NotNull ExternalEntityVisitor visitor);
-  
-  @NotNull
-  ExternalEntity clone(@NotNull ExternalEntityCloneContext context);
 }

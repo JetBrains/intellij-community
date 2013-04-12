@@ -1,7 +1,8 @@
 package com.intellij.openapi.externalSystem.service.project.change;
 
+import com.intellij.openapi.externalSystem.model.DataHolder;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.ExternalProject;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChangesCalculator;
 import com.intellij.openapi.externalSystem.service.DisposableExternalSystemService;
@@ -34,7 +35,7 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
   private final Set<ExternalProjectStructureChangeListener> myListeners = new ConcurrentHashSet<ExternalProjectStructureChangeListener>();
 
   private final ConcurrentMap<IntegrationKey, Set<ExternalProjectStructureChange>> myChanges          = ContainerUtil.newConcurrentMap();
-  private final ConcurrentMap<IntegrationKey, ExternalProject>                     myExternalProjects = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<IntegrationKey, DataHolder<ProjectData>>             myExternalProjects = ContainerUtil.newConcurrentMap();
 
   private final Collection<ExternalProjectStructureChangesPreProcessor>  myCommonPreProcessors  = ContainerUtilRt.createEmptyCOWList();
   private final Collection<ExternalProjectStructureChangesPostProcessor> myCommonPostProcessors = ContainerUtilRt.createEmptyCOWList();
@@ -44,11 +45,11 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
   private final ConcurrentMap<ProjectSystemId, Set<ExternalProjectStructureChangesPostProcessor>> mySpecificPostProcessors =
     ContainerUtil.newConcurrentMap();
 
-  @NotNull private final ExternalProjectStructureChangesCalculator<ExternalProject, Project> myChangesCalculator;
-  @NotNull private final PlatformFacade                                                      myPlatformFacade;
-  @NotNull private final ExternalLibraryPathTypeMapper                                       myLibraryPathTypeMapper;
+  @NotNull private final ExternalProjectStructureChangesCalculator<ProjectData, Project> myChangesCalculator;
+  @NotNull private final PlatformFacade                                                  myPlatformFacade;
+  @NotNull private final ExternalLibraryPathTypeMapper                                   myLibraryPathTypeMapper;
 
-  public ProjectStructureChangesModel(@NotNull ExternalProjectStructureChangesCalculator<ExternalProject, Project> changesCalculator,
+  public ProjectStructureChangesModel(@NotNull ExternalProjectStructureChangesCalculator<ProjectData, Project> changesCalculator,
                                       @NotNull PlatformFacade platformFacade,
                                       @NotNull ExternalLibraryPathTypeMapper mapper,
                                       @NotNull AutoImporter autoImporter,
@@ -87,12 +88,13 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
    * @param onIdeProjectStructureChange  a flag which identifies if current update is triggered by ide project structure
    *                                     change (an alternative is a manual project structure changes refresh implied by a user)
    */
-  public void update(@NotNull ExternalProject externalProject, @NotNull Project ideProject, boolean onIdeProjectStructureChange) {
-    ExternalProject externalProjectToUse = externalProject;
-    for (ExternalProjectStructureChangesPreProcessor preProcessor : myCommonPreProcessors) {
-      externalProjectToUse = preProcessor.preProcess(externalProjectToUse, ideProject);
-    }
-    ProjectSystemId externalSystemId = externalProject.getOwner();
+  public void update(@NotNull DataHolder<ProjectData> externalProject, @NotNull Project ideProject, boolean onIdeProjectStructureChange) {
+    DataHolder<ProjectData> externalProjectToUse = externalProject;
+    // TODO den uncomment
+//    for (ExternalProjectStructureChangesPreProcessor preProcessor : myCommonPreProcessors) {
+//      externalProjectToUse = preProcessor.preProcess(externalProjectToUse, ideProject);
+//    }
+    ProjectSystemId externalSystemId = externalProject.getData().getOwner();
     IntegrationKey key = new IntegrationKey(ideProject, externalSystemId);
     myExternalProjects.putIfAbsent(key, externalProjectToUse);
     final ExternalProjectChangesCalculationContext context = getCurrentChangesContext(
@@ -138,12 +140,12 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
    */
   @SuppressWarnings("unchecked")
   @Nullable
-  public <T extends ExternalProject> T getExternalProject(@NotNull ProjectSystemId id, @NotNull Project ideProject) {
-    ExternalProject result = myExternalProjects.get(new IntegrationKey(ideProject, id));
+  public DataHolder<ProjectData> getExternalProject(@NotNull ProjectSystemId id, @NotNull Project ideProject) {
+    DataHolder<ProjectData> result = myExternalProjects.get(new IntegrationKey(ideProject, id));
     if (result == null) {
       return null;
     }
-    return (T)result;
+    return result;
   }
 
   @NotNull
@@ -160,7 +162,7 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
 
   /**
    * Registers given listener within the current model.
-   * 
+   *
    * @param listener  listener to register
    * @return          <code>true</code> if given listener was not registered before;
    *                  <code>false</code> otherwise
@@ -170,28 +172,30 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
   }
 
   @NotNull
-  public ExternalProjectChangesCalculationContext getCurrentChangesContext(@NotNull ExternalProject externalProject,
+  public ExternalProjectChangesCalculationContext getCurrentChangesContext(@NotNull DataHolder<ProjectData> externalProject,
                                                                            @NotNull Project ideProject,
                                                                            boolean onIdeProjectStructureChange)
   {
-    IntegrationKey key = new IntegrationKey(ideProject, externalProject.getOwner());
+    ProjectSystemId owner = externalProject.getData().getOwner();
+    IntegrationKey key = new IntegrationKey(ideProject, owner);
     ExternalProjectChangesCalculationContext context
       = new ExternalProjectChangesCalculationContext(myChanges.get(key), myPlatformFacade, myLibraryPathTypeMapper);
-    myChangesCalculator.calculate(externalProject, ideProject, context);
+    // TODO den uncomment
+//    myChangesCalculator.calculate(externalProject, ideProject, context);
     for (ExternalProjectStructureChangesPostProcessor processor : myCommonPostProcessors) {
-      processor.processChanges(context.getCurrentChanges(), externalProject.getOwner(), ideProject, onIdeProjectStructureChange);
+      processor.processChanges(context.getCurrentChanges(), owner, ideProject, onIdeProjectStructureChange);
     }
-    Set<ExternalProjectStructureChangesPostProcessor> postProcessors = mySpecificPostProcessors.get(externalProject.getOwner());
+    Set<ExternalProjectStructureChangesPostProcessor> postProcessors = mySpecificPostProcessors.get(owner);
     if (postProcessors != null)
-    for (ExternalProjectStructureChangesPostProcessor processor : myCommonPostProcessors) {
-      processor.processChanges(context.getCurrentChanges(), externalProject.getOwner(), ideProject, onIdeProjectStructureChange);
-    }
+      for (ExternalProjectStructureChangesPostProcessor processor : myCommonPostProcessors) {
+        processor.processChanges(context.getCurrentChanges(), owner, ideProject, onIdeProjectStructureChange);
+      }
     return context;
   }
-  
+
   /**
    * @param id  target external system id
-   * @return    collection of project structure changes between the external system with the given id and
+   * @return collection of project structure changes between the external system with the given id and
    *            given ide project registered within the current model
    */
   @NotNull

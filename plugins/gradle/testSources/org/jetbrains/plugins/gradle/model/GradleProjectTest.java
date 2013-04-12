@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.gradle.model;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalProject;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import org.jetbrains.annotations.NotNull;
 import org.junit.Before;
@@ -16,12 +16,12 @@ import static org.junit.Assert.assertEquals;
  */
 public class GradleProjectTest {
 
-  private ExternalProject myProject;
+  private ProjectData myProject;
 
   @Before
   public void setUp() {
     String path = new File(".").getPath();
-    myProject = new ExternalProject(path, path, id);
+    myProject = new ProjectData(path, path, id);
   }
 
   @Test

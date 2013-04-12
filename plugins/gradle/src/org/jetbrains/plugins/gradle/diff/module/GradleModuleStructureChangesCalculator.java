@@ -42,7 +42,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 11/14/11 6:30 PM
  */
-public class GradleModuleStructureChangesCalculator implements ExternalProjectStructureChangesCalculator<ExternalModule, Module> {
+public class GradleModuleStructureChangesCalculator implements ExternalProjectStructureChangesCalculator<ModuleData, Module> {
   
   @NotNull private final GradleLibraryDependencyStructureChangesCalculator myLibraryDependencyCalculator;
   @NotNull private final GradleModuleDependencyStructureChangesCalculator myModuleDependencyCalculator;
@@ -58,12 +58,12 @@ public class GradleModuleStructureChangesCalculator implements ExternalProjectSt
   }
 
   @Override
-  public void calculate(@NotNull ExternalModule gradleEntity,
+  public void calculate(@NotNull ModuleData gradleEntity,
                         @NotNull Module ideEntity,
                         @NotNull ExternalProjectChangesCalculationContext context)
   {
     // Content roots.
-    final Collection<ExternalContentRoot> gradleContentRoots = gradleEntity.getContentRoots();
+    final Collection<ContentRootData> gradleContentRoots = gradleEntity.getContentRoots();
     final Collection<ModuleAwareContentRoot> intellijContentRoots = context.getPlatformFacade().getContentRoots(ideEntity);
     GradleDiffUtil.calculate(myContentRootCalculator, gradleContentRoots, intellijContentRoots, context);
     
@@ -79,11 +79,11 @@ public class GradleModuleStructureChangesCalculator implements ExternalProjectSt
 
   @NotNull
   @Override
-  public Object getGradleKey(@NotNull ExternalModule entity, @NotNull ExternalProjectChangesCalculationContext context) {
+  public Object getGradleKey(@NotNull ModuleData entity, @NotNull ExternalProjectChangesCalculationContext context) {
     return entity.getName();
   }
 
-  private void checkDependencies(@NotNull ExternalModule gradleModule,
+  private void checkDependencies(@NotNull ModuleData gradleModule,
                                  @NotNull Module intellijModule,
                                  @NotNull ExternalProjectChangesCalculationContext context)
   {
@@ -108,20 +108,20 @@ public class GradleModuleStructureChangesCalculator implements ExternalProjectSt
     }
 
     // Prepare gradle part.
-    final List<ExternalModuleDependency> gradleModuleDependencies = new ArrayList<ExternalModuleDependency>();
-    final List<ExternalLibraryDependency> gradleLibraryDependencies = new ArrayList<ExternalLibraryDependency>();
+    final List<ModuleDependencyData> gradleModuleDependencies = new ArrayList<ModuleDependencyData>();
+    final List<LibraryDependencyData> gradleLibraryDependencies = new ArrayList<LibraryDependencyData>();
     ExternalEntityVisitor visitor = new ExternalEntityVisitorAdapter() {
       @Override
-      public void visit(@NotNull ExternalModuleDependency dependency) {
+      public void visit(@NotNull ModuleDependencyData dependency) {
         gradleModuleDependencies.add(dependency);
       }
 
       @Override
-      public void visit(@NotNull ExternalLibraryDependency dependency) {
+      public void visit(@NotNull LibraryDependencyData dependency) {
         gradleLibraryDependencies.add(dependency);
       }
     };
-    for (ExternalDependency dependency : gradleModule.getDependencies()) {
+    for (DependencyData dependency : gradleModule.getDependencies()) {
       dependency.invite(visitor);
     }
 

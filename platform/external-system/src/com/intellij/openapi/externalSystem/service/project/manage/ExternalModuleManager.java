@@ -4,7 +4,7 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.ExternalModule;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -42,17 +42,17 @@ public class ExternalModuleManager {
 
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
-  @NotNull private final ExternalContentRootManager myContentRootImporter;
-  @NotNull private final ExternalDependencyManager  myDependencyImporter;
+  @NotNull private final ContentRootDataManager    myContentRootImporter;
+  @NotNull private final ExternalDependencyManager myDependencyImporter;
 
-  public ExternalModuleManager(@NotNull ExternalContentRootManager contentRootImporter,
+  public ExternalModuleManager(@NotNull ContentRootDataManager contentRootImporter,
                                @NotNull ExternalDependencyManager dependencyImporter)
   {
     myContentRootImporter = contentRootImporter;
     myDependencyImporter = dependencyImporter;
   }
 
-  public void importModules(@NotNull final Collection<? extends ExternalModule> modules,
+  public void importModules(@NotNull final Collection<? extends ModuleData> modules,
                             @NotNull final Project project,
                             final boolean recursive,
                             final boolean synchronous)
@@ -69,14 +69,14 @@ public class ExternalModuleManager {
       public void run() {
         removeExistingModulesConfigs(modules, project);
         Application application = ApplicationManager.getApplication();
-        final Map<ExternalModule, Module> moduleMappings = new HashMap<ExternalModule, Module>();
+        final Map<ModuleData, Module> moduleMappings = new HashMap<ModuleData, Module>();
         application.runWriteAction(new Runnable() {
           @Override
           public void run() {
             final ModuleManager moduleManager = ModuleManager.getInstance(project);
             final ProjectEntityChangeListener publisher
               = project.getMessageBus().syncPublisher(ProjectEntityChangeListener.TOPIC);
-            for (ExternalModule module : modules) {
+            for (ModuleData module : modules) {
               publisher.onChangeStart(module, module.getOwner());
               try {
                 importModule(moduleManager, module);
@@ -87,7 +87,7 @@ public class ExternalModuleManager {
             }
           }
 
-          private void importModule(@NotNull ModuleManager moduleManager, @NotNull ExternalModule module) {
+          private void importModule(@NotNull ModuleManager moduleManager, @NotNull ModuleData module) {
             final Module created = moduleManager.newModule(module.getModuleFilePath(), StdModuleTypes.JAVA.getId());
 
             // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via gradle)
@@ -121,7 +121,7 @@ public class ExternalModuleManager {
         if (!recursive) {
           return;
         }
-        for (ExternalModule gradleModule : modules) {
+        for (ModuleData gradleModule : modules) {
           final Module intellijModule = moduleMappings.get(gradleModule);
           myContentRootImporter.importContentRoots(gradleModule.getContentRoots(), intellijModule, synchronous);
           myDependencyImporter.importDependencies(gradleModule.getDependencies(), intellijModule, synchronous);
@@ -136,7 +136,7 @@ public class ExternalModuleManager {
     }
   }
 
-  private void removeExistingModulesConfigs(@NotNull final Collection<? extends ExternalModule> modules, @NotNull Project project) {
+  private void removeExistingModulesConfigs(@NotNull final Collection<? extends ModuleData> modules, @NotNull Project project) {
     if (modules.isEmpty()) {
       return;
     }
@@ -144,7 +144,7 @@ public class ExternalModuleManager {
       @Override
       public void run() {
         LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-        for (ExternalModule module : modules) {
+        for (ModuleData module : modules) {
           // Remove existing '*.iml' file if necessary.
           VirtualFile file = fileSystem.refreshAndFindFileByPath(module.getModuleFilePath());
           if (file != null) {
@@ -187,13 +187,13 @@ public class ExternalModuleManager {
   
   private class ImportModulesTask implements Runnable {
 
-    private final Project                            myProject;
-    private final Collection<? extends ExternalModule> myModules;
-    private final boolean                            myRecursive;
-    private final boolean                            mySynchronous;
+    private final Project                          myProject;
+    private final Collection<? extends ModuleData> myModules;
+    private final boolean                          myRecursive;
+    private final boolean                          mySynchronous;
 
     ImportModulesTask(@NotNull Project project,
-                      @NotNull Collection<? extends ExternalModule> modules,
+                      @NotNull Collection<? extends ModuleData> modules,
                       boolean recursive,
                       boolean synchronous)
     {

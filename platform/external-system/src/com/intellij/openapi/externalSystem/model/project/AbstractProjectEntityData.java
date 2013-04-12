@@ -12,7 +12,7 @@ import java.io.ObjectInputStream;
  * @author Denis Zhdanov
  * @since 8/25/11 3:44 PM
  */
-public abstract class AbstractExternalEntity implements ExternalEntity {
+public abstract class AbstractProjectEntityData implements ProjectEntityData {
 
   private static final long serialVersionUID = 1L;
   
@@ -20,7 +20,7 @@ public abstract class AbstractExternalEntity implements ExternalEntity {
   
   private transient PropertyChangeSupport myPropertyChangeSupport;
 
-  public AbstractExternalEntity(@NotNull ProjectSystemId owner) {
+  public AbstractProjectEntityData(@NotNull ProjectSystemId owner) {
     myOwner = owner;
     myPropertyChangeSupport = new PropertyChangeSupport(this);
   }
@@ -58,7 +58,7 @@ public abstract class AbstractExternalEntity implements ExternalEntity {
     if (getClass() != obj.getClass()) {
       return false;
     }
-    AbstractExternalEntity that = (AbstractExternalEntity)obj;
+    AbstractProjectEntityData that = (AbstractProjectEntityData)obj;
     return myOwner.equals(that.myOwner);
   }
 } 

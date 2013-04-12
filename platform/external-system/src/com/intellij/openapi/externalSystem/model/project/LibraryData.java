@@ -1,9 +1,13 @@
 package com.intellij.openapi.externalSystem.model.project;
 
+import com.intellij.openapi.externalSystem.model.DataHolder;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.id.LibraryId;
+import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.Collections;
 import java.util.HashSet;
@@ -16,14 +20,20 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since 8/24/11 4:50 PM
  */
-public class ExternalLibrary extends AbstractNamedExternalEntity implements Named {
+public class LibraryData extends AbstractNamedData implements Named {
 
   private static final long serialVersionUID = 1L;
 
   private final Map<LibraryPathType, Set<String>> myPaths = new HashMap<LibraryPathType, Set<String>>();
 
-  public ExternalLibrary(@NotNull ProjectSystemId owner, @NotNull String name) {
+  public LibraryData(@NotNull ProjectSystemId owner, @NotNull String name) {
     super(owner, name);
+  }
+
+  @NotNull
+  @Override
+  public ProjectEntityId getId(@Nullable DataHolder<?> dataHolder) {
+    return new LibraryId(getOwner(), getName());
   }
 
   @NotNull
@@ -45,11 +55,6 @@ public class ExternalLibrary extends AbstractNamedExternalEntity implements Name
   }
   
   @Override
-  public void invite(@NotNull ExternalEntityVisitor visitor) {
-    visitor.visit(this);
-  }
-
-  @Override
   public int hashCode() {
     int result = myPaths.hashCode();
     result = 31 * result + super.hashCode();
@@ -60,28 +65,12 @@ public class ExternalLibrary extends AbstractNamedExternalEntity implements Name
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
 
-    ExternalLibrary that = (ExternalLibrary)o;
+    LibraryData that = (LibraryData)o;
     return super.equals(that) && myPaths.equals(that.myPaths);
   }
 
   @Override
   public String toString() {
     return "library " + getName();
-  }
-
-  @NotNull
-  @Override
-  public ExternalLibrary clone(@NotNull ExternalEntityCloneContext context) {
-    ExternalLibrary result = context.getLibrary(this);
-    if (result == null) {
-      result = new ExternalLibrary(getOwner(), getName());
-      context.store(this, result);
-      for (Map.Entry<LibraryPathType, Set<String>> entry : myPaths.entrySet()) {
-        for (String path : entry.getValue()) {
-          result.addPath(entry.getKey(), path);
-        }
-      }
-    } 
-    return result;
   }
 }

@@ -236,7 +236,7 @@ public class ExternalProjectStructureTreeModel extends DefaultTreeModel {
       }
     }
 
-    ExternalProject externalProject = myChangesModel.getExternalProject(myExternalSystemId, myProject);
+    ProjectData externalProject = myChangesModel.getExternalProject(myExternalSystemId, myProject);
     if (externalProject != null) {
       ExternalProjectChangesCalculationContext context
         = myChangesModel.getCurrentChangesContext(externalProject, myProject, onIdeProjectStructureChange);
@@ -374,7 +374,7 @@ public class ExternalProjectStructureTreeModel extends DefaultTreeModel {
   private ProjectStructureNode<ContentRootId> buildContentRootNode(@NotNull ContentRootId id) {
     final boolean singleRoot;
     if (myExternalSystemId.equals(id.getOwner())) {
-      final ExternalModule module = myProjectStructureHelper.findExternalModule(id.getModuleName(), myExternalSystemId, myProject);
+      final ModuleData module = myProjectStructureHelper.findExternalModule(id.getModuleName(), myExternalSystemId, myProject);
       singleRoot = module == null || module.getContentRoots().size() <= 1;
     }
     else {
@@ -506,7 +506,7 @@ public class ExternalProjectStructureTreeModel extends DefaultTreeModel {
     if (dependencyNode == null || id == null) {
       return;
     }
-    ExternalLibrary gradleLibrary = myProjectStructureHelper.findExternalLibrary(id.getLibraryId(), myExternalSystemId, myProject);
+    LibraryData gradleLibrary = myProjectStructureHelper.findExternalLibrary(id.getLibraryId(), myExternalSystemId, myProject);
     if (gradleLibrary == null) {
       return;
     }

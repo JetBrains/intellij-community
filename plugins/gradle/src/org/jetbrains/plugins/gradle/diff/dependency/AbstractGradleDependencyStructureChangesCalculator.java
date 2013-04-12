@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.gradle.diff.dependency;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalDependency;
+import com.intellij.openapi.externalSystem.model.project.DependencyData;
 import com.intellij.openapi.externalSystem.model.project.change.DependencyExportedChange;
 import com.intellij.openapi.externalSystem.model.project.change.DependencyScopeChange;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChangesCalculator;
@@ -18,7 +18,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 2/20/12 11:17 AM
  */
-public abstract class AbstractGradleDependencyStructureChangesCalculator<G extends ExternalDependency, I extends ExportableOrderEntry>
+public abstract class AbstractGradleDependencyStructureChangesCalculator<G extends DependencyData, I extends ExportableOrderEntry>
   implements ExternalProjectStructureChangesCalculator<G, I>
 {
   @Override

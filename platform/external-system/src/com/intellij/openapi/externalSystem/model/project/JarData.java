@@ -1,8 +1,10 @@
 package com.intellij.openapi.externalSystem.model.project;
 
+import com.intellij.openapi.externalSystem.model.DataHolder;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.id.JarId;
 import com.intellij.openapi.externalSystem.model.project.id.LibraryId;
+import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
@@ -12,28 +14,34 @@ import org.jetbrains.annotations.Nullable;
  * @author Denis Zhdanov
  * @since 12/11/12 3:07 PM
  */
-public class Jar extends AbstractNamedExternalEntity {
+public class JarData extends AbstractNamedData {
 
   @NotNull private final String myPath;
 
   @Nullable private final Library         myIdeLibrary;
-  @Nullable private final ExternalLibrary myExternalLibrary;
+  @Nullable private final LibraryData     myLibraryData;
   @NotNull private final  LibraryPathType myPathType;
   @Nullable private final ProjectSystemId myExternalSystemId;
 
-  public Jar(@NotNull String path,
-             @NotNull LibraryPathType pathType,
-             @Nullable Library ideLibrary,
-             @Nullable ExternalLibrary externalLibrary,
-             @Nullable ProjectSystemId owner)
+  public JarData(@NotNull String path,
+                 @NotNull LibraryPathType pathType,
+                 @Nullable Library ideLibrary,
+                 @Nullable LibraryData libraryData,
+                 @Nullable ProjectSystemId owner)
   {
-    super(ExternalSystemUtil.detectOwner(externalLibrary, ideLibrary), ExternalSystemUtil.extractNameFromPath(path));
+    super(ExternalSystemUtil.detectOwner(libraryData, ideLibrary), ExternalSystemUtil.extractNameFromPath(path));
     myPathType = pathType;
     myExternalSystemId = owner;
-    assert ideLibrary == null ^ externalLibrary == null;
+    assert ideLibrary == null ^ libraryData == null;
     myPath = path;
     myIdeLibrary = ideLibrary;
-    myExternalLibrary = externalLibrary;
+    myLibraryData = libraryData;
+  }
+
+  @NotNull
+  @Override
+  public ProjectEntityId getId(@Nullable DataHolder<?> dataHolder) {
+    return getId();
   }
 
   @NotNull
@@ -57,20 +65,8 @@ public class Jar extends AbstractNamedExternalEntity {
       return new LibraryId(ProjectSystemId.IDE, ExternalSystemUtil.getLibraryName(myIdeLibrary));
     }
     assert myExternalSystemId != null;
-    assert myExternalLibrary != null;
-    return new LibraryId(myExternalSystemId, myExternalLibrary.getName());
-  }
-
-  @Override
-  public void invite(@NotNull ExternalEntityVisitor visitor) {
-    visitor.visit(this);
-  }
-
-  @NotNull
-  @Override
-  public Jar clone(@NotNull ExternalEntityCloneContext context) {
-    ExternalLibrary library = myExternalLibrary == null ? null : context.getLibrary(myExternalLibrary);
-    return new Jar(myPath, myPathType, myIdeLibrary, library, myExternalSystemId);
+    assert myLibraryData != null;
+    return new LibraryId(myExternalSystemId, myLibraryData.getName());
   }
 
   @Override
@@ -79,7 +75,7 @@ public class Jar extends AbstractNamedExternalEntity {
     result = 31 * result + myPath.hashCode();
     result = 31 * result + myPathType.hashCode();
     result = 31 * result + (myIdeLibrary != null ? myIdeLibrary.hashCode() : 0);
-    result = 31 * result + (myExternalLibrary != null ? myExternalLibrary.hashCode() : 0);
+    result = 31 * result + (myLibraryData != null ? myLibraryData.hashCode() : 0);
     return result;
   }
 
@@ -87,11 +83,11 @@ public class Jar extends AbstractNamedExternalEntity {
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
 
-    Jar that = (Jar)o;
+    JarData that = (JarData)o;
     
     if (!myPath.equals(that.myPath)) return false;
     if (!myPathType.equals(that.myPathType)) return false;
-    if (myExternalLibrary != null ? !myExternalLibrary.equals(that.myExternalLibrary) : that.myExternalLibrary != null) return false;
+    if (myLibraryData != null ? !myLibraryData.equals(that.myLibraryData) : that.myLibraryData != null) return false;
     if (myIdeLibrary == null && that.myIdeLibrary != null) {
       return false;
     }
@@ -112,7 +108,7 @@ public class Jar extends AbstractNamedExternalEntity {
     return String.format(
       "%s jar at '%s'. Belongs to library '%s'",
       myPathType.toString().toLowerCase(), myPath,
-      myIdeLibrary == null ? myExternalLibrary.getName() : ExternalSystemUtil.getLibraryName(myIdeLibrary)
+      myIdeLibrary == null ? myLibraryData.getName() : ExternalSystemUtil.getLibraryName(myIdeLibrary)
     );
   }
 }

@@ -2,12 +2,12 @@ package org.jetbrains.plugins.gradle.manage;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.model.project.ExternalProject;
-import com.intellij.openapi.externalSystem.model.project.ExternalLibrary;
-import com.intellij.openapi.externalSystem.model.project.ExternalModule;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.project.LibraryData;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.service.project.change.user.UserProjectChangesCalculator;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalDependencyManager;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalLibraryManager;
+import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataManager;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalModuleManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.module.ModifiableModuleModel;
@@ -59,17 +59,17 @@ import java.util.Set;
  * @since 8/1/11 1:29 PM
  */
 @SuppressWarnings("MethodMayBeStatic")
-public class GradleProjectImportBuilder extends ProjectImportBuilder<ExternalProject> {
+public class GradleProjectImportBuilder extends ProjectImportBuilder<ProjectData> {
 
   @NotNull private final ExternalModuleManager     myModuleManager;
-  @NotNull private final ExternalLibraryManager    myLibraryManager;
+  @NotNull private final LibraryDataManager        myLibraryManager;
   @NotNull private final ExternalDependencyManager myDependencyManager;
 
-  private ExternalProject    myGradleProject;
+  private ProjectData        myGradleProject;
   private GradleConfigurable myConfigurable;
 
   public GradleProjectImportBuilder(@NotNull ExternalModuleManager moduleManager,
-                                    @NotNull ExternalLibraryManager libraryManager,
+                                    @NotNull LibraryDataManager libraryManager,
                                     @NotNull ExternalDependencyManager manager)
   {
     myModuleManager = moduleManager;
@@ -89,17 +89,17 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<ExternalPro
   }
 
   @Override
-  public List<ExternalProject> getList() {
+  public List<ProjectData> getList() {
     return Arrays.asList(myGradleProject);
   }
 
   @Override
-  public boolean isMarked(ExternalProject element) {
+  public boolean isMarked(ProjectData element) {
     return true;
   }
 
   @Override
-  public void setList(List<ExternalProject> gradleProjects) {
+  public void setList(List<ProjectData> gradleProjects) {
   }
 
   @Override
@@ -130,7 +130,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<ExternalPro
                              ModifiableArtifactModel artifactModel)
   {
     System.setProperty(GradleConstants.NEWLY_IMPORTED_PROJECT, Boolean.TRUE.toString());
-    final ExternalProject gradleProject = getGradleProject();
+    final ProjectData gradleProject = getGradleProject();
     if (gradleProject != null) {
       final LanguageLevel gradleLanguageLevel = gradleProject.getLanguageLevel();
       final LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
@@ -175,7 +175,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<ExternalPro
                   public void run(@NotNull final ProgressIndicator indicator) {
                     GradleResolveProjectTask task = new GradleResolveProjectTask(project, linkedProjectPath, true);
                     task.execute(indicator);
-                    ExternalProject projectWithResolvedLibraries = task.getGradleProject();
+                    ProjectData projectWithResolvedLibraries = task.getGradleProject();
                     if (projectWithResolvedLibraries == null) {
                       return;
                     }
@@ -212,8 +212,8 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<ExternalPro
    * @param project                       current intellij project which should be configured by libraries and module library
    *                                      dependencies information available at the given gradle project
    */
-  private void setupLibraries(final ExternalProject projectWithResolvedLibraries, final Project project) {
-    final Set<? extends ExternalLibrary> libraries = projectWithResolvedLibraries.getLibraries();
+  private void setupLibraries(final ProjectData projectWithResolvedLibraries, final Project project) {
+    final Set<? extends LibraryData> libraries = projectWithResolvedLibraries.getLibraries();
     GradleUtil.executeProjectChangeAction(project, libraries, new Runnable() {
       @Override
       public void run() {
@@ -242,7 +242,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<ExternalPro
             // Register libraries.
             myLibraryManager.importLibraries(projectWithResolvedLibraries.getLibraries(), project, false);
             ProjectStructureHelper helper = ServiceManager.getService(project, ProjectStructureHelper.class);
-            for (ExternalModule module : projectWithResolvedLibraries.getModules()) {
+            for (ModuleData module : projectWithResolvedLibraries.getModules()) {
               Module intellijModule = helper.findIdeModule(module);
               assert intellijModule != null;
               myDependencyManager.importDependencies(module.getDependencies(), intellijModule, false);
@@ -313,7 +313,7 @@ public class GradleProjectImportBuilder extends ProjectImportBuilder<ExternalPro
   }
 
   @Nullable
-  public ExternalProject getGradleProject() {
+  public ProjectData getGradleProject() {
     return myGradleProject;
   }
 

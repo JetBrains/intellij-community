@@ -23,33 +23,33 @@ import java.util.*;
  */
 public class ExternalDependencyManager {
 
-  @NotNull private final PlatformFacade         myPlatformFacade;
-  @NotNull private final ExternalLibraryManager myLibraryManager;
+  @NotNull private final PlatformFacade     myPlatformFacade;
+  @NotNull private final LibraryDataManager myLibraryManager;
 
-  public ExternalDependencyManager(@NotNull PlatformFacade platformFacade, @NotNull ExternalLibraryManager manager) {
+  public ExternalDependencyManager(@NotNull PlatformFacade platformFacade, @NotNull LibraryDataManager manager) {
     myPlatformFacade = platformFacade;
     myLibraryManager = manager;
   }
 
-  public void importDependency(@NotNull ExternalDependency dependency, @NotNull Module module, boolean synchronous) {
+  public void importDependency(@NotNull DependencyData dependency, @NotNull Module module, boolean synchronous) {
     importDependencies(Collections.singleton(dependency), module, synchronous);
   }
 
-  public void importDependencies(@NotNull Iterable<ExternalDependency> dependencies, @NotNull Module module, boolean synchronous) {
-    final List<ExternalModuleDependency> moduleDependencies = new ArrayList<ExternalModuleDependency>();
-    final List<ExternalLibraryDependency> libraryDependencies = new ArrayList<ExternalLibraryDependency>();
+  public void importDependencies(@NotNull Iterable<DependencyData> dependencies, @NotNull Module module, boolean synchronous) {
+    final List<ModuleDependencyData> moduleDependencies = new ArrayList<ModuleDependencyData>();
+    final List<LibraryDependencyData> libraryDependencies = new ArrayList<LibraryDependencyData>();
     ExternalEntityVisitor visitor = new ExternalEntityVisitorAdapter() {
       @Override
-      public void visit(@NotNull ExternalModuleDependency dependency) {
+      public void visit(@NotNull ModuleDependencyData dependency) {
         moduleDependencies.add(dependency);
       }
 
       @Override
-      public void visit(@NotNull ExternalLibraryDependency dependency) {
+      public void visit(@NotNull LibraryDependencyData dependency) {
         libraryDependencies.add(dependency);
       }
     };
-    for (ExternalDependency dependency : dependencies) {
+    for (DependencyData dependency : dependencies) {
       dependency.invite(visitor);
     }
     importLibraryDependencies(libraryDependencies, module, synchronous);
@@ -57,7 +57,7 @@ public class ExternalDependencyManager {
   }
 
   @SuppressWarnings("MethodMayBeStatic")
-  public void importModuleDependencies(@NotNull final Collection<ExternalModuleDependency> dependencies,
+  public void importModuleDependencies(@NotNull final Collection<ModuleDependencyData> dependencies,
                                        @NotNull final Module module,
                                        boolean synchronous)
   {
@@ -73,7 +73,7 @@ public class ExternalDependencyManager {
         try {
           final ProjectStructureHelper projectStructureHelper
             = ServiceManager.getService(module.getProject(), ProjectStructureHelper.class);
-          for (ExternalModuleDependency dependency : dependencies) {
+          for (ModuleDependencyData dependency : dependencies) {
             final String moduleName = dependency.getName();
             final Module intellijModule = projectStructureHelper.findIdeModule(moduleName, module.getProject());
             if (intellijModule == null) {
@@ -100,7 +100,7 @@ public class ExternalDependencyManager {
     });
   }
   
-  public void importLibraryDependencies(@NotNull final Iterable<ExternalLibraryDependency> dependencies,
+  public void importLibraryDependencies(@NotNull final Iterable<LibraryDependencyData> dependencies,
                                         @NotNull final Module module,
                                         final boolean synchronous)
   {
@@ -108,8 +108,8 @@ public class ExternalDependencyManager {
       @Override
       public void run() {
         LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
-        Set<ExternalLibrary> librariesToImport = new HashSet<ExternalLibrary>();
-        for (ExternalLibraryDependency dependency : dependencies) {
+        Set<LibraryData> librariesToImport = new HashSet<LibraryData>();
+        for (LibraryDependencyData dependency : dependencies) {
           final Library library = libraryTable.getLibraryByName(dependency.getName());
           if (library == null) {
             librariesToImport.add(dependency.getTarget());
@@ -119,7 +119,7 @@ public class ExternalDependencyManager {
           myLibraryManager.importLibraries(librariesToImport, module.getProject(), synchronous);
         }
 
-        for (ExternalLibraryDependency dependency : dependencies) {
+        for (LibraryDependencyData dependency : dependencies) {
           ProjectStructureHelper helper = ServiceManager.getService(module.getProject(), ProjectStructureHelper.class);
           ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
           final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();

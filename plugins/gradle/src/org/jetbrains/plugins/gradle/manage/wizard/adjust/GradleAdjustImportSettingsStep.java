@@ -173,7 +173,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     if (builder == null) {
       return;
     }
-    ExternalProject project = builder.getGradleProject();
+    ProjectData project = builder.getGradleProject();
     if (project == null) {
       throw new IllegalStateException(String.format(
         "Can't init 'adjust importing settings' step. Reason: no project is defined. Context: '%s', builder: '%s'",
@@ -181,47 +181,47 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
       ));
     }
 
-    Map<ExternalEntity, Pair<String, Collection<ProjectStructureNode>>> entity2nodes
-      = new HashMap<ExternalEntity, Pair<String, Collection<ProjectStructureNode>>>();
+    Map<ProjectEntityData, Pair<String, Collection<ProjectStructureNode>>> entity2nodes
+      = new HashMap<ProjectEntityData, Pair<String, Collection<ProjectStructureNode>>>();
     int counter = 0;
     ProjectStructureNode<ProjectEntityId> root = buildNode(project, entity2nodes, counter++);
 
-    List<ExternalModule> modules = new ArrayList<ExternalModule>(project.getModules());
+    List<ModuleData> modules = new ArrayList<ModuleData>(project.getModules());
     Collections.sort(modules, Named.COMPARATOR);
     List<MutableTreeNode> moduleNodes = new ArrayList<MutableTreeNode>();
     
-    for (ExternalModule module : modules) {
+    for (ModuleData module : modules) {
       ProjectStructureNode<ProjectEntityId> moduleNode = buildNode(module, entity2nodes, counter++);
       moduleNodes.add(moduleNode);
-      for (ExternalContentRoot contentRoot : module.getContentRoots()) {
+      for (ContentRootData contentRoot : module.getContentRoots()) {
         moduleNode.add(buildNode(contentRoot, entity2nodes, counter++));
       }
-      Collection<ExternalDependency> dependencies = module.getDependencies();
+      Collection<DependencyData> dependencies = module.getDependencies();
       if (!dependencies.isEmpty()) {
         ProjectStructureNode<GradleSyntheticId> dependenciesNode
           = new ProjectStructureNode<GradleSyntheticId>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR);
-        final List<ExternalModuleDependency> moduleDependencies = new ArrayList<ExternalModuleDependency>();
-        final List<ExternalLibraryDependency> libraryDependencies = new ArrayList<ExternalLibraryDependency>();
+        final List<ModuleDependencyData> moduleDependencies = new ArrayList<ModuleDependencyData>();
+        final List<LibraryDependencyData> libraryDependencies = new ArrayList<LibraryDependencyData>();
         ExternalEntityVisitor visitor = new ExternalEntityVisitorAdapter() {
           @Override
-          public void visit(@NotNull ExternalModuleDependency dependency) {
+          public void visit(@NotNull ModuleDependencyData dependency) {
             moduleDependencies.add(dependency);
           }
 
           @Override
-          public void visit(@NotNull ExternalLibraryDependency dependency) {
+          public void visit(@NotNull LibraryDependencyData dependency) {
             libraryDependencies.add(dependency);
           }
         };
-        for (ExternalDependency dependency : dependencies) {
+        for (DependencyData dependency : dependencies) {
           dependency.invite(visitor);
         }
-        Collections.sort(moduleDependencies, ExternalModuleDependency.COMPARATOR);
+        Collections.sort(moduleDependencies, ModuleDependencyData.COMPARATOR);
         Collections.sort(libraryDependencies, Named.COMPARATOR);
-        for (ExternalModuleDependency dependency : moduleDependencies) {
+        for (ModuleDependencyData dependency : moduleDependencies) {
           dependenciesNode.add(buildNode(dependency, entity2nodes, counter++));
         }
-        for (ExternalLibraryDependency dependency : libraryDependencies) {
+        for (LibraryDependencyData dependency : libraryDependencies) {
           dependenciesNode.add(buildNode(dependency, entity2nodes, counter++));
         }
         moduleNode.add(dependenciesNode);
@@ -231,7 +231,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     myTreeModel.setRoot(root);
     myTree.setSelectionPath(new TreePath(root));
     
-    Collection<? extends ExternalLibrary> libraries = project.getLibraries();
+    Collection<? extends LibraryData> libraries = project.getLibraries();
     if (libraries.isEmpty()) {
       for (MutableTreeNode node : moduleNodes) {
         root.add(node);
@@ -246,11 +246,11 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
       }
       root.add(modulesNode);
 
-      List<ExternalLibrary> sortedLibraries = new ArrayList<ExternalLibrary>(libraries);
+      List<LibraryData> sortedLibraries = new ArrayList<LibraryData>(libraries);
       Collections.sort(sortedLibraries, Named.COMPARATOR);
       ProjectStructureNode<GradleSyntheticId> librariesNode
         = new ProjectStructureNode<GradleSyntheticId>(GradleConstants.LIBRARIES_NODE_DESCRIPTOR);
-      for (ExternalLibrary library : sortedLibraries) {
+      for (LibraryData library : sortedLibraries) {
         librariesNode.add(buildNode(library, entity2nodes, counter++));
       }
       root.add(librariesNode);
@@ -263,7 +263,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
   }
 
   private ProjectStructureNode<ProjectEntityId> buildNode(
-    @NotNull ExternalEntity entity, @NotNull Map<ExternalEntity, Pair<String, Collection<ProjectStructureNode>>> processed, int counter)
+    @NotNull ProjectEntityData entity, @NotNull Map<ProjectEntityData, Pair<String, Collection<ProjectStructureNode>>> processed, int counter)
   {
     // We build tree node, its settings control and map them altogether. The only trick here is that nodes can reuse the same
     // settings control (e.g. more than one node may have the same library as a dependency, so, library dependency node for

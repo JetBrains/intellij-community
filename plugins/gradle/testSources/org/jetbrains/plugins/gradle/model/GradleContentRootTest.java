@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.gradle.model;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalContentRoot;
-import com.intellij.openapi.externalSystem.model.project.ExternalModule;
-import com.intellij.openapi.externalSystem.model.project.SourceType;
+import com.intellij.openapi.externalSystem.model.project.ContentRootData;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import org.junit.Test;
 
 /**
@@ -13,7 +13,7 @@ public class GradleContentRootTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void pathOutOfContentRoot() {
-    ExternalContentRoot contentRoot = new ExternalContentRoot(new ExternalModule("module", "."), "./my-content-root");
-    contentRoot.storePath(SourceType.SOURCE, "./my-dir-out-of-content-root");
+    ContentRootData contentRoot = new ContentRootData(new ModuleData("module", "."), "./my-content-root");
+    contentRoot.storePath(ExternalSystemSourceType.SOURCE, "./my-dir-out-of-content-root");
   }
 }

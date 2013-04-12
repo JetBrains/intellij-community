@@ -15,8 +15,9 @@
  */
 package com.intellij.openapi.externalSystem.service.remote;
 
+import com.intellij.openapi.externalSystem.model.DataHolder;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.openapi.externalSystem.model.project.ExternalProject;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemService;
@@ -40,10 +41,10 @@ public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExe
     = new RemoteExternalSystemProjectResolver<ExternalSystemExecutionSettings>() {
     @Nullable
     @Override
-    public ExternalProject resolveProjectInfo(@NotNull ExternalSystemTaskId id,
-                                              @NotNull String projectPath,
-                                              boolean downloadLibraries,
-                                              @Nullable ExternalSystemExecutionSettings settings)
+    public DataHolder<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
+                                                      @NotNull String projectPath,
+                                                      boolean downloadLibraries,
+                                                      @Nullable ExternalSystemExecutionSettings settings)
       throws ExternalSystemException, IllegalArgumentException, IllegalStateException
     {
       return null;
@@ -71,9 +72,9 @@ public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExe
 
 
   @Nullable
-  ExternalProject resolveProjectInfo(@NotNull ExternalSystemTaskId id,
-                                     @NotNull String projectPath,
-                                     boolean downloadLibraries,
-                                     @Nullable S settings)
+  DataHolder<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
+                                             @NotNull String projectPath,
+                                             boolean downloadLibraries,
+                                             @Nullable S settings)
     throws RemoteException, ExternalSystemException, IllegalArgumentException, IllegalStateException;
 }

@@ -17,7 +17,7 @@ package com.intellij.openapi.externalSystem.service.project.change;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.Jar;
+import com.intellij.openapi.externalSystem.model.project.JarData;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChangeVisitor;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChangeVisitorAdapter;
@@ -186,7 +186,7 @@ public class MovedJarsPostProcessor implements ExternalProjectStructureChangesPo
         }
         JarId ideJarId = ideLocalJarChange.getIdeEntity();
         assert ideJarId != null;
-        Jar ideJar = ideJarId.mapToEntity(services, project);
+        JarData ideJar = ideJarId.mapToEntity(services, project);
         if (ideJar == null) {
           continue;
         }
@@ -194,7 +194,7 @@ public class MovedJarsPostProcessor implements ExternalProjectStructureChangesPo
         JarPresenceChange gradleLocalJarChange = entry.getValue().get(info);
         JarId jarId = gradleLocalJarChange.getExternalEntity();
         assert jarId != null;
-        Jar gradleJar = jarId.mapToEntity(services, project);
+        JarData gradleJar = jarId.mapToEntity(services, project);
         if (gradleJar == null) {
           continue;
         }
@@ -208,10 +208,10 @@ public class MovedJarsPostProcessor implements ExternalProjectStructureChangesPo
 
     @NotNull public final Collection<JarPresenceChange> changes = ContainerUtilRt.newArrayList();
 
-    @NotNull public final Jar gradleJar;
-    @NotNull public final Jar ideJar;
+    @NotNull public final JarData gradleJar;
+    @NotNull public final JarData ideJar;
 
-    MergeInfo(@NotNull Jar gradleJar, @NotNull Jar ideJar, JarPresenceChange... changes) {
+    MergeInfo(@NotNull JarData gradleJar, @NotNull JarData ideJar, JarPresenceChange... changes) {
       this.gradleJar = gradleJar;
       this.ideJar = ideJar;
       this.changes.addAll(Arrays.asList(changes));

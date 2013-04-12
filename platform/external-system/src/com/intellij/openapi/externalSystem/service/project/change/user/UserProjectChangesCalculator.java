@@ -62,11 +62,11 @@ public class UserProjectChangesCalculator {
       return new RemoveModuleUserChange(moduleName);
     }
   };
-  
+
   @NotNull private final PlatformFacade         myFacade;
   @NotNull private final ProjectStructureHelper myProjectStructureHelper;
 
-  @Nullable private ExternalProject myLastProjectState;
+  @Nullable private ProjectData myLastProjectState;
 
   public UserProjectChangesCalculator(@NotNull PlatformFacade facade, @NotNull ProjectStructureHelper helper) {
     myFacade = facade;
@@ -80,8 +80,8 @@ public class UserProjectChangesCalculator {
    * @return current ide project state
    */
   @Nullable
-  public ExternalProject updateCurrentProjectState(@NotNull Project project) {
-    ExternalProject state = buildCurrentIdeProject(project);
+  public ProjectData updateCurrentProjectState(@NotNull Project project) {
+    ProjectData state = buildCurrentIdeProject(project);
     myLastProjectState = state;
     filterOutdatedChanges(project);
     return state;
@@ -92,17 +92,17 @@ public class UserProjectChangesCalculator {
    * with the {@link #updateCurrentProjectState(Project) previous one} and considers all changes between them as user-made.
    * <p/>
    * All are checked for validity and dropped if they are out of date.
-   * 
-   * @param project  
+   *
+   * @param project
    */
   public void updateChanges(@NotNull Project project) {
-    ExternalProject lastProjectState = myLastProjectState;
+    ProjectData lastProjectState = myLastProjectState;
     if (lastProjectState == null) {
       updateCurrentProjectState(project);
       return;
     }
 
-    ExternalProject currentProjectState = buildCurrentIdeProject(project);
+    ProjectData currentProjectState = buildCurrentIdeProject(project);
     if (currentProjectState == null) {
       return;
     }
@@ -152,40 +152,41 @@ public class UserProjectChangesCalculator {
     Set<String> commonModuleNames = ContainerUtilRt.newHashSet(context.currentModules.keySet());
     commonModuleNames.retainAll(context.oldModules.keySet());
     for (final String moduleName : commonModuleNames) {
-      final Map<String, ExternalModuleDependency> currentModuleDependencies = ContainerUtilRt.newHashMap();
-      final Map<String, ExternalModuleDependency> oldModuleDependencies = ContainerUtilRt.newHashMap();
-      final Map<String, ExternalLibraryDependency> currentLibraryDependencies = ContainerUtilRt.newHashMap();
-      final Map<String, ExternalLibraryDependency> oldLibraryDependencies = ContainerUtilRt.newHashMap();
+      final Map<String, ModuleDependencyData> currentModuleDependencies = ContainerUtilRt.newHashMap();
+      final Map<String, ModuleDependencyData> oldModuleDependencies = ContainerUtilRt.newHashMap();
+      final Map<String, LibraryDependencyData> currentLibraryDependencies = ContainerUtilRt.newHashMap();
+      final Map<String, LibraryDependencyData> oldLibraryDependencies = ContainerUtilRt.newHashMap();
+      
+      // TODO den implement
+//      ExternalEntityVisitor oldStateVisitor = new ExternalEntityVisitorAdapter() {
+//        @Override
+//        public void visit(@NotNull ModuleDependencyData dependency) {
+//          oldModuleDependencies.put(dependency.getTarget().getName(), dependency);
+//        }
+//
+//        @Override
+//        public void visit(@NotNull LibraryDependencyData dependency) {
+//          oldLibraryDependencies.put(dependency.getTarget().getName(), dependency);
+//        }
+//      };
+//      for (DependencyData dependency : context.oldModules.get(moduleName).getDependencies()) {
+//        dependency.invite(oldStateVisitor);
+//      }
 
-      ExternalEntityVisitor oldStateVisitor = new ExternalEntityVisitorAdapter() {
-        @Override
-        public void visit(@NotNull ExternalModuleDependency dependency) {
-          oldModuleDependencies.put(dependency.getTarget().getName(), dependency);
-        }
-
-        @Override
-        public void visit(@NotNull ExternalLibraryDependency dependency) {
-          oldLibraryDependencies.put(dependency.getTarget().getName(), dependency);
-        }
-      };
-      for (ExternalDependency dependency : context.oldModules.get(moduleName).getDependencies()) {
-        dependency.invite(oldStateVisitor);
-      }
-
-      ExternalEntityVisitor currentStateVisitor = new ExternalEntityVisitorAdapter() {
-        @Override
-        public void visit(@NotNull ExternalModuleDependency dependency) {
-          currentModuleDependencies.put(dependency.getTarget().getName(), dependency);
-        }
-
-        @Override
-        public void visit(@NotNull ExternalLibraryDependency dependency) {
-          currentLibraryDependencies.put(dependency.getTarget().getName(), dependency);
-        }
-      };
-      for (ExternalDependency dependency : context.currentModules.get(moduleName).getDependencies()) {
-        dependency.invite(currentStateVisitor);
-      }
+//      ExternalEntityVisitor currentStateVisitor = new ExternalEntityVisitorAdapter() {
+//        @Override
+//        public void visit(@NotNull ModuleDependencyData dependency) {
+//          currentModuleDependencies.put(dependency.getTarget().getName(), dependency);
+//        }
+//
+//        @Override
+//        public void visit(@NotNull LibraryDependencyData dependency) {
+//          currentLibraryDependencies.put(dependency.getTarget().getName(), dependency);
+//        }
+//      };
+//      for (DependencyData dependency : context.currentModules.get(moduleName).getDependencies()) {
+//        dependency.invite(currentStateVisitor);
+//      }
       
       Function<String, UserProjectChange<?>> addedModuleDependency = new Function<String, UserProjectChange<?>>() {
         @Override
@@ -217,44 +218,44 @@ public class UserProjectChangesCalculator {
       buildPresenceChanges(oldLibraryDependencies.keySet(), currentLibraryDependencies.keySet(),
                            addedLibraryDependency, removedLibraryDependency, context);
 
-      NullableFunction<Pair<ExternalModuleDependency, ExternalModuleDependency>, UserProjectChange<?>> exportedModuleDependencyBuilder
-        = new NullableFunction<Pair<ExternalModuleDependency, ExternalModuleDependency>, UserProjectChange<?>>() {
+      NullableFunction<Pair<ModuleDependencyData, ModuleDependencyData>, UserProjectChange<?>> exportedModuleDependencyBuilder
+        = new NullableFunction<Pair<ModuleDependencyData, ModuleDependencyData>, UserProjectChange<?>>() {
         @Nullable
         @Override
-        public UserProjectChange<?> fun(Pair<ExternalModuleDependency, ExternalModuleDependency> pair) {
+        public UserProjectChange<?> fun(Pair<ModuleDependencyData, ModuleDependencyData> pair) {
           if (pair.first.isExported() != pair.second.isExported()) {
             return new ModuleDependencyExportedChange(moduleName, pair.second.getName(), pair.second.isExported());
           }
           return null;
         }
       };
-      NullableFunction<Pair<ExternalModuleDependency, ExternalModuleDependency>, UserProjectChange<?>> scopeModuleDependencyBuilder
-        = new NullableFunction<Pair<ExternalModuleDependency, ExternalModuleDependency>, UserProjectChange<?>>() {
+      NullableFunction<Pair<ModuleDependencyData, ModuleDependencyData>, UserProjectChange<?>> scopeModuleDependencyBuilder
+        = new NullableFunction<Pair<ModuleDependencyData, ModuleDependencyData>, UserProjectChange<?>>() {
         @Nullable
         @Override
-        public UserProjectChange<?> fun(Pair<ExternalModuleDependency, ExternalModuleDependency> pair) {
+        public UserProjectChange<?> fun(Pair<ModuleDependencyData, ModuleDependencyData> pair) {
           if (pair.first.getScope() != pair.second.getScope()) {
             return new ModuleDependencyScopeUserChange(moduleName, pair.second.getName(), pair.second.getScope());
           }
           return null;
         }
       };
-      NullableFunction<Pair<ExternalLibraryDependency, ExternalLibraryDependency>, UserProjectChange<?>> exportedLibDependencyBuilder
-        = new NullableFunction<Pair<ExternalLibraryDependency, ExternalLibraryDependency>, UserProjectChange<?>>() {
+      NullableFunction<Pair<LibraryDependencyData, LibraryDependencyData>, UserProjectChange<?>> exportedLibDependencyBuilder
+        = new NullableFunction<Pair<LibraryDependencyData, LibraryDependencyData>, UserProjectChange<?>>() {
         @Nullable
         @Override
-        public UserProjectChange<?> fun(Pair<ExternalLibraryDependency, ExternalLibraryDependency> pair) {
+        public UserProjectChange<?> fun(Pair<LibraryDependencyData, LibraryDependencyData> pair) {
           if (pair.first.isExported() != pair.second.isExported()) {
             return new LibraryDependencyExportedChange(moduleName, pair.second.getName(), pair.second.isExported());
           }
           return null;
         }
       };
-      NullableFunction<Pair<ExternalLibraryDependency, ExternalLibraryDependency>, UserProjectChange<?>> scopeLibDependencyBuilder
-        = new NullableFunction<Pair<ExternalLibraryDependency, ExternalLibraryDependency>, UserProjectChange<?>>() {
+      NullableFunction<Pair<LibraryDependencyData, LibraryDependencyData>, UserProjectChange<?>> scopeLibDependencyBuilder
+        = new NullableFunction<Pair<LibraryDependencyData, LibraryDependencyData>, UserProjectChange<?>>() {
         @Nullable
         @Override
-        public UserProjectChange<?> fun(Pair<ExternalLibraryDependency, ExternalLibraryDependency> pair) {
+        public UserProjectChange<?> fun(Pair<LibraryDependencyData, LibraryDependencyData> pair) {
           if (pair.first.getScope() != pair.second.getScope()) {
             return new LibraryDependencyScopeUserChange(moduleName, pair.second.getName(), pair.second.getScope());
           }
@@ -308,7 +309,7 @@ public class UserProjectChangesCalculator {
   }
   
   @Nullable
-  private ExternalProject buildCurrentIdeProject(@NotNull Project project) {
+  private ProjectData buildCurrentIdeProject(@NotNull Project project) {
     String compileOutput = null;
     CompilerProjectExtension compilerProjectExtension = CompilerProjectExtension.getInstance(project);
     if (compilerProjectExtension != null) {
@@ -317,50 +318,53 @@ public class UserProjectChangesCalculator {
     if (compileOutput == null) {
       compileOutput = "";
     }
-
-    ExternalProject result = new ExternalProject(ProjectSystemId.IDE, ".", compileOutput);
-    final Map<String, ExternalModule> modules = ContainerUtilRt.newHashMap();
-    for (Module ideModule : myFacade.getModules(project)) {
-      final ExternalModule module = new ExternalModule(ProjectSystemId.IDE, ideModule.getName(), ideModule.getModuleFilePath());
-      modules.put(module.getName(), module);
-    }
-    for (Module ideModule : myFacade.getModules(project)) {
-      final ExternalModule module = modules.get(ideModule.getName());
-      RootPolicy<Void> visitor = new RootPolicy<Void>() {
-        @Override
-        public Void visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Void value) {
-          Library library = libraryOrderEntry.getLibrary();
-          if (library != null) {
-            ExternalLibraryDependency dependency = new ExternalLibraryDependency(
-              module,
-              new ExternalLibrary(ProjectSystemId.IDE, ExternalSystemUtil.getLibraryName(library))
-            );
-            dependency.setScope(libraryOrderEntry.getScope());
-            dependency.setExported(libraryOrderEntry.isExported());
-            module.addDependency(dependency);
-          }
-          return value;
-        }
-
-        @Override
-        public Void visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Void value) {
-          ExternalModule dependencyModule = modules.get(moduleOrderEntry.getModuleName());
-          if (dependencyModule != null) {
-            ExternalModuleDependency dependency = new ExternalModuleDependency(module, dependencyModule);
-            dependency.setScope(moduleOrderEntry.getScope());
-            dependency.setExported(moduleOrderEntry.isExported());
-            module.addDependency(dependency);
-          }
-          return value;
-        }
-      };
-      for (OrderEntry orderEntry : myFacade.getOrderEntries(ideModule)) {
-        orderEntry.accept(visitor, null);
-      }
-      result.addModule(module);
-    }
     
-    return result;
+    return null;
+    
+    // TODO den implement
+//    ProjectData result = new ProjectData(ProjectSystemId.IDE, ".", compileOutput);
+//    final Map<String, ModuleData> modules = ContainerUtilRt.newHashMap();
+//    for (Module ideModule : myFacade.getModules(project)) {
+//      final ModuleData module = new ModuleData(ProjectSystemId.IDE, ideModule.getName(), ideModule.getModuleFilePath());
+//      modules.put(module.getName(), module);
+//    }
+//    for (Module ideModule : myFacade.getModules(project)) {
+//      final ModuleData module = modules.get(ideModule.getName());
+//      RootPolicy<Void> visitor = new RootPolicy<Void>() {
+//        @Override
+//        public Void visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Void value) {
+//          Library library = libraryOrderEntry.getLibrary();
+//          if (library != null) {
+//            LibraryDependencyData dependency = new LibraryDependencyData(
+//              module,
+//              new LibraryData(ProjectSystemId.IDE, ExternalSystemUtil.getLibraryName(library))
+//            );
+//            dependency.setScope(libraryOrderEntry.getScope());
+//            dependency.setExported(libraryOrderEntry.isExported());
+//            module.addDependency(dependency);
+//          }
+//          return value;
+//        }
+//
+//        @Override
+//        public Void visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, Void value) {
+//          ModuleData dependencyModule = modules.get(moduleOrderEntry.getModuleName());
+//          if (dependencyModule != null) {
+//            ModuleDependencyData dependency = new ModuleDependencyData(module, dependencyModule);
+//            dependency.setScope(moduleOrderEntry.getScope());
+//            dependency.setExported(moduleOrderEntry.isExported());
+//            module.addDependency(dependency);
+//          }
+//          return value;
+//        }
+//      };
+//      for (OrderEntry orderEntry : myFacade.getOrderEntries(ideModule)) {
+//        orderEntry.accept(visitor, null);
+//      }
+//      result.addModule(module);
+//    }
+//    
+//    return result;
   }
 
   /**
@@ -471,22 +475,26 @@ public class UserProjectChangesCalculator {
 
     @NotNull public final Set<UserProjectChange<?>> currentChanges = ContainerUtilRt.newHashSet();
 
-    @NotNull public final Map<String, ExternalModule> oldModules;
-    @NotNull public final Map<String, ExternalModule> currentModules;
+    @NotNull public final Map<String, ModuleData> oldModules;
+    @NotNull public final Map<String, ModuleData> currentModules;
 
-    Context(@NotNull ExternalProject oldProjectState,
-            @NotNull ExternalProject currentProjectState)
+    Context(@NotNull ProjectData oldProjectState,
+            @NotNull ProjectData currentProjectState)
     {
-      Function<ExternalModule, Pair<String, ExternalModule>> modulesByName
-        = new Function<ExternalModule, Pair<String, ExternalModule>>() {
+      Function<ModuleData, Pair<String, ModuleData>> modulesByName
+        = new Function<ModuleData, Pair<String, ModuleData>>() {
         @Override
-        public Pair<String, ExternalModule> fun(ExternalModule module) {
+        public Pair<String, ModuleData> fun(ModuleData module) {
           return Pair.create(module.getName(), module);
         }
       };
 
-      oldModules = ContainerUtil.map2Map(oldProjectState.getModules(), modulesByName);
-      currentModules = ContainerUtil.map2Map(currentProjectState.getModules(), modulesByName);
+      // TODO den remove
+      oldModules = ContainerUtil.newHashMap();
+      currentModules = ContainerUtil.newHashMap();
+      // TODO den uncomment
+//      oldModules = ContainerUtil.map2Map(oldProjectState.getModules(), modulesByName);
+//      currentModules = ContainerUtil.map2Map(currentProjectState.getModules(), modulesByName);
     }
   }
 }

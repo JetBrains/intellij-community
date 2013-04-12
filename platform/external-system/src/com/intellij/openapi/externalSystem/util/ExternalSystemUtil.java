@@ -22,11 +22,13 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
+import com.intellij.openapi.externalSystem.model.DataHolder;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
+import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.ExternalEntity;
-import com.intellij.openapi.externalSystem.model.project.ExternalEntityVisitor;
+import com.intellij.openapi.externalSystem.model.project.ProjectEntityData;
 import com.intellij.openapi.externalSystem.service.project.ModuleAwareContentRoot;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectEntityChangeListener;
 import com.intellij.openapi.fileTypes.FileTypes;
@@ -56,6 +58,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
+import java.util.Collection;
 import java.util.Collections;
 import java.util.Map;
 import java.util.regex.Matcher;
@@ -66,6 +69,8 @@ import java.util.regex.Pattern;
  * @since 4/1/13 1:31 PM
  */
 public class ExternalSystemUtil {
+
+  private static final Logger LOG = Logger.getInstance("#" + ExternalSystemUtil.class.getName());
 
   @NotNull public static final String PATH_SEPARATOR = "/";
 
@@ -160,15 +165,6 @@ public class ExternalSystemUtil {
     return file.getPath();
   }
 
-  public static void dispatch(@Nullable Object entity, @NotNull ExternalEntityVisitor gradleVisitor, @NotNull IdeEntityVisitor ideVisitor) {
-    if (entity instanceof ExternalEntity) {
-      ((ExternalEntity)entity).invite(gradleVisitor);
-    }
-    else {
-      dispatch(entity, ideVisitor);
-    }
-  }
-
   /**
    * Tries to dispatch given entity via the given visitor.
    *
@@ -197,7 +193,7 @@ public class ExternalSystemUtil {
   }
 
   @NotNull
-  public static ProjectSystemId detectOwner(@Nullable ExternalEntity externalEntity, @Nullable Object ideEntity) {
+  public static ProjectSystemId detectOwner(@Nullable ProjectEntityData externalEntity, @Nullable Object ideEntity) {
     if (ideEntity != null) {
       return ProjectSystemId.IDE;
     }
@@ -388,5 +384,26 @@ public class ExternalSystemUtil {
       unwrapped.printStackTrace(new PrintWriter(writer));
       return writer.toString();
     }
+  }
+
+  @NotNull
+  public static <K, V> Map<K, Collection<DataHolder<V>>> groupBy(@NotNull Collection<DataHolder<V>> datas, @NotNull Key<K> key) {
+    Map<K, Collection<DataHolder<V>>> result = ContainerUtilRt.newHashMap();
+    for (DataHolder<V> data : datas) {
+      K grouper = data.getData(key);
+      if (grouper == null) {
+        LOG.warn(String.format(
+          "Skipping entry '%s' during grouping. Reason: it doesn't provide a value for key %s. Given entries: %s",
+          data, key, datas
+        ));
+        continue;
+      }
+      Collection<DataHolder<V>> grouped = result.get(grouper);
+      if (grouped == null) {
+        result.put(grouper, grouped = ContainerUtilRt.newArrayList());
+      }
+      grouped.add(data);
+    }
+    return result;
   }
 }

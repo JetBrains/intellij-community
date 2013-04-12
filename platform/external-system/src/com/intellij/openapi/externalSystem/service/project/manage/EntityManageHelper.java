@@ -45,21 +45,21 @@ import java.util.Set;
  */
 public class EntityManageHelper {
 
-  @NotNull private final ProjectStructureHelper     myProjectStructureHelper;
-  @NotNull private final ExternalProjectManager     myProjectManager;
-  @NotNull private final ExternalModuleManager      myModuleManager;
-  @NotNull private final ExternalLibraryManager     myLibraryManager;
-  @NotNull private final ExternalJarManager         myJarManager;
-  @NotNull private final ExternalDependencyManager  myDependencyManager;
-  @NotNull private final ExternalContentRootManager myContentRootManager;
+  @NotNull private final ProjectStructureHelper    myProjectStructureHelper;
+  @NotNull private final ExternalProjectManager    myProjectManager;
+  @NotNull private final ExternalModuleManager     myModuleManager;
+  @NotNull private final LibraryDataManager        myLibraryManager;
+  @NotNull private final ExternalJarManager        myJarManager;
+  @NotNull private final ExternalDependencyManager myDependencyManager;
+  @NotNull private final ContentRootDataManager    myContentRootManager;
 
   public EntityManageHelper(@NotNull ProjectStructureHelper helper,
                             @NotNull ExternalProjectManager projectManager,
                             @NotNull ExternalModuleManager moduleManager,
-                            @NotNull ExternalLibraryManager libraryManager,
+                            @NotNull LibraryDataManager libraryManager,
                             @NotNull ExternalJarManager jarManager,
                             @NotNull ExternalDependencyManager dependencyManager,
-                            @NotNull ExternalContentRootManager contentRootManager)
+                            @NotNull ContentRootDataManager contentRootManager)
   {
     myProjectStructureHelper = helper;
     myProjectManager = projectManager;
@@ -70,58 +70,58 @@ public class EntityManageHelper {
     myContentRootManager = contentRootManager;
   }
 
-  public void importEntities(@NotNull Project project, @NotNull Collection<ExternalEntity> entities, boolean synchronous) {
-    final Set<ExternalModule> modules = ContainerUtilRt.newHashSet();
-    final Map<ExternalModule, Collection<ExternalContentRoot>> contentRoots = ContainerUtilRt.newHashMap();
-    final Set<ExternalLibrary> libraries = ContainerUtilRt.newHashSet();
-    final Set<Jar> jars = ContainerUtilRt.newHashSet();
-    final Map<ExternalModule, Collection<ExternalDependency>> dependencies = ContainerUtilRt.newHashMap();
+  public void importEntities(@NotNull Project project, @NotNull Collection<ProjectEntityData> entities, boolean synchronous) {
+    final Set<ModuleData> modules = ContainerUtilRt.newHashSet();
+    final Map<ModuleData, Collection<ContentRootData>> contentRoots = ContainerUtilRt.newHashMap();
+    final Set<LibraryData> libraries = ContainerUtilRt.newHashSet();
+    final Set<JarData> jars = ContainerUtilRt.newHashSet();
+    final Map<ModuleData, Collection<DependencyData>> dependencies = ContainerUtilRt.newHashMap();
     ExternalEntityVisitor visitor = new ExternalEntityVisitor() {
       @Override
-      public void visit(@NotNull ExternalProject project) { }
+      public void visit(@NotNull ProjectData project) { }
 
       @Override
-      public void visit(@NotNull ExternalModule module) { modules.add(module); }
+      public void visit(@NotNull ModuleData module) { modules.add(module); }
 
       @Override
-      public void visit(@NotNull ExternalLibrary library) { libraries.add(library); }
+      public void visit(@NotNull LibraryData library) { libraries.add(library); }
 
       @Override
-      public void visit(@NotNull Jar jar) { jars.add(jar); }
+      public void visit(@NotNull JarData jar) { jars.add(jar); }
 
       @Override
-      public void visit(@NotNull ExternalModuleDependency dependency) { addDependency(dependency); }
+      public void visit(@NotNull ModuleDependencyData dependency) { addDependency(dependency); }
 
       @Override
-      public void visit(@NotNull ExternalLibraryDependency dependency) { addDependency(dependency); }
+      public void visit(@NotNull LibraryDependencyData dependency) { addDependency(dependency); }
 
       @Override
-      public void visit(@NotNull ExternalCompositeLibraryDependency dependency) { }
+      public void visit(@NotNull CompositeLibraryDependencyData dependency) { }
 
       @Override
-      public void visit(@NotNull ExternalContentRoot contentRoot) {
-        Collection<ExternalContentRoot> roots = contentRoots.get(contentRoot.getOwnerModule());
+      public void visit(@NotNull ContentRootData contentRoot) {
+        Collection<ContentRootData> roots = contentRoots.get(contentRoot.getOwnerModule());
         if (roots == null) {
-          contentRoots.put(contentRoot.getOwnerModule(), roots = ContainerUtilRt.<ExternalContentRoot>newHashSet());
+          contentRoots.put(contentRoot.getOwnerModule(), roots = ContainerUtilRt.<ContentRootData>newHashSet());
         }
         roots.add(contentRoot);
       }
 
-      private void addDependency(@NotNull ExternalDependency dependency) {
-        Collection<ExternalDependency> d = dependencies.get(dependency.getOwnerModule());
+      private void addDependency(@NotNull DependencyData dependency) {
+        Collection<DependencyData> d = dependencies.get(dependency.getOwnerModule());
         if (d == null) {
-          dependencies.put(dependency.getOwnerModule(), d = ContainerUtilRt.<ExternalDependency>newHashSet());
+          dependencies.put(dependency.getOwnerModule(), d = ContainerUtilRt.<DependencyData>newHashSet());
         }
         d.add(dependency);
       }
     };
     
     // Sort entities.
-    for (ExternalEntity entity : entities) {
+    for (ProjectEntityData entity : entities) {
       entity.invite(visitor);
     }
     myModuleManager.importModules(modules, project, false, synchronous);
-    for (Map.Entry<ExternalModule, Collection<ExternalContentRoot>> entry : contentRoots.entrySet()) {
+    for (Map.Entry<ModuleData, Collection<ContentRootData>> entry : contentRoots.entrySet()) {
       Module module = myProjectStructureHelper.findIdeModule(entry.getKey(), project);
       if (module != null) {
         myContentRootManager.importContentRoots(entry.getValue(), module, synchronous);
@@ -129,7 +129,7 @@ public class EntityManageHelper {
     }
     myLibraryManager.importLibraries(libraries, project, synchronous);
     myJarManager.importJars(jars, project, synchronous);
-    for (Map.Entry<ExternalModule, Collection<ExternalDependency>> entry : dependencies.entrySet()) {
+    for (Map.Entry<ModuleData, Collection<DependencyData>> entry : dependencies.entrySet()) {
       Module module = myProjectStructureHelper.findIdeModule(entry.getKey(), project);
       if (module != null) {
         myDependencyManager.importDependencies(entry.getValue(), module, synchronous);
@@ -141,7 +141,7 @@ public class EntityManageHelper {
     final List<Module> modules = ContainerUtilRt.newArrayList();
     final List<ModuleAwareContentRoot> contentRoots = ContainerUtilRt.newArrayList();
     final List<ExportableOrderEntry> dependencies = ContainerUtilRt.newArrayList();
-    final List<Jar> jars = ContainerUtilRt.newArrayList();
+    final List<JarData> jars = ContainerUtilRt.newArrayList();
     IdeEntityVisitor ideVisitor = new IdeEntityVisitor() {
       @Override public void visit(@NotNull Project project) { }
       @Override public void visit(@NotNull Module module) { modules.add(module); }
@@ -152,7 +152,7 @@ public class EntityManageHelper {
     };
     ExternalEntityVisitor gradleVisitor = new ExternalEntityVisitorAdapter() {
       @Override
-      public void visit(@NotNull Jar jar) {
+      public void visit(@NotNull JarData jar) {
         jars.add(jar);
       }
     };
@@ -217,7 +217,7 @@ public class EntityManageHelper {
       }
     }
     else {
-      ExternalModule module = context.projectStructureHelper.findExternalModule(id.getModuleName(), id.getOwner(), context.project);
+      ModuleData module = context.projectStructureHelper.findExternalModule(id.getModuleName(), id.getOwner(), context.project);
       if (module != null && !context.changesToPreserve.contains(new RemoveModuleUserChange(id.getModuleName()))) {
         context.entitiesToImport.add(module);
         return;
@@ -241,7 +241,7 @@ public class EntityManageHelper {
       }
     }
     else {
-      ExternalContentRoot root = context.projectStructureHelper.findExternalContentRoot(id, id.getOwner(), context.project);
+      ContentRootData root = context.projectStructureHelper.findExternalContentRoot(id, id.getOwner(), context.project);
       if (root != null) {
         context.entitiesToImport.add(root);
         return;
@@ -267,7 +267,7 @@ public class EntityManageHelper {
     }
     else {
       ProjectSystemId owner = id.getOwner();
-      ExternalLibraryDependency dependency = context.projectStructureHelper.findExternalLibraryDependency(id, owner, context.project);
+      LibraryDependencyData dependency = context.projectStructureHelper.findExternalLibraryDependency(id, owner, context.project);
       RemoveLibraryDependencyUserChange c = new RemoveLibraryDependencyUserChange(id.getOwnerModuleName(), id.getDependencyName());
       if (dependency != null && !context.changesToPreserve.contains(c)) {
         context.entitiesToImport.add(dependency);
@@ -283,16 +283,16 @@ public class EntityManageHelper {
       // IDE-local change.
       id = change.getIdeEntity();
       assert id != null;
-      Jar jar = context.projectStructureHelper.findIdeJar(id, context.project);
+      JarData jar = context.projectStructureHelper.findIdeJar(id, context.project);
       if (jar != null) {
         context.entitiesToRemove.add(jar);
         return;
       }
     }
     else {
-      ExternalLibrary library = context.projectStructureHelper.findExternalLibrary(id.getLibraryId(), id.getOwner(), context.project);
+      LibraryData library = context.projectStructureHelper.findExternalLibrary(id.getLibraryId(), id.getOwner(), context.project);
       if (library != null) {
-        context.entitiesToImport.add(new Jar(id.getPath(), id.getLibraryPathType(), null, library, id.getOwner()));
+        context.entitiesToImport.add(new JarData(id.getPath(), id.getLibraryPathType(), null, library, id.getOwner()));
         return;
       }
     }
@@ -315,7 +315,7 @@ public class EntityManageHelper {
       }
     }
     else {
-      ExternalModuleDependency dependency = context.projectStructureHelper.findExternalModuleDependency(id, id.getOwner(), context.project);
+      ModuleDependencyData dependency = context.projectStructureHelper.findExternalModuleDependency(id, id.getOwner(), context.project);
       RemoveModuleDependencyUserChange c = new RemoveModuleDependencyUserChange(id.getOwnerModuleName(), id.getDependencyName());
       if (dependency != null && !context.changesToPreserve.contains(c)) {
         context.entitiesToImport.add(dependency);
@@ -389,7 +389,7 @@ public class EntityManageHelper {
   
   private static class EliminateChangesContext {
     @NotNull final Set<Object>                         entitiesToRemove    = ContainerUtilRt.newHashSet();
-    @NotNull final Set<ExternalEntity>                 entitiesToImport    = ContainerUtilRt.newHashSet();
+    @NotNull final Set<ProjectEntityData>              entitiesToImport    = ContainerUtilRt.newHashSet();
     @NotNull final Set<ExternalProjectStructureChange> nonProcessedChanges = ContainerUtilRt.newHashSet();
     @NotNull final Set<UserProjectChange<?>>           changesToPreserve   = ContainerUtilRt.newHashSet();
 

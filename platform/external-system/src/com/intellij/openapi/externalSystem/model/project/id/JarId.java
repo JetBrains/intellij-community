@@ -1,8 +1,8 @@
 package com.intellij.openapi.externalSystem.model.project.id;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.Jar;
-import com.intellij.openapi.externalSystem.model.project.ExternalLibrary;
+import com.intellij.openapi.externalSystem.model.project.JarData;
+import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.ProjectEntityType;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureServices;
@@ -47,18 +47,18 @@ public class JarId extends AbstractExternalEntityId {
 
   @Nullable
   @Override
-  public Jar mapToEntity(@NotNull ProjectStructureServices services, @NotNull Project ideProject) {
+  public JarData mapToEntity(@NotNull ProjectStructureServices services, @NotNull Project ideProject) {
     ProjectStructureHelper helper = services.getProjectStructureHelper();
     String libraryName = myLibraryId.getLibraryName();
     OrderRootType jarType = services.getLibraryPathTypeMapper().map(myPathType);
     Library ideLibrary = helper.findIdeLibrary(libraryName, jarType, myPath, ideProject);
     if (ideLibrary != null) {
-      return new Jar(myPath, myPathType, ideLibrary, null, ProjectSystemId.IDE);
+      return new JarData(myPath, myPathType, ideLibrary, null, ProjectSystemId.IDE);
     }
 
-    ExternalLibrary gradleLibrary = helper.findExternalLibrary(libraryName, myPathType, myPath, getOwner(), ideProject);
+    LibraryData gradleLibrary = helper.findExternalLibrary(libraryName, myPathType, myPath, getOwner(), ideProject);
     if (gradleLibrary != null) {
-      return new Jar(myPath, myPathType, null, gradleLibrary, getOwner());
+      return new JarData(myPath, myPathType, null, gradleLibrary, getOwner());
     }
     return null;
   }

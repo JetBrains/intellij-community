@@ -2,9 +2,9 @@ package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
 import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.externalSystem.model.project.ExternalProject;
-import com.intellij.openapi.externalSystem.model.project.ExternalContentRoot;
-import com.intellij.openapi.externalSystem.model.project.ExternalModule;
+import com.intellij.openapi.externalSystem.model.project.ContentRootData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -29,7 +29,7 @@ import java.util.*;
 import java.util.List;
 
 /**
- * Manages settings of {@link ExternalProject gradle project} component.
+ * Manages settings of {@link ProjectData gradle project} component.
  * 
  * @author Denis Zhdanov
  * @since 8/12/11 2:58 PM
@@ -39,7 +39,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
   private static final String KEEP_IML_AT_MODULE_DIR_PROPERTY_KEY = "gradle.iml.at.module.dir";
 
   @NotNull private final JComponent                myComponent;
-  @NotNull private final ExternalProject           myProject;
+  @NotNull private final ProjectData               myProject;
   @NotNull private final JComboBox                 myLanguageLevelComboBox;
   @NotNull private final DefaultComboBoxModel      mySdkModel;
   @NotNull private final TextFieldWithBrowseButton myProjectConfigLocationField;
@@ -47,7 +47,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
   @NotNull private final JRadioButton              myImlAtModuleContentRootsButton;
   @NotNull private final JRadioButton              myImlAtProjectDirButton;
 
-  public GradleProjectSettings(@NotNull ExternalProject project) {
+  public GradleProjectSettings(@NotNull ProjectData project) {
     myProject = project;
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
     myLanguageLevelComboBox = setupLanguageLevelControls(builder);
@@ -166,8 +166,8 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
         if (e.getStateChange() != ItemEvent.SELECTED) {
           return;
         }
-        for (ExternalModule module : myProject.getModules()) {
-          Collection<ExternalContentRoot> contentRoots = module.getContentRoots();
+        for (ModuleData module : myProject.getModules()) {
+          Collection<ContentRootData> contentRoots = module.getContentRoots();
           if (contentRoots.isEmpty()) {
             continue;
           }
@@ -190,7 +190,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
         if (!goodDir) {
           return;
         }
-        for (ExternalModule module : myProject.getModules()) {
+        for (ModuleData module : myProject.getModules()) {
           module.setModuleFileDirectoryPath(dirPath);
         }
         PropertiesComponent.getInstance().setValue(KEEP_IML_AT_MODULE_DIR_PROPERTY_KEY, String.valueOf(false));

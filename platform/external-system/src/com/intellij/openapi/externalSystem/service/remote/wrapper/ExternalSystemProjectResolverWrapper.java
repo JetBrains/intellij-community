@@ -1,7 +1,8 @@
 package com.intellij.openapi.externalSystem.service.remote.wrapper;
 
+import com.intellij.openapi.externalSystem.model.DataHolder;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.openapi.externalSystem.model.project.ExternalProject;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
@@ -37,10 +38,10 @@ public class ExternalSystemProjectResolverWrapper<S extends ExternalSystemExecut
 
   @Nullable
   @Override
-  public ExternalProject resolveProjectInfo(@NotNull ExternalSystemTaskId id,
-                                            @NotNull String projectPath,
-                                            boolean downloadLibraries,
-                                            @Nullable S settings)
+  public DataHolder<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
+                                                    @NotNull String projectPath,
+                                                    boolean downloadLibraries,
+                                                    @Nullable S settings)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException, RemoteException
   {
     myProgressManager.onQueued(id);

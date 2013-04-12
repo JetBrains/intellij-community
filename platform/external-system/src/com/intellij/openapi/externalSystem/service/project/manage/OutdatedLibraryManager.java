@@ -16,9 +16,10 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.ExternalLibrary;
-import com.intellij.openapi.externalSystem.model.project.ExternalLibraryDependency;
-import com.intellij.openapi.externalSystem.model.project.ExternalModule;
+import com.intellij.openapi.externalSystem.model.project.CompositeLibraryDependencyData;
+import com.intellij.openapi.externalSystem.model.project.LibraryData;
+import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureServices;
 import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
 import com.intellij.openapi.module.Module;
@@ -31,7 +32,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
-import com.intellij.openapi.externalSystem.model.project.ExternalCompositeLibraryDependency;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 
 import java.util.Collection;
@@ -44,12 +44,12 @@ import java.util.Map;
  */
 public class OutdatedLibraryManager {
 
-  @NotNull private final ExternalLibraryManager    myLibraryManager;
+  @NotNull private final LibraryDataManager        myLibraryManager;
   @NotNull private final ExternalDependencyManager myDependencyManager;
   @NotNull private final ProjectStructureServices  myContext;
   @NotNull private final Project                   myProject;
 
-  public OutdatedLibraryManager(@NotNull ExternalLibraryManager libraryManager,
+  public OutdatedLibraryManager(@NotNull LibraryDataManager libraryManager,
                                 @NotNull ExternalDependencyManager dependencyManager,
                                 @NotNull ProjectStructureServices context,
                                 @NotNull Project project)
@@ -64,9 +64,9 @@ public class OutdatedLibraryManager {
                    @NotNull ProjectSystemId externalSystemId,
                    @NotNull Collection<ProjectStructureNode<?>> nodes)
   {
-    List<Pair<ExternalLibraryDependency, Module>> libraryDependenciesToImport = ContainerUtilRt.newArrayList();
+    List<Pair<LibraryDependencyData, Module>> libraryDependenciesToImport = ContainerUtilRt.newArrayList();
     Map<String /* ide library name */, Library> ideLibsToRemove = ContainerUtilRt.newHashMap();
-    Map<String /* ide library name */, ExternalLibrary> ide2gradleLibs = ContainerUtilRt.newHashMap();
+    Map<String /* ide library name */, LibraryData> ide2gradleLibs = ContainerUtilRt.newHashMap();
     Collection<LibraryOrderEntry> ideLibraryDependenciesToRemove = ContainerUtilRt.newArrayList();
     ProjectStructureHelper projectStructureHelper = myContext.getProjectStructureHelper();
     PlatformFacade facade = myContext.getPlatformFacade();
@@ -77,10 +77,10 @@ public class OutdatedLibraryManager {
     //region Parse information to use for further processing.
     for (ProjectStructureNode<?> node : nodes) {
       Object entity = node.getDescriptor().getElement().mapToEntity(myContext, project);
-      if (!(entity instanceof ExternalCompositeLibraryDependency)) {
+      if (!(entity instanceof CompositeLibraryDependencyData)) {
         continue;
       }
-      ExternalCompositeLibraryDependency e = (ExternalCompositeLibraryDependency)entity;
+      CompositeLibraryDependencyData e = (CompositeLibraryDependencyData)entity;
       String ideLibraryName = e.getIdeEntity().getLibraryName();
       Library ideLibraryToRemove = null;
       if (ideLibraryName != null) {
@@ -105,7 +105,7 @@ public class OutdatedLibraryManager {
       }
     };
     for (Module ideModule : facade.getModules(myProject)) {
-      ExternalModule gradleModule = projectStructureHelper.findExternalModule(ideModule.getName(), externalSystemId, project);
+      ModuleData gradleModule = projectStructureHelper.findExternalModule(ideModule.getName(), externalSystemId, project);
       if (gradleModule == null) {
         continue;
       }
@@ -123,7 +123,7 @@ public class OutdatedLibraryManager {
           continue;
         }
         ideLibraryDependenciesToRemove.add(ideLibraryDependency);
-        ExternalLibraryDependency gradleLibraryDependency = new ExternalLibraryDependency(gradleModule, ide2gradleLibs.get(libraryName));
+        LibraryDependencyData gradleLibraryDependency = new LibraryDependencyData(gradleModule, ide2gradleLibs.get(libraryName));
         gradleLibraryDependency.setExported(ideLibraryDependency.isExported());
         gradleLibraryDependency.setScope(ideLibraryDependency.getScope());
         libraryDependenciesToImport.add(Pair.create(gradleLibraryDependency, ideModule));
@@ -131,7 +131,7 @@ public class OutdatedLibraryManager {
     }
     myDependencyManager.removeDependencies(ideLibraryDependenciesToRemove, false);
     myLibraryManager.removeLibraries(ideLibsToRemove.values(), myProject);
-    for (Pair<ExternalLibraryDependency, Module> pair : libraryDependenciesToImport) {
+    for (Pair<LibraryDependencyData, Module> pair : libraryDependenciesToImport) {
       // Assuming that dependency manager is smart enough to import library for a given library dependency if it hasn't been
       // imported yet.
       myDependencyManager.importDependency(pair.first, pair.second, false);

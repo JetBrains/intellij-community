@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.model.project.ExternalProject;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolverImpl;
@@ -21,7 +21,7 @@ import java.util.concurrent.atomic.AtomicReference;
  */
 public class GradleResolveProjectTask extends AbstractGradleTask {
 
-  private final AtomicReference<ExternalProject> myGradleProject = new AtomicReference<ExternalProject>();
+  private final AtomicReference<ProjectData> myGradleProject = new AtomicReference<ProjectData>();
 
   @NotNull private final String  myProjectPath;
   private final          boolean myResolveLibraries;
@@ -42,7 +42,7 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
     if (ideProject != null && !ideProject.isDisposed()) {
       model = ServiceManager.getService(ideProject, ProjectStructureChangesModel.class);
     }
-    final ExternalProject project;
+    final ProjectData project;
     try {
       project = resolver.resolveProjectInfo(getId(), myProjectPath, myResolveLibraries);
     }
@@ -68,7 +68,7 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
   }
 
   @Nullable
-  public ExternalProject getGradleProject() {
+  public ProjectData getGradleProject() {
     return myGradleProject.get();
   }
 

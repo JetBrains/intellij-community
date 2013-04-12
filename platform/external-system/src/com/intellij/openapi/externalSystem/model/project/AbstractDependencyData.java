@@ -12,21 +12,21 @@ import java.io.ObjectInputStream;
  * @author Denis Zhdanov
  * @since 8/10/11 6:41 PM
  */
-public abstract class AbstractExternalDependency<T extends AbstractExternalEntity & Named> extends AbstractExternalEntity
-  implements ExternalDependency, Named
+public abstract class AbstractDependencyData<T extends AbstractProjectEntityData & Named> extends AbstractProjectEntityData
+  implements DependencyData, Named
 {
 
   private static final long serialVersionUID = 1L;
 
-  private final ExternalModule myOwnerModule;
-  private final T            myTarget;
-  
+  @NotNull private final ModuleData myOwnerModule;
+  @NotNull private final T          myTarget;
+
   private DependencyScope myScope = DependencyScope.COMPILE;
 
   private transient boolean mySkipNameChange;
   private           boolean myExported;
 
-  protected AbstractExternalDependency(@NotNull ExternalModule ownerModule, @NotNull T dependency) {
+  protected AbstractDependencyData(@NotNull ModuleData ownerModule, @NotNull T dependency) {
     super(ownerModule.getOwner());
     myOwnerModule = ownerModule;
     myTarget = dependency;
@@ -34,7 +34,7 @@ public abstract class AbstractExternalDependency<T extends AbstractExternalEntit
   }
 
   @NotNull
-  public ExternalModule getOwnerModule() {
+  public ModuleData getOwnerModule() {
     return myOwnerModule;
   }
 
@@ -42,7 +42,7 @@ public abstract class AbstractExternalDependency<T extends AbstractExternalEntit
   public T getTarget() {
     return myTarget;
   }
-  
+
   @Override
   @NotNull
   public DependencyScope getScope() {
@@ -118,28 +118,12 @@ public abstract class AbstractExternalDependency<T extends AbstractExternalEntit
     if (!super.equals(o)) {
       return false;
     }
-    AbstractExternalDependency<?> that = (AbstractExternalDependency<?>)o;
+    AbstractDependencyData<?> that = (AbstractDependencyData<?>)o;
     return myOwnerModule.equals(that.myOwnerModule) && myTarget.equals(that.myTarget);
   }
 
   @Override
   public String toString() {
     return "dependency=" + getTarget() + "|scope=" + getScope() + "|exported=" + isExported() + "|owner=" + getOwnerModule();
-  }
-  
-  @NotNull
-  @Override
-  public ExternalDependency clone() {
-    try {
-      return (ExternalDependency)super.clone();
-    }
-    catch (CloneNotSupportedException e) {
-      throw new RuntimeException(e);
-    }
-  }
-
-  protected void copyTo(@NotNull AbstractExternalDependency that) {
-    that.setExported(isExported());
-    that.setScope(getScope());
   }
 }

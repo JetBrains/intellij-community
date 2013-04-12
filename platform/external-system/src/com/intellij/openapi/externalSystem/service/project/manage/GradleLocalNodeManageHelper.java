@@ -73,7 +73,7 @@ public class GradleLocalNodeManageHelper {
    * @param nodes  'anchor nodes' to import
    */
   public void importNodes(@NotNull Project project, @NotNull Iterable<ProjectStructureNode<?>> nodes) {
-    final Collection<ExternalEntity> entities = deriveEntitiesToImport(project, nodes);
+    final Collection<ProjectEntityData> entities = deriveEntitiesToImport(project, nodes);
     myEntityManageHelper.importEntities(project, entities, true);
   }
 
@@ -85,7 +85,7 @@ public class GradleLocalNodeManageHelper {
    * @return collection of gradle entities that should be imported based on the given nodes
    */
   @NotNull
-  public Collection<ExternalEntity> deriveEntitiesToImport(@NotNull Project project, @NotNull Iterable<ProjectStructureNode<?>> nodes) {
+  public Collection<ProjectEntityData> deriveEntitiesToImport(@NotNull Project project, @NotNull Iterable<ProjectStructureNode<?>> nodes) {
     Context context = new Context(project);
     for (ProjectStructureNode<?> node : nodes) {
       collectEntitiesToImport(node, context);
@@ -105,27 +105,27 @@ public class GradleLocalNodeManageHelper {
       }
       Object id = descriptor.getElement();
       final Object entity = myIdMapper.mapIdToEntity((ProjectEntityId)id, context.project);
-      if (entity instanceof ExternalEntity) {
-        ((ExternalEntity)entity).invite(context.visitor);
+      if (entity instanceof ProjectEntityData) {
+        ((ProjectEntityData)entity).invite(context.visitor);
       }
     }
 
     // Collect down.
-    final Stack<ExternalEntity> toProcess = new Stack<ExternalEntity>();
+    final Stack<ProjectEntityData> toProcess = new Stack<ProjectEntityData>();
     final Object id = node.getDescriptor().getElement();
     final Object entity = myIdMapper.mapIdToEntity((ProjectEntityId)id, context.project);
-    if (entity instanceof ExternalEntity) {
-      toProcess.push((ExternalEntity)entity);
+    if (entity instanceof ProjectEntityData) {
+      toProcess.push((ProjectEntityData)entity);
     }
 
     context.recursive = true;
     while (!toProcess.isEmpty()) {
-      final ExternalEntity e = toProcess.pop();
+      final ProjectEntityData e = toProcess.pop();
       e.invite(context.visitor);
     }
   }
 
-  private void collectModuleEntities(@NotNull ExternalModule module, @NotNull Context context) {
+  private void collectModuleEntities(@NotNull ModuleData module, @NotNull Context context) {
     final Module intellijModule = myProjectStructureHelper.findIdeModule(module.getName(), context.project);
     if (intellijModule != null) {
       // Already imported
@@ -135,15 +135,15 @@ public class GradleLocalNodeManageHelper {
     if (!context.recursive) {
       return;
     }
-    for (ExternalContentRoot contentRoot : module.getContentRoots()) {
+    for (ContentRootData contentRoot : module.getContentRoots()) {
       contentRoot.invite(context.visitor);
     }
-    for (ExternalDependency dependency : module.getDependencies()) {
+    for (DependencyData dependency : module.getDependencies()) {
       dependency.invite(context.visitor);
     }
   }
 
-  private void collectContentRoots(@NotNull ExternalContentRoot contentRoot, @NotNull Context context) {
+  private void collectContentRoots(@NotNull ContentRootData contentRoot, @NotNull Context context) {
     final ContentRootId id = EntityIdMapper.mapEntityToId(contentRoot);
     final ModuleAwareContentRoot intellijContentRoot = myProjectStructureHelper.findIdeContentRoot(id, context.project);
     if (intellijContentRoot != null) {
@@ -153,14 +153,14 @@ public class GradleLocalNodeManageHelper {
     context.entities.add(contentRoot);
   }
   
-  private void collectModuleDependencyEntities(@NotNull ExternalModuleDependency dependency, @NotNull Context context) {
+  private void collectModuleDependencyEntities(@NotNull ModuleDependencyData dependency, @NotNull Context context) {
     final ModuleOrderEntry intellijModuleDependency = myProjectStructureHelper.findIdeModuleDependency(dependency, context.project);
     if (intellijModuleDependency != null) {
       // Already imported.
       return;
     }
     context.entities.add(dependency);
-    final ExternalModule gradleModule = dependency.getTarget();
+    final ModuleData gradleModule = dependency.getTarget();
     final Module intellijModule = myProjectStructureHelper.findIdeModule(gradleModule, context.project);
     if (intellijModule != null) {
       return;
@@ -175,11 +175,11 @@ public class GradleLocalNodeManageHelper {
     }
   }
 
-  private void collectLibraryDependencyEntities(@NotNull ExternalLibraryDependency dependency, @NotNull Context context) {
+  private void collectLibraryDependencyEntities(@NotNull LibraryDependencyData dependency, @NotNull Context context) {
     final LibraryOrderEntry intellijDependency
       = myProjectStructureHelper.findIdeLibraryDependency(dependency.getOwnerModule().getName(), dependency.getName(), context.project);
     Set<String> intellijPaths = ContainerUtilRt.newHashSet();
-    ExternalLibrary gradleLibrary = dependency.getTarget();
+    LibraryData gradleLibrary = dependency.getTarget();
     Library intellijLibrary = null;
     if (intellijDependency == null) {
       context.entities.add(dependency);
@@ -203,7 +203,7 @@ public class GradleLocalNodeManageHelper {
     
     for (String gradleJarPath : gradleLibrary.getPaths(LibraryPathType.BINARY)) {
       if (!intellijPaths.contains(gradleJarPath)) {
-        context.entities.add(new Jar(gradleJarPath, LibraryPathType.BINARY, null, gradleLibrary, dependency.getOwner()));
+        context.entities.add(new JarData(gradleJarPath, LibraryPathType.BINARY, null, gradleLibrary, dependency.getOwner()));
       }
     }
   }
@@ -225,11 +225,11 @@ public class GradleLocalNodeManageHelper {
   
   private class Context {
 
-    @NotNull public final Set<ExternalEntity> entities = ContainerUtilRt.newHashSet();
-    @NotNull public final CollectingVisitor visitor = new CollectingVisitor(this);
-    
+    @NotNull public final Set<ProjectEntityData> entities = ContainerUtilRt.newHashSet();
+    @NotNull public final CollectingVisitor      visitor  = new CollectingVisitor(this);
+
     @NotNull public final Project project;
-    
+
     public boolean recursive;
 
     Context(@NotNull Project project) {
@@ -244,13 +244,28 @@ public class GradleLocalNodeManageHelper {
       myContext = context;
     }
 
-    @Override public void visit(@NotNull ExternalProject project) { }
-    @Override public void visit(@NotNull ExternalModule module) { collectModuleEntities(module, myContext); }
-    @Override public void visit(@NotNull ExternalContentRoot contentRoot) { collectContentRoots(contentRoot, myContext); }
-    @Override public void visit(@NotNull ExternalLibrary library) { /* Assuming that a library may be imported only as a dependency */ }
-    @Override public void visit(@NotNull ExternalModuleDependency dependency) { collectModuleDependencyEntities(dependency, myContext); }
-    @Override public void visit(@NotNull ExternalLibraryDependency dependency) { collectLibraryDependencyEntities(dependency, myContext); }
-    @Override public void visit(@NotNull Jar jar) { myContext.entities.add(jar); }
-    @Override public void visit(@NotNull ExternalCompositeLibraryDependency dependency) { /* Do nothing */ }
+    @Override
+    public void visit(@NotNull ProjectData project) { }
+
+    @Override
+    public void visit(@NotNull ModuleData module) { collectModuleEntities(module, myContext); }
+
+    @Override
+    public void visit(@NotNull ContentRootData contentRoot) { collectContentRoots(contentRoot, myContext); }
+
+    @Override
+    public void visit(@NotNull LibraryData library) { /* Assuming that a library may be imported only as a dependency */ }
+
+    @Override
+    public void visit(@NotNull ModuleDependencyData dependency) { collectModuleDependencyEntities(dependency, myContext); }
+
+    @Override
+    public void visit(@NotNull LibraryDependencyData dependency) { collectLibraryDependencyEntities(dependency, myContext); }
+
+    @Override
+    public void visit(@NotNull JarData jar) { myContext.entities.add(jar); }
+
+    @Override
+    public void visit(@NotNull CompositeLibraryDependencyData dependency) { /* Do nothing */ }
   }
 }

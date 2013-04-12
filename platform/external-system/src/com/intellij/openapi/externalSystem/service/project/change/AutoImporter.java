@@ -19,9 +19,9 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
 import com.intellij.openapi.externalSystem.model.project.change.user.UserProjectChange;
 import com.intellij.openapi.externalSystem.service.project.manage.EntityManageHelper;
-import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
+import com.intellij.openapi.externalSystem.settings.UserProjectChanges;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
@@ -85,11 +85,10 @@ public class AutoImporter implements ExternalProjectStructureChangesPostProcesso
       return;
     }
 
-    AbstractExternalSystemLocalSettings localSettings = mySettingsManager.getLocalSettings(project, externalSystemId);
     Set<ExternalProjectStructureChange> nonProcessed;
     myInProgress.set(true);
     try {
-      Set<UserProjectChange<?>> userChanges = localSettings.getUserProjectChanges();
+      Set<UserProjectChange<?>> userChanges = UserProjectChanges.getInstance(project).getUserProjectChanges();
       nonProcessed = myEntityManageHelper.eliminateChange(project, changes, userChanges, true);
     }
     finally {

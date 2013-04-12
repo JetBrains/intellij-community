@@ -1,7 +1,7 @@
 package org.jetbrains.plugins.gradle.diff.project;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalProject;
-import com.intellij.openapi.externalSystem.model.project.ExternalModule;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChangesCalculator;
 import com.intellij.openapi.externalSystem.model.project.change.LanguageLevelChange;
@@ -30,7 +30,7 @@ import java.util.Set;
  * @since 11/3/11 3:55 PM
  */
 public class GradleProjectStructureChangesCalculator implements
-                                                     ExternalProjectStructureChangesCalculator<ExternalProject, Project>
+                                                     ExternalProjectStructureChangesCalculator<ProjectData, Project>
 {
 
   @NotNull private final GradleModuleStructureChangesCalculator myModuleChangesCalculator;
@@ -47,13 +47,13 @@ public class GradleProjectStructureChangesCalculator implements
   }
 
   @Override
-  public void calculate(@NotNull ExternalProject gradleEntity,
+  public void calculate(@NotNull ProjectData gradleEntity,
                         @NotNull Project ideEntity,
                         @NotNull ExternalProjectChangesCalculationContext context)
   {
     calculateProjectChanges(gradleEntity, ideEntity, context.getCurrentChanges());
 
-    final Set<? extends ExternalModule> gradleSubEntities = gradleEntity.getModules();
+    final Set<? extends ModuleData> gradleSubEntities = gradleEntity.getModules();
     final Collection<Module> intellijSubEntities = myPlatformFacade.getModules(ideEntity);
     GradleDiffUtil.calculate(myModuleChangesCalculator, gradleSubEntities, intellijSubEntities, context);
     
@@ -69,11 +69,11 @@ public class GradleProjectStructureChangesCalculator implements
 
   @NotNull
   @Override
-  public Object getGradleKey(@NotNull ExternalProject entity, @NotNull ExternalProjectChangesCalculationContext context) {
+  public Object getGradleKey(@NotNull ProjectData entity, @NotNull ExternalProjectChangesCalculationContext context) {
     return entity.getName();
   }
 
-  private void calculateProjectChanges(@NotNull ExternalProject gradleProject,
+  private void calculateProjectChanges(@NotNull ProjectData gradleProject,
                                        @NotNull Project intellijProject,
                                        @NotNull Set<ExternalProjectStructureChange> currentChanges)
   {
@@ -81,7 +81,7 @@ public class GradleProjectStructureChangesCalculator implements
     checkLanguageLevel(gradleProject, intellijProject, currentChanges);
   }
 
-  private static void checkName(@NotNull ExternalProject gradleProject,
+  private static void checkName(@NotNull ProjectData gradleProject,
                                 @NotNull Project intellijProject,
                                 @NotNull Set<ExternalProjectStructureChange> currentChanges)
   {
@@ -92,7 +92,7 @@ public class GradleProjectStructureChangesCalculator implements
     }
   }
 
-  private void checkLanguageLevel(@NotNull ExternalProject gradleProject,
+  private void checkLanguageLevel(@NotNull ProjectData gradleProject,
                                   @NotNull Project intellijProject,
                                   @NotNull Set<ExternalProjectStructureChange> currentChanges)
   {

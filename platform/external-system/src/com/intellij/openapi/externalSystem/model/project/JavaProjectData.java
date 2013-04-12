@@ -1,7 +1,25 @@
+/*
+ * Copyright 2000-2013 JetBrains s.r.o.
+ *
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
+ *
+ * http://www.apache.org/licenses/LICENSE-2.0
+ *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
+ */
 package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.model.DataHolder;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
+import com.intellij.openapi.externalSystem.model.project.id.ProjectId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -9,20 +27,16 @@ import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.HashSet;
-import java.util.Set;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
- * Not thread-safe.
- * 
  * @author Denis Zhdanov
- * @since 8/1/11 1:30 PM
+ * @since 4/12/13 12:27 PM
  */
-public class ExternalProject extends AbstractNamedExternalEntity {
+public class JavaProjectData extends AbstractProjectEntityData {
 
-  private static final Logger LOG = Logger.getInstance("#" + ExternalProject.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + JavaProjectData.class.getName());
 
   private static final long serialVersionUID = 1L;
 
@@ -30,50 +44,21 @@ public class ExternalProject extends AbstractNamedExternalEntity {
   private static final JavaSdkVersion DEFAULT_JDK_VERSION    = JavaSdkVersion.JDK_1_6;
   private static final Pattern        JDK_VERSION_PATTERN    = Pattern.compile(".*1\\.(\\d+).*");
 
-  private final Set<ExternalModule>  myModules   = new HashSet<ExternalModule>();
-  private final Set<ExternalLibrary> myLibraries = new HashSet<ExternalLibrary>();
-  
-  private String myProjectFileDirectoryPath;
-  private JavaSdkVersion myJdkVersion    = DEFAULT_JDK_VERSION;
-  private LanguageLevel  myLanguageLevel = DEFAULT_LANGUAGE_LEVEL;
+  @NotNull private JavaSdkVersion myJdkVersion    = DEFAULT_JDK_VERSION;
+  @NotNull private LanguageLevel  myLanguageLevel = DEFAULT_LANGUAGE_LEVEL;
 
-  private Sdk    mySdk;
-  private String myCompileOutputPath;
+  @Nullable private Sdk    mySdk;
+  @NotNull private  String myCompileOutputPath;
 
-  public ExternalProject(@NotNull ProjectSystemId owner,
-                         @NotNull String projectFileDirectoryPath,
-                         @NotNull String compileOutputPath)
-  {
-    super(owner, "unnamed");
-    myProjectFileDirectoryPath = ExternalSystemUtil.toCanonicalPath(projectFileDirectoryPath);
-    myCompileOutputPath = ExternalSystemUtil.toCanonicalPath(compileOutputPath);
+  public JavaProjectData(@NotNull ProjectSystemId owner, @NotNull String compileOutputPath) {
+    super(owner);
+    myCompileOutputPath = compileOutputPath;
   }
 
   @NotNull
-  public String getProjectFileDirectoryPath() {
-    return myProjectFileDirectoryPath;
-  }
-
-  public void setProjectFileDirectoryPath(@NotNull String projectFileDirectoryPath) {
-    myProjectFileDirectoryPath = ExternalSystemUtil.toCanonicalPath(projectFileDirectoryPath);
-  }
-
-  public void addModule(@NotNull ExternalModule module) {
-    myModules.add(module);
-  }
-  
-  @NotNull
-  public Set<? extends ExternalModule> getModules() {
-    return myModules;
-  }
-
-  @NotNull
-  public Set<? extends ExternalLibrary> getLibraries() {
-    return myLibraries;
-  }
-
-  public boolean addLibrary(@NotNull ExternalLibrary library) {
-    return myLibraries.add(library);
+  @Override
+  public ProjectEntityId getId(@Nullable DataHolder<?> dataHolder) {
+    return new ProjectId(getOwner());
   }
 
   @NotNull
@@ -143,6 +128,7 @@ public class ExternalProject extends AbstractNamedExternalEntity {
     return mySdk;
   }
 
+  @SuppressWarnings("NullableProblems")
   public void setSdk(@NotNull Sdk sdk) {
     mySdk = sdk;
   }
@@ -164,52 +150,28 @@ public class ExternalProject extends AbstractNamedExternalEntity {
   }
 
   @Override
-  public void invite(@NotNull ExternalEntityVisitor visitor) {
-    visitor.visit(this);
-  }
-
-  @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + myModules.hashCode();
-    result = 31 * result + myCompileOutputPath.hashCode();
     result = 31 * result + myJdkVersion.hashCode();
     result = 31 * result + myLanguageLevel.hashCode();
+    result = 31 * result + (mySdk != null ? mySdk.hashCode() : 0);
+    result = 31 * result + myCompileOutputPath.hashCode();
     return result;
   }
 
   @Override
   public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
     if (!super.equals(o)) return false;
-    ExternalProject that = (ExternalProject)o;
 
-    if (!myCompileOutputPath.equals(that.myCompileOutputPath)) return false;
-    if (!myJdkVersion.equals(that.myJdkVersion)) return false;
-    if (myLanguageLevel != that.myLanguageLevel) return false;
-    if (!myModules.equals(that.myModules)) return false;
+    JavaProjectData project = (JavaProjectData)o;
+
+    if (!myCompileOutputPath.equals(project.myCompileOutputPath)) return false;
+    if (myJdkVersion != project.myJdkVersion) return false;
+    if (myLanguageLevel != project.myLanguageLevel) return false;
+    if (mySdk != null ? !mySdk.equals(project.mySdk) : project.mySdk != null) return false;
 
     return true;
-  }
-
-  @Override
-  public String toString() {
-    return String.format("%s project '%s':jdk='%s'|language level='%s'|modules=%s",
-                         getOwner().toString().toLowerCase(), getName(), getJdkVersion(), getLanguageLevel(), getModules());
-  }
-
-  @NotNull
-  @Override
-  public ExternalProject clone(@NotNull ExternalEntityCloneContext context) {
-    ExternalProject result = new ExternalProject(getOwner(), getProjectFileDirectoryPath(), getCompileOutputPath());
-    result.setName(getName());
-    result.setJdkVersion(getJdkVersion());
-    result.setLanguageLevel(getLanguageLevel());
-    for (ExternalModule module : getModules()) {
-      result.addModule(module.clone(context));
-    }
-    for (ExternalLibrary library : getLibraries()) {
-      result.addLibrary(library.clone(context));
-    }
-    return result;
   }
 }

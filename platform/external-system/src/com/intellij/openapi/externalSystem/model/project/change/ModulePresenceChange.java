@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.model.project.change;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalModule;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.id.EntityIdMapper;
 import com.intellij.openapi.externalSystem.model.project.id.ModuleId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ModulePresenceChange extends AbstractProjectEntityPresenceChange<ModuleId> {
 
-  public ModulePresenceChange(@Nullable ExternalModule externalModule, @Nullable Module ideModule)
+  public ModulePresenceChange(@Nullable ModuleData externalModule, @Nullable Module ideModule)
     throws IllegalArgumentException
   {
     super(ExternalSystemBundle.message("entity.type.module"), of(externalModule), of(ideModule));

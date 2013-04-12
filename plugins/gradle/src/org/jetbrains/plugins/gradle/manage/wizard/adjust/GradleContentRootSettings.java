@@ -1,10 +1,10 @@
 package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
 import com.intellij.ide.util.projectWizard.NamePathComponent;
-import com.intellij.openapi.externalSystem.model.project.ExternalContentRoot;
+import com.intellij.openapi.externalSystem.model.project.ContentRootData;
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.externalSystem.model.project.SourceType;
 
 import javax.swing.*;
 import java.util.Collection;
@@ -17,19 +17,23 @@ import java.util.Map;
  */
 public class GradleContentRootSettings implements GradleProjectStructureNodeSettings {
 
-  private static final Map<SourceType, String> ROOT_TYPE_TITLES = new EnumMap<SourceType, String>(SourceType.class);
+  private static final Map<ExternalSystemSourceType, String> ROOT_TYPE_TITLES =
+    new EnumMap<ExternalSystemSourceType, String>(ExternalSystemSourceType.class);
+
   static {
-    ROOT_TYPE_TITLES.put(SourceType.SOURCE, ExternalSystemBundle.message("gradle.import.structure.settings.label.root.source"));
-    ROOT_TYPE_TITLES.put(SourceType.TEST, ExternalSystemBundle.message("gradle.import.structure.settings.label.root.test"));
-    ROOT_TYPE_TITLES.put(SourceType.EXCLUDED, ExternalSystemBundle.message("gradle.import.structure.settings.label.root.excluded"));
-    assert ROOT_TYPE_TITLES.size() == SourceType.values().length;
+    ROOT_TYPE_TITLES
+      .put(ExternalSystemSourceType.SOURCE, ExternalSystemBundle.message("gradle.import.structure.settings.label.root.source"));
+    ROOT_TYPE_TITLES.put(ExternalSystemSourceType.TEST, ExternalSystemBundle.message("gradle.import.structure.settings.label.root.test"));
+    ROOT_TYPE_TITLES
+      .put(ExternalSystemSourceType.EXCLUDED, ExternalSystemBundle.message("gradle.import.structure.settings.label.root.excluded"));
+    assert ROOT_TYPE_TITLES.size() == ExternalSystemSourceType.values().length;
   }
 
   @NotNull private final JComponent myComponent;
 
-  public GradleContentRootSettings(@NotNull ExternalContentRoot contentRoot) {
+  public GradleContentRootSettings(@NotNull ContentRootData contentRoot) {
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
-    for (SourceType sourceType : SourceType.values()) {
+    for (ExternalSystemSourceType sourceType : ExternalSystemSourceType.values()) {
       Collection<String> paths = contentRoot.getPaths(sourceType);
       if (paths.isEmpty()) {
         continue;

@@ -16,7 +16,7 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.model.project.Jar;
+import com.intellij.openapi.externalSystem.model.project.JarData;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
@@ -53,13 +53,13 @@ public class ExternalJarManager {
     myLibraryPathTypeMapper = mapper;
   }
 
-  public void importJars(@NotNull final Collection<? extends Jar> jars, @NotNull final Project project, boolean synchronous) {
+  public void importJars(@NotNull final Collection<? extends JarData> jars, @NotNull final Project project, boolean synchronous) {
     if (jars.isEmpty()) {
       return;
     }
-    final Map<LibraryId, List<Jar>> jarsByLibraries = ContainerUtilRt.newHashMap();
-    for (Jar jar : jars) {
-      List<Jar> list = jarsByLibraries.get(jar.getLibraryId());
+    final Map<LibraryId, List<JarData>> jarsByLibraries = ContainerUtilRt.newHashMap();
+    for (JarData jar : jars) {
+      List<JarData> list = jarsByLibraries.get(jar.getLibraryId());
       if (list == null) {
         jarsByLibraries.put(jar.getLibraryId(), list = ContainerUtilRt.newArrayList());
       }
@@ -68,7 +68,7 @@ public class ExternalJarManager {
     ExternalSystemUtil.executeProjectChangeAction(project, jars, synchronous, new Runnable() {
       @Override
       public void run() {
-        for (Map.Entry<LibraryId, List<Jar>> entry : jarsByLibraries.entrySet()) {
+        for (Map.Entry<LibraryId, List<JarData>> entry : jarsByLibraries.entrySet()) {
           LibraryTable table = myPlatformFacade.getProjectLibraryTable(project);
           Library library = table.getLibraryByName(entry.getKey().getLibraryName());
           if (library == null) {
@@ -77,7 +77,7 @@ public class ExternalJarManager {
           Library.ModifiableModel model = library.getModifiableModel();
           try {
             LocalFileSystem fileSystem = LocalFileSystem.getInstance();
-            for (Jar jar : entry.getValue()) {
+            for (JarData jar : entry.getValue()) {
               OrderRootType ideJarType = myLibraryPathTypeMapper.map(jar.getPathType());
               for (VirtualFile file : model.getFiles(ideJarType)) {
                 if (jar.getPath().equals(ExternalSystemUtil.getLocalFileSystemPath(file))) {
@@ -116,13 +116,13 @@ public class ExternalJarManager {
     });
   }
 
-  public void removeJars(@NotNull Collection<? extends Jar> jars, @NotNull Project project, boolean synchronous) {
+  public void removeJars(@NotNull Collection<? extends JarData> jars, @NotNull Project project, boolean synchronous) {
     if (jars.isEmpty()) {
       return;
     }
-    Map<LibraryId, List<Jar>> jarsByLibraries = ContainerUtilRt.newHashMap();
-    for (Jar jar : jars) {
-      List<Jar> list = jarsByLibraries.get(jar.getLibraryId());
+    Map<LibraryId, List<JarData>> jarsByLibraries = ContainerUtilRt.newHashMap();
+    for (JarData jar : jars) {
+      List<JarData> list = jarsByLibraries.get(jar.getLibraryId());
       if (list == null) {
         jarsByLibraries.put(jar.getLibraryId(), list = ContainerUtilRt.newArrayList());
       }
@@ -130,13 +130,13 @@ public class ExternalJarManager {
     }
 
     LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(project);
-    for (Map.Entry<LibraryId, List<Jar>> entry : jarsByLibraries.entrySet()) {
+    for (Map.Entry<LibraryId, List<JarData>> entry : jarsByLibraries.entrySet()) {
       Library library = libraryTable.getLibraryByName(entry.getKey().getLibraryName());
       if (library == null) {
         continue;
       }
-      Set<Jar> libraryJars = ContainerUtilRt.newHashSet(entry.getValue());
-      for (Jar jar : entry.getValue()) {
+      Set<JarData> libraryJars = ContainerUtilRt.newHashSet(entry.getValue());
+      for (JarData jar : entry.getValue()) {
         boolean valid = false;
         for (VirtualFile file : library.getFiles(myLibraryPathTypeMapper.map(jar.getPathType()))) {
           if (jar.getPath().equals(ExternalSystemUtil.getLocalFileSystemPath(file))) {
@@ -161,7 +161,7 @@ public class ExternalJarManager {
    * @param jars     jars to remove
    * @param project  current project
    */
-  private void removeLibraryJars(@NotNull final Set<Jar> jars, @NotNull final Project project, boolean synchronous) {
+  private void removeLibraryJars(@NotNull final Set<JarData> jars, @NotNull final Project project, boolean synchronous) {
     ExternalSystemUtil.executeProjectChangeAction(project, jars, synchronous, new Runnable() {
       @Override
       public void run() {
@@ -171,9 +171,9 @@ public class ExternalJarManager {
         if (library == null) {
           return;
         }
-        Set<String> pathsToRemove = ContainerUtil.map2Set(jars, new Function<Jar, String>() {
+        Set<String> pathsToRemove = ContainerUtil.map2Set(jars, new Function<JarData, String>() {
           @Override
-          public String fun(Jar jar) {
+          public String fun(JarData jar) {
             return jar.getPath();
           }
         });

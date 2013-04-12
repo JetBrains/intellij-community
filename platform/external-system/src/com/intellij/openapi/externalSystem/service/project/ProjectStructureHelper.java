@@ -75,7 +75,7 @@ public class ProjectStructureHelper {
   }
   
   @Nullable
-  public Module findIdeModule(@NotNull ExternalModule module, @NotNull Project ideProject) {
+  public Module findIdeModule(@NotNull ModuleData module, @NotNull Project ideProject) {
     return findIdeModule(module.getName(), ideProject);
   }
 
@@ -100,12 +100,12 @@ public class ProjectStructureHelper {
   }
   
   @Nullable
-  public ExternalModule findExternalModule(@NotNull String name, @NotNull ProjectSystemId externalSystemId, @NotNull Project ideProject) {
-    final ExternalProject project = myChangesModel.getExternalProject(externalSystemId, ideProject);
+  public ModuleData findExternalModule(@NotNull String name, @NotNull ProjectSystemId externalSystemId, @NotNull Project ideProject) {
+    final ProjectData project = myChangesModel.getExternalProject(externalSystemId, ideProject);
     if (project == null) {
       return null;
     }
-    for (ExternalModule module : project.getModules()) {
+    for (ModuleData module : project.getModules()) {
       if (name.equals(module.getName())) {
         return module;
       }
@@ -114,15 +114,15 @@ public class ProjectStructureHelper {
   }
 
   @Nullable
-  public ExternalContentRoot findExternalContentRoot(@NotNull ContentRootId id,
+  public ContentRootData findExternalContentRoot(@NotNull ContentRootId id,
                                                      @NotNull ProjectSystemId externalSystemId,
                                                      @NotNull Project ideProject)
   {
-    final ExternalModule module = findExternalModule(id.getModuleName(), externalSystemId, ideProject);
+    final ModuleData module = findExternalModule(id.getModuleName(), externalSystemId, ideProject);
     if (module == null) {
       return null;
     }
-    for (ExternalContentRoot root : module.getContentRoots()) {
+    for (ContentRootData root : module.getContentRoots()) {
       if (id.getRootPath().equals(root.getRootPath())) {
         return root;
       }
@@ -166,7 +166,7 @@ public class ProjectStructureHelper {
   }
   
   @Nullable
-  public Library findIdeLibrary(@NotNull final ExternalLibrary library, @NotNull Project ideProject) {
+  public Library findIdeLibrary(@NotNull final LibraryData library, @NotNull Project ideProject) {
     return findIdeLibrary(library.getName(), ideProject);
   }
 
@@ -306,7 +306,7 @@ public class ProjectStructureHelper {
   }
 
   @Nullable
-  public ExternalLibrary findExternalLibrary(@NotNull final LibraryId id,
+  public LibraryData findExternalLibrary(@NotNull final LibraryId id,
                                              @NotNull ProjectSystemId externalSystemId,
                                              @NotNull Project ideProject)
   {
@@ -314,15 +314,15 @@ public class ProjectStructureHelper {
   }
   
   @Nullable
-  public ExternalLibrary findExternalLibrary(@NotNull final String libraryName,
+  public LibraryData findExternalLibrary(@NotNull final String libraryName,
                                              @NotNull ProjectSystemId externalSystemId,
                                              @NotNull Project ideProject)
   {
-    final ExternalProject project = myChangesModel.getExternalProject(externalSystemId, ideProject);
+    final ProjectData project = myChangesModel.getExternalProject(externalSystemId, ideProject);
     if (project == null) {
       return null;
     }
-    for (ExternalLibrary library : project.getLibraries()) {
+    for (LibraryData library : project.getLibraries()) {
       if (libraryName.equals(library.getName())) {
         return library;
       }
@@ -331,13 +331,13 @@ public class ProjectStructureHelper {
   }
 
   @Nullable
-  public ExternalLibrary findExternalLibrary(@NotNull String libraryName,
+  public LibraryData findExternalLibrary(@NotNull String libraryName,
                                              @NotNull LibraryPathType jarType,
                                              @NotNull String jarPath,
                                              @NotNull ProjectSystemId externalSystemId,
                                              @NotNull Project ideProject)
   {
-    ExternalLibrary library = findExternalLibrary(libraryName, externalSystemId, ideProject);
+    LibraryData library = findExternalLibrary(libraryName, externalSystemId, ideProject);
     if (library == null) {
       return null;
     }
@@ -358,7 +358,7 @@ public class ProjectStructureHelper {
   }
   
   @Nullable
-  public ExternalLibraryDependency findExternalLibraryDependency(@NotNull LibraryDependencyId id,
+  public LibraryDependencyData findExternalLibraryDependency(@NotNull LibraryDependencyId id,
                                                                  @NotNull ProjectSystemId externalSystemId,
                                                                  @NotNull Project ideProject)
   {
@@ -366,27 +366,27 @@ public class ProjectStructureHelper {
   }
   
   @Nullable
-  public ExternalLibraryDependency findExternalLibraryDependency(@NotNull final String moduleName,
+  public LibraryDependencyData findExternalLibraryDependency(@NotNull final String moduleName,
                                                                  @NotNull final String libraryName,
                                                                  @NotNull ProjectSystemId externalSystemId,
                                                                  @NotNull Project ideProject)
   {
-    final ExternalModule module = findExternalModule(moduleName, externalSystemId, ideProject);
+    final ModuleData module = findExternalModule(moduleName, externalSystemId, ideProject);
     if (module == null) {
       return null;
     }
-    final Ref<ExternalLibraryDependency> ref = new Ref<ExternalLibraryDependency>();
+    final Ref<LibraryDependencyData> ref = new Ref<LibraryDependencyData>();
     ExternalEntityVisitor visitor = new ExternalEntityVisitorAdapter() {
       @Override
-      public void visit(@NotNull ExternalLibraryDependency dependency) {
+      public void visit(@NotNull LibraryDependencyData dependency) {
         if (libraryName.equals(dependency.getName())) {
           ref.set(dependency);
         }
       }
     };
-    for (ExternalDependency dependency : module.getDependencies()) {
+    for (DependencyData dependency : module.getDependencies()) {
       dependency.invite(visitor);
-      final ExternalLibraryDependency result = ref.get();
+      final LibraryDependencyData result = ref.get();
       if (result != null) {
         return result;
       }
@@ -395,7 +395,7 @@ public class ProjectStructureHelper {
   }
 
   @Nullable
-  public ExternalModuleDependency findExternalModuleDependency(@NotNull ModuleDependencyId id,
+  public ModuleDependencyData findExternalModuleDependency(@NotNull ModuleDependencyId id,
                                                                @NotNull ProjectSystemId externalSystemId,
                                                                @NotNull Project ideProject)
   {
@@ -403,25 +403,25 @@ public class ProjectStructureHelper {
   }
   
   @Nullable
-  public ExternalModuleDependency findExternalModuleDependency(@NotNull final String ownerModuleName,
+  public ModuleDependencyData findExternalModuleDependency(@NotNull final String ownerModuleName,
                                                                @NotNull final String dependencyModuleName,
                                                                @NotNull ProjectSystemId externalSystemId,
                                                                @NotNull Project ideProject)
   {
-    final ExternalModule ownerModule = findExternalModule(ownerModuleName, externalSystemId, ideProject);
+    final ModuleData ownerModule = findExternalModule(ownerModuleName, externalSystemId, ideProject);
     if (ownerModule == null) {
       return null;
     }
-    final Ref<ExternalModuleDependency> ref = new Ref<ExternalModuleDependency>();
+    final Ref<ModuleDependencyData> ref = new Ref<ModuleDependencyData>();
     ExternalEntityVisitor visitor = new ExternalEntityVisitorAdapter() {
       @Override
-      public void visit(@NotNull ExternalModuleDependency dependency) {
+      public void visit(@NotNull ModuleDependencyData dependency) {
         if (dependencyModuleName.equals(dependency.getName())) {
           ref.set(dependency);
         }
       }
     };
-    for (ExternalDependency dependency : ownerModule.getDependencies()) {
+    for (DependencyData dependency : ownerModule.getDependencies()) {
       dependency.invite(visitor);
     }
     return ref.get();
@@ -433,7 +433,7 @@ public class ProjectStructureHelper {
   }
   
   @Nullable
-  public ModuleOrderEntry findIdeModuleDependency(@NotNull final ExternalModuleDependency gradleDependency, @NotNull Project ideProject) {
+  public ModuleOrderEntry findIdeModuleDependency(@NotNull final ModuleDependencyData gradleDependency, @NotNull Project ideProject) {
     return findIdeModuleDependency(gradleDependency.getOwnerModule().getName(), gradleDependency.getTarget().getName(), ideProject);
   }
   
@@ -480,7 +480,7 @@ public class ProjectStructureHelper {
   
   @SuppressWarnings("MethodMayBeStatic")
   @Nullable
-  public ModuleOrderEntry findIdeModuleDependency(@NotNull ExternalModuleDependency dependency, @NotNull ModifiableRootModel model) {
+  public ModuleOrderEntry findIdeModuleDependency(@NotNull ModuleDependencyData dependency, @NotNull ModifiableRootModel model) {
     for (OrderEntry entry : model.getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         ModuleOrderEntry candidate = (ModuleOrderEntry)entry;
@@ -493,14 +493,14 @@ public class ProjectStructureHelper {
   }
 
   @Nullable
-  public Jar findIdeJar(@NotNull JarId jarId, @NotNull Project ideProject) {
+  public JarData findIdeJar(@NotNull JarId jarId, @NotNull Project ideProject) {
     Library library = findIdeLibrary(jarId.getLibraryId().getLibraryName(), ideProject);
     if (library == null) {
       return null;
     }
     for (VirtualFile file : library.getFiles(myLibraryPathTypeMapper.map(jarId.getLibraryPathType()))) {
       if (jarId.getPath().equals(ExternalSystemUtil.getLocalFileSystemPath(file))) {
-        return new Jar(jarId.getPath(), jarId.getLibraryPathType(), library, null, ProjectSystemId.IDE);
+        return new JarData(jarId.getPath(), jarId.getLibraryPathType(), library, null, ProjectSystemId.IDE);
       }
     }
     return null;

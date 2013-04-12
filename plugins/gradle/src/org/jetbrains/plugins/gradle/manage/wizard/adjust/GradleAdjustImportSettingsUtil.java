@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
-import com.intellij.openapi.externalSystem.model.project.AbstractExternalDependency;
+import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.ui.MessageType;
@@ -46,7 +46,7 @@ public class GradleAdjustImportSettingsUtil {
    */
   @NotNull
   public static Pair<Runnable, Runnable> configureCommonDependencyControls(@NotNull GradleProjectSettingsBuilder builder,
-                                                                           @NotNull final AbstractExternalDependency dependency)
+                                                                           @NotNull final AbstractDependencyData dependency)
   {
     builder.setKeyAndValueControlsOnSameRow(true);
     

@@ -17,8 +17,8 @@ package org.jetbrains.plugins.gradle.sync
 
 import com.intellij.openapi.roots.libraries.Library
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalJarManager
-import com.intellij.openapi.externalSystem.model.project.Jar
-import com.intellij.openapi.externalSystem.model.project.ExternalLibrary
+import com.intellij.openapi.externalSystem.model.project.JarData
+import com.intellij.openapi.externalSystem.model.project.LibraryData
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import org.jetbrains.plugins.gradle.testutil.AbstractGradleTest
 import org.jetbrains.plugins.gradle.util.GradleUtil
@@ -49,20 +49,20 @@ class MovedJarsPostProcessorTest extends AbstractGradleTest {
 
     checkChanges { }
 
-    def gradleLibrary = gradle.libraries['lib1'] as ExternalLibrary
+    def gradleLibrary = gradle.libraries['lib1'] as LibraryData
     def ideLibrary = intellij.libraries['lib1'] as Library
     def expectedImported = [
-      new Jar(GradleUtil.toCanonicalPath('repo1/jar1'), LibraryPathType.BINARY, null, gradleLibrary),
-      new Jar(GradleUtil.toCanonicalPath('repo1/jar2'), LibraryPathType.BINARY, null, gradleLibrary),
-      new Jar(GradleUtil.toCanonicalPath('repo1/zip1'), LibraryPathType.SOURCE, null, gradleLibrary),
-      new Jar(GradleUtil.toCanonicalPath('repo1/zip2'), LibraryPathType.SOURCE, null, gradleLibrary),
+      new JarData(GradleUtil.toCanonicalPath('repo1/jar1'), LibraryPathType.BINARY, null, gradleLibrary),
+      new JarData(GradleUtil.toCanonicalPath('repo1/jar2'), LibraryPathType.BINARY, null, gradleLibrary),
+      new JarData(GradleUtil.toCanonicalPath('repo1/zip1'), LibraryPathType.SOURCE, null, gradleLibrary),
+      new JarData(GradleUtil.toCanonicalPath('repo1/zip2'), LibraryPathType.SOURCE, null, gradleLibrary),
     ]
     
     def expectedRemoved = [
-      new Jar(GradleUtil.toCanonicalPath('repo2/jar1'), LibraryPathType.BINARY, ideLibrary, null),
-      new Jar(GradleUtil.toCanonicalPath('repo2/jar2'), LibraryPathType.BINARY, ideLibrary, null),
-      new Jar(GradleUtil.toCanonicalPath('repo2/zip1'), LibraryPathType.SOURCE, ideLibrary, null),
-      new Jar(GradleUtil.toCanonicalPath('repo2/zip2'), LibraryPathType.SOURCE, ideLibrary, null),
+      new JarData(GradleUtil.toCanonicalPath('repo2/jar1'), LibraryPathType.BINARY, ideLibrary, null),
+      new JarData(GradleUtil.toCanonicalPath('repo2/jar2'), LibraryPathType.BINARY, ideLibrary, null),
+      new JarData(GradleUtil.toCanonicalPath('repo2/zip1'), LibraryPathType.SOURCE, ideLibrary, null),
+      new JarData(GradleUtil.toCanonicalPath('repo2/zip2'), LibraryPathType.SOURCE, ideLibrary, null),
     ]
     TestExternalJarManager jarManager = container.getComponentInstance(ExternalJarManager)
     Assert.assertEquals(expectedImported.toSet(), jarManager.importedJars.toSet())

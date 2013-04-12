@@ -7,7 +7,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
-import com.intellij.openapi.externalSystem.model.project.ExternalProject;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
 import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -271,14 +271,14 @@ public class GradleUtil {
    * @return                   the most up-to-date gradle project (if any)
    */
   @Nullable
-  public static ExternalProject refreshProject(@NotNull final Project project,
+  public static ProjectData refreshProject(@NotNull final Project project,
                                              @NotNull final String gradleProjectPath,
                                              @NotNull final Ref<String> errorMessageHolder,
                                              @NotNull final Ref<String> errorDetailsHolder,
                                              final boolean resolveLibraries,
                                              final boolean modal)
   {
-    final Ref<ExternalProject> gradleProject = new Ref<ExternalProject>();
+    final Ref<ProjectData> gradleProject = new Ref<ProjectData>();
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
       @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
       @Override

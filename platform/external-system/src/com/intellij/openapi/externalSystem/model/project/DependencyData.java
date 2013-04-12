@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/10/11 6:31 PM
  */
-public interface ExternalDependency extends ExternalEntity {
+public interface DependencyData<T extends ProjectEntityData> extends ProjectEntityData {
   
   boolean isExported();
 
@@ -17,8 +17,8 @@ public interface ExternalDependency extends ExternalEntity {
   DependencyScope getScope();
 
   @NotNull
-  ExternalModule getOwnerModule();
+  ModuleData getOwnerModule();
   
   @NotNull
-  ExternalDependency clone(@NotNull ExternalEntityCloneContext context);
+  T getTarget();
 }

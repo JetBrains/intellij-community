@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.NotNull
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalJarManager
-import com.intellij.openapi.externalSystem.model.project.Jar
+import com.intellij.openapi.externalSystem.model.project.JarData
 
 /**
  * @author Denis Zhdanov
@@ -37,12 +37,12 @@ class TestExternalJarManager extends ExternalJarManager {
   }
 
   @Override
-  void importJars(@NotNull Collection<? extends Jar> jars, @NotNull Project project, boolean synchronous) {
+  void importJars(@NotNull Collection<? extends JarData> jars, @NotNull Project project, boolean synchronous) {
     importedJars.addAll(jars)
   }
 
   @Override
-  void removeJars(@NotNull Collection<? extends Jar> jars, @NotNull Project project, boolean synchronous) {
+  void removeJars(@NotNull Collection<? extends JarData> jars, @NotNull Project project, boolean synchronous) {
     removedJars.addAll(jars)
   }
 }

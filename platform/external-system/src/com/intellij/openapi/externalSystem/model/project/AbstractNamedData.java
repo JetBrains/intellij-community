@@ -7,13 +7,13 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/25/11 5:38 PM
  */
-public abstract class AbstractNamedExternalEntity extends AbstractExternalEntity implements Named {
+public abstract class AbstractNamedData extends AbstractProjectEntityData implements Named {
 
   private static final long serialVersionUID = 1L;
   
   private String myName;
 
-  public AbstractNamedExternalEntity(@NotNull ProjectSystemId owner, @NotNull String name) {
+  public AbstractNamedData(@NotNull ProjectSystemId owner, @NotNull String name) {
     super(owner);
     myName = name;
   }
@@ -42,7 +42,7 @@ public abstract class AbstractNamedExternalEntity extends AbstractExternalEntity
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
 
-    AbstractNamedExternalEntity that = (AbstractNamedExternalEntity)o;
+    AbstractNamedData that = (AbstractNamedData)o;
     return myName.equals(that.myName);
   }
 }

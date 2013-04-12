@@ -1,6 +1,6 @@
 package com.intellij.openapi.externalSystem.model.project.change;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalLibraryDependency;
+import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
 import com.intellij.openapi.externalSystem.model.project.id.EntityIdMapper;
 import com.intellij.openapi.externalSystem.model.project.id.LibraryDependencyId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -16,7 +16,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class LibraryDependencyPresenceChange extends AbstractProjectEntityPresenceChange<LibraryDependencyId> {
 
-  public LibraryDependencyPresenceChange(@Nullable ExternalLibraryDependency gradleDependency,
+  public LibraryDependencyPresenceChange(@Nullable LibraryDependencyData gradleDependency,
                                          @Nullable LibraryOrderEntry intellijDependency) throws IllegalArgumentException
   {
     super(ExternalSystemBundle.message("entity.type.library.dependency"), of(gradleDependency), of(intellijDependency));

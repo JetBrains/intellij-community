@@ -24,10 +24,10 @@ import org.jetbrains.plugins.gradle.diff.project.GradleProjectStructureChangesCa
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalDependencyManager
 import com.intellij.openapi.externalSystem.service.project.manage.EntityManageHelper
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalJarManager
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalLibraryManager
+import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataManager
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalProjectManager
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
-import com.intellij.openapi.externalSystem.model.project.ExternalLibrary
+import com.intellij.openapi.externalSystem.model.project.LibraryData
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
 import com.intellij.openapi.externalSystem.model.project.id.EntityIdMapper
 import com.intellij.openapi.externalSystem.model.project.id.JarId
@@ -95,7 +95,7 @@ public abstract class AbstractGradleTest {
     container.registerComponentImplementation(ProjectStructureServices)
     container.registerComponentImplementation(ExternalLibraryPathTypeMapper, TestExternalLibraryPathTypeMapper)
     container.registerComponentImplementation(ExternalDependencyManager)
-    container.registerComponentImplementation(ExternalLibraryManager)
+    container.registerComponentImplementation(LibraryDataManager)
     container.registerComponentImplementation(ExternalJarManager, TestExternalJarManager)
     container.registerComponentImplementation(ExternalProjectManager)
     container.registerComponentImplementation(GradleDuplicateLibrariesPreProcessor)
@@ -204,7 +204,7 @@ public abstract class AbstractGradleTest {
   @NotNull
   protected JarId findJarId(@NotNull String path) {
     String pathToUse = GradleUtil.toCanonicalPath(path)
-    for (ExternalLibrary library in (gradle.libraries.values() as Collection<ExternalLibrary>)) {
+    for (LibraryData library in (gradle.libraries.values() as Collection<LibraryData>)) {
       for (libPath in library.getPaths(LibraryPathType.BINARY)) {
         if (libPath == pathToUse) {
           return new JarId(pathToUse, LibraryPathType.BINARY, new LibraryId(ProjectSystemId.GRADLE, library.name))
@@ -223,7 +223,7 @@ public abstract class AbstractGradleTest {
     String errorMessage = """
 Can't build an id object for given jar path ($path).
   Available gradle libraries:
-    ${gradle.libraries.values().collect { ExternalLibrary lib -> "${lib.name}: ${lib.getPaths(LibraryPathType.BINARY)}" }.join('\n    ') }
+    ${gradle.libraries.values().collect { LibraryData lib -> "${lib.name}: ${lib.getPaths(LibraryPathType.BINARY)}" }.join('\n    ') }
   Available intellij libraries:
     ${intellij.libraries.values().collect { Library lib -> "${lib.name}: ${lib.getFiles(OrderRootType.CLASSES).collect{it.path}}" }
     .join('\n    ')}

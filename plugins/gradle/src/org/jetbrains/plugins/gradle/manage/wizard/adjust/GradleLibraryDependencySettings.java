@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalLibraryDependency;
+import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
 
@@ -17,7 +17,7 @@ public class GradleLibraryDependencySettings implements GradleProjectStructureNo
   private final Runnable                myValidateCallback;
   private final JComponent              myComponent;
 
-  public GradleLibraryDependencySettings(@NotNull ExternalLibraryDependency dependency) {
+  public GradleLibraryDependencySettings(@NotNull LibraryDependencyData dependency) {
     myLibrarySettings = new GradleLibrarySettings();
     
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();

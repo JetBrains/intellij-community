@@ -22,7 +22,7 @@ import com.intellij.openapi.externalSystem.model.project.id.LibraryDependencyId;
 import com.intellij.openapi.externalSystem.service.project.change.ExternalProjectStructureChangesPreProcessor;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalDependencyManager;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalLibraryManager;
+import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -40,25 +40,25 @@ import org.jetbrains.annotations.NotNull;
 public class GradleDuplicateLibrariesPreProcessor implements ExternalProjectStructureChangesPreProcessor {
 
   @NotNull private final ExternalDependencyManager myDependencyManager;
-  @NotNull private final ExternalLibraryManager    myLibraryManager;
+  @NotNull private final LibraryDataManager        myLibraryManager;
 
-  public GradleDuplicateLibrariesPreProcessor(@NotNull ExternalDependencyManager manager, @NotNull ExternalLibraryManager manager1) {
+  public GradleDuplicateLibrariesPreProcessor(@NotNull ExternalDependencyManager manager, @NotNull LibraryDataManager manager1) {
     myDependencyManager = manager;
     myLibraryManager = manager1;
   }
 
   @NotNull
   @Override
-  public ExternalProject preProcess(@NotNull ExternalProject externalProject, @NotNull final Project ideProject) {
+  public ProjectData preProcess(@NotNull ProjectData externalProject, @NotNull final Project ideProject) {
     final ProjectStructureHelper projectStructureHelper = ServiceManager.getService(ideProject, ProjectStructureHelper.class);
-    for (ExternalModule gradleModule : externalProject.getModules()) {
+    for (ModuleData gradleModule : externalProject.getModules()) {
       final Module ideModule = projectStructureHelper.findIdeModule(gradleModule);
       if (ideModule == null) {
         continue;
       }
       ExternalEntityVisitor visitor = new ExternalEntityVisitorAdapter() {
         @Override
-        public void visit(@NotNull ExternalLibraryDependency gradleDependency) {
+        public void visit(@NotNull LibraryDependencyData gradleDependency) {
           LibraryDependencyId id = EntityIdMapper.mapEntityToId(gradleDependency);
           LibraryOrderEntry ideDependency = projectStructureHelper.findIdeModuleLocalLibraryDependency(
             id.getOwnerModuleName(), id.getDependencyName()
@@ -73,7 +73,7 @@ public class GradleDuplicateLibrariesPreProcessor implements ExternalProjectStru
             myDependencyManager.importDependency(gradleDependency, ideModule, true);
           }
 
-          ExternalLibrary gradleLibrary = gradleDependency.getTarget();
+          LibraryData gradleLibrary = gradleDependency.getTarget();
           Library ideLibrary = projectStructureHelper.findIdeLibrary(gradleLibrary);
           if (ideLibrary == null) {
             myLibraryManager.importLibrary(gradleLibrary, ideProject, true);
@@ -83,7 +83,7 @@ public class GradleDuplicateLibrariesPreProcessor implements ExternalProjectStru
           }
         }
       };
-      for (ExternalDependency dependency : gradleModule.getDependencies()) {
+      for (DependencyData dependency : gradleModule.getDependencies()) {
         dependency.invite(visitor);
       }
     }

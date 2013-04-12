@@ -8,37 +8,37 @@ import java.util.Map;
 
 /**
  * We need to be able to perform cloning of external project entities. However, there is a possible case that particular entity
- * encapsulates graph of other entities. For example, {@link ExternalModule} has a number of
- * {@link ExternalModule#getDependencies() dependencies} where those dependencies can reference other modules that, in turn, also
+ * encapsulates graph of other entities. For example, {@link ModuleData} has a number of
+ * {@link ModuleData#getDependencies() dependencies} where those dependencies can reference other modules that, in turn, also
  * have dependencies.
  * <p/>
  * The problem is that we need to ensure that particular entity is shared within a single entities graph (e.g. there should
- * be a single shared instance of {@link ExternalModule gradle module} after cloning). That's why we need some place to serve
+ * be a single shared instance of {@link ModuleData gradle module} after cloning). That's why we need some place to serve
  * as a cache during cloning. This class serves that purpose.
  * 
  * @author Denis Zhdanov
  * @since 9/28/11 12:36 PM
  */
 public class ExternalEntityCloneContext {
-  
-  private final Map<ExternalLibrary, ExternalLibrary> myLibraries = new HashMap<ExternalLibrary, ExternalLibrary>();
-  private final Map<ExternalModule, ExternalModule> myModules = new HashMap<ExternalModule, ExternalModule>();
+
+  private final Map<LibraryData, LibraryData> myLibraries = new HashMap<LibraryData, LibraryData>();
+  private final Map<ModuleData, ModuleData>   myModules   = new HashMap<ModuleData, ModuleData>();
 
   @Nullable
-  public ExternalLibrary getLibrary(@NotNull ExternalLibrary library) {
+  public LibraryData getLibrary(@NotNull LibraryData library) {
     return myLibraries.get(library);
   }
 
-  public void store(@NotNull ExternalLibrary key, @NotNull ExternalLibrary value) {
+  public void store(@NotNull LibraryData key, @NotNull LibraryData value) {
     myLibraries.put(key, value);
   }
-  
+
   @Nullable
-  public ExternalModule getModule(@NotNull ExternalModule module) {
+  public ModuleData getModule(@NotNull ModuleData module) {
     return myModules.get(module);
   }
 
-  public void store(@NotNull ExternalModule key, @NotNull ExternalModule value) {
+  public void store(@NotNull ModuleData key, @NotNull ModuleData value) {
     myModules.put(key, value);
   }
 }

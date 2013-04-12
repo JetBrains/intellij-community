@@ -45,7 +45,6 @@ import java.util.concurrent.atomic.AtomicReference;
 public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExternalSystemLocalSettings<S>>
   implements PersistentStateComponent<S>
 {
-
   private static final boolean PRESERVE_EXPAND_STATE
     = !SystemProperties.getBooleanProperty("external.system.forget.expand.nodes.state", false);
 

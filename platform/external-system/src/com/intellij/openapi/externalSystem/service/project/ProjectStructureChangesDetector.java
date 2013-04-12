@@ -7,12 +7,14 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.ExternalProject;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.project.change.ExternalProjectStructureChangeListener;
 import com.intellij.openapi.externalSystem.service.project.change.ProjectStructureChangesModel;
 import com.intellij.openapi.externalSystem.service.project.change.user.UserProjectChangesCalculator;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectEntityChangeListener;
+import com.intellij.openapi.externalSystem.service.task.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
 import com.intellij.openapi.externalSystem.ui.ExternalProjectStructureTreeModel;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -43,7 +45,6 @@ public class ProjectStructureChangesDetector implements ExternalProjectStructure
 
   private final Alarm          myAlarm              = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
   private final AtomicLong     myStartRefreshTime   = new AtomicLong();
-  private final RefreshRequest myRequest            = new RefreshRequest();
   private final AtomicInteger  myImportCounter      = new AtomicInteger();
   private final AtomicBoolean  myNewChangesDetected = new AtomicBoolean();
 
@@ -83,7 +84,7 @@ public class ProjectStructureChangesDetector implements ExternalProjectStructure
 
           myUserProjectChangesCalculator.updateCurrentProjectState(project);
 
-          ExternalProject externalProject = myChangesModel.getExternalProject(externalSystemId, project);
+          ProjectData externalProject = myChangesModel.getExternalProject(externalSystemId, project);
           if (externalProject != null) {
             myChangesModel.update(externalProject, project, true);
           }
@@ -147,7 +148,7 @@ public class ProjectStructureChangesDetector implements ExternalProjectStructure
     //
     // The idea is to check are there any new project structure changes comparing to the gradle project structure used last time.
     // We don't do anything in case no new changes have been detected.
-    ExternalProject project = myChangesModel.getExternalProject(externalSystemId, ideProject);
+    ProjectData project = myChangesModel.getExternalProject(externalSystemId, ideProject);
     if (project != null) {
       myNewChangesDetected.set(false);
       myChangesModel.update(project, ideProject, true);
@@ -158,10 +159,17 @@ public class ProjectStructureChangesDetector implements ExternalProjectStructure
 
     myStartRefreshTime.set(System.currentTimeMillis() + REFRESH_DELAY_MILLIS);
     myAlarm.cancelAllRequests();
-    myAlarm.addRequest(myRequest, REFRESH_DELAY_MILLIS);
+    myAlarm.addRequest(new RefreshRequest(externalSystemId), REFRESH_DELAY_MILLIS);
   }
   
   private class RefreshRequest implements Runnable {
+    
+    @NotNull private final ProjectSystemId myExternalSystemId;
+
+    RefreshRequest(@NotNull ProjectSystemId id) {
+      myExternalSystemId = id;
+    }
+
     @Override
     public void run() {
       if (myProject.isDisposed()) {
@@ -172,8 +180,8 @@ public class ProjectStructureChangesDetector implements ExternalProjectStructure
         return;
       }
       myAlarm.cancelAllRequests();
-      final GradleTaskManager taskManager = ServiceManager.getService(GradleTaskManager.class);
-      if (taskManager != null && taskManager.hasTaskOfTypeInProgress(GradleTaskType.RESOLVE_PROJECT)) {
+      final ExternalSystemTaskManager taskManager = ServiceManager.getService(ExternalSystemTaskManager.class);
+      if (taskManager != null && taskManager.hasTaskOfTypeInProgress(ExternalSystemTaskType.RESOLVE_PROJECT)) {
         return;
       }
 
@@ -196,7 +204,7 @@ public class ProjectStructureChangesDetector implements ExternalProjectStructure
           }
 
           // There is a possible case that we need to add/remove IJ-specific new nodes because of the IJ project structure changes.
-          rebuildTreeModel();
+          rebuildTreeModel(myExternalSystemId);
           //GradleUtil.refreshProject(myProject);
         }
       });

@@ -1,6 +1,7 @@
 package org.jetbrains.plugins.gradle.remote.impl;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalLibrary;
+import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
@@ -59,11 +60,11 @@ public class GradleLibraryNamesMixer {
    * @param libraries  libraries to process
    */
   @SuppressWarnings("MethodMayBeStatic")
-  public void mixNames(@NotNull Iterable<? extends ExternalLibrary> libraries) {
+  public void mixNames(@NotNull Iterable<DataHolder<LibraryData>> libraries) {
     Map<String, Wrapped> names = new HashMap<String, Wrapped>();
     List<Wrapped> data = new ArrayList<Wrapped>();
-    for (ExternalLibrary library : libraries) {
-      Wrapped wrapped = new Wrapped(library);
+    for (DataHolder<LibraryData> library : libraries) {
+      Wrapped wrapped = new Wrapped(library.getData());
       data.add(wrapped);
     }
     boolean mixed = false;
@@ -189,11 +190,11 @@ public class GradleLibraryNamesMixer {
     /** Holds list of files that may be used for name generation. */
     public final Set<File> files = new HashSet<File>();
     /** File that was used for the current name generation. */
-    public File currentFile;
+    public File        currentFile;
     /** Target library. */
-    public ExternalLibrary library;
+    public LibraryData library;
 
-    Wrapped(@NotNull ExternalLibrary library) {
+    Wrapped(@NotNull LibraryData library) {
       this.library = library;
       for (LibraryPathType pathType : LibraryPathType.values()) {
         for (String path : library.getPaths(pathType)) {
@@ -201,14 +202,14 @@ public class GradleLibraryNamesMixer {
         }
       }
     }
-    
+
     public boolean prepare() {
       if (currentFile != null) {
         return true;
       }
       return nextFile();
     }
-    
+
     public boolean nextFile() {
       if (files.isEmpty()) {
         return false;

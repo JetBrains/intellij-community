@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.gradle.diff.dependency;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalModuleDependency;
+import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.service.project.change.ExternalProjectChangesCalculationContext;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import org.jetbrains.annotations.NotNull;
@@ -10,11 +10,11 @@ import org.jetbrains.annotations.NotNull;
  * @since 2/20/12 11:10 AM
  */
 public class GradleModuleDependencyStructureChangesCalculator
-  extends AbstractGradleDependencyStructureChangesCalculator<ExternalModuleDependency, ModuleOrderEntry>
+  extends AbstractGradleDependencyStructureChangesCalculator<ModuleDependencyData, ModuleOrderEntry>
 {
   
   @Override
-  public void doCalculate(@NotNull ExternalModuleDependency gradleEntity,
+  public void doCalculate(@NotNull ModuleDependencyData gradleEntity,
                           @NotNull ModuleOrderEntry intellijEntity,
                           @NotNull ExternalProjectChangesCalculationContext context)
   {
@@ -33,7 +33,7 @@ public class GradleModuleDependencyStructureChangesCalculator
 
   @NotNull
   @Override
-  public Object getGradleKey(@NotNull ExternalModuleDependency entity, @NotNull ExternalProjectChangesCalculationContext context) {
+  public Object getGradleKey(@NotNull ModuleDependencyData entity, @NotNull ExternalProjectChangesCalculationContext context) {
     return entity.getTarget().getName();
   }
 }

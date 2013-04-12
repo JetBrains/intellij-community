@@ -1,6 +1,6 @@
 package com.intellij.openapi.externalSystem.model.project.change;
 
-import com.intellij.openapi.externalSystem.model.project.ExternalModuleDependency;
+import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.model.project.id.EntityIdMapper;
 import com.intellij.openapi.externalSystem.model.project.id.ModuleDependencyId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -14,7 +14,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class ModuleDependencyPresenceChange extends AbstractProjectEntityPresenceChange<ModuleDependencyId> {
 
-  public ModuleDependencyPresenceChange(@Nullable ExternalModuleDependency gradle, @Nullable ModuleOrderEntry intellij) {
+  public ModuleDependencyPresenceChange(@Nullable ModuleDependencyData gradle, @Nullable ModuleOrderEntry intellij) {
     super(ExternalSystemBundle.message("entity.type.module.dependency"), of(gradle), of(intellij));
   }
 

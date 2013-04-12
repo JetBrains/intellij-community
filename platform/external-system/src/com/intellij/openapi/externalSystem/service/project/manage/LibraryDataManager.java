@@ -2,8 +2,8 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.Jar;
-import com.intellij.openapi.externalSystem.model.project.ExternalLibrary;
+import com.intellij.openapi.externalSystem.model.project.JarData;
+import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
@@ -28,24 +28,24 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 2/15/12 11:32 AM
  */
-public class ExternalLibraryManager {
+public class LibraryDataManager {
 
-  private static final Logger LOG = Logger.getInstance("#" + ExternalLibraryManager.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + LibraryDataManager.class.getName());
 
   @NotNull private final PlatformFacade                myPlatformFacade;
   @NotNull private final ExternalLibraryPathTypeMapper myLibraryPathTypeMapper;
   @NotNull private final ExternalJarManager            myJarManager;
 
-  public ExternalLibraryManager(@NotNull PlatformFacade platformFacade,
-                                @NotNull ExternalLibraryPathTypeMapper mapper,
-                                @NotNull ExternalJarManager manager)
+  public LibraryDataManager(@NotNull PlatformFacade platformFacade,
+                            @NotNull ExternalLibraryPathTypeMapper mapper,
+                            @NotNull ExternalJarManager manager)
   {
     myPlatformFacade = platformFacade;
     myLibraryPathTypeMapper = mapper;
     myJarManager = manager;
   }
 
-  public void syncPaths(@NotNull ExternalLibrary gradleLibrary,
+  public void syncPaths(@NotNull LibraryData gradleLibrary,
                         @NotNull final Library ideLibrary,
                         @NotNull Project project,
                         boolean synchronous)
@@ -62,31 +62,31 @@ public class ExternalLibraryManager {
       return;
     }
 
-    Function<String, Jar> jarMapper = new Function<String, Jar>() {
+    Function<String, JarData> jarMapper = new Function<String, JarData>() {
       @Override
-      public Jar fun(String path) {
-        return new Jar(path, LibraryPathType.BINARY, ideLibrary, null, ProjectSystemId.IDE);
+      public JarData fun(String path) {
+        return new JarData(path, LibraryPathType.BINARY, ideLibrary, null, ProjectSystemId.IDE);
       }
     };
 
     if (!toRemove.isEmpty()) {
-      List<Jar> jarsToRemove = ContainerUtil.map(toRemove, jarMapper);
+      List<JarData> jarsToRemove = ContainerUtil.map(toRemove, jarMapper);
       myJarManager.removeJars(jarsToRemove, project, synchronous);
     }
 
     if (!toAdd.isEmpty()) {
-      List<Jar> jarsToAdd = ContainerUtil.map(toAdd, jarMapper);
+      List<JarData> jarsToAdd = ContainerUtil.map(toAdd, jarMapper);
       myJarManager.importJars(jarsToAdd, project, synchronous);
     }
   }
 
-  public void importLibraries(@NotNull Collection<? extends ExternalLibrary> libraries, @NotNull Project project, boolean synchronous) {
-    for (ExternalLibrary library : libraries) {
+  public void importLibraries(@NotNull Collection<? extends LibraryData> libraries, @NotNull Project project, boolean synchronous) {
+    for (LibraryData library : libraries) {
       importLibrary(library, project, synchronous);
     }
   }
 
-  public void importLibrary(@NotNull final ExternalLibrary library, @NotNull final Project project, boolean synchronous) {
+  public void importLibrary(@NotNull final LibraryData library, @NotNull final Project project, boolean synchronous) {
     Map<OrderRootType, Collection<File>> libraryFiles = new HashMap<OrderRootType, Collection<File>>();
     for (LibraryPathType pathType : LibraryPathType.values()) {
       final Set<String> paths = library.getPaths(pathType);

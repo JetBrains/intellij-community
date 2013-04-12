@@ -28,12 +28,12 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 1/23/13 9:19 AM
  */
-public abstract class AbstractExternalCompositeEntity<E extends ExternalEntity, I> extends AbstractExternalEntity {
+public abstract class AbstractCompositeData<E extends ProjectEntityData, I> extends AbstractProjectEntityData {
 
   @NotNull private final E myExternalEntity;
   @NotNull private final I myIdeEntity;
 
-  public AbstractExternalCompositeEntity(@NotNull E externalEntity, @NotNull I ideEntity) {
+  public AbstractCompositeData(@NotNull E externalEntity, @NotNull I ideEntity) {
     super(ProjectSystemId.IDE);
     myExternalEntity = externalEntity;
     myIdeEntity = ideEntity;
@@ -61,7 +61,7 @@ public abstract class AbstractExternalCompositeEntity<E extends ExternalEntity, 
   public boolean equals(Object o) {
     if (!super.equals(o)) return false;
 
-    AbstractExternalCompositeEntity entity = (AbstractExternalCompositeEntity)o;
+    AbstractCompositeData entity = (AbstractCompositeData)o;
 
     if (!myExternalEntity.equals(entity.myExternalEntity)) return false;
     if (!myIdeEntity.equals(entity.myIdeEntity)) return false;
