@@ -913,7 +913,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private List<PyTargetExpression> collectInstanceAttributes() {
     Map<String, PyTargetExpression> result = new HashMap<String, PyTargetExpression>();
 
-    // __init__ takes priority over all other methods
+    collectAttributesInNew(result);
     PyFunctionImpl initMethod = (PyFunctionImpl)findMethodByName(PyNames.INIT, false);
     if (initMethod != null) {
       collectInstanceAttributes(initMethod, result);
@@ -927,6 +927,15 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
     final Collection<PyTargetExpression> expressions = result.values();
     return new ArrayList<PyTargetExpression>(expressions);
+  }
+
+  private void collectAttributesInNew(@NotNull final Map<String, PyTargetExpression> result) {
+    final PyFunction newMethod = findMethodByName(PyNames.NEW, false);
+    if (newMethod != null) {
+      for (PyTargetExpression target : getTargetExpressions(newMethod)) {
+        result.put(target.getName(), target);
+      }
+    }
   }
 
   public static void collectInstanceAttributes(@NotNull PyFunction method, @NotNull final Map<String, PyTargetExpression> result) {

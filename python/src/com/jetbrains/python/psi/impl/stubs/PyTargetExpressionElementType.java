@@ -11,6 +11,7 @@ import com.intellij.psi.stubs.StubOutputStream;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.io.StringRef;
 import com.jetbrains.python.PyElementTypes;
+import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.impl.PyTargetExpressionImpl;
@@ -110,6 +111,10 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     final ASTNode functionNode = TreeUtil.findParent(node, PyElementTypes.FUNCTION_DECLARATION);
     final ASTNode qualifierNode = node.findChildByType(PyElementTypes.REFERENCE_EXPRESSION);
     if (functionNode != null && qualifierNode != null) {
+      final PsiElement function = functionNode.getPsi();
+      if (function instanceof PyFunction && PyNames.NEW.equals(((PyFunction)function).getName())) {
+        return true;
+      }
       final ASTNode parameterList = functionNode.findChildByType(PyElementTypes.PARAMETER_LIST);
       assert parameterList != null;
       final ASTNode[] children = parameterList.getChildren(PyElementTypes.FORMAL_PARAMETER_SET);

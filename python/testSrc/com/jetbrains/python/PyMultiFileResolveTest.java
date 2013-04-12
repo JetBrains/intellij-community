@@ -432,6 +432,11 @@ public class PyMultiFileResolveTest extends PyResolveTestCase {
     assertResolvesTo(PyFunction.class, "foobar");
   }
 
+  // PY-6805
+  public void testAttributeDefinedInNew() {
+    assertResolvesTo(PyTargetExpression.class, "foo");
+  }
+
   private void prepareTestDirectory() {
     final String testName = getTestName(true);
     myFixture.copyDirectoryToProject(testName, "");

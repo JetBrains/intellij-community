@@ -182,7 +182,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
                 initType = stdlib.getConstructorType(containingClass);
               }
             }
-            if (initType != null && !(initType instanceof PyNoneType)) {
+            if (initType != null && !(initType instanceof PyNoneType || initType instanceof PyReturnTypeReference)) {
               return initType;
             }
             return new PyClassTypeImpl(containingClass, modifier == PyFunction.Modifier.CLASSMETHOD);

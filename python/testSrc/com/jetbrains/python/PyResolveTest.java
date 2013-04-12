@@ -5,6 +5,8 @@ import com.intellij.psi.PsiPolyVariantReference;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.ResolveResult;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.fixtures.PyResolveTestCase;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyPsiUtils;
@@ -524,5 +526,17 @@ public class PyResolveTest extends PyResolveTestCase {
 
   public void testGeneratorShadowing() {  // PY-8725
     assertResolvesTo(PyFunction.class, "_");
+  }
+
+  // PY-6805
+  public void testAttributeDefinedInNew() {
+    final PsiElement resolved = resolve();
+    assertInstanceOf(resolved, PyTargetExpression.class);
+    final PyTargetExpression target = (PyTargetExpression)resolved;
+    assertEquals("foo", target.getName());
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(target);
+    assertNotNull(owner);
+    assertInstanceOf(owner, PyFunction.class);
+    assertEquals("__new__", owner.getName());
   }
 }
