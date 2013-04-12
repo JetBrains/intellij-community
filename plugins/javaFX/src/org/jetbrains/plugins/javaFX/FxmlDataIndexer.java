@@ -15,6 +15,9 @@
  */
 package org.jetbrains.plugins.javaFX;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
 import com.intellij.util.xml.NanoXmlUtil;
@@ -35,7 +38,7 @@ public class FxmlDataIndexer implements DataIndexer<String, Set<String>, FileCon
   @Override
   @NotNull
   public Map<String, Set<String>> map(final FileContent inputData) {
-    final Map<String, Set<String>> map = getIds(inputData.getContentAsText().toString(), inputData.getFile().getPath());
+    final Map<String, Set<String>> map = getIds(inputData.getContentAsText().toString(), inputData.getFile(), inputData.getProject());
     if (map != null) {
       return map;
     }
@@ -43,22 +46,24 @@ public class FxmlDataIndexer implements DataIndexer<String, Set<String>, FileCon
   }
 
   @Nullable
-  protected Map<String, Set<String>> getIds(String content, final String path) {
+  protected Map<String, Set<String>> getIds(String content, final VirtualFile file, Project project) {
     if (!content.contains(JavaFXNamespaceProvider.JAVAFX_NAMESPACE)) {
       return null;
     }
 
     final Map<String, Set<String>> map = new HashMap<String, Set<String>>();
+    final String path = file.getPath();
     final IXMLBuilder handler = createParseHandler(path, map);
     try {
       NanoXmlUtil.parse(new StringReader(content), handler);
     }
     catch (StopException ignore) {}
-    endDocument(path, map, handler);
+    final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(file);
+    endDocument(path, sourceRoot, map, handler);
     return map;
   }
   
-  protected void endDocument(String math, Map<String, Set<String>> map, IXMLBuilder handler){}
+  protected void endDocument(String math, VirtualFile sourceRoot, Map<String, Set<String>> map, IXMLBuilder handler){}
 
   protected IXMLBuilder createParseHandler(final String path, final Map<String, Set<String>> map) {
     return new NanoXmlUtil.IXMLBuilderAdapter() {
