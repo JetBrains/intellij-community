@@ -29,7 +29,7 @@ import com.intellij.util.ArrayUtil;
 /**
  * @author Konstantin Bulenkov
  */
-@Colored(color = "ffffe4", darkVariant = "000029")
+@Colored(color = "ffffe4", darkVariant = "494539")
 public class NonProjectFilesScope extends NamedScope {
   public static final String NAME = "Non-Project Files";
 
