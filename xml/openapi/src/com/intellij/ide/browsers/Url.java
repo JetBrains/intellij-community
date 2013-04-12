@@ -4,7 +4,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public interface Url {
-  @Nullable
+  @NotNull
   String getPath();
 
   boolean isInLocalFileSystem();

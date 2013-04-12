@@ -25,14 +25,14 @@ public final class UrlImpl implements Url {
     this.raw = raw;
     this.scheme = scheme;
     this.authority = StringUtil.nullize(authority);
-    this.path = StringUtil.nullize(path);
+    this.path = StringUtil.isEmpty(path) ? "/" : path;
     this.parameters = StringUtil.nullize(parameters);
   }
 
-  @Nullable
+  @NotNull
   @Override
   public String getPath() {
-    if (decodedPath == null && path != null) {
+    if (decodedPath == null) {
       decodedPath = URLUtil.unescapePercentSequences(path);
     }
     return decodedPath;
