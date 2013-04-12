@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.codeInsight.highlighting;
 
 import com.intellij.find.FindManager;
@@ -24,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
 import com.intellij.openapi.editor.markup.RangeHighlighter;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 
 import java.util.Map;
@@ -37,22 +37,31 @@ public class EscapeHandler extends EditorActionHandler {
 
   @Override
   public void execute(Editor editor, DataContext dataContext){
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-
     editor.setHeaderComponent(null);
+
+    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project != null) {
-      if (((HighlightManagerImpl)HighlightManager.getInstance(project)).hideHighlights(editor, HighlightManager.HIDE_BY_ESCAPE |
-                                                                                               HighlightManager.HIDE_BY_ANY_KEY)) {
-        WindowManager.getInstance().getStatusBar(project).setInfo(""); //??
-        FindManager findManager = FindManager.getInstance(project);
-        FindModel model = findManager.getFindNextModel(editor);
-        if (model != null) {
-          model.setSearchHighlighters(false);
-          findManager.setFindNextModel(model);
+      HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(project);
+      if (highlightManager != null && highlightManager.hideHighlights(editor, HighlightManager.HIDE_BY_ESCAPE | HighlightManager.HIDE_BY_ANY_KEY)) {
+
+        StatusBar statusBar = WindowManager.getInstance().getStatusBar(project);
+        if (statusBar != null) {
+          statusBar.setInfo("");
         }
+
+        FindManager findManager = FindManager.getInstance(project);
+        if (findManager != null) {
+          FindModel model = findManager.getFindNextModel(editor);
+          if (model != null) {
+            model.setSearchHighlighters(false);
+            findManager.setFindNextModel(model);
+          }
+        }
+
         return;
       }
     }
+
     myOriginalHandler.execute(editor, dataContext);
   }
 
@@ -63,13 +72,14 @@ public class EscapeHandler extends EditorActionHandler {
 
     if (project != null) {
       HighlightManagerImpl highlightManager = (HighlightManagerImpl)HighlightManager.getInstance(project);
-      Map<RangeHighlighter, HighlightManagerImpl.HighlightInfo> map = highlightManager.getHighlightInfoMap(editor, false);
-
-      if (map != null) {
-        for (HighlightManagerImpl.HighlightInfo info : map.values()) {
-          if (!info.editor.equals(editor)) continue;
-          if ((info.flags & HighlightManager.HIDE_BY_ESCAPE) != 0) {
-            return true;
+      if (highlightManager != null) {
+        Map<RangeHighlighter, HighlightManagerImpl.HighlightInfo> map = highlightManager.getHighlightInfoMap(editor, false);
+        if (map != null) {
+          for (HighlightManagerImpl.HighlightInfo info : map.values()) {
+            if (!info.editor.equals(editor)) continue;
+            if ((info.flags & HighlightManager.HIDE_BY_ESCAPE) != 0) {
+              return true;
+            }
           }
         }
       }
