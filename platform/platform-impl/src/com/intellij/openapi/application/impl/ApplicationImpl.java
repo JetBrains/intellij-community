@@ -1200,11 +1200,13 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
         myActive = Boolean.valueOf(active);
         System.setProperty("idea.active", myActive.toString());
         ApplicationActivationListener publisher = getMessageBus().syncPublisher(ApplicationActivationListener.TOPIC);
-        if (active) {
-          publisher.applicationActivated(ideFrame);
-        }
-        else {
-          publisher.applicationDeactivated(ideFrame);
+        if (SystemInfo.isLinux) {
+          if (active) {
+            publisher.applicationActivated(ideFrame);
+          }
+          else {
+            publisher.applicationDeactivated(ideFrame);
+          }
         }
         return true;
       }
