@@ -1313,6 +1313,9 @@
                      key="assertequals.called.on.arrays.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.junit.AssertEqualsCalledOnArrayInspection"/>
+    <localInspection language="JAVA" shortName="JUnitRule" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="junit.rule.display.name" implementationClass="com.siyeh.ig.junit.JUnitRuleInspection" 
+                     groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"/>
     <localInspection language="JAVA" suppressId="MessageMissingOnJUnitAssertion" shortName="AssertsWithoutMessages"
                      bundle="com.siyeh.InspectionGadgetsBundle" key="asserts.without.messages.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.junit.issues" enabledByDefault="false" level="WARNING"
@@ -2597,7 +2600,6 @@
                      bundle="com.siyeh.InspectionGadgetsBundle" key="parameter.hides.member.variable.display.name"
                      groupBundle="messages.InspectionsBundle" groupKey="group.names.visibility.issues" enabledByDefault="false"
                      level="WARNING" implementationClass="com.siyeh.ig.visibility.ParameterHidingMemberVariableInspection"/>
-
   </extensions>
 
   <application-components>
