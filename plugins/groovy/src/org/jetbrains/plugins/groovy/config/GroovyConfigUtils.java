@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
@@ -45,7 +46,7 @@ import java.util.regex.Pattern;
  * @author ilyas
  */
 public abstract class GroovyConfigUtils extends AbstractConfigUtils {
-  @NonNls public static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all-(\\d.*)\\.jar");
+  @NonNls private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all-(\\d.*)\\.jar");
 
   private static GroovyConfigUtils myGroovyConfigUtils;
   @NonNls public static final String GROOVY_JAR_PATTERN_NOVERSION = "groovy\\.jar";
@@ -67,6 +68,15 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
         }};
     }
     return myGroovyConfigUtils;
+  }
+
+  @NotNull
+  public static File[] getGroovyAllJars(@NotNull String path) {
+    return GroovyUtils.getFilesInDirectoryByPattern(path, GROOVY_ALL_JAR_PATTERN);
+  }
+
+  public static boolean matchesGroovyAll(@NotNull String name) {
+    return GROOVY_ALL_JAR_PATTERN.matcher(name).matches() && !name.contains("src") && !name.contains("doc");
   }
 
   @NotNull
