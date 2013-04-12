@@ -59,6 +59,13 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
     doTest("Create Field 'btn'", ".java");
   }
 
+  public void testCreateFieldEmptyName() throws Exception {
+    String path = getTestName(true) + ".fxml";
+    final IntentionAction intention =
+      myFixture.getAvailableIntention("Create Field 'btn'", path, getTestName(false) + ".java");
+    assertNull(intention);
+  }
+
   public void testRegisterPageLanguage() throws Exception {
     myFixture.configureByFile(getTestName(true) + ".fxml");
     final IntentionAction intention = myFixture.findSingleIntention("Specify page language");
