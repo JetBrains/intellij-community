@@ -105,7 +105,6 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
    */
   @Nullable
   public String getPathPrependStatement(List<String> additionalPythonPath) {
-    BuildoutFacet buildoutFacet = this;
     StringBuilder sb = new StringBuilder("sys.path[0:0]=[");
     for (String s : additionalPythonPath) {
       sb.append("'").append(s).append("',");
