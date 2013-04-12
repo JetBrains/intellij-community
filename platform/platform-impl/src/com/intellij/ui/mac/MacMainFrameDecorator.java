@@ -117,9 +117,6 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
   public MacMainFrameDecorator(@NotNull final IdeFrameImpl frame, final boolean navBar) {
     super(frame);
 
-    final ID window = MacUtil.findWindowForTitle(frame.getTitle());
-    if (window == null) return;
-
     if (CURRENT_SETTER == null) {
       CURRENT_SETTER = navBar ? NAVBAR_SETTER : TOOLBAR_SETTER;
       CURRENT_GETTER = navBar ? NAVBAR_GETTER : TOOLBAR_GETTER;
@@ -191,7 +188,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
         final ID ownToolbar = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSToolbar"), className);
         Foundation.registerObjcClassPair(ownToolbar);
 
-        ID toolbar = invoke(invoke(className, "alloc"), "initWithIdentifier:", Foundation.nsString(className));
+        final ID toolbar = invoke(invoke(className, "alloc"), "initWithIdentifier:", Foundation.nsString(className));
         Foundation.cfRetain(toolbar);
 
         invoke(toolbar, "setVisible:", 0); // hide native toolbar by default
@@ -199,8 +196,16 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
         Foundation.addMethod(ownToolbar, Foundation.createSelector("setVisible:"), SET_VISIBLE_CALLBACK, "v*");
         Foundation.addMethod(ownToolbar, Foundation.createSelector("isVisible"), IS_VISIBLE, "B*");
 
-        invoke(window, "setToolbar:", toolbar);
-        invoke(window, "setShowsToolbarButton:", 1);
+        final ID window = MacUtil.findWindowForTitle(frame.getTitle());
+        if (window == null) return;
+
+        Foundation.executeOnMainThread(new Runnable() {
+          @Override
+          public void run() {
+            invoke(window, "setToolbar:", toolbar);
+            invoke(window, "setShowsToolbarButton:", 1);
+          }
+        }, true, true);
       }
     }
     finally {
