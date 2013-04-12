@@ -59,6 +59,10 @@ public class ExtractEnumTest extends MultiFileTestCase {
     doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true));
   }
 
+  public void testUsageInVariableInitializer() throws Exception {
+    doTest(new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, true));
+  }
+
   public void testForwardReferenceConflict() throws Exception {
     doTest("Unable to migrate statement to enum constant.", false,
            new RefactoringTestUtil.MemberDescriptor("FOO", PsiField.class, false),
@@ -149,6 +153,7 @@ public class ExtractEnumTest extends MultiFileTestCase {
             if (member.hasModifierProperty(PsiModifier.STATIC) && member.hasModifierProperty(PsiModifier.FINAL) && ((PsiField)member).hasInitializer()) {
               if (memberInfo.isToAbstract()) {
                 enumConstants.add(memberInfo);
+                memberInfo.setChecked(true);
               }
             }
           }
