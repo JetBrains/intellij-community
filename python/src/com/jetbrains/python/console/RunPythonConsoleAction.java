@@ -16,7 +16,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PathMappingSettings;
@@ -207,7 +206,7 @@ public class RunPythonConsoleAction extends AnAction implements DumbAware {
     final String path = Joiner.on(", ").join(Collections2.transform(pythonPath, new Function<String, String>() {
       @Override
       public String apply(String input) {
-        return "'" + FileUtil.toSystemDependentName(input).replace("\\", "\\\\") + "'";
+        return "'" + input.replace("\\", "\\\\") + "'";
       }
     }));
 
