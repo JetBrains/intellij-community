@@ -40,15 +40,13 @@ public class EnterHandler extends BaseEnterHandler {
   @Override
   public void executeWriteAction(Editor editor, DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-
-    if (project == null) {
-      myOriginalHandler.execute(editor, dataContext);
-      return;
+    if (project != null) {
+      TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
+      if (templateManager != null && templateManager.startTemplate(editor, TemplateSettings.ENTER_CHAR)) {
+        return;
+      }
     }
 
-    TemplateManagerImpl templateManager = (TemplateManagerImpl)TemplateManager.getInstance(project);
-    if (templateManager == null || !templateManager.startTemplate(editor, TemplateSettings.ENTER_CHAR)) {
-      myOriginalHandler.execute(editor, dataContext);
-    }
+    myOriginalHandler.execute(editor, dataContext);
   }
 }
