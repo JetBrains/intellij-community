@@ -608,8 +608,8 @@ public abstract class InplaceRefactoring {
                            final PsiElement selectedElement,
                            final TemplateBuilderImpl builder,
                            int offset) {
-    if (reference.getElement() == selectedElement &&
-        reference.getRangeInElement().shiftRight(selectedElement.getTextRange().getStartOffset()).containsOffset(offset)) {
+    final PsiElement element = reference.getElement();
+    if (element == selectedElement && checkRangeContainsOffset(offset, reference.getRangeInElement(), element)) {
       builder.replaceElement(reference, PRIMARY_VARIABLE_NAME, createLookupExpression(), true);
     }
     else {
@@ -671,7 +671,7 @@ public abstract class InplaceRefactoring {
     //prefer reference in case of self-references
     for (PsiReference ref : refs) {
       final PsiElement element = ref.getElement();
-      if (ref.getRangeInElement().shiftRight(element.getTextRange().getStartOffset()).containsOffset(offset)) return element;
+      if (checkRangeContainsOffset(offset, ref.getRangeInElement(), element)) return element;
     }
 
     if (nameIdentifier != null) {
@@ -680,12 +680,20 @@ public abstract class InplaceRefactoring {
     }
 
     for (Pair<PsiElement, TextRange> stringUsage : stringUsages) {
-      final PsiElement element = stringUsage.first;
-      if (stringUsage.second.shiftRight(element.getTextRange().getStartOffset()).containsOffset(offset)) return element;
+      if (checkRangeContainsOffset(offset, stringUsage.second, stringUsage.first)) return stringUsage.first;
     }
 
     LOG.error(nameIdentifier + " by " + this.getClass().getName());
     return null;
+  }
+
+  private boolean checkRangeContainsOffset(int offset, final TextRange textRange, PsiElement element) {
+    int startOffset = element.getTextRange().getStartOffset();
+    final PsiLanguageInjectionHost injectionHost = InjectedLanguageManager.getInstance(myProject).getInjectionHost(element);
+    if (injectionHost != null) {
+      startOffset += injectionHost.getTextOffset();
+    }
+    return textRange.shiftRight(startOffset).containsOffset(offset);
   }
 
   protected boolean isRestart() {
