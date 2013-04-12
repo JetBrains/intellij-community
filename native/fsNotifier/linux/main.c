@@ -392,7 +392,8 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
 static bool is_watchable(const char* fs) {
   // don't watch special and network filesystems
   return !(strncmp(fs, "dev", 3) == 0 || strcmp(fs, "proc") == 0 || strcmp(fs, "sysfs") == 0 || strcmp(fs, MNTTYPE_SWAP) == 0 ||
-           strncmp(fs, "fuse", 4) == 0 || strcmp(fs, "cifs") == 0 || strcmp(fs, MNTTYPE_NFS) == 0);
+           (strncmp(fs, "fuse", 4) == 0 && strcmp(fs, "fuseblk") != 0) ||
+           strcmp(fs, "cifs") == 0 || strcmp(fs, MNTTYPE_NFS) == 0);
 }
 
 static array* unwatchable_mounts() {
