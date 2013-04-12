@@ -125,6 +125,14 @@ public class IdeFrameImpl extends JFrame implements IdeFrameEx, DataProvider {
   }
 
   @Override
+  public Insets getInsets() {
+    if (SystemInfo.isMac && isInFullScreen()) {
+      return new Insets(0, 0, 0, 0);
+    }
+    return super.getInsets();
+  }
+
+  @Override
   public JComponent getComponent() {
     return getRootPane();
   }

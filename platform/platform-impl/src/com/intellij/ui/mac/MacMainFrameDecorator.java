@@ -29,12 +29,11 @@ import com.intellij.ui.mac.foundation.ID;
 import com.intellij.ui.mac.foundation.MacUtil;
 import com.intellij.util.Function;
 import com.sun.jna.Callback;
+import com.sun.jna.Pointer;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
 import java.util.concurrent.atomic.AtomicInteger;
@@ -46,6 +45,33 @@ import static com.intellij.ui.mac.foundation.Foundation.invoke;
  */
 public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
+
+  // Fullscreen listener delivers event too late,
+  // so we use method swizzling here
+  private final Callback windowWillEnterFullScreenCallBack = new Callback() {
+    public void callback(ID self,
+                         ID nsNotification)
+    {
+      myInFullScreen = true;
+      myFrame.storeFullScreenStateIfNeeded(true);
+      invoke(self, "oldWindowWillEnterFullScreen:", nsNotification);
+    }
+  };
+
+  private final Callback windowWillExitFullScreenCallBack = new Callback() {
+    public void callback(ID self,
+                         ID nsNotification)
+    {
+      myInFullScreen = false;
+      myFrame.storeFullScreenStateIfNeeded(false);
+
+
+      JRootPane rootPane = myFrame.getRootPane();
+      if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
+
+      invoke(self, "oldWindowWillExitFullScreen:", nsNotification);
+    }
+  };
 
   public static final String FULL_SCREEN = "Idea.Is.In.FullScreen.Mode.Now";
   private static boolean HAS_FULLSCREEN_UTILITIES;
@@ -127,6 +153,24 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
     final ID pool = invoke("NSAutoreleasePool", "new");
 
+    if (SystemInfo.isMac) {
+      ID awtWindow = Foundation.getObjcClass("AWTWindow");
+
+      Pointer  windowWillEnterFullScreenMethod = Foundation.createSelector("windowWillEnterFullScreen:");
+      ID originalWindowWillEnterFullScreen = Foundation.class_replaceMethod(awtWindow, windowWillEnterFullScreenMethod,
+                                                                            windowWillEnterFullScreenCallBack, "v@::@");
+
+      Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowWillEnterFullScreen:"),
+                               originalWindowWillEnterFullScreen, "v@::@");
+
+      Pointer  windowWillExitFullScreenMethod = Foundation.createSelector("windowWillExitFullScreen:");
+      ID originalWindowWillExitFullScreen = Foundation.class_replaceMethod(awtWindow, windowWillExitFullScreenMethod,
+                                                                           windowWillExitFullScreenCallBack, "v@::@");
+
+      Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowWillExitFullScreen:"),
+                               originalWindowWillExitFullScreen, "v@::@");
+    }
+
     int v = UNIQUE_COUNTER.incrementAndGet();
     if (Patches.APPLE_BUG_ID_10514018) {
       frame.addWindowListener(new WindowAdapter() {
@@ -147,39 +191,12 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
         FullScreenUtilities.addFullScreenListenerTo(frame, new FullScreenAdapter() {
           @Override
           public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
-            myInFullScreen = true;
-            frame.storeFullScreenStateIfNeeded(true);
-
-            JRootPane rootPane = frame.getRootPane();
-            if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, Boolean.TRUE);
-            if (Patches.APPLE_BUG_ID_10207064) {
-              // fix problem with bottom empty bar
-              // it seems like the title is still visible in full screen but the window itself shifted up for title bar height
-              // and the size of the frame is still calculated to be the height of the screen which is wrong
-              // so just add these title bar height to the frame height once again
-              Timer timer = new Timer(300, new ActionListener() {
-                @Override
-                public void actionPerformed(ActionEvent e) {
-                  SwingUtilities.invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                      frame.setSize(frame.getWidth(), frame.getHeight() + frame.getInsets().top);
-                    }
-                  });
-                }
-              });
-              timer.setRepeats(false);
-              timer.start();
-            }
+            LOG.assertTrue(SystemInfo.isMac, "For mac we set myInFullScreen in the windowWillEnterFullScreenCallBack methods");
           }
 
           @Override
           public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
-            myInFullScreen = false;
-            frame.storeFullScreenStateIfNeeded(false);
-
-            JRootPane rootPane = frame.getRootPane();
-            if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
+            LOG.assertTrue(SystemInfo.isMac, "For mac we set myInFullScreen in the windowWillExitFullScreenCallBack methods");
           }
         });
       } else {
