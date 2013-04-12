@@ -689,9 +689,14 @@ public abstract class InplaceRefactoring {
 
   private boolean checkRangeContainsOffset(int offset, final TextRange textRange, PsiElement element) {
     int startOffset = element.getTextRange().getStartOffset();
-    final PsiLanguageInjectionHost injectionHost = InjectedLanguageManager.getInstance(myProject).getInjectionHost(element);
+    final InjectedLanguageManager injectedLanguageManager = InjectedLanguageManager.getInstance(myProject);
+    final PsiLanguageInjectionHost injectionHost = injectedLanguageManager.getInjectionHost(element);
     if (injectionHost != null) {
-      startOffset += injectionHost.getTextOffset();
+      final PsiElement nameIdentifier = getNameIdentifier();
+      final PsiLanguageInjectionHost initialInjectedHost = nameIdentifier != null ? injectedLanguageManager.getInjectionHost(nameIdentifier) : null;
+      if (initialInjectedHost != null && initialInjectedHost != injectionHost) {
+        return false;
+      }
     }
     return textRange.shiftRight(startOffset).containsOffset(offset);
   }
