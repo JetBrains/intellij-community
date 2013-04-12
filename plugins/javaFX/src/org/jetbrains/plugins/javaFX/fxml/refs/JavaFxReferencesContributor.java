@@ -50,6 +50,11 @@ public class JavaFxReferencesContributor extends PsiReferenceContributor {
 
   public static PsiExpression getParentElement(PsiLiteralExpression context) {
     PsiMethodCallExpression methodCallExpression = PsiTreeUtil.getParentOfType(context, PsiMethodCallExpression.class);
+    final Object value = context.getValue();
+    if (value instanceof String && ((String)value).endsWith(".bss")) {
+      final PsiExpressionList addArgumentsList = PsiTreeUtil.getParentOfType(methodCallExpression, PsiExpressionList.class);
+      methodCallExpression = PsiTreeUtil.getParentOfType(addArgumentsList, PsiMethodCallExpression.class);
+    }
     if (methodCallExpression != null) {
       final PsiMethod psiMethod = methodCallExpression.resolveMethod();
       if (psiMethod != null && "add".equals(psiMethod.getName())) {
