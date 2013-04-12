@@ -109,7 +109,9 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     myGenerateAccessors = generateAccessors;
     this.enumConstants = new ArrayList<PsiField>();
     for (MemberInfo constant : enumConstants) {
-      this.enumConstants.add((PsiField)constant.getMember());
+      if (constant.isChecked()) {
+        this.enumConstants.add((PsiField)constant.getMember());
+      }
     }
     this.fields = new ArrayList<PsiField>(fields);
     this.methods = new ArrayList<PsiMethod>(methods);
@@ -139,7 +141,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
         result.setResult(buildClass());
       }
     }.execute().getResultObject();
-    myExtractEnumProcessor = new ExtractEnumProcessor(myProject, this.enumConstants, fields, myClass);
+    myExtractEnumProcessor = new ExtractEnumProcessor(myProject, this.enumConstants, myClass);
   }
 
   public PsiClass getCreatedClass() {
@@ -149,7 +151,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
   @Override
   protected boolean preprocessUsages(final Ref<UsageInfo[]> refUsages) {
     final MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
-    myExtractEnumProcessor.findEnumConstantConflicts(refUsages, conflicts);
+    myExtractEnumProcessor.findEnumConstantConflicts(refUsages);
     if (!DestinationFolderComboBox.isAccessible(myProject, sourceClass.getContainingFile().getVirtualFile(),
                                                 myClass.getContainingFile().getContainingDirectory().getVirtualFile())) {
       conflicts.putValue(sourceClass, "Extracted class won't be accessible in " + RefactoringUIUtil.getDescription(sourceClass, true));

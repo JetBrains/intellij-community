@@ -378,7 +378,7 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
       final PsiMember member = info.getMember();
       if (isConstantField(member)) {
         if (enumConstants.isEmpty() || ((PsiField)enumConstants.get(0).getMember()).getType().equals(((PsiField)member).getType())) {
-          enumConstants.add(info);
+          if (!enumConstants.contains(info)) enumConstants.add(info);
           info.setToAbstract(true);
         }
       }
@@ -407,7 +407,9 @@ class ExtractClassDialog extends RefactoringDialog implements MemberInfoChangeLi
     if (extractAsEnum.isVisible()) {
       for (Object info : memberInfoChange.getChangedMembers()) {
         if (((MemberInfo)info).isToAbstract()) {
-          enumConstants.add((MemberInfo)info);
+          if (!enumConstants.contains(info)) {
+            enumConstants.add((MemberInfo)info);
+          }
         }
         else {
           enumConstants.remove((MemberInfo)info);
