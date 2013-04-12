@@ -913,7 +913,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private List<PyTargetExpression> collectInstanceAttributes() {
     Map<String, PyTargetExpression> result = new HashMap<String, PyTargetExpression>();
 
-    // __init__ takes priority over all other methods
+    collectAttributesInNew(result);
     PyFunctionImpl initMethod = (PyFunctionImpl)findMethodByName(PyNames.INIT, false);
     if (initMethod != null) {
       collectInstanceAttributes(initMethod, result);
@@ -929,39 +929,49 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return new ArrayList<PyTargetExpression>(expressions);
   }
 
+  private void collectAttributesInNew(@NotNull final Map<String, PyTargetExpression> result) {
+    final PyFunction newMethod = findMethodByName(PyNames.NEW, false);
+    if (newMethod != null) {
+      for (PyTargetExpression target : getTargetExpressions(newMethod)) {
+        result.put(target.getName(), target);
+      }
+    }
+  }
+
   public static void collectInstanceAttributes(@NotNull PyFunction method, @NotNull final Map<String, PyTargetExpression> result) {
     final PyParameter[] params = method.getParameterList().getParameters();
     if (params.length == 0) {
       return;
     }
     final PyFunctionStub methodStub = method.getStub();
-    if (methodStub != null) {
-      final PyTargetExpression[] targets = methodStub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY);
-      for (PyTargetExpression target : targets) {
-        if (!result.containsKey(target.getName())) {
-          result.put(target.getName(), target);
-        }
-      }
-    }
-    else {
-      final PyStatementList statementList = method.getStatementList();
-      if (statementList != null) {
-        statementList.accept(new PyRecursiveElementVisitor() {
-          public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
-            super.visitPyAssignmentStatement(node);
-            collectNewTargets(result, node);
-          }
-        });
+    for (PyTargetExpression target : getTargetExpressions(method)) {
+      if (methodStub != null || PyUtil.isInstanceAttribute(target)) {
+        result.put(target.getName(), target);
       }
     }
   }
 
-  private static void collectNewTargets(Map<String, PyTargetExpression> collected, PyAssignmentStatement node) {
-    final PyExpression[] targets = node.getTargets();
-    for (PyExpression target : targets) {
-      if (target instanceof PyTargetExpression && PyUtil.isInstanceAttribute(target)) {
-        collected.put(target.getName(), (PyTargetExpression)target);
+  @NotNull
+  private static List<PyTargetExpression> getTargetExpressions(@NotNull PyFunction function) {
+    final PyFunctionStub stub = function.getStub();
+    if (stub != null) {
+      return Arrays.asList(stub.getChildrenByType(PyElementTypes.TARGET_EXPRESSION, PyTargetExpression.EMPTY_ARRAY));
+    }
+    else {
+      final PyStatementList statementList = function.getStatementList();
+      final List<PyTargetExpression> result = new ArrayList<PyTargetExpression>();
+      if (statementList != null) {
+        statementList.accept(new PyRecursiveElementVisitor() {
+          public void visitPyAssignmentStatement(final PyAssignmentStatement node) {
+            for (PyExpression expression : node.getTargets()) {
+              if (expression instanceof PyTargetExpression) {
+                result.add((PyTargetExpression)expression);
+              }
+            }
+          }
+        });
       }
+      return result;
     }
   }
 

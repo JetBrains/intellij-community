@@ -167,7 +167,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
           if (containingClass != null) {
             PyType initType = null;
             final PyFunction init = containingClass.findInitOrNew(true);
-            if (init != null) {
+            if (init != null && init != func) {
               initType = init.getReturnType(context, null);
               if (init.getContainingClass() != containingClass) {
                 if (initType instanceof PyCollectionType) {
@@ -182,7 +182,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
                 initType = stdlib.getConstructorType(containingClass);
               }
             }
-            if (initType != null && !(initType instanceof PyNoneType)) {
+            if (initType != null && !(initType instanceof PyNoneType || initType instanceof PyReturnTypeReference)) {
               return initType;
             }
             return new PyClassTypeImpl(containingClass, modifier == PyFunction.Modifier.CLASSMETHOD);
