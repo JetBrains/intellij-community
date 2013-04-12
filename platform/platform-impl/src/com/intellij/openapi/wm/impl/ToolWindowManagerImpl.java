@@ -116,6 +116,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
   @NonNls private static final String WIDTH_ATTR = "width";
   @NonNls private static final String HEIGHT_ATTR = "height";
   @NonNls private static final String EXTENDED_STATE_ATTR = "extended-state";
+  @NonNls private static final String LAYOUT_TO_RESTORE = "layout-to-restore";
 
   private final FileEditorManager myFileEditorManager;
   private final LafManager myLafManager;
@@ -1876,6 +1877,10 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       else if (DesktopLayout.TAG.equals(e.getName())) { // read layout of tool windows
         myLayout.readExternal(e);
       }
+      else if (LAYOUT_TO_RESTORE.equals(e.getName())) {
+        myLayoutToRestoreLater = new DesktopLayout();
+        myLayoutToRestoreLater.readExternal(e);
+      }
     }
   }
 
@@ -1914,6 +1919,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
     final Element layoutElement = new Element(DesktopLayout.TAG);
     element.addContent(layoutElement);
     myLayout.writeExternal(layoutElement);
+    if (myLayoutToRestoreLater != null) {
+      Element layoutToRestoreElement = new Element(LAYOUT_TO_RESTORE);
+      element.addContent(layoutToRestoreElement);
+      myLayoutToRestoreLater.writeExternal(layoutToRestoreElement);
+    }
   }
 
   public void setDefaultState(@NotNull final ToolWindowImpl toolWindow,
