@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -60,7 +60,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.arithme
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunConfiguration;
 import org.jetbrains.plugins.groovy.runner.GroovyScriptRunner;
-import org.jetbrains.plugins.groovy.util.GroovyUtils;
 
 import javax.swing.*;
 import java.io.File;
@@ -219,7 +218,7 @@ public class GradleScriptType extends GroovyScriptType {
 
         params.setMainClass(findMainClass(gradleHome, script, project));
 
-        final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(gradleHome.getPath() + "/lib/", GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
+        final File[] groovyJars = GroovyConfigUtils.getGroovyAllJars(gradleHome.getPath() + "/lib/");
         if (groovyJars.length > 0) {
           params.getClassPath().add(groovyJars[0].getAbsolutePath());
         } else if (module != null) {
