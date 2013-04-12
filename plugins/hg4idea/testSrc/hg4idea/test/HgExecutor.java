@@ -19,6 +19,7 @@ import com.intellij.dvcs.test.Executor;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
 import java.util.Arrays;
@@ -31,7 +32,7 @@ public class HgExecutor extends Executor {
 
   private static final String HG_EXECUTABLE_ENV = "IDEA_TEST_HG_EXECUTABLE";
 
-  private static final String HG_EXECUTABLE = doFindExecutable();
+  @NotNull private static final String HG_EXECUTABLE = doFindExecutable();
 
   private static String doFindExecutable() {
     final String programName = "hg";
@@ -70,4 +71,8 @@ public class HgExecutor extends Executor {
     return run(split);
   }
 
+  @NotNull
+  public static String getHgExecutable() {
+    return HG_EXECUTABLE;
+  }
 }

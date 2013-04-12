@@ -79,6 +79,9 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     hg("version");
 
     createRepository(myProjectRoot);
+    HgVcs hgVcs = HgVcs.getInstance(myProject);
+    assertNotNull(hgVcs);
+    hgVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
     myRepository = myProjectRoot;
     setUpHgrc(myRepository);
 
