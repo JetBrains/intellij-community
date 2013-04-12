@@ -37,8 +37,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.WindowAdapter;
 import java.awt.event.WindowEvent;
-import java.lang.reflect.InvocationTargetException;
-import java.lang.reflect.Method;
 import java.util.concurrent.atomic.AtomicInteger;
 
 import static com.intellij.ui.mac.foundation.Foundation.invoke;
@@ -245,35 +243,12 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
     if (myInFullScreen != state) {
       final ID window = MacUtil.findWindowForTitle(myFrame.getTitle());
       if (window == null) return;
-      if (SystemInfo.isJavaVersionAtLeast("1.7")) {
-        requestToggleFullScreen(myFrame);
-      } else {
-        invoke(window, "toggleFullScreen:", window);
-      }
+      Foundation.executeOnMainThread(new Runnable() {
+        @Override
+        public void run() {
+          invoke(window, "toggleFullScreen:", window);
+        }
+      }, true, true);
     }
   }
-
-  private static void requestToggleFullScreen(final Window window) {
-    LOG.assertTrue(SystemInfo.isJavaVersionAtLeast("1.7"));
-    try {
-      //Load Application class from the jdk not from our eawtstub.jar
-      Class<?> applicationClass = window.getClass().getClassLoader().loadClass("com.apple.eawt.Application");
-      Method requestToggleFullScreenMethod = applicationClass.getDeclaredMethod("requestToggleFullScreen", Window.class);
-      Object theApplicationInstance = applicationClass.getDeclaredMethod("getApplication").invoke(null);
-      requestToggleFullScreenMethod.invoke(theApplicationInstance, window);
-    }
-    catch (ClassNotFoundException e) {
-      LOG.warn("Looks like the com.apple.eawt.Application class does not exist anymore");
-    }
-    catch (NoSuchMethodException e) {
-      LOG.warn("Looks like the com.apple.eawt.Application.requestToggleFullScreen class is removed");
-    }
-    catch (InvocationTargetException e) {
-      LOG.warn("com.apple.eawt.Application method invocation has failed");
-    }
-    catch (IllegalAccessException e) {
-      LOG.warn("com.apple.eawt.Application method invocation has failed");
-    }
-  }
-
 }
