@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,8 @@ import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.ui.DialogWrapper;
+import com.intellij.ui.ColorUtil;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.TableUtil;
 import com.intellij.util.ui.UIUtil;
 
@@ -69,7 +71,12 @@ public abstract class AbstractUpdateDialog extends DialogWrapper {
       pluginsPanel.add(foundPluginsPanel, BorderLayout.CENTER);
     }
     updateLinkPane.setBackground(UIUtil.getPanelBackground());
-    updateLinkPane.setText(IdeBundle.message("updates.configure.label", UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())));
+    String css = UIUtil.getCssFontDeclaration(UIUtil.getLabelFont());
+    if (UIUtil.isUnderDarcula()) {
+      css += "<style>body {background: #" + ColorUtil.toHex(UIUtil.getPanelBackground()) + ";}</style>";
+    }
+    updateLinkPane.setBorder(IdeBorderFactory.createEmptyBorder(0));
+    updateLinkPane.setText(IdeBundle.message("updates.configure.label", css));
     updateLinkPane.setEditable(false);
     LabelTextReplacingUtil.replaceText(panel);
 
