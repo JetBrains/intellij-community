@@ -44,21 +44,24 @@ import static org.jboss.netty.handler.codec.http.HttpResponseStatus.OK;
 import static org.jboss.netty.handler.codec.http.HttpVersion.HTTP_1_1;
 
 public final class Responses {
-  @SuppressWarnings("SpellCheckingInspection")
-  public static final DateFormat DATE_FORMAT = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+  static final ThreadLocal<DateFormat> DATE_FORMAT = new ThreadLocal<DateFormat>() {
+    @Override
+    protected DateFormat initialValue() {
+      //noinspection SpellCheckingInspection
+      SimpleDateFormat format = new SimpleDateFormat("EEE, dd MMM yyyy HH:mm:ss zzz", Locale.US);
+      format.setTimeZone(TimeZone.getTimeZone("GMT"));
+      return format;
+    }
+  };
 
   private static String SERVER_HEADER_VALUE;
-
-  static {
-    DATE_FORMAT.setTimeZone(TimeZone.getTimeZone("GMT"));
-  }
 
   public static void addDate(HttpResponse response) {
     addDate(response, Calendar.getInstance().getTime());
   }
 
   public static void addDate(HttpResponse response, Date date) {
-    response.setHeader(DATE, DATE_FORMAT.format(date));
+    response.setHeader(DATE, DATE_FORMAT.get().format(date));
   }
 
   public static void addServer(HttpResponse response) {
