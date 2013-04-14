@@ -32,6 +32,7 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.io.File;
+import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
@@ -2252,5 +2253,45 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     importProject();
 
     assertModuleLibDeps("m", "Maven: asm:asm-attrs:2.2.1", "Maven: asm:asm:2.2.1");
+  }
+
+  public void testDependencyToIgnoredProject() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>2</version>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    VirtualFile m2 = createModulePom("m2", "<groupId>test</groupId>" +
+                                           "<artifactId>m2</artifactId>" +
+                                           "<version>2</version>");
+
+    importProject();
+
+    assertModules("project", "m1", "m2");
+    assertModuleModuleDeps("m1", "m2");
+
+    myProjectsManager.setIgnoredFilesPaths(Collections.singletonList(m2.getPath()));
+    myProjectsManager.forceUpdateProjects(myProjectsManager.getProjects());
+    importProject();
+
+    assertModules("project", "m1");
+    assertModuleLibDeps("m1", "Maven: test:m2:2");
   }
 }

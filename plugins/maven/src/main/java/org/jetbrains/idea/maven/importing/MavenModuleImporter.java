@@ -157,7 +157,7 @@ public class MavenModuleImporter {
       else {
         MavenProject depProject = myMavenTree.findProject(artifact.getMavenId());
 
-        if (depProject != null) {
+        if (depProject != null && !myMavenTree.isIgnored(depProject)) {
           if (depProject == myMavenProject) continue;
           boolean isTestJar = MavenConstants.TYPE_TEST_JAR.equals(artifact.getType()) || "tests".equals(artifact.getClassifier());
           myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), scope, isTestJar);
