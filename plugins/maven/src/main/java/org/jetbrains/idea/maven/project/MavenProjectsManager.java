@@ -534,6 +534,12 @@ public class MavenProjectsManager extends MavenSimpleProjectComponent
   }
 
   @NotNull
+  public List<MavenProject> getRootProjects() {
+    if (!isInitialized()) return Collections.emptyList();
+    return myProjectsTree.getRootProjects();
+  }
+
+  @NotNull
   public List<MavenProject> getNonIgnoredProjects() {
     if (!isInitialized()) return Collections.emptyList();
     return myProjectsTree.getNonIgnoredProjects();
