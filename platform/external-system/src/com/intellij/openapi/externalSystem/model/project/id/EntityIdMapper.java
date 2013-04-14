@@ -1,6 +1,6 @@
 package com.intellij.openapi.externalSystem.model.project.id;
 
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.service.project.ModuleAwareContentRoot;
@@ -59,10 +59,10 @@ public class EntityIdMapper {
     throws IllegalArgumentException
   {
     final Ref<ProjectEntityId> result = new Ref<ProjectEntityId>();
-    if (entity instanceof DataHolder) {
-      Object data = ((DataHolder)entity).getData();
+    if (entity instanceof DataNode) {
+      Object data = ((DataNode)entity).getData();
       if (data instanceof ProjectEntityData) {
-        return (T)((ProjectEntityData)data).getId((DataHolder<T>)entity);
+        return (T)((ProjectEntityData)data).getId((DataNode<T>)entity);
       }
     }
 

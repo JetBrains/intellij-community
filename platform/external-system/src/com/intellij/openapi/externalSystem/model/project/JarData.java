@@ -1,6 +1,6 @@
 package com.intellij.openapi.externalSystem.model.project;
 
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.id.JarId;
 import com.intellij.openapi.externalSystem.model.project.id.LibraryId;
@@ -40,7 +40,7 @@ public class JarData extends AbstractNamedData {
 
   @NotNull
   @Override
-  public ProjectEntityId getId(@Nullable DataHolder<?> dataHolder) {
+  public ProjectEntityId getId(@Nullable DataNode<?> dataNode) {
     return getId();
   }
 

@@ -15,34 +15,34 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys;
 import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 
 /**
- * Defines common contract for a strategy which is able to manage project data defines in terms of 'external systems' sub-system.
- * <p/>
- * Implementations of this interface are expected to be thread-safe.
- * 
  * @author Denis Zhdanov
- * @since 4/12/13 3:59 PM
- * @param <T>  target project data type
+ * @since 4/14/13 11:04 PM
  */
-public interface ProjectDataManager<T> {
+public class ModuleDataManager implements ProjectDataManager<ModuleData> {
 
-  ExtensionPointName<ProjectDataManager<?>> EP_NAME = ExtensionPointName.create("EXTERNAL_SYSTEM_PROJECT_DATA_MANAGER");
-
-  /**
-   * @return key of project data supported by the current manager
-   */
   @NotNull
-  Key<T> getTargetDataKey();
+  @Override
+  public Key<ModuleData> getTargetDataKey() {
+    return ExternalSystemProjectKeys.MODULE;
+  }
 
-  void importData(@NotNull Collection<DataNode<T>> toImport, @NotNull Project project, boolean synchronous);
+  @Override
+  public void importData(@NotNull Collection<DataNode<ModuleData>> toImport, @NotNull Project project, boolean synchronous) {
+    // TODO den implement 
+  }
 
-  void removeData(@NotNull Collection<DataNode<T>> toRemove, @NotNull Project project, boolean synchronous);
+  @Override
+  public void removeData(@NotNull Collection<DataNode<ModuleData>> toRemove, @NotNull Project project, boolean synchronous) {
+    // TODO den implement 
+  }
 }

@@ -1,6 +1,6 @@
 package com.intellij.openapi.externalSystem.service.project.change;
 
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
@@ -35,7 +35,7 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
   private final Set<ExternalProjectStructureChangeListener> myListeners = new ConcurrentHashSet<ExternalProjectStructureChangeListener>();
 
   private final ConcurrentMap<IntegrationKey, Set<ExternalProjectStructureChange>> myChanges          = ContainerUtil.newConcurrentMap();
-  private final ConcurrentMap<IntegrationKey, DataHolder<ProjectData>>             myExternalProjects = ContainerUtil.newConcurrentMap();
+  private final ConcurrentMap<IntegrationKey, DataNode<ProjectData>>               myExternalProjects = ContainerUtil.newConcurrentMap();
 
   private final Collection<ExternalProjectStructureChangesPreProcessor>  myCommonPreProcessors  = ContainerUtilRt.createEmptyCOWList();
   private final Collection<ExternalProjectStructureChangesPostProcessor> myCommonPostProcessors = ContainerUtilRt.createEmptyCOWList();
@@ -88,8 +88,8 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
    * @param onIdeProjectStructureChange  a flag which identifies if current update is triggered by ide project structure
    *                                     change (an alternative is a manual project structure changes refresh implied by a user)
    */
-  public void update(@NotNull DataHolder<ProjectData> externalProject, @NotNull Project ideProject, boolean onIdeProjectStructureChange) {
-    DataHolder<ProjectData> externalProjectToUse = externalProject;
+  public void update(@NotNull DataNode<ProjectData> externalProject, @NotNull Project ideProject, boolean onIdeProjectStructureChange) {
+    DataNode<ProjectData> externalProjectToUse = externalProject;
     // TODO den uncomment
 //    for (ExternalProjectStructureChangesPreProcessor preProcessor : myCommonPreProcessors) {
 //      externalProjectToUse = preProcessor.preProcess(externalProjectToUse, ideProject);
@@ -140,8 +140,8 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
    */
   @SuppressWarnings("unchecked")
   @Nullable
-  public DataHolder<ProjectData> getExternalProject(@NotNull ProjectSystemId id, @NotNull Project ideProject) {
-    DataHolder<ProjectData> result = myExternalProjects.get(new IntegrationKey(ideProject, id));
+  public DataNode<ProjectData> getExternalProject(@NotNull ProjectSystemId id, @NotNull Project ideProject) {
+    DataNode<ProjectData> result = myExternalProjects.get(new IntegrationKey(ideProject, id));
     if (result == null) {
       return null;
     }
@@ -172,7 +172,7 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
   }
 
   @NotNull
-  public ExternalProjectChangesCalculationContext getCurrentChangesContext(@NotNull DataHolder<ProjectData> externalProject,
+  public ExternalProjectChangesCalculationContext getCurrentChangesContext(@NotNull DataNode<ProjectData> externalProject,
                                                                            @NotNull Project ideProject,
                                                                            boolean onIdeProjectStructureChange)
   {

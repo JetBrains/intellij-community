@@ -1,6 +1,6 @@
 package com.intellij.openapi.externalSystem.model.project;
 
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
 import com.intellij.openapi.externalSystem.model.project.id.ProjectId;
@@ -29,7 +29,7 @@ public class ProjectData extends AbstractNamedData {
 
   @NotNull
   @Override
-  public ProjectEntityId getId(@Nullable DataHolder<?> dataHolder) {
+  public ProjectEntityId getId(@Nullable DataNode<?> dataNode) {
     return new ProjectId(getOwner());
   }
 

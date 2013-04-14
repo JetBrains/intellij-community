@@ -1,7 +1,7 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -47,17 +47,18 @@ public class ContentRootDataManager implements ProjectDataManager<ContentRootDat
   }
 
   @Override
-  public void importData(@NotNull final Collection<DataHolder<ContentRootData>> datas,
+  public void importData(@NotNull final Collection<DataNode<ContentRootData>> toImport,
                          @NotNull final Project project,
                          boolean synchronous)
   {
-    if (datas.isEmpty()) {
+    if (toImport.isEmpty()) {
       return;
     }
 
-    Map<ModuleData,Collection<DataHolder<ContentRootData>>> byModule = ExternalSystemUtil.groupBy(datas, ExternalSystemProjectKeys.MODULE);
-    for (Map.Entry<ModuleData, Collection<DataHolder<ContentRootData>>> entry : byModule.entrySet()) {
-      final Module module = myProjectStructureHelper.findIdeModule(entry.getKey(), project);
+    Map<DataNode<ModuleData>,Collection<DataNode<ContentRootData>>> byModule
+      = ExternalSystemUtil.groupBy(toImport, ExternalSystemProjectKeys.MODULE);
+    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
+      final Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
       if (module == null) {
         LOG.warn(String.format(
           "Can't import content roots. Reason: target module (%s) is not found at the ide. Content roots: %s",
@@ -65,11 +66,11 @@ public class ContentRootDataManager implements ProjectDataManager<ContentRootDat
         ));
         continue;
       }
-      importData(entry.getValue(), entry.getKey().getOwner(), project, module, synchronous);
+      importData(entry.getValue(), entry.getKey().getData().getOwner(), project, module, synchronous);
     }
   }
 
-  private static void importData(@NotNull final Collection<DataHolder<ContentRootData>> datas,
+  private static void importData(@NotNull final Collection<DataNode<ContentRootData>> datas,
                                  @NotNull ProjectSystemId owner,
                                  @NotNull Project project,
                                  @NotNull final Module module,
@@ -81,17 +82,30 @@ public class ContentRootDataManager implements ProjectDataManager<ContentRootDat
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
         final ModifiableRootModel model = moduleRootManager.getModifiableModel();
         try {
-          for (DataHolder<ContentRootData> data : datas) {
+          for (DataNode<ContentRootData> data : datas) {
             ContentRootData contentRoot = data.getData();
             ContentEntry contentEntry = model.addContentEntry(toVfsUrl(contentRoot.getRootPath()));
+            LOG.info(String.format("Importing content root '%s' for module '%s'", contentRoot.getRootPath(), module.getName()));
             for (String path : contentRoot.getPaths(ExternalSystemSourceType.SOURCE)) {
               contentEntry.addSourceFolder(toVfsUrl(path), false);
+              LOG.info(String.format(
+                "Importing source root '%s' for content root '%s' of module '%s'",
+                path, contentRoot.getRootPath(), module.getName()
+              ));
             }
             for (String path : contentRoot.getPaths(ExternalSystemSourceType.TEST)) {
               contentEntry.addSourceFolder(toVfsUrl(path), true);
+              LOG.info(String.format(
+                "Importing test root '%s' for content root '%s' of module '%s'",
+                path, contentRoot.getRootPath(), module.getName()
+              ));
             }
             for (String path : contentRoot.getPaths(ExternalSystemSourceType.EXCLUDED)) {
               contentEntry.addExcludeFolder(toVfsUrl(path));
+              LOG.info(String.format(
+                "Importing excluded root '%s' for content root '%s' of module '%s'",
+                path, contentRoot.getRootPath(), module.getName()
+              ));
             }
           }
         }
@@ -103,13 +117,14 @@ public class ContentRootDataManager implements ProjectDataManager<ContentRootDat
   }
   
   @Override
-  public void removeData(@NotNull Collection<DataHolder<ContentRootData>> datas, @NotNull Project project, boolean synchronous) {
-    if (datas.isEmpty()) {
+  public void removeData(@NotNull Collection<DataNode<ContentRootData>> toRemove, @NotNull Project project, boolean synchronous) {
+    if (toRemove.isEmpty()) {
       return;
     }
-    Map<ModuleData,Collection<DataHolder<ContentRootData>>> byModule = ExternalSystemUtil.groupBy(datas, ExternalSystemProjectKeys.MODULE);
-    for (Map.Entry<ModuleData, Collection<DataHolder<ContentRootData>>> entry : byModule.entrySet()) {
-      final Module module = myProjectStructureHelper.findIdeModule(entry.getKey(), project);
+    Map<DataNode<ModuleData>,Collection<DataNode<ContentRootData>>> byModule
+      = ExternalSystemUtil.groupBy(toRemove, ExternalSystemProjectKeys.MODULE);
+    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
+      final Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
       if (module == null) {
         LOG.warn(String.format(
           "Can't import content roots. Reason: target module (%s) is not found at the ide. Content roots: %s",
@@ -118,7 +133,7 @@ public class ContentRootDataManager implements ProjectDataManager<ContentRootDat
         continue;
       }
       List<ModuleAwareContentRoot> contentRoots = ContainerUtilRt.newArrayList();
-      for (DataHolder<ContentRootData> holder : entry.getValue()) {
+      for (DataNode<ContentRootData> holder : entry.getValue()) {
         ModuleAwareContentRoot contentRoot = myProjectStructureHelper.findIdeContentRoot(holder.getData().getId(holder), project);
         if (contentRoot != null) {
           contentRoots.add(contentRoot);
@@ -140,6 +155,7 @@ public class ContentRootDataManager implements ProjectDataManager<ContentRootDat
           ModifiableRootModel model = moduleRootManager.getModifiableModel();
           try {
             model.removeContentEntry(contentRoot);
+            LOG.info(String.format("Removing content root '%s' from module %s", contentRoot.getUrl(), contentRoot.getModule().getName()));
           }
           finally {
             model.commit();

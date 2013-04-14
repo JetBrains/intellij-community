@@ -1,8 +1,9 @@
 package org.jetbrains.plugins.gradle.remote.impl;
 
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -60,10 +61,13 @@ public class GradleLibraryNamesMixer {
    * @param libraries  libraries to process
    */
   @SuppressWarnings("MethodMayBeStatic")
-  public void mixNames(@NotNull Iterable<DataHolder<LibraryData>> libraries) {
-    Map<String, Wrapped> names = new HashMap<String, Wrapped>();
-    List<Wrapped> data = new ArrayList<Wrapped>();
-    for (DataHolder<LibraryData> library : libraries) {
+  public void mixNames(@NotNull Collection<DataNode<LibraryData>> libraries) {
+    if (libraries.isEmpty()) {
+      return;
+    }
+    Map<String, Wrapped> names = ContainerUtilRt.newHashMap();
+    List<Wrapped> data = ContainerUtilRt.newArrayList();
+    for (DataNode<LibraryData> library : libraries) {
       Wrapped wrapped = new Wrapped(library.getData());
       data.add(wrapped);
     }
@@ -74,7 +78,7 @@ public class GradleLibraryNamesMixer {
   }
 
   /**
-   * Does the same as {@link #mixNames(Iterable)} but uses given <code>('library name; wrapped library'}</code> mappings cache.
+   * Does the same as {@link #mixNames(Collection)} but uses given <code>('library name; wrapped library'}</code> mappings cache.
    * 
    * @param libraries  libraries to process
    * @param cache      cache to use

@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.remote;
 
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -41,10 +41,10 @@ public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExe
     = new RemoteExternalSystemProjectResolver<ExternalSystemExecutionSettings>() {
     @Nullable
     @Override
-    public DataHolder<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
-                                                      @NotNull String projectPath,
-                                                      boolean downloadLibraries,
-                                                      @Nullable ExternalSystemExecutionSettings settings)
+    public DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
+                                                    @NotNull String projectPath,
+                                                    boolean downloadLibraries,
+                                                    @Nullable ExternalSystemExecutionSettings settings)
       throws ExternalSystemException, IllegalArgumentException, IllegalStateException
     {
       return null;
@@ -72,9 +72,9 @@ public interface RemoteExternalSystemProjectResolver<S extends ExternalSystemExe
 
 
   @Nullable
-  DataHolder<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
-                                             @NotNull String projectPath,
-                                             boolean downloadLibraries,
-                                             @Nullable S settings)
+  DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
+                                           @NotNull String projectPath,
+                                           boolean downloadLibraries,
+                                           @Nullable S settings)
     throws RemoteException, ExternalSystemException, IllegalArgumentException, IllegalStateException;
 }

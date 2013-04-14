@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.model.project;
 
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.id.CompositeLibraryDependencyId;
 import com.intellij.openapi.externalSystem.model.project.id.LibraryDependencyId;
@@ -42,7 +42,7 @@ public class CompositeLibraryDependencyData extends AbstractCompositeData<Librar
 
   @NotNull
   @Override
-  public ProjectEntityId getId(@Nullable DataHolder<?> dataHolder) {
+  public ProjectEntityId getId(@Nullable DataNode<?> dataNode) {
     Library library = getIdeEntity().getLibrary();
     assert library != null;
     return new CompositeLibraryDependencyId(

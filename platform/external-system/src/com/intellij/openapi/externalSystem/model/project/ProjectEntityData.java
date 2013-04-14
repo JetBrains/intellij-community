@@ -1,6 +1,6 @@
 package com.intellij.openapi.externalSystem.model.project;
 
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
 import org.jetbrains.annotations.NotNull;
@@ -29,11 +29,11 @@ public interface ProjectEntityData extends Serializable {
   /**
    * Allows to map current data to its id.
    * 
-   * @param dataHolder  data holder which holds current data (if any)
+   * @param dataNode  data holder which holds current data (if any)
    * @return            current data id
    */
   @NotNull
-  ProjectEntityId getId(@Nullable DataHolder<?> dataHolder);
+  ProjectEntityId getId(@Nullable DataNode<?> dataNode);
   
   /**
    * Follows contract of {@link PropertyChangeSupport#addPropertyChangeListener(PropertyChangeListener)}  

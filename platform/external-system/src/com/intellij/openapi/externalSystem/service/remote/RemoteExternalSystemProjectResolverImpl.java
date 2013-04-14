@@ -1,6 +1,6 @@
 package com.intellij.openapi.externalSystem.service.remote;
 
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -27,16 +27,16 @@ public class RemoteExternalSystemProjectResolverImpl<S extends ExternalSystemExe
 
   @Nullable
   @Override
-  public DataHolder<ProjectData> resolveProjectInfo(@NotNull final ExternalSystemTaskId id,
+  public DataNode<ProjectData> resolveProjectInfo(@NotNull final ExternalSystemTaskId id,
                                                     @NotNull final String projectPath,
                                                     final boolean downloadLibraries,
                                                     ExternalSystemExecutionSettings settings)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException
   {
-    return execute(id, new Producer<DataHolder<ProjectData>>() {
+    return execute(id, new Producer<DataNode<ProjectData>>() {
       @Nullable
       @Override
-      public DataHolder<ProjectData> produce() {
+      public DataNode<ProjectData> produce() {
         return myDelegate.resolveProjectInfo(id, projectPath, downloadLibraries, getSettings());
       }
     });

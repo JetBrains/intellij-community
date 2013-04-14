@@ -24,7 +24,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
@@ -47,6 +47,7 @@ import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -387,23 +388,50 @@ public class ExternalSystemUtil {
   }
 
   @NotNull
-  public static <K, V> Map<K, Collection<DataHolder<V>>> groupBy(@NotNull Collection<DataHolder<V>> datas, @NotNull Key<K> key) {
-    Map<K, Collection<DataHolder<V>>> result = ContainerUtilRt.newHashMap();
-    for (DataHolder<V> data : datas) {
-      K grouper = data.getData(key);
+  public static <K, V> Map<DataNode<K>, Collection<DataNode<V>>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull Key<K> key) {
+    Map<DataNode<K>, Collection<DataNode<V>>> result = ContainerUtilRt.newHashMap();
+    for (DataNode<V> data : nodes) {
+      DataNode<K> grouper = data.getDataNode(key);
       if (grouper == null) {
         LOG.warn(String.format(
           "Skipping entry '%s' during grouping. Reason: it doesn't provide a value for key %s. Given entries: %s",
-          data, key, datas
+          data, key, nodes
         ));
         continue;
       }
-      Collection<DataHolder<V>> grouped = result.get(grouper);
+      Collection<DataNode<V>> grouped = result.get(grouper);
       if (grouped == null) {
         result.put(grouper, grouped = ContainerUtilRt.newArrayList());
       }
       grouped.add(data);
     }
     return result;
+  }
+  
+  @SuppressWarnings("unchecked")
+  @NotNull
+  public static <T> Collection<DataNode<T>> getChildren(@NotNull DataNode<?> node, @NotNull Key<T> key) {
+    Collection<DataNode<T>> result = null;
+    for (DataNode<?> child : node.getChildren()) {
+      if (!key.equals(child.getKey())) {
+        continue;
+      }
+      if (result == null) {
+        result = ContainerUtilRt.newArrayList();
+      }
+      result.add((DataNode<T>)child);
+    }
+    return result == null ? Collections.<DataNode<T>>emptyList() : result;
+  }
+
+  @SuppressWarnings("unchecked")
+  @Nullable
+  public static <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key, BooleanFunction<DataNode<T>> predicate) {
+    for (DataNode<?> child : node.getChildren()) {
+      if (key.equals(child.getKey()) && predicate.fun((DataNode<T>)child)) {
+        return (DataNode<T>)child;
+      }
+    }
+    return null;
   }
 }

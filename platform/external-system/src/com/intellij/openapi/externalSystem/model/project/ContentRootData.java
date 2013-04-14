@@ -1,6 +1,6 @@
 package com.intellij.openapi.externalSystem.model.project;
 
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.id.ContentRootId;
@@ -39,11 +39,11 @@ public class ContentRootData extends AbstractProjectEntityData {
 
   @NotNull
   @Override
-  public ContentRootId getId(@Nullable DataHolder<?> dataHolder) {
-    if (dataHolder == null) {
+  public ContentRootId getId(@Nullable DataNode<?> dataNode) {
+    if (dataNode == null) {
       throw new IllegalArgumentException(String.format("Can't build id for %s. Reason: given data holder is undefined", this));
     }
-    ModuleData moduleData = dataHolder.getData(ExternalSystemProjectKeys.MODULE);
+    ModuleData moduleData = dataNode.getData(ExternalSystemProjectKeys.MODULE);
     if (moduleData == null) {
       throw new IllegalArgumentException(String.format(
         "Can't build id for %s. Reason: given data holder doesn't contain information about owner module", this

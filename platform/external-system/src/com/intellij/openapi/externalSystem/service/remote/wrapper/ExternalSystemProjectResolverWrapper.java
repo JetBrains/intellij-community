@@ -1,6 +1,6 @@
 package com.intellij.openapi.externalSystem.service.remote.wrapper;
 
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -38,7 +38,7 @@ public class ExternalSystemProjectResolverWrapper<S extends ExternalSystemExecut
 
   @Nullable
   @Override
-  public DataHolder<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
+  public DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
                                                     @NotNull String projectPath,
                                                     boolean downloadLibraries,
                                                     @Nullable S settings)

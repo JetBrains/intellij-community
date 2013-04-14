@@ -15,7 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project;
 
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
@@ -46,7 +46,7 @@ public interface ExternalSystemProjectResolver<S extends ExternalSystemExecution
    * @throws IllegalStateException    if it's not possible to resolve target project info
    */
   @Nullable
-  DataHolder<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
+  DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
                                                  @NotNull String projectPath,
                                                  boolean downloadLibraries,
                                                  @Nullable S settings)

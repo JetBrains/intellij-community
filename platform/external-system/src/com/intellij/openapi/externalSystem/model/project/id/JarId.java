@@ -1,5 +1,6 @@
 package com.intellij.openapi.externalSystem.model.project.id;
 
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.JarData;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
@@ -56,9 +57,9 @@ public class JarId extends AbstractExternalEntityId {
       return new JarData(myPath, myPathType, ideLibrary, null, ProjectSystemId.IDE);
     }
 
-    LibraryData gradleLibrary = helper.findExternalLibrary(libraryName, myPathType, myPath, getOwner(), ideProject);
+    DataNode<LibraryData> gradleLibrary = helper.findExternalLibrary(libraryName, myPathType, myPath, getOwner(), ideProject);
     if (gradleLibrary != null) {
-      return new JarData(myPath, myPathType, null, gradleLibrary, getOwner());
+      return new JarData(myPath, myPathType, null, gradleLibrary.getData(), getOwner());
     }
     return null;
   }

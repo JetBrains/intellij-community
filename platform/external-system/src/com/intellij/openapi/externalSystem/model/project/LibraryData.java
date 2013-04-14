@@ -1,6 +1,6 @@
 package com.intellij.openapi.externalSystem.model.project;
 
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.id.LibraryId;
 import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
@@ -32,7 +32,7 @@ public class LibraryData extends AbstractNamedData implements Named {
 
   @NotNull
   @Override
-  public ProjectEntityId getId(@Nullable DataHolder<?> dataHolder) {
+  public ProjectEntityId getId(@Nullable DataNode<?> dataNode) {
     return new LibraryId(getOwner(), getName());
   }
 

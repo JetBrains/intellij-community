@@ -1,6 +1,6 @@
 package com.intellij.openapi.externalSystem.model.project;
 
-import com.intellij.openapi.externalSystem.model.DataHolder;
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.id.LibraryDependencyId;
 import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
 import org.jetbrains.annotations.NotNull;
@@ -20,7 +20,7 @@ public class LibraryDependencyData extends AbstractDependencyData<LibraryData> i
 
   @NotNull
   @Override
-  public ProjectEntityId getId(@Nullable DataHolder<?> dataHolder) {
+  public ProjectEntityId getId(@Nullable DataNode<?> dataNode) {
     return new LibraryDependencyId(getOwner(), getOwnerModule().getName(), getName());
   }
 }
