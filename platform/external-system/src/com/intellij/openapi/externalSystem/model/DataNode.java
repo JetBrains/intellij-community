@@ -51,7 +51,6 @@ public class DataNode<T> implements Serializable {
     myData = data;
     myParent = parent;
   }
-
   @NotNull
   public <T> DataNode<T> createChild(@NotNull Key<T> key, @NotNull T data) {
     DataNode<T> result = new DataNode<T>(key, data, this);
@@ -71,10 +70,10 @@ public class DataNode<T> implements Serializable {
 
   /**
    * Allows to retrieve data stored for the given key at the current node or any of its parents.
-   *
+   * 
    * @param key  target data's key
    * @param <T>  target data type
-   * @return data stored for the current key and available via the current node (if any)
+   * @return     data stored for the current key and available via the current node (if any)
    */
   @SuppressWarnings("unchecked")
   @Nullable

@@ -447,6 +447,7 @@ public class ExternalSystemUtil {
   }
   
   @NotNull
+
   public static <K, V> Map<DataNode<K>, Collection<DataNode<V>>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull Key<K> key) {
     Map<DataNode<K>, Collection<DataNode<V>>> result = ContainerUtilRt.newHashMap();
     for (DataNode<V> data : nodes) {

@@ -97,6 +97,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         extension.enhanceProject(result, connection, !downloadLibraries);
       }
     }
+    Collection<DataNode<LibraryData>> libraries = ExternalSystemUtil.getChildren(result, ExternalSystemProjectKeys.LIBRARY);
+    myLibraryNamesMixer.mixNames(libraries);
     return result;
   }
 
@@ -114,6 +116,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     
     DataNode<ProjectData> result = new DataNode<ProjectData>(ProjectKeys.PROJECT, projectData, null);
     result.createChild(ProjectKeys.JAVA_PROJECT, javaProjectData);
+    DataNode<ProjectData> result = new DataNode<ProjectData>(ExternalSystemProjectKeys.PROJECT, projectData, null);
+    result.createChild(ExternalSystemProjectKeys.JAVA_PROJECT, javaProjectData);
     return result;
   }
 
@@ -145,6 +149,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         );
       }
       DataNode<ModuleData> moduleDataNode = ideProject.createChild(ProjectKeys.MODULE, ideModule);
+      DataNode<ModuleData> moduleDataNode = ideProject.createChild(ExternalSystemProjectKeys.MODULE, ideModule);
       result.put(moduleName, new Pair<DataNode<ModuleData>, IdeaModule>(moduleDataNode, gradleModule));
     }
     return result;

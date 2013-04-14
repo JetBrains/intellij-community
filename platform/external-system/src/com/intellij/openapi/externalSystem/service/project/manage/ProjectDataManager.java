@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -94,4 +95,7 @@ public class ProjectDataManager {
     }
     importData(children, project, synchronous);
   }
+  void importData(@NotNull Collection<DataNode<T>> toImport, @NotNull Project project, boolean synchronous);
+
+  void removeData(@NotNull Collection<DataNode<T>> toRemove, @NotNull Project project, boolean synchronous);
 }

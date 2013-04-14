@@ -2,6 +2,7 @@ package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.project.id.*;
@@ -21,6 +22,8 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.LIBRARY_DEPENDENCY;
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE_DEPENDENCY;
+import static com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys.LIBRARY_DEPENDENCY;
+import static com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys.MODULE_DEPENDENCY;
 
 /**
  * Thread-safe.
