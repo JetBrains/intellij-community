@@ -132,7 +132,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   public void update() {
     List<MavenProject> projects = myProjectsManager.getProjects();
-    List<MavenProject> deleted = new ArrayList<MavenProject>(myProjectToNodeMapping.keySet());
+    Set<MavenProject> deleted = new HashSet<MavenProject>(myProjectToNodeMapping.keySet());
     deleted.removeAll(projects);
     updateProjects(projects, deleted);
   }
@@ -149,7 +149,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
   }
 
-  public void updateProjects(List<MavenProject> updated, List<MavenProject> deleted) {
+  public void updateProjects(List<MavenProject> updated, Collection<MavenProject> deleted) {
     for (MavenProject each : updated) {
       ProjectNode node = findNodeFor(each);
       if (node == null) {
