@@ -156,7 +156,7 @@ public class AndroidPropertyFilesUpdater extends AbstractProjectComponent {
               }
             }
           }
-        });
+        }, myProject.getDisposed());
       }
     });
   }
