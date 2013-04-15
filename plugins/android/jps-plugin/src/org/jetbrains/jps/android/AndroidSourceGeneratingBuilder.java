@@ -1290,7 +1290,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return null;
   }
 
-  private static boolean checkUnambiguousArtifacts(CompileContext context, List<JpsArtifact> artifacts) {
+  private static boolean checkUnambiguousAndRecursiveArtifacts(CompileContext context, List<JpsArtifact> artifacts) {
+    boolean success = true;
+
     for (JpsArtifact artifact : artifacts) {
       if (artifact.getArtifactType() instanceof AndroidApplicationArtifactType) {
         final List<JpsAndroidModuleExtension> facets = AndroidJpsUtil.getAllPackagedFacets(artifact);
@@ -1299,17 +1301,31 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           context.processMessage(new CompilerMessage(
             ANDROID_VALIDATOR, BuildMessage.Kind.ERROR, "Cannot build artifact '" + artifact.getName() +
                                                         "' because it contains more than one Android package"));
-          return false;
+          success = false;
+          continue;
+        }
+        final String artifactOutputPath = artifact.getOutputPath();
+
+        if (artifactOutputPath != null && facets.size() > 0) {
+          final JpsAndroidModuleExtension facet = facets.get(0);
+          final String apkPath = AndroidFinalPackageElementBuilder.getApkPath(facet);
+
+          if (FileUtil.pathsEqual(apkPath, artifactOutputPath)) {
+            context.processMessage(new CompilerMessage(
+              ANDROID_VALIDATOR, BuildMessage.Kind.ERROR,
+              "Incorrect output path for artifact '" + artifact.getName() + "': " + FileUtil.toSystemDependentName(apkPath)));
+            success = false;
+          }
         }
       }
     }
-    return true;
+    return success;
   }
 
   private static boolean checkArtifacts(@NotNull CompileContext context) {
     final List<JpsArtifact> artifacts = AndroidJpsUtil.getAndroidArtifactsToBuild(context);
 
-    if (!checkUnambiguousArtifacts(context, artifacts)) {
+    if (!checkUnambiguousAndRecursiveArtifacts(context, artifacts)) {
       return false;
     }
 
