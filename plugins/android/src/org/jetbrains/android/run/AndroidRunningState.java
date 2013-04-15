@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.run;
 
+import com.android.SdkConstants;
 import com.android.ddmlib.*;
 import com.android.prefs.AndroidLocation;
 import com.android.sdklib.IAndroidTarget;
@@ -46,20 +47,27 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ModuleOrderEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Condition;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
+import com.intellij.util.xml.GenericAttributeValue;
 import com.intellij.xdebugger.DefaultDebugProcessHandler;
+import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.facet.AvdsNotSupportedException;
@@ -75,6 +83,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 import java.util.*;
 import java.util.regex.Matcher;
@@ -101,12 +110,12 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
   static final int NO_ERROR = -2;
   private static final int UNTYPED_ERROR = -1;
 
-  private final String myPackageName;
+  private String myPackageName;
   private String myTargetPackageName;
   private final AndroidFacet myFacet;
   private final String myCommandLine;
   private final AndroidApplicationLauncher myApplicationLauncher;
-  private final Map<AndroidFacet, String> myAdditionalFacet2PackageName;
+  private Map<AndroidFacet, String> myAdditionalFacet2PackageName;
   private final AndroidRunConfigurationBase myConfiguration;
 
   private final Object myDebugLock = new Object();
@@ -210,10 +219,110 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
+        LocalFileSystem.getInstance().refresh(false);
+
+        myPackageName = computePackageName(myFacet);
+
+        if (myPackageName == null) {
+          getProcessHandler().destroyProcess();
+          return;
+        }
+        myTargetPackageName = myPackageName;
+        final HashMap<AndroidFacet, String> depFacet2PackageName = new HashMap<AndroidFacet, String>();
+
+        if (!fillRuntimeAndTestDependencies(getModule(), depFacet2PackageName)) {
+          getProcessHandler().destroyProcess();
+          return;
+        }
+        myAdditionalFacet2PackageName = depFacet2PackageName;
         chooseTargetDeviceAndStart();
       }
     });
     return new DefaultExecutionResult(console, myProcessHandler);
+  }
+
+  @Nullable
+  private String computePackageName(final AndroidFacet facet) {
+    if (facet.getProperties().USE_CUSTOM_MANIFEST_PACKAGE) {
+      return facet.getProperties().CUSTOM_MANIFEST_PACKAGE;
+    }
+    else {
+      File manifestCopy = null;
+      final VirtualFile manifestVFile;
+      final String manifestLocalPath;
+
+      try {
+        if (facet.getProperties().USE_CUSTOM_COMPILER_MANIFEST) {
+          final Pair<File,String> pair = AndroidRunConfigurationBase.getCopyOfCompilerManifestFile(facet, getProcessHandler());
+          manifestCopy = pair != null ? pair.getFirst() : null;
+          manifestVFile = manifestCopy != null ? LocalFileSystem.getInstance().findFileByIoFile(manifestCopy) : null;
+          manifestLocalPath = pair != null ? pair.getSecond() : null;
+        }
+        else {
+          manifestVFile = AndroidRootUtil.getManifestFile(facet);
+          manifestLocalPath = manifestVFile != null ? PathUtil.getLocalPath(manifestVFile) : null;
+        }
+        final Module module = facet.getModule();
+        final String moduleName = module.getName();
+
+        if (manifestVFile == null) {
+          message("Cannot find " + SdkConstants.FN_ANDROID_MANIFEST_XML + " file for module " + moduleName, STDERR);
+          return null;
+        }
+        manifestVFile.refresh(false, false);
+
+        return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+          @Override
+          public String compute() {
+            final Manifest manifest = AndroidUtils.loadDomElement(module, manifestVFile, Manifest.class);
+
+            if (manifest == null) {
+              message("[" + moduleName + "] File " + manifestLocalPath + " is not a valid manifest file", STDERR);
+              return null;
+            }
+            final GenericAttributeValue<String> packageAttrValue = manifest.getPackage();
+            final String aPackage = packageAttrValue.getValue();
+
+            if (aPackage == null || aPackage.length() == 0) {
+              message("[" + moduleName + "] Main package is not specified in file " + manifestLocalPath, STDERR);
+              return null;
+            }
+            return aPackage;
+          }
+        });
+      }
+      finally {
+        if (manifestCopy != null) {
+          FileUtil.delete(manifestCopy.getParentFile());
+        }
+      }
+    }
+  }
+
+  private boolean fillRuntimeAndTestDependencies(@NotNull Module module,
+                                                 @NotNull Map<AndroidFacet, String> module2PackageName) {
+    for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
+      if (entry instanceof ModuleOrderEntry) {
+        ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
+        Module depModule = moduleOrderEntry.getModule();
+        if (depModule != null) {
+          AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
+          if (depFacet != null &&
+              !module2PackageName.containsKey(depFacet) &&
+              !depFacet.getProperties().LIBRARY_PROJECT) {
+            String packageName = computePackageName(depFacet);
+            if (packageName == null) {
+              return false;
+            }
+            module2PackageName.put(depFacet, packageName);
+            if (!fillRuntimeAndTestDependencies(depModule, module2PackageName)) {
+              return false;
+            }
+          }
+        }
+      }
+    }
+    return true;
   }
 
   @NotNull
@@ -302,9 +411,7 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
                              @NotNull AndroidFacet facet,
                              @Nullable TargetChooser targetChooser,
                              @NotNull String commandLine,
-                             @NotNull String packageName,
                              AndroidApplicationLauncher applicationLauncher,
-                             Map<AndroidFacet, String> additionalFacet2PackageName,
                              boolean supportMultipleDevices,
                              boolean clearLogcatBeforeStart,
                              @NotNull AndroidRunConfigurationBase configuration,
@@ -322,9 +429,6 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
       
     myEnv = environment;
     myApplicationLauncher = applicationLauncher;
-    myPackageName = packageName;
-    myTargetPackageName = packageName;
-    myAdditionalFacet2PackageName = additionalFacet2PackageName;
     myClearLogcatBeforeStart = clearLogcatBeforeStart;
     myNonDebuggableOnDevice = nonDebuggableOnDevice;
   }
