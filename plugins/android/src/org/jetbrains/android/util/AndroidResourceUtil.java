@@ -16,9 +16,9 @@
 
 package org.jetbrains.android.util;
 
+import com.android.SdkConstants;
 import com.android.resources.ResourceFolderType;
 import com.android.resources.ResourceType;
-import com.android.SdkConstants;
 import com.intellij.ide.actions.CreateElementActionBase;
 import com.intellij.ide.fileTemplates.FileTemplate;
 import com.intellij.ide.fileTemplates.FileTemplateManager;
@@ -70,7 +70,7 @@ public class AndroidResourceUtil {
   public static final Set<ResourceType> VALUE_RESOURCE_TYPES = EnumSet.of(ResourceType.DRAWABLE, ResourceType.COLOR, ResourceType.DIMEN,
                                                                           ResourceType.STRING, ResourceType.STYLE, ResourceType.ARRAY,
                                                                           ResourceType.PLURALS, ResourceType.ID, ResourceType.BOOL,
-                                                                          ResourceType.INTEGER);
+                                                                          ResourceType.INTEGER, ResourceType.FRACTION);
 
   public static final Set<ResourceType> ALL_VALUE_RESOURCE_TYPES = EnumSet.noneOf(ResourceType.class);
 
@@ -411,6 +411,8 @@ public class AndroidResourceUtil {
         return resources.addStringArray();
       case INTEGER:
         return resources.addInteger();
+      case FRACTION:
+        return resources.addFraction();
       case BOOL:
         return resources.addBool();
       case ID:
@@ -494,6 +496,9 @@ public class AndroidResourceUtil {
     }
     else if (resourceType.equals(ResourceType.INTEGER.getName())) {
       result.addAll(resources.getIntegers());
+    }
+    else if (resourceType.equals(ResourceType.FRACTION.getName())) {
+      result.addAll(resources.getFractions());
     }
     else if (resourceType.equals(ResourceType.BOOL.getName())) {
       result.addAll(resources.getBools());

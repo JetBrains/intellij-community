@@ -16,8 +16,8 @@
 
 package org.jetbrains.android.dom;
 
-import com.android.resources.ResourceType;
 import com.android.SdkConstants;
+import com.android.resources.ResourceType;
 import com.intellij.openapi.module.Module;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiReference;
@@ -98,6 +98,8 @@ public class AndroidDomUtil {
         return ResourceType.STRING.getName();
       case Integer:
         return ResourceType.INTEGER.getName();
+      case Fraction:
+        return ResourceType.FRACTION.getName();
       case Boolean:
         return ResourceType.BOOL.getName();
       default:

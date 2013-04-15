@@ -194,6 +194,9 @@ public class ResourceEditor extends PropertyEditor {
         case Integer:
           types.add(ResourceType.INTEGER);
           break;
+        case Fraction:
+          types.add(ResourceType.FRACTION);
+          break;
         case String:
           types.add(ResourceType.STRING);
           break;
