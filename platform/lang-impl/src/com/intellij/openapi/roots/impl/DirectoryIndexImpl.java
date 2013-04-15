@@ -167,7 +167,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       if (!(parent instanceof NewVirtualFile)) return;
       DirectoryInfo existing = myState.getInfo(((NewVirtualFile)file).getId());
       assert existing == null : file+" -> "+existing;
-      myState = updateStateWithNewFile((NewVirtualFile)file, (NewVirtualFile)parent);
+      IndexState newState = updateStateWithNewFile((NewVirtualFile)file, (NewVirtualFile)parent);
+      replaceState(newState);
     }
 
 
@@ -291,7 +292,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
 
       if (copy != null) {
-        myState = copy;
+        replaceState(copy);
       }
       myState.assertAncestorsConsistent();
     }
@@ -320,6 +321,11 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
       myState.assertAncestorsConsistent();
     }
+  }
+
+  private void replaceState(IndexState newState) {
+    newState.writable = false;
+    myState = newState;
   }
 
   private class PackageSink extends QueryFactory<VirtualFile, Pair<IndexState, List<VirtualFile>>> {
@@ -391,12 +397,15 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private void doCheckConsistency(boolean reverseAllSets) {
     assert myInitialized;
     assert !myDisposed;
+    myState.assertNotWritable();
 
     final IndexState oldState = myState;
     myState.assertAncestorsConsistent();
-    myState = myState.copy(null);
+    replaceState(myState.copy(null));
+    myState.writable = true;
 
     myState.doInitialize(reverseAllSets);
+    myState.writable = false;
 
     int[] keySet = myState.myDirToInfoMap.keys();
     assert keySet.length == oldState.myDirToInfoMap.keys().length;
@@ -431,7 +440,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
   private void doInitialize() {
     IndexState newState = new IndexState();
     newState.doInitialize(false);
-    myState = newState;
+    replaceState(newState);
   }
 
   private boolean isExcludeRootForModule(@NotNull Module module, VirtualFile excludeRoot) {
@@ -546,17 +555,20 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     private final TObjectIntHashMap<int[]> myPackageNameToDirsMap = new TObjectIntHashMap<int[]>(INT_ARRAY_STRATEGY);
     private final List<int[]> multiDirPackages = new ArrayList<int[]>(Arrays.asList(new int[]{-1}));
     private final TIntObjectHashMap<int[]> myDirToPackageName = new TIntObjectHashMap<int[]>();
+    private volatile boolean writable = true;
 
     private IndexState() {
     }
 
     @Nullable
     private int[] getDirsForPackage(@NotNull int[] packageName) {
+      assertNotWritable();
       int i = myPackageNameToDirsMap.get(packageName);
       return i == 0 ? null : i > 0 ? new int[]{i} : multiDirPackages.get(-i);
     }
 
     private void removeDirFromPackage(@NotNull int[] packageName, int dirId) {
+      assertWritable();
       int i = myPackageNameToDirsMap.get(packageName);
       int[] oldPackageDirs = i == 0 ? null : i > 0 ? new int[]{i} : multiDirPackages.get(-i);
       assert oldPackageDirs != null;
@@ -577,7 +589,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void addDirToPackage(@NotNull int[] packageName, int dirId) {
+      assertWritable();
       assert dirId > 0;
+
       int i = myPackageNameToDirsMap.get(packageName);
 
       if (i < 0) {
@@ -614,6 +628,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void storeInfo(@NotNull DirectoryInfo info, int id) {
+      assertWritable();
       if (CHECK) {
         VirtualFile file = findFileById(id);
         VirtualFile contentRoot = info.getContentRoot();
@@ -656,6 +671,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                           final Module module,
                                           final NewVirtualFile contentRoot,
                                           @Nullable final ProgressIndicator progress) {
+      assertWritable();
       if (!isValid(root)) return;
       final int contentRootId = contentRoot == null ? 0 : contentRoot.getId();
       if (contentRoot != null) {
@@ -749,6 +765,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void initModuleContents(@NotNull Module module, boolean reverseAllSets, @NotNull ProgressIndicator progress) {
+      assertWritable();
       progress.checkCanceled();
       progress.setText2(ProjectBundle.message("project.index.processing.module.content.progress", module.getName()));
 
@@ -766,6 +783,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void initModuleSources(@NotNull Module module, boolean reverseAllSets, @NotNull ProgressIndicator progress) {
+      assertWritable();
       progress.checkCanceled();
       progress.setText2(ProjectBundle.message("project.index.processing.module.sources.progress", module.getName()));
 
@@ -797,6 +815,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                          @NotNull final NewVirtualFile sourceRoot,
                                          final boolean isTestSource,
                                          @Nullable final ProgressIndicator progress) {
+      assertWritable();
       if (!isValid(dir)) return;
       assert VfsUtilCore.isAncestor(sourceRoot, dir, false) : "SourceRoot: "+sourceRoot+" ("+sourceRoot.getFileSystem()+"); dir: "+dir+" ("+dir.getFileSystem()+")";
       VfsUtilCore.visitChildrenRecursively(dir, new DirectoryVisitor() {
@@ -842,6 +861,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void initLibrarySources(@NotNull Module module, @NotNull ProgressIndicator progress) {
+      assertWritable();
       progress.checkCanceled();
       progress.setText2(ProjectBundle.message("project.index.processing.library.sources.progress", module.getName()));
 
@@ -861,6 +881,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                              @Nullable final String packageName,
                                              @NotNull final NewVirtualFile sourceRoot,
                                              @Nullable final ProgressIndicator progress) {
+      assertWritable();
       if (!isValid(dir)) return;
       VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<String>() {
         { setValueForChildren(packageName); }
@@ -890,6 +911,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void initLibraryClasses(@NotNull Module module, @NotNull ProgressIndicator progress) {
+      assertWritable();
       progress.checkCanceled();
       progress.setText2(ProjectBundle.message("project.index.processing.library.classes.progress", module.getName()));
 
@@ -909,6 +931,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                              @NotNull final String packageName,
                                              @NotNull final NewVirtualFile classRoot,
                                              @Nullable final ProgressIndicator progress) {
+      assertWritable();
       if (!isValid(dir)) return;
       VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<String>() {
         { setValueForChildren(packageName); }
@@ -944,6 +967,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                   @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
                                   @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries,
                                   @NotNull ProgressIndicator progress) {
+      assertWritable();
       for (OrderEntry orderEntry : getOrderEntries(module)) {
         if (orderEntry instanceof ModuleOrderEntry) {
           final Module depModule = ((ModuleOrderEntry)orderEntry).getModule();
@@ -988,6 +1012,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                          @NotNull MultiMap<VirtualFile, OrderEntry> libClassRootEntries,
                                          @NotNull MultiMap<VirtualFile, OrderEntry> libSourceRootEntries,
                                          @NotNull ProgressIndicator progress) {
+      assertWritable();
       for (Map.Entry<VirtualFile, Collection<OrderEntry>> mapEntry : depEntries.entrySet()) {
         VirtualFile vRoot = mapEntry.getKey();
         Collection<OrderEntry> entries = mapEntry.getValue();
@@ -1014,6 +1039,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void setPackageName(int dirId, @Nullable int[] newPackageName) {
+      assertWritable();
       int[] oldPackageName = myDirToPackageName.get(dirId);
       if (oldPackageName != null) {
         removeDirFromPackage(oldPackageName, dirId);
@@ -1037,6 +1063,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                          @Nullable final NewVirtualFile librarySourceRoot,
                                          @Nullable final DirectoryInfo parentInfo,
                                          @Nullable final ProgressIndicator progress) {
+      assertWritable();
       if (!isValid(root)) return;
       VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
         private final Stack<OrderEntry[]> myEntries = new Stack<OrderEntry[]>();
@@ -1084,6 +1111,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void doInitialize(boolean reverseAllSets/* for testing order independence*/) {
+      assertWritable();
       assertAncestorsConsistent();
       ProgressIndicator progress = ProgressIndicatorProvider.getGlobalProgressIndicator();
       if (progress == null) progress = new EmptyProgressIndicator();
@@ -1126,6 +1154,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void internDirectoryInfos() {
+      assertWritable();
       final Map<DirectoryInfo, DirectoryInfo> diInterner = new THashMap<DirectoryInfo, DirectoryInfo>();
       final Map<OrderEntry[], OrderEntry[]> oeInterner = new THashMap<OrderEntry[], OrderEntry[]>(new TObjectHashingStrategy<OrderEntry[]>() {
         @Override
@@ -1162,6 +1191,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void initExcludedDirMap(@NotNull Module[] modules, ProgressIndicator progress) {
+      assertWritable();
       progress.checkCanceled();
       progress.setText2(ProjectBundle.message("project.index.building.exclude.roots.progress"));
 
@@ -1202,7 +1232,8 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void putForFileAndAllAncestors(NewVirtualFile file, String value) {
-      TIntObjectHashMap<Set<String>> map = myExcludeRootsMap;
+      assertWritable();
+      TIntObjectHashMap <Set<String>> map = myExcludeRootsMap;
       while (file != null) {
         int id = file.getId();
         Set<String> set = map.get(id);
@@ -1216,8 +1247,17 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       }
     }
 
+    private void assertWritable() {
+      assert writable;
+    }
+
+    private void assertNotWritable() {
+      assert !writable;
+    }
+
     @NotNull
     private IndexState copy(@Nullable final TIntProcedure idFilter) {
+      assertNotWritable();
       final IndexState copy = new IndexState();
 
       myExcludeRootsMap.forEachEntry(new TIntObjectProcedure<Set<String>>() {
