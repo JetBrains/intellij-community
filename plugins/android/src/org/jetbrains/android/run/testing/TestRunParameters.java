@@ -33,8 +33,8 @@ import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiPackage;
 import com.intellij.ui.EditorTextFieldWithBrowseButton;
 import com.intellij.ui.components.JBLabel;
-import org.jetbrains.android.run.AndroidClassBrowser;
-import org.jetbrains.android.run.AndroidClassVisibilityChecker;
+import org.jetbrains.android.run.AndroidInheritingClassBrowser;
+import org.jetbrains.android.run.AndroidInheritingClassVisibilityChecker;
 import org.jetbrains.android.run.ConfigurationSpecificEditor;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
@@ -54,8 +54,6 @@ import static org.jetbrains.android.run.testing.AndroidTestRunConfiguration.*;
  * To change this template use File | Settings | File Templates.
  */
 class TestRunParameters implements ConfigurationSpecificEditor<AndroidTestRunConfiguration> {
-  private static final String ANDROID_TEST_BASE_CLASS_NAME = "junit.framework.TestCase";
-
   private JRadioButton myAllInPackageButton;
   private JRadioButton myClassButton;
   private JRadioButton myTestMethodButton;
@@ -79,18 +77,18 @@ class TestRunParameters implements ConfigurationSpecificEditor<AndroidTestRunCon
     myPackageComponent.setComponent(new EditorTextFieldWithBrowseButton(project, false));
     bind(myPackageComponent, new MyPackageBrowser());
 
-    myClassComponent.setComponent(new EditorTextFieldWithBrowseButton(project, true,
-                                                                      new AndroidClassVisibilityChecker(myProject, moduleSelector,
-                                                                                                        ANDROID_TEST_BASE_CLASS_NAME)));
-    bind(myClassComponent, new AndroidClassBrowser(project, moduleSelector, ANDROID_TEST_BASE_CLASS_NAME,
-                                                   AndroidBundle.message("android.browse.test.class.dialog.title"), false, null));
+    myClassComponent
+      .setComponent(new EditorTextFieldWithBrowseButton(project, true, new AndroidTestClassVisibilityChecker(moduleSelector)));
+
+    bind(myClassComponent,
+         new AndroidTestClassBrowser(project, moduleSelector, AndroidBundle.message("android.browse.test.class.dialog.title"), false));
 
     myRunnerComponent.setComponent(new EditorTextFieldWithBrowseButton(project, true,
-                                                                       new AndroidClassVisibilityChecker(myProject, moduleSelector,
+                                                                       new AndroidInheritingClassVisibilityChecker(myProject, moduleSelector,
                                                                                                          AndroidUtils.INSTRUMENTATION_RUNNER_BASE_CLASS)));
-    bind(myRunnerComponent, new AndroidClassBrowser(project, moduleSelector, AndroidUtils.INSTRUMENTATION_RUNNER_BASE_CLASS,
-                                                    AndroidBundle.message("android.browse.instrumentation.class.dialog.title"), true,
-                                                    null));
+    bind(myRunnerComponent, new AndroidInheritingClassBrowser(project, moduleSelector, AndroidUtils.INSTRUMENTATION_RUNNER_BASE_CLASS,
+                                                    AndroidBundle.message("android.browse.instrumentation.class.dialog.title"), true
+    ));
     bind(myMethodComponent, new MyMethodBrowser());
 
     addTestingType(TEST_ALL_IN_MODULE, myAllInModuleButton);
