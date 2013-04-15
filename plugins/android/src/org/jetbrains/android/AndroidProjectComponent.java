@@ -50,10 +50,7 @@ public class AndroidProjectComponent extends AbstractProjectComponent {
   public void projectOpened() {
     final CompilerManager manager = CompilerManager.getInstance(myProject);
     manager.addBeforeTask(new AndroidPrecompileTask());
-  }
 
-  @Override
-  public void initComponent() {
     myDisposable = new Disposable() {
       @Override
       public void dispose() {
@@ -63,7 +60,7 @@ public class AndroidProjectComponent extends AbstractProjectComponent {
   }
 
   @Override
-  public void disposeComponent() {
+  public void projectClosed() {
     Disposer.dispose(myDisposable);
   }
 
