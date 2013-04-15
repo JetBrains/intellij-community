@@ -269,6 +269,7 @@ public abstract class InplaceRefactoring {
     PsiElement selectedElement = getSelectedInEditorElement(nameIdentifier, refs, stringUsages, offset);
 
     boolean subrefOnPrimaryElement = false;
+    boolean hasReferenceOnNameIdentifier = false;
     for (PsiReference ref : refs) {
       if (isReferenceAtCaret(selectedElement, ref)) {
         builder.replaceElement(ref, PRIMARY_VARIABLE_NAME, createLookupExpression(), true);
@@ -276,8 +277,14 @@ public abstract class InplaceRefactoring {
         continue;
       }
       addVariable(ref, selectedElement, builder, offset);
+      hasReferenceOnNameIdentifier |= isReferenceAtCaret(nameIdentifier, ref);
     }
-    if (nameIdentifier != null && !subrefOnPrimaryElement) addVariable(nameIdentifier, selectedElement, builder);
+    if (nameIdentifier != null) {
+      hasReferenceOnNameIdentifier |= selectedElement.getTextRange().contains(nameIdentifier.getTextRange());
+      if (!subrefOnPrimaryElement || !hasReferenceOnNameIdentifier){
+        addVariable(nameIdentifier, selectedElement, builder);
+      }
+    }
     for (Pair<PsiElement, TextRange> usage : stringUsages) {
       addVariable(usage.first, usage.second, selectedElement, builder);
     }
@@ -328,7 +335,8 @@ public abstract class InplaceRefactoring {
   }
 
   protected boolean isReferenceAtCaret(PsiElement selectedElement, PsiReference ref) {
-    return selectedElement != null && selectedElement.getTextRange().contains(ref.getElement().getTextRange());
+    final TextRange textRange = ref.getRangeInElement().shiftRight(ref.getElement().getTextRange().getStartOffset());
+    return selectedElement != null && selectedElement.getTextRange().contains(textRange);
   }
 
   protected void beforeTemplateStart() {
