@@ -559,6 +559,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     private void removeDirFromPackage(@NotNull int[] packageName, int dirId) {
       int i = myPackageNameToDirsMap.get(packageName);
       int[] oldPackageDirs = i == 0 ? null : i > 0 ? new int[]{i} : multiDirPackages.get(-i);
+      assert oldPackageDirs != null;
       int index = ArrayUtil.find(oldPackageDirs, dirId);
       assert index != -1;
       oldPackageDirs = ArrayUtil.remove(oldPackageDirs, index);
@@ -576,6 +577,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
     }
 
     private void addDirToPackage(@NotNull int[] packageName, int dirId) {
+      assert dirId > 0;
       int i = myPackageNameToDirsMap.get(packageName);
 
       if (i < 0) {
@@ -619,6 +621,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
             assert VfsUtilCore.isAncestor(contentRoot, file, false) : "File: "+file+"; Content root: "+contentRoot;
         }
       }
+      assert id > 0;
       myDirToInfoMap.put(id, info);
     }
 
@@ -653,6 +656,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                           final Module module,
                                           final NewVirtualFile contentRoot,
                                           @Nullable final ProgressIndicator progress) {
+      if (!isValid(root)) return;
       final int contentRootId = contentRoot == null ? 0 : contentRoot.getId();
       if (contentRoot != null) {
         assert VfsUtilCore.isAncestor(contentRoot, root, false) : "Root: "+root+"; contentRoot: "+contentRoot;
@@ -793,6 +797,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                          @NotNull final NewVirtualFile sourceRoot,
                                          final boolean isTestSource,
                                          @Nullable final ProgressIndicator progress) {
+      if (!isValid(dir)) return;
       assert VfsUtilCore.isAncestor(sourceRoot, dir, false) : "SourceRoot: "+sourceRoot+" ("+sourceRoot.getFileSystem()+"); dir: "+dir+" ("+dir.getFileSystem()+")";
       VfsUtilCore.visitChildrenRecursively(dir, new DirectoryVisitor() {
         private final Stack<String> myPackages = new Stack<String>();
@@ -812,16 +817,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
             if (isAnotherRoot(id)) return null; // another source root starts here
           }
 
-
-          assert VfsUtilCore.isAncestor(dir, file, false) : "dir: " +
-                                                            dir +
-                                                            " (" +
-                                                            dir.getFileSystem() +
-                                                            "); file: " +
-                                                            file +
-                                                            " (" +
-                                                            file.getFileSystem() +
-                                                            ")";
+          assert VfsUtilCore.isAncestor(dir, file, false) : "dir: " + dir + " (" + dir.getFileSystem() + "); file: " + file + " (" + file.getFileSystem() + ")";
 
           int flag = info.getSourceFlag() | DirectoryInfo.MODULE_SOURCE_FLAG;
           flag = BitUtil.set(flag, DirectoryInfo.TEST_SOURCE_FLAG, isTestSource);
@@ -865,6 +861,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                              @Nullable final String packageName,
                                              @NotNull final NewVirtualFile sourceRoot,
                                              @Nullable final ProgressIndicator progress) {
+      if (!isValid(dir)) return;
       VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<String>() {
         { setValueForChildren(packageName); }
 
@@ -912,6 +909,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                              @NotNull final String packageName,
                                              @NotNull final NewVirtualFile classRoot,
                                              @Nullable final ProgressIndicator progress) {
+      if (!isValid(dir)) return;
       VfsUtilCore.visitChildrenRecursively(dir, new VirtualFileVisitor<String>() {
         { setValueForChildren(packageName); }
 
@@ -1039,6 +1037,7 @@ public class DirectoryIndexImpl extends DirectoryIndex {
                                          @Nullable final NewVirtualFile librarySourceRoot,
                                          @Nullable final DirectoryInfo parentInfo,
                                          @Nullable final ProgressIndicator progress) {
+      if (!isValid(root)) return;
       VfsUtilCore.visitChildrenRecursively(root, new DirectoryVisitor() {
         private final Stack<OrderEntry[]> myEntries = new Stack<OrderEntry[]>();
 
@@ -1282,6 +1281,10 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
       return copy;
     }
+  }
+
+  private static boolean isValid(@NotNull NewVirtualFile root) {
+    return root.getId() > 0;
   }
 
   @NotNull
