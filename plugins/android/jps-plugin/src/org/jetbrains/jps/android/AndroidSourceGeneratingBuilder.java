@@ -1304,7 +1304,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           success = false;
           continue;
         }
-        final String artifactOutputPath = artifact.getOutputPath();
+        final String artifactOutputPath = artifact.getOutputFilePath();
 
         if (artifactOutputPath != null && facets.size() > 0) {
           final JpsAndroidModuleExtension facet = facets.get(0);
