@@ -103,7 +103,7 @@ public class FindInProjectManager {
         final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(myToOpenInNewTab, findModelCopy);
         final boolean showPanelIfOnlyOneUsage = !FindSettings.getInstance().isSkipResultsWithOneUsage();
 
-        FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
+        final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, showPanelIfOnlyOneUsage, presentation);
         UsageTarget usageTarget = StringUtil.isEmpty(findModel.getStringToFind()) ? createFileByTypeTarget(findModel)
                                                          : new FindInProjectUtil.StringUsageTarget(findModel.getStringToFind());
         manager.searchAndShowUsages(new UsageTarget[] {usageTarget},
@@ -116,8 +116,8 @@ public class FindInProjectManager {
                   myIsFindInProgress = true;
 
                   try {
-                    FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject,
-                                                 true, new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER));
+                    AdapterProcessor<UsageInfo, Usage> consumer = new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER);
+                    FindInProjectUtil.findUsages(findModelCopy, psiDirectory, myProject, true, consumer, processPresentation);
                   }
                   finally {
                     myIsFindInProgress = false;

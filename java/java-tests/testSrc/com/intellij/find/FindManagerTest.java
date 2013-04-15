@@ -37,6 +37,7 @@ import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.testFramework.fixtures.TempDirTestFixture;
 import com.intellij.testFramework.fixtures.impl.LightTempDirTestFixtureImpl;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.Usage;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
@@ -184,7 +185,7 @@ public class FindManagerTest extends DaemonAnalyzerTestCase {
     PsiDirectory psiDirectory = FindInProjectUtil.getPsiDirectory(findModel, myProject);
     List<UsageInfo> result = new ArrayList<UsageInfo>();
     final CommonProcessors.CollectProcessor<UsageInfo> collector = new CommonProcessors.CollectProcessor<UsageInfo>(result);
-    FindInProjectUtil.findUsages(findModel, psiDirectory, myProject, true, collector);
+    FindInProjectUtil.findUsages(findModel, psiDirectory, myProject, true, collector, new FindUsagesProcessPresentation());
     return result;
   }
 

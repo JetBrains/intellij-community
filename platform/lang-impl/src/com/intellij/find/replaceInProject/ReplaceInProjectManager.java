@@ -108,7 +108,7 @@ public class ReplaceInProjectManager {
     }
   }
 
-  public void replaceInProject(DataContext dataContext) {
+  public void replaceInProject(@NotNull DataContext dataContext) {
     final FindManager findManager = FindManager.getInstance(myProject);
     final FindModel findModel = (FindModel)findManager.getFindInProjectModel().clone();
     findModel.setReplaceState(true);
@@ -134,26 +134,30 @@ public class ReplaceInProjectManager {
         findManager.getFindInProjectModel().copyFrom(findModel);
         final FindModel findModelCopy = (FindModel)findModel.clone();
 
-        searchAndShowUsages(manager, new UsageSearcherFactory(findModelCopy, psiDirectory), findModelCopy, findManager);
+        final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(true, findModelCopy);
+        final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
+
+        UsageSearcherFactory factory = new UsageSearcherFactory(findModelCopy, psiDirectory, processPresentation);
+        searchAndShowUsages(manager, factory, findModelCopy, presentation, processPresentation, findManager);
       }
     });
   }
 
   public void searchAndShowUsages(@NotNull UsageViewManager manager,
-                                  final Factory<UsageSearcher> usageSearcherFactory,
-                                  final FindModel findModelCopy,
-                                  final FindManager findManager) {
+                                  @NotNull Factory<UsageSearcher> usageSearcherFactory,
+                                  @NotNull FindModel findModelCopy,
+                                  @NotNull FindManager findManager) {
     final UsageViewPresentation presentation = FindInProjectUtil.setupViewPresentation(true, findModelCopy);
     final FindUsagesProcessPresentation processPresentation = FindInProjectUtil.setupProcessPresentation(myProject, true, presentation);
 
     searchAndShowUsages(manager, usageSearcherFactory, findModelCopy, presentation, processPresentation, findManager);
   }
 
-  public void searchAndShowUsages(UsageViewManager manager,
-                                  final Factory<UsageSearcher> usageSearcherFactory,
-                                  final FindModel findModelCopy,
-                                  UsageViewPresentation presentation,
-                                  FindUsagesProcessPresentation processPresentation,
+  public void searchAndShowUsages(@NotNull UsageViewManager manager,
+                                  @NotNull Factory<UsageSearcher> usageSearcherFactory,
+                                  @NotNull final FindModel findModelCopy,
+                                  @NotNull UsageViewPresentation presentation,
+                                  @NotNull FindUsagesProcessPresentation processPresentation,
                                   final FindManager findManager) {
     presentation.setMergeDupLinesAvailable(false);
     final ReplaceContext[] context = new ReplaceContext[1];
@@ -512,10 +516,14 @@ public class ReplaceInProjectManager {
   private class UsageSearcherFactory implements Factory<UsageSearcher> {
     private final FindModel myFindModelCopy;
     private final PsiDirectory myPsiDirectory;
+    private final FindUsagesProcessPresentation myProcessPresentation;
 
-    public UsageSearcherFactory(FindModel findModelCopy, PsiDirectory psiDirectory) {
+    private UsageSearcherFactory(@NotNull FindModel findModelCopy,
+                                PsiDirectory psiDirectory,
+                                @NotNull FindUsagesProcessPresentation processPresentation) {
       myFindModelCopy = findModelCopy;
       myPsiDirectory = psiDirectory;
+      myProcessPresentation = processPresentation;
     }
 
     @Override
@@ -528,7 +536,8 @@ public class ReplaceInProjectManager {
             myIsFindInProgress = true;
 
             FindInProjectUtil.findUsages(myFindModelCopy, myPsiDirectory, myProject,
-                                         true, new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER));
+                                         true, new AdapterProcessor<UsageInfo, Usage>(processor, UsageInfo2UsageAdapter.CONVERTER),
+                                         myProcessPresentation);
           }
           finally {
             myIsFindInProgress = false;

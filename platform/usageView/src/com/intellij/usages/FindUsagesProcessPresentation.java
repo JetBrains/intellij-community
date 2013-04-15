@@ -17,10 +17,14 @@ package com.intellij.usages;
 
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.util.Factory;
+import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.ArrayList;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -34,14 +38,16 @@ public class FindUsagesProcessPresentation {
   private boolean myShowPanelIfOnlyOneUsage;
   private boolean myShowNotFoundMessage;
   private Factory<ProgressIndicator> myProgressIndicatorFactory;
+  private Collection<PsiFile> myLargeFiles;
 
-  public void addNotFoundAction(Action action) {
+  public void addNotFoundAction(@NotNull Action action) {
     if (myNotFoundActions == null) myNotFoundActions = new ArrayList<Action>();
     myNotFoundActions.add(action);
   }
 
+  @NotNull
   public List<Action> getNotFoundActions() {
-    return myNotFoundActions;
+    return myNotFoundActions == null ? Collections.<Action>emptyList() : myNotFoundActions;
   }
 
   public boolean isShowNotFoundMessage() {
@@ -64,8 +70,17 @@ public class FindUsagesProcessPresentation {
     return myProgressIndicatorFactory;
   }
 
-  public void setProgressIndicatorFactory(final Factory<ProgressIndicator> progressIndicatorFactory) {
+  public void setProgressIndicatorFactory(@NotNull Factory<ProgressIndicator> progressIndicatorFactory) {
     myProgressIndicatorFactory = progressIndicatorFactory;
+  }
+
+  public void setLargeFilesWereNotScanned(@NotNull Collection<PsiFile> largeFiles) {
+    myLargeFiles = largeFiles;
+  }
+
+  @NotNull
+  public Collection<PsiFile> getLargeFiles() {
+    return myLargeFiles == null ? Collections.<PsiFile>emptyList() : myLargeFiles;
   }
 }
 

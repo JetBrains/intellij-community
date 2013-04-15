@@ -41,6 +41,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.usageView.UsageInfo;
+import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -323,7 +324,7 @@ public class IconsReferencesContributor extends PsiReferenceContributor implemen
             });
             return true;
           }
-        });
+        }, new FindUsagesProcessPresentation());
       }
     }
     return true;
