@@ -182,6 +182,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
         }
       });
     }
+
     try {
       if (SystemInfo.isMacOSLion) {
         if (!FULL_SCREEN_AVAILABLE) return;
@@ -199,7 +200,11 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
             LOG.assertTrue(SystemInfo.isMac, "For mac we set myInFullScreen in the windowWillExitFullScreenCallBack methods");
           }
         });
-      } else {
+      }
+      else {
+        final ID window = MacUtil.findWindowForTitle(frame.getTitle());
+        if (window == null) return;
+
         // toggle toolbar
         String className = "IdeaToolbar" + v;
         final ID ownToolbar = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSToolbar"), className);
@@ -212,9 +217,6 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
         Foundation.addMethod(ownToolbar, Foundation.createSelector("setVisible:"), SET_VISIBLE_CALLBACK, "v*");
         Foundation.addMethod(ownToolbar, Foundation.createSelector("isVisible"), IS_VISIBLE, "B*");
-
-        final ID window = MacUtil.findWindowForTitle(frame.getTitle());
-        if (window == null) return;
 
         Foundation.executeOnMainThread(new Runnable() {
           @Override
