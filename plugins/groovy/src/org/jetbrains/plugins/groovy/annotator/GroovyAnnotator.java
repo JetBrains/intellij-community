@@ -1349,8 +1349,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
     }
 
     Map<PsiElement, String> errors = ContainerUtil.newHashMap();
-    CustomAnnotationChecker.checkAnnotationArguments(errors, anno, annotation.getClassReference(), annotationArgumentList.getAttributes(),
-                                                     true);
+    CustomAnnotationChecker.checkAnnotationArguments(errors, anno, annotation.getClassReference(), annotationArgumentList.getAttributes(), true);
     for (Map.Entry<PsiElement, String> entry : errors.entrySet()) {
       myHolder.createErrorAnnotation(entry.getKey(), entry.getValue());
     }
@@ -1614,7 +1613,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
         PsiModifierList typeDefModifiersList = containingTypeDef.getModifierList();
         LOG.assertTrue(typeDefModifiersList != null, "modifiers list must be not null");
 
-        if (!typeDefModifiersList.hasExplicitModifier(ABSTRACT) && isMethodAbstract) {
+        if (!typeDefModifiersList.hasModifierProperty(ABSTRACT) && isMethodAbstract) {
           final Annotation annotation =
             holder.createErrorAnnotation(modifiersList, GroovyBundle.message("only.abstract.class.can.have.abstract.method"));
           registerMakeAbstractMethodNotAbstractFix(annotation, method, true);
@@ -1677,7 +1676,7 @@ public class GroovyAnnotator extends GroovyElementVisitor implements Annotator {
       }
     }
 
-    if (modifiersList.hasModifierProperty(ABSTRACT) && modifiersList.hasModifierProperty(FINAL)) {
+    if (!typeDefinition.isEnum() && modifiersList.hasModifierProperty(ABSTRACT) && modifiersList.hasModifierProperty(FINAL)) {
       final Annotation annotation =
         holder.createErrorAnnotation(modifiersList, GroovyBundle.message("illegal.combination.of.modifiers.abstract.and.final"));
       annotation.registerFix(new GrModifierFix(typeDefinition, modifiersList, FINAL, false, false));
