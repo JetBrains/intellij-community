@@ -29,15 +29,20 @@ public class JavaFxFileReferenceProvider extends PsiReferenceProvider {
   @Override
   public PsiReference[] getReferencesByElement(@NotNull final PsiElement element, @NotNull ProcessingContext context) {
     final Object value = ((PsiLiteralExpression)element).getValue();
-    return getReferences(element, value, myAcceptedExtension);
+    if (!(value instanceof String)) return PsiReference.EMPTY_ARRAY;
+    return getReferences(element, preprocessValue((String)value), myAcceptedExtension);
   }
 
-  public static PsiReference[] getReferences(final PsiElement element, final Object value, final String acceptedExtension) {
+  protected String preprocessValue(String value) {
+    return value;
+  }
+
+  public static PsiReference[] getReferences(final PsiElement element, String value, final String acceptedExtension) {
     final PsiDirectory directory = element.getContainingFile().getOriginalFile().getParent();
-    if (!(value instanceof String) || directory == null) return PsiReference.EMPTY_ARRAY;
-    final boolean startsWithSlash = ((String)value).startsWith("/");
+    if (directory == null) return PsiReference.EMPTY_ARRAY;
+    final boolean startsWithSlash = value.startsWith("/");
     final VirtualFileSystem fs = directory.getVirtualFile().getFileSystem();
-    final FileReferenceSet fileReferenceSet = new FileReferenceSet((String)value, element, 1, null, ((NewVirtualFileSystem)fs).isCaseSensitive()) {
+    final FileReferenceSet fileReferenceSet = new FileReferenceSet(value, element, 1, null, ((NewVirtualFileSystem)fs).isCaseSensitive()) {
       @NotNull
       @Override
       public Collection<PsiFileSystemItem> getDefaultContexts() {
