@@ -135,7 +135,7 @@ public class ResourceNameConverter extends ResolvingConverter<String> implements
     return result.toArray(new PsiReference[result.size()]);
   }
 
-  private static boolean hasExplicitParent(@NotNull AndroidFacet facet, @NotNull String localStyleName) {
+  public static boolean hasExplicitParent(@NotNull AndroidFacet facet, @NotNull String localStyleName) {
     final List<ValueResourceInfoImpl> styles = facet.getLocalResourceManager().
       findValueResourceInfos(ResourceType.STYLE.getName(), localStyleName, true, false);
 
