@@ -134,11 +134,11 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     }
     catch (LinkageError e) {
       LOG.debug(e);
-      myBrokenClasses.put(className, e.getCause());
+      myBrokenClasses.put(className, getCauseIfNotNull(e));
     }
     catch (ClassNotFoundException e) {
       LOG.debug(e);
-      myBrokenClasses.put(className, e.getCause());
+      myBrokenClasses.put(className, getCauseIfNotNull(e));
     }
     catch (InvocationTargetException e) {
       LOG.debug(e);
@@ -153,15 +153,15 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     }
     catch (IllegalAccessException e) {
       LOG.debug(e);
-      myBrokenClasses.put(className, e.getCause());
+      myBrokenClasses.put(className, getCauseIfNotNull(e));
     }
     catch (InstantiationException e) {
       LOG.debug(e);
-      myBrokenClasses.put(className, e.getCause());
+      myBrokenClasses.put(className, getCauseIfNotNull(e));
     }
     catch (NoSuchMethodException e) {
       LOG.debug(e);
-      myBrokenClasses.put(className, e.getCause());
+      myBrokenClasses.put(className, getCauseIfNotNull(e));
     }
     catch (IncompatibleClassFileFormatException e) {
       myClassesWithIncorrectFormat.add(e.getClassName());
@@ -193,6 +193,12 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     catch (NoSuchFieldException e) {
       throw new ClassNotFoundException(className, e);
     }
+  }
+
+  @NotNull
+  private static Throwable getCauseIfNotNull(@NotNull Throwable e) {
+    final Throwable cause = e.getCause();
+    return cause != null ? cause : e;
   }
 
   @Nullable
