@@ -64,18 +64,22 @@ typedef jint (JNICALL *fun_ptr_t_CreateJavaVM)(JavaVM **pvm, void **env, void *a
 }
 
 
+void appendBundle(NSString *path, NSMutableArray *sink) {
+    if ([path hasSuffix:@".jdk"] || [path hasSuffix:@".jre"]) {
+        NSBundle *bundle = [NSBundle bundleWithPath:path];
+        if (bundle != nil) {
+            [sink addObject:bundle];
+        }
+    }
+}
+
 void appendJvmBundlesAt(NSString *path, NSMutableArray *sink) {
     NSError *error = nil;
     NSArray *names = [[NSFileManager defaultManager] contentsOfDirectoryAtPath:path error:&error];
 
     if (names != nil) {
         for (NSString *name in names) {
-            if ([name hasSuffix:@".jdk"] || [name hasSuffix:@".jre"]) {
-                NSBundle *bundle = [NSBundle bundleWithPath:[path stringByAppendingPathComponent:name]];
-                if (bundle != nil) {
-                    [sink addObject:bundle];
-                }
-            }
+            appendBundle([path stringByAppendingPathComponent:name], sink);
         }
     }
 }
@@ -86,7 +90,7 @@ NSArray *allVms() {
     NSString *explicit = [[[NSProcessInfo processInfo] environment] objectForKey:@"IDEA_JDK"];
 
     if (explicit != nil) {
-        appendJvmBundlesAt(explicit, jvmBundlePaths);
+        appendBundle(explicit, jvmBundlePaths);
     }
     else {
         NSBundle *bundle = [NSBundle mainBundle];
