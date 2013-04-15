@@ -121,12 +121,14 @@ public class ResourceNameConverter extends ResolvingConverter<String> implements
     int offset = s.length();
 
     for (int i = ids.length - 1; i >= 0; i--) {
-      final String parentStyleName = s.substring(0, offset);
-      final ResourceValue val = ResourceValue.referenceTo((char)0, null, ResourceType.STYLE.getName(), parentStyleName);
-      result.add(new MyParentStyleReference(value, new TextRange(1, 1 + offset), val, facet));
+      if (i < ids.length - 1) {
+        final String parentStyleName = s.substring(0, offset);
+        final ResourceValue val = ResourceValue.referenceTo((char)0, null, ResourceType.STYLE.getName(), parentStyleName);
+        result.add(new MyParentStyleReference(value, new TextRange(1, 1 + offset), val, facet));
 
-      if (hasExplicitParent(facet, parentStyleName)) {
-        break;
+        if (hasExplicitParent(facet, parentStyleName)) {
+          break;
+        }
       }
       offset = offset - ids[i].length() - 1;
     }
