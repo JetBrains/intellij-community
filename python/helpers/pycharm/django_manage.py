@@ -5,13 +5,13 @@ import os
 from pycharm_run_utils import adjust_django_sys_path
 from fix_getpass import fixGetpass
 
-adjust_django_sys_path()
-base_path = sys.argv.pop()
-
 try:
   from runpy import run_module
 except ImportError:
   from runpy_compat import run_module
+
+adjust_django_sys_path()
+base_path = sys.argv.pop()
 
 manage_file = os.getenv('PYCHARM_DJANGO_MANAGE_MODULE')
 if not manage_file:
