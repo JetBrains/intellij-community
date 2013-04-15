@@ -122,7 +122,8 @@
     <dom.fileDescription implementation="org.jetbrains.android.dom.color.ColorDomFileDescription"/>
 
     <dom.fileDescription implementation="org.jetbrains.android.dom.manifest.ManifestDomFileDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.android.dom.layout.LayoutDomFileDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.android.dom.layout.ViewLayoutDomFileDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.android.dom.layout.FragmentLayoutDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.animation.AnimationDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.animator.AnimatorDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.menu.MenuDomFileDescription"/>

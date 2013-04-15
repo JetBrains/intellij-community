@@ -25,9 +25,9 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author yole
  */
-public class LayoutDomFileDescription extends AndroidResourceDomFileDescription<LayoutViewElement> {
-  public LayoutDomFileDescription() {
-    super(LayoutViewElement.class, "view", ResourceType.LAYOUT.getName());
+public class LayoutDomFileDescription<T extends LayoutElement> extends AndroidResourceDomFileDescription<T> {
+  public LayoutDomFileDescription(@NotNull Class<T> rootElementClass, @NotNull String rootTagName) {
+    super(rootElementClass, rootTagName, ResourceType.LAYOUT.getName());
   }
 
   public boolean acceptsOtherRootTagNames() {
@@ -37,7 +37,7 @@ public class LayoutDomFileDescription extends AndroidResourceDomFileDescription<
   public static boolean isLayoutFile(@NotNull final XmlFile file) {
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
       public Boolean compute() {
-        return new LayoutDomFileDescription().isMyFile(file, null);
+        return AndroidResourceDomFileDescription.doIsMyFile(file, new String[]{ResourceType.LAYOUT.getName()});
       }
     });
   }

@@ -1,0 +1,3 @@
+<fragment xmlns:android="http://schemas.android.com/apk/res/android"
+          class="p1.p2.MyFragmentActivity$MyFragment" android:layout_weight="1"
+          android:layout_width="0px" android:layout_height="match_parent" />

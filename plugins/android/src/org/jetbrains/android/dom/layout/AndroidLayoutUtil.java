@@ -20,6 +20,7 @@ public class AndroidLayoutUtil {
     final List<String> result = new ArrayList<String>();
     result.add("view");
     result.add("merge");
+    result.add(FragmentLayoutDomFileDescription.FRAGMENT_TAG_NAME);
     result.addAll(AndroidDomUtil.removeUnambigiousNames(
       AndroidDomExtender.getViewClassMap(facet)));
     result.remove("View");

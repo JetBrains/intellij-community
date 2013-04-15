@@ -400,6 +400,11 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
     doTestHighlighting(getTestName(true) + ".xml");
   }
 
+  public void testFragmentHighlighting1() throws Throwable {
+    copyFileToProject("MyFragmentActivity.java", "src/p1/p2/MyFragmentActivity.java");
+    doTestHighlighting(getTestName(true) + ".xml");
+  }
+
   public void testFragmentCompletion1() throws Throwable {
     copyFileToProject("MyFragmentActivity.java", "src/p1/p2/MyFragmentActivity.java");
     toTestCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml");
@@ -411,6 +416,23 @@ public class AndroidLayoutDomTest extends AndroidDomTest {
 
   public void testFragmentCompletion3() throws Throwable {
     toTestCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml");
+  }
+
+  public void testFragmentCompletion4() throws Throwable {
+    copyFileToProject("MyFragmentActivity.java", "src/p1/p2/MyFragmentActivity.java");
+    toTestCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml");
+  }
+
+  public void testFragmentCompletion5() throws Throwable {
+    toTestCompletion(getTestName(true) + ".xml", getTestName(true) + "_after.xml");
+  }
+
+  public void testFragmentCompletion6() throws Throwable {
+    VirtualFile file = copyFileToProject(getTestName(true) + ".xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    myFixture.type('\n');
+    myFixture.checkResultByFile(testFolder + '/' + getTestName(true) + "_after.xml");
   }
 
   public void testCustomAttrsPerformance() throws Throwable {
