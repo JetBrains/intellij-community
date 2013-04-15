@@ -15,7 +15,10 @@ import com.android.io.IAbstractFolder;
 import com.android.io.IAbstractResource;
 import com.android.io.StreamException;
 import com.android.sdklib.IAndroidTarget;
-import com.intellij.compiler.impl.javaCompiler.javac.JavacConfiguration;
+import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerConfigurationImpl;
+import com.intellij.compiler.impl.javaCompiler.BackendCompiler;
+import com.intellij.compiler.options.JavaCompilersTab;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompilerManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -49,7 +52,6 @@ import org.jetbrains.android.sdk.AndroidSdkType;
 import org.jetbrains.android.util.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerOptions;
 import org.xmlpull.v1.XmlPullParserException;
 
 import javax.imageio.ImageIO;
@@ -293,15 +295,17 @@ public class RenderUtil {
     final List<Pair<String, Runnable>> quickFixes = new ArrayList<Pair<String, Runnable>>();
 
     if (problemModules.size() > 0) {
-      quickFixes.add(new Pair<String, Runnable>("Rebuild project with '-target 1.6'", new Runnable() {
+      quickFixes.add(new Pair<String, Runnable>("Change Bytecode Version", new Runnable() {
         @Override
         public void run() {
-          final JpsJavaCompilerOptions settings = JavacConfiguration.getOptions(project, JavacConfiguration.class);
-          if (settings.ADDITIONAL_OPTIONS_STRING.length() > 0) {
-            settings.ADDITIONAL_OPTIONS_STRING += ' ';
+          final CompilerConfigurationImpl configuration = (CompilerConfigurationImpl)CompilerConfiguration.getInstance(project);
+          final Collection<BackendCompiler> compilers = configuration.getRegisteredJavaCompilers();
+          final BackendCompiler defaultCompiler = configuration.getDefaultCompiler();
+          final JavaCompilersTab compilersTab = new JavaCompilersTab(project, compilers, defaultCompiler);
+
+          if (ShowSettingsUtil.getInstance().editConfigurable(project, compilersTab)) {
+            askAndRebuild(project);
           }
-          settings.ADDITIONAL_OPTIONS_STRING += "-target 1.6";
-          CompilerManager.getInstance(project).rebuild(null);
         }
       }));
 
@@ -358,6 +362,7 @@ public class RenderUtil {
           builder.append(", ");
         }
       }
+      builder.append("\nPlease change Java SDK to 1.5/1.6 or change target bytecode version");
     }
 
     warnMessages.add(new FixableIssueMessage(builder.toString(), quickFixes));
@@ -379,7 +384,7 @@ public class RenderUtil {
   private static void askAndRebuild(Project project) {
     final int r =
       Messages.showYesNoDialog(project, "You have to rebuild project to see fixed preview. Would you like to do it?",
-                               "Rebuild project", Messages.getQuestionIcon());
+                               "Rebuild Project", Messages.getQuestionIcon());
     if (r == Messages.YES) {
       CompilerManager.getInstance(project).rebuild(null);
     }
