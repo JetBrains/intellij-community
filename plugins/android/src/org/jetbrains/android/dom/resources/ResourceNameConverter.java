@@ -139,14 +139,18 @@ public class ResourceNameConverter extends ResolvingConverter<String> implements
     final List<ValueResourceInfoImpl> styles = facet.getLocalResourceManager().
       findValueResourceInfos(ResourceType.STYLE.getName(), localStyleName, true, false);
 
+    if (styles.size() == 0) {
+      return false;
+    }
+    // all resolved styles have explicit parents
     for (ValueResourceInfoImpl info : styles) {
       final ResourceElement domElement = info.computeDomElement();
 
-      if (domElement instanceof Style && ((Style)domElement).getParentStyle().getStringValue() != null) {
-        return true;
+      if (!(domElement instanceof Style) || ((Style)domElement).getParentStyle().getStringValue() == null) {
+        return false;
       }
     }
-    return false;
+    return true;
   }
 
   public static class MyParentStyleReference extends AndroidResourceReferenceBase implements LocalQuickFixProvider {

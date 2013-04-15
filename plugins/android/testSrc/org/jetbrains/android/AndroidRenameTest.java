@@ -182,6 +182,12 @@ public class AndroidRenameTest extends AndroidTestCase {
     doTestStyleInheritance("styles5.xml", "styles5_after.xml", "Dilimiter.Horisontal");
   }
 
+  public void testStyleInheritance5() throws Throwable {
+    myFixture.copyFileToProject(BASE_PATH + "styles6_1.xml", "res/values-en/styles6.xml");
+    myFixture.copyFileToProject(BASE_PATH + "styles6_2.xml", "res/values-ru/styles6.xml");
+    doTestStyleInheritance("styles6.xml", "styles6_after.xml");
+  }
+
   private void doTestStyleInheritance(String before, String after) throws IOException {
     doTestStyleInheritance(before, after, "newStyle");
   }
