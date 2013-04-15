@@ -76,6 +76,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Map<String, Pair<DataNode<ModuleData>, IdeaModule>> modules = createModules(project, result);
     populateModules(modules.values(), result);
     Collection<DataNode<LibraryData>> libraries = ExternalSystemUtil.getChildren(result, ProjectKeys.LIBRARY);
+<<<<<<< HEAD
     myLibraryNamesMixer.mixNames(libraries);
 
     if (settings != null) {
@@ -98,6 +99,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
     }
     Collection<DataNode<LibraryData>> libraries = ExternalSystemUtil.getChildren(result, ExternalSystemProjectKeys.LIBRARY);
+=======
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     myLibraryNamesMixer.mixNames(libraries);
     return result;
   }
@@ -116,8 +119,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     
     DataNode<ProjectData> result = new DataNode<ProjectData>(ProjectKeys.PROJECT, projectData, null);
     result.createChild(ProjectKeys.JAVA_PROJECT, javaProjectData);
+<<<<<<< HEAD
     DataNode<ProjectData> result = new DataNode<ProjectData>(ExternalSystemProjectKeys.PROJECT, projectData, null);
     result.createChild(ExternalSystemProjectKeys.JAVA_PROJECT, javaProjectData);
+=======
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     return result;
   }
 
@@ -149,7 +155,10 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         );
       }
       DataNode<ModuleData> moduleDataNode = ideProject.createChild(ProjectKeys.MODULE, ideModule);
+<<<<<<< HEAD
       DataNode<ModuleData> moduleDataNode = ideProject.createChild(ExternalSystemProjectKeys.MODULE, ideModule);
+=======
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
       result.put(moduleName, new Pair<DataNode<ModuleData>, IdeaModule>(moduleDataNode, gradleModule));
     }
     return result;

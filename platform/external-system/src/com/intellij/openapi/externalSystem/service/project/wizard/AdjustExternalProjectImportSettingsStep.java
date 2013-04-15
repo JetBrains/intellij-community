@@ -1,7 +1,6 @@
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
 import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
@@ -12,6 +11,9 @@ import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.manage.GradleProjectImportBuilder;
+import org.jetbrains.plugins.gradle.manage.wizard.AbstractImportFromGradleWizardStep;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -36,21 +38,19 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 8/2/11 12:31 PM
  */
-public class AdjustExternalProjectImportSettingsStep extends AbstractImportFromExternalSystemWizardStep {
+public class AdjustExternalProjectImportSettingsStep extends AbstractImportFromGradleWizardStep {
 
   private static final String EMPTY_CARD_NAME = "EMPTY";
 
-  // TODO den uncomment
-  //private final GradleProjectStructureFactory myFactory            = GradleProjectStructureFactory.INSTANCE;
+  private final GradleProjectStructureFactory myFactory            = GradleProjectStructureFactory.INSTANCE;
   private final JPanel                        myComponent          = new JPanel(new GridLayout(1, 2));
   private final DefaultTreeModel              myTreeModel          = new DefaultTreeModel(new DefaultMutableTreeNode("unnamed"));
   private final Tree                          myTree               = new Tree(myTreeModel);
   private final CardLayout                    mySettingsCardLayout = new CardLayout();
   private final JPanel                        mySettingsPanel      = new JPanel(mySettingsCardLayout);
 
-  // TODO den uncomment
-  //private final Map<ProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>> myCards =
-  //  new HashMap<ProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>>();
+  private final Map<ProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>> myCards =
+    new HashMap<ProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>>();
 
   private boolean myOnValidateAttempt;
 
@@ -81,12 +81,11 @@ public class AdjustExternalProjectImportSettingsStep extends AbstractImportFromE
           return;
         }
 
-        // TODO den uncomment
-        //Pair<String, GradleProjectStructureNodeSettings> pair = myCards.get(oldNode);
-        //if (pair == null || pair.second.validate()) {
-        //  onNodeChange();
-        //  return;
-        //}
+        Pair<String, GradleProjectStructureNodeSettings> pair = myCards.get(oldNode);
+        if (pair == null || pair.second.validate()) {
+          onNodeChange();
+          return;
+        }
 
         myIgnore = true;
         try {
@@ -100,14 +99,13 @@ public class AdjustExternalProjectImportSettingsStep extends AbstractImportFromE
       @SuppressWarnings("SuspiciousMethodCalls")
       private void onNodeChange() {
         Object node = myTree.getLastSelectedPathComponent();
-        // TODO den uncomment
-        //Pair<String, GradleProjectStructureNodeSettings> pair = myCards.get(node);
-        //String cardName = EMPTY_CARD_NAME;
-        //if (pair != null) {
-        //  cardName = pair.first;
-        //  pair.second.refresh();
-        //}
-        //mySettingsCardLayout.show(mySettingsPanel, cardName);
+        Pair<String, GradleProjectStructureNodeSettings> pair = myCards.get(node);
+        String cardName = EMPTY_CARD_NAME;
+        if (pair != null) {
+          cardName = pair.first;
+          pair.second.refresh();
+        }
+        mySettingsCardLayout.show(mySettingsPanel, cardName);
       }
     });
 
@@ -158,9 +156,7 @@ public class AdjustExternalProjectImportSettingsStep extends AbstractImportFromE
   }
   @Override
   public String getHelpId() {
-    return null;
-    // TODO den uncomment
-    //return GradleConstants.HELP_TOPIC_ADJUST_SETTINGS_STEP;
+    return GradleConstants.HELP_TOPIC_ADJUST_SETTINGS_STEP;
   }
   
   @Override
@@ -178,7 +174,7 @@ public class AdjustExternalProjectImportSettingsStep extends AbstractImportFromE
     if (builder == null) {
       return;
     }
-    DataNode<ProjectData> project = builder.getExternalProjectNode();
+    ProjectData project = builder.getGradleProject();
     if (project == null) {
       throw new IllegalStateException(String.format(
         "Can't init 'adjust importing settings' step. Reason: no project is defined. Context: '%s', builder: '%s'",
@@ -189,8 +185,7 @@ public class AdjustExternalProjectImportSettingsStep extends AbstractImportFromE
     Map<ProjectEntityData, Pair<String, Collection<ProjectStructureNode>>> entity2nodes
       = new HashMap<ProjectEntityData, Pair<String, Collection<ProjectStructureNode>>>();
     int counter = 0;
-    // TODO den uncomment
-    //ProjectStructureNode<ProjectEntityId> root = buildNode(project, entity2nodes, counter++);
+    ProjectStructureNode<ProjectEntityId> root = buildNode(project, entity2nodes, counter++);
 
     List<ModuleData> modules = ContainerUtilRt.newArrayList();
 //    List<ModuleData> modules = new ArrayList<ModuleData>(project.getModules());
@@ -236,9 +231,8 @@ public class AdjustExternalProjectImportSettingsStep extends AbstractImportFromE
 //      }
 //    }
 
-    // TODO den uncomment
-    //myTreeModel.setRoot(root);
-    //myTree.setSelectionPath(new TreePath(root));
+    myTreeModel.setRoot(root);
+    myTree.setSelectionPath(new TreePath(root));
     
     // TODO den implement
 //    Collection<? extends LibraryData> libraries = project.getLibraries();
@@ -269,39 +263,37 @@ public class AdjustExternalProjectImportSettingsStep extends AbstractImportFromE
 //      myTree.expandPath(new TreePath(librariesNode.getPath()));
 //    }
     
-    //myTree.expandPath(new TreePath(root.getPath()));
+    myTree.expandPath(new TreePath(root.getPath()));
   }
 
   private ProjectStructureNode<ProjectEntityId> buildNode(
     @NotNull ProjectEntityData entity, @NotNull Map<ProjectEntityData, Pair<String, Collection<ProjectStructureNode>>> processed, int counter)
   {
-    return null;
     // We build tree node, its settings control and map them altogether. The only trick here is that nodes can reuse the same
     // settings control (e.g. more than one node may have the same library as a dependency, so, library dependency node for
     // every control will use the same settings control).
-    // TODO den uncomment
-    //ProjectStructureNode<ProjectEntityId> result = new ProjectStructureNode<ProjectEntityId>(myFactory.buildDescriptor(entity));
-    //Pair<String, Collection<ProjectStructureNode>> pair = processed.get(entity);
-    //if (pair == null) {
-    //  String cardName = String.valueOf(counter);
-    //  List<ProjectStructureNode> nodes = new ArrayList<ProjectStructureNode>();
-    //  nodes.add(result);
-    //  processed.put(entity, new Pair<String, Collection<ProjectStructureNode>>(cardName, nodes));
-    //  GradleProjectStructureNodeSettings settings = myFactory.buildSettings(entity, myTreeModel, nodes);
-    //  myCards.put(result, new Pair<String, GradleProjectStructureNodeSettings>(cardName, settings));
-    //  mySettingsPanel.add(settings.getComponent(), cardName);
-    //} 
-    //else {
-    //  pair.second.add(result);
-    //  for (ProjectStructureNode node : pair.second) {
-    //    Pair<String, GradleProjectStructureNodeSettings> settingsPair = myCards.get(node);
-    //    if (settingsPair != null) {
-    //      myCards.put(result, settingsPair);
-    //      break;
-    //    } 
-    //  }
-    //}
-    //return result;
+    ProjectStructureNode<ProjectEntityId> result = new ProjectStructureNode<ProjectEntityId>(myFactory.buildDescriptor(entity));
+    Pair<String, Collection<ProjectStructureNode>> pair = processed.get(entity);
+    if (pair == null) {
+      String cardName = String.valueOf(counter);
+      List<ProjectStructureNode> nodes = new ArrayList<ProjectStructureNode>();
+      nodes.add(result);
+      processed.put(entity, new Pair<String, Collection<ProjectStructureNode>>(cardName, nodes));
+      GradleProjectStructureNodeSettings settings = myFactory.buildSettings(entity, myTreeModel, nodes);
+      myCards.put(result, new Pair<String, GradleProjectStructureNodeSettings>(cardName, settings));
+      mySettingsPanel.add(settings.getComponent(), cardName);
+    } 
+    else {
+      pair.second.add(result);
+      for (ProjectStructureNode node : pair.second) {
+        Pair<String, GradleProjectStructureNodeSettings> settingsPair = myCards.get(node);
+        if (settingsPair != null) {
+          myCards.put(result, settingsPair);
+          break;
+        } 
+      }
+    }
+    return result;
   }
 
   @SuppressWarnings("SuspiciousMethodCalls")
@@ -314,20 +306,19 @@ public class AdjustExternalProjectImportSettingsStep extends AbstractImportFromE
 
     // Validate current card.
     Object node = myTree.getLastSelectedPathComponent();
-    // TODO den uncomment
-    //Pair<String, GradleProjectStructureNodeSettings> pair = myCards.get(node);
-    //if (pair != null && !pair.second.validate()) {
-    //  myOnValidateAttempt = true;
-    //  return false;
-    //}
-    //
-    //for (Map.Entry<ProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>> entry : myCards.entrySet()) {
-    //  if (!entry.getValue().second.validate()) {
-    //    myTree.getSelectionModel().setSelectionPath(new TreePath(entry.getKey().getPath()));
-    //    myOnValidateAttempt = true;
-    //    return false;
-    //  }
-    //}
+    Pair<String, GradleProjectStructureNodeSettings> pair = myCards.get(node);
+    if (pair != null && !pair.second.validate()) {
+      myOnValidateAttempt = true;
+      return false;
+    }
+
+    for (Map.Entry<ProjectStructureNode, Pair<String, GradleProjectStructureNodeSettings>> entry : myCards.entrySet()) {
+      if (!entry.getValue().second.validate()) {
+        myTree.getSelectionModel().setSelectionPath(new TreePath(entry.getKey().getPath()));
+        myOnValidateAttempt = true;
+        return false;
+      }
+    }
 
     builder.applyProjectSettings(getWizardContext());
     return true;
@@ -338,8 +329,7 @@ public class AdjustExternalProjectImportSettingsStep extends AbstractImportFromE
   }
 
   private void clear() {
-    // TODO den uncomment
-    //myCards.clear();
+    myCards.clear();
     mySettingsPanel.removeAll();
     mySettingsPanel.add(new JPanel(), EMPTY_CARD_NAME);
   }

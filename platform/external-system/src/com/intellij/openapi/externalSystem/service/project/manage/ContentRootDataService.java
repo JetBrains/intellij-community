@@ -3,7 +3,10 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
+<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/ContentRootDataService.java
 import com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys;
+=======
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/ContentRootDataManager.java
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData;
@@ -56,7 +59,11 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
       return;
     }
 
+<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/ContentRootDataService.java
     Map<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> byModule
+=======
+    Map<DataNode<ModuleData>,Collection<DataNode<ContentRootData>>> byModule
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/ContentRootDataManager.java
       = ExternalSystemUtil.groupBy(toImport, ProjectKeys.MODULE);
     for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
       final Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);

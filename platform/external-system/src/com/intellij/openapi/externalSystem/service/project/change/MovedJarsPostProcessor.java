@@ -24,7 +24,11 @@ import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectS
 import com.intellij.openapi.externalSystem.model.project.change.JarPresenceChange;
 import com.intellij.openapi.externalSystem.model.project.id.JarId;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureServices;
+<<<<<<< HEAD
 import com.intellij.openapi.externalSystem.service.project.manage.JarDataService;
+=======
+import com.intellij.openapi.externalSystem.service.project.manage.JarDataManager;
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 import com.intellij.openapi.externalSystem.util.ArtifactInfo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
@@ -64,9 +68,15 @@ import java.util.*;
  */
 public class MovedJarsPostProcessor implements ExternalProjectStructureChangesPostProcessor {
 
+<<<<<<< HEAD
   @NotNull private final JarDataService myJarManager;
 
   public MovedJarsPostProcessor(@NotNull JarDataService manager) {
+=======
+  @NotNull private final JarDataManager myJarManager;
+
+  public MovedJarsPostProcessor(@NotNull JarDataManager manager) {
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     myJarManager = manager;
   }
 

@@ -20,9 +20,13 @@ public abstract class AbstractExternalProjectImportProvider extends ProjectImpor
 
   @Override
   public ModuleWizardStep[] createSteps(WizardContext context) {
+<<<<<<< HEAD
     return new ModuleWizardStep[] { new SelectExternalProjectStepBase(context) };
     // TODO den uncomment
     //return new ModuleWizardStep[] { new SelectExternalProjectStepBase(context), new AdjustExternalProjectImportSettingsStep(context) };
+=======
+    return new ModuleWizardStep[] { new SelectExternalProjectStepBase(context), new AdjustExternalProjectImportSettingsStep(context) };
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   }
 
   @Override

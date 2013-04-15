@@ -17,6 +17,10 @@ import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
+<<<<<<< HEAD
+=======
+import org.jetbrains.plugins.gradle.util.GradleUtil;
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
 import javax.swing.*;
 import java.awt.*;

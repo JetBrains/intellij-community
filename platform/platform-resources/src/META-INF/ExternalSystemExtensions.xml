@@ -7,6 +7,7 @@
         serviceInterface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager"
         serviceImplementation="com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.PlatformFacade"
+<<<<<<< HEAD
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.PlatformFacadeImpl"/>
     <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper"
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapperImpl"/>
@@ -24,6 +25,19 @@
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataService"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDependencyDataService"/>
     <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleDependencyDataService"/>
+=======
+                        serviceImplementation="org.jetbrains.plugins.gradle.config.PlatformFacadeImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper"
+                        serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapperImpl"/>
+    
+    <!--Project structure management services-->
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleDataManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.JarDataManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalDependencyManager"/>
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     
   </extensions>
 </idea-plugin>

@@ -23,9 +23,15 @@ import org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalc
 import org.jetbrains.plugins.gradle.diff.project.GradleProjectStructureChangesCalculator
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalDependencyManager
 import com.intellij.openapi.externalSystem.service.project.manage.EntityManageHelper
+<<<<<<< HEAD
 import com.intellij.openapi.externalSystem.service.project.manage.JarDataService
 import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl
+=======
+import com.intellij.openapi.externalSystem.service.project.manage.JarDataManager
+import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataManager
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.LibraryData
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
@@ -95,9 +101,15 @@ public abstract class AbstractGradleTest {
     container.registerComponentImplementation(ProjectStructureServices)
     container.registerComponentImplementation(ExternalLibraryPathTypeMapper, TestExternalLibraryPathTypeMapper)
     container.registerComponentImplementation(ExternalDependencyManager)
+<<<<<<< HEAD
     container.registerComponentImplementation(LibraryDataService)
     container.registerComponentImplementation(JarDataService, TestExternalJarManager)
     container.registerComponentImplementation(ProjectDataServiceImpl)
+=======
+    container.registerComponentImplementation(LibraryDataManager)
+    container.registerComponentImplementation(JarDataManager, TestExternalJarManager)
+    container.registerComponentImplementation(ProjectDataManagerImpl)
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     container.registerComponentImplementation(GradleDuplicateLibrariesPreProcessor)
     container.registerComponentImplementation(MovedJarsPostProcessor, TestMovedJarsPostProcessor)
     container.registerComponentImplementation(OutdatedLibraryVersionPostProcessor)

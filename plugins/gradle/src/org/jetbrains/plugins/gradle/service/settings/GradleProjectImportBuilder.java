@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.service.settings;
 
+<<<<<<< HEAD
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -38,16 +39,28 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
 import java.io.File;
+=======
+import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportBuilder;
+import icons.GradleIcons;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
+
+import javax.swing.*;
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
 /**
  * @author Denis Zhdanov
  * @since 4/15/13 2:29 PM
  */
+<<<<<<< HEAD
 public class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder<GradleConfigurable> {
 
   public GradleProjectImportBuilder(@NotNull ExternalSystemSettingsManager settingsManager, @NotNull ProjectDataManager dataManager) {
     super(settingsManager, dataManager, new GradleConfigurable(null), GradleConstants.SYSTEM_ID);
   }
+=======
+public class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder {
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
   @NotNull
   @Override
@@ -59,6 +72,7 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
   public Icon getIcon() {
     return GradleIcons.Gradle;
   }
+<<<<<<< HEAD
 
   @Override
   protected void doPrepare(@NotNull WizardContext context) {
@@ -123,4 +137,6 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
     }
     return file;
   }
+=======
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 }

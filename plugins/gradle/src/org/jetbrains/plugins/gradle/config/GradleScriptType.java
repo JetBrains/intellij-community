@@ -190,9 +190,15 @@ public class GradleScriptType extends GroovyScriptType {
 //            ExternalSystemBundle.message("gradle.run.no.sdk.title"),
 //            GradleIcons.Gradle
 //          );
+<<<<<<< HEAD
 //          if (result == 0) {
 //            ShowSettingsUtil.getInstance().editConfigurable(project, new AbstractExternalProjectConfigurable(project));
 //          }
+=======
+          if (result == 0) {
+            ShowSettingsUtil.getInstance().editConfigurable(project, new AbstractExternalProjectConfigurable(project));
+          }
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
           if (libraryManager.getGradleHome(module, project) == null) {
             return false;
           }

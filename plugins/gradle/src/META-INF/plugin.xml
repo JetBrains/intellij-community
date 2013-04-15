@@ -36,17 +36,26 @@
                          key="gradle.name" bundle="i18n.GradleBundle"/>
     <library.presentationProvider implementation="org.jetbrains.plugins.gradle.config.GradleLibraryPresentationProvider" order="last"/>
     <java.elementFinder implementation="org.jetbrains.plugins.gradle.config.GradleClassFinder"/>
+<<<<<<< HEAD
     <!--<projectOpenProcessor implementation="com.intellij.openapi.externalSystem.service.project.wizard.ExternalProjectOpenProcessor"/>-->
+=======
+    <projectOpenProcessor implementation="com.intellij.openapi.externalSystem.service.project.wizard.ExternalProjectOpenProcessor"/>
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     <colorAndFontPanelFactory implementation="org.jetbrains.plugins.gradle.config.GradleColorAndFontPanelFactory"/>
     <colorAndFontDescriptorProvider implementation="org.jetbrains.plugins.gradle.config.GradleColorAndFontDescriptorsProvider"/>
     
     <externalSystemManager implementation="org.jetbrains.plugins.gradle.GradleManager"/>
     <!--<postStartupActivity implementation="org.jetbrains.plugins.gradle.sync.GradleStartupActivity"/>-->
+<<<<<<< HEAD
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
 
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>
+=======
+
+    <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     
     <!--Structure diff calculators-->
     <!--<applicationService serviceInterface="com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChangesCalculator"-->
@@ -86,6 +95,11 @@
     <!--<applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleProjectConflictControlFactory"/>-->
     <!--<applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleCommonDependencyConflictControlFactory"/>-->
 
+<<<<<<< HEAD
+=======
+    <!--<projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>-->
+    <!--<projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>-->
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     <!--<projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.change.ProjectStructureChangesModel"/>-->
     <!--<projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper"/>-->
     <!--<projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.OutdatedLibraryManager"/>-->

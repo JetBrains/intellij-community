@@ -2,7 +2,10 @@ package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
+<<<<<<< HEAD
 import com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys;
+=======
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.project.id.*;
@@ -22,8 +25,11 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.LIBRARY_DEPENDENCY;
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE_DEPENDENCY;
+<<<<<<< HEAD
 import static com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys.LIBRARY_DEPENDENCY;
 import static com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys.MODULE_DEPENDENCY;
+=======
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
 /**
  * Thread-safe.

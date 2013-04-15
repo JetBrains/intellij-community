@@ -2,7 +2,10 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
+<<<<<<< HEAD
 import com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys;
+=======
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.id.ContentRootId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;

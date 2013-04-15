@@ -29,28 +29,26 @@ public class ExternalProjectOpenProcessor extends ProjectOpenProcessorBase<Abstr
 
   @Override
   protected boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {
-    return false;
-    // TODO den uncomment
-    //AddModuleWizard dialog = new AddModuleWizard(null, file.getPath(), new AbstractExternalProjectImportProvider(getBuilder()));
-    //getBuilder().prepare(wizardContext);
-    //getBuilder().setCurrentProjectPath(file.getPath());
-    //dialog.getWizardContext().setProjectBuilder(getBuilder());
-    //dialog.navigateToStep(new Function<Step, Boolean>() {
-    //  @Override
-    //  public Boolean fun(Step step) {
-    //    return step instanceof SelectExternalProjectStepBase;
-    //  }
-    //});
-    //dialog.doNextAction();
-    //if (StringUtil.isEmpty(wizardContext.getProjectName())) {
-    //  final String projectName = dialog.getWizardContext().getProjectName();
-    //  if (!StringUtil.isEmpty(projectName)) {
-    //    wizardContext.setProjectName(projectName);
-    //  }
-    //}
-    //
-    //dialog.show();
-    //return dialog.isOK();
+    AddModuleWizard dialog = new AddModuleWizard(null, file.getPath(), new AbstractExternalProjectImportProvider(getBuilder()));
+    getBuilder().prepare(wizardContext);
+    getBuilder().setCurrentProjectPath(file.getPath());
+    dialog.getWizardContext().setProjectBuilder(getBuilder());
+    dialog.navigateToStep(new Function<Step, Boolean>() {
+      @Override
+      public Boolean fun(Step step) {
+        return step instanceof SelectExternalProjectStepBase;
+      }
+    });
+    dialog.doNextAction();
+    if (StringUtil.isEmpty(wizardContext.getProjectName())) {
+      final String projectName = dialog.getWizardContext().getProjectName();
+      if (!StringUtil.isEmpty(projectName)) {
+        wizardContext.setProjectName(projectName);
+      }
+    }
+
+    dialog.show();
+    return dialog.isOK();
   }
 
   @Override

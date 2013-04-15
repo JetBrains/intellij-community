@@ -23,7 +23,11 @@ import java.io.File;
  * @author Denis Zhdanov
  * @since 8/1/11 4:15 PM
  */
+<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/wizard/SelectExternalProjectStepBase.java
 public class SelectExternalProjectStepBase extends AbstractImportFromExternalSystemWizardStep {
+=======
+public class SelectExternalProjectStepBase extends AbstractImportFromGradleWizardStep {
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/wizard/SelectExternalProjectStepBase.java
 
   private final JPanel myComponent = new JPanel(new BorderLayout());
 

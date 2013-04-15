@@ -32,19 +32,32 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 2/15/12 11:32 AM
  */
+<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/LibraryDataService.java
 public class LibraryDataService implements ProjectDataService<LibraryData> {
+=======
+public class LibraryDataManager implements ProjectDataManager<LibraryData> {
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/LibraryDataManager.java
 
   private static final Logger LOG = Logger.getInstance("#" + LibraryDataService.class.getName());
 
   @NotNull private final PlatformFacade                myPlatformFacade;
   @NotNull private final ProjectStructureHelper        myProjectStructureHelper;
   @NotNull private final ExternalLibraryPathTypeMapper myLibraryPathTypeMapper;
+<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/LibraryDataService.java
   @NotNull private final JarDataService                myJarManager;
 
   public LibraryDataService(@NotNull PlatformFacade platformFacade,
                             @NotNull ProjectStructureHelper helper,
                             @NotNull ExternalLibraryPathTypeMapper mapper,
                             @NotNull JarDataService manager)
+=======
+  @NotNull private final JarDataManager                myJarManager;
+
+  public LibraryDataManager(@NotNull PlatformFacade platformFacade,
+                            @NotNull ProjectStructureHelper helper,
+                            @NotNull ExternalLibraryPathTypeMapper mapper,
+                            @NotNull JarDataManager manager)
+>>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/LibraryDataManager.java
   {
     myPlatformFacade = platformFacade;
     myProjectStructureHelper = helper;
