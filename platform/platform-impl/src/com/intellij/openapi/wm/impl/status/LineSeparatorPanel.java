@@ -89,31 +89,51 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        String lineSeparator = null;
         VirtualFile file = getSelectedFile();
-        if (file == null || !file.isWritable()) {
-          myActionEnabled = false;
+        myActionEnabled = false;
+        String lineSeparator = null;
+        String toolTipText = null;
+        String panelText = null;
+
+        if (file != null) {
+          myActionEnabled = file.isWritable();
+
+          lineSeparator =
+            LoadTextUtil.detectLineSeparator(file, true);
+
+          if (lineSeparator != null) {
+             toolTipText = String.format("Line separator: %s",
+                                         StringUtil.escapeLineBreak(lineSeparator));
+             panelText = LineSeparator.fromString(lineSeparator).toString();
+          }
         }
-        else {
-          lineSeparator = LoadTextUtil.detectLineSeparator(file, true);
+
+        if (lineSeparator == null) {
+          toolTipText = "No line separator";
+          panelText = "n/a";
+          myActionEnabled = false;
         }
 
         myComponent.resetColor();
-        if (lineSeparator == null) {
-          myComponent.setText("");
-        }
-        else {
-          myActionEnabled = true;
-          myComponent.setToolTipText(String.format("Line separator: %s%nClick to change", StringUtil.escapeLineBreak(lineSeparator)));
-          myComponent.setText(LineSeparator.fromString(lineSeparator).toString());
-        }
+
+        String toDoComment;
 
         if (myActionEnabled) {
+          toDoComment = "Click to change";
           myComponent.setForeground(UIUtil.getActiveTextColor());
-        }
-        else {
+          myComponent.setTextAlignment(Component.LEFT_ALIGNMENT);
+        } else {
+          toDoComment = "";
           myComponent.setForeground(UIUtil.getInactiveTextColor());
+          myComponent.setTextAlignment(Component.CENTER_ALIGNMENT);
         }
+
+        myComponent.setToolTipText(String.format("%s%n%s",
+                                                 toolTipText,
+                                                 toDoComment));
+        myComponent.setText(panelText);
+
+
 
         if (myStatusBar != null) {
           myStatusBar.updateWidget(ID());

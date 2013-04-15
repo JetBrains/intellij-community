@@ -20,6 +20,7 @@ import com.intellij.application.options.colors.NewColorAndFontPanel;
 import com.intellij.application.options.colors.SimpleEditorPreview;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
+import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.CreateDesktopEntryAction;
 import com.intellij.ide.actions.CreateLauncherScriptAction;
 import com.intellij.ide.todo.TodoConfiguration;
@@ -76,6 +77,7 @@ public class InitialConfigurationDialog extends DialogWrapper {
   private JCheckBox myGlobalEntryCheckBox;
   private JPanel myCreateEntryPanel;
   private ComboBox myAppearanceComboBox;
+  private JLabel myPreferencesLabel;
   private String myColorSettingsPage;
   private SimpleEditorPreview myPreviewEditor;
   private ColorAndFontOptions myPreviewOptions;
@@ -176,6 +178,8 @@ public class InitialConfigurationDialog extends DialogWrapper {
     if (canCreateDesktopEntry) {
       myGlobalEntryCheckBox.setSelected(!PathManager.getHomePath().startsWith("/home"));
     }
+
+    myPreferencesLabel.setText("You can use "+ IdeBundle.settingsActionPath() + " to configure any of these settings later.");
 
     Disposer.register(myDisposable, new Disposable() {
       @Override

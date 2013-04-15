@@ -369,6 +369,7 @@ public class ExtensionPointImpl<T> implements ExtensionPoint<T> {
     }
   }
 
+  @NotNull
   @Override
   public Class<T> getExtensionClass() {
     // racy single-check: we don't care whether the access to 'myExtensionClass' is thread-safe

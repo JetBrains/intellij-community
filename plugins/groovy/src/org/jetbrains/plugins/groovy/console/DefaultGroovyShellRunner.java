@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -82,7 +82,8 @@ public class DefaultGroovyShellRunner extends GroovyShellRunner {
   private static boolean hasGroovyAll(Module module) {
     GlobalSearchScope scope = GlobalSearchScope.moduleWithDependenciesAndLibrariesScope(module);
     JavaPsiFacade facade = JavaPsiFacade.getInstance(module.getProject());
-    return facade.findClass("org.apache.commons.cli.CommandLineParser", scope) != null &&
+    return (facade.findClass("org.apache.commons.cli.CommandLineParser", scope) != null ||
+            facade.findClass("groovyjarjarcommonscli.CommandLineParser", scope) != null) &&
            facade.findClass("groovy.ui.GroovyMain", scope) != null;
   }
 

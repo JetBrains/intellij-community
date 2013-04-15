@@ -107,9 +107,8 @@ public class ParametersList implements Cloneable {
   }
 
   public void prependAll(@NonNls final String... parameter) {
-    for (int i = parameter.length - 1; i >= 0; i--) {
-      addAt(0, parameter[i]);
-    }
+    addAll(parameter);
+    Collections.rotate(myParameters, parameter.length);
   }
 
   public void addParametersString(final String parameters) {
@@ -226,11 +225,14 @@ public class ParametersList implements Cloneable {
   }
 
   public void addAll(final String... parameters) {
-    ContainerUtil.addAll(myParameters, parameters);
+    addAll(Arrays.asList(parameters));
   }
 
   public void addAll(final List<String> parameters) {
-    myParameters.addAll(parameters);
+    // Don't use myParameters.addAll(parameters) , it does not call expandMacros(parameter)
+    for (String parameter : parameters) {
+      add(parameter);
+    }
   }
 
   @Override

@@ -27,7 +27,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAc
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstant
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrGdkMethod
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightLocalVariable
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable
 import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil
 import org.jetbrains.plugins.groovy.util.TestUtils
 /**
@@ -141,7 +141,7 @@ public class ResolvePropertyTest extends GroovyResolveTestCase {
   public void testUndefinedVar1() throws Exception {
     PsiReference ref = configureByFile("undefinedVar1/A.groovy");
     PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, GrLightLocalVariable);
+    assertInstanceOf(resolved, GrBindingVariable);
   }
 
   public void testRecursive1() throws Exception {
@@ -311,7 +311,7 @@ print ba<caret>r
   private void doUndefinedVarTest(String fileName) throws Exception {
     PsiReference ref = configureByFile(fileName);
     PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, GrLightLocalVariable);
+    assertInstanceOf(resolved, GrBindingVariable);
   }
 
   public void testBooleanProperty() throws Exception {
@@ -1087,4 +1087,124 @@ print foo.Inn<caret>er
 
     assertInstanceOf(ref.resolve(), PsiField)
   }
+
+  void testResolveBinding1() {
+    resolveByText('''\
+abc = 4
+
+print ab<caret>c
+''', GrBindingVariable)
+  }
+
+  void testResolveBinding2() {
+    resolveByText('''\
+print ab<caret>c
+
+abc = 4
+''', GrBindingVariable)
+  }
+
+  void testResolveBinding3() {
+    resolveByText('''\
+a<caret>bc = 4
+
+print abc
+''', GrBindingVariable)
+  }
+
+  void testResolveBinding4() {
+    resolveByText('''\
+print abc
+
+a<caret>bc = 4
+''', GrBindingVariable)
+  }
+
+
+  void testResolveBinding5() {
+    resolveByText('''\
+def foo() {
+  abc = 4
+}
+
+def bar() {
+  print ab<caret>c
+}
+''', GrBindingVariable)
+  }
+
+  void testResolveBinding6() {
+    resolveByText('''\
+def foo() {
+  print ab<caret>c
+}
+
+def bar() {
+  abc = 4
+}
+''', GrBindingVariable)
+  }
+
+  void testResolveBinding7() {
+    resolveByText('''\
+def foo() {
+  a<caret>bc = 4
+}
+
+def bar() {
+  print abc
+}
+''', GrBindingVariable)
+  }
+
+  void testResolveBinding8() {
+    resolveByText('''\
+def foo() {
+  print abc
+}
+
+def bar() {
+  a<caret>bc = 4
+}
+''', GrBindingVariable)
+  }
+
+  void testBinding9() {
+    resolveByText('''\
+a<caret>a = 5
+print aa
+aa = 6
+print aa
+''', GrBindingVariable)
+  }
+
+  void testBinding10() {
+    resolveByText('''\
+aa = 5
+print a<caret>a
+aa = 6
+print aa
+''', GrBindingVariable)
+  }
+
+  void testBinding11() {
+    resolveByText('''\
+aa = 5
+print aa
+a<caret>a = 6
+print aa
+''', GrBindingVariable)
+  }
+
+  void testBinding12() {
+    resolveByText('''\
+aa = 5
+print aa
+aa = 6
+print a<caret>a
+''', GrBindingVariable)
+  }
+
+
+
 }

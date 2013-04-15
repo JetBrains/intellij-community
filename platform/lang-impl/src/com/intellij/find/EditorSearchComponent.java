@@ -25,6 +25,7 @@ import com.intellij.find.impl.livePreview.LivePreviewControllerBase;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
 import com.intellij.openapi.actionSystem.impl.ActionToolbarImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
@@ -35,11 +36,14 @@ import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.editor.impl.EditorHeaderComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Getter;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
+import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.LightColors;
+import com.intellij.ui.SearchTextField;
 import com.intellij.ui.TextComponentUndoProvider;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
@@ -48,6 +52,7 @@ import com.intellij.ui.components.labels.LinkListener;
 import com.intellij.ui.components.panels.NonOpaquePanel;
 import com.intellij.ui.speedSearch.SpeedSearchSupply;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -57,6 +62,7 @@ import javax.swing.event.DocumentListener;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
 import java.awt.event.*;
+import java.util.Arrays;
 import java.util.regex.Pattern;
 
 /**
@@ -84,10 +90,30 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     return mySearchField;
   }
 
+  private JSplitPane mySplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+  private JPanel myLeftComponent = new JPanel(new BorderLayout());
+  private JPanel myRightComponent = new JPanel(new BorderLayout());
+
+  {
+    mySplitPane.setOpaque(false);
+    mySplitPane.setBorder(IdeBorderFactory.createEmptyBorder(1, 0, 2, 0));
+    mySplitPane.setContinuousLayout(true);
+    myLeftComponent.setOpaque(false);
+    myRightComponent.setOpaque(false);
+
+    mySplitPane.setLeftComponent(myLeftComponent);
+    mySplitPane.setRightComponent(myRightComponent);
+    add(mySplitPane, BorderLayout.NORTH);
+  }
+
   private JTextComponent mySearchField;
+  private SearchTextField mySearchSearchTextField;
+
   private JTextComponent myReplaceField;
-  private TextComponentUndoProvider mySearchUndo;
-  private TextComponentUndoProvider myReplaceUndo;
+  private SearchTextField myReplaceSearchTextField;
+
+  private MyUndoProvider mySearchUndo;
+  private MyUndoProvider myReplaceUndo;
 
   private Getter<JTextComponent> mySearchFieldGetter = new Getter<JTextComponent>() {
     @Override
@@ -273,13 +299,20 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
   private void configureLeadPanel() {
     JPanel myLeadPanel = createLeadPane();
-    add(myLeadPanel, BorderLayout.WEST);
+    myRightComponent.add(myLeadPanel, BorderLayout.WEST);
 
     if (mySearchUndo != null) {
       mySearchUndo.dispose();
     }
-    mySearchField = createTextField(myLeadPanel);
-    mySearchUndo = new TextComponentUndoProvider(mySearchField);
+
+    Ref<SearchTextField> ref = Ref.create();
+    mySearchField = createTextField(BorderLayout.NORTH, ref);
+    mySearchSearchTextField = ref.get();
+    if (mySearchSearchTextField != null) {
+      setupHistoryToSearchField(mySearchSearchTextField, FindSettings.getInstance().getRecentFindStrings());
+    }
+
+    mySearchUndo = new MyUndoProvider(mySearchField);
 
     setupSearchFieldListener();
 
@@ -287,7 +320,11 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
       initToolbar();
     }
 
-    myLeadPanel.add(myToolbarComponent);
+    JPanel centerPanel = new JPanel(new BorderLayout());
+    centerPanel.setOpaque(false);
+    centerPanel.add(myToolbarComponent, BorderLayout.CENTER);
+
+    myRightComponent.add(centerPanel, BorderLayout.CENTER);
 
     if (secondaryActionsAvailable()) {
       if (myToolbarComponent instanceof ActionToolbarImpl) {
@@ -299,21 +336,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     JPanel tailPanel = new NonOpaquePanel(new BorderLayout(5, 0));
     JPanel tailContainer = new NonOpaquePanel(new BorderLayout(5, 0));
     tailContainer.add(tailPanel, BorderLayout.EAST);
-    add(tailContainer, BorderLayout.CENTER);
-
-    myMatchInfoLabel = new JLabel();
-    setSmallerFontAndOpaque(myMatchInfoLabel);
-
-
-    myClickToHighlightLabel = new LinkLabel("Click to highlight", null, new LinkListener() {
-      @Override
-      public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        setMatchesLimit(Integer.MAX_VALUE);
-        updateResults(true);
-      }
-    });
-    setSmallerFontAndOpaque(myClickToHighlightLabel);
-    myClickToHighlightLabel.setVisible(false);
+    centerPanel.add(tailContainer, BorderLayout.EAST);
 
     JLabel closeLabel = new JLabel(" ", AllIcons.Actions.Cross, SwingConstants.RIGHT);
     closeLabel.addMouseListener(new MouseAdapter() {
@@ -325,11 +348,6 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
     closeLabel.setToolTipText("Close search bar (Escape)");
 
-    JPanel labelsPanel = new NonOpaquePanel(new FlowLayout());
-
-    labelsPanel.add(myMatchInfoLabel);
-    labelsPanel.add(myClickToHighlightLabel);
-    tailPanel.add(labelsPanel, BorderLayout.CENTER);
     tailPanel.add(closeLabel, BorderLayout.EAST);
 
     Utils.setSmallerFont(mySearchField);
@@ -362,6 +380,11 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     Utils.setSmallerFontForChildren(myToolbarComponent);
   }
 
+  private void setupHistoryToSearchField(SearchTextField field, String[] strings) {
+    field.setHistorySize(strings.length);
+    field.setHistory(ContainerUtil.reverse(Arrays.asList(strings)));
+  }
+
   private void initToolbar() {
     DefaultActionGroup actionGroup = new DefaultActionGroup("search bar", false);
     actionGroup.add(new ShowHistoryAction(mySearchFieldGetter, this));
@@ -371,6 +394,17 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     actionGroup.add(new ToggleMultiline(this));
     actionGroup.add(new ToggleMatchCase(this));
     actionGroup.add(new ToggleRegex(this));
+
+    myMatchInfoLabel = new JLabel();
+
+    myClickToHighlightLabel = new LinkLabel("Click to highlight", null, new LinkListener() {
+      @Override
+      public void linkSelected(LinkLabel aSource, Object aLinkData) {
+        setMatchesLimit(Integer.MAX_VALUE);
+        updateResults(true);
+      }
+    });
+    myClickToHighlightLabel.setVisible(false);
 
     myActionsToolbar = ActionManager.getInstance().createActionToolbar("SearchBar", actionGroup, true);
     myActionsToolbar.setSecondaryActionsTooltip("More Options(" + ShowMoreOptions.SHORT_CUT + ")");
@@ -383,6 +417,25 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     actionGroup.addAction(new TogglePreserveCaseAction(this));
     actionGroup.addAction(new ToggleSelectionOnlyAction(this));
 
+    class MyCustomComponentDoNothingAction extends AnAction implements CustomComponentAction {
+      private JComponent c;
+
+      MyCustomComponentDoNothingAction(JComponent c) {
+        this.c = c;
+        c.setBorder(IdeBorderFactory.createEmptyBorder(new Insets(0, 10, 0, 0)));
+      }
+
+      @Override
+      public void actionPerformed(AnActionEvent e) {
+      }
+
+      @Override
+      public JComponent createCustomComponent(Presentation presentation) {
+        return c;
+      }
+    }
+    actionGroup.add(new MyCustomComponentDoNothingAction(myMatchInfoLabel));
+    actionGroup.add(new MyCustomComponentDoNothingAction(myClickToHighlightLabel));
 
     myActionsToolbar.setLayoutPolicy(ActionToolbar.AUTO_LAYOUT_POLICY);
     myToolbarComponent = myActionsToolbar.getComponent();
@@ -453,7 +506,8 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     myActionsToolbar.updateActionsImmediately();
 
     if ((myFindModel.isMultiline() && mySearchField instanceof JTextField) || (!myFindModel.isMultiline() && mySearchField instanceof JTextArea)) {
-      removeAll();
+      myLeftComponent.removeAll();
+      myRightComponent.removeAll();
       configureLeadPanel();
       if (myReplacementPane != null) {
         myReplacementPane = null;
@@ -471,7 +525,8 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     if (myFindModel.isReplaceState() && myReplacementPane == null) {
       configureReplacementPane();
     } else if (!myFindModel.isReplaceState() && myReplacementPane != null) {
-      remove(myReplacementPane);
+      myLeftComponent.remove(myReplaceField);
+      myRightComponent.remove(myReplacementPane);
       myReplacementPane = null;
     }
     if (myFindModel.isReplaceState()) {
@@ -483,8 +538,8 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     }
 
     updateReplaceButton();
-
     Utils.setSmallerFontForChildren(myToolbarComponent);
+    revalidate();
   }
 
   private static boolean wholeWordsApplicable(String stringToFind) {
@@ -501,17 +556,21 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   }
 
   private void configureReplacementPane() {
-    myReplacementPane = createLeadPane();
+    myReplacementPane = new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
 
     if (myReplaceUndo != null) {
       myReplaceUndo.dispose();
     }
-    myReplaceField = createTextField(myReplacementPane);
-    myReplaceUndo = new TextComponentUndoProvider(myReplaceField);
 
-    //if (myToolbarComponent instanceof ActionToolbarImpl) {
-    //  new ShowMoreOptions(myToolbarComponent, myReplaceField);
-    //}
+    Ref<SearchTextField> ref = Ref.create();
+    myReplaceField = createTextField(BorderLayout.SOUTH, ref);
+    myReplaceSearchTextField = ref.get();
+    if (myReplaceSearchTextField != null) {
+      setupHistoryToSearchField(myReplaceSearchTextField, FindSettings.getInstance().getRecentReplaceStrings());
+    }
+    myReplaceUndo = new MyUndoProvider(myReplaceField);
+
+    revalidate();
 
     DocumentListener replaceFieldListener = new DocumentListener() {
       @Override
@@ -536,7 +595,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     }
 
     myReplaceField.setText(myFindModel.getStringToReplace());
-    add(myReplacementPane, BorderLayout.SOUTH);
+    myRightComponent.add(myReplacementPane, BorderLayout.SOUTH);
 
     myReplaceButton = new JButton("Replace");
     myReplaceButton.setFocusable(false);
@@ -591,7 +650,6 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     new VariantsCompletionAction(this, myReplaceFieldGetter);
     new NextOccurrenceAction(this, myReplaceFieldGetter);
     new PrevOccurrenceAction(this, myReplaceFieldGetter);
-
   }
 
   private void replaceFieldDocumentChanged() {
@@ -633,7 +691,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   }
 
   private static JPanel createLeadPane() {
-    return new NonOpaquePanel(new FlowLayout(FlowLayout.LEFT, 5, 0));
+    return new NonOpaquePanel(new BorderLayout());
   }
 
   public void showHistory(final boolean byClickingToolbarButton, JTextComponent textField) {
@@ -661,7 +719,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     }
   }
 
-  private JTextComponent createTextField(JPanel leadPanel) {
+  private JTextComponent createTextField(Object constraint, Ref<SearchTextField> searchTextField) {
     final JTextComponent editorTextField;
     if (myFindModel.isMultiline()) {
       editorTextField = new JTextArea("") {
@@ -676,22 +734,19 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
       final JScrollPane scrollPane = new JBScrollPane(editorTextField,
                                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
                                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-      leadPanel.add(scrollPane);
+      myLeftComponent.add(scrollPane, constraint);
     }
     else {
-      editorTextField = new JTextField("") {
-        @Override
-        protected void paintBorder(final Graphics g) {
-          super.paintBorder(g);
-          paintBorderOfTextField(g);
-        }
-      };
-      ((JTextField)editorTextField).setColumns(25);
+      SearchTextField stf = new SearchTextField(true);
+      stf.setOpaque(false);
+      editorTextField = stf.getTextEditor();
       if (UIUtil.isUnderGTKLookAndFeel()) {
         editorTextField.setOpaque(false);
       }
-      leadPanel.add(editorTextField);
+      myLeftComponent.add(stf, constraint);
+      searchTextField.set(stf);
     }
+    editorTextField.setMinimumSize(new Dimension(200, -1));
     editorTextField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
 
     editorTextField.addFocusListener(new FocusListener() {
@@ -738,8 +793,14 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     if (text.length() > 0) {
       if (textField == mySearchField) {
         FindSettings.getInstance().addStringToFind(text);
+        if (mySearchSearchTextField != null) {
+          mySearchSearchTextField.addCurrentTextToHistory();
+        }
       } else {
         FindSettings.getInstance().addStringToReplace(text);
+        if (myReplaceSearchTextField != null) {
+          myReplaceSearchTextField.addCurrentTextToHistory();
+        }
       }
     }
   }
@@ -904,6 +965,34 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     return insets;
   }
 
+  private static class MyUndoProvider extends TextComponentUndoProvider {
+    private boolean myEnabled = true;
+    public MyUndoProvider(JTextComponent textComponent) {
+      super(textComponent);
+      textComponent.getDocument().addDocumentListener(new com.intellij.ui.DocumentAdapter() {
+        @Override
+        protected void textChanged(javax.swing.event.DocumentEvent e) {
+          myEnabled = true;
+        }
+      });
+    }
+
+    @Override
+    protected boolean canUndo() {
+      return super.canUndo() && myEnabled;
+    }
+
+    @Override
+    protected boolean canRedo() {
+      return super.canRedo() && myEnabled;
+    }
+
+    public void disable() {
+      myEnabled = false;
+      myUndoManager.discardAllEdits();
+    }
+  }
+
   private class MyLivePreviewController extends LivePreviewControllerBase {
     public MyLivePreviewController() {
       super(EditorSearchComponent.this.mySearchResults, EditorSearchComponent.this.myLivePreview);
@@ -941,7 +1030,8 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
         mySuppressUpdate = false;
       }
       //getFocusBack();
-      addTextToRecent(myReplaceField) ;
+      addTextToRecent(myReplaceField);
+      clearUndoInTextFields();
     }
 
     public void exclude() {
@@ -951,5 +1041,10 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     public void performReplaceAll() {
       performReplaceAll(myEditor);
     }
+  }
+
+  private void clearUndoInTextFields() {
+    myReplaceUndo.disable();
+    mySearchUndo.disable();
   }
 }

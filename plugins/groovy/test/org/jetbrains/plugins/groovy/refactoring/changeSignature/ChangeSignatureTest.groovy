@@ -253,6 +253,10 @@ public class ChangeSignatureTest extends ChangeSignatureTestCase {
     doTest(null, 'a\'bc', null, [], [], false)
   }
 
+  void testLineFeedInCommandArgs() {
+    doTest(new SimpleInfo(1))
+  }
+
 
   private PsiType createType(String typeText) {
     return JavaPsiFacade.getElementFactory(project).createTypeByFQClassName(typeText, GlobalSearchScope.allScope(project));

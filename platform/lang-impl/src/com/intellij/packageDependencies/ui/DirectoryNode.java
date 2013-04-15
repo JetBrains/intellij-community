@@ -152,7 +152,7 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
   public PsiElement getPsiElement() {
-    return getPsiDirectory();
+    return getTargetDirectory();
   }
 
   @Nullable

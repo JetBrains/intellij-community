@@ -38,6 +38,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
@@ -408,7 +409,9 @@ public class TestNGConfigurationEditor extends SettingsEditor<TestNGConfiguratio
       }
     }));
 
-    final EditorTextFieldWithBrowseButton methodEditorTextField = new EditorTextFieldWithBrowseButton(project, true);
+    final EditorTextFieldWithBrowseButton methodEditorTextField = new EditorTextFieldWithBrowseButton(project, true, 
+                                                                                                      JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE, 
+                                                                                                      PlainTextLanguage.INSTANCE.getAssociatedFileType());
     new TextFieldCompletionProvider() {
       @Override
       protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {

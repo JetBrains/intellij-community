@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -126,7 +126,7 @@ public class GantRunner extends GroovyScriptRunner {
   }
 
   private static void addGroovyAndAntJars(JavaParameters params, Module module, String gantHome) {
-    final File[] groovyJars = GroovyUtils.getFilesInDirectoryByPattern(gantHome + "/lib/", GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
+    final File[] groovyJars = GroovyConfigUtils.getGroovyAllJars(gantHome + "/lib/");
     if (groovyJars.length > 0) {
       params.getClassPath().add(groovyJars[0].getAbsolutePath());
       return;

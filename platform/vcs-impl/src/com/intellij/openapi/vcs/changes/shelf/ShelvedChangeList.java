@@ -75,13 +75,14 @@ public class ShelvedChangeList implements JDOMExternalizable {
     myRecycled = recycled;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     DefaultJDOMExternalizer.readExternal(this, element);
     DATE = new Date(Long.parseLong(element.getAttributeValue(ATTRIBUTE_DATE)));
 
-    myBinaryFiles = new ArrayList<ShelvedBinaryFile>();
     //noinspection unchecked
     final List<Element> children = (List<Element>)element.getChildren(ELEMENT_BINARY);
+    myBinaryFiles = new ArrayList<ShelvedBinaryFile>(children.size());
     for (Element child : children) {
       ShelvedBinaryFile binaryFile = new ShelvedBinaryFile();
       binaryFile.readExternal(child);
@@ -89,6 +90,7 @@ public class ShelvedChangeList implements JDOMExternalizable {
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
     element.setAttribute(ATTRIBUTE_DATE, Long.toString(DATE.getTime()));

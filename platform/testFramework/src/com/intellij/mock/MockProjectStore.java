@@ -41,7 +41,7 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  public void setProjectFilePath(final String filePath) {
+  public void setProjectFilePath(@NotNull final String filePath) {
     throw new UnsupportedOperationException("Method setProjectFilePath is not yet implemented in " + getClass().getName());
   }
 

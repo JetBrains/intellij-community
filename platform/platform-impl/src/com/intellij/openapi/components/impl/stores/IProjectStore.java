@@ -36,7 +36,7 @@ import java.util.Set;
 public interface IProjectStore extends IComponentStore {
   boolean checkVersion();
 
-  void setProjectFilePath(final String filePath);
+  void setProjectFilePath(@NotNull String filePath);
 
   @Nullable
   VirtualFile getProjectBaseDir();

@@ -19,6 +19,7 @@ import com.google.common.base.Function;
 import com.google.common.collect.Collections2;
 import com.intellij.dvcs.test.MockVcsHelper;
 import com.intellij.dvcs.test.MockVirtualFile;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.FilePathImpl;
 import com.intellij.openapi.vcs.changes.Change;
 import com.intellij.openapi.vcs.changes.LocalChangeList;
@@ -163,8 +164,8 @@ public class GitCherryPickStepdefs {
     List<String> actualMessages = Arrays.asList(output.split(RECORD_SEPARATOR));
 
     for (int i = 0; i < expectedMessages.size(); i++) {
-      String expectedMessage = expectedMessages.get(i).trim();
-      String actualMessage = actualMessages.get(i).trim();
+      String expectedMessage = StringUtil.convertLineSeparators(expectedMessages.get(i).trim());
+      String actualMessage = StringUtil.convertLineSeparators(actualMessages.get(i).trim());
       if (!fullBody) {
         // the subject (%s) somehow contains both "fix #1" and "cherry-picked from <hash>" in a single line
         // which is probably Git misbehavior, so let's compare without taking line breaks and spaces into consideration

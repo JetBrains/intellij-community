@@ -231,6 +231,7 @@ public class DefaultActionGroup extends ActionGroup {
    * @param e not used
    * @return An array of children actions
    */
+  @Override
   @NotNull
   public final AnAction[] getChildren(@Nullable AnActionEvent e) {
     boolean hasNulls = false;

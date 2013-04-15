@@ -228,7 +228,7 @@ public class ByteArrayList implements  Cloneable {
      */
     public byte get(int offset) {
         if (offset >= _pos) {
-            throw new ArrayIndexOutOfBoundsException(offset);
+            throw new ArrayIndexOutOfBoundsException("Index out of range: "+offset+"; size: "+_pos);
         }
         return _data[offset];
     }

@@ -143,33 +143,13 @@ public class PsiParameterImpl extends JavaStubPsiElement<PsiParameterStub> imple
       return LambdaUtil.getLambdaParameterType(this);
     }
     else {
-      return JavaSharedImplUtil.getType(typeElement, getParameterIdentifier(), this);
+      return JavaSharedImplUtil.getType(typeElement, getParameterIdentifier());
     }
   }
 
   @Override
   public PsiType getTypeNoResolve() {
-    PsiParameterStub stub = getStub();
-    if (stub != null) {
-      String typeText = TypeInfo.createTypeText(stub.getType(false));
-      assert typeText != null : stub;
-      try {
-        return JavaPsiFacade.getInstance(getProject()).getParserFacade().createTypeFromText(typeText, this);
-      }
-      catch (IncorrectOperationException e) {
-        LOG.error(e);
-        return null;
-      }
-    }
-
-    final PsiTypeElement typeElement = getTypeElement();
-    if (typeElement == null) {
-      assert isLambdaParameter() : this;
-      return new PsiLambdaParameterType(this);
-    }
-    else {
-      return JavaSharedImplUtil.getTypeNoResolve(typeElement, getParameterIdentifier(), this);
-    }
+    return getType();
   }
 
   private boolean isLambdaParameter() {

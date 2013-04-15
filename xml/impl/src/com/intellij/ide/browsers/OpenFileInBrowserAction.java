@@ -88,10 +88,10 @@ public class OpenFileInBrowserAction extends DumbAwareAction {
     LOG.assertTrue(psiFile != null);
     try {
       final InputEvent event = e.getInputEvent();
-      final String url = WebBrowserService.getInstance().getUrlToOpen(psiFile, event != null && event.isShiftDown());
+      Url url = WebBrowserService.getInstance().getUrlToOpen(psiFile, event != null && event.isShiftDown());
       if (url != null) {
         ApplicationManager.getApplication().saveAll();
-        BrowserUtil.launchBrowser(url);
+        BrowserUtil.launchBrowser(url.toExternalForm());
       }
     }
     catch (WebBrowserUrlProvider.BrowserException e1) {

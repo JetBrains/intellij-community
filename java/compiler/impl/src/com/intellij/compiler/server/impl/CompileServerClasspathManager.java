@@ -85,7 +85,11 @@ public class CompileServerClasspathManager {
           else {
             //development mode: add directory out/classes/production/<jar-name> to classpath, assuming that jar-name is equal to module name
             final String moduleName = FileUtil.getNameWithoutExtension(PathUtil.getFileName(relativePath));
-            final File dir = new File(baseFile.getParentFile(), moduleName);
+            File baseOutputDir = baseFile.getParentFile();
+            if (baseOutputDir.getName().equals("test")) {
+              baseOutputDir = new File(baseOutputDir.getParentFile(), "production");
+            }
+            final File dir = new File(baseOutputDir, moduleName);
             if (dir.exists()) {
               classpath.add(dir.getPath());
             }
@@ -98,12 +102,13 @@ public class CompileServerClasspathManager {
                   classpath.add(libraryFile.getPath());
                 }
                 else {
-                  LOG.error("Cannot add plugin '" + plugin.getName() + "' to external compiler classpath: " +
+                  LOG.error("Cannot add " + relativePath + " from plugin '" + plugin.getName() + "' to external compiler classpath: " +
                             "library " + libraryFile.getAbsolutePath() + " not found");
                 }
               }
               else {
-                LOG.error("Cannot add plugin '" + plugin.getName() + "' to external compiler classpath: home directory of plugin not found");
+                LOG.error("Cannot add " + relativePath + " from plugin '" + plugin.getName() +
+                          "' to external compiler classpath: home directory of plugin not found");
               }
             }
           }
@@ -116,12 +121,15 @@ public class CompileServerClasspathManager {
   @Nullable
   private static File getPluginDir(IdeaPluginDescriptor plugin) {
     String pluginDirName = StringUtil.getShortName(plugin.getPluginId().getIdString());
-    List<String> roots = Arrays.asList(new File(PathManager.getHomePath(), "plugins").getPath(),
-                                       new File(PathManager.getHomePath(), "community/plugins").getPath());
     String extraDir = System.getProperty("idea.external.build.development.plugins.dir");
     if (extraDir != null) {
-      roots.add(extraDir);
+      File extraDirFile = new File(extraDir, pluginDirName);
+      if (extraDirFile.isDirectory()) {
+        return extraDirFile;
+      }
     }
+    List<String> roots = Arrays.asList(new File(PathManager.getHomePath(), "plugins").getPath(),
+                                       new File(PathManager.getHomePath(), "community/plugins").getPath());
     for (String root : roots) {
       File pluginDir = new File(root, pluginDirName);
       if (pluginDir.isDirectory()) {

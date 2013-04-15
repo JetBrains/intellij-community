@@ -69,8 +69,9 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     initialize();
   }
 
-  public ExtensionsAreaImpl(MutablePicoContainer picoContainer, LogProvider logger) {
-    this(null, null, picoContainer, logger);
+  @TestOnly
+  ExtensionsAreaImpl(MutablePicoContainer parentPicoContainer, @NotNull LogProvider logger) {
+    this(null, null, parentPicoContainer, logger);
   }
 
   @TestOnly
@@ -148,7 +149,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
 
     ExtensionComponentAdapter adapter;
     final PicoContainer container = getPluginContainer(pluginId.getIdString());
-    final ExtensionPoint extensionPoint = getExtensionPoint(epName);
+    final ExtensionPointImpl extensionPoint = getExtensionPoint(epName);
     if (extensionPoint.getKind() == ExtensionPoint.Kind.INTERFACE) {
       String implClass = extensionElement.getAttributeValue("implementation");
       if (implClass == null) {
@@ -161,7 +162,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
     }
     myExtensionElement2extension.put(extensionElement, adapter);
     internalGetPluginContainer().registerComponent(adapter);
-    getExtensionPoint(epName).registerExtensionAdapter(adapter);
+    extensionPoint.registerExtensionAdapter(adapter);
   }
 
   private static boolean shouldDeserializeInstance(Element extensionElement) {

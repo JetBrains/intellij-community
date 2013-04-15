@@ -46,6 +46,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.ExceptionUtil;
 import com.intellij.util.Function;
 import com.intellij.util.PlatformUtils;
 import com.intellij.util.graph.CachingSemiGraph;
@@ -197,8 +198,15 @@ public class PluginManager {
             method.invoke(null, new Object[]{args});
           }
           catch (Exception e) {
-            e.printStackTrace();
-            getLogger().error("Error while accessing " + mainClass + "." + methodName + " with arguments: " + Arrays.asList(args), e);
+            e.printStackTrace(System.err);
+            String message = "Error while accessing " + mainClass + "." + methodName + " with arguments: " + Arrays.asList(args);
+            if ("true".equals(System.getProperty("java.awt.headless"))) {
+              //noinspection UseOfSystemOutOrSystemErr
+              System.err.println(message);
+            }
+            else {
+              JOptionPane.showMessageDialog(null, message + ": " + e.getClass().getName() + ": " + e.getMessage() + "\n" + ExceptionUtil.getThrowableText(e), "Error starting IntelliJ Platform", JOptionPane.ERROR_MESSAGE);
+            }
           }
         }
       };

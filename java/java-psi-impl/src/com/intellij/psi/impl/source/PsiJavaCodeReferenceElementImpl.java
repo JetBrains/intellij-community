@@ -582,7 +582,12 @@ public class PsiJavaCodeReferenceElementImpl extends CompositePsiElement impleme
 
     if (!isQualified()) {
       PsiModifierList modifierList = PsiImplUtil.findNeighbourModifierList(this);
-      if (modifierList != null) PsiImplUtil.addTypeUseAnnotations(modifierList, annotations);
+      if (modifierList != null) {
+        List<PsiAnnotation> typeAnnotations = PsiImplUtil.getTypeUseAnnotations(modifierList);
+        if (typeAnnotations != null && typeAnnotations.size() > 0) {
+          annotations.addAll(typeAnnotations);
+        }
+      }
     }
 
     return annotations;

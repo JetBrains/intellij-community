@@ -1,8 +1,6 @@
 package com.intellij.remotesdk;
 
-import com.intellij.openapi.util.PasswordUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.xmlb.annotations.Transient;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -14,7 +12,7 @@ import java.util.List;
 /**
 * @author traff
 */
-public class RemoteSdkDataHolder implements RemoteSdkData {
+public class RemoteSdkDataHolder extends RemoteCredentialsHolder implements RemoteSdkData {
 
   public static final String SSH_PREFIX = "ssh://";
   private static final String HOST = "HOST";
@@ -32,17 +30,6 @@ public class RemoteSdkDataHolder implements RemoteSdkData {
   private static final String REMOTE_PATH = "REMOTE_PATH";
   private static final String INITIALIZED = "INITIALIZED";
 
-  private String myHost;
-  private int myPort;
-  private boolean myAnonymous;
-  private String myUserName;
-  private String myPassword;
-  private boolean myUseKeyPair;
-  private String myPrivateKeyFile;
-  private String myKnownHostsFile;
-  private String myPassphrase;
-  private boolean myStorePassword;
-  private boolean myStorePassphrase;
 
   private String myInterpreterPath;
   private String myHelpersPath;
@@ -72,7 +59,7 @@ public class RemoteSdkDataHolder implements RemoteSdkData {
 
   @Override
   public String getFullInterpreterPath() {
-    return SSH_PREFIX + myUserName + "@" + myHost + ":" + myPort + myInterpreterPath;
+    return SSH_PREFIX + getUserName() + "@" + getHost() + ":" + getPort() + myInterpreterPath;
   }
 
   @Override
@@ -87,175 +74,6 @@ public class RemoteSdkDataHolder implements RemoteSdkData {
 
   public String getDefaultHelpersName() {
     return myHelpersDefaultDirName;
-  }
-
-  @Override
-  public String getHost() {
-    return myHost;
-  }
-
-  @Override
-  public void setHost(String host) {
-    myHost = host;
-  }
-
-  @Override
-  public int getPort() {
-    return myPort;
-  }
-
-  @Override
-  public void setPort(int port) {
-    myPort = port;
-  }
-
-  @Override
-  @Transient
-  public String getUserName() {
-    return myUserName;
-  }
-
-  @Override
-  public void setUserName(String userName) {
-    myUserName = userName;
-  }
-
-  public String getSerializedUserName() {
-    if (myAnonymous || myUserName == null) return "";
-    return myUserName;
-  }
-
-  public void setSerializedUserName(String userName) {
-    if (StringUtil.isEmpty(userName)) {
-      myUserName = null;
-    }
-    else {
-      myUserName = userName;
-    }
-  }
-
-  @Override
-  public String getPassword() {
-    return myPassword;
-  }
-
-  @Override
-  public void setPassword(String password) {
-    myPassword = password;
-  }
-
-  public String getSerializedPassword() {
-    if (myAnonymous) return "";
-
-    if (myStorePassword) {
-      return PasswordUtil.encodePassword(myPassword);
-    }
-    else {
-      return "";
-    }
-  }
-
-  public void setSerializedPassword(String serializedPassword) {
-    if (!StringUtil.isEmpty(serializedPassword)) {
-      myPassword = PasswordUtil.decodePassword(serializedPassword);
-      myStorePassword = true;
-    }
-    else {
-      myPassword = null;
-    }
-  }
-
-  @Override
-  public void setStorePassword(boolean storePassword) {
-    myStorePassword = storePassword;
-  }
-
-  @Override
-  public void setStorePassphrase(boolean storePassphrase) {
-    myStorePassphrase = storePassphrase;
-  }
-
-  @Override
-  public boolean isStorePassword() {
-    return myStorePassword;
-  }
-
-  @Override
-  public boolean isStorePassphrase() {
-    return myStorePassphrase;
-  }
-
-  @Override
-  public boolean isAnonymous() {
-    return myAnonymous;
-  }
-
-  @Override
-  public void setAnonymous(boolean anonymous) {
-    myAnonymous = anonymous;
-  }
-
-  @Override
-  public String getPrivateKeyFile() {
-    return myPrivateKeyFile;
-  }
-
-  @Override
-  public void setPrivateKeyFile(String privateKeyFile) {
-    myPrivateKeyFile = privateKeyFile;
-  }
-
-
-  @Override
-  public String getKnownHostsFile() {
-    return myKnownHostsFile;
-  }
-
-  @Override
-  public void setKnownHostsFile(String knownHostsFile) {
-    myKnownHostsFile = knownHostsFile;
-  }
-
-  @Override
-  @Transient
-  public String getPassphrase() {
-    return myPassphrase;
-  }
-
-  @Override
-  public void setPassphrase(String passphrase) {
-    myPassphrase = passphrase;
-  }
-
-  @Nullable
-  public String getSerializedPassphrase() {
-    if (myStorePassphrase) {
-      return PasswordUtil.encodePassword(myPassphrase);
-    }
-    else {
-      return "";
-    }
-  }
-
-  public void setSerializedPassphrase(String serializedPassphrase) {
-    if (!StringUtil.isEmpty(serializedPassphrase)) {
-      myPassphrase = PasswordUtil.decodePassword(serializedPassphrase);
-      myStorePassphrase = true;
-    }
-    else {
-      myPassphrase = null;
-      myStorePassphrase = false;
-    }
-  }
-
-  @Override
-  public boolean isUseKeyPair() {
-    return myUseKeyPair;
-  }
-
-  @Override
-  public void setUseKeyPair(boolean useKeyPair) {
-    myUseKeyPair = useKeyPair;
   }
 
   @Override
@@ -368,42 +186,46 @@ public class RemoteSdkDataHolder implements RemoteSdkData {
 
     RemoteSdkDataHolder holder = (RemoteSdkDataHolder)o;
 
-    if (myAnonymous != holder.myAnonymous) return false;
+    if (isAnonymous() != holder.isAnonymous()) return false;
     if (myHelpersVersionChecked != holder.myHelpersVersionChecked) return false;
-    if (myPort != holder.myPort) return false;
-    if (myStorePassphrase != holder.myStorePassphrase) return false;
-    if (myStorePassword != holder.myStorePassword) return false;
-    if (myUseKeyPair != holder.myUseKeyPair) return false;
-    if (myHost != null ? !myHost.equals(holder.myHost) : holder.myHost != null) return false;
+    if (getPort() != holder.getPort()) return false;
+    if (isStorePassphrase() != holder.isStorePassphrase()) return false;
+    if (isStorePassword() != holder.isStorePassword()) return false;
+    if (isUseKeyPair() != holder.isUseKeyPair()) return false;
+    if (getHost() != null ? !getHost().equals(holder.getHost()) : holder.getHost() != null) return false;
     if (myInterpreterPath != null ? !myInterpreterPath.equals(holder.myInterpreterPath) : holder.myInterpreterPath != null) return false;
-    if (myKnownHostsFile != null ? !myKnownHostsFile.equals(holder.myKnownHostsFile) : holder.myKnownHostsFile != null) return false;
-    if (myPassphrase != null ? !myPassphrase.equals(holder.myPassphrase) : holder.myPassphrase != null) return false;
-    if (myPassword != null ? !myPassword.equals(holder.myPassword) : holder.myPassword != null) return false;
-    if (myPrivateKeyFile != null ? !myPrivateKeyFile.equals(holder.myPrivateKeyFile) : holder.myPrivateKeyFile != null) return false;
+    if (getKnownHostsFile() != null ? !getKnownHostsFile().equals(holder.getKnownHostsFile()) : holder.getKnownHostsFile() != null) {
+      return false;
+    }
+    if (getPassphrase() != null ? !getPassphrase().equals(holder.getPassphrase()) : holder.getPassphrase() != null) return false;
+    if (getPassword() != null ? !getPassword().equals(holder.getPassword()) : holder.getPassword() != null) return false;
+    if (getPrivateKeyFile() != null ? !getPrivateKeyFile().equals(holder.getPrivateKeyFile()) : holder.getPrivateKeyFile() != null) {
+      return false;
+    }
     if (myHelpersPath != null
         ? !myHelpersPath.equals(holder.myHelpersPath)
         : holder.myHelpersPath != null) {
       return false;
     }
     if (myRemoteRoots != null ? !myRemoteRoots.equals(holder.myRemoteRoots) : holder.myRemoteRoots != null) return false;
-    if (myUserName != null ? !myUserName.equals(holder.myUserName) : holder.myUserName != null) return false;
+    if (getUserName() != null ? !getUserName().equals(holder.getUserName()) : holder.getUserName() != null) return false;
 
     return true;
   }
 
   @Override
   public int hashCode() {
-    int result = myHost != null ? myHost.hashCode() : 0;
-    result = 31 * result + myPort;
-    result = 31 * result + (myAnonymous ? 1 : 0);
-    result = 31 * result + (myUserName != null ? myUserName.hashCode() : 0);
-    result = 31 * result + (myPassword != null ? myPassword.hashCode() : 0);
-    result = 31 * result + (myUseKeyPair ? 1 : 0);
-    result = 31 * result + (myPrivateKeyFile != null ? myPrivateKeyFile.hashCode() : 0);
-    result = 31 * result + (myKnownHostsFile != null ? myKnownHostsFile.hashCode() : 0);
-    result = 31 * result + (myPassphrase != null ? myPassphrase.hashCode() : 0);
-    result = 31 * result + (myStorePassword ? 1 : 0);
-    result = 31 * result + (myStorePassphrase ? 1 : 0);
+    int result = getHost() != null ? getHost().hashCode() : 0;
+    result = 31 * result + getPort();
+    result = 31 * result + (isAnonymous() ? 1 : 0);
+    result = 31 * result + (getUserName() != null ? getUserName().hashCode() : 0);
+    result = 31 * result + (getPassword() != null ? getPassword().hashCode() : 0);
+    result = 31 * result + (isUseKeyPair() ? 1 : 0);
+    result = 31 * result + (getPrivateKeyFile() != null ? getPrivateKeyFile().hashCode() : 0);
+    result = 31 * result + (getKnownHostsFile() != null ? getKnownHostsFile().hashCode() : 0);
+    result = 31 * result + (getPassphrase() != null ? getPassphrase().hashCode() : 0);
+    result = 31 * result + (isStorePassword() ? 1 : 0);
+    result = 31 * result + (isStorePassphrase() ? 1 : 0);
     result = 31 * result + (myInterpreterPath != null ? myInterpreterPath.hashCode() : 0);
     result = 31 * result + (myHelpersPath != null ? myHelpersPath.hashCode() : 0);
     result = 31 * result + (myHelpersVersionChecked ? 1 : 0);
@@ -415,10 +237,10 @@ public class RemoteSdkDataHolder implements RemoteSdkData {
   public String toString() {
     final StringBuilder sb = new StringBuilder();
     sb.append("RemoteSdkDataHolder");
-    sb.append("{myHost='").append(myHost).append('\'');
-    sb.append(", myPort=").append(myPort);
-    sb.append(", myAnonymous=").append(myAnonymous);
-    sb.append(", myUserName='").append(myUserName).append('\'');
+    sb.append("{getHost()='").append(getHost()).append('\'');
+    sb.append(", getPort()=").append(getPort());
+    sb.append(", isAnonymous()=").append(isAnonymous());
+    sb.append(", getUserName()='").append(getUserName()).append('\'');
     sb.append(", myInterpreterPath='").append(myInterpreterPath).append('\'');
     sb.append(", myHelpersPath='").append(myHelpersPath).append('\'');
     sb.append('}');

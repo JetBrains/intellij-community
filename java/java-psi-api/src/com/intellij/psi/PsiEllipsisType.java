@@ -29,8 +29,17 @@ public class PsiEllipsisType extends PsiArrayType {
    *
    * @param componentType the type of the varargs array component.
    */
-  public PsiEllipsisType(PsiType componentType) {
+  public PsiEllipsisType(@NotNull PsiType componentType) {
     super(componentType);
+  }
+
+  public PsiEllipsisType(@NotNull PsiType componentType, @NotNull PsiAnnotation[] annotations) {
+    super(componentType, annotations);
+  }
+
+  @NotNull
+  public static PsiType createEllipsis(@NotNull PsiType componentType, @NotNull PsiAnnotation[] annotations) {
+    return new PsiEllipsisType(componentType, annotations);
   }
 
   @Override
@@ -60,7 +69,7 @@ public class PsiEllipsisType extends PsiArrayType {
    * @return the array type instance.
    */
   public PsiType toArrayType() {
-    return getComponentType().createArrayType();
+    return getComponentType().createArrayType(getAnnotations());
   }
 
   @Override

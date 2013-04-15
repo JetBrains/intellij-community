@@ -35,25 +35,24 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.Key;
-import com.intellij.openapi.util.Segment;
+import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.HyperlinkAdapter;
 import com.intellij.ui.content.Content;
-import com.intellij.usageView.*;
+import com.intellij.usageView.UsageViewBundle;
 import com.intellij.usages.*;
-import com.intellij.usages.UsageViewManager;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.RangeBlinker;
 import com.intellij.util.ui.UIUtil;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -62,6 +61,8 @@ import javax.swing.event.HyperlinkEvent;
 import javax.swing.event.HyperlinkListener;
 import java.awt.event.ActionEvent;
 import java.util.ArrayList;
+import java.util.Arrays;
+import java.util.Collection;
 import java.util.List;
 import java.util.concurrent.CountDownLatch;
 import java.util.concurrent.TimeUnit;
@@ -75,7 +76,9 @@ import java.util.concurrent.atomic.AtomicReference;
 public class UsageViewManagerImpl extends UsageViewManager {
   private final Project myProject;
   private static final Key<UsageView> USAGE_VIEW_KEY = Key.create("USAGE_VIEW");
-  
+  @NonNls private static final String LARGE_FILES_HREF_TARGET = "LargeFiles";
+  @NonNls private static final String FIND_OPTIONS_HREF_TARGET = "FindOptions";
+
   public UsageViewManagerImpl(@NotNull Project project) {
     myProject = project;
   }
@@ -323,7 +326,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
       findUsagesStartedBalloon.addRequest(new Runnable() {
         @Override
         public void run() {
-          notifyByFindBalloon("Find Usages in progress...", null, MessageType.WARNING);
+          notifyByFindBalloon(null, MessageType.WARNING, myProcessPresentation,"Find Usages in progress...");
           findStartedBalloonShown.set(true);
         }
       }, 300, ModalityState.NON_MODAL);
@@ -357,7 +360,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
             if (usageCount > UsageLimitUtil.USAGES_LIMIT && tooManyUsages.get() == 0 && tooManyUsages.compareAndSet(0, 1)) {
               showTooManyUsagesWarning(indicator, waitWhileUserClick, myUsageCountWithoutDefinition.get(), usageView);
             }
-            
+
             if (usageView != null) {
               usageView.appendUsage(usage);
             }
@@ -407,9 +410,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                              StringUtil.decapitalize(myPresentation.getUsagesString()),
                                                              myPresentation.getScopeText());
 
-              if (notFoundActions == null || notFoundActions.isEmpty()) {
-                notifyByFindBalloon("<html>"+message+".<br>" + createOptionsHtml() + "</html>", createGotToOptionsListener(mySearchFor),
-                                    MessageType.INFO);
+              if (notFoundActions.isEmpty()) {
+                notifyByFindBalloon(createGotToOptionsListener(mySearchFor),
+                                    MessageType.INFO, myProcessPresentation, message, createOptionsHtml());
                 findStartedBalloonShown.set(false);
               }
               else {
@@ -441,8 +444,8 @@ public class UsageViewManagerImpl extends UsageViewManager {
               usage.navigate(true);
               flashUsageScriptaculously(usage);
             }
-            notifyByFindBalloon("<html>Only one usage found.<br>" + createOptionsHtml() + "</html>", createGotToOptionsListener(mySearchFor),
-                                MessageType.INFO);
+            notifyByFindBalloon(createGotToOptionsListener(mySearchFor),
+                                MessageType.INFO, myProcessPresentation,"Only one usage found.", createOptionsHtml());
           }
         }, ModalityState.NON_MODAL, myProject.getDisposed());
       }
@@ -451,6 +454,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
         if (usageView != null) {
           usageView.drainQueuedUsageNodes();
           usageView.setSearchInProgress(false);
+        }
+        if (!myProcessPresentation.getLargeFiles().isEmpty()) {
+          notifyByFindBalloon(null, MessageType.INFO, myProcessPresentation);
         }
       }
 
@@ -482,9 +488,104 @@ public class UsageViewManagerImpl extends UsageViewManager {
     }
   }
 
-  private void notifyByFindBalloon(@NotNull String text, HyperlinkListener listener, final MessageType info) {
+  private void notifyByFindBalloon(final HyperlinkListener listener,
+                                   @NotNull final MessageType info,
+                                   @NotNull FindUsagesProcessPresentation processPresentation,
+                                   @NotNull String... sLines) {
     com.intellij.usageView.UsageViewManager.getInstance(myProject); // in case tool window not registered
-    ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, info, text, AllIcons.Actions.Find, listener);
+
+    final List<String> lines = new ArrayList<String>(Arrays.asList(sLines));
+    final Collection<PsiFile> largeFiles = processPresentation.getLargeFiles();
+    List<String> resultLines = new ArrayList<String>(lines);
+    HyperlinkListener resultListener = listener;
+    if (!largeFiles.isEmpty()) {
+      String shortMessage = "(<a href='" + LARGE_FILES_HREF_TARGET + "'>"
+                            + UsageViewBundle.message("large.files.were.ignored", largeFiles.size()) + "</a>)";
+
+      resultLines.add(shortMessage);
+      resultListener = new HyperlinkAdapter(){
+        @Override
+        protected void hyperlinkActivated(HyperlinkEvent e) {
+          if (e.getDescription().equals(LARGE_FILES_HREF_TARGET)) {
+            String detailedMessage = detailedLargeFilesMessage(largeFiles);
+            List<String> strings = new ArrayList<String>(lines);
+            strings.add(detailedMessage);
+            ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, info, wrapHtml(strings), AllIcons.Actions.Find, listener);
+          }
+          else if (listener != null) {
+            listener.hyperlinkUpdate(e);
+          }
+        }
+      };
+    }
+
+    ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, info, wrapHtml(resultLines), AllIcons.Actions.Find, resultListener);
+  }
+
+  @NotNull
+  private static String wrapHtml(@NotNull List<String> strings) {
+    return "<html><body>"+ StringUtil.join(strings, "<br>") + "</body></html>";
+  }
+
+  @NotNull
+  private static String detailedLargeFilesMessage(@NotNull Collection<PsiFile> largeFiles) {
+    String message = "";
+    if (largeFiles.size() == 1) {
+      final VirtualFile vFile = largeFiles.iterator().next().getVirtualFile();
+      message += "File " + presentableFileInfo(vFile) + " is ";
+    }
+    else {
+      message += "Files<br> ";
+
+      int counter = 0;
+      for (PsiFile file : largeFiles) {
+        final VirtualFile vFile = file.getVirtualFile();
+        message += presentableFileInfo(vFile) + "<br> ";
+        if (counter++ > 10) break;
+      }
+
+      message += "are ";
+    }
+
+    message += "too large and cannot be scanned";
+    return message;
+  }
+
+  @NotNull
+  private static String presentableFileInfo(@NotNull VirtualFile vFile) {
+    return getPresentablePath(vFile)
+           + "&nbsp;("
+           + presentableSize(getFileLength(vFile))
+           + ")";
+  }
+
+  @NotNull
+  public static String presentableSize(long bytes) {
+    long megabytes = bytes / (1024 * 1024);
+    return UsageViewBundle.message("find.file.size.megabytes", Long.toString(megabytes));
+  }
+
+  public static long getFileLength(@NotNull final VirtualFile virtualFile) {
+    final long[] length = {-1L};
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        if (!virtualFile.isValid()) return;
+        if (virtualFile.getFileType().isBinary()) return;
+        length[0] = virtualFile.getLength();
+      }
+    });
+    return length[0];
+  }
+
+  @NotNull
+  private static String getPresentablePath(@NotNull final VirtualFile virtualFile) {
+    return "'" + ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+      @Override
+      public String compute() {
+        return virtualFile.getPresentableUrl();
+      }
+    }) + "'";
   }
 
   @NotNull
@@ -492,7 +593,9 @@ public class UsageViewManagerImpl extends UsageViewManager {
     return new HyperlinkAdapter() {
       @Override
       protected void hyperlinkActivated(HyperlinkEvent e) {
-        FindManager.getInstance(myProject).showSettingsAndFindUsages(targets);
+        if (e.getDescription().equals(FIND_OPTIONS_HREF_TARGET)) {
+          FindManager.getInstance(myProject).showSettingsAndFindUsages(targets);
+        }
       }
     };
   }
@@ -504,7 +607,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
     if (shortcut != null) {
       shortcutText = "&nbsp;(" + KeymapUtil.getShortcutText(shortcut) + ")";
     }
-    return "<a href='xxx'>Find Options...</a>" + shortcutText;
+    return "<a href='" + FIND_OPTIONS_HREF_TARGET + "'>Find Options...</a>" + shortcutText;
   }
 
   private static void flashUsageScriptaculously(@NotNull final Usage usage) {

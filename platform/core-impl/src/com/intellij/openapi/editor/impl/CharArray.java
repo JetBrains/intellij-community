@@ -203,7 +203,8 @@ abstract class CharArray implements CharSequenceBackedByArray, Dumpable {
     if (myArray != null) {
       assert myCount <= myArray.length;
       seqFromCharArray = new CharArrayCharSequence(myArray, myStart, myCount);
-    } else {
+    }
+    else {
       seqFromCharArray = null;
     }
 

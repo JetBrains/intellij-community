@@ -1239,7 +1239,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       return mySoftWrapModel.offsetToLogicalPosition(offset);
     }
     int line = offsetToLogicalLine(offset, false);
-    int column = calcColumnNumber(offset, line, false);
+    int column = calcColumnNumber(offset, line, false, myDocument.getCharsSequence());
     return new LogicalPosition(line, column);
   }
 
@@ -3241,6 +3241,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return true;
   }
 
+  private static final char IDEOGRAPHIC_SPACE = '\u3000'; // http://www.marathon-studios.com/unicode/U3000/Ideographic_Space
+
   private void drawChars(@NotNull Graphics g, char[] data, int start, int end, int x, int y) {
     g.drawChars(data, start, end - start, x, y);
 
@@ -3248,12 +3250,19 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       Color oldColor = g.getColor();
       g.setColor(myScheme.getColor(EditorColors.WHITESPACES_COLOR));
       final FontMetrics metrics = g.getFontMetrics();
-      int halfSpaceWidth = metrics.charWidth(' ') / 2;
+
       for (int i = start; i < end; i++) {
-        if (data[i] == ' ') {
-          g.fillRect(x + halfSpaceWidth, y, 1, 1);
+        final char c = data[i];
+        final int charWidth = metrics.charWidth(c);
+
+        if (c == ' ') {
+          g.fillRect(x + (charWidth >> 1), y, 1, 1);
+        } else if (c == IDEOGRAPHIC_SPACE) {
+          final int charHeight = getCharHeight();
+          g.drawRect(x + 2, y - charHeight, charWidth - 4, charHeight);
         }
-        x += metrics.charWidth(data[i]);
+
+        x += charWidth;
       }
       g.setColor(oldColor);
     }
@@ -3718,7 +3727,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     LOG.assertTrue(lineIndex >= 0 && lineIndex < myDocument.getLineCount());
 
     if (softWrapAware && getSoftWrapModel().isSoftWrappingEnabled()) {
-      int column = calcColumnNumber(offset, lineIndex, false);
+      int column = calcColumnNumber(offset, lineIndex, false, myDocument.getCharsSequence());
       return mySoftWrapModel.adjustLogicalPosition(new LogicalPosition(lineIndex, column), offset).line;
     }
     else {
@@ -3728,16 +3737,15 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
   @Override
   public int calcColumnNumber(int offset, int lineIndex) {
-    return calcColumnNumber(offset, lineIndex, true);
+    return calcColumnNumber(offset, lineIndex, true, myDocument.getCharsSequence());
   }
 
-  public int calcColumnNumber(int offset, int lineIndex, boolean softWrapAware) {
+  public int calcColumnNumber(int offset, int lineIndex, boolean softWrapAware, CharSequence documentCharSequence) {
     if (myDocument.getTextLength() == 0) return 0;
 
     int start = myDocument.getLineStartOffset(lineIndex);
     if (start == offset) return 0;
-    CharSequence text = myDocument.getCharsSequence();
-    int column = EditorUtil.calcColumnNumber(this, text, start, offset, EditorUtil.getTabSize(this));
+    int column = EditorUtil.calcColumnNumber(this, documentCharSequence, start, offset, EditorUtil.getTabSize(this));
 
     if (softWrapAware) {
       int line = offsetToLogicalLine(offset, false);

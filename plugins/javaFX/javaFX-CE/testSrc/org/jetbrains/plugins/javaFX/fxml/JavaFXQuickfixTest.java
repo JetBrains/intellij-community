@@ -18,6 +18,8 @@ package org.jetbrains.plugins.javaFX.fxml;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.impl.JavaAwareProjectJdkTableImpl;
 import com.intellij.openapi.roots.ContentEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.testFramework.LightProjectDescriptor;
@@ -33,6 +35,8 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
        public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
        PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
        PsiTestUtil.addLibrary(module, model, "groovy", PluginPathManager.getPluginHomePath("groovy") + "/testdata/mockGroovyLib1.8", "groovy-1.8.0-beta-2.jar");
+       final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
+       PsiTestUtil.addLibrary(module, model, "rt", projectJdk.getHomePath() + "/lib", "rt.jar");
        super.configureModule(module, model, contentEntry);
      }
    };
@@ -53,6 +57,21 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
 
   public void testCreateField() throws Exception {
     doTest("Create Field 'btn'", ".java");
+  }
+
+  public void testCreateFieldEmptyName() throws Exception {
+    String path = getTestName(true) + ".fxml";
+    final IntentionAction intention =
+      myFixture.getAvailableIntention("Create Field 'btn'", path, getTestName(false) + ".java");
+    assertNull(intention);
+  }
+
+  public void testRegisterPageLanguage() throws Exception {
+    myFixture.configureByFile(getTestName(true) + ".fxml");
+    final IntentionAction intention = myFixture.findSingleIntention("Specify page language");
+    assertNotNull(intention);
+    myFixture.launchAction(intention);
+    myFixture.checkResultByFile(getTestName(true) + ".fxml", getTestName(true) + "_after.fxml", true);
   }
 
   public void testWrapWithDefine() throws Exception {

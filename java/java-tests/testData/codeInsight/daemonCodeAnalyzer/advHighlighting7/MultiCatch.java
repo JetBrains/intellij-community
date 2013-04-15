@@ -54,7 +54,7 @@ abstract class C {
     try { f(); } catch (E1 | E2 e) { } catch (<error descr="Exception 'C.E2' has already been caught">E2</error> e) { }
 
     try { f(); } catch (E1 | E2 e) { <error descr="Incompatible types. Found: 'C.E1 | C.E2', required: 'C.E2'">E2 ee = e;</error> }
-    try { f(); } catch (E1 | E2 e) { <error descr="Cannot assign a value to final variable 'e'">e = new E1()</error>; }
+    try { f(); } catch (E1 | E2 e) { <error descr="Cannot assign a value to final variable 'e'">e</error> = new E1(); }
     try { f(); } catch (E1 | E2 e) { <error descr="Incompatible types. Found: 'C.E', required: 'C.E1 | C.E2'">e = new E()</error>; }
 
     try { g(); }

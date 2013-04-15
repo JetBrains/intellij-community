@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.lang.psi.expectedTypes;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
@@ -64,6 +65,8 @@ import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
  * @author ven
  */
 public class GroovyExpectedTypesProvider {
+
+  private static final Logger LOG = Logger.getInstance(GroovyExpectedTypesProvider.class);
 
   public static TypeConstraint[] calculateTypeConstraints(@NotNull final GrExpression expression) {
     return TypeInferenceHelper.getCurrentContext().getCachedValue(expression, new Computable<TypeConstraint[]>() {
@@ -209,7 +212,14 @@ public class GroovyExpectedTypesProvider {
           final GrArgumentList argumentList = methodCall.getArgumentList();
           final GrNamedArgument[] namedArgs = argumentList == null ? GrNamedArgument.EMPTY_ARRAY : argumentList.getNamedArguments();
           final GrExpression[] expressionArgs = argumentList == null ? GrExpression.EMPTY_ARRAY : argumentList.getExpressionArguments();
-          addConstraintsFromMap(constraints, GrClosureSignatureUtil.mapArgumentsToParameters(variant, methodCall, true, true, namedArgs, expressionArgs, closureArgs));
+          try {
+            final Map<GrExpression, Pair<PsiParameter, PsiType>> map =
+              GrClosureSignatureUtil.mapArgumentsToParameters(variant, methodCall, true, true, namedArgs, expressionArgs, closureArgs);
+            addConstraintsFromMap(constraints, map);
+          }
+          catch (RuntimeException e) {
+            LOG.error("call: " + methodCall.getText() + "\nsymbol: " + variant.getElement().getText(), e);
+          }
         }
         if (!constraints.isEmpty()) {
           myResult = constraints.toArray(new TypeConstraint[constraints.size()]);

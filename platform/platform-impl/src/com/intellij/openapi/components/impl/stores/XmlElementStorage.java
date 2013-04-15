@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.components.impl.stores;
 
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
@@ -25,7 +26,6 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.vfs.SafeWriteRequestor;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.StringInterner;
 import com.intellij.util.io.fs.IFile;
 import gnu.trove.THashMap;
 import org.jdom.Document;
@@ -41,8 +41,6 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.components.impl.stores.XmlElementStorage");
 
   @NonNls private static final String ATTR_NAME = "name";
-
-  private static final StringInterner ourInterner = new StringInterner();
 
   protected TrackingPathMacroSubstitutor myPathMacroSubstitutor;
   @NotNull private final String myRootElementName;
@@ -196,7 +194,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       myPathMacroSubstitutor.expandPaths(element);
     }
 
-    JDOMUtil.internElement(element, ourInterner);
+    IdeaPluginDescriptorImpl.internJDOMElement(element);
 
     try {
       result.load(element);

@@ -51,6 +51,7 @@ public class Constraints implements Cloneable {
     myRelativeToActionId = relativeToActionId;
   }
 
+  @Override
   public Object clone(){
     try{
       return super.clone();

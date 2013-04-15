@@ -150,9 +150,10 @@ public class MavenModuleImporter {
       if (!myMavenProject.isSupportedDependency(artifact, SupportedRequestType.FOR_IMPORT)) continue;
 
       DependencyScope scope = selectScope(artifact.getScope());
+
       MavenProject depProject = myMavenTree.findProject(artifact.getMavenId());
 
-      if (depProject != null) {
+      if (depProject != null && !myMavenTree.isIgnored(depProject)) {
         if (depProject == myMavenProject) continue;
         boolean isTestJar = MavenConstants.TYPE_TEST_JAR.equals(artifact.getType()) || "tests".equals(artifact.getClassifier());
         myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), scope, isTestJar);
@@ -162,9 +163,10 @@ public class MavenModuleImporter {
           addAttachArtifactDependency(buildHelperCfg, scope, depProject, artifact);
         }
       }
-      else if ("system".equals(artifact.getScope())) {
+      if ("system".equals(artifact.getScope())) {
         myRootModelAdapter.addSystemDependency(artifact, scope);
-      } else {
+      }
+      else {
         myRootModelAdapter.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject);
       }
     }

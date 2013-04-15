@@ -75,12 +75,12 @@ public class ToolbarPanel extends JPanel implements OccurenceNavigator, Disposab
                                                     properties, TestConsoleProperties.SORT_ALPHABETICALLY));
     actionGroup.addSeparator();
 
-    AnAction action = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, parent);
-    action.getTemplatePresentation().setDescription(ExecutionBundle.message("junit.runing.info.collapse.test.action.name"));
+    AnAction action = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, parent);
+    action.getTemplatePresentation().setDescription(ExecutionBundle.message("junit.runing.info.expand.test.action.name"));
     actionGroup.add(action);
 
-    action = CommonActionsManager.getInstance().createExpandAllAction(myTreeExpander, parent);
-    action.getTemplatePresentation().setDescription(ExecutionBundle.message("junit.runing.info.expand.test.action.name"));
+    action = CommonActionsManager.getInstance().createCollapseAllAction(myTreeExpander, parent);
+    action.getTemplatePresentation().setDescription(ExecutionBundle.message("junit.runing.info.collapse.test.action.name"));
     actionGroup.add(action);
 
     actionGroup.addSeparator();

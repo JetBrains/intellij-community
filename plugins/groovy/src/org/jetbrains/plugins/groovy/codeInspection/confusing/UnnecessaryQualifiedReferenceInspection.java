@@ -57,7 +57,7 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
       public void visitCodeReferenceElement(GrCodeReferenceElement refElement) {
         super.visitCodeReferenceElement(refElement);
 
-        if (canBeReplacedWithImport(refElement)) {
+        if (canBeSimplified(refElement)) {
           registerError(refElement);
         }
       }
@@ -66,7 +66,7 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
       public void visitReferenceExpression(GrReferenceExpression referenceExpression) {
         super.visitReferenceExpression(referenceExpression);
 
-        if (canBeReplacedWithImport(referenceExpression) || isQualifiedStaticMethodWithUnnecessaryQualifier(referenceExpression)) {
+        if (canBeSimplified(referenceExpression) || isQualifiedStaticMethodWithUnnecessaryQualifier(referenceExpression)) {
           registerError(referenceExpression);
         }
       }
@@ -138,7 +138,7 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
     return true;
   }
 
-  private static boolean canBeReplacedWithImport(PsiElement element) {
+  private static boolean canBeSimplified(PsiElement element) {
     if (element instanceof GrCodeReferenceElement) {
       if (PsiTreeUtil.getParentOfType(element, GrImportStatement.class, GrPackageDefinition.class) != null) return false;
     }
@@ -155,22 +155,25 @@ public class UnnecessaryQualifiedReferenceInspection extends BaseInspection {
 
     final PsiElement resolved = ref.resolve();
     if (!(resolved instanceof PsiClass)) return false;
-    if (((PsiClass)resolved).getContainingClass() != null &&
-        !CodeStyleSettingsManager.getSettings(resolved.getProject()).getCustomSettings(GroovyCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS) {
-      return false;
-    }
 
     final String name = ((PsiClass)resolved).getName();
     if (name == null) return false;
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(element.getProject());
     final GrReferenceExpression shortedRef = factory.createReferenceExpressionFromText(name, element);
-
     final GroovyResolveResult resolveResult = shortedRef.advancedResolve();
-    if (resolveResult.getElement() == null || !resolveResult.isAccessible() || !resolveResult.isStaticsOK()) {
+
+    if (element.getManager().areElementsEquivalent(resolved, resolveResult.getElement())) {
       return true;
     }
-    if (element.getManager().areElementsEquivalent(resolved, resolveResult.getElement())) {
+
+    final PsiClass containingClass = ((PsiClass)resolved).getContainingClass();
+    if (containingClass != null &&
+        !CodeStyleSettingsManager.getSettings(resolved.getProject()).getCustomSettings(GroovyCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS) {
+      return false;
+    }
+
+    if (resolveResult.getElement() == null || !resolveResult.isAccessible() || !resolveResult.isStaticsOK()) {
       return true;
     }
 

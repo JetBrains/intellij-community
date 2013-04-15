@@ -53,8 +53,9 @@ public interface PsiTypeElement extends PsiElement,PsiAnnotationOwner {
   @Nullable
   PsiJavaCodeReferenceElement getInnermostComponentReferenceElement();
 
-  /** @deprecated equals to getType() (to remove in IDEA 13) */
+  /** @deprecated use {@link PsiAnnotation#getOwner()} (to remove in IDEA 13) */
   PsiAnnotationOwner getOwner(PsiAnnotation annotation);
 
+  /** @deprecated use {@link #getType()} (to remove in IDEA 13) */
   PsiType getTypeNoResolve(@NotNull PsiElement context);
 }

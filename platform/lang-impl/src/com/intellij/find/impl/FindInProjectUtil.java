@@ -40,7 +40,6 @@ import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectCoreUtil;
 import com.intellij.openapi.roots.*;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Factory;
 import com.intellij.openapi.util.Pair;
@@ -50,8 +49,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.util.text.TrigramBuilder;
 import com.intellij.openapi.vfs.*;
 import com.intellij.openapi.vfs.ex.VirtualFileManagerEx;
-import com.intellij.openapi.wm.ToolWindowId;
-import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.cache.CacheManager;
 import com.intellij.psi.search.*;
@@ -60,6 +57,7 @@ import com.intellij.usages.FindUsagesProcessPresentation;
 import com.intellij.usages.UsageLimitUtil;
 import com.intellij.usages.UsageTarget;
 import com.intellij.usages.UsageViewPresentation;
+import com.intellij.usages.impl.UsageViewManagerImpl;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.PatternUtil;
@@ -69,7 +67,6 @@ import com.intellij.util.indexing.FileBasedIndex;
 import gnu.trove.THashSet;
 import gnu.trove.TIntHashSet;
 import gnu.trove.TIntIterator;
-import org.intellij.lang.annotations.Language;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -206,7 +203,8 @@ public class FindInProjectUtil {
                                 final PsiDirectory psiDirectory,
                                 @NotNull final Project project,
                                 boolean showWarnings,
-                                @NotNull final Processor<UsageInfo> consumer) {
+                                @NotNull final Processor<UsageInfo> consumer,
+                                @NotNull FindUsagesProcessPresentation processPresentation) {
     final ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
 
     final Collection<PsiFile> psiFiles = getFilesToSearchIn(findModel, project, psiDirectory);
@@ -223,7 +221,7 @@ public class FindInProjectUtil {
         final int index = i++;
         if (virtualFile == null) continue;
 
-        long fileLength = getFileLength(virtualFile);
+        long fileLength = UsageViewManagerImpl.getFileLength(virtualFile);
         if (fileLength == -1) continue; // Binary or invalid
 
         if (ProjectCoreUtil.isProjectOrWorkspaceFile(virtualFile) && !Registry.is("find.search.in.project.files")) continue;
@@ -249,42 +247,16 @@ public class FindInProjectUtil {
           totalFilesSize += fileLength;
           if (totalFilesSize > FILES_SIZE_LIMIT && !warningShown[0]) {
             warningShown[0] = true;
-            String message = FindBundle.message("find.excessive.total.size.prompt", presentableSize(totalFilesSize),
+            String message = FindBundle.message("find.excessive.total.size.prompt", UsageViewManagerImpl.presentableSize(totalFilesSize),
                                                 ApplicationNamesInfo.getInstance().getProductName());
             UsageLimitUtil.showAndCancelIfAborted(project, message);
           }
         }
       }
 
-      if (showWarnings && !largeFiles.isEmpty()) {
-        @Language("HTML")
-        String message = "<html><body>";
-        if (largeFiles.size() == 1) {
-          final VirtualFile vFile = largeFiles.iterator().next().getVirtualFile();
-          message += "File " + presentableFileInfo(vFile) + " is ";
-        }
-        else {
-          message += "Files<br> ";
 
-          int counter = 0;
-          for (PsiFile file : largeFiles) {
-            final VirtualFile vFile = file.getVirtualFile();
-            message += presentableFileInfo(vFile) + "<br> ";
-            if (counter++ > 10) break;
-          }
-
-          message += "are ";
-        }
-
-        message += "too large and cannot be scanned</body></html>";
-
-        final String finalMessage = message;
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
-          @Override
-          public void run() {
-            ToolWindowManager.getInstance(project).notifyByBalloon(ToolWindowId.FIND, MessageType.WARNING, finalMessage);
-          }
-        }, project.getDisposed());
+      if (!largeFiles.isEmpty()) {
+        processPresentation.setLargeFilesWereNotScanned(largeFiles);
       }
     }
     catch (ProcessCanceledException e) {
@@ -294,14 +266,6 @@ public class FindInProjectUtil {
     if (progress != null && !progress.isCanceled()) {
       progress.setText(FindBundle.message("find.progress.search.completed"));
     }
-  }
-
-  @NotNull
-  private static String presentableFileInfo(@NotNull VirtualFile vFile) {
-    return getPresentablePath(vFile)
-           + "&nbsp;("
-           + presentableSize(getFileLength(vFile))
-           + ")";
   }
 
   private static int processUsagesInFile(@NotNull final PsiFile psiFile,
@@ -339,34 +303,6 @@ public class FindInProjectUtil {
     }
     while (found != 0);
     return count;
-  }
-
-  @NotNull
-  private static String getPresentablePath(@NotNull final VirtualFile virtualFile) {
-    return "'" + ApplicationManager.getApplication().runReadAction(new Computable<String>() {
-      @Override
-      public String compute() {
-        return virtualFile.getPresentableUrl();
-      }
-    }) + "'";
-  }
-
-  private static String presentableSize(long bytes) {
-    long megabytes = bytes / (1024 * 1024);
-    return FindBundle.message("find.file.size.megabytes", Long.toString(megabytes));
-  }
-
-  private static long getFileLength(@NotNull final VirtualFile virtualFile) {
-    final long[] length = {-1L};
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        if (!virtualFile.isValid()) return;
-        if (virtualFile.getFileType().isBinary()) return;
-        length[0] = virtualFile.getLength();
-      }
-    });
-    return length[0];
   }
 
   @NotNull

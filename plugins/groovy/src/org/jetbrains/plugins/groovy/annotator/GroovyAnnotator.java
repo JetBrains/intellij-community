@@ -76,6 +76,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrRegex;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.*;
@@ -156,6 +157,14 @@ public class GroovyAnnotator extends GroovyElementVisitor {
           break;
         }
       }
+    }
+  }
+
+  @Override
+  public void visitNamedArgument(GrNamedArgument argument) {
+    final PsiElement parent = argument.getParent().getParent();
+    if (parent instanceof GrIndexProperty) {
+      myHolder.createErrorAnnotation(argument, GroovyBundle.message("named.arguments.are.not.allowed.inside.index.operations"));
     }
   }
 
@@ -1347,14 +1356,14 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public void visitExtendsClause(GrExtendsClause extendsClause) {
     GrTypeDefinition typeDefinition = (GrTypeDefinition)extendsClause.getParent();
 
-    if (typeDefinition.isInterface()) {
+    if (typeDefinition.isAnnotationType()) {
+      myHolder.createErrorAnnotation(extendsClause, GroovyBundle.message("annotation.types.may.not.have.extends.clause"));
+    }
+    else if (typeDefinition.isInterface()) {
       checkReferenceList(myHolder, extendsClause, true, GroovyBundle.message("no.class.expected.here"), null);
     }
     else if (typeDefinition.isEnum()) {
       myHolder.createErrorAnnotation(extendsClause, GroovyBundle.message("enums.may.not.have.extends.clause"));
-    }
-    else if (typeDefinition.isAnnotationType()) {
-      myHolder.createErrorAnnotation(extendsClause, GroovyBundle.message("annotation.types.may.not.have.extends.clause"));
     }
     else {
       checkReferenceList(myHolder, extendsClause, false, GroovyBundle.message("no.interface.expected.here"),
@@ -1368,11 +1377,12 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public void visitImplementsClause(GrImplementsClause implementsClause) {
     GrTypeDefinition typeDefinition = (GrTypeDefinition)implementsClause.getParent();
 
-    if (typeDefinition.isInterface()) {
-      myHolder.createErrorAnnotation(implementsClause, GroovyBundle.message("no.implements.clause.allowed.for.interface"));
-    }
-    else if (typeDefinition.isAnnotationType()) {
+    if (typeDefinition.isAnnotationType()) {
       myHolder.createErrorAnnotation(implementsClause, GroovyBundle.message("annotation.types.may.not.have.implements.clause"));
+    }
+    else if (typeDefinition.isInterface()) {
+      myHolder.createErrorAnnotation(implementsClause, GroovyBundle.message("no.implements.clause.allowed.for.interface"))
+        .registerFix(new ChangeExtendsImplementsQuickFix(typeDefinition));
     }
     else {
       checkReferenceList(myHolder, implementsClause, true, GroovyBundle.message("no.class.expected.here"),

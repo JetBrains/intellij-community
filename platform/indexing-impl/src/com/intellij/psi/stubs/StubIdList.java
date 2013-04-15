@@ -64,11 +64,11 @@ public final class StubIdList {
     }
   }
 
-  int size() {
+  public int size() {
     return myArray == null ? myData >= 0 ? 1 : 0: myData;
   }
 
-  int get(int i) {
+  public int get(int i) {
     if (myArray == null) {
       assert myData >= 0;
       if (i == 0) return myData;

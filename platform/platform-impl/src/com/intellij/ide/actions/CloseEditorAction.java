@@ -19,17 +19,18 @@ package com.intellij.ide.actions;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.impl.EditorWindow;
-import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class CloseEditorAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
 
-    final FileEditorManagerImpl editorManager = getEditorManager(project);
+    FileEditorManagerEx editorManager = getEditorManager(project);
     EditorWindow window = e.getData(EditorWindow.DATA_KEY);
     VirtualFile file = null;
     if (window == null) {
@@ -46,10 +47,11 @@ public class CloseEditorAction extends AnAction implements DumbAware {
     }
   }
 
-  private FileEditorManagerImpl getEditorManager(Project project) {
-    return ((FileEditorManagerImpl)FileEditorManager.getInstance(project));
+  private static FileEditorManagerEx getEditorManager(Project project) {
+    return (FileEditorManagerEx)FileEditorManager.getInstance(project);
   }
 
+  @Override
   public void update(final AnActionEvent event){
     final Presentation presentation = event.getPresentation();
     final Project project = event.getData(PlatformDataKeys.PROJECT);

@@ -22,7 +22,7 @@
     <orderEntry type="library" scope="TEST" name="Mocks" level="project" />
     <orderEntry type="module" module-name="testFramework" scope="TEST" />
     <orderEntry type="library" name="swingx" level="project" />
-    <orderEntry type="module-library">
+    <orderEntry type="module-library" exported="">
       <library name="Gradle">
         <CLASSES>
           <root url="jar://$MODULE_DIR$/lib/gradle-base-services-1.4.jar!/" />

@@ -75,11 +75,6 @@ public class Patches {
   public static final boolean APPLE_BUG_ID_3716835 = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.4.2.5");
 
   /**
-   * Lion eAWT FullScreen mode leads to visual artifacts.
-   */
-  public static final boolean APPLE_BUG_ID_10207064 = SystemInfo.isMac && (!SystemInfo.isMacOSLeopard || !SystemInfo.isJavaVersionAtLeast("1.6.0_30"));
-
-  /**
    * Minimizing and restoring application via View | Minimize leads to visual artifacts.
    */
   public static final boolean APPLE_BUG_ID_10514018 = SystemInfo.isMac && !SystemInfo.isJavaVersionAtLeast("1.6.0_31");

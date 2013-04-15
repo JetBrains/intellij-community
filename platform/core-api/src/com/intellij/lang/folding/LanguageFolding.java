@@ -24,6 +24,7 @@ import com.intellij.openapi.project.DumbService;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -60,6 +61,14 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
 
     l.putUserData(getLanguageCache(), result);
     return result;
+  }
+
+  @Override
+  public List<FoldingBuilder> allForLanguage(@NotNull Language l) {
+    FoldingBuilder result = forLanguage(l);
+    if (result == null) return Collections.emptyList();
+    return result instanceof CompositeFoldingBuilder ? ((CompositeFoldingBuilder)result).getAllBuilders()
+                                                     : Collections.singletonList(result);
   }
 
   public static FoldingDescriptor[] buildFoldingDescriptors(FoldingBuilder builder, PsiElement root, Document document, boolean quick) {

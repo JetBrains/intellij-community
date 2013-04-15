@@ -23,7 +23,6 @@ import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.nio.charset.Charset;
@@ -32,14 +31,10 @@ import java.util.List;
 /**
  * @author Roman Chernyatchik
  */
-public class ColoredProcessHandler extends OSProcessHandler {
-  private static final char TEXT_ATTRS_PREFIX_CH = '\u001B';
-  private static final String TEXT_ATTRS_PREFIX = Character.toString(TEXT_ATTRS_PREFIX_CH) + "[";
-  private static final String TEXT_ATTRS_PATTERN = "m" + TEXT_ATTRS_PREFIX_CH + "\\[";
+public class ColoredProcessHandler extends OSProcessHandler implements AnsiEscapeDecoder.ColoredTextAcceptor {
+  private final AnsiEscapeDecoder myAnsiEscapeDecoder = new AnsiEscapeDecoder();
 
-  private Key myCurrentColor;
-
-  public static TextAttributes getByKey(final TextAttributesKey key){
+  public static TextAttributes getByKey(final TextAttributesKey key) {
     return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(key);
   }
 
@@ -62,59 +57,22 @@ public class ColoredProcessHandler extends OSProcessHandler {
   }
 
   public final void notifyTextAvailable(final String text, final Key outputType) {
-    final List<Pair<String, Key>> textChunks = ContainerUtil.newArrayList();
-    int pos = 0;
-    while(true) {
-      int macroPos = text.indexOf(TEXT_ATTRS_PREFIX, pos);
-      if (macroPos < 0) break;
-      if (pos != macroPos) {
-        textChunks.add(Pair.create(text.substring(pos, macroPos), getCurrentOutputAttributes(outputType)));
-      }
-      final int macroEndPos = getEndMacroPos(text, macroPos);
-      if (macroEndPos < 0) {
-        break;
-      }
-      // this is a simple fix for RUBY-8996:
-      // we replace several consecutive escape sequences with one which contains all these sequences
-      final String colorAttribute = text.substring(macroPos, macroEndPos).replaceAll(TEXT_ATTRS_PATTERN, ";");
-      myCurrentColor = ColoredOutputTypeRegistry.getInstance().getOutputKey(colorAttribute);
-      pos = macroEndPos;
-    }
-    if (pos < text.length()) {
-      textChunks.add(Pair.create(text.substring(pos), getCurrentOutputAttributes(outputType)));
-    }
-    textAvailable(textChunks);
+    myAnsiEscapeDecoder.escapeText(text, outputType, this);
   }
 
-  protected void textAvailable(@NotNull final List<Pair<String, Key>> textChunks) {
-    for (final Pair<String, Key> textChunk : textChunks) {
-      textAvailable(textChunk.getFirst(), textChunk.getSecond());
-    }
+  public void coloredTextAvailable(String text, Key attributes) {
+    textAvailable(text, attributes);
   }
 
-  // selects all consecutive escape sequences
-  private static int getEndMacroPos(final String text, int macroPos) {
-    int endMacroPos = text.indexOf('m', macroPos);
-    while (endMacroPos >= 0) {
-      endMacroPos += 1;
-      macroPos = text.indexOf(TEXT_ATTRS_PREFIX, endMacroPos);
-      if (macroPos != endMacroPos) {
-        break;
-      }
-      endMacroPos = text.indexOf('m', macroPos);
-    }
-    return endMacroPos;
-  }
-
+  /**
+   * @deprecated Inheritors should override coloredTextAvailable method
+   * or implement ColoredChunksAcceptor and override method coloredChunksAvailable to process colored chunks
+   */
   protected void textAvailable(final String text, final Key attributes) {
     super.notifyTextAvailable(text, attributes);
   }
 
-  private Key getCurrentOutputAttributes(final Key outputType) {
-    if (outputType == ProcessOutputTypes.STDERR) {
-      return outputType;
-    }
-    return myCurrentColor != null ? myCurrentColor : outputType;
+  public void processColoredChunks(@NotNull final List<Pair<String, Key>> textChunks) {
+    myAnsiEscapeDecoder.coloredTextAvailable(textChunks, this);
   }
-
 }

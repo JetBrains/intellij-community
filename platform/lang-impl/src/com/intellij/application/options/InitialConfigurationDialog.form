@@ -131,13 +131,13 @@
         <border type="none"/>
         <children/>
       </grid>
-      <component id="978ed" class="javax.swing.JLabel">
+      <component id="978ed" class="javax.swing.JLabel" binding="myPreferencesLabel">
         <constraints>
           <grid row="6" column="0" row-span="1" col-span="2" vsize-policy="0" hsize-policy="0" anchor="8" fill="0" indent="1" use-parent-layout="false"/>
         </constraints>
         <properties>
           <font size="11"/>
-          <text value="You can use the Preferences dialog to configure any of these settings later."/>
+          <text value=""/>
         </properties>
       </component>
       <grid id="90b80" binding="myExtraOptionsPanel" custom-create="true" layout-manager="GridLayoutManager" row-count="1" column-count="1" same-size-horizontally="false" same-size-vertically="false" hgap="-1" vgap="-1">

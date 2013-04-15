@@ -48,6 +48,7 @@ public final class SpellingPopupActionGroup extends ActionGroup {
     super(shortName, popup);
   }
 
+  @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e != null) {
       AnAction[] children = findActions(e);

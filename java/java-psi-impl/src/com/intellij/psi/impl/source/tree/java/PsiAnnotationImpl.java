@@ -124,11 +124,6 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
       return ((PsiNewExpression)parent).getOwner(this);
     }
 
-    if (parent instanceof PsiMethod) {
-      PsiType type = ((PsiMethod)parent).getReturnType();
-      return JavaSharedImplUtil.findAnnotatedSubtype(type, this);
-    }
-
     if (parent instanceof PsiReferenceExpression) {
       PsiElement ctx = parent.getParent();
       if (ctx instanceof PsiMethodReferenceExpression) {
@@ -140,6 +135,20 @@ public class PsiAnnotationImpl extends JavaStubPsiElement<PsiAnnotationStub> imp
       if (ctx instanceof PsiReferenceList || ctx instanceof PsiNewExpression || ctx instanceof PsiTypeElement) {
         return new PsiClassReferenceType((PsiJavaCodeReferenceElement)parent, null);
       }
+    }
+
+    PsiTypeElement typeElement = null;
+    PsiElement anchor = null;
+    if (parent instanceof PsiMethod) {
+      typeElement = ((PsiMethod)parent).getReturnTypeElement();
+      anchor = ((PsiMethod)parent).getParameterList();
+    }
+    else if (parent instanceof PsiField || parent instanceof PsiParameter || parent instanceof PsiLocalVariable) {
+      typeElement = ((PsiVariable)parent).getTypeElement();
+      anchor = ((PsiVariable)parent).getNameIdentifier();
+    }
+    if (typeElement != null && anchor != null) {
+      return JavaSharedImplUtil.getType(typeElement, anchor, this);
     }
 
     return null;

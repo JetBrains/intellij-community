@@ -37,6 +37,7 @@ import java.util.regex.Pattern;
 public class IdeaWideProxySelector extends ProxySelector {
   private final static Logger LOG = Logger.getInstance("#com.intellij.util.net.IdeaWideProxySelector");
   private final HttpConfigurable myHttpConfigurable;
+  private ProxySelector myPacProxySelector;
 
   public IdeaWideProxySelector(HttpConfigurable configurable) {
     myHttpConfigurable = configurable;
@@ -64,10 +65,16 @@ public class IdeaWideProxySelector extends ProxySelector {
       myHttpConfigurable.LAST_ERROR = null;
       return Collections.singletonList(proxy);
     } else if (myHttpConfigurable.USE_PROXY_PAC) {
-      final ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
-      final ProxySelector proxySelector = proxySearch.getProxySelector();
-      if (proxySelector != null) {
-        final List<Proxy> select = proxySelector.select(uri);
+      synchronized (this) {
+        if (myPacProxySelector == null) {
+          final ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
+          proxySearch.setPacCacheSettings(32, 10 * 60 * 1000); // Cache 32 urls for up to 10 min.
+          myPacProxySelector = proxySearch.getProxySelector();
+        }
+      }
+
+      if (myPacProxySelector != null) {
+        final List<Proxy> select = myPacProxySelector.select(uri);
         LOG.debug("IDEA-wide proxy selector found autodetected proxies: " + select);
         return select;
       }

@@ -53,7 +53,6 @@ import java.util.List;
  * <li>error output is logged to the console and log, if the command is not silent.
  * </p>
  */
-@SuppressWarnings("UseOfSystemOutOrSystemErr")
 public final class HgCommandExecutor {
 
   private static final Logger LOG = Logger.getInstance(HgCommandExecutor.class.getName());
@@ -220,6 +219,7 @@ public final class HgCommandExecutor {
   }
 
   // logging to the Version Control console (without extensions and configs)
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
   private void log(@NotNull String operation, @Nullable List<String> arguments, @NotNull HgCommandResult result) {
     if (myProject.isDisposed()) {
       return;

@@ -22,6 +22,7 @@ import java.util.ResourceBundle;
 /**
  * @author Konstantin Bulenkov
  * @author Roman.Chernyatchik
+ * @deprecated use FeatureStatisticsBundleEP instead
  */
 public interface FeatureStatisticsBundleProvider {
   ExtensionPointName<FeatureStatisticsBundleProvider> EP_NAME = new ExtensionPointName<FeatureStatisticsBundleProvider>("com.intellij.featureStatBundle");

@@ -441,7 +441,7 @@ public class PropertyUtil {
     String propertyName = codeStyleManager.variableNameToPropertyName(name, kind);
     String setName = suggestSetterName(project, field);
     try {
-      PsiMethod setMethod = factory.createMethod(setName, returnSelf ? factory.createType(containingClass) : PsiType.VOID);
+      PsiMethod setMethod = factory.createMethodFromText(factory.createMethod(setName, returnSelf ? factory.createType(containingClass) : PsiType.VOID).getText(), field);
       String parameterName = codeStyleManager.propertyNameToVariableName(propertyName, VariableKind.PARAMETER);
       PsiParameter param = factory.createParameter(parameterName, field.getType());
 

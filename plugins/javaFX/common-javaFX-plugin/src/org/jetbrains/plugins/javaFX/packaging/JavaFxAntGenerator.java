@@ -17,12 +17,12 @@ package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.ArrayUtil;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Properties;
 
@@ -66,18 +66,20 @@ public class JavaFxAntGenerator {
     }
     topLevelTagsCollector.add(allButSelfAndPreloader);
 
+    final String all = "all_" + artifactName;
+    final SimpleTag allIncluded = new SimpleTag("fx:fileset", new Pair<String, String>("id", all),
+                                                              new Pair<String, String>("dir", tempDirPath),
+                                                              new Pair<String, String>("includes", "*.jar"));
+    topLevelTagsCollector.add(allIncluded);
+
     //register application
     final String appId = artifactName + "_id";
-    Pair[] applicationParams = {
-                                  new Pair<String, String>("id", appId),
-                                  new Pair<String, String>("name", artifactName),
-                                  new Pair<String, String>("mainClass", packager.getAppClass())
-                               };
+    final SimpleTag applicationTag = new SimpleTag("fx:application", new Pair<String, String>("id", appId),
+                                                                     new Pair<String, String>("name", artifactName),
+                                                                     new Pair<String, String>("mainClass", packager.getAppClass()));
     if (preloaderFiles != null) {
-      applicationParams = ArrayUtil.append(applicationParams, new Pair<String, String>("preloaderClass", preloaderClass));
+      applicationTag.addAttribute(new Pair<String, String>("preloaderClass", preloaderClass));
     }
-
-    final SimpleTag applicationTag = new SimpleTag("fx:application", applicationParams);
 
     appendValuesFromPropertiesFile(applicationTag, packager.getHtmlParamFile(), "fx:htmlParam", false);
     //also loads fx:argument values
@@ -101,7 +103,7 @@ public class JavaFxAntGenerator {
     fileset2Jar.add(new Pair<String, String>("excludes", "*.jar"));
     createJarTag.add(new SimpleTag("fileset", fileset2Jar.toArray(new Pair[fileset2Jar.size()])));
 
-    createJarTag.add(createResourcesTag(preloaderFiles, false, allButPreloader, allButSelf));
+    createJarTag.add(createResourcesTag(preloaderFiles, false, allButPreloader, allButSelf, all));
     
     topLevelTagsCollector.add(createJarTag);
 
@@ -112,6 +114,11 @@ public class JavaFxAntGenerator {
                                               new Pair<String, String>("updatemode", packager.getUpdateMode()),
                                               new Pair<String, String>("outdir", tempDirPath + File.separator + "deploy"),
                                               new Pair<String, String>("outfile", artifactName));
+    final JavaFxPackagerConstants.NativeBundles bundle = packager.getNativeBundle();
+    if (bundle != JavaFxPackagerConstants.NativeBundles.none) {
+      deployTag.addAttribute(new Pair<String, String>("nativeBundles", bundle.name()));
+    }
+    
     deployTag.add(new SimpleTag("fx:application", new Pair<String, String>("refid", appId)));
 
     final List<Pair> infoPairs = new ArrayList<Pair>();
@@ -121,22 +128,22 @@ public class JavaFxAntGenerator {
     if (!infoPairs.isEmpty()) {
       deployTag.add(new SimpleTag("fx:info", infoPairs.toArray(new Pair[infoPairs.size()])));
     }
-    deployTag.add(createResourcesTag(preloaderFiles, true, allButPreloader, allButSelf));
+    deployTag.add(createResourcesTag(preloaderFiles, true, allButPreloader, allButSelf, all));
 
     topLevelTagsCollector.add(deployTag);
     return topLevelTagsCollector;
   }
 
-  private static SimpleTag createResourcesTag(String preloaderFiles,
-                                              boolean includeSelf, 
-                                              String allButPreloader, 
-                                              String allButSelf) {
+  private static SimpleTag createResourcesTag(String preloaderFiles, boolean includeSelf,
+                                              String allButPreloader,
+                                              String allButSelf,
+                                              String all) {
     final SimpleTag resourcesTag = new SimpleTag("fx:resources");
     if (preloaderFiles != null) {
       resourcesTag.add(new SimpleTag("fx:fileset", new Pair<String, String>("refid", preloaderFiles)));
       resourcesTag.add(new SimpleTag("fx:fileset", new Pair<String, String>("refid", includeSelf ? allButPreloader : allButSelf)));
-    } else if (!includeSelf) {
-      resourcesTag.add(new SimpleTag("fx:fileset", new Pair<String, String>("refid", allButSelf)));
+    } else {
+      resourcesTag.add(new SimpleTag("fx:fileset", new Pair<String, String>("refid", includeSelf ? all : allButSelf)));
     }
     return resourcesTag;
   }
@@ -185,22 +192,26 @@ public class JavaFxAntGenerator {
 
   public static class SimpleTag {
     private final String myName;
-    private final Pair[] myPairs;
+    private final List<Pair> myPairs;
     private final List<SimpleTag> mySubTags = new ArrayList<SimpleTag>();
     private final String myValue;
 
     public SimpleTag(String name, Pair... pairs) {
       myName = name;
-      myPairs = pairs;
+      myPairs = new ArrayList<Pair>(Arrays.asList(pairs));
       myValue = null;
     }
 
     public SimpleTag(String name, String value) {
       myName = name;
-      myPairs = new Pair[0];
+      myPairs = new ArrayList<Pair>();
       myValue = value;
     }
 
+    public void addAttribute(Pair attr) {
+      myPairs.add(attr);
+    }
+    
     public void add(SimpleTag tag) {
       mySubTags.add(tag);
     }
@@ -210,7 +221,7 @@ public class JavaFxAntGenerator {
     }
 
     public Pair[] getPairs() {
-      return myPairs;
+      return myPairs.toArray(new Pair[myPairs.size()]);
     }
 
     public String getValue() {

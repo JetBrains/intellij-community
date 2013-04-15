@@ -26,6 +26,7 @@ import com.intellij.debugger.ui.tree.render.NodeRenderer;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbAware;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -90,6 +91,7 @@ public class ViewAsGroup extends ActionGroup implements DumbAware {
     }
   }
 
+  @NotNull
   public AnAction[] getChildren(@Nullable final AnActionEvent e) {
     return myChildren;
   }

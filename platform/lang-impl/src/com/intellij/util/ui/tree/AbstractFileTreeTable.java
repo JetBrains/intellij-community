@@ -78,8 +78,8 @@ public abstract class AbstractFileTreeTable<T> extends TreeTable {
       }
     });
     final DefaultTreeExpander treeExpander = new DefaultTreeExpander(getTree());
-    CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, this);
     CommonActionsManager.getInstance().createExpandAllAction(treeExpander, this);
+    CommonActionsManager.getInstance().createCollapseAllAction(treeExpander, this);
 
     getTree().setShowsRootHandles(true);
     getTree().setLineStyleAngled();

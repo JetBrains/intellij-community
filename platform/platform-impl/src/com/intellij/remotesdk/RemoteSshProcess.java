@@ -1,11 +1,11 @@
 package com.intellij.remotesdk;
 
-import com.intellij.execution.process.OSProcessManager;
+import com.intellij.execution.process.SelfKiller;
 
 /**
  * @author traff
  */
-abstract public class RemoteSshProcess extends Process implements OSProcessManager.SelfKiller {
+abstract public class RemoteSshProcess extends Process implements SelfKiller {
   /**
    * Makes host:localPort server which is available on local side available on remote side as localhost:remotePort.
    */

@@ -104,8 +104,12 @@ bool FindValidJVM(const char* path)
 std::string GetAdjacentDir(const char* suffix)
 {
 	char libDir[_MAX_PATH];
-	GetCurrentDirectoryA(_MAX_PATH-1, libDir);
+	GetModuleFileNameA(NULL, libDir, _MAX_PATH-1);
 	char* lastSlash = strrchr(libDir, '\\');
+	if (!lastSlash) return "";
+	*lastSlash = '\0';
+	lastSlash = strrchr(libDir, '\\');
+	if (!lastSlash) return "";
 	strcpy(lastSlash+1, suffix);
 	strcat_s(libDir, "\\");
 	return std::string(libDir);
@@ -261,7 +265,7 @@ std::string FindToolsJar()
 std::string CollectLibJars(const std::string& jarList)
 {
 	std::string libDir = GetAdjacentDir("lib");
-	if (!FileExists(libDir))
+	if (libDir.size() == 0 || !FileExists(libDir))
 	{
 		return "";
 	}

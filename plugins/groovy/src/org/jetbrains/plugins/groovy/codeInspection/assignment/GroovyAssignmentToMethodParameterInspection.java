@@ -17,15 +17,18 @@ package org.jetbrains.plugins.groovy.codeInspection.assignment;
 
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
+import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspection;
 import org.jetbrains.plugins.groovy.codeInspection.BaseInspectionVisitor;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrUnaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 
 public class GroovyAssignmentToMethodParameterInspection extends BaseInspection {
@@ -48,15 +51,20 @@ public class GroovyAssignmentToMethodParameterInspection extends BaseInspection 
 
   }
 
+  @NotNull
   public BaseInspectionVisitor buildVisitor() {
     return new Visitor();
   }
 
   private static class Visitor extends BaseInspectionVisitor {
     
-    public void visitAssignmentExpression(GrAssignmentExpression grAssignmentExpression) {
-      super.visitAssignmentExpression(grAssignmentExpression);
-      final GrExpression lhs = grAssignmentExpression.getLValue();
+    public void visitAssignmentExpression(GrAssignmentExpression expr) {
+      super.visitAssignmentExpression(expr);
+
+      check(expr.getLValue());
+    }
+
+    private void check(@Nullable GrExpression lhs) {
       if (!(lhs instanceof GrReferenceExpression)) {
         return;
       }
@@ -71,6 +79,16 @@ public class GroovyAssignmentToMethodParameterInspection extends BaseInspection 
         return;
       }
       registerError(lhs);
+    }
+
+    @Override
+    public void visitUnaryExpression(GrUnaryExpression expression) {
+      super.visitUnaryExpression(expression);
+
+      final IElementType op = expression.getOperationTokenType();
+      if (op == GroovyTokenTypes.mINC || op == GroovyTokenTypes.mDEC) {
+        check(expression.getOperand());
+      }
     }
   }
 }

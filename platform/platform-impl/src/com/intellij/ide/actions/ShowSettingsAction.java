@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.icons.AllIcons;
+import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -31,11 +33,18 @@ import com.intellij.openapi.util.SystemInfo;
 import javax.swing.*;
 
 public class ShowSettingsAction extends AnAction implements DumbAware {
+  public ShowSettingsAction() {
+    super(IdeBundle.settingsAction(), IdeBundle.settingsActionDescription(), AllIcons.General.Settings);
+  }
+
   @Override
   public void update(AnActionEvent e) {
     if (SystemInfo.isMac && e.getPlace().equals(ActionPlaces.MAIN_MENU)) {
       // It's called from Preferences in App menu.
       e.getPresentation().setVisible(false);
+    }
+    if (e.getPlace().equals(ActionPlaces.WELCOME_SCREEN)) {
+      e.getPresentation().setText(IdeBundle.settingsTitle());
     }
   }
 

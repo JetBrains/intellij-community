@@ -364,6 +364,7 @@ public class JavaDocumentationProvider implements CodeDocumentationProvider, Ext
 
     generateInitializer(buffer, field);
 
+    JavaDocInfoGenerator.enumConstantOrdinal(buffer, field, parentClass, "\n");
     return buffer.toString();
   }
 

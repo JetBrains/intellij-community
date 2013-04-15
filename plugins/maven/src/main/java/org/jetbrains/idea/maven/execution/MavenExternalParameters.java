@@ -435,16 +435,18 @@ public class MavenExternalParameters {
     if (!mavenHomeBootAsFile.exists()) {
       mavenHomeBootAsFile = new File(mavenHome, "boot");
     }
+
     List<String> classpathEntries = new ArrayList<String>();
-    if (mavenHomeBootAsFile.exists()) {
-      if (mavenHomeBootAsFile.isDirectory()) {
-        for (File file : mavenHomeBootAsFile.listFiles()) {
-          if (file.getName().contains("classworlds")) {
-            classpathEntries.add(file.getAbsolutePath());
-          }
+
+    File[] files = mavenHomeBootAsFile.listFiles();
+    if (files != null) {
+      for (File file : files) {
+        if (file.getName().contains("classworlds")) {
+          classpathEntries.add(file.getAbsolutePath());
         }
       }
     }
+
     return classpathEntries;
   }
 

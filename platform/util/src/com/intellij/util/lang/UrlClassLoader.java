@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -73,11 +73,9 @@ public class UrlClassLoader extends ClassLoader {
   @NotNull
   public static URL internProtocol(@NotNull URL url) {
     try {
-      if ("file".equals(url.getProtocol())) {
-        return new URL("file", url.getHost(), url.getPort(), url.getFile());
-      }
-      if ("jar".equals(url.getProtocol())) {
-        return new URL("jar", url.getHost(), url.getPort(), url.getFile());
+      final String protocol = url.getProtocol();
+      if ("file".equals(protocol) || "jar".equals(protocol)) {
+        return new URL(protocol.intern(), url.getHost(), url.getPort(), url.getFile());
       }
       return url;
     }

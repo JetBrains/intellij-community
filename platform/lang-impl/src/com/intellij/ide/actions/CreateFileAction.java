@@ -74,18 +74,30 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
 
   @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
-    if (SystemInfo.isWindows) {
-      newName = newName.replace('\\', '/');
-    }
-    if (newName.contains("/")) {
-      final List<String> subDirs = StringUtil.split(newName, "/");
-      newName = subDirs.remove(subDirs.size() - 1);
-      for (String dir : subDirs) {
-        final PsiDirectory sub = directory.findSubdirectory(dir);
-        directory = sub == null ? directory.createSubdirectory(dir) : sub;
+    MkDirs mkdirs = new MkDirs(newName, directory);
+    return new PsiElement[]{mkdirs.directory.createFile(getFileName(mkdirs.newName))};
+  }
+
+  public static class MkDirs {
+    public final String newName;
+    public final PsiDirectory directory;
+
+    public MkDirs(String newName, PsiDirectory directory) {
+      if (SystemInfo.isWindows) {
+        newName = newName.replace('\\', '/');
       }
+      if (newName.contains("/")) {
+        final List<String> subDirs = StringUtil.split(newName, "/");
+        newName = subDirs.remove(subDirs.size() - 1);
+        for (String dir : subDirs) {
+          final PsiDirectory sub = directory.findSubdirectory(dir);
+          directory = sub == null ? directory.createSubdirectory(dir) : sub;
+        }
+      }
+
+      this.newName = newName;
+      this.directory = directory;
     }
-    return new PsiElement[]{directory.createFile(getFileName(newName))};
   }
 
   protected String getActionName(PsiDirectory directory, String newName) {

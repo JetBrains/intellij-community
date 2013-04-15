@@ -15,59 +15,98 @@
  */
 package com.intellij.util;
 
-import org.junit.Test;
+import com.intellij.concurrency.JobLauncher;
+import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformTestUtil;
 
-import static org.junit.Assert.assertTrue;
+import java.util.Collections;
+import java.util.Random;
+
 import static org.junit.Assume.assumeTrue;
 
-public class StringBuilderSpinAllocatorTest {
-  private final String[] myStrings = new String[]{
-    "First String is the smallest",
-    "Second String is definitely larger than the first one",
-    "Third String is a bit larger than the first one",
-    "Fourth String is the largest amongst all the myStrings. Congrats! It must be even larger than it is."
-  };
+public class StringBuilderSpinAllocatorTest extends PlatformTestCase {
 
-  @Test
-  public void testPerformance() {
-    assumeTrue(!com.intellij.testFramework.PlatformTestUtil.COVERAGE_ENABLED_BUILD);
-    doTest(true);
-    doTest(false);
+  public static final int THREADS = 1000;
+
+  public void testSequentialPerformance() {
+    assumeTrue(!PlatformTestUtil.COVERAGE_ENABLED_BUILD);
+    for (int i=0; i<10; i++) {
+      long spinTime = time(count, spinAlloc);
+      long regularTime = time(count, regularAlloc);
+      System.out.println("regular: " + regularTime + "; spin :" +spinTime+"; ratio: "+(10*spinTime/regularTime)/10.0+" times");
+    }
+  }
+  public void testConcurrentPerformance() {
+    assumeTrue(!PlatformTestUtil.COVERAGE_ENABLED_BUILD);
+    for (int i=0; i<10; i++) {
+      long spinTime = concurrentTime(count/THREADS, spinAlloc);
+      long regularTime = concurrentTime(count/THREADS, regularAlloc);
+      System.out.println("concurrent regular: " + regularTime + "; spin :" +spinTime+"; ratio: "+(10*spinTime/regularTime)/10.0+" times");
+    }
   }
 
-  private void doTest(boolean warmUp) {
-    StringBuilder builder;
-    int count = warmUp ? 1000 : 1000000;
+  private static long concurrentTime(int count, final Runnable action) {
+    return time(count, new Runnable() {
+      @Override
+      public void run() {
+        boolean ok =
+          JobLauncher.getInstance().invokeConcurrentlyUnderProgress(Collections.nCopies(THREADS, null), null, true, new Processor<Object>() {
+            @Override
+            public boolean process(Object o) {
+              action.run();
+              return true;
+            }
+          });
 
-    System.gc();
-    System.runFinalization();
-    TimeoutUtil.sleep(1000);
+        assertTrue(ok);
+      }
+    });
+  }
 
+  static final int count = 100000;
+  static final int iter = 1000;
+  static Runnable spinAlloc = new Runnable() {
+    @Override
+    public void run() {
+      for (int i = 0; i < iter; ++i) {
+        StringBuilder builder = null;
+        try {
+          builder = StringBuilderSpinAllocator.alloc();
+          if (randomField == 0x78962343) {
+            System.out.println("xxx"+builder);
+          }
+        }
+        finally {
+          StringBuilderSpinAllocator.dispose(builder);
+        }
+      }
+    }
+  };
+  static Runnable regularAlloc = new Runnable() {
+    @Override
+    public void run() {
+      for (int i = 0; i < iter; ++i) {
+        StringBuilder builder = new StringBuilder();
+        if (randomField == 0x78962343) {
+          System.out.println("xxx"+builder);
+        }
+      }
+    }
+  };
+  private static volatile int randomField = new Random().nextInt();
+
+  private static long time(int count, final Runnable action) {
     long start = System.nanoTime();
     for (int i = 0; i < count; ++i) {
-      builder = new StringBuilder();
-      builder.append(myStrings[i & 3]);
-      builder.append(builder.toString());
-    }
-    long regularTime = (System.nanoTime() - start) / 1000;
-
-    System.gc();
-    System.runFinalization();
-    TimeoutUtil.sleep(1000);
-
-    start = System.nanoTime();
-    for (int i = 0; i < count; ++i) {
-      builder = StringBuilderSpinAllocator.alloc();
-      builder.append(myStrings[i & 3]);
-      builder.append(builder.toString());
-      StringBuilderSpinAllocator.dispose(builder);
+      action.run();
     }
     long spinTime = (System.nanoTime() - start) / 1000;
+    randomField++;
+    return spinTime;
+  }
 
-    if (!warmUp) {
-      System.out.println("StringBuilder regular allocations took: " + regularTime);
-      System.out.println("StringBuilder spin allocations took: " + spinTime);
-      assertTrue("regular:" + regularTime + "mks, spin:" + spinTime + "mks", spinTime < regularTime);
-    }
+  @Override
+  protected boolean isRunInWriteAction() {
+    return false;
   }
 }

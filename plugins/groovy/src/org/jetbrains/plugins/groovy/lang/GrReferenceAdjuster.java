@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
@@ -119,14 +120,14 @@ public class GrReferenceAdjuster {
     if (ref.getManager().areElementsEquivalent(resolved, resolvedCopy)) {
       return true;
     }
-    else if (resolvedCopy != null) {
+    else if (resolvedCopy != null && !(resolvedCopy instanceof GrBindingVariable)) {
       return false;
     }
 
     if (resolved instanceof PsiClass) {
       final PsiClass clazz = (PsiClass)resolved;
       final String qName = clazz.getQualifiedName();
-      if (qName != null && addImports && checkIsInnerClass(clazz) && mayInsertImport(ref)) {
+      if (qName != null && addImports && checkIsInnerClass(clazz, ref) && mayInsertImport(ref)) {
         final GroovyFileBase file = (GroovyFileBase)ref.getContainingFile();
         final GrImportStatement added = file.addImportForClass(clazz);
         if (copy.isReferenceTo(resolved)) return true;
@@ -137,10 +138,11 @@ public class GrReferenceAdjuster {
     return false;
   }
 
-  private static boolean checkIsInnerClass(@NotNull PsiClass resolved) {
+  private static <Qualifier extends PsiElement> boolean checkIsInnerClass(@NotNull PsiClass resolved, GrQualifiedReference<Qualifier> ref) {
     final PsiClass containingClass = resolved.getContainingClass();
-    return containingClass == null || CodeStyleSettingsManager.getSettings(resolved.getProject())
-      .getCustomSettings(GroovyCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS;
+    return containingClass == null ||
+           PsiTreeUtil.isAncestor(containingClass, ref, true) ||
+           CodeStyleSettingsManager.getSettings(resolved.getProject()).getCustomSettings(GroovyCodeStyleSettings.class).INSERT_INNER_CLASS_IMPORTS;
   }
 
   @Nullable

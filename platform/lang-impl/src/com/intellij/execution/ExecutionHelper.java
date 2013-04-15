@@ -23,11 +23,11 @@ import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessOutput;
 import com.intellij.execution.ui.RunContentDescriptor;
 import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
+import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
@@ -317,13 +317,14 @@ public class ExecutionHelper {
     return result;
   }
 
-  public static void selectContentDescriptor(final @NotNull Editor editor,
+  public static void selectContentDescriptor(final @NotNull DataContext dataContext,
+                                             final @NotNull Project project,
                                              @NotNull Collection<RunContentDescriptor> consoles,
                                              String selectDialogTitle, final Consumer<RunContentDescriptor> descriptorConsumer) {
     if (consoles.size() == 1) {
       RunContentDescriptor descriptor = consoles.iterator().next();
       descriptorConsumer.consume(descriptor);
-      descriptorToFront(editor, descriptor);
+      descriptorToFront(project, descriptor);
     }
     else if (consoles.size() > 1) {
       final JList list = new JBList(consoles);
@@ -350,15 +351,14 @@ public class ExecutionHelper {
           if (selectedValue instanceof RunContentDescriptor) {
             RunContentDescriptor descriptor = (RunContentDescriptor)selectedValue;
             descriptorConsumer.consume(descriptor);
-            descriptorToFront(editor, descriptor);
+            descriptorToFront(project, descriptor);
           }
         }
-      }).createPopup().showInBestPositionFor(editor);
+      }).createPopup().showInBestPositionFor(dataContext);
     }
   }
 
-  private static void descriptorToFront(final Editor editor, final RunContentDescriptor descriptor) {
-    final Project project = editor.getProject();
+  private static void descriptorToFront(final Project project, final RunContentDescriptor descriptor) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       public void run() {
         final ToolWindow toolWindow = ExecutionManager.getInstance(project).getContentManager().getToolWindowByDescriptor(descriptor);

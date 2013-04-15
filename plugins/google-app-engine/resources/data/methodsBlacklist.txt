@@ -1,0 +1,3 @@
+java.lang.System:exit,gc,runFinalization,runFinalizersOnExit,load,loadLibrary,setSecurityManager,inheritedChannel,console
+java.lang.Thread:new
+java.lang.ThreadGroup:new

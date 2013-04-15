@@ -75,6 +75,7 @@ public final class ToolWindowsGroup extends ActionGroup {
     projectManager.addProjectManagerListener(new MyProjectManagerListener());
   }
 
+  @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e){
     return myChildren.toArray(new AnAction[myChildren.size()]);
   }

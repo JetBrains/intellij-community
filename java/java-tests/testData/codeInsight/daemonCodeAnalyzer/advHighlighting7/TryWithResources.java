@@ -54,7 +54,7 @@ class C {
   void m3(int p) throws Exception {
     try (MyResource r = new MyResource()) {
       r.doSomething();
-      <error descr="Cannot assign a value to final variable 'r'">r = null</error>;
+      <error descr="Cannot assign a value to final variable 'r'">r</error> = null;
       int <error descr="Variable 'r' is already defined in the scope">r</error> = 0;
     }
     catch (E e) {

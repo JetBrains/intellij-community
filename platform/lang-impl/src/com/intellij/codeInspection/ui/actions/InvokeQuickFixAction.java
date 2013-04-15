@@ -68,6 +68,7 @@ public class InvokeQuickFixAction extends AnAction {
 
   private static ActionGroup getFixes(final QuickFixAction[] quickFixes) {
     return new ActionGroup() {
+      @NotNull
       public AnAction[] getChildren(@Nullable AnActionEvent e) {
         List<QuickFixAction> children = new ArrayList<QuickFixAction>();
         for (QuickFixAction fix : quickFixes) {

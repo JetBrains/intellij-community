@@ -22,6 +22,7 @@ package com.intellij.lang.html;
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.lang.PsiBuilder;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.tree.CustomParsingType;
 import com.intellij.psi.tree.IElementType;
@@ -100,7 +101,6 @@ public class HtmlParsing {
 
     if (error != null) {
       error.error(XmlErrorMessages.message("top.level.element.is.not.completed"));
-      error = null;
     }
 
     document.done(XmlElementType.HTML_DOCUMENT);
@@ -152,9 +152,9 @@ public class HtmlParsing {
       advance();
     }
 
-    String tagName = originalTagName.toLowerCase();
-    if ((ddordt(tagName) && ddordt(parentName)) ||
-        (tagName.equals(parentName) && HtmlUtil.isOptionalEndForHtmlTagL(tagName)) ||
+    String tagName = StringUtil.toLowerCase(originalTagName);
+    if (ddordt(tagName) && ddordt(parentName) ||
+        tagName.equals(parentName) && HtmlUtil.isOptionalEndForHtmlTagL(tagName) ||
         myTagMarkersStack.size() > MAGIC_FRAME_COUNT // no chance for evil guys wanting us to have stack overflow
        ) {
       tag.rollbackTo();
@@ -164,7 +164,7 @@ public class HtmlParsing {
 
     myTagNamesStack.push(tagName);
 
-    boolean freeMakerTag = tagName.length() > 0 && '#' == tagName.charAt(0);
+    boolean freeMakerTag = !tagName.isEmpty() && '#' == tagName.charAt(0);
 
     do {
       final IElementType tt = token();
@@ -305,7 +305,7 @@ public class HtmlParsing {
         advance();
 
         if (token() == XmlTokenType.XML_NAME) {
-          String endName = myBuilder.getTokenText().toLowerCase();
+          String endName = StringUtil.toLowerCase(myBuilder.getTokenText());
           if (!tagName.equals(endName) && !endName.endsWith(COMPLETION_NAME)) {
             final boolean hasChancesToMatch = HtmlUtil.isOptionalEndForHtmlTagL(endName) ? childTerminatesParentInStack(endName, false) : myTagNamesStack.contains(endName);
             if (hasChancesToMatch) {
@@ -360,7 +360,7 @@ public class HtmlParsing {
       }
     }
 
-    xmlText = terminateText(xmlText);
+    terminateText(xmlText);
 
     if (isOptionalTagEnd || "body".equalsIgnoreCase(tagName) || "html".equalsIgnoreCase(tagName)) {
       if (firstBlockChild != null) {
@@ -381,7 +381,7 @@ public class HtmlParsing {
   private static boolean canTerminate(final String childTagName,final String tagName) {
     // TODO: make hash
     return !(tagName.equalsIgnoreCase(TR_TAG) && childTagName.equalsIgnoreCase(TD_TAG)) ||
-           (tagName.equalsIgnoreCase(TABLE_TAG) && childTagName.equalsIgnoreCase(TR_TAG));
+           tagName.equalsIgnoreCase(TABLE_TAG) && childTagName.equalsIgnoreCase(TR_TAG);
   }
 
   private boolean childTerminatesParentInStack(final String childName, final boolean terminateOnNonOptionalTag) {
@@ -451,7 +451,7 @@ public class HtmlParsing {
         advance();
         continue;
       }
-      else if (tt == XmlTokenType.XML_BAD_CHARACTER) {
+      if (tt == XmlTokenType.XML_BAD_CHARACTER) {
         final PsiBuilder.Marker error = mark();
         advance();
         error.error(XmlErrorMessages.message("xml.parsing.bad.character"));

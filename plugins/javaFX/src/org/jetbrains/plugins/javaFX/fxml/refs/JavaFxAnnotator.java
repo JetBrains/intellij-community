@@ -17,6 +17,7 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInsight.intentions.XmlChooseColorIntentionAction;
+import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.AnnotationHolder;
 import com.intellij.lang.annotation.Annotator;
@@ -28,9 +29,7 @@ import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.presentation.java.SymbolPresentationUtil;
-import com.intellij.psi.xml.XmlAttribute;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.*;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ui.ColorIcon;
@@ -40,11 +39,13 @@ import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxCommonClassNames;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxPsiUtil;
+import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxInjectPageLanguageIntention;
 import org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxWrapWithDefineIntention;
 import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxDefaultPropertyElementDescriptor;
 
 import javax.swing.*;
 import java.awt.*;
+import java.util.List;
 
 /**
  * User: anna
@@ -96,6 +97,20 @@ public class JavaFxAnnotator implements Annotator {
                 annotation.registerFix(new JavaFxWrapWithDefineIntention(referencedTag, valueElement.getValue()));
               }
             }
+          }
+        }
+      }
+    }
+    else if (element instanceof XmlTag) {
+      if (FxmlConstants.FX_SCRIPT.equals(((XmlTag)element).getName())) {
+        final XmlTagValue tagValue = ((XmlTag)element).getValue();
+        if (!StringUtil.isEmptyOrSpaces(tagValue.getText())) {
+          final List<String> langs = JavaFxPsiUtil.parseInjectedLanguages((XmlFile)element.getContainingFile());
+          if (langs.isEmpty()) {
+            final ASTNode openTag = element.getNode().findChildByType(XmlTokenType.XML_NAME);
+            final Annotation annotation =
+              holder.createErrorAnnotation(openTag != null ? openTag.getPsi() : element, "Page language not specified.");
+            annotation.registerFix(new JavaFxInjectPageLanguageIntention());
           }
         }
       }

@@ -17,6 +17,7 @@ package com.intellij.ide;
 
 import com.intellij.util.lang.UrlClassLoader;
 
+import javax.swing.*;
 import java.lang.reflect.Method;
 import java.net.URL;
 import java.util.ArrayList;
@@ -46,8 +47,13 @@ public class Bootstrap {
       startMethod.invoke(null, mainClass, methodName, args);
     }
     catch (Exception e) {
-      //noinspection UseOfSystemOutOrSystemErr
-      e.printStackTrace(System.err);
+      if ("true".equals(System.getProperty("java.awt.headless"))) {
+        //noinspection UseOfSystemOutOrSystemErr
+        e.printStackTrace(System.err);
+      }
+      else {
+        JOptionPane.showMessageDialog(null, e.getClass().getName() + ": " + e.getMessage(), "Error starting IntelliJ Platform", JOptionPane.ERROR_MESSAGE);
+      }
     }
   }
 }

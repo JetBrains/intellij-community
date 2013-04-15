@@ -16,11 +16,14 @@
 package com.intellij.psi;
 
 import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.regex.Pattern;
+
+import static com.intellij.util.ObjectUtils.notNull;
 
 /**
  * Service for validating and parsing Java identifiers.
@@ -103,26 +106,44 @@ public abstract class PsiNameHelper {
     return sub.length() == referenceText.length() ? sub : new String(sub);
   }
 
-  public static String getPresentableText(PsiJavaCodeReferenceElement ref) {
-    final String referenceName = ref.getReferenceName();
-    PsiType[] typeParameters = ref.getTypeParameters();
-    return getPresentableText(referenceName, typeParameters);
+  @NotNull
+  public static String getPresentableText(@NotNull PsiJavaCodeReferenceElement ref) {
+    String name = ref.getReferenceName();
+    PsiAnnotation[] annotations = PsiTreeUtil.getChildrenOfType(ref, PsiAnnotation.class);
+    return getPresentableText(name, notNull(annotations, PsiAnnotation.EMPTY_ARRAY), ref.getTypeParameters());
   }
 
-  public static String getPresentableText(final String referenceName, final PsiType[] typeParameters) {
+  @NotNull
+  public static String getPresentableText(@Nullable String refName, @NotNull PsiAnnotation[] annotations, @NotNull PsiType[] typeParameters) {
+    if (typeParameters.length == 0 && annotations.length == 0) {
+      return refName != null ? refName : "";
+    }
+
+    StringBuilder buffer = new StringBuilder();
+
+    if (annotations.length > 0) {
+      for (PsiAnnotation annotation : annotations) {
+        buffer.append(annotation.getText()).append(' ');
+      }
+    }
+
+    buffer.append(refName);
+
     if (typeParameters.length > 0) {
-      StringBuilder buffer = new StringBuilder();
-      buffer.append(referenceName);
       buffer.append("<");
       for (int i = 0; i < typeParameters.length; i++) {
         buffer.append(typeParameters[i].getPresentableText());
         if (i < typeParameters.length - 1) buffer.append(", ");
       }
       buffer.append(">");
-      return buffer.toString();
     }
 
-    return referenceName != null ? referenceName : "";
+    return buffer.toString();
+  }
+
+  /** deprecated use {@link #getPresentableText(String, PsiAnnotation[], PsiType[])} (to remove in IDEA 13) */
+  public static String getPresentableText(@Nullable String referenceName, @NotNull PsiType[] typeParameters) {
+    return getPresentableText(referenceName, PsiAnnotation.EMPTY_ARRAY, typeParameters);
   }
 
   @NotNull

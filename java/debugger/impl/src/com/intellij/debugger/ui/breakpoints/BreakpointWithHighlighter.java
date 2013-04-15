@@ -226,14 +226,14 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
       }
       buf.append("&nbsp;<br>&nbsp;");
       buf.append(DebuggerBundle.message("breakpoint.property.name.suspend.policy")).append(" : ");
-      if (DebuggerSettings.SUSPEND_ALL.equals(SUSPEND_POLICY)) {
+      if (DebuggerSettings.SUSPEND_NONE.equals(SUSPEND_POLICY) || !SUSPEND) {
+        buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.none"));
+      }
+      else if (DebuggerSettings.SUSPEND_ALL.equals(SUSPEND_POLICY)) {
         buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.all"));
       }
       else if (DebuggerSettings.SUSPEND_THREAD.equals(SUSPEND_POLICY)) {
         buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.thread"));
-      }
-      else if (DebuggerSettings.SUSPEND_NONE.equals(SUSPEND_POLICY)) {
-        buf.append(DebuggerBundle.message("breakpoint.properties.panel.option.suspend.none"));
       }
       buf.append("&nbsp;<br>&nbsp;");
       buf.append(DebuggerBundle.message("breakpoint.property.name.log.message")).append(": ");

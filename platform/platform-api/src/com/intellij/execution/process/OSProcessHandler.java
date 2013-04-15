@@ -80,7 +80,7 @@ public class OSProcessHandler extends BaseOSProcessHandler {
   }
 
   public static boolean processCanBeKilledByOS(Process process) {
-    return !(process instanceof OSProcessManager.SelfKiller);
+    return !(process instanceof SelfKiller);
   }
 
   /**

@@ -132,7 +132,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
   public void update() {
     List<MavenProject> projects = myProjectsManager.getProjects();
-    List<MavenProject> deleted = new ArrayList<MavenProject>(myProjectToNodeMapping.keySet());
+    Set<MavenProject> deleted = new HashSet<MavenProject>(myProjectToNodeMapping.keySet());
     deleted.removeAll(projects);
     updateProjects(projects, deleted);
   }
@@ -149,7 +149,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
     }
   }
 
-  public void updateProjects(List<MavenProject> updated, List<MavenProject> deleted) {
+  public void updateProjects(List<MavenProject> updated, Collection<MavenProject> deleted) {
     for (MavenProject each : updated) {
       ProjectNode node = findNodeFor(each);
       if (node == null) {
@@ -715,7 +715,15 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected void doUpdate() {
-      setNameAndTooltip(getName(), myTooltipCache);
+      String hint = null;
+
+      if (!myProjectsNavigator.getGroupModules()
+          && myProjectsManager.findAggregator(myMavenProject) == null
+          && myProjectsManager.getProjects().size() > myProjectsManager.getRootProjects().size()) {
+        hint = "aggregator";
+      }
+
+      setNameAndTooltip(getName(), myTooltipCache, hint);
     }
 
     @Override

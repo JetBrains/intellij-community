@@ -163,6 +163,12 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
   @Override
   protected int restoreCaretOffset(int offset) {
+    if (myCaretRangeMarker.isValid()) {
+      if (myCaretRangeMarker.getStartOffset() <= offset && myCaretRangeMarker.getEndOffset() >= offset) {
+        return offset;
+      }
+      return myCaretRangeMarker.getEndOffset();
+    }
     return offset;
   }
 
@@ -281,11 +287,6 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
 
   @Override
   protected String getCommandName() {
-    PsiNamedElement variable = getVariable();
-    if (variable == null) {
-      LOG.error(myElementToRename);
-      return "Rename";
-    }
     return RefactoringBundle.message("renaming.command.name", myInitialName);
   }
 

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -88,7 +88,7 @@ public abstract class GroovyUtils {
   public static File getBundledGroovyJar() {
     String root = new File(PathUtil.getJarPathForClass(GroovyUtils.class)).isDirectory() ?
                   PluginPathManager.getPluginHomePath("groovy") + "/../../lib/" : PathManager.getHomePath() + "/lib/";
-    final File[] groovyJars = getFilesInDirectoryByPattern(root, GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN);
+    final File[] groovyJars = GroovyConfigUtils.getGroovyAllJars(root);
     assert groovyJars.length == 1;
     return groovyJars[0];
   }

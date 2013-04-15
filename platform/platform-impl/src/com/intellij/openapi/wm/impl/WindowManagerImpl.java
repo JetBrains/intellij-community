@@ -54,6 +54,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.*;
+import java.awt.peer.ComponentPeer;
 import java.awt.peer.FramePeer;
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
@@ -69,7 +70,6 @@ import java.util.Set;
 public final class WindowManagerImpl extends WindowManagerEx implements ApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.WindowManagerImpl");
 
-  private static boolean ourAlphaModeLibraryLoaded;
   @NonNls private static final String FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow";
   @NonNls private static final String X_ATTR = "x";
   @NonNls private static final String FRAME_ELEMENT = "frame";
@@ -77,24 +77,19 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   @NonNls private static final String WIDTH_ATTR = "width";
   @NonNls private static final String HEIGHT_ATTR = "height";
   @NonNls private static final String EXTENDED_STATE_ATTR = "extended-state";
+
+  static {
+    try {
+      System.loadLibrary("jawt");
+    }
+    catch (Throwable t) {
+      LOG.info("jawt failed to load", t);
+    }
+  }
+
   private Boolean myAlphaModeSupported = null;
 
   private final EventDispatcher<WindowManagerListener> myEventDispatcher = EventDispatcher.create(WindowManagerListener.class);
-
-  static {
-    initialize();
-  }
-
-  @SuppressWarnings({"HardCodedStringLiteral"})
-  private static void initialize() {
-    try {
-      System.loadLibrary("jawt");
-      ourAlphaModeLibraryLoaded = true;
-    }
-    catch (Throwable exc) {
-      ourAlphaModeLibraryLoaded = false;
-    }
-  }
 
   /**
    * Union of bounds of all available default screen devices.
@@ -230,9 +225,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   @Override
   public JFrame findVisibleFrame() {
     IdeFrameImpl[] frames = getAllProjectFrames();
-
-    if (frames.length > 0) return frames[0];
-    return (JFrame)WelcomeFrame.getInstance();
+    return frames.length > 0 ? frames[0] : (JFrame)WelcomeFrame.getInstance();
   }
 
   @Override
@@ -246,11 +239,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   public final Rectangle getScreenBounds() {
     return myScreenBounds;
-  }
-
-  @Override
-  public boolean isFullScreen(@NotNull Frame frame) {
-    return frame instanceof IdeFrameImpl && ((IdeFrameImpl)frame).isInFullScreen();
   }
 
   @Override
@@ -723,12 +711,15 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     final IdeFrameImpl frame = getFrame(project);
     if (frame != null) {
       int extendedState = frame.getExtendedState();
-      if (SystemInfo.isMacOSLion && frame.getPeer() instanceof FramePeer) {
-        // frame.state is not updated by jdk so get it directly from peer
-        extendedState = ((FramePeer)frame.getPeer()).getState();
+      if (SystemInfo.isMacOSLion) {
+        @SuppressWarnings("deprecation") ComponentPeer peer = frame.getPeer();
+        if (peer instanceof FramePeer) {
+          // frame.state is not updated by jdk so get it directly from peer
+          extendedState = ((FramePeer)peer).getState();
+        }
       }
       boolean isMaximized = extendedState == Frame.MAXIMIZED_BOTH ||
-                            isFullScreenSupportedInCurrentOS() && WindowManagerEx.getInstanceEx().isFullScreen(frame);
+                            isFullScreenSupportedInCurrentOS() && frame.isInFullScreen();
       boolean usePreviousBounds = isMaximized &&
                                   myFrameBounds != null &&
                                   frame.getBounds().contains(new Point((int)myFrameBounds.getCenterX(), (int)myFrameBounds.getCenterY()));
@@ -761,7 +752,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   /**
    * We cannot clear selected menu path just by changing of focused window. Under Windows LAF
-   * focused window changes sporadically when user clickes on menu item or submenu. The problem
+   * focused window changes sporadically when user clicks on menu item or sub-menu. The problem
    * is that all popups under Windows LAF always has native window ancestor. This window isn't
    * focusable but by mouse click focused window changes in this manner:
    * InitialFocusedWindow->null
@@ -821,45 +812,7 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
     return myWindowWatcher;
   }
 
-  public void setFullScreen(IdeFrameImpl frame, boolean fullScreen) {
-    if (!isFullScreenSupportedInCurrentOS() || frame.isInFullScreen() == fullScreen) {
-      return;
-    }
-
-    try {
-      if (SystemInfo.isMacOSLion) {
-        frame.getFrameDecorator().toggleFullScreen(fullScreen);
-        return;
-      }
-
-      if (SystemInfo.isWindows) {
-        GraphicsDevice device = ScreenUtil.getScreenDevice(frame.getBounds());
-        if (device == null) return;
-        try {
-          frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, Boolean.TRUE);
-          if (fullScreen) {
-            frame.getRootPane().putClientProperty("oldBounds", frame.getBounds());
-          }
-          frame.dispose();
-          frame.setUndecorated(fullScreen);
-        }
-        finally {
-          if (fullScreen) {
-            frame.setBounds(device.getDefaultConfiguration().getBounds());
-          }
-          else {
-            Object o = frame.getRootPane().getClientProperty("oldBounds");
-            if (o instanceof Rectangle) {
-              frame.setBounds((Rectangle)o);
-            }
-          }
-          frame.setVisible(true);
-          frame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
-        }
-      }
-    }
-    finally {
-      frame.storeFullScreenStateIfNeeded(fullScreen);
-    }
+  public boolean isFullScreenSupportedInCurrentOS() {
+    return SystemInfo.isMacOSLion || SystemInfo.isWindows || SystemInfo.isXWindow && XlibUiUtil.isFullScreenSupported();
   }
 }

@@ -158,11 +158,7 @@ class ProjectStoreImpl extends BaseFileConfigurableStoreImpl implements IProject
   }
 
   @Override
-  public void setProjectFilePath(final String filePath) {
-    if (filePath == null) {
-      return;
-    }
-
+  public void setProjectFilePath(@NotNull final String filePath) {
     final StateStorageManager stateStorageManager = getStateStorageManager();
     final LocalFileSystem fs = LocalFileSystem.getInstance();
 

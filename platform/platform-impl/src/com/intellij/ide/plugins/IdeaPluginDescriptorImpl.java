@@ -118,9 +118,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     return ourInterner.intern(s);
   }
 
+  public static void internJDOMElement(@NotNull Element rootElement) {
+    JDOMUtil.internElement(rootElement, ourInterner);
+  }
+
   public void readExternal(@NotNull Document document, @NotNull URL url) throws InvalidDataException, FileNotFoundException {
     document = JDOMXIncluder.resolve(document, url.toExternalForm());
-    JDOMUtil.internElement(document.getRootElement(), ourInterner);
+    Element rootElement = document.getRootElement();
+    internJDOMElement(rootElement);
     readExternal(document.getRootElement());
   }
 
@@ -235,7 +240,9 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
       List<Element> result = new ArrayList<Element>();
       for (Element extensionsRoot : elements) {
         for (final Object o : extensionsRoot.getChildren()) {
-          result.add((Element)o);
+          Element element = (Element)o;
+          internJDOMElement(element);
+          result.add(element);
         }
       }
       return result;
@@ -252,14 +259,14 @@ public class IdeaPluginDescriptorImpl implements IdeaPluginDescriptor {
     if (myExtensions != null || myExtensionsPoints != null) {
       Extensions.getRootArea().getExtensionPoint(Extensions.AREA_LISTENER_EXTENSION_POINT).registerExtension(new AreaListener() {
         @Override
-        public void areaCreated(String areaClass, AreaInstance areaInstance) {
+        public void areaCreated(@NotNull String areaClass, @NotNull AreaInstance areaInstance) {
           if (PluginManager.shouldSkipPlugin(IdeaPluginDescriptorImpl.this)) return;
           final ExtensionsArea area = Extensions.getArea(areaInstance);
           area.registerAreaExtensionsAndPoints(IdeaPluginDescriptorImpl.this, myExtensionsPoints, myExtensions);
         }
 
         @Override
-        public void areaDisposing(String areaClass, AreaInstance areaInstance) {
+        public void areaDisposing(@NotNull String areaClass, @NotNull AreaInstance areaInstance) {
         }
       });
     }

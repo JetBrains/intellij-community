@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.vcs.CheckoutProvider;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Arrays;
@@ -37,6 +38,7 @@ public class CheckoutActionGroup extends ActionGroup implements DumbAware {
     }
   }
 
+  @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (myChildren == null) {
       final CheckoutProvider[] providers = Extensions.getExtensions(CheckoutProvider.EXTENSION_POINT_NAME);

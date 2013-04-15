@@ -189,7 +189,7 @@ public class EnterHandler extends BaseEnterHandler {
     if (!commentText.endsWith(expectedCommentEnd)) return false;
 
     final PsiFile containingFile = comment.getContainingFile();
-    final Language language = comment.getParent().getLanguage();
+    final Language language = containingFile.getLanguage();
     ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(language);
     if (parserDefinition == null) {
       return true;

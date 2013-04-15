@@ -50,6 +50,7 @@ public class CssEditPrefixesListPanel {
     myPrefixesTableView = new TableView<CssPrefixInfo>(myPrefixesModel);
     myPrefixesTableView.setAutoCreateRowSorter(true);
     myPrefixesTableView.setBorder(null);
+    myPrefixesTableView.setStriped(true);
     myPrefixesTableView.getRowSorter().toggleSortOrder(0);
 
     new TableViewSpeedSearch(myPrefixesTableView) {

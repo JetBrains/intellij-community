@@ -189,6 +189,24 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     doTest("ColumnConstraints");
   }
 
+  public void testOnlyCssAsStylesheets() throws Exception {
+    myFixture.addFileToProject("my.fxml", "");
+    myFixture.addFileToProject("my.png", "");
+    myFixture.addFileToProject("sample.css", ".root{}");
+    configureByFile(getTestName(true) + ".fxml");
+    assertTrue(myItems.length == 1);
+    LookupElement selectionElement = null;
+    for (LookupElement item : myItems) {
+      if (item.getLookupString().equals("sample.css")) {
+        selectionElement = item;
+        break;
+      }
+    }
+    if (selectionElement == null) {
+      fail("sample.css was not found");
+    }
+  }
+
   public void testReadOnly() throws Exception {
     configureByFile(getTestName(true) + ".fxml");
     assertTrue(myItems.length > 0);

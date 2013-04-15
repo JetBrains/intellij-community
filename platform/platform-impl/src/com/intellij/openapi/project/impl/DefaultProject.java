@@ -15,11 +15,13 @@
  */
 package com.intellij.openapi.project.impl;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * @author peter
  */
 public class DefaultProject extends ProjectImpl {
-  protected DefaultProject(ProjectManagerImpl manager, String filePath, boolean isOptimiseTestLoadSpeed, String projectName) {
+  protected DefaultProject(@NotNull ProjectManagerImpl manager, @NotNull String filePath, boolean isOptimiseTestLoadSpeed, @NotNull String projectName) {
     super(manager, filePath, isOptimiseTestLoadSpeed, projectName);
   }
 

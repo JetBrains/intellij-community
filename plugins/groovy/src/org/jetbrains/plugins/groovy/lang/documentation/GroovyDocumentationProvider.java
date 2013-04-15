@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -47,13 +47,13 @@ import org.jetbrains.plugins.groovy.extensions.NamedArgumentDescriptor;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocCommentOwner;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.impl.GrDocCommentUtil;
+import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariableDeclaration;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -104,24 +104,6 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
       else {
         generateVariableInfo(originalElement, buffer, variable);
       }
-      return buffer.toString();
-    }
-    else if (element instanceof GrReferenceExpression) {
-      GrReferenceExpression refExpr = (GrReferenceExpression)element;
-      StringBuilder buffer = new StringBuilder();
-      PsiType type = null;
-      if (refExpr.getParent() instanceof GrAssignmentExpression) {
-        GrAssignmentExpression assignment = (GrAssignmentExpression)refExpr.getParent();
-        if (refExpr.equals(assignment.getLValue())) {
-          GrExpression rvalue = assignment.getRValue();
-          if (rvalue != null) {
-            type = rvalue.getType();
-          }
-        }
-      }
-      appendTypeString(buffer, type, originalElement);
-      buffer.append(" ");
-      buffer.append(refExpr.getReferenceName());
       return buffer.toString();
     }
     else if (element instanceof PsiMethod) {
@@ -211,13 +193,22 @@ public class GroovyDocumentationProvider implements CodeDocumentationProvider, E
     }
   }
 
-  private static void appendInferredType(@NotNull PsiElement originalElement, GrVariable variable, StringBuilder buffer) {
+  private static void appendInferredType(PsiElement originalElement, GrVariable variable, StringBuilder buffer) {
     PsiType inferredType = null;
+    if (TokenSets.WHITE_SPACES_SET.contains(originalElement.getNode().getElementType())) {
+      originalElement = PsiTreeUtil.prevLeaf(originalElement);
+    }
+    if (originalElement != null && originalElement.getNode().getElementType() == GroovyTokenTypes.mIDENT) {
+      originalElement = originalElement.getParent();
+    }
     if (originalElement instanceof GrReferenceExpression) {
       inferredType = ((GrReferenceExpression)originalElement).getType();
     }
     else if (originalElement instanceof GrVariableDeclaration) {
       inferredType = variable.getTypeGroovy();
+    }
+    else if (originalElement instanceof GrVariable) {
+      inferredType = ((GrVariable)originalElement).getTypeGroovy();
     }
 
     if (inferredType != null) {

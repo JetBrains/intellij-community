@@ -367,13 +367,26 @@ public abstract class BreakpointPropertiesPanel {
       }
     };
 
-    ButtonGroup checkboxesGroup = new ButtonGroup();
-    checkboxesGroup.add(myPassCountCheckbox);
-    checkboxesGroup.add(myConditionCheckbox);
-    myPassCountCheckbox.addActionListener(updateListener);
+    myPassCountCheckbox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        if (myPassCountCheckbox.isSelected()) {
+          myConditionCheckbox.setSelected(false);
+        }
+        updateCheckboxes();
+      }
+    });
     myInstanceFiltersCheckBox.addActionListener(updateListener);
     myClassFiltersCheckBox.addActionListener(updateListener);
-    myConditionCheckbox.addActionListener(updateListener);
+    myConditionCheckbox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        if (myConditionCheckbox.isSelected()) {
+          myPassCountCheckbox.setSelected(false);
+        }
+        updateCheckboxes();
+      }
+    });
     DebuggerUIUtil.focusEditorOnCheck(myPassCountCheckbox, myPassCountField);
     DebuggerUIUtil.focusEditorOnCheck(myLogExpressionCheckBox, myLogExpressionCombo);
     DebuggerUIUtil.focusEditorOnCheck(myInstanceFiltersCheckBox, myInstanceFiltersField.getTextField());

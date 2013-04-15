@@ -50,7 +50,7 @@ public class FileResponses {
     String ifModifiedSince = request.getHeader(IF_MODIFIED_SINCE);
     if (ifModifiedSince != null && !ifModifiedSince.isEmpty()) {
       try {
-        if (Responses.DATE_FORMAT.parse(ifModifiedSince).getTime() >= lastModified) {
+        if (Responses.DATE_FORMAT.get().parse(ifModifiedSince).getTime() >= lastModified) {
           HttpResponse response = new DefaultHttpResponse(HTTP_1_1, NOT_MODIFIED);
           response.setHeader("Access-Control-Allow-Origin", "*");
           response.setHeader("Access-Control-Allow-Credentials", true);
@@ -61,6 +61,8 @@ public class FileResponses {
         }
       }
       catch (ParseException ignored) {
+      }
+      catch (NumberFormatException ignored) {
       }
     }
     return false;
@@ -78,7 +80,7 @@ public class FileResponses {
       HttpResponse response = createResponse(file.getPath());
       setContentLength(response, fileLength);
       addDate(response);
-      response.setHeader(LAST_MODIFIED, Responses.DATE_FORMAT.format(new Date(file.lastModified())));
+      response.setHeader(LAST_MODIFIED, Responses.DATE_FORMAT.get().format(new Date(file.lastModified())));
       if (isKeepAlive(request)) {
         response.setHeader(CONNECTION, HttpHeaders.Values.KEEP_ALIVE);
       }

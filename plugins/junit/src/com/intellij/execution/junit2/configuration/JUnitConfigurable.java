@@ -31,6 +31,7 @@ import com.intellij.execution.ui.ClassBrowser;
 import com.intellij.execution.ui.CommonJavaParametersPanel;
 import com.intellij.execution.ui.ConfigurationModuleSelector;
 import com.intellij.icons.AllIcons;
+import com.intellij.openapi.fileTypes.PlainTextLanguage;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.ClassFilter;
 import com.intellij.ide.util.PackageChooserDialog;
@@ -382,7 +383,9 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
     }));
 
     myMethod = new LabeledComponent<EditorTextFieldWithBrowseButton>();
-    final EditorTextFieldWithBrowseButton textFieldWithBrowseButton = new EditorTextFieldWithBrowseButton(myProject, true);
+    final EditorTextFieldWithBrowseButton textFieldWithBrowseButton = new EditorTextFieldWithBrowseButton(myProject, true, 
+                                                                                                          JavaCodeFragment.VisibilityChecker.EVERYTHING_VISIBLE, 
+                                                                                                          PlainTextLanguage.INSTANCE.getAssociatedFileType());
     new TextFieldCompletionProvider() {
       @Override
       protected void addCompletionVariants(@NotNull String text, int offset, @NotNull String prefix, @NotNull CompletionResultSet result) {

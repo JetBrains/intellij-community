@@ -23,6 +23,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiCodeFragment;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -59,7 +60,7 @@ public class ProjectRootsUtil {
     return projectFileIndex.isInTestSourceContent(directoryFile);
   }
 
-  public static boolean isSourceOrTestRoot(final VirtualFile virtualFile, final Project project) {
+  public static boolean isSourceOrTestRoot(@NotNull VirtualFile virtualFile, final Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final Module module = projectFileIndex.getModuleForFile(virtualFile);
     if (module == null) return false;
@@ -86,7 +87,7 @@ public class ProjectRootsUtil {
     return isModuleContentRoot(directory.getVirtualFile(), directory.getProject());
   }
 
-  public static boolean isModuleContentRoot(final VirtualFile directoryFile, final Project project) {
+  public static boolean isModuleContentRoot(@NotNull final VirtualFile directoryFile, final Project project) {
     final ProjectFileIndex projectFileIndex = ProjectRootManager.getInstance(project).getFileIndex();
     final VirtualFile contentRootForFile = projectFileIndex.getContentRootForFile(directoryFile);
     return directoryFile.equals(contentRootForFile);

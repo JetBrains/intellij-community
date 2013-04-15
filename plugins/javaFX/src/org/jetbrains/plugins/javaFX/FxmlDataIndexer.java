@@ -15,19 +15,18 @@
  */
 package org.jetbrains.plugins.javaFX;
 
+import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.indexing.DataIndexer;
 import com.intellij.util.indexing.FileContent;
+import com.intellij.util.xml.NanoXmlUtil;
+import net.n3.nanoxml.IXMLBuilder;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFXNamespaceProvider;
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import java.io.StringReader;
 import java.util.*;
 
@@ -36,21 +35,10 @@ import java.util.*;
 * Date: 3/14/13
 */
 public class FxmlDataIndexer implements DataIndexer<String, Set<String>, FileContent> {
-  private static final SAXParser SAX_PARSER = createParser();
-
-  private static SAXParser createParser() {
-    try {
-      return SAXParserFactory.newInstance().newSAXParser();
-    }
-    catch (Exception e) {
-      return null;
-    }
-  }
-
   @Override
   @NotNull
   public Map<String, Set<String>> map(final FileContent inputData) {
-    final Map<String, Set<String>> map = getIds(inputData.getContentAsText().toString(), inputData.getFile().getPath());
+    final Map<String, Set<String>> map = getIds(inputData.getContentAsText().toString(), inputData.getFile(), inputData.getProject());
     if (map != null) {
       return map;
     }
@@ -58,35 +46,40 @@ public class FxmlDataIndexer implements DataIndexer<String, Set<String>, FileCon
   }
 
   @Nullable
-  protected Map<String, Set<String>> getIds(String content, final String path) {
+  protected Map<String, Set<String>> getIds(String content, final VirtualFile file, Project project) {
     if (!content.contains(JavaFXNamespaceProvider.JAVAFX_NAMESPACE)) {
       return null;
     }
 
     final Map<String, Set<String>> map = new HashMap<String, Set<String>>();
+    final String path = file.getPath();
+    final IXMLBuilder handler = createParseHandler(path, map);
     try {
-      SAX_PARSER.parse(new InputSource(new StringReader(content)), createParseHandler(path, map));
+      NanoXmlUtil.parse(new StringReader(content), handler);
     }
-    catch (Exception e) {
-      // Do nothing.
-    }
-
+    catch (StopException ignore) {}
+    final VirtualFile sourceRoot = ProjectRootManager.getInstance(project).getFileIndex().getSourceRootForFile(file);
+    endDocument(path, sourceRoot, map, handler);
     return map;
   }
+  
+  protected void endDocument(String math, VirtualFile sourceRoot, Map<String, Set<String>> map, IXMLBuilder handler){}
 
-  protected DefaultHandler createParseHandler(final String path, final Map<String, Set<String>> map) {
-    return new DefaultHandler() {
-      public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-        final String attributesValue = attributes.getValue(FxmlConstants.FX_ID);
-        if (attributesValue != null) {
-          Set<String> paths = map.get(attributesValue);
+  protected IXMLBuilder createParseHandler(final String path, final Map<String, Set<String>> map) {
+    return new NanoXmlUtil.IXMLBuilderAdapter() {
+      @Override
+      public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
+        if (value != null && FxmlConstants.FX_ID.equals(nsPrefix + ":" + key)) {
+          Set<String> paths = map.get(value);
           if (paths == null) {
             paths = new HashSet<String>();
-            map.put(attributesValue, paths);
+            map.put(value, paths);
           }
           paths.add(path);
         }
       }
     };
   }
+
+  protected static class StopException extends RuntimeException {}
 }

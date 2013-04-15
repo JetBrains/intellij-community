@@ -123,6 +123,22 @@ public class ArtifactUtil {
     return true;
   }
 
+  public static void processRecursivelySkippingIncludedArtifacts(Artifact artifact,
+                                                                 final Processor<PackagingElement<?>> processor,
+                                                                 PackagingElementResolvingContext context) {
+    processPackagingElements(artifact.getRootElement(), null, new PackagingElementProcessor<PackagingElement<?>>() {
+      @Override
+      public boolean process(@NotNull PackagingElement<?> element, @NotNull PackagingElementPath path) {
+        return processor.process(element);
+      }
+
+      @Override
+      public boolean shouldProcessSubstitution(ComplexPackagingElement<?> element) {
+        return !(element instanceof ArtifactPackagingElement);
+      }
+    }, context, true, artifact.getArtifactType());
+  }
+
   private static <E extends PackagingElement<?>> boolean processElementRecursively(@NotNull PackagingElement<?> element, @Nullable PackagingElementType<E> type,
                                                                          @NotNull PackagingElementProcessor<? super E> processor,
                                                                          @NotNull PackagingElementResolvingContext resolvingContext,
@@ -546,6 +562,32 @@ public class ArtifactUtil {
       }, resolvingContext, true);
     }
     return modules;
+  }
+
+  public static Collection<Artifact> getArtifactsContainingModuleOutput(@NotNull final Module module) {
+    ArtifactManager artifactManager = ArtifactManager.getInstance(module.getProject());
+    final PackagingElementResolvingContext context = artifactManager.getResolvingContext();
+    final Set<Artifact> result = new HashSet<Artifact>();
+    Processor<PackagingElement<?>> processor = new Processor<PackagingElement<?>>() {
+      @Override
+      public boolean process(@NotNull PackagingElement<?> element) {
+        if (element instanceof ProductionModuleOutputPackagingElement
+            && module.equals(((ProductionModuleOutputPackagingElement)element).findModule(context))) {
+          return false;
+        }
+        if (element instanceof ArtifactPackagingElement && result.contains(((ArtifactPackagingElement)element).findArtifact(context))) {
+          return false;
+        }
+        return true;
+      }
+    };
+    for (Artifact artifact : artifactManager.getSortedArtifacts()) {
+      boolean contains = !processPackagingElements(artifact, null, processor, context, true);
+      if (contains) {
+        result.add(artifact);
+      }
+    }
+    return result;
   }
 
   public static List<Artifact> getArtifactWithOutputPaths(Project project) {

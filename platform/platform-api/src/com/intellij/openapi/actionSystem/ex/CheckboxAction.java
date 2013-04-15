@@ -39,6 +39,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
     super(text, description, icon);
   }
 
+  @Override
   public JComponent createCustomComponent(Presentation presentation) {
     // this component cannot be stored right here because of action system architecture:
     // one action can be shown on multiple toolbars simultaneously
@@ -49,6 +50,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
     checkBox.setDisplayedMnemonicIndex(presentation.getDisplayedMnemonicIndex());
 
     checkBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         JCheckBox checkBox = (JCheckBox)e.getSource();
         ActionToolbar actionToolbar = UIUtil.getParentOfType(ActionToolbar.class, checkBox);
@@ -63,6 +65,7 @@ public abstract class CheckboxAction extends ToggleAction implements CustomCompo
     return checkBox;
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     super.update(e);
     Object property = e.getPresentation().getClientProperty(CUSTOM_COMPONENT_PROPERTY);

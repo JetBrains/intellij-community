@@ -47,6 +47,12 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
   private final Map<File, File[]> myDirectoryCache = new HashMap<File, File[]>();
   public static final File[] NULL_FILE_ARRAY = new File[0];
 
+  private static final String _OS_NAME = System.getProperty("os.name").toLowerCase(Locale.US);
+  private static final boolean isWindows = _OS_NAME.startsWith("windows");
+  private static final boolean isOS2 = _OS_NAME.startsWith("os/2") || _OS_NAME.startsWith("os2");
+  private static final boolean isMac = _OS_NAME.startsWith("mac");
+  private static final boolean isFileSystemCaseSensitive = !isWindows && !isOS2 && !isMac;
+  
   public OptimizedFileManager17() throws Throwable {
     super(new Context(), true, null);
     final Field archivesField = com.sun.tools.javac.file.JavacFileManager.class.getDeclaredField("archives");
@@ -214,7 +220,7 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
 
   private class InputFileObject extends BaseFileObject {
     private String name;
-    final File file;
+    private final File file;
     private Reference<File> absFileRef;
 
     public InputFileObject(JavacFileManager fileManager, File f) {
@@ -285,20 +291,38 @@ class OptimizedFileManager17 extends com.sun.tools.javac.file.JavacFileManager {
 
     @Override
     protected String inferBinaryName(Iterable<? extends File> path) {
-      String fPath = file.getPath();
-      //System.err.println("RegularFileObject " + file + " " +r.getPath());
+      final String fPath = file.getPath();
       for (File dir: path) {
-        //System.err.println("dir: " + dir);
-        String dPath = dir.getPath();
-        if (dPath.length() == 0)
-          dPath = System.getProperty("user.dir");
-        if (!dPath.endsWith(File.separator))
-          dPath += File.separator;
-        if (fPath.regionMatches(true, 0, dPath, 0, dPath.length())
-            && new File(fPath.substring(0, dPath.length())).equals(new File(dPath))) {
-          String relativeName = fPath.substring(dPath.length());
-          return removeExtension(relativeName).replace(File.separatorChar, '.');
+        String dirPath = dir.getPath();
+        if (dirPath.length() == 0) {
+          dirPath = System.getProperty("user.dir");
         }
+        if (!fPath.regionMatches(!isFileSystemCaseSensitive, 0, dirPath, 0, dirPath.length())) {
+          continue;
+        }
+        final int pathLength = fPath.length();
+        final boolean endsWithSeparator = dirPath.endsWith(File.separator);
+        if (!endsWithSeparator) {
+          // need to check if the next char in fPath is file separator
+          final int separatorIdx = dirPath.length();
+          if (pathLength <= separatorIdx || fPath.charAt(separatorIdx) != File.separatorChar) {
+            continue;
+          }
+        }
+        // fPath starts with dirPath
+        final int startIndex = endsWithSeparator ? dirPath.length() : dirPath.length() + 1;
+        int endIndex = fPath.lastIndexOf('.');
+        if (endIndex <= startIndex) {
+          endIndex = fPath.length();
+        }
+        final int length = endIndex - startIndex;
+        final StringBuilder buf = new StringBuilder(length).append(fPath, startIndex, endIndex);
+        for (int idx = 0; idx < length; idx++) {
+          if (buf.charAt(idx) == File.separatorChar) {
+            buf.setCharAt(idx, '.');
+          }
+        }
+        return buf.toString();
       }
       return null;
     }

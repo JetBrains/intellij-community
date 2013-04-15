@@ -78,7 +78,11 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
 
   protected ComponentManagerImpl(ComponentManager parentComponentManager) {
     myParentComponentManager = parentComponentManager;
-    bootstrapPicoContainer();
+    bootstrapPicoContainer(toString());
+  }
+  protected ComponentManagerImpl(ComponentManager parentComponentManager, @NotNull String name) {
+    myParentComponentManager = parentComponentManager;
+    bootstrapPicoContainer(name);
   }
 
   //todo[mike] there are several init* methods. Make it just 1
@@ -351,19 +355,12 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     myConfigurator.loadComponentsConfiguration(components, descriptor, defaultProject);
   }
 
-  protected void bootstrapPicoContainer() {
+  protected void bootstrapPicoContainer(@NotNull String name) {
     myPicoContainer = createPicoContainer();
 
-    myMessageBus = MessageBusFactory.newMessageBus(this, myParentComponentManager == null ? null : myParentComponentManager.getMessageBus());
+    myMessageBus = MessageBusFactory.newMessageBus(name, myParentComponentManager == null ? null : myParentComponentManager.getMessageBus());
     final MutablePicoContainer picoContainer = getPicoContainer();
     picoContainer.registerComponentInstance(MessageBus.class, myMessageBus);
-    /*
-    picoContainer.registerComponentInstance(ExtensionInitializer.class, new ExtensionInitializer() {
-      public void initExtension(final Object extension) {
-        getComponentStore().initComponent(extension);
-      }
-    });
-    */
   }
 
 

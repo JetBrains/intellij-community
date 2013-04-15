@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -90,5 +90,6 @@ public interface PsiVariable extends PsiModifierListOwner, PsiNameIdentifierOwne
   @Override
   PsiElement setName(@NonNls @NotNull String name) throws IncorrectOperationException;
 
+  /** @deprecated use {@link #getType()} (to remove in IDEA 13) */
   PsiType getTypeNoResolve();
 }

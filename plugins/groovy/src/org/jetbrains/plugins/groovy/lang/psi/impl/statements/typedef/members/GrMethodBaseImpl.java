@@ -540,25 +540,7 @@ public abstract class GrMethodBaseImpl extends GrStubElementBase<GrMethodStub> i
   }
 
   public PsiType getReturnTypeNoResolve() {
-    if (isConstructor()) return null;
-
-    final GrMethodStub stub = getStub();
-    if (stub != null) {
-      final String typeText = stub.getTypeText();
-      if (typeText == null) return null;
-
-      try {
-        return JavaPsiFacade.getInstance(getProject()).getElementFactory().createTypeFromText(typeText, this);
-      }
-      catch(IncorrectOperationException e){
-        LOG.error(e);
-        return null;
-      }
-    }
-
-    GrTypeElement typeElement = getReturnTypeElementGroovy();
-    if (typeElement == null) return null;
-    return typeElement.getTypeNoResolve(this);
+    return getReturnType();
   }
 
   @Override

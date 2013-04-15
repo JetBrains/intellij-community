@@ -146,7 +146,10 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   private static final List<AnnotationData> NO_DATA = new ArrayList<AnnotationData>(1);
   private final ConcurrentMostlySingularMultiMap<PsiModifierListOwner, AnnotationData> cache = new ConcurrentMostlySingularMultiMap<PsiModifierListOwner, AnnotationData>();
+
+  // interner for storing annotation FQN
   private final CharTableImpl charTable = new CharTableImpl();
+
   @NotNull
   private List<AnnotationData> collectExternalAnnotations(@NotNull PsiModifierListOwner listOwner) {
     if (!hasAnyAnnotationsRoots()) return Collections.emptyList();
@@ -278,7 +281,9 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   @NotNull
   private String intern(@NotNull String annotationFQN) {
-    return charTable.doIntern(annotationFQN).toString();
+    synchronized (charTable) {
+      return charTable.doIntern(annotationFQN).toString();
+    }
   }
 
   @NotNull
@@ -499,12 +504,15 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
 
   @NotNull
   private PsiAnnotation createAnnotationFromText(@NotNull final String text) throws IncorrectOperationException {
-    final DummyHolder holder = DummyHolderFactory.createHolder(myPsiManager, new JavaDummyElement(text, ANNOTATION, LanguageLevel.HIGHEST), null, charTable);
-    final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
-    if (!(element instanceof PsiAnnotation)) {
-      throw new IncorrectOperationException("Incorrect annotation \"" + text + "\".");
+    // synchronize during interning in charTable
+    synchronized (charTable) {
+      final DummyHolder holder = DummyHolderFactory.createHolder(myPsiManager, new JavaDummyElement(text, ANNOTATION, LanguageLevel.HIGHEST), null, charTable);
+      final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
+      if (!(element instanceof PsiAnnotation)) {
+        throw new IncorrectOperationException("Incorrect annotation \"" + text + "\".");
+      }
+      return (PsiAnnotation)element;
     }
-    return (PsiAnnotation)element;
   }
   private static final JavaParserUtil.ParserWrapper ANNOTATION = new JavaParserUtil.ParserWrapper() {
     @Override
