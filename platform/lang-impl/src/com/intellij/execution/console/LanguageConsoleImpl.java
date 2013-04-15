@@ -423,19 +423,21 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     ApplicationManager.getApplication().assertIsDispatchThread();
     text = StringUtil.convertLineSeparators(text);
     final boolean scrollToEnd = shouldScrollHistoryToEnd();
-    final Document history = myHistoryViewer.getDocument();
-    final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
-    final int offset = history.getTextLength();
-    appendToHistoryDocument(history, text);
-    markupModel.addRangeHighlighter(offset,
-                                    history.getTextLength(),
-                                    HighlighterLayer.SYNTAX,
-                                    attributes,
-                                    HighlighterTargetArea.EXACT_RANGE);
+    addTextToHistory(text, attributes);
     if (scrollToEnd) {
       scrollHistoryToEnd();
     }
     queueUiUpdate(scrollToEnd);
+  }
+
+  protected void addTextToHistory(@Nullable String text, @Nullable TextAttributes attributes) {
+    if (text == null || text.length() == 0) return;
+    Document history = myHistoryViewer.getDocument();
+    MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
+    int offset = history.getTextLength();
+    appendToHistoryDocument(history, text);
+    if (attributes == null) return;
+    markupModel.addRangeHighlighter(offset, offset + text.length(), HighlighterLayer.SYNTAX, attributes, HighlighterTargetArea.EXACT_RANGE);
   }
 
   public String addCurrentToHistory(final TextRange textRange, final boolean erase, final boolean preserveMarkup) {
@@ -487,12 +489,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   protected String addTextRangeToHistory(TextRange textRange, final EditorEx consoleEditor, boolean preserveMarkup) {
     final Document history = myHistoryViewer.getDocument();
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
-    if (myPrompt != null) {
-      appendToHistoryDocument(history, myPrompt);
-    }
-    markupModel.addRangeHighlighter(history.getTextLength() - StringUtil.length(myPrompt), history.getTextLength(), HighlighterLayer.SYNTAX,
-                                    ConsoleViewContentType.USER_INPUT.getAttributes(),
-                                    HighlighterTargetArea.EXACT_RANGE);
+    doAddPromptToHistory();
     final int localStartOffset = textRange.getStartOffset();
     String text;
     EditorHighlighter highlighter;
@@ -537,6 +534,10 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       appendToHistoryDocument(history, "\n");
     }
     return text;
+  }
+
+  protected void doAddPromptToHistory() {
+    addTextToHistory(myPrompt, ConsoleViewContentType.USER_INPUT.getAttributes());
   }
 
   protected void appendToHistoryDocument(@NotNull Document history, @NotNull String text) {
