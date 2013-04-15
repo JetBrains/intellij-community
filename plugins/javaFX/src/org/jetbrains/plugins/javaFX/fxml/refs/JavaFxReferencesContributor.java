@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.refs;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.patterns.PsiJavaElementPattern;
 import com.intellij.psi.*;
 import com.intellij.psi.filters.ElementFilter;
@@ -118,6 +119,14 @@ public class JavaFxReferencesContributor extends PsiReferenceContributor {
   @Override
   public void registerReferenceProviders(PsiReferenceRegistrar registrar) {
     registrar.registerReferenceProvider(FXML_PATTERN, new JavaFxFileReferenceProvider(JavaFxFileTypeFactory.FXML_EXTENSION));
-    registrar.registerReferenceProvider(STYLESHEET_PATTERN, new JavaFxFileReferenceProvider("css"));
+    registrar.registerReferenceProvider(STYLESHEET_PATTERN, new JavaFxFileReferenceProvider("css") {
+      @Override
+      protected String preprocessValue(String value) {
+        if (value.endsWith(".bss")) {
+          return StringUtil.trimEnd(value, ".bss") + ".css";
+        }
+        return value;
+      }
+    });
   }
 }
