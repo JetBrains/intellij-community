@@ -475,9 +475,10 @@ public class FileWatcher {
         }
       }
       else if (myLastOp == WatcherOp.MESSAGE) {
-        Notifications.Bus.notify(
-          new Notification(Notifications.SYSTEM_MESSAGES_GROUP_ID, "File Watcher", line, NotificationType.WARNING, NotificationListener.URL_OPENING_LISTENER)
-        );
+        LOG.warn(line);
+        String title = ApplicationBundle.message("watcher.slow.sync");
+        NotificationListener listener = NotificationListener.URL_OPENING_LISTENER;
+        Notifications.Bus.notify(NOTIFICATION_GROUP.getValue().createNotification(title, line, NotificationType.WARNING, listener));
         myLastOp = null;
       }
       else if (myLastOp == WatcherOp.REMAP || myLastOp == WatcherOp.UNWATCHEABLE) {
