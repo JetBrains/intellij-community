@@ -82,6 +82,7 @@ public abstract class AndroidLogcatView implements Disposable {
   private JPanel myRightPanel;
   private JPanel myTopPanel;
   private JBScrollPane myFiltersListScrollPane;
+  private JButton myClearLogButton;
 
   private volatile IDevice myDevice;
   private final Object myLock = new Object();
@@ -295,8 +296,8 @@ public abstract class AndroidLogcatView implements Disposable {
   @NotNull
   public JPanel createSearchComponent(final Project project) {
     final JPanel searchComponent = new JPanel(new BorderLayout());
-    final JButton clearLogButton = new JButton(AndroidBundle.message("android.logcat.clear.log.button.title"));
-    clearLogButton.addActionListener(new ActionListener() {
+    myClearLogButton = new JButton(AndroidBundle.message("android.logcat.clear.log.button.title"));
+    myClearLogButton.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         IDevice device = getSelectedDevice();
         if (device != null) {
@@ -306,7 +307,7 @@ public abstract class AndroidLogcatView implements Disposable {
       }
     });
     searchComponent.add(myLogConsole.getSearchComponent(), BorderLayout.CENTER);
-    searchComponent.add(clearLogButton, BorderLayout.EAST);
+    searchComponent.add(myClearLogButton, BorderLayout.EAST);
     return searchComponent;
   }
 
@@ -373,6 +374,8 @@ public abstract class AndroidLogcatView implements Disposable {
 
   private void updateLogConsole() {
     IDevice device = getSelectedDevice();
+    myClearLogButton.setEnabled(device != null);
+
     if (myDevice != device) {
       synchronized (myLock) {
         myDevice = device;
@@ -392,11 +395,11 @@ public abstract class AndroidLogcatView implements Disposable {
             LOG.error(e);
           }
         }
+        final ConsoleView console = myLogConsole.getConsole();
+        if (console != null) {
+          console.clear();
+        }
         if (device != null) {
-          final ConsoleView console = myLogConsole.getConsole();
-          if (console != null) {
-            console.clear();
-          }
           final Pair<Reader, Writer> pair = AndroidLogcatUtil.startLoggingThread(myProject, device, false, myLogConsole);
           if (pair != null) {
             myCurrentReader = pair.first;
