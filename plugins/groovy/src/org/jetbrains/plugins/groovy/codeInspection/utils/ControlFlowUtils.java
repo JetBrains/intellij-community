@@ -53,7 +53,6 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ThrowingInstructio
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightLocalVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
@@ -820,7 +819,7 @@ public class ControlFlowUtils {
         if (element instanceof GrVariable && element != var) return;
         if (element instanceof GrReferenceExpression) {
           final GrReferenceExpression ref = (GrReferenceExpression)element;
-          if (ref.isQualified() || !(ref.resolve() == var || var instanceof GrLightLocalVariable && var.getNavigationElement() == ref)) {
+          if (ref.isQualified() || ref.resolve() != var) {
             return;
           }
         }

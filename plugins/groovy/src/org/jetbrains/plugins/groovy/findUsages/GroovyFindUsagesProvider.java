@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrLabeledStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.refactoring.rename.PropertyForRename;
 
 /**
@@ -58,6 +59,7 @@ public class GroovyFindUsagesProvider implements FindUsagesProvider {
         if (element instanceof PsiMethod) return "method";
         if (element instanceof PsiField) return "field";
         if (element instanceof PsiParameter) return "parameter";
+        if (element instanceof GrBindingVariable) return "script binding variable";
         if (element instanceof PsiVariable) return "variable";
         if (element instanceof GrLabeledStatement) return "label";
         if (element instanceof PropertyForRename) return "property";
