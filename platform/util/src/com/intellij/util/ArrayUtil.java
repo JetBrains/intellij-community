@@ -153,7 +153,7 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   @NotNull
-  public static <T> T[] toObjectArray(@NotNull Class<T> aClass, Object... source) {
+  public static <T> T[] toObjectArray(@NotNull Class<T> aClass, @NotNull Object... source) {
     @SuppressWarnings("unchecked") T[] array = (T[])Array.newInstance(aClass, source.length);
     System.arraycopy(source, 0, array, 0, array.length);
     return array;
@@ -504,7 +504,7 @@ public class ArrayUtil extends ArrayUtilRt {
     return true;
   }
 
-  public static <T> boolean equals(T[] a1, T[] a2, Equality<? super T> comparator) {
+  public static <T> boolean equals(T[] a1, T[] a2, @NotNull Equality<? super T> comparator) {
     if (a1 == a2) {
       return true;
     }
@@ -525,7 +525,7 @@ public class ArrayUtil extends ArrayUtilRt {
     return true;
   }
 
-  public static <T> boolean equals(T[] a1, T[] a2, Comparator<? super T> comparator) {
+  public static <T> boolean equals(T[] a1, T[] a2, @NotNull Comparator<? super T> comparator) {
     if (a1 == a2) {
       return true;
     }
@@ -632,15 +632,19 @@ public class ArrayUtil extends ArrayUtilRt {
   }
 
   public static int indexOf(@NotNull Object[] objects, @Nullable Object object) {
-    for (int i = 0; i < objects.length; i++) {
-      if (Comparing.equal(objects[i], object)) return i;
-    }
-    return -1;
+    return indexOf(objects, object, 0, objects.length);
   }
 
   public static int indexOf(@NotNull Object[] objects, Object object, int start, int end) {
-    for (int i = start; i < end; i++) {
-      if (Comparing.equal(objects[i], object)) return i;
+    if (object == null) {
+      for (int i = start; i < end; i++) {
+        if (objects[i] == null) return i;
+      }
+    }
+    else {
+      for (int i = start; i < end; i++) {
+        if (object.equals(objects[i])) return i;
+      }
     }
     return -1;
   }
