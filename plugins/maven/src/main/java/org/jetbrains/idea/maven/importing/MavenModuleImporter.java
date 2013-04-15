@@ -151,25 +151,23 @@ public class MavenModuleImporter {
 
       DependencyScope scope = selectScope(artifact.getScope());
 
+      MavenProject depProject = myMavenTree.findProject(artifact.getMavenId());
+
+      if (depProject != null && !myMavenTree.isIgnored(depProject)) {
+        if (depProject == myMavenProject) continue;
+        boolean isTestJar = MavenConstants.TYPE_TEST_JAR.equals(artifact.getType()) || "tests".equals(artifact.getClassifier());
+        myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), scope, isTestJar);
+
+        Element buildHelperCfg = depProject.getPluginGoalConfiguration("org.codehaus.mojo", "build-helper-maven-plugin", "attach-artifact");
+        if (buildHelperCfg != null) {
+          addAttachArtifactDependency(buildHelperCfg, scope, depProject, artifact);
+        }
+      }
       if ("system".equals(artifact.getScope())) {
         myRootModelAdapter.addSystemDependency(artifact, scope);
       }
       else {
-        MavenProject depProject = myMavenTree.findProject(artifact.getMavenId());
-
-        if (depProject != null && !myMavenTree.isIgnored(depProject)) {
-          if (depProject == myMavenProject) continue;
-          boolean isTestJar = MavenConstants.TYPE_TEST_JAR.equals(artifact.getType()) || "tests".equals(artifact.getClassifier());
-          myRootModelAdapter.addModuleDependency(myMavenProjectToModuleName.get(depProject), scope, isTestJar);
-
-          Element buildHelperCfg = depProject.getPluginGoalConfiguration("org.codehaus.mojo", "build-helper-maven-plugin", "attach-artifact");
-          if (buildHelperCfg != null) {
-            addAttachArtifactDependency(buildHelperCfg, scope, depProject, artifact);
-          }
-        }
-        else {
-          myRootModelAdapter.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject);
-        }
+        myRootModelAdapter.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject);
       }
     }
 
