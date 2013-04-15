@@ -50,7 +50,7 @@ public abstract class IdeFrameDecorator implements Disposable {
       return new WinMainFrameDecorator(frame);
     }
     else if (SystemInfo.isXWindow) {
-      if (XlibUiUtil.isFullScreenSupported()) {
+      if (X11UiUtil.isFullScreenSupported()) {
         return new EWMHFrameDecorator(frame);
       }
     }
@@ -112,13 +112,13 @@ public abstract class IdeFrameDecorator implements Disposable {
 
     @Override
     public boolean isInFullScreen() {
-      return myFrame != null && XlibUiUtil.isInFullScreenMode(myFrame);
+      return myFrame != null && X11UiUtil.isInFullScreenMode(myFrame);
     }
 
     @Override
     public void toggleFullScreen(boolean state) {
       if (myFrame != null) {
-        XlibUiUtil.toggleFullScreenMode(myFrame);
+        X11UiUtil.toggleFullScreenMode(myFrame);
       }
     }
   }

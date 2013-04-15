@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -707,6 +707,11 @@ public class ArrayUtil extends ArrayUtilRt {
   @NotNull
   public static int[] newIntArray(int count) {
     return count == 0 ? EMPTY_INT_ARRAY : new int[count];
+  }
+
+  @NotNull
+  public static long[] newLongArray(int count) {
+    return count == 0 ? EMPTY_LONG_ARRAY : new long[count];
   }
 
   @NotNull

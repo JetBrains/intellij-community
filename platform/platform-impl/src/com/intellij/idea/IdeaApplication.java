@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,7 @@ import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
+import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.Splash;
 import com.intellij.util.SystemProperties;
@@ -49,8 +50,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.IOException;
-import java.lang.reflect.Field;
-import java.lang.reflect.Method;
 import java.util.Arrays;
 
 @SuppressWarnings({"CallToPrintStackTrace"})
@@ -80,12 +79,15 @@ public class IdeaApplication {
     }
     else {
       patchSystem();
-      new JFrame().pack(); // this peer will prevent shutting down our application
+
       Splash splash = null;
       if (myArgs.length == 0) {
         myStarter = getStarter();
-        splash = ((IdeStarter)myStarter).showSplash(myArgs);
+        if (myStarter instanceof IdeStarter) {
+          splash = ((IdeStarter)myStarter).showSplash(myArgs);
+        }
       }
+
       ApplicationManagerEx.createApplication(isInternal, false, false, false, "idea", splash);
     }
 
@@ -96,7 +98,7 @@ public class IdeaApplication {
   }
 
   private static void patchSystem() {
-    System.setProperty("sun.awt.noerasebackground","true");
+    System.setProperty("sun.awt.noerasebackground", "true");
 
     Toolkit.getDefaultToolkit().getSystemEventQueue().push(IdeEventQueue.getInstance());
 
@@ -104,73 +106,17 @@ public class IdeaApplication {
       RepaintManager.setCurrentManager(new IdeRepaintManager());
     }
 
-    patchWM();
+    if (SystemInfo.isXWindow && !SystemProperties.getBooleanProperty("idea.skip.wm.patching", false)) {
+      String wmName = X11UiUtil.getWmName();
+      LOG.info("WM detected: " + wmName);
+      if (wmName != null) {
+        X11UiUtil.patchDetectedWm(wmName);
+      }
+    }
 
     IconLoader.activate();
-  }
 
-  private static void patchWM() {
-    if (SystemProperties.getBooleanProperty("idea.skip.wm.patching", false)) return;
-    if (!"sun.awt.X11.XToolkit".equals(Toolkit.getDefaultToolkit().getClass().getName())) return;
-
-    try {
-      final Class<?> xwmClass = Class.forName("sun.awt.X11.XWM");
-      final Method getWM = xwmClass.getDeclaredMethod("getWM");
-      getWM.setAccessible(true);
-      final Object xwm = getWM.invoke(null);
-      if (xwm == null) return;
-
-      final Method getNetProtocol = xwmClass.getDeclaredMethod("getNETProtocol");
-      getNetProtocol.setAccessible(true);
-      final Object netProtocol = getNetProtocol.invoke(xwm);
-      if (netProtocol == null) return;
-
-      final Method getWMName = netProtocol.getClass().getDeclaredMethod("getWMName");
-      getWMName.setAccessible(true);
-      final String wmName = (String)getWMName.invoke(netProtocol);
-      LOG.info("WM detected: " + wmName);
-      if (wmName == null) return;
-
-      if (wmName.startsWith("Mutter") || "Muffin".equals(wmName) || "GNOME Shell".equals(wmName)) {
-        try {
-          setWM(xwm, "MUTTER_WM");
-        }
-        catch (NoSuchFieldException e) {
-          setWM(xwm, "METACITY_WM");
-        }
-      }
-      else if ("Marco".equals(wmName)) {
-        setWM(xwm, "METACITY_WM");
-      }
-      else if ("awesome".equals(wmName)) {
-        try {
-          xwmClass.getDeclaredField("OTHER_NONREPARENTING_WM");
-          if (System.getenv("_JAVA_AWT_WM_NONREPARENTING") == null) {
-            setWM(xwm, "OTHER_NONREPARENTING_WM");  // patch present but not activated
-          }
-        }
-        catch (NoSuchFieldException e) {
-          setWM(xwm, "LG3D_WM");  // patch absent - mimic LG3D
-        }
-      }
-    }
-    catch (Throwable e) {
-      LOG.warn(e);
-    }
-  }
-
-  private static void setWM(final Object xwm, final String wmConstant) throws NoSuchFieldException, IllegalAccessException {
-    final Field wm = xwm.getClass().getDeclaredField(wmConstant);
-    wm.setAccessible(true);
-    final Object id = wm.get(null);
-    if (id != null) {
-      final Field awtWmgr = xwm.getClass().getDeclaredField("awt_wmgr");
-      awtWmgr.setAccessible(true);
-      awtWmgr.set(null, id);
-      final Field wmID = xwm.getClass().getDeclaredField("WMID");
-      wmID.setAccessible(true);
-      wmID.set(xwm, id);
-    }
+    new JFrame().pack(); // this peer will prevent shutting down our application
   }
 
   protected ApplicationStarter getStarter() {
