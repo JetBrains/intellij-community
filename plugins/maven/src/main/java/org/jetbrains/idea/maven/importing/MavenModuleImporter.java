@@ -163,7 +163,7 @@ public class MavenModuleImporter {
           addAttachArtifactDependency(buildHelperCfg, scope, depProject, artifact);
         }
       }
-      if ("system".equals(artifact.getScope())) {
+      else if ("system".equals(artifact.getScope())) {
         myRootModelAdapter.addSystemDependency(artifact, scope);
       }
       else {
