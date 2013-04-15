@@ -77,9 +77,11 @@ import java.util.*;
  */
 public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFacet, AndroidFacetConfiguration, AndroidFacetType> {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.maven.AndroidFacetImporterBase");
-  
+
   private static final Key<Boolean> MODULE_IMPORTED = Key.create("ANDROID_NEWLY_CREATED_KEY");
   @NonNls private static final String DEFAULT_NATIVE_ARCHITECTURE = "armeabi";
+
+  private static final Key<Boolean> DELETE_OBSOLETE_MODULE_TASK_KEY = Key.create("DELETE_OBSOLETE_MODULE_TASK");
 
   public AndroidFacetImporterBase(@NotNull String pluginId) {
     super("com.jayway.maven.plugins.android.generation2", pluginId, FacetType.findInstance(AndroidFacetType.class));
@@ -141,17 +143,18 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
                                List<MavenProjectsProcessorTask> postTasks) {
     configurePaths(facet, mavenProject);
     configureAndroidPlatform(facet, mavenProject, modelsProvider);
-    importExternalApklibDependencies(module.getProject(), rootModel, modelsProvider, mavenTree, mavenProject, mavenProjectToModuleName,
+    final Project project = module.getProject();
+    importExternalApklibDependencies(project, rootModel, modelsProvider, mavenTree, mavenProject, mavenProjectToModuleName,
                                      postTasks);
 
     if (hasApklibDependencies(mavenProject) &&
-        MavenProjectsManager.getInstance(module.getProject()).getImportingSettings().isUseMavenOutput()) {
+        MavenProjectsManager.getInstance(project).getImportingSettings().isUseMavenOutput()) {
       // IDEA's apklibs building model is different from Maven's one, so we cannot use the same
       rootModel.useModuleOutput(mavenProject.getBuildDirectory() + "/idea-classes",
                                 mavenProject.getBuildDirectory() + "/idea-test-classes");
     }
-    
-    postTasks.add(new MyDeleteObsoleteApklibModulesTask(module.getProject(), mavenProject, mavenTree));
+    project.putUserData(DELETE_OBSOLETE_MODULE_TASK_KEY, Boolean.TRUE);
+    postTasks.add(new MyDeleteObsoleteApklibModulesTask(project));
   }
 
   private void importNativeDependencies(@NotNull AndroidFacet facet, @NotNull MavenProject mavenProject, @NotNull String moduleDirPath) {
@@ -211,7 +214,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
         final ModifiableModuleModel moduleModel = modelsProvider.getModuleModel();
         final String apklibModuleName = AndroidMavenUtil.getModuleNameForExtApklibArtifact(depArtifact.getMavenId());
         Module apklibModule = moduleModel.findModuleByName(apklibModuleName);
-        
+
         if ((apklibModule == null || apklibModule.getUserData(MODULE_IMPORTED) == null) &&
             MavenConstants.SCOPE_COMPILE.equals(depArtifact.getScope())) {
           apklibModule =
@@ -298,7 +301,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     }
 
     final Module module = modelsProvider.getModuleModel().findModuleByName(moduleName);
-    
+
     final ModuleOrderEntry entry = module != null
                                    ? rootModel.addModuleOrderEntry(module)
                                    : rootModel.addInvalidModuleEntry(moduleName);
@@ -379,7 +382,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     }
 
     final File artifactFile = artifact.getFile();
-    
+
     final AndroidExternalApklibDependenciesManager adm = AndroidExternalApklibDependenciesManager.getInstance(project);
 
     adm.setArtifactFilePath(artifactMavenId, FileUtil.toSystemIndependentName(artifactFile.getPath()));
@@ -422,7 +425,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     }
 
     final AndroidFacet facet = AndroidUtils.addAndroidFacet(apklibModuleModel.getModule(), vApklibDir, true);
-    
+
     final AndroidFacetConfiguration configuration = facet.getConfiguration();
     String s = AndroidRootUtil.getPathRelativeToModuleDir(apklibModule, vApklibDir.getPath());
     if (s != null) {
@@ -604,7 +607,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
 
     final List<AndroidExternalApklibDependenciesManager.MavenDependencyInfo> dependencies =
       new ArrayList<AndroidExternalApklibDependenciesManager.MavenDependencyInfo>();
-    
+
     for (MavenArtifact depArtifact : projectForExternalApklib.getDependencies()) {
       final String path = depArtifact.getPathForExtraArtifact(null, null);
       final String libName = depArtifact.getLibraryName();
@@ -622,7 +625,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       sdkPath != null ? sdkPath : "",
       dependencies
     );
-    
+
     apklibDependenciesManager.setSdkInfoForArtifact(artifact.getMavenId(), info);
   }
 
@@ -769,7 +772,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     }
     return null;
   }
-  
+
   @Nullable
   private String getSdkPathFromConfig(MavenProject project) {
     Element sdkRoot = getConfig(project, "sdk");
@@ -955,13 +958,10 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     }
   }
 
-  private static class MyDeleteObsoleteApklibModulesTask extends MavenProjectsProcessorBasicTask {
+  private static class MyDeleteObsoleteApklibModulesTask implements MavenProjectsProcessorTask {
     private final Project myProject;
 
-    public MyDeleteObsoleteApklibModulesTask(@NotNull Project project,
-                                             @NotNull MavenProject mavenProject,
-                                             @NotNull MavenProjectsTree mavenTree) {
-      super(mavenProject, mavenTree);
+    public MyDeleteObsoleteApklibModulesTask(@NotNull Project project) {
       myProject = project;
     }
 
@@ -974,9 +974,10 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
-          if (project.isDisposed()) {
+          if (project.isDisposed() || project.getUserData(DELETE_OBSOLETE_MODULE_TASK_KEY) != Boolean.TRUE) {
             return;
           }
+          project.putUserData(DELETE_OBSOLETE_MODULE_TASK_KEY, null);
           final ModifiableModuleModel moduleModel = ModuleManager.getInstance(project).getModifiableModel();
           final Set<Module> referredModules = new HashSet<Module>();
 
@@ -989,6 +990,8 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             @Override
             public void run() {
+              boolean modelChanged = false;
+
               for (final Module module : moduleModel.getModules()) {
                 if (AndroidMavenUtil.isExtApklibModule(module) && !referredModules.contains(module)) {
                   final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
@@ -1003,10 +1006,15 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
                     }
                   }
                   moduleModel.disposeModule(module);
+                  modelChanged = true;
                 }
               }
-
-              moduleModel.commit();
+              if (modelChanged) {
+                moduleModel.commit();
+              }
+              else {
+                moduleModel.dispose();
+              }
             }
           });
         }
