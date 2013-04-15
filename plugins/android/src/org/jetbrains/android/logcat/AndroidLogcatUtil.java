@@ -75,7 +75,7 @@ public class AndroidLogcatUtil {
       LOG.info(e);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         public void run() {
-          Messages.showErrorDialog(project, e.getMessage(), AndroidBundle.message("android.logcat.error.dialog.title"));
+          Messages.showErrorDialog(project, "Error: " + e.getMessage(), AndroidBundle.message("android.logcat.error.dialog.title"));
         }
       });
     }
@@ -83,9 +83,9 @@ public class AndroidLogcatUtil {
 
   @Nullable
   public static Pair<Reader, Writer> startLoggingThread(final Project project,
-                                          final IDevice device,
-                                          final boolean clearLogcat,
-                                          @NotNull final LogConsoleBase console) {
+                                                        final IDevice device,
+                                                        final boolean clearLogcat,
+                                                        @NotNull final LogConsoleBase console) {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       public void run() {
         console.clear();
