@@ -745,7 +745,8 @@ public class JavaChangeSignatureDialog extends ChangeSignatureDialogBase<Paramet
     buffer.append(getMethodName());
     buffer.append("(");
 
-    String indent = StringUtil.repeatSymbol(' ', buffer.length());
+    final int lineBreakIdx = buffer.lastIndexOf("\n");
+    String indent = StringUtil.repeatSymbol(' ', lineBreakIdx >= 0 ? buffer.length() - lineBreakIdx - 1 : buffer.length());
     List<ParameterTableModelItemBase<ParameterInfoImpl>> items = myParametersTableModel.getItems();
     int curIndent = indent.length();
     for (int i = 0; i < items.size(); i++) {
