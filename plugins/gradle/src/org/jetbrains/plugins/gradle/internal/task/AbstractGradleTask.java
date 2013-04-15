@@ -72,8 +72,9 @@ public abstract class AbstractGradleTask implements GradleTask {
     }
     final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     try {
-      final RemoteExternalSystemFacade facade = manager.getFacade(myIdeProject);
-      setState(facade.isTaskInProgress(getId()) ? GradleTaskState.IN_PROGRESS : GradleTaskState.FAILED);
+      // TODO den implement
+//      final RemoteExternalSystemFacade facade = manager.getFacade(myIdeProject);
+//      setState(facade.isTaskInProgress(getId()) ? GradleTaskState.IN_PROGRESS : GradleTaskState.FAILED);
     }
     catch (Throwable e) {
       setState(GradleTaskState.FAILED);
@@ -129,7 +130,9 @@ public abstract class AbstractGradleTask implements GradleTask {
 
   @NotNull
   protected String wrapProgressText(@NotNull String text) {
-    return ExternalSystemBundle.message("gradle.general.progress.update.text", text);
+    // TODO den implement
+    return "";
+//    return ExternalSystemBundle.message("gradle.general.progress.update.text", text);
   }
   
   @Override

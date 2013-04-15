@@ -1,0 +1,6 @@
+<idea-plugin>
+  <extensionPoints>
+    <extensionPoint name="externalSystemManager" interface="com.intellij.openapi.externalSystem.ExternalSystemManager"/>
+    <extensionPoint name="projectDataManager" interface="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager"/>
+  </extensionPoints>
+</idea-plugin>

@@ -2,7 +2,7 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
@@ -72,7 +72,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     // populating dependent module object.
     Map<String, Pair<DataNode<ModuleData>, IdeaModule>> modules = createModules(project, result);
     populateModules(modules.values(), result);
-    Collection<DataNode<LibraryData>> libraries = ExternalSystemUtil.getChildren(result, ExternalSystemProjectKeys.LIBRARY);
+    Collection<DataNode<LibraryData>> libraries = ExternalSystemUtil.getChildren(result, ProjectKeys.LIBRARY);
     myLibraryNamesMixer.mixNames(libraries);
     return result;
   }
@@ -89,8 +89,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     javaProjectData.setJdkVersion(project.getJdkName());
     javaProjectData.setLanguageLevel(project.getLanguageLevel().getLevel());
     
-    DataNode<ProjectData> result = new DataNode<ProjectData>(ExternalSystemProjectKeys.PROJECT, projectData, null);
-    result.createChild(ExternalSystemProjectKeys.JAVA_PROJECT, javaProjectData);
+    DataNode<ProjectData> result = new DataNode<ProjectData>(ProjectKeys.PROJECT, projectData, null);
+    result.createChild(ProjectKeys.JAVA_PROJECT, javaProjectData);
     return result;
   }
 
@@ -121,7 +121,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           String.format("Modules with duplicate name (%s) detected: '%s' and '%s'", moduleName, ideModule, previouslyParsedModule)
         );
       }
-      DataNode<ModuleData> moduleDataNode = ideProject.createChild(ExternalSystemProjectKeys.MODULE, ideModule);
+      DataNode<ModuleData> moduleDataNode = ideProject.createChild(ProjectKeys.MODULE, ideModule);
       result.put(moduleName, new Pair<DataNode<ModuleData>, IdeaModule>(moduleDataNode, gradleModule));
     }
     return result;
@@ -147,7 +147,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   /**
-   * Populates {@link ExternalSystemProjectKeys#CONTENT_ROOT) content roots} of the given ide module on the basis of the information
+   * Populates {@link ProjectKeys#CONTENT_ROOT) content roots} of the given ide module on the basis of the information
    * contained at the given gradle module.
    * 
    * @param gradleModule    holder of the module information received from the gradle tooling api
@@ -178,7 +178,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           ideContentRoot.storePath(ExternalSystemSourceType.EXCLUDED, file.getAbsolutePath());
         }
       }
-      ideModule.createChild(ExternalSystemProjectKeys.CONTENT_ROOT, ideContentRoot);
+      ideModule.createChild(ProjectKeys.CONTENT_ROOT, ideContentRoot);
     }
   }
 
@@ -245,7 +245,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         if (scope != null) {
           d.setScope(scope);
         }
-        ideModule.createChild(ExternalSystemProjectKeys.MODULE_DEPENDENCY, d);
+        ideModule.createChild(ProjectKeys.MODULE_DEPENDENCY, d);
       }
       else if (dependency instanceof IdeaSingleEntryLibraryDependency) {
         LibraryDependencyData d = buildDependency(ideModule, (IdeaSingleEntryLibraryDependency)dependency, ideProject);
@@ -253,7 +253,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         if (scope != null) {
           d.setScope(scope);
         }
-        ideModule.createChild(ExternalSystemProjectKeys.LIBRARY_DEPENDENCY, d);
+        ideModule.createChild(ProjectKeys.LIBRARY_DEPENDENCY, d);
       }
     }
   }
@@ -279,7 +279,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     Set<String> registeredModuleNames = ContainerUtilRt.newHashSet();
-    Collection<DataNode<ModuleData>> modulesDataNode = ExternalSystemUtil.getChildren(ideProject, ExternalSystemProjectKeys.MODULE);
+    Collection<DataNode<ModuleData>> modulesDataNode = ExternalSystemUtil.getChildren(ideProject, ProjectKeys.MODULE);
     for (DataNode<ModuleData> moduleDataNode : modulesDataNode) {
       String name = moduleDataNode.getData().getName();
       registeredModuleNames.add(name);
@@ -321,14 +321,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     DataNode<LibraryData> libraryData =
-      ExternalSystemUtil.find(ideProject, ExternalSystemProjectKeys.LIBRARY, new BooleanFunction<DataNode<LibraryData>>() {
+      ExternalSystemUtil.find(ideProject, ProjectKeys.LIBRARY, new BooleanFunction<DataNode<LibraryData>>() {
         @Override
         public boolean fun(DataNode<LibraryData> node) {
           return library.equals(node.getData());
         }
       });
     if (libraryData == null) {
-      libraryData = ideProject.createChild(ExternalSystemProjectKeys.LIBRARY, library);
+      libraryData = ideProject.createChild(ProjectKeys.LIBRARY, library);
     }
 
     return new LibraryDependencyData(ownerModule.getData(), libraryData.getData());

@@ -49,40 +49,43 @@ public class GradleRefreshTasksListTask extends AbstractGradleTask {
   protected void doExecute() throws Exception {
     final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     Project project = getIdeProject();
-    ExternalSystemBuildManager buildManager = manager.getFacade(project).getBuildManager();
-    setState(GradleTaskState.IN_PROGRESS);
-    try {
-      final Collection<ExternalSystemTaskDescriptor> descriptors = buildManager.listTasks(getId(), myProjectPath);
-      if (descriptors == null || descriptors.isEmpty()) {
-        return;
-      }
-      
-      if (project == null) {
-        return;
-      }
-
-      GradleLocalSettings settings = GradleLocalSettings.getInstance(project);
-      settings.setAvailableTasks(descriptors);
-      
-      final GradleTasksModel tasksModel = GradleUtil.getToolWindowElement(GradleTasksModel.class, project, ExternalSystemDataKeys.ALL_TASKS_MODEL);
-      if (tasksModel == null) {
-        return;
-      }
-      UIUtil.invokeLaterIfNeeded(new Runnable() {
-        @Override
-        public void run() {
-          tasksModel.setTasks(descriptors); 
-        }
-      });
-    }
-    finally {
-      setState(GradleTaskState.FINISHED);
-    }
+    // TODO den implement
+//    ExternalSystemBuildManager buildManager = manager.getFacade(project).getBuildManager();
+//    setState(GradleTaskState.IN_PROGRESS);
+//    try {
+//      final Collection<ExternalSystemTaskDescriptor> descriptors = buildManager.listTasks(getId(), myProjectPath);
+//      if (descriptors == null || descriptors.isEmpty()) {
+//        return;
+//      }
+//      
+//      if (project == null) {
+//        return;
+//      }
+//
+//      GradleLocalSettings settings = GradleLocalSettings.getInstance(project);
+//      settings.setAvailableTasks(descriptors);
+//      
+//      final GradleTasksModel tasksModel = GradleUtil.getToolWindowElement(GradleTasksModel.class, project, ExternalSystemDataKeys.ALL_TASKS_MODEL);
+//      if (tasksModel == null) {
+//        return;
+//      }
+//      UIUtil.invokeLaterIfNeeded(new Runnable() {
+//        @Override
+//        public void run() {
+//          tasksModel.setTasks(descriptors); 
+//        }
+//      });
+//    }
+//    finally {
+//      setState(GradleTaskState.FINISHED);
+//    }
   }
 
   @Override
   @NotNull
   protected String wrapProgressText(@NotNull String text) {
-    return ExternalSystemBundle.message("gradle.tasks.progress.update.text", text);
+    // TODO den implement
+    return "";
+//    return ExternalSystemBundle.message("gradle.tasks.progress.update.text", text);
   }
 }

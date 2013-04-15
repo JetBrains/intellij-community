@@ -18,6 +18,7 @@ import com.intellij.pom.java.LanguageLevel;
 import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
+import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
@@ -56,9 +57,9 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
     myProjectCompileOutputLocationField = setupProjectCompileOutputLocation(builder);
     filterSdksByLanguageLevel();
     myImlAtModuleContentRootsButton =
-      new JBRadioButton(ExternalSystemBundle.message("gradle.import.structure.settings.label.iml.location.per.module"));
+      new JBRadioButton(GradleBundle.message("gradle.import.structure.settings.label.iml.location.per.module"));
     myImlAtProjectDirButton = new JBRadioButton(
-      ExternalSystemBundle.message("gradle.import.structure.settings.label.iml.location.project.dir"));
+      GradleBundle.message("gradle.import.structure.settings.label.iml.location.project.dir"));
     setModuleFilesLocationControl(builder);
     myComponent = builder.build();
     refresh();
@@ -74,18 +75,22 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
     result.addItemListener(new ItemListener() {
       @Override
       public void itemStateChanged(ItemEvent e) {
-        myProject.setLanguageLevel(levels.get(e.getItem()));
+        // TODO den implement
+//        myProject.setLanguageLevel(levels.get(e.getItem()));
         filterSdksByLanguageLevel();
       }
     });
-    builder.add("gradle.import.structure.settings.label.language.level", result);
+    // TODO den implement
+//    builder.add("gradle.import.structure.settings.label.language.level", result);
     return result;
   }
   
   private void filterSdksByLanguageLevel() {
     Object selectedItem = mySdkModel.getSelectedItem();
     mySdkModel.removeAllElements();
-    LanguageLevel languageLevel = myProject.getLanguageLevel();
+    // TODO den implement
+    LanguageLevel languageLevel = null;
+//    LanguageLevel languageLevel = myProject.getLanguageLevel();
     boolean restoreSelection = false;
     List<Sdk> matchedRegisteredSdks = new ArrayList<Sdk>();
     JavaSdk javaSdk = JavaSdk.getInstance();
@@ -98,9 +103,10 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
       matchedRegisteredSdks.add(sdk);
     }
 
-    if (matchedRegisteredSdks.isEmpty()) {
-      mySdkModel.addElement(ExternalSystemBundle.message("gradle.import.structure.settings.no.sdk.for.language.level.text"));
-    }
+    // TODO den implement
+//    if (matchedRegisteredSdks.isEmpty()) {
+//      mySdkModel.addElement(ExternalSystemBundle.message("gradle.import.structure.settings.no.sdk.for.language.level.text"));
+//    }
 
     for (Sdk sdk : matchedRegisteredSdks) {
       mySdkModel.addElement(sdk.getName());
@@ -126,30 +132,34 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
         }
         Sdk sdk = ProjectJdkTable.getInstance().findJdk(selectedItem.toString());
         if (sdk != null) {
-          myProject.setSdk(sdk);
+          // TODO den implement
+//          myProject.setSdk(sdk);
         }
       }
     });
-    builder.add("gradle.import.structure.settings.label.sdk", sdkComboBox);
+    // TODO den implement
+//    builder.add("gradle.import.structure.settings.label.sdk", sdkComboBox);
   }
   
   @NotNull
   private TextFieldWithBrowseButton setupProjectConfigLocation(@NotNull GradleProjectSettingsBuilder builder) {
     TextFieldWithBrowseButton result = new TextFieldWithBrowseButton();
-    String title = ExternalSystemBundle.message("gradle.import.structure.settings.title.project.config.location");
-    result.addBrowseFolderListener(title, "", null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
-    result.setText(myProject.getProjectFileDirectoryPath());
-    builder.add("gradle.import.structure.settings.label.project.config.location", result);
+    // TODO den implement
+//    String title = ExternalSystemBundle.message("gradle.import.structure.settings.title.project.config.location");
+//    result.addBrowseFolderListener(title, "", null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
+//    result.setText(myProject.getProjectFileDirectoryPath());
+//    builder.add("gradle.import.structure.settings.label.project.config.location", result);
     return result;
   }
 
   @NotNull
   private TextFieldWithBrowseButton setupProjectCompileOutputLocation(@NotNull GradleProjectSettingsBuilder builder) {
     TextFieldWithBrowseButton result = new TextFieldWithBrowseButton();
-    String title = ExternalSystemBundle.message("gradle.import.structure.settings.title.project.compile.output.location");
-    result.addBrowseFolderListener(title, "", null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
-    result.setText(myProject.getCompileOutputPath());
-    builder.add("gradle.import.structure.settings.label.project.compile.output.location", result);
+    // TODO den implement
+//    String title = ExternalSystemBundle.message("gradle.import.structure.settings.title.project.compile.output.location");
+//    result.addBrowseFolderListener(title, "", null, BrowseFilesListener.SINGLE_DIRECTORY_DESCRIPTOR);
+//    result.setText(myProject.getCompileOutputPath());
+//    builder.add("gradle.import.structure.settings.label.project.compile.output.location", result);
     return result;
   }
 
@@ -166,13 +176,14 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
         if (e.getStateChange() != ItemEvent.SELECTED) {
           return;
         }
-        for (ModuleData module : myProject.getModules()) {
-          Collection<ContentRootData> contentRoots = module.getContentRoots();
-          if (contentRoots.isEmpty()) {
-            continue;
-          }
-          module.setModuleFileDirectoryPath(contentRoots.iterator().next().getRootPath());
-        }
+        // TODO den implement
+//        for (ModuleData module : myProject.getModules()) {
+//          Collection<ContentRootData> contentRoots = module.getContentRoots();
+//          if (contentRoots.isEmpty()) {
+//            continue;
+//          }
+//          module.setModuleFileDirectoryPath(contentRoots.iterator().next().getRootPath());
+//        }
         PropertiesComponent.getInstance().setValue(KEEP_IML_AT_MODULE_DIR_PROPERTY_KEY, String.valueOf(true));
       }
     });
@@ -190,9 +201,10 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
         if (!goodDir) {
           return;
         }
-        for (ModuleData module : myProject.getModules()) {
-          module.setModuleFileDirectoryPath(dirPath);
-        }
+        // TODO den implement
+//        for (ModuleData module : myProject.getModules()) {
+//          module.setModuleFileDirectoryPath(dirPath);
+//        }
         PropertiesComponent.getInstance().setValue(KEEP_IML_AT_MODULE_DIR_PROPERTY_KEY, String.valueOf(false));
       }
     });
@@ -203,24 +215,26 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
     else {
       myImlAtProjectDirButton.setSelected(true);
     }
-    builder.add("gradle.import.structure.settings.label.iml.location", panel);
+    // TODO den implement
+//    builder.add("gradle.import.structure.settings.label.iml.location", panel);
   }
   
   @Override
   public boolean validate() {
-    if (!validateDirLocation(myProjectConfigLocationField, "gradle.import.text.error.project.undefined.config.location",
-                             "gradle.import.text.error.file.config.location"))
-    {
-      return false;
-    }
-    myProject.setProjectFileDirectoryPath(myProjectConfigLocationField.getText());
-    
-    if (!validateDirLocation(myProjectCompileOutputLocationField, "gradle.import.text.error.undefined.project.compile.output.location",
-                             "gradle.import.text.error.file.project.compile.output.location"))
-    {
-      return false;
-    }
-    myProject.setCompileOutputPath(myProjectCompileOutputLocationField.getText());
+    // TODO den implement
+//    if (!validateDirLocation(myProjectConfigLocationField, "gradle.import.text.error.project.undefined.config.location",
+//                             "gradle.import.text.error.file.config.location"))
+//    {
+//      return false;
+//    }
+//    myProject.setProjectFileDirectoryPath(myProjectConfigLocationField.getText());
+//    
+//    if (!validateDirLocation(myProjectCompileOutputLocationField, "gradle.import.text.error.undefined.project.compile.output.location",
+//                             "gradle.import.text.error.file.project.compile.output.location"))
+//    {
+//      return false;
+//    }
+//    myProject.setCompileOutputPath(myProjectCompileOutputLocationField.getText());
     
     return true;
   }
@@ -228,8 +242,9 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
   @Override
   public void refresh() {
     myProjectConfigLocationField.setText(myProject.getProjectFileDirectoryPath());
-    myProjectCompileOutputLocationField.setText(myProject.getCompileOutputPath());
-    myLanguageLevelComboBox.setSelectedItem(myProject.getLanguageLevel().getPresentableText());
+    // TODO den implement
+//    myProjectCompileOutputLocationField.setText(myProject.getCompileOutputPath());
+//    myLanguageLevelComboBox.setSelectedItem(myProject.getLanguageLevel().getPresentableText());
   }
 
   private static boolean validateDirLocation(

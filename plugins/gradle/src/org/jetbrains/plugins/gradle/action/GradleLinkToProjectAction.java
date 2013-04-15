@@ -22,9 +22,10 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 public class GradleLinkToProjectAction extends AnAction implements DumbAware {
 
   public GradleLinkToProjectAction() {
-    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.link.project.text"));
-    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.link.project.description"));
-    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.toolwindow.linked.action.text"));
+    // TODO den implement
+//    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.link.project.text"));
+//    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.link.project.description"));
+//    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.toolwindow.linked.action.text"));
   }
 
   @Override
@@ -37,6 +38,7 @@ public class GradleLinkToProjectAction extends AnAction implements DumbAware {
     if (file == null) {
       return;
     }
-    GradleSettings.applyLinkedProjectPath(file.getPath(), project);
+    // TODO den implement
+//    GradleSettings.applyLinkedProjectPath(file.getPath(), project);
   }
 }

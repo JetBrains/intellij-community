@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.util;
 
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalJarManager;
+import com.intellij.openapi.externalSystem.service.project.manage.JarDataManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.externalSystem.service.project.change.MovedJarsPostProcessor;
@@ -26,7 +26,7 @@ import com.intellij.openapi.externalSystem.service.project.change.MovedJarsPostP
  */
 public class TestMovedJarsPostProcessor extends MovedJarsPostProcessor {
 
-  public TestMovedJarsPostProcessor(@NotNull ExternalJarManager manager) {
+  public TestMovedJarsPostProcessor(@NotNull JarDataManager manager) {
     super(manager);
   }
 

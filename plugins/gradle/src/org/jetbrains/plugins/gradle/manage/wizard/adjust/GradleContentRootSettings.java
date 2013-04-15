@@ -4,6 +4,7 @@ import com.intellij.ide.util.projectWizard.NamePathComponent;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -17,36 +18,37 @@ import java.util.Map;
  */
 public class GradleContentRootSettings implements GradleProjectStructureNodeSettings {
 
-  private static final Map<ExternalSystemSourceType, String> ROOT_TYPE_TITLES =
-    new EnumMap<ExternalSystemSourceType, String>(ExternalSystemSourceType.class);
+  private static final Map<ExternalSystemSourceType, String> ROOT_TYPE_TITLES = ContainerUtilRt.newHashMap();
 
   static {
-    ROOT_TYPE_TITLES
-      .put(ExternalSystemSourceType.SOURCE, ExternalSystemBundle.message("gradle.import.structure.settings.label.root.source"));
-    ROOT_TYPE_TITLES.put(ExternalSystemSourceType.TEST, ExternalSystemBundle.message("gradle.import.structure.settings.label.root.test"));
-    ROOT_TYPE_TITLES
-      .put(ExternalSystemSourceType.EXCLUDED, ExternalSystemBundle.message("gradle.import.structure.settings.label.root.excluded"));
-    assert ROOT_TYPE_TITLES.size() == ExternalSystemSourceType.values().length;
+    // TODO den implement
+//    ROOT_TYPE_TITLES.put(ExternalSystemSourceType.SOURCE,
+//                         ExternalSystemBundle.message("gradle.import.structure.settings.label.root.source"));
+//    ROOT_TYPE_TITLES.put(ExternalSystemSourceType.TEST,
+//                         ExternalSystemBundle.message("gradle.import.structure.settings.label.root.test"));
+//    ROOT_TYPE_TITLES.put(ExternalSystemSourceType.EXCLUDED,
+//                         ExternalSystemBundle.message("gradle.import.structure.settings.label.root.excluded"));
   }
 
   @NotNull private final JComponent myComponent;
 
   public GradleContentRootSettings(@NotNull ContentRootData contentRoot) {
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
-    for (ExternalSystemSourceType sourceType : ExternalSystemSourceType.values()) {
-      Collection<String> paths = contentRoot.getPaths(sourceType);
-      if (paths.isEmpty()) {
-        continue;
-      }
-      builder.add(new JLabel(ROOT_TYPE_TITLES.get(sourceType)));
-      for (String path : paths) {
-        NamePathComponent component = new NamePathComponent("", "  ", "", "", false);
-        component.setNameComponentVisible(false);
-        component.setPath(path);
-        component.getPathPanel().setEditable(false);
-        builder.add(component, GradleProjectSettingsBuilder.InsetSize.SMALL);
-      }
-    }
+    // TODO den implement
+//    for (ExternalSystemSourceType sourceType : ExternalSystemSourceType.values()) {
+//      Collection<String> paths = contentRoot.getPaths(sourceType);
+//      if (paths.isEmpty()) {
+//        continue;
+//      }
+//      builder.add(new JLabel(ROOT_TYPE_TITLES.get(sourceType)));
+//      for (String path : paths) {
+//        NamePathComponent component = new NamePathComponent("", "  ", "", "", false);
+//        component.setNameComponentVisible(false);
+//        component.setPath(path);
+//        component.getPathPanel().setEditable(false);
+//        builder.add(component, GradleProjectSettingsBuilder.InsetSize.SMALL);
+//      }
+//    }
     myComponent = builder.build();
   }
 

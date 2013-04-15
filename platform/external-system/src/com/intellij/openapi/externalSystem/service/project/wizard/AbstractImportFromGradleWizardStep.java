@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.manage.wizard;
+package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.projectImport.ProjectImportWizardStep;
@@ -26,7 +26,7 @@ public abstract class AbstractImportFromGradleWizardStep extends ProjectImportWi
 
   @Override
   @Nullable
-  protected GradleProjectImportBuilder getBuilder() {
-    return (GradleProjectImportBuilder)getWizardContext().getProjectBuilder();
+  protected AbstractExternalProjectImportBuilder getBuilder() {
+    return (AbstractExternalProjectImportBuilder)getWizardContext().getProjectBuilder();
   }
 }

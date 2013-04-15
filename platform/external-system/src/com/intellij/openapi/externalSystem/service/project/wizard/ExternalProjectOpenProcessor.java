@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.manage;
+package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.newProjectWizard.AddModuleWizard;
 import com.intellij.ide.util.projectWizard.WizardContext;
@@ -8,17 +8,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.projectImport.ProjectOpenProcessorBase;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.manage.wizard.select.GradleSelectProjectStep;
 
 /**
  * @author Denis Zhdanov
  * @since 11/1/11 4:45 PM
  */
-public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleProjectImportBuilder> {
+public class ExternalProjectOpenProcessor extends ProjectOpenProcessorBase<AbstractExternalProjectImportBuilder> {
   
+  // TODO den implement
   public static final String[] BUILD_FILE_NAMES = { "build.gradle" };
   
-  public GradleProjectOpenProcessor(@NotNull GradleProjectImportBuilder builder) {
+  public ExternalProjectOpenProcessor(@NotNull AbstractExternalProjectImportBuilder builder) {
     super(builder);
   }
 
@@ -29,14 +29,14 @@ public class GradleProjectOpenProcessor extends ProjectOpenProcessorBase<GradleP
 
   @Override
   protected boolean doQuickImport(VirtualFile file, WizardContext wizardContext) {
-    AddModuleWizard dialog = new AddModuleWizard(null, file.getPath(), new GradleProjectImportProvider(getBuilder()));
+    AddModuleWizard dialog = new AddModuleWizard(null, file.getPath(), new AbstractExternalProjectImportProvider(getBuilder()));
     getBuilder().prepare(wizardContext);
     getBuilder().setCurrentProjectPath(file.getPath());
     dialog.getWizardContext().setProjectBuilder(getBuilder());
     dialog.navigateToStep(new Function<Step, Boolean>() {
       @Override
       public Boolean fun(Step step) {
-        return step instanceof GradleSelectProjectStep;
+        return step instanceof SelectExternalProjectStepBase;
       }
     });
     dialog.doNextAction();

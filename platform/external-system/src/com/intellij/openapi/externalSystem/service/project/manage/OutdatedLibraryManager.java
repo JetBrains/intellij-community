@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.CompositeLibraryDependencyData;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
@@ -44,18 +45,18 @@ import java.util.Map;
  */
 public class OutdatedLibraryManager {
 
-  @NotNull private final LibraryDataManager        myLibraryManager;
-  @NotNull private final ExternalDependencyManager myDependencyManager;
-  @NotNull private final ProjectStructureServices  myContext;
-  @NotNull private final Project                   myProject;
+  @NotNull private final LibraryDataManager           myLibraryManager;
+  @NotNull private final LibraryDependencyDataManager myLibraryDependencyManager;
+  @NotNull private final ProjectStructureServices     myContext;
+  @NotNull private final Project                      myProject;
 
   public OutdatedLibraryManager(@NotNull LibraryDataManager libraryManager,
-                                @NotNull ExternalDependencyManager dependencyManager,
+                                @NotNull LibraryDependencyDataManager libraryDependencyManager,
                                 @NotNull ProjectStructureServices context,
                                 @NotNull Project project)
   {
     myLibraryManager = libraryManager;
-    myDependencyManager = dependencyManager;
+    myLibraryDependencyManager = libraryDependencyManager;
     myContext = context;
     myProject = project;
   }
@@ -66,13 +67,13 @@ public class OutdatedLibraryManager {
   {
     List<Pair<LibraryDependencyData, Module>> libraryDependenciesToImport = ContainerUtilRt.newArrayList();
     Map<String /* ide library name */, Library> ideLibsToRemove = ContainerUtilRt.newHashMap();
-    Map<String /* ide library name */, LibraryData> ide2gradleLibs = ContainerUtilRt.newHashMap();
+    Map<String /* ide library name */, LibraryData> ide2externalLibs = ContainerUtilRt.newHashMap();
     Collection<LibraryOrderEntry> ideLibraryDependenciesToRemove = ContainerUtilRt.newArrayList();
     ProjectStructureHelper projectStructureHelper = myContext.getProjectStructureHelper();
     PlatformFacade facade = myContext.getPlatformFacade();
 
     // The general idea is to remove all ide-local entities references by the 'outdated libraries' and import
-    // all corresponding gradle-local entities.
+    // all corresponding external-local entities.
 
     //region Parse information to use for further processing.
     for (ProjectStructureNode<?> node : nodes) {
@@ -92,7 +93,7 @@ public class OutdatedLibraryManager {
         // We use map here because Library.hashCode()/equals() contract is not clear. That's why we consider two currently
         // configured libraries with the same name to be the same.
         ideLibsToRemove.put(ideLibraryName, ideLibraryToRemove);
-        ide2gradleLibs.put(ideLibraryName, e.getExternalEntity().getTarget());
+        ide2externalLibs.put(ideLibraryName, e.getExternalEntity().getTarget());
       }
     }
     //endregion
@@ -105,8 +106,8 @@ public class OutdatedLibraryManager {
       }
     };
     for (Module ideModule : facade.getModules(myProject)) {
-      ModuleData gradleModule = projectStructureHelper.findExternalModule(ideModule.getName(), externalSystemId, project);
-      if (gradleModule == null) {
+      DataNode<ModuleData> externalModule = projectStructureHelper.findExternalModule(ideModule.getName(), externalSystemId, project);
+      if (externalModule == null) {
         continue;
       }
       
@@ -123,19 +124,21 @@ public class OutdatedLibraryManager {
           continue;
         }
         ideLibraryDependenciesToRemove.add(ideLibraryDependency);
-        LibraryDependencyData gradleLibraryDependency = new LibraryDependencyData(gradleModule, ide2gradleLibs.get(libraryName));
-        gradleLibraryDependency.setExported(ideLibraryDependency.isExported());
-        gradleLibraryDependency.setScope(ideLibraryDependency.getScope());
-        libraryDependenciesToImport.add(Pair.create(gradleLibraryDependency, ideModule));
+        // TODO den implement
+//        LibraryDependencyData externalLibraryDependency = new LibraryDependencyData(externalModule, ide2externalLibs.get(libraryName));
+//        externalLibraryDependency.setExported(ideLibraryDependency.isExported());
+//        externalLibraryDependency.setScope(ideLibraryDependency.getScope());
+//        libraryDependenciesToImport.add(Pair.create(externalLibraryDependency, ideModule));
       }
     }
-    myDependencyManager.removeDependencies(ideLibraryDependenciesToRemove, false);
-    myLibraryManager.removeLibraries(ideLibsToRemove.values(), myProject);
-    for (Pair<LibraryDependencyData, Module> pair : libraryDependenciesToImport) {
-      // Assuming that dependency manager is smart enough to import library for a given library dependency if it hasn't been
-      // imported yet.
-      myDependencyManager.importDependency(pair.first, pair.second, false);
-    }
+    // TODO den implement
+//    myLibraryDependencyManager.removeData(ideLibraryDependenciesToRemove, true);
+//    myLibraryManager.removeLibraries(ideLibsToRemove.values(), myProject);
+//    for (Pair<LibraryDependencyData, Module> pair : libraryDependenciesToImport) {
+//      // Assuming that dependency manager is smart enough to import library for a given library dependency if it hasn't been
+//      // imported yet.
+//      myLibraryDependencyManager.importData(pair.first, externalSystemId, pair.second, true);
+//    }
     //endregion
   }
 }

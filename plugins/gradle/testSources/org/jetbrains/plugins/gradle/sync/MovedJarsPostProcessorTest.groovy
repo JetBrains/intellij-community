@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.gradle.sync
 
 import com.intellij.openapi.roots.libraries.Library
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalJarManager
+import com.intellij.openapi.externalSystem.service.project.manage.JarDataManager
 import com.intellij.openapi.externalSystem.model.project.JarData
 import com.intellij.openapi.externalSystem.model.project.LibraryData
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
@@ -64,7 +64,7 @@ class MovedJarsPostProcessorTest extends AbstractGradleTest {
       new JarData(GradleUtil.toCanonicalPath('repo2/zip1'), LibraryPathType.SOURCE, ideLibrary, null),
       new JarData(GradleUtil.toCanonicalPath('repo2/zip2'), LibraryPathType.SOURCE, ideLibrary, null),
     ]
-    TestExternalJarManager jarManager = container.getComponentInstance(ExternalJarManager)
+    TestExternalJarManager jarManager = container.getComponentInstance(JarDataManager)
     Assert.assertEquals(expectedImported.toSet(), jarManager.importedJars.toSet())
     Assert.assertEquals(expectedRemoved.toSet(), jarManager.removedJars.toSet())
   }

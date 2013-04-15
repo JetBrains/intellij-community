@@ -106,7 +106,8 @@ public class GradleLocalNodeManageHelper {
       Object id = descriptor.getElement();
       final Object entity = myIdMapper.mapIdToEntity((ProjectEntityId)id, context.project);
       if (entity instanceof ProjectEntityData) {
-        ((ProjectEntityData)entity).invite(context.visitor);
+        // TODO den implement
+//        ((ProjectEntityData)entity).invite(context.visitor);
       }
     }
 
@@ -121,7 +122,8 @@ public class GradleLocalNodeManageHelper {
     context.recursive = true;
     while (!toProcess.isEmpty()) {
       final ProjectEntityData e = toProcess.pop();
-      e.invite(context.visitor);
+      // TODO den implement
+//      e.invite(context.visitor);
     }
   }
 
@@ -135,12 +137,13 @@ public class GradleLocalNodeManageHelper {
     if (!context.recursive) {
       return;
     }
-    for (ContentRootData contentRoot : module.getContentRoots()) {
-      contentRoot.invite(context.visitor);
-    }
-    for (DependencyData dependency : module.getDependencies()) {
-      dependency.invite(context.visitor);
-    }
+    // TODO den implement
+//    for (ContentRootData contentRoot : module.getContentRoots()) {
+//      contentRoot.invite(context.visitor);
+//    }
+//    for (DependencyData dependency : module.getDependencies()) {
+//      dependency.invite(context.visitor);
+//    }
   }
 
   private void collectContentRoots(@NotNull ContentRootData contentRoot, @NotNull Context context) {
@@ -168,7 +171,8 @@ public class GradleLocalNodeManageHelper {
     boolean r = context.recursive;
     context.recursive = true;
     try {
-      gradleModule.invite(context.visitor);
+      // TODO den implement
+//      gradleModule.invite(context.visitor);
     }
     finally {
       context.recursive = r;
@@ -226,7 +230,6 @@ public class GradleLocalNodeManageHelper {
   private class Context {
 
     @NotNull public final Set<ProjectEntityData> entities = ContainerUtilRt.newHashSet();
-    @NotNull public final CollectingVisitor      visitor  = new CollectingVisitor(this);
 
     @NotNull public final Project project;
 
@@ -235,37 +238,5 @@ public class GradleLocalNodeManageHelper {
     Context(@NotNull Project project) {
       this.project = project;
     }
-  }
-
-  private class CollectingVisitor implements ExternalEntityVisitor {
-    @NotNull private final Context myContext;
-
-    CollectingVisitor(@NotNull Context context) {
-      myContext = context;
-    }
-
-    @Override
-    public void visit(@NotNull ProjectData project) { }
-
-    @Override
-    public void visit(@NotNull ModuleData module) { collectModuleEntities(module, myContext); }
-
-    @Override
-    public void visit(@NotNull ContentRootData contentRoot) { collectContentRoots(contentRoot, myContext); }
-
-    @Override
-    public void visit(@NotNull LibraryData library) { /* Assuming that a library may be imported only as a dependency */ }
-
-    @Override
-    public void visit(@NotNull ModuleDependencyData dependency) { collectModuleDependencyEntities(dependency, myContext); }
-
-    @Override
-    public void visit(@NotNull LibraryDependencyData dependency) { collectLibraryDependencyEntities(dependency, myContext); }
-
-    @Override
-    public void visit(@NotNull JarData jar) { myContext.entities.add(jar); }
-
-    @Override
-    public void visit(@NotNull CompositeLibraryDependencyData dependency) { /* Do nothing */ }
   }
 }

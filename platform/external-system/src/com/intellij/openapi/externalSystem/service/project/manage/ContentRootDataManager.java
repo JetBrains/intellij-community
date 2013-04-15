@@ -2,7 +2,7 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData;
@@ -43,7 +43,7 @@ public class ContentRootDataManager implements ProjectDataManager<ContentRootDat
   @NotNull
   @Override
   public Key<ContentRootData> getTargetDataKey() {
-    return ExternalSystemProjectKeys.CONTENT_ROOT;
+    return ProjectKeys.CONTENT_ROOT;
   }
 
   @Override
@@ -56,7 +56,7 @@ public class ContentRootDataManager implements ProjectDataManager<ContentRootDat
     }
 
     Map<DataNode<ModuleData>,Collection<DataNode<ContentRootData>>> byModule
-      = ExternalSystemUtil.groupBy(toImport, ExternalSystemProjectKeys.MODULE);
+      = ExternalSystemUtil.groupBy(toImport, ProjectKeys.MODULE);
     for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
       final Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
       if (module == null) {
@@ -122,7 +122,7 @@ public class ContentRootDataManager implements ProjectDataManager<ContentRootDat
       return;
     }
     Map<DataNode<ModuleData>,Collection<DataNode<ContentRootData>>> byModule
-      = ExternalSystemUtil.groupBy(toRemove, ExternalSystemProjectKeys.MODULE);
+      = ExternalSystemUtil.groupBy(toRemove, ProjectKeys.MODULE);
     for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
       final Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
       if (module == null) {

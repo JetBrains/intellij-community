@@ -56,29 +56,32 @@ public class GradleLibraryStructureChangesCalculator implements ExternalProjectS
     }
 
     if (!gradleBinaryPaths.isEmpty()) {
-      LibraryId libraryId = new LibraryId(ProjectSystemId.GRADLE, gradleEntity.getName());
-      for (String path : gradleBinaryPaths) {
-        context.register(new JarPresenceChange(new JarId(path, gradleType, libraryId), null));
-      }
+      // TODO den implement
+//      LibraryId libraryId = new LibraryId(ProjectSystemId.GRADLE, gradleEntity.getName());
+//      for (String path : gradleBinaryPaths) {
+//        context.register(new JarPresenceChange(new JarId(path, gradleType, libraryId), null));
+//      }
     }
 
     if (!ideBinaryPaths.isEmpty()) {
-      LibraryId libraryId = new LibraryId(ProjectSystemId.IDE, GradleUtil.getLibraryName(ideEntity));
-      for (String path : ideBinaryPaths) {
-        context.register(new JarPresenceChange(null, new JarId(path, gradleType, libraryId)));
-      }
+      // TODO den implement
+//      LibraryId libraryId = new LibraryId(ProjectSystemId.IDE, GradleUtil.getLibraryName(ideEntity));
+//      for (String path : ideBinaryPaths) {
+//        context.register(new JarPresenceChange(null, new JarId(path, gradleType, libraryId)));
+//      }
     }
   }
 
-  @NotNull
-  @Override
-  public Object getIdeKey(@NotNull Library entity) {
-    return GradleUtil.getLibraryName(entity);
-  }
-
-  @NotNull
-  @Override
-  public Object getGradleKey(@NotNull LibraryData entity, @NotNull ExternalProjectChangesCalculationContext context) {
-    return entity.getName();
-  }
+  // TODO den implement
+//  @NotNull
+//  @Override
+//  public Object getIdeKey(@NotNull Library entity) {
+//    return GradleUtil.getLibraryName(entity);
+//  }
+//
+//  @NotNull
+//  @Override
+//  public Object getGradleKey(@NotNull LibraryData entity, @NotNull ExternalProjectChangesCalculationContext context) {
+//    return entity.getName();
+//  }
 }

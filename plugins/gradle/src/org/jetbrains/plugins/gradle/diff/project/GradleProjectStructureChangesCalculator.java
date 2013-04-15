@@ -29,9 +29,7 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since 11/3/11 3:55 PM
  */
-public class GradleProjectStructureChangesCalculator implements
-                                                     ExternalProjectStructureChangesCalculator<ProjectData, Project>
-{
+public class GradleProjectStructureChangesCalculator implements ExternalProjectStructureChangesCalculator<ProjectData, Project> {
 
   @NotNull private final GradleModuleStructureChangesCalculator myModuleChangesCalculator;
   @NotNull private final GradleLibraryStructureChangesCalculator myLibraryChangesCalculator;
@@ -52,23 +50,22 @@ public class GradleProjectStructureChangesCalculator implements
                         @NotNull ExternalProjectChangesCalculationContext context)
   {
     calculateProjectChanges(gradleEntity, ideEntity, context.getCurrentChanges());
-
-    final Set<? extends ModuleData> gradleSubEntities = gradleEntity.getModules();
-    final Collection<Module> intellijSubEntities = myPlatformFacade.getModules(ideEntity);
-    GradleDiffUtil.calculate(myModuleChangesCalculator, gradleSubEntities, intellijSubEntities, context);
     
-    LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(ideEntity);
-    GradleDiffUtil.calculate(myLibraryChangesCalculator, gradleEntity.getLibraries(), Arrays.asList(libraryTable.getLibraries()), context);
+    // TODO den implement
+//    final Set<? extends ModuleData> gradleSubEntities = gradleEntity.getModules();
+//    final Collection<Module> intellijSubEntities = myPlatformFacade.getModules(ideEntity);
+//    GradleDiffUtil.calculate(myModuleChangesCalculator, gradleSubEntities, intellijSubEntities, context);
+//    
+//    LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(ideEntity);
+//    GradleDiffUtil.calculate(myLibraryChangesCalculator, gradleEntity.getLibraries(), Arrays.asList(libraryTable.getLibraries()), context);
   }
 
   @NotNull
-  @Override
   public Object getIdeKey(@NotNull Project entity) {
     return entity.getName();
   }
 
   @NotNull
-  @Override
   public Object getGradleKey(@NotNull ProjectData entity, @NotNull ExternalProjectChangesCalculationContext context) {
     return entity.getName();
   }
@@ -96,10 +93,11 @@ public class GradleProjectStructureChangesCalculator implements
                                   @NotNull Project intellijProject,
                                   @NotNull Set<ExternalProjectStructureChange> currentChanges)
   {
-    LanguageLevel gradleLevel = gradleProject.getLanguageLevel();
-    LanguageLevel intellijLevel = myPlatformFacade.getLanguageLevel(intellijProject);
-    if (gradleLevel != intellijLevel) {
-      currentChanges.add(new LanguageLevelChange(gradleLevel, intellijLevel));
-    }
+    // TODO den implement
+//    LanguageLevel gradleLevel = gradleProject.getLanguageLevel();
+//    LanguageLevel intellijLevel = myPlatformFacade.getLanguageLevel(intellijProject);
+//    if (gradleLevel != intellijLevel) {
+//      currentChanges.add(new LanguageLevelChange(gradleLevel, intellijLevel));
+//    }
   }
 }

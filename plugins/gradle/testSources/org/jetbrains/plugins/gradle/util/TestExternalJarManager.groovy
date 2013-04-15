@@ -19,21 +19,21 @@ import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTy
 import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.NotNull
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalJarManager
+import com.intellij.openapi.externalSystem.service.project.manage.JarDataManager
 import com.intellij.openapi.externalSystem.model.project.JarData
 
 /**
  * @author Denis Zhdanov
  * @since 1/18/13 2:16 PM
  */
-class TestExternalJarManager extends ExternalJarManager {
+class TestExternalJarManager extends JarDataManager {
   
   def importedJars = []
   def removedJars = []
 
   TestExternalJarManager(@NotNull PlatformFacade facade,
                        @NotNull ExternalLibraryPathTypeMapper mapper) {
-    super(facade, mapper);
+    super(facade, helper, mapper, manager);
   }
 
   @Override

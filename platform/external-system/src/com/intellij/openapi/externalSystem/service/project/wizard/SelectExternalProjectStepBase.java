@@ -1,4 +1,4 @@
-package org.jetbrains.plugins.gradle.manage.wizard.select;
+package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -20,7 +20,7 @@ import java.io.File;
  * Handles the following responsibilities:
  * <pre>
  * <ul>
- *   <li>allows end user to define gradle project file to import from;</li>
+ *   <li>allows end user to define external system config file to import from;</li>
  *   <li>processes the input and reacts accordingly - shows error message if the project is invalid or proceeds to the next screen;</li>
  * </ul>
  * </pre>
@@ -28,7 +28,7 @@ import java.io.File;
  * @author Denis Zhdanov
  * @since 8/1/11 4:15 PM
  */
-public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep {
+public class SelectExternalProjectStepBase extends AbstractImportFromGradleWizardStep {
 
   private final JPanel myComponent = new JPanel(new BorderLayout());
   
@@ -36,7 +36,7 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
   
   private boolean myGradleSettingsInitialised;
 
-  public GradleSelectProjectStep(@NotNull WizardContext context) {
+  public SelectExternalProjectStepBase(@NotNull WizardContext context) {
     super(context);
   }
 
@@ -83,7 +83,7 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
       }
     }
     storeCurrentSettings();
-    GradleProjectImportBuilder builder = getBuilder();
+    AbstractExternalProjectImportBuilder builder = getBuilder();
     if (builder == null) {
       return false;
     }
@@ -110,7 +110,7 @@ public class GradleSelectProjectStep extends AbstractImportFromGradleWizardStep 
   }
 
   private void initGradleSettingsControl() {
-    GradleProjectImportBuilder builder = getBuilder();
+    AbstractExternalProjectImportBuilder builder = getBuilder();
     if (builder == null) {
       return;
     }

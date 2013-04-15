@@ -1,0 +1,24 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+
+    <!--Generic services-->
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager"/>
+    <applicationService
+        serviceInterface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager"
+        serviceImplementation="com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.PlatformFacade"
+                        serviceImplementation="org.jetbrains.plugins.gradle.config.PlatformFacadeImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper"
+                        serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapperImpl"/>
+    
+    <!--Project structure management services-->
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleDataManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.JarDataManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalDependencyManager"/>
+    
+  </extensions>
+</idea-plugin>
+  

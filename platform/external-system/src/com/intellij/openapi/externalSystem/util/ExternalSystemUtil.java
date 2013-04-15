@@ -434,4 +434,20 @@ public class ExternalSystemUtil {
     }
     return null;
   }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  public static <T> Collection<DataNode<T>> findAll(@NotNull DataNode<?> parent, @NotNull Key<T> key) {
+    Collection<DataNode<T>> result = null;
+    for (DataNode<?> child : parent.getChildren()) {
+      if (!key.equals(child.getKey())) {
+        continue;
+      }
+      if (result == null) {
+        result = ContainerUtilRt.newArrayList();
+      }
+      result.add((DataNode<T>)child);
+    }
+    return result == null ? Collections.<DataNode<T>>emptyList() : result;
+  }
 }

@@ -48,60 +48,61 @@ public class GradleDiffUtil {
    * @param context  changes calculation context to use
    */
   public static void buildLocalChanges(@NotNull ProjectEntityData entity, @NotNull final ExternalProjectChangesCalculationContext context) {
-    entity.invite(new ExternalEntityVisitor() {
-      @Override
-      public void visit(@NotNull ProjectData project) {
-        assert false;
-      }
-
-      @Override
-      public void visit(@NotNull ModuleData module) {
-        context.register(new ModulePresenceChange(module, null));
-        for (ContentRootData root : module.getContentRoots()) {
-          root.invite(this);
-        }
-        for (DependencyData dependency : module.getDependencies()) {
-          dependency.invite(this);
-        }
-      }
-
-      @Override
-      public void visit(@NotNull ContentRootData contentRoot) {
-        context.register(new ContentRootPresenceChange(contentRoot, null)); 
-      }
-
-      @Override
-      public void visit(@NotNull LibraryData library) {
-        for (LibraryPathType pathType : LibraryPathType.values()) {
-          for (String path : library.getPaths(pathType)) {
-            JarId jarId = new JarId(path, pathType, new LibraryId(ProjectSystemId.GRADLE, library.getName()));
-            context.register(new JarPresenceChange(jarId, null));
-          }
-        } 
-      }
-
-      @Override
-      public void visit(@NotNull JarData jar) {
-        context.register(new JarPresenceChange(jar.getId(), null));
-      }
-
-      @Override
-      public void visit(@NotNull ModuleDependencyData dependency) {
-        context.register(new ModuleDependencyPresenceChange(dependency, null));
-      }
-
-      @Override
-      public void visit(@NotNull LibraryDependencyData dependency) {
-        context.register(new LibraryDependencyPresenceChange(dependency, null));
-      }
-
-      @Override
-      public void visit(@NotNull CompositeLibraryDependencyData dependency) {
-        // We expect such composite entities for outdated libraries to appear as 'low-level' project structure changes processing
-        // result.
-        assert false;
-      }
-    });
+    // TODO den implement
+//    entity.invite(new ExternalEntityVisitor() {
+//      @Override
+//      public void visit(@NotNull ProjectData project) {
+//        assert false;
+//      }
+//
+//      @Override
+//      public void visit(@NotNull ModuleData module) {
+//        context.register(new ModulePresenceChange(module, null));
+//        for (ContentRootData root : module.getContentRoots()) {
+//          root.invite(this);
+//        }
+//        for (DependencyData dependency : module.getDependencies()) {
+//          dependency.invite(this);
+//        }
+//      }
+//
+//      @Override
+//      public void visit(@NotNull ContentRootData contentRoot) {
+//        context.register(new ContentRootPresenceChange(contentRoot, null)); 
+//      }
+//
+//      @Override
+//      public void visit(@NotNull LibraryData library) {
+//        for (LibraryPathType pathType : LibraryPathType.values()) {
+//          for (String path : library.getPaths(pathType)) {
+//            JarId jarId = new JarId(path, pathType, new LibraryId(ProjectSystemId.GRADLE, library.getName()));
+//            context.register(new JarPresenceChange(jarId, null));
+//          }
+//        } 
+//      }
+//
+//      @Override
+//      public void visit(@NotNull JarData jar) {
+//        context.register(new JarPresenceChange(jar.getId(), null));
+//      }
+//
+//      @Override
+//      public void visit(@NotNull ModuleDependencyData dependency) {
+//        context.register(new ModuleDependencyPresenceChange(dependency, null));
+//      }
+//
+//      @Override
+//      public void visit(@NotNull LibraryDependencyData dependency) {
+//        context.register(new LibraryDependencyPresenceChange(dependency, null));
+//      }
+//
+//      @Override
+//      public void visit(@NotNull CompositeLibraryDependencyData dependency) {
+//        // We expect such composite entities for outdated libraries to appear as 'low-level' project structure changes processing
+//        // result.
+//        assert false;
+//      }
+//    });
   }
 
   /**
@@ -115,50 +116,51 @@ public class GradleDiffUtil {
       buildLocalChanges((ProjectEntityData)entity, context);
     }
     else {
-      GradleUtil.dispatch(entity, new IdeEntityVisitor() {
-        @Override
-        public void visit(@NotNull Project project) {
-        }
-
-        @Override
-        public void visit(@NotNull Module module) {
-          context.register(new ModulePresenceChange(null, module));
-          for (ModuleAwareContentRoot contentRoot : context.getPlatformFacade().getContentRoots(module)) {
-            visit(contentRoot);
-          }
-          for (OrderEntry entry : context.getPlatformFacade().getOrderEntries(module)) {
-            GradleUtil.dispatch(entry, this);
-          }
-        }
-
-        @Override
-        public void visit(@NotNull ModuleAwareContentRoot contentRoot) {
-          context.register(new ContentRootPresenceChange(null, contentRoot)); 
-        }
-
-        @Override
-        public void visit(@NotNull LibraryOrderEntry libraryDependency) {
-          context.register(new LibraryDependencyPresenceChange(null, libraryDependency));
-        }
-
-        @Override
-        public void visit(@NotNull ModuleOrderEntry moduleDependency) {
-          final Module module = moduleDependency.getModule();
-          if (module != null) {
-            context.register(new ModuleDependencyPresenceChange(null, moduleDependency));
-          }
-        }
-
-        @Override
-        public void visit(@NotNull Library library) {
-          for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
-            JarId jarId = new JarId(context.getPlatformFacade().getLocalFileSystemPath(file),
-                                                LibraryPathType.BINARY,
-                                                new LibraryId(ProjectSystemId.IDE, GradleUtil.getLibraryName(library)));
-            context.register(new JarPresenceChange(null, jarId));
-          }
-        }
-      });
+      // TODO den implement
+//      GradleUtil.dispatch(entity, new IdeEntityVisitor() {
+//        @Override
+//        public void visit(@NotNull Project project) {
+//        }
+//
+//        @Override
+//        public void visit(@NotNull Module module) {
+//          context.register(new ModulePresenceChange(null, module));
+//          for (ModuleAwareContentRoot contentRoot : context.getPlatformFacade().getContentRoots(module)) {
+//            visit(contentRoot);
+//          }
+//          for (OrderEntry entry : context.getPlatformFacade().getOrderEntries(module)) {
+//            GradleUtil.dispatch(entry, this);
+//          }
+//        }
+//
+//        @Override
+//        public void visit(@NotNull ModuleAwareContentRoot contentRoot) {
+//          context.register(new ContentRootPresenceChange(null, contentRoot)); 
+//        }
+//
+//        @Override
+//        public void visit(@NotNull LibraryOrderEntry libraryDependency) {
+//          context.register(new LibraryDependencyPresenceChange(null, libraryDependency));
+//        }
+//
+//        @Override
+//        public void visit(@NotNull ModuleOrderEntry moduleDependency) {
+//          final Module module = moduleDependency.getModule();
+//          if (module != null) {
+//            context.register(new ModuleDependencyPresenceChange(null, moduleDependency));
+//          }
+//        }
+//
+//        @Override
+//        public void visit(@NotNull Library library) {
+//          for (VirtualFile file : library.getFiles(OrderRootType.CLASSES)) {
+//            JarId jarId = new JarId(context.getPlatformFacade().getLocalFileSystemPath(file),
+//                                                LibraryPathType.BINARY,
+//                                                new LibraryId(ProjectSystemId.IDE, GradleUtil.getLibraryName(library)));
+//            context.register(new JarPresenceChange(null, jarId));
+//          }
+//        }
+//      });
     }
   }
 
@@ -181,26 +183,25 @@ public class GradleDiffUtil {
     @NotNull Iterable<? extends I> ideEntities,
     @NotNull ExternalProjectChangesCalculationContext context)
   {
-    Map<Object, I> ideEntitiesByKeys = new HashMap<Object, I>();
-    for (I entity : ideEntities) {
-      Object key = calculator.getIdeKey(entity);
-      final I previous = ideEntitiesByKeys.put(key, entity);
-      if (previous != null) {
-        LOG.warn("Duplicate setup for library " + key);
-      }
-    }
-    for (G gradleEntity: gradleEntities) {
-      I ideEntity = ideEntitiesByKeys.remove(calculator.getGradleKey(gradleEntity, context));
-      if (ideEntity == null) {
-        buildLocalChanges(gradleEntity, context);
-      }
-      else {
-        calculator.calculate(gradleEntity, ideEntity, context);
-      }
-    }
-
-    for (I entity : ideEntitiesByKeys.values()) {
-      buildLocalChanges(entity, context);
-    }
+    // TODO den implement
+//    Map<Object, I> ideEntitiesByKeys = new HashMap<Object, I>();
+//    for (I entity : ideEntities) {
+//      Object key = calculator.getIdeKey(entity);
+//      final I previous = ideEntitiesByKeys.put(key, entity);
+//      assert previous == null : key;
+//    }
+//    for (G gradleEntity: gradleEntities) {
+//      I ideEntity = ideEntitiesByKeys.remove(calculator.getGradleKey(gradleEntity, context));
+//      if (ideEntity == null) {
+//        buildLocalChanges(gradleEntity, context);
+//      }
+//      else {
+//        calculator.calculate(gradleEntity, ideEntity, context);
+//      }
+//    }
+//
+//    for (I entity : ideEntitiesByKeys.values()) {
+//      buildLocalChanges(entity, context);
+//    }
   }
 }

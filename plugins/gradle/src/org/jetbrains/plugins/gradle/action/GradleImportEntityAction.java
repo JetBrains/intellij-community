@@ -22,8 +22,9 @@ import java.util.Collection;
 public class GradleImportEntityAction extends AbstractGradleSyncTreeNodeAction {
   
   public GradleImportEntityAction() {
-    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.import.entity.text"));
-    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.import.entity.description"));
+    // TODO den implement
+//    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.import.entity.text"));
+//    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.import.entity.description"));
   }
 
   @Override
@@ -34,6 +35,7 @@ public class GradleImportEntityAction extends AbstractGradleSyncTreeNodeAction {
   @Override
   protected void doActionPerformed(@NotNull Collection<ProjectStructureNode<?>> nodes, @NotNull Project project, @NotNull Tree tree) {
     final GradleLocalNodeManageHelper helper = ServiceManager.getService(project, GradleLocalNodeManageHelper.class);
-    helper.importNodes(nodes); 
+    // TODO den implement
+//    helper.importNodes(nodes); 
   }
 }

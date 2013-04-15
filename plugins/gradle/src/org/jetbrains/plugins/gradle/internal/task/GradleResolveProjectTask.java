@@ -35,36 +35,37 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
   protected void doExecute() throws Exception {
     final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     Project ideProject = getIdeProject();
-    RemoteExternalSystemProjectResolverImpl resolver = manager.getFacade(ideProject).getResolver();
-    setState(GradleTaskState.IN_PROGRESS);
-
-    ProjectStructureChangesModel model = null;
-    if (ideProject != null && !ideProject.isDisposed()) {
-      model = ServiceManager.getService(ideProject, ProjectStructureChangesModel.class);
-    }
-    final ProjectData project;
-    try {
-      project = resolver.resolveProjectInfo(getId(), myProjectPath, myResolveLibraries);
-    }
-    catch (Exception e) {
-      if (model != null) {
-        model.clearChanges();
-      }
-      throw e;
-    }
-    
-    if (project == null) {
-      return;
-    }
-    myGradleProject.set(project);
-    setState(GradleTaskState.FINISHED);
-    
-    if (model != null) {
-      // This task may be called during the 'import from gradle' processing, hence, no project-level IoC is up.
-      // Model update is necessary for the correct tool window project structure diff showing but we don't have
-      // gradle tool window on this stage.
-      model.update(project);
-    }
+    // TODO den implement
+//    RemoteExternalSystemProjectResolverImpl resolver = manager.getFacade(ideProject).getResolver();
+//    setState(GradleTaskState.IN_PROGRESS);
+//
+//    ProjectStructureChangesModel model = null;
+//    if (ideProject != null && !ideProject.isDisposed()) {
+//      model = ServiceManager.getService(ideProject, ProjectStructureChangesModel.class);
+//    }
+//    final ProjectData project;
+//    try {
+//      project = resolver.resolveProjectInfo(getId(), myProjectPath, myResolveLibraries);
+//    }
+//    catch (Exception e) {
+//      if (model != null) {
+//        model.clearChanges();
+//      }
+//      throw e;
+//    }
+//    
+//    if (project == null) {
+//      return;
+//    }
+//    myGradleProject.set(project);
+//    setState(GradleTaskState.FINISHED);
+//    
+//    if (model != null) {
+//      // This task may be called during the 'import from gradle' processing, hence, no project-level IoC is up.
+//      // Model update is necessary for the correct tool window project structure diff showing but we don't have
+//      // gradle tool window on this stage.
+//      model.update(project);
+//    }
   }
 
   @Nullable
@@ -75,6 +76,8 @@ public class GradleResolveProjectTask extends AbstractGradleTask {
   @Override
   @NotNull
   protected String wrapProgressText(@NotNull String text) {
-    return ExternalSystemBundle.message("gradle.sync.progress.update.text", text);
+    // TODO den implement
+    return "";
+//    return ExternalSystemBundle.message("gradle.sync.progress.update.text", text);
   }
 }

@@ -34,8 +34,9 @@ import java.util.Collection;
 public class GradleShowConflictDetailsAction extends AbstractGradleSyncTreeNodeAction {
 
   public GradleShowConflictDetailsAction() {
-    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.show.conflict.text"));
-    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.show.conflict.description"));
+    // TODO den implement
+//    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.show.conflict.text"));
+//    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.show.conflict.description"));
   }
 
   @Override
@@ -56,7 +57,9 @@ public class GradleShowConflictDetailsAction extends AbstractGradleSyncTreeNodeA
     assert nodes.size() == 1;
     final ProjectStructureNode<?> node = nodes.iterator().next();
     final ProjectStructureServices context = ServiceManager.getService(project, ProjectStructureServices.class);
-    final Object entity = node.getDescriptor().getElement().mapToEntity(context);
+    // TODO den implement
+    final Object entity = null;
+//    final Object entity = node.getDescriptor().getElement().mapToEntity(context);
     if (entity == null) {
       return;
     }

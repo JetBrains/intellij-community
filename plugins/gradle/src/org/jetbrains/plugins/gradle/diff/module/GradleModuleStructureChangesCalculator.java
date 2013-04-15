@@ -63,22 +63,21 @@ public class GradleModuleStructureChangesCalculator implements ExternalProjectSt
                         @NotNull ExternalProjectChangesCalculationContext context)
   {
     // Content roots.
-    final Collection<ContentRootData> gradleContentRoots = gradleEntity.getContentRoots();
-    final Collection<ModuleAwareContentRoot> intellijContentRoots = context.getPlatformFacade().getContentRoots(ideEntity);
-    GradleDiffUtil.calculate(myContentRootCalculator, gradleContentRoots, intellijContentRoots, context);
+    // TODO den implement
+//    final Collection<ContentRootData> gradleContentRoots = gradleEntity.getContentRoots();
+//    final Collection<ModuleAwareContentRoot> intellijContentRoots = context.getPlatformFacade().getContentRoots(ideEntity);
+//    GradleDiffUtil.calculate(myContentRootCalculator, gradleContentRoots, intellijContentRoots, context);
     
     // Dependencies.
     checkDependencies(gradleEntity, ideEntity, context); 
   }
 
   @NotNull
-  @Override
   public Object getIdeKey(@NotNull Module entity) {
     return entity.getName();
   }
 
   @NotNull
-  @Override
   public Object getGradleKey(@NotNull ModuleData entity, @NotNull ExternalProjectChangesCalculationContext context) {
     return entity.getName();
   }
@@ -110,20 +109,21 @@ public class GradleModuleStructureChangesCalculator implements ExternalProjectSt
     // Prepare gradle part.
     final List<ModuleDependencyData> gradleModuleDependencies = new ArrayList<ModuleDependencyData>();
     final List<LibraryDependencyData> gradleLibraryDependencies = new ArrayList<LibraryDependencyData>();
-    ExternalEntityVisitor visitor = new ExternalEntityVisitorAdapter() {
-      @Override
-      public void visit(@NotNull ModuleDependencyData dependency) {
-        gradleModuleDependencies.add(dependency);
-      }
-
-      @Override
-      public void visit(@NotNull LibraryDependencyData dependency) {
-        gradleLibraryDependencies.add(dependency);
-      }
-    };
-    for (DependencyData dependency : gradleModule.getDependencies()) {
-      dependency.invite(visitor);
-    }
+    // TODO den implement
+//    ExternalEntityVisitor visitor = new ExternalEntityVisitorAdapter() {
+//      @Override
+//      public void visit(@NotNull ModuleDependencyData dependency) {
+//        gradleModuleDependencies.add(dependency);
+//      }
+//
+//      @Override
+//      public void visit(@NotNull LibraryDependencyData dependency) {
+//        gradleLibraryDependencies.add(dependency);
+//      }
+//    };
+//    for (DependencyData dependency : gradleModule.getDependencies()) {
+//      dependency.invite(visitor);
+//    }
 
     // Calculate changes.
     GradleDiffUtil.calculate(myLibraryDependencyCalculator, gradleLibraryDependencies, intellijLibraryDependencies, context);

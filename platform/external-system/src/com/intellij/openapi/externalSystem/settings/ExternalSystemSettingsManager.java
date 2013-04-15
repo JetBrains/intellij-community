@@ -48,7 +48,7 @@ public class ExternalSystemSettingsManager implements DisposableExternalSystemSe
 
   @SuppressWarnings("unchecked")
   @NotNull
-  public <L extends ExternalSystemSettingsListener, S extends AbstractExternalSystemSettings<L, S>> S getSettings(
+  public AbstractExternalSystemSettings getSettings(
     @NotNull Project project,
     @NotNull ProjectSystemId externalSystemId) throws IllegalArgumentException
   {
@@ -60,7 +60,7 @@ public class ExternalSystemSettingsManager implements DisposableExternalSystemSe
         externalSystemId, holder.settingsProviders.keySet()
       ));
     }
-    return (S)provider.fun(project);
+    return provider.fun(project);
   }
 
   @SuppressWarnings("unchecked")

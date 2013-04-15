@@ -1,10 +1,14 @@
 package com.intellij.openapi.externalSystem.service.project.manage;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.JarData;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
+import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
@@ -28,68 +32,43 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 2/15/12 11:32 AM
  */
-public class LibraryDataManager {
+public class LibraryDataManager implements ProjectDataManager<LibraryData> {
 
   private static final Logger LOG = Logger.getInstance("#" + LibraryDataManager.class.getName());
 
   @NotNull private final PlatformFacade                myPlatformFacade;
+  @NotNull private final ProjectStructureHelper        myProjectStructureHelper;
   @NotNull private final ExternalLibraryPathTypeMapper myLibraryPathTypeMapper;
-  @NotNull private final ExternalJarManager            myJarManager;
+  @NotNull private final JarDataManager                myJarManager;
 
   public LibraryDataManager(@NotNull PlatformFacade platformFacade,
+                            @NotNull ProjectStructureHelper helper,
                             @NotNull ExternalLibraryPathTypeMapper mapper,
-                            @NotNull ExternalJarManager manager)
+                            @NotNull JarDataManager manager)
   {
     myPlatformFacade = platformFacade;
+    myProjectStructureHelper = helper;
     myLibraryPathTypeMapper = mapper;
     myJarManager = manager;
   }
 
-  public void syncPaths(@NotNull LibraryData gradleLibrary,
-                        @NotNull final Library ideLibrary,
-                        @NotNull Project project,
-                        boolean synchronous)
-  {
-    Set<String> toRemove = ContainerUtilRt.newHashSet();
-    Set<String> toAdd = ContainerUtilRt.newHashSet(gradleLibrary.getPaths(LibraryPathType.BINARY));
-    for (VirtualFile ideFile : ideLibrary.getFiles(OrderRootType.CLASSES)) {
-      String idePath = ExternalSystemUtil.getLocalFileSystemPath(ideFile);
-      if (!toAdd.remove(idePath)) {
-        toRemove.add(idePath);
-      }
-    }
-    if (toRemove.isEmpty() && toAdd.isEmpty()) {
-      return;
-    }
+  @NotNull
+  @Override
+  public Key<LibraryData> getTargetDataKey() {
+    return ProjectKeys.LIBRARY;
+  }
 
-    Function<String, JarData> jarMapper = new Function<String, JarData>() {
-      @Override
-      public JarData fun(String path) {
-        return new JarData(path, LibraryPathType.BINARY, ideLibrary, null, ProjectSystemId.IDE);
-      }
-    };
-
-    if (!toRemove.isEmpty()) {
-      List<JarData> jarsToRemove = ContainerUtil.map(toRemove, jarMapper);
-      myJarManager.removeJars(jarsToRemove, project, synchronous);
-    }
-
-    if (!toAdd.isEmpty()) {
-      List<JarData> jarsToAdd = ContainerUtil.map(toAdd, jarMapper);
-      myJarManager.importJars(jarsToAdd, project, synchronous);
+  @Override
+  public void importData(@NotNull Collection<DataNode<LibraryData>> toImport, @NotNull Project project, boolean synchronous) {
+    for (DataNode<LibraryData> dataNode : toImport) {
+      importLibrary(dataNode.getData(), project, synchronous);
     }
   }
 
-  public void importLibraries(@NotNull Collection<? extends LibraryData> libraries, @NotNull Project project, boolean synchronous) {
-    for (LibraryData library : libraries) {
-      importLibrary(library, project, synchronous);
-    }
-  }
-
-  public void importLibrary(@NotNull final LibraryData library, @NotNull final Project project, boolean synchronous) {
+  public void importLibrary(@NotNull final LibraryData toImport, @NotNull final Project project, boolean synchronous) {
     Map<OrderRootType, Collection<File>> libraryFiles = new HashMap<OrderRootType, Collection<File>>();
     for (LibraryPathType pathType : LibraryPathType.values()) {
-      final Set<String> paths = library.getPaths(pathType);
+      final Set<String> paths = toImport.getPaths(pathType);
       if (paths.isEmpty()) {
         continue;
       }
@@ -101,15 +80,16 @@ public class LibraryDataManager {
         }
       }));
     }
-    importLibrary(library.getName(), libraryFiles, project, synchronous);
+    importLibrary(toImport.getName(), toImport.getOwner(), libraryFiles, project, synchronous);
   }
 
   public void importLibrary(@NotNull final String libraryName,
+                            @NotNull ProjectSystemId externalSystemId,
                             @NotNull final Map<OrderRootType, ? extends Collection<File>> libraryFiles,
                             @NotNull final Project project,
                             boolean synchronous)
   {
-    ExternalSystemUtil.executeProjectChangeAction(project, libraryName, synchronous, new Runnable() {
+    ExternalSystemUtil.executeProjectChangeAction(project, externalSystemId, libraryName, synchronous, new Runnable() {
       @Override
       public void run() {
         // Is assumed to be called from the EDT.
@@ -166,11 +146,23 @@ public class LibraryDataManager {
     }
   }
 
-  public void removeLibraries(@NotNull final Collection<? extends Library> libraries, @NotNull final Project project) {
+  @Override
+  public void removeData(@NotNull Collection<DataNode<LibraryData>> toRemove, @NotNull Project project, boolean synchronous) {
+    Collection<Library> libraries = ContainerUtilRt.newArrayList();
+    for (DataNode<LibraryData> node : toRemove) {
+      Library library = myProjectStructureHelper.findIdeLibrary(node.getData(), project);
+      if (library != null) {
+        libraries.add(library);
+      }
+    }
+    removeLibraries(libraries, project, synchronous);
+  }
+
+  public void removeLibraries(@NotNull final Collection<? extends Library> libraries, @NotNull final Project project, boolean synchronous) {
     if (libraries.isEmpty()) {
       return;
     }
-    ExternalSystemUtil.executeProjectChangeAction(project, libraries, new Runnable() {
+    ExternalSystemUtil.executeProjectChangeAction(project, ProjectSystemId.IDE, libraries, synchronous, new Runnable() {
       @Override
       public void run() {
         final LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(project);
@@ -191,5 +183,41 @@ public class LibraryDataManager {
         }
       }
     });
+  }
+
+  public void syncPaths(@NotNull LibraryData externalLibrary,
+                        @NotNull final Library ideLibrary,
+                        @NotNull Project project,
+                        boolean synchronous)
+  {
+    Set<String> toRemove = ContainerUtilRt.newHashSet();
+    Set<String> toAdd = ContainerUtilRt.newHashSet(externalLibrary.getPaths(LibraryPathType.BINARY));
+    for (VirtualFile ideFile : ideLibrary.getFiles(OrderRootType.CLASSES)) {
+      String idePath = ExternalSystemUtil.getLocalFileSystemPath(ideFile);
+      if (!toAdd.remove(idePath)) {
+        toRemove.add(idePath);
+      }
+    }
+    if (toRemove.isEmpty() && toAdd.isEmpty()) {
+      return;
+    }
+
+    Function<String, DataNode<JarData>> jarMapper = new Function<String, DataNode<JarData>>() {
+      @Override
+      public DataNode<JarData> fun(String path) {
+        JarData data = new JarData(path, LibraryPathType.BINARY, ideLibrary, null, ProjectSystemId.IDE);
+        return new DataNode<JarData>(ProjectKeys.JAR, data, null);
+      }
+    };
+
+    if (!toRemove.isEmpty()) {
+      List<DataNode<JarData>> jarsToRemove = ContainerUtil.map(toRemove, jarMapper);
+      myJarManager.removeData(jarsToRemove, project, synchronous);
+    }
+
+    if (!toAdd.isEmpty()) {
+      List<DataNode<JarData>> jarsToAdd = ContainerUtil.map(toAdd, jarMapper);
+      myJarManager.importJars(jarsToAdd, ideLibrary, externalLibrary.getOwner(), project, synchronous);
+    }
   }
 }

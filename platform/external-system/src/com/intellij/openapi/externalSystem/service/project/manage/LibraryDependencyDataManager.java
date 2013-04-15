@@ -18,12 +18,13 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -32,12 +33,13 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
+import com.intellij.util.BooleanFunction;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
 
-import static com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys.MODULE;
+import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
 
 /**
  * @author Denis Zhdanov
@@ -66,7 +68,7 @@ public class LibraryDependencyDataManager extends AbstractDependencyDataManager<
   @NotNull
   @Override
   public Key<LibraryDependencyData> getTargetDataKey() {
-    return ExternalSystemProjectKeys.LIBRARY_DEPENDENCY;
+    return ProjectKeys.LIBRARY_DEPENDENCY;
   }
 
   @Override
@@ -83,36 +85,47 @@ public class LibraryDependencyDataManager extends AbstractDependencyDataManager<
         module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
         if (module == null) {
           LOG.warn(String.format(
-            "Can't import library dependencies %s. Reason: target module (%s) is not found at the ide",
+            "Can't import library dependencies %s. Reason: target module (%s) is not found at the ide and can't be imported",
             entry.getValue(), entry.getKey()
           ));
           continue;
         }
       }
-      doImportData(entry.getValue(), entry.getKey().getData().getOwner(), project, module, synchronous);
+      importData(entry.getValue(), entry.getKey().getData().getOwner(), module, synchronous);
     }
   }
 
-  private void doImportData(@NotNull final Collection<DataNode<LibraryDependencyData>> nodesToImport,
-                            @NotNull ProjectSystemId externalSystemId,
-                            @NotNull Project project,
-                            @NotNull final Module module,
-                            final boolean synchronous)
+  public void importData(@NotNull final Collection<DataNode<LibraryDependencyData>> nodesToImport,
+                         @NotNull ProjectSystemId externalSystemId,
+                         @NotNull final Module module,
+                         final boolean synchronous)
   {
-    ExternalSystemUtil.executeProjectChangeAction(project, externalSystemId, nodesToImport, synchronous, new Runnable() {
+    ExternalSystemUtil.executeProjectChangeAction(module.getProject(), externalSystemId, nodesToImport, synchronous, new Runnable() {
       @Override
       public void run() {
         LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());
-        Set<LibraryData> librariesToImport = new HashSet<LibraryData>();
+        List<DataNode<LibraryData>> librariesToImport = ContainerUtilRt.newArrayList();
         for (DataNode<LibraryDependencyData> dataNode : nodesToImport) {
-          LibraryDependencyData data = dataNode.getData();
-          final Library library = libraryTable.getLibraryByName(data.getName());
+          final LibraryDependencyData dependencyData = dataNode.getData();
+          final Library library = libraryTable.getLibraryByName(dependencyData.getName());
           if (library == null) {
-            librariesToImport.add(data.getTarget());
+            DataNode<ProjectData> projectNode = dataNode.getDataNode(ProjectKeys.PROJECT);
+            if (projectNode != null) {
+              DataNode<LibraryData> libraryNode =
+                ExternalSystemUtil.find(projectNode, ProjectKeys.LIBRARY, new BooleanFunction<DataNode<LibraryData>>() {
+                  @Override
+                  public boolean fun(DataNode<LibraryData> node) {
+                    return node.getData().equals(dependencyData.getTarget());
+                  }
+                });
+              if (libraryNode != null) {
+                librariesToImport.add(libraryNode);
+              }
+            }
           }
         }
         if (!librariesToImport.isEmpty()) {
-          myLibraryManager.importLibraries(librariesToImport, module.getProject(), synchronous);
+          myLibraryManager.importData(librariesToImport, module.getProject(), synchronous);
         }
 
         for (DataNode<LibraryDependencyData> dependencyNode : nodesToImport) {
@@ -157,10 +170,6 @@ public class LibraryDependencyDataManager extends AbstractDependencyDataManager<
     for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<LibraryDependencyData>>> entry : byModule.entrySet()) {
       Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
       if (module == null) {
-        LOG.warn(String.format(
-          "Can't remove library dependencies %s. Reason: target module (%s) is not found at the ide",
-          entry.getValue(), entry.getKey()
-        ));
         continue;
       }
       List<ExportableOrderEntry> dependencies = ContainerUtilRt.newArrayList();
@@ -168,14 +177,10 @@ public class LibraryDependencyDataManager extends AbstractDependencyDataManager<
         LibraryOrderEntry dependency
           = myProjectStructureHelper.findIdeLibraryDependency(module.getName(), node.getData().getName(), project);
         if (dependency != null) {
-          LOG.warn(String.format(
-            "Can't remove library dependency '%s'. Reason: target module (%s) is not found at the ide",
-            node, entry.getKey()
-          ));
-          continue;
+          dependencies.add(dependency);
         }
       }
-      doRemoveData(dependencies, module, synchronous);
+      removeData(dependencies, module, synchronous);
     }
   }
 }

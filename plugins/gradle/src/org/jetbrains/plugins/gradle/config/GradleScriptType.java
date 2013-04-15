@@ -21,15 +21,12 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectConfigurable;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -44,11 +41,8 @@ import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.execution.GradleTaskLocation;
-import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
-import org.jetbrains.plugins.gradle.tasks.GradleTasksList;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 import org.jetbrains.plugins.groovy.extensions.GroovyScriptType;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
@@ -177,24 +171,27 @@ public class GradleScriptType extends GroovyScriptType {
           GroovyScriptRunConfiguration configuration = (GroovyScriptRunConfiguration)profile;
           String parameters = configuration.getScriptParameters();
           if (parameters != null) {
-            GradleTasksList list = GradleUtil.getToolWindowElement(GradleTasksList.class, project, ExternalSystemDataKeys.RECENT_TASKS_LIST);
-            if (list != null) {
-              ExternalSystemTaskDescriptor descriptor = new ExternalSystemTaskDescriptor(parameters, null);
-              descriptor.setExecutorId(executor.getId());
-              list.setFirst(descriptor);
-              GradleLocalSettings.getInstance(project).setRecentTasks(list.getModel().getTasks());
-            }
+            // TODO den implement
+//            GradleTasksList list = GradleUtil.getToolWindowElement(GradleTasksList.class, project, ExternalSystemDataKeys.RECENT_TASKS_LIST);
+//            if (list != null) {
+//              ExternalSystemTaskDescriptor descriptor = new ExternalSystemTaskDescriptor(parameters, null);
+//              descriptor.setExecutorId(executor.getId());
+//              list.setFirst(descriptor);
+//              GradleLocalSettings.getInstance(project).setRecentTasks(list.getModel().getTasks());
+//            }
           }
         }
         final GradleInstallationManager libraryManager = ServiceManager.getService(GradleInstallationManager.class);
         if (libraryManager.getGradleHome(module, project) == null) {
-          int result = Messages.showOkCancelDialog(
-            ExternalSystemBundle.message("gradle.run.no.sdk.text"),
-            ExternalSystemBundle.message("gradle.run.no.sdk.title"),
-            GradleIcons.Gradle
-          );
+          int result = 0;
+          // TODO den implement
+//          int result = Messages.showOkCancelDialog(
+//            ExternalSystemBundle.message("gradle.run.no.sdk.text"),
+//            ExternalSystemBundle.message("gradle.run.no.sdk.title"),
+//            GradleIcons.Gradle
+//          );
           if (result == 0) {
-            ShowSettingsUtil.getInstance().editConfigurable(project, new GradleConfigurable(project));
+            ShowSettingsUtil.getInstance().editConfigurable(project, new AbstractExternalProjectConfigurable(project));
           }
           if (libraryManager.getGradleHome(module, project) == null) {
             return false;

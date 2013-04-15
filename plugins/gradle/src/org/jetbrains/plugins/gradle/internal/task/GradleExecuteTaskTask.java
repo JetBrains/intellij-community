@@ -44,13 +44,14 @@ public class GradleExecuteTaskTask extends AbstractGradleTask {
   protected void doExecute() throws Exception {
     final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     Project project = getIdeProject();
-    ExternalSystemBuildManager buildManager = manager.getFacade(project).getBuildManager();
-    setState(GradleTaskState.IN_PROGRESS);
-    try {
-      buildManager.executeTasks(getId(), myTasksToExecute, myGradleProjectPath);
-    }
-    finally {
-      setState(GradleTaskState.FINISHED);
-    }
+    // TODO den implement
+//    ExternalSystemBuildManager buildManager = manager.getFacade(project).getBuildManager();
+//    setState(GradleTaskState.IN_PROGRESS);
+//    try {
+//      buildManager.executeTasks(getId(), myTasksToExecute, myGradleProjectPath);
+//    }
+//    finally {
+//      setState(GradleTaskState.FINISHED);
+//    }
   }
 }

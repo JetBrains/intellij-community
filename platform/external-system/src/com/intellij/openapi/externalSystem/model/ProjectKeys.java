@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 4/12/13 11:52 AM
  */
-public class ExternalSystemProjectKeys {
+public class ProjectKeys {
 
   @NotNull public static final Key<ProjectData>           PROJECT            = Key.create(ProjectData.class);
   @NotNull public static final Key<JavaProjectData>       JAVA_PROJECT       = Key.create(JavaProjectData.class);
@@ -33,7 +33,8 @@ public class ExternalSystemProjectKeys {
   @NotNull public static final Key<ContentRootData>       CONTENT_ROOT       = Key.create(ContentRootData.class);
   @NotNull public static final Key<ModuleDependencyData>  MODULE_DEPENDENCY  = Key.create(ModuleDependencyData.class);
   @NotNull public static final Key<LibraryDependencyData> LIBRARY_DEPENDENCY = Key.create(LibraryDependencyData.class);
+  @NotNull public static final Key<JarData>               JAR                = Key.create(JarData.class);
 
-  private ExternalSystemProjectKeys() {
+  private ProjectKeys() {
   }
 }

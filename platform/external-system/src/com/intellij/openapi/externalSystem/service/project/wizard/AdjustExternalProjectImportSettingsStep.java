@@ -1,19 +1,18 @@
-package org.jetbrains.plugins.gradle.manage.wizard.adjust;
+package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
 import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.manage.GradleProjectImportBuilder;
 import org.jetbrains.plugins.gradle.manage.wizard.AbstractImportFromGradleWizardStep;
-import com.intellij.openapi.externalSystem.model.project.id.GradleSyntheticId;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
@@ -39,7 +38,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 8/2/11 12:31 PM
  */
-public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWizardStep {
+public class AdjustExternalProjectImportSettingsStep extends AbstractImportFromGradleWizardStep {
 
   private static final String EMPTY_CARD_NAME = "EMPTY";
 
@@ -55,7 +54,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
 
   private boolean myOnValidateAttempt;
 
-  public GradleAdjustImportSettingsStep(WizardContext context) {
+  public AdjustExternalProjectImportSettingsStep(WizardContext context) {
     super(context);
 
     // Init.
@@ -120,7 +119,8 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     constraints.fill = GridBagConstraints.HORIZONTAL;
     constraints.insets = new Insets(5, 5, 5, 5);
     constraints.gridwidth = GridBagConstraints.REMAINDER;
-    leftPanel.add(new JLabel(ExternalSystemBundle.message("gradle.import.label.project.structure")), constraints);
+    // TODO den implement
+//    leftPanel.add(new JLabel(ExternalSystemBundle.message("gradle.import.label.project.structure")), constraints);
     
     constraints = new GridBagConstraints();
     constraints.weightx = constraints.weighty = 1;
@@ -136,7 +136,8 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     constraints.fill = GridBagConstraints.HORIZONTAL;
     constraints.insets = new Insets(5, 10, 5, 5);
     constraints.gridwidth = GridBagConstraints.REMAINDER;
-    rightPanel.add(new JLabel(ExternalSystemBundle.message("gradle.import.label.details")), constraints);
+    // TODO den implement
+//    rightPanel.add(new JLabel(ExternalSystemBundle.message("gradle.import.label.details")), constraints);
 
     constraints = new GridBagConstraints();
     constraints.weightx = constraints.weighty = 1;
@@ -169,7 +170,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
 
     clear();
 
-    GradleProjectImportBuilder builder = getBuilder();
+    AbstractExternalProjectImportBuilder builder = getBuilder();
     if (builder == null) {
       return;
     }
@@ -186,78 +187,81 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
     int counter = 0;
     ProjectStructureNode<ProjectEntityId> root = buildNode(project, entity2nodes, counter++);
 
-    List<ModuleData> modules = new ArrayList<ModuleData>(project.getModules());
+    List<ModuleData> modules = ContainerUtilRt.newArrayList();
+//    List<ModuleData> modules = new ArrayList<ModuleData>(project.getModules());
     Collections.sort(modules, Named.COMPARATOR);
     List<MutableTreeNode> moduleNodes = new ArrayList<MutableTreeNode>();
     
-    for (ModuleData module : modules) {
-      ProjectStructureNode<ProjectEntityId> moduleNode = buildNode(module, entity2nodes, counter++);
-      moduleNodes.add(moduleNode);
-      for (ContentRootData contentRoot : module.getContentRoots()) {
-        moduleNode.add(buildNode(contentRoot, entity2nodes, counter++));
-      }
-      Collection<DependencyData> dependencies = module.getDependencies();
-      if (!dependencies.isEmpty()) {
-        ProjectStructureNode<GradleSyntheticId> dependenciesNode
-          = new ProjectStructureNode<GradleSyntheticId>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR);
-        final List<ModuleDependencyData> moduleDependencies = new ArrayList<ModuleDependencyData>();
-        final List<LibraryDependencyData> libraryDependencies = new ArrayList<LibraryDependencyData>();
-        ExternalEntityVisitor visitor = new ExternalEntityVisitorAdapter() {
-          @Override
-          public void visit(@NotNull ModuleDependencyData dependency) {
-            moduleDependencies.add(dependency);
-          }
-
-          @Override
-          public void visit(@NotNull LibraryDependencyData dependency) {
-            libraryDependencies.add(dependency);
-          }
-        };
-        for (DependencyData dependency : dependencies) {
-          dependency.invite(visitor);
-        }
-        Collections.sort(moduleDependencies, ModuleDependencyData.COMPARATOR);
-        Collections.sort(libraryDependencies, Named.COMPARATOR);
-        for (ModuleDependencyData dependency : moduleDependencies) {
-          dependenciesNode.add(buildNode(dependency, entity2nodes, counter++));
-        }
-        for (LibraryDependencyData dependency : libraryDependencies) {
-          dependenciesNode.add(buildNode(dependency, entity2nodes, counter++));
-        }
-        moduleNode.add(dependenciesNode);
-      }
-    }
+    // TODO den implement
+//    for (ModuleData module : modules) {
+//      ProjectStructureNode<ProjectEntityId> moduleNode = buildNode(module, entity2nodes, counter++);
+//      moduleNodes.add(moduleNode);
+//      for (ContentRootData contentRoot : module.getContentRoots()) {
+//        moduleNode.add(buildNode(contentRoot, entity2nodes, counter++));
+//      }
+//      Collection<DependencyData> dependencies = module.getDependencies();
+//      if (!dependencies.isEmpty()) {
+//        ProjectStructureNode<GradleSyntheticId> dependenciesNode
+//          = new ProjectStructureNode<GradleSyntheticId>(GradleConstants.DEPENDENCIES_NODE_DESCRIPTOR);
+//        final List<ModuleDependencyData> moduleDependencies = new ArrayList<ModuleDependencyData>();
+//        final List<LibraryDependencyData> libraryDependencies = new ArrayList<LibraryDependencyData>();
+//        ExternalEntityVisitor visitor = new ExternalEntityVisitorAdapter() {
+//          @Override
+//          public void visit(@NotNull ModuleDependencyData dependency) {
+//            moduleDependencies.add(dependency);
+//          }
+//
+//          @Override
+//          public void visit(@NotNull LibraryDependencyData dependency) {
+//            libraryDependencies.add(dependency);
+//          }
+//        };
+//        for (DependencyData dependency : dependencies) {
+//          dependency.invite(visitor);
+//        }
+//        Collections.sort(moduleDependencies, ModuleDependencyData.COMPARATOR);
+//        Collections.sort(libraryDependencies, Named.COMPARATOR);
+//        for (ModuleDependencyData dependency : moduleDependencies) {
+//          dependenciesNode.add(buildNode(dependency, entity2nodes, counter++));
+//        }
+//        for (LibraryDependencyData dependency : libraryDependencies) {
+//          dependenciesNode.add(buildNode(dependency, entity2nodes, counter++));
+//        }
+//        moduleNode.add(dependenciesNode);
+//      }
+//    }
 
     myTreeModel.setRoot(root);
     myTree.setSelectionPath(new TreePath(root));
     
-    Collection<? extends LibraryData> libraries = project.getLibraries();
-    if (libraries.isEmpty()) {
-      for (MutableTreeNode node : moduleNodes) {
-        root.add(node);
-      }
-    }
-    else {
-      // Insert intermediate 'modules' and 'libraries' nodes if the project has both libraries and nodes.
-      ProjectStructureNode<GradleSyntheticId> modulesNode
-        = new ProjectStructureNode<GradleSyntheticId>(GradleConstants.MODULES_NODE_DESCRIPTOR);
-      for (MutableTreeNode node : moduleNodes) {
-        modulesNode.add(node);
-      }
-      root.add(modulesNode);
-
-      List<LibraryData> sortedLibraries = new ArrayList<LibraryData>(libraries);
-      Collections.sort(sortedLibraries, Named.COMPARATOR);
-      ProjectStructureNode<GradleSyntheticId> librariesNode
-        = new ProjectStructureNode<GradleSyntheticId>(GradleConstants.LIBRARIES_NODE_DESCRIPTOR);
-      for (LibraryData library : sortedLibraries) {
-        librariesNode.add(buildNode(library, entity2nodes, counter++));
-      }
-      root.add(librariesNode);
-
-      myTree.expandPath(new TreePath(modulesNode.getPath()));
-      myTree.expandPath(new TreePath(librariesNode.getPath()));
-    }
+    // TODO den implement
+//    Collection<? extends LibraryData> libraries = project.getLibraries();
+//    if (libraries.isEmpty()) {
+//      for (MutableTreeNode node : moduleNodes) {
+//        root.add(node);
+//      }
+//    }
+//    else {
+//      // Insert intermediate 'modules' and 'libraries' nodes if the project has both libraries and nodes.
+//      ProjectStructureNode<GradleSyntheticId> modulesNode
+//        = new ProjectStructureNode<GradleSyntheticId>(GradleConstants.MODULES_NODE_DESCRIPTOR);
+//      for (MutableTreeNode node : moduleNodes) {
+//        modulesNode.add(node);
+//      }
+//      root.add(modulesNode);
+//
+//      List<LibraryData> sortedLibraries = new ArrayList<LibraryData>(libraries);
+//      Collections.sort(sortedLibraries, Named.COMPARATOR);
+//      ProjectStructureNode<GradleSyntheticId> librariesNode
+//        = new ProjectStructureNode<GradleSyntheticId>(GradleConstants.LIBRARIES_NODE_DESCRIPTOR);
+//      for (LibraryData library : sortedLibraries) {
+//        librariesNode.add(buildNode(library, entity2nodes, counter++));
+//      }
+//      root.add(librariesNode);
+//
+//      myTree.expandPath(new TreePath(modulesNode.getPath()));
+//      myTree.expandPath(new TreePath(librariesNode.getPath()));
+//    }
     
     myTree.expandPath(new TreePath(root.getPath()));
   }
@@ -295,7 +299,7 @@ public class GradleAdjustImportSettingsStep extends AbstractImportFromGradleWiza
   @SuppressWarnings("SuspiciousMethodCalls")
   @Override
   public boolean validate() throws ConfigurationException {
-    GradleProjectImportBuilder builder = getBuilder();
+    AbstractExternalProjectImportBuilder builder = getBuilder();
     if (builder == null) {
       return false;
     }

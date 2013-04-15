@@ -83,11 +83,12 @@ public class ProjectStructureChangesDetector implements ExternalProjectStructure
         if (myImportCounter.decrementAndGet() <= 0) {
 
           myUserProjectChangesCalculator.updateCurrentProjectState(project);
-
-          ProjectData externalProject = myChangesModel.getExternalProject(externalSystemId, project);
-          if (externalProject != null) {
-            myChangesModel.update(externalProject, project, true);
-          }
+          
+          // TODO den implement
+//          ProjectData externalProject = myChangesModel.getExternalProject(externalSystemId, project);
+//          if (externalProject != null) {
+//            myChangesModel.update(externalProject, project, true);
+//          }
 
           // There is a possible case that we need to add/remove IJ-specific new nodes because of the IJ project structure changes
           // triggered by gradle.
@@ -148,14 +149,15 @@ public class ProjectStructureChangesDetector implements ExternalProjectStructure
     //
     // The idea is to check are there any new project structure changes comparing to the gradle project structure used last time.
     // We don't do anything in case no new changes have been detected.
-    ProjectData project = myChangesModel.getExternalProject(externalSystemId, ideProject);
-    if (project != null) {
-      myNewChangesDetected.set(false);
-      myChangesModel.update(project, ideProject, true);
-      if (!myNewChangesDetected.get()) {
-        return;
-      }
-    }
+    // TODO den implement
+//    ProjectData project = myChangesModel.getExternalProject(externalSystemId, ideProject);
+//    if (project != null) {
+//      myNewChangesDetected.set(false);
+//      myChangesModel.update(project, ideProject, true);
+//      if (!myNewChangesDetected.get()) {
+//        return;
+//      }
+//    }
 
     myStartRefreshTime.set(System.currentTimeMillis() + REFRESH_DELAY_MILLIS);
     myAlarm.cancelAllRequests();

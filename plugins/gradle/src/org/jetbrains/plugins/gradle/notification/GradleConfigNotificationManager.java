@@ -1,11 +1,6 @@
 package org.jetbrains.plugins.gradle.notification;
 
 import com.intellij.notification.Notification;
-import com.intellij.notification.NotificationGroup;
-import com.intellij.notification.NotificationListener;
-import com.intellij.notification.NotificationType;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.ui.EditorNotifications;
@@ -13,12 +8,9 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 import org.jetbrains.plugins.gradle.config.GradleSettingsListenerAdapter;
-import org.jetbrains.plugins.gradle.config.GradleConfigurable;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
-import javax.swing.event.HyperlinkEvent;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -33,10 +25,11 @@ import java.util.concurrent.atomic.AtomicReference;
  * @since 3/21/12 4:04 PM
  */
 public class GradleConfigNotificationManager {
-
-  @NotNull private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup(
-    ExternalSystemBundle.message("gradle.notification.group.display.warning"), GradleConstants.TOOL_WINDOW_ID, true
-  );
+  
+  // TODO den implement
+//  @NotNull private static final NotificationGroup NOTIFICATION_GROUP = NotificationGroup.toolWindowGroup(
+//    ExternalSystemBundle.message("gradle.notification.group.display.warning"), GradleConstants.TOOL_WINDOW_ID, true
+//  );
 
   @NotNull private final AtomicReference<Notification> myNotification = new AtomicReference<Notification>();
 
@@ -70,41 +63,43 @@ public class GradleConfigNotificationManager {
   }
 
   public void processRefreshError(@NotNull String message) {
-    final Notification notification = NOTIFICATION_GROUP.createNotification(
-      ExternalSystemBundle.message("gradle.notification.refresh.fail.description", message),
-      ExternalSystemBundle.message("gradle.notification.action.show.settings"),
-      NotificationType.WARNING,
-      new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
-            return;
-          }
-          ShowSettingsUtil.getInstance().editConfigurable(myProject, new GradleConfigurable(myProject, myLibraryManager));
-        }
-      }
-    );
-
-    applyNotification(notification);
+    // TODO den implement
+//    final Notification notification = NOTIFICATION_GROUP.createNotification(
+//      ExternalSystemBundle.message("gradle.notification.refresh.fail.description", message),
+//      ExternalSystemBundle.message("gradle.notification.action.show.settings"),
+//      NotificationType.WARNING,
+//      new NotificationListener() {
+//        @Override
+//        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+//          if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
+//            return;
+//          }
+//          ShowSettingsUtil.getInstance().editConfigurable(myProject, new GradleConfigurable(myProject, myLibraryManager));
+//        }
+//      }
+//    );
+//
+//    applyNotification(notification);
   }
   
   public void processUnknownGradleHome() {
-    final Notification notification = NOTIFICATION_GROUP.createNotification(
-      ExternalSystemBundle.message("gradle.notification.gradle.home.undefined.description"),
-      ExternalSystemBundle.message("gradle.notification.action.show.settings"),
-      NotificationType.WARNING,
-      new NotificationListener() {
-        @Override
-        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-          if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
-            return;
-          }
-          ShowSettingsUtil.getInstance().editConfigurable(myProject, new GradleConfigurable(myProject, myLibraryManager));
-        }
-      }
-    );
-
-    applyNotification(notification);
+    // TODO den implement
+//    final Notification notification = NOTIFICATION_GROUP.createNotification(
+//      ExternalSystemBundle.message("gradle.notification.gradle.home.undefined.description"),
+//      ExternalSystemBundle.message("gradle.notification.action.show.settings"),
+//      NotificationType.WARNING,
+//      new NotificationListener() {
+//        @Override
+//        public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
+//          if (event.getEventType() != HyperlinkEvent.EventType.ACTIVATED) {
+//            return;
+//          }
+//          ShowSettingsUtil.getInstance().editConfigurable(myProject, new GradleConfigurable(myProject, myLibraryManager));
+//        }
+//      }
+//    );
+//
+//    applyNotification(notification);
   }
 
   private void applyNotification(@NotNull Notification notification) {

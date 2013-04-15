@@ -21,7 +21,7 @@ import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 
 /**
- * Strategy for mapping {@link LibraryPathType gradle library path types} to {@link OrderRootType ide library path types}.
+ * Strategy for mapping {@link LibraryPathType external library path types} to {@link OrderRootType ide library path types}.
  * <p/>
  * Is introduced because {@link JavadocOrderRootType#getInstance() 'real ide doc type'} assumes that project IoC is setup thus
  * make it ineligible for unit testing.

@@ -34,47 +34,48 @@ public class GradleProjectStructureFactory {
   @NotNull
   public <T extends ProjectEntityData> ProjectStructureNodeDescriptor<ProjectEntityId> buildDescriptor(@NotNull T entity) {
     final Ref<String> text = new Ref<String>();
-    entity.invite(new ExternalEntityVisitor() {
-      @Override
-      public void visit(@NotNull ProjectData project) {
-        text.set(project.getName());
-      }
-
-      @Override
-      public void visit(@NotNull ModuleData module) {
-        text.set(module.getName());
-      }
-
-      @Override
-      public void visit(@NotNull ContentRootData contentRoot) {
-        text.set(ExternalSystemBundle.message("gradle.import.structure.tree.node.content.root"));
-      }
-
-      @Override
-      public void visit(@NotNull LibraryData library) {
-        text.set(library.getName());
-      }
-
-      @Override
-      public void visit(@NotNull JarData jar) {
-        text.set(GradleUtil.extractNameFromPath(jar.getPath()));
-      }
-
-      @Override
-      public void visit(@NotNull ModuleDependencyData dependency) {
-        visit(dependency.getTarget());
-      }
-
-      @Override
-      public void visit(@NotNull LibraryDependencyData dependency) {
-        visit(dependency.getTarget());
-      }
-
-      @Override
-      public void visit(@NotNull CompositeLibraryDependencyData dependency) {
-        assert false; // We don't expect outdated library during importing project.
-      }
-    });
+    // TODO den implement
+//    entity.invite(new ExternalEntityVisitor() {
+//      @Override
+//      public void visit(@NotNull ProjectData project) {
+//        text.set(project.getName());
+//      }
+//
+//      @Override
+//      public void visit(@NotNull ModuleData module) {
+//        text.set(module.getName());
+//      }
+//
+//      @Override
+//      public void visit(@NotNull ContentRootData contentRoot) {
+//        text.set(ExternalSystemBundle.message("gradle.import.structure.tree.node.content.root"));
+//      }
+//
+//      @Override
+//      public void visit(@NotNull LibraryData library) {
+//        text.set(library.getName());
+//      }
+//
+//      @Override
+//      public void visit(@NotNull JarData jar) {
+//        text.set(GradleUtil.extractNameFromPath(jar.getPath()));
+//      }
+//
+//      @Override
+//      public void visit(@NotNull ModuleDependencyData dependency) {
+//        visit(dependency.getTarget());
+//      }
+//
+//      @Override
+//      public void visit(@NotNull LibraryDependencyData dependency) {
+//        visit(dependency.getTarget());
+//      }
+//
+//      @Override
+//      public void visit(@NotNull CompositeLibraryDependencyData dependency) {
+//        assert false; // We don't expect outdated library during importing project.
+//      }
+//    });
     return GradleUtil.buildDescriptor(EntityIdMapper.mapEntityToId(entity), text.get());
   }
 
@@ -85,51 +86,52 @@ public class GradleProjectStructureFactory {
                                                           @NotNull final Collection<ProjectStructureNode> treeNodes)
   {
     final Ref<GradleProjectStructureNodeSettings> result = new Ref<GradleProjectStructureNodeSettings>();
-    entity.invite(new ExternalEntityVisitor() {
-      @Override
-      public void visit(@NotNull ProjectData project) {
-        setupController(project, treeModel, treeNodes);
-        result.set(new GradleProjectSettings(project));
-      }
-
-      @Override
-      public void visit(@NotNull ModuleData module) {
-        setupController(module, treeModel, treeNodes);
-        result.set(new GradleModuleSettings(module)); 
-      }
-
-      @Override
-      public void visit(@NotNull ContentRootData contentRoot) {
-        result.set(new GradleContentRootSettings(contentRoot));
-      }
-
-      @Override
-      public void visit(@NotNull LibraryData library) {
-        result.set(new GradleLibrarySettings()); 
-      }
-
-      @Override
-      public void visit(@NotNull JarData jar) {
-        result.set(new GradleJarSettings(jar)); 
-      }
-
-      @Override
-      public void visit(@NotNull ModuleDependencyData dependency) {
-        setupController(dependency, treeModel, treeNodes);
-        result.set(new GradleModuleDependencySettings(dependency));
-      }
-
-      @Override
-      public void visit(@NotNull LibraryDependencyData dependency) {
-        setupController(dependency, treeModel, treeNodes);
-        result.set(new GradleLibraryDependencySettings(dependency));
-      }
-
-      @Override
-      public void visit(@NotNull CompositeLibraryDependencyData dependency) {
-        assert false; // We don't expect outdated library during importing project. 
-      }
-    });
+    // TODO den implement
+//    entity.invite(new ExternalEntityVisitor() {
+//      @Override
+//      public void visit(@NotNull ProjectData project) {
+//        setupController(project, treeModel, treeNodes);
+//        result.set(new GradleProjectSettings(project));
+//      }
+//
+//      @Override
+//      public void visit(@NotNull ModuleData module) {
+//        setupController(module, treeModel, treeNodes);
+//        result.set(new GradleModuleSettings(module)); 
+//      }
+//
+//      @Override
+//      public void visit(@NotNull ContentRootData contentRoot) {
+//        result.set(new GradleContentRootSettings(contentRoot));
+//      }
+//
+//      @Override
+//      public void visit(@NotNull LibraryData library) {
+//        result.set(new GradleLibrarySettings()); 
+//      }
+//
+//      @Override
+//      public void visit(@NotNull JarData jar) {
+//        result.set(new GradleJarSettings(jar)); 
+//      }
+//
+//      @Override
+//      public void visit(@NotNull ModuleDependencyData dependency) {
+//        setupController(dependency, treeModel, treeNodes);
+//        result.set(new GradleModuleDependencySettings(dependency));
+//      }
+//
+//      @Override
+//      public void visit(@NotNull LibraryDependencyData dependency) {
+//        setupController(dependency, treeModel, treeNodes);
+//        result.set(new GradleLibraryDependencySettings(dependency));
+//      }
+//
+//      @Override
+//      public void visit(@NotNull CompositeLibraryDependencyData dependency) {
+//        assert false; // We don't expect outdated library during importing project. 
+//      }
+//    });
     return result.get();
   }
 

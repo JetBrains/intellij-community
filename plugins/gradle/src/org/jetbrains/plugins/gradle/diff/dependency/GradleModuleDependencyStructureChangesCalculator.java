@@ -22,7 +22,6 @@ public class GradleModuleDependencyStructureChangesCalculator
   }
 
   @NotNull
-  @Override
   public Object getIdeKey(@NotNull ModuleOrderEntry entity) {
     final String intellijModuleName = entity.getModuleName();
     if (intellijModuleName == null) {
@@ -32,7 +31,6 @@ public class GradleModuleDependencyStructureChangesCalculator
   }
 
   @NotNull
-  @Override
   public Object getGradleKey(@NotNull ModuleDependencyData entity, @NotNull ExternalProjectChangesCalculationContext context) {
     return entity.getTarget().getName();
   }

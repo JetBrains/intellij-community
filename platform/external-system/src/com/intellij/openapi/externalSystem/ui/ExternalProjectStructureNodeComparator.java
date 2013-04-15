@@ -87,47 +87,48 @@ public class ExternalProjectStructureNodeComparator implements Comparator<Projec
     }
     final Ref<Integer> result = new Ref<Integer>();
     if (entity instanceof ProjectEntityData) {
-      ((ProjectEntityData)entity).invite(new ExternalEntityVisitor() {
-        @Override
-        public void visit(@NotNull ProjectData project) {
-          result.set(PROJECT_WEIGHT);
-        }
-
-        @Override
-        public void visit(@NotNull ModuleData module) {
-          result.set(MODULE_WEIGHT);
-        }
-
-        @Override
-        public void visit(@NotNull ContentRootData contentRoot) {
-          result.set(CONTENT_ROOT_WEIGHT);
-        }
-
-        @Override
-        public void visit(@NotNull LibraryData library) {
-          result.set(LIBRARY_WEIGHT);
-        }
-
-        @Override
-        public void visit(@NotNull JarData jar) {
-          result.set(JAR_WEIGHT);
-        }
-
-        @Override
-        public void visit(@NotNull ModuleDependencyData dependency) {
-          result.set(MODULE_DEPENDENCY_WEIGHT);
-        }
-
-        @Override
-        public void visit(@NotNull LibraryDependencyData dependency) {
-          result.set(LIBRARY_DEPENDENCY_WEIGHT);
-        }
-
-        @Override
-        public void visit(@NotNull CompositeLibraryDependencyData dependency) {
-          result.set(LIBRARY_DEPENDENCY_WEIGHT);
-        }
-      });
+      // TODO den implement
+//      ((ProjectEntityData)entity).invite(new ExternalEntityVisitor() {
+//        @Override
+//        public void visit(@NotNull ProjectData project) {
+//          result.set(PROJECT_WEIGHT);
+//        }
+//
+//        @Override
+//        public void visit(@NotNull ModuleData module) {
+//          result.set(MODULE_WEIGHT);
+//        }
+//
+//        @Override
+//        public void visit(@NotNull ContentRootData contentRoot) {
+//          result.set(CONTENT_ROOT_WEIGHT);
+//        }
+//
+//        @Override
+//        public void visit(@NotNull LibraryData library) {
+//          result.set(LIBRARY_WEIGHT);
+//        }
+//
+//        @Override
+//        public void visit(@NotNull JarData jar) {
+//          result.set(JAR_WEIGHT);
+//        }
+//
+//        @Override
+//        public void visit(@NotNull ModuleDependencyData dependency) {
+//          result.set(MODULE_DEPENDENCY_WEIGHT);
+//        }
+//
+//        @Override
+//        public void visit(@NotNull LibraryDependencyData dependency) {
+//          result.set(LIBRARY_DEPENDENCY_WEIGHT);
+//        }
+//
+//        @Override
+//        public void visit(@NotNull CompositeLibraryDependencyData dependency) {
+//          result.set(LIBRARY_DEPENDENCY_WEIGHT);
+//        }
+//      });
     }
     else {
       ExternalSystemUtil.dispatch(entity, new IdeEntityVisitor() {

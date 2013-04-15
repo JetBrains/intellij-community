@@ -24,7 +24,7 @@ import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectS
 import com.intellij.openapi.externalSystem.model.project.change.JarPresenceChange;
 import com.intellij.openapi.externalSystem.model.project.id.JarId;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureServices;
-import com.intellij.openapi.externalSystem.service.project.manage.ExternalJarManager;
+import com.intellij.openapi.externalSystem.service.project.manage.JarDataManager;
 import com.intellij.openapi.externalSystem.util.ArtifactInfo;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
@@ -64,9 +64,9 @@ import java.util.*;
  */
 public class MovedJarsPostProcessor implements ExternalProjectStructureChangesPostProcessor {
 
-  @NotNull private final ExternalJarManager myJarManager;
+  @NotNull private final JarDataManager myJarManager;
 
-  public MovedJarsPostProcessor(@NotNull ExternalJarManager manager) {
+  public MovedJarsPostProcessor(@NotNull JarDataManager manager) {
     myJarManager = manager;
   }
 
@@ -89,13 +89,14 @@ public class MovedJarsPostProcessor implements ExternalProjectStructureChangesPo
       @Override
       public void run() {
         for (MergeInfo info : toMerge) {
-          myJarManager.removeJars(Collections.singleton(info.ideJar), project, true);
-          myJarManager.importJars(Collections.singleton(info.gradleJar), project, true);
+          // TODO den implement
+//          myJarManager.removeJars(Collections.singleton(info.ideJar), project, true);
+//          myJarManager.importJars(Collections.singleton(info.gradleJar), project, true);
           changes.removeAll(info.changes);
         }
       }
     };
-    doMerge(mergeTask, project); 
+    doMerge(mergeTask, project);
   }
 
   /**
@@ -105,7 +106,7 @@ public class MovedJarsPostProcessor implements ExternalProjectStructureChangesPo
    * @param project    target project
    */
   public void doMerge(@NotNull final Runnable mergeTask, @NotNull final Project project) {
-    ExternalSystemUtil.executeProjectChangeAction(project,ProjectSystemId.IDE, mergeTask, true, new Runnable() {
+    ExternalSystemUtil.executeProjectChangeAction(project, ProjectSystemId.IDE, mergeTask, true, new Runnable() {
       @Override
       public void run() {
         ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(mergeTask);

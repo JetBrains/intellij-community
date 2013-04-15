@@ -80,66 +80,67 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
     initContent();
 
     MessageBusConnection connection = project.getMessageBus().connect(project);
-    connection.subscribe(GradleSettingsListener.TOPIC, new GradleSettingsListener() {
-
-      private boolean myRefresh;
-      private boolean myInBulk;
-
-      @Override
-      public void onBulkChangeStart() {
-        myInBulk = true;
-      }
-
-      @Override
-      public void onBulkChangeEnd() {
-        myInBulk = false;
-        if (myRefresh) {
-          myRefresh = false;
-          refreshAll();
-        }
-      }
-
-      @Override
-      public void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
-
-      @Override
-      public void onPreferLocalGradleDistributionToWrapperChange(boolean currentValue) { refreshAll(); }
-
-      @Override
-      public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
-
-      @Override
-      public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
-
-      @Override
-      public void onUseAutoImportChange(boolean oldValue, boolean newValue) {
-        if (newValue) {
-          update();
-        }
-      }
-
-      private void refreshAll() {
-        if (myInBulk) {
-          myRefresh = true;
-          return;
-        }
-        GradleUtil.refreshProject(getProject(), new Consumer<String>() {
-          @Override
-          public void consume(String s) {
-            GradleConfigNotificationManager notificationManager
-              = ServiceManager.getService(getProject(), GradleConfigNotificationManager.class);
-            notificationManager.processRefreshError(s);
-            UIUtil.invokeLaterIfNeeded(new Runnable() {
-              @Override
-              public void run() {
-                update();
-              }
-            });
-          }
-        });
-        update();
-      }
-    });
+    // TODO den implement
+//    connection.subscribe(GradleSettingsListener.TOPIC, new GradleSettingsListener() {
+//
+//      private boolean myRefresh;
+//      private boolean myInBulk;
+//
+//      @Override
+//      public void onBulkChangeStart() {
+//        myInBulk = true;
+//      }
+//
+//      @Override
+//      public void onBulkChangeEnd() {
+//        myInBulk = false;
+//        if (myRefresh) {
+//          myRefresh = false;
+//          refreshAll();
+//        }
+//      }
+//
+//      @Override
+//      public void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
+//
+//      @Override
+//      public void onPreferLocalGradleDistributionToWrapperChange(boolean currentValue) { refreshAll(); }
+//
+//      @Override
+//      public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
+//
+//      @Override
+//      public void onServiceDirectoryPathChange(@Nullable String oldPath, @Nullable String newPath) { refreshAll(); }
+//
+//      @Override
+//      public void onUseAutoImportChange(boolean oldValue, boolean newValue) {
+//        if (newValue) {
+//          update();
+//        }
+//      }
+//
+//      private void refreshAll() {
+//        if (myInBulk) {
+//          myRefresh = true;
+//          return;
+//        }
+//        GradleUtil.refreshProject(getProject(), new Consumer<String>() {
+//          @Override
+//          public void consume(String s) {
+//            GradleConfigNotificationManager notificationManager
+//              = ServiceManager.getService(getProject(), GradleConfigNotificationManager.class);
+//            notificationManager.processRefreshError(s);
+//            UIUtil.invokeLaterIfNeeded(new Runnable() {
+//              @Override
+//              public void run() {
+//                update();
+//              }
+//            });
+//          }
+//        });
+//        update();
+//      }
+//    });
   }
 
   @NotNull
@@ -151,7 +152,9 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   @Override
   protected JComponent buildContent() {
     JPanel result = new JPanel(new GridBagLayout());
-    myTreeModel = new ExternalProjectStructureTreeModel(getProject(), myContext, false);
+    // TODO den implement
+    myTreeModel = null;
+//    myTreeModel = new ExternalProjectStructureTreeModel(getProject(), myContext, false);
     myTree = new Tree(myTreeModel);
     myTree.addTreeWillExpandListener(new TreeWillExpandListener() {
       @Override
@@ -307,7 +310,8 @@ public class GradleProjectStructureChangesPanel extends GradleToolWindowPanel {
   private static String getPath(@NotNull TreePath path) {
     StringBuilder buffer = new StringBuilder();
     for (TreePath current = path; current != null; current = current.getParentPath()) {
-      buffer.append(current.getLastPathComponent().toString()).append(GradleUtil.PATH_SEPARATOR);
+      // TODO den implement
+//      buffer.append(current.getLastPathComponent().toString()).append(GradleUtil.PATH_SEPARATOR);
     }
     buffer.setLength(buffer.length() - 1);
     return buffer.toString();

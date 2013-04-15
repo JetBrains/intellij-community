@@ -51,34 +51,35 @@ public class GradleConflictControlFactory {
   @Nullable
   public JComponent getDiffControl(@NotNull Object entity, final @NotNull Collection<ExternalProjectStructureChange> changes) {
     final Ref<JComponent> result = new Ref<JComponent>();
-    GradleUtil.dispatch(entity, new IdeEntityVisitor() {
-      @Override
-      public void visit(@NotNull Project project) {
-        result.set(myProjectFactory.getControl(changes));
-      }
-
-      @Override
-      public void visit(@NotNull Module module) {
-      }
-
-      @Override
-      public void visit(@NotNull ModuleAwareContentRoot contentRoot) {
-      }
-
-      @Override
-      public void visit(@NotNull LibraryOrderEntry libraryDependency) {
-        result.set(myCommonDependencyFactory.getControl(libraryDependency, changes));
-      }
-
-      @Override
-      public void visit(@NotNull ModuleOrderEntry moduleDependency) {
-        result.set(myCommonDependencyFactory.getControl(moduleDependency, changes));
-      }
-
-      @Override
-      public void visit(@NotNull Library library) {
-      }
-    });
+    // TODO den implement
+//    GradleUtil.dispatch(entity, new IdeEntityVisitor() {
+//      @Override
+//      public void visit(@NotNull Project project) {
+//        result.set(myProjectFactory.getControl(changes));
+//      }
+//
+//      @Override
+//      public void visit(@NotNull Module module) {
+//      }
+//
+//      @Override
+//      public void visit(@NotNull ModuleAwareContentRoot contentRoot) {
+//      }
+//
+//      @Override
+//      public void visit(@NotNull LibraryOrderEntry libraryDependency) {
+//        result.set(myCommonDependencyFactory.getControl(libraryDependency, changes));
+//      }
+//
+//      @Override
+//      public void visit(@NotNull ModuleOrderEntry moduleDependency) {
+//        result.set(myCommonDependencyFactory.getControl(moduleDependency, changes));
+//      }
+//
+//      @Override
+//      public void visit(@NotNull Library library) {
+//      }
+//    });
     return result.get();
   }
 }

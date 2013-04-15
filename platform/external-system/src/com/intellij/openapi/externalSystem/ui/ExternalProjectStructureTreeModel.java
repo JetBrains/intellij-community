@@ -236,14 +236,15 @@ public class ExternalProjectStructureTreeModel extends DefaultTreeModel {
       }
     }
 
-    ProjectData externalProject = myChangesModel.getExternalProject(myExternalSystemId, myProject);
-    if (externalProject != null) {
-      ExternalProjectChangesCalculationContext context
-        = myChangesModel.getCurrentChangesContext(externalProject, myProject, onIdeProjectStructureChange);
-      processChanges(Collections.<ExternalProjectStructureChange>emptyList(),
-                     ContainerUtil.union(context.getKnownChanges(), context.getCurrentChanges()));
-      filterNodes(root);
-    }
+    // TODO den implement
+//    ProjectData externalProject = myChangesModel.getExternalProject(myExternalSystemId, myProject);
+//    if (externalProject != null) {
+//      ExternalProjectChangesCalculationContext context
+//        = myChangesModel.getCurrentChangesContext(externalProject, myProject, onIdeProjectStructureChange);
+//      processChanges(Collections.<ExternalProjectStructureChange>emptyList(),
+//                     ContainerUtil.union(context.getKnownChanges(), context.getCurrentChanges()));
+//      filterNodes(root);
+//    }
   }
 
   private void populateLibraryDependencyNode(@NotNull ProjectStructureNode<LibraryDependencyId> node,
@@ -372,16 +373,18 @@ public class ExternalProjectStructureTreeModel extends DefaultTreeModel {
 
   @NotNull
   private ProjectStructureNode<ContentRootId> buildContentRootNode(@NotNull ContentRootId id) {
-    final boolean singleRoot;
-    if (myExternalSystemId.equals(id.getOwner())) {
-      final ModuleData module = myProjectStructureHelper.findExternalModule(id.getModuleName(), myExternalSystemId, myProject);
-      singleRoot = module == null || module.getContentRoots().size() <= 1;
-    }
-    else {
-      final Module module = myProjectStructureHelper.findIdeModule(id.getModuleName(), myProject);
-      singleRoot = module == null || myPlatformFacade.getContentRoots(module).size() <= 1;
-    }
-    return buildContentRootNode(id, singleRoot);
+    return null;
+    // TODO den implement
+//    final boolean singleRoot;
+//    if (myExternalSystemId.equals(id.getOwner())) {
+//      final ModuleData module = myProjectStructureHelper.findExternalModule(id.getModuleName(), myExternalSystemId, myProject);
+//      singleRoot = module == null || module.getContentRoots().size() <= 1;
+//    }
+//    else {
+//      final Module module = myProjectStructureHelper.findIdeModule(id.getModuleName(), myProject);
+//      singleRoot = module == null || myPlatformFacade.getContentRoots(module).size() <= 1;
+//    }
+//    return buildContentRootNode(id, singleRoot);
   }
   
   @NotNull
@@ -506,7 +509,9 @@ public class ExternalProjectStructureTreeModel extends DefaultTreeModel {
     if (dependencyNode == null || id == null) {
       return;
     }
-    LibraryData gradleLibrary = myProjectStructureHelper.findExternalLibrary(id.getLibraryId(), myExternalSystemId, myProject);
+    LibraryData gradleLibrary = null;
+    // TODO den implement
+//    LibraryData gradleLibrary = myProjectStructureHelper.findExternalLibrary(id.getLibraryId(), myExternalSystemId, myProject);
     if (gradleLibrary == null) {
       return;
     }

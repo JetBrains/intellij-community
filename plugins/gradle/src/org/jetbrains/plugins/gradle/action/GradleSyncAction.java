@@ -38,8 +38,9 @@ import java.util.*;
 public class GradleSyncAction extends AbstractGradleSyncTreeNodeAction {
 
   public GradleSyncAction() {
-    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.sync.text"));
-    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.sync.description"));
+    // TODO den implement
+//    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.sync.text"));
+//    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.sync.description"));
   }
 
   @Override
@@ -67,11 +68,12 @@ public class GradleSyncAction extends AbstractGradleSyncTreeNodeAction {
       conflictChanges.addAll(node.getConflictChanges());
     }
 
-    if (!outdatedLibraryNodes.isEmpty()) {
-      manager.sync(nodes);
-    }
-    if (!conflictChanges.isEmpty()) {
-      helper.eliminateChange(conflictChanges, Collections.<UserProjectChange>emptySet(), true);
-    }
+    // TODO den implement
+//    if (!outdatedLibraryNodes.isEmpty()) {
+//      manager.sync(nodes);
+//    }
+//    if (!conflictChanges.isEmpty()) {
+//      helper.eliminateChange(conflictChanges, Collections.<UserProjectChange>emptySet(), true);
+//    }
   }
 }

@@ -26,7 +26,7 @@ public abstract class GradleSettingsListenerAdapter implements GradleSettingsLis
   }
 
   @Override
-  public void onUseAutoImportChange(boolean oldValue, boolean newValue) {
+  public void onUseAutoImportChange(boolean currentValue) {
   }
 
   @Override

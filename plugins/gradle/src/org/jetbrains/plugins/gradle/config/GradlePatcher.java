@@ -46,7 +46,8 @@ public class GradlePatcher {
     File autodetectedGradleHome = libraryManager.getAutodetectedGradleHome();
     // We don't want to store auto-detected value at the settings.
     if (autodetectedGradleHome == null || !FileUtil.filesEqual(autodetectedGradleHome, new File(projectGradleHome))) {
-      GradleSettings.applyGradleHome(projectGradleHome, defaultProject);
+      // TODO den implement
+//      GradleSettings.applyGradleHome(projectGradleHome, defaultProject);
     }
   }
 }

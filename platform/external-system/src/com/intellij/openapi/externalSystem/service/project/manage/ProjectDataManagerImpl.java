@@ -15,6 +15,11 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
@@ -22,18 +27,41 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Collection;
+
 /**
  * @author Denis Zhdanov
  * @since 2/21/13 2:40 PM
  */
-public class ExternalProjectManager {
+public class ProjectDataManagerImpl implements ProjectDataManager<ProjectData> {
+
+  @NotNull
+  @Override
+  public Key<ProjectData> getTargetDataKey() {
+    return ProjectKeys.PROJECT;
+  }
+
+  @Override
+  public void importData(@NotNull Collection<DataNode<ProjectData>> toImport, @NotNull Project project, boolean synchronous) {
+    if (toImport.size() != 1) {
+      throw new IllegalArgumentException(String.format("Expected to get a single project but got %d: %s", toImport.size(), toImport));
+    }
+    ProjectData projectData = toImport.iterator().next().getData();
+    if (!project.getName().equals(projectData.getName())) {
+      renameProject(projectData.getName(), project, synchronous);
+    }
+  }
+
+  @Override
+  public void removeData(@NotNull Collection<DataNode<ProjectData>> toRemove, @NotNull Project project, boolean synchronous) {
+  }
 
   @SuppressWarnings("MethodMayBeStatic")
   public void renameProject(@NotNull final String newName, @NotNull final Project project, boolean synchronous) {
     if (!(project instanceof ProjectEx) || newName.equals(project.getName())) {
       return;
     }
-    ExternalSystemUtil.executeProjectChangeAction(project, project, synchronous, new Runnable() {
+    ExternalSystemUtil.executeProjectChangeAction(project, ProjectSystemId.IDE, project, synchronous, new Runnable() {
       @Override
       public void run() {
         ((ProjectEx)project).setProjectName(newName);
@@ -41,17 +69,4 @@ public class ExternalProjectManager {
     });
   }
 
-  @SuppressWarnings("MethodMayBeStatic")
-  public void setLanguageLevel(@NotNull final LanguageLevel languageLevel, @NotNull Project project, boolean synchronous) {
-    final LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
-    if (languageLevel == languageLevelExtension.getLanguageLevel()) {
-      return;
-    }
-    ExternalSystemUtil.executeProjectChangeAction(project, project, synchronous, new Runnable() {
-      @Override
-      public void run() {
-        languageLevelExtension.setLanguageLevel(languageLevel); 
-      }
-    });
-  }
 }

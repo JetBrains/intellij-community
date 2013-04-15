@@ -1,7 +1,7 @@
 package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.project.id.*;
@@ -19,8 +19,8 @@ import com.intellij.util.BooleanFunction;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import static com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys.LIBRARY_DEPENDENCY;
-import static com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys.MODULE_DEPENDENCY;
+import static com.intellij.openapi.externalSystem.model.ProjectKeys.LIBRARY_DEPENDENCY;
+import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE_DEPENDENCY;
 
 /**
  * Thread-safe.
@@ -113,7 +113,7 @@ public class ProjectStructureHelper {
     if (project == null) {
       return null;
     }
-    for (DataNode<ModuleData> moduleNode : ExternalSystemUtil.getChildren(project, ExternalSystemProjectKeys.MODULE)) {
+    for (DataNode<ModuleData> moduleNode : ExternalSystemUtil.getChildren(project, ProjectKeys.MODULE)) {
       if (name.equals(moduleNode.getData().getName())) {
         return moduleNode;
       }
@@ -130,7 +130,7 @@ public class ProjectStructureHelper {
     if (moduleNode == null) {
       return null;
     }
-    for (DataNode<ContentRootData> contentRootNode : ExternalSystemUtil.getChildren(moduleNode, ExternalSystemProjectKeys.CONTENT_ROOT)) {
+    for (DataNode<ContentRootData> contentRootNode : ExternalSystemUtil.getChildren(moduleNode, ProjectKeys.CONTENT_ROOT)) {
       if (id.getRootPath().equals(contentRootNode.getData().getRootPath())) {
         return contentRootNode;
       }
@@ -330,7 +330,7 @@ public class ProjectStructureHelper {
     if (project == null) {
       return null;
     }
-    for (DataNode<LibraryData> libraryNode : ExternalSystemUtil.getChildren(project, ExternalSystemProjectKeys.LIBRARY)) {
+    for (DataNode<LibraryData> libraryNode : ExternalSystemUtil.getChildren(project, ProjectKeys.LIBRARY)) {
       if (libraryName.equals(libraryNode.getData().getName())) {
         return libraryNode;
       }

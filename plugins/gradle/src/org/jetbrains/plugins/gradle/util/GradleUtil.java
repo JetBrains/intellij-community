@@ -177,33 +177,6 @@ public class GradleUtil {
   }
 
   /**
-   * Asks to show balloon that contains information related to the given component.
-   *
-   * @param component    component for which we want to show information
-   * @param messageType  balloon message type
-   * @param message      message to show
-   */
-  public static void showBalloon(@NotNull JComponent component, @NotNull MessageType messageType, @NotNull String message) {
-    final BalloonBuilder builder = JBPopupFactory.getInstance().createHtmlTextBalloonBuilder(message, messageType, null)
-      .setDisposable(ApplicationManager.getApplication()).setFadeoutTime(TimeUnit.SECONDS.toMillis(1));
-    Balloon balloon = builder.createBalloon();
-    Dimension size = component.getSize();
-    Balloon.Position position;
-    int x;
-    int y;
-    if (size == null) {
-      x = y = 0;
-      position = Balloon.Position.above;
-    }
-    else {
-      x = Math.min(10, size.width / 2);
-      y = size.height;
-      position = Balloon.Position.below;
-    }
-    balloon.show(new RelativePoint(component, new Point(x, y)), position);
-  }
-
-  /**
    * Delegates to the {@link #refreshProject(Project, String, Ref, Ref, boolean, boolean)} with the following defaults:
    * <pre>
    * <ul>
@@ -290,14 +263,15 @@ public class GradleUtil {
         if (error == null) {
           return;
         }
-        final String message = buildErrorMessage(error);
-        if (StringUtil.isEmpty(message)) {
-          errorMessageHolder.set(String.format("Can't resolve gradle project at '%s'. Reason: %s", gradleProjectPath, message));
-        }
-        else {
-          errorMessageHolder.set(message);
-        }
-        errorDetailsHolder.set(extractDetails(error));
+        // TODO den implement
+//        final String message = buildErrorMessage(error);
+//        if (StringUtil.isEmpty(message)) {
+//          errorMessageHolder.set(String.format("Can't resolve gradle project at '%s'. Reason: %s", gradleProjectPath, message));
+//        }
+//        else {
+//          errorMessageHolder.set(message);
+//        }
+//        errorDetailsHolder.set(extractDetails(error));
       }
     };
     
@@ -309,32 +283,33 @@ public class GradleUtil {
       }
     };
     
-    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        if (modal) {
-          ProgressManager.getInstance().run(new Task.Modal(project, ExternalSystemBundle.message("gradle.import.progress.text"), false) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              refreshProjectStructureTask.execute(indicator);
-              setTitle(ExternalSystemBundle.message("gradle.task.progress.initial.text"));
-              refreshTasksTask.execute(indicator);
-            }
-          });
-        }
-        else {
-          ProgressManager.getInstance().run(new Task.Backgroundable(project, ExternalSystemBundle
-            .message("gradle.sync.progress.initial.text")) {
-            @Override
-            public void run(@NotNull ProgressIndicator indicator) {
-              refreshProjectStructureTask.execute(indicator);
-              setTitle(ExternalSystemBundle.message("gradle.task.progress.initial.text"));
-              refreshTasksTask.execute(indicator);
-            }
-          });
-        }
-      }
-    });
+    // TODO den implement
+//    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+//      @Override
+//      public void run() {
+//        if (modal) {
+//          ProgressManager.getInstance().run(new Task.Modal(project, ExternalSystemBundle.message("gradle.import.progress.text"), false) {
+//            @Override
+//            public void run(@NotNull ProgressIndicator indicator) {
+//              refreshProjectStructureTask.execute(indicator);
+//              setTitle(ExternalSystemBundle.message("gradle.task.progress.initial.text"));
+//              refreshTasksTask.execute(indicator);
+//            }
+//          });
+//        }
+//        else {
+//          ProgressManager.getInstance().run(new Task.Backgroundable(project, ExternalSystemBundle
+//            .message("gradle.sync.progress.initial.text")) {
+//            @Override
+//            public void run(@NotNull ProgressIndicator indicator) {
+//              refreshProjectStructureTask.execute(indicator);
+//              setTitle(ExternalSystemBundle.message("gradle.task.progress.initial.text"));
+//              refreshTasksTask.execute(indicator);
+//            }
+//          });
+//        }
+//      }
+//    });
     return gradleProject.get();
   }
   
@@ -382,7 +357,9 @@ public class GradleUtil {
    */
   @Nullable
   public static ExternalProjectStructureTreeModel getProjectStructureTreeModel(@Nullable DataContext context) {
-    return getToolWindowElement(ExternalProjectStructureTreeModel.class, context, ExternalSystemDataKeys.PROJECT_TREE_MODEL);
+    // TODO den implement
+    return null;
+//    return getToolWindowElement(ExternalProjectStructureTreeModel.class, context, ExternalSystemDataKeys.PROJECT_TREE_MODEL);
   }
   
   /**
@@ -390,8 +367,11 @@ public class GradleUtil {
    */
   @NotNull
   public static MatrixControlBuilder getConflictChangeBuilder() {
-    final String gradle = ExternalSystemBundle.message("gradle.name");
-    final String intellij = ExternalSystemBundle.message("gradle.ide");
+    // TODO den implement
+    final String gradle = "";
+    final String intellij = "";
+//    final String gradle = ExternalSystemBundle.message("gradle.name");
+//    final String intellij = ExternalSystemBundle.message("gradle.ide");
     return new MatrixControlBuilder(gradle, intellij);
   }
   

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.model.project.id;
 
+import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.CompositeLibraryDependencyData;
 import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
@@ -42,8 +43,9 @@ public class CompositeLibraryDependencyId extends AbstractCompositeExternalEntit
   @Override
   public Object mapToEntity(@NotNull ProjectStructureServices services, @NotNull Project ideProject) {
     ProjectStructureHelper helper = services.getProjectStructureHelper();
-    LibraryDependencyData gradleLibraryDependency = helper.findExternalLibraryDependency(getCounterPartyId(), getOwner(), ideProject);
-    if (gradleLibraryDependency == null) {
+    DataNode<LibraryDependencyData> externalDataNode
+      = helper.findExternalLibraryDependency(getCounterPartyId(), getOwner(), ideProject);
+    if (externalDataNode == null) {
       return null;
     }
 
@@ -52,6 +54,6 @@ public class CompositeLibraryDependencyId extends AbstractCompositeExternalEntit
       return null;
     }
 
-    return new CompositeLibraryDependencyData(gradleLibraryDependency, ideLibraryDependency);
+    return new CompositeLibraryDependencyData(externalDataNode.getData(), ideLibraryDependency);
   }
 }

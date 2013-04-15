@@ -102,14 +102,16 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     int recentTasksNumber = Registry.intValue(GradleConstants.REGISTRY_RECENT_TASKS_NUMBER_KEY, 5);
     myRecentTasksModel.ensureSize(recentTasksNumber);
     myRecentTasksList.setVisibleRowCount(recentTasksNumber);
-    addListPanel(myRecentTasksList, result, ExternalSystemBundle.message("gradle.task.recent.title"), false);
+    // TODO den implement
+//    addListPanel(myRecentTasksList, result, ExternalSystemBundle.message("gradle.task.recent.title"), false);
     
     myAllTasksModel.clear();
     Collection<ExternalSystemTaskDescriptor> tasks = myLocalSettings.getAvailableTasks();
     if (!tasks.isEmpty()) {
       myAllTasksModel.setTasks(tasks);
     }
-    addListPanel(myAllTasksList, result, ExternalSystemBundle.message("gradle.task.all.title"), true);
+    // TODO den implement
+//    addListPanel(myAllTasksList, result, ExternalSystemBundle.message("gradle.task.all.title"), true);
 
     return result;
   }
@@ -121,7 +123,8 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
 
     setupMouseListener(list);
     CustomizationUtil.installPopupHandler(list, GradleConstants.ACTION_GROUP_TASKS, GradleConstants.TASKS_CONTEXT_MENU_PLACE);
-    list.setEmptyText(ExternalSystemBundle.message("gradle.text.loading"));
+    // TODO den implement
+//    list.setEmptyText(ExternalSystemBundle.message("gradle.text.loading"));
     JBScrollPane scrollPane = new JBScrollPane(list);
     scrollPane.setBorder(null);
     panel.add(scrollPane, BorderLayout.CENTER);
@@ -203,19 +206,21 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (ExternalSystemDataKeys.ALL_TASKS_MODEL.is(dataId)) {
-      return myAllTasksModel;
-    }
-    else if (ExternalSystemDataKeys.RECENT_TASKS_LIST.is(dataId)) {
-      return myRecentTasksList;
-    }
-    else if (Location.DATA_KEY.is(dataId)) {
-      Location location = buildLocation();
-      return location == null ? super.getData(dataId) : location;
-    }
-    else {
-      return super.getData(dataId);
-    }
+    return super.getData(dataId);
+    // TODO den implement
+//    if (ExternalSystemDataKeys.ALL_TASKS_MODEL.is(dataId)) {
+//      return myAllTasksModel;
+//    }
+//    else if (ExternalSystemDataKeys.RECENT_TASKS_LIST.is(dataId)) {
+//      return myRecentTasksList;
+//    }
+//    else if (Location.DATA_KEY.is(dataId)) {
+//      Location location = buildLocation();
+//      return location == null ? super.getData(dataId) : location;
+//    }
+//    else {
+//      return super.getData(dataId);
+//    }
   }
 
   @Nullable

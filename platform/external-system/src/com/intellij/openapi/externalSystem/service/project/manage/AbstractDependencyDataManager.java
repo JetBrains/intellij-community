@@ -15,17 +15,13 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData;
-import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ExportableOrderEntry;
-import com.intellij.openapi.roots.ModifiableRootModel;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.*;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -36,7 +32,7 @@ import java.util.Collection;
  */
 public abstract class AbstractDependencyDataManager<T extends AbstractDependencyData<?>> implements ProjectDataManager<T> {
 
-  protected void doRemoveData(@NotNull Collection<ExportableOrderEntry> toRemove, @NotNull final Module module, boolean synchronous) {
+  public void removeData(@NotNull Collection<ExportableOrderEntry> toRemove, @NotNull final Module module, boolean synchronous) {
     if (toRemove.isEmpty()) {
       return;
     }
@@ -62,6 +58,56 @@ public abstract class AbstractDependencyDataManager<T extends AbstractDependency
           }
         }
       });
+    }
+  }
+
+  public void setScope(@NotNull final DependencyScope scope, @NotNull final ExportableOrderEntry dependency, boolean synchronous) {
+    Project project = dependency.getOwnerModule().getProject();
+    ExternalSystemUtil.executeProjectChangeAction(project, ProjectSystemId.IDE, dependency, synchronous, new Runnable() {
+      @Override
+      public void run() {
+        doForDependency(dependency, new Consumer<ExportableOrderEntry>() {
+          @Override
+          public void consume(ExportableOrderEntry entry) {
+            entry.setScope(scope);
+          }
+        });
+      }
+    });
+  }
+
+  public void setExported(final boolean exported, @NotNull final ExportableOrderEntry dependency, boolean synchronous) {
+    Project project = dependency.getOwnerModule().getProject();
+    ExternalSystemUtil.executeProjectChangeAction(project, ProjectSystemId.IDE, dependency, synchronous, new Runnable() {
+      @Override
+      public void run() {
+        doForDependency(dependency, new Consumer<ExportableOrderEntry>() {
+          @Override
+          public void consume(ExportableOrderEntry entry) {
+            entry.setExported(exported);
+          }
+        });
+      }
+    });
+  }
+  
+  private static void doForDependency(@NotNull ExportableOrderEntry entry, @NotNull Consumer<ExportableOrderEntry> consumer) {
+    // We need to get an up-to-date modifiable model to work with.
+    ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(entry.getOwnerModule());
+    final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+    try {
+      // The thing is that intellij created order entry objects every time new modifiable model is created,
+      // that's why we can't use target dependency object as is but need to get a reference to the current
+      // entry object from the model instead.
+      for (OrderEntry e : moduleRootModel.getOrderEntries()) {
+        if (e instanceof ExportableOrderEntry && e.getPresentableName().equals(entry.getPresentableName())) {
+          consumer.consume((ExportableOrderEntry)e);
+          break;
+        }
+      }
+    }
+    finally {
+      moduleRootModel.commit();
     }
   }
 }

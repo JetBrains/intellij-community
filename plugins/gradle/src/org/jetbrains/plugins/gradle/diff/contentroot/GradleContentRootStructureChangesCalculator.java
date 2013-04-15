@@ -20,17 +20,18 @@ public class GradleContentRootStructureChangesCalculator
                         @NotNull ExternalProjectChangesCalculationContext context)
   {
   }
-
-  @NotNull
-  @Override
-  public Object getIdeKey(@NotNull ModuleAwareContentRoot entity) {
-    return EntityIdMapper.mapEntityToId(entity);
-  }
-
-  @NotNull
-  @Override
-  public Object getGradleKey(@NotNull ContentRootData entity, @NotNull ExternalProjectChangesCalculationContext context) {
-    // TODO den consider the known changes 
-    return EntityIdMapper.mapEntityToId(entity);
-  }
+  
+  // TODO den implement
+//  @NotNull
+//  @Override
+//  public Object getIdeKey(@NotNull ModuleAwareContentRoot entity) {
+//    return EntityIdMapper.mapEntityToId(entity);
+//  }
+//
+//  @NotNull
+//  @Override
+//  public Object getGradleKey(@NotNull ContentRootData entity, @NotNull ExternalProjectChangesCalculationContext context) {
+//    // TODO den consider the known changes 
+//    return EntityIdMapper.mapEntityToId(entity);
+//  }
 }

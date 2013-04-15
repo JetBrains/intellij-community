@@ -33,19 +33,20 @@ public class GradleLibraryDependencyStructureChangesCalculator
     myLibraryCalculator.calculate(gradleEntity.getTarget(), library, context);
   }
 
-  @NotNull
-  @Override
-  public Object getIdeKey(@NotNull LibraryOrderEntry entity) {
-    final Library library = entity.getLibrary();
-    if (library == null) {
-      return "";
-    }
-    return myLibraryCalculator.getIdeKey(library);
-  }
-
-  @NotNull
-  @Override
-  public Object getGradleKey(@NotNull LibraryDependencyData entity, @NotNull ExternalProjectChangesCalculationContext context) {
-    return myLibraryCalculator.getGradleKey(entity.getTarget(), context);
-  }
+  // TODO den implement
+//  @NotNull
+//  @Override
+//  public Object getIdeKey(@NotNull LibraryOrderEntry entity) {
+//    final Library library = entity.getLibrary();
+//    if (library == null) {
+//      return "";
+//    }
+//    return myLibraryCalculator.getIdeKey(library);
+//  }
+//
+//  @NotNull
+//  @Override
+//  public Object getGradleKey(@NotNull LibraryDependencyData entity, @NotNull ExternalProjectChangesCalculationContext context) {
+//    return myLibraryCalculator.getGradleKey(entity.getTarget(), context);
+//  }
 }
