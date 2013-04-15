@@ -36,14 +36,14 @@
 #define LOG_ENV_ERROR "error"
 #define LOG_ENV_OFF "off"
 
-#define VERSION "1.2"
+#define VERSION "20130415.2136"
 #define VERSION_MSG "fsnotifier " VERSION "\n"
 
 #define USAGE_MSG \
     "fsnotifier - IntelliJ IDEA companion program for watching and reporting file and directory structure modifications.\n\n" \
     "fsnotifier utilizes \"user\" facility of syslog(3) - messages usually can be found in /var/log/user.log.\n" \
     "Verbosity is regulated via " LOG_ENV " environment variable, possible values are: " \
-    LOG_ENV_DEBUG ", " LOG_ENV_INFO ", " LOG_ENV_WARNING ", " LOG_ENV_ERROR ", " LOG_ENV_OFF "; latter is the default.\n\n" \
+    LOG_ENV_DEBUG ", " LOG_ENV_INFO ", " LOG_ENV_WARNING ", " LOG_ENV_ERROR ", " LOG_ENV_OFF "; default is " LOG_ENV_WARNING ".\n\n" \
     "Use 'fsnotifier --selftest' to perform some self-diagnostics (output will be logged and printed to console).\n"
 
 #define HELP_MSG \
@@ -142,8 +142,9 @@ int main(int argc, char** argv) {
 
 
 static void init_log() {
+  int level = LOG_WARNING;
+
   char* env_level = getenv(LOG_ENV);
-  int level = LOG_EMERG;
   if (env_level != NULL) {
     if (strcmp(env_level, LOG_ENV_DEBUG) == 0)  level = LOG_DEBUG;
     else if (strcmp(env_level, LOG_ENV_INFO) == 0)  level = LOG_INFO;
@@ -350,13 +351,13 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
     for (int j=0; j<array_size(mounts); j++) {
       char* mount = array_get(mounts, j);
       if (is_parent_path(mount, unflattened)) {
-        userlog(LOG_DEBUG, "watch root '%s' is under mount point '%s' - skipping", unflattened, mount);
+        userlog(LOG_INFO, "watch root '%s' is under mount point '%s' - skipping", unflattened, mount);
         CHECK_NULL(array_push(unwatchable, strdup(unflattened)), false);
         skip = true;
         break;
       }
       else if (is_parent_path(unflattened, mount)) {
-        userlog(LOG_DEBUG, "watch root '%s' contains mount point '%s' - partial watch", unflattened, mount);
+        userlog(LOG_INFO, "watch root '%s' contains mount point '%s' - partial watch", unflattened, mount);
         char* copy = strdup(mount);
         CHECK_NULL(array_push(unwatchable, copy), false);
         CHECK_NULL(array_push(inner_mounts, copy), false);
@@ -381,6 +382,7 @@ static bool register_roots(array* new_roots, array* unwatchable, array* mounts) 
       return false;
     }
     else if (id != ERR_IGNORE) {
+      userlog(LOG_WARNING, "watch root '%s' cannot be watched: %d", unflattened, id);
       CHECK_NULL(array_push(unwatchable, strdup(unflattened)), false);
     }
   }
