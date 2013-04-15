@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -108,6 +108,7 @@ public class ModifierListGenerator {
   public static void writeClassModifiers(StringBuilder text,
                                          @Nullable PsiModifierList modifierList,
                                          boolean isInterface,
+                                         boolean isEnum,
                                          boolean toplevel,
                                          boolean generateAnnotations) {
     if (modifierList == null) {
@@ -117,11 +118,11 @@ public class ModifierListGenerator {
 
     List<String> allowedModifiers = new ArrayList<String>();
     allowedModifiers.add(PsiModifier.PUBLIC);
-    allowedModifiers.add(PsiModifier.FINAL);
+    if (!isEnum) allowedModifiers.add(PsiModifier.FINAL);
     if (!toplevel) {
       allowedModifiers.addAll(Arrays.asList(PsiModifier.PROTECTED, PsiModifier.PRIVATE, PsiModifier.STATIC));
     }
-    if (!isInterface) {
+    if (!isInterface && !isEnum) {
       allowedModifiers.add(PsiModifier.ABSTRACT);
     }
 
