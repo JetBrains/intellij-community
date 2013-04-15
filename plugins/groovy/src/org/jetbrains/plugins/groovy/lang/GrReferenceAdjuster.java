@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatem
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrReferenceElementImpl;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
@@ -119,7 +120,7 @@ public class GrReferenceAdjuster {
     if (ref.getManager().areElementsEquivalent(resolved, resolvedCopy)) {
       return true;
     }
-    else if (resolvedCopy != null) {
+    else if (resolvedCopy != null && !(resolvedCopy instanceof GrBindingVariable)) {
       return false;
     }
 
