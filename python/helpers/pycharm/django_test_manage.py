@@ -8,12 +8,18 @@ from pycharm_run_utils import import_system_module
 
 inspect = import_system_module("inspect")
 
+#import settings to prevent circular dependencies later on import django.db
+try:
+    from django.conf import settings
+    apps = settings.INSTALLED_APPS
+except:
+    pass
+
 import django_test_runner
 project_directory = sys.argv.pop()
 
 from django.core import management
 from django.core.management.commands.test import Command
-from django.conf import settings
 
 try:
   # setup environment
