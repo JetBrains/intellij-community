@@ -584,7 +584,17 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           for (PyDecorator deco : decoratorList.getDecorators()) {
             final PyQualifiedName qname = deco.getQualifiedName();
             if (qname != null) {
-              if (qname.matches(PyNames.PROPERTY)) {
+              String decoName = qname.toString();
+              for (PyKnownDecoratorProvider provider : PyUtil.KnownDecoratorProviderHolder.KNOWN_DECORATOR_PROVIDERS) {
+                final String knownName = provider.toKnownDecorator(decoName);
+                if (knownName != null) {
+                  decoName = knownName;
+                }
+              }
+              if (PyNames.PROPERTY.equals(decoName)) {
+                getter = new Maybe<Callable>(method);
+              }
+              else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.GETTER)) {
                 getter = new Maybe<Callable>(method);
               }
               else if (useAdvancedSyntax && qname.matches(decoratorName, PyNames.SETTER)) {
