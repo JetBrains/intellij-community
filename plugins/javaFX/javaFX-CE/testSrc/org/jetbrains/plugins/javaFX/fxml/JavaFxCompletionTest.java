@@ -165,11 +165,17 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     assertContainsElements(myFixture.getLookupElementStrings(), "true", "false");
   }
 
+  public void testPropertyNameWithoutField() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    complete();
+    assertContainsElements(myFixture.getLookupElementStrings(), "disable");
+  }
+
   public void testDefaultPropertyIncludeOnce() throws Exception {
     myFixture.configureByFiles(getTestName(true) + ".fxml");
     myItems = myFixture.completeBasic();
     assertContainsElements(myFixture.getLookupElementStrings(), "fx:reference");
-    assertEquals(5, myItems.length);
+    assertEquals(3, myItems.length);
   }
 
   public void testAcceptableSourceOnly() throws Exception {
