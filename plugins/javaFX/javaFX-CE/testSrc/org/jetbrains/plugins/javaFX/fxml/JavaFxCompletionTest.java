@@ -159,6 +159,12 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     assertContainsElements(myFixture.getLookupElementStrings(), "true", "false");
   }
 
+  public void testBooleanValuesNonStatic() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    complete();
+    assertContainsElements(myFixture.getLookupElementStrings(), "true", "false");
+  }
+
   public void testDefaultPropertyIncludeOnce() throws Exception {
     myFixture.configureByFiles(getTestName(true) + ".fxml");
     myItems = myFixture.completeBasic();
