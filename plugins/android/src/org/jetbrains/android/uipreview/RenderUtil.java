@@ -309,7 +309,7 @@ public class RenderUtil {
         }
       }));
 
-      quickFixes.add(new Pair<String, Runnable>("Change Java SDK to 1.5/1.6", new Runnable() {
+      quickFixes.add(new Pair<String, Runnable>("Change Java SDK", new Runnable() {
         @Override
         public void run() {
           final Set<String> sdkNames = getSdkNamesFromModules(problemModules);
@@ -378,7 +378,7 @@ public class RenderUtil {
         builder.append('\n');
       }
     }
-    Messages.showInfoMessage(project, builder.toString(), "Unsupported class version");
+    Messages.showInfoMessage(project, builder.toString(), "Unsupported Class Version");
   }
 
   private static void askAndRebuild(Project project) {
