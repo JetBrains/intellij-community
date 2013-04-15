@@ -251,7 +251,7 @@ public class ExceptionWorker {
     @Nullable
     @Override
     public OpenFileDescriptor getDescriptor() {
-      return new OpenFileDescriptor(myProject, myVirtualFile, myLineNumber);
+      return new OpenFileDescriptor(myProject, myVirtualFile, myLineNumber - 1, 0);
     }
   }
 }
