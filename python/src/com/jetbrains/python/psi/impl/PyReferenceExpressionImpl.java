@@ -337,7 +337,8 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
         for (PyDecorator decorator : decoratorList.getDecorators()) {
           final PyQualifiedName qName = decorator.getQualifiedName();
-          if (qName != null && (qName.endsWith(PyNames.SETTER) || qName.endsWith(PyNames.DELETER))) {
+          if (qName != null && (qName.endsWith(PyNames.SETTER) || qName.endsWith(PyNames.DELETER) ||
+                                qName.endsWith(PyNames.GETTER))) {
             return PyBuiltinCache.getInstance(target).getObjectType(PyNames.PROPERTY);
           }
         }
