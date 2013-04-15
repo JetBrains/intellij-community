@@ -149,6 +149,7 @@ public class AndroidModuleBuilder extends JavaModuleBuilder {
         ModuleOrderEntry entry = rootModel.addModuleOrderEntry(myTestedModule);
         entry.setScope(DependencyScope.PROVIDED);
       }
+      facet.getProperties().UPDATE_PROPERTY_FILES = Boolean.TRUE.toString();
 
       StartupManager.getInstance(project).runWhenProjectIsInitialized(new DumbAwareRunnable() {
         public void run() {

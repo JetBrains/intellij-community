@@ -26,6 +26,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
@@ -33,6 +34,7 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.ComboboxWithBrowseButton;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ArrayUtil;
@@ -100,6 +102,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
   private JBCheckBox myIncludeAssetsFromLibraries;
   private JBCheckBox myUseCustomManifestPackage;
   private JTextField myCustomManifestPackageField;
+  private ComboBox myUpdateProjectPropertiesCombo;
 
   public AndroidFacetEditorTab(FacetEditorContext context, AndroidFacetConfiguration androidFacetConfiguration) {
     final Project project = context.getProject();
@@ -241,6 +244,22 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
         myCustomManifestPackageField.setEnabled(myUseCustomManifestPackage.isSelected());
       }
     });
+
+    myUpdateProjectPropertiesCombo.setModel(new DefaultComboBoxModel(new Object[]{"", Boolean.TRUE.toString(), Boolean.FALSE.toString()}));
+    myUpdateProjectPropertiesCombo.setRenderer(new ListCellRendererWrapper<String>() {
+      @Override
+      public void customize(JList list, String value, int index, boolean selected, boolean hasFocus) {
+        if (value != null && value.isEmpty()) {
+          setText("Ask");
+        }
+        else if (Boolean.parseBoolean(value)) {
+          setText("Yes");
+        }
+        else {
+          setText("No");
+        }
+      }
+    });
   }
 
   private void updateAptPanel() {
@@ -339,6 +358,9 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       return true;
     }
     if (!myCustomManifestPackageField.getText().trim().equals(myConfiguration.getState().CUSTOM_MANIFEST_PACKAGE)) {
+      return true;
+    }
+    if (!myUpdateProjectPropertiesCombo.getSelectedItem().equals(myConfiguration.getState().UPDATE_PROPERTY_FILES)) {
       return true;
     }
     return false;
@@ -482,6 +504,7 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
       String relPath = toRelativePath(absAptSourcePath);
       myConfiguration.getState().CUSTOM_APK_RESOURCE_FOLDER = relPath != null ? '/' + relPath : "";
     }
+    myConfiguration.getState().UPDATE_PROPERTY_FILES = (String)myUpdateProjectPropertiesCombo.getSelectedItem();
 
     runApt = runApt && AndroidAptCompiler.isToCompileModule(myContext.getModule(), myConfiguration);
 
@@ -588,6 +611,8 @@ public class AndroidFacetEditorTab extends FacetEditorTab {
     myUseCustomManifestPackage.setSelected(myConfiguration.getState().USE_CUSTOM_MANIFEST_PACKAGE);
     myCustomManifestPackageField.setEnabled(myConfiguration.getState().USE_CUSTOM_MANIFEST_PACKAGE);
     myCustomManifestPackageField.setText(myConfiguration.getState().CUSTOM_MANIFEST_PACKAGE);
+
+    myUpdateProjectPropertiesCombo.setSelectedItem(myConfiguration.getState().UPDATE_PROPERTY_FILES);
   }
 
   @Nullable
