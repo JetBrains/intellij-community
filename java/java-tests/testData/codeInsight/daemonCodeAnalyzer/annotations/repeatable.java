@@ -42,3 +42,14 @@ class DupTypeAnno {
 
   static <T> void m() { }
 }
+
+@interface AA7 { A7[] value() default { }; }
+@Target({METHOD}) @Repeatable(<error descr="Target of container annotation 'AA7' is not a subset of target of this annotation">AA7.class</error>) @interface A7 { }
+
+@Target({METHOD}) @interface AA8 { A8[] value() default { }; }
+@Target({METHOD, FIELD}) @Repeatable(AA8.class) @interface A8 { }
+class C8 {
+  @A8 int f1;
+  <error descr="Container annotation '@AA8' is not applicable to field">@A8</error> <error descr="Container annotation '@AA8' is not applicable to field">@A8</error> int f2;
+  @A8 @A8 void m() { }
+}

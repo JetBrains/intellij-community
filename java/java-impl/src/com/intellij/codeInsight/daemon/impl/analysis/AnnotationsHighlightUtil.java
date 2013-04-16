@@ -205,6 +205,14 @@ public class AnnotationsHighlightUtil {
             return annotationError(containerAnno, description);
           }
         }
+
+        PsiAnnotation.TargetType[] targets = PsiImplUtil.getTargetsForLocation(owner);
+        PsiAnnotation.TargetType applicable = PsiImplUtil.findApplicableTarget(container, targets);
+        if (applicable == null) {
+          String target = JavaErrorMessages.message("annotation.target." + targets[0]);
+          String message = JavaErrorMessages.message("annotation.container.not.applicable", containerName, target);
+          return annotationError(annotation, message);
+        }
       }
     }
 
@@ -600,6 +608,14 @@ public class AnnotationsHighlightUtil {
       RetentionPolicy containerPolicy = getRetentionPolicy(container);
       if (containerPolicy != null && targetPolicy.compareTo(containerPolicy) > 0) {
         return JavaErrorMessages.message("annotation.container.low.retention", container.getQualifiedName(), containerPolicy);
+      }
+    }
+
+    Set<PsiAnnotation.TargetType> repeatableTargets = PsiImplUtil.getAnnotationTargets((PsiClass)target);
+    if (repeatableTargets != null) {
+      Set<PsiAnnotation.TargetType> containerTargets = PsiImplUtil.getAnnotationTargets(container);
+      if (containerTargets != null && !repeatableTargets.containsAll(containerTargets)) {
+        return JavaErrorMessages.message("annotation.container.wide.target", container.getQualifiedName());
       }
     }
 
