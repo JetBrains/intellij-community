@@ -119,13 +119,14 @@ public class BuildRunner {
   public void runBuild(ProjectDescriptor pd, CanceledStatus cs, @Nullable Callbacks.ConstantAffectionResolver constantSearch,
                        MessageHandler msgHandler, BuildType buildType) throws Exception {
     for (int attempt = 0; attempt < 2; attempt++) {
-      final CompileScope compileScope = createCompilationScope(pd, myScopes, myFilePaths);
+      final boolean forceClean = myForceCleanCaches && myFilePaths.isEmpty();
+      final CompileScope compileScope = createCompilationScope(pd, myScopes, myFilePaths, forceClean);
       final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), myBuilderParams, cs, constantSearch);
       builder.addMessageHandler(msgHandler);
       try {
         switch (buildType) {
           case BUILD:
-            builder.build(compileScope, myForceCleanCaches);
+            builder.build(compileScope, forceClean);
             break;
 
           case CLEAN:
@@ -150,8 +151,8 @@ public class BuildRunner {
     }
   }
 
-  private CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes,
-                                              Collection<String> paths) throws Exception {
+  private static CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes,
+                                                     Collection<String> paths, final boolean forceClean) throws Exception {
     Set<BuildTargetType<?>> targetTypes = new HashSet<BuildTargetType<?>>();
     Set<BuildTargetType<?>> targetTypesToForceBuild = new HashSet<BuildTargetType<?>>();
     Set<BuildTarget<?>> targets = new HashSet<BuildTarget<?>>();
@@ -164,7 +165,7 @@ public class BuildRunner {
         LOG.info("Unknown target type: " + scope.getTypeId());
         continue;
       }
-      if (scope.getForceBuild() || myForceCleanCaches && paths.isEmpty()) {
+      if (scope.getForceBuild() || forceClean) {
         targetTypesToForceBuild.add(targetType);
       }
       if (scope.getAllTargets()) {
