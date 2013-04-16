@@ -11,3 +11,11 @@ def test_basic():
       pass
 
     raise D()
+
+
+# PY-5811
+def test_unknown_type_exception():
+    Unknown = None
+    class C(Unknown): pass
+
+    raise C()
