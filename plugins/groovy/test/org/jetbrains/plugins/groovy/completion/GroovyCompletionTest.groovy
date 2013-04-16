@@ -1734,4 +1734,41 @@ class Inheritor extends Base {
 
     doVariantableTest('Inheritor.fo<caret>','', CompletionType.BASIC, CompletionResult.equal, 'foo', 'forName', 'forName')
   }
+
+  void testBinding1() {
+   doCompletionTest('''\
+aaa = 5
+print aa<caret>
+''', '''\
+aaa = 5
+print aaa<caret>
+''', CompletionType.BASIC)
+  }
+
+  void testBinding2() {
+    doCompletionTest('''\
+def foo() {
+  aaa = 5
+}
+print aa<caret>
+''', '''\
+def foo() {
+  aaa = 5
+}
+print aaa<caret>
+''', CompletionType.BASIC)
+  }
+
+
+  void testBinding3() {
+    doVariantableTest('''\
+def x() {
+  aaa = 5
+}
+
+aaaa = 6
+print aa<caret>
+''', CompletionType.BASIC, 'aaa', 'aaaa')
+  }
+
 }
