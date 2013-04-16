@@ -3,13 +3,13 @@ import java.util.*;
 import static java.lang.annotation.ElementType.*;
 
 @interface AA1 { }
-@Repeatable(<error descr="Invalid containing annotation 'AA1': no 'value' method declared">AA1.class</error>) @interface A1 { }
+@Repeatable(<error descr="Invalid container annotation 'AA1': no 'value' method declared">AA1.class</error>) @interface A1 { }
 
 @interface AA2 { String[] value(); }
-@Repeatable(<error descr="Invalid containing annotation 'AA2': 'value' method should have type 'A2[]'">AA2.class</error>) @interface A2 { }
+@Repeatable(<error descr="Invalid container annotation 'AA2': 'value' method should have type 'A2[]'">AA2.class</error>) @interface A2 { }
 
 @interface AA3 { A3[] value(); }
-@Repeatable(<error descr="Containing annotation 'AA3' has shorter retention ('CLASS') than the contained annotation">AA3.class</error>)
+@Repeatable(<error descr="Container annotation 'AA3' has shorter retention ('CLASS') than the contained annotation">AA3.class</error>)
 @Retention(RetentionPolicy.RUNTIME) @interface A3 { }
 
 @interface A4 { }
@@ -18,14 +18,14 @@ import static java.lang.annotation.ElementType.*;
 class C4 { }
 @A4 class C4bis { }
 
-@<error descr="Duplicate annotation. Invalid containing annotation 'AA1': no 'value' method declared">A1</error>
-@<error descr="Duplicate annotation. Invalid containing annotation 'AA1': no 'value' method declared">A1</error>
+@<error descr="Duplicate annotation. Invalid container annotation 'AA1': no 'value' method declared">A1</error>
+@<error descr="Duplicate annotation. Invalid container annotation 'AA1': no 'value' method declared">A1</error>
 class C5 { }
 @A1 class C5bis { }
 
 @interface AA6 { A6[] value() default { }; }
 @Repeatable(AA6.class) @interface A6 { }
-@A6 @A6 <error descr="Containing annotation 'AA6' must not be present at the same time as the element it contains">@AA6</error> class C6 { }
+@A6 @A6 <error descr="Container annotation 'AA6' must not be present at the same time as the element it contains">@AA6</error> class C6 { }
 @A6 @A6 class C6bis1 { }
 @A6 @AA6 class C6bis2 { }
 
