@@ -67,7 +67,7 @@ final class HistoryEntry{
     String url = e.getAttributeValue(FILE_ATTR);
     VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(url);
     if (file == null){
-      throw new InvalidDataException();
+      throw new InvalidDataException("No file exists: " + url);
     }
 
     myFile = file;

@@ -348,7 +348,9 @@ public class EditorsSplitters extends JBPanel {
         }
       }
       catch (InvalidDataException e) {
-        // OK
+        if (ApplicationManager.getApplication().isUnitTestMode()) {
+          LOG.error(e);
+        }
       }
     }
     if (currentFile != null) {

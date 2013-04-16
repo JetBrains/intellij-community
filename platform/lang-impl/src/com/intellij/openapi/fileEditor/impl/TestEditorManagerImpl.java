@@ -454,7 +454,7 @@ import java.util.Map;
   @Override
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> getEditorsWithProviders(@NotNull VirtualFile file) {
-    return null;
+    return Pair.create(new FileEditor[0], new FileEditorProvider[0]);
   }
 
   @Override
