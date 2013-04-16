@@ -30,6 +30,7 @@ import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.speedSearch.FilteringListModel;
 import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
@@ -74,7 +75,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     myUpdateAlarm = new Alarm(getDisposable());
     mySplitter = new JBSplitter(true, 0.3f);
     mySplitter.setSplitterProportionKey(getDimensionServiceKey() + ".splitter");
-    myList = new JBList();
+    myList = new JBList(new CollectionListModel<Item>());
 
     setOKButtonText(CommonBundle.getOkButtonText());
     setTitle(title);
@@ -109,8 +110,6 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       myList.setBackground(bg);
     }
 
-    rebuildListContent();
-
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
@@ -143,7 +142,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
           myList.setSelectedIndex(newSelectionIndex);
         }
         else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-          close(OK_EXIT_CODE);
+          doOKAction();
         }
         else {
           final char aChar = e.getKeyChar();
@@ -164,6 +163,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       }
     }));
     mySplitter.setSecondComponent(new JPanel());
+    rebuildListContent();
 
     ListScrollingUtil.installActions(myList);
     ListScrollingUtil.ensureSelectionExists(myList);
@@ -195,6 +195,12 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   @Override
   protected String getDimensionServiceKey() {
     return getClass().getName(); // store different values for multi-paste, history and commit messages
+  }
+
+  @Override
+  protected void doOKAction() {
+    if (getSelectedIndex() < 0) return;
+    super.doOKAction();
   }
 
   private void updateViewerForSelection() {
@@ -279,7 +285,14 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       }
     }
     myAllContents = contents;
-    myList.setModel(new CollectionListModel<Item>(items));
+    FilteringListModel listModel = (FilteringListModel)myList.getModel();
+    ((CollectionListModel)listModel.getOriginalModel()).removeAll();
+    listModel.addAll(items);
+    ListWithFilter listWithFilter = UIUtil.getParentOfType(ListWithFilter.class, myList);
+    if (listWithFilter != null) {
+      listWithFilter.getSpeedSearch().update();
+      if (listModel.getSize() == 0) listWithFilter.resetFilter();
+    }
   }
 
   protected abstract String getStringRepresentationFor(final Data content);
@@ -288,7 +301,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   public int getSelectedIndex() {
     Object o = myList.getSelectedValue();
-    return o == null? 0 : ((Item)o).index;
+    return o == null? -1 : ((Item)o).index;
   }
   
   public void setSelectedIndex(int index) {
