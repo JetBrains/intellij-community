@@ -528,6 +528,21 @@ public class DocumentationManager extends DockablePopupManager<DocumentationComp
   
   @Nullable
   public PsiElement findTargetElement(final Editor editor, int offset, @Nullable final PsiFile file, PsiElement contextElement) {
+    try {
+      return findTargetElementUnsafe(editor, offset, file, contextElement);
+    }
+    catch (IndexNotReadyException inre) {
+      LOG.warn("Index not ready");
+      LOG.debug(inre);
+      return null;
+    }
+  }
+
+  /**
+   * in case index is not ready will throw IndexNotReadyException
+   */
+  @Nullable
+  private PsiElement findTargetElementUnsafe(final Editor editor, int offset, @Nullable final PsiFile file, PsiElement contextElement) {
     TargetElementUtilBase util = TargetElementUtilBase.getInstance();
     PsiElement element = assertSameProject(getElementFromLookup(editor, file));
     if (element == null && file != null) {
