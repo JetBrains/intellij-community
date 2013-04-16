@@ -9,6 +9,8 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.Processor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyClassStub;
+import com.jetbrains.python.psi.types.PyClassType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +43,9 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   @NotNull
   PsiElement[] getSuperClassElements();
+
+  @NotNull
+  List<PyClassType> getSuperClassTypes(@NotNull TypeEvalContext context);
 
   @NotNull
   PyClass[] getSuperClasses();
@@ -112,6 +117,12 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   Iterable<PyClassRef> iterateAncestors();
 
   Iterable<PyClass> iterateAncestorClasses();
+
+  /**
+   * Get a list of all ancestor types.
+   */
+  @NotNull
+  List<PyClassType> getAncestorTypes(@NotNull TypeEvalContext context);
 
   /**
    * Return the method resolution order list for this class.

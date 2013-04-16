@@ -13,7 +13,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.*;
 import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -36,6 +36,8 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
+import java.util.HashMap;
+import java.util.HashSet;
 
 /**
  * @author yole
@@ -176,14 +178,29 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   public Iterable<PyClassRef> iterateAncestors() {
-    // The implementation is manifestly lazy wrt psi scanning and uses stack rather sparingly.
-    // It must be more efficient on deep and wide hierarchies, but it was more fun than efficiency that produced it.
-    return new AncestorsIterable(this);
+    // TODO: Change this method to getAncestorTypes()
+    // Implementation is no longer lazy, because C3 resolve for new-style classes will not be lazy
+    final List<PyClassRef> results = new ArrayList<PyClassRef>();
+    for (PyClassType type : getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+      if (type != null) {
+        results.add(new PyClassRef(type.getPyClass()));
+      }
+      else {
+        results.add(new PyClassRef(type));
+      }
+    }
+    return results;
   }
 
   @Override
   public Iterable<PyClass> iterateAncestorClasses() {
-    return new AncestorClassesIterable(this);
+    final List<PyClass> results = new ArrayList<PyClass>();
+    for (PyClassType type : getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+      if (type != null) {
+        results.add(type.getPyClass());
+      }
+    }
+    return results;
   }
 
   public boolean isSubclass(PyClass parent) {
@@ -1109,6 +1126,125 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       return new LocalSearchScope(scopeOwner);
     }
     return super.getUseScope();
+  }
+
+  @NotNull
+  @Override
+  public List<PyClassType> getSuperClassTypes(@NotNull TypeEvalContext context) {
+    if (PyNames.FAKE_OLD_BASE.equals(getName())) {
+      return Collections.emptyList();
+    }
+    final PyClassStub stub = getStub();
+    final List<PyClassType> result = new ArrayList<PyClassType>();
+    if (stub != null) {
+      final PsiElement parent = stub.getParentStub().getPsi();
+      if (parent instanceof PyFile) {
+        final PyFile file = (PyFile)parent;
+        for (PyQualifiedName name : stub.getSuperClasses()) {
+          result.add(name != null ? classTypeFromQName(name, file, context) : null);
+        }
+      }
+    }
+    else {
+      for (PyExpression expression : getSuperClassExpressions()) {
+        final PyType type = context.getType(expression);
+        result.add(type instanceof PyClassType ? (PyClassType)type : null);
+        // TODO: PyUnknownClassType(expression, expression.getName())?
+      }
+    }
+    final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(this);
+    if (result.isEmpty() && isValid() && !builtinCache.hasInBuiltins(this)) {
+      final String implicitSuperName = LanguageLevel.forElement(this).isPy3K() ? PyNames.OBJECT : PyNames.FAKE_OLD_BASE;
+      final PyClass implicitSuper = builtinCache.getClass(implicitSuperName);
+      if (implicitSuper != null) {
+        final PyType type = context.getType(implicitSuper);
+        if (type instanceof PyClassType) {
+          result.add((PyClassType)type);
+        }
+      }
+    }
+    return result;
+  }
+
+  @NotNull
+  @Override
+  public List<PyClassType> getAncestorTypes(@NotNull TypeEvalContext context) {
+    final List<PyClassType> results = new ArrayList<PyClassType>();
+    final List<PyClass> toProcess = new ArrayList<PyClass>();
+    final Set<PyClassType> seen = new HashSet<PyClassType>();
+    final Set<PyClass> visited = new HashSet<PyClass>();
+    toProcess.add(this);
+    while (!toProcess.isEmpty()) {
+      final PyClass cls = toProcess.remove(0);
+      visited.add(cls);
+      final List<PyClassType> types = cls.getSuperClassTypes(context);
+      for (PyClassType type : types) {
+        if (type == null || !seen.contains(type)) {
+          results.add(type);
+          seen.add(type);
+        }
+        if (type != null) {
+          // TODO: process PyClassType instead of PyClass
+          final PyClass superClass = type.getPyClass();
+          if (!visited.contains(superClass)) {
+            toProcess.add(superClass);
+          }
+        }
+      }
+    }
+    return results;
+  }
+
+  @Nullable
+  private static PsiElement getElementQNamed(@NotNull NameDefiner nameDefiner, @NotNull PyQualifiedName qualifiedName) {
+    final int componentCount = qualifiedName.getComponentCount();
+    final String fullName = qualifiedName.toString();
+    if (componentCount == 0) {
+      return null;
+    }
+    else if (componentCount == 1) {
+      PsiElement element = nameDefiner.getElementNamed(fullName);
+      if (element == null) {
+        element = PyBuiltinCache.getInstance(nameDefiner).getByName(fullName);
+      }
+      return element;
+    }
+    else {
+      final String name = qualifiedName.getLastComponent();
+      final PyQualifiedName containingQName = qualifiedName.removeLastComponent();
+      NameDefiner definer = nameDefiner;
+      for (String component : containingQName.getComponents()) {
+        PsiElement element = PyUtil.turnDirIntoInit(definer.getElementNamed(component));
+        if (element instanceof PyImportElement) {
+          element = ((PyImportElement)element).resolve();
+        }
+        if (element instanceof NameDefiner) {
+          definer = (NameDefiner)element;
+        }
+        else {
+          definer = null;
+          break;
+        }
+      }
+      if (definer != null) {
+        return definer.getElementNamed(name);
+      }
+      return null;
+    }
+  }
+
+  @Nullable
+  private static PyClassType classTypeFromQName(@NotNull PyQualifiedName qualifiedName, @NotNull PyFile containingFile,
+                                                @NotNull TypeEvalContext context) {
+    final PsiElement element = getElementQNamed(containingFile, qualifiedName);
+    if (element instanceof PyTypedElement) {
+      final PyType type = context.getType((PyTypedElement)element);
+      if (type instanceof PyClassType) {
+        return (PyClassType)type;
+      }
+    }
+    // TODO: PyUnknownClassType(element, qualifiedName)?
+    return null;
   }
 
   private static class AncestorsIterable implements Iterable<PyClassRef> {
