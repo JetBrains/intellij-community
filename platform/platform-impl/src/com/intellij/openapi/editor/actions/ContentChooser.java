@@ -26,13 +26,13 @@ import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.EditorFontType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.SplitterProportionsData;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
+import com.intellij.ui.speedSearch.ListWithFilter;
 import com.intellij.util.Alarm;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.Function;
 import com.intellij.util.ObjectUtils;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -74,7 +74,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     myUpdateAlarm = new Alarm(getDisposable());
     mySplitter = new JBSplitter(true, 0.3f);
     mySplitter.setSplitterProportionKey(getDimensionServiceKey() + ".splitter");
-      myList = new JBList();
+    myList = new JBList();
 
     setOKButtonText(CommonBundle.getOkButtonText());
     setTitle(title);
@@ -126,7 +126,8 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       public void keyReleased(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
           int newSelectionIndex = -1;
-          for (int i : getSelectedIndices()) {
+          for (Object o : myList.getSelectedValues()) {
+            int i = ((Item)o).index;
             removeContentAt(myAllContents.get(i));
             if (newSelectionIndex < 0) {
               newSelectionIndex = i;
@@ -134,7 +135,7 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
           }
           
           rebuildListContent();
-          if (myAllContents.size() <= 0) {
+          if (myAllContents.isEmpty()) {
             close(CANCEL_EXIT_CODE);
             return;
           }
@@ -156,7 +157,12 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
       }
     });
 
-    mySplitter.setFirstComponent(ScrollPaneFactory.createScrollPane(myList));
+    mySplitter.setFirstComponent(ListWithFilter.wrap(myList, ScrollPaneFactory.createScrollPane(myList), new Function<Object, String>() {
+      @Override
+      public String fun(Object o) {
+        return ((Item)o).longText;
+      }
+    }));
     mySplitter.setSecondComponent(new JPanel());
 
     ListScrollingUtil.installActions(myList);
@@ -181,8 +187,6 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
     d.externalizeToDimensionService(getClass().getName());
     d.restoreSplitterProportions(mySplitter);
 
-    new ListSpeedSearch(myList);
-
     return mySplitter;
   }
 
@@ -194,12 +198,8 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   }
 
   private void updateViewerForSelection() {
-    if (myAllContents.size() == 0) return;
-    String fullString = "";
-    for (int i : getSelectedIndices()) {
-      String s = getStringRepresentationFor(myAllContents.get(i));
-      fullString += StringUtil.convertLineSeparators(s);
-    }
+    if (myAllContents.isEmpty()) return;
+    String fullString = getSelectedText();
 
     if (myViewer != null) {
       EditorFactory.getInstance().releaseEditor(myViewer);
@@ -248,36 +248,38 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   }
 
   private void rebuildListContent() {
-    List<Data> allContents = new ArrayList<Data>(getContents());
-    ArrayList<String> shortened = new ArrayList<String>();
-    for (Data content : allContents) {
+    ArrayList<Item> items = new ArrayList<Item>();
+    int i = 0;
+    List<Data> contents = new ArrayList<Data>(getContents());
+    for (Data content : contents) {
       String fullString = getStringRepresentationFor(content);
       if (fullString != null) {
+        String shortString;
         fullString = StringUtil.convertLineSeparators(fullString);
         int newLineIdx = fullString.indexOf('\n');
         if (newLineIdx == -1) {
-          shortened.add(fullString.trim());
+          shortString = fullString.trim(); 
         }
         else {
           int lastLooked = 0;
           do  {
             int nextLineIdx = fullString.indexOf("\n", lastLooked);
             if (nextLineIdx > lastLooked) {
-              shortened.add(fullString.substring(lastLooked, nextLineIdx).trim() + " ...");
+              shortString = fullString.substring(lastLooked, nextLineIdx).trim() + " ...";
               break;
             }
             else if (nextLineIdx == -1) {
-              shortened.add(" ...");
+              shortString = " ...";
               break;
             }
             lastLooked = nextLineIdx + 1;
           } while (true);
         }
+        items.add(new Item(i ++, shortString, fullString));
       }
     }
-
-    myAllContents = allContents;
-    myList.setListData(ArrayUtil.toStringArray(shortened));
+    myAllContents = contents;
+    myList.setModel(new CollectionListModel<Item>(items));
   }
 
   protected abstract String getStringRepresentationFor(final Data content);
@@ -285,8 +287,8 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
   protected abstract List<Data> getContents();
 
   public int getSelectedIndex() {
-    if (myList.getSelectedIndex() == -1) return 0;
-    return myList.getSelectedIndex();
+    Object o = myList.getSelectedValue();
+    return o == null? 0 : ((Item)o).index;
   }
   
   public void setSelectedIndex(int index) {
@@ -297,7 +299,12 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   @NotNull
   public int[] getSelectedIndices() {
-    return myList.getSelectedIndices();
+    Object[] values = myList.getSelectedValues();
+    int[] result = new int[values.length];
+    for (int i = 0, length = values.length; i < length; i++) {
+      result[i] = ((Item)values[i]).index;
+    }
+    return result;
   }
 
   public List<Data> getAllContents() {
@@ -306,12 +313,12 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
 
   @NotNull
   public String getSelectedText() {
-    String result = "";
-    for (int i : getSelectedIndices()) {
-      String s = getStringRepresentationFor(myAllContents.get(i));
-      result += StringUtil.convertLineSeparators(s);
+    StringBuilder sb = new StringBuilder();
+    for (Object o : myList.getSelectedValues()) {
+      String s = ((Item)o).longText;
+      sb.append(StringUtil.convertLineSeparators(s));
     }
-    return result;
+    return sb.toString();
   }
   
   private class MyListCellRenderer extends ColoredListCellRenderer {
@@ -332,13 +339,25 @@ public abstract class ContentChooser<Data> extends DialogWrapper {
         Color background = selected ? UIUtil.getListSelectionBackground() : UIUtil.getListBackground();
         UIUtil.changeBackGround(this, background);
       }
-      String text = (String)value;
+      String text = ((Item)value).shortText;
 
       FontMetrics metrics = list.getFontMetrics(list.getFont());
       int charWidth = metrics.charWidth('m');
       int maxLength = list.getParent().getParent().getWidth() * 3 / charWidth / 2;
       text = StringUtil.first(text, maxLength, true); // do not paint long strings
       append(text, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
+  }
+  
+  private static class Item {
+    final int index;
+    final String shortText;
+    final String longText;
+
+    private Item(int index, String shortText, String longText) {
+      this.index = index;
+      this.shortText = shortText;
+      this.longText = longText;
     }
   }
 }
