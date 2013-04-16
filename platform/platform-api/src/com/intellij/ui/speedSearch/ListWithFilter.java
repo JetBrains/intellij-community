@@ -127,6 +127,10 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     return hadPattern;
   }
 
+  public SpeedSearch getSpeedSearch() {
+    return mySpeedSearch;
+  }
+
   private class MySpeedSearch extends SpeedSearch {
     boolean searchFieldShown = false;
 
