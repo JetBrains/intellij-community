@@ -1,6 +1,7 @@
 package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.CommonClassNames;
@@ -18,6 +19,7 @@ import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Calendar;
 import java.util.Collection;
 
 /**
@@ -394,6 +396,16 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
 
   public void testMethodReferenceExpr() throws Exception {
     doTest(new MockIntroduceVariableHandler("m", false, false, false, "Foo.I"));
+  }
+
+  @Bombed(month = Calendar.APRIL, day = 22, user = "Roman")
+  public void testReturnNonExportedArray() throws Exception {
+    doTest(new MockIntroduceVariableHandler("i", false, false, false, "java.io.File[]") {
+      @Override
+      protected boolean isInplaceAvailableInTestMode() {
+        return true;
+      }
+    });
   }
 
   private void doTest(IntroduceVariableBase testMe) throws Exception {
