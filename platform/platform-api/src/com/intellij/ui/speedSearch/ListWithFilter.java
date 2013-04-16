@@ -156,9 +156,10 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
   }
 
   protected void onSpeedSearchPatternChanged() {
+    T prevSelection = (T)myList.getSelectedValue(); // save to restore the selection on filter drop
     myModel.refilter();
     if (myModel.getSize() > 0) {
-      int fullMatchIndex = myModel.getClosestMatchIndex();
+      int fullMatchIndex = mySpeedSearch.isHoldingFilter() ? myModel.getClosestMatchIndex() : myModel.getElementIndex(prevSelection);
       if (fullMatchIndex != -1) {
         myList.setSelectedIndex(fullMatchIndex);
       }
