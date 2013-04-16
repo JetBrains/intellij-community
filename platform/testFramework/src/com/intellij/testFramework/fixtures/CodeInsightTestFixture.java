@@ -329,14 +329,31 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   List<IntentionAction> getAvailableIntentions();
 
   /**
-   * Returns all intentions whose text contains hint
-   * @param hint
-   * @return
+   * Returns all intentions or quickfixes which are available at the current caret position and whose text starts with the specified hint text.
+   *
+   * @param hint the text that the intention text should begin with.
+   * @return the list of matching intentions
    */
   List<IntentionAction> filterAvailableIntentions(@NotNull String hint);
 
+  /**
+   * Returns a single intention or quickfix which is available at the current caret position and whose text starts with the specified
+   * hint text. Throws an assertion if no such intentions are found or if multiple intentions match the hint text.
+   *
+   * @param hint the text that the intention text should begin with.
+   * @return the list of matching intentions
+   */
   IntentionAction findSingleIntention(@NotNull String hint);
 
+  /**
+   * Copies multiple files from the testdata directory to the same relative paths in the test project directory, opens the first of them
+   * in the in-memory editor and returns an intention action or quickfix with the name exactly matching the specified text.
+   *
+   * @param intentionName the text that the intention text should be equal to.
+   * @param filePaths the list of file path to copy to the test project directory.
+   * @return the first found intention or quickfix, or null if no matching intention actions are found.
+   */
+  @Nullable
   IntentionAction getAvailableIntention(final String intentionName, final String... filePaths);
 
   /**
