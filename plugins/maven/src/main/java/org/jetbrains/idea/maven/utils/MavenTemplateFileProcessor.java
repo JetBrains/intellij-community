@@ -51,11 +51,11 @@ public class MavenTemplateFileProcessor extends ProjectTemplateFileProcessor {
           String text = psiFile.getText();
           XmlElement element = model.getName().getXmlElement();
           if (element instanceof XmlTag) {
-            text = ((XmlTag)element).getValue().getTextRange().replace(text, "${" + ProjectTemplateParameterFactory.IJ_PROJECT_NAME + "}");
+            text = ((XmlTag)element).getValue().getTextRange().replace(text, wrap(ProjectTemplateParameterFactory.IJ_PROJECT_NAME));
           }
           element = model.getArtifactId().getXmlElement();
           if (element instanceof XmlTag) {
-            text = ((XmlTag)element).getValue().getTextRange().replace(text, "${" + ProjectTemplateParameterFactory.IJ_PROJECT_NAME + "}");
+            text = ((XmlTag)element).getValue().getTextRange().replace(text, wrap(ProjectTemplateParameterFactory.IJ_PROJECT_NAME));
           }
           return text;
         }
