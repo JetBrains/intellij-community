@@ -76,7 +76,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     addDefaultSchemes();
 
     // Load default schemes from providers
-    if (!ApplicationManager.getApplication().isUnitTestMode()) {
+    if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
       loadSchemesFromBeans();
     }
 
