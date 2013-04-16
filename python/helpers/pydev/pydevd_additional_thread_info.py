@@ -143,4 +143,6 @@ else:
     except:
         #If all fails, let's use the support without frames
         PyDBAdditionalThreadInfo = PyDBAdditionalThreadInfoWithoutCurrentFramesSupport
-    
+
+        sys.stderr.write("pydev debugger: warning: sys._current_frames is not supported in Python 2.4, it is recommended to install threadframe module\n")
+        sys.stderr.write("pydev debugger: warning: See http://majid.info/blog/threadframe-multithreaded-stack-frame-extraction-for-python/\n")
