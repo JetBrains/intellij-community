@@ -183,7 +183,6 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
         // create project-level libraries
         for (ProjectDescriptor projectDescriptor : getSelectedDescriptors()) {
           for (LibraryDescriptor lib : projectDescriptor.getLibraries()) {
-            if (lib.getLevel() == LibraryDescriptor.Level.PROJECT) {
               final Collection<File> files = lib.getJars();
               final Library projectLib = projectLibraryTable.createLibrary(lib.getName());
               final Library.ModifiableModel libraryModel = projectLib.getModifiableModel();
@@ -192,7 +191,6 @@ public class ProjectFromSourcesBuilderImpl extends ProjectImportBuilder implemen
               }
               libraryModel.commit();
               projectLibs.put(lib, projectLib);
-            }
           }
         }
         if (!fromProjectStructure) {
