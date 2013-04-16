@@ -297,8 +297,6 @@ public class MavenProjectImporter {
     final int[] result = new int[1];
     MavenUtil.invokeAndWait(myProject, myModelsProvider.getModalityStateForQuestionDialogs(), new Runnable() {
       public void run() {
-        if (ApplicationManager.getApplication().isUnitTestMode()) return;
-
         result[0] = Messages.showYesNoDialog(myProject,
                                              ProjectBundle.message("maven.import.message.delete.obsolete", formatModules(obsoleteModules)),
                                              ProjectBundle.message("maven.project.import.title"),

@@ -2287,6 +2287,8 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
     assertModules("project", "m1", "m2");
     assertModuleModuleDeps("m1", "m2");
 
+    configConfirmationForYesAnswer();
+
     myProjectsManager.setIgnoredFilesPaths(Collections.singletonList(m2.getPath()));
     myProjectsManager.forceUpdateProjects(myProjectsManager.getProjects());
     importProject();
