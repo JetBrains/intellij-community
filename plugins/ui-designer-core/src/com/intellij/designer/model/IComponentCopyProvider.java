@@ -25,5 +25,5 @@ import java.util.List;
 public interface IComponentCopyProvider {
   boolean isCopyEnabled(List<RadComponent> components);
 
-  void copyTo(Element parentElement, List<RadComponent> components) throws Exception;
+  void copyTo(Element element, List<RadComponent> components) throws Exception;
 }
