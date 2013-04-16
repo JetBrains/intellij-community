@@ -16,7 +16,6 @@
 package com.intellij.openapi.options.newEditor;
 
 import com.intellij.CommonBundle;
-import com.intellij.ide.IdeBundle;
 import com.intellij.ide.ui.search.SearchUtil;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.DataProvider;
@@ -68,7 +67,7 @@ public class OptionsEditorDialog extends DialogWrapper implements DataProvider{
     myGroups = groups;
     myPreselected = preselected;
 
-    setTitle(IdeBundle.settingsTitle());
+    setTitle(CommonBundle.settingsTitle());
 
     init();
   }

@@ -15,8 +15,8 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.CommonBundle;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
@@ -34,7 +34,7 @@ import javax.swing.*;
 
 public class ShowSettingsAction extends AnAction implements DumbAware {
   public ShowSettingsAction() {
-    super(IdeBundle.settingsAction(), IdeBundle.settingsActionDescription(), AllIcons.General.Settings);
+    super(CommonBundle.settingsAction(), CommonBundle.settingsActionDescription(), AllIcons.General.Settings);
   }
 
   @Override
@@ -44,7 +44,7 @@ public class ShowSettingsAction extends AnAction implements DumbAware {
       e.getPresentation().setVisible(false);
     }
     if (e.getPlace().equals(ActionPlaces.WELCOME_SCREEN)) {
-      e.getPresentation().setText(IdeBundle.settingsTitle());
+      e.getPresentation().setText(CommonBundle.settingsTitle());
     }
   }
 
