@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -40,6 +40,8 @@ public class JBColor extends Color {
   public JBColor(Color regular, Color dark) {
     super(regular.getRGB(), regular.getAlpha() != 255);
     darkColor = dark;
+    //noinspection AssignmentToStaticFieldFromInstanceMethod
+    DARK = UIUtil.isUnderDarcula(); //Double check. Sometimes DARK != isDarcula() after dialogs appear on splash screen
   }
 
   public static void setDark(boolean dark) {
