@@ -298,28 +298,6 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
   @Override
   public void initComponent() {
-    try {
-      final boolean forceClean = Boolean.TRUE == ourForcedClean.getAndSet(Boolean.FALSE);
-
-      final StubIndexExtension<?, ?>[] extensions = Extensions.getExtensions(StubIndexExtension.EP_NAME);
-      boolean needRebuild = false;
-      for (StubIndexExtension extension : extensions) {
-        //noinspection unchecked
-        needRebuild |= registerIndexer(extension, forceClean);
-      }
-      if (needRebuild) {
-        if (ApplicationManager.getApplication().isUnitTestMode()) {
-          requestRebuild();
-        }
-        else {
-          forceRebuild(new Throwable());
-        }
-      }
-      dropUnregisteredIndices();
-    }
-    catch (IOException e) {
-      throw new RuntimeException(e);
-    }
   }
 
   @Override
