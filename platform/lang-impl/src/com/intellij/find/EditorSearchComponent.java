@@ -41,10 +41,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.LightColors;
-import com.intellij.ui.SearchTextField;
-import com.intellij.ui.TextComponentUndoProvider;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -90,19 +87,22 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     return mySearchField;
   }
 
-  private JSplitPane mySplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+  private JBSplitter mySplitPane = new JBSplitter(false);
   private JPanel myLeftComponent = new JPanel(new BorderLayout());
   private JPanel myRightComponent = new JPanel(new BorderLayout());
 
   {
-    mySplitPane.setOpaque(false);
     mySplitPane.setBorder(IdeBorderFactory.createEmptyBorder(1, 0, 2, 0));
-    mySplitPane.setContinuousLayout(true);
+    mySplitPane.setHonorComponentsMinimumSize(true);
+    mySplitPane.setProportion(0.25f);
+    mySplitPane.setAndLoadSplitterProportionKey("FindSplitterProportion");
+    mySplitPane.setOpaque(false);
+    mySplitPane.getDivider().setOpaque(false);
     myLeftComponent.setOpaque(false);
     myRightComponent.setOpaque(false);
 
-    mySplitPane.setLeftComponent(myLeftComponent);
-    mySplitPane.setRightComponent(myRightComponent);
+    mySplitPane.setFirstComponent(myLeftComponent);
+    mySplitPane.setSecondComponent(myRightComponent);
     add(mySplitPane, BorderLayout.NORTH);
   }
 
