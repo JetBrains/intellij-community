@@ -133,13 +133,11 @@ public class JavaTreeGenerator implements TreeGenerator {
 
       String text = type.getPresentableText();
       PsiJavaParserFacade parserFacade = JavaPsiFacade.getInstance(original.getProject()).getParserFacade();
-      TreeElement element = (TreeElement)parserFacade.createTypeElementFromText(text, original).getNode();
+      PsiTypeElement element = parserFacade.createTypeElementFromText(text, original);
 
-      PsiTypeElementImpl result = (PsiTypeElementImpl)element.getPsi();
+      TreeElement result = (TreeElement)element.getNode();
       markGeneratedIfNeeded(original, result);
-      if (type instanceof PsiClassType) {
-        encodeInfoInTypeElement(result, type);
-      }
+      encodeInfoInTypeElement(result, type);
       return result;
     }
 
@@ -195,8 +193,7 @@ public class JavaTreeGenerator implements TreeGenerator {
     else if (type instanceof PsiIntersectionType) {
       encodeInfoInTypeElement(typeElement, ((PsiIntersectionType)type).getRepresentative());
     }
-    else {
-      LOG.assertTrue(type instanceof PsiClassType);
+    else if (type instanceof PsiClassType) {
       final PsiClassType classType = (PsiClassType)type;
       final PsiClassType.ClassResolveResult resolveResult = classType.resolveGenerics();
       PsiClass referencedClass = resolveResult.getElement();
