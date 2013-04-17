@@ -17,7 +17,6 @@ package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.LogUtil;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
-import com.intellij.util.containers.PrefixStringInterner;
 import com.intellij.util.containers.RecentStringInterner;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -142,18 +141,22 @@ public class StubSerializationHelper {
   private static class FileLocalStringEnumerator implements AbstractStringEnumerator {
     private final TObjectIntHashMap<String> myEnumerates = new TObjectIntHashMap<String>();
     private final ArrayList<String> myStrings = new ArrayList<String>();
-    PrefixStringInterner interner = new PrefixStringInterner();
 
     @Override
     public int enumerate(@Nullable String value) throws IOException {
       if (value == null) return 0;
-      return interner.intern(value);
+      int i = myEnumerates.get(value);
+      if (i == 0) {
+        myEnumerates.put(value, i = myStrings.size() + 1);
+        myStrings.add(value);
+      }
+      return i;
     }
 
     @Override
     public String valueOf(int idx) throws IOException {
       if (idx == 0) return null;
-      return interner.getKeyById(idx);
+      return myStrings.get(idx - 1);
     }
 
     @Override
