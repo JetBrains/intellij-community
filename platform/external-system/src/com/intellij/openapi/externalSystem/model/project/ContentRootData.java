@@ -2,10 +2,6 @@ package com.intellij.openapi.externalSystem.model.project;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-<<<<<<< HEAD
-import com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys;
-=======
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.id.ContentRootId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
@@ -68,7 +64,7 @@ public class ContentRootData extends AbstractProjectEntityData {
 
   /**
    * Ask to remember that directory at the given path contains sources of the given type.
-   * 
+   *
    * @param type  target sources type
    * @param path  target source directory path
    * @throws IllegalArgumentException   if given path points to the directory that is not located
@@ -84,20 +80,20 @@ public class ContentRootData extends AbstractProjectEntityData {
       return;
     }
     if (!ExternalSystemSourceType.EXCLUDED.equals(type)) { // There are external systems which mark output directory as 'excluded' path.
-                                                           // We don't need to bother if it's outside a module content root then.
+      // We don't need to bother if it's outside a module content root then.
       throw new IllegalArgumentException(String.format(
         "Can't register given path of type '%s' because it's out of content root.%nContent root: '%s'%nGiven path: '%s'",
         type, getRootPath(), new File(path).getAbsolutePath()
       ));
     }
   }
-  
+
   @NotNull
   public String getRootPath() {
     return myRootPath;
   }
 
-  
+
 
   @Override
   public String toString() {

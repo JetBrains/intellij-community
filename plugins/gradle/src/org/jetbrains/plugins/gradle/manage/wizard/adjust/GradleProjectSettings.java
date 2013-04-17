@@ -17,13 +17,6 @@ import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-import org.jetbrains.plugins.gradle.util.GradleUtil;
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
-=======
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
 import javax.swing.*;
 import java.awt.*;
@@ -37,7 +30,7 @@ import java.util.Map;
 
 /**
  * Manages settings of {@link ProjectData gradle project} component.
- * 
+ *
  * @author Denis Zhdanov
  * @since 8/12/11 2:58 PM
  */
@@ -90,7 +83,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
 //    builder.add("gradle.import.structure.settings.label.language.level", result);
     return result;
   }
-  
+
   private void filterSdksByLanguageLevel() {
     Object selectedItem = mySdkModel.getSelectedItem();
     mySdkModel.removeAllElements();
@@ -125,7 +118,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
       mySdkModel.setSelectedItem(selectedItem);
     }
   }
-  
+
   private void setupSdkControls(@NotNull ComboBoxModel model, @NotNull GradleProjectSettingsBuilder builder) {
     // Configure SDK combo box with all jdk versions.
     final JComboBox sdkComboBox = new JComboBox(model);
@@ -146,7 +139,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
     // TODO den implement
 //    builder.add("gradle.import.structure.settings.label.sdk", sdkComboBox);
   }
-  
+
   @NotNull
   private TextFieldWithBrowseButton setupProjectConfigLocation(@NotNull GradleProjectSettingsBuilder builder) {
     TextFieldWithBrowseButton result = new TextFieldWithBrowseButton();
@@ -224,7 +217,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
     // TODO den implement
 //    builder.add("gradle.import.structure.settings.label.iml.location", panel);
   }
-  
+
   @Override
   public boolean validate() {
     // TODO den implement
@@ -241,7 +234,7 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
 //      return false;
 //    }
 //    myProject.setCompileOutputPath(myProjectCompileOutputLocationField.getText());
-    
+
     return true;
   }
 

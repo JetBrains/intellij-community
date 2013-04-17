@@ -31,14 +31,14 @@ import java.util.*;
  * enhance any project. For example, particular framework can add facet settings as one more 'project' node's child.
  * <p/>
  * Not thread-safe.
- * 
+ *
  * @author Denis Zhdanov
  * @since 4/12/13 11:53 AM
  */
 public class DataNode<T> implements Serializable {
 
   private static final long serialVersionUID = 1L;
-  
+
   @NotNull private final List<DataNode<?>> myChildren = ContainerUtilRt.newArrayList();
 
   @NotNull private final Key<T> myKey;
@@ -51,10 +51,7 @@ public class DataNode<T> implements Serializable {
     myData = data;
     myParent = parent;
   }
-<<<<<<< HEAD
-=======
 
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   @NotNull
   public <T> DataNode<T> createChild(@NotNull Key<T> key, @NotNull T data) {
     DataNode<T> result = new DataNode<T>(key, data, this);

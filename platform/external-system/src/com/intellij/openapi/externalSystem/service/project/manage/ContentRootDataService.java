@@ -3,10 +3,6 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/ContentRootDataService.java
-import com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys;
-=======
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/ContentRootDataManager.java
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData;
@@ -30,7 +26,7 @@ import java.util.Map;
 
 /**
  * Thread-safe.
- * 
+ *
  * @author Denis Zhdanov
  * @since 2/7/12 3:20 PM
  */
@@ -59,15 +55,7 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
       return;
     }
 
-<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/ContentRootDataService.java
-<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/ContentRootDataService.java
     Map<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> byModule
-=======
-    Map<DataNode<ModuleData>,Collection<DataNode<ContentRootData>>> byModule
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/ContentRootDataManager.java
-=======
-    Map<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> byModule
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/ContentRootDataService.java
       = ExternalSystemUtil.groupBy(toImport, ProjectKeys.MODULE);
     for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
       final Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
@@ -127,7 +115,7 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
       }
     });
   }
-  
+
   @Override
   public void removeData(@NotNull Collection<DataNode<ContentRootData>> toRemove, @NotNull Project project, boolean synchronous) {
     if (toRemove.isEmpty()) {

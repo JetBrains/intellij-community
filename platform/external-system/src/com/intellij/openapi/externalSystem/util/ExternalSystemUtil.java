@@ -33,7 +33,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectEntityData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.project.ModuleAwareContentRoot;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectEntityChangeListener;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
@@ -123,9 +122,7 @@ public class ExternalSystemUtil {
         toCheck.add(clazz.getSuperclass());
         Class<?>[] interfaces = clazz.getInterfaces();
         if (interfaces != null) {
-          for (Class<?> interfaceClass : interfaces) {
-            toCheck.add(interfaceClass);
-          }
+          Collections.addAll(toCheck, interfaces);
         }
       }
       return ExternalSystemConstants.UNORDERED;
@@ -390,7 +387,7 @@ public class ExternalSystemUtil {
 
   /**
    * Configures given classpath to reference target i18n bundle file(s).
-   * 
+   *
    * @param classPath     process classpath
    * @param bundlePath    path to the target bundle file
    * @param contextClass  class from the same content root as the target bundle file
@@ -445,12 +442,8 @@ public class ExternalSystemUtil {
     }
     return result;
   }
-  
-  @NotNull
-<<<<<<< HEAD
 
-=======
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+  @NotNull
   public static <K, V> Map<DataNode<K>, Collection<DataNode<V>>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull Key<K> key) {
     Map<DataNode<K>, Collection<DataNode<V>>> result = ContainerUtilRt.newHashMap();
     for (DataNode<V> data : nodes) {
@@ -470,7 +463,7 @@ public class ExternalSystemUtil {
     }
     return result;
   }
-  
+
   @SuppressWarnings("unchecked")
   @NotNull
   public static <T> Collection<DataNode<T>> getChildren(@NotNull DataNode<?> node, @NotNull Key<T> key) {
@@ -497,7 +490,7 @@ public class ExternalSystemUtil {
     }
     return null;
   }
-  
+
   @SuppressWarnings("unchecked")
   @Nullable
   public static <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key, BooleanFunction<DataNode<T>> predicate) {
@@ -524,10 +517,6 @@ public class ExternalSystemUtil {
     }
     return result == null ? Collections.<DataNode<T>>emptyList() : result;
   }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
   @NotNull
   public static String toReadableName(@NotNull ProjectSystemId id) {
@@ -697,9 +686,4 @@ public class ExternalSystemUtil {
   public static void orderAwareSort(@NotNull List<?> data) {
     Collections.sort(data, ORDER_AWARE_COMPARATOR);
   }
-<<<<<<< HEAD
-=======
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
-=======
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 }

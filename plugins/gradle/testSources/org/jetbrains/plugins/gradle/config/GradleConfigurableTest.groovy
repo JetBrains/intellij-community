@@ -36,8 +36,9 @@ public class GradleConfigurableTest {
     ]
     projectImpl = [:]
     project = projectImpl as Project
-
-    configurable = new AbstractExternalProjectConfigurable(project, helper as AbstractExternalProjectConfigurable.Helper)
+    
+    // TODO den uncomment
+    //configurable = new AbstractExternalProjectConfigurable(project, helper as AbstractExternalProjectConfigurable.Helper)
   }
   
   // TODO den remove

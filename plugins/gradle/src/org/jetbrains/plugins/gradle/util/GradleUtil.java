@@ -1,32 +1,24 @@
 package org.jetbrains.plugins.gradle.util;
 
-import com.intellij.execution.rmi.RemoteUtil;
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.openapi.externalSystem.model.project.ProjectData;
+import com.intellij.openapi.externalSystem.model.project.id.GradleSyntheticId;
 import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
+import com.intellij.openapi.externalSystem.ui.ExternalProjectStructureTreeModel;
 import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNodeDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
-import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.treeStructure.Tree;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.internal.task.ExternalSystemRefreshTasksListTask;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemResolveProjectTask;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
-import com.intellij.openapi.externalSystem.model.project.id.GradleSyntheticId;
-import com.intellij.openapi.externalSystem.ui.ExternalProjectStructureTreeModel;
-import com.intellij.openapi.externalSystem.ui.ProjectStructureNodeDescriptor;
 import org.jetbrains.plugins.gradle.ui.MatrixControlBuilder;
 
 import javax.swing.*;
@@ -40,7 +32,7 @@ import java.util.regex.Pattern;
 
 /**
  * Holds miscellaneous utility methods.
- * 
+ *
  * @author Denis Zhdanov
  * @since 8/25/11 1:19 PM
  */
@@ -164,166 +156,23 @@ public class GradleUtil {
     return null;
   }
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
-  /**
-   * Delegates to the {@link #refreshProject(Project, String, Ref, Ref, boolean, boolean)} with the following defaults:
-   * <pre>
-   * <ul>
-   *   <li>target gradle project path is retrieved from the {@link GradleSettings gradle settings} associated with the given project;</li>
-   *   <li>refresh process is run in background;</li>
-   *   <li>any problem occurred during the refresh is reported to the {@link GradleLog#LOG};</li>
-   * </ul>
-   * </pre>
-   *
-   * @param project  target intellij project to use
-   */
-  public static void refreshProject(@NotNull Project project) {
-    refreshProject(project, new Ref<String>());
-  }
-
-  public static void refreshProject(@NotNull Project project, @NotNull final Consumer<String> errorCallback) {
-    final Ref<String> errorMessageHolder = new Ref<String>() {
-      @Override
-      public void set(@Nullable String value) {
-        if (value != null) {
-          errorCallback.consume(value);
-        }
-      }
-    };
-    refreshProject(project, errorMessageHolder);
-  }
-  
-  public static void refreshProject(@NotNull Project project, @NotNull final Ref<String> errorMessageHolder) {
-    final GradleSettings settings = GradleSettings.getInstance(project);
-    final String linkedProjectPath = settings.getLinkedProjectPath();
-    if (StringUtil.isEmpty(linkedProjectPath)) {
-      return;
-    }
-    assert linkedProjectPath != null;
-    Ref<String> errorDetailsHolder = new Ref<String>() {
-      @Override
-      public void set(@Nullable String error) {
-        if (!StringUtil.isEmpty(error)) {
-          assert error != null;
-          GradleLog.LOG.warn(error);
-        }
-      }
-    };
-    refreshProject(project, linkedProjectPath, errorMessageHolder, errorDetailsHolder, true, false);
-  }
-
-  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
-  @Nullable
-  private static String extractDetails(@NotNull Throwable e) {
-    final Throwable unwrapped = RemoteUtil.unwrap(e);
-    if (unwrapped instanceof ExternalSystemException) {
-      return ((ExternalSystemException)unwrapped).getOriginalReason();
-    }
-    return null;
-  }
-  
-  /**
-   * Queries slave gradle process to refresh target gradle project.
-   * 
-   * @param project            target intellij project to use
-   * @param gradleProjectPath  path of the target gradle project's file
-   * @param errorMessageHolder holder for the error message that describes a problem occurred during the refresh (if any)
-   * @param errorDetailsHolder holder for the error details of the problem occurred during the refresh (if any)
-   * @param resolveLibraries   flag that identifies whether gradle libraries should be resolved during the refresh
-   * @return                   the most up-to-date gradle project (if any)
-   */
-  @Nullable
-  public static ProjectData refreshProject(@NotNull final Project project,
-                                             @NotNull final String gradleProjectPath,
-                                             @NotNull final Ref<String> errorMessageHolder,
-                                             @NotNull final Ref<String> errorDetailsHolder,
-                                             final boolean resolveLibraries,
-                                             final boolean modal)
-  {
-    final Ref<ProjectData> gradleProject = new Ref<ProjectData>();
-    final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
-      @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
-      @Override
-      public void execute(@NotNull ProgressIndicator indicator) {
-        GradleResolveProjectTask task = new GradleResolveProjectTask(project, gradleProjectPath, resolveLibraries);
-        task.execute(indicator);
-        gradleProject.set(task.getGradleProject());
-        final Throwable error = task.getError();
-        if (error == null) {
-          return;
-        }
-        // TODO den implement
-//        final String message = buildErrorMessage(error);
-//        if (StringUtil.isEmpty(message)) {
-//          errorMessageHolder.set(String.format("Can't resolve gradle project at '%s'. Reason: %s", gradleProjectPath, message));
-//        }
-//        else {
-//          errorMessageHolder.set(message);
-//        }
-//        errorDetailsHolder.set(extractDetails(error));
-      }
-    };
-    
-    final TaskUnderProgress refreshTasksTask = new TaskUnderProgress() {
-      @Override
-      public void execute(@NotNull ProgressIndicator indicator) {
-        final GradleRefreshTasksListTask task = new GradleRefreshTasksListTask(project, gradleProjectPath);
-        task.execute(indicator);
-      }
-    };
-    
-    // TODO den implement
-//    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
-//      @Override
-//      public void run() {
-//        if (modal) {
-//          ProgressManager.getInstance().run(new Task.Modal(project, ExternalSystemBundle.message("gradle.import.progress.text"), false) {
-//            @Override
-//            public void run(@NotNull ProgressIndicator indicator) {
-//              refreshProjectStructureTask.execute(indicator);
-//              setTitle(ExternalSystemBundle.message("gradle.task.progress.initial.text"));
-//              refreshTasksTask.execute(indicator);
-//            }
-//          });
-//        }
-//        else {
-//          ProgressManager.getInstance().run(new Task.Backgroundable(project, ExternalSystemBundle
-//            .message("gradle.sync.progress.initial.text")) {
-//            @Override
-//            public void run(@NotNull ProgressIndicator indicator) {
-//              refreshProjectStructureTask.execute(indicator);
-//              setTitle(ExternalSystemBundle.message("gradle.task.progress.initial.text"));
-//              refreshTasksTask.execute(indicator);
-//            }
-//          });
-//        }
-//      }
-//    });
-    return gradleProject.get();
-  }
-  
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
-=======
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   @NotNull
   public static <T extends ProjectEntityId> ProjectStructureNodeDescriptor<T> buildDescriptor(@NotNull T id, @NotNull String name) {
     return new ProjectStructureNodeDescriptor<T>(id, name, id.getType().getIcon());
   }
-  
+
   @NotNull
   public static ProjectStructureNodeDescriptor<GradleSyntheticId> buildSyntheticDescriptor(@NotNull String text) {
     return buildSyntheticDescriptor(text, null);
   }
-  
+
   public static ProjectStructureNodeDescriptor<GradleSyntheticId> buildSyntheticDescriptor(@NotNull String text, @Nullable Icon icon) {
     return new ProjectStructureNodeDescriptor<GradleSyntheticId>(new GradleSyntheticId(text), text, icon);
   }
 
   /**
    * Tries to calculate the position to use for showing hint for the given node of the given tree.
-   * 
+   *
    * @param node  target node for which a hint should be shown
    * @param tree  target tree that contains given node
    * @return      preferred hint position (in coordinates relative to the given tree) if it's possible to calculate the one;
@@ -355,7 +204,7 @@ public class GradleUtil {
     return null;
 //    return getToolWindowElement(ExternalProjectStructureTreeModel.class, context, ExternalSystemDataKeys.PROJECT_TREE_MODEL);
   }
-  
+
   /**
    * @return    {@link MatrixControlBuilder} with predefined set of columns ('gradle' and 'intellij')
    */
@@ -368,7 +217,7 @@ public class GradleUtil {
 //    final String intellij = ExternalSystemBundle.message("gradle.ide");
     return new MatrixControlBuilder(gradle, intellij);
   }
-  
+
   public static boolean isGradleAvailable(@Nullable Project project) {
     if (project != null) {
       GradleSettings settings = GradleSettings.getInstance(project);

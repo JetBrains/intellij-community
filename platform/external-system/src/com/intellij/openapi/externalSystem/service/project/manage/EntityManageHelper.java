@@ -45,10 +45,6 @@ import java.util.Set;
 public class EntityManageHelper {
 
   @NotNull private final ProjectStructureHelper       myProjectStructureHelper;
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   @NotNull private final ProjectDataServiceImpl       myProjectManager;
   @NotNull private final ModuleDataService            myModuleManager;
   @NotNull private final LibraryDataService           myLibraryManager;
@@ -56,7 +52,6 @@ public class EntityManageHelper {
   @NotNull private final LibraryDependencyDataService myLibraryDependencyManager;
   @NotNull private final ModuleDependencyDataService  myModuleDependencyManager;
   @NotNull private final ContentRootDataService       myContentRootManager;
-<<<<<<< HEAD
 
   public EntityManageHelper(@NotNull ProjectStructureHelper helper,
                             @NotNull ProjectDataServiceImpl projectManager,
@@ -66,35 +61,6 @@ public class EntityManageHelper {
                             @NotNull LibraryDependencyDataService libraryDependencyManager,
                             @NotNull ModuleDependencyDataService moduleDependencyManager,
                             @NotNull ContentRootDataService contentRootManager)
-=======
-  @NotNull private final ProjectDataManagerImpl       myProjectManager;
-  @NotNull private final ModuleDataManager            myModuleManager;
-  @NotNull private final LibraryDataManager           myLibraryManager;
-  @NotNull private final JarDataManager               myJarManager;
-  @NotNull private final LibraryDependencyDataManager myLibraryDependencyManager;
-  @NotNull private final ModuleDependencyDataManager  myModuleDependencyManager;
-  @NotNull private final ContentRootDataManager       myContentRootManager;
-
-  public EntityManageHelper(@NotNull ProjectStructureHelper helper,
-                            @NotNull ProjectDataManagerImpl projectManager,
-                            @NotNull ModuleDataManager moduleManager,
-                            @NotNull LibraryDataManager libraryManager,
-                            @NotNull JarDataManager jarManager,
-                            @NotNull LibraryDependencyDataManager libraryDependencyManager,
-                            @NotNull ModuleDependencyDataManager moduleDependencyManager,
-                            @NotNull ContentRootDataManager contentRootManager)
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
-=======
-
-  public EntityManageHelper(@NotNull ProjectStructureHelper helper,
-                            @NotNull ProjectDataServiceImpl projectManager,
-                            @NotNull ModuleDataService moduleManager,
-                            @NotNull LibraryDataService libraryManager,
-                            @NotNull JarDataService jarManager,
-                            @NotNull LibraryDependencyDataService libraryDependencyManager,
-                            @NotNull ModuleDependencyDataService moduleDependencyManager,
-                            @NotNull ContentRootDataService contentRootManager)
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   {
     myProjectStructureHelper = helper;
     myProjectManager = projectManager;
@@ -152,7 +118,7 @@ public class EntityManageHelper {
 //        d.add(dependency);
 //      }
 //    };
-    
+
     // Sort entities.
     // TODO den implement
 //    for (ProjectEntityData entity : entities) {
@@ -174,7 +140,7 @@ public class EntityManageHelper {
 //      }
 //    }
   }
-  
+
   public void removeEntities(@NotNull Project project, @NotNull Collection<Object> entities, boolean synchronous) {
     final List<Module> modules = ContainerUtilRt.newArrayList();
     final List<ModuleAwareContentRoot> contentRoots = ContainerUtilRt.newArrayList();
@@ -239,11 +205,11 @@ public class EntityManageHelper {
   // Don't auto-apply language level change because we can't correctly process language level change manually made
   // by a user - there is crazy processing related to project reloading after language level change and there is just
   // no normal way to inject there.
-  
+
 //  private static void processLanguageLevelChange(@NotNull GradleLanguageLevelChange change, @NotNull EliminateChangesContext context) {
 //    context.projectManager.setLanguageLevel(change.getGradleValue(), context.projectStructureHelper.getProject(), context.synchronous);
 //  }
-  
+
   private static void processModulePresenceChange(@NotNull ModulePresenceChange change, @NotNull EliminateChangesContext context) {
     ModuleId id = change.getExternalEntity();
     if (id == null) {
@@ -291,7 +257,7 @@ public class EntityManageHelper {
     }
     context.nonProcessedChanges.add(change);
   }
-  
+
   private static void processLibraryDependencyPresenceChange(@NotNull LibraryDependencyPresenceChange change,
                                                              @NotNull EliminateChangesContext context)
   {
@@ -319,7 +285,7 @@ public class EntityManageHelper {
     }
     context.nonProcessedChanges.add(change);
   }
-  
+
   private static void processJarPresenceChange(@NotNull JarPresenceChange change, @NotNull EliminateChangesContext context) {
     JarId id = change.getExternalEntity();
     if (id == null) {
@@ -369,7 +335,7 @@ public class EntityManageHelper {
     }
     context.nonProcessedChanges.add(change);
   }
-  
+
   private static void processDependencyScopeChange(@NotNull DependencyScopeChange change, @NotNull EliminateChangesContext context) {
     ExportableOrderEntry dependency = findDependency(change, context);
     if (dependency == null) {
@@ -433,7 +399,7 @@ public class EntityManageHelper {
     }
     return dependency;
   }
-  
+
   private static class EliminateChangesContext {
     @NotNull final Set<Object>                         entitiesToRemove    = ContainerUtilRt.newHashSet();
     @NotNull final Set<ProjectEntityData>              entitiesToImport    = ContainerUtilRt.newHashSet();
@@ -442,15 +408,7 @@ public class EntityManageHelper {
 
     @NotNull final Project                project;
     @NotNull final ProjectStructureHelper projectStructureHelper;
-<<<<<<< HEAD
-<<<<<<< HEAD
     @NotNull final ProjectDataServiceImpl projectManager;
-=======
-    @NotNull final ProjectDataManagerImpl projectManager;
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
-=======
-    @NotNull final ProjectDataServiceImpl projectManager;
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
     final boolean synchronous;
 
@@ -508,15 +466,7 @@ public class EntityManageHelper {
     EliminateChangesContext(@NotNull Project project,
                             @NotNull ProjectStructureHelper projectStructureHelper,
                             @NotNull Set<UserProjectChange<?>> changesToPreserve,
-<<<<<<< HEAD
-<<<<<<< HEAD
                             @NotNull ProjectDataServiceImpl projectManager,
-=======
-                            @NotNull ProjectDataManagerImpl projectManager,
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
-=======
-                            @NotNull ProjectDataServiceImpl projectManager,
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
                             boolean synchronous)
     {
       this.project = project;

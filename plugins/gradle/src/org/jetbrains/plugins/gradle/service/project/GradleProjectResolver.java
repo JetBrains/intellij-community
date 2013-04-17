@@ -76,31 +76,6 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     Map<String, Pair<DataNode<ModuleData>, IdeaModule>> modules = createModules(project, result);
     populateModules(modules.values(), result);
     Collection<DataNode<LibraryData>> libraries = ExternalSystemUtil.getChildren(result, ProjectKeys.LIBRARY);
-<<<<<<< HEAD
-    myLibraryNamesMixer.mixNames(libraries);
-
-    if (settings != null) {
-      List<String> extensionClassNames = settings.getResolverExtensions();
-      if (myCachedExtensions == null || !myCachedExtensions.first.equals(extensionClassNames)) {
-        List<String> classNames = ContainerUtilRt.newArrayList(extensionClassNames);
-        List<GradleProjectResolverExtension> extensions = ContainerUtilRt.newArrayList();
-        for (String className : classNames) {
-          try {
-            extensions.add((GradleProjectResolverExtension)Class.forName(className).newInstance());
-          }
-          catch (Exception e) {
-            throw new IllegalArgumentException(String.format("Can't instantiate project resolve extension for class '%s'", className), e);
-          }
-        }
-        myCachedExtensions = Pair.create(classNames, extensions);
-      }
-      for (GradleProjectResolverExtension extension : myCachedExtensions.second) {
-        extension.enhanceProject(result, connection, !downloadLibraries);
-      }
-    }
-    Collection<DataNode<LibraryData>> libraries = ExternalSystemUtil.getChildren(result, ExternalSystemProjectKeys.LIBRARY);
-=======
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     myLibraryNamesMixer.mixNames(libraries);
 
     if (settings != null) {
@@ -128,7 +103,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   @NotNull
   private static DataNode<ProjectData> populateProject(@NotNull IdeaProject project, @NotNull String projectPath) {
     String projectDirPath = ExternalSystemUtil.toCanonicalPath(PathUtil.getParentPath(projectPath));
-    
+
     ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, projectDirPath);
     projectData.setName(project.getName());
 
@@ -136,14 +111,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     JavaProjectData javaProjectData = new JavaProjectData(GradleConstants.SYSTEM_ID, projectDirPath + "/out");
     javaProjectData.setJdkVersion(project.getJdkName());
     javaProjectData.setLanguageLevel(project.getLanguageLevel().getLevel());
-    
+
     DataNode<ProjectData> result = new DataNode<ProjectData>(ProjectKeys.PROJECT, projectData, null);
     result.createChild(ProjectKeys.JAVA_PROJECT, javaProjectData);
-<<<<<<< HEAD
-    DataNode<ProjectData> result = new DataNode<ProjectData>(ExternalSystemProjectKeys.PROJECT, projectData, null);
-    result.createChild(ExternalSystemProjectKeys.JAVA_PROJECT, javaProjectData);
-=======
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     return result;
   }
 
@@ -152,7 +122,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     @NotNull IdeaProject gradleProject,
     @NotNull DataNode<ProjectData> ideProject) throws IllegalStateException
   {
-    
+
     DomainObjectSet<? extends IdeaModule> gradleModules = gradleProject.getModules();
     if (gradleModules == null || gradleModules.isEmpty()) {
       throw new IllegalStateException("No modules found for the target project: " + gradleProject);
@@ -175,16 +145,12 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         );
       }
       DataNode<ModuleData> moduleDataNode = ideProject.createChild(ProjectKeys.MODULE, ideModule);
-<<<<<<< HEAD
-      DataNode<ModuleData> moduleDataNode = ideProject.createChild(ExternalSystemProjectKeys.MODULE, ideModule);
-=======
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
       result.put(moduleName, new Pair<DataNode<ModuleData>, IdeaModule>(moduleDataNode, gradleModule));
     }
     return result;
   }
 
-  private static void populateModules(@NotNull Iterable<Pair<DataNode<ModuleData>,IdeaModule>> modules, 
+  private static void populateModules(@NotNull Iterable<Pair<DataNode<ModuleData>,IdeaModule>> modules,
                                       @NotNull DataNode<ProjectData> ideProject)
     throws IllegalArgumentException, IllegalStateException
   {
@@ -206,7 +172,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   /**
    * Populates {@link ProjectKeys#CONTENT_ROOT) content roots} of the given ide module on the basis of the information
    * contained at the given gradle module.
-   * 
+   *
    * @param gradleModule    holder of the module information received from the gradle tooling api
    * @param ideModule       corresponding module from intellij gradle plugin domain
    * @throws IllegalArgumentException   if given gradle module contains invalid data
@@ -241,7 +207,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   /**
    * Stores information about given directories at the given content root 
-   * 
+   *
    * @param contentRoot  target paths info holder
    * @param type         type of data located at the given directories
    * @param dirs         directories which paths should be stored at the given content root
@@ -259,7 +225,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       contentRoot.storePath(type, dir.getDirectory().getAbsolutePath());
     }
   }
-  
+
   private static void populateCompileOutputSettings(@Nullable IdeaCompilerOutput gradleSettings,
                                                     @NotNull DataNode<ModuleData> ideModule)
   {
@@ -283,7 +249,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   }
 
   private static void populateDependencies(@NotNull IdeaModule gradleModule,
-                                           @NotNull DataNode<ModuleData> ideModule, 
+                                           @NotNull DataNode<ModuleData> ideModule,
                                            @NotNull DataNode<ProjectData> ideProject)
   {
     DomainObjectSet<? extends IdeaDependency> dependencies = gradleModule.getDependencies();
@@ -295,7 +261,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         continue;
       }
       DependencyScope scope = parseScope(dependency.getScope());
-      
+
       if (dependency instanceof IdeaModuleDependency) {
         ModuleDependencyData d = buildDependency(ideModule, (IdeaModuleDependency)dependency, ideProject);
         d.setExported(dependency.getExported());
@@ -317,8 +283,8 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   @NotNull
   private static ModuleDependencyData buildDependency(@NotNull DataNode<ModuleData> ownerModule,
-                                                          @NotNull IdeaModuleDependency dependency,
-                                                          @NotNull DataNode<ProjectData> ideProject)
+                                                      @NotNull IdeaModuleDependency dependency,
+                                                      @NotNull DataNode<ProjectData> ideProject)
     throws IllegalStateException
   {
     IdeaModule module = dependency.getDependencyModule();

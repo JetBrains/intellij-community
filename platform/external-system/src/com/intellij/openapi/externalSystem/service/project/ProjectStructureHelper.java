@@ -2,10 +2,6 @@ package com.intellij.openapi.externalSystem.service.project;
 
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-<<<<<<< HEAD
-import com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys;
-=======
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.project.id.*;
@@ -25,15 +21,10 @@ import org.jetbrains.annotations.Nullable;
 
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.LIBRARY_DEPENDENCY;
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE_DEPENDENCY;
-<<<<<<< HEAD
-import static com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys.LIBRARY_DEPENDENCY;
-import static com.intellij.openapi.externalSystem.model.ExternalSystemProjectKeys.MODULE_DEPENDENCY;
-=======
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
 /**
  * Thread-safe.
- * 
+ *
  * @author Denis Zhdanov
  * @since 2/6/12 3:28 PM
  */
@@ -83,11 +74,11 @@ public class ProjectStructureHelper {
   public boolean isIdeModuleDependencyExist(@NotNull final ModuleDependencyId id, @NotNull Project ideProject) {
     return findIdeModuleDependency(id.getOwnerModuleName(), id.getDependencyName(), ideProject) != null;
   }
-  
+
   public boolean isExternalModuleDependencyExist(@NotNull final ModuleDependencyId id, @NotNull Project ideProject) {
     return findIdeModuleDependency(id.getOwnerModuleName(), id.getDependencyName(), ideProject) != null;
   }
-  
+
   @Nullable
   public Module findIdeModule(@NotNull ModuleData module, @NotNull Project ideProject) {
     return findIdeModule(module.getName(), ideProject);
@@ -102,7 +93,7 @@ public class ProjectStructureHelper {
       return findExternalModule(moduleName, owner, ideProject);
     }
   }
-  
+
   @Nullable
   public Module findIdeModule(@NotNull String ideModuleName, @NotNull Project ideProject) {
     for (Module module : myFacade.getModules(ideProject)) {
@@ -112,7 +103,7 @@ public class ProjectStructureHelper {
     }
     return null;
   }
-  
+
   @Nullable
   public DataNode<ModuleData> findExternalModule(@NotNull String name,
                                                  @NotNull ProjectSystemId externalSystemId,
@@ -156,7 +147,7 @@ public class ProjectStructureHelper {
       return findExternalContentRoot(id, owner, ideProject);
     }
   }
-  
+
   @Nullable
   public ModuleAwareContentRoot findIdeContentRoot(@NotNull ContentRootId id, @NotNull Project ideProject) {
     final Module module = findIdeModule(id.getModuleName(), ideProject);
@@ -181,7 +172,7 @@ public class ProjectStructureHelper {
       return findExternalLibrary(libraryName, owner, ideProject);
     }
   }
-  
+
   @Nullable
   public Library findIdeLibrary(@NotNull final LibraryData library, @NotNull Project ideProject) {
     return findIdeLibrary(library.getName(), ideProject);
@@ -191,7 +182,7 @@ public class ProjectStructureHelper {
    * Gradle library names follow the following pattern: {@code '[base library name]-[library-version]'}.
    * <p/>
    * This methods serves as an utility which tries to find a library by it's given base name.
-   * 
+   *
    * @param baseName    base name of the target library
    * @param ideProject  target ide project
    * @return            target library for the given base name if there is one and only one library for it;
@@ -213,7 +204,7 @@ public class ProjectStructureHelper {
     }
     return result;
   }
-  
+
   @Nullable
   public Library findIdeLibrary(@NotNull String libraryName, @NotNull Project ideProject) {
     final LibraryTable libraryTable = myFacade.getProjectLibraryTable(ideProject);
@@ -247,7 +238,7 @@ public class ProjectStructureHelper {
   public LibraryOrderEntry findIdeLibraryDependency(@NotNull LibraryDependencyId id, @NotNull Project ideProject) {
     return findIdeLibraryDependency(id.getOwnerModuleName(), id.getLibraryId().getLibraryName(), ideProject);
   }
-  
+
   @Nullable
   public LibraryOrderEntry findIdeLibraryDependency(@NotNull final String moduleName,
                                                     @NotNull final String libraryName,
@@ -430,12 +421,12 @@ public class ProjectStructureHelper {
   public ModuleOrderEntry findIdeModuleDependency(@NotNull final ModuleDependencyId id, @NotNull Project ideProject) {
     return findIdeModuleDependency(id.getOwnerModuleName(), id.getDependencyName(), ideProject);
   }
-  
+
   @Nullable
   public ModuleOrderEntry findIdeModuleDependency(@NotNull final ModuleDependencyData gradleDependency, @NotNull Project ideProject) {
     return findIdeModuleDependency(gradleDependency.getOwnerModule().getName(), gradleDependency.getTarget().getName(), ideProject);
   }
-  
+
   @Nullable
   public ModuleOrderEntry findIdeModuleDependency(@NotNull final String ownerModuleName,
                                                   @NotNull final String dependencyModuleName,
@@ -476,7 +467,7 @@ public class ProjectStructureHelper {
       return findExternalModuleDependency(ownerModuleName, dependencyModuleName, owner, ideProject);
     }
   }
-  
+
   @SuppressWarnings("MethodMayBeStatic")
   @Nullable
   public ModuleOrderEntry findIdeModuleDependency(@NotNull ModuleDependencyData dependency, @NotNull ModifiableRootModel model) {

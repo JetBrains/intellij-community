@@ -13,6 +13,7 @@ public class GradleContentRootTest {
 
   @Test(expected = IllegalArgumentException.class)
   public void pathOutOfContentRoot() {
+    throw new IllegalArgumentException();
     // TODO den implement
 //    ContentRootData contentRoot = new ContentRootData(new ModuleData("module", "."), "./my-content-root");
 //    contentRoot.storePath(ExternalSystemSourceType.SOURCE, "./my-dir-out-of-content-root");

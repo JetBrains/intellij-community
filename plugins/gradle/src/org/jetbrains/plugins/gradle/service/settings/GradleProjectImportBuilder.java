@@ -15,10 +15,6 @@
  */
 package org.jetbrains.plugins.gradle.service.settings;
 
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -42,37 +38,16 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
 import java.io.File;
-<<<<<<< HEAD
-=======
-import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportBuilder;
-import icons.GradleIcons;
-import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
-
-import javax.swing.*;
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
-=======
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
 /**
  * @author Denis Zhdanov
  * @since 4/15/13 2:29 PM
  */
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 public class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder<GradleConfigurable> {
 
   public GradleProjectImportBuilder(@NotNull ExternalSystemSettingsManager settingsManager, @NotNull ProjectDataManager dataManager) {
     super(settingsManager, dataManager, new GradleConfigurable(null), GradleConstants.SYSTEM_ID);
   }
-<<<<<<< HEAD
-=======
-public class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder {
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
-=======
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
   @NotNull
   @Override
@@ -84,10 +59,6 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
   public Icon getIcon() {
     return GradleIcons.Gradle;
   }
-<<<<<<< HEAD
-<<<<<<< HEAD
-=======
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
   @Override
   protected void doPrepare(@NotNull WizardContext context) {
@@ -95,7 +66,7 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
     if (!pathToUse.endsWith(GradleConstants.DEFAULT_SCRIPT_NAME)) {
       pathToUse = new File(pathToUse, GradleConstants.DEFAULT_SCRIPT_NAME).getAbsolutePath();
     }
-    getConfigurable().setLinkedExternalProjectPath(pathToUse); 
+    getConfigurable().setLinkedExternalProjectPath(pathToUse);
   }
 
   @Override
@@ -104,12 +75,12 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
     if (javaProjectNode == null) {
       return;
     }
-    
+
     final LanguageLevel externalLanguageLevel = javaProjectNode.getData().getLanguageLevel();
     final LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
     if (externalLanguageLevel != languageLevelExtension.getLanguageLevel()) {
       languageLevelExtension.setLanguageLevel(externalLanguageLevel);
-    } 
+    }
   }
 
   @Override
@@ -136,7 +107,7 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
     GradleSettings settings = (GradleSettings)getSettingsManager().getSettings(project, GradleConstants.SYSTEM_ID);
     settings.setPreferLocalInstallationToWrapper(getConfigurable().isPreferLocalInstallationToWrapper());
     settings.setGradleHome(getConfigurable().getGradleHomePath());
-    
+
     // Reset linked gradle home for default project (legacy bug).
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
     getSettingsManager().getSettings(defaultProject, GradleConstants.SYSTEM_ID).setLinkedExternalProjectPath(null);
@@ -152,9 +123,4 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
     }
     return file;
   }
-<<<<<<< HEAD
-=======
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
-=======
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 }

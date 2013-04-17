@@ -5,14 +5,13 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
 
 import java.util.concurrent.atomic.AtomicReference;
 
@@ -20,7 +19,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * Encapsulates particular task performed by external system integration.
  * <p/>
  * Thread-safe.
- * 
+ *
  * @author Denis Zhdanov
  * @since 1/24/12 7:03 AM
  */
@@ -80,24 +79,13 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
     }
     final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     try {
-<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/model/task/AbstractExternalSystemTask.java
-<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/model/task/AbstractExternalSystemTask.java
       final RemoteExternalSystemFacade facade = manager.getFacade(myIdeProject, myExternalSystemId);
       setState(facade.isTaskInProgress(getId()) ? ExternalSystemTaskState.IN_PROGRESS : ExternalSystemTaskState.FAILED);
-=======
-      // TODO den implement
-//      final RemoteExternalSystemFacade facade = manager.getFacade(myIdeProject);
-//      setState(facade.isTaskInProgress(getId()) ? GradleTaskState.IN_PROGRESS : GradleTaskState.FAILED);
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:plugins/gradle/src/org/jetbrains/plugins/gradle/internal/task/AbstractGradleTask.java
-=======
-      final RemoteExternalSystemFacade facade = manager.getFacade(myIdeProject, myExternalSystemId);
-      setState(facade.isTaskInProgress(getId()) ? ExternalSystemTaskState.IN_PROGRESS : ExternalSystemTaskState.FAILED);
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/model/task/AbstractExternalSystemTask.java
     }
     catch (Throwable e) {
       setState(ExternalSystemTaskState.FAILED);
       myError.set(e);
-      if (myIdeProject == null || !myIdeProject.isDisposed()) {
+      if (!myIdeProject.isDisposed()) {
         LOG.warn(e);
       }
     }
@@ -119,10 +107,10 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
     else {
       ls = new ExternalSystemTaskNotificationListener[] { adapter };
     }
-    
+
     execute(ls);
   }
-  
+
   @Override
   public void execute(@NotNull ExternalSystemTaskNotificationListener... listeners) {
     ExternalSystemProgressNotificationManager progressManager = ServiceManager.getService(ExternalSystemProgressNotificationManager.class);
@@ -148,19 +136,9 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
 
   @NotNull
   protected String wrapProgressText(@NotNull String text) {
-<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/model/task/AbstractExternalSystemTask.java
-<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/model/task/AbstractExternalSystemTask.java
     return ExternalSystemBundle.message("progress.update.text", getExternalSystemId(), text);
-=======
-    // TODO den implement
-    return "";
-//    return ExternalSystemBundle.message("gradle.general.progress.update.text", text);
->>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:plugins/gradle/src/org/jetbrains/plugins/gradle/internal/task/AbstractGradleTask.java
-=======
-    return ExternalSystemBundle.message("progress.update.text", getExternalSystemId(), text);
->>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/model/task/AbstractExternalSystemTask.java
   }
-  
+
   @Override
   public int hashCode() {
     return myId.hashCode() + myExternalSystemId.hashCode();

@@ -368,9 +368,7 @@ public class GradleInstallationManager {
     final JarFileSystem jarFileSystem = JarFileSystem.getInstance();
     List<VirtualFile> result = new ArrayList<VirtualFile>();
     for (File file : libraries) {
-      if (ANY_GRADLE_JAR_FILE_PATTERN.matcher(file.getName()).matches()
-          || GroovyConfigUtils.GROOVY_ALL_JAR_PATTERN.matcher(file.getName()).matches())
-      {
+      if (ANY_GRADLE_JAR_FILE_PATTERN.matcher(file.getName()).matches() || GroovyConfigUtils.matchesGroovyAll(file.getName())) {
         final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByIoFile(file);
         if (virtualFile != null) {
           ContainerUtil.addIfNotNull(result, jarFileSystem.getJarRootForLocalFile(virtualFile));
