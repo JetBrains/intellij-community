@@ -313,6 +313,7 @@ public class GotoRelatedFileAction extends AnAction {
                                            final Map<PsiElement, GotoRelatedItem> itemsMap,
                                            final Processor<Object> processor) {
       return new AbstractAction() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           for (final Object item : listPopup.getListStep().getValues()) {
             if (getMnemonic(item, itemsMap) == mnemonic) {

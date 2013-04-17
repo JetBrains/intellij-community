@@ -269,6 +269,7 @@ public abstract class BaseRefactoringProcessor {
 
             for (final Usage usage : usages) {
               ApplicationManager.getApplication().runReadAction(new Runnable() {
+                @Override
                 public void run() {
                   processor.process(usage);
                 }
@@ -285,7 +286,7 @@ public abstract class BaseRefactoringProcessor {
   protected boolean skipNonCodeUsages() {
     return false;
   }
-  
+
   private boolean ensureElementsWritable(@NotNull final UsageInfo[] usages, final UsageViewDescriptor descriptor) {
     Set<PsiElement> elements = new THashSet<PsiElement>();
     for (UsageInfo usage : usages) {
@@ -380,6 +381,7 @@ public abstract class BaseRefactoringProcessor {
       @Override
       public void run() {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             convertUsagesRef.set(UsageInfo2UsageAdapter.convert(usageInfos));
           }

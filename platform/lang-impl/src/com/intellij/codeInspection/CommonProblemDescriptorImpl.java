@@ -25,11 +25,13 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
     myDescriptionTemplate = descriptionTemplate;
   }
 
+  @Override
   @NotNull
   public String getDescriptionTemplate() {
     return myDescriptionTemplate;
   }
 
+  @Override
   public QuickFix[] getFixes() {
     return myFixes;
   }

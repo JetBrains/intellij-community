@@ -94,6 +94,7 @@ public class SuppressionUtil {
                                                 final String toolId,
                                                 final Class<? extends PsiElement> statementClass) {
     return ApplicationManager.getApplication().runReadAction(new NullableComputable<PsiElement>() {
+      @Override
       public PsiElement compute() {
         return getStatementToolSuppressedIn(place, toolId, statementClass);
       }

@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
  */
 public abstract class DefaultProgramRunner extends GenericProgramRunner {
 
+  @Override
   protected RunContentDescriptor doExecute(final Project project, final Executor executor, final RunProfileState state, final RunContentDescriptor contentToReuse,
                                            final ExecutionEnvironment env) throws ExecutionException {
     FileDocumentManager.getInstance().saveAllDocuments();

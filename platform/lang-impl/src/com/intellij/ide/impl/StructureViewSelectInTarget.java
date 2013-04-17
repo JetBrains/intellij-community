@@ -39,17 +39,21 @@ public class StructureViewSelectInTarget implements SelectInTarget {
     return IdeBundle.message("select.in.file.structure");
   }
 
+  @Override
   public boolean canSelect(SelectInContext context) {
     return context.getFileEditorProvider() != null;
   }
 
+  @Override
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
     final FileEditor fileEditor = context.getFileEditorProvider().openFileEditor();
 
     ToolWindowManager windowManager=ToolWindowManager.getInstance(context.getProject());
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         StructureViewFactoryEx.getInstanceEx(myProject).runWhenInitialized(new Runnable() {
+          @Override
           public void run() {
             final StructureViewWrapper structureView = getStructureViewWrapper();
             structureView.selectCurrentElement(fileEditor, context.getVirtualFile(), requestFocus);
@@ -70,14 +74,17 @@ public class StructureViewSelectInTarget implements SelectInTarget {
     return StructureViewFactoryEx.getInstanceEx(myProject).getStructureViewWrapper();
   }
 
+  @Override
   public String getToolWindowId() {
     return ToolWindowId.STRUCTURE_VIEW;
   }
 
+  @Override
   public String getMinorViewId() {
     return null;
   }
 
+  @Override
   public float getWeight() {
     return StandardTargetWeights.STRUCTURE_WEIGHT;
   }

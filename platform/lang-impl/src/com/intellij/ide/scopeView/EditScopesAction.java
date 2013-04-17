@@ -40,6 +40,7 @@ public class EditScopesAction extends AnAction implements DumbAware {
     getTemplatePresentation().setIcon(AllIcons.Ide.LocalScope);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -48,6 +49,7 @@ public class EditScopesAction extends AnAction implements DumbAware {
     LOG.assertTrue(scopeName != null);
     final ScopeChooserConfigurable scopeChooserConfigurable = new ScopeChooserConfigurable(project);
     ShowSettingsUtil.getInstance().editConfigurable(project, scopeChooserConfigurable, new Runnable(){
+      @Override
       public void run() {
         scopeChooserConfigurable.selectNodeInTree(scopeName);
       }

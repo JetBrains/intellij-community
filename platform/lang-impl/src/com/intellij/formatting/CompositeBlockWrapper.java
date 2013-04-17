@@ -49,6 +49,7 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
     myChildren = children;
   }
 
+  @Override
   public void reset() {
     super.reset();
 
@@ -64,7 +65,7 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
   protected boolean indentAlreadyUsedBefore(final AbstractBlockWrapper child) {
     for (AbstractBlockWrapper childBefore : myChildren) {
       if (childBefore == child) return false;
-      if (childBefore.getWhiteSpace().containsLineFeeds()) return true;      
+      if (childBefore.getWhiteSpace().containsLineFeeds()) return true;
     }
     return false;
   }
@@ -85,6 +86,7 @@ public class CompositeBlockWrapper extends AbstractBlockWrapper{
     return myChildren.get(0).getPreviousBlock();
   }
 
+  @Override
   public void dispose() {
     super.dispose();
     myChildren = null;

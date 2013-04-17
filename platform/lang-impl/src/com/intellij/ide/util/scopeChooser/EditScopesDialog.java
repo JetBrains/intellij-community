@@ -42,6 +42,7 @@ public class EditScopesDialog extends SingleConfigurableEditor {
     myCheckShared = checkShared;
   }
 
+  @Override
   protected void doOKAction() {
     final Object selectedObject = ((ScopeChooserConfigurable)getConfigurable()).getSelectedObject();
     if (selectedObject instanceof NamedScope){
@@ -59,10 +60,12 @@ public class EditScopesDialog extends SingleConfigurableEditor {
           final String newName = Messages.showInputDialog(project, IdeBundle.message("add.scope.name.label"),
                                                           IdeBundle.message("scopes.save.dialog.title.shared"), Messages.getQuestionIcon(),
                                                           mySelectedScope.getName(), new InputValidator() {
+            @Override
             public boolean checkInput(String inputString) {
               return inputString != null && inputString.length() > 0 && manager.getScope(inputString) == null;
             }
 
+            @Override
             public boolean canClose(String inputString) {
               return checkInput(inputString);
             }

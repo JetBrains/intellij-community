@@ -178,6 +178,7 @@ class Browser extends JPanel {
     myHTMLViewer = new JEditorPane(UIUtil.HTML_MIME, InspectionsBundle.message("inspection.offline.view.empty.browser.text"));
     myHTMLViewer.setEditable(false);
     myHyperLinkListener = new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           JEditorPane pane = (JEditorPane)e.getSource();
@@ -273,7 +274,7 @@ class Browser extends JPanel {
     }
 
     StyledDocument styledDocument = (StyledDocument)document;
-    
+
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
 
@@ -299,6 +300,7 @@ class Browser extends JPanel {
     final StringBuffer buf = new StringBuffer();
     if (refEntity instanceof RefElement) {
       final Runnable action = new Runnable() {
+        @Override
         public void run() {
           tool.getComposer().compose(buf, refEntity);
         }
@@ -329,6 +331,7 @@ class Browser extends JPanel {
   private String generateHTML(final RefEntity refEntity, final CommonProblemDescriptor descriptor) {
     final StringBuffer buf = new StringBuffer();
     final Runnable action = new Runnable() {
+      @Override
       public void run() {
         InspectionTool tool = getTool(refEntity);
         tool.getComposer().compose(buf, refEntity, descriptor);
@@ -498,6 +501,7 @@ class Browser extends JPanel {
       @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             final PsiModificationTracker tracker = PsiManager.getInstance(myView.getProject()).getModificationTracker();
             final long startCount = tracker.getModificationCount();

@@ -72,6 +72,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     mySearchNonJava = isSearchNonJava;
   }
 
+  @Override
   @NotNull
   protected UsageViewDescriptor createUsageViewDescriptor(UsageInfo[] usages) {
     return new SafeDeleteUsageViewDescriptor(myElements);
@@ -124,6 +125,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return isAncestor;
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     List<UsageInfo> usages = Collections.synchronizedList(new ArrayList<UsageInfo>());
@@ -152,6 +154,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   public static Condition<PsiElement> getDefaultInsideDeletedCondition(final PsiElement[] elements) {
     return new Condition<PsiElement>() {
+      @Override
       public boolean value(final PsiElement usage) {
         return !(usage instanceof PsiFile) && isInside(usage, elements);
       }
@@ -160,6 +163,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   public static void findGenericElementUsages(final PsiElement element, final List<UsageInfo> usages, final PsiElement[] allElementsToDelete) {
     ReferencesSearch.search(element).forEach(new Processor<PsiReference>() {
+      @Override
       public boolean process(final PsiReference reference) {
         final PsiElement refElement = reference.getElement();
         if (!isInside(refElement, allElementsToDelete)) {
@@ -170,6 +174,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     });
   }
 
+  @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
     UsageInfo[] usages = refUsages.get();
     ArrayList<String> conflicts = new ArrayList<String>();
@@ -247,6 +252,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     usageView.addPerformOperationAction(new RerunSafeDelete(myProject, myElements, usageView),
                                         RefactoringBundle.message("retry.command"), null, RefactoringBundle.message("rerun.safe.delete"));
     usageView.addPerformOperationAction(new Runnable() {
+      @Override
       public void run() {
         UsageInfo[] preprocessedUsages = usages;
         for (SafeDeleteProcessorDelegate delegate : Extensions.getExtensions(SafeDeleteProcessorDelegate.EP_NAME)) {
@@ -296,8 +302,10 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
       }
     }
 
+    @Override
     public void run() {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             PsiDocumentManager.getInstance(myProject).commitAllDocuments();
             myUsageView.close();
@@ -335,11 +343,13 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
 
+  @Override
   protected void refreshElements(PsiElement[] elements) {
     LOG.assertTrue(elements.length == myElements.length);
     System.arraycopy(elements, 0, myElements, 0, elements.length);
   }
 
+  @Override
   protected boolean isPreviewUsages(UsageInfo[] usages) {
     if(myPreviewNonCodeUsages && UsageViewUtil.hasNonCodeUsages(usages)) {
       WindowManager.getInstance().getStatusBar(myProject).setInfo(
@@ -360,6 +370,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
     return list.toArray(new UsageInfo[list.size()]);
   }
 
+  @Override
   protected void performRefactoring(UsageInfo[] usages) {
     try {
       for (UsageInfo usage : usages) {
@@ -387,6 +398,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
   }
 
   private String myCachedCommandName = null;
+  @Override
   protected String getCommandName() {
     if (myCachedCommandName == null) {
       myCachedCommandName = calcCommandName();
@@ -397,6 +409,7 @@ public class SafeDeleteProcessor extends BaseRefactoringProcessor {
 
   private void addNonCodeUsages(final PsiElement element, List<UsageInfo> usages, @Nullable final Condition<PsiElement> insideElements) {
     TextOccurrencesUtil.UsageInfoFactory nonCodeUsageFactory = new TextOccurrencesUtil.UsageInfoFactory() {
+      @Override
       public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
         if (insideElements != null && insideElements.value(usage)) {
           return null;

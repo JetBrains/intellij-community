@@ -114,15 +114,18 @@ class PrintManager {
     }
     final Printable painter0 = painter;
     Pageable document = new Pageable(){
+      @Override
       public int getNumberOfPages() {
         return Pageable.UNKNOWN_NUMBER_OF_PAGES;
       }
 
+      @Override
       public PageFormat getPageFormat(int pageIndex)
         throws IndexOutOfBoundsException {
         return pageFormat;
       }
 
+      @Override
       public Printable getPrintable(int pageIndex)
         throws IndexOutOfBoundsException {
         return painter0;
@@ -239,6 +242,7 @@ class PrintManager {
     final TextPainter[] res = new TextPainter[1];
     ApplicationManager.getApplication().runReadAction(
       new Runnable() {
+        @Override
         public void run() {
           res[0] = doInitTextPainter(doc, project);
         }
@@ -246,7 +250,7 @@ class PrintManager {
     );
     return res[0];
   }
-  
+
   private static TextPainter doInitTextPainter(@NotNull final DocumentEx doc, Project project) {
      EditorHighlighter highlighter = HighlighterFactory.createHighlighter(project, "unknown");
      highlighter.setText(doc.getCharsSequence());

@@ -98,6 +98,7 @@ public class InspectionToolRegistrar {
       for (InspectionToolsFactory factory : Extensions.getExtensions(InspectionToolsFactory.EXTENSION_POINT_NAME)) {
         for (final InspectionProfileEntry profileEntry : factory.createTools()) {
           myInspectionToolFactories.add(new Factory<InspectionToolWrapper>() {
+            @Override
             public InspectionToolWrapper create() {
               return wrapTool(profileEntry);
             }
@@ -179,6 +180,7 @@ public class InspectionToolRegistrar {
     } else {
       ensureInitialized();
       return registerInspectionToolFactory(new Factory<InspectionToolWrapper>() {
+        @Override
         public InspectionToolWrapper create() {
           return new CommonInspectionToolWrapper((InspectionTool)instantiateTool(aClass));
         }
@@ -202,6 +204,7 @@ public class InspectionToolRegistrar {
 
   private Factory<InspectionToolWrapper> registerLocalInspection(final Class toolClass, boolean store) {
     return registerInspectionToolFactory(new Factory<InspectionToolWrapper>() {
+      @Override
       public InspectionToolWrapper create() {
         return new LocalInspectionToolWrapper((LocalInspectionTool)instantiateTool(toolClass));
       }
@@ -210,6 +213,7 @@ public class InspectionToolRegistrar {
 
   private Factory<InspectionToolWrapper> registerGlobalInspection(final Class aClass, boolean store) {
     return registerInspectionToolFactory(new Factory<InspectionToolWrapper>() {
+      @Override
       public InspectionToolWrapper create() {
         return new GlobalInspectionToolWrapper((GlobalInspectionTool) instantiateTool(aClass));
       }
@@ -264,6 +268,7 @@ public class InspectionToolRegistrar {
       if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;
 
       app.executeOnPooledThread(new Runnable(){
+        @Override
         public void run() {
           List<InspectionToolWrapper> tools = createTools();
           for (InspectionTool tool : tools) {
@@ -311,6 +316,7 @@ public class InspectionToolRegistrar {
 
   private static void showNotification(final String message) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         Notifications.Bus.notify(new Notification(InspectionManager.INSPECTION_GROUP_ID, InspectionsBundle.message("inspection.disabled.title"),
                                                   message, NotificationType.ERROR));

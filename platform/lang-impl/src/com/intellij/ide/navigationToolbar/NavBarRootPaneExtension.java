@@ -92,6 +92,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
            correctedAction instanceof CustomisedActionGroup && ((CustomisedActionGroup)correctedAction).getFirstAction() != null;
   }
 
+  @Override
   public JComponent getComponent() {
     if (myWrapperPanel == null) {
       myWrapperPanel = new NavBarWrapperPanel(new BorderLayout()) {
@@ -182,7 +183,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
           firstAction = action;
           break;
         }
-  
+
         if (firstAction != null) break;
       }
 
@@ -250,7 +251,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
           Rectangle bounds = getParent().getBounds();
           NavBarUIManager.getUI().doPaintWrapperPanel(g2d, bounds, false);
         }
-        
+
         g2d.dispose();
       }
 
@@ -274,11 +275,12 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     return panel.get();
   }
 
+  @Override
   public void uiSettingsChanged(final UISettings settings) {
     if (myNavigationBar != null) {
       myNavigationBar.updateState(settings.SHOW_NAVIGATION_BAR);
       myWrapperPanel.setVisible(settings.SHOW_NAVIGATION_BAR);
-      
+
       myWrapperPanel.revalidate();
       myNavigationBar.revalidate();
       myWrapperPanel.repaint();
@@ -290,11 +292,13 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     }
   }
 
+  @Override
   @NonNls
   public String getKey() {
     return NAV_BAR;
   }
 
+  @Override
   public void dispose() {
     myWrapperPanel.setVisible(false);
     myWrapperPanel = null;

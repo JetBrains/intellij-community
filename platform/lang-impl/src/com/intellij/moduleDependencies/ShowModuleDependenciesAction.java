@@ -37,6 +37,7 @@ import java.awt.*;
  * Date: Feb 9, 2005
  */
 public class ShowModuleDependenciesAction extends AnAction{
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -80,6 +81,7 @@ public class ShowModuleDependenciesAction extends AnAction{
     DependenciesAnalyzeManager.getInstance(project).addContent(content);
   }
 
+  @Override
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -101,6 +103,7 @@ public class ShowModuleDependenciesAction extends AnAction{
       init();
     }
 
+    @Override
     protected JComponent createCenterPanel() {
       JPanel panel = new JPanel(new GridLayout(2, 1));
       panel.add(myProjectScope);

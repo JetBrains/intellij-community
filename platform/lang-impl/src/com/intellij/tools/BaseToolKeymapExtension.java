@@ -33,6 +33,7 @@ import java.util.Arrays;
  */
 public abstract class BaseToolKeymapExtension implements KeymapExtension {
 
+  @Override
   public KeymapGroup createGroup(final Condition<AnAction> filtered, final Project project) {
     final ActionManagerEx actionManager = ActionManagerEx.getInstanceEx();
     String[] ids = actionManager.getActionIds(getActionIdPrefix());

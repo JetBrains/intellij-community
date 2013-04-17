@@ -195,6 +195,7 @@ extends BeforeRunTaskProvider<RunConfigurationBeforeRunProvider.RunConfigurableB
       try {
         ApplicationManager.getApplication().invokeAndWait(new Runnable() {
 
+          @Override
           public void run() {
             targetDone.down();
             try {

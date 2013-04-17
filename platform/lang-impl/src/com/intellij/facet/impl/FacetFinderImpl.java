@@ -52,6 +52,7 @@ public class FacetFinderImpl extends FacetFinder {
     myModuleManager = ModuleManager.getInstance(myProject);
   }
 
+  @Override
   public <F extends Facet> ModificationTracker getAllFacetsOfTypeModificationTracker(FacetTypeId<F> type) {
     AllFacetsOfTypeModificationTracker tracker = myAllFacetTrackers.get(type);
     if (tracker == null) {
@@ -66,6 +67,7 @@ public class FacetFinderImpl extends FacetFinder {
     CachedValue<Map<VirtualFile, List<Facet>>> cachedValue = myCachedMaps.get(type);
     if (cachedValue == null) {
       cachedValue = myCachedValuesManager.createCachedValue(new CachedValueProvider<Map<VirtualFile, List<Facet>>>() {
+        @Override
         public Result<Map<VirtualFile, List<Facet>>> compute() {
           Map<VirtualFile, List<Facet>> map = computeRootToFacetsMap(type);
           return Result.create(map, getAllFacetsOfTypeModificationTracker(type));
@@ -98,12 +100,14 @@ public class FacetFinderImpl extends FacetFinder {
     return map;
   }
 
+  @Override
   @Nullable
   public <F extends Facet & FacetRootsProvider> F findFacet(VirtualFile file, FacetTypeId<F> type) {
     final List<F> list = findFacets(file, type);
     return list.size() > 0 ? list.get(0) : null;
   }
 
+  @Override
   @NotNull
   public <F extends Facet & FacetRootsProvider> List<F> findFacets(VirtualFile file, FacetTypeId<F> type) {
     final Map<VirtualFile, List<Facet>> map = getRootToFacetsMap(type);
@@ -127,21 +131,26 @@ public class FacetFinderImpl extends FacetFinder {
       ProjectWideFacetListenersRegistry.getInstance(project).registerListener(type, this, this);
     }
 
+    @Override
     public void facetAdded(final F facet) {
       myModificationCount++;
     }
 
+    @Override
     public void facetRemoved(final F facet) {
       myModificationCount++;
     }
 
+    @Override
     public void facetConfigurationChanged(final F facet) {
       myModificationCount++;
     }
 
+    @Override
     public void dispose() {
     }
 
+    @Override
     public long getModificationCount() {
       return myModificationCount;
     }

@@ -76,10 +76,12 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
     };
   }
 
+  @Override
   public ProjectFacetManagerState getState() {
     return myState;
   }
 
+  @Override
   public void loadState(final ProjectFacetManagerState state) {
     myState = state;
   }
@@ -109,6 +111,7 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
     return result;
   }
 
+  @Override
   public <C extends FacetConfiguration> C createDefaultConfiguration(@NotNull final FacetType<?, C> facetType) {
     C configuration = facetType.createDefaultConfiguration();
     DefaultFacetConfigurationState state = myState.getDefaultConfigurations().get(facetType.getStringId());
@@ -124,6 +127,7 @@ public class ProjectFacetManagerImpl extends ProjectFacetManagerEx implements Pe
     return configuration;
   }
 
+  @Override
   public <C extends FacetConfiguration> void setDefaultConfiguration(@NotNull final FacetType<?, C> facetType, @NotNull final C configuration) {
     Map<String, DefaultFacetConfigurationState> defaultConfigurations = myState.getDefaultConfigurations();
     DefaultFacetConfigurationState state = defaultConfigurations.get(facetType.getStringId());

@@ -22,14 +22,17 @@ import com.intellij.openapi.actionSystem.DataContext;
 import java.io.File;
 
 public final class FileRelativeDirMacro2 extends FileRelativeDirMacro {
+  @Override
   public String getName() {
     return "/FileRelativeDir";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.file.directory.relative.fwd.slash");
   }
 
+  @Override
   public String expand(DataContext dataContext) {
     String s = super.expand(dataContext);
     return s != null ? s.replace(File.separatorChar, '/') : null;

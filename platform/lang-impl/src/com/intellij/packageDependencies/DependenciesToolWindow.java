@@ -34,13 +34,14 @@ public class DependenciesToolWindow {
   public static DependenciesToolWindow getInstance(Project project) {
     return ServiceManager.getService(project, DependenciesToolWindow.class);
   }
-  
+
   private final Project myProject;
   private ContentManager myContentManager;
 
   public DependenciesToolWindow(final Project project) {
     myProject = project;
     StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+      @Override
       public void run() {
         final ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
         if (toolWindowManager == null) return;

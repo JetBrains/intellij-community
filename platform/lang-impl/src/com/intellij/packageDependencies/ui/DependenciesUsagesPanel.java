@@ -49,11 +49,13 @@ public class DependenciesUsagesPanel extends UsagesPanel {
     setToInitialPosition();
   }
 
+  @Override
   public String getInitialPositionText() {
     return myBuilders.get(0).getInitialUsagesPosition();
   }
 
 
+  @Override
   public String getCodeUsagesString() {
     return myBuilders.get(0).getRootNodeNameInUsageView();
   }
@@ -63,18 +65,23 @@ public class DependenciesUsagesPanel extends UsagesPanel {
 
     myAlarm.cancelAllRequests();
     myAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+          @Override
           public void run() {
             final ProgressIndicator progress = new PanelProgressIndicator(new Consumer<JComponent>() {
+              @Override
               public void consume(final JComponent component) {
                 setToComponent(component);
               }
             });
             myCurrentProgress = progress;
             ProgressManager.getInstance().runProcess(new Runnable() {
+              @Override
               public void run() {
                 ApplicationManager.getApplication().runReadAction(new Runnable() {
+                  @Override
                   public void run() {
                     UsageInfo[] usages = new UsageInfo[0];
                     Set<PsiFile> elementsToSearch = null;
@@ -101,6 +108,7 @@ public class DependenciesUsagesPanel extends UsagesPanel {
                       final PsiElement[] _elementsToSearch =
                         elementsToSearch != null ? PsiUtilBase.toPsiElementArray(elementsToSearch) : PsiElement.EMPTY_ARRAY;
                       ApplicationManager.getApplication().invokeLater(new Runnable() {
+                        @Override
                         public void run() {
                           showUsages(new UsageInfoToUsageConverter.TargetElementsDescriptor(_elementsToSearch), finalUsages);
                         }

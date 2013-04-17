@@ -158,6 +158,7 @@ public abstract class MethodSignatureEditor<M extends PsiElement> extends Editor
       ((CaretModelImpl)editor.getCaretModel()).setIgnoreWrongMoves(true);
       final TextRange range = getCurrentSignatureTextRange();
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           CodeStyleManager.getInstance(getProject()).reformatText(myFile, range.getStartOffset(), range.getEndOffset());
         }

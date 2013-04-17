@@ -117,6 +117,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
       final int exitCode = Messages.showYesNoDialog(project, message, getRefactoringName(), Messages.getInformationIcon());
       if (exitCode == DialogWrapper.OK_EXIT_CODE) {
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+          @Override
           public void run() {
             boolean replaceAll = false;
             for (IncludeDuplicate<T> pair : duplicates) {
@@ -162,6 +163,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
   }
 
@@ -180,6 +182,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     return null;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, DataContext dataContext) {
     myIncludingFile = file;
     if (!editor.getSelectionModel().hasSelection()) {
@@ -219,14 +222,17 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
       LOG.assertTrue(targetDirectory != null);
       final String targetfileName = dialog.getTargetFileName();
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+        @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               try {
                 final List<IncludeDuplicate<T>> duplicates = new ArrayList<IncludeDuplicate<T>>();
                 final T first = children.getFirst();
                 final T second = children.getSecond();
                 PsiEquivalenceUtil.findChildRangeDuplicates(first, second, file, new PairConsumer<PsiElement, PsiElement>() {
+                  @Override
                   public void consume(final PsiElement start, final PsiElement end) {
                     duplicates.add(new IncludeDuplicate<T>((T) start, (T) end));
                   }
@@ -235,6 +241,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
                 editor.getCaretModel().moveToOffset(first.getTextRange().getStartOffset());
 
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  @Override
                   public void run() {
                     replaceDuplicates(includePath, duplicates, editor, project);
                   }
@@ -281,6 +288,7 @@ public abstract class ExtractIncludeFileBase<T extends PsiElement> implements Re
     return includePath;
   }
 
+  @Override
   public String getActionTitle() {
     return "Extract Include File...";
   }

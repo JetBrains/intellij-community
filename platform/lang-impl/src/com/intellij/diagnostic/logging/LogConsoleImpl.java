@@ -87,6 +87,7 @@ public abstract class LogConsoleImpl extends LogConsoleBase {
     return reader;
   }
 
+  @Override
   @Nullable
   public String getTooltip() {
     return myPath;

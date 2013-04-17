@@ -49,6 +49,7 @@ public class RefactoringUIUtil {
 
     final String s = message;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         Messages.showMessageDialog(project, s, RefactoringBundle.message("error.title"), Messages.getErrorIcon());
       }

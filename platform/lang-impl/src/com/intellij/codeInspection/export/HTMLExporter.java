@@ -100,6 +100,7 @@ public class HTMLExporter {
       writer.write(buf.toString().toCharArray());
     } catch (IOException e) {
       Runnable showError = new Runnable() {
+        @Override
         public void run() {
           Messages.showMessageDialog(
             project,

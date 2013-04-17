@@ -216,6 +216,7 @@ public class GotoClassAction extends GotoActionBase implements DumbAware {
     return PsiElement.EMPTY_ARRAY;
   }
 
+  @Override
   protected boolean hasContributors(DataContext dataContext) {
     return ChooseByNameRegistry.getInstance().getClassModelContributors().length > 0;
   }

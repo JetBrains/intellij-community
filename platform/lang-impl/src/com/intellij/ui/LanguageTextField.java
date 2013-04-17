@@ -97,6 +97,7 @@ public class LanguageTextField extends EditorTextField {
     }
   }
 
+  @Override
   protected EditorEx createEditor() {
     final EditorEx ex = super.createEditor();
 

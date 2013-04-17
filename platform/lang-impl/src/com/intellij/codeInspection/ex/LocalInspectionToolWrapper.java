@@ -95,6 +95,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     addProblemDescriptors(holder.getResults(), filterSuppressed);
   }
 
+  @Override
   @NotNull
   public JobDescriptor[] getJobDescriptors(GlobalInspectionContext context) {
     return ((GlobalInspectionContextImpl)context).LOCAL_ANALYSIS_ARRAY;
@@ -144,6 +145,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
       content.add(refElement);
 
       UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
         public void run() {
           final GlobalInspectionContextImpl context = getContext();
           if (context != null) {
@@ -202,6 +204,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     }
   }
 
+  @Override
   public void runInspection(@NotNull AnalysisScope scope, @NotNull final InspectionManager manager) {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
     scope.accept(new PsiRecursiveElementVisitor() {

@@ -57,6 +57,7 @@ public class ProfilesComboBox extends JComboBox {
     reloadProfiles(profileManager, availableProfiles, selectedProfile);
 
     setRenderer(new DefaultListCellRenderer() {
+      @Override
       public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
         final Component rendererComponent = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         if (value instanceof Profile) {
@@ -73,6 +74,7 @@ public class ProfilesComboBox extends JComboBox {
     addItemListener(new ItemListener() {
       private Object myDeselectedItem = null;
 
+      @Override
       public void itemStateChanged(ItemEvent e) {
         if (myFrozenProfilesCombo) return; //do not update during reloading
         if (ItemEvent.SELECTED == e.getStateChange()) {

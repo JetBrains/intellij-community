@@ -67,6 +67,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     myManager = PsiManager.getInstance(project);
   }
 
+  @Override
   @NotNull
   protected UsageInfo[] findUsages() {
     List<UsageInfo> infos = new ArrayList<UsageInfo>();
@@ -112,12 +113,14 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     return super.isPreviewUsages(usages);
   }
 
+  @Override
   protected void performRefactoring(UsageInfo[] usages) {
     RefactoringTransaction transaction = getTransaction();
     final RefactoringElementListener elementListener = transaction == null ? null : transaction.getElementListener(myChangeInfo.getMethod());
     final String fqn = CopyReferenceAction.elementToFqn(myChangeInfo.getMethod());
     if (fqn != null) {
       UndoableAction action = new BasicUndoableAction() {
+        @Override
         public void undo() {
           if (elementListener instanceof UndoRefactoringElementListener) {
             ((UndoRefactoringElementListener)elementListener).undoElementMovedOrRenamed(myChangeInfo.getMethod(), fqn);
@@ -177,6 +180,7 @@ public abstract class ChangeSignatureProcessorBase extends BaseRefactoringProces
     }
   }
 
+  @Override
   protected String getCommandName() {
     return RefactoringBundle.message("changing.signature.of.0", UsageViewUtil.getDescriptiveName(myChangeInfo.getMethod()));
   }

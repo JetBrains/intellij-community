@@ -56,16 +56,19 @@ public class QuickFixWrapper implements IntentionAction {
     myFixNumber = fixNumber;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return getFamilyName();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return myDescriptor.getFixes()[myFixNumber].getName();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     PsiElement psiElement = myDescriptor.getPsiElement();
     if (psiElement == null || !psiElement.isValid()) return false;
@@ -73,8 +76,9 @@ public class QuickFixWrapper implements IntentionAction {
     return !(fix instanceof IntentionAction) || ((IntentionAction)fix).isAvailable(project, editor, file);
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    //if (!CodeInsightUtil.prepareFileForWrite(file)) return; 
+    //if (!CodeInsightUtil.prepareFileForWrite(file)) return;
     // consider all local quick fixes do it themselves
 
     LocalQuickFix fix = getFix();
@@ -89,6 +93,7 @@ public class QuickFixWrapper implements IntentionAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     final LocalQuickFix fix = getFix();
     return !(fix instanceof IntentionAction) || ((IntentionAction)fix).startInWriteAction();
@@ -97,7 +102,7 @@ public class QuickFixWrapper implements IntentionAction {
   public LocalQuickFix getFix() {
     return (LocalQuickFix)myDescriptor.getFixes()[myFixNumber];
   }
-  
+
   public String toString() {
     return getText();
   }

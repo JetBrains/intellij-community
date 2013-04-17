@@ -20,6 +20,7 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.LangDataKeys;
 
 public class PasteTargetRule implements GetDataRule {
+  @Override
   public Object getData(DataProvider dataProvider) {
     return LangDataKeys.PSI_ELEMENT.getData(dataProvider);
   }

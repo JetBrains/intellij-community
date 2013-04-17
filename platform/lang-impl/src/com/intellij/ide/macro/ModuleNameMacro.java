@@ -22,14 +22,17 @@ import com.intellij.openapi.actionSystem.LangDataKeys;
 import com.intellij.openapi.module.Module;
 
 public final class ModuleNameMacro extends Macro {
+  @Override
   public String getName() {
     return "ModuleName";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.module.file.name");
   }
 
+  @Override
   public String expand(DataContext dataContext) {
     final Module module = LangDataKeys.MODULE.getData(dataContext);
     if (module == null) {

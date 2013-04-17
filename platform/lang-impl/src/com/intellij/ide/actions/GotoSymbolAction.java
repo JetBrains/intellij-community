@@ -31,6 +31,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class GotoSymbolAction extends GotoActionBase {
 
+  @Override
   public void gotoActionPerformed(AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.popup.symbol");
     final Project project = e.getData(PlatformDataKeys.PROJECT);
@@ -49,6 +50,7 @@ public class GotoSymbolAction extends GotoActionBase {
     }, "Symbols matching patterns", true);
   }
 
+  @Override
   protected boolean hasContributors(DataContext dataContext) {
     return ChooseByNameRegistry.getInstance().getSymbolModelContributors().length > 0;
   }

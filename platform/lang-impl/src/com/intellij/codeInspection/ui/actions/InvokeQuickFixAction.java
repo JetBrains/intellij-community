@@ -47,6 +47,7 @@ public class InvokeQuickFixAction extends AnAction {
                               myView.getTree());
   }
 
+  @Override
   public void update(AnActionEvent e) {
     if (!myView.isSingleToolInSelection()) {
       e.getPresentation().setEnabled(false);
@@ -68,6 +69,7 @@ public class InvokeQuickFixAction extends AnAction {
 
   private static ActionGroup getFixes(final QuickFixAction[] quickFixes) {
     return new ActionGroup() {
+      @Override
       @NotNull
       public AnAction[] getChildren(@Nullable AnActionEvent e) {
         List<QuickFixAction> children = new ArrayList<QuickFixAction>();
@@ -81,6 +83,7 @@ public class InvokeQuickFixAction extends AnAction {
     };
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final InspectionTool tool = myView.getTree().getSelectedTool();
     assert tool != null;

@@ -39,6 +39,7 @@ public class ConsoleViewRunningState extends ConsoleState {
   private final Writer myUserInputWriter;
 
   private final ProcessAdapter myProcessListener = new ProcessAdapter() {
+    @Override
     public void onTextAvailable(final ProcessEvent event, final Key outputType) {
       myConsole.print(event.getText(), ConsoleViewContentType.getConsoleViewType(outputType));
     }
@@ -80,6 +81,7 @@ public class ConsoleViewRunningState extends ConsoleState {
     return new OutputStreamWriter(processInput, charset);
   }
 
+  @Override
   @NotNull
   public ConsoleState dispose() {
     if (myProcessHandler != null) {
@@ -88,14 +90,17 @@ public class ConsoleViewRunningState extends ConsoleState {
     return myFinishedStated;
   }
 
+  @Override
   public boolean isFinished() {
     return myProcessHandler == null || myProcessHandler.isProcessTerminated();
   }
 
+  @Override
   public boolean isRunning() {
     return myProcessHandler != null && !myProcessHandler.isProcessTerminated();
   }
 
+  @Override
   public void sendUserInput(final String input) throws IOException {
     if (myUserInputWriter == null) {
       throw new IOException(ExecutionBundle.message("no.user.process.input.error.message"));
@@ -104,6 +109,7 @@ public class ConsoleViewRunningState extends ConsoleState {
     myUserInputWriter.flush();
   }
 
+  @Override
   public ConsoleState attachTo(final ConsoleViewImpl console, final ProcessHandler processHandler) {
     return dispose().attachTo(console, processHandler);
   }

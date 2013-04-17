@@ -84,9 +84,11 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     myModule = ModuleUtil.findModuleForPsiElement(element);
   }
 
+  @Override
   public boolean isValid() {
     if (myIsDeleted) return false;
     return ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+      @Override
       public Boolean compute() {
 
         final PsiFile file = myID.getContainingFile();
@@ -101,6 +103,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     }).booleanValue();
   }
 
+  @Override
   @Nullable
   public Icon getIcon(final boolean expanded) {
     final PsiElement element = getElement();
@@ -110,14 +113,17 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return null;
   }
 
+  @Override
   public RefModule getModule() {
     return myManager.getRefModule(myModule);
   }
 
+  @Override
   public String getExternalName() {
     return getName();
   }
 
+  @Override
   @Nullable
   public PsiElement getElement() {
     return myID.getElement();
@@ -132,6 +138,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return myID.getVirtualFile();
   }
 
+  @Override
   public SmartPsiElementPointer getPointer() {
     return myID;
   }
@@ -139,10 +146,12 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   public void buildReferences() {
   }
 
+  @Override
   public boolean isReachable() {
     return checkFlag(IS_REACHABLE_MASK);
   }
 
+  @Override
   public boolean isReferenced() {
     return !getInReferences().isEmpty();
   }
@@ -155,6 +164,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return false;
   }
 
+  @Override
   @NotNull
   public Collection<RefElement> getOutReferences() {
     if (myOutReferences == null){
@@ -163,6 +173,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     return myOutReferences;
   }
 
+  @Override
   @NotNull
   public Collection<RefElement> getInReferences() {
     if (myInReferences == null){
@@ -193,15 +204,18 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
     setFlag(entry, IS_ENTRY_MASK);
   }
 
+  @Override
   public boolean isEntry() {
     return checkFlag(IS_ENTRY_MASK);
   }
 
+  @Override
   public boolean isPermanentEntry() {
     return checkFlag(IS_PERMANENT_ENTRY_MASK);
   }
 
 
+  @Override
   @NotNull
   public RefElement getContainingEntry() {
     return this;
@@ -250,7 +264,7 @@ public abstract class RefElementImpl extends RefEntityImpl implements RefElement
   protected abstract void initialize();
 
   public void addSuppression(final String text) {
-    mySuppressions = text.split("[, ]");    
+    mySuppressions = text.split("[, ]");
   }
 
   public boolean isSuppressed(final String... toolId) {

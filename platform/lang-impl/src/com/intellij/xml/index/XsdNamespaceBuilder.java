@@ -63,6 +63,7 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
   private String myVersion;
   private List<String> myTags = new ArrayList<String>();
   private List<String> myAttributes = new ArrayList<String>();
+  @Override
   public void startElement(@NonNls final String name, @NonNls final String nsPrefix, @NonNls final String nsURI, final String systemID, final int lineNr)
       throws Exception {
 
@@ -78,6 +79,7 @@ public class XsdNamespaceBuilder extends NanoXmlUtil.IXMLBuilderAdapter implemen
     myCurrentTag = null;
   }
 
+  @Override
   public void addAttribute(@NonNls final String key, final String nsPrefix, final String nsURI, final String value, final String type)
       throws Exception {
     if ("schema".equals(myCurrentTag)) {

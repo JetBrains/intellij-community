@@ -92,14 +92,17 @@ public class MyLookupExpression extends Expression {
     return lookupElements;
   }
 
+  @Override
   public LookupElement[] calculateLookupItems(ExpressionContext context) {
     return myLookupItems;
   }
 
+  @Override
   public Result calculateQuickResult(ExpressionContext context) {
     return calculateResult(context);
   }
 
+  @Override
   public Result calculateResult(ExpressionContext context) {
     TemplateState templateState = TemplateManagerImpl.getTemplateState(context.getEditor());
     final TextResult insertedValue = templateState != null ? templateState.getVariableValue(InplaceRefactoring.PRIMARY_VARIABLE_NAME) : null;

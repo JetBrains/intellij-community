@@ -59,18 +59,22 @@ public class BackwardDependenciesBuilder extends DependenciesBuilder {
     myTotalFileCount = myFileCount + scope.getFileCount();
   }
 
+  @Override
   public String getRootNodeNameInUsageView() {
     return AnalysisScopeBundle.message("backward.dependencies.usage.view.root.node.text");
   }
 
+  @Override
   public String getInitialUsagesPosition() {
     return AnalysisScopeBundle.message("backward.dependencies.usage.view.initial.text");
   }
 
+  @Override
   public boolean isBackward() {
     return true;
   }
 
+  @Override
   public void analyze() {
     AnalysisScope scope = myForwardScope;
     final DependenciesBuilder builder = new ForwardDependenciesBuilder(getProject(), scope, getScopeOfInterest());

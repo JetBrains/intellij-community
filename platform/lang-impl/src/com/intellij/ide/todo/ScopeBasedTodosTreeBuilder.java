@@ -33,6 +33,7 @@ public class ScopeBasedTodosTreeBuilder extends TodoTreeBuilder{
     myScopes = scopes;
   }
 
+  @Override
   @NotNull
   protected TodoTreeStructure createTreeStructure(){
     return new ScopeBasedTodosTreeStructure(myProject, myScopes);

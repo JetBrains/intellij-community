@@ -66,7 +66,7 @@ public class PsiCopyPasteManager {
       }
     });
   }
-    
+
 
   @Nullable
   public PsiElement[] getElements(boolean[] isCopied) {
@@ -221,7 +221,7 @@ public class PsiCopyPasteManager {
     public boolean isCopied() {
       return myIsCopied;
     }
-    
+
     @Nullable
     public Project getProject() {
       if (myElements == null || myElements.length == 0) {
@@ -248,6 +248,7 @@ public class PsiCopyPasteManager {
       myDataProxy = data;
     }
 
+    @Override
     @Nullable
     public Object getTransferData(DataFlavor flavor) throws UnsupportedFlavorException, IOException {
       if (ourDataFlavor.equals(flavor)) {
@@ -310,10 +311,12 @@ public class PsiCopyPasteManager {
       }
     }
 
+    @Override
     public DataFlavor[] getTransferDataFlavors() {
       return myDataProxy.isCopied() ? DATA_FLAVORS_COPY : DATA_FLAVORS_CUT;
     }
 
+    @Override
     public boolean isDataFlavorSupported(DataFlavor flavor) {
       return ArrayUtil.find(getTransferDataFlavors(), flavor) != -1;
     }

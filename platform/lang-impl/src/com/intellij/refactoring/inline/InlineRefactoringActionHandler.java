@@ -47,6 +47,7 @@ public class InlineRefactoringActionHandler implements RefactoringActionHandler 
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.inline.InlineHandler");
   private static final String REFACTORING_NAME = RefactoringBundle.message("inline.title");
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     LOG.assertTrue(elements.length == 1);
     if (dataContext == null) {
@@ -63,6 +64,7 @@ public class InlineRefactoringActionHandler implements RefactoringActionHandler 
     invokeInliner(editor, elements[0]);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, Editor editor, PsiFile file, DataContext dataContext) {
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
 

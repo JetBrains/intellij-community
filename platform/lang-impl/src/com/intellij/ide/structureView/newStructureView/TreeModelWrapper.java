@@ -36,11 +36,13 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
     myStructureView = structureView;
   }
 
+  @Override
   @NotNull
   public StructureViewTreeElement getRoot() {
     return myModel.getRoot();
   }
 
+  @Override
   @NotNull
   public Grouper[] getGroupers() {
     ArrayList<TreeAction> filtered = filterActive(myModel.getGroupers());
@@ -54,7 +56,7 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
     }
     return filtered;
   }
-  
+
   private ArrayList<NodeProvider> filterProviders(Collection<NodeProvider> actions) {
     ArrayList<NodeProvider> filtered = new ArrayList<NodeProvider>();
     for (NodeProvider action : actions) {
@@ -67,18 +69,21 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
     return action instanceof Sorter && !((Sorter)action).isVisible() || myStructureView.isActionActive(action.getName());
   }
 
+  @Override
   @NotNull
   public Sorter[] getSorters() {
     ArrayList<TreeAction> filtered = filterActive(myModel.getSorters());
     return filtered.toArray(new Sorter[filtered.size()]);
   }
 
+  @Override
   @NotNull
   public Filter[] getFilters() {
     ArrayList<TreeAction> filtered = filterActive(myModel.getFilters());
     return filtered.toArray(new Filter[filtered.size()]);
   }
 
+  @Override
   public Object getCurrentEditorElement() {
     return myModel.getCurrentEditorElement();
   }
@@ -106,26 +111,32 @@ public class TreeModelWrapper implements StructureViewModel, ProvidingTreeModel 
     return action instanceof Filter && ((Filter)action).isReverted();
   }
 
+  @Override
   public void addEditorPositionListener(FileEditorPositionListener listener) {
     myModel.addEditorPositionListener(listener);
   }
 
+  @Override
   public void removeEditorPositionListener(FileEditorPositionListener listener) {
     myModel.removeEditorPositionListener(listener);
   }
 
+  @Override
   public void dispose() {
     myModel.dispose();
   }
 
+  @Override
   public boolean shouldEnterElement(final Object element) {
     return false;
   }
 
+  @Override
   public void addModelListener(ModelListener modelListener) {
     myModel.addModelListener(modelListener);
   }
 
+  @Override
   public void removeModelListener(ModelListener modelListener) {
     myModel.removeModelListener(modelListener);
   }

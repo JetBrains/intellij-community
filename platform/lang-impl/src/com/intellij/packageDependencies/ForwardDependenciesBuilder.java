@@ -51,18 +51,22 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     myTransitive = transitive;
   }
 
+  @Override
   public String getRootNodeNameInUsageView(){
     return AnalysisScopeBundle.message("forward.dependencies.usage.view.root.node.text");
   }
 
+  @Override
   public String getInitialUsagesPosition(){
     return AnalysisScopeBundle.message("forward.dependencies.usage.view.initial.text");
   }
 
+  @Override
   public boolean isBackward(){
     return false;
   }
 
+  @Override
   public void analyze() {
     final PsiManager psiManager = PsiManager.getInstance(getProject());
     psiManager.startBatchFilesProcessingMode();
@@ -124,6 +128,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
         if (!processed.contains(psiFile)) {
           processed.add(psiFile);
           analyzeFileDependencies(psiFile, new DependencyProcessor() {
+            @Override
             public void process(PsiElement place, PsiElement dependency) {
               PsiFile dependencyFile = dependency.getContainingFile();
               if (dependencyFile != null) {
@@ -160,6 +165,7 @@ public class ForwardDependenciesBuilder extends DependenciesBuilder {
     while (isTransitive() && !collectedDeps.isEmpty());
   }
 
+  @Override
   public Map<PsiFile, Set<PsiFile>> getDirectDependencies() {
     return myDirectDependencies;
   }

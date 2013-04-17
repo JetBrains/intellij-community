@@ -59,14 +59,17 @@ public class ConversionResultImpl implements ConversionResult {
     }
   }
 
+  @Override
   public boolean conversionNotNeeded() {
     return !myConversionNeeded;
   }
 
+  @Override
   public boolean openingIsCanceled() {
     return myConversionCanceled || myErrorOccurred;
   }
 
+  @Override
   public void postStartupActivity(@NotNull Project project) {
     final Application application = ApplicationManager.getApplication();
     if (application.isHeadlessEnvironment() || application.isUnitTestMode()) {

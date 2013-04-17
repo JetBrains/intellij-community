@@ -42,6 +42,7 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
     final MyChangeListManagerListener myChangeListManagerListener = new MyChangeListManagerListener();
     changeListManager.addChangeListListener(myChangeListManagerListener);
     Disposer.register(this, new Disposable() {
+      @Override
       public void dispose() {
         ChangeListManager.getInstance(myProject).removeChangeListListener(myChangeListManagerListener);
       }
@@ -50,15 +51,18 @@ public abstract class ChangeListTodosPanel extends TodoPanel{
   }
 
   private final class MyChangeListManagerListener extends ChangeListAdapter {
+    @Override
     public void defaultListChanged(final ChangeList oldDefaultList, final ChangeList newDefaultList) {
       rebuildWithAlarm(myAlarm);
       setDisplayName(IdeBundle.message("changelist.todo.title", newDefaultList.getName()));
     }
 
+    @Override
     public void changeListRenamed(final ChangeList list, final String oldName) {
       setDisplayName(IdeBundle.message("changelist.todo.title", list.getName()));
     }
 
+    @Override
     public void changesMoved(final Collection<Change> changes, final ChangeList fromList, final ChangeList toList) {
       rebuildWithAlarm(myAlarm);
     }

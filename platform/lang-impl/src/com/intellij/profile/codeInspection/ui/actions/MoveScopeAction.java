@@ -62,6 +62,7 @@ public abstract class MoveScopeAction extends AnAction {
     }
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final InspectionConfigTreeNode[] nodes = myTree.getSelectedNodes(InspectionConfigTreeNode.class, null);
     final InspectionConfigTreeNode node = nodes[0];

@@ -38,6 +38,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
   private static final ThreadLocal<Boolean> ourPreventInlineRenameFlag = new ThreadLocal<Boolean>();
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.rename.inplace.VariableInplaceRenameHandler");
 
+  @Override
   public final boolean isAvailableOnDataContext(final DataContext dataContext) {
     final PsiElement element = PsiElementRenameHandler.getElement(dataContext);
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
@@ -60,10 +61,12 @@ public class VariableInplaceRenameHandler implements RenameHandler {
            supportProvider.isInplaceRenameAvailable(element, nameSuggestionContext);
   }
 
+  @Override
   public final boolean isRenaming(final DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     PsiElement element = PsiElementRenameHandler.getElement(dataContext);
     if (element == null) {
@@ -88,6 +91,7 @@ public class VariableInplaceRenameHandler implements RenameHandler {
     }
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = PsiElementRenameHandler.getElement(dataContext);

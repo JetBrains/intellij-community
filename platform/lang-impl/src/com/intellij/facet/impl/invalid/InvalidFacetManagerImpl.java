@@ -55,6 +55,7 @@ public class InvalidFacetManagerImpl extends InvalidFacetManager implements Pers
     return myState.getIgnoredFacets().contains(FacetPointersManager.constructId(facet));
   }
 
+  @Override
   public InvalidFacetManagerState getState() {
     return myState;
   }

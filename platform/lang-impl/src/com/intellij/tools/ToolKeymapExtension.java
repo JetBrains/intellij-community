@@ -31,10 +31,12 @@ public class ToolKeymapExtension extends BaseToolKeymapExtension {
     return Tool.ACTION_ID_PREFIX;
   }
 
+  @Override
   protected String getGroupByActionId(String id) {
     return myToolManager.getGroupByActionId(id);
   }
 
+  @Override
   protected String getGroupName() {
     return KeyMapBundle.message("actions.tree.external.tools.group");
   }

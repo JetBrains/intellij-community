@@ -90,10 +90,12 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return false;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return getDefaultLevel() != HighlightDisplayLevel.DO_NOT_SHOW;
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public final String getDescriptionFileName() {
     return getShortName() + ".html";
@@ -216,7 +218,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     provider.appendToolNodeContent(myToolNode, parentNode, showStructure);
     return myToolNode;
   }
-  
+
   @Nullable
   public SuppressIntentionAction[] getSuppressActions() {
     return null;

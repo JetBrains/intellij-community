@@ -65,11 +65,13 @@ public class RefElementNode extends InspectionTreeNode {
     return (RefEntity)getUserObject();
   }
 
+  @Override
   @Nullable
   public Icon getIcon(boolean expanded) {
     return myIcon.getIcon();
   }
 
+  @Override
   public int getProblemCount() {
     return Math.max(1, super.getProblemCount());
   }
@@ -82,30 +84,36 @@ public class RefElementNode extends InspectionTreeNode {
     return element.getRefManager().getRefinedElement(element).getQualifiedName();
   }
 
+  @Override
   public boolean isValid() {
     final RefEntity refEntity = getElement();
     return refEntity != null && refEntity.isValid();
   }
 
+  @Override
   public boolean isResolved() {
     return myTool.isElementIgnored(getElement());
   }
 
 
+  @Override
   public void ignoreElement() {
     myTool.ignoreCurrentElement(getElement());
     super.ignoreElement();
   }
 
+  @Override
   public void amnesty() {
     myTool.amnesty(getElement());
     super.amnesty();
   }
 
+  @Override
   public FileStatus getNodeStatus() {
-    return  myTool.getElementStatus(getElement());    
+    return  myTool.getElementStatus(getElement());
   }
 
+  @Override
   public void add(MutableTreeNode newChild) {
     super.add(newChild);
     if (newChild instanceof ProblemDescriptionNode) {

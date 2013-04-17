@@ -23,6 +23,7 @@ import com.intellij.codeInsight.lookup.Lookup;
 */
 public class IdentifierCharFilter extends CharFilter {
 
+  @Override
   public Result acceptChar(char c, final int prefixLength, final Lookup lookup) {
     if (lookup.isCompletion()) return null;
 

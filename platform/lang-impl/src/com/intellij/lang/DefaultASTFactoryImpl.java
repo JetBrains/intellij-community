@@ -21,6 +21,7 @@ import com.intellij.psi.impl.source.tree.PsiCommentImpl;
 import com.intellij.psi.tree.IElementType;
 
 public class DefaultASTFactoryImpl extends CoreASTFactory implements DefaultASTFactory {
+  @Override
   public LeafElement createComment(IElementType type, CharSequence text) {
     return new PsiCommentImpl(type, text);
   }

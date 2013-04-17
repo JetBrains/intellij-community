@@ -49,6 +49,7 @@ public class BookmarkItem extends ItemWrapper {
     return myBookmark;
   }
 
+  @Override
   public void setupRenderer(ColoredListCellRenderer renderer, Project project, boolean selected) {
     setupRenderer(renderer, project, myBookmark, selected);
   }
@@ -92,6 +93,7 @@ public class BookmarkItem extends ItemWrapper {
     setupRenderer(renderer, project, myBookmark, selected);
   }
 
+  @Override
   public void updateAccessoryView(JComponent component) {
     JLabel label = (JLabel)component;
     final char mnemonic = myBookmark.getMnemonic();
@@ -103,14 +105,17 @@ public class BookmarkItem extends ItemWrapper {
     }
   }
 
+  @Override
   public String speedSearchText() {
     return myBookmark.getFile().getName() + " " + myBookmark.getDescription();
   }
 
+  @Override
   public String footerText() {
     return myBookmark.getFile().getPresentableUrl();
   }
 
+  @Override
   protected void doUpdateDetailView(DetailView panel, boolean editorOnly) {
     panel.navigateInPreviewEditor(DetailView.PreviewEditorState.create(myBookmark.getFile(), myBookmark.getLine()));
   }

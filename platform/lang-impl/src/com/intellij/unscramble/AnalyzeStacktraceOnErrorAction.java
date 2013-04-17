@@ -28,6 +28,7 @@ import com.intellij.openapi.project.Project;
  */
 public class AnalyzeStacktraceOnErrorAction extends AnAction {
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
 

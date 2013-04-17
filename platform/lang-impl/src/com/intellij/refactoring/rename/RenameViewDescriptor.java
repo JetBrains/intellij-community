@@ -69,19 +69,23 @@ public class RenameViewDescriptor implements UsageViewDescriptor{
                                                                                                  ", "));
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return myElements;
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return myProcessedElementsHeader;
   }
 
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return myCodeReferencesText + UsageViewBundle.getReferencesString(usagesCount, filesCount);
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("comments.elements.header",
                                      UsageViewBundle.getOccurencesString(usagesCount, filesCount));

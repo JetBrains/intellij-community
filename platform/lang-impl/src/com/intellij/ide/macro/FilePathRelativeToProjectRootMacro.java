@@ -25,14 +25,17 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class FilePathRelativeToProjectRootMacro extends Macro {
+  @Override
   public String getName() {
     return "FilePathRelativeToProjectRoot";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.file.path.relative.to.root");
   }
 
+  @Override
   public String expand(final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {

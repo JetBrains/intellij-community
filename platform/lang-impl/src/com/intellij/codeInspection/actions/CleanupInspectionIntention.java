@@ -52,16 +52,19 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     myQuickfixClass = quickFixClass;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return InspectionsBundle.message("fix.all.inspection.problems.in.file", myTool.getDisplayName());
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
     final List<CommonProblemDescriptor> descriptions =
@@ -73,6 +76,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
       }, new EmptyProgressIndicator());
 
     Collections.sort(descriptions, new Comparator<CommonProblemDescriptor>() {
+      @Override
       public int compare(final CommonProblemDescriptor o1, final CommonProblemDescriptor o2) {
         final ProblemDescriptorImpl d1 = (ProblemDescriptorImpl)o1;
         final ProblemDescriptorImpl d2 = (ProblemDescriptorImpl)o2;
@@ -101,14 +105,16 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     }
   }
 
-  
 
 
+
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return myQuickfixClass != null && myQuickfixClass != EmptyIntentionAction.class && !(myTool instanceof LocalInspectionToolWrapper &&
                                                                                          ((LocalInspectionToolWrapper)myTool).isUnfair());
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

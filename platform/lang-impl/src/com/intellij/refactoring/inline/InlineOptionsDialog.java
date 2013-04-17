@@ -42,15 +42,18 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     myElement = element;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     myNameLabel.setText(getNameLabelText());
     return myNameLabel;
   }
 
+  @Override
   public boolean isInlineThisOnly() {
     return myRbInlineThisOnly.isSelected();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel optionsPanel = new JPanel();
     optionsPanel.setBorder(new EmptyBorder(10, 0, 0, 0));
@@ -97,6 +100,7 @@ public abstract class InlineOptionsDialog extends RefactoringDialog implements I
     getPreviewAction().setEnabled(myRbInlineAll.isSelected());
     myRbInlineAll.addItemListener(
       new ItemListener() {
+        @Override
         public void itemStateChanged(ItemEvent e) {
           boolean enabled = myRbInlineAll.isSelected();
           getPreviewAction().setEnabled(enabled);

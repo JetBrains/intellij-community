@@ -111,6 +111,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     return dirName;
   }
 
+  @Override
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     int count = getChildCount();
@@ -151,6 +152,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     return VfsUtilCore.getRelativePath(directory, contentRoot, '/');
   }
 
+  @Override
   public PsiElement getPsiElement() {
     return getTargetDirectory();
   }
@@ -175,6 +177,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     return dirNode.getPsiDirectory();
   }
 
+  @Override
   public int getWeight() {
     return 3;
   }
@@ -197,6 +200,7 @@ public class DirectoryNode extends PackageDependenciesNode {
     return toString().hashCode();
   }
 
+  @Override
   public Icon getIcon() {
     return PlatformIcons.PACKAGE_ICON;
   }
@@ -225,10 +229,12 @@ public class DirectoryNode extends PackageDependenciesNode {
   }
 
 
+  @Override
   public boolean isValid() {
     return myVDirectory != null && myVDirectory.isValid();
   }
 
+  @Override
   public boolean canNavigate() {
     return false;
   }

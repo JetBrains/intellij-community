@@ -242,6 +242,7 @@ class AnnotateStackTraceAction extends AnAction {
                       cache.put(line, revision);
                     }
                     ApplicationManager.getApplication().invokeLater(new Runnable() {
+                      @Override
                       public void run() {
                         if (!myGutterShowed) {
                           showGutter();

@@ -50,11 +50,13 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     myContent = content;
   }
 
+  @Override
   public boolean checkReportedProblems(final InspectionTool tool) {
     final Map<String, Set<OfflineProblemDescriptor>> content = getFilteredContent(tool);
     return content != null && !content.values().isEmpty();
   }
 
+  @Override
   @Nullable
   public QuickFixAction[] getQuickFixes(final InspectionTool tool, final InspectionTree tree) {
     final TreePath[] treePaths = tree.getSelectionPaths();
@@ -62,6 +64,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     final Map<RefEntity, Set<QuickFix>> actions = new HashMap<RefEntity, Set<QuickFix>>();
     for (TreePath selectionPath : treePaths) {
       TreeUtil.traverseDepth((TreeNode)selectionPath.getLastPathComponent(), new TreeUtil.Traverse() {
+        @Override
         public boolean accept(final Object node) {
           if (!((InspectionTreeNode)node).isValid()) return true;
           if (node instanceof OfflineProblemDescriptorNode) {
@@ -100,10 +103,12 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     return tool.getQuickFixes(selectedRefElements);
   }
 
+  @Override
   public boolean isContentLoaded() {
     return false;
   }
 
+  @Override
   public void appendToolNodeContent(final InspectionNode toolNode,
                                     final InspectionTreeNode parentNode,
                                     final boolean showStructure,
@@ -115,6 +120,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     if (filteredContent != null && !filteredContent.values().isEmpty()) {
       final Function<OfflineProblemDescriptor, UserObjectContainer<OfflineProblemDescriptor>> computeContainer =
         new Function<OfflineProblemDescriptor, UserObjectContainer<OfflineProblemDescriptor>>() {
+          @Override
           public UserObjectContainer<OfflineProblemDescriptor> fun(final OfflineProblemDescriptor descriptor) {
             return new OfflineProblemDescriptorContainer(descriptor);
           }
@@ -163,6 +169,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
     }
   }
 
+  @Override
   protected void appendDescriptor(final InspectionTool tool,
                                   final UserObjectContainer container,
                                   final InspectionPackageNode packageNode,
@@ -181,6 +188,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
       myDescriptor = descriptor;
     }
 
+    @Override
     @Nullable
     public OfflineProblemDescriptorContainer getOwner() {
       final OfflineProblemDescriptor descriptor = myDescriptor.getOwner();
@@ -191,18 +199,22 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
       return null;
     }
 
+    @Override
     public RefElementNode createNode(InspectionTool tool) {
       return new OfflineRefElementNode(myDescriptor, tool);
     }
 
+    @Override
     public OfflineProblemDescriptor getUserObject() {
       return myDescriptor;
     }
 
+    @Override
     public String getModule() {
       return myDescriptor.getModuleName();
     }
 
+    @Override
     public boolean areEqual(final OfflineProblemDescriptor o1, final OfflineProblemDescriptor o2) {
       if (o1 == null || o2 == null) {
         return o1 == o2;
@@ -214,6 +226,7 @@ public class OfflineInspectionRVContentProvider extends InspectionRVContentProvi
       return true;
     }
 
+    @Override
     public boolean supportStructure() {
       return !Comparing.strEqual(myDescriptor.getType(), SmartRefElementPointer.MODULE) &&
              !Comparing.strEqual(myDescriptor.getType(), "package") &&

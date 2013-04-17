@@ -22,6 +22,7 @@ import com.intellij.openapi.ide.CutElementMarker;
  * @author yole
  */
 public class PsiCutElementMarker implements CutElementMarker {
+  @Override
   public boolean isCutElement(final Object element) {
     return PsiCopyPasteManager.getInstance().isCutElement(element);
   }

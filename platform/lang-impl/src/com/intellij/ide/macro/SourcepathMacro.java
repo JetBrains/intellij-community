@@ -23,14 +23,17 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 
 public final class SourcepathMacro extends Macro {
+  @Override
   public String getName() {
     return "Sourcepath";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.project.sourcepath");
   }
 
+  @Override
   public String expand(DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) return null;

@@ -100,6 +100,7 @@ public class RenameDialog extends RefactoringDialog {
     return RenamePsiElementProcessor.forElement(myPsiElement).showRenamePreviewButton(myPsiElement);
   }
 
+  @Override
   protected void dispose() {
     myNameSuggestionsField.removeDataChangedListener(myNameChangedListener);
     super.dispose();
@@ -130,6 +131,7 @@ public class RenameDialog extends RefactoringDialog {
       myNameSuggestionsField.selectNameWithoutExtension();
     }
     myNameChangedListener = new NameSuggestionsField.DataChanged() {
+      @Override
       public void dataChanged() {
         processNewNameChanged();
       }
@@ -169,14 +171,17 @@ public class RenameDialog extends RefactoringDialog {
     return myCbSearchTextOccurences.isSelected();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameSuggestionsField.getFocusableComponent();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -254,10 +259,12 @@ public class RenameDialog extends RefactoringDialog {
     }
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(myHelpID);
   }
 
+  @Override
   protected void doAction() {
     LOG.assertTrue(myPsiElement.isValid());
 
@@ -304,6 +311,7 @@ public class RenameDialog extends RefactoringDialog {
     }
   }
 
+  @Override
   protected boolean areButtonsValid() {
     final String newName = getNewName();
     return RenameUtil.isValidName(myProject, myPsiElement, newName);

@@ -177,6 +177,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     DataManager.registerDataProvider(myPanel, new TypeSafeDataProviderAdapter(this));
 
     myHistoryViewer.getComponent().addComponentListener(new ComponentAdapter() {
+      @Override
       public void componentResized(ComponentEvent e) {
         if (myForceScrollToEnd.getAndSet(false)) {
           final JScrollBar scrollBar = myHistoryViewer.getScrollPane().getVerticalScrollBar();
@@ -184,6 +185,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
         }
       }
 
+      @Override
       public void componentShown(ComponentEvent e) {
         componentResized(e);
       }
@@ -229,6 +231,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryViewer.setCaretEnabled(false);
     myConsoleEditor.setHorizontalScrollbarVisible(true);
     final VisibleAreaListener areaListener = new VisibleAreaListener() {
+      @Override
       public void visibleAreaChanged(VisibleAreaEvent e) {
         final int offset = myConsoleEditor.getScrollingModel().getHorizontalScrollOffset();
         final ScrollingModel model = myHistoryViewer.getScrollingModel();
@@ -255,6 +258,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     myHistoryViewer.getDocument().addDocumentListener(docListener, this);
 
     myHistoryViewer.getContentComponent().addKeyListener(new KeyAdapter() {
+      @Override
       public void keyTyped(KeyEvent event) {
         if (isConsoleEditorEnabled() && UIUtil.isReallyTypedEvent(event)) {
           myConsoleEditor.getContentComponent().requestFocus();
@@ -278,6 +282,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   public void setTextToEditor(final String text) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         myConsoleEditor.getDocument().setText(text);
       }
@@ -454,6 +459,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
                                      final boolean preserveMarkup) {
     final Ref<String> ref = Ref.create("");
     final Runnable action = new Runnable() {
+      @Override
       public void run() {
         ref.set(addTextRangeToHistory(textRange, editor, preserveMarkup));
         if (erase) {
@@ -570,6 +576,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   public void queueUiUpdate(final boolean forceScrollToEnd) {
     myForceScrollToEnd.compareAndSet(false, forceScrollToEnd);
     myUpdateQueue.queue(new Update("UpdateUi") {
+      @Override
       public void run() {
         if (Disposer.isDisposed(LanguageConsoleImpl.this)) return;
         if (isConsoleEditorEnabled()) {
@@ -583,6 +590,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     });
   }
 
+  @Override
   public void dispose() {
     final EditorFactory editorFactory = EditorFactory.getInstance();
     editorFactory.releaseEditor(myConsoleEditor);
@@ -595,6 +603,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
   }
 
+  @Override
   public void calcData(DataKey key, DataSink sink) {
     if (OpenFileDescriptor.NAVIGATE_IN_EDITOR == key) {
       sink.put(OpenFileDescriptor.NAVIGATE_IN_EDITOR, myConsoleEditor);
@@ -622,6 +631,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
           }
           EmptyAction.registerActionShortcuts(editor.getComponent(), myConsoleEditor.getComponent());
           editor.getCaretModel().addCaretListener(new CaretListener() {
+            @Override
             public void caretPositionChanged(CaretEvent e) {
               queueUiUpdate(false);
             }
@@ -657,6 +667,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
 
   public void setInputText(final String query) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         myConsoleEditor.getDocument().setText(query);
       }
@@ -693,6 +704,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
     else {
       application.invokeLater(new Runnable() {
+        @Override
         public void run() {
           console.printToHistory(attributedText);
         }
@@ -720,6 +732,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     }
     else {
       application.invokeLater(new Runnable() {
+        @Override
         public void run() {
           console.printToHistory(string, attributes);
         }

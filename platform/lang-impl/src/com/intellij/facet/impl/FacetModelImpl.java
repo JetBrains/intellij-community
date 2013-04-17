@@ -49,6 +49,7 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
     }
   }
 
+  @Override
   public void addFacet(Facet facet) {
     if (myFacets.contains(facet)) {
       LOG.error("Facet " + facet + " [" + facet.getTypeId() + "] is already added");
@@ -58,6 +59,7 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
     facetsChanged();
   }
 
+  @Override
   public void removeFacet(Facet facet) {
     if (!myFacets.remove(facet)) {
       LOG.error("Facet " + facet + " [" + facet.getTypeId() + "] not found");
@@ -66,6 +68,7 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
     facetsChanged();
   }
 
+  @Override
   public void rename(final Facet facet, final String newName) {
     if (!newName.equals(facet.getName())) {
       myFacet2NewName.put(facet, newName);
@@ -75,37 +78,45 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
     facetsChanged();
   }
 
+  @Override
   @Nullable
   public String getNewName(final Facet facet) {
     return myFacet2NewName.get(facet);
   }
 
+  @Override
   public void commit() {
     myManager.commit(this);
   }
 
+  @Override
   public boolean isModified() {
     return !new HashSet<Facet>(myFacets).equals(new HashSet<Facet>(Arrays.asList(myManager.getAllFacets()))) || !myFacet2NewName.isEmpty();
   }
 
+  @Override
   public boolean isNewFacet(final Facet facet) {
     return myFacets.contains(facet) && ArrayUtil.find(myManager.getAllFacets(), facet) == -1;
   }
 
+  @Override
   @NotNull
   public Facet[] getAllFacets() {
     return myFacets.toArray(new Facet[myFacets.size()]);
   }
 
+  @Override
   @NotNull
   public String getFacetName(@NotNull final Facet facet) {
     return myFacet2NewName.containsKey(facet) ? myFacet2NewName.get(facet) : facet.getName();
   }
 
+  @Override
   public void addListener(@NotNull final Listener listener, @Nullable Disposable parentDisposable) {
     myListeners.add(listener);
     if (parentDisposable != null) {
       Disposer.register(parentDisposable, new Disposable() {
+        @Override
         public void dispose() {
           myListeners.remove(listener);
         }
@@ -113,6 +124,7 @@ public class FacetModelImpl extends FacetModelBase implements ModifiableFacetMod
     }
   }
 
+  @Override
   protected void facetsChanged() {
     super.facetsChanged();
     for (Listener each : myListeners) {

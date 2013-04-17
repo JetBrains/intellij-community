@@ -156,6 +156,7 @@ public class PlatformPackageUtil {
         final PsiDirectory psiDirectory_ = psiDirectory;
         try {
           psiDirectory = ActionRunner.runInsideWriteAction(new ActionRunner.InterruptibleRunnableWithResult<PsiDirectory>() {
+            @Override
             public PsiDirectory run() throws Exception {
               return psiDirectory_.createSubdirectory(name);
             }

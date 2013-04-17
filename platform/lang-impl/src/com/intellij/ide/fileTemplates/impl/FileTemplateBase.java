@@ -38,11 +38,13 @@ public abstract class FileTemplateBase implements FileTemplate {
   @Nullable
   private String myText;
   private boolean myShouldReformatCode = DEFAULT_REFORMAT_CODE_VALUE;
-  
+
+  @Override
   public final boolean isReformatCode() {
     return myShouldReformatCode;
   }
 
+  @Override
   public final void setReformatCode(boolean reformat) {
     myShouldReformatCode = reformat;
   }
@@ -55,12 +57,14 @@ public abstract class FileTemplateBase implements FileTemplate {
     return name + "." + extension;
   }
 
+  @Override
   @NotNull
   public final String getText() {
     final String text = myText;
     return text != null? text : getDefaultText();
   }
 
+  @Override
   public final void setText(@Nullable String text) {
     if (text == null) {
       myText = null;
@@ -76,16 +80,19 @@ public abstract class FileTemplateBase implements FileTemplate {
     return "";
   }
 
+  @Override
   @NotNull
   public final String getText(Map attributes) throws IOException{
     return FileTemplateUtil.mergeTemplate(attributes, getText(), false);
   }
 
+  @Override
   @NotNull
   public final String getText(Properties attributes) throws IOException{
     return FileTemplateUtil.mergeTemplate(attributes, getText(), false);
   }
 
+  @Override
   @NotNull
   public final String[] getUnsetAttributes(@NotNull Properties properties) throws ParseException {
     return FileTemplateUtil.calculateAttributes(getText(), properties, false);
@@ -94,13 +101,14 @@ public abstract class FileTemplateBase implements FileTemplate {
   @Override
   public FileTemplateBase clone() {
     try {
-      return (FileTemplateBase)super.clone(); 
+      return (FileTemplateBase)super.clone();
     }
     catch (CloneNotSupportedException e) {
       throw new RuntimeException(e);
     }
   }
-  
+
+  @Override
   public boolean isTemplateOfType(@NotNull final FileType fType) {
     return fType.equals(FileTypeManagerEx.getInstanceEx().getFileTypeByExtension(getExtension()));
   }

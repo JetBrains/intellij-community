@@ -30,14 +30,17 @@ public class AbstractUrlFavoriteAdapter extends AbstractUrl {
     myNodeProvider = nodeProvider;
   }
 
+  @Override
   public Object[] createPath(Project project) {
     return myNodeProvider.createPathFromUrl(project, url, moduleName);
   }
 
+  @Override
   protected AbstractUrl createUrl(String moduleName, String url) {
     return null;
   }
 
+  @Override
   public AbstractUrl createUrlByElement(Object element) {
     return null;
   }

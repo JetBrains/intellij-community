@@ -32,19 +32,23 @@ public class SafeDeleteUsageViewDescriptor extends UsageViewDescriptorAdapter {
     myElementsToDelete = elementsToDelete;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return myElementsToDelete;
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return RefactoringBundle.message("items.to.be.deleted");
   }
 
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.in.code", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("safe.delete.comment.occurences.header",
                                      UsageViewBundle.getOccurencesString(usagesCount, filesCount));

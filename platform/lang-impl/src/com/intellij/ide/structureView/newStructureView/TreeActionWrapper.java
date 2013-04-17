@@ -34,6 +34,7 @@ public class TreeActionWrapper extends ToggleAction implements DumbAware {
     myStructureView = structureView;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     super.update(e);
     Presentation presentation = e.getPresentation();
@@ -44,10 +45,12 @@ public class TreeActionWrapper extends ToggleAction implements DumbAware {
     presentation.setText(actionPresentation.getText());
   }
 
+  @Override
   public boolean isSelected(AnActionEvent e) {
     return TreeModelWrapper.isActive(myAction, myStructureView);
   }
 
+  @Override
   public void setSelected(AnActionEvent e, boolean state) {
     myStructureView.setActionActive(myAction.getName(), TreeModelWrapper.shouldRevert(myAction) ?  !state : state);
   }

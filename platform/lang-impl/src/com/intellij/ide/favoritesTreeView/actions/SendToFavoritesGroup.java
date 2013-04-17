@@ -33,6 +33,7 @@ import java.util.List;
  * Date: Feb 24, 2005
  */
 public class SendToFavoritesGroup extends ActionGroup {
+  @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) {
@@ -67,6 +68,7 @@ public class SendToFavoritesGroup extends ActionGroup {
       super(IdeBundle.message("action.send.to.new.favorites.list"));
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final DataContext dataContext = e.getDataContext();
       Project project = e.getProject();

@@ -54,20 +54,24 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     myShortName = key.toString();
   }
 
+  @Override
   @NotNull
   public String getText() {
     return InspectionsBundle.message("run.inspection.on.file.intention.text");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return LocalInspectionToolWrapper.findTool2RunInBatch(project, file, myShortName) != null;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionManagerEx managerEx = (InspectionManagerEx)InspectionManager.getInstance(project);
     final Module module = ModuleUtilCore.findModuleForPsiElement(file);
@@ -119,6 +123,7 @@ public class RunInspectionIntention implements IntentionAction, HighPriorityActi
     return inspectionContext;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

@@ -115,6 +115,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     }
   }
 
+  @Override
   public PsiElement getPsiElement() {
     PsiElement startElement = getStartElement();
     if (myEndSmartPointer == null) {
@@ -128,14 +129,17 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     return PsiTreeUtil.findCommonParent(startElement, endElement);
   }
 
+  @Override
   public PsiElement getStartElement() {
     return myStartSmartPointer.getElement();
   }
 
+  @Override
   public PsiElement getEndElement() {
     return myEndSmartPointer == null ? getStartElement() : myEndSmartPointer.getElement();
   }
 
+  @Override
   public int getLineNumber() {
     if (myLineNumber == -1) {
       PsiElement psiElement = getPsiElement();
@@ -153,14 +157,17 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     return myLineNumber;
   }
 
+  @Override
   public ProblemHighlightType getHighlightType() {
     return myHighlightType;
   }
 
+  @Override
   public boolean isAfterEndOfLine() {
     return myAfterEndOfLine;
   }
 
+  @Override
   public void setTextAttributes(TextAttributesKey key) {
     myEnforcedTextAttributes = key;
   }
@@ -207,15 +214,18 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     return myHintAction;
   }
 
+  @Override
   @Nullable
   public String getProblemGroup() {
     return myProblemGroup;
   }
 
+  @Override
   public void setProblemGroup(@Nullable String problemGroup) {
     myProblemGroup = problemGroup;
   }
 
+  @Override
   public boolean showTooltip() {
     return myShowTooltip;
   }

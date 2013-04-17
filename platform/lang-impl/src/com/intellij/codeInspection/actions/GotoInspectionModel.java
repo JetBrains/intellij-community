@@ -68,14 +68,17 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
     myNames = ArrayUtil.toStringArray(nameIds);
   }
 
+  @Override
   public ListCellRenderer getListCellRenderer() {
     return myListCellRenderer;
   }
 
+  @Override
   public String[] getNames() {
     return myNames;
   }
 
+  @Override
   public Object[] getElementsByName(final String id, final String pattern) {
     final Set<InspectionProfileEntry> result = new HashSet<InspectionProfileEntry>();
     InspectionProfileEntry e = myToolNames.get(id);
@@ -93,6 +96,7 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
     return result.toArray(new InspectionProfileEntry[result.size()]);
   }
 
+  @Override
   public String getElementName(final Object element) {
     if (element instanceof InspectionProfileEntry) {
       final InspectionProfileEntry entry = (InspectionProfileEntry)element;

@@ -53,15 +53,15 @@ public abstract class AbstractListBuilder {
     void removeAllElements();
 
     void addElement(final Object node);
-    
+
     void replaceElements(final List newElements);
 
     Object[] toArray();
 
     int indexOf(final Object o);
-    
+
     int getSize();
-    
+
     Object getElementAt(int idx);
   }
 
@@ -144,7 +144,7 @@ public abstract class AbstractListBuilder {
   protected Object getSelectedValue() {
     return myList.getSelectedValue();
   }
-  
+
   protected void selectItem(int i) {
     ListScrollingUtil.selectItem(myList, i);
   }
@@ -274,6 +274,7 @@ public abstract class AbstractListBuilder {
     final Alarm alarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
     alarm.addRequest(
         new Runnable() {
+        @Override
         public void run() {
           myList.setCursor(Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
         }
@@ -302,6 +303,7 @@ public abstract class AbstractListBuilder {
     if (n == 0) {
       alarm.addRequest(
           new Runnable() {
+          @Override
           public void run() {
             myList.setCursor(Cursor.getDefaultCursor());
           }
@@ -380,7 +382,7 @@ public abstract class AbstractListBuilder {
     else {
       Collections.sort(resultDescriptors, IndexComparator.INSTANCE);
     }
-    
+
     if (shouldAddTopElement()) {
       final List elems = new ArrayList();
       elems.add(new TopLevelNode(myProject, parentDescriptor.getValue()));
@@ -390,7 +392,7 @@ public abstract class AbstractListBuilder {
     else {
       myModel.replaceElements(resultDescriptors);
     }
-    
+
     restoreSelection(selection);
     updateParentTitle();
   }

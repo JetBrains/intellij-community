@@ -55,6 +55,7 @@ public class FacetErrorPanel {
     myWarningLabel = new JLabel();
     myWarningLabel.setIcon(Messages.getWarningIcon());
     myQuickFixButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         if (myCurrentQuickFix != null) {
           myCurrentQuickFix.run(myQuickFixButton);
@@ -106,6 +107,7 @@ public class FacetErrorPanel {
   private class FacetValidatorsManagerImpl implements FacetValidatorsManager {
     private final List<FacetEditorValidator> myValidators = new ArrayList<FacetEditorValidator>();
 
+    @Override
     public void registerValidator(final FacetEditorValidator validator, JComponent... componentsToWatch) {
       myValidators.add(validator);
       final UserActivityWatcher watcher = new UserActivityWatcher();
@@ -113,12 +115,14 @@ public class FacetErrorPanel {
         watcher.register(component);
       }
       watcher.addUserActivityListener(new UserActivityListener() {
+        @Override
         public void stateChanged() {
           validate();
         }
       });
     }
 
+    @Override
     public void validate() {
       for (FacetEditorValidator validator : myValidators) {
         ValidationResult validationResult = validator.check();

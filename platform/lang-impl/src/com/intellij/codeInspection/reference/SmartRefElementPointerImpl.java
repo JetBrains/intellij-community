@@ -19,7 +19,7 @@
  * User: max
  * Date: Dec 17, 2001
  * Time: 2:40:54 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.reference;
@@ -65,18 +65,22 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
     resolve(manager);
   }
 
+  @Override
   public boolean isPersistent() {
     return myIsPersistent;
   }
 
+  @Override
   public String getFQName() {
     return myFQName;
   }
 
+  @Override
   public RefEntity getRefElement() {
     return myRefElement;
   }
 
+  @Override
   public void writeExternal(Element parentNode) {
     Element element = new Element(ENTRY_POINT);
     element.setAttribute(TYPE_ATTR, myType);
@@ -90,6 +94,7 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
     parentNode.addContent(element);
   }
 
+  @Override
   public boolean resolve(RefManager manager) {
     if (myRefElement != null) {
       if (myRefElement instanceof RefElement && myRefElement.isValid()) return true;
@@ -99,6 +104,7 @@ public class SmartRefElementPointerImpl implements SmartRefElementPointer {
     return myRefElement != null;
   }
 
+  @Override
   public void freeReference() {
     myRefElement = null;
   }

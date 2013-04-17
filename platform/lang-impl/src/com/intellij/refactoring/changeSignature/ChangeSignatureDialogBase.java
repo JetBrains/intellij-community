@@ -143,6 +143,7 @@ public abstract class ChangeSignatureDialogBase<
     init();
     doUpdateSignature();
     Disposer.register(myDisposable, new Disposable() {
+      @Override
       public void dispose() {
         myUpdateSignatureAlarm.cancelAllRequests();
         myDisposed = true;
@@ -186,6 +187,7 @@ public abstract class ChangeSignatureDialogBase<
     return myAllowDelegation && myDelegationPanel.isGenerateDelegate();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     final JTable table = getTableComponent();
 
@@ -211,6 +213,7 @@ public abstract class ChangeSignatureDialogBase<
   }
 
 
+  @Override
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbc = new GridBagConstraints(0,0,1,1,0,1, GridBagConstraints.WEST, GridBagConstraints.HORIZONTAL, new Insets(0,0,0,0), 0,0);
@@ -275,6 +278,7 @@ public abstract class ChangeSignatureDialogBase<
 
   private DelegationPanel createDelegationPanel() {
     return new DelegationPanel() {
+      @Override
       protected void stateModified() {
         myParametersTableModel.fireTableDataChanged();
         myParametersTable.repaint();
@@ -282,6 +286,7 @@ public abstract class ChangeSignatureDialogBase<
     };
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final JPanel panel = new JPanel(new BorderLayout());
 
@@ -379,6 +384,7 @@ public abstract class ChangeSignatureDialogBase<
     return Collections.emptyList();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "refactoring.ChangeSignatureDialog";
   }
@@ -391,6 +397,7 @@ public abstract class ChangeSignatureDialogBase<
   protected JPanel createParametersPanel(boolean hasTabsInDialog) {
     myParametersTable = new TableView<ParameterTableModelItem>(myParametersTableModel) {
 
+      @Override
       public void removeEditor() {
         clearEditorListeners();
         super.removeEditor();
@@ -413,6 +420,7 @@ public abstract class ChangeSignatureDialogBase<
         }
       }
 
+      @Override
       public Component prepareEditor(final TableCellEditor editor, final int row, final int column) {
         final DocumentAdapter listener = new DocumentAdapter() {
           @Override
@@ -587,10 +595,12 @@ public abstract class ChangeSignatureDialogBase<
     if (mySignatureArea == null || myPropagateParamChangesButton == null) return;
 
     final Runnable updateRunnable = new Runnable() {
+      @Override
       public void run() {
         if (myDisposed) return;
         myUpdateSignatureAlarm.cancelAllRequests();
         myUpdateSignatureAlarm.addRequest(new Runnable() {
+          @Override
           public void run() {
             updateSignatureAlarmFired();
           }
@@ -625,6 +635,7 @@ public abstract class ChangeSignatureDialogBase<
     return true;
   }
 
+  @Override
   protected void doAction() {
     if (myParametersTable != null) {
       TableUtil.stopEditing(myParametersTable);

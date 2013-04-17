@@ -64,16 +64,19 @@ public abstract class MethodNodeBase<M extends PsiElement> extends CheckedTreeNo
     }
   }
 
+  @Override
   public TreeNode getChildAt(int index) {
     buildChildren();
     return super.getChildAt(index);
   }
 
+  @Override
   public int getChildCount() {
     buildChildren();
     return super.getChildCount();
   }
 
+  @Override
   public int getIndex(TreeNode aChild) {
     buildChildren();
     return super.getIndex(aChild);
@@ -83,6 +86,7 @@ public abstract class MethodNodeBase<M extends PsiElement> extends CheckedTreeNo
     if (myMethod == null) return Collections.emptyList();
     final Ref<List<M>> callers = new Ref<List<M>>();
     if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+      @Override
       public void run() {
         callers.set(computeCallers());
       }
@@ -101,6 +105,7 @@ public abstract class MethodNodeBase<M extends PsiElement> extends CheckedTreeNo
     customizeRendererText(renderer);
   }
 
+  @Override
   public void setEnabled(final boolean enabled) {
     super.setEnabled(enabled);
     if (!enabled) {

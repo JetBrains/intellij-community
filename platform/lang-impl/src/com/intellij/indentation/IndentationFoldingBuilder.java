@@ -23,6 +23,7 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
     myTokenSet = tokenSet;
   }
 
+  @Override
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull ASTNode astNode, @NotNull Document document) {
     List<FoldingDescriptor> descriptors = new LinkedList<FoldingDescriptor>();
@@ -47,6 +48,7 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
     }
   }
 
+  @Override
   @Nullable
   public String getPlaceholderText(@NotNull final ASTNode node) {
     final StringBuilder builder = new StringBuilder();
@@ -86,6 +88,7 @@ public abstract class IndentationFoldingBuilder implements FoldingBuilder, DumbA
     return end == -1 ? text.substring(start) : text.substring(start, end);
   }
 
+  @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     return false;
   }

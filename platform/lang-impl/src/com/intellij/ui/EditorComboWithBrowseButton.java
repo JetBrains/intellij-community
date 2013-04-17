@@ -42,10 +42,12 @@ public class EditorComboWithBrowseButton extends ComponentWithBrowseButton<Edito
     }
   }
 
+  @Override
   public String getText() {
     return getChildComponent().getText().trim();
   }
 
+  @Override
   public void setText(final String text) {
     getChildComponent().setText(text);
   }

@@ -76,7 +76,7 @@ public class InspectionApplication {
   public String myOutputFormat = null;
 
   public boolean myErrorCodeRequired = true;
-  
+
   @NonNls public static final String DESCRIPTIONS = ".descriptions";
   @NonNls public static final String PROFILE = "profile";
   @NonNls public static final String INSPECTIONS_NODE = "inspections";
@@ -87,7 +87,7 @@ public class InspectionApplication {
       logError("Project to inspect is not defined");
       printHelp();
     }
-    
+
     if (myProfileName == null && myProfilePath == null && myStubProfile == null) {
       logError("Profile to inspect with is not defined");
       printHelp();
@@ -95,6 +95,7 @@ public class InspectionApplication {
 
     final ApplicationEx application = ApplicationManagerEx.getApplicationEx();
     application.runReadAction(new Runnable() {
+      @Override
       public void run() {
         try {
           final ApplicationInfoEx applicationInfo = (ApplicationInfoEx)ApplicationInfo.getInstance();
@@ -146,6 +147,7 @@ public class InspectionApplication {
       }
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run(){
           VirtualFileManager.getInstance().refreshWithoutFileWatcher(false);
         }
@@ -214,6 +216,7 @@ public class InspectionApplication {
 
       final List<File> inspectionsResults = new ArrayList<File>();
       ProgressManager.getInstance().runProcess(new Runnable() {
+        @Override
         public void run() {
           if (!InspectionManagerEx.canRunInspections(myProject, false)) {
             if (myErrorCodeRequired) System.exit(1);
@@ -228,6 +231,7 @@ public class InspectionApplication {
         private String lastPrefix = "";
         private int myLastPercent = -1;
 
+        @Override
         public void setText(String text) {
           if (myVerboseLevel == 0) return;
 
@@ -363,7 +367,7 @@ public class InspectionApplication {
         }
       }
     }
-    
+
     return inspectionProfile;
   }
 
@@ -380,20 +384,24 @@ public class InspectionApplication {
 
   private ConversionListener createConversionListener() {
     return new ConversionListener() {
+      @Override
       public void conversionNeeded() {
         logMessageLn(1, InspectionsBundle.message("inspection.application.project.has.older.format.and.will.be.converted"));
       }
 
+      @Override
       public void successfullyConverted(final File backupDir) {
         logMessageLn(1, InspectionsBundle.message(
           "inspection.application.project.was.succesfully.converted.old.project.files.were.saved.to.0",
                                                   backupDir.getAbsolutePath()));
       }
 
+      @Override
       public void error(final String message) {
         logError(InspectionsBundle.message("inspection.application.cannot.convert.project.0", message));
       }
 
+      @Override
       public void cannotWriteToFiles(final List<File> readonlyFiles) {
         StringBuilder files = new StringBuilder();
         for (File file : readonlyFiles) {

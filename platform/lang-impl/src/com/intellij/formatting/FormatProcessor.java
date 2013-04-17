@@ -128,6 +128,7 @@ class FormatProcessor {
    */
   private SortedMap<TextRange, DependantSpacingImpl> myPreviousDependencies =
     new TreeMap<TextRange, DependantSpacingImpl>(new Comparator<TextRange>() {
+      @Override
       public int compare(final TextRange o1, final TextRange o2) {
         int offsetsDelta = o1.getEndOffset() - o2.getEndOffset();
 
@@ -1184,7 +1185,7 @@ class FormatProcessor {
 
   /**
    * Calculates difference in visual columns between the given indents.
-   * 
+   *
    * @param oldIndent  old indent
    * @param newIndent  new indent
    * @param options    indent options to use
@@ -1205,7 +1206,7 @@ class FormatProcessor {
 
   /**
    * Utility method to use during debugging formatter processing.
-   * 
+   *
    * @return    text that contains intermediate formatter-introduced changes (even not committed yet)
    */
   @SuppressWarnings("UnusedDeclaration")

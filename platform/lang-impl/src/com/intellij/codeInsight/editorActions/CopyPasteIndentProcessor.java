@@ -92,6 +92,7 @@ public class CopyPasteIndentProcessor implements CopyPastePostProcessor<IndentTr
         final boolean useTabs =
           CodeStyleSettingsManager.getSettings(project).useTabCharacter(psiFile.getFileType());
         CharFilter NOT_INDENT_FILTER = new CharFilter() {
+          @Override
           public boolean accept(char ch) {
             return useTabs? ch != '\t' : ch != ' ';
           }

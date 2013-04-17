@@ -41,6 +41,7 @@ public class ConfigureTemplatesDialog extends SingleConfigurableEditor{
     initSize();
   }
 
+  @Override
   protected String getDimensionServiceKey(){
     return DIMENSION_KEY;
   }

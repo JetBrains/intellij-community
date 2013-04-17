@@ -71,17 +71,18 @@ class FTManager {
     if (sorted == null) {
       sorted = new ArrayList<FileTemplateBase>(myTemplates.values());
       Collections.sort(sorted, new Comparator<FileTemplateBase>() {
+        @Override
         public int compare(FileTemplateBase t1, FileTemplateBase t2) {
           return t1.getName().compareToIgnoreCase(t2.getName());
         }
       });
       mySortedTemplates = sorted;
     }
-    
+
     if (includeDisabled) {
       return Collections.unmodifiableCollection(sorted);
     }
-    
+
     final List<FileTemplateBase> list = new ArrayList<FileTemplateBase>(sorted.size());
     for (FileTemplateBase template : sorted) {
       if (template instanceof BundledFileTemplate && !((BundledFileTemplate)template).isEnabled()) {
@@ -175,7 +176,7 @@ class FTManager {
       _template.setReformatCode(template.isReformatCode());
     }
   }
-  
+
   public void addDefaultTemplate(DefaultTemplate template) {
     myDefaultTemplates.add(template);
     createAndStoreBundledTemplate(template);
@@ -307,5 +308,5 @@ class FTManager {
   public String toString() {
     return myName + " file template manager";
   }
-  
+
 }

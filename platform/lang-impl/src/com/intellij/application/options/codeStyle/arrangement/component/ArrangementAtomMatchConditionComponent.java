@@ -45,7 +45,7 @@ import java.awt.event.MouseEvent;
  * {@link ArrangementUiComponent} for {@link ArrangementAtomMatchCondition} representation.
  * <p/>
  * Not thread-safe.
- * 
+ *
  * @author Denis Zhdanov
  * @since 8/8/12 10:06 AM
  */
@@ -176,7 +176,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
           Point mouseScreenLocation = MouseInfo.getPointerInfo().getLocation();
           myCloseButtonHovered = buttonBounds.contains(mouseScreenLocation);
         }
-        
+
         Rectangle bounds = getBounds();
         g.setColor(myBackgroundColor);
         g.fillRoundRect(0, 0, bounds.width, bounds.height, ArrangementConstants.BORDER_ARC_SIZE, ArrangementConstants.BORDER_ARC_SIZE);
@@ -201,7 +201,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     myBorder = myBorderStrategy.create();
     roundBorderPanel.setBorder(myBorder);
     roundBorderPanel.setOpaque(false);
-    
+
     myAnimationPanel = new ArrangementAnimationPanel(roundBorderPanel, false, true) {
       @Override
       public void paint(Graphics g) {
@@ -233,7 +233,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
   public void setData(@NotNull Object data) {
     // Do nothing
   }
-  
+
   @NotNull
   @Override
   public JComponent getUiComponent() {
@@ -251,6 +251,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
    *
    * @param selected  flag that indicates if current component should be drawn as 'selected'
    */
+  @Override
   public void setSelected(boolean selected) {
     boolean notifyListener = selected != mySelected;
     mySelected = selected;
@@ -264,6 +265,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     }
   }
 
+  @Override
   public boolean isEnabled() {
     return myEnabled;
   }
@@ -273,6 +275,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
    *
    * @param enabled  flag that indicates if current component should be drawn as 'enabled'
    */
+  @Override
   public void setEnabled(boolean enabled) {
     myEnabled = enabled;
     if (!enabled) {
@@ -363,7 +366,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
 
   @Override
   public void reset() {
-    setSelected(false); 
+    setSelected(false);
   }
 
   @Override
@@ -374,14 +377,14 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
   @SuppressWarnings("NullableProblems")
   @Override
   public void setListener(@NotNull Listener listener) {
-    myListener = listener; 
+    myListener = listener;
   }
 
   private interface BorderStrategy {
     RoundedLineBorder create();
     void setup(@NotNull Graphics2D g);
   }
-  
+
   private static class PredefinedConditionBorderStrategy implements BorderStrategy {
     @Override
     public RoundedLineBorder create() {
@@ -392,7 +395,7 @@ public class ArrangementAtomMatchConditionComponent implements ArrangementUiComp
     public void setup(@NotNull Graphics2D g) {
     }
   }
-  
+
   private static class NameBorderStrategy implements BorderStrategy {
 
     @NotNull private final BasicStroke myStroke = new BasicStroke(1, BasicStroke.CAP_BUTT, BasicStroke.JOIN_BEVEL, 1, new float[]{5, 5}, 0);

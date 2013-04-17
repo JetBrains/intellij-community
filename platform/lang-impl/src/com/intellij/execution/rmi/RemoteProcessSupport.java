@@ -153,11 +153,13 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   private void startProcess(Target target, Parameters configuration, Pair<Target, Parameters> key) {
     ProgramRunner runner = new DefaultProgramRunner() {
+      @Override
       @NotNull
       public String getRunnerId() {
         return "MyRunner";
       }
 
+      @Override
       public boolean canRun(@NotNull String executorId, @NotNull RunProfile profile) {
         return true;
       }
@@ -213,6 +215,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   private EntryPoint acquire(final RunningInfo port) throws Exception {
     EntryPoint result = RemoteUtil.executeWithClassLoader(new ThrowableComputable<EntryPoint, Exception>() {
+      @Override
       public EntryPoint compute() throws Exception {
         Registry registry = LocateRegistry.getRegistry("localhost", port.port);
         Remote remote = registry.lookup(port.name);
@@ -236,6 +239,7 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
 
   private ProcessListener getProcessListener(final Pair<Target, Parameters> key) {
     return new ProcessListener() {
+      @Override
       public void startNotified(ProcessEvent event) {
         ProcessHandler processHandler = event.getProcessHandler();
         processHandler.putUserData(ProcessHandler.SILENTLY_DESTROY_ON_CLOSE, Boolean.TRUE);
@@ -248,18 +252,21 @@ public abstract class RemoteProcessSupport<Target, EntryPoint, Parameters> {
         }
       }
 
+      @Override
       public void processTerminated(ProcessEvent event) {
         if (dropProcessInfo(key, null, event.getProcessHandler())) {
           fireModificationCountChanged();
         }
       }
 
+      @Override
       public void processWillTerminate(ProcessEvent event, boolean willBeDestroyed) {
         if (dropProcessInfo(key, null, event.getProcessHandler())) {
           fireModificationCountChanged();
         }
       }
 
+      @Override
       public void onTextAvailable(ProcessEvent event, Key outputType) {
         String text = StringUtil.notNullize(event.getText());
         if (outputType == ProcessOutputTypes.STDERR) {

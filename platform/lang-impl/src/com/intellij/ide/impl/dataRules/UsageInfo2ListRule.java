@@ -27,6 +27,7 @@ import java.util.Collections;
  * @author cdr
  */
 public class UsageInfo2ListRule implements GetDataRule {
+  @Override
   @Nullable
   public Object getData(final DataProvider dataProvider) {
     UsageInfo usageInfo = (UsageInfo)dataProvider.getData(UsageView.USAGE_INFO_KEY.getName());

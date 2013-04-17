@@ -43,6 +43,7 @@ class MultiFilePainter implements Printable{
     myProgress = progress;
   }
 
+  @Override
   public int print(Graphics g, PageFormat pageFormat, int pageIndex) throws PrinterException {
     if (myProgress.isCanceled()) {
       return Printable.NO_SUCH_PAGE;

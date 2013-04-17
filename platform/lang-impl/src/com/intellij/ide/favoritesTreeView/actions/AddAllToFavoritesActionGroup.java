@@ -33,6 +33,7 @@ import java.util.List;
  * Date: Mar 3, 2005
  */
 public class AddAllToFavoritesActionGroup extends ActionGroup {
+  @Override
   @NotNull
   public AnAction[] getChildren(@Nullable AnActionEvent e) {
     if (e == null) return AnAction.EMPTY_ARRAY;

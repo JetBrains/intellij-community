@@ -44,6 +44,7 @@ public class FileReferenceContextUtil {
       @Override public void visitElement(PsiElement element) {
         if (element instanceof PsiLanguageInjectionHost) {
           InjectedLanguageUtil.enumerate(element, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+            @Override
             public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
               encodeFileReferences(injectedPsi);
             }
@@ -90,6 +91,7 @@ public class FileReferenceContextUtil {
 
         if (element instanceof PsiLanguageInjectionHost) {
           InjectedLanguageUtil.enumerate(element, new PsiLanguageInjectionHost.InjectedPsiVisitor() {
+            @Override
             public void visit(@NotNull final PsiFile injectedPsi, @NotNull final List<PsiLanguageInjectionHost.Shred> places) {
               decodeFileReferences(injectedPsi);
             }

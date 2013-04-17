@@ -107,6 +107,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
     connection.subscribe(FileTypeManager.TOPIC, new MyFileTypeListener());
   }
 
+  @Override
   public void loadState(Element element) {
     mySelectedIndex=0;
     try{
@@ -135,6 +136,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
     }
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("TodoView");
     if(myContentManager!=null){ // all panel were constructed
@@ -159,6 +161,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
     return element;
   }
 
+  @Override
   public void dispose() {
     myVCSManager.removeVcsListener(myVcsListener);
   }
@@ -168,6 +171,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
 
     Content allTodosContent= ContentFactory.SERVICE.getInstance().createContent(null, IdeBundle.message("title.project"),false);
     myAllTodos=new TodoPanel(myProject,myAllPanelSettings,false,allTodosContent){
+      @Override
       protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project){
         AllTodosTreeBuilder builder=new AllTodosTreeBuilder(tree,treeModel,project);
         builder.init();
@@ -180,6 +184,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
     Content currentFileTodosContent=
       ContentFactory.SERVICE.getInstance().createContent(null,IdeBundle.message("title.todo.current.file"),false);
     myCurrentFileTodos=new CurrentFileTodosPanel(myProject,myCurrentPanelSettings,currentFileTodosContent){
+      @Override
       protected TodoTreeBuilder createTreeBuilder(JTree tree,DefaultTreeModel treeModel,Project project){
         CurrentFileTodosTreeBuilder builder=new CurrentFileTodosTreeBuilder(tree,treeModel,project);
         builder.init();
@@ -194,6 +199,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
                                              ChangeListManager.getInstance(myProject).getDefaultChangeList().getName()),
                            false);
     myChangeListTodos = new ChangeListTodosPanel(myProject, myCurrentPanelSettings, myChangeListTodosContent) {
+      @Override
       protected TodoTreeBuilder createTreeBuilder(JTree tree, DefaultTreeModel treeModel, Project project) {
         ChangeListTodosTreeBuilder builder = new ChangeListTodosTreeBuilder(tree, treeModel, project);
         builder.init();
@@ -202,8 +208,8 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
     };
     Disposer.register(this, myChangeListTodos);
     myChangeListTodosContent.setComponent(myChangeListTodos);
-    
-    
+
+
     Content scopeBasedTodoContent = ContentFactory.SERVICE.getInstance().createContent(null, "Scope Based", false);
     myScopeBasedTodos = new ScopeBasedTodosPanel(myProject, myCurrentPanelSettings, scopeBasedTodoContent);
     Disposer.register(this, myScopeBasedTodos);
@@ -240,8 +246,10 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
   private final class MyVcsListener implements VcsListener {
     private boolean myIsVisible;
 
+    @Override
     public void directoryMappingChanged() {        // todo ?
       ApplicationManager.getApplication().invokeLater(new Runnable(){
+        @Override
         public void run() {
           if (myContentManager == null) return; //was not initialized yet
 
@@ -262,6 +270,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
   }
 
   private final class MyPropertyChangeListener implements PropertyChangeListener{
+    @Override
     public void propertyChange(PropertyChangeEvent e){
       if (TodoConfiguration.PROP_TODO_PATTERNS.equals(e.getPropertyName()) || TodoConfiguration.PROP_TODO_FILTERS.equals(e.getPropertyName())) {
         _updateFilters();
@@ -274,6 +283,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
       }
       catch (ProcessCanceledException e) {
         DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
+          @Override
           public void run() {
             _updateFilters();
           }
@@ -294,15 +304,18 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
       // this invokeLater guaranties that this code will be invoked after
       // PSI gets the same event.
       DumbService.getInstance(myProject).smartInvokeLater(new Runnable() {
+        @Override
         public void run() {
           if (myProject.isDisposed()) return;
 
           ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
+            @Override
             public void run(){
               if (myAllTodos == null) return;
 
               ApplicationManager.getApplication().runReadAction(
                 new Runnable(){
+                  @Override
                   public void run(){
                     for (TodoPanel panel : myPanels) {
                       panel.rebuildCache();
@@ -311,6 +324,7 @@ public class TodoView implements PersistentStateComponent<Element>, Disposable {
                 }
               );
               ApplicationManager.getApplication().invokeLater(new Runnable(){
+                @Override
                 public void run(){
                   for (TodoPanel panel : myPanels) {
                     panel.updateTree();

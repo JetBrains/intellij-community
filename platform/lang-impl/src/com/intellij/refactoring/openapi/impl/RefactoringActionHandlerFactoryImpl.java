@@ -26,14 +26,17 @@ import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
  */
 public class RefactoringActionHandlerFactoryImpl extends RefactoringActionHandlerFactory {
 
+  @Override
   public RefactoringActionHandler createSafeDeleteHandler() {
     return new SafeDeleteHandler();
   }
 
+  @Override
   public RefactoringActionHandler createMoveHandler() {
     return new MoveHandler();
   }
 
+  @Override
   public RefactoringActionHandler createRenameHandler() {
     return new PsiElementRenameHandler();
   }

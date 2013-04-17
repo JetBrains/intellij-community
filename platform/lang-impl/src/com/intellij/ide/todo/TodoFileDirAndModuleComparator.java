@@ -30,6 +30,7 @@ public final class TodoFileDirAndModuleComparator implements Comparator<NodeDesc
 
   private TodoFileDirAndModuleComparator(){}
 
+  @Override
   public int compare(NodeDescriptor obj1, NodeDescriptor obj2){
     final int weight1 = obj1.getWeight();
     final int weight2 = obj2.getWeight();

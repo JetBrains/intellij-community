@@ -126,6 +126,7 @@ public class MoveFilesOrDirectoriesUtil {
     final PsiDirectory initialTargetDirectory = getInitialTargetDirectory(targetDirectory, elements);
 
     final MoveFilesOrDirectoriesDialog.Callback doRun = new MoveFilesOrDirectoriesDialog.Callback() {
+      @Override
       public void run(final MoveFilesOrDirectoriesDialog moveDialog) {
         CommandProcessor.getInstance().executeCommand(project, new Runnable() {
           @Override
@@ -155,6 +156,7 @@ public class MoveFilesOrDirectoriesUtil {
                 els.add(psiElement);
               }
               final Runnable callback = new Runnable() {
+                @Override
                 public void run() {
                   if (moveDialog != null) moveDialog.close(DialogWrapper.CANCEL_EXIT_CODE);
                 }
@@ -188,7 +190,7 @@ public class MoveFilesOrDirectoriesUtil {
 
   @Nullable
   public static PsiDirectory resolveToDirectory(final Project project, final PsiElement element) {
-    if (!(element instanceof PsiDirectoryContainer)) {                                                                 
+    if (!(element instanceof PsiDirectoryContainer)) {
       return (PsiDirectory)element;
     }
 

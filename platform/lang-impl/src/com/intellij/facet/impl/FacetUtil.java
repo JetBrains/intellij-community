@@ -44,6 +44,7 @@ public class FacetUtil {
     final ModifiableFacetModel model = FacetManager.getInstance(module).createModifiableModel();
     final F facet = createFacet(module, type);
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         model.addFacet(facet);
         model.commit();
@@ -58,6 +59,7 @@ public class FacetUtil {
 
   public static void deleteFacet(final Facet facet) {
     new WriteAction() {
+      @Override
       protected void run(final Result result) {
         if (!isRegistered(facet)) {
           return;

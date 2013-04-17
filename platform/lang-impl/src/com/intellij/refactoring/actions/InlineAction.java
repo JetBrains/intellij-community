@@ -46,6 +46,7 @@ public class InlineAction extends BasePlatformRefactoringAction {
     setInjectedContext(true);
   }
 
+  @Override
   public boolean isAvailableInEditorOnly() {
     return false;
   }
@@ -55,6 +56,7 @@ public class InlineAction extends BasePlatformRefactoringAction {
     return hasInlineActionHandler(element, PsiUtilBase.getLanguageInEditor(editor, element.getProject()), editor);
   }
 
+  @Override
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return elements.length == 1 && hasInlineActionHandler(elements [0], null, null);
   }
@@ -83,6 +85,7 @@ public class InlineAction extends BasePlatformRefactoringAction {
     return handlers.isEmpty() ? null : new InlineRefactoringActionHandler();
   }
 
+  @Override
   protected boolean isAvailableForLanguage(Language language) {
     for(InlineActionHandler handler: Extensions.getExtensions(InlineActionHandler.EP_NAME)) {
       if (handler.isEnabledForLanguage(language)) {

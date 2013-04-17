@@ -33,10 +33,12 @@ public class IntroduceConstantAction extends BasePlatformRefactoringAction {
     return provider.getIntroduceConstantHandler();
   }
 
+  @Override
   protected boolean isAvailableInEditorOnly() {
     return true;
   }
 
+  @Override
   protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return false;
   }

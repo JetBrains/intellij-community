@@ -40,6 +40,7 @@ public class FrameworkUsagesCollector extends AbstractApplicationUsagesCollector
   }
 
 
+  @Override
   @NotNull
   public Set<UsageDescriptor> getProjectUsages(@NotNull Project project) {
     final Set<String> facets = new HashSet<String>();

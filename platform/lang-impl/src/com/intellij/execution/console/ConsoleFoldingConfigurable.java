@@ -27,6 +27,7 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable, Confi
   private MyAddDeleteListPanel myNegativePanel;
   private final ConsoleFoldingSettings mySettings = ConsoleFoldingSettings.getSettings();
 
+  @Override
   public JComponent createComponent() {
     if (myMainComponent == null) {
       myMainComponent = new JPanel(new BorderLayout());
@@ -48,42 +49,50 @@ public class ConsoleFoldingConfigurable implements SearchableConfigurable, Confi
     myPositivePanel.addRule(rule);
   }
 
+  @Override
   public boolean isModified() {
     return !Arrays.asList(myNegativePanel.getListItems()).equals(mySettings.getNegativePatterns()) ||
            !Arrays.asList(myPositivePanel.getListItems()).equals(mySettings.getPositivePatterns());
 
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     myNegativePanel.applyTo(mySettings.getNegativePatterns());
     myPositivePanel.applyTo(mySettings.getPositivePatterns());
   }
 
+  @Override
   public void reset() {
     myNegativePanel.resetFrom(mySettings.getNegativePatterns());
     myPositivePanel.resetFrom(mySettings.getPositivePatterns());
   }
 
+  @Override
   public void disposeUIResources() {
     myMainComponent = null;
     myNegativePanel = null;
     myPositivePanel = null;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return getDisplayName();
   }
 
+  @Override
   public Runnable enableSearch(String option) {
     return null;
   }
 
+  @Override
   @Nls
   public String getDisplayName() {
     return "Console Folding";
   }
 
+  @Override
   public String getHelpTopic() {
     return "reference.idesettings.console.folding";
   }

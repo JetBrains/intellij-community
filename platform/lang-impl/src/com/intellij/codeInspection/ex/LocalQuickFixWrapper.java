@@ -45,12 +45,14 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     myText = myFix.getName();
   }
 
+  @Override
   public void update(AnActionEvent e) {
     super.update(e);
     getTemplatePresentation().setText(myText);
     e.getPresentation().setText(myText);
   }
 
+  @Override
   public String getText(RefEntity where) {
     return myText;
   }
@@ -60,6 +62,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   }
 
 
+  @Override
   protected boolean isProblemDescriptorsAcceptable() {
     return true;
   }
@@ -81,6 +84,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
     return null;
   }
 
+  @Override
   protected boolean applyFix(RefElement[] refElements) {
     throw new UnsupportedOperationException("");
   }

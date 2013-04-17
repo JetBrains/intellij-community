@@ -135,9 +135,11 @@ public class SingleInspectionProfilePanel extends JPanel {
     add(myInspectionProfilePanel, BorderLayout.CENTER);
     UserActivityWatcher userActivityWatcher = new UserActivityWatcher();
     userActivityWatcher.addUserActivityListener(new UserActivityListener() {
+      @Override
       public void stateChanged() {
         //invoke after all other listeners
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (mySelectedProfile == null) return; //panel was disposed
             updateProperSettingsForSelection();
@@ -192,6 +194,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     if (!JDOMUtil.areElementsEqual(oldConfig, newConfig)) {
       myAlarm.cancelAllRequests();
       myAlarm.addRequest(new Runnable() {
+        @Override
         public void run() {
           myTree.repaint();
         }
@@ -212,6 +215,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         if (node.isProperSetting() != properSetting) {
           myAlarm.cancelAllRequests();
           myAlarm.addRequest(new Runnable() {
+            @Override
             public void run() {
               myTree.repaint();
             }
@@ -259,7 +263,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   public static ModifiableModel createNewProfile(final int initValue,
                                                  ModifiableModel selectedProfile,
                                                  JPanel parent,
-                                                 String profileName, 
+                                                 String profileName,
                                                  Set<String> existingProfileNames) {
     profileName = Messages.showInputDialog(parent, profileName, "Create New Inspection Profile", Messages.getQuestionIcon());
     if (profileName == null) return null;
@@ -294,7 +298,7 @@ public class SingleInspectionProfilePanel extends JPanel {
   public void setFilter(String filter) {
     myProfileFilter.setFilter(filter);
   }
-  
+
   public void filterTree(String filter) {
     if (myTree != null) {
       mySelectedProfile.getExpandedNodes().saveVisibleState(myTree);
@@ -360,6 +364,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         e.getPresentation().setEnabled(mySelectedProfile != null && mySelectedProfile.isExecutable());
       }
 
+      @Override
       public void actionPerformed(AnActionEvent e) {
         mySelectedProfile.resetToEmpty();
         postProcessModification();
@@ -367,10 +372,12 @@ public class SingleInspectionProfilePanel extends JPanel {
     });
 
     actions.add(new ToggleAction("Lock Profile", "Lock profile", AllIcons.Nodes.Padlock) {
+      @Override
       public boolean isSelected(AnActionEvent e) {
         return mySelectedProfile != null && mySelectedProfile.isProfileLocked();
       }
 
+      @Override
       public void setSelected(AnActionEvent e, boolean state) {
         mySelectedProfile.lockProfile(state);
       }
@@ -380,19 +387,23 @@ public class SingleInspectionProfilePanel extends JPanel {
     actions.add(new MyAddScopeAction());
     actions.add(new MyDeleteScopeAction());
     actions.add(new MoveScopeAction(myTree, "Move Scope Up", IconUtil.getMoveUpIcon(), -1) {
+      @Override
       protected boolean isEnabledFor(int idx, InspectionConfigTreeNode parent) {
         return idx > 0;
       }
 
+      @Override
       protected InspectionProfileImpl getSelectedProfile() {
         return mySelectedProfile;
       }
     });
     actions.add(new MoveScopeAction(myTree, "Move Scope Down", IconUtil.getMoveDownIcon(), 1) {
+      @Override
       protected boolean isEnabledFor(int idx, InspectionConfigTreeNode parent) {
         return idx < parent.getChildCount() - 2;
       }
 
+      @Override
       protected InspectionProfileImpl getSelectedProfile() {
         return mySelectedProfile;
       }
@@ -443,11 +454,13 @@ public class SingleInspectionProfilePanel extends JPanel {
     fillTreeData(null, true);
 
     final InspectionsConfigTreeRenderer renderer = new InspectionsConfigTreeRenderer(){
+      @Override
       protected String getFilter() {
         return myProfileFilter != null ? myProfileFilter.getFilter() : null;
       }
     };
     myTree = new CheckboxTree(renderer, myRoot) {
+      @Override
       public Dimension getPreferredScrollableViewportSize() {
         Dimension size = super.getPreferredScrollableViewportSize();
         size = new Dimension(size.width + 10, size.height);
@@ -469,6 +482,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
 
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         if (myTree.getSelectionPaths() != null && myTree.getSelectionPaths().length == 1) {
           updateOptionsAndDescriptionPanel(myTree.getSelectionPaths()[0]);
@@ -493,6 +507,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
 
     myTree.addMouseListener(new PopupHandler() {
+      @Override
       public void invokePopup(Component comp, int x, int y) {
         final int[] selectionRows = myTree.getSelectionRows();
         if (selectionRows != null && myTree.getPathForLocation(x, y) != null && Arrays.binarySearch(selectionRows, myTree.getRowForLocation(x, y)) > -1)
@@ -504,6 +519,7 @@ public class SingleInspectionProfilePanel extends JPanel {
 
 
     new TreeSpeedSearch(myTree, new Convertor<TreePath, String>() {
+      @Override
       public String convert(TreePath o) {
         final InspectionConfigTreeNode node = (InspectionConfigTreeNode)o.getLastPathComponent();
         final Descriptor descriptor = node.getDescriptor();
@@ -522,6 +538,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     myTree.addTreeExpansionListener(new TreeExpansionListener() {
 
 
+      @Override
       public void treeCollapsed(TreeExpansionEvent event) {
         InspectionProfileImpl selected = mySelectedProfile;
         final InspectionConfigTreeNode node = (InspectionConfigTreeNode)event.getPath().getLastPathComponent();
@@ -532,6 +549,7 @@ public class SingleInspectionProfilePanel extends JPanel {
         selected.getExpandedNodes().saveVisibleState(myTree);
       }
 
+      @Override
       public void treeExpanded(TreeExpansionEvent event) {
         InspectionProfileImpl selected = mySelectedProfile;
         if (selected != null) {
@@ -769,6 +787,7 @@ public class SingleInspectionProfilePanel extends JPanel {
           }
         };
         chooser.getComboBox().addActionListener(new ActionListener() {
+          @Override
           public void actionPerformed(ActionEvent e) {
             boolean toUpdate = mySelectedProfile.getErrorLevel(key, scope) != chooser.getLevel();
             mySelectedProfile.setErrorLevel(key, chooser.getLevel(), node.isInspectionNode() || node.isByDefault() ? -1 : node.getParent().getIndex(node));
@@ -852,6 +871,7 @@ public class SingleInspectionProfilePanel extends JPanel {
     filterTree(myProfileFilter != null ? myProfileFilter.getFilter() : null);
   }
 
+  @Override
   public Dimension getPreferredSize() {
     return new Dimension(700, 500);
   }
@@ -1111,6 +1131,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       myLevel = level;
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       setNewHighlightingLevel(myLevel);
     }
@@ -1122,10 +1143,12 @@ public class SingleInspectionProfilePanel extends JPanel {
       setHistory(Arrays.asList("\"New in 12\""));
     }
 
+    @Override
     public void filter() {
       filterTree(getFilter());
     }
 
+    @Override
     protected void onlineFilter() {
       if (mySelectedProfile == null) return;
       final String filter = getFilter();
@@ -1145,6 +1168,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       super(SingleInspectionProfilePanel.this.myTree);
     }
 
+    @Override
     protected InspectionProfileImpl getSelectedProfile() {
       return mySelectedProfile;
     }
@@ -1166,6 +1190,7 @@ public class SingleInspectionProfilePanel extends JPanel {
       super(SingleInspectionProfilePanel.this.myTree);
     }
 
+    @Override
     protected InspectionProfileImpl getSelectedProfile() {
       return mySelectedProfile;
     }

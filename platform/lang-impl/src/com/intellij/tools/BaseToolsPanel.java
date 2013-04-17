@@ -43,6 +43,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         return index != 0;
       }
 
+      @Override
       public int newIndex(final int index) {
         return index - 1;
       }
@@ -53,6 +54,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
         return index < childCount - 1;
       }
 
+      @Override
       public int newIndex(final int index) {
         return index + 1;
       }
@@ -77,6 +79,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
 
     myTree = new CheckboxTree(
       new CheckboxTree.CheckboxTreeCellRenderer() {
+        @Override
         public void customizeRenderer(final JTree tree,
                                       final Object value,
                                       final boolean selected,
@@ -190,6 +193,7 @@ public abstract class BaseToolsPanel<T extends Tool> extends JPanel {
     //TODO check edit and delete
 
     myTree.getSelectionModel().addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         update();
       }

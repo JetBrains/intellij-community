@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
  */
 @SuppressWarnings({"MethodMayBeStatic"})
 public class NewElementAction extends AnAction  implements DumbAware, PopupAction {
+  @Override
   public void actionPerformed(final AnActionEvent event) {
     showPopup(event.getDataContext());
   }
@@ -82,6 +83,7 @@ public class NewElementAction extends AnAction  implements DumbAware, PopupActio
     return IdeBundle.message("title.popup.new.element");
   }
 
+  @Override
   public void update(AnActionEvent e){
     final Presentation presentation = e.getPresentation();
     final DataContext context = e.getDataContext();

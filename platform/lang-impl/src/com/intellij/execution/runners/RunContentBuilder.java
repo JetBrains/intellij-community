@@ -111,6 +111,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     myExecutionResult = executionResult;
   }
 
+  @Override
   public void setEnvironment(@NotNull final ExecutionEnvironment env) {
     super.setEnvironment(env);
     final RunProfile profile = env.getRunProfile();
@@ -252,6 +253,7 @@ public class RunContentBuilder extends LogConsoleManagerBase {
     return actionGroup;
   }
 
+  @Override
   public ProcessHandler getProcessHandler() {
     return myExecutionResult.getProcessHandler();
   }

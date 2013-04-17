@@ -484,18 +484,22 @@ public class GeneratedParserUtilBase {
     public MyList<Variant> unexpected = new MyList<Variant>(10);
 
     final LimitedPool<Variant> VARIANTS = new LimitedPool<Variant>(1000, new LimitedPool.ObjectFactory<Variant>() {
+      @Override
       public Variant create() {
         return new Variant();
       }
 
+      @Override
       public void cleanup(final Variant o) {
       }
     });
     final LimitedPool<Frame> FRAMES = new LimitedPool<Frame>(100, new LimitedPool.ObjectFactory<Frame>() {
+      @Override
       public Frame create() {
         return new Frame();
       }
 
+      @Override
       public void cleanup(final Frame o) {
       }
     });
@@ -658,6 +662,7 @@ public class GeneratedParserUtilBase {
     PsiBuilder.Marker marker = null;
 
     final Runnable checkSiblingsRunnable = new Runnable() {
+      @Override
       public void run() {
         main:
         while (!siblingList.isEmpty()) {

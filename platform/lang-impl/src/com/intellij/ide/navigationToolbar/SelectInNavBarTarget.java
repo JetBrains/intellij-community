@@ -44,19 +44,23 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Du
     super(project);
   }
 
+  @Override
   @NonNls
   public String getToolWindowId() {
     return NAV_BAR_ID;
   }
 
+  @Override
   protected boolean canSelect(final PsiFileSystemItem file) {
     return UISettings.getInstance().SHOW_NAVIGATION_BAR;
   }
 
+  @Override
   protected void select(final Object selector, final VirtualFile virtualFile, final boolean requestFocus) {
     selectInNavBar();
   }
 
+  @Override
   protected void select(final PsiElement element, boolean requestFocus) {
     selectInNavBar();
   }
@@ -79,14 +83,17 @@ public class SelectInNavBarTarget extends SelectInTargetPsiWrapper implements Du
       });
   }
 
+  @Override
   public float getWeight() {
     return StandardTargetWeights.NAV_BAR_WEIGHT;
   }
 
+  @Override
   public String getMinorViewId() {
     return null;
   }
 
+  @Override
   protected boolean canWorkWithCustomObjects() {
     return false;
   }

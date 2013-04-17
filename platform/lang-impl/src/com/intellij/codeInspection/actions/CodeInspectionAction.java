@@ -53,6 +53,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     super(InspectionsBundle.message("inspection.action.title"), InspectionsBundle.message("inspection.action.noun"));
   }
 
+  @Override
   protected void analyze(@NotNull Project project, AnalysisScope scope) {
     try {
       scope.setSearchInLibraries(false);
@@ -77,16 +78,19 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     return myGlobalInspectionContext;
   }
 
+  @Override
   @NonNls
   protected String getHelpTopic() {
     return "reference.dialogs.inspection.scope";
   }
 
+  @Override
   protected void canceled() {
     super.canceled();
     myGlobalInspectionContext = null;
   }
 
+  @Override
   protected JComponent getAdditionalActionSettings(final Project project, final BaseAnalysisActionDialog dialog) {
     final AdditionalPanel panel = new AdditionalPanel();
     final InspectionManagerEx manager = (InspectionManagerEx)InspectionManager.getInstance(project);
@@ -105,6 +109,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(project);
     reloadProfiles(profiles, profileManager, projectProfileManager, manager);
     panel.myBrowseProfilesCombo.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final IDEInspectionToolsConfigurable errorConfigurable = new IDEInspectionToolsConfigurable(projectProfileManager, profileManager);
         final MySingleConfigurableEditor editor = new MySingleConfigurableEditor(project, errorConfigurable, manager);
@@ -122,6 +127,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
       }
     });
     profiles.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myExternalProfile = (InspectionProfile)profiles.getSelectedItem();
         final boolean canExecute = myExternalProfile != null && myExternalProfile.isExecutable();
@@ -170,6 +176,7 @@ public class CodeInspectionAction extends BaseAnalysisAction {
     }
 
 
+    @Override
     protected void doOKAction() {
       final Object o = ((ErrorsConfigurable)getConfigurable()).getSelectedObject();
       if (o instanceof Profile) {

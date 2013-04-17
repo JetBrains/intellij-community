@@ -46,10 +46,12 @@ public class StructureViewElementWrapper<V extends PsiElement> implements Struct
     return myTreeElement;
   }
 
+  @Override
   public V getValue() {
     return (V)myTreeElement.getValue();
   }
 
+  @Override
   public StructureViewTreeElement[] getChildren() {
     TreeElement[] baseChildren = myTreeElement.getChildren();
     List<StructureViewTreeElement> result = new ArrayList<StructureViewTreeElement>();
@@ -61,10 +63,12 @@ public class StructureViewElementWrapper<V extends PsiElement> implements Struct
     return result.toArray(new StructureViewTreeElement[result.size()]);
   }
 
+  @Override
   public ItemPresentation getPresentation() {
     return myTreeElement.getPresentation();
   }
 
+  @Override
   public void navigate(final boolean requestFocus) {
     Navigatable navigatable = getNavigatableInTemplateLanguageFile();
     if (navigatable != null) {
@@ -93,10 +97,12 @@ public class StructureViewElementWrapper<V extends PsiElement> implements Struct
     return null;
   }
 
+  @Override
   public boolean canNavigate() {
     return getNavigatableInTemplateLanguageFile() != null;
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return canNavigate();
   }

@@ -35,6 +35,7 @@ public final class NavBarIdeView implements IdeView {
     myPanel = panel;
   }
 
+  @Override
   public void selectElement(PsiElement element) {
     myPanel.getModel().updateModel(element);
 
@@ -47,6 +48,7 @@ public final class NavBarIdeView implements IdeView {
     myPanel.hideHint();
   }
 
+  @Override
   public PsiDirectory[] getDirectories() {
     final PsiDirectory dir = myPanel.getSelectedElement(PsiDirectory.class);
     if (dir != null && dir.isValid()) {
@@ -80,6 +82,7 @@ public final class NavBarIdeView implements IdeView {
     return PsiDirectory.EMPTY_ARRAY;
   }
 
+  @Override
   public PsiDirectory getOrChooseDirectory() {
     return DirectoryChooserUtil.getOrChooseDirectory(this);
   }

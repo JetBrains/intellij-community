@@ -19,7 +19,7 @@
  * User: max
  * Date: Nov 15, 2001
  * Time: 5:14:35 PM
- * To change template for new interface use 
+ * To change template for new interface use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.reference;
@@ -50,18 +50,22 @@ public abstract class RefEntityImpl implements RefEntity {
     myChildren = null;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
 
+  @Override
   public String getQualifiedName() {
     return myName;
   }
 
+  @Override
   public List<RefEntity> getChildren() {
     return myChildren;
   }
 
+  @Override
   public RefEntity getOwner() {
     return myOwner;
   }
@@ -89,7 +93,8 @@ public abstract class RefEntityImpl implements RefEntity {
   public String toString() {
     return getName();
   }
-  
+
+ @Override
  @Nullable
   public <T> T getUserData(@NotNull Key<T> key){
     synchronized(this){
@@ -99,14 +104,17 @@ public abstract class RefEntityImpl implements RefEntity {
     }
   }
 
+  @Override
   public void accept(final RefVisitor refVisitor) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         refVisitor.visitElement(RefEntityImpl.this);
       }
     });
   }
 
+  @Override
   public <T> void putUserData(@NotNull Key<T> key, T value){
     synchronized(this){
       if (myUserMap == null){
@@ -139,10 +147,12 @@ public abstract class RefEntityImpl implements RefEntity {
     }
   }
 
+  @Override
   public String getExternalName() {
     return myName;
   }
 
+  @Override
   public RefManagerImpl getRefManager() {
     return myManager;
   }

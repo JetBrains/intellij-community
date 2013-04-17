@@ -89,6 +89,7 @@ public class DetailViewImpl extends JPanel implements DetailView, UserDataHolder
     }
   }
 
+  @Override
   public void setCurrentItem(@Nullable ItemWrapper wrapper) {
     myWrapper = wrapper;
   }

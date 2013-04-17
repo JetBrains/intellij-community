@@ -30,6 +30,7 @@ public class ExtractClassAction extends BasePlatformRefactoringAction {
     return provider.getExtractClassHandler();
   }
 
+  @Override
   public boolean isAvailableInEditorOnly(){
       return false;
   }

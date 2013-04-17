@@ -195,6 +195,7 @@ public class CommonInspectionToolWrapper extends InspectionToolWrapper<Inspectio
     return getTool().getIgnoredRefElements();
   }
 
+  @Override
   @Nullable
   public SuppressIntentionAction[] getSuppressActions() {
     return getTool().getSuppressActions();

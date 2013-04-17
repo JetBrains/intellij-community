@@ -42,6 +42,7 @@ public class FileNode extends PackageDependenciesNode implements Comparable<File
     myMarked = marked;
   }
 
+  @Override
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     final PsiFile file = getFile();
@@ -50,10 +51,12 @@ public class FileNode extends PackageDependenciesNode implements Comparable<File
     }
   }
 
+  @Override
   public boolean hasUnmarked() {
     return !myMarked;
   }
 
+  @Override
   public boolean hasMarked() {
     return myMarked;
   }
@@ -62,22 +65,27 @@ public class FileNode extends PackageDependenciesNode implements Comparable<File
     return myVFile.getName();
   }
 
+  @Override
   public Icon getIcon() {
     return IconUtil.getIcon(myVFile, Iconable.ICON_FLAG_VISIBILITY | Iconable.ICON_FLAG_READ_STATUS, myProject);
   }
 
+  @Override
   public int getWeight() {
     return 5;
   }
 
+  @Override
   public int getContainingFiles() {
     return 1;
   }
 
+  @Override
   public PsiElement getPsiElement() {
     return getFile();
   }
 
+  @Override
   public Color getColor() {
     if (myColor == null) {
       myColor = FileStatusManager.getInstance(myProject).getStatus(myVFile).getColor();
@@ -107,6 +115,7 @@ public class FileNode extends PackageDependenciesNode implements Comparable<File
   }
 
 
+  @Override
   public boolean isValid() {
     return myVFile != null && myVFile.isValid();
   }

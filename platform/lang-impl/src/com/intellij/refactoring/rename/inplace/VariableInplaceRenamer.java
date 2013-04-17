@@ -99,6 +99,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
     if (stringToSearch != null) {
       TextOccurrencesUtil
         .processUsagesInStringsAndComments(myElementToRename, stringToSearch, true, new PairProcessor<PsiElement, TextRange>() {
+          @Override
           public boolean process(PsiElement psiElement, TextRange textRange) {
             if (psiElement.getContainingFile() == currentFile) {
               stringUsages.add(Pair.create(psiElement, textRange));
@@ -229,6 +230,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
             }
 
             final Runnable runnable = new Runnable() {
+              @Override
               public void run() {
                 renamer.findUsages(usages, false, false);
               }
@@ -308,6 +310,7 @@ public class VariableInplaceRenamer extends InplaceRefactoring {
         if (mySnapshot != null) {
           if (isIdentifier(myInsertedName, myLanguage)) {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
               public void run() {
                 mySnapshot.apply(myInsertedName);
               }

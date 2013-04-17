@@ -63,6 +63,7 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
     return myNegativePatterns;
   }
 
+  @Override
   public MyBean getState() {
     MyBean result = new MyBean();
     writeDiff(result.addedPositive, result.removedPositive, false);
@@ -99,6 +100,7 @@ public class ConsoleFoldingSettings implements PersistentStateComponent<ConsoleF
     });
   }
 
+  @Override
   public void loadState(MyBean state) {
     myPositivePatterns.clear();
     myNegativePatterns.clear();

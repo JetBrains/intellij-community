@@ -51,12 +51,14 @@ public class PushedFilePropertiesUpdater {
     myProject = project;
     myPushers = Extensions.getExtensions(FilePropertyPusher.EP_NAME);
     myFilePushers = ContainerUtil.findAllAsArray(myPushers, new Condition<FilePropertyPusher>() {
+      @Override
       public boolean value(FilePropertyPusher pusher) {
         return !pusher.pushDirectoriesOnly();
       }
     });
 
     StartupManager.getInstance(project).registerPreStartupActivity(new Runnable() {
+      @Override
       public void run() {
         long l = System.currentTimeMillis();
         pushAll(myPushers);
@@ -64,6 +66,7 @@ public class PushedFilePropertiesUpdater {
 
         final MessageBusConnection connection = bus.connect();
         connection.subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
+          @Override
           public void rootsChanged(final ModuleRootEvent event) {
             pushAll(myPushers);
             for (FilePropertyPusher pusher : myPushers) {
@@ -92,10 +95,12 @@ public class PushedFilePropertiesUpdater {
         }));
         for (final FilePropertyPusher pusher : myPushers) {
           pusher.initExtra(project, bus, new FilePropertyPusher.Engine() {
+            @Override
             public void pushAll() {
               PushedFilePropertiesUpdater.this.pushAll(pusher);
             }
 
+            @Override
             public void pushRecursively(VirtualFile file, Project project) {
               PushedFilePropertiesUpdater.this.pushRecursively(file, project, pusher);
             }
@@ -108,6 +113,7 @@ public class PushedFilePropertiesUpdater {
   public void pushRecursively(final VirtualFile dir, final Project project, final FilePropertyPusher... pushers) {
     if (pushers.length == 0) return;
     ProjectRootManager.getInstance(project).getFileIndex().iterateContentUnderDirectory(dir, new ContentIterator() {
+      @Override
       public boolean processFile(final VirtualFile fileOrDir) {
         final boolean isDir = fileOrDir.isDirectory();
         for (FilePropertyPusher<Object> pusher : pushers) {
@@ -148,6 +154,7 @@ public class PushedFilePropertiesUpdater {
       final ModuleFileIndex index = rootManager.getFileIndex();
       for (VirtualFile root : rootManager.getContentRoots()) {
         index.iterateContentUnderDirectory(root, new ContentIterator() {
+          @Override
           public boolean processFile(final VirtualFile fileOrDir) {
             final boolean isDir = fileOrDir.isDirectory();
             for (int i = 0, pushersLength = pushers.length; i < pushersLength; i++) {

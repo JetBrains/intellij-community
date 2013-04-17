@@ -32,9 +32,10 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
 
   public ModuleNode(Module module) {
     super(module.getProject());
-    myModule = module;    
+    myModule = module;
   }
 
+  @Override
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     int count = getChildCount();
@@ -59,6 +60,7 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
     ProjectSettingsService.getInstance(myModule.getProject()).openModuleSettings(myModule);
   }
 
+  @Override
   public Icon getIcon() {
     return myModule == null || myModule.isDisposed() ? super.getIcon() : ModuleType.get(myModule).getIcon();
   }
@@ -75,6 +77,7 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
     return myModule;
   }
 
+  @Override
   public int getWeight() {
     return 1;
   }
@@ -96,6 +99,7 @@ public class ModuleNode extends PackageDependenciesNode implements NavigatableWi
   }
 
 
+  @Override
   public boolean isValid() {
     return myModule != null && !myModule.isDisposed();
   }

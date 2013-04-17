@@ -65,6 +65,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
                                                               boolean searchInComments,
                                                               boolean searchInNonJavaFiles);
 
+  @Override
   public boolean isAvailableOnDataContext(final DataContext dataContext) {
     PsiElement element = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
     if (element instanceof PsiDirectory) {
@@ -91,10 +92,12 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     return element;
   }
 
+  @Override
   public boolean isRenaming(final DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file, final DataContext dataContext) {
     PsiElement element = adjustForRename(dataContext, PsiElementRenameHandler.getElement(dataContext));
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -102,6 +105,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     doRename(element, project, nameSuggestionContext, editor);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull final PsiElement[] elements, final DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = PsiElementRenameHandler.getElement(dataContext);
@@ -146,7 +150,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
           }
           final String promptMessage = "Package \'" +
                                        aPackage.getName() +
-                                       "\' contains directories in libraries which cannot be renamed. Do you want to rename " + 
+                                       "\' contains directories in libraries which cannot be renamed. Do you want to rename " +
                                        (moduleDirs == null ? "current directory" : "current module directories");
           if (projectDirectories.length > 0) {
             int ret = Messages
@@ -219,6 +223,7 @@ public abstract class DirectoryAsPackageRenameHandlerBase<T extends PsiDirectory
     }
   }
 
+  @Override
   public String getActionTitle() {
     return RefactoringBundle.message("rename.directory.title");
   }

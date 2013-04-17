@@ -80,6 +80,7 @@ public class ConvertProjectDialog extends DialogWrapper {
     Messages.configureMessagePaneUi(myTextPane, message.toString(), false);
 
     myTextPane.addHyperlinkListener(new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           @NonNls StringBuilder descriptions = new StringBuilder("<html>The following conversions will be performed:<br>");

@@ -49,6 +49,7 @@ import java.util.Set;
 public class SafeDeleteHandler implements RefactoringActionHandler {
   public static final String REFACTORING_NAME = RefactoringBundle.message("safe.delete.title");
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataContext);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -60,6 +61,7 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     invoke(project, new PsiElement[]{element}, dataContext);
   }
 
+  @Override
   public void invoke(@NotNull final Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     invoke(project, elements, LangDataKeys.MODULE.getData(dataContext), true, null);
   }
@@ -116,8 +118,10 @@ public class SafeDeleteHandler implements RefactoringActionHandler {
     }
     else {
       final SafeDeleteDialog.Callback callback = new SafeDeleteDialog.Callback() {
+        @Override
         public void run(final SafeDeleteDialog dialog) {
           SafeDeleteProcessor.createInstance(project, new Runnable() {
+            @Override
             public void run() {
               if (successRunnable != null) {
                 successRunnable.run();

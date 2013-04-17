@@ -58,26 +58,32 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
     myManager = manager;
   }
 
+  @Override
   public void projectOpened() {
   }
 
+  @Override
   public void projectClosed() {
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getComponentName() {
     return "ProjectRunConfigurationManager";
   }
 
+  @Override
   public void initComponent() {
 
   }
 
+  @Override
   public void disposeComponent() {
 
   }
 
+  @Override
   public Element getState() {
      try {
        final Element e = new Element("state");
@@ -90,6 +96,7 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
      }
    }
 
+   @Override
    public void loadState(Element state) {
      try {
        readExternal(state);
@@ -148,6 +155,7 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
   }
 
   public static class RunConfigurationStateSplitter implements StateSplitter {
+    @Override
     public List<Pair<Element, String>> splitState(Element e) {
       final UniqueNameGenerator generator = new UniqueNameGenerator();
 
@@ -163,6 +171,7 @@ public class ProjectRunConfigurationManager implements ProjectComponent, Persist
       return result;
     }
 
+    @Override
     public void mergeStatesInto(Element target, Element[] elements) {
       for (Element e : elements) {
         target.addContent(e);

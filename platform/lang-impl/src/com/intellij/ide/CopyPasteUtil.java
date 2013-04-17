@@ -40,6 +40,7 @@ public class CopyPasteUtil {
       myUpdater = updater;
     }
 
+    @Override
     public void contentChanged(final Transferable oldTransferable, final Transferable newTransferable) {
       updateByTransferable(oldTransferable);
       updateByTransferable(newTransferable);

@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 
 public class FileIconPatcherImpl implements FileIconProvider {
+  @Override
   @Nullable
   public Icon getIcon(@NotNull final VirtualFile file, final int flags, final Project project) {
     if(project == null) return null;

@@ -35,10 +35,12 @@ public class ProjectInspectionProfilesVisibleTreeState implements PersistentStat
     return ServiceManager.getService(project, ProjectInspectionProfilesVisibleTreeState.class);
   }
 
+  @Override
   public VisibleTreeStateComponent getState() {
     return myComponent;
   }
 
+  @Override
   public void loadState(final VisibleTreeStateComponent state) {
     myComponent.copyFrom(state);
   }

@@ -187,8 +187,9 @@ public abstract class RenamePsiElementProcessor {
   public void findCollisions(final PsiElement element, final String newName, final Map<? extends PsiElement, String> allRenames,
                              final List<UsageInfo> result) {
   }
-  
+
   public static final RenamePsiElementProcessor DEFAULT = new RenamePsiElementProcessor() {
+    @Override
     public boolean canProcessElement(@NotNull final PsiElement element) {
       return true;
     }

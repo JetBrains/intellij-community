@@ -74,6 +74,7 @@ public class DetailController implements TreeSelectionListener, ListSelectionLis
     final ItemWrapper wrapper1 = wrapper;
     myUpdateAlarm.cancelAllRequests();
     myUpdateAlarm.addRequest(new Runnable() {
+      @Override
       public void run() {
         doUpdateDetailViewWithItem(wrapper1);
       }

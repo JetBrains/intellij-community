@@ -42,6 +42,7 @@ public class LibraryVersionsFetcher extends FileSetVersionsFetcherBase<Framework
     return new FrameworkLibraryVersionImpl(version.getVersion(), files, myGroupId);
   }
 
+  @Override
   protected DownloadableLibraryFileDescription createFileDescription(ArtifactItem item, String url, String prefix) {
     String sourceUrl = item.getSourceUrl();
     if (sourceUrl != null) {

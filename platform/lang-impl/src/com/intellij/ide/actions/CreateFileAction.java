@@ -54,6 +54,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     return CreateFileAction.class.equals(getClass());
   }
 
+  @Override
   @NotNull
   protected PsiElement[] invokeDialog(final Project project, PsiDirectory directory) {
     MyInputValidator validator = new MyValidator(project, directory);
@@ -72,6 +73,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
   }
 
+  @Override
   @NotNull
   protected PsiElement[] create(String newName, PsiDirectory directory) throws Exception {
     MkDirs mkdirs = new MkDirs(newName, directory);
@@ -100,14 +102,17 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
     }
   }
 
+  @Override
   protected String getActionName(PsiDirectory directory, String newName) {
     return IdeBundle.message("progress.creating.file", directory.getVirtualFile().getPresentableUrl(), File.separator, newName);
   }
 
+  @Override
   protected String getErrorTitle() {
     return IdeBundle.message("title.cannot.create.file");
   }
 
+  @Override
   protected String getCommandName() {
     return IdeBundle.message("command.create.file");
   }
@@ -156,6 +161,7 @@ public class CreateFileAction extends CreateElementActionBase implements DumbAwa
       return super.create(newName);
     }
 
+    @Override
     public boolean canClose(String inputString) {
       if (inputString.length() == 0) {
         return super.canClose(inputString);

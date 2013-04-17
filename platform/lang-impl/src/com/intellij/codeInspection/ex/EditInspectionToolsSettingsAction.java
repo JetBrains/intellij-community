@@ -52,20 +52,24 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
     myShortName = key.toString();
   }
 
+  @Override
   @NotNull
   public String getText() {
     return InspectionsBundle.message("edit.options.of.reporter.inspection.text");
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("edit.options.of.reporter.inspection.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager projectProfileManager = InspectionProjectProfileManager.getInstance(file.getProject());
     InspectionProfile inspectionProfile = projectProfileManager.getInspectionProfile();
@@ -96,9 +100,11 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
       errorsConfigurable = ErrorsConfigurable.SERVICE.createConfigurable(project);
     }
     return settingsUtil.editConfigurable(project, errorsConfigurable, new Runnable() {
+      @Override
       public void run() {
         errorsConfigurable.selectProfile(inspectionProfile.getName());
         SwingUtilities.invokeLater(new Runnable() {
+          @Override
           public void run() {
             errorsConfigurable.selectInspectionTool(selectedToolShortName);
           }
@@ -108,10 +114,12 @@ public class EditInspectionToolsSettingsAction implements IntentionAction, Icona
 
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
 
+  @Override
   public Icon getIcon(int flags) {
     return AllIcons.General.Settings;
   }

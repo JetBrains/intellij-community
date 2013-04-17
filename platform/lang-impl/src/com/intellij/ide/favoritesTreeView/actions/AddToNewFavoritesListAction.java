@@ -36,6 +36,7 @@ class AddToNewFavoritesListAction extends AnAction {
           "Add To New Favorites List", AllIcons.General.AddFavoritesList);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getProject();
     Collection<AbstractTreeNode> nodesToAdd = AddToFavoritesAction.getNodesToAdd(e.getDataContext(), true);
@@ -47,6 +48,7 @@ class AddToNewFavoritesListAction extends AnAction {
     }
   }
 
+  @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(AddToFavoritesAction.canCreateNodes(e));
   }

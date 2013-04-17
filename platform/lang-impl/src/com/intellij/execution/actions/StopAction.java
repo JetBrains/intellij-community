@@ -50,6 +50,7 @@ import java.util.Collections;
 import java.util.List;
 
 public class StopAction extends DumbAwareAction implements AnAction.TransparentUpdate {
+  @Override
   public void update(final AnActionEvent e) {
     boolean enable = false;
     Icon icon = getTemplatePresentation().getIcon();
@@ -78,6 +79,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
     presentation.setDescription(description);
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     ProcessHandler activeProcessHandler = getHandler(dataContext);
@@ -107,7 +109,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         @Nullable
         @Override
         public String getTooltipFor(Object value) {
-          return null; 
+          return null;
         }
 
         @Nullable
@@ -127,7 +129,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
           return null;
         }
       }));
-      
+
       final PopupChooserBuilder builder = JBPopupFactory.getInstance().createListPopupBuilder(list);
       final JBPopup popup = builder
         .setMovable(true)
@@ -139,6 +141,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
           }
         })
         .setItemChoosenCallback(new Runnable() {
+          @Override
           public void run() {
             HandlerItem item = (HandlerItem)list.getSelectedValue();
             if (item != null) item.stop();
@@ -188,7 +191,7 @@ public class StopAction extends DumbAwareAction implements AnAction.TransparentU
         if (handler == activeProcessHandler) selected = item;
       }
     }
-    
+
     boolean hasSeparator = true;
     for (final Pair<TaskInfo, ProgressIndicator> eachPair : tasks) {
       items.add(new HandlerItem(eachPair.first.getTitle(), AllIcons.Process.Step_passive, hasSeparator) {

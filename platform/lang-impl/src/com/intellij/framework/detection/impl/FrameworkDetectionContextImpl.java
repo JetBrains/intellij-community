@@ -86,6 +86,7 @@ public class FrameworkDetectionContextImpl extends FrameworkDetectionContextBase
     return result;
   }
 
+  @Override
   public VirtualFile getBaseDir() {
     return myProject.getBaseDir();
   }

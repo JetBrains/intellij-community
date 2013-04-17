@@ -28,6 +28,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.refactoring.copy.CopyHandler;
 
 public class CopyElementAction extends AnAction {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -36,6 +37,7 @@ public class CopyElementAction extends AnAction {
     }
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
       public void run() {
         PsiDocumentManager.getInstance(project).commitAllDocuments();
       }}, "", null
@@ -65,6 +67,7 @@ public class CopyElementAction extends AnAction {
     CopyHandler.doCopy(elements, defaultTargetDirectory);
   }
 
+  @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();

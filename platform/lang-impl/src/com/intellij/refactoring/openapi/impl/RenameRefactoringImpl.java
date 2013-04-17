@@ -34,30 +34,37 @@ public class RenameRefactoringImpl extends RefactoringImpl<RenameProcessor> impl
     super(new RenameProcessor(project, element, newName, toSearchInComments, toSearchInNonJavaFiles));
   }
 
+  @Override
   public void addElement(PsiElement element, String newName) {
     myProcessor.addElement(element, newName);
   }
 
+  @Override
   public Set<PsiElement> getElements() {
     return myProcessor.getElements();
   }
 
+  @Override
   public Collection<String> getNewNames() {
     return myProcessor.getNewNames();
   }
 
+  @Override
   public void setSearchInComments(boolean value) {
     myProcessor.setSearchInComments(value);
   }
 
+  @Override
   public void setSearchInNonJavaFiles(boolean value) {
     myProcessor.setSearchTextOccurrences(value);
   }
 
+  @Override
   public boolean isSearchInComments() {
     return myProcessor.isSearchInComments();
   }
 
+  @Override
   public boolean isSearchInNonJavaFiles() {
     return myProcessor.isSearchTextOccurrences();
   }

@@ -119,6 +119,7 @@ class RunConfigurable extends BaseConfigurable {
     myRunDialog = runDialog;
   }
 
+  @Override
   public String getDisplayName() {
     return ExecutionBundle.message("run.configurable.display.name");
   }
@@ -151,6 +152,7 @@ class RunConfigurable extends BaseConfigurable {
       }
     });
     myTree.setCellRenderer(new ColoredTreeCellRenderer() {
+      @Override
       public void customizeCellRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row,
                                         boolean hasFocus) {
         if (value instanceof DefaultMutableTreeNode) {
@@ -259,6 +261,7 @@ class RunConfigurable extends BaseConfigurable {
     if (defaults.getChildCount() > 0) myRoot.add(defaults);
 
     myTree.addTreeSelectionListener(new TreeSelectionListener() {
+      @Override
       public void valueChanged(TreeSelectionEvent e) {
         final TreePath selectionPath = myTree.getSelectionPath();
         if (selectionPath != null) {
@@ -297,11 +300,13 @@ class RunConfigurable extends BaseConfigurable {
       }
     });
     myTree.registerKeyboardAction(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         clickDefaultButton();
       }
     }, KeyStroke.getKeyStroke(KeyEvent.VK_ENTER, 0), JComponent.WHEN_FOCUSED);
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (isDisposed) return;
 
@@ -404,6 +409,7 @@ class RunConfigurable extends BaseConfigurable {
   private void sortTopLevelBranches() {
     List<TreePath> expandedPaths = TreeUtil.collectExpandedPaths(myTree);
     TreeUtil.sort(myRoot, new Comparator() {
+      @Override
       public int compare(final Object o1, final Object o2) {
         final Object userObject1 = ((DefaultMutableTreeNode)o1).getUserObject();
         final Object userObject2 = ((DefaultMutableTreeNode)o2).getUserObject();
@@ -432,6 +438,7 @@ class RunConfigurable extends BaseConfigurable {
   private void installUpdateListeners(final SingleConfigurationConfigurable<RunConfiguration> info) {
     final boolean[] changed = new boolean[]{false};
     info.getEditor().addSettingsEditorListener(new SettingsEditorListener<RunnerAndConfigurationSettings>() {
+      @Override
       public void stateChanged(final SettingsEditor<RunnerAndConfigurationSettings> editor) {
         update();
         final RunConfiguration configuration = info.getConfiguration();
@@ -563,6 +570,7 @@ class RunConfigurable extends BaseConfigurable {
     return configurationTypeNode != null ? (ConfigurationType)configurationTypeNode.getUserObject() : null;
   }
 
+  @Override
   public JComponent createComponent() {
     for (RunConfigurationsSettings each : Extensions.getExtensions(RunConfigurationsSettings.EXTENSION_POINT)) {
       UnnamedConfigurable configurable = each.createConfigurable();
@@ -586,6 +594,7 @@ class RunConfigurable extends BaseConfigurable {
     return myWholePanel;
   }
 
+  @Override
   public void reset() {
     final RunManagerEx manager = getRunManager();
     final RunManagerConfig config = manager.getConfig();
@@ -603,6 +612,7 @@ class RunConfigurable extends BaseConfigurable {
     return mySelectedConfigurable;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     updateActiveConfigurationFromSelected();
 
@@ -790,6 +800,7 @@ class RunConfigurable extends BaseConfigurable {
     }
   }
 
+  @Override
   public boolean isModified() {
     if (super.isModified()) return true;
     final RunManagerImpl runManager = getRunManager();
@@ -833,6 +844,7 @@ class RunConfigurable extends BaseConfigurable {
     return false;
   }
 
+  @Override
   public void disposeUIResources() {
     isDisposed = true;
     for (Configurable configurable : myStoredComponents.values()) {
@@ -845,6 +857,7 @@ class RunConfigurable extends BaseConfigurable {
     }
 
     TreeUtil.traverseDepth(myRoot, new TreeUtil.Traverse() {
+      @Override
       public boolean accept(Object node) {
         if (node instanceof DefaultMutableTreeNode) {
           final DefaultMutableTreeNode treeNode = (DefaultMutableTreeNode)node;
@@ -877,6 +890,7 @@ class RunConfigurable extends BaseConfigurable {
 
   private void setupDialogBounds() {
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         UIUtil.setupEnclosingDialogBounds(myWholePanel);
       }
@@ -909,6 +923,7 @@ class RunConfigurable extends BaseConfigurable {
     return RunManagerImpl.getInstanceImpl(myProject);
   }
 
+  @Override
   public String getHelpTopic() {
     final ConfigurationType type = getSelectedConfigurationType();
     if (type != null) {
@@ -1069,6 +1084,7 @@ class RunConfigurable extends BaseConfigurable {
       registerCustomShortcutSet(CommonShortcuts.INSERT, myTree);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       showAddPopup();
     }
@@ -1082,6 +1098,7 @@ class RunConfigurable extends BaseConfigurable {
       final JBPopupFactory popupFactory = JBPopupFactory.getInstance();
       final ConfigurationType[] configurationTypes = getRunManager().getConfigurationFactories(false);
       Arrays.sort(configurationTypes, new Comparator<ConfigurationType>() {
+        @Override
         public int compare(final ConfigurationType type1, final ConfigurationType type2) {
           return type1.getDisplayName().compareTo(type2.getDisplayName());
         }
@@ -1090,6 +1107,7 @@ class RunConfigurable extends BaseConfigurable {
         popupFactory.createListPopup(new BaseListPopupStep<ConfigurationType>(
           ExecutionBundle.message("add.new.run.configuration.acrtion.name"), configurationTypes) {
 
+          @Override
           @NotNull
           public String getTextFor(final ConfigurationType type) {
             return type.getDisplayName();
@@ -1105,10 +1123,12 @@ class RunConfigurable extends BaseConfigurable {
             return true;
           }
 
+          @Override
           public Icon getIconFor(final ConfigurationType type) {
             return type.getIcon();
           }
 
+          @Override
           public PopupStep onChosen(final ConfigurationType type, final boolean finalChoice) {
             if (hasSubstep(type)) {
               return getSupStep(type);
@@ -1120,6 +1140,7 @@ class RunConfigurable extends BaseConfigurable {
             return FINAL_CHOICE;
           }
 
+          @Override
           public int getDefaultOptionIndex() {
             ConfigurationType type = getSelectedConfigurationType();
             return type != null ? ArrayUtilRt.find(configurationTypes, type) : super.getDefaultOptionIndex();
@@ -1128,6 +1149,7 @@ class RunConfigurable extends BaseConfigurable {
           private ListPopupStep getSupStep(final ConfigurationType type) {
             final ConfigurationFactory[] factories = type.getConfigurationFactories();
             Arrays.sort(factories, new Comparator<ConfigurationFactory>() {
+              @Override
               public int compare(final ConfigurationFactory factory1, final ConfigurationFactory factory2) {
                 return factory1.getName().compareTo(factory2.getName());
               }
@@ -1135,15 +1157,18 @@ class RunConfigurable extends BaseConfigurable {
             return new BaseListPopupStep<ConfigurationFactory>(
               ExecutionBundle.message("add.new.run.configuration.action.name", type.getDisplayName()), factories) {
 
+              @Override
               @NotNull
               public String getTextFor(final ConfigurationFactory value) {
                 return value.getName();
               }
 
+              @Override
               public Icon getIconFor(final ConfigurationFactory factory) {
                 return factory.getIcon();
               }
 
+              @Override
               public PopupStep onChosen(final ConfigurationFactory factory, final boolean finalChoice) {
                 createNewConfiguration(factory);
                 return FINAL_CHOICE;
@@ -1152,6 +1177,7 @@ class RunConfigurable extends BaseConfigurable {
             };
           }
 
+          @Override
           public boolean hasSubstep(final ConfigurationType type) {
             return type.getConfigurationFactories().length > 1;
           }
@@ -1171,6 +1197,7 @@ class RunConfigurable extends BaseConfigurable {
       registerCustomShortcutSet(CommonShortcuts.DELETE, myTree);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       doRemove();
     }
@@ -1275,11 +1302,13 @@ class RunConfigurable extends BaseConfigurable {
     }
 
 
+    @Override
     public void update(AnActionEvent e) {
       boolean enabled = isEnabled(e);
       e.getPresentation().setEnabled(enabled);
     }
 
+    @Override
     public boolean isEnabled(AnActionEvent e) {
       boolean enabled = false;
       TreePath[] selections = myTree.getSelectionPaths();
@@ -1307,6 +1336,7 @@ class RunConfigurable extends BaseConfigurable {
     }
 
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       final SingleConfigurationConfigurable<RunConfiguration> configuration = getSelectedConfiguration();
       LOG.assertTrue(configuration != null);
@@ -1329,6 +1359,7 @@ class RunConfigurable extends BaseConfigurable {
       }
     }
 
+    @Override
     public void update(AnActionEvent e) {
       final SingleConfigurationConfigurable<RunConfiguration> configuration = getSelectedConfiguration();
       e.getPresentation().setEnabled(configuration != null && !(configuration.getConfiguration() instanceof UnknownRunConfiguration));
@@ -1341,6 +1372,7 @@ class RunConfigurable extends BaseConfigurable {
       super(ExecutionBundle.message("action.name.save.configuration"), null, AllIcons.Actions.Menu_saveall);
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       final SingleConfigurationConfigurable<RunConfiguration> configurationConfigurable = getSelectedConfiguration();
       LOG.assertTrue(configurationConfigurable != null);
@@ -1358,6 +1390,7 @@ class RunConfigurable extends BaseConfigurable {
       myTree.repaint();
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       final SingleConfigurationConfigurable<RunConfiguration> configuration = getSelectedConfiguration();
       final Presentation presentation = e.getPresentation();
@@ -1408,6 +1441,7 @@ class RunConfigurable extends BaseConfigurable {
       myDirection = direction;
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       doMove();
     }
@@ -1424,6 +1458,7 @@ class RunConfigurable extends BaseConfigurable {
       doMove();
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       e.getPresentation().setEnabled(isEnabled(e));
     }
@@ -1440,6 +1475,7 @@ class RunConfigurable extends BaseConfigurable {
             ExecutionBundle.message("run.configuration.edit.default.configuration.settings.description"), AllIcons.General.Settings);
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       TreeNode defaults = TreeUtil.findNodeWithObject(DEFAULTS, myTree.getModel(), myRoot);
       if (defaults != null) {

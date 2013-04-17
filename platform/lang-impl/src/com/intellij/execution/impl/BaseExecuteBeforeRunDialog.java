@@ -58,6 +58,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
     setTitle(ExecutionBundle.message("execute.before.run.debug.dialog.title", getTargetDisplayString()));
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
 
@@ -74,6 +75,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
     new TreeSpeedSearch(tree);
 
     tree.addMouseListener(new MouseAdapter() {
+      @Override
       public void mousePressed(MouseEvent e) {
         int row = tree.getRowForLocation(e.getX(), e.getY());
         if (row >= 0) {
@@ -92,6 +94,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
     });
 
     tree.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_SPACE) {
           TreePath treePath = tree.getLeadSelectionPath();
@@ -187,6 +190,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
     return false;
   }
 
+  @Override
   protected void doOKAction() {
     final RunManagerImpl runManager = (RunManagerImpl)RunManagerEx.getInstanceEx(myProject);
     for (Enumeration nodes = myRoot.depthFirstEnumeration(); nodes.hasMoreElements(); ) {
@@ -307,6 +311,7 @@ public abstract class BaseExecuteBeforeRunDialog<T extends BeforeRunTask> extend
       add(myLabel, BorderLayout.CENTER);
     }
 
+    @Override
     public Component getTreeCellRendererComponent(JTree tree,
                                                   Object value,
                                                   boolean selected,

@@ -67,6 +67,7 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     return myDescriptor;
   }
 
+  @Override
   public Icon getIcon(boolean expanded) {
     if (myDescriptor instanceof ProblemDescriptorImpl) {
       ProblemHighlightType problemHighlightType = ((ProblemDescriptorImpl)myDescriptor).getHighlightType();
@@ -76,10 +77,12 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
     return AllIcons.General.Information;
   }
 
+  @Override
   public int getProblemCount() {
     return 1;
   }
 
+  @Override
   public boolean isValid() {
     if (myElement instanceof RefElement && !myElement.isValid()) return false;
     final CommonProblemDescriptor descriptor = getDescriptor();
@@ -91,18 +94,22 @@ public class ProblemDescriptionNode extends InspectionTreeNode {
   }
 
 
+  @Override
   public boolean isResolved() {
     return myElement instanceof RefElement && myTool.isProblemResolved(myElement, getDescriptor());
   }
 
+  @Override
   public void ignoreElement() {
     myTool.ignoreCurrentElementProblem(getElement(), getDescriptor());
   }
 
+  @Override
   public void amnesty() {
     myTool.amnesty(getElement());
   }
 
+  @Override
   public FileStatus getNodeStatus() {
     if (myElement instanceof RefElement){
       return myTool.getProblemStatus(myDescriptor);

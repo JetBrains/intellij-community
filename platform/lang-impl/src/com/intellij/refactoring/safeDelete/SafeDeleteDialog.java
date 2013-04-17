@@ -67,15 +67,18 @@ public class SafeDeleteDialog extends DialogWrapper {
     return false;
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("refactoring.safeDelete");
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     final JPanel panel = new JPanel(new GridBagLayout());
     final GridBagConstraints gbc = new GridBagConstraints();
@@ -134,6 +137,7 @@ public class SafeDeleteDialog extends DialogWrapper {
     return null;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
@@ -148,6 +152,7 @@ public class SafeDeleteDialog extends DialogWrapper {
   }
 
 
+  @Override
   protected void doOKAction() {
     if (myCallback != null) {
       myCallback.run(this);

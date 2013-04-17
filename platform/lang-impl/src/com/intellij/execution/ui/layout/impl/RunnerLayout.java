@@ -35,13 +35,14 @@ import java.util.*;
 
 public class RunnerLayout  {
   public static final Key<Integer> DEFAULT_INDEX = Key.create("RunnerLayoutDefaultIndex");
-  public static final Key<Integer> DROP_INDEX = Key.create("RunnerLayoutDropIndex");  
+  public static final Key<Integer> DROP_INDEX = Key.create("RunnerLayoutDropIndex");
   private final String myID;
 
   protected Map<String, ViewImpl> myViews = new HashMap<String, ViewImpl>();
   private final Map<String, ViewImpl.Default> myDefaultViews = new HashMap<String, ViewImpl.Default>();
 
   protected Set<TabImpl> myTabs = new TreeSet<TabImpl>(new Comparator<TabImpl>() {
+    @Override
     public int compare(final TabImpl o1, final TabImpl o2) {
       return o1.getIndex() - o2.getIndex();
     }
@@ -55,7 +56,7 @@ public class RunnerLayout  {
   public RunnerLayout(@NotNull String ID) {
     myID = ID;
   }
-  
+
   @Nullable
   public String getDefaultDisplayName(final int defaultIndex) {
     final TabImpl.Default tab = myDefaultTabs.get(defaultIndex);

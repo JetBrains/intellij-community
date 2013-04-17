@@ -96,6 +96,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
     myRenames = temp.toArray(new PsiNamedElement[temp.size()]);
     Arrays.sort(myRenames, new Comparator<PsiNamedElement>() {
+      @Override
       public int compare(final PsiNamedElement e1, final PsiNamedElement e2) {
         return Comparing.compare(e1.getName(), e2.getName());
       }
@@ -119,6 +120,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     return "#com.intellij.refactoring.rename.AutomaticRenamingDialog";
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     final Box box = Box.createHorizontalBox();
     box.add(new JLabel(myRenamer.getDialogDescription()));
@@ -126,6 +128,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     return box;
   }
 
+  @Override
   public void show() {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     super.show();
@@ -140,11 +143,13 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     }
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myTableModel = new MyTableModel();
     myTable.setModel(myTableModel);
     myTableModel.getSpaceAction().register();
     myTableModel.addTableModelListener(new TableModelListener() {
+      @Override
       public void tableChanged(TableModelEvent e) {
         handleChanges();
       }
@@ -158,6 +163,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
 
     columnModel.getColumn(NEW_NAME_COLUMN).setCellEditor(new StringTableCellEditor(myProject));
     mySelectAllButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         for (int i = 0; i < myShouldRename.length; i++) {
           myShouldRename[i] = true;
@@ -167,6 +173,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     });
 
     myUnselectAllButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         for (int i = 0; i < myShouldRename.length; i++) {
           myShouldRename[i] = false;
@@ -175,6 +182,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       }
     });
     myListSelectionListener = new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         myUsageFileLabel.setText("");
         int index = myTable.getSelectionModel().getLeadSelectionIndex();
@@ -201,7 +209,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     myUsagePreviewPanel.updateLayout(null);
     myPanelForPreview.add(myUsageFileLabel, BorderLayout.NORTH);
     mySplitPane.setDividerLocation(0.5);
-    
+
     GuiUtils.replaceJSplitPaneWithIDEASplitter(myPanel);
 
     if (myTableModel.getRowCount() != 0) {
@@ -221,16 +229,19 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     myTable.getSelectionModel().addListSelectionListener(myListSelectionListener);
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTable;
   }
 
+  @Override
   protected void doOKAction() {
     TableUtil.stopEditing(myTable);
     updateRenamer();
     super.doOKAction();
   }
 
+  @Override
   protected void dispose() {
     Disposer.dispose(myUsagePreviewPanel);
     super.dispose();
@@ -254,14 +265,17 @@ public class AutomaticRenamingDialog extends DialogWrapper {
   }
 
   private class MyTableModel extends AbstractTableModel {
+    @Override
     public int getColumnCount() {
       return 3;
     }
 
+    @Override
     public int getRowCount() {
       return myShouldRename.length;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch(columnIndex) {
         case CHECK_COLUMN:
@@ -276,6 +290,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       }
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       switch(columnIndex) {
         case CHECK_COLUMN:
@@ -290,10 +305,12 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       handleChanges();
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       return columnIndex != OLD_NAME_COLUMN;
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       switch(columnIndex) {
         case CHECK_COLUMN: return Boolean.class;
@@ -303,6 +320,7 @@ public class AutomaticRenamingDialog extends DialogWrapper {
       }
     }
 
+    @Override
     public String getColumnName(int column) {
       switch(column) {
         case OLD_NAME_COLUMN:
@@ -319,14 +337,17 @@ public class AutomaticRenamingDialog extends DialogWrapper {
     }
 
     private class MyEnableDisable extends EnableDisableAction {
+      @Override
       protected JTable getTable() {
         return myTable;
       }
 
+      @Override
       protected boolean isRowChecked(int row) {
         return myShouldRename[row];
       }
 
+      @Override
       protected void applyValue(int[] rows, boolean valueToBeSet) {
         for (final int row : rows) {
           myShouldRename[row] = valueToBeSet;

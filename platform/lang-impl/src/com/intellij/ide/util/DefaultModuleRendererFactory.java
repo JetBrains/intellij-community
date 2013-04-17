@@ -22,6 +22,7 @@ import javax.swing.*;
  * @author yole
  */
 public class DefaultModuleRendererFactory extends ModuleRendererFactory {
+  @Override
   public DefaultListCellRenderer getModuleRenderer() {
     return new PsiElementModuleRenderer();
   }

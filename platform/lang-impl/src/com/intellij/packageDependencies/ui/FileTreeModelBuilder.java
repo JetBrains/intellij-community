@@ -116,6 +116,7 @@ public class FileTreeModelBuilder {
     final Integer fileCount = project.getUserData(FILE_COUNT);
     if (fileCount == null) {
       myFileIndex.iterateContent(new ContentIterator() {
+        @Override
         public boolean processFile(VirtualFile fileOrDir) {
           if (!fileOrDir.isDirectory()) {
             counting();
@@ -139,6 +140,7 @@ public class FileTreeModelBuilder {
 
   public TreeModel build(final Project project, final boolean showProgress, @Nullable final Runnable successRunnable) {
     final Runnable buildingRunnable = new Runnable() {
+      @Override
       public void run() {
         ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
         if (indicator != null) {
@@ -207,6 +209,7 @@ public class FileTreeModelBuilder {
     }
 
     Runnable buildingRunnable = new Runnable() {
+      @Override
       public void run() {
         for (final PsiFile file : files) {
           if (file != null) {
@@ -258,7 +261,7 @@ public class FileTreeModelBuilder {
     final VirtualFile containingDirectory = file.getParent();
     return getModuleDirNode(containingDirectory, myFileIndex.getModuleForFile(file), null);
   }
-  
+
   public boolean hasFileNode(@NotNull VirtualFile file) {
     return myModuleDirNodes.containsKey(file);
   }
@@ -468,6 +471,7 @@ public class FileTreeModelBuilder {
           nestedNode.removeUpReference();
           if (myTree != null && expand) {
             final Runnable expandRunnable = new Runnable() {
+              @Override
               public void run() {
                 myTree.expandPath(new TreePath(nestedNode.getPath()));
               }
@@ -589,6 +593,7 @@ public class FileTreeModelBuilder {
     PackageDependenciesNode lastParent = null;
     VirtualFile dir;
 
+    @Override
     public boolean processFile(VirtualFile fileOrDir) {
       if (!fileOrDir.isDirectory()) {
         if (lastParent != null && !Comparing.equal(dir, fileOrDir.getParent())) {

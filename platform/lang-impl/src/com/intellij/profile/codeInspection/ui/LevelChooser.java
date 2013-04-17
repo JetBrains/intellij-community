@@ -52,6 +52,7 @@ public class LevelChooser extends ComboboxWithBrowseButton {
     });
 
     addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final SeverityEditorDialog dlg = new SeverityEditorDialog(LevelChooser.this, (HighlightSeverity)getComboBox().getSelectedItem(), severityRegistrar);
         dlg.show();

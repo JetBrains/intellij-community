@@ -47,6 +47,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
   private final Map<Content, GridCellImpl> myContent2Cell = new HashMap<Content, GridCellImpl>();
 
   private final Comparator<Content> myContentComparator = new Comparator<Content>() {
+    @Override
     public int compare(final Content o1, final Content o2) {
       return getCellFor(o1).getPlaceInGrid().compareTo(getCellFor(o2).getPlaceInGrid());
     }
@@ -140,6 +141,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     }
   }
 
+  @Override
   public GridCellImpl getCellFor(final Content content) {
     final GridCellImpl cell = myPlaceInGrid2Cell.get(getStateFor(content).getPlaceInGrid());
     assert cell != null : "Unknown place in grid: " + getStateFor(content).getPlaceInGrid().name();
@@ -229,6 +231,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
       }
 
       return new CellTransform.Restore() {
+        @Override
         public ActionCallback restoreInGrid() {
           if (myContent != null) {
             setContent(myContent);
@@ -240,6 +243,7 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     }
   }
 
+  @Override
   public void dispose() {
 
   }
@@ -341,18 +345,21 @@ public class GridImpl extends Wrapper implements Grid, Disposable, DataProvider 
     return result;
   }
 
+  @Override
   public List<Content> getContents() {
     return myContents;
   }
 
   public void minimize(final Content content, final CellTransform.Restore restore) {
     myViewContext.getCellTransform().minimize(content, new CellTransform.Restore() {
+      @Override
       public ActionCallback restoreInGrid() {
         return restore.restoreInGrid();
       }
     });
   }
 
+  @Override
   @Nullable
   public Object getData(@NonNls final String dataId) {
     if (ViewContext.CONTEXT_KEY.is(dataId)) {

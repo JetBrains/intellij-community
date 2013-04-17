@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
 
+  @Override
   protected void fillActions(@Nullable final Project project,
                              @NotNull final DefaultActionGroup group,
                              @NotNull final DataContext dataContext) {
@@ -82,6 +83,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
     }
   }
 
+  @Override
   protected boolean isEnabled() {
     return true;
   }
@@ -92,6 +94,7 @@ public class RefactoringQuickListPopupAction extends QuickSwitchSchemeAction {
     e.getPresentation().setVisible(e.getPlace() == ActionPlaces.MAIN_MENU);
   }
 
+  @Override
   protected String getPopupTitle(AnActionEvent e) {
     return "Refactor This";
   }

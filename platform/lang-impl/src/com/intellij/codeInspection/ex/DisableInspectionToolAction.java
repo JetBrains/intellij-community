@@ -49,20 +49,24 @@ public class DisableInspectionToolAction implements IntentionAction, Iconable {
     myToolId = key.toString();
   }
 
+  @Override
   @NotNull
   public String getText() {
     return NAME;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return NAME;
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(file.getProject());
     InspectionProfile inspectionProfile = profileManager.getInspectionProfile();
@@ -77,10 +81,12 @@ public class DisableInspectionToolAction implements IntentionAction, Iconable {
     DaemonCodeAnalyzer.getInstance(project).restart();
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }
 
+  @Override
   public Icon getIcon(int flags) {
     return AllIcons.Actions.Cancel;
   }

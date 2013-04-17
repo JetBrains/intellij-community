@@ -23,6 +23,7 @@ public class RefModuleImpl extends RefEntityImpl implements RefModule {
     ((RefProjectImpl)manager.getRefProject()).add(this);
   }
 
+  @Override
   public void add(RefEntity child) {
     if (myChildren == null) {
        myChildren = new ArrayList<RefEntity>();
@@ -34,29 +35,35 @@ public class RefModuleImpl extends RefEntityImpl implements RefModule {
     }
   }
 
+  @Override
   protected void removeChild(RefEntity child) {
     if (myChildren != null) {
       myChildren.remove(child);
     }
   }
 
+  @Override
   public void accept(final RefVisitor refVisitor) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         refVisitor.visitModule(RefModuleImpl.this);
       }
     });
   }
 
+  @Override
   @NotNull
   public Module getModule() {
     return myModule;
   }
 
+  @Override
   public boolean isValid() {
     return myModule != null && !myModule.isDisposed();
   }
 
+  @Override
   public Icon getIcon(final boolean expanded) {
     return ModuleType.get(getModule()).getIcon();
   }

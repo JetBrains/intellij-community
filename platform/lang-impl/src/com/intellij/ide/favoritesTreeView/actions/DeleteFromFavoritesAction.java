@@ -46,6 +46,7 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
     super(IdeBundle.message("action.remove.from.current.favorites"), IconUtil.getRemoveIcon());
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
@@ -90,6 +91,7 @@ public class DeleteFromFavoritesAction extends AnActionButton implements DumbAwa
     }
   }
 
+  @Override
   public void updateButton(AnActionEvent e) {
     e.getPresentation().setText(getTemplatePresentation().getText());
     final DataContext dataContext = e.getDataContext();

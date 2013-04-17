@@ -82,6 +82,7 @@ public class ToggleBookmarkWithMnemonicAction extends ToggleBookmarkAction {
     }
   }
 
+  @Override
   public void update(AnActionEvent event) {
     super.update(event);
 
