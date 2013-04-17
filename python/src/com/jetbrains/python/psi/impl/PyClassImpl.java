@@ -26,10 +26,7 @@ import com.jetbrains.python.psi.stubs.PropertyStubStorage;
 import com.jetbrains.python.psi.stubs.PyClassStub;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.stubs.PyTargetExpressionStub;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyClassTypeImpl;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.Maybe;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -181,12 +178,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     // TODO: Change this method to getAncestorTypes()
     // Implementation is no longer lazy, because C3 resolve for new-style classes will not be lazy
     final List<PyClassRef> results = new ArrayList<PyClassRef>();
-    for (PyClassType type : getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
-      if (type != null) {
-        results.add(new PyClassRef(type.getPyClass()));
+    for (PyClassLikeType type : getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+      if (type instanceof PyClassType) {
+        results.add(new PyClassRef(((PyClassType)type).getPyClass()));
       }
       else {
-        results.add(new PyClassRef(type));
+        results.add(new PyClassRef((PyClass)null));
       }
     }
     return results;
@@ -195,9 +192,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @Override
   public Iterable<PyClass> iterateAncestorClasses() {
     final List<PyClass> results = new ArrayList<PyClass>();
-    for (PyClassType type : getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
-      if (type != null) {
-        results.add(type.getPyClass());
+    for (PyClassLikeType type : getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+      if (type instanceof PyClassType) {
+        results.add(((PyClassType)type).getPyClass());
       }
     }
     return results;
@@ -1092,12 +1089,12 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @NotNull
   @Override
-  public List<PyClassType> getSuperClassTypes(@NotNull TypeEvalContext context) {
+  public List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context) {
     if (PyNames.FAKE_OLD_BASE.equals(getName())) {
       return Collections.emptyList();
     }
     final PyClassStub stub = getStub();
-    final List<PyClassType> result = new ArrayList<PyClassType>();
+    final List<PyClassLikeType> result = new ArrayList<PyClassLikeType>();
     if (stub != null) {
       final PsiElement parent = stub.getParentStub().getPsi();
       if (parent instanceof PyFile) {
@@ -1110,8 +1107,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     else {
       for (PyExpression expression : getSuperClassExpressions()) {
         final PyType type = context.getType(expression);
-        result.add(type instanceof PyClassType ? (PyClassType)type : null);
-        // TODO: PyUnknownClassType(expression, expression.getName())?
+        result.add(type instanceof PyClassLikeType ? (PyClassLikeType)type : null);
       }
     }
     final PyBuiltinCache builtinCache = PyBuiltinCache.getInstance(this);
@@ -1120,8 +1116,8 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       final PyClass implicitSuper = builtinCache.getClass(implicitSuperName);
       if (implicitSuper != null) {
         final PyType type = context.getType(implicitSuper);
-        if (type instanceof PyClassType) {
-          result.add((PyClassType)type);
+        if (type instanceof PyClassLikeType) {
+          result.add((PyClassLikeType)type);
         }
       }
     }
@@ -1130,24 +1126,24 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @NotNull
   @Override
-  public List<PyClassType> getAncestorTypes(@NotNull TypeEvalContext context) {
-    final List<PyClassType> results = new ArrayList<PyClassType>();
+  public List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context) {
+    final List<PyClassLikeType> results = new ArrayList<PyClassLikeType>();
     final List<PyClass> toProcess = new ArrayList<PyClass>();
-    final Set<PyClassType> seen = new HashSet<PyClassType>();
+    final Set<PyClassLikeType> seen = new HashSet<PyClassLikeType>();
     final Set<PyClass> visited = new HashSet<PyClass>();
     toProcess.add(this);
     while (!toProcess.isEmpty()) {
       final PyClass cls = toProcess.remove(0);
       visited.add(cls);
-      final List<PyClassType> types = cls.getSuperClassTypes(context);
-      for (PyClassType type : types) {
+      final List<PyClassLikeType> types = cls.getSuperClassTypes(context);
+      for (PyClassLikeType type : types) {
         if (type == null || !seen.contains(type)) {
           results.add(type);
           seen.add(type);
         }
-        if (type != null) {
+        if (type instanceof PyClassType) {
           // TODO: process PyClassType instead of PyClass
-          final PyClass superClass = type.getPyClass();
+          final PyClass superClass = ((PyClassType)type).getPyClass();
           if (!visited.contains(superClass)) {
             toProcess.add(superClass);
           }
@@ -1196,16 +1192,15 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   }
 
   @Nullable
-  private static PyClassType classTypeFromQName(@NotNull PyQualifiedName qualifiedName, @NotNull PyFile containingFile,
-                                                @NotNull TypeEvalContext context) {
+  private static PyClassLikeType classTypeFromQName(@NotNull PyQualifiedName qualifiedName, @NotNull PyFile containingFile,
+                                                    @NotNull TypeEvalContext context) {
     final PsiElement element = getElementQNamed(containingFile, qualifiedName);
     if (element instanceof PyTypedElement) {
       final PyType type = context.getType((PyTypedElement)element);
-      if (type instanceof PyClassType) {
-        return (PyClassType)type;
+      if (type instanceof PyClassLikeType) {
+        return (PyClassLikeType)type;
       }
     }
-    // TODO: PyUnknownClassType(element, qualifiedName)?
     return null;
   }
 }

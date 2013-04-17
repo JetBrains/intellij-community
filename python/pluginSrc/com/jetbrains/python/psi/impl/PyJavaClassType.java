@@ -11,9 +11,7 @@ import com.jetbrains.python.psi.PyQualifiedExpression;
 import com.jetbrains.python.psi.resolve.CompletionVariantsProcessor;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
-import com.jetbrains.python.psi.types.PyCallableType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -22,7 +20,7 @@ import java.util.List;
 /**
  * @author yole
  */
-public class PyJavaClassType implements PyCallableType {
+public class PyJavaClassType implements PyClassLikeType {
   private final PsiClass myClass;
   private final boolean myDefinition;
 
@@ -85,5 +83,26 @@ public class PyJavaClassType implements PyCallableType {
       return new PyJavaClassType(myClass, false);
     }
     return null;
+  }
+
+  @Override
+  public boolean isDefinition() {
+    return myDefinition;
+  }
+
+  @Override
+  public PyClassLikeType toInstance() {
+    return myDefinition ? new PyJavaClassType(myClass, false) : this;
+  }
+
+  @Nullable
+  @Override
+  public String getClassQName() {
+    return myClass.getQualifiedName();
+  }
+
+  @Override
+  public boolean isValid() {
+    return myClass.isValid();
   }
 }
