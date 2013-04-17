@@ -96,7 +96,7 @@ public class CreateConstructorMatchingSuperFix extends BaseIntentionAction {
 
     LOG.assertTrue(constructors.length >=1); // Otherwise we won't have been messing with all this stuff
     boolean isCopyJavadoc = true;
-    if (constructors.length > 1) {
+    if (constructors.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
       MemberChooser<PsiMethodMember> chooser = new MemberChooser<PsiMethodMember>(constructors, false, true, project);
       chooser.setTitle(QuickFixBundle.message("super.class.constructors.chooser.title"));
       chooser.show();
