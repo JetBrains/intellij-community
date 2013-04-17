@@ -22,7 +22,6 @@ import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
 import com.intellij.openapi.externalSystem.model.project.id.ProjectId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,7 +46,6 @@ public class JavaProjectData extends AbstractProjectEntityData {
   @NotNull private JavaSdkVersion myJdkVersion    = DEFAULT_JDK_VERSION;
   @NotNull private LanguageLevel  myLanguageLevel = DEFAULT_LANGUAGE_LEVEL;
 
-  @Nullable private Sdk    mySdk;
   @NotNull private  String myCompileOutputPath;
 
   public JavaProjectData(@NotNull ProjectSystemId owner, @NotNull String compileOutputPath) {
@@ -123,16 +121,6 @@ public class JavaProjectData extends AbstractProjectEntityData {
     return false;
   }
 
-  @Nullable
-  public Sdk getSdk() {
-    return mySdk;
-  }
-
-  @SuppressWarnings("NullableProblems")
-  public void setSdk(@NotNull Sdk sdk) {
-    mySdk = sdk;
-  }
-
   @NotNull
   public LanguageLevel getLanguageLevel() {
     return myLanguageLevel;
@@ -154,7 +142,6 @@ public class JavaProjectData extends AbstractProjectEntityData {
     int result = super.hashCode();
     result = 31 * result + myJdkVersion.hashCode();
     result = 31 * result + myLanguageLevel.hashCode();
-    result = 31 * result + (mySdk != null ? mySdk.hashCode() : 0);
     result = 31 * result + myCompileOutputPath.hashCode();
     return result;
   }
@@ -170,8 +157,12 @@ public class JavaProjectData extends AbstractProjectEntityData {
     if (!myCompileOutputPath.equals(project.myCompileOutputPath)) return false;
     if (myJdkVersion != project.myJdkVersion) return false;
     if (myLanguageLevel != project.myLanguageLevel) return false;
-    if (mySdk != null ? !mySdk.equals(project.mySdk) : project.mySdk != null) return false;
 
     return true;
+  }
+
+  @Override
+  public String toString() {
+    return "java project";
   }
 }

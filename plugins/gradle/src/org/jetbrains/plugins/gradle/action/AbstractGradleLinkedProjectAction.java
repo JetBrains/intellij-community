@@ -11,7 +11,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 
 /**
- * Common super class for gradle actions that require {@link GradleSettings#getLinkedProjectPath()}  linked project}.
+ * Common super class for gradle actions that require {@link GradleSettings#getLinkedExternalProjectPath()}  linked project}.
  * <p/>
  * Not thread-safe.
  * 
@@ -56,7 +56,7 @@ public abstract class AbstractGradleLinkedProjectAction extends AnAction {
       return null;
     }
     
-    final String path = GradleSettings.getInstance(project).getLinkedProjectPath();
+    final String path = GradleSettings.getInstance(project).getLinkedExternalProjectPath();
     return path == null ? null : new Pair<Project, String>(project, path);
   }
 

@@ -16,32 +16,27 @@
 package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.task.AbstractExternalSystemTask;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
-import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
-import com.intellij.openapi.externalSystem.build.ExternalSystemBuildManager;
-import org.jetbrains.plugins.gradle.tasks.GradleTasksModel;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
-
-import java.util.Collection;
 
 /**
  * @author Denis Zhdanov
  * @since 3/15/13 1:20 PM
  */
-public class GradleRefreshTasksListTask extends AbstractGradleTask {
+public class ExternalSystemRefreshTasksListTask extends AbstractExternalSystemTask {
 
   @NotNull private final String myProjectPath;
 
-  public GradleRefreshTasksListTask(@Nullable Project project, @NotNull String projectPath) {
-    super(project, ExternalSystemTaskType.REFRESH_TASKS_LIST);
+  public ExternalSystemRefreshTasksListTask(@NotNull ProjectSystemId externalSystemId,
+                                            @NotNull Project project,
+                                            @NotNull String projectPath)
+  {
+    super(externalSystemId, ExternalSystemTaskType.REFRESH_TASKS_LIST, project);
     myProjectPath = projectPath;
   }
 

@@ -22,24 +22,38 @@ import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectEntityData;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.project.ModuleAwareContentRoot;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectEntityChangeListener;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.module.Module;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -48,6 +62,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.BooleanFunction;
+import com.intellij.util.Consumer;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -59,9 +74,7 @@ import javax.swing.*;
 import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.Map;
+import java.util.*;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -89,6 +102,36 @@ public class ExternalSystemUtil {
         return result;
       }
     };
+
+  @NotNull public static final Comparator<Object> ORDER_AWARE_COMPARATOR = new Comparator<Object>() {
+    @Override
+    public int compare(Object o1, Object o2) {
+      int order1 = getOrder(o1);
+      int order2 = getOrder(o2);
+      return order1 > order2 ? 1 : order1 < order2 ? -1 : 0;
+    }
+
+    private int getOrder(@NotNull Object o) {
+      Queue<Class<?>> toCheck = new ArrayDeque<Class<?>>();
+      toCheck.add(o.getClass());
+      while (!toCheck.isEmpty()) {
+        Class<?> clazz = toCheck.poll();
+        Order annotation = clazz.getAnnotation(Order.class);
+        if (annotation != null) {
+          return annotation.value();
+        }
+        toCheck.add(clazz.getSuperclass());
+        Class<?>[] interfaces = clazz.getInterfaces();
+        if (interfaces != null) {
+          for (Class<?> interfaceClass : interfaces) {
+            toCheck.add(interfaceClass);
+          }
+        }
+      }
+      return ExternalSystemConstants.UNORDERED;
+    }
+  };
+
 
   private ExternalSystemUtil() {
   }
@@ -388,6 +431,22 @@ public class ExternalSystemUtil {
   }
 
   @NotNull
+  public static Map<Key<?>, Collection<DataNode<?>>> group(@NotNull Collection<DataNode<?>> nodes) {
+    if (nodes.isEmpty()) {
+      return Collections.emptyMap();
+    }
+    Map<Key<?>, Collection<DataNode<?>>> result = ContainerUtilRt.newHashMap();
+    for (DataNode<?> node : nodes) {
+      Collection<DataNode<?>> n = result.get(node.getKey());
+      if (n == null) {
+        result.put(node.getKey(), n = ContainerUtilRt.newArrayList());
+      }
+      n.add(node);
+    }
+    return result;
+  }
+  
+  @NotNull
   public static <K, V> Map<DataNode<K>, Collection<DataNode<V>>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull Key<K> key) {
     Map<DataNode<K>, Collection<DataNode<V>>> result = ContainerUtilRt.newHashMap();
     for (DataNode<V> data : nodes) {
@@ -426,6 +485,17 @@ public class ExternalSystemUtil {
 
   @SuppressWarnings("unchecked")
   @Nullable
+  public static <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key) {
+    for (DataNode<?> child : node.getChildren()) {
+      if (key.equals(child.getKey())) {
+        return (DataNode<T>)child;
+      }
+    }
+    return null;
+  }
+  
+  @SuppressWarnings("unchecked")
+  @Nullable
   public static <T> DataNode<T> find(@NotNull DataNode<?> node, @NotNull Key<T> key, BooleanFunction<DataNode<T>> predicate) {
     for (DataNode<?> child : node.getChildren()) {
       if (key.equals(child.getKey()) && predicate.fun((DataNode<T>)child)) {
@@ -449,5 +519,174 @@ public class ExternalSystemUtil {
       result.add((DataNode<T>)child);
     }
     return result == null ? Collections.<DataNode<T>>emptyList() : result;
+  }
+
+  @NotNull
+  public static String toReadableName(@NotNull ProjectSystemId id) {
+    return StringUtil.capitalize(id.toString().toLowerCase());
+  }
+
+  public static void refreshProject(@NotNull Project project, @NotNull ProjectSystemId externalSystemId) {
+    refreshProject(project, externalSystemId, new Ref<String>());
+  }
+
+  public static void refreshProject(@NotNull Project project,
+                                    @NotNull ProjectSystemId externalSystemId,
+                                    @NotNull final Consumer<String> errorCallback)
+  {
+    final Ref<String> errorMessageHolder = new Ref<String>() {
+      @Override
+      public void set(@Nullable String value) {
+        if (value != null) {
+          errorCallback.consume(value);
+        }
+      }
+    };
+    refreshProject(project, externalSystemId, errorMessageHolder);
+  }
+
+  public static void refreshProject(@NotNull Project project,
+                                    @NotNull ProjectSystemId externalSystemId,
+                                    @NotNull final Ref<String> errorMessageHolder)
+  {
+    ExternalSystemSettingsManager settingsManager = ServiceManager.getService(ExternalSystemSettingsManager.class);
+    AbstractExternalSystemSettings settings = settingsManager.getSettings(project, externalSystemId);
+    final String linkedProjectPath = settings.getLinkedExternalProjectPath();
+    if (StringUtil.isEmpty(linkedProjectPath)) {
+      return;
+    }
+    assert linkedProjectPath != null;
+    Ref<String> errorDetailsHolder = new Ref<String>() {
+      @Override
+      public void set(@Nullable String error) {
+        if (!StringUtil.isEmpty(error)) {
+          assert error != null;
+          LOG.warn(error);
+        }
+      }
+    };
+    refreshProject(project, externalSystemId, linkedProjectPath, errorMessageHolder, errorDetailsHolder, true, false);
+  }
+
+  @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
+  @Nullable
+  private static String extractDetails(@NotNull Throwable e) {
+    final Throwable unwrapped = RemoteUtil.unwrap(e);
+    if (unwrapped instanceof ExternalSystemException) {
+      return ((ExternalSystemException)unwrapped).getOriginalReason();
+    }
+    return null;
+  }
+
+  /**
+   * Queries slave gradle process to refresh target gradle project.
+   *
+   * @param project             target intellij project to use
+   * @param externalProjectPath path of the target gradle project's file
+   * @param errorMessageHolder  holder for the error message that describes a problem occurred during the refresh (if any)
+   * @param errorDetailsHolder  holder for the error details of the problem occurred during the refresh (if any)
+   * @param resolveLibraries    flag that identifies whether gradle libraries should be resolved during the refresh
+   * @return the most up-to-date gradle project (if any)
+   */
+  @Nullable
+  public static DataNode<ProjectData> refreshProject(@NotNull final Project project,
+                                                     @NotNull final ProjectSystemId externalSystemId,
+                                                     @NotNull final String externalProjectPath,
+                                                     @NotNull final Ref<String> errorMessageHolder,
+                                                     @NotNull final Ref<String> errorDetailsHolder,
+                                                     final boolean resolveLibraries,
+                                                     final boolean modal)
+  {
+    final Ref<DataNode<ProjectData>> externalProject = new Ref<DataNode<ProjectData>>();
+    final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
+      @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
+      @Override
+      public void execute(@NotNull ProgressIndicator indicator) {
+        ExternalSystemResolveProjectTask task
+          = new ExternalSystemResolveProjectTask(externalSystemId, project, externalProjectPath, resolveLibraries);
+        task.execute(indicator);
+        externalProject.set(task.getExternalProject());
+        final Throwable error = task.getError();
+        if (error == null) {
+          return;
+        }
+        final String message = buildErrorMessage(error);
+        if (StringUtil.isEmpty(message)) {
+          errorMessageHolder.set(String.format(
+            "Can't resolve %s project at '%s'. Reason: %s",
+            toReadableName(externalSystemId), externalProjectPath, message
+          ));
+        }
+        else {
+          errorMessageHolder.set(message);
+        }
+        errorDetailsHolder.set(extractDetails(error));
+      }
+    };
+
+    // TODO den uncomment
+    //final TaskUnderProgress refreshTasksTask = new TaskUnderProgress() {
+    //  @Override
+    //  public void execute(@NotNull ProgressIndicator indicator) {
+    //    final ExternalSystemRefreshTasksListTask task = new ExternalSystemRefreshTasksListTask(project, externalProjectPath);
+    //    task.execute(indicator);
+    //  }
+    //};
+
+    UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        if (modal) {
+          String title = ExternalSystemBundle.message("progress.import.text", toReadableName(externalSystemId));
+          ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              refreshProjectStructureTask.execute(indicator);
+              // TODO den uncomment
+              //setTitle(ExternalSystemBundle.message("gradle.task.progress.initial.text"));
+              //refreshTasksTask.execute(indicator);
+            }
+          });
+        }
+        else {
+          String title = ExternalSystemBundle.message("progress.refresh.text", toReadableName(externalSystemId));
+          ProgressManager.getInstance().run(new Task.Backgroundable(project, title) {
+            @Override
+            public void run(@NotNull ProgressIndicator indicator) {
+              refreshProjectStructureTask.execute(indicator);
+              // TODO den uncomment
+              //setTitle(ExternalSystemBundle.message("gradle.task.progress.initial.text"));
+              //refreshTasksTask.execute(indicator);
+            }
+          });
+        }
+      }
+    });
+    return externalProject.get();
+  }
+
+  private interface TaskUnderProgress {
+    void execute(@NotNull ProgressIndicator indicator);
+  }
+
+  @Nullable
+  public static Sdk findJdk(@NotNull JavaSdkVersion version) {
+    JavaSdk javaSdk = JavaSdk.getInstance();
+    List<Sdk> javaSdks = ProjectJdkTable.getInstance().getSdksOfType(javaSdk);
+    Sdk candidate = null;
+    for (Sdk sdk : javaSdks) {
+      JavaSdkVersion v = javaSdk.getVersion(sdk);
+      if (v == version) {
+        return sdk;
+      }
+      else if (candidate == null && v != null && version.getMaxLanguageLevel().isAtLeast(version.getMaxLanguageLevel())) {
+        candidate = sdk;
+      }
+    }
+    return candidate;
+  }
+
+  public static void orderAwareSort(@NotNull List<?> data) {
+    Collections.sort(data, ORDER_AWARE_COMPARATOR);
   }
 }

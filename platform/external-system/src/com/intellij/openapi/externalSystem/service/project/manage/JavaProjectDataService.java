@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
+import com.intellij.ide.impl.NewProjectUtil;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
@@ -22,7 +23,11 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.JavaProjectData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdk;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,7 +37,7 @@ import java.util.Collection;
  * @author Denis Zhdanov
  * @since 4/15/13 12:09 PM
  */
-public class JavaProjectDataManager implements ProjectDataManager<JavaProjectData> {
+public class JavaProjectDataService implements ProjectDataService<JavaProjectData> {
 
   @NotNull
   @Override
@@ -46,6 +51,21 @@ public class JavaProjectDataManager implements ProjectDataManager<JavaProjectDat
       throw new IllegalArgumentException(String.format("Expected to get a single project but got %d: %s", toImport.size(), toImport));
     }
     JavaProjectData projectData = toImport.iterator().next().getData();
+    
+    // JDK.
+    JavaSdkVersion version = projectData.getJdkVersion();
+    JavaSdk javaSdk = JavaSdk.getInstance();
+    Sdk sdk = ProjectRootManagerEx.getInstanceEx(project).getProjectSdk();
+    if (sdk instanceof JavaSdk) {
+      JavaSdkVersion currentVersion = javaSdk.getVersion(sdk);
+      if (currentVersion == null || !currentVersion.isAtLeast(version)) {
+        Sdk newJdk = ExternalSystemUtil.findJdk(version);
+        if (newJdk != null) {
+          NewProjectUtil.applyJdkToProject(project, newJdk);
+        }
+      }
+    }
+    // Language level.
     setLanguageLevel(projectData.getLanguageLevel(), project, synchronous);
   }
 
@@ -56,7 +76,7 @@ public class JavaProjectDataManager implements ProjectDataManager<JavaProjectDat
   @SuppressWarnings("MethodMayBeStatic")
   public void setLanguageLevel(@NotNull final LanguageLevel languageLevel, @NotNull Project project, boolean synchronous) {
     final LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
-    if (languageLevel == languageLevelExtension.getLanguageLevel()) {
+    if (languageLevelExtension.getLanguageLevel().isAtLeast(languageLevel)) {
       return;
     }
     ExternalSystemUtil.executeProjectChangeAction(project, ProjectSystemId.IDE, synchronous, new Runnable() {

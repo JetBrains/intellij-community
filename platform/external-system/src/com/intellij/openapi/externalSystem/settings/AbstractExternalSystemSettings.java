@@ -34,13 +34,12 @@ import org.jetbrains.annotations.Nullable;
  * @since 4/3/13 4:04 PM
  */
 public abstract class AbstractExternalSystemSettings<L extends ExternalSystemSettingsListener, S extends AbstractExternalSystemSettings<L,S>>
-  implements PersistentStateComponent<S>
 {
 
   @NotNull private final Topic<L> myChangesTopic;
   @NotNull private final Project  myProject;
 
-  @Nullable private String myLinkedProjectPath;
+  @Nullable private String myLinkedExternalProjectPath;
 
   private boolean myUseAutoImport = true; // Turned on by default.
 
@@ -49,28 +48,15 @@ public abstract class AbstractExternalSystemSettings<L extends ExternalSystemSet
     myProject = project;
   }
 
-  @SuppressWarnings("unchecked")
   @Nullable
-  @Override
-  public S getState() {
-    return (S)this;
+  public String getLinkedExternalProjectPath() {
+    return myLinkedExternalProjectPath;
   }
 
-  @Override
-  public void loadState(S state) {
-    XmlSerializerUtil.copyBean(state, this);
-  }
-
-  @Nullable
-  public String getLinkedProjectPath() {
-    return myLinkedProjectPath;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  public void setLinkedProjectPath(@Nullable String linkedProjectPath) {
-    if (!Comparing.equal(myLinkedProjectPath, linkedProjectPath)) {
-      final String oldPath = myLinkedProjectPath;
-      myLinkedProjectPath = linkedProjectPath;
+  public void setLinkedExternalProjectPath(@Nullable String linkedProjectPath) {
+    if (!Comparing.equal(myLinkedExternalProjectPath, linkedProjectPath)) {
+      final String oldPath = myLinkedExternalProjectPath;
+      myLinkedExternalProjectPath = linkedProjectPath;
       myProject.getMessageBus().syncPublisher(myChangesTopic).onLinkedProjectPathChange(oldPath, linkedProjectPath);
     }
   }
@@ -89,5 +75,20 @@ public abstract class AbstractExternalSystemSettings<L extends ExternalSystemSet
   @NotNull
   protected L getPublisher() {
     return myProject.getMessageBus().syncPublisher(myChangesTopic);
+  }
+
+  protected void fillState(@NotNull State state) {
+    state.linkedExternalProjectPath = myLinkedExternalProjectPath;
+    state.useAutoImport = myUseAutoImport;
+  }
+
+  protected void loadState(@NotNull State state) {
+    myLinkedExternalProjectPath = state.linkedExternalProjectPath;
+    myUseAutoImport = state.useAutoImport;
+  }
+  
+  public static class State {
+    public String linkedExternalProjectPath;
+    public boolean useAutoImport;
   }
 }

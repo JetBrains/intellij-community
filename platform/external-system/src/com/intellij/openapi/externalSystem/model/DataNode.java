@@ -19,6 +19,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.Serializable;
 import java.util.*;
 
 /**
@@ -34,13 +35,15 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 4/12/13 11:53 AM
  */
-public class DataNode<T> {
+public class DataNode<T> implements Serializable {
+
+  private static final long serialVersionUID = 1L;
   
   @NotNull private final List<DataNode<?>> myChildren = ContainerUtilRt.newArrayList();
-  
+
   @NotNull private final Key<T> myKey;
   @NotNull private final T      myData;
-  
+
   @Nullable private final DataNode<?> myParent;
 
   public DataNode(@NotNull Key<T> key, @NotNull T data, @Nullable DataNode<?> parent) {
@@ -48,7 +51,7 @@ public class DataNode<T> {
     myData = data;
     myParent = parent;
   }
-  
+
   @NotNull
   public <T> DataNode<T> createChild(@NotNull Key<T> key, @NotNull T data) {
     DataNode<T> result = new DataNode<T>(key, data, this);
@@ -68,10 +71,10 @@ public class DataNode<T> {
 
   /**
    * Allows to retrieve data stored for the given key at the current node or any of its parents.
-   * 
+   *
    * @param key  target data's key
    * @param <T>  target data type
-   * @return     data stored for the current key and available via the current node (if any)
+   * @return data stored for the current key and available via the current node (if any)
    */
   @SuppressWarnings("unchecked")
   @Nullable
@@ -108,5 +111,32 @@ public class DataNode<T> {
   @NotNull
   public Collection<DataNode<?>> getChildren() {
     return myChildren;
+  }
+
+  @Override
+  public int hashCode() {
+    int result = myChildren.hashCode();
+    result = 31 * result + myKey.hashCode();
+    result = 31 * result + myData.hashCode();
+    return result;
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (this == o) return true;
+    if (o == null || getClass() != o.getClass()) return false;
+
+    DataNode node = (DataNode)o;
+
+    if (!myChildren.equals(node.myChildren)) return false;
+    if (!myData.equals(node.myData)) return false;
+    if (!myKey.equals(node.myKey)) return false;
+
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    return String.format("%s: %s", myKey, myData);
   }
 }

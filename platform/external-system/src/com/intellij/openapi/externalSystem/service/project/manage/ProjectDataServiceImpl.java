@@ -23,8 +23,6 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
-import com.intellij.openapi.roots.LanguageLevelProjectExtension;
-import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -33,7 +31,7 @@ import java.util.Collection;
  * @author Denis Zhdanov
  * @since 2/21/13 2:40 PM
  */
-public class ProjectDataManagerImpl implements ProjectDataManager<ProjectData> {
+public class ProjectDataServiceImpl implements ProjectDataService<ProjectData> {
 
   @NotNull
   @Override

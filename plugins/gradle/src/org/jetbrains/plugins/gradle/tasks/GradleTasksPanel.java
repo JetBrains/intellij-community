@@ -22,9 +22,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.*;
-import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -233,7 +231,7 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
       return null;
     }
 
-    String gradleProjectPath = GradleSettings.getInstance(getProject()).getLinkedProjectPath();
+    String gradleProjectPath = GradleSettings.getInstance(getProject()).getLinkedExternalProjectPath();
     if (StringUtil.isEmpty(gradleProjectPath)) {
       return null;
     }

@@ -18,12 +18,10 @@ package org.jetbrains.plugins.gradle.action;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
-import com.intellij.openapi.externalSystem.model.project.change.user.UserProjectChange;
 import com.intellij.openapi.externalSystem.service.project.manage.EntityManageHelper;
-import com.intellij.openapi.externalSystem.service.project.manage.OutdatedLibraryManager;
+import com.intellij.openapi.externalSystem.service.project.manage.OutdatedLibraryService;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemTextAttributes;
 import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -56,7 +54,7 @@ public class GradleSyncAction extends AbstractGradleSyncTreeNodeAction {
 
   @Override
   protected void doActionPerformed(@NotNull Collection<ProjectStructureNode<?>> nodes, @NotNull Project project, @NotNull Tree tree) {
-    OutdatedLibraryManager manager = ServiceManager.getService(project, OutdatedLibraryManager.class);
+    OutdatedLibraryService manager = ServiceManager.getService(project, OutdatedLibraryService.class);
     EntityManageHelper helper = ServiceManager.getService(project, EntityManageHelper.class);
     
     List<ProjectStructureNode<?>> outdatedLibraryNodes = ContainerUtilRt.newArrayList();

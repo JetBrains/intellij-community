@@ -7,7 +7,6 @@ import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemDataKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.project.change.ExternalProjectStructureChangeListener;
@@ -136,7 +135,7 @@ public class ProjectStructureChangesDetector implements ExternalProjectStructure
   
   private void scheduleUpdate(@NotNull Project ideProject, @NotNull ProjectSystemId externalSystemId) {
     if (ApplicationManager.getApplication().isUnitTestMode()
-        || StringUtil.isEmpty(mySettingsManager.getSettings(myProject, externalSystemId).getLinkedProjectPath()))
+        || StringUtil.isEmpty(mySettingsManager.getSettings(myProject, externalSystemId).getLinkedExternalProjectPath()))
     {
       return;
     }

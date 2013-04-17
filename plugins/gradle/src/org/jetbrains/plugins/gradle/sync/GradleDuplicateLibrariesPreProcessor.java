@@ -15,18 +15,11 @@
  */
 package org.jetbrains.plugins.gradle.sync;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.project.*;
-import com.intellij.openapi.externalSystem.model.project.id.EntityIdMapper;
-import com.intellij.openapi.externalSystem.model.project.id.LibraryDependencyId;
 import com.intellij.openapi.externalSystem.service.project.change.ExternalProjectStructureChangesPreProcessor;
-import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
-import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataManager;
-import com.intellij.openapi.externalSystem.service.project.manage.LibraryDependencyDataManager;
-import com.intellij.openapi.module.Module;
+import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService;
+import com.intellij.openapi.externalSystem.service.project.manage.LibraryDependencyDataService;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.LibraryOrderEntry;
-import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -39,10 +32,10 @@ import org.jetbrains.annotations.NotNull;
  */
 public class GradleDuplicateLibrariesPreProcessor implements ExternalProjectStructureChangesPreProcessor {
 
-  @NotNull private final LibraryDependencyDataManager myDependencyManager;
-  @NotNull private final LibraryDataManager           myLibraryManager;
+  @NotNull private final LibraryDependencyDataService myDependencyManager;
+  @NotNull private final LibraryDataService           myLibraryManager;
 
-  public GradleDuplicateLibrariesPreProcessor(@NotNull LibraryDependencyDataManager manager, @NotNull LibraryDataManager manager1) {
+  public GradleDuplicateLibrariesPreProcessor(@NotNull LibraryDependencyDataService manager, @NotNull LibraryDataService manager1) {
     myDependencyManager = manager;
     myLibraryManager = manager1;
   }

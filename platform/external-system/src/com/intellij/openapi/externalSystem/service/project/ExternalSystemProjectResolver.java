@@ -47,8 +47,8 @@ public interface ExternalSystemProjectResolver<S extends ExternalSystemExecution
    */
   @Nullable
   DataNode<ProjectData> resolveProjectInfo(@NotNull ExternalSystemTaskId id,
-                                                 @NotNull String projectPath,
-                                                 boolean downloadLibraries,
-                                                 @Nullable S settings)
+                                           @NotNull String projectPath,
+                                           boolean downloadLibraries,
+                                           @Nullable S settings)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException;
 }

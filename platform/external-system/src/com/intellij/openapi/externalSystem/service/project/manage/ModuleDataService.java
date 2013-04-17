@@ -7,10 +7,7 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.ContentRootData;
-import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
-import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.Module;
@@ -37,9 +34,9 @@ import java.util.concurrent.TimeUnit;
  * @author Denis Zhdanov
  * @since 2/7/12 2:49 PM
  */
-public class ModuleDataManager implements ProjectDataManager<ModuleData> {
+public class ModuleDataService implements ProjectDataService<ModuleData> {
 
-  private static final Logger LOG = Logger.getInstance("#" + ModuleDataManager.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + ModuleDataService.class.getName());
 
   /**
    * We can't modify project modules (add/remove) until it's initialised, so, we delay that activity. Current constant
@@ -50,19 +47,9 @@ public class ModuleDataManager implements ProjectDataManager<ModuleData> {
   private final Alarm myAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
 
   @NotNull private final ProjectStructureHelper       myProjectStructureHelper;
-  @NotNull private final ContentRootDataManager       myContentRootManager;
-  @NotNull private final LibraryDependencyDataManager myLibraryDependencyManager;
-  @NotNull private final ModuleDependencyDataManager  myModuleDependencyManager;
 
-  public ModuleDataManager(@NotNull ProjectStructureHelper helper,
-                           @NotNull ContentRootDataManager contentRootManager,
-                           @NotNull LibraryDependencyDataManager libraryDependencyManager,
-                           @NotNull ModuleDependencyDataManager moduleDependencyManager)
-  {
+  public ModuleDataService(@NotNull ProjectStructureHelper helper) {
     myProjectStructureHelper = helper;
-    myContentRootManager = contentRootManager;
-    myLibraryDependencyManager = libraryDependencyManager;
-    myModuleDependencyManager = moduleDependencyManager;
   }
 
   @NotNull
@@ -71,24 +58,15 @@ public class ModuleDataManager implements ProjectDataManager<ModuleData> {
     return ProjectKeys.MODULE;
   }
 
-  @Override
-  public void importData(@NotNull Collection<DataNode<ModuleData>> toImport, @NotNull Project project, boolean synchronous) {
-    if (toImport.isEmpty()) {
-      return;
-    }
-    importData(toImport, project, true, synchronous);
-  }
-
   public void importData(@NotNull final Collection<DataNode<ModuleData>> toImport,
                          @NotNull final Project project,
-                         final boolean recursive,
                          final boolean synchronous)
   {
     if (toImport.isEmpty()) {
       return;
     }
     if (!project.isInitialized()) {
-      myAlarm.addRequest(new ImportModulesTask(project, toImport, recursive, synchronous), PROJECT_INITIALISATION_DELAY_MS);
+      myAlarm.addRequest(new ImportModulesTask(project, toImport, synchronous), PROJECT_INITIALISATION_DELAY_MS);
       return;
     }
     Runnable task = new Runnable() {
@@ -145,21 +123,6 @@ public class ModuleDataManager implements ProjectDataManager<ModuleData> {
             moduleMappings.put(module, created);
           }
         });
-        if (!recursive) {
-          return;
-        }
-        for (DataNode<ModuleData> node : toImport) {
-          final Module ideModule = moduleMappings.get(node);
-          
-          Collection<DataNode<ContentRootData>> contentRoots = ExternalSystemUtil.findAll(node, ProjectKeys.CONTENT_ROOT);
-          myContentRootManager.importData(contentRoots, project, synchronous);
-
-          Collection<DataNode<ModuleDependencyData>> moduleDependencies = ExternalSystemUtil.findAll(node, ProjectKeys.MODULE_DEPENDENCY);
-          myModuleDependencyManager.importData(moduleDependencies, node.getData().getOwner(), ideModule, synchronous);
-
-          Collection<DataNode<LibraryDependencyData>> libraryDependencies = ExternalSystemUtil.findAll(node, ProjectKeys.LIBRARY_DEPENDENCY);
-          myLibraryDependencyManager.importData(libraryDependencies, node.getData().getOwner(), ideModule, synchronous);
-        }
       }
     };
     if (synchronous) {
@@ -236,17 +199,11 @@ public class ModuleDataManager implements ProjectDataManager<ModuleData> {
 
     private final Project                          myProject;
     private final Collection<DataNode<ModuleData>> myModules;
-    private final boolean                          myRecursive;
     private final boolean                          mySynchronous;
 
-    ImportModulesTask(@NotNull Project project,
-                      @NotNull Collection<DataNode<ModuleData>> modules,
-                      boolean recursive,
-                      boolean synchronous)
-    {
+    ImportModulesTask(@NotNull Project project, @NotNull Collection<DataNode<ModuleData>> modules, boolean synchronous) {
       myProject = project;
       myModules = modules;
-      myRecursive = recursive;
       mySynchronous = synchronous;
     }
 
@@ -255,13 +212,13 @@ public class ModuleDataManager implements ProjectDataManager<ModuleData> {
       myAlarm.cancelAllRequests();
       if (!myProject.isInitialized()) {
         myAlarm.addRequest(
-          new ImportModulesTask(myProject, myModules, myRecursive, mySynchronous),
+          new ImportModulesTask(myProject, myModules, mySynchronous),
           PROJECT_INITIALISATION_DELAY_MS
         );
         return;
       }
 
-      importData(myModules, myProject, myRecursive, mySynchronous);
+      importData(myModules, myProject, mySynchronous);
     }
   }
 }

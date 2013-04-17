@@ -4,6 +4,7 @@ import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
@@ -87,22 +88,25 @@ public class GradleModuleSettings implements GradleProjectStructureNodeSettings 
     if (myUseModuleCompileOutputPathButton.isSelected()) {
       String outputLocation = myOutputLocationField.getText();
       if (outputLocation == null || StringUtil.isEmpty(outputLocation.trim())) {
-        GradleUtil.showBalloon(
-          myOutputLocationField,
-          MessageType.ERROR,
-          ExternalSystemBundle.message("gradle.import.text.error.file.module.compile.output.location")
-        );
-        return false;
+        // TODO den uncomment
       }
+      //  ExternalSystemUiUtil.showBalloon(
+      //    myOutputLocationField,
+      //    MessageType.ERROR,
+      //    ExternalSystemBundle.message("gradle.import.text.error.file.module.compile.output.location")
+      //  );
+      //  return false;
+      //}
       String testOutputLocation = myTestOutputLocationField.getText();
-      if (testOutputLocation == null || StringUtil.isEmpty(testOutputLocation.trim())) {
-        GradleUtil.showBalloon(
-          myTestOutputLocationField,
-          MessageType.ERROR,
-          ExternalSystemBundle.message("gradle.import.text.error.file.module.test.output.location")
-        );
-        return false;
-      }
+      // TODO den uncomment
+      //if (testOutputLocation == null || StringUtil.isEmpty(testOutputLocation.trim())) {
+      //  ExternalSystemUiUtil.showBalloon(
+      //    myTestOutputLocationField,
+      //    MessageType.ERROR,
+      //    ExternalSystemBundle.message("gradle.import.text.error.file.module.test.output.location")
+      //  );
+      //  return false;
+      //}
       myModule.setCompileOutputPath(ExternalSystemSourceType.SOURCE, outputLocation.trim());
       myModule.setCompileOutputPath(ExternalSystemSourceType.TEST, testOutputLocation.trim());
     }

@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.service.settings;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.settings.LocationSettingType;
 import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectConfigurable;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
@@ -25,8 +26,8 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.Alarm;
@@ -38,6 +39,7 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
@@ -57,6 +59,8 @@ import java.util.concurrent.TimeUnit;
  */
 public class GradleConfigurable extends AbstractExternalProjectConfigurable<GradleSettingsListener, GradleSettings> {
 
+  private static final Logger LOG = Logger.getInstance("#" + GradleConfigurable.class.getName());
+
   @NonNls public static final String HELP_TOPIC = "reference.settingsdialog.project.gradle";
 
   private static final long BALLOON_DELAY_MILLIS = TimeUnit.SECONDS.toMillis(1);
@@ -65,8 +69,8 @@ public class GradleConfigurable extends AbstractExternalProjectConfigurable<Grad
 
   @NotNull private LocationSettingType myGradleHomeSettingType = LocationSettingType.UNKNOWN;
 
-  @NotNull private final JLabel myGradleHomeLabel       = new JBLabel(GradleBundle.message("gradle.settings.text.home.path"));
-  @NotNull private final JLabel myServiceDirectoryLabel = new JBLabel(GradleBundle.message("gradle.settings.text.service.dir.path"));
+  @NotNull private JLabel myGradleHomeLabel       = new JBLabel(GradleBundle.message("gradle.settings.text.home.path"));
+  @NotNull private JLabel myServiceDirectoryLabel = new JBLabel(GradleBundle.message("gradle.settings.text.service.dir.path"));
 
   @NotNull private final Helper myHelper;
 
@@ -74,8 +78,7 @@ public class GradleConfigurable extends AbstractExternalProjectConfigurable<Grad
   @NotNull private TextFieldWithBrowseButton myServiceDirectoryPathField;
   @NotNull private JBRadioButton             myUseWrapperButton;
   @NotNull private JBRadioButton             myUseLocalDistributionButton;
-  @NotNull private JBCheckBox                myUseAutoImportBox;
-  
+
   private boolean myShowBalloonIfNecessary;
   private boolean myGradleHomeModifiedByUser;
   private boolean myServiceDirectoryModifiedByUser;
@@ -87,11 +90,20 @@ public class GradleConfigurable extends AbstractExternalProjectConfigurable<Grad
   public GradleConfigurable(@Nullable Project project, @NotNull GradleInstallationManager installationManager) {
     super(project, GradleConstants.SYSTEM_ID, false);
     myHelper = new DefaultHelper(installationManager);
+    init(false);
   }
 
-  public GradleConfigurable(@Nullable Project project, @NotNull GradleInstallationManager installationManager, @NotNull Helper helper) {
+  public GradleConfigurable(@Nullable Project project, @NotNull Helper helper) {
     super(project, GradleConstants.SYSTEM_ID, true);
     myHelper = helper;
+    init(true);
+  }
+
+  private void init(boolean testMode) {
+    initLinkedProjectPathControl();
+    initWrapperVsLocalControls();
+    initGradleHome(testMode);
+    initServiceDirectoryHome();
   }
 
   @NotNull
@@ -108,32 +120,6 @@ public class GradleConfigurable extends AbstractExternalProjectConfigurable<Grad
   @NotNull
   @Override
   protected JComponent buildContent(boolean testMode) {
-    JPanel result = createContent();
-    
-    initLinkedProjectPathControl();
-    initWrapperVsLocalControls();
-    initGradleHome(testMode);
-    initServiceDirectoryHome();
-    myUseAutoImportBox = new JBCheckBox(GradleBundle.message("gradle.settings.text.use.auto.import"));
-
-    // Provide radio buttons if gradle wrapper can be used for particular project.
-    result.add(myUseWrapperButton, getFillLineConstraints());
-    result.add(myUseLocalDistributionButton, getFillLineConstraints());
-
-    result.add(myUseAutoImportBox, getFillLineConstraints());
-
-    result.add(myGradleHomeLabel, getLabelConstraints());
-    result.add(myGradleHomePathField, getFillLineConstraints());
-
-    Insets insets = new Insets(5, 0, 0, 0);
-    result.add(myServiceDirectoryLabel, getLabelConstraints().insets(insets));
-    result.add(myServiceDirectoryPathField, getFillLineConstraints().insets(insets));
-    
-    return result;
-  }
-
-  @NotNull
-  private JPanel createContent() {
     JPanel result = new JPanel(new GridBagLayout()) {
       @Override
       public void paint(Graphics g) {
@@ -158,6 +144,19 @@ public class GradleConfigurable extends AbstractExternalProjectConfigurable<Grad
       }
     });
     return result;
+  }
+  
+  protected void fillContent(@NotNull JComponent content) {
+    // Provide radio buttons if gradle wrapper can be used for particular project.
+    content.add(myUseWrapperButton, getFillLineConstraints());
+    content.add(myUseLocalDistributionButton, getFillLineConstraints());
+
+    content.add(myGradleHomeLabel, getLabelConstraints());
+    content.add(myGradleHomePathField, getFillLineConstraints());
+
+    Insets insets = new Insets(5, 0, 0, 0);
+    content.add(myServiceDirectoryLabel, getLabelConstraints().insets(insets));
+    content.add(myServiceDirectoryPathField, getFillLineConstraints().insets(insets));
   }
 
   private void initLinkedProjectPathControl() {
@@ -300,15 +299,215 @@ public class GradleConfigurable extends AbstractExternalProjectConfigurable<Grad
     return myUseLocalDistributionButton.isSelected();
   }
 
-  public boolean isUseAutoImport() {
-    return myUseAutoImportBox.isSelected();
-  }
-
   @NotNull
   JBRadioButton getUseWrapperButton() {
     return myUseWrapperButton;
   }
 
+  @NotNull
+  @Override
+  protected GradleSettings getSettings(@NotNull Project project) {
+    return myHelper.getSettings(project);
+  }
+
+  @Override
+  protected boolean isExtraSettingModified() {
+    Project project = getProject();
+    if (project == null) {
+      return false;
+    }
+    GradleSettings settings = getSettings(project);
+    boolean preferLocalToWrapper = settings.isPreferLocalInstallationToWrapper();
+    if (myUseWrapperButton.isSelected() == preferLocalToWrapper) {
+      return true;
+    }
+
+    if (myGradleHomeModifiedByUser &&
+        !Comparing.equal(normalizePath(myGradleHomePathField.getText()), normalizePath(settings.getGradleHome())))
+    {
+      return true;
+    }
+
+    if (myServiceDirectoryModifiedByUser &&
+        !Comparing.equal(normalizePath(myServiceDirectoryPathField.getText()), normalizePath(settings.getServiceDirectoryPath())))
+    {
+      return true;
+    }
+
+    return false; 
+  }
+
+  @Override
+  protected void doApply(@NotNull String linkedExternalProjectPath, boolean useAutoImport) {
+    Project project = getProject();
+    if (project == null) {
+      return;
+    }
+    GradleSettings settings = getSettings(project);
+    final String gradleHomePath = getPathToUse(myGradleHomeModifiedByUser, settings.getGradleHome(), myGradleHomePathField.getText());
+    final String serviceDirPath = getPathToUse(myServiceDirectoryModifiedByUser,
+                                               settings.getServiceDirectoryPath(),
+                                               myServiceDirectoryPathField.getText());
+
+    boolean preferLocalToWrapper = myUseLocalDistributionButton.isSelected();
+
+    myHelper.applySettings(linkedExternalProjectPath, gradleHomePath, preferLocalToWrapper, useAutoImport, serviceDirPath, project);
+
+    Project defaultProject = myHelper.getDefaultProject();
+    if (project != defaultProject) {
+      myHelper.applyPreferLocalInstallationToWrapper(preferLocalToWrapper, defaultProject);
+    }
+
+    if (isValidGradleHome(gradleHomePath)) {
+      if (myGradleHomeModifiedByUser) {
+        myGradleHomeSettingType = LocationSettingType.EXPLICIT_CORRECT;
+        // There is a possible case that user defines gradle home for particular open project. We want to apply that value
+        // to the default project as well if it's still non-defined.
+        if (defaultProject != project && !isValidGradleHome(GradleSettings.getInstance(defaultProject).getGradleHome())) {
+          GradleSettings.getInstance(defaultProject).setGradleHome(gradleHomePath);
+        }
+      }
+      else {
+        myGradleHomeSettingType = LocationSettingType.DEDUCED;
+      }
+    }
+    else if (preferLocalToWrapper) {
+      if (StringUtil.isEmpty(gradleHomePath)) {
+        myGradleHomeSettingType = LocationSettingType.UNKNOWN;
+      }
+      else {
+        myGradleHomeSettingType = LocationSettingType.EXPLICIT_INCORRECT;
+        myHelper.showBalloon(MessageType.ERROR, myGradleHomeSettingType, 0);
+      }
+    }
+  }
+
+  private boolean isValidGradleHome(@Nullable String path) {
+    if (StringUtil.isEmpty(path)) {
+      return false;
+    }
+    assert path != null;
+    return myHelper.isGradleSdkHome(new File(path));
+  }
+
+  @Override
+  protected void doReset() {
+    Project project = getProject();
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
+    }
+
+    // Process gradle wrapper/local distribution settings.
+    // There are the following possible cases:
+    //   1. Default project or non-default project with no linked gradle project - 'use gradle wrapper whenever possible' check box
+    //      should be shown;
+    //   2. Non-default project with linked gradle project:
+    //      2.1. Gradle wrapper is configured for the target project - radio buttons on whether to use wrapper or particular local gradle
+    //           distribution should be show;
+    //      2.2. Gradle wrapper is not configured for the target project - radio buttons should be shown and 
+    //           'use gradle wrapper' option should be disabled;
+    useColorForPath(LocationSettingType.EXPLICIT_CORRECT, myGradleHomePathField);
+    useColorForPath(LocationSettingType.EXPLICIT_CORRECT, myServiceDirectoryPathField);
+
+    String linkedExternalProjectPath = getLinkedExternalProjectPathField().getText();
+    myUseWrapperButton.setVisible(isAlwaysShowLinkedProjectControls() || (!project.isDefault() && linkedExternalProjectPath != null));
+    myUseLocalDistributionButton.setVisible(isAlwaysShowLinkedProjectControls()
+                                            || (!project.isDefault() && linkedExternalProjectPath != null));
+    if (isAlwaysShowLinkedProjectControls() && linkedExternalProjectPath == null) {
+      myUseWrapperButton.setEnabled(false);
+      myUseLocalDistributionButton.setSelected(true);
+    }
+    else if (linkedExternalProjectPath != null) {
+      if (myHelper.isGradleWrapperDefined(linkedExternalProjectPath)) {
+        myUseWrapperButton.setEnabled(true);
+        myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper"));
+        if (project.isDefault() || !getSettings(project).isPreferLocalInstallationToWrapper()) {
+          myUseWrapperButton.setSelected(true);
+          myGradleHomePathField.setEnabled(false);
+        }
+        else {
+          myUseLocalDistributionButton.setSelected(true);
+          myGradleHomePathField.setEnabled(true);
+        }
+      }
+      else {
+        myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper.disabled"));
+        myUseWrapperButton.setEnabled(false);
+        myUseLocalDistributionButton.setSelected(true);
+      }
+    }
+
+    String localDistributionPath = getSettings(project).getGradleHome();
+    if (StringUtil.isEmpty(localDistributionPath)) {
+      myGradleHomeSettingType = LocationSettingType.UNKNOWN;
+      deduceGradleHomeIfPossible();
+    }
+    else {
+      assert localDistributionPath != null;
+      myGradleHomeSettingType = myHelper.isGradleSdkHome(new File(localDistributionPath)) ?
+                                LocationSettingType.EXPLICIT_CORRECT :
+                                LocationSettingType.EXPLICIT_INCORRECT;
+      myAlarm.cancelAllRequests();
+      if (myGradleHomeSettingType == LocationSettingType.EXPLICIT_INCORRECT && getSettings(project).isPreferLocalInstallationToWrapper()) {
+        myHelper.showBalloon(MessageType.ERROR, myGradleHomeSettingType, 0);
+      }
+      myGradleHomePathField.setText(localDistributionPath);
+    }
+
+    String serviceDirectoryPath = getSettings(project).getServiceDirectoryPath();
+    if (StringUtil.isEmpty(serviceDirectoryPath)) {
+      deduceServiceDirectoryIfPossible();
+    }
+    else {
+      myServiceDirectoryPathField.setText(serviceDirectoryPath);
+      useColorForPath(LocationSettingType.EXPLICIT_CORRECT, myServiceDirectoryPathField);
+    }
+  }
+
+  @SuppressWarnings("ConstantConditions")
+  @Override
+  public void disposeUIResources() {
+    super.disposeUIResources();
+    myGradleHomeLabel = null;
+    myGradleHomePathField = null;
+    myServiceDirectoryLabel = null;
+    myServiceDirectoryPathField = null;
+    myUseWrapperButton = null;
+    myUseLocalDistributionButton = null;
+  }
+
+  @Nullable
+  @Override
+  public ValidationError validate() {
+    final LocationSettingType settingType = getCurrentGradleHomeSettingType();
+    if (isPreferLocalInstallationToWrapper()) {
+      if (settingType == LocationSettingType.EXPLICIT_INCORRECT) {
+        return new ValidationError(GradleBundle.message("gradle.home.setting.type.explicit.incorrect"), myGradleHomePathField);
+      }
+      else if (settingType == LocationSettingType.UNKNOWN) {
+        return new ValidationError(GradleBundle.message("gradle.home.setting.type.unknown"), myGradleHomePathField);
+      }
+    }
+    return null;
+  }
+
+  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
+  @NotNull
+  public LocationSettingType getCurrentGradleHomeSettingType() {
+    String path = myGradleHomePathField.getText();
+    if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
+      LOG.info(String.format("Checking 'gradle home' status. Manually entered value is '%s'", path));
+    }
+    if (path == null || StringUtil.isEmpty(path.trim())) {
+      return LocationSettingType.UNKNOWN;
+    }
+    if (isModified()) {
+      return myHelper.isGradleSdkHome(new File(path)) ? LocationSettingType.EXPLICIT_CORRECT
+                                                      : LocationSettingType.EXPLICIT_INCORRECT;
+    }
+    return myGradleHomeSettingType;
+  }
+  
   void showBalloonIfNecessary() {
     if (!myShowBalloonIfNecessary || !myGradleHomePathField.isEnabled()) {
       return;
@@ -454,16 +653,14 @@ public class GradleConfigurable extends AbstractExternalProjectConfigurable<Grad
                               @Nullable String serviceDirectoryPath,
                               @NotNull Project project)
     {
-      // TODO den implement
-//      GradleSettings.applySettings(
-//        linkedProjectPath, gradleHomePath, preferLocalInstallationToWrapper, useAutoImport, serviceDirectoryPath, project
-//      ); 
+      GradleSettings.getInstance(project).applySettings(
+        linkedProjectPath, gradleHomePath, preferLocalInstallationToWrapper, useAutoImport, serviceDirectoryPath
+      ); 
     }
 
     @Override
     public void applyPreferLocalInstallationToWrapper(boolean preferLocalToWrapper, @NotNull Project project) {
-      // TODO den implement
-//      GradleSettings.applyPreferLocalInstallationToWrapper(preferLocalToWrapper, project);
+      GradleSettings.getInstance(project).setPreferLocalInstallationToWrapper(preferLocalToWrapper);
     }
 
     @Override

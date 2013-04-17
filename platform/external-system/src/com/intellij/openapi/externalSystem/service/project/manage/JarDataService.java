@@ -47,24 +47,21 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 12/13/12 1:04 PM
  */
-public class JarDataManager implements ProjectDataManager<JarData> {
+public class JarDataService implements ProjectDataService<JarData> {
 
-  private static final Logger LOG = Logger.getInstance("#" + JarDataManager.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + JarDataService.class.getName());
 
   @NotNull private final PlatformFacade                myPlatformFacade;
   @NotNull private final ProjectStructureHelper        myProjectStructureHelper;
   @NotNull private final ExternalLibraryPathTypeMapper myLibraryPathTypeMapper;
-  @NotNull private final LibraryDataManager            myLibraryManager;
 
-  public JarDataManager(@NotNull PlatformFacade facade,
+  public JarDataService(@NotNull PlatformFacade facade,
                         @NotNull ProjectStructureHelper helper,
-                        @NotNull ExternalLibraryPathTypeMapper mapper,
-                        @NotNull LibraryDataManager manager)
+                        @NotNull ExternalLibraryPathTypeMapper mapper)
   {
     myPlatformFacade = facade;
     myProjectStructureHelper = helper;
     myLibraryPathTypeMapper = mapper;
-    myLibraryManager = manager;
   }
 
   @NotNull
@@ -83,14 +80,10 @@ public class JarDataManager implements ProjectDataManager<JarData> {
     for (Map.Entry<DataNode<LibraryData>, Collection<DataNode<JarData>>> entry : byLibrary.entrySet()) {
       Library library = myProjectStructureHelper.findIdeLibrary(entry.getKey().getData(), project);
       if (library == null) {
-        myLibraryManager.importData(Collections.singleton(entry.getKey()), project, true);
-        library = myProjectStructureHelper.findIdeLibrary(entry.getKey().getData(), project);
-        if (library == null) {
-          LOG.warn(String.format(
-            "Can't import jars %s. Reason: target library (%s) is not configured at the ide and can't be imported",
-            entry.getValue(), entry.getKey().getData().getName()
-          ));
-        }
+        LOG.warn(String.format(
+          "Can't import jars %s. Reason: target library (%s) is not configured at the ide and can't be imported",
+          entry.getValue(), entry.getKey().getData().getName()
+        ));
         return;
       }
       importJars(entry.getValue(), library, entry.getKey().getData().getOwner(), project, synchronous);

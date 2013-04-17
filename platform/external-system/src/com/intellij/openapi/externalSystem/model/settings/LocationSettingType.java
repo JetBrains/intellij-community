@@ -2,6 +2,7 @@ package com.intellij.openapi.externalSystem.model.settings;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -35,7 +36,6 @@ public enum LocationSettingType {
    * @return    human-readable description of the current setting type
    */
   public String getDescription(@NotNull ProjectSystemId externalSystemId) {
-    String systemName = StringUtil.capitalize(externalSystemId.toString().toLowerCase());
-    return ExternalSystemBundle.message(myKey, systemName);
+    return ExternalSystemBundle.message(myKey, ExternalSystemUtil.toReadableName(externalSystemId));
   }
 }

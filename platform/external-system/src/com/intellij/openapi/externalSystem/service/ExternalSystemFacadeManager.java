@@ -174,7 +174,9 @@ public class ExternalSystemFacadeManager {
         if (externalSystemId != null) {
           ExternalSystemManager<?, ?, ?, ?> manager = ExternalSystemUtil.getManager(externalSystemId);
           if (manager != null) {
-            manager.enhance(params);
+            params.getProgramParametersList().add(manager.getProjectResolverClass().getName());
+            params.getProgramParametersList().add(manager.getBuildManagerClass().getName());
+            manager.enhanceParameters(params);
           }
         }
 

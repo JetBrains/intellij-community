@@ -30,7 +30,7 @@ import java.util.Collection;
  * @author Denis Zhdanov
  * @since 4/14/13 11:21 PM
  */
-public abstract class AbstractDependencyDataManager<T extends AbstractDependencyData<?>> implements ProjectDataManager<T> {
+public abstract class AbstractDependencyDataService<T extends AbstractDependencyData<?>> implements ProjectDataService<T> {
 
   public void removeData(@NotNull Collection<ExportableOrderEntry> toRemove, @NotNull final Module module, boolean synchronous) {
     if (toRemove.isEmpty()) {

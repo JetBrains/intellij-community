@@ -45,19 +45,19 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
  * @author Denis Zhdanov
  * @since 4/12/13 6:19 PM
  */
-public class LibraryDependencyDataManager extends AbstractDependencyDataManager<LibraryDependencyData> {
+public class LibraryDependencyDataService extends AbstractDependencyDataService<LibraryDependencyData> {
 
-  private static final Logger LOG = Logger.getInstance("#" + LibraryDependencyDataManager.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + LibraryDependencyDataService.class.getName());
 
   @NotNull private final PlatformFacade         myPlatformFacade;
   @NotNull private final ProjectStructureHelper myProjectStructureHelper;
-  @NotNull private final ModuleDataManager      myModuleManager;
-  @NotNull private final LibraryDataManager     myLibraryManager;
+  @NotNull private final ModuleDataService      myModuleManager;
+  @NotNull private final LibraryDataService     myLibraryManager;
 
-  public LibraryDependencyDataManager(@NotNull PlatformFacade platformFacade,
+  public LibraryDependencyDataService(@NotNull PlatformFacade platformFacade,
                                       @NotNull ProjectStructureHelper helper,
-                                      @NotNull ModuleDataManager moduleManager,
-                                      @NotNull LibraryDataManager libraryManager)
+                                      @NotNull ModuleDataService moduleManager,
+                                      @NotNull LibraryDataService libraryManager)
   {
     myPlatformFacade = platformFacade;
     myProjectStructureHelper = helper;

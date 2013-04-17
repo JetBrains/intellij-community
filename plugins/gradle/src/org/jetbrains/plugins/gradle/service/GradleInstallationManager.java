@@ -153,7 +153,7 @@ public class GradleInstallationManager {
       return null;
     }
     GradleSettings settings = GradleSettings.getInstance(project);
-    String gradleProjectPath = settings.getLinkedProjectPath();
+    String gradleProjectPath = settings.getLinkedExternalProjectPath();
     if (StringUtil.isEmpty(gradleProjectPath)) {
       return null;
     }

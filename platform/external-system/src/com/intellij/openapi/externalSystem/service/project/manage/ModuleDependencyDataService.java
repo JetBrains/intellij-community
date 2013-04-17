@@ -46,14 +46,14 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
  * @author Denis Zhdanov
  * @since 4/15/13 8:37 AM
  */
-public class ModuleDependencyDataManager extends AbstractDependencyDataManager<ModuleDependencyData> {
+public class ModuleDependencyDataService extends AbstractDependencyDataService<ModuleDependencyData> {
 
-  private static final Logger LOG = Logger.getInstance("#" + ModuleDependencyDataManager.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + ModuleDependencyDataService.class.getName());
 
   @NotNull private final ProjectStructureHelper myProjectStructureHelper;
-  @NotNull private final ModuleDataManager      myModuleDataManager;
+  @NotNull private final ModuleDataService      myModuleDataManager;
 
-  public ModuleDependencyDataManager(@NotNull ProjectStructureHelper projectStructureHelper, @NotNull ModuleDataManager manager) {
+  public ModuleDependencyDataService(@NotNull ProjectStructureHelper projectStructureHelper, @NotNull ModuleDataService manager) {
     myProjectStructureHelper = projectStructureHelper;
     myModuleDataManager = manager;
   }

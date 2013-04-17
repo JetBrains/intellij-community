@@ -25,9 +25,10 @@ public class GradleStartupActivity implements StartupActivity {
       public void run() {
         new GradlePatcher().patch(project);
         
-        if (!Boolean.getBoolean(GradleConstants.NEWLY_IMPORTED_PROJECT)) {
-          GradleUtil.refreshProject(project);
-        }
+        // TODO den uncomment
+        //if (!Boolean.getBoolean(GradleConstants.NEWLY_IMPORTED_PROJECT)) {
+        //  GradleUtil.refreshProject(project);
+        //}
       }
     };
     

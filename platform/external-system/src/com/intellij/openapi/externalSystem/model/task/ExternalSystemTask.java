@@ -1,7 +1,5 @@
-package org.jetbrains.plugins.gradle.internal.task;
+package com.intellij.openapi.externalSystem.model.task;
 
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import com.intellij.openapi.progress.ProgressIndicator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -10,13 +8,13 @@ import org.jetbrains.annotations.Nullable;
  * @author Denis Zhdanov
  * @since 1/24/12 7:16 AM
  */
-public interface GradleTask {
+public interface ExternalSystemTask {
 
   @NotNull
   ExternalSystemTaskId getId();
 
   @NotNull
-  GradleTaskState getState();
+  ExternalSystemTaskState getState();
 
   /**
    * @return    error occurred during the task execution (if any)

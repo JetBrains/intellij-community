@@ -190,9 +190,9 @@ public class GradleScriptType extends GroovyScriptType {
 //            ExternalSystemBundle.message("gradle.run.no.sdk.title"),
 //            GradleIcons.Gradle
 //          );
-          if (result == 0) {
-            ShowSettingsUtil.getInstance().editConfigurable(project, new AbstractExternalProjectConfigurable(project));
-          }
+//          if (result == 0) {
+//            ShowSettingsUtil.getInstance().editConfigurable(project, new AbstractExternalProjectConfigurable(project));
+//          }
           if (libraryManager.getGradleHome(module, project) == null) {
             return false;
           }

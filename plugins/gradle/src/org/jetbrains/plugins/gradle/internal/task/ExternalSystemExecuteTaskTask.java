@@ -16,12 +16,13 @@
 package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.task.AbstractExternalSystemTask;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import com.intellij.openapi.externalSystem.build.ExternalSystemBuildManager;
 
 import java.util.List;
 
@@ -29,13 +30,17 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 3/15/13 10:02 PM
  */
-public class GradleExecuteTaskTask extends AbstractGradleTask {
+public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
 
   @NotNull private final List<String> myTasksToExecute;
   @NotNull private final String       myGradleProjectPath;
 
-  public GradleExecuteTaskTask(@Nullable Project project, @NotNull String gradleProjectPath, @NotNull List<String> tasksToExecute) {
-    super(project, ExternalSystemTaskType.EXECUTE_TASK);
+  public ExternalSystemExecuteTaskTask(@NotNull ProjectSystemId externalSystemId,
+                                       @NotNull Project project,
+                                       @NotNull String gradleProjectPath,
+                                       @NotNull List<String> tasksToExecute)
+  {
+    super(externalSystemId, ExternalSystemTaskType.EXECUTE_TASK, project);
     myGradleProjectPath = gradleProjectPath;
     myTasksToExecute = tasksToExecute;
   }

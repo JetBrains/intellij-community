@@ -77,7 +77,7 @@ public class ExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings>
         "Can't create external system facade. Reason: given arguments don't contain information about external system build manager to use"
       );
     }
-    final Class<ExternalSystemBuildManager<?>> buildManagerClass = (Class<ExternalSystemBuildManager<?>>)Class.forName(args[0]);
+    final Class<ExternalSystemBuildManager<?>> buildManagerClass = (Class<ExternalSystemBuildManager<?>>)Class.forName(args[1]);
     if (!ExternalSystemProjectResolver.class.isAssignableFrom(resolverClass)) {
       throw new IllegalArgumentException(String.format(
         "Can't create external system facade. Reason: given external system build manager (%s) must be IS-A '%s'",
@@ -145,6 +145,7 @@ public class ExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings>
     }
     S settings = mySettings.get();
     if (settings != null) {
+      impl.setNotificationListener(myNotificationListener.get());
       impl.setSettings(settings);
     }
     impl.setNotificationListener(myNotificationListener.get());

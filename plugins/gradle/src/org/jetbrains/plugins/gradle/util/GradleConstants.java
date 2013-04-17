@@ -17,8 +17,6 @@ public class GradleConstants {
 
   @NotNull public static final ProjectSystemId SYSTEM_ID = new ProjectSystemId("GRADLE");
 
-  @NonNls public static final String NEWLY_IMPORTED_PROJECT = "gradle.newly.imported";
-
   @NonNls public static final String EXTENSION           = "gradle";
   @NonNls public static final String DEFAULT_SCRIPT_NAME = "build.gradle";
 
@@ -32,7 +30,7 @@ public class GradleConstants {
 
   @NonNls public static final String ACTION_GROUP_SYNC_TREE = "Gradle.SyncTreeGroup";
   @NonNls public static final String ACTION_GROUP_TASKS     = "Gradle.TasksGroup";
-
+  
   @NonNls public static final String HELP_TOPIC_IMPORT_SELECT_PROJECT_STEP = "reference.dialogs.new.project.import.gradle.page1";
   @NonNls public static final String HELP_TOPIC_ADJUST_SETTINGS_STEP       = "reference.dialogs.new.project.import.gradle.page2";
   @NonNls public static final String HELP_TOPIC_TOOL_WINDOW                = "reference.toolwindows.gradle";

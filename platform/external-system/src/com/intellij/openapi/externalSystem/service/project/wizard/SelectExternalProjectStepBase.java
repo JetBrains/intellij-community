@@ -1,16 +1,11 @@
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectConfigurable;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.ui.MessageType;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.config.GradleConfigurable;
-import org.jetbrains.plugins.gradle.config.GradleHomeSettingType;
-import org.jetbrains.plugins.gradle.manage.GradleProjectImportBuilder;
-import org.jetbrains.plugins.gradle.manage.wizard.AbstractImportFromGradleWizardStep;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -28,12 +23,12 @@ import java.io.File;
  * @author Denis Zhdanov
  * @since 8/1/11 4:15 PM
  */
-public class SelectExternalProjectStepBase extends AbstractImportFromGradleWizardStep {
+public class SelectExternalProjectStepBase extends AbstractImportFromExternalSystemWizardStep {
 
   private final JPanel myComponent = new JPanel(new BorderLayout());
-  
-  @NotNull private GradleConfigurable myConfigurable;
-  
+
+  @NotNull private AbstractExternalProjectConfigurable myConfigurable;
+
   private boolean myGradleSettingsInitialised;
 
   public SelectExternalProjectStepBase(@NotNull WizardContext context) {
@@ -56,31 +51,17 @@ public class SelectExternalProjectStepBase extends AbstractImportFromGradleWizar
   public void updateDataModel() {
   }
 
-  @Override
-  public String getHelpId() {
-    return GradleConstants.HELP_TOPIC_IMPORT_SELECT_PROJECT_STEP;
-  }
+  // TODO den uncomment
+  //@Override
+  //public String getHelpId() {
+  //  return GradleConstants.HELP_TOPIC_IMPORT_SELECT_PROJECT_STEP;
+  //}
 
   @Override
   public boolean validate() throws ConfigurationException {
-    final GradleHomeSettingType settingType = myConfigurable.getCurrentGradleHomeSettingType();
-    if (myConfigurable.isPreferLocalInstallationToWrapper()) {
-      if (settingType == GradleHomeSettingType.EXPLICIT_INCORRECT) {
-        GradleUtil.showBalloon(
-          myConfigurable.getGradleHomePathField(),
-          MessageType.ERROR,
-          ExternalSystemBundle.message("gradle.home.setting.type.explicit.incorrect")
-        );
-        return false;
-      }
-      if (settingType == GradleHomeSettingType.UNKNOWN) {
-        GradleUtil.showBalloon(
-          myConfigurable.getGradleHomePathField(),
-          MessageType.ERROR,
-          ExternalSystemBundle.message("gradle.home.setting.type.unknown")
-        );
-        return false;
-      }
+    AbstractExternalProjectConfigurable.ValidationError error = myConfigurable.validate();
+    if (error != null) {
+      ExternalSystemUiUtil.showBalloon(error.problemHolder, MessageType.ERROR, error.message);
     }
     storeCurrentSettings();
     AbstractExternalProjectImportBuilder builder = getBuilder();
@@ -100,7 +81,7 @@ public class SelectExternalProjectStepBase extends AbstractImportFromGradleWizar
     if (myConfigurable.isModified()) {
       myConfigurable.apply();
     }
-    final String projectPath = myConfigurable.getLinkedProjectPath();
+    final String projectPath = myConfigurable.getLinkedExternalProjectPath();
     if (projectPath != null) {
       final File parent = new File(projectPath).getParentFile();
       if (parent != null) {

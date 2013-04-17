@@ -15,34 +15,83 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
- * Defines common contract for a strategy which is able to manage project data defines in terms of 'external systems' sub-system.
- * <p/>
- * Implementations of this interface are expected to be thread-safe.
+ * Aggregates all {@link ProjectDataService#EP_NAME registered data services} and provides entry points for project data management.
  * 
  * @author Denis Zhdanov
- * @since 4/12/13 3:59 PM
- * @param <T>  target project data type
+ * @since 4/16/13 11:38 AM
  */
-public interface ProjectDataManager<T> {
+public class ProjectDataManager {
 
-  ExtensionPointName<ProjectDataManager<?>> EP_NAME = ExtensionPointName.create("EXTERNAL_SYSTEM_PROJECT_DATA_MANAGER");
+  private static final Logger LOG = Logger.getInstance("#" + ProjectDataManager.class.getName());
 
-  /**
-   * @return key of project data supported by the current manager
-   */
-  @NotNull
-  Key<T> getTargetDataKey();
+  @NotNull private final NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?>>>> myServices =
+    new NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?>>>>() {
+      @NotNull
+      @Override
+      protected Map<Key<?>, List<ProjectDataService<?>>> compute() {
+        Map<Key<?>, List<ProjectDataService<?>>> result = ContainerUtilRt.newHashMap();
+        for (ProjectDataService<?> service : ProjectDataService.EP_NAME.getExtensions()) {
+          List<ProjectDataService<?>> services = result.get(service.getTargetDataKey());
+          if (services == null) {
+            result.put(service.getTargetDataKey(), services = ContainerUtilRt.newArrayList());
+          }
+          services.add(service);
+        }
 
-  void importData(@NotNull Collection<DataNode<T>> toImport, @NotNull Project project, boolean synchronous);
+        for (List<ProjectDataService<?>> services : result.values()) {
+          ExternalSystemUtil.orderAwareSort(services);
+        }
 
-  void removeData(@NotNull Collection<DataNode<T>> toRemove, @NotNull Project project, boolean synchronous);
+        return result;
+      }
+    };
+
+  @SuppressWarnings("unchecked")
+  public <T> void importData(@NotNull Collection<DataNode<?>> nodes, @NotNull Project project, boolean synchronous) {
+    Map<Key<?>, Collection<DataNode<?>>> grouped = ExternalSystemUtil.group(nodes);
+    for (Map.Entry<Key<?>, Collection<DataNode<?>>> entry : grouped.entrySet()) {
+      // Simple class cast makes ide happy but compiler fails.
+      Collection<DataNode<T>> dummy = ContainerUtilRt.newArrayList();
+      for (DataNode<?> node : entry.getValue()) {
+        dummy.add((DataNode<T>)node);
+      }
+      importData((Key<T>)entry.getKey(), dummy, project, synchronous);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T> void importData(@NotNull Key<T> key, @NotNull Collection<DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {
+    List<ProjectDataService<?>> services = myServices.getValue().get(key);
+    if (services == null) {
+      LOG.warn(String.format(
+        "Can't import data nodes '%s'. Reason: no service is registered for key %s. Available services for %s",
+        nodes, key, myServices.getValue().keySet()
+      ));
+    }
+    else {
+      for (ProjectDataService<?> service : services) {
+        ((ProjectDataService<T>)service).importData(nodes, project, synchronous);
+      }
+    }
+
+    Collection<DataNode<?>> children = ContainerUtilRt.newArrayList();
+    for (DataNode<T> node : nodes) {
+      children.addAll(node.getChildren());
+    }
+    importData(children, project, synchronous);
+  }
 }

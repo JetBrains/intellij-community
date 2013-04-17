@@ -30,13 +30,13 @@ import java.util.Map;
  * @author Denis Zhdanov
  * @since 2/7/12 3:20 PM
  */
-public class ContentRootDataManager implements ProjectDataManager<ContentRootData> {
+public class ContentRootDataService implements ProjectDataService<ContentRootData> {
 
-  private static final Logger LOG = Logger.getInstance("#" + ContentRootDataManager.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + ContentRootDataService.class.getName());
 
   @NotNull private final ProjectStructureHelper myProjectStructureHelper;
 
-  public ContentRootDataManager(@NotNull ProjectStructureHelper helper) {
+  public ContentRootDataService(@NotNull ProjectStructureHelper helper) {
     myProjectStructureHelper = helper;
   }
 
@@ -55,7 +55,7 @@ public class ContentRootDataManager implements ProjectDataManager<ContentRootDat
       return;
     }
 
-    Map<DataNode<ModuleData>,Collection<DataNode<ContentRootData>>> byModule
+    Map<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> byModule
       = ExternalSystemUtil.groupBy(toImport, ProjectKeys.MODULE);
     for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
       final Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);

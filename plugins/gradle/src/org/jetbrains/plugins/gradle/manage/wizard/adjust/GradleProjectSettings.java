@@ -1,11 +1,9 @@
 package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
-import com.intellij.ide.util.BrowseFilesListener;
 import com.intellij.ide.util.PropertiesComponent;
-import com.intellij.openapi.externalSystem.model.project.ContentRootData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.openapi.projectRoots.ProjectJdkTable;
@@ -19,15 +17,16 @@ import com.intellij.ui.components.JBRadioButton;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 import java.io.File;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Manages settings of {@link ProjectData gradle project} component.
@@ -254,11 +253,11 @@ public class GradleProjectSettings implements GradleProjectStructureNodeSettings
   {
     String path = dataHolder.getText();
     if (path == null || path.trim().isEmpty()) {
-      GradleUtil.showBalloon(dataHolder, MessageType.ERROR, ExternalSystemBundle.message(undefinedPathMessageKey));
+      ExternalSystemUiUtil.showBalloon(dataHolder, MessageType.ERROR, ExternalSystemBundle.message(undefinedPathMessageKey));
       return false;
     }
     else if (new File(path).isFile()) {
-      GradleUtil.showBalloon(dataHolder, MessageType.ERROR, ExternalSystemBundle.message(filePathMessageKey));
+      ExternalSystemUiUtil.showBalloon(dataHolder, MessageType.ERROR, ExternalSystemBundle.message(filePathMessageKey));
       return false;
     }
     return true;

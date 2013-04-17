@@ -23,9 +23,9 @@ import org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalc
 import org.jetbrains.plugins.gradle.diff.project.GradleProjectStructureChangesCalculator
 import com.intellij.openapi.externalSystem.service.project.manage.ExternalDependencyManager
 import com.intellij.openapi.externalSystem.service.project.manage.EntityManageHelper
-import com.intellij.openapi.externalSystem.service.project.manage.JarDataManager
-import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataManager
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl
+import com.intellij.openapi.externalSystem.service.project.manage.JarDataService
+import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl
 import com.intellij.openapi.externalSystem.model.ProjectSystemId
 import com.intellij.openapi.externalSystem.model.project.LibraryData
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
@@ -95,9 +95,9 @@ public abstract class AbstractGradleTest {
     container.registerComponentImplementation(ProjectStructureServices)
     container.registerComponentImplementation(ExternalLibraryPathTypeMapper, TestExternalLibraryPathTypeMapper)
     container.registerComponentImplementation(ExternalDependencyManager)
-    container.registerComponentImplementation(LibraryDataManager)
-    container.registerComponentImplementation(JarDataManager, TestExternalJarManager)
-    container.registerComponentImplementation(ProjectDataManagerImpl)
+    container.registerComponentImplementation(LibraryDataService)
+    container.registerComponentImplementation(JarDataService, TestExternalJarManager)
+    container.registerComponentImplementation(ProjectDataServiceImpl)
     container.registerComponentImplementation(GradleDuplicateLibrariesPreProcessor)
     container.registerComponentImplementation(MovedJarsPostProcessor, TestMovedJarsPostProcessor)
     container.registerComponentImplementation(OutdatedLibraryVersionPostProcessor)

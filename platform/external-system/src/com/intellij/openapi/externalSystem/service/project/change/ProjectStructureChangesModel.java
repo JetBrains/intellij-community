@@ -45,23 +45,27 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
   private final ConcurrentMap<ProjectSystemId, Set<ExternalProjectStructureChangesPostProcessor>> mySpecificPostProcessors =
     ContainerUtil.newConcurrentMap();
 
-  @NotNull private final ExternalProjectStructureChangesCalculator<ProjectData, Project> myChangesCalculator;
+  // TODO den uncomment
+  //@NotNull private final ExternalProjectStructureChangesCalculator<ProjectData, Project> myChangesCalculator;
   @NotNull private final PlatformFacade                                                  myPlatformFacade;
   @NotNull private final ExternalLibraryPathTypeMapper                                   myLibraryPathTypeMapper;
 
-  public ProjectStructureChangesModel(@NotNull ExternalProjectStructureChangesCalculator<ProjectData, Project> changesCalculator,
+  // TODO den uncomment
+  public ProjectStructureChangesModel(/*@NotNull ExternalProjectStructureChangesCalculator<ProjectData, Project> changesCalculator,*/
                                       @NotNull PlatformFacade platformFacade,
-                                      @NotNull ExternalLibraryPathTypeMapper mapper,
-                                      @NotNull AutoImporter autoImporter,
+                                      @NotNull ExternalLibraryPathTypeMapper mapper
+                                      /*@NotNull AutoImporter autoImporter,
                                       @NotNull MovedJarsPostProcessor movedJarsPostProcessor,
-                                      @NotNull OutdatedLibraryVersionPostProcessor changedLibraryVersionPostProcessor)
+                                      @NotNull OutdatedLibraryVersionPostProcessor changedLibraryVersionPostProcessor*/)
   {
-    myChangesCalculator = changesCalculator;
+    // TODO den uncomment
+    //myChangesCalculator = changesCalculator;
     myPlatformFacade = platformFacade;
     myLibraryPathTypeMapper = mapper;
-    myCommonPostProcessors.add(autoImporter);
-    myCommonPostProcessors.add(movedJarsPostProcessor);
-    myCommonPostProcessors.add(changedLibraryVersionPostProcessor);
+    // TODO den uncomment
+    //myCommonPostProcessors.add(autoImporter);
+    //myCommonPostProcessors.add(movedJarsPostProcessor);
+    //myCommonPostProcessors.add(changedLibraryVersionPostProcessor);
   }
 
   /**
@@ -178,8 +182,12 @@ public class ProjectStructureChangesModel implements DisposableExternalSystemSer
   {
     ProjectSystemId owner = externalProject.getData().getOwner();
     IntegrationKey key = new IntegrationKey(ideProject, owner);
+    Set<ExternalProjectStructureChange> knownChanges = myChanges.get(key);
+    if (knownChanges == null) {
+      knownChanges = Collections.emptySet();
+    }
     ExternalProjectChangesCalculationContext context
-      = new ExternalProjectChangesCalculationContext(myChanges.get(key), myPlatformFacade, myLibraryPathTypeMapper);
+      = new ExternalProjectChangesCalculationContext(knownChanges, myPlatformFacade, myLibraryPathTypeMapper);
     // TODO den uncomment
 //    myChangesCalculator.calculate(externalProject, ideProject, context);
     for (ExternalProjectStructureChangesPostProcessor processor : myCommonPostProcessors) {

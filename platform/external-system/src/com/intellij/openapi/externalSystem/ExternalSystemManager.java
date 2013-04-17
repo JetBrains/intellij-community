@@ -1,10 +1,9 @@
 package com.intellij.openapi.externalSystem;
 
-import com.intellij.execution.ExecutionException;
-import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.externalSystem.build.ExternalSystemBuildManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
@@ -30,9 +29,10 @@ public interface ExternalSystemManager<
   Settings extends AbstractExternalSystemSettings<SettingsListener, Settings>,
   LocalSettings extends AbstractExternalSystemLocalSettings<LocalSettings>,
   ExecutionSettings extends ExternalSystemExecutionSettings>
+  extends ParametersEnhancer
 {
   
-  ExtensionPointName<ExternalSystemManager> EP_NAME = ExtensionPointName.create("EXTERNAL_SYSTEM");
+  ExtensionPointName<ExternalSystemManager> EP_NAME = ExtensionPointName.create("com.intellij.externalSystemManager");
   
   /**
    * @return    id of the external system represented by the current manager
@@ -69,17 +69,6 @@ public interface ExternalSystemManager<
   @NotNull
   Function<Project, ExecutionSettings> getExecutionSettingsProvider();
 
-  /**
-   * Our recommended practice is to work with third-party api from external process in order to avoid potential problems with
-   * the whole ide process. For example, the api might contain a memory leak which crashed the whole process etc.
-   * <p/>
-   * This method is a callback which allows particular external system integration to adjust that external process
-   * settings. Most of the time that means classpath adjusting.
-   * 
-   * @param parameters  parameters to be applied to the slave process which will be used for external system communication
-   */
-  void enhance(@NotNull SimpleJavaParameters parameters) throws ExecutionException;
-  
   /**
    * Allows to retrieve information about {@link ExternalSystemProjectResolver project resolver} to use for the target external
    * system.

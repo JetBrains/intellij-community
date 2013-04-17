@@ -1,37 +1,48 @@
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.LibraryData;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataManager;
-import com.intellij.openapi.externalSystem.service.project.manage.LibraryDependencyDataManager;
-import com.intellij.openapi.externalSystem.service.project.manage.ModuleDataManager;
-import com.intellij.openapi.externalSystem.service.project.manage.ModuleDependencyDataManager;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemResolveProjectTask;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
+import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectConfigurable;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.module.ModifiableModuleModel;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
+import com.intellij.openapi.progress.ProgressIndicator;
+import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.projectRoots.JavaSdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
+import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
+import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
+import com.intellij.openapi.roots.libraries.Library;
+import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
+import com.intellij.openapi.startup.StartupManager;
+import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.packaging.artifacts.ModifiableArtifactModel;
 import com.intellij.projectImport.ProjectImportBuilder;
-import icons.GradleIcons;
+import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleConfigurable;
-import org.jetbrains.plugins.gradle.settings.GradleSettings;
-import org.jetbrains.plugins.gradle.internal.task.GradleResolveProjectTask;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleLog;
-import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
-import java.util.Arrays;
-import java.util.Collections;
-import java.util.List;
+import java.util.*;
 
 /**
  * GoF builder for gradle-backed projects.
@@ -40,32 +51,34 @@ import java.util.List;
  * @since 8/1/11 1:29 PM
  */
 @SuppressWarnings("MethodMayBeStatic")
-public abstract class AbstractExternalProjectImportBuilder extends ProjectImportBuilder<DataNode<ProjectData>> {
+public abstract class AbstractExternalProjectImportBuilder<C extends AbstractExternalProjectConfigurable>
+  extends ProjectImportBuilder<DataNode<ProjectData>>
+{
 
-  @NotNull private final ModuleDataManager            myModuleManager;
-  @NotNull private final LibraryDataManager           myLibraryManager;
-  @NotNull private final LibraryDependencyDataManager myLibraryDependencyManager;
-  @NotNull private final ModuleDependencyDataManager  myModuleDependencyManager;
+  private static final Logger LOG = Logger.getInstance("#" + AbstractExternalProjectImportBuilder.class.getName());
 
-  private DataNode<ProjectData> myGradleProject;
-  private GradleConfigurable    myConfigurable;
+  @NotNull private final ExternalSystemSettingsManager mySettingsManager;
+  @NotNull private final ProjectDataManager            myProjectDataManager;
+  @NotNull private final C                             myConfigurable;
+  @NotNull private final ProjectSystemId               myExternalSystemId;
 
-  public AbstractExternalProjectImportBuilder(@NotNull ModuleDataManager moduleManager,
-                                              @NotNull LibraryDataManager libraryManager,
-                                              @NotNull LibraryDependencyDataManager libraryDependencyManager,
-                                              @NotNull ModuleDependencyDataManager moduleDependencyManager)
+  private DataNode<ProjectData> myExternalProjectNode;
+
+  public AbstractExternalProjectImportBuilder(@NotNull ExternalSystemSettingsManager settingsManager,
+                                              @NotNull ProjectDataManager projectDataManager,
+                                              @NotNull C configurable,
+                                              @NotNull ProjectSystemId externalSystemId)
   {
-    myModuleManager = moduleManager;
-    myLibraryManager = libraryManager;
-    myLibraryDependencyManager = libraryDependencyManager;
-    myModuleDependencyManager = moduleDependencyManager;
+    mySettingsManager = settingsManager;
+    myProjectDataManager = projectDataManager;
+    myConfigurable = configurable;
+    myConfigurable.setAlwaysShowLinkedProjectControls(true);
+    myExternalSystemId = externalSystemId;
   }
-
-  
 
   @Override
   public List<DataNode<ProjectData>> getList() {
-    return Arrays.asList(myGradleProject);
+    return Arrays.asList(myExternalProjectNode);
   }
 
   @Override
@@ -81,22 +94,29 @@ public abstract class AbstractExternalProjectImportBuilder extends ProjectImport
   public void setOpenProjectSettingsAfter(boolean on) {
   }
 
-  public GradleConfigurable getConfigurable() {
+  @NotNull
+  public C getConfigurable() {
     return myConfigurable;
   }
 
+  @NotNull
+  public ProjectSystemId getExternalSystemId() {
+    return myExternalSystemId;
+  }
+
+  @NotNull
+  public ExternalSystemSettingsManager getSettingsManager() {
+    return mySettingsManager;
+  }
+
   public void prepare(@NotNull WizardContext context) {
-    if (myConfigurable == null) {
-      myConfigurable = new GradleConfigurable(getProject(context));
-      myConfigurable.setAlwaysShowLinkedProjectControls(true);
-    }
     myConfigurable.reset();
     String pathToUse = context.getProjectFileDirectory();
-    if (!pathToUse.endsWith(GradleConstants.DEFAULT_SCRIPT_NAME)) {
-      pathToUse = new File(pathToUse, GradleConstants.DEFAULT_SCRIPT_NAME).getAbsolutePath();
-    }
-    myConfigurable.setLinkedGradleProjectPath(pathToUse);
+    myConfigurable.setLinkedExternalProjectPath(pathToUse);
+    doPrepare(context);
   }
+
+  protected abstract void doPrepare(@NotNull WizardContext context);
 
   @Override
   public List<Module> commit(final Project project,
@@ -104,70 +124,67 @@ public abstract class AbstractExternalProjectImportBuilder extends ProjectImport
                              ModulesProvider modulesProvider,
                              ModifiableArtifactModel artifactModel)
   {
-    System.setProperty(GradleConstants.NEWLY_IMPORTED_PROJECT, Boolean.TRUE.toString());
-    final ProjectData gradleProject = getGradleProject();
-    if (gradleProject != null) {
-      // TODO den implement
-//      final LanguageLevel gradleLanguageLevel = gradleProject.getLanguageLevel();
-//      final LanguageLevelProjectExtension languageLevelExtension = LanguageLevelProjectExtension.getInstance(project);
-//      if (gradleLanguageLevel != languageLevelExtension.getLanguageLevel()) {
-//        languageLevelExtension.setLanguageLevel(gradleLanguageLevel);
-//      }
+    System.setProperty(ExternalSystemConstants.NEWLY_IMPORTED_PROJECT, Boolean.TRUE.toString());
+    final DataNode<ProjectData> externalProjectNode = getExternalProjectNode();
+    if (externalProjectNode != null) {
+      beforeCommit(externalProjectNode, project);
     }
-    // TODO den implement
-//    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
-//      @Override
-//      public void run() {
-//        GradleSettings.applyLinkedProjectPath(myConfigurable.getLinkedProjectPath(), project);
-//        GradleSettings.applyPreferLocalInstallationToWrapper(myConfigurable.isPreferLocalInstallationToWrapper(), project);
-//        GradleSettings.applyGradleHome(myConfigurable.getGradleHomePath(), project);
-//        GradleSettings.applyUseAutoImport(myConfigurable.isUseAutoImport(), project);
-//        // Reset gradle home for default project.
-//        GradleSettings.applyLinkedProjectPath(null, ProjectManager.getInstance().getDefaultProject());
-//
-//        if (gradleProject != null) {
-//          GradleUtil.executeProjectChangeAction(project, project, new Runnable() {
-//            @Override
-//            public void run() {
-//              ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
-//                @Override
-//                public void run() {
-//                  myModuleManager.importModules(gradleProject.getModules(), project, true, true);
-//                }
-//              }); 
-//            }
-//          });
-//
-//          final String linkedProjectPath = myConfigurable.getLinkedProjectPath();
-//          assert linkedProjectPath != null;
-//          myConfigurable = null;
-//          myGradleProject = null;
-//          
-//          final Runnable resolveDependenciesTask = new Runnable() {
-//            @Override
-//            public void run() {
-//              ProgressManager.getInstance().run(
-//                new Task.Backgroundable(project, ExternalSystemBundle.message("gradle.library.resolve.progress.text"), false) {
-//                  @Override
-//                  public void run(@NotNull final ProgressIndicator indicator) {
-//                    GradleResolveProjectTask task = new GradleResolveProjectTask(project, linkedProjectPath, true);
-//                    task.execute(indicator);
-//                    ProjectData projectWithResolvedLibraries = task.getGradleProject();
-//                    if (projectWithResolvedLibraries == null) {
-//                      return;
-//                    }
-//
-//                    setupLibraries(projectWithResolvedLibraries, project);
-//                  }
-//                });
-//            }
-//          };
-//          UIUtil.invokeLaterIfNeeded(resolveDependenciesTask);
-//        }
-//      }
-//    });
+    StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+      @Override
+      public void run() {
+        AbstractExternalSystemSettings settings = mySettingsManager.getSettings(project, myExternalSystemId);
+        final String linkedProjectPath = myConfigurable.getLinkedExternalProjectPath();
+        assert linkedProjectPath != null;
+        settings.setLinkedExternalProjectPath(linkedProjectPath);
+        settings.setUseAutoImport(myConfigurable.isUseAutoImport());
+        onProjectInit(project);
+
+        if (externalProjectNode != null) {
+          ExternalSystemUtil.executeProjectChangeAction(project, myExternalSystemId, project, new Runnable() {
+            @Override
+            public void run() {
+              ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
+                @Override
+                public void run() {
+                  Collection<DataNode<ModuleData>> modules = ExternalSystemUtil.findAll(externalProjectNode, ProjectKeys.MODULE);
+                  myProjectDataManager.importData(ProjectKeys.MODULE, modules, project, true);
+                }
+              }); 
+            }
+          });
+
+          final Runnable resolveDependenciesTask = new Runnable() {
+            @Override
+            public void run() {
+              String progressText
+                = ExternalSystemBundle.message("progress.resolve.libraries", ExternalSystemUtil.toReadableName(myExternalSystemId));
+              ProgressManager.getInstance().run(
+                new Task.Backgroundable(project, progressText, false) {
+                  @Override
+                  public void run(@NotNull final ProgressIndicator indicator) {
+                    ExternalSystemResolveProjectTask task
+                      = new ExternalSystemResolveProjectTask(myExternalSystemId, project, linkedProjectPath, true);
+                    task.execute(indicator);
+                    DataNode<ProjectData> projectWithResolvedLibraries = task.getExternalProject();
+                    if (projectWithResolvedLibraries == null) {
+                      return;
+                    }
+
+                    setupLibraries(projectWithResolvedLibraries, project);
+                  }
+                });
+            }
+          };
+          UIUtil.invokeLaterIfNeeded(resolveDependenciesTask);
+        }
+      }
+    });
     return Collections.emptyList();
   }
+
+  protected abstract void beforeCommit(@NotNull DataNode<ProjectData> dataNode, @NotNull Project project);
+
+  protected abstract void onProjectInit(@NotNull Project project);
 
   /**
    * The whole import sequence looks like below:
@@ -189,55 +206,51 @@ public abstract class AbstractExternalProjectImportBuilder extends ProjectImport
    * @param project                       current intellij project which should be configured by libraries and module library
    *                                      dependencies information available at the given gradle project
    */
-  private void setupLibraries(final ProjectData projectWithResolvedLibraries, final Project project) {
-    // TODO den implement
-//    final Set<? extends LibraryData> libraries = projectWithResolvedLibraries.getLibraries();
-//    GradleUtil.executeProjectChangeAction(project, libraries, new Runnable() {
-//      @Override
-//      public void run() {
-//        ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
-//          @Override
-//          public void run() {
-//            // Clean existing libraries (if any).
-//            LibraryTable projectLibraryTable = ProjectLibraryTable.getInstance(project);
-//            if (projectLibraryTable == null) {
-//              GradleLog.LOG.warn(
-//                "Can't resolve external dependencies of the target gradle project (" + project + "). Reason: project "
-//                + "library table is undefined"
-//              );
-//              return;
-//            }
-//            LibraryTable.ModifiableModel model = projectLibraryTable.getModifiableModel();
-//            try {
-//              for (Library library : model.getLibraries()) {
-//                model.removeLibrary(library);
-//              }
-//            }
-//            finally {
-//              model.commit();
-//            }
-//
-//            // Register libraries.
-//            myLibraryManager.importLibraries(projectWithResolvedLibraries.getLibraries(), project, false);
-//            ProjectStructureHelper helper = ServiceManager.getService(project, ProjectStructureHelper.class);
-//            for (ModuleData module : projectWithResolvedLibraries.getModules()) {
-//              Module intellijModule = helper.findIdeModule(module);
-//              assert intellijModule != null;
-//              myLibraryDependencyManager.importDependencies(module.getDependencies(), intellijModule, false);
-//            }
-//
-//            ProjectStructureChangesModel changesModel = ServiceManager.getService(project, ProjectStructureChangesModel.class);
-//            changesModel.update(projectWithResolvedLibraries);
-//          }
-//        });
-//        ServiceManager.getService(project, UserProjectChangesCalculator.class).updateCurrentProjectState();
-//      }
-//    });
+  private void setupLibraries(@NotNull final DataNode<ProjectData> projectWithResolvedLibraries, final Project project) {
+    Collection<DataNode<LibraryData>> libraries = ExternalSystemUtil.findAll(projectWithResolvedLibraries, ProjectKeys.LIBRARY);
+    ExternalSystemUtil.executeProjectChangeAction(project, projectWithResolvedLibraries.getData().getOwner(), libraries, new Runnable() {
+      @Override
+      public void run() {
+        ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
+          @Override
+          public void run() {
+            // Clean existing libraries (if any).
+            LibraryTable projectLibraryTable = ProjectLibraryTable.getInstance(project);
+            if (projectLibraryTable == null) {
+              LOG.warn(
+                "Can't resolve external dependencies of the target gradle project (" + project + "). Reason: project "
+                + "library table is undefined"
+              );
+              return;
+            }
+            LibraryTable.ModifiableModel model = projectLibraryTable.getModifiableModel();
+            try {
+              for (Library library : model.getLibraries()) {
+                model.removeLibrary(library);
+              }
+            }
+            finally {
+              model.commit();
+            }
+
+            // Register libraries.
+            Set<DataNode<?>> toImport = ContainerUtilRt.newHashSet();
+            toImport.add(projectWithResolvedLibraries);
+            myProjectDataManager.importData(toImport, project, false);
+            // TODO den uncomment
+            //ProjectStructureChangesModel changesModel = ServiceManager.getService(project, ProjectStructureChangesModel.class);
+            //changesModel.update(projectWithResolvedLibraries);
+          }
+        });
+        // TODO den uncomment
+        //ServiceManager.getService(project, UserProjectChangesCalculator.class).updateCurrentProjectState();
+      }
+    });
   }
 
   @Nullable
   private File getProjectFile() {
-    String path = myConfigurable.getLinkedProjectPath();
+    String path = myConfigurable.getLinkedExternalProjectPath();
     return path == null ? null : new File(path);
   }
 
@@ -247,7 +260,7 @@ public abstract class AbstractExternalProjectImportBuilder extends ProjectImport
    * @param path      new directory path
    */
   public void setCurrentProjectPath(@NotNull String path) {
-    myConfigurable.setLinkedGradleProjectPath(path);
+    myConfigurable.setLinkedExternalProjectPath(path);
   }
 
   /**
@@ -257,43 +270,48 @@ public abstract class AbstractExternalProjectImportBuilder extends ProjectImport
    * @throws ConfigurationException   if gradle project is not defined and can't be constructed
    */
   public void ensureProjectIsDefined(@NotNull WizardContext wizardContext) throws ConfigurationException {
-    // TODO den implement
-//    File projectFile = getProjectFile();
-//    if (projectFile == null) {
-//      throw new ConfigurationException(ExternalSystemBundle.message("gradle.import.text.error.project.undefined"));
-//    }
-//    if (projectFile.isDirectory()) {
-//      throw new ConfigurationException(ExternalSystemBundle.message("gradle.import.text.error.directory.instead.file"));
-//    }
-//    final Ref<String> errorReason = new Ref<String>();
-//    final Ref<String> errorDetails = new Ref<String>();
-//    try {
-//      final Project project = getProject(wizardContext);
-//      myGradleProject = GradleUtil.refreshProject(project, projectFile.getAbsolutePath(), errorReason, errorDetails, false, true);
-//    }
-//    catch (IllegalArgumentException e) {
-//      throw new ConfigurationException(e.getMessage(), ExternalSystemBundle.message("gradle.import.text.error.cannot.parse.project"));
-//    }
-//    if (myGradleProject == null) {
-//      final String details = errorDetails.get();
-//      if (!StringUtil.isEmpty(details)) {
-//        GradleLog.LOG.warn(details);
-//      }
-//      String errorMessage;
-//      String reason = errorReason.get();
-//      if (reason == null) {
-//        errorMessage = ExternalSystemBundle.message("gradle.import.text.error.resolve.generic.without.reason", projectFile.getPath());
-//      }
-//      else {
-//        errorMessage = ExternalSystemBundle.message("gradle.import.text.error.resolve.with.reason", reason);
-//      }
-//      throw new ConfigurationException(errorMessage, ExternalSystemBundle.message("gradle.import.title.error.resolve.generic"));
-//    } 
+    String externalSystemName = ExternalSystemUtil.toReadableName(myExternalSystemId);
+    File projectFile = getProjectFile();
+    if (projectFile == null) {
+      throw new ConfigurationException(ExternalSystemBundle.message("error.project.undefined"));
+    }
+    projectFile = getExternalProjectConfigToUse(projectFile);
+    final Ref<String> errorReason = new Ref<String>();
+    final Ref<String> errorDetails = new Ref<String>();
+    try {
+      final Project project = getProject(wizardContext);
+      myExternalProjectNode= ExternalSystemUtil.refreshProject(project, myExternalSystemId, projectFile.getAbsolutePath(), errorReason,
+                                                               errorDetails, false, true);
+    }
+    catch (IllegalArgumentException e) {
+      throw new ConfigurationException(e.getMessage(), ExternalSystemBundle.message("error.cannot.parse.project", externalSystemName));
+    }
+    if (myExternalProjectNode == null) {
+      final String details = errorDetails.get();
+      if (!StringUtil.isEmpty(details)) {
+        LOG.warn(details);
+      }
+      String errorMessage;
+      String reason = errorReason.get();
+      if (reason == null) {
+        errorMessage = ExternalSystemBundle.message("error.resolve.generic.without.reason", externalSystemName, projectFile.getPath());
+      }
+      else {
+        errorMessage = ExternalSystemBundle.message("error.resolve.with.reason", reason);
+      }
+      throw new ConfigurationException(errorMessage, ExternalSystemBundle.message("error.resolve.generic"));
+    }
+    else {
+      applyProjectSettings(wizardContext);
+    }
   }
 
+  // TODO den add doc
+  protected abstract File getExternalProjectConfigToUse(@NotNull File file);
+
   @Nullable
-  public ProjectData getGradleProject() {
-    return myGradleProject;
+  public DataNode<ProjectData> getExternalProjectNode() {
+    return myExternalProjectNode;
   }
 
   @Override
@@ -307,16 +325,16 @@ public abstract class AbstractExternalProjectImportBuilder extends ProjectImport
    * @param context  storage for the project/module settings.
    */
   public void applyProjectSettings(@NotNull WizardContext context) {
-    if (myGradleProject == null) {
+    if (myExternalProjectNode == null) {
       assert false;
       return;
     }
-    context.setProjectName(myGradleProject.getName());
-    context.setProjectFileDirectory(myGradleProject.getProjectFileDirectoryPath());
-    // TODO den implement
-//    context.setCompilerOutputDirectory(myGradleProject.getCompileOutputPath());
-//    context.setProjectJdk(myGradleProject.getSdk());
+    context.setProjectName(myExternalProjectNode.getData().getName());
+    context.setProjectFileDirectory(myExternalProjectNode.getData().getProjectFileDirectoryPath());
+    applyExtraSettings(context);
   }
+
+  protected abstract void applyExtraSettings(@NotNull WizardContext context);
 
   /**
    * Allows to get {@link Project} instance to use. Basically, there are two alternatives -

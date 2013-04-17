@@ -26,6 +26,7 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
@@ -39,12 +40,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 
   private final GradleLibraryNamesMixer myLibraryNamesMixer = new GradleLibraryNamesMixer();
 
+  @Nullable private Pair<List<String>, List<GradleProjectResolverExtension>> myCachedExtensions;
+
   @Nullable
   @Override
   public DataNode<ProjectData> resolveProjectInfo(@NotNull final ExternalSystemTaskId id,
-                                            @NotNull final String projectPath,
-                                            final boolean downloadLibraries,
-                                            @Nullable final GradleExecutionSettings settings)
+                                                  @NotNull final String projectPath,
+                                                  final boolean downloadLibraries,
+                                                  @Nullable final GradleExecutionSettings settings)
     throws ExternalSystemException, IllegalArgumentException, IllegalStateException
   {
     return myHelper.execute(projectPath, settings, new Function<ProjectConnection, DataNode<ProjectData>>() {
@@ -74,6 +77,26 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     populateModules(modules.values(), result);
     Collection<DataNode<LibraryData>> libraries = ExternalSystemUtil.getChildren(result, ProjectKeys.LIBRARY);
     myLibraryNamesMixer.mixNames(libraries);
+
+    if (settings != null) {
+      List<String> extensionClassNames = settings.getResolverExtensions();
+      if (myCachedExtensions == null || !myCachedExtensions.first.equals(extensionClassNames)) {
+        List<String> classNames = ContainerUtilRt.newArrayList(extensionClassNames);
+        List<GradleProjectResolverExtension> extensions = ContainerUtilRt.newArrayList();
+        for (String className : classNames) {
+          try {
+            extensions.add((GradleProjectResolverExtension)Class.forName(className).newInstance());
+          }
+          catch (Exception e) {
+            throw new IllegalArgumentException(String.format("Can't instantiate project resolve extension for class '%s'", className), e);
+          }
+        }
+        myCachedExtensions = Pair.create(classNames, extensions);
+      }
+      for (GradleProjectResolverExtension extension : myCachedExtensions.second) {
+        extension.enhanceProject(result, connection, !downloadLibraries);
+      }
+    }
     return result;
   }
 

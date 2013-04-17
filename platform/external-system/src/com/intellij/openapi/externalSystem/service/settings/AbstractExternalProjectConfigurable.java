@@ -25,24 +25,19 @@ import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ui.GridBag;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.io.File;
 
 /**
  * // TODO den add doc
@@ -67,24 +62,26 @@ public abstract class AbstractExternalProjectConfigurable
   implements SearchableConfigurable, Configurable.NoScroll
 {
 
-  @NotNull private final String                    myDisplayName;
-  @NotNull private final JLabel                    myLinkedExternalProjectLabel;
-  @NotNull private final JComponent                myComponent;
-  @NotNull private final TextFieldWithBrowseButton myLinkedExternalProjectPathField;
-
+  @NotNull private final String myDisplayName;
+  
   @Nullable private final Project myProject;
 
+  @NotNull private JComponent                myComponent;
+  @NotNull private JLabel                    myLinkedExternalProjectLabel;
+  @NotNull private TextFieldWithBrowseButton myLinkedExternalProjectPathField;
+  @NotNull private JBCheckBox                myUseAutoImportBox;
+
+  private final boolean myTestMode;
   private boolean myAlwaysShowLinkedProjectControls;
 
   @SuppressWarnings("AbstractMethodCallInConstructor")
   protected AbstractExternalProjectConfigurable(@Nullable Project project, @NotNull ProjectSystemId externalSystemId, boolean testMode) {
     myProject = project;
+    myTestMode = testMode;
     myDisplayName = getSystemName(externalSystemId);
     myLinkedExternalProjectLabel = new JBLabel(ExternalSystemBundle.message("settings.label.select.project", myDisplayName));
-    myComponent = buildContent(testMode);
     myLinkedExternalProjectPathField = initLinkedGradleProjectPathControl(testMode);
-    myComponent.add(myLinkedExternalProjectLabel, getLabelConstraints());
-    myComponent.add(myLinkedExternalProjectPathField, getFillLineConstraints());
+    myUseAutoImportBox = new JBCheckBox(ExternalSystemBundle.message("settings.label.use.auto.import"));
   }
 
   @NotNull
@@ -107,12 +104,39 @@ public abstract class AbstractExternalProjectConfigurable
     return myLinkedExternalProjectPathField;
   }
 
+  @Nullable
+  public String getLinkedExternalProjectPath() {
+    return myLinkedExternalProjectPathField.getText();
+  }
+  
+  public void setLinkedExternalProjectPath(@NotNull String path) {
+    myLinkedExternalProjectPathField.setText(path);
+  }
+
+  public boolean isUseAutoImport() {
+    return myUseAutoImportBox.isSelected();
+  }
+
+  @NotNull
+  public JBCheckBox getUseAutoImportBox() {
+    return myUseAutoImportBox;
+  }
+
+  // TODO den add doc
+  @Nullable
+  public abstract ValidationError validate();
+  
   // TODO den add doc
   @NotNull
   protected abstract JComponent buildContent(boolean testMode);
 
+  protected abstract void fillContent(@NotNull JComponent content);
+
   @NotNull
   protected abstract FileChooserDescriptor getLinkedProjectConfigDescriptor();
+
+  @NotNull
+  protected abstract S getSettings(@NotNull Project project);
 
   @NotNull
   private TextFieldWithBrowseButton initLinkedGradleProjectPathControl(boolean testMode) {
@@ -121,7 +145,7 @@ public abstract class AbstractExternalProjectConfigurable
     FileChooserDescriptor fileChooserDescriptor = testMode ? new FileChooserDescriptor(true, false, false, false, false, false)
                                                            : getLinkedProjectConfigDescriptor();
 
-    myLinkedExternalProjectPathField.addBrowseFolderListener(
+    result.addBrowseFolderListener(
       "",
       ExternalSystemBundle.message("settings.label.select.project", myDisplayName),
       myProject,
@@ -152,43 +176,34 @@ public abstract class AbstractExternalProjectConfigurable
   @SuppressWarnings("ConstantConditions")
   @Override
   public JComponent createComponent() {
+    if (myComponent == null) {
+      myComponent = buildContent(myTestMode);
+      myComponent.add(myLinkedExternalProjectLabel, getLabelConstraints());
+      myComponent.add(myLinkedExternalProjectPathField, getFillLineConstraints());
+      myComponent.add(myUseAutoImportBox, getFillLineConstraints());
+      fillContent(myComponent);
+      myComponent.add(Box.createVerticalGlue(), new GridBag().weightx(1).weighty(1).fillCell().coverLine());
+    }
     return myComponent;
   }
 
   public boolean isAlwaysShowLinkedProjectControls() {
     return myAlwaysShowLinkedProjectControls;
   }
-
+  
   public void setAlwaysShowLinkedProjectControls(boolean alwaysShowLinkedProjectControls) {
     myAlwaysShowLinkedProjectControls = alwaysShowLinkedProjectControls;
   }
-
+  
   @Override
   public boolean isModified() {
     if (myProject == null) {
       return false;
     }
 
-    GradleSettings settings = myHelper.getSettings(myProject);
+    S settings = getSettings(myProject);
 
-    if (!Comparing.equal(normalizePath(myLinkedExternalProjectPathField.getText()), normalizePath(settings.getLinkedProjectPath()))) {
-      return true;
-    }
-    
-    boolean preferLocalToWrapper = settings.isPreferLocalInstallationToWrapper();
-    if (myUseWrapperButton.isSelected() == preferLocalToWrapper) {
-      return true;
-    }
-
-    if (myGradleHomeModifiedByUser &&
-        !Comparing.equal(normalizePath(myGradleHomePathField.getText()), normalizePath(settings.getGradleHome())))
-    {
-      return true;
-    }
-
-    if (myServiceDirectoryModifiedByUser &&
-        !Comparing.equal(normalizePath(myServiceDirectoryPathField.getText()), normalizePath(settings.getServiceDirectoryPath())))
-    {
+    if (!Comparing.equal(normalizePath(myLinkedExternalProjectPathField.getText()), normalizePath(settings.getLinkedExternalProjectPath()))) {
       return true;
     }
 
@@ -196,11 +211,13 @@ public abstract class AbstractExternalProjectConfigurable
       return true;
     }
     
-    return false;
+    return isExtraSettingModified();
   }
 
+  protected abstract boolean isExtraSettingModified();
+
   @Nullable
-  private static String normalizePath(@Nullable String s) {
+  protected static String normalizePath(@Nullable String s) {
     return StringUtil.isEmpty(s) ? null : s;
   }
 
@@ -210,50 +227,21 @@ public abstract class AbstractExternalProjectConfigurable
       return;
     }
 
-    GradleSettings settings = myHelper.getSettings(myProject);
-
     String linkedProjectPath = myLinkedExternalProjectPathField.getText();
-    final String gradleHomePath = getPathToUse(myGradleHomeModifiedByUser, settings.getGradleHome(), myGradleHomePathField.getText());
-    final String serviceDirPath = getPathToUse(myServiceDirectoryModifiedByUser,
-                                               settings.getServiceDirectoryPath(),
-                                               myServiceDirectoryPathField.getText());
-    
-    boolean preferLocalToWrapper = myUseLocalDistributionButton.isSelected();
     boolean useAutoImport = myUseAutoImportBox.isSelected();
-    myHelper.applySettings(linkedProjectPath, gradleHomePath, preferLocalToWrapper, useAutoImport, serviceDirPath, myProject);
+    doApply(linkedProjectPath, useAutoImport);
+  }
 
-    Project defaultProject = myHelper.getDefaultProject();
-    if (myProject != defaultProject) {
-      myHelper.applyPreferLocalInstallationToWrapper(preferLocalToWrapper, defaultProject);
+  protected void doApply(@NotNull String linkedExternalProjectPath, boolean useAutoImport) {
+    if (myProject == null) {
+      return;
     }
-
-    if (isValidGradleHome(gradleHomePath)) {
-      if (myGradleHomeModifiedByUser) {
-        myGradleHomeSettingType = GradleHomeSettingType.EXPLICIT_CORRECT;
-        // There is a possible case that user defines gradle home for particular open project. We want to apply that value
-        // to the default project as well if it's still non-defined.
-        if (defaultProject != myProject && !isValidGradleHome(GradleSettings.getInstance(defaultProject).getGradleHome())) {
-          // TODO den implement
-//          GradleSettings.applyGradleHome(gradleHomePath, defaultProject);
-        }
-      }
-      else {
-        myGradleHomeSettingType = GradleHomeSettingType.DEDUCED;
-      }
-    }
-    else if (preferLocalToWrapper) {
-      if (StringUtil.isEmpty(gradleHomePath)) {
-        myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
-      }
-      else {
-        myGradleHomeSettingType = GradleHomeSettingType.EXPLICIT_INCORRECT;
-        myHelper.showBalloon(MessageType.ERROR, myGradleHomeSettingType, 0);
-      }
-    }
+    getSettings(myProject).setLinkedExternalProjectPath(linkedExternalProjectPath);
+    getSettings(myProject).setUseAutoImport(useAutoImport);
   }
 
   @Nullable
-  private static String getPathToUse(boolean modifiedByUser, @Nullable String settingsPath, @Nullable String uiPath) {
+  protected static String getPathToUse(boolean modifiedByUser, @Nullable String settingsPath, @Nullable String uiPath) {
     if (modifiedByUser) {
       return StringUtil.isEmpty(uiPath) ? null : uiPath;
     }
@@ -270,95 +258,29 @@ public abstract class AbstractExternalProjectConfigurable
     }
   }
 
-  private boolean isValidGradleHome(@Nullable String path) {
-    if (StringUtil.isEmpty(path)) {
-      return false;
-    }
-    assert path != null;
-    return myHelper.isGradleSdkHome(new File(path));
-  }
-  
   @Override
   public void reset() {
+    Project project = myProject;
     if (myProject == null) {
-      return;
-    }
-    
-    // Process gradle wrapper/local distribution settings.
-    // There are the following possible cases:
-    //   1. Default project or non-default project with no linked gradle project - 'use gradle wrapper whenever possible' check box
-    //      should be shown;
-    //   2. Non-default project with linked gradle project:
-    //      2.1. Gradle wrapper is configured for the target project - radio buttons on whether to use wrapper or particular local gradle
-    //           distribution should be show;
-    //      2.2. Gradle wrapper is not configured for the target project - radio buttons should be shown and 
-    //           'use gradle wrapper' option should be disabled;
-    useColorForPath(PathColor.NORMAL, myGradleHomePathField);
-    useColorForPath(PathColor.NORMAL, myServiceDirectoryPathField);
-    GradleSettings settings = myHelper.getSettings(myProject);
-    String linkedProjectPath = myLinkedExternalProjectPathField.getText();
-    if (StringUtil.isEmpty(linkedProjectPath)) {
-      linkedProjectPath = settings.getLinkedProjectPath();
-    }
-    myLinkedExternalProjectLabel.setVisible(myAlwaysShowLinkedProjectControls || !myProject.isDefault());
-    myLinkedExternalProjectPathField.setVisible(myAlwaysShowLinkedProjectControls || !myProject.isDefault());
-    if (linkedProjectPath != null) {
-      myLinkedExternalProjectPathField.setText(linkedProjectPath);
-    }
-    
-    myUseWrapperButton.setVisible(myAlwaysShowLinkedProjectControls || (!myProject.isDefault() && linkedProjectPath != null));
-    myUseLocalDistributionButton.setVisible(myAlwaysShowLinkedProjectControls || (!myProject.isDefault() && linkedProjectPath != null));
-    if (myAlwaysShowLinkedProjectControls && linkedProjectPath == null) {
-      myUseWrapperButton.setEnabled(false);
-      myUseLocalDistributionButton.setSelected(true);
-    }
-    else if (linkedProjectPath != null) {
-      if (myHelper.isGradleWrapperDefined(linkedProjectPath)) {
-        myUseWrapperButton.setEnabled(true);
-        myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper"));
-        if (myProject.isDefault() || !settings.isPreferLocalInstallationToWrapper()) {
-          myUseWrapperButton.setSelected(true);
-          myGradleHomePathField.setEnabled(false);
-        }
-        else {
-          myUseLocalDistributionButton.setSelected(true);
-          myGradleHomePathField.setEnabled(true);
-        }
-      }
-      else {
-        myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper.disabled"));
-        myUseWrapperButton.setEnabled(false);
-        myUseLocalDistributionButton.setSelected(true);
-      }
-    }
-    
-    String localDistributionPath = settings.getGradleHome();
-    if (StringUtil.isEmpty(localDistributionPath)) {
-      myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
-      deduceGradleHomeIfPossible();
-    }
-    else {
-      myGradleHomeSettingType = myHelper.isGradleSdkHome(new File(localDistributionPath)) ?
-                                GradleHomeSettingType.EXPLICIT_CORRECT :
-                                GradleHomeSettingType.EXPLICIT_INCORRECT;
-      myAlarm.cancelAllRequests();
-      if (myGradleHomeSettingType == GradleHomeSettingType.EXPLICIT_INCORRECT && settings.isPreferLocalInstallationToWrapper()) {
-        myHelper.showBalloon(MessageType.ERROR, myGradleHomeSettingType, 0);
-      }
-      myGradleHomePathField.setText(localDistributionPath);
+      project = ProjectManager.getInstance().getDefaultProject();
     }
 
-    String serviceDirectoryPath = settings.getServiceDirectoryPath();
-    if (StringUtil.isEmpty(serviceDirectoryPath)) {
-      deduceServiceDirectoryIfPossible();
+    S settings = getSettings(project);
+    String linkedExternalProjectPath = myLinkedExternalProjectPathField.getText();
+    if (StringUtil.isEmpty(linkedExternalProjectPath)) {
+      linkedExternalProjectPath = settings.getLinkedExternalProjectPath();
     }
-    else {
-      myServiceDirectoryPathField.setText(serviceDirectoryPath);
-      useColorForPath(PathColor.NORMAL, myServiceDirectoryPathField);
+    myLinkedExternalProjectLabel.setVisible(myAlwaysShowLinkedProjectControls || !project.isDefault());
+    myLinkedExternalProjectPathField.setVisible(myAlwaysShowLinkedProjectControls || !project.isDefault());
+    if (linkedExternalProjectPath != null) {
+      myLinkedExternalProjectPathField.setText(linkedExternalProjectPath);
     }
-    
+
     myUseAutoImportBox.setSelected(settings.isUseAutoImport());
+    doReset();
   }
+  
+  protected abstract void doReset();
 
   protected static void useColorForPath(@NotNull LocationSettingType type, @NotNull TextFieldWithBrowseButton pathControl) {
     Color c = type == LocationSettingType.DEDUCED ? UIManager.getColor("TextField.inactiveForeground")
@@ -370,29 +292,18 @@ public abstract class AbstractExternalProjectConfigurable
   @Override
   public void disposeUIResources() {
     myComponent = null;
-    myGradleHomePathField = null;
-    myUseWrapperButton = null;
-    myUseLocalDistributionButton = null;
+    myLinkedExternalProjectLabel = null;
+    myLinkedExternalProjectPathField = null;
+    myUseAutoImportBox = null;
   }
+  
+  public static class ValidationError {
+    @NotNull public final String     message;
+    @NotNull public final JComponent problemHolder;
 
-  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
-  @NotNull
-  public GradleLocationSettingType getCurrentGradleHomeSettingType() {
-    String path = myGradleHomePathField.getText();
-    if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
-      GradleLog.LOG.info(String.format("Checking 'gradle home' status. Manually entered value is '%s'", path));
+    public ValidationError(@NotNull String message, @NotNull JComponent problemHolder) {
+      this.message = message;
+      this.problemHolder = problemHolder;
     }
-    if (path == null || StringUtil.isEmpty(path.trim())) {
-      return GradleHomeSettingType.UNKNOWN;
-    }
-    if (isModified()) {
-      return myHelper.isGradleSdkHome(new File(path)) ? GradleHomeSettingType.EXPLICIT_CORRECT
-                                                      : GradleHomeSettingType.EXPLICIT_INCORRECT;
-    }
-    return myGradleHomeSettingType;
   }
-
-  
-
-  
 }

@@ -17,6 +17,8 @@ package com.intellij.openapi.externalSystem.model;
 
 import org.jetbrains.annotations.NotNull;
 
+import java.io.Serializable;
+
 /**
  * // TODO den add doc
  * 
@@ -24,7 +26,9 @@ import org.jetbrains.annotations.NotNull;
  * @since 4/12/13 11:49 AM
  * @param <T>  data class
  */
-public class Key<T> {
+public class Key<T> implements Serializable {
+
+  private static final long serialVersionUID = 1L;
   
   @NotNull private final Class<T> myDataClass;
 
@@ -36,7 +40,7 @@ public class Key<T> {
   public static <T> Key<T> create(@NotNull Class<T> dataClass) {
     return new Key<T>(dataClass);
   }
-  
+
   @NotNull
   public Class<T> getDataClass() {
     return myDataClass;
@@ -61,6 +65,6 @@ public class Key<T> {
 
   @Override
   public String toString() {
-    return "key " + myDataClass;
+    return myDataClass.getSimpleName();
   }
 }

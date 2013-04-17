@@ -34,12 +34,14 @@ import org.jetbrains.annotations.Nullable;
       @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/gradle.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class GradleSettings extends AbstractExternalSystemSettings<GradleSettingsListener, GradleSettings> {
+public class GradleSettings extends AbstractExternalSystemSettings<GradleSettingsListener, GradleSettings>
+  implements PersistentStateComponent<GradleSettings.MyState>
+{
 
   private String  myGradleHome;
   private String  myServiceDirectoryPath;
   private boolean myPreferLocalInstallationToWrapper;
-
+  
   public GradleSettings(@NotNull Project project) {
     super(GradleSettingsListener.TOPIC, project);
   }
@@ -49,6 +51,26 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     return ServiceManager.getService(project, GradleSettings.class);
   }
 
+  @SuppressWarnings("unchecked")
+  @Nullable
+  @Override
+  public GradleSettings.MyState getState() {
+    MyState state = new MyState();
+    fillState(state);
+    state.gradleHome = myGradleHome;
+    state.serviceDirectoryPath = myServiceDirectoryPath;
+    state.preferLocalInstallationToWrapper = myPreferLocalInstallationToWrapper;
+    return state;
+  }
+
+  @Override
+  public void loadState(MyState state) {
+    super.loadState(state);
+    myGradleHome = state.gradleHome;
+    myServiceDirectoryPath = state.serviceDirectoryPath;
+    myPreferLocalInstallationToWrapper = state.preferLocalInstallationToWrapper;
+  }
+  
   @Nullable
   public String getGradleHome() {
     return myGradleHome;
@@ -102,7 +124,7 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     GradleSettingsListener publisher = getPublisher();
     publisher.onBulkChangeStart();
     try {
-      setLinkedProjectPath(linkedProjectPath);
+      setLinkedExternalProjectPath(linkedProjectPath);
       setGradleHome(gradleHomePath);
       setPreferLocalInstallationToWrapper(preferLocalInstallationToWrapper);
       setUseAutoImport(useAutoImport);
@@ -115,6 +137,12 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
 
   @Override
   public String toString() {
-    return "home: " + myGradleHome + ", path: " + getLinkedProjectPath();
+    return "home: " + myGradleHome + ", path: " + getLinkedExternalProjectPath();
+  }
+  
+  public static class MyState extends State {
+    public String gradleHome;
+    public String serviceDirectoryPath;
+    public boolean preferLocalInstallationToWrapper;
   }
 }

@@ -13,25 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.util;
-
-import com.intellij.openapi.externalSystem.service.project.manage.JarDataService;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.externalSystem.service.project.change.MovedJarsPostProcessor;
+package com.intellij.openapi.externalSystem.model.task;
 
 /**
  * @author Denis Zhdanov
- * @since 1/18/13 2:11 PM
+ * @since 1/24/12 7:08 AM
  */
-public class TestMovedJarsPostProcessor extends MovedJarsPostProcessor {
-
-  public TestMovedJarsPostProcessor(@NotNull JarDataService manager) {
-    super(manager);
-  }
-
-  @Override
-  public void doMerge(@NotNull Runnable mergeTask, @NotNull Project project) {
-    mergeTask.run();
-  }
+public enum ExternalSystemTaskState {
+  
+  NOT_STARTED, IN_PROGRESS, FINISHED, FAILED
 }

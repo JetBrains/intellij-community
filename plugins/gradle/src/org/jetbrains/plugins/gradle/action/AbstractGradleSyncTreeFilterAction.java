@@ -76,7 +76,7 @@ public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
     super.update(e);
 
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (project == null || StringUtil.isEmpty(GradleSettings.getInstance(project).getLinkedProjectPath())) {
+    if (project == null || StringUtil.isEmpty(GradleSettings.getInstance(project).getLinkedExternalProjectPath())) {
       e.getPresentation().setEnabled(false);
       return;
     }

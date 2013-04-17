@@ -7,6 +7,7 @@ import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.io.IOException;
 import java.io.ObjectInputStream;
+import java.io.Serializable;
 
 /**
  * @author Denis Zhdanov
@@ -16,7 +17,7 @@ public abstract class AbstractProjectEntityData implements ProjectEntityData {
 
   private static final long serialVersionUID = 1L;
   
-  @NotNull private final ProjectSystemId myOwner;
+  @NotNull private ProjectSystemId myOwner;
   
   private transient PropertyChangeSupport myPropertyChangeSupport;
 
@@ -42,6 +43,7 @@ public abstract class AbstractProjectEntityData implements ProjectEntityData {
 
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     myPropertyChangeSupport = new PropertyChangeSupport(this);
+    myOwner = (ProjectSystemId)in.readObject();
   }
   
   @Override

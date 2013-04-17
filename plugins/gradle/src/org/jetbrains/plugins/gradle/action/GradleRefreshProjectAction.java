@@ -5,6 +5,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
@@ -14,11 +15,12 @@ import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import com.intellij.openapi.externalSystem.service.task.ExternalSystemTaskManager;
 import org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager;
 import com.intellij.openapi.externalSystem.ui.ExternalProjectStructureTreeModel;
+import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 /**
  * Forces the 'gradle' plugin to retrieve the most up-to-date info about the
- * {@link GradleSettings#getLinkedProjectPath() linked gradle project} and update all affected control if necessary
+ * {@link GradleSettings#getLinkedExternalProjectPath() linked gradle project} and update all affected control if necessary
  * (like project structure UI, tasks list etc).
  * 
  * @author Denis Zhdanov
@@ -29,8 +31,9 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
   private final Ref<String> myErrorMessage = new Ref<String>();
 
   public GradleRefreshProjectAction() {
-    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.refresh.project.text"));
-    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.refresh.project.description"));
+    // TODO den uncomment
+    //getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.refresh.project.text"));
+    //getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.refresh.project.description"));
   }
 
   @Override
@@ -65,6 +68,6 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
     }
 
     myErrorMessage.set(null);
-    GradleUtil.refreshProject(project, myErrorMessage);
+    ExternalSystemUtil.refreshProject(project, GradleConstants.SYSTEM_ID, myErrorMessage);
   }
 }

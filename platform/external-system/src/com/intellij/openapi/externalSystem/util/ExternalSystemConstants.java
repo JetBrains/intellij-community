@@ -4,7 +4,6 @@
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
  * You may obtain a copy of the License at
- *
  * http://www.apache.org/licenses/LICENSE-2.0
  *
  * Unless required by applicable law or agreed to in writing, software
@@ -13,25 +12,19 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.gradle.util;
+package com.intellij.openapi.externalSystem.util;
 
-import com.intellij.openapi.externalSystem.service.project.manage.JarDataService;
-import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import com.intellij.openapi.externalSystem.service.project.change.MovedJarsPostProcessor;
 
 /**
  * @author Denis Zhdanov
- * @since 1/18/13 2:11 PM
+ * @since 4/16/13 11:44 AM
  */
-public class TestMovedJarsPostProcessor extends MovedJarsPostProcessor {
+public class ExternalSystemConstants {
+  @NonNls @NotNull public static final String NEWLY_IMPORTED_PROJECT = "external.system.newly.imported";
 
-  public TestMovedJarsPostProcessor(@NotNull JarDataService manager) {
-    super(manager);
-  }
-
-  @Override
-  public void doMerge(@NotNull Runnable mergeTask, @NotNull Project project) {
-    mergeTask.run();
-  }
+  // Order.
+  public static final int BUILTIN_SERVICE_ORDER = 42;
+  public static final int UNORDERED             = 1000;
 }

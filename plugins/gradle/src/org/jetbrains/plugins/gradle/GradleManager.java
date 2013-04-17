@@ -25,14 +25,17 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.remote.GradleJavaHelper;
 import org.jetbrains.plugins.gradle.remote.impl.GradleBuildManager;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
+import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
@@ -43,6 +46,8 @@ import org.jetbrains.plugins.gradle.util.GradleConstants;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -55,6 +60,18 @@ public class GradleManager
   private static final Logger LOG = Logger.getInstance("#" + GradleManager.class.getName());
 
   @NotNull private final GradleInstallationManager myInstallationManager;
+
+  @NotNull private static final NotNullLazyValue<List<GradleProjectResolverExtension>> RESOLVER_EXTENSIONS =
+    new NotNullLazyValue<List<GradleProjectResolverExtension>>() {
+      @NotNull
+      @Override
+      protected List<GradleProjectResolverExtension> compute() {
+        List<GradleProjectResolverExtension> result = ContainerUtilRt.newArrayList();
+        Collections.addAll(result, GradleProjectResolverExtension.EP_NAME.getExtensions());
+        ExternalSystemUtil.orderAwareSort(result);
+        return result;
+      }
+    };
 
   public GradleManager(@NotNull GradleInstallationManager manager) {
     myInstallationManager = manager;
@@ -117,6 +134,9 @@ public class GradleManager
         GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
                                                                      settings.getServiceDirectoryPath(),
                                                                      settings.isPreferLocalInstallationToWrapper());
+        for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
+          result.addResolverExtensionClass(extension.getClass().getName());
+        }
         String javaHome = myJavaHelper.getJdkHome(project);
         if (!StringUtil.isEmpty(javaHome)) {
           LOG.info("Instructing gradle to use java from " + javaHome);
@@ -128,7 +148,7 @@ public class GradleManager
   }
 
   @Override
-  public void enhance(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
+  public void enhanceParameters(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
     // Gradle i18n bundle.
     ExternalSystemUtil.addBundle(parameters.getClassPath(), GradleBundle.PATH_TO_BUNDLE, GradleBundle.class);
 
@@ -151,6 +171,10 @@ public class GradleManager
     }
     for (String jar : gradleJars) {
       parameters.getClassPath().add(new File(gradleJarsDir, jar).getAbsolutePath());
+    }
+
+    for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
+      extension.enhanceParameters(parameters);
     }
   }
 

@@ -22,7 +22,6 @@ import com.intellij.openapi.externalSystem.model.project.change.user.*;
 import com.intellij.openapi.externalSystem.model.project.id.*;
 import com.intellij.openapi.externalSystem.service.project.ModuleAwareContentRoot;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.util.IdeEntityVisitor;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
@@ -46,22 +45,22 @@ import java.util.Set;
 public class EntityManageHelper {
 
   @NotNull private final ProjectStructureHelper       myProjectStructureHelper;
-  @NotNull private final ProjectDataManagerImpl       myProjectManager;
-  @NotNull private final ModuleDataManager            myModuleManager;
-  @NotNull private final LibraryDataManager           myLibraryManager;
-  @NotNull private final JarDataManager               myJarManager;
-  @NotNull private final LibraryDependencyDataManager myLibraryDependencyManager;
-  @NotNull private final ModuleDependencyDataManager  myModuleDependencyManager;
-  @NotNull private final ContentRootDataManager       myContentRootManager;
+  @NotNull private final ProjectDataServiceImpl       myProjectManager;
+  @NotNull private final ModuleDataService            myModuleManager;
+  @NotNull private final LibraryDataService           myLibraryManager;
+  @NotNull private final JarDataService               myJarManager;
+  @NotNull private final LibraryDependencyDataService myLibraryDependencyManager;
+  @NotNull private final ModuleDependencyDataService  myModuleDependencyManager;
+  @NotNull private final ContentRootDataService       myContentRootManager;
 
   public EntityManageHelper(@NotNull ProjectStructureHelper helper,
-                            @NotNull ProjectDataManagerImpl projectManager,
-                            @NotNull ModuleDataManager moduleManager,
-                            @NotNull LibraryDataManager libraryManager,
-                            @NotNull JarDataManager jarManager,
-                            @NotNull LibraryDependencyDataManager libraryDependencyManager,
-                            @NotNull ModuleDependencyDataManager moduleDependencyManager,
-                            @NotNull ContentRootDataManager contentRootManager)
+                            @NotNull ProjectDataServiceImpl projectManager,
+                            @NotNull ModuleDataService moduleManager,
+                            @NotNull LibraryDataService libraryManager,
+                            @NotNull JarDataService jarManager,
+                            @NotNull LibraryDependencyDataService libraryDependencyManager,
+                            @NotNull ModuleDependencyDataService moduleDependencyManager,
+                            @NotNull ContentRootDataService contentRootManager)
   {
     myProjectStructureHelper = helper;
     myProjectManager = projectManager;
@@ -409,7 +408,7 @@ public class EntityManageHelper {
 
     @NotNull final Project                project;
     @NotNull final ProjectStructureHelper projectStructureHelper;
-    @NotNull final ProjectDataManagerImpl projectManager;
+    @NotNull final ProjectDataServiceImpl projectManager;
 
     final boolean synchronous;
 
@@ -467,7 +466,7 @@ public class EntityManageHelper {
     EliminateChangesContext(@NotNull Project project,
                             @NotNull ProjectStructureHelper projectStructureHelper,
                             @NotNull Set<UserProjectChange<?>> changesToPreserve,
-                            @NotNull ProjectDataManagerImpl projectManager,
+                            @NotNull ProjectDataServiceImpl projectManager,
                             boolean synchronous)
     {
       this.project = project;

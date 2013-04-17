@@ -32,19 +32,19 @@ import java.util.*;
  * @author Denis Zhdanov
  * @since 2/15/12 11:32 AM
  */
-public class LibraryDataManager implements ProjectDataManager<LibraryData> {
+public class LibraryDataService implements ProjectDataService<LibraryData> {
 
-  private static final Logger LOG = Logger.getInstance("#" + LibraryDataManager.class.getName());
+  private static final Logger LOG = Logger.getInstance("#" + LibraryDataService.class.getName());
 
   @NotNull private final PlatformFacade                myPlatformFacade;
   @NotNull private final ProjectStructureHelper        myProjectStructureHelper;
   @NotNull private final ExternalLibraryPathTypeMapper myLibraryPathTypeMapper;
-  @NotNull private final JarDataManager                myJarManager;
+  @NotNull private final JarDataService                myJarManager;
 
-  public LibraryDataManager(@NotNull PlatformFacade platformFacade,
+  public LibraryDataService(@NotNull PlatformFacade platformFacade,
                             @NotNull ProjectStructureHelper helper,
                             @NotNull ExternalLibraryPathTypeMapper mapper,
-                            @NotNull JarDataManager manager)
+                            @NotNull JarDataService manager)
   {
     myPlatformFacade = platformFacade;
     myProjectStructureHelper = helper;

@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
 import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
@@ -32,7 +33,8 @@ public class GradleAdjustImportSettingsUtil {
     if (!StringUtil.isEmptyOrSpaces(namedComponent.getName())) {
       return true;
     }
-    GradleUtil.showBalloon(componentNameUI, MessageType.ERROR, ExternalSystemBundle.message("gradle.import.text.error.undefined.name"));
+    // TODO den uncomment
+    //ExternalSystemUiUtil.showBalloon(componentNameUI, MessageType.ERROR, ExternalSystemBundle.message("gradle.import.text.error.undefined.name"));
     return false;
   }
 
@@ -51,10 +53,12 @@ public class GradleAdjustImportSettingsUtil {
     builder.setKeyAndValueControlsOnSameRow(true);
     
     final JCheckBox exportedCheckBock = new JCheckBox();
-    builder.add("gradle.import.structure.settings.label.export", exportedCheckBock);
+    // TODO den uncomment
+    //builder.add("gradle.import.structure.settings.label.export", exportedCheckBock);
 
     final JComboBox scopeComboBox = new JComboBox(DependencyScope.values());
-    builder.add("gradle.import.structure.settings.label.scope", scopeComboBox);
+    // TODO den uncomment
+    //builder.add("gradle.import.structure.settings.label.scope", scopeComboBox);
     
     Runnable refreshCallback = new Runnable() {
       @Override

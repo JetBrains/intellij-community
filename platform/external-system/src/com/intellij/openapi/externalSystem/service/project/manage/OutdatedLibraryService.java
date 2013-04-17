@@ -43,15 +43,15 @@ import java.util.Map;
  * @author Denis Zhdanov
  * @since 1/23/13 11:35 AM
  */
-public class OutdatedLibraryManager {
+public class OutdatedLibraryService {
 
-  @NotNull private final LibraryDataManager           myLibraryManager;
-  @NotNull private final LibraryDependencyDataManager myLibraryDependencyManager;
+  @NotNull private final LibraryDataService           myLibraryManager;
+  @NotNull private final LibraryDependencyDataService myLibraryDependencyManager;
   @NotNull private final ProjectStructureServices     myContext;
   @NotNull private final Project                      myProject;
 
-  public OutdatedLibraryManager(@NotNull LibraryDataManager libraryManager,
-                                @NotNull LibraryDependencyDataManager libraryDependencyManager,
+  public OutdatedLibraryService(@NotNull LibraryDataService libraryManager,
+                                @NotNull LibraryDependencyDataService libraryDependencyManager,
                                 @NotNull ProjectStructureServices context,
                                 @NotNull Project project)
   {

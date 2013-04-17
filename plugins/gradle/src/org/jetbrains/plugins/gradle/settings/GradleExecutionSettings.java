@@ -16,7 +16,11 @@
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.service.remote.ExternalSystemExecutionSettings;
+import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -28,6 +32,7 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   private static final long serialVersionUID = 1L;
 
+  @NotNull private final List<String> myResolverExtensions = ContainerUtilRt.newArrayList();
   @Nullable private final String myGradleHome;
   @Nullable private final String myServiceDirectory;
 
@@ -63,6 +68,15 @@ public class GradleExecutionSettings extends ExternalSystemExecutionSettings {
 
   public void setJavaHome(@Nullable String javaHome) {
     myJavaHome = javaHome;
+  }
+
+  @NotNull
+  public List<String> getResolverExtensions() {
+    return myResolverExtensions;
+  }
+
+  public void addResolverExtensionClass(@NotNull String className) {
+    myResolverExtensions.add(className);
   }
 
   @Override
