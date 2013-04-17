@@ -116,10 +116,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return envs;
   }
 
-  @Override
-  protected boolean isAutoFocusContent() {
-    return true;
-  }
 
   @Override
   protected List<AnAction> fillToolBarActions(final DefaultActionGroup toolbarActions,
