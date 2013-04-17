@@ -18,6 +18,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.NotNullFunction;
 import com.jetbrains.django.util.OSUtil;
 import com.jetbrains.python.buildout.BuildoutFacet;
+import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nullable;
@@ -82,9 +83,16 @@ public class PythonTask {
   public ProcessHandler createProcess() throws ExecutionException {
     GeneralCommandLine commandLine = createCommandLine();
 
-    ProcessHandler handler = PythonProcessRunner.createProcessHandlingCtrlC(commandLine);
+    ProcessHandler handler;
+    if (PySdkUtil.isRemote(mySdk)) {
+      assert mySdk != null;
+      handler = new PyRemoteProcessStarter().startRemoteProcess(mySdk, commandLine, myModule.getProject(), null);
+    }
+    else {
+      handler = PythonProcessRunner.createProcessHandlingCtrlC(commandLine);
 
-    ProcessTerminatedListener.attach(handler);
+      ProcessTerminatedListener.attach(handler);
+    }
     return handler;
   }
 
@@ -106,7 +114,7 @@ public class PythonTask {
     assert scriptParams != null;
     cmd.setPassParentEnvs(true);
     Map<String, String> envs = new HashMap<String, String>();
-    if (!SystemInfo.isWindows) {
+    if (!SystemInfo.isWindows && !PySdkUtil.isRemote(mySdk)) {
       cmd.setExePath("bash");
       ParamsGroup bashParams = cmd.getParametersList().addParamsGroupAt(0, "Bash");
       bashParams.addParameter("-cl");
