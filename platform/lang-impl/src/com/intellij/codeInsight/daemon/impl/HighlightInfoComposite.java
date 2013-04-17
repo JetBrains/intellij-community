@@ -39,10 +39,10 @@ public class HighlightInfoComposite extends HighlightInfo {
   @NonNls private static final String LINE_BREAK = "<hr size=1 noshade>";
 
   public HighlightInfoComposite(@NotNull List<HighlightInfo> infos) {
-    super(infos.get(0).type, infos.get(0).startOffset, infos.get(0).endOffset, createCompositeDescription(infos), createCompositeTooltip(infos));
-    text = infos.get(0).text;
+    super(null, null, infos.get(0).type, infos.get(0).startOffset, infos.get(0).endOffset, createCompositeDescription(infos),
+          createCompositeTooltip(infos), infos.get(0).type.getSeverity(null), false, null, false, 0);
     highlighter = infos.get(0).highlighter;
-    group = infos.get(0).group;
+    setGroup(infos.get(0).getGroup());
     List EMPTY = ContainerUtil.emptyList();
     List<Pair<IntentionActionDescriptor, RangeMarker>> markers = EMPTY;
     List<Pair<IntentionActionDescriptor, TextRange>> ranges = EMPTY;
@@ -65,7 +65,7 @@ public class HighlightInfoComposite extends HighlightInfo {
     StringBuilder description = new StringBuilder();
     boolean isNull = true;
     for (HighlightInfo info : infos) {
-      String itemDescription = info.description;
+      String itemDescription = info.getDescription();
       if (itemDescription != null) {
         itemDescription = itemDescription.trim();
         description.append(itemDescription);
@@ -84,7 +84,7 @@ public class HighlightInfoComposite extends HighlightInfo {
   private static String createCompositeTooltip(List<HighlightInfo> infos) {
     StringBuilder result = new StringBuilder();
     for (HighlightInfo info : infos) {
-      String toolTip = info.toolTip;
+      String toolTip = info.getToolTip();
       if (toolTip != null) {
         if (result.length() != 0) {
           result.append(LINE_BREAK);

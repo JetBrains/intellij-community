@@ -361,7 +361,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               }
               builder.unescapedToolTip(desc);
               HighlightInfo info = builder.createUnconditionally();
-              info.fromInjection = true;
+              info.setFromInjection(true);
               outInfos.add(info);
             }
 
@@ -380,15 +380,15 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               final int startOffset = info.startOffset;
               final TextRange fixedTextRange = getFixedTextRange(documentWindow, startOffset);
               if (fixedTextRange == null) {
-                info.fromInjection = true;
+                info.setFromInjection(true);
                 outInfos.add(info);
               }
               else {
                 HighlightInfo patched = new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey,
                                                           info.type, fixedTextRange.getStartOffset(), fixedTextRange.getEndOffset(),
-                                                          info.description, info.toolTip, info.type.getSeverity(null),
-                                                          info.isAfterEndOfLine, null, false, 0);
-                patched.fromInjection = true;
+                                                          info.getDescription(), info.getToolTip(), info.type.getSeverity(null),
+                                                          info.isAfterEndOfLine(), null, false, 0);
+                patched.setFromInjection(true);
                 outInfos.add(patched);
               }
             }
@@ -438,7 +438,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     for (TextRange editable : editables) {
       TextRange hostRange = fixedTextRange == null ? documentWindow.injectedToHost(editable) : fixedTextRange;
 
-      boolean isAfterEndOfLine = info.isAfterEndOfLine;
+      boolean isAfterEndOfLine = info.isAfterEndOfLine();
       if (isAfterEndOfLine) {
         // convert injected afterEndOfLine to either host' afterEndOfLine or not-afterEndOfLine highlight of the injected fragment boundary
         int hostEndOffset = hostRange.getEndOffset();
@@ -454,7 +454,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
       HighlightInfo patched =
         new HighlightInfo(info.forcedTextAttributes, info.forcedTextAttributesKey, info.type,
                           hostRange.getStartOffset(), hostRange.getEndOffset(),
-                          info.description, info.toolTip, info.type.getSeverity(null), isAfterEndOfLine, null, false, 0);
+                          info.getDescription(), info.getToolTip(), info.type.getSeverity(null), isAfterEndOfLine, null, false, 0);
       patched.setHint(info.hasHint());
       patched.setGutterIconRenderer(info.getGutterIconRenderer());
 
@@ -470,7 +470,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
           }
         }
       }
-      patched.fromInjection = true;
+      patched.setFromInjection(true);
       out.add(patched);
     }
   }
@@ -681,7 +681,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
               }
               // if this highlight info range is exactly the same as the element range we are visiting
               // that means we can clear this highlight as soon as visitors won't produce any highlights during visiting the same range next time.
-              info.bijective = elementRange.equalsToRange(info.startOffset, info.endOffset);
+              info.setBijective(elementRange.equalsToRange(info.startOffset, info.endOffset));
 
               myTransferToEDTQueue.offer(info);
               infosForThisRange.add(info);
@@ -723,8 +723,8 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     DaemonCodeAnalyzerImpl.processHighlights(getDocument(), myProject, null, range.getStartOffset(), range.getEndOffset(), new Processor<HighlightInfo>() {
       @Override
       public boolean process(final HighlightInfo existing) {
-        if (existing.bijective &&
-            existing.group == Pass.UPDATE_ALL &&
+        if (existing.isBijective() &&
+            existing.getGroup() == Pass.UPDATE_ALL &&
             range.equalsToRange(existing.getActualStartOffset(), existing.getActualEndOffset())) {
           if (holder != null) {
             for (HighlightInfo created : holder) {

@@ -183,7 +183,7 @@ public class CodeSmellDetectorImpl extends CodeSmellDetector {
   }
 
   private static String getDescription(final HighlightInfo highlightInfo) {
-    final String description = highlightInfo.description;
+    final String description = highlightInfo.getDescription();
     final HighlightInfoType type = highlightInfo.type;
     if (type instanceof HighlightInfoType.HighlightInfoTypeSeverityByKey) {
       final HighlightDisplayKey severityKey = ((HighlightInfoType.HighlightInfoTypeSeverityByKey)type).getSeverityKey();

@@ -315,7 +315,7 @@ public class InspectionValidatorWrapper implements Validator {
       if (startElement == null || endElement == null) continue;
 
       final ProblemDescriptor descriptor =
-        myInspectionManager.createProblemDescriptor(startElement, endElement, info.description, ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
+        myInspectionManager.createProblemDescriptor(startElement, endElement, info.getDescription(), ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
                                                     false);
       final HighlightDisplayLevel level = info.getSeverity() == HighlightSeverity.ERROR? HighlightDisplayLevel.ERROR: HighlightDisplayLevel.WARNING;
       problemsMap.put(descriptor, level);

@@ -634,7 +634,7 @@ public class HighlightMethodUtil {
            ? createShortMismatchedArgumentsHtmlTooltip(list, parameters, methodName, substitutor, aClass)
            : createLongMismatchedArgumentsHtmlTooltip(list, parameters, methodName, substitutor, aClass);
   }
-  
+
   @Language("HTML")
   private static String createLongMismatchedArgumentsHtmlTooltip(PsiExpressionList list,
                                                              PsiParameter[] parameters,
@@ -669,7 +669,7 @@ public class HighlightMethodUtil {
         }
       }
       s += "</nobr></b></td>";
-      
+
       s += "<td><b><nobr>";
       if (parameter != null) {
         PsiType type = substitutor.substitute(parameter.getType());
@@ -1112,7 +1112,7 @@ public class HighlightMethodUtil {
           highlightInfo = checkMethodIncompatibleReturnType(signature, superSignatures, false);
         }
       }
-      if (highlightInfo != null) description = highlightInfo.description;
+      if (highlightInfo != null) description = highlightInfo.getDescription();
 
       if (method.hasModifierProperty(PsiModifier.STATIC)) {
         for (HierarchicalMethodSignature superSignature : superSignatures) {
@@ -1131,12 +1131,12 @@ public class HighlightMethodUtil {
 
       if (description == null) {
         highlightInfo = checkMethodIncompatibleThrows(signature, superSignatures, false, aClass);
-        if (highlightInfo != null) description = highlightInfo.description;
+        if (highlightInfo != null) description = highlightInfo.getDescription();
       }
 
       if (description == null) {
         highlightInfo = checkMethodWeakerPrivileges(signature, superSignatures, false);
-        if (highlightInfo != null) description = highlightInfo.description;
+        if (highlightInfo != null) description = highlightInfo.getDescription();
       }
 
       if (description != null) break;

@@ -1,4 +1,3 @@
-
 /*
  * Copyright 2000-2009 JetBrains s.r.o.
  *
@@ -150,7 +149,7 @@ public class GotoNextErrorHandler implements CodeInsightActionHandler {
     int start = info.getActualStartOffset();
     if (start >= document.getTextLength()) return document.getTextLength();
     char c = document.getCharsSequence().charAt(start);
-    int shift = info.isAfterEndOfLine && c != '\n' ? 1 : info.navigationShift;
+    int shift = info.isAfterEndOfLine() && c != '\n' ? 1 : info.navigationShift;
 
     int offset = info.getActualStartOffset() + shift;
     return Math.min(offset, document.getTextLength());

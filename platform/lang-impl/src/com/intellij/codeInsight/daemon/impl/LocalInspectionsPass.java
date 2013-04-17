@@ -382,7 +382,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       new Processor<InspectionContext>() {
         @Override
         public boolean process(InspectionContext context) {
-          
+
           indicator.checkCanceled();
           ApplicationManager.getApplication().assertReadAccessAllowed();
           acceptElements(elements, context.visitor, context.languageIds);
@@ -621,15 +621,15 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       int start = hostRange.getStartOffset();
       int end = hostRange.getEndOffset();
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(info.type).range(element, start, end);
-      if (info.description != null) {
-        builder.description(info.description);
+      if (info.getDescription() != null) {
+        builder.description(info.getDescription());
       }
-      if (info.toolTip != null) {
-        builder.escapedToolTip(info.toolTip);
+      if (info.getToolTip() != null) {
+        builder.escapedToolTip(info.getToolTip());
       }
       HighlightInfo patched = builder.createUnconditionally();
       if (patched.startOffset != patched.endOffset || info.startOffset == info.endOffset) {
-        patched.fromInjection = true;
+        patched.setFromInjection(true);
         registerQuickFixes(tool, descriptor, patched, emptyActionRegistered);
         outInfos.add(patched);
       }
@@ -800,7 +800,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       this.foundProblems = foundProblems;
     }
   }
-  
+
   private static class InspectionContext {
     private InspectionContext(LocalInspectionToolWrapper tool, ProblemsHolder holder, PsiElementVisitor visitor, Set<String> languageIds) {
       this.tool = tool;
