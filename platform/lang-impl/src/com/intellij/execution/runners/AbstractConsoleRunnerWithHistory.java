@@ -175,8 +175,8 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return consoleTitle;
   }
 
-  protected boolean isAutoFocusContent() {
-    return false;
+  public boolean isAutoFocusContent() {
+    return true;
   }
 
   protected boolean shouldAddNumberToTitle() {
