@@ -36,10 +36,11 @@ public class PySingleStarParameterElementType extends PyStubElementType<PySingle
     return new PySingleStarParameterStubImpl(parentStub);
   }
 
-  public void serialize(PySingleStarParameterStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PySingleStarParameterStub stub, @NotNull StubOutputStream dataStream) throws IOException {
   }
 
-  public PySingleStarParameterStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  @NotNull
+  public PySingleStarParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new PySingleStarParameterStubImpl(parentStub);
   }
 }

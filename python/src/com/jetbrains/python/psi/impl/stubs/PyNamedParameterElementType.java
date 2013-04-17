@@ -45,7 +45,7 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
     return new PyNamedParameterImpl(node);
   }
 
-  public void serialize(final PyNamedParameterStub stub, final StubOutputStream dataStream)
+  public void serialize(@NotNull final PyNamedParameterStub stub, @NotNull final StubOutputStream dataStream)
       throws IOException {
     dataStream.writeName(stub.getName());
 
@@ -56,7 +56,8 @@ public class PyNamedParameterElementType extends PyStubElementType<PyNamedParame
     dataStream.writeByte(flags);
   }
 
-  public PyNamedParameterStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  @NotNull
+  public PyNamedParameterStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     String name = StringRef.toString(dataStream.readName());
     byte flags = dataStream.readByte();
     return new PyNamedParameterStubImpl(name,

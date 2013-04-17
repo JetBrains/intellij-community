@@ -34,12 +34,13 @@ public class PyTupleParameterElementType extends PyStubElementType<PyTupleParame
     return new PyTupleParameterStubImpl(psi.hasDefaultValue(), parentStub);
   }
 
-  public PyTupleParameterStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  @NotNull
+  public PyTupleParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     boolean hasDefaultValue = dataStream.readBoolean();
     return new PyTupleParameterStubImpl(hasDefaultValue, parentStub);
   }
 
-  public void serialize(PyTupleParameterStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PyTupleParameterStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeBoolean(stub.hasDefaultValue());
   }
 }
