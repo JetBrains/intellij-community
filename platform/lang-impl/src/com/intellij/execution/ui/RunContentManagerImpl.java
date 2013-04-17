@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -293,6 +293,7 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
     }
     content.setExecutionId(executionId);
     content.setComponent(descriptor.getComponent());
+    content.setPreferredFocusedComponent(descriptor.getPreferredFocusComputable());
     content.putUserData(DESCRIPTOR_KEY, descriptor);
     final ProcessHandler processHandler = descriptor.getProcessHandler();
     if (processHandler != null) {
@@ -340,9 +341,10 @@ public class RunContentManagerImpl implements RunContentManager, Disposable {
         //
         // window.show() isn't valid here, because it will not
         // mark the window as "last activated" windows and thus
-        // some action like navigation up/down in stactrace wont
+        // some action like navigation up/down in stacktrace wont
         // work correctly
-        window.activate(null, false, false);
+        descriptor.getPreferredFocusComputable();
+        window.activate(null, descriptor.isAutoFocusContent(), descriptor.isAutoFocusContent());
       }
     });
   }
