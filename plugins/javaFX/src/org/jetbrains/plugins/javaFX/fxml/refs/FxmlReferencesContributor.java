@@ -24,6 +24,7 @@ import com.intellij.psi.impl.source.resolve.reference.impl.providers.JavaClassRe
 import com.intellij.psi.xml.XmlProcessingInstruction;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.xml.XmlElementDescriptor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
@@ -156,7 +157,28 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
       @Nullable
       @Override
       public PsiElement resolve() {
-        return myReference.resolve();
+        final PsiElement resolve = myReference.resolve();
+        if (resolve != null) {
+          return resolve;
+        }
+        return getReferencedClass();
+      }
+
+      private PsiElement getReferencedClass() {
+        if (myPosition instanceof XmlTag) {
+          final XmlElementDescriptor descriptor = ((XmlTag)myPosition).getDescriptor();
+          if (descriptor != null) {
+            final PsiElement declaration = descriptor.getDeclaration();
+            if (declaration instanceof PsiMethod &&
+                ((PsiMethod)declaration).hasModifierProperty(PsiModifier.STATIC)) {
+              final PsiClass containingClass = ((PsiMethod)declaration).getContainingClass();
+              if (containingClass != null && myReference.getCanonicalText().equals(containingClass.getName())) {
+                return containingClass;
+              }
+            }
+          }
+        }
+        return null;
       }
 
       @NotNull
@@ -176,13 +198,13 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
         throws IncorrectOperationException {
         String oldText = ((XmlTag)myPosition).getName();
         final TextRange range = getRangeInElement();
-        final String newText = ((PsiPackage)element).getQualifiedName() +
+        final String newText = (element instanceof PsiPackage ? ((PsiPackage)element).getQualifiedName() : ((PsiClass)element).getName()) +
                                oldText.substring(range.getEndOffset() - 1);
         return ((XmlTag)myPosition).setName(newText);
       }
 
       public boolean isReferenceTo(PsiElement element) {
-        return myReference.isReferenceTo(element);
+        return myReference.isReferenceTo(element) || getReferencedClass() == element;
       }
 
       @NotNull
