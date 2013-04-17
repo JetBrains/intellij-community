@@ -636,4 +636,14 @@ a<warning descr="Cannot resolve index access with arguments (java.lang.Integer, 
 ''')
   }
 
+  public void testVarWithInitializer() {
+    testHighlighting('''\
+Object o = new Date()
+foo(o)
+bar<warning descr="'bar' in '_' cannot be applied to '(java.util.Date)'">(o)</warning>
+
+def foo(Date d) {}
+def bar(String s) {}
+''')
+  }
 }

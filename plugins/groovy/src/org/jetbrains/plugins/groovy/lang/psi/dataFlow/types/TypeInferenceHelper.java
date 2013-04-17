@@ -33,7 +33,6 @@ import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.InstanceOfInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.MixinTypeInstruction;
@@ -229,14 +228,7 @@ public class TypeInferenceHelper {
     }
 
     if (element instanceof GrVariable) {
-      GrVariable variable = (GrVariable)element;
-        if (!(variable instanceof GrParameter)) {
-          final GrExpression initializer = variable.getInitializerGroovy();
-          if (initializer != null) {
-            return initializer.getType();
-          }
-        }
-        return variable.getTypeGroovy();
+      return ((GrVariable)element).getTypeGroovy();
     }
 
     return null;
