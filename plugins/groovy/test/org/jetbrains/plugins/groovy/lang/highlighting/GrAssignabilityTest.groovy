@@ -636,4 +636,14 @@ a<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' c
 ''')
   }
 
+  public void testVarWithInitializer() {
+    testHighlighting('''\
+Object o = new Date()
+foo(o)
+bar<warning descr="'bar' in '_' cannot be applied to '(java.util.Date)'">(o)</warning>
+
+def foo(Date d) {}
+def bar(String s) {}
+''')
+  }
 }
