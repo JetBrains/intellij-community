@@ -44,6 +44,32 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     assertModulesUpToDate();
   }
 
+  public void testForceCompileUpToDateFileAndDoNotCompileDependentTestClass() {
+    VirtualFile a = createFile("src/A.java", "class A{ public static void foo(int param) {} }");
+    VirtualFile b = createFile("testSrc/B.java", "class B { void bar() {A.foo(10);}}");
+    Module module = addModule("a", a.getParent(), b.getParent());
+    make(module);
+    assertOutput(module, fs().file("A.class"), false);
+    assertOutput(module, fs().file("B.class"), true);
+    final VirtualFile output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module, false));
+    assertNotNull(output);
+    final VirtualFile testOutput = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module, true));
+    assertNotNull(testOutput);
+    final VirtualFile classFile = output.findChild("A.class");
+    assertNotNull(classFile);
+    final VirtualFile testClassFile = testOutput.findChild("B.class");
+    assertNotNull(testClassFile);
+    deleteFile(classFile);
+    deleteFile(testClassFile);
+    make(module);
+    assertOutput(module, fs());
+    compile(true, a);
+    assertOutput(module, fs().file("A.class"), false);
+    assertOutput(module, fs(), true);
+    boolean upToDate = getCompilerManager().isUpToDate(getCompilerManager().createProjectCompileScope(myProject));
+    assertFalse("Module should not be up to date", upToDate);
+  }
+
   public void testMakeTwoModules() {
     VirtualFile file1 = createFile("m1/src/A.java", "class A{}");
     Module m1 = addModule("m1", file1.getParent());
