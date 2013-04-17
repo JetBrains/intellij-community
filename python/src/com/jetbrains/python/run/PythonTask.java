@@ -114,7 +114,7 @@ public class PythonTask {
     assert scriptParams != null;
     cmd.setPassParentEnvs(true);
     Map<String, String> envs = new HashMap<String, String>();
-    if (!SystemInfo.isWindows && !PySdkUtil.isRemote(mySdk)) {
+    if (1==2 && !SystemInfo.isWindows && !PySdkUtil.isRemote(mySdk)) {
       cmd.setExePath("bash");
       ParamsGroup bashParams = cmd.getParametersList().addParamsGroupAt(0, "Bash");
       bashParams.addParameter("-cl");
