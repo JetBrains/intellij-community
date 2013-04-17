@@ -6,6 +6,8 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.containers.Stack;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.*;
@@ -48,11 +50,8 @@ public class PythonUnitTestUtil {
   }
 
   private static boolean isUnitTestCaseClass(PyClass cls, HashSet<String> testQualifiedNames) {
-    for (PyClassRef ancestor : cls.iterateAncestors()) {
-      if (ancestor == null) continue;
-
-      String qName = ancestor.getQualifiedName();
-      if (testQualifiedNames.contains(qName)) {
+    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+      if (type != null && testQualifiedNames.contains(type.getClassQName())) {
         return true;
       }
     }
@@ -122,21 +121,19 @@ public class PythonUnitTestUtil {
   }
 
   public static boolean isTestCaseClass(@NotNull PyClass cls, Set<String> testQualifiedNames) {
-    for (PyClassRef ancestor : cls.iterateAncestors()) {
-      String qName = ancestor.getQualifiedName();
-      if (qName == null) continue;
-      if (testQualifiedNames.contains(qName)) {
-        return true;
-      }
-      String clsName = cls.getQualifiedName();
-      String[] names = clsName.split("\\.");
-      clsName = names[names.length - 1];
-
-      if (TEST_MATCH_PATTERN.matcher(clsName).find()) {
-        return true;
+    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+      if (type != null) {
+        if (testQualifiedNames.contains(type.getClassQName())) {
+          return true;
+        }
+        String clsName = cls.getQualifiedName();
+        String[] names = clsName.split("\\.");
+        clsName = names[names.length - 1];
+        if (TEST_MATCH_PATTERN.matcher(clsName).find()) {
+          return true;
+        }
       }
     }
-
     return false;
   }
 }

@@ -174,21 +174,6 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return expression;
   }
 
-  public Iterable<PyClassRef> iterateAncestors() {
-    // TODO: Change this method to getAncestorTypes()
-    // Implementation is no longer lazy, because C3 resolve for new-style classes will not be lazy
-    final List<PyClassRef> results = new ArrayList<PyClassRef>();
-    for (PyClassLikeType type : getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
-      if (type instanceof PyClassType) {
-        results.add(new PyClassRef(((PyClassType)type).getPyClass()));
-      }
-      else {
-        results.add(new PyClassRef((PyClass)null));
-      }
-    }
-    return results;
-  }
-
   @Override
   public Iterable<PyClass> iterateAncestorClasses() {
     final List<PyClass> results = new ArrayList<PyClass>();
@@ -215,8 +200,10 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (superClassQName.equals(getQualifiedName())) {
       return true;
     }
-    for (PyClassRef superclass : iterateAncestors()) {
-      if (superClassQName.equals(superclass.getQualifiedName())) return true;
+    for (PyClassLikeType type : getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+      if (type != null && superClassQName.equals(type.getClassQName())) {
+        return true;
+      }
     }
     return false;
   }
@@ -274,85 +261,19 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return PyFileImpl.getStringListFromTargetExpression(PyNames.SLOTS, getClassAttributes());
   }
 
-  @Nullable
-  private List<PyClassRef> resolveSuperClassesFromStub() {
-    final PyClassStub stub = getStub();
-    if (stub == null) {
-      return null;
-    }
-    // stub-based resolve currently works correctly only with classes in file level
-    final PsiElement parent = stub.getParentStub().getPsi();
-    if (!(parent instanceof PyFile)) {
-      // TODO[yole] handle this case
-      return null;
-    }
-
-    List<PyClassRef> result = new ArrayList<PyClassRef>();
-    for (PyQualifiedName qualifiedName : stub.getSuperClasses()) {
-      result.add(classRefFromQName((NameDefiner)parent, qualifiedName));
-    }
-    return result;
-  }
-
-  private static PyClassRef classRefFromQName(NameDefiner parent, PyQualifiedName qualifiedName) {
-    if (qualifiedName == null) {
-      return new PyClassRef((String)null);
-    }
-    NameDefiner currentParent = parent;
-    for (String component : qualifiedName.getComponents()) {
-      PsiElement element = currentParent.getElementNamed(component);
-      element = PyUtil.turnDirIntoInit(element);
-      if (element instanceof PyImportElement) {
-        element = ((PyImportElement)element).resolve();
-      }
-      if (!(element instanceof NameDefiner)) {
-        currentParent = null;
-        break;
-      }
-      currentParent = (NameDefiner)element;
-    }
-
-    if (currentParent != null) {
-      return new PyClassRef(currentParent);
-    }
-    if (qualifiedName.getComponentCount() == 1) {
-      final PyClass builtinClass = PyBuiltinCache.getInstance(parent).getClass(qualifiedName.getComponents().get(0));
-      if (builtinClass != null) {
-        return new PyClassRef(builtinClass);
-      }
-    }
-    return new PyClassRef(qualifiedName.toString());
-  }
-
   @NotNull
   public PyClass[] getSuperClasses() {
-    final PyClassStub stub = getStub();
-    if (stub != null) {
-      final List<PyClassRef> pyClasses = resolveSuperClassesFromStub();
-      if (pyClasses == null) {
-        return EMPTY_ARRAY;
-      }
-      List<PyClass> result = new ArrayList<PyClass>();
-      for (PyClassRef clsRef : pyClasses) {
-        PyClass pyClass = clsRef.getPyClass();
-        if (pyClass != null) {
-          result.add(pyClass);
-        }
-      }
-      return result.toArray(new PyClass[result.size()]);
+    final List<PyClassLikeType> superTypes = getSuperClassTypes(TypeEvalContext.fastStubOnly(null));
+    if (superTypes.isEmpty()) {
+      return EMPTY_ARRAY;
     }
-
-    PsiElement[] superClassElements = getSuperClassElements();
-    if (superClassElements.length > 0) {
-      List<PyClass> result = new ArrayList<PyClass>();
-      for (PsiElement element : superClassElements) {
-        if (element instanceof PyClass) {
-          result.add((PyClass)element);
-        }
+    final List<PyClass> result = new ArrayList<PyClass>();
+    for (PyClassLikeType type : superTypes) {
+      if (type instanceof PyClassType) {
+        result.add(((PyClassType)type).getPyClass());
       }
-      return result.toArray(new PyClass[result.size()]);
     }
-    return EMPTY_ARRAY;
+    return result.toArray(new PyClass[result.size()]);
   }
 
 
@@ -963,15 +884,17 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     final PyClass objClass = PyBuiltinCache.getInstance(this).getClass("object");
     if (this == objClass) return true; // a rare but possible case
     if (hasNewStyleMetaClass(this)) return true;
-    for (PyClassRef ancestor : iterateAncestors()) {
-      final PyClass pyClass = ancestor.getPyClass();
-      if (pyClass == null) {
+    for (PyClassLikeType type : getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+      if (type == null) {
         // unknown, assume new-style class
         return true;
       }
-      if (pyClass == objClass) return true;
-      if (hasNewStyleMetaClass(pyClass)) {
-        return true;
+      if (type instanceof PyClassType) {
+        final PyClass pyClass = ((PyClassType)type).getPyClass();
+        if (pyClass == objClass) return true;
+        if (hasNewStyleMetaClass(pyClass)) {
+          return true;
+        }
       }
     }
     return false;

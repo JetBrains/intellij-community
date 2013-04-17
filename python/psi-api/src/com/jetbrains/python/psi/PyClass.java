@@ -110,12 +110,6 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    */
   boolean isNewStyleClass();
 
-  /**
-   * A lazy way to list ancestor classes width first, *not* in method-resolution order.
-   * @return an iterable of ancestor classes.
-   */
-  Iterable<PyClassRef> iterateAncestors();
-
   Iterable<PyClass> iterateAncestorClasses();
 
   /**

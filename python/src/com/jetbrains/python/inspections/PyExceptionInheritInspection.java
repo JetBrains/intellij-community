@@ -6,6 +6,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassLikeType;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -47,8 +48,11 @@ public class PyExceptionInheritInspection extends PyInspection {
           PsiElement psiElement = ((PyReferenceExpression)callee).getReference(resolveWithoutImplicits()).resolve();
           if (psiElement instanceof PyClass) {
             PyClass aClass = (PyClass) psiElement;
-            for (PyClassRef pyClass : aClass.iterateAncestors()) {
-              final String name = pyClass.getClassName();
+            for (PyClassLikeType type : aClass.getAncestorTypes(myTypeEvalContext)) {
+              if (type == null) {
+                return;
+              }
+              final String name = type.getName();
               if (name == null || "BaseException".equals(name) || "Exception".equals(name)) {
                 return;
               }

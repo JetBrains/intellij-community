@@ -134,8 +134,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             final List<String> slots = pyClass.getSlots();
             final String attrName = node.getReferencedName();
             if (slots != null && !slots.contains(attrName) && !slots.contains(PyNames.DICT)) {
-              for (PyClassRef ref : pyClass.iterateAncestors()) {
-                final PyClass ancestor = ref.getPyClass();
+              for (PyClass ancestor : pyClass.iterateAncestorClasses()) {
                 if (ancestor == null) {
                   return;
                 }

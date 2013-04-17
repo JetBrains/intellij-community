@@ -618,8 +618,8 @@ public class PyUtil {
   }
 
   public static boolean hasUnresolvedAncestors(@NotNull PyClass cls) {
-    for (PyClassRef classRef : cls.iterateAncestors()) {
-      if (classRef.getPyClass() == null && classRef.getType() == null) {
+    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+      if (type == null) {
         return true;
       }
     }
@@ -959,8 +959,10 @@ public class PyUtil {
     if (isBaseException(pyClass.getQualifiedName())) {
       return true;
     }
-    for (PyClassRef superclass : pyClass.iterateAncestors()) {
-      if (isBaseException(superclass.getQualifiedName())) return true;
+    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+      if (type != null && isBaseException(type.getClassQName())) {
+        return true;
+      }
     }
     return false;
   }

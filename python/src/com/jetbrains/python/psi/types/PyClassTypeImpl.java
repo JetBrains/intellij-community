@@ -122,6 +122,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
                                                              @Nullable PyExpression location,
                                                              @NotNull AccessDirection direction,
                                                              @NotNull PyResolveContext resolveContext) {
+    final TypeEvalContext context = resolveContext.getTypeEvalContext();
     PsiElement classMember = resolveByOverridingMembersProviders(this, name); //overriding members provers have priority to normal resolve
     if (classMember != null) {
       return ResolveResultList.to(classMember);
@@ -147,11 +148,11 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       }
     }
 
-    if ("super".equals(getClassQName()) && isBuiltin(resolveContext.getTypeEvalContext()) && location instanceof PyCallExpression) {
+    if ("super".equals(getClassQName()) && isBuiltin(context) && location instanceof PyCallExpression) {
       // methods of super() call are not of class super!
       PyExpression first_arg = ((PyCallExpression)location).getArgument(0, PyExpression.class);
       if (first_arg != null) { // the usual case: first arg is the derived class that super() is proxying for
-        PyType first_arg_type = resolveContext.getTypeEvalContext().getType(first_arg);
+        PyType first_arg_type = context.getType(first_arg);
         if (first_arg_type instanceof PyClassType) {
           PyClass derived_class = ((PyClassType)first_arg_type).getPyClass();
           final Iterator<PyClass> base_it = derived_class.iterateAncestorClasses().iterator();
@@ -170,7 +171,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return ResolveResultList.to(classMember);
     }
 
-    for (PyClassLikeType type : myClass.getAncestorTypes(resolveContext.getTypeEvalContext())) {
+    for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
       if (type instanceof PyClassType) {
         PsiElement superMember = resolveClassMember(((PyClassType)type).getPyClass(), myIsDefinition, name, null);
         if (superMember != null) {
@@ -201,13 +202,15 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return ResolveResultList.to(classMember);
     }
 
-    for (PyClassRef superClass : myClass.iterateAncestors()) {
-      final PyClass pyClass = superClass.getPyClass();
-      if (pyClass != null) {
-        PsiElement superMember = resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name);
+    for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
+      if (type instanceof PyClassType) {
+        final PyClass pyClass = ((PyClassType)type).getPyClass();
+        if (pyClass != null) {
+          PsiElement superMember = resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name);
 
-        if (superMember != null) {
-          return ResolveResultList.to(superMember);
+          if (superMember != null) {
+            return ResolveResultList.to(superMember);
+          }
         }
       }
     }
