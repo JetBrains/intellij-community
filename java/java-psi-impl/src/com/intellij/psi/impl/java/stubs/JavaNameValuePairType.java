@@ -80,18 +80,19 @@ public class JavaNameValuePairType extends JavaStubElementType<PsiNameValuePairS
   }
 
   @Override
-  public void serialize(PsiNameValuePairStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PsiNameValuePairStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     dataStream.writeName(stub.getValue());
   }
 
+  @NotNull
   @Override
-  public PsiNameValuePairStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public PsiNameValuePairStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
     return new PsiNameValuePairStubImpl(parentStub, name, dataStream.readName());
   }
 
   @Override
-  public void indexStub(PsiNameValuePairStub stub, IndexSink sink) {
+  public void indexStub(@NotNull PsiNameValuePairStub stub, @NotNull IndexSink sink) {
   }
 }

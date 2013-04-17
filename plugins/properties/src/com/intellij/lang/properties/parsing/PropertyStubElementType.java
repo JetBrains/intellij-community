@@ -43,20 +43,22 @@ public class PropertyStubElementType extends IStubElementType<PropertyStub, Prop
     return new PropertyStubImpl(parentStub, psi.getKey());
   }
 
+  @NotNull
   public String getExternalId() {
     return "properties.prop";
   }
 
-  public void serialize(final PropertyStub stub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final PropertyStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getKey());
   }
 
-  public PropertyStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  @NotNull
+  public PropertyStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     final StringRef ref = dataStream.readName();
     return new PropertyStubImpl(parentStub, ref.getString());
   }
 
-  public void indexStub(final PropertyStub stub, final IndexSink sink) {
+  public void indexStub(@NotNull final PropertyStub stub, @NotNull final IndexSink sink) {
     sink.occurrence(PropertyKeyIndex.KEY, PropertyImpl.unescape(stub.getKey()));
   }
 }

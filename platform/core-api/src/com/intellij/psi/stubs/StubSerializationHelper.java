@@ -16,8 +16,8 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.diagnostic.LogUtil;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
+import com.intellij.util.containers.PrefixStringInterner;
 import com.intellij.util.containers.RecentStringInterner;
 import com.intellij.util.io.AbstractStringEnumerator;
 import com.intellij.util.io.DataInputOutputUtil;
@@ -38,12 +38,12 @@ import java.util.List;
  * Author: dmitrylomov
  */
 public class StubSerializationHelper {
-  private AbstractStringEnumerator myNameStorage;
+  private final AbstractStringEnumerator myNameStorage;
 
   protected final TIntObjectHashMap<ObjectStubSerializer> myIdToSerializer = new TIntObjectHashMap<ObjectStubSerializer>();
   protected final TObjectIntHashMap<ObjectStubSerializer> mySerializerToId = new TObjectIntHashMap<ObjectStubSerializer>();
 
-  public StubSerializationHelper(AbstractStringEnumerator nameStorage) {
+  public StubSerializationHelper(@NotNull AbstractStringEnumerator nameStorage) {
     myNameStorage = nameStorage;
   }
 
@@ -57,13 +57,10 @@ public class StubSerializationHelper {
   }
 
   private int persistentId(@NotNull final ObjectStubSerializer serializer) throws IOException {
-    if (myNameStorage == null) {
-      throw new IOException("SerializationManager's name storage failed to initialize");
-    }
     return myNameStorage.enumerate(serializer.getExternalId());
   }
 
-  private void doSerialize(final Stub rootStub, final StubOutputStream stream) throws IOException {
+  private void doSerialize(@NotNull Stub rootStub, @NotNull StubOutputStream stream) throws IOException {
     final ObjectStubSerializer serializer = StubSerializationUtil.getSerializer(rootStub);
 
     DataInputOutputUtil.writeINT(stream, getClassId(serializer));
@@ -77,7 +74,7 @@ public class StubSerializationHelper {
     }
   }
 
-  public void serialize(Stub rootStub, OutputStream stream) throws IOException {
+  public void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream) throws IOException {
     BufferExposingByteArrayOutputStream out = new BufferExposingByteArrayOutputStream();
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator();
     StubOutputStream stubOutputStream = new StubOutputStream(out, storage);
@@ -100,7 +97,8 @@ public class StubSerializationHelper {
 
   private final RecentStringInterner myStringInterner = new RecentStringInterner();
 
-  public Stub deserialize(InputStream stream) throws IOException, SerializerNotFoundException {
+  @NotNull
+  public Stub deserialize(@NotNull InputStream stream) throws IOException, SerializerNotFoundException {
     FileLocalStringEnumerator storage = new FileLocalStringEnumerator();
     StubInputStream inputStream = new StubInputStream(stream, storage);
     final int size = DataInputOutputUtil.readINT(inputStream);
@@ -120,7 +118,8 @@ public class StubSerializationHelper {
     return myStringInterner.get(str);
   }
 
-  private Stub deserialize(StubInputStream stream, @Nullable Stub parentStub) throws IOException, SerializerNotFoundException {
+  @NotNull
+  private Stub deserialize(@NotNull StubInputStream stream, @Nullable Stub parentStub) throws IOException, SerializerNotFoundException {
     final int id = DataInputOutputUtil.readINT(stream);
     final ObjectStubSerializer serializer = getClassById(id);
     if (serializer == null) {
@@ -143,22 +142,18 @@ public class StubSerializationHelper {
   private static class FileLocalStringEnumerator implements AbstractStringEnumerator {
     private final TObjectIntHashMap<String> myEnumerates = new TObjectIntHashMap<String>();
     private final ArrayList<String> myStrings = new ArrayList<String>();
+    PrefixStringInterner interner = new PrefixStringInterner();
 
     @Override
     public int enumerate(@Nullable String value) throws IOException {
       if (value == null) return 0;
-      int i = myEnumerates.get(value);
-      if (i == 0) {
-        myEnumerates.put(value, i = myStrings.size() + 1);
-        myStrings.add(value);
-      }
-      return i;
+      return interner.intern(value);
     }
 
     @Override
     public String valueOf(int idx) throws IOException {
       if (idx == 0) return null;
-      return myStrings.get(idx - 1);
+      return interner.getKeyById(idx);
     }
 
     @Override

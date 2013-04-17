@@ -41,6 +41,7 @@ public abstract class JavaStubElementType<StubT extends StubElement, PsiT extend
     myLeftBound = leftBound;
   }
 
+  @NotNull
   @Override
   public String getExternalId() {
     return "java." + toString();

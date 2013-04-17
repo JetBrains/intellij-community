@@ -19,6 +19,7 @@ import com.intellij.psi.stubs.IndexSink;
 import com.intellij.psi.stubs.ObjectStubSerializer;
 import com.intellij.psi.stubs.StubInputStream;
 import com.intellij.psi.stubs.StubOutputStream;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -31,21 +32,23 @@ public class ElementStubSerializer implements ObjectStubSerializer<ElementStub, 
   final static ObjectStubSerializer INSTANCE = new ElementStubSerializer();
 
   @Override
-  public void serialize(ElementStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull ElementStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     dataStream.writeName(stub.getNamespaceKey());
     dataStream.writeBoolean(stub.isCustom());
   }
 
+  @NotNull
   @Override
-  public ElementStub deserialize(StubInputStream dataStream, ElementStub parentStub) throws IOException {
+  public ElementStub deserialize(@NotNull StubInputStream dataStream, ElementStub parentStub) throws IOException {
     return new ElementStub(parentStub, dataStream.readName(), dataStream.readName(), dataStream.readBoolean());
   }
 
   @Override
-  public void indexStub(ElementStub stub, IndexSink sink) {
+  public void indexStub(@NotNull ElementStub stub, @NotNull IndexSink sink) {
   }
 
+  @NotNull
   @Override
   public String getExternalId() {
     return "ElementStubSerializer";

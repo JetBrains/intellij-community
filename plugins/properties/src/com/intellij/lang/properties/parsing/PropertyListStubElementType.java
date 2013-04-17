@@ -41,17 +41,19 @@ public class PropertyListStubElementType extends IStubElementType<PropertiesList
     return new PropertiesListStubImpl(parentStub);
   }
 
+  @NotNull
   public String getExternalId() {
     return "properties.propertieslist";
   }
 
-  public void serialize(final PropertiesListStub stub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final PropertiesListStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
   }
 
-  public PropertiesListStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  @NotNull
+  public PropertiesListStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PropertiesListStubImpl(parentStub);
   }
 
-  public void indexStub(final PropertiesListStub stub, final IndexSink sink) {
+  public void indexStub(@NotNull final PropertiesListStub stub, @NotNull final IndexSink sink) {
   }
 }

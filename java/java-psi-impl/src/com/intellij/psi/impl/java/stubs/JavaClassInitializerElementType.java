@@ -62,15 +62,16 @@ public class JavaClassInitializerElementType extends JavaStubElementType<PsiClas
   }
 
   @Override
-  public void serialize(final PsiClassInitializerStub stub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final PsiClassInitializerStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
   }
 
+  @NotNull
   @Override
-  public PsiClassInitializerStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiClassInitializerStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PsiClassInitializerStubImpl(parentStub);
   }
 
   @Override
-  public void indexStub(final PsiClassInitializerStub stub, final IndexSink sink) {
+  public void indexStub(@NotNull final PsiClassInitializerStub stub, @NotNull final IndexSink sink) {
   }
 }

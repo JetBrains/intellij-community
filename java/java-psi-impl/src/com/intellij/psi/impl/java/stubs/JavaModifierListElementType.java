@@ -63,7 +63,7 @@ public class JavaModifierListElementType extends JavaStubElementType<PsiModifier
   }
 
   @Override
-  public void serialize(final PsiModifierListStub stub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final PsiModifierListStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
     dataStream.writeVarInt(stub.getModifiersMask());
   }
 
@@ -84,12 +84,13 @@ public class JavaModifierListElementType extends JavaStubElementType<PsiModifier
     return parentType != null && parentType != JavaElementType.LOCAL_VARIABLE && parentType != JavaElementType.RESOURCE_VARIABLE;
   }
 
+  @NotNull
   @Override
-  public PsiModifierListStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiModifierListStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PsiModifierListStubImpl(parentStub, dataStream.readVarInt());
   }
 
   @Override
-  public void indexStub(final PsiModifierListStub stub, final IndexSink sink) {
+  public void indexStub(@NotNull final PsiModifierListStub stub, @NotNull final IndexSink sink) {
   }
 }

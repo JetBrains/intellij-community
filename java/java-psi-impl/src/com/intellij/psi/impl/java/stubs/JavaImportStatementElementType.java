@@ -80,19 +80,20 @@ public abstract class JavaImportStatementElementType extends JavaStubElementType
   }
 
   @Override
-  public void serialize(final PsiImportStatementStub stub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final PsiImportStatementStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
     dataStream.writeByte(((PsiImportStatementStubImpl)stub).getFlags());
     dataStream.writeName(stub.getImportReferenceText());
   }
 
+  @NotNull
   @Override
-  public PsiImportStatementStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiImportStatementStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     final byte flags = dataStream.readByte();
     final StringRef refText = dataStream.readName();
     return new PsiImportStatementStubImpl(parentStub, refText, flags);
   }
 
   @Override
-  public void indexStub(final PsiImportStatementStub stub, final IndexSink sink) {
+  public void indexStub(@NotNull final PsiImportStatementStub stub, @NotNull final IndexSink sink) {
   }
 }
