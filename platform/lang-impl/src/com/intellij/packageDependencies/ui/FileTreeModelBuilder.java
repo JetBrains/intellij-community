@@ -163,6 +163,7 @@ public class FileTreeModelBuilder {
 
           @Override
           public void onSuccess() {
+            if (project.isDisposed()) return;
             myRoot.setSorted(false);
             myRoot.sortChildren();
             treeModel.reload(myRoot);
