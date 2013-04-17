@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -560,7 +560,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       supportProvider != null &&
       editor.getSettings().isVariableInplaceRenameEnabled() &&
       supportProvider.isInplaceIntroduceAvailable(expr, nameSuggestionContext) &&
-      !ApplicationManager.getApplication().isUnitTestMode() &&
+      (!ApplicationManager.getApplication().isUnitTestMode() || isInplaceAvailableInTestMode()) &&
       !isInJspHolderMethod(expr);
 
     if (isInplaceAvailableOnDataContext) {
@@ -592,14 +592,14 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
         final boolean allOccurences = choice != OccurrencesChooser.ReplaceChoice.NO;
         final PsiElement chosenAnchor = allOccurences ? anchorStatementIfAll : anchorStatement;
         final Ref<SmartPsiElementPointer<PsiVariable>> variable = new Ref<SmartPsiElementPointer<PsiVariable>>();
-        
+
         final Editor topLevelEditor;
         if (!InjectedLanguageManager.getInstance(project).isInjectedFragment(anchorStatement.getContainingFile())) {
           topLevelEditor = InjectedLanguageUtil.getTopLevelEditor(editor);
         } else {
           topLevelEditor = editor;
         }
-        
+
         final IntroduceVariableSettings settings =
           getSettings(project, topLevelEditor, expr, occurrences, typeSelectorManager, inFinalContext, hasWriteAccess, validator, chosenAnchor, choice);
         if (!settings.isOK()) {
@@ -651,6 +651,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       OccurrencesChooser.<PsiExpression>simpleChooser(editor).showChooser(callback, occurrencesMap);
     }
     return wasSucceed[0];
+  }
+
+  protected boolean isInplaceAvailableInTestMode() {
+    return false;
   }
 
   private static ExpressionOccurrenceManager createOccurrenceManager(PsiExpression expr, PsiElement tempContainer) {
@@ -836,7 +840,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
             if (!deleteSelf && replaceSelf && expr1 instanceof PsiPolyadicExpression && expr1.isValid() && !expr1.isPhysical() ) {
               array.add(replace(expr1, ref, project));
             }
-            
+
             if (editor != null) {
               final PsiElement[] replacedOccurences = PsiUtilBase.toPsiElementArray(array);
               highlightReplacedOccurences(project, editor, replacedOccurences);
@@ -896,7 +900,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
     }
     return false;
   }
-  
+
   public static PsiExpression replaceExplicitWithDiamondWhenApplicable(final PsiExpression initializer,
                                                                        final PsiType expectedType) {
     if (initializer instanceof PsiNewExpression) {
