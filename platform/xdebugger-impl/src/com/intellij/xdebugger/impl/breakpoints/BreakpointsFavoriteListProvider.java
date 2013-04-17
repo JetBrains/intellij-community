@@ -91,9 +91,8 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
     }
   }
 
-  private void updateChildren() {
+  protected void updateChildrenImpl() {
     myChildren.clear();
-    if (myProject.isDisposed()) return;
     List<BreakpointItem> items = new ArrayList<BreakpointItem>();
     for (final BreakpointPanelProvider provider : myBreakpointPanelProviders) {
       provider.provideBreakpointItems(myProject, items);
