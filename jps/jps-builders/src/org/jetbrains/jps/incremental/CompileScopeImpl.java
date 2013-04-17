@@ -87,10 +87,7 @@ public class CompileScopeImpl extends CompileScope {
       return true;
     }
     final Set<File> files = myFiles.get(target);
-    if (files != null) {
-      return files.contains(file);
-    }
-    return myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target);
+    return files != null && files.contains(file);
   }
 
   private boolean isAffectedByAssociatedModule(BuildTarget<?> target) {
