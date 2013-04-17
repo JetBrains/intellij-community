@@ -294,7 +294,13 @@ public abstract class BreakpointPropertiesPanel {
       myPanel.addFocusListener(new FocusAdapter() {
         @Override
         public void focusGained(FocusEvent event) {
-          IdeFocusManager.findInstance().requestFocus(myConditionCombo, true);
+          DebuggerExpressionComboBox focus;
+          if (myLogExpressionCheckBox.isSelected()) {
+            focus = myLogExpressionCombo;
+          } else {
+            focus = myConditionCombo;
+          }
+          IdeFocusManager.findInstance().requestFocus(focus, true);
         }
       });
     }
