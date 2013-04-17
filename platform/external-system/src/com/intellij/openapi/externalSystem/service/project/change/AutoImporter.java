@@ -20,7 +20,6 @@ import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectS
 import com.intellij.openapi.externalSystem.model.project.change.user.UserProjectChange;
 import com.intellij.openapi.externalSystem.service.project.manage.EntityManageHelper;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
-import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
 import com.intellij.openapi.externalSystem.settings.UserProjectChanges;
 import com.intellij.openapi.project.Project;

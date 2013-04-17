@@ -18,9 +18,13 @@
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="module" module-name="idea-ui" />
 <<<<<<< HEAD
+<<<<<<< HEAD
     <orderEntry type="module" module-name="compiler-openapi" />
 =======
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+    <orderEntry type="module" module-name="compiler-openapi" />
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   </component>
 </module>
 

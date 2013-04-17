@@ -26,15 +26,19 @@ import com.intellij.openapi.options.SearchableConfigurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import com.intellij.openapi.ui.MessageType;
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 import com.intellij.openapi.ui.TextComponentAccessor;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+<<<<<<< HEAD
 <<<<<<< HEAD
 import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.Nls;
@@ -45,17 +49,22 @@ import javax.swing.*;
 import java.awt.*;
 =======
 import com.intellij.ui.components.JBRadioButton;
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 import com.intellij.util.ui.GridBag;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import javax.swing.event.DocumentEvent;
-import javax.swing.event.DocumentListener;
 import java.awt.*;
+<<<<<<< HEAD
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
 /**
  * // TODO den add doc
@@ -81,6 +90,7 @@ public abstract class AbstractExternalProjectConfigurable
 {
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   @NotNull private final String myDisplayName;
   
   @Nullable private final Project myProject;
@@ -100,11 +110,24 @@ public abstract class AbstractExternalProjectConfigurable
   @Nullable private final Project myProject;
 
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+  @NotNull private final String myDisplayName;
+  
+  @Nullable private final Project myProject;
+
+  @NotNull private JComponent                myComponent;
+  @NotNull private JLabel                    myLinkedExternalProjectLabel;
+  @NotNull private TextFieldWithBrowseButton myLinkedExternalProjectPathField;
+  @NotNull private JBCheckBox                myUseAutoImportBox;
+
+  private final boolean myTestMode;
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   private boolean myAlwaysShowLinkedProjectControls;
 
   @SuppressWarnings("AbstractMethodCallInConstructor")
   protected AbstractExternalProjectConfigurable(@Nullable Project project, @NotNull ProjectSystemId externalSystemId, boolean testMode) {
     myProject = project;
+<<<<<<< HEAD
 <<<<<<< HEAD
     myTestMode = testMode;
     myDisplayName = getSystemName(externalSystemId);
@@ -112,13 +135,19 @@ public abstract class AbstractExternalProjectConfigurable
     myLinkedExternalProjectPathField = initLinkedGradleProjectPathControl(testMode);
     myUseAutoImportBox = new JBCheckBox(ExternalSystemBundle.message("settings.label.use.auto.import"));
 =======
+=======
+    myTestMode = testMode;
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     myDisplayName = getSystemName(externalSystemId);
     myLinkedExternalProjectLabel = new JBLabel(ExternalSystemBundle.message("settings.label.select.project", myDisplayName));
-    myComponent = buildContent(testMode);
     myLinkedExternalProjectPathField = initLinkedGradleProjectPathControl(testMode);
+<<<<<<< HEAD
     myComponent.add(myLinkedExternalProjectLabel, getLabelConstraints());
     myComponent.add(myLinkedExternalProjectPathField, getFillLineConstraints());
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+    myUseAutoImportBox = new JBCheckBox(ExternalSystemBundle.message("settings.label.use.auto.import"));
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   }
 
   @NotNull
@@ -142,6 +171,9 @@ public abstract class AbstractExternalProjectConfigurable
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   @Nullable
   public String getLinkedExternalProjectPath() {
     return myLinkedExternalProjectPathField.getText();
@@ -164,27 +196,41 @@ public abstract class AbstractExternalProjectConfigurable
   @Nullable
   public abstract ValidationError validate();
   
+<<<<<<< HEAD
 =======
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   // TODO den add doc
   @NotNull
   protected abstract JComponent buildContent(boolean testMode);
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   protected abstract void fillContent(@NotNull JComponent content);
 
 =======
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+  protected abstract void fillContent(@NotNull JComponent content);
+
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   @NotNull
   protected abstract FileChooserDescriptor getLinkedProjectConfigDescriptor();
 
   @NotNull
+<<<<<<< HEAD
 <<<<<<< HEAD
   protected abstract S getSettings(@NotNull Project project);
 
   @NotNull
 =======
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+  protected abstract S getSettings(@NotNull Project project);
+
+  @NotNull
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   private TextFieldWithBrowseButton initLinkedGradleProjectPathControl(boolean testMode) {
     TextFieldWithBrowseButton result = new TextFieldWithBrowseButton();
 
@@ -192,10 +238,14 @@ public abstract class AbstractExternalProjectConfigurable
                                                            : getLinkedProjectConfigDescriptor();
 
 <<<<<<< HEAD
+<<<<<<< HEAD
     result.addBrowseFolderListener(
 =======
     myLinkedExternalProjectPathField.addBrowseFolderListener(
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+    result.addBrowseFolderListener(
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
       "",
       ExternalSystemBundle.message("settings.label.select.project", myDisplayName),
       myProject,
@@ -227,6 +277,9 @@ public abstract class AbstractExternalProjectConfigurable
   @Override
   public JComponent createComponent() {
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     if (myComponent == null) {
       myComponent = buildContent(myTestMode);
       myComponent.add(myLinkedExternalProjectLabel, getLabelConstraints());
@@ -235,14 +288,18 @@ public abstract class AbstractExternalProjectConfigurable
       fillContent(myComponent);
       myComponent.add(Box.createVerticalGlue(), new GridBag().weightx(1).weighty(1).fillCell().coverLine());
     }
+<<<<<<< HEAD
 =======
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     return myComponent;
   }
 
   public boolean isAlwaysShowLinkedProjectControls() {
     return myAlwaysShowLinkedProjectControls;
   }
+<<<<<<< HEAD
 <<<<<<< HEAD
   
   public void setAlwaysShowLinkedProjectControls(boolean alwaysShowLinkedProjectControls) {
@@ -256,12 +313,20 @@ public abstract class AbstractExternalProjectConfigurable
   }
 
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+  
+  public void setAlwaysShowLinkedProjectControls(boolean alwaysShowLinkedProjectControls) {
+    myAlwaysShowLinkedProjectControls = alwaysShowLinkedProjectControls;
+  }
+  
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   @Override
   public boolean isModified() {
     if (myProject == null) {
       return false;
     }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     S settings = getSettings(myProject);
 
@@ -288,6 +353,11 @@ public abstract class AbstractExternalProjectConfigurable
         !Comparing.equal(normalizePath(myServiceDirectoryPathField.getText()), normalizePath(settings.getServiceDirectoryPath())))
     {
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+    S settings = getSettings(myProject);
+
+    if (!Comparing.equal(normalizePath(myLinkedExternalProjectPathField.getText()), normalizePath(settings.getLinkedExternalProjectPath()))) {
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
       return true;
     }
 
@@ -295,6 +365,7 @@ public abstract class AbstractExternalProjectConfigurable
       return true;
     }
     
+<<<<<<< HEAD
 <<<<<<< HEAD
     return isExtraSettingModified();
   }
@@ -305,11 +376,20 @@ public abstract class AbstractExternalProjectConfigurable
   protected static String normalizePath(@Nullable String s) {
 =======
     return false;
+=======
+    return isExtraSettingModified();
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   }
 
+  protected abstract boolean isExtraSettingModified();
+
   @Nullable
+<<<<<<< HEAD
   private static String normalizePath(@Nullable String s) {
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+  protected static String normalizePath(@Nullable String s) {
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     return StringUtil.isEmpty(s) ? null : s;
   }
 
@@ -319,6 +399,7 @@ public abstract class AbstractExternalProjectConfigurable
       return;
     }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
     String linkedProjectPath = myLinkedExternalProjectPathField.getText();
     boolean useAutoImport = myUseAutoImportBox.isSelected();
@@ -338,49 +419,28 @@ public abstract class AbstractExternalProjectConfigurable
 =======
     GradleSettings settings = myHelper.getSettings(myProject);
 
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     String linkedProjectPath = myLinkedExternalProjectPathField.getText();
-    final String gradleHomePath = getPathToUse(myGradleHomeModifiedByUser, settings.getGradleHome(), myGradleHomePathField.getText());
-    final String serviceDirPath = getPathToUse(myServiceDirectoryModifiedByUser,
-                                               settings.getServiceDirectoryPath(),
-                                               myServiceDirectoryPathField.getText());
-    
-    boolean preferLocalToWrapper = myUseLocalDistributionButton.isSelected();
     boolean useAutoImport = myUseAutoImportBox.isSelected();
-    myHelper.applySettings(linkedProjectPath, gradleHomePath, preferLocalToWrapper, useAutoImport, serviceDirPath, myProject);
+    doApply(linkedProjectPath, useAutoImport);
+  }
 
-    Project defaultProject = myHelper.getDefaultProject();
-    if (myProject != defaultProject) {
-      myHelper.applyPreferLocalInstallationToWrapper(preferLocalToWrapper, defaultProject);
+  protected void doApply(@NotNull String linkedExternalProjectPath, boolean useAutoImport) {
+    if (myProject == null) {
+      return;
     }
-
-    if (isValidGradleHome(gradleHomePath)) {
-      if (myGradleHomeModifiedByUser) {
-        myGradleHomeSettingType = GradleHomeSettingType.EXPLICIT_CORRECT;
-        // There is a possible case that user defines gradle home for particular open project. We want to apply that value
-        // to the default project as well if it's still non-defined.
-        if (defaultProject != myProject && !isValidGradleHome(GradleSettings.getInstance(defaultProject).getGradleHome())) {
-          // TODO den implement
-//          GradleSettings.applyGradleHome(gradleHomePath, defaultProject);
-        }
-      }
-      else {
-        myGradleHomeSettingType = GradleHomeSettingType.DEDUCED;
-      }
-    }
-    else if (preferLocalToWrapper) {
-      if (StringUtil.isEmpty(gradleHomePath)) {
-        myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
-      }
-      else {
-        myGradleHomeSettingType = GradleHomeSettingType.EXPLICIT_INCORRECT;
-        myHelper.showBalloon(MessageType.ERROR, myGradleHomeSettingType, 0);
-      }
-    }
+    getSettings(myProject).setLinkedExternalProjectPath(linkedExternalProjectPath);
+    getSettings(myProject).setUseAutoImport(useAutoImport);
   }
 
   @Nullable
+<<<<<<< HEAD
   private static String getPathToUse(boolean modifiedByUser, @Nullable String settingsPath, @Nullable String uiPath) {
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+  protected static String getPathToUse(boolean modifiedByUser, @Nullable String settingsPath, @Nullable String uiPath) {
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     if (modifiedByUser) {
       return StringUtil.isEmpty(uiPath) ? null : uiPath;
     }
@@ -397,6 +457,7 @@ public abstract class AbstractExternalProjectConfigurable
     }
   }
 
+<<<<<<< HEAD
 <<<<<<< HEAD
   @Override
   public void reset() {
@@ -430,88 +491,35 @@ public abstract class AbstractExternalProjectConfigurable
     return myHelper.isGradleSdkHome(new File(path));
   }
   
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   @Override
   public void reset() {
+    Project project = myProject;
     if (myProject == null) {
-      return;
-    }
-    
-    // Process gradle wrapper/local distribution settings.
-    // There are the following possible cases:
-    //   1. Default project or non-default project with no linked gradle project - 'use gradle wrapper whenever possible' check box
-    //      should be shown;
-    //   2. Non-default project with linked gradle project:
-    //      2.1. Gradle wrapper is configured for the target project - radio buttons on whether to use wrapper or particular local gradle
-    //           distribution should be show;
-    //      2.2. Gradle wrapper is not configured for the target project - radio buttons should be shown and 
-    //           'use gradle wrapper' option should be disabled;
-    useColorForPath(PathColor.NORMAL, myGradleHomePathField);
-    useColorForPath(PathColor.NORMAL, myServiceDirectoryPathField);
-    GradleSettings settings = myHelper.getSettings(myProject);
-    String linkedProjectPath = myLinkedExternalProjectPathField.getText();
-    if (StringUtil.isEmpty(linkedProjectPath)) {
-      linkedProjectPath = settings.getLinkedProjectPath();
-    }
-    myLinkedExternalProjectLabel.setVisible(myAlwaysShowLinkedProjectControls || !myProject.isDefault());
-    myLinkedExternalProjectPathField.setVisible(myAlwaysShowLinkedProjectControls || !myProject.isDefault());
-    if (linkedProjectPath != null) {
-      myLinkedExternalProjectPathField.setText(linkedProjectPath);
-    }
-    
-    myUseWrapperButton.setVisible(myAlwaysShowLinkedProjectControls || (!myProject.isDefault() && linkedProjectPath != null));
-    myUseLocalDistributionButton.setVisible(myAlwaysShowLinkedProjectControls || (!myProject.isDefault() && linkedProjectPath != null));
-    if (myAlwaysShowLinkedProjectControls && linkedProjectPath == null) {
-      myUseWrapperButton.setEnabled(false);
-      myUseLocalDistributionButton.setSelected(true);
-    }
-    else if (linkedProjectPath != null) {
-      if (myHelper.isGradleWrapperDefined(linkedProjectPath)) {
-        myUseWrapperButton.setEnabled(true);
-        myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper"));
-        if (myProject.isDefault() || !settings.isPreferLocalInstallationToWrapper()) {
-          myUseWrapperButton.setSelected(true);
-          myGradleHomePathField.setEnabled(false);
-        }
-        else {
-          myUseLocalDistributionButton.setSelected(true);
-          myGradleHomePathField.setEnabled(true);
-        }
-      }
-      else {
-        myUseWrapperButton.setText(GradleBundle.message("gradle.config.text.use.wrapper.disabled"));
-        myUseWrapperButton.setEnabled(false);
-        myUseLocalDistributionButton.setSelected(true);
-      }
-    }
-    
-    String localDistributionPath = settings.getGradleHome();
-    if (StringUtil.isEmpty(localDistributionPath)) {
-      myGradleHomeSettingType = GradleHomeSettingType.UNKNOWN;
-      deduceGradleHomeIfPossible();
-    }
-    else {
-      myGradleHomeSettingType = myHelper.isGradleSdkHome(new File(localDistributionPath)) ?
-                                GradleHomeSettingType.EXPLICIT_CORRECT :
-                                GradleHomeSettingType.EXPLICIT_INCORRECT;
-      myAlarm.cancelAllRequests();
-      if (myGradleHomeSettingType == GradleHomeSettingType.EXPLICIT_INCORRECT && settings.isPreferLocalInstallationToWrapper()) {
-        myHelper.showBalloon(MessageType.ERROR, myGradleHomeSettingType, 0);
-      }
-      myGradleHomePathField.setText(localDistributionPath);
+      project = ProjectManager.getInstance().getDefaultProject();
     }
 
-    String serviceDirectoryPath = settings.getServiceDirectoryPath();
-    if (StringUtil.isEmpty(serviceDirectoryPath)) {
-      deduceServiceDirectoryIfPossible();
+    S settings = getSettings(project);
+    String linkedExternalProjectPath = myLinkedExternalProjectPathField.getText();
+    if (StringUtil.isEmpty(linkedExternalProjectPath)) {
+      linkedExternalProjectPath = settings.getLinkedExternalProjectPath();
     }
-    else {
-      myServiceDirectoryPathField.setText(serviceDirectoryPath);
-      useColorForPath(PathColor.NORMAL, myServiceDirectoryPathField);
+    myLinkedExternalProjectLabel.setVisible(myAlwaysShowLinkedProjectControls || !project.isDefault());
+    myLinkedExternalProjectPathField.setVisible(myAlwaysShowLinkedProjectControls || !project.isDefault());
+    if (linkedExternalProjectPath != null) {
+      myLinkedExternalProjectPathField.setText(linkedExternalProjectPath);
     }
-    
+
     myUseAutoImportBox.setSelected(settings.isUseAutoImport());
+    doReset();
   }
+<<<<<<< HEAD
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+  
+  protected abstract void doReset();
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
   protected static void useColorForPath(@NotNull LocationSettingType type, @NotNull TextFieldWithBrowseButton pathControl) {
     Color c = type == LocationSettingType.DEDUCED ? UIManager.getColor("TextField.inactiveForeground")
@@ -523,6 +531,7 @@ public abstract class AbstractExternalProjectConfigurable
   @Override
   public void disposeUIResources() {
     myComponent = null;
+<<<<<<< HEAD
 <<<<<<< HEAD
     myLinkedExternalProjectLabel = null;
     myLinkedExternalProjectPathField = null;
@@ -542,27 +551,28 @@ public abstract class AbstractExternalProjectConfigurable
     myGradleHomePathField = null;
     myUseWrapperButton = null;
     myUseLocalDistributionButton = null;
+=======
+    myLinkedExternalProjectLabel = null;
+    myLinkedExternalProjectPathField = null;
+    myUseAutoImportBox = null;
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   }
+  
+  public static class ValidationError {
+    @NotNull public final String     message;
+    @NotNull public final JComponent problemHolder;
 
-  @SuppressWarnings("UseOfArchaicSystemPropertyAccessors")
-  @NotNull
-  public GradleLocationSettingType getCurrentGradleHomeSettingType() {
-    String path = myGradleHomePathField.getText();
-    if (GradleEnvironment.DEBUG_GRADLE_HOME_PROCESSING) {
-      GradleLog.LOG.info(String.format("Checking 'gradle home' status. Manually entered value is '%s'", path));
+    public ValidationError(@NotNull String message, @NotNull JComponent problemHolder) {
+      this.message = message;
+      this.problemHolder = problemHolder;
     }
-    if (path == null || StringUtil.isEmpty(path.trim())) {
-      return GradleHomeSettingType.UNKNOWN;
-    }
-    if (isModified()) {
-      return myHelper.isGradleSdkHome(new File(path)) ? GradleHomeSettingType.EXPLICIT_CORRECT
-                                                      : GradleHomeSettingType.EXPLICIT_INCORRECT;
-    }
-    return myGradleHomeSettingType;
   }
+<<<<<<< HEAD
 
   
 
   
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 }

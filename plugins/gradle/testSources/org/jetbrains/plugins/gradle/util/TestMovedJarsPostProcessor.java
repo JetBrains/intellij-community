@@ -16,10 +16,14 @@
 package org.jetbrains.plugins.gradle.util;
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.intellij.openapi.externalSystem.service.project.manage.JarDataService;
 =======
 import com.intellij.openapi.externalSystem.service.project.manage.JarDataManager;
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+import com.intellij.openapi.externalSystem.service.project.manage.JarDataService;
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import com.intellij.openapi.externalSystem.service.project.change.MovedJarsPostProcessor;
@@ -31,10 +35,14 @@ import com.intellij.openapi.externalSystem.service.project.change.MovedJarsPostP
 public class TestMovedJarsPostProcessor extends MovedJarsPostProcessor {
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   public TestMovedJarsPostProcessor(@NotNull JarDataService manager) {
 =======
   public TestMovedJarsPostProcessor(@NotNull JarDataManager manager) {
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+  public TestMovedJarsPostProcessor(@NotNull JarDataService manager) {
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     super(manager);
   }
 

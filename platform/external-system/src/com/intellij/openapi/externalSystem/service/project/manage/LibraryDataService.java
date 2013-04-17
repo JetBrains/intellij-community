@@ -33,16 +33,21 @@ import java.util.*;
  * @since 2/15/12 11:32 AM
  */
 <<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/LibraryDataService.java
+<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/LibraryDataService.java
 public class LibraryDataService implements ProjectDataService<LibraryData> {
 =======
 public class LibraryDataManager implements ProjectDataManager<LibraryData> {
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/LibraryDataManager.java
+=======
+public class LibraryDataService implements ProjectDataService<LibraryData> {
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/LibraryDataService.java
 
   private static final Logger LOG = Logger.getInstance("#" + LibraryDataService.class.getName());
 
   @NotNull private final PlatformFacade                myPlatformFacade;
   @NotNull private final ProjectStructureHelper        myProjectStructureHelper;
   @NotNull private final ExternalLibraryPathTypeMapper myLibraryPathTypeMapper;
+<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/LibraryDataService.java
 <<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/LibraryDataService.java
   @NotNull private final JarDataService                myJarManager;
 
@@ -52,12 +57,19 @@ public class LibraryDataManager implements ProjectDataManager<LibraryData> {
                             @NotNull JarDataService manager)
 =======
   @NotNull private final JarDataManager                myJarManager;
+=======
+  @NotNull private final JarDataService                myJarManager;
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/LibraryDataService.java
 
-  public LibraryDataManager(@NotNull PlatformFacade platformFacade,
+  public LibraryDataService(@NotNull PlatformFacade platformFacade,
                             @NotNull ProjectStructureHelper helper,
                             @NotNull ExternalLibraryPathTypeMapper mapper,
+<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/LibraryDataService.java
                             @NotNull JarDataManager manager)
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/LibraryDataManager.java
+=======
+                            @NotNull JarDataService manager)
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/LibraryDataService.java
   {
     myPlatformFacade = platformFacade;
     myProjectStructureHelper = helper;

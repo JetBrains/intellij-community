@@ -46,6 +46,7 @@ import java.util.Map;
 public class OutdatedLibraryService {
 
 <<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/OutdatedLibraryService.java
+<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/OutdatedLibraryService.java
   @NotNull private final LibraryDataService           myLibraryManager;
   @NotNull private final LibraryDependencyDataService myLibraryDependencyManager;
   @NotNull private final ProjectStructureServices     myContext;
@@ -62,6 +63,15 @@ public class OutdatedLibraryService {
   public OutdatedLibraryManager(@NotNull LibraryDataManager libraryManager,
                                 @NotNull LibraryDependencyDataManager libraryDependencyManager,
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/OutdatedLibraryManager.java
+=======
+  @NotNull private final LibraryDataService           myLibraryManager;
+  @NotNull private final LibraryDependencyDataService myLibraryDependencyManager;
+  @NotNull private final ProjectStructureServices     myContext;
+  @NotNull private final Project                      myProject;
+
+  public OutdatedLibraryService(@NotNull LibraryDataService libraryManager,
+                                @NotNull LibraryDependencyDataService libraryDependencyManager,
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/OutdatedLibraryService.java
                                 @NotNull ProjectStructureServices context,
                                 @NotNull Project project)
   {

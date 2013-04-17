@@ -102,6 +102,26 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
 =======
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     myLibraryNamesMixer.mixNames(libraries);
+
+    if (settings != null) {
+      List<String> extensionClassNames = settings.getResolverExtensions();
+      if (myCachedExtensions == null || !myCachedExtensions.first.equals(extensionClassNames)) {
+        List<String> classNames = ContainerUtilRt.newArrayList(extensionClassNames);
+        List<GradleProjectResolverExtension> extensions = ContainerUtilRt.newArrayList();
+        for (String className : classNames) {
+          try {
+            extensions.add((GradleProjectResolverExtension)Class.forName(className).newInstance());
+          }
+          catch (Exception e) {
+            throw new IllegalArgumentException(String.format("Can't instantiate project resolve extension for class '%s'", className), e);
+          }
+        }
+        myCachedExtensions = Pair.create(classNames, extensions);
+      }
+      for (GradleProjectResolverExtension extension : myCachedExtensions.second) {
+        extension.enhanceProject(result, connection, !downloadLibraries);
+      }
+    }
     return result;
   }
 

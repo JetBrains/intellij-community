@@ -60,10 +60,14 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
     }
 
 <<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/ContentRootDataService.java
+<<<<<<< HEAD:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/ContentRootDataService.java
     Map<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> byModule
 =======
     Map<DataNode<ModuleData>,Collection<DataNode<ContentRootData>>> byModule
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/ContentRootDataManager.java
+=======
+    Map<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> byModule
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems:platform/external-system/src/com/intellij/openapi/externalSystem/service/project/manage/ContentRootDataService.java
       = ExternalSystemUtil.groupBy(toImport, ProjectKeys.MODULE);
     for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
       final Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);

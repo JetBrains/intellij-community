@@ -46,6 +46,9 @@ public class EntityManageHelper {
 
   @NotNull private final ProjectStructureHelper       myProjectStructureHelper;
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   @NotNull private final ProjectDataServiceImpl       myProjectManager;
   @NotNull private final ModuleDataService            myModuleManager;
   @NotNull private final LibraryDataService           myLibraryManager;
@@ -53,6 +56,7 @@ public class EntityManageHelper {
   @NotNull private final LibraryDependencyDataService myLibraryDependencyManager;
   @NotNull private final ModuleDependencyDataService  myModuleDependencyManager;
   @NotNull private final ContentRootDataService       myContentRootManager;
+<<<<<<< HEAD
 
   public EntityManageHelper(@NotNull ProjectStructureHelper helper,
                             @NotNull ProjectDataServiceImpl projectManager,
@@ -80,6 +84,17 @@ public class EntityManageHelper {
                             @NotNull ModuleDependencyDataManager moduleDependencyManager,
                             @NotNull ContentRootDataManager contentRootManager)
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+
+  public EntityManageHelper(@NotNull ProjectStructureHelper helper,
+                            @NotNull ProjectDataServiceImpl projectManager,
+                            @NotNull ModuleDataService moduleManager,
+                            @NotNull LibraryDataService libraryManager,
+                            @NotNull JarDataService jarManager,
+                            @NotNull LibraryDependencyDataService libraryDependencyManager,
+                            @NotNull ModuleDependencyDataService moduleDependencyManager,
+                            @NotNull ContentRootDataService contentRootManager)
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   {
     myProjectStructureHelper = helper;
     myProjectManager = projectManager;
@@ -428,10 +443,14 @@ public class EntityManageHelper {
     @NotNull final Project                project;
     @NotNull final ProjectStructureHelper projectStructureHelper;
 <<<<<<< HEAD
+<<<<<<< HEAD
     @NotNull final ProjectDataServiceImpl projectManager;
 =======
     @NotNull final ProjectDataManagerImpl projectManager;
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+    @NotNull final ProjectDataServiceImpl projectManager;
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
     final boolean synchronous;
 
@@ -490,10 +509,14 @@ public class EntityManageHelper {
                             @NotNull ProjectStructureHelper projectStructureHelper,
                             @NotNull Set<UserProjectChange<?>> changesToPreserve,
 <<<<<<< HEAD
+<<<<<<< HEAD
                             @NotNull ProjectDataServiceImpl projectManager,
 =======
                             @NotNull ProjectDataManagerImpl projectManager,
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+                            @NotNull ProjectDataServiceImpl projectManager,
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
                             boolean synchronous)
     {
       this.project = project;

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.gradle.sync;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.service.project.change.ExternalProjectStructureChangesPreProcessor;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService;
 import com.intellij.openapi.externalSystem.service.project.manage.LibraryDependencyDataService;
 =======
@@ -26,6 +27,10 @@ import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataMan
 import com.intellij.openapi.externalSystem.service.project.manage.LibraryDependencyDataManager;
 import com.intellij.openapi.module.Module;
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+import com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService;
+import com.intellij.openapi.externalSystem.service.project.manage.LibraryDependencyDataService;
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
@@ -40,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 public class GradleDuplicateLibrariesPreProcessor implements ExternalProjectStructureChangesPreProcessor {
 
 <<<<<<< HEAD
+<<<<<<< HEAD
   @NotNull private final LibraryDependencyDataService myDependencyManager;
   @NotNull private final LibraryDataService           myLibraryManager;
 
@@ -50,6 +56,12 @@ public class GradleDuplicateLibrariesPreProcessor implements ExternalProjectStru
 
   public GradleDuplicateLibrariesPreProcessor(@NotNull LibraryDependencyDataManager manager, @NotNull LibraryDataManager manager1) {
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+  @NotNull private final LibraryDependencyDataService myDependencyManager;
+  @NotNull private final LibraryDataService           myLibraryManager;
+
+  public GradleDuplicateLibrariesPreProcessor(@NotNull LibraryDependencyDataService manager, @NotNull LibraryDataService manager1) {
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     myDependencyManager = manager;
     myLibraryManager = manager1;
   }

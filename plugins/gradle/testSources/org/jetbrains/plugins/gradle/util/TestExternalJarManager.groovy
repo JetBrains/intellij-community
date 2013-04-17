@@ -20,10 +20,14 @@ import com.intellij.openapi.project.Project
 import org.jetbrains.annotations.NotNull
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.intellij.openapi.externalSystem.service.project.manage.JarDataService
 =======
 import com.intellij.openapi.externalSystem.service.project.manage.JarDataManager
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+import com.intellij.openapi.externalSystem.service.project.manage.JarDataService
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 import com.intellij.openapi.externalSystem.model.project.JarData
 
 /**
@@ -31,10 +35,14 @@ import com.intellij.openapi.externalSystem.model.project.JarData
  * @since 1/18/13 2:16 PM
  */
 <<<<<<< HEAD
+<<<<<<< HEAD
 class TestExternalJarManager extends JarDataService {
 =======
 class TestExternalJarManager extends JarDataManager {
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+class TestExternalJarManager extends JarDataService {
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   
   def importedJars = []
   def removedJars = []

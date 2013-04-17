@@ -447,7 +447,10 @@ public class ExternalSystemUtil {
   }
   
   @NotNull
+<<<<<<< HEAD
 
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   public static <K, V> Map<DataNode<K>, Collection<DataNode<V>>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull Key<K> key) {
     Map<DataNode<K>, Collection<DataNode<V>>> result = ContainerUtilRt.newHashMap();
     for (DataNode<V> data : nodes) {
@@ -522,6 +525,9 @@ public class ExternalSystemUtil {
     return result == null ? Collections.<DataNode<T>>emptyList() : result;
   }
 <<<<<<< HEAD
+<<<<<<< HEAD
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
   @NotNull
   public static String toReadableName(@NotNull ProjectSystemId id) {
@@ -691,6 +697,9 @@ public class ExternalSystemUtil {
   public static void orderAwareSort(@NotNull List<?> data) {
     Collections.sort(data, ORDER_AWARE_COMPARATOR);
   }
+<<<<<<< HEAD
 =======
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 }

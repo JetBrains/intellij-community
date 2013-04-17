@@ -3,9 +3,13 @@ package com.intellij.openapi.externalSystem.model.settings;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 =======
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
@@ -40,10 +44,14 @@ public enum LocationSettingType {
    */
   public String getDescription(@NotNull ProjectSystemId externalSystemId) {
 <<<<<<< HEAD
+<<<<<<< HEAD
     return ExternalSystemBundle.message(myKey, ExternalSystemUtil.toReadableName(externalSystemId));
 =======
     String systemName = StringUtil.capitalize(externalSystemId.toString().toLowerCase());
     return ExternalSystemBundle.message(myKey, systemName);
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+    return ExternalSystemBundle.message(myKey, ExternalSystemUtil.toReadableName(externalSystemId));
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   }
 }

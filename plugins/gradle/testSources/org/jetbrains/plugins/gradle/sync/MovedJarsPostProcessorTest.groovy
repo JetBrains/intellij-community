@@ -17,10 +17,14 @@ package org.jetbrains.plugins.gradle.sync
 
 import com.intellij.openapi.roots.libraries.Library
 <<<<<<< HEAD
+<<<<<<< HEAD
 import com.intellij.openapi.externalSystem.service.project.manage.JarDataService
 =======
 import com.intellij.openapi.externalSystem.service.project.manage.JarDataManager
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+import com.intellij.openapi.externalSystem.service.project.manage.JarDataService
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 import com.intellij.openapi.externalSystem.model.project.JarData
 import com.intellij.openapi.externalSystem.model.project.LibraryData
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType
@@ -69,10 +73,14 @@ class MovedJarsPostProcessorTest extends AbstractGradleTest {
       new JarData(GradleUtil.toCanonicalPath('repo2/zip2'), LibraryPathType.SOURCE, ideLibrary, null),
     ]
 <<<<<<< HEAD
+<<<<<<< HEAD
     TestExternalJarManager jarManager = container.getComponentInstance(JarDataService)
 =======
     TestExternalJarManager jarManager = container.getComponentInstance(JarDataManager)
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+    TestExternalJarManager jarManager = container.getComponentInstance(JarDataService)
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
     Assert.assertEquals(expectedImported.toSet(), jarManager.importedJars.toSet())
     Assert.assertEquals(expectedRemoved.toSet(), jarManager.removedJars.toSet())
   }

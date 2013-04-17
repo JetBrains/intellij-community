@@ -165,6 +165,7 @@ public class GradleUtil {
   }
 
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
   /**
    * Delegates to the {@link #refreshProject(Project, String, Ref, Ref, boolean, boolean)} with the following defaults:
@@ -304,6 +305,8 @@ public class GradleUtil {
   }
   
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
   @NotNull
   public static <T extends ProjectEntityId> ProjectStructureNodeDescriptor<T> buildDescriptor(@NotNull T id, @NotNull String name) {
     return new ProjectStructureNodeDescriptor<T>(id, name, id.getType().getIcon());

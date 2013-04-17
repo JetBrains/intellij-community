@@ -18,9 +18,12 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 <<<<<<< HEAD
+<<<<<<< HEAD
 =======
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 >>>>>>> 38a9775... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
+=======
+>>>>>>> 5fd2c47... IDEA-104500 Gradle: Allow to reuse common logic for other external systems
 
 import javax.swing.*;
 import java.awt.*;
