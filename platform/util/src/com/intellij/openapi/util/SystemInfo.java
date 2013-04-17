@@ -132,78 +132,17 @@ public class SystemInfo extends SystemInfoRt {
     return ourFileManagerName.getValue();
   }
 
-  /**
-   * Whether IDEA is running under MacOS X version 10.4 or later.
-   *
-   * @since 5.0.2
-   */
-  public static final boolean isMacOSTiger = isTiger();
-
-  /**
-   * Whether IDEA is running under MacOS X on an Intel Machine
-   *
-   * @since 5.0.2
-   */
-  public static final boolean isIntelMac = isIntelMac();
-
-  /**
-   * Running under MacOS X version 10.5 or later;
-   *
-   * @since 7.0.2
-   */
-  public static final boolean isMacOSLeopard = isLeopard();
-
-  /**
-   * Running under MacOS X version 10.6 or later;
-   *
-   * @since 9.0
-   */
-  public static final boolean isMacOSSnowLeopard = isSnowLeopard();
-
-  /**
-   * Running under MacOS X version 10.7 or later;
-   *
-   * @since 11.0
-   */
-  public static final boolean isMacOSLion = isLion();
-
-  /**
-   * Running under MacOS X version 10.8 or later;
-   *
-   * @since 11.1
-   */
-  public static final boolean isMacOSMountainLion = isMountainLion();
-
   /** @deprecated use {@linkplain #isXWindow} (to remove in IDEA 13) */
   public static boolean X11PasteEnabledSystem = isXWindow;
 
-  private static boolean isIntelMac() {
-    return isMac && "i386".equals(OS_ARCH);
-  }
+  /** @deprecated useless (to remove in IDEA 14) */
+  public static final boolean isIntelMac = isMac && "i386".equals(OS_ARCH);
 
-  private static boolean isTiger() {
-    return isMac &&
-           !OS_VERSION.startsWith("10.0") &&
-           !OS_VERSION.startsWith("10.1") &&
-           !OS_VERSION.startsWith("10.2") &&
-           !OS_VERSION.startsWith("10.3");
-  }
-
-  private static boolean isLeopard() {
-    return isMac && isTiger() && !OS_VERSION.startsWith("10.4");
-  }
-
-  private static boolean isSnowLeopard() {
-    return isMac && isLeopard() && !OS_VERSION.startsWith("10.5");
-  }
-
-  private static boolean isLion() {
-    return isMac && isSnowLeopard() && !OS_VERSION.startsWith("10.6");
-  }
-
-  private static boolean isMountainLion() {
-    return isMac && isLion() && !OS_VERSION.startsWith("10.7");
-  }
+  public static final boolean isMacOSTiger = isMac && isOsVersionAtLeast("10.4");
+  public static final boolean isMacOSLeopard = isMac && isOsVersionAtLeast("10.5");
+  public static final boolean isMacOSSnowLeopard = isMac && isOsVersionAtLeast("10.6");
+  public static final boolean isMacOSLion = isMac && isOsVersionAtLeast("10.7");
+  public static final boolean isMacOSMountainLion = isMac && isOsVersionAtLeast("10.8");
 
   @NotNull
   public static String getMacOSMajorVersion() {
