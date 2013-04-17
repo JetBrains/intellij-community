@@ -335,11 +335,12 @@ public class EditorsSplitters extends JBPanel {
     }
 
     VirtualFile currentFile = null;
-    for (final Element file : children) {
+    for (int i = 0; i < children.size(); i++) {
+      Element file = children.get(i);
       try {
         final HistoryEntry entry = new HistoryEntry(getManager().getProject(), file.getChild(HistoryEntry.TAG), true);
         boolean isCurrent = Boolean.valueOf(file.getAttributeValue("current")).booleanValue();
-        getManager().openFileImpl3(window, entry.myFile, false, entry, isCurrent);
+        getManager().openFileImpl4(window, entry.myFile, false, entry, isCurrent, i);
         if (getManager().isFileOpen(entry.myFile)) {
           window.setFilePinned(entry.myFile, Boolean.valueOf(file.getAttributeValue("pinned")).booleanValue());
           if (Boolean.valueOf(file.getAttributeValue("current-in-tab")).booleanValue()) {
