@@ -187,6 +187,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
           public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
             if (!ORACLE_BUG_ID_8003173) {
               enterFullscreen();
+              myFrame.validate();
             }
           }
 
