@@ -35,6 +35,12 @@ public class StoringPropertyContainer extends AbstractProperty.AbstractPropertyC
     myStorage = storage;
   }
 
+  public void setIfUndefined(AbstractProperty<Boolean> property, boolean value) {
+    if (myStorage.get(property.getName()) == null) {
+      setValueOf(property, value);
+    }
+  }
+
   protected void setValueOf(final AbstractProperty<Boolean> property, final Object value) {
     myValues.put(property, (Boolean)value);
     onPropertyChanged(property, (Boolean)value);
