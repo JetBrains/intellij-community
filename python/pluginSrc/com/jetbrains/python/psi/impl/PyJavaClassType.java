@@ -15,6 +15,7 @@ import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -99,6 +100,16 @@ public class PyJavaClassType implements PyClassLikeType {
   @Override
   public String getClassQName() {
     return myClass.getQualifiedName();
+  }
+
+  @NotNull
+  @Override
+  public List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context) {
+    final List<PyClassLikeType> result = new ArrayList<PyClassLikeType>();
+    for (PsiClass cls : myClass.getSupers()) {
+      result.add(new PyJavaClassType(cls, myDefinition));
+    }
+    return result;
   }
 
   @Override

@@ -1128,25 +1128,23 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @Override
   public List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context) {
     final List<PyClassLikeType> results = new ArrayList<PyClassLikeType>();
-    final List<PyClass> toProcess = new ArrayList<PyClass>();
+    final List<PyClassLikeType> toProcess = new ArrayList<PyClassLikeType>();
     final Set<PyClassLikeType> seen = new HashSet<PyClassLikeType>();
-    final Set<PyClass> visited = new HashSet<PyClass>();
-    toProcess.add(this);
+    final Set<PyClassLikeType> visited = new HashSet<PyClassLikeType>();
+    final PyType thisType = context.getType(this);
+    if (thisType instanceof PyClassLikeType) {
+      toProcess.add((PyClassLikeType)thisType);
+    }
     while (!toProcess.isEmpty()) {
-      final PyClass cls = toProcess.remove(0);
-      visited.add(cls);
-      final List<PyClassLikeType> types = cls.getSuperClassTypes(context);
-      for (PyClassLikeType type : types) {
-        if (type == null || !seen.contains(type)) {
-          results.add(type);
-          seen.add(type);
+      final PyClassLikeType currentType = toProcess.remove(0);
+      visited.add(currentType);
+      for (PyClassLikeType superType : currentType.getSuperClassTypes(context)) {
+        if (superType == null || !seen.contains(superType)) {
+          results.add(superType);
+          seen.add(superType);
         }
-        if (type instanceof PyClassType) {
-          // TODO: process PyClassType instead of PyClass
-          final PyClass superClass = ((PyClassType)type).getPyClass();
-          if (!visited.contains(superClass)) {
-            toProcess.add(superClass);
-          }
+        if (superType != null && !visited.contains(superType)) {
+          toProcess.add(superType);
         }
       }
     }

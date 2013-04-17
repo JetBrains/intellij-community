@@ -20,7 +20,6 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.PyDynamicMember;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
-import com.jetbrains.python.psi.impl.PyTypeProvider;
 import com.jetbrains.python.psi.impl.ResolveResultList;
 import com.jetbrains.python.psi.resolve.*;
 import com.jetbrains.python.psi.stubs.PyClassNameIndex;
@@ -91,6 +90,12 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Nullable
   public String getClassQName() {
     return myClass.getQualifiedName();
+  }
+
+  @NotNull
+  @Override
+  public List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context) {
+    return myClass.getSuperClassTypes(context);
   }
 
   @Nullable
@@ -165,28 +170,21 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return ResolveResultList.to(classMember);
     }
 
-    for (PyClassRef superClass : myClass.iterateAncestors()) {
-      final PyClass pyClass = superClass.getPyClass();
-      final PsiElement element = superClass.getElement();
-      final PyClassType type = superClass.getType();
-      if (pyClass != null) {
-        PsiElement superMember = resolveClassMember(pyClass, myIsDefinition, name, null);
+    for (PyClassLikeType type : myClass.getAncestorTypes(resolveContext.getTypeEvalContext())) {
+      if (type instanceof PyClassType) {
+        PsiElement superMember = resolveClassMember(((PyClassType)type).getPyClass(), myIsDefinition, name, null);
         if (superMember != null) {
           return ResolveResultList.to(superMember);
         }
       }
-      else if (element != null) {
-        for (PyTypeProvider typeProvider : Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
-          final PyType refType = typeProvider.getReferenceType(element, resolveContext.getTypeEvalContext(), myClass);
-          if (refType != null) {
-            return refType.resolveMember(name, location, direction, resolveContext);
-          }
+      if (type != null) {
+        final List<? extends RatedResolveResult> results = type.resolveMember(name, location, direction, resolveContext);
+        if (results != null && !results.isEmpty()) {
+          return results;
         }
       }
-      else if (type != null) {
-        return type.resolveMember(name, location, direction, resolveContext);
-      }
     }
+
     if (isDefinition() && myClass.isNewStyleClass()) {
       PyClassType typeType = getMetaclassType();
       if (typeType != null) {
@@ -213,7 +211,6 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         }
       }
     }
-
 
     return Collections.emptyList();
   }
