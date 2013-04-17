@@ -38,12 +38,10 @@ class TestExternalJarManager extends JarDataService {
     super(facade, helper, mapper);
   }
 
-  @Override
   void importJars(@NotNull Collection<? extends JarData> jars, @NotNull Project project, boolean synchronous) {
     importedJars.addAll(jars)
   }
 
-  @Override
   void removeJars(@NotNull Collection<? extends JarData> jars, @NotNull Project project, boolean synchronous) {
     removedJars.addAll(jars)
   }
