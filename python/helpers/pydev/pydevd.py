@@ -5,6 +5,7 @@ from pydevd_frame import add_exception_to_frame
 from pydevd_constants import * #@UnusedWildImport
 import pydev_imports
 from pydevd_breakpoints import * #@UnusedWildImport
+import fix_getpass
 
 from pydevd_comm import  CMD_CHANGE_VARIABLE, \
                          CMD_EVALUATE_EXPRESSION, \
@@ -1432,6 +1433,8 @@ if __name__ == '__main__':
         #if it's available, let's change it for a stub (pydev already made use of it)
         import pydevd_psyco_stub
         sys.modules['psyco'] = pydevd_psyco_stub
+
+    fix_getpass.fixGetpass()
 
 
     pydev_log.debug("Executing file %s" % setup['file'])
