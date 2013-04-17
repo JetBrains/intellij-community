@@ -45,7 +45,7 @@ public class MavenConstants {
     Arrays.asList("clean", "validate", "generate-sources", "process-sources", "generate-resources",
                   "process-resources", "compile", "process-classes", "generate-test-sources", "process-test-sources",
                   "generate-test-resources",
-                  "process-test-resources", "test-compile", "test", "prepare-package", "package", "pre-integration-test",
+                  "process-test-resources", "test-compile", "process-test-classes", "test", "prepare-package", "package", "pre-integration-test",
                   "integration-test",
                   "post-integration-test",
                   "verify", "install", "site", "deploy");
