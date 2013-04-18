@@ -131,4 +131,22 @@ $foo
 """
 ''')
   }
+
+  void testPasteAfterGStringInjection() {
+    doTest("print '<selection>\$</selection>'", '''
+print "${foo}<caret>"
+''', '''
+print "${foo}\\$<caret>"
+''')
+  }
+
+  void testPasteBeforeGStringInjection() {
+    doTest("print '<selection>\$</selection>'", '''
+print "<caret>${foo}"
+''', '''
+print "\\$<caret>${foo}"
+''')
+  }
+
+
 }
