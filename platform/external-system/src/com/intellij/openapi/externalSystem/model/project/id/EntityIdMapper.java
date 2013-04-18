@@ -21,7 +21,7 @@ import org.jetbrains.annotations.Nullable;
  * That's why we provide {@code 'entity <--> id'} mapping and make it possible to store the unique 'id' element within the node.
  * <p/>
  * Thread-safe.
- * 
+ *
  * @author Denis Zhdanov
  * @since 2/14/12 12:20 PM
  * @see ProjectEntityId
@@ -43,9 +43,10 @@ public class EntityIdMapper {
     else {
       owner = ProjectSystemId.IDE;
     }
-    return mapEntityToId(entity, owner);
+    T t = mapEntityToId(entity, owner);
+    return t;
   }
-  
+
   /**
    * Performs {@code 'entity -> id'} mapping. Check class-level javadoc for more details.
    *
@@ -121,7 +122,7 @@ public class EntityIdMapper {
 
   /**
    * Performs {@code 'id -> entity'} mapping. Check class-level javadoc for more details.
-   * 
+   *
    * @param id          target entity id
    * @param ideProject  target ide project
    * @param <T>         target entity type
