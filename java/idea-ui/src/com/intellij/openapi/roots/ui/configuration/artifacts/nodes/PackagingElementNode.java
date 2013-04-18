@@ -31,6 +31,7 @@ import com.intellij.ui.treeStructure.SimpleNode;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.SmartList;
 import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -60,7 +61,7 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     myPackagingElements.add(packagingElement);
   }
 
-  @Nullable 
+  @Nullable
   public CompositePackagingElement<?> getParentElement(PackagingElement<?> element) {
     return myParentElements.get(element);
   }
@@ -105,13 +106,11 @@ public class PackagingElementNode<E extends PackagingElement<?>> extends Artifac
     final String tooltip;
     boolean isError = false;
     try {
-      buffer.append("<html>");
       for (ArtifactProblemDescription problem : problems) {
         isError |= problem.getSeverity() == ProjectStructureProblemType.Severity.ERROR;
         buffer.append(problem.getMessage(false)).append("<br>");
       }
-      buffer.append("</html>");
-      tooltip = buffer.toString();
+      tooltip = XmlStringUtil.wrapInHtml(buffer);
     }
     finally {
       StringBuilderSpinAllocator.dispose(buffer);

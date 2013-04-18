@@ -36,6 +36,7 @@ import com.intellij.openapi.ui.NamedConfigurable;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.PathUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.lang.reflect.InvocationHandler;
@@ -93,14 +94,12 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
 
   private static String createInvalidRootsDescription(List<String> invalidClasses, String rootName, String libraryName) {
     StringBuilder buffer = new StringBuilder();
-    buffer.append("<html>");
     buffer.append("Library '").append(StringUtil.escapeXml(libraryName)).append("' has broken " + rootName + " " + StringUtil.pluralize("path", invalidClasses.size()) + ":");
     for (String url : invalidClasses) {
       buffer.append("<br>&nbsp;&nbsp;");
       buffer.append(PathUtil.toPresentableUrl(url));
     }
-    buffer.append("</html>");
-    return buffer.toString();
+    return XmlStringUtil.wrapInHtml(buffer);
   }
 
   @NotNull
@@ -134,7 +133,7 @@ public class LibraryProjectStructureElement extends ProjectStructureElement {
     final Library source = realLibrary instanceof LibraryImpl? ((LibraryImpl)realLibrary).getSource() : null;
     return source != null ? source : myLibrary;
   }
-  
+
   @Override
   public int hashCode() {
     return System.identityHashCode(getSourceOrThis());

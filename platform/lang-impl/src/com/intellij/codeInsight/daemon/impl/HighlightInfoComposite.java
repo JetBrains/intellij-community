@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,13 +85,13 @@ public class HighlightInfoComposite extends HighlightInfo {
         if (result.length() != 0) {
           result.append(LINE_BREAK);
         }
-        toolTip = stripHtml(toolTip);
+        toolTip = XmlStringUtil.stripHtml(toolTip);
         result.append(toolTip);
       }
     }
     if (result.length() == 0) {
       return null;
     }
-    return wrapInHtml(result);
+    return XmlStringUtil.wrapInHtml(result);
   }
 }

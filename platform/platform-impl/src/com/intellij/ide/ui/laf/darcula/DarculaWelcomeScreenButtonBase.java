@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.ui.Gray;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -41,7 +42,8 @@ public class DarculaWelcomeScreenButtonBase {
     description.setUI(DarculaWelcomeScreenLabelUI.createUI(description));
     //icon.setIcon(action.getTemplatePresentation().getIcon());
     final String text = action.getTemplatePresentation().getDescription();
-    final String html = "<html>" + MessageFormat.format(text, ApplicationNamesInfo.getInstance().getFullProductName()) + "</html>";
+    final String html = XmlStringUtil
+          .wrapInHtml(MessageFormat.format(text, ApplicationNamesInfo.getInstance().getFullProductName()));
     root.setCursor(Cursor.getPredefinedCursor(Cursor.HAND_CURSOR));
     description.setText(html);
     description.setForeground(Gray._200);

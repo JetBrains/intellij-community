@@ -111,13 +111,13 @@ public class HighlightInfo implements Segment {
     String description = this.description;
     if (toolTip == null || description == null || !toolTip.contains(DESCRIPTION_PLACEHOLDER)) return toolTip;
     String decoded = toolTip.replace(DESCRIPTION_PLACEHOLDER, XmlStringUtil.escapeString(description));
-    String niceTooltip = wrapInHtml(decoded);
+    String niceTooltip = XmlStringUtil.wrapInHtml(decoded);
     return niceTooltip;
   }
 
   private static String encodeTooltip(String toolTip, String description) {
     if (toolTip == null || description == null) return toolTip;
-    String unescaped = StringUtil.unescapeXml(stripHtml(toolTip));
+    String unescaped = StringUtil.unescapeXml(XmlStringUtil.stripHtml(toolTip));
 
     if (unescaped.contains(description)) {
       String encoded = unescaped.replace(description, DESCRIPTION_PLACEHOLDER);
@@ -248,7 +248,7 @@ public class HighlightInfo implements Segment {
   @Nullable
   @NonNls
   private static String htmlEscapeToolTip(@Nullable String unescapedTooltip) {
-    return unescapedTooltip == null ? null : wrapInHtml(XmlStringUtil.escapeString(unescapedTooltip));
+    return unescapedTooltip == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(unescapedTooltip));
   }
 
   @NotNull
@@ -843,26 +843,6 @@ public class HighlightInfo implements Segment {
     if (!highlighter.isValid()) return "";
     return highlighter.getDocument().getText(TextRange.create(highlighter));
   }
-
-  @NonNls private static final String HTML_HEADER = "<html>";
-  @NonNls private static final String BODY_HEADER = "<body>";
-  @NonNls private static final String HTML_FOOTER = "</html>";
-  @NonNls private static final String BODY_FOOTER = "</body>";
-  @NotNull
-  protected static String wrapInHtml(@NotNull CharSequence result) {
-    return HTML_HEADER + result + HTML_FOOTER;
-  }
-
-  @NotNull
-  protected static String stripHtml(@NotNull String toolTip) {
-    toolTip = StringUtil.trimStart(toolTip, HTML_HEADER);
-    toolTip = StringUtil.trimStart(toolTip, BODY_HEADER);
-    toolTip = StringUtil.trimEnd(toolTip, HTML_FOOTER);
-    toolTip = StringUtil.trimEnd(toolTip, BODY_FOOTER);
-    return toolTip;
-  }
-
-
 
 
   // Deprecated methods for plugin compatibility

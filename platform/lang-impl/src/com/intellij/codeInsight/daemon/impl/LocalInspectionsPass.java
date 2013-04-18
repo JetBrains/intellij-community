@@ -653,7 +653,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     if (!inspectionProfile.isToolEnabled(key, myFile)) return null;
 
     HighlightInfoType type = new HighlightInfoType.HighlightInfoTypeImpl(level.getSeverity(element), level.getAttributesKey());
-    final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(message.replaceAll("<[^>]*>", "")) : message;
+    final String plainMessage = message.startsWith("<html>") ? StringUtil.unescapeXml(XmlStringUtil.stripHtml(message).replaceAll("<[^>]*>", "")) : message;
     @NonNls final String link = " <a "
                                 +"href=\"#inspection/" + tool.getShortName() + "\""
                                 + (UIUtil.isUnderDarcula() ? " color=\"7AB4C9\" " : "")
@@ -663,10 +663,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     @NonNls String tooltip = null;
     if (descriptor.showTooltip()) {
       if (message.startsWith("<html>")) {
-        tooltip = HighlightInfo.wrapInHtml(HighlightInfo.stripHtml(message) + link);
+        tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.stripHtml(message) + link);
       }
       else {
-        tooltip = HighlightInfo.wrapInHtml(XmlStringUtil.escapeString(message) + link);
+        tooltip = XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(message) + link);
       }
     }
     HighlightInfo highlightInfo = highlightInfoFromDescriptor(descriptor, type, plainMessage, tooltip,element);

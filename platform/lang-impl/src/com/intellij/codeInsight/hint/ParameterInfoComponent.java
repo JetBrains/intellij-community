@@ -28,6 +28,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -387,7 +388,7 @@ class ParameterInfoComponent extends JPanel {
         faultMap.put(highlightRange.getEndOffset(), endTag.length());
 
       }
-      return "<html>" + labelText.toString() + "</html>";
+      return XmlStringUtil.wrapInHtml(labelText);
     }
 
     private String getTag(@NotNull final String tagValue) {

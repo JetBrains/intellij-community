@@ -82,7 +82,7 @@ public class HTMLExporter {
     buf.append("<hr>");
   }
 
-  public static void writeFile(String folder, @NonNls String fileName, StringBuffer buf, final Project project) {
+  public static void writeFile(String folder, @NonNls String fileName, CharSequence buf, final Project project) {
     ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
     final String fullPath = folder + File.separator + fileName;
 

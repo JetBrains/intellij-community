@@ -18,13 +18,13 @@ package com.intellij.refactoring.typeCook;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.RefactoringDialog;
-import com.intellij.ui.IdeBorderFactory;
 import com.intellij.usageView.UsageViewUtil;
+import com.intellij.xml.util.XmlStringUtil;
 
 import javax.swing.*;
 import java.awt.*;
@@ -56,7 +56,7 @@ public class TypeCookDialog extends RefactoringDialog {
 
     init();
 
-    StringBuffer name = new StringBuffer("<html>");
+    StringBuffer name = new StringBuffer();
 
     myElements = elements;
     for (int i = 0; i < elements.length; i++) {
@@ -69,9 +69,7 @@ public class TypeCookDialog extends RefactoringDialog {
       }
     }
 
-    name.append("</html>");
-
-    myClassNameLabel.setText(name.toString());
+    myClassNameLabel.setText(XmlStringUtil.wrapInHtml(name));
   }
 
   protected JComponent createCenterPanel() {

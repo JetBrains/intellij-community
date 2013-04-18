@@ -30,6 +30,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -100,13 +101,7 @@ public class ProblemsHolder {
     assert vFile != null;
     final String path = FileUtil.toSystemIndependentName(vFile.getPath());
 
-    String description = problem.getDescriptionTemplate();
-    if (description.startsWith("<html>")) {
-      description = description.replace("<html>", "").replace("</html>", "");
-    }
-    if (description.startsWith("<body>")) {
-      description = description.replace("<body>", "").replace("</body>", "");
-    }
+    String description = XmlStringUtil.stripHtml(problem.getDescriptionTemplate());
 
     final String template =
       InspectionsBundle.message("inspection.redirect.template",

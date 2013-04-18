@@ -1203,7 +1203,7 @@ public class StringUtil extends StringUtilRt {
     }
     return result.toString();
   }
-  
+
   @NotNull
   public static <T> String join(@NotNull Iterable<T> items, @NotNull Function<T, String> f, @NotNull @NonNls String separator) {
     final StringBuilder result = new StringBuilder();
