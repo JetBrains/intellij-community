@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
@@ -24,11 +25,18 @@ import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
 import com.intellij.ui.docking.DockManager;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jdom.JDOMException;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
+import java.io.IOException;
+import java.util.Arrays;
+import java.util.List;
+import java.util.concurrent.ExecutionException;
 import java.util.concurrent.Future;
 
 /**
@@ -39,12 +47,43 @@ public class FileEditorManagerTest extends LightPlatformCodeInsightFixtureTestCa
 
   private FileEditorManagerImpl myManager;
 
+  @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public FileEditorManagerTest() {
     PlatformTestCase.initPlatformLangPrefix();
   }
 
-  public void testManager() throws Exception {
+  public void testTabOrder() throws Exception {
 
+    openFiles();
+    assertOpenFiles("1.txt", "foo.xml", "2.txt", "3.txt");
+  }
+
+  public void testTabLimit() throws Exception {
+
+    int limit = UISettings.getInstance().EDITOR_TAB_LIMIT;
+    try {
+      UISettings.getInstance().EDITOR_TAB_LIMIT = 2;
+      openFiles();
+      // note that foo.xml is pinned
+      assertOpenFiles("foo.xml", "3.txt");
+    }
+    finally {
+      UISettings.getInstance().EDITOR_TAB_LIMIT = limit;
+    }
+  }
+
+  private void assertOpenFiles(String... fileNames) {
+    EditorWithProviderComposite[] files = myManager.getSplitters().getEditorsComposites();
+    List<String> names = ContainerUtil.map(files, new Function<EditorWithProviderComposite, String>() {
+      @Override
+      public String fun(EditorWithProviderComposite composite) {
+        return composite.getFile().getName();
+      }
+    });
+    assertEquals(Arrays.asList(fileNames), names);
+  }
+
+  private void openFiles() throws IOException, JDOMException, InterruptedException, ExecutionException {
     Document document = JDOMUtil.loadDocument("  <component name=\"FileEditorManager\">\n" +
                                               "    <leaf>\n" +
                                               "      <file leaf-file-name=\"1.txt\" pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
@@ -55,7 +94,7 @@ public class FileEditorManagerTest extends LightPlatformCodeInsightFixtureTestCa
                                               "          </provider>\n" +
                                               "        </entry>\n" +
                                               "      </file>\n" +
-                                              "      <file leaf-file-name=\"foo.xml\" pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
+                                              "      <file leaf-file-name=\"foo.xml\" pinned=\"true\" current=\"false\" current-in-tab=\"false\">\n" +
                                               "        <entry file=\"file://$PROJECT_DIR$/src/foo.xml\">\n" +
                                               "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
                                               "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
@@ -95,13 +134,6 @@ public class FileEditorManagerTest extends LightPlatformCodeInsightFixtureTestCa
       }
     });
     future.get();
-
-    EditorWithProviderComposite[] files = myManager.getSplitters().getEditorsComposites();
-    assertEquals(4, files.length);
-    assertEquals("1.txt", files[0].getFile().getName());
-    assertEquals("foo.xml", files[1].getFile().getName());
-    assertEquals("2.txt", files[2].getFile().getName());
-    assertEquals("3.txt", files[3].getFile().getName());
   }
 
   public void setUp() throws Exception {
