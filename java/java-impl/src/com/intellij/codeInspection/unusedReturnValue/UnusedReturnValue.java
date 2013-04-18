@@ -30,7 +30,6 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.changeSignature.ChangeSignatureProcessor;
 import com.intellij.refactoring.changeSignature.ParameterInfoImpl;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.containers.HashSet;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -57,7 +56,7 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
       final RefMethod refMethod = (RefMethod)refEntity;
 
       if (refMethod.isConstructor()) return null;
-      if (!refMethod.getSuperMethods().isEmpty()) return null;  
+      if (!refMethod.getSuperMethods().isEmpty()) return null;
       if (refMethod.getInReferences().size() == 0) return null;
 
       if (!refMethod.isReturnValueUsed()) {
@@ -78,7 +77,7 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
   }
 
   @Override
-  public void writeSettings(Element node) throws WriteExternalException {
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (IGNORE_BUILDER_PATTERN) {
       super.writeSettings(node);
     }
@@ -92,10 +91,10 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
                                                 final ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(final RefMethod refMethod) {
+            @Override public void visitMethod(@NotNull final RefMethod refMethod) {
               globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
                 public boolean process(PsiReference psiReference) {
                   processor.ignoreElement(refMethod);

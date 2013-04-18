@@ -183,7 +183,7 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
   }
 
   @Override
-  public void inspectionStarted(LocalInspectionToolSession session, boolean isOnTheFly) {
+  public void inspectionStarted(@NotNull LocalInspectionToolSession session, boolean isOnTheFly) {
     super.inspectionStarted(session, isOnTheFly);
     if (inspectionGadgetsPlugin.isTelemetryEnabled()) {
       timestamp = System.currentTimeMillis();
@@ -191,8 +191,8 @@ public abstract class BaseInspection extends BaseJavaLocalInspectionTool {
   }
 
   @Override
-  public void inspectionFinished(LocalInspectionToolSession session,
-                                 ProblemsHolder problemsHolder) {
+  public void inspectionFinished(@NotNull LocalInspectionToolSession session,
+                                 @NotNull ProblemsHolder problemsHolder) {
     super.inspectionFinished(session, problemsHolder);
     if (inspectionGadgetsPlugin.isTelemetryEnabled()) {
       if (timestamp < 0L) {

@@ -50,16 +50,22 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
   private int myLineNumber = -1;
   private String myProblemGroup;
 
-  public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
-                               ProblemHighlightType highlightType,
+  public ProblemDescriptorImpl(@NotNull PsiElement startElement,
+                               @NotNull PsiElement endElement,
+                               String descriptionTemplate,
+                               LocalQuickFix[] fixes,
+                               @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
                                @Nullable TextRange rangeInElement,
                                boolean onTheFly) {
     this(startElement, endElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, rangeInElement, null, onTheFly);
   }
 
-  public ProblemDescriptorImpl(@NotNull PsiElement startElement, @NotNull PsiElement endElement, String descriptionTemplate, LocalQuickFix[] fixes,
-                               ProblemHighlightType highlightType,
+  public ProblemDescriptorImpl(@NotNull PsiElement startElement,
+                               @NotNull PsiElement endElement,
+                               String descriptionTemplate,
+                               LocalQuickFix[] fixes,
+                               @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
                                @Nullable TextRange rangeInElement,
                                @Nullable HintAction hintAction,
@@ -71,7 +77,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
                                @NotNull PsiElement endElement,
                                String descriptionTemplate,
                                LocalQuickFix[] fixes,
-                               ProblemHighlightType highlightType,
+                               @NotNull ProblemHighlightType highlightType,
                                boolean isAfterEndOfLine,
                                @Nullable TextRange rangeInElement,
                                final boolean tooltip,
@@ -157,6 +163,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
     return myLineNumber;
   }
 
+  @NotNull
   @Override
   public ProblemHighlightType getHighlightType() {
     return myHighlightType;

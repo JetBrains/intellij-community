@@ -132,6 +132,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public static InspectionProfileImpl createSimple(String name, final InspectionProfileEntry... tools) {
     InspectionProfileImpl profile = new InspectionProfileImpl(name, new InspectionToolRegistrar(null) {
+      @NotNull
       @Override
       public List<InspectionToolWrapper> createTools() {
         return ContainerUtil.map(tools, WRAPPER_FUNCTION);
@@ -209,7 +210,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @Override
   public void resetToBase() {
     initInspectionTools(null);
-    
+
     copyToolsConfigurations(myBaseProfile, null);
     myDisplayLevelMap = null;
   }

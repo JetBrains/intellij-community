@@ -91,7 +91,7 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
   }
 
   @Override
-  public void writeSettings(Element node) throws WriteExternalException {
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (IGNORE_UNCHECKED_ASSIGNMENT ||
         IGNORE_UNCHECKED_CALL ||
         IGNORE_UNCHECKED_CAST ||
@@ -271,7 +271,7 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
       PsiExpression initializer = variable.getInitializer();
       if (initializer == null || initializer instanceof PsiArrayInitializerExpression) return;
       final PsiType initializerType = initializer.getType();
-      checkRawToGenericsAssignment(initializer, variable.getType(), initializerType, true, 
+      checkRawToGenericsAssignment(initializer, variable.getType(), initializerType, true,
                                    myOnTheFly ? getChangeVariableTypeFixes(variable, initializerType) : LocalQuickFix.EMPTY_ARRAY);
     }
 

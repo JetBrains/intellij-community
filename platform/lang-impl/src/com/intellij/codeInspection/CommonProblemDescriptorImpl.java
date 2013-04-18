@@ -19,8 +19,6 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
     }
     else {
       myFixes = fixes;
-      //new QuickFix[fixes.length];
-      //System.arraycopy(fixes, 0, myFixes, 0, fixes.length);
     }
     myDescriptionTemplate = descriptionTemplate;
   }

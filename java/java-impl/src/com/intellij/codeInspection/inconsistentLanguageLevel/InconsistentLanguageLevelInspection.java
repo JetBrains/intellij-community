@@ -91,7 +91,7 @@ public class InconsistentLanguageLevelInspection extends DescriptorProviderInspe
   }
 
   @NotNull
-  public JobDescriptor[] getJobDescriptors(GlobalInspectionContext globalInspectionContext) {
+  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext globalInspectionContext) {
     return JobDescriptor.EMPTY_ARRAY;
   }
 

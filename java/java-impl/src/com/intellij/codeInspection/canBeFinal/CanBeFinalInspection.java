@@ -177,10 +177,10 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
     }
 
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (problemsProcessor.getDescriptions(refEntity) == null) return;
         refEntity.accept(new RefJavaVisitor() {
-          @Override public void visitMethod(final RefMethod refMethod) {
+          @Override public void visitMethod(@NotNull final RefMethod refMethod) {
             if (!refMethod.isStatic() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) &&
                 !(refMethod instanceof RefImplicitConstructor)) {
               globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
@@ -193,7 +193,7 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
             }
           }
 
-          @Override public void visitClass(final RefClass refClass) {
+          @Override public void visitClass(@NotNull final RefClass refClass) {
             if (!refClass.isAnonymous()) {
               globalContext.enqueueDerivedClassesProcessor(refClass, new GlobalJavaInspectionContext.DerivedClassesProcessor() {
                 public boolean process(PsiClass inheritor) {
@@ -205,7 +205,7 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
             }
           }
 
-          @Override public void visitField(final RefField refField) {
+          @Override public void visitField(@NotNull final RefField refField) {
             globalContext.enqueueFieldUsagesProcessor(refField, new GlobalJavaInspectionContext.UsagesProcessor() {
               public boolean process(PsiReference psiReference) {
                 PsiElement expression = psiReference.getElement();
