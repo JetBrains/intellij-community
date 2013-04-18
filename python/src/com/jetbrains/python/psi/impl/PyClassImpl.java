@@ -2,6 +2,7 @@ package com.jetbrains.python.psi.impl;
 
 import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -283,30 +284,22 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return result.toArray(new PyClass[result.size()]);
   }
 
-
-  public
   @NotNull
-  List<PyClass> getMRO() {
-    // see http://www.python.org/download/releases/2.3/mro/ for a muddy explanation.
-    // see http://hackage.haskell.org/packages/archive/MetaObject/latest/doc/html/src/MO-Util-C3.html#linearize for code to port from.
-    return mroLinearize(this, Collections.<PyClass>emptyList());
-  }
-
-  private static List<PyClass> mroMerge(List<List<PyClass>> sequences) {
-    List<PyClass> result = new LinkedList<PyClass>(); // need to insert to 0th position on linearize
+  private static List<PyClassLikeType> mroMerge(@NotNull List<List<PyClassLikeType>> sequences) {
+    List<PyClassLikeType> result = new LinkedList<PyClassLikeType>(); // need to insert to 0th position on linearize
     while (true) {
       // filter blank sequences
-      List<List<PyClass>> nonBlankSequences = new ArrayList<List<PyClass>>(sequences.size());
-      for (List<PyClass> item : sequences) {
+      List<List<PyClassLikeType>> nonBlankSequences = new ArrayList<List<PyClassLikeType>>(sequences.size());
+      for (List<PyClassLikeType> item : sequences) {
         if (item.size() > 0) nonBlankSequences.add(item);
       }
       if (nonBlankSequences.isEmpty()) return result;
       // find a clean head
-      PyClass head = null; // to keep compiler happy; really head is assigned in the loop at least once.
-      for (List<PyClass> seq : nonBlankSequences) {
+      PyClassLikeType head = null; // to keep compiler happy; really head is assigned in the loop at least once.
+      for (List<PyClassLikeType> seq : nonBlankSequences) {
         head = seq.get(0);
         boolean head_in_tails = false;
-        for (List<PyClass> tail_seq : nonBlankSequences) {
+        for (List<PyClassLikeType> tail_seq : nonBlankSequences) {
           if (tail_seq.indexOf(head) > 0) { // -1 is not found, 0 is head, >0 is tail.
             head_in_tails = true;
             break;
@@ -319,31 +312,36 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           head = null; // as a signal
         }
       }
-      assert head != null : "Inconsistent hierarchy!"; // TODO: better diagnostics?
       // our head is clean;
       result.add(head);
       // remove it from heads of other sequences
-      for (List<PyClass> seq : nonBlankSequences) {
-        if (seq.get(0) == head) seq.remove(0);
+      for (List<PyClassLikeType> seq : nonBlankSequences) {
+        if (Comparing.equal(seq.get(0), head)) seq.remove(0);
       }
     } // we either return inside the loop or die by assertion
   }
 
-  private static List<PyClass> mroLinearize(PyClass cls, List<PyClass> seen) {
-    assert (seen.indexOf(cls) < 0) : "Circular import structure on " + PyUtil.nvl(cls);
-    PyClass[] bases = cls.getSuperClasses();
-    List<List<PyClass>> lins = new ArrayList<List<PyClass>>(bases.length * 2);
-    ArrayList<PyClass> new_seen = new ArrayList<PyClass>(seen.size() + 1);
-    new_seen.add(cls);
-    for (PyClass base : bases) {
-      List<PyClass> lin = mroLinearize(base, new_seen);
-      if (!lin.isEmpty()) lins.add(lin);
+  @NotNull
+  private static List<PyClassLikeType> mroLinearize(@NotNull PyClassLikeType type, @NotNull List<PyClassLikeType> seen, boolean addThisType,
+                                                    @NotNull TypeEvalContext context) {
+    assert (seen.indexOf(type) < 0) : "Circular import structure on " + PyUtil.nvl(type);
+    final List<PyClassLikeType> bases = type.getSuperClassTypes(context);
+    List<List<PyClassLikeType>> lins = new ArrayList<List<PyClassLikeType>>(bases.size() * 2);
+    ArrayList<PyClassLikeType> new_seen = new ArrayList<PyClassLikeType>(seen.size() + 1);
+    new_seen.add(type);
+    for (PyClassLikeType base : bases) {
+      if (base != null) {
+        List<PyClassLikeType> lin = mroLinearize(base, new_seen, true, context);
+        if (!lin.isEmpty()) lins.add(lin);
+      }
     }
-    for (PyClass base : bases) {
-      lins.add(new SmartList<PyClass>(base));
+    for (PyClassLikeType base : bases) {
+      lins.add(new SmartList<PyClassLikeType>(base));
     }
-    List<PyClass> result = mroMerge(lins);
-    result.add(0, cls);
+    List<PyClassLikeType> result = mroMerge(lins);
+    if (addThisType) {
+      result.add(0, type);
+    }
     return result;
   }
 
@@ -891,7 +889,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     final PyClass objClass = PyBuiltinCache.getInstance(this).getClass("object");
     if (this == objClass) return true; // a rare but possible case
     if (hasNewStyleMetaClass(this)) return true;
-    for (PyClassLikeType type : getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+    for (PyClassLikeType type : getOldStyleAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
       if (type == null) {
         // unknown, assume new-style class
         return true;
@@ -1057,6 +1055,20 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @NotNull
   @Override
   public List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context) {
+    return isNewStyleClass() ? getMROAncestorTypes(context) : getOldStyleAncestorTypes(context);
+  }
+
+  @NotNull
+  private List<PyClassLikeType> getMROAncestorTypes(@NotNull TypeEvalContext context) {
+    final PyType thisType = context.getType(this);
+    if (thisType instanceof PyClassLikeType) {
+      return mroLinearize((PyClassLikeType)thisType, Collections.<PyClassLikeType>emptyList(), false, context);
+    }
+    return Collections.emptyList();
+  }
+
+  @NotNull
+  private List<PyClassLikeType> getOldStyleAncestorTypes(@NotNull TypeEvalContext context) {
     final List<PyClassLikeType> results = new ArrayList<PyClassLikeType>();
     final List<PyClassLikeType> toProcess = new ArrayList<PyClassLikeType>();
     final Set<PyClassLikeType> seen = new HashSet<PyClassLikeType>();
