@@ -42,6 +42,7 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
   private List<TreeNode> myCachedAllChildren;
   protected final ValueContainer myValueContainer;
   private volatile boolean myObsolete;
+  private volatile boolean myAlreadySorted;
 
   protected XValueContainerNode(XDebuggerTree tree, final XDebuggerTreeNode parent, @NotNull ValueContainer valueContainer) {
     super(tree, parent, true);
@@ -64,12 +65,20 @@ public abstract class XValueContainerNode<ValueContainer extends XValueContainer
     return MessageTreeNode.createLoadingMessage(myTree, this);
   }
 
+  public boolean isAlreadySorted() {
+    return myAlreadySorted;
+  }
+
+  public void setAlreadySorted(boolean alreadySorted) {
+    myAlreadySorted = alreadySorted;
+  }
+
   @Override
   public void addChildren(@NotNull final XValueChildrenList children, final boolean last) {
     DebuggerUIUtil.invokeLater(new Runnable() {
       public void run() {
         if (myValueChildren == null) {
-          if (XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues() && !children.isAlreadySorted()) {
+          if (!isAlreadySorted() && XDebuggerSettingsManager.getInstance().getDataViewSettings().isSortValues()) {
             myValueChildren = new SortedList<XValueNodeImpl>(XValueNodeImpl.COMPARATOR);
           }
           else {

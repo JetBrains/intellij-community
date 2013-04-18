@@ -29,7 +29,6 @@ public class XValueChildrenList {
   public static final XValueChildrenList EMPTY = new XValueChildrenList(Collections.<String>emptyList(), Collections.<XValue>emptyList());
   private List<String> myNames;
   private List<XValue> myValues;
-  private boolean myAlreadySorted;
 
   public XValueChildrenList(int initialCapacity) {
     myNames = new ArrayList<String>(initialCapacity);
@@ -67,11 +66,16 @@ public class XValueChildrenList {
     return myValues.get(i);
   }
 
+  /**
+   * @deprecated use {@link XCompositeNode#isAlreadySorted} (to remove in IDEA 13)
+   */
   public boolean isAlreadySorted() {
-    return myAlreadySorted;
+    return false;
   }
 
+  /**
+   * @deprecated use {@link XCompositeNode#setAlreadySorted} instead (to remove in IDEA 13)
+   */
   public void setAlreadySorted(boolean alreadySorted) {
-    myAlreadySorted = alreadySorted;
   }
 }
