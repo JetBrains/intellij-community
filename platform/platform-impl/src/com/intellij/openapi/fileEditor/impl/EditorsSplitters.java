@@ -404,9 +404,12 @@ public class EditorsSplitters extends JBPanel {
     for (final EditorWindow myWindow : myWindows) {
       final EditorWithProviderComposite[] editors = myWindow.getEditors();
       for (final EditorWithProviderComposite editor : editors) {
-        final VirtualFile file = editor.getFile();
-        LOG.assertTrue(file.isValid(), Arrays.toString(editor.getProviders()));
-        files.add(file);
+        VirtualFile file = editor.getFile();
+        // background thread may call this method when invalid file is being removed
+        // do not return it here as it will quietly drop out soon
+        if (file.isValid()) {
+          files.add(file);
+        }
       }
     }
     return VfsUtil.toVirtualFileArray(files);
