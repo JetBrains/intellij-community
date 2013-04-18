@@ -39,11 +39,12 @@ public class PyParameterListElementType extends PyStubElementType<PyParameterLis
     return new PyParameterListImpl(node);
   }
 
-  public void serialize(final PyParameterListStub stub, final StubOutputStream dataStream)
+  public void serialize(@NotNull final PyParameterListStub stub, @NotNull final StubOutputStream dataStream)
       throws IOException {
   }
 
-  public PyParameterListStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
+  @NotNull
+  public PyParameterListStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub)
       throws IOException {
     return new PyParameterListStubImpl(parentStub, getStubElementType());
   }

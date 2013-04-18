@@ -46,12 +46,13 @@ public class PyImportElementElementType extends PyStubElementType<PyImportElemen
     return new PyImportElementStubImpl(psi.getImportedQName(), asName != null ? asName.getName() : "", parentStub, getStubElementType());
   }
 
-  public void serialize(PyImportElementStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PyImportElementStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     PyQualifiedName.serialize(stub.getImportedQName(), dataStream);
     dataStream.writeName(stub.getAsName());
   }
 
-  public PyImportElementStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  @NotNull
+  public PyImportElementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     PyQualifiedName qName = PyQualifiedName.deserialize(dataStream);
     StringRef asName = dataStream.readName();
     return new PyImportElementStubImpl(qName, asName.getString(), parentStub, getStubElementType());

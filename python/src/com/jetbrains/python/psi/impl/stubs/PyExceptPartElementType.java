@@ -37,11 +37,12 @@ public class PyExceptPartElementType extends PyStubElementType<PyExceptPartStub,
   }
 
   @Override
-  public void serialize(PyExceptPartStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PyExceptPartStub stub, @NotNull StubOutputStream dataStream) throws IOException {
   }
 
+  @NotNull
   @Override
-  public PyExceptPartStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public PyExceptPartStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new PyExceptPartStubImpl(parentStub);
   }
 }
