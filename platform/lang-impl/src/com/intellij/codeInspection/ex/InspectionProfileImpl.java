@@ -537,7 +537,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
           toolsList.readExternal(element, this);
         }
         catch (InvalidDataException e) {
-          LOG.error(e);
+          LOG.error("Can't read settings for " + tool, e);
         }
       }
       myTools.put(tool.getShortName(), toolsList);
