@@ -224,6 +224,42 @@ public class DependenciesImportingTest extends MavenImportingTestCase {
 
     assertModuleModuleDeps("m1", "m2");
   }
+  public void testInterModuleDependenciesWithClassifier() throws Exception {
+    createProjectPom("<groupId>test</groupId>" +
+                     "<artifactId>project</artifactId>" +
+                     "<packaging>pom</packaging>" +
+                     "<version>1</version>" +
+
+                     "<modules>" +
+                     "  <module>m1</module>" +
+                     "  <module>m2</module>" +
+                     "</modules>");
+
+    createModulePom("m1", "<groupId>test</groupId>" +
+                          "<artifactId>m1</artifactId>" +
+                          "<version>1</version>" +
+
+                          "<dependencies>" +
+                          "  <dependency>" +
+                          "    <groupId>test</groupId>" +
+                          "    <artifactId>m2</artifactId>" +
+                          "    <version>1</version>" +
+                          "    <classifier>zzz</classifier>" +
+                          "  </dependency>" +
+                          "</dependencies>");
+
+    createModulePom("m2", "<groupId>test</groupId>" +
+                          "<artifactId>m2</artifactId>" +
+                          "<version>1</version>");
+
+    importProject();
+
+    assertModuleModuleDeps("m1", "m2");
+    assertModuleLibDep("m1", "Maven: test:m2:zzz:1",
+                       "jar://" + getRepositoryPath() + "/test/m2/1/m2-1-zzz.jar!/",
+                       "jar://" + getRepositoryPath() + "/test/m2/1/m2-1-sources.jar!/",
+                       "jar://" + getRepositoryPath() + "/test/m2/1/m2-1-javadoc.jar!/");
+  }
 
   public void testDoNotAddInterModuleDependenciesFoUnsupportedDependencyType() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
