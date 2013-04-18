@@ -47,6 +47,11 @@ public class PyClassMROTest extends PyTestCase {
     assertMRO(getClass("G"), "E", "F", "object");
   }
 
+  // PY-4183
+  public void testComplicatedDiamond() {
+    assertMRO(getClass("H"), "E", "F", "B", "G", "C", "D", "A", "object");
+  }
+
   public void assertMRO(@NotNull PyClass cls, @NotNull String... mro) {
     final List<PyClassLikeType> types = cls.getAncestorTypes(TypeEvalContext.fastStubOnly(null));
     final List<String> classNames = new ArrayList<String>();
