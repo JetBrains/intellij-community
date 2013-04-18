@@ -128,7 +128,7 @@ public class AsyncResult<T> extends ActionCallback {
         v = doneHandler.fun(result);
       }
       catch (Throwable e) {
-        subResult.setRejected();
+        subResult.reject(e.getMessage());
         LOG.error(e);
         return;
       }
