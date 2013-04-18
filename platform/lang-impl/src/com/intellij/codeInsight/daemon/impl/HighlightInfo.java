@@ -111,18 +111,13 @@ public class HighlightInfo implements Segment {
     String description = this.description;
     if (toolTip == null || description == null || !toolTip.contains(DESCRIPTION_PLACEHOLDER)) return toolTip;
     String decoded = toolTip.replace(DESCRIPTION_PLACEHOLDER, XmlStringUtil.escapeString(description));
-    String niceTooltip = "<html><body>" + decoded + "</body></html>";
+    String niceTooltip = wrapInHtml(decoded);
     return niceTooltip;
   }
 
   private static String encodeTooltip(String toolTip, String description) {
     if (toolTip == null || description == null) return toolTip;
-    String unescaped = StringUtil.unescapeXml(
-    StringUtil.trimEnd(
-    StringUtil.trimEnd(
-    StringUtil.trimStart(
-    StringUtil.trimStart(
-      toolTip, "<html>"),"<body>"), "</html>"), "</body>"));
+    String unescaped = StringUtil.unescapeXml(stripHtml(toolTip));
 
     if (unescaped.contains(description)) {
       String encoded = unescaped.replace(description, DESCRIPTION_PLACEHOLDER);
@@ -253,7 +248,7 @@ public class HighlightInfo implements Segment {
   @Nullable
   @NonNls
   private static String htmlEscapeToolTip(@Nullable String unescapedTooltip) {
-    return unescapedTooltip == null ? null : "<html><body>"+ XmlStringUtil.escapeString(unescapedTooltip)+"</body></html>";
+    return unescapedTooltip == null ? null : wrapInHtml(XmlStringUtil.escapeString(unescapedTooltip));
   }
 
   @NotNull
@@ -290,12 +285,6 @@ public class HighlightInfo implements Segment {
     description = escapedDescription;
     // optimisation: do not retain extra memory if can recompute
     toolTip = encodeTooltip(escapedToolTip, escapedDescription);
-    //if (escapedToolTip != null && escapedToolTip.equals(htmlEscapeToolTip(escapedDescription))) {
-    //  toolTip = ESCAPED_DESCRIPTION;
-    //}
-    //else {
-    //  toolTip = escapedToolTip;
-    //}
     this.severity = severity;
     setFlag(AFTER_END_OF_LINE_FLAG, afterEndOfLine);
     setFlag(NEEDS_UPDATE_ON_TYPING_FLAG, calcNeedUpdateOnTyping(needsUpdateOnTyping, type));
@@ -969,5 +958,23 @@ public class HighlightInfo implements Segment {
     if (highlighter == null) throw new RuntimeException("info not applied yet");
     if (!highlighter.isValid()) return "";
     return highlighter.getDocument().getText(TextRange.create(highlighter));
+  }
+
+  @NonNls private static final String HTML_HEADER = "<html>";
+  @NonNls private static final String BODY_HEADER = "<body>";
+  @NonNls private static final String HTML_FOOTER = "</html>";
+  @NonNls private static final String BODY_FOOTER = "</body>";
+  @NotNull
+  protected static String wrapInHtml(@NotNull CharSequence result) {
+    return HTML_HEADER + result + HTML_FOOTER;
+  }
+
+  @NotNull
+  protected static String stripHtml(@NotNull String toolTip) {
+    toolTip = StringUtil.trimStart(toolTip, HTML_HEADER);
+    toolTip = StringUtil.trimStart(toolTip, BODY_HEADER);
+    toolTip = StringUtil.trimEnd(toolTip, HTML_FOOTER);
+    toolTip = StringUtil.trimEnd(toolTip, BODY_FOOTER);
+    return toolTip;
   }
 }
