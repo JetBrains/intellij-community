@@ -1177,4 +1177,23 @@ def <error descr="Illegal escape character in string literal">'a\\obc'</error>()
       }
     ''')
   }
+
+  void testDuplicatingAnnotations() {
+    testHighlighting('''\
+@interface A {
+  String value()
+}
+
+@A('a')
+@A('a')
+class X{}
+
+@A('a')
+@A('ab')
+class Y{}
+
+<error descr="Duplicate modifier 'public'">public public</error> class Z {}
+''')
+  }
+
 }

@@ -1672,6 +1672,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     final PsiElement[] modifiers = list.getModifiers();
     Set<String> set = new THashSet<String>(modifiers.length);
     for (PsiElement modifier : modifiers) {
+      if (modifier instanceof GrAnnotation) continue;
       @GrModifier.GrModifierConstant String name = modifier.getText();
       if (set.contains(name)) {
         final Annotation annotation = holder.createErrorAnnotation(list, GroovyBundle.message("duplicate.modifier", name));
