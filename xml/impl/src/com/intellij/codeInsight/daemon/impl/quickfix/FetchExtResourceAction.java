@@ -427,6 +427,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
             String schemaLocation = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT);
 
             if (schemaLocation != null) {
+              // processing xsd:import && xsd:include
               final PsiReference[] references = tag.getAttribute(XmlUtil.SCHEMA_LOCATION_ATT).getValueElement().getReferences();
               if (references.length > 0) {
                 String extension = FileUtilRt.getExtension(new File(url).getName());
@@ -442,7 +443,7 @@ public class FetchExtResourceAction extends BaseExtResourceAction implements Wat
               }
             }
             else {
-              schemaLocation = tag.getAttributeValue("schemaLocation", XmlUtil.XML_SCHEMA_INSTANCE_URI);
+              schemaLocation = tag.getAttributeValue(XmlUtil.SCHEMA_LOCATION_ATT, XmlUtil.XML_SCHEMA_INSTANCE_URI);
               if (schemaLocation != null) {
                 final StringTokenizer tokenizer = new StringTokenizer(schemaLocation);
 
