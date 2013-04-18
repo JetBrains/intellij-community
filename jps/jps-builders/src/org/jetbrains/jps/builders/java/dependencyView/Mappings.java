@@ -787,14 +787,14 @@ public class Mappings {
       }
 
       @Override
-      public boolean belongsToCurrentChunk(File file) {
+      public boolean belongsToCurrentTargetChunk(File file) {
         return true;
       }
     };
 
     boolean accept(File file);
     
-    boolean belongsToCurrentChunk(File file);
+    boolean belongsToCurrentTargetChunk(File file);
   }
 
   private class Differential {
@@ -1769,7 +1769,7 @@ public class Mappings {
         for (ClassRepr c : addedClasses) {
           if (!c.isLocal() && !c.isAnonymous() && isEmpty(c.getOuterClassName())) {
             final File currentlyMappedTo = myClassToSourceFile.get(c.name);
-            if (currentlyMappedTo != null && !FileUtil.filesEqual(currentlyMappedTo, srcFile) && currentlyMappedTo.exists() && myFilter.belongsToCurrentChunk(currentlyMappedTo)) {
+            if (currentlyMappedTo != null && !FileUtil.filesEqual(currentlyMappedTo, srcFile) && currentlyMappedTo.exists() && myFilter.belongsToCurrentTargetChunk(currentlyMappedTo)) {
               // Same classes from different source files.
               // Schedule for recompilation both to make possible 'duplicate sources' error evident
               debug("Scheduling for recompilation duplicated sources: ", currentlyMappedTo.getPath() + "; " + srcFile.getPath());
