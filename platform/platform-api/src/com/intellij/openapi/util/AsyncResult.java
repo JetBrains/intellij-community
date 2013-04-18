@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,6 +16,7 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -53,6 +54,16 @@ public class AsyncResult<T> extends ActionCallback {
     doWhenDone(new Runnable() {
       public void run() {
         handler.run(myResult);
+      }
+    });
+    return this;
+  }
+
+  @NotNull
+  public AsyncResult<T> doWhenDone(@NotNull final Consumer<T> consumer) {
+    doWhenDone(new Runnable() {
+      public void run() {
+        consumer.consume(myResult);
       }
     });
     return this;
@@ -102,25 +113,26 @@ public class AsyncResult<T> extends ActionCallback {
   private static class SubResultDoneCallback<Result, SubResult, AsyncSubResult extends AsyncResult<SubResult>> implements Handler<Result> {
     private static final Logger LOG = Logger.getInstance(SubResultDoneCallback.class);
 
-    private final AsyncSubResult dependentResult;
+    private final AsyncSubResult subResult;
     private final Function<Result, SubResult> doneHandler;
 
-    public SubResultDoneCallback(AsyncSubResult dependentResult, Function<Result, SubResult> doneHandler) {
-      this.dependentResult = dependentResult;
+    public SubResultDoneCallback(AsyncSubResult subResult, Function<Result, SubResult> doneHandler) {
+      this.subResult = subResult;
       this.doneHandler = doneHandler;
     }
 
+    @Override
     public void run(Result result) {
       SubResult v;
       try {
         v = doneHandler.fun(result);
       }
       catch (Throwable e) {
-        dependentResult.setRejected();
+        subResult.setRejected();
         LOG.error(e);
         return;
       }
-      dependentResult.setDone(v);
+      subResult.setDone(v);
     }
   }
 }
