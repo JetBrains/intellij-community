@@ -58,26 +58,26 @@ public class HgLogCommand {
 
   private static final SimpleDateFormat DATE_FORMAT = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss Z");
 
-  private final Project project;
+  @NotNull private final Project myProject;
 
-  private boolean includeRemoved;
-  private boolean followCopies;
-  private boolean logFile = true;
+  private boolean myIncludeRemoved;
+  private boolean myFollowCopies;
+  private boolean myLogFile = true;
 
   public void setIncludeRemoved(boolean includeRemoved) {
-    this.includeRemoved = includeRemoved;
+    myIncludeRemoved = includeRemoved;
   }
 
   public void setFollowCopies(boolean followCopies) {
-    this.followCopies = followCopies;
+    myFollowCopies = followCopies;
   }
 
   public void setLogFile(boolean logFile) {
-    this.logFile = logFile;
+    myLogFile = logFile;
   }
 
-  public HgLogCommand(Project project) {
-    this.project = project;
+  public HgLogCommand(@NotNull Project project) {
+    myProject = project;
   }
 
   public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles) throws HgCommandException {
@@ -93,7 +93,7 @@ public class HgLogCommand {
     String template = HgChangesetUtil.makeTemplate(includeFiles ? LONG_TEMPLATE_ITEMS : SHORT_TEMPLATE_ITEMS);
     int expectedItemCount = includeFiles ? LONG_TEMPLATE_ITEMS.length : SHORT_TEMPLATE_ITEMS.length;
 
-    FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(project));
+    FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(myProject));
     HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
     HgCommandResult result = execute(hgFile.getRepo(), template, limit, originalHgFile, argsForCmd);
 
@@ -185,7 +185,7 @@ public class HgLogCommand {
         }
 
         revisions.add(
-          new HgFileRevision(project, hgFile, vcsRevisionNumber, branchName, revisionDate, author, commitMessage, filesModified, filesAdded,
+          new HgFileRevision(myProject, hgFile, vcsRevisionNumber, branchName, revisionDate, author, commitMessage, filesModified, filesAdded,
                              filesDeleted, copies));
       }
       catch (NumberFormatException e) {
@@ -200,16 +200,16 @@ public class HgLogCommand {
 
   @Nullable
   private HgCommandResult execute(@NotNull VirtualFile repo, @NotNull String template, int limit, HgFile hgFile,
-                                 @Nullable List<String> argsForCmd) {
+                                  @Nullable List<String> argsForCmd) {
     List<String> arguments = new LinkedList<String>();
-    if (followCopies) {
+    if (myFollowCopies) {
       arguments.add("--follow");
     }
-    if (includeRemoved) {
+    if (myIncludeRemoved) {
       // There is a bug in mercurial that causes --follow --removed <file> to cause
       // an error (http://mercurial.selenic.com/bts/issue2139). Avoid this combination
       // for now, preferring to use --follow over --removed.
-      if (!(followCopies && logFile)) {
+      if (!(myFollowCopies && myLogFile)) {
         arguments.add("--removed");
       }
     }
@@ -222,13 +222,13 @@ public class HgLogCommand {
     if (argsForCmd != null) {
       arguments.addAll(argsForCmd);
     }
-    if (logFile) {
+    if (myLogFile) {
       arguments.add(hgFile.getRelativePath());
     }
-    return new HgCommandExecutor(project).executeInCurrentThread(repo, "log", arguments);
+    return new HgCommandExecutor(myProject).executeInCurrentThread(repo, "log", arguments);
   }
 
-  private Set<String> parseFileList(String fileListString) {
+  private static Set<String> parseFileList(String fileListString) {
     if (StringUtil.isEmpty(fileListString)) {
       return Collections.emptySet();
     }
@@ -237,13 +237,15 @@ public class HgLogCommand {
     }
   }
 
-  private Map<String, String> parseCopiesFileList(String fileListString) {
+  @NotNull
+  private static Map<String, String> parseCopiesFileList(@Nullable String fileListString) {
     if (StringUtil.isEmpty(fileListString)) {
       return Collections.emptyMap();
     }
     else {
       Map<String, String> copies = new HashMap<String, String>();
 
+      assert fileListString != null; // checked via StringUtil
       String[] filesList = fileListString.split("\\)");
 
       for (String files : filesList) {
