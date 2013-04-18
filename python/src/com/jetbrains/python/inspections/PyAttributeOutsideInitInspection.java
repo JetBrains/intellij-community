@@ -65,7 +65,7 @@ public class PyAttributeOutsideInitInspection extends PyInspection {
         collectAttributesFromSuper(attributesInInit, initMethod);
       }
       else {
-        for (PyClass superClass : containingClass.getAncestorClasses()) {
+        for (PyClass superClass : containingClass.getAncestorClasses(myTypeEvalContext)) {
           final PyFunction superInit = superClass.findMethodByName(PyNames.INIT, false);
           if (superInit != null)
             PyClassImpl.collectInstanceAttributes(superInit, attributesInInit);

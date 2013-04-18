@@ -125,7 +125,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             it.set(rrr.replace(init));
           }
           else { // init not found; maybe it's ancestor's
-            for (PyClass ancestor : cls.getAncestorClasses()) {
+            for (PyClass ancestor : cls.getAncestorClasses(myContext.getTypeEvalContext())) {
               init = ancestor.findMethodByName(PyNames.INIT, false);
               if (init != null) {
                 // add to results as low priority
