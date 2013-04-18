@@ -165,6 +165,27 @@ public class MavenModuleImporter {
         if (buildHelperCfg != null) {
           addAttachArtifactDependency(buildHelperCfg, scope, depProject, artifact);
         }
+
+        if (Boolean.getBoolean("idea.maven.classifier.dep")) {
+          if (artifact.getClassifier() != null && !"system".equals(artifact.getScope())) {
+            MavenArtifact a = new MavenArtifact(
+              artifact.getGroupId(),
+              artifact.getArtifactId(),
+              artifact.getVersion(),
+              artifact.getBaseVersion(),
+              artifact.getType(),
+              artifact.getClassifier(),
+              artifact.getScope(),
+              artifact.isOptional(),
+              artifact.getExtension(),
+              null,
+              myMavenProject.getLocalRepository(),
+              false, false
+            );
+
+            myRootModelAdapter.addLibraryDependency(a, scope, myModifiableModelsProvider, myMavenProject);
+          }
+        }
       }
       else {
         myRootModelAdapter.addLibraryDependency(artifact, scope, myModifiableModelsProvider, myMavenProject);
