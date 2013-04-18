@@ -867,16 +867,16 @@ public class LookupImpl extends LightweightHint implements LookupEx, Disposable 
         myHintAlarm.cancelAllRequests();
 
         final LookupElement item = getCurrentItem();
-        if (oldItem != item) {
+        if (oldItem != item && !myList.isEmpty()) { // do not update on temporary model wipe
           fireCurrentItemChanged(item);
           if (myDisposed) { //a listener may have decided to close us, what can we do?
             return;
           }
+          oldItem = item;
         }
         if (item != null) {
           updateHint(item);
         }
-        oldItem = item;
       }
     });
 
