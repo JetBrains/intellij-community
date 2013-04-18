@@ -80,10 +80,16 @@ public class HgLogCommand {
     myProject = project;
   }
 
+  /**
+   * @param limit Pass -1 to set no limits on history
+   */
   public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles) throws HgCommandException {
     return execute(hgFile, limit, includeFiles, null);
   }
 
+  /**
+   * @param limit Pass -1 to set no limits on history
+   */
   public final List<HgFileRevision> execute(final HgFile hgFile, int limit, boolean includeFiles, @Nullable List<String> argsForCmd)
     throws HgCommandException {
     if ((limit <= 0 && limit != -1) || hgFile == null || hgFile.getRepo() == null) {
