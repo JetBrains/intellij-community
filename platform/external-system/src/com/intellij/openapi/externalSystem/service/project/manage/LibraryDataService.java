@@ -85,7 +85,7 @@ public class LibraryDataService implements ProjectDataService<LibraryData> {
 
   public void importLibrary(@NotNull final String libraryName,
                             @NotNull ProjectSystemId externalSystemId,
-                            @NotNull final Map<OrderRootType, ? extends Collection<File>> libraryFiles,
+                            @NotNull final Map<OrderRootType, Collection<File>> libraryFiles,
                             @NotNull final Project project,
                             boolean synchronous)
   {
@@ -113,11 +113,11 @@ public class LibraryDataService implements ProjectDataService<LibraryData> {
     });
   }
 
-  private static void registerPaths(@NotNull final Map<OrderRootType, ? extends Collection<File>> libraryFiles,
+  private static void registerPaths(@NotNull final Map<OrderRootType, Collection<File>> libraryFiles,
                                     @NotNull Library.ModifiableModel model,
                                     @NotNull String libraryName)
   {
-    for (Map.Entry<OrderRootType, ? extends Collection<File>> entry : libraryFiles.entrySet()) {
+    for (Map.Entry<OrderRootType, Collection<File>> entry : libraryFiles.entrySet()) {
       for (File file : entry.getValue()) {
         VirtualFile virtualFile = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(file);
         if (virtualFile == null) {
@@ -157,7 +157,7 @@ public class LibraryDataService implements ProjectDataService<LibraryData> {
     removeLibraries(libraries, project, synchronous);
   }
 
-  public void removeLibraries(@NotNull final Collection<? extends Library> libraries, @NotNull final Project project, boolean synchronous) {
+  public void removeLibraries(@NotNull final Collection<Library> libraries, @NotNull final Project project, boolean synchronous) {
     if (libraries.isEmpty()) {
       return;
     }
