@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -39,6 +39,6 @@ public abstract class DialogWrapperPeerFactory {
 
   public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, @Nullable Project project, boolean canBeParent);
   public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, boolean canBeParent);
-  public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, boolean canBeParent, boolean tryToolkitModal);
+  public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, boolean canBeParent, boolean applicationModalIfPossible);
   public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent);
 }

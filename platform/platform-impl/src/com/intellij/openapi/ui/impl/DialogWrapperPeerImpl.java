@@ -169,7 +169,7 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     createDialog(owner, canBeParent);
   }
 
-  public DialogWrapperPeerImpl(final DialogWrapper wrapper, final boolean canBeParent, final boolean tryToolkitModal) {
+  public DialogWrapperPeerImpl(final DialogWrapper wrapper, final boolean canBeParent, final boolean applicationModalIfPossible) {
     myWrapper = wrapper;
     myWindowManager = null;
     Application application = ApplicationManager.getApplication();
@@ -177,8 +177,12 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
       myWindowManager = (WindowManagerEx)WindowManager.getInstance();
     }
     createDialog(null, canBeParent);
-    if (tryToolkitModal && !isHeadless()) {
-      ((MyDialog)myDialog).setModalityType(Dialog.ModalityType.TOOLKIT_MODAL);
+    if (applicationModalIfPossible && !isHeadless()) {
+      Dialog.ModalityType modalityType = Dialog.ModalityType.TOOLKIT_MODAL;
+      if (Registry.is("ide.mac.modalDialogsOnFullscreen")) {
+        modalityType = Dialog.ModalityType.APPLICATION_MODAL;
+      }
+      ((MyDialog)myDialog).setModalityType(modalityType);
     }
   }
 
@@ -205,7 +209,9 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
     }
 
     myDialog = new MyDialog(owner, myWrapper, myProject, myWindowFocusedCallback, myTypeAheadDone, myTypeAheadCallback);
-    myDialog.setModal(true);
+    if (!Registry.is("ide.mac.modalDialogsOnFullscreen")) {
+      myDialog.setModal(true);
+    }
     myCanBeParent = canBeParent;
   }
 
@@ -485,6 +491,10 @@ public class DialogWrapperPeerImpl extends DialogWrapperPeer implements FocusTra
                     ActionCallback typeAheadDone,
                     ActionCallback typeAheadCallback) {
       super(owner);
+      if (Registry.is("ide.mac.modalDialogsOnFullscreen")) {
+        //todo should be passed in the super method
+        setModalityType(ModalityType.DOCUMENT_MODAL);
+      }
       myDialogWrapper = new WeakReference<DialogWrapper>(dialogWrapper);
       myProject = project != null ? new WeakReference<Project>(project) : null;
       initDialog(focused, typeAheadDone, typeAheadCallback);
