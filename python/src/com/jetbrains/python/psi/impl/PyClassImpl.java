@@ -14,7 +14,7 @@ import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.psi.util.*;
 import com.intellij.util.*;
-import com.intellij.util.containers.*;
+import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.*;
 import com.jetbrains.python.codeInsight.controlflow.ControlFlowCache;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
@@ -34,8 +34,6 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.util.*;
-import java.util.HashMap;
-import java.util.HashSet;
 
 /**
  * @author yole
@@ -295,6 +293,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
       if (nonBlankSequences.isEmpty()) return result;
       // find a clean head
+      boolean found = false;
       PyClassLikeType head = null; // to keep compiler happy; really head is assigned in the loop at least once.
       for (List<PyClassLikeType> seq : nonBlankSequences) {
         head = seq.get(0);
@@ -306,39 +305,48 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
           }
         }
         if (!head_in_tails) {
+          found = true;
           break;
         }
         else {
           head = null; // as a signal
         }
       }
+      if (!found) {
+        // Inconsistent hierarchy results in TypeError
+        throw new IllegalStateException("Inconsistent class hierarchy");
+      }
       // our head is clean;
       result.add(head);
       // remove it from heads of other sequences
       for (List<PyClassLikeType> seq : nonBlankSequences) {
-        if (Comparing.equal(seq.get(0), head)) seq.remove(0);
+        if (Comparing.equal(seq.get(0), head)) {
+          seq.remove(0);
+        }
       }
     } // we either return inside the loop or die by assertion
   }
 
   @NotNull
-  private static List<PyClassLikeType> mroLinearize(@NotNull PyClassLikeType type, @NotNull List<PyClassLikeType> seen, boolean addThisType,
+  private static List<PyClassLikeType> mroLinearize(@NotNull PyClassLikeType type, @NotNull Set<PyClassLikeType> seen, boolean addThisType,
                                                     @NotNull TypeEvalContext context) {
-    assert (seen.indexOf(type) < 0) : "Circular import structure on " + PyUtil.nvl(type);
+    if (seen.contains(type)) {
+      throw new IllegalStateException("Circular class inheritance");
+    }
     final List<PyClassLikeType> bases = type.getSuperClassTypes(context);
-    List<List<PyClassLikeType>> lins = new ArrayList<List<PyClassLikeType>>(bases.size() * 2);
-    ArrayList<PyClassLikeType> new_seen = new ArrayList<PyClassLikeType>(seen.size() + 1);
-    new_seen.add(type);
+    List<List<PyClassLikeType>> lines = new ArrayList<List<PyClassLikeType>>();
     for (PyClassLikeType base : bases) {
       if (base != null) {
-        List<PyClassLikeType> lin = mroLinearize(base, new_seen, true, context);
-        if (!lin.isEmpty()) lins.add(lin);
+        final Set<PyClassLikeType> newSeen = new HashSet<PyClassLikeType>(seen);
+        newSeen.add(type);
+        List<PyClassLikeType> lin = mroLinearize(base, newSeen, true, context);
+        if (!lin.isEmpty()) lines.add(lin);
       }
     }
-    for (PyClassLikeType base : bases) {
-      lins.add(new SmartList<PyClassLikeType>(base));
+    if (!bases.isEmpty()) {
+      lines.add(bases);
     }
-    List<PyClassLikeType> result = mroMerge(lins);
+    List<PyClassLikeType> result = mroMerge(lines);
     if (addThisType) {
       result.add(0, type);
     }
@@ -1062,7 +1070,11 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   private List<PyClassLikeType> getMROAncestorTypes(@NotNull TypeEvalContext context) {
     final PyType thisType = context.getType(this);
     if (thisType instanceof PyClassLikeType) {
-      return mroLinearize((PyClassLikeType)thisType, Collections.<PyClassLikeType>emptyList(), false, context);
+      try {
+        return mroLinearize((PyClassLikeType)thisType, new HashSet<PyClassLikeType>(), false, context);
+      }
+      catch (IllegalStateException ignored) {
+      }
     }
     return Collections.emptyList();
   }
