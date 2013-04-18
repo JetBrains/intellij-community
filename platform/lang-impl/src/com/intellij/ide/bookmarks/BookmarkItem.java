@@ -56,6 +56,9 @@ public class BookmarkItem extends ItemWrapper {
 
   public static void setupRenderer(SimpleColoredComponent renderer, Project project, Bookmark bookmark, boolean selected) {
     VirtualFile file = bookmark.getFile();
+    if (!file.isValid()) {
+      return;
+    }
 
     PsiManager psiManager = PsiManager.getInstance(project);
 
