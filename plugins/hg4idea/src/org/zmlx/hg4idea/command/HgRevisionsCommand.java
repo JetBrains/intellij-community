@@ -63,9 +63,6 @@ abstract class HgRevisionsCommand {
     this.project = project;
   }
 
-  @Nullable
-  protected abstract HgCommandResult execute(HgCommandExecutor executor, VirtualFile repo, String template, int limit, HgFile hgFile);
-
   protected abstract HgCommandResult execute(HgCommandExecutor executor, VirtualFile repo,
                                              String template, int limit, HgFile hgFile, @Nullable List<String> argsForCmd);
 
@@ -86,13 +83,7 @@ abstract class HgRevisionsCommand {
 
     FilePath originalFileName = HgUtil.getOriginalFileName(hgFile.toFilePath(), ChangeListManager.getInstance(project));
     HgFile originalHgFile = new HgFile(hgFile.getRepo(), originalFileName);
-    HgCommandResult result;
-    if (argsForCmd != null) {
-      result = execute(hgCommandExecutor, hgFile.getRepo(), template, limit, originalHgFile, argsForCmd);
-    }
-    else {
-      result = execute(hgCommandExecutor, hgFile.getRepo(), template, limit, originalHgFile);
-    }
+    HgCommandResult result = execute(hgCommandExecutor, hgFile.getRepo(), template, limit, originalHgFile, argsForCmd);
 
     final List<HgFileRevision> revisions = new LinkedList<HgFileRevision>();
     if (result == null) {
