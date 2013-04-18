@@ -298,10 +298,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     PyBuiltinCache builtins_cache = PyBuiltinCache.getInstance(realContext);
     if (uexpr == null) {
       // ...as a part of current module
-      PyType otype = builtins_cache.getObjectType(); // "object" as a closest kin to "module"
       String name = myElement.getName();
-      if (otype != null && name != null) {
-        ret.addAll(otype.resolveMember(name, null, AccessDirection.READ, myContext));
+      if (PyModuleType.MODULE_MEMBERS.contains(name)) {
+        PyType otype = builtins_cache.getObjectType(); // "object" as a closest kin to "module"
+        if (otype != null && name != null) {
+          ret.addAll(otype.resolveMember(name, null, AccessDirection.READ, myContext));
+        }
       }
     }
     if (uexpr == null) {
