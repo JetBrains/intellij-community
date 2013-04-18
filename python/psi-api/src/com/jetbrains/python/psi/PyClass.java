@@ -113,6 +113,9 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
   @NotNull
   List<PyClass> getAncestorClasses();
 
+  @NotNull
+  List<PyClass> getAncestorClasses(@NotNull TypeEvalContext context);
+
   /**
    * Get a list of all ancestor types.
    */

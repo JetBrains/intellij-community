@@ -177,8 +177,14 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @NotNull
   @Override
   public List<PyClass> getAncestorClasses() {
+    return getAncestorClasses(TypeEvalContext.fastStubOnly(null));
+  }
+
+  @NotNull
+  @Override
+  public List<PyClass> getAncestorClasses(@NotNull TypeEvalContext context) {
     final List<PyClass> results = new ArrayList<PyClass>();
-    for (PyClassLikeType type : getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+    for (PyClassLikeType type : getAncestorTypes(context)) {
       if (type instanceof PyClassType) {
         results.add(((PyClassType)type).getPyClass());
       }
