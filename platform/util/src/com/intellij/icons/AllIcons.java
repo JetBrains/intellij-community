@@ -563,10 +563,10 @@ public class AllIcons {
   public static class Ide {
     
     public static class Dnd {
-      public static final Icon Bottom = IconLoader.getIcon("/ide/dnd/bottom.png"); // 17x17
-      public static final Icon Left = IconLoader.getIcon("/ide/dnd/left.png"); // 17x17
-      public static final Icon Right = IconLoader.getIcon("/ide/dnd/right.png"); // 17x17
-      public static final Icon Top = IconLoader.getIcon("/ide/dnd/top.png"); // 17x17
+      public static final Icon Bottom = IconLoader.getIcon("/ide/dnd/bottom.png"); // 16x16
+      public static final Icon Left = IconLoader.getIcon("/ide/dnd/left.png"); // 16x16
+      public static final Icon Right = IconLoader.getIcon("/ide/dnd/right.png"); // 16x16
+      public static final Icon Top = IconLoader.getIcon("/ide/dnd/top.png"); // 16x16
 
     }
     public static final Icon EmptyFatalError = IconLoader.getIcon("/ide/emptyFatalError.png"); // 16x16
@@ -597,8 +597,8 @@ public class AllIcons {
     }
     public static final Icon NoNotifications13 = IconLoader.getIcon("/ide/noNotifications13.png"); // 13x13
     public static final Icon Notifications = IconLoader.getIcon("/ide/notifications.png"); // 16x16
-    public static final Icon Pipette = IconLoader.getIcon("/ide/pipette.png"); // 18x18
-    public static final Icon Pipette_rollover = IconLoader.getIcon("/ide/pipette_rollover.png"); // 18x18
+    public static final Icon Pipette = IconLoader.getIcon("/ide/pipette.png"); // 16x16
+    public static final Icon Pipette_rollover = IconLoader.getIcon("/ide/pipette_rollover.png"); // 16x16
     public static final Icon Rating = IconLoader.getIcon("/ide/rating.png"); // 11x11
     public static final Icon Rating1 = IconLoader.getIcon("/ide/rating1.png"); // 11x11
     public static final Icon Rating2 = IconLoader.getIcon("/ide/rating2.png"); // 11x11
@@ -693,8 +693,8 @@ public class AllIcons {
     public static final Icon Annotation = IconLoader.getIcon("/modules/annotation.png"); // 16x16
     public static final Icon DeleteContentFolder = IconLoader.getIcon("/modules/deleteContentFolder.png"); // 9x9
     public static final Icon DeleteContentFolderRollover = IconLoader.getIcon("/modules/deleteContentFolderRollover.png"); // 9x9
-    public static final Icon DeleteContentRoot = IconLoader.getIcon("/modules/deleteContentRoot.png"); // 11x11
-    public static final Icon DeleteContentRootRollover = IconLoader.getIcon("/modules/deleteContentRootRollover.png"); // 11x11
+    public static final Icon DeleteContentRoot = IconLoader.getIcon("/modules/deleteContentRoot.png"); // 9x9
+    public static final Icon DeleteContentRootRollover = IconLoader.getIcon("/modules/deleteContentRootRollover.png"); // 9x9
     public static final Icon Edit = IconLoader.getIcon("/modules/edit.png"); // 14x14
     public static final Icon ExcludeRoot = IconLoader.getIcon("/modules/excludeRoot.png"); // 16x16
     public static final Icon Library = IconLoader.getIcon("/modules/library.png"); // 16x16
@@ -945,7 +945,7 @@ public class AllIcons {
   public static class Providers {
     public static final Icon Apache = IconLoader.getIcon("/providers/apache.png"); // 16x16
     public static final Icon Bea = IconLoader.getIcon("/providers/bea.png"); // 16x16
-    public static final Icon Cvs = IconLoader.getIcon("/providers/cvs.png"); // 13x13
+    public static final Icon Cvs = IconLoader.getIcon("/providers/cvs.png"); // 16x16
     public static final Icon Eclipse = IconLoader.getIcon("/providers/eclipse.png"); // 16x16
     public static final Icon Hibernate = IconLoader.getIcon("/providers/hibernate.png"); // 16x16
     public static final Icon Ibm = IconLoader.getIcon("/providers/ibm.png"); // 16x16
