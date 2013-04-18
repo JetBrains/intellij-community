@@ -132,7 +132,7 @@ public class UnversionedViewDialog extends DialogWrapper {
           refreshView();
         }
       }
-    });
+    }, myDisposable);
 
     actions.add(new MoveChangesToAnotherListAction() {
       @Override
