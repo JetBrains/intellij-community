@@ -317,8 +317,7 @@ public class GradleConfigurable extends AbstractExternalProjectConfigurable<Grad
       return false;
     }
     GradleSettings settings = getSettings(project);
-    boolean preferLocalToWrapper = settings.isPreferLocalInstallationToWrapper();
-    if (myUseWrapperButton.isSelected() == preferLocalToWrapper) {
+    if (myUseWrapperButton.isEnabled() && settings.isPreferLocalInstallationToWrapper() != myUseLocalDistributionButton.isSelected()) {
       return true;
     }
 
@@ -349,7 +348,14 @@ public class GradleConfigurable extends AbstractExternalProjectConfigurable<Grad
                                                settings.getServiceDirectoryPath(),
                                                myServiceDirectoryPathField.getText());
 
-    boolean preferLocalToWrapper = myUseLocalDistributionButton.isSelected();
+    final boolean preferLocalToWrapper;
+    if (myUseWrapperButton.isEnabled()) {
+      preferLocalToWrapper = myUseLocalDistributionButton.isSelected();
+    }
+    else {
+      // No point in switching the value if gradle wrapper is not defined for the target project.
+      preferLocalToWrapper = settings.isPreferLocalInstallationToWrapper();
+    }
 
     myHelper.applySettings(linkedExternalProjectPath, gradleHomePath, preferLocalToWrapper, useAutoImport, serviceDirPath, project);
 
