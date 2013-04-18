@@ -45,7 +45,16 @@ public class GradleExecutionHelper {
                                                              @NotNull ProjectConnection connection,
                                                              boolean downloadLibraries)
   {
-    ModelBuilder<? extends IdeaProject> result = connection.model(downloadLibraries ? IdeaProject.class : BasicIdeaProject.class);
+    return getModelBuilder(downloadLibraries ? IdeaProject.class : BasicIdeaProject.class, id, settings, connection);
+  }
+  
+  @NotNull
+  public <T> ModelBuilder<T> getModelBuilder(@NotNull Class<T> modelType,
+                                             @NotNull final ExternalSystemTaskId id,
+                                             @Nullable GradleExecutionSettings settings,
+                                             @NotNull ProjectConnection connection)
+  {
+    ModelBuilder<T> result = connection.model(modelType);
     prepare(result, id, settings);
     return result;
   }

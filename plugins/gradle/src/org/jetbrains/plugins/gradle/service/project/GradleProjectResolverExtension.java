@@ -17,16 +17,10 @@ package org.jetbrains.plugins.gradle.service.project;
 
 import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.openapi.extensions.ExtensionPointName;
-import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
-import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataService;
-import com.intellij.openapi.externalSystem.service.remote.ExternalSystemExecutionSettings;
-import org.gradle.tooling.ProjectConnection;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.GradleManager;
+import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 
 /**
  * Allows to enhance {@link GradleProjectResolver} processing.
@@ -38,20 +32,7 @@ import org.jetbrains.plugins.gradle.GradleManager;
  * @since 4/17/13 11:24 AM
  * @see GradleManager#enhanceParameters(SimpleJavaParameters)   sample enhanceParameters() implementation
  */
-public interface GradleProjectResolverExtension extends ParametersEnhancer {
+public interface GradleProjectResolverExtension extends ParametersEnhancer, ExternalSystemProjectResolver<GradleExecutionSettings> {
   
   ExtensionPointName<GradleProjectResolverExtension> EP_NAME = ExtensionPointName.create("org.jetbrains.plugins.gradle.projectResolve");
-
-  /**
-   * Is expected to be called during gradle project
-   * {@link ExternalSystemProjectResolver#resolveProjectInfo(ExternalSystemTaskId, String, boolean, ExternalSystemExecutionSettings) parsing}.
-   * <p/>
-   * The general idea is to allow to store specific data at given project node for {@link ProjectDataService further processing}.
-   * 
-   * @param project            target project built from the gradle file
-   * @param connection         gradle connection for the target gradle file
-   * @param quick              flag which indicates whether the processing should be quick (e.g. don't download binary dependencies
-   *                           if the flag is <code>true</code>)
-   */
-  void enhanceProject(@NotNull DataNode<ProjectData> project, @NotNull ProjectConnection connection, boolean quick);
 }
