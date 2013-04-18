@@ -1,20 +1,27 @@
 package com.jetbrains.python.refactoring.extractmethod;
 
+import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.codeFragment.CodeFragment;
+import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.find.FindManager;
 import com.intellij.lang.LanguageNamesValidation;
 import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.LogicalPosition;
+import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.editor.colors.EditorColors;
+import com.intellij.openapi.editor.colors.EditorColorsManager;
+import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiNamedElement;
-import com.intellij.psi.PsiRecursiveElementVisitor;
-import com.intellij.psi.PsiWhiteSpace;
+import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -26,6 +33,7 @@ import com.intellij.refactoring.extractMethod.ExtractMethodValidator;
 import com.intellij.refactoring.listeners.RefactoringElementListenerComposite;
 import com.intellij.refactoring.rename.RenameUtil;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
+import com.intellij.ui.ReplacePromptDialog;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
@@ -56,19 +64,19 @@ public class PyExtractMethodUtil {
   private PyExtractMethodUtil() {
   }
 
-  public static void extractFromStatements(final Project project,
-                                           final Editor editor,
-                                           final PyCodeFragment fragment,
-                                           final PsiElement statement1,
-                                           final PsiElement statement2) {
+  public static void extractFromStatements(@NotNull final Project project,
+                                           @NotNull final Editor editor,
+                                           @NotNull final PyCodeFragment fragment,
+                                           @NotNull final PsiElement statement1,
+                                           @NotNull final PsiElement statement2) {
     if (!fragment.getOutputVariables().isEmpty() && fragment.isReturnInstructionInside()) {
       CommonRefactoringUtil.showErrorHint(project, editor,
-                                          "Cannot perform refactoring from expression with local variables modifications and return instructions inside code fragment",
+                                          PyBundle.message("refactoring.extract.method.error.cannot.perform.refactoring.with.local"),
                                           RefactoringBundle.message("error.title"), "refactoring.extractMethod");
       return;
     }
 
-    PyFunction function = PsiTreeUtil.getParentOfType(statement1, PyFunction.class);
+    final PyFunction function = PsiTreeUtil.getParentOfType(statement1, PyFunction.class);
     final PyUtil.MethodFlags flags = function == null ? null : PyUtil.MethodFlags.of(function);
     final boolean isClassMethod = flags != null && flags.isClassMethod();
     final boolean isStaticMethod = flags != null && flags.isStaticMethod();
@@ -89,6 +97,8 @@ public class PyExtractMethodUtil {
 
     final String methodName = data.first;
     final AbstractVariableData[] variableData = data.second;
+
+    final PyDuplicatesFinder finder = new PyDuplicatesFinder(statement1, statement2);
 
     if (fragment.getOutputVariables().isEmpty()) {
       CommandProcessor.getInstance().executeCommand(project, new Runnable() {
@@ -123,6 +133,8 @@ public class PyExtractMethodUtil {
 
               // Replace statements with call
               callElement = replaceElements(elementsRange, callElement);
+              callElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(callElement);
+              processDuplicates(callElement, generatedMethod, finder, editor);
 
               // Set editor
               setSelectionAndCaret(editor, callElement);
@@ -174,6 +186,8 @@ public class PyExtractMethodUtil {
 
               // replace statements with call
               callElement = replaceElements(elementsRange, callElement);
+              callElement = CodeInsightUtilBase.forcePsiPostprocessAndRestoreElement(callElement);
+              processDuplicates(callElement, generatedMethod, finder, editor);
 
               // Set editor
               setSelectionAndCaret(editor, callElement);
@@ -184,7 +198,66 @@ public class PyExtractMethodUtil {
     }
   }
 
-  private static void processGlobalWrites(@NotNull PyFunction function, @NotNull PyCodeFragment fragment) {
+  private static void processDuplicates(@NotNull final PsiElement callElement,
+                                        @NotNull final PyFunction generatedMethod,
+                                        @NotNull final PyDuplicatesFinder finder,
+                                        @NotNull final Editor editor) {
+    final ScopeOwner owner = ScopeUtil.getScopeOwner(callElement);
+    if (owner instanceof PsiFile) return;
+    final List<Pair<PsiElement, PsiElement>> duplicates = finder.findDuplicates(owner, generatedMethod);
+
+    if (duplicates.size() > 0) {
+      final String message = RefactoringBundle.message("0.has.detected.1.code.fragments.in.this.file.that.can.be.replaced.with.a.call.to.extracted.method",
+                                                       ApplicationNamesInfo.getInstance().getProductName(), duplicates.size());
+      final boolean isUnittest = ApplicationManager.getApplication().isUnitTestMode();
+      final int exitCode = !isUnittest ?  Messages.showYesNoDialog(callElement.getProject(), message,
+                                                    RefactoringBundle.message("refactoring.extract.method.dialog.title"), Messages.getInformationIcon()) :
+                                          DialogWrapper.OK_EXIT_CODE;
+      if (exitCode == DialogWrapper.OK_EXIT_CODE) {
+        boolean replaceAll = false;
+        for (Pair<PsiElement, PsiElement> match : duplicates) {
+          final List<PsiElement> elementsRange = PyPsiUtils.collectElements(match.getFirst(), match.getSecond());
+          if (!replaceAll) {
+            highlightInEditor(callElement.getProject(), match, editor);
+
+            int promptResult = FindManager.PromptResult.ALL;
+            if (!isUnittest) {
+              ReplacePromptDialog promptDialog = new ReplacePromptDialog(false, RefactoringBundle.message("replace.fragment"), callElement.getProject());
+              promptDialog.show();
+              promptResult = promptDialog.getExitCode();
+            }
+            if (promptResult == FindManager.PromptResult.SKIP) continue;
+            if (promptResult == FindManager.PromptResult.CANCEL) break;
+
+            if (promptResult == FindManager.PromptResult.OK) {
+              replaceElements(elementsRange, callElement);
+            }
+            else if (promptResult == FindManager.PromptResult.ALL) {
+              replaceElements(elementsRange, callElement);
+              replaceAll = true;
+            }
+          }
+          else {
+            replaceElements(elementsRange, callElement);
+          }
+        }
+      }
+    }
+  }
+
+  private static void highlightInEditor(@NotNull final Project project, @NotNull final Pair<PsiElement, PsiElement> pair,
+                                        @NotNull final Editor editor) {
+    final HighlightManager highlightManager = HighlightManager.getInstance(project);
+    final EditorColorsManager colorsManager = EditorColorsManager.getInstance();
+    final TextAttributes attributes = colorsManager.getGlobalScheme().getAttributes(EditorColors.SEARCH_RESULT_ATTRIBUTES);
+    final int startOffset = pair.getFirst().getTextRange().getStartOffset();
+    final int endOffset = pair.getSecond().getTextRange().getEndOffset();
+    highlightManager.addRangeHighlight(editor, startOffset, endOffset, attributes, true, null);
+    final LogicalPosition logicalPosition = editor.offsetToLogicalPosition(startOffset);
+    editor.getScrollingModel().scrollTo(logicalPosition, ScrollType.MAKE_VISIBLE);
+  }
+
+  private static void processGlobalWrites(@NotNull final PyFunction function, @NotNull final PyCodeFragment fragment) {
     final Set<String> globalWrites = fragment.getGlobalWrites();
     final Set<String> newGlobalNames = new LinkedHashSet<String>();
     final Scope scope = ControlFlowCache.getScope(function);
@@ -239,7 +312,7 @@ public class PyExtractMethodUtil {
     builder.append(".");
   }
 
-  public static void extractFromExpression(final Project project,
+  public static void extractFromExpression(@NotNull final Project project,
                                            final Editor editor,
                                            final PyCodeFragment fragment,
                                            final PsiElement expression) {
@@ -301,7 +374,7 @@ public class PyExtractMethodUtil {
               final PyElement generated = generator.createFromText(LanguageLevel.getDefault(), PyElement.class, builder.toString());
               PsiElement callElement = null;
               if (generated instanceof PyReturnStatement) {
-                callElement = fragment.isReturnInstructionInside() ? generated : ((PyReturnStatement)generated).getExpression();
+                callElement = ((PyReturnStatement)generated).getExpression();
               }
               else if (generated instanceof PyExpressionStatement) {
                 callElement = ((PyExpressionStatement)generated).getExpression();
