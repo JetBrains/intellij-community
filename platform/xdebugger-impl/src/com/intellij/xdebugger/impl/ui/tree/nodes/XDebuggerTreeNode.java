@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleColoredText;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.enumeration.EmptyEnumeration;
 import com.intellij.xdebugger.frame.XDebuggerTreeNodeHyperlink;
 import com.intellij.xdebugger.impl.ui.tree.XDebuggerTree;
@@ -128,7 +129,7 @@ public abstract class XDebuggerTreeNode implements TreeNode {
   }
 
   protected int[] getNodesIndices(@Nullable Collection<? extends TreeNode> children) {
-    if (children == null) return new int[0];
+    if (children == null) return ArrayUtilRt.EMPTY_INT_ARRAY;
 
     final int[] ints = new int[children.size()];
     int i = 0;
