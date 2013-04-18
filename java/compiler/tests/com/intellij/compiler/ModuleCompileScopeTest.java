@@ -5,6 +5,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PsiTestUtil;
 
+import java.io.File;
+
 import static com.intellij.util.io.TestFileSystemBuilder.fs;
 
 /**
@@ -44,6 +46,30 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     assertModulesUpToDate();
   }
 
+  public void testForceCompileUpToDateFileAndDoNotCompileResources() {
+    VirtualFile a = createFile("src/A.java", "class A{}");
+    VirtualFile res = createFile("src/res.properties", "aaa=bbb");
+    Module module = addModule("a", a.getParent());
+    make(module);
+    assertOutput(module, fs().file("A.class").file("res.properties"));
+    final VirtualFile output = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(getOutputDir(module));
+    assertNotNull(output);
+    final VirtualFile classFile = output.findChild("A.class");
+    assertNotNull(classFile);
+    final VirtualFile resOutputFile = output.findChild("res.properties");
+    assertNotNull(resOutputFile);
+    final File resourceOutputIoFile = new File(resOutputFile.getPath());
+    final long resStampBefore = resourceOutputIoFile.lastModified();
+    deleteFile(classFile);
+    make(module);
+    assertOutput(module, fs().file("res.properties"));
+    compile(true, a);
+    assertOutput(module, fs().file("A.class").file("res.properties"));
+    final long resStampAfter = resourceOutputIoFile.lastModified();
+    assertEquals(resStampBefore, resStampAfter);
+    assertModulesUpToDate();
+  }
+
   public void testForceCompileUpToDateFileAndDoNotCompileDependentTestClass() {
     VirtualFile a = createFile("src/A.java", "class A{ public static void foo(int param) {} }");
     VirtualFile b = createFile("testSrc/B.java", "class B { void bar() {A.foo(10);}}");
@@ -66,8 +92,7 @@ public class ModuleCompileScopeTest extends BaseCompilerTestCase {
     compile(true, a);
     assertOutput(module, fs().file("A.class"), false);
     assertOutput(module, fs(), true);
-    boolean upToDate = getCompilerManager().isUpToDate(getCompilerManager().createProjectCompileScope(myProject));
-    assertFalse("Module should not be up to date", upToDate);
+    assertModulesUpToDate();
   }
 
   public void testMakeTwoModules() {
