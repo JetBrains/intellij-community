@@ -78,8 +78,6 @@
 
     <treeStructureProvider implementation="com.intellij.platform.PlatformProjectViewStructureProvider"/>
 
-    <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.platform.PlatformFileProjectDirectoryRule"/>
-
     <programRunner implementation="com.intellij.execution.runners.BasicProgramRunner" order="last"/>
 
     <projectConfigurable provider="com.intellij.profile.codeInspection.ui.ProjectInspectionToolsConfigurableProvider" order="before intentions"/>
