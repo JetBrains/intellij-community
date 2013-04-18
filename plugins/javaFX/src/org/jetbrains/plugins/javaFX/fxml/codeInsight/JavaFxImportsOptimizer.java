@@ -118,43 +118,52 @@ public class JavaFxImportsOptimizer implements ImportOptimizer {
   }
   
   private static void collectNamesToImport(@NotNull final Collection<Pair<String, Boolean>> names, XmlFile file) {
-    file.accept(new XmlRecursiveElementVisitor(){
+    file.accept(new JavaFxUsedClassesVisitor() {
       @Override
-      public void visitXmlProlog(XmlProlog prolog) {}
-
-      @Override
-      public void visitXmlProcessingInstruction(XmlProcessingInstruction processingInstruction) {}
-
-      @Override
-      public void visitXmlAttribute(XmlAttribute attribute) {
-        final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
-        if (descriptor instanceof JavaFxStaticPropertyAttributeDescriptor) {
-          final PsiElement declaration = descriptor.getDeclaration();
-          if (declaration instanceof PsiMember) {
-            appendClassName(((PsiMember)declaration).getContainingClass());
-          }
-        }
-      }
-
-      @Override
-      public void visitXmlTag(XmlTag tag) {
-        super.visitXmlTag(tag);
-        final XmlElementDescriptor descriptor = tag.getDescriptor();
-        if (descriptor instanceof JavaFxClassBackedElementDescriptor) {
-          appendClassName(descriptor.getDeclaration());
-        } else if (descriptor instanceof JavaFxPropertyElementDescriptor && ((JavaFxPropertyElementDescriptor)descriptor).isStatic()) {
-          final PsiElement declaration = descriptor.getDeclaration();
-          if (declaration instanceof PsiMember) {
-            appendClassName(((PsiMember)declaration).getContainingClass());
-          }
-        }
-      }
-
-      private void appendClassName(PsiElement declaration) {
-        if (declaration instanceof PsiClass) {
-          names.add(Pair.create(((PsiClass)declaration).getQualifiedName(), false));
-        }
+      protected void appendClassName(String fqn) {
+        names.add(Pair.create(fqn, false));
       }
     });
-  } 
+  }
+
+  public static abstract class JavaFxUsedClassesVisitor extends XmlRecursiveElementVisitor {
+    @Override
+    public void visitXmlProlog(XmlProlog prolog) {}
+
+    @Override
+    public void visitXmlProcessingInstruction(XmlProcessingInstruction processingInstruction) {}
+
+    @Override
+    public void visitXmlAttribute(XmlAttribute attribute) {
+      final XmlAttributeDescriptor descriptor = attribute.getDescriptor();
+      if (descriptor instanceof JavaFxStaticPropertyAttributeDescriptor) {
+        final PsiElement declaration = descriptor.getDeclaration();
+        if (declaration instanceof PsiMember) {
+          appendClassName((PsiElement)((PsiMember)declaration).getContainingClass());
+        }
+      }
+    }
+
+    @Override
+    public void visitXmlTag(XmlTag tag) {
+      super.visitXmlTag(tag);
+      final XmlElementDescriptor descriptor = tag.getDescriptor();
+      if (descriptor instanceof JavaFxClassBackedElementDescriptor) {
+        appendClassName(descriptor.getDeclaration());
+      } else if (descriptor instanceof JavaFxPropertyElementDescriptor && ((JavaFxPropertyElementDescriptor)descriptor).isStatic()) {
+        final PsiElement declaration = descriptor.getDeclaration();
+        if (declaration instanceof PsiMember) {
+          appendClassName((PsiElement)((PsiMember)declaration).getContainingClass());
+        }
+      }
+    }
+
+    private void appendClassName(PsiElement declaration) {
+      if (declaration instanceof PsiClass) {
+        appendClassName(((PsiClass)declaration).getQualifiedName());
+      }
+    }
+
+    protected abstract void appendClassName(String fqn);
+  }
 }
