@@ -313,7 +313,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       PyClass cls = inferContainingClassOf(context);
       if (cls != null) {
         String desired_name = link.substring(LINK_TYPE_PARENT.length());
-        for (PyClass parent : cls.iterateAncestorClasses()) {
+        for (PyClass parent : cls.getAncestorClasses()) {
           final String parent_name = parent.getName();
           if (parent_name != null && parent_name.equals(desired_name)) return parent;
         }

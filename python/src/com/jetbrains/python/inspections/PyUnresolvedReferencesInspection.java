@@ -134,7 +134,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             final List<String> slots = pyClass.getSlots();
             final String attrName = node.getReferencedName();
             if (slots != null && !slots.contains(attrName) && !slots.contains(PyNames.DICT)) {
-              for (PyClass ancestor : pyClass.iterateAncestorClasses()) {
+              for (PyClass ancestor : pyClass.getAncestorClasses()) {
                 if (ancestor == null) {
                   return;
                 }
@@ -672,7 +672,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         if (isDecoratedAsDynamic(cls, false)) {
           return true;
         }
-        for (PyClass base : cls.iterateAncestorClasses()) {
+        for (PyClass base : cls.getAncestorClasses()) {
           if (base != null && isDecoratedAsDynamic(base, false)) {
             return true;
           }

@@ -110,7 +110,8 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    */
   boolean isNewStyleClass();
 
-  Iterable<PyClass> iterateAncestorClasses();
+  @NotNull
+  List<PyClass> getAncestorClasses();
 
   /**
    * Get a list of all ancestor types.

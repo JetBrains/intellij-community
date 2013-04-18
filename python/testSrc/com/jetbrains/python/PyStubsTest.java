@@ -347,7 +347,7 @@ public class PyStubsTest extends PyTestCase {
   public void testBuiltinAncestor() {
     final PyFileImpl file = (PyFileImpl) getTestFile();
     final PyClass pyClass = file.getTopLevelClasses().get(0);
-    final PyClass cls = pyClass.iterateAncestorClasses().iterator().next();
+    final PyClass cls = pyClass.getAncestorClasses().iterator().next();
     assertNotNull(cls);
     assertNotParsed(file);
   }

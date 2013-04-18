@@ -174,8 +174,9 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     return expression;
   }
 
+  @NotNull
   @Override
-  public Iterable<PyClass> iterateAncestorClasses() {
+  public List<PyClass> getAncestorClasses() {
     final List<PyClass> results = new ArrayList<PyClass>();
     for (PyClassLikeType type : getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
       if (type instanceof PyClassType) {
@@ -189,7 +190,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (this == parent) {
       return true;
     }
-    for (PyClass superclass : iterateAncestorClasses()) {
+    for (PyClass superclass : getAncestorClasses()) {
       if (parent == superclass) return true;
     }
     return false;
@@ -243,7 +244,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (slots != null) {
       return slots;
     }
-    for (PyClass cls : iterateAncestorClasses()) {
+    for (PyClass cls : getAncestorClasses()) {
       slots = ((PyClassImpl)cls).getOwnSlots();
       if (slots != null) {
         return slots;
@@ -549,7 +550,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (findMethodByName(name, false) != null || findClassAttribute(name, false) != null) {
       return null;
     }
-    for (PyClass aClass : iterateAncestorClasses()) {
+    for (PyClass aClass : getAncestorClasses()) {
       final Property ancestorProperty = ((PyClassImpl)aClass).findLocalProperty(name);
       if (ancestorProperty != null) {
         return ancestorProperty;
@@ -621,7 +622,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       if (name != null && (findMethodByName(name, false) != null || findClassAttribute(name, false) != null)) {
         return null;
       }
-      for (PyClass cls : iterateAncestorClasses()) {
+      for (PyClass cls : getAncestorClasses()) {
         final Property property = ((PyClassImpl)cls).processPropertiesInClass(name, filter, useAdvancedSyntax);
         if (property != null) {
           return property;
@@ -713,7 +714,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     PyFunction[] methods = getMethods();
     if (!ContainerUtil.process(methods, processor)) return false;
     if (inherited) {
-      for (PyClass ancestor : iterateAncestorClasses()) {
+      for (PyClass ancestor : getAncestorClasses()) {
         if (skipClassObj && PyNames.FAKE_OLD_BASE.equals(ancestor.getName())) {
           continue;
         }
@@ -729,7 +730,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     PyClass[] nestedClasses = getNestedClasses();
     if (!ContainerUtil.process(nestedClasses, processor)) return false;
     if (inherited) {
-      for (PyClass ancestor : iterateAncestorClasses()) {
+      for (PyClass ancestor : getAncestorClasses()) {
         if (!((PyClassImpl)ancestor).visitNestedClasses(processor, false)) {
           return false;
         }
@@ -742,7 +743,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     List<PyTargetExpression> methods = getClassAttributes();
     if (!ContainerUtil.process(methods, processor)) return false;
     if (inherited) {
-      for (PyClass ancestor : iterateAncestorClasses()) {
+      for (PyClass ancestor : getAncestorClasses()) {
         if (!ancestor.visitClassAttributes(processor, false)) {
           return false;
         }
@@ -797,7 +798,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
       }
     }
     if (inherited) {
-      for (PyClass ancestor : iterateAncestorClasses()) {
+      for (PyClass ancestor : getAncestorClasses()) {
         final PyTargetExpression attribute = ancestor.findInstanceAttribute(name, false);
         if (attribute != null) {
           return attribute;

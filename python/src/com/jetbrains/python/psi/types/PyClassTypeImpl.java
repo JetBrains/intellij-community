@@ -155,7 +155,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
         PyType first_arg_type = context.getType(first_arg);
         if (first_arg_type instanceof PyClassType) {
           PyClass derived_class = ((PyClassType)first_arg_type).getPyClass();
-          final Iterator<PyClass> base_it = derived_class.iterateAncestorClasses().iterator();
+          final Iterator<PyClass> base_it = derived_class.getAncestorClasses().iterator();
           if (base_it.hasNext()) {
             return new PyClassTypeImpl(base_it.next(), true).resolveMember(name, location, direction, resolveContext);
           }

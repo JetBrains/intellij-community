@@ -62,7 +62,7 @@ public class PyMissingConstructorInspection extends PyInspection {
     }
 
     private static boolean superHasConstructor(@NotNull PyClass cls) {
-      for (PyClass c : cls.iterateAncestorClasses()) {
+      for (PyClass c : cls.getAncestorClasses()) {
         final String name = c.getName();
         final String className = cls.getName();
         if (!OBJECT.equals(name) && !FAKE_OLD_BASE.equals(name) && className != null &&
@@ -77,7 +77,7 @@ public class PyMissingConstructorInspection extends PyInspection {
       if (PyBroadExceptionInspection.equalsException(cls, context)) {
         return true;
       }
-      for (PyClass baseClass : cls.iterateAncestorClasses()) {
+      for (PyClass baseClass : cls.getAncestorClasses()) {
         if (PyBroadExceptionInspection.equalsException(baseClass, context)) {
           return true;
         }
@@ -127,7 +127,7 @@ public class PyMissingConstructorInspection extends PyInspection {
                   if (firstArg.equals(cl.getName()) || firstArg.equals(CANONICAL_SELF+"."+ CLASS) ||
                       (qualifiedName != null && qualifiedName.endsWith(firstArg)))
                       return true;
-                  for (PyClass s : cl.iterateAncestorClasses()) {
+                  for (PyClass s : cl.getAncestorClasses()) {
                     if (firstArg.equals(s.getName()))
                       return true;
                   }
@@ -159,7 +159,7 @@ public class PyMissingConstructorInspection extends PyInspection {
           if (ref != null)
             callingClass = ref.resolve();
         }
-        for (PyClass s : cl.iterateAncestorClasses()) {
+        for (PyClass s : cl.getAncestorClasses()) {
           if (s.equals(callingClass)) {
             return true;
           }

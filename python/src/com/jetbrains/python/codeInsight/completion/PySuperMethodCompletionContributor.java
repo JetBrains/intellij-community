@@ -47,7 +47,7 @@ public class PySuperMethodCompletionContributor extends CompletionContributor {
                }
                LanguageLevel languageLevel = LanguageLevel.forElement(parameters.getOriginalFile());
                seenNames.addAll(PyNames.getBuiltinMethods(languageLevel).keySet());
-               for (PyClass ancestor : containingClass.iterateAncestorClasses()) {
+               for (PyClass ancestor : containingClass.getAncestorClasses()) {
                  for (PyFunction superMethod : ancestor.getMethods()) {
                    if (!seenNames.contains(superMethod.getName())) {
                      String text = superMethod.getName() + superMethod.getParameterList().getText();
