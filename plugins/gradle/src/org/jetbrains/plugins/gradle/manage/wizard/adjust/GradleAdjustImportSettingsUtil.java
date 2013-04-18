@@ -1,13 +1,14 @@
 package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
+import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.gradle.AbstractGradleDependency;
-import org.jetbrains.plugins.gradle.model.gradle.Named;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
+import com.intellij.openapi.externalSystem.model.project.Named;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
@@ -32,7 +33,8 @@ public class GradleAdjustImportSettingsUtil {
     if (!StringUtil.isEmptyOrSpaces(namedComponent.getName())) {
       return true;
     }
-    GradleUtil.showBalloon(componentNameUI, MessageType.ERROR, GradleBundle.message("gradle.import.text.error.undefined.name"));
+    // TODO den uncomment
+    //ExternalSystemUiUtil.showBalloon(componentNameUI, MessageType.ERROR, ExternalSystemBundle.message("gradle.import.text.error.undefined.name"));
     return false;
   }
 
@@ -46,15 +48,17 @@ public class GradleAdjustImportSettingsUtil {
    */
   @NotNull
   public static Pair<Runnable, Runnable> configureCommonDependencyControls(@NotNull GradleProjectSettingsBuilder builder,
-                                                                           @NotNull final AbstractGradleDependency dependency)
+                                                                           @NotNull final AbstractDependencyData dependency)
   {
     builder.setKeyAndValueControlsOnSameRow(true);
     
     final JCheckBox exportedCheckBock = new JCheckBox();
-    builder.add("gradle.import.structure.settings.label.export", exportedCheckBock);
+    // TODO den uncomment
+    //builder.add("gradle.import.structure.settings.label.export", exportedCheckBock);
 
     final JComboBox scopeComboBox = new JComboBox(DependencyScope.values());
-    builder.add("gradle.import.structure.settings.label.scope", scopeComboBox);
+    // TODO den uncomment
+    //builder.add("gradle.import.structure.settings.label.scope", scopeComboBox);
     
     Runnable refreshCallback = new Runnable() {
       @Override

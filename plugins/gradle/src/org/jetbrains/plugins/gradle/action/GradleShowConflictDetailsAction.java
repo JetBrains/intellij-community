@@ -2,6 +2,8 @@ package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.service.project.ProjectStructureServices;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.JBPopupAdapter;
@@ -11,10 +13,8 @@ import com.intellij.ui.awt.RelativePoint;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.sync.conflict.GradleConflictControlFactory;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleUiListener;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
-import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
@@ -34,29 +34,32 @@ import java.util.Collection;
 public class GradleShowConflictDetailsAction extends AbstractGradleSyncTreeNodeAction {
 
   public GradleShowConflictDetailsAction() {
-    getTemplatePresentation().setText(GradleBundle.message("gradle.action.show.conflict.text"));
-    getTemplatePresentation().setDescription(GradleBundle.message("gradle.action.show.conflict.description"));
+    // TODO den implement
+//    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.show.conflict.text"));
+//    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.show.conflict.description"));
   }
 
   @Override
-  protected void filterNodes(@NotNull Collection<GradleProjectStructureNode<?>> nodes) {
+  protected void filterNodes(@NotNull Collection<ProjectStructureNode<?>> nodes) {
     if (nodes.size() != 1) {
       // Don't provide details if more than one node is selected
       nodes.clear();
       return;
     }
-    final GradleProjectStructureNode<?> node = nodes.iterator().next();
+    final ProjectStructureNode<?> node = nodes.iterator().next();
     if (node.getConflictChanges().isEmpty()) {
       nodes.clear();
     }
   }
 
   @Override
-  protected void doActionPerformed(@NotNull Collection<GradleProjectStructureNode<?>> nodes, @NotNull final Project project, @NotNull Tree tree) {
+  protected void doActionPerformed(@NotNull Collection<ProjectStructureNode<?>> nodes, @NotNull final Project project, @NotNull Tree tree) {
     assert nodes.size() == 1;
-    final GradleProjectStructureNode<?> node = nodes.iterator().next();
-    final GradleProjectStructureContext context = ServiceManager.getService(project, GradleProjectStructureContext.class);
-    final Object entity = node.getDescriptor().getElement().mapToEntity(context);
+    final ProjectStructureNode<?> node = nodes.iterator().next();
+    final ProjectStructureServices context = ServiceManager.getService(project, ProjectStructureServices.class);
+    // TODO den implement
+    final Object entity = null;
+//    final Object entity = node.getDescriptor().getElement().mapToEntity(context);
     if (entity == null) {
       return;
     }

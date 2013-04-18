@@ -8,6 +8,9 @@ import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.externalSystem.model.project.ProjectEntityType;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemTextAttributes;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.JBColor;
@@ -17,10 +20,8 @@ import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.hash.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.GradleEntityType;
-import org.jetbrains.plugins.gradle.model.id.GradleSyntheticId;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
+import com.intellij.openapi.externalSystem.model.project.id.GradleSyntheticId;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNodeDescriptor;
 
 import javax.swing.*;
 import javax.swing.event.TreeSelectionEvent;
@@ -61,29 +62,29 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
 
   private Pair<Tree, DefaultTreeModel> init() {
     myContent.removeAll();
-    String projectName = GradleBundle.message("gradle.settings.color.text.sample.conflict.node.name");
+    String projectName = ExternalSystemBundle.message("gradle.settings.color.text.sample.conflict.node.name");
     DefaultMutableTreeNode root = createNode(
       projectName,
-      GradleEntityType.PROJECT,
-      GradleTextAttributes.CHANGE_CONFLICT
+      ProjectEntityType.PROJECT,
+      ExternalSystemTextAttributes.CHANGE_CONFLICT
     );
 
-    String moduleName = GradleBundle.message("gradle.settings.color.text.sample.node.sync.name");
-    DefaultMutableTreeNode module = createNode(moduleName, GradleEntityType.MODULE, GradleTextAttributes.NO_CHANGE);
+    String moduleName = ExternalSystemBundle.message("gradle.settings.color.text.sample.node.sync.name");
+    DefaultMutableTreeNode module = createNode(moduleName, ProjectEntityType.MODULE, ExternalSystemTextAttributes.NO_CHANGE);
 
-    String gradleLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.gradle.name");
+    String gradleLibraryName = ExternalSystemBundle.message("gradle.settings.color.text.sample.node.gradle.name");
     DefaultMutableTreeNode gradleLibrary = createNode(
-      gradleLibraryName, GradleEntityType.LIBRARY_DEPENDENCY, GradleTextAttributes.GRADLE_LOCAL_CHANGE
+      gradleLibraryName, ProjectEntityType.LIBRARY_DEPENDENCY, ExternalSystemTextAttributes.EXTERNAL_SYSTEM_LOCAL_CHANGE
     );
 
-    String intellijLibraryName = GradleBundle.message("gradle.settings.color.text.sample.node.intellij.name");
+    String intellijLibraryName = ExternalSystemBundle.message("gradle.settings.color.text.sample.node.intellij.name");
     DefaultMutableTreeNode intellijLibrary = createNode(
-      intellijLibraryName, GradleEntityType.LIBRARY_DEPENDENCY, GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
+      intellijLibraryName, ProjectEntityType.LIBRARY_DEPENDENCY, ExternalSystemTextAttributes.IDE_LOCAL_CHANGE
     );
 
-    String libraryWithChangedVersionName = GradleBundle.message("gradle.settings.color.text.sample.node.outdated.name");
+    String libraryWithChangedVersionName = ExternalSystemBundle.message("gradle.settings.color.text.sample.node.outdated.name");
     DefaultMutableTreeNode libraryWithChangedVersion = createNode(
-      libraryWithChangedVersionName, GradleEntityType.LIBRARY_DEPENDENCY, GradleTextAttributes.OUTDATED_ENTITY);
+      libraryWithChangedVersionName, ProjectEntityType.LIBRARY_DEPENDENCY, ExternalSystemTextAttributes.OUTDATED_ENTITY);
 
     module.add(gradleLibrary);
     module.add(intellijLibrary);
@@ -263,9 +264,9 @@ public class GradleColorAndFontPreviewPanel implements PreviewPanel {
     myListeners.add(listener);
   }
 
-  private DefaultMutableTreeNode createNode(@NotNull String text, @NotNull GradleEntityType type, @Nullable TextAttributesKey textAttributesKey) {
-    final GradleProjectStructureNodeDescriptor<GradleSyntheticId> descriptor
-      = new GradleProjectStructureNodeDescriptor<GradleSyntheticId>(new GradleSyntheticId(text), text, type.getIcon());
+  private DefaultMutableTreeNode createNode(@NotNull String text, @NotNull ProjectEntityType type, @Nullable TextAttributesKey textAttributesKey) {
+    final ProjectStructureNodeDescriptor<GradleSyntheticId> descriptor
+      = new ProjectStructureNodeDescriptor<GradleSyntheticId>(new GradleSyntheticId(text), text, type.getIcon());
     DefaultMutableTreeNode result = new DefaultMutableTreeNode(descriptor);
     if (textAttributesKey != null) {
       final PresentationData presentation = descriptor.getPresentation();

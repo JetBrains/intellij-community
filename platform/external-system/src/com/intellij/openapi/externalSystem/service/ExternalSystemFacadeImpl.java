@@ -1,0 +1,306 @@
+package com.intellij.openapi.externalSystem.service;
+
+import com.intellij.execution.rmi.RemoteServer;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationEvent;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
+import com.intellij.openapi.externalSystem.build.ExternalSystemBuildManager;
+import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
+import com.intellij.openapi.externalSystem.service.remote.*;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
+import org.jetbrains.annotations.NotNull;
+
+import java.lang.reflect.InvocationHandler;
+import java.lang.reflect.Method;
+import java.lang.reflect.Proxy;
+import java.rmi.RemoteException;
+import java.rmi.server.UnicastRemoteObject;
+import java.util.*;
+import java.util.concurrent.ConcurrentMap;
+import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicInteger;
+import java.util.concurrent.atomic.AtomicLong;
+import java.util.concurrent.atomic.AtomicReference;
+
+/**
+ * @author Denis Zhdanov
+ * @since 8/8/11 12:51 PM
+ */
+public class ExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings> extends RemoteServer
+  implements RemoteExternalSystemFacade<S>
+{
+
+  private static final long DEFAULT_REMOTE_GRADLE_PROCESS_TTL_IN_MS = TimeUnit.MILLISECONDS.convert(3, TimeUnit.MINUTES);
+
+  private final ConcurrentMap<Class<?>, RemoteExternalSystemService<S>> myRemotes = ContainerUtil.newConcurrentMap();
+
+  private final AtomicReference<S> mySettings              = new AtomicReference<S>();
+  private final AtomicLong         myTtlMs                 = new AtomicLong(DEFAULT_REMOTE_GRADLE_PROCESS_TTL_IN_MS);
+  private final Alarm              myShutdownAlarm         = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
+  private final AtomicInteger      myCallsInProgressNumber = new AtomicInteger();
+
+  private final AtomicReference<ExternalSystemTaskNotificationListener> myNotificationListener
+    = new AtomicReference<ExternalSystemTaskNotificationListener>();
+
+  @NotNull private final RemoteExternalSystemProjectResolverImpl<S> myProjectResolver;
+  @NotNull private final RemoteExternalSystemBuildManagerImpl<S>    myBuildManager;
+
+  public ExternalSystemFacadeImpl(@NotNull Class<ExternalSystemProjectResolver<S>> projectResolverClass,
+                                  @NotNull Class<ExternalSystemBuildManager<S>> buildManagerClass)
+    throws IllegalAccessException, InstantiationException
+  {
+    myProjectResolver = new RemoteExternalSystemProjectResolverImpl<S>(projectResolverClass.newInstance());
+    myBuildManager = new RemoteExternalSystemBuildManagerImpl<S>(buildManagerClass.newInstance());
+    updateAutoShutdownTime();
+  }
+
+  @SuppressWarnings("unchecked")
+  public static void main(String[] args) throws Exception {
+    if (args.length < 1) {
+      throw new IllegalArgumentException(
+        "Can't create external system facade. Reason: given arguments don't contain information about external system resolver to use"
+      );
+    }
+    final Class<ExternalSystemProjectResolver<?>> resolverClass = (Class<ExternalSystemProjectResolver<?>>)Class.forName(args[0]);
+    if (!ExternalSystemProjectResolver.class.isAssignableFrom(resolverClass)) {
+      throw new IllegalArgumentException(String.format(
+        "Can't create external system facade. Reason: given external system resolver class (%s) must be IS-A '%s'",
+        resolverClass, ExternalSystemProjectResolver.class
+      ));
+    }
+
+    if (args.length < 2) {
+      throw new IllegalArgumentException(
+        "Can't create external system facade. Reason: given arguments don't contain information about external system build manager to use"
+      );
+    }
+    final Class<ExternalSystemBuildManager<?>> buildManagerClass = (Class<ExternalSystemBuildManager<?>>)Class.forName(args[1]);
+    if (!ExternalSystemProjectResolver.class.isAssignableFrom(resolverClass)) {
+      throw new IllegalArgumentException(String.format(
+        "Can't create external system facade. Reason: given external system build manager (%s) must be IS-A '%s'",
+        buildManagerClass, ExternalSystemBuildManager.class
+      ));
+    }
+    
+    ExternalSystemFacadeImpl facade = new ExternalSystemFacadeImpl(resolverClass, buildManagerClass);
+    facade.init();
+    start(facade);
+  }
+
+  private void init() throws RemoteException {
+    applyProgressManager(RemoteExternalSystemProgressNotificationManager.NULL_OBJECT);
+  }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  @Override
+  public RemoteExternalSystemProjectResolver<S> getResolver() throws RemoteException, IllegalStateException {
+    try {
+      return getRemote(RemoteExternalSystemProjectResolver.class, myProjectResolver);
+    }
+    catch (Exception e) {
+      throw new IllegalStateException(String.format("Can't create '%s' service", RemoteExternalSystemProjectResolverImpl.class.getName()),
+                                      e);
+    }
+  }
+
+  @SuppressWarnings("unchecked")
+  @NotNull
+  @Override
+  public RemoteExternalSystemBuildManager<S> getBuildManager() throws RemoteException {
+    try {
+      return getRemote(RemoteExternalSystemBuildManager.class, myBuildManager);
+    }
+    catch (Exception e) {
+      throw new IllegalStateException(String.format("Can't create '%s' service", ExternalSystemBuildManager.class.getName()), e);
+    }
+  }
+
+  /**
+   * Generic method to retrieve exposed implementations of the target interface.
+   * <p/>
+   * Uses cached value if it's found; creates new and caches it otherwise.
+   *
+   * @param interfaceClass  target service interface class
+   * @param impl            service implementation
+   * @param <I>             service interface class
+   * @param <C>             service implementation
+   * @return implementation of the target service
+   * @throws IllegalAccessException   in case of incorrect assumptions about server class interface
+   * @throws InstantiationException   in case of incorrect assumptions about server class interface
+   * @throws ClassNotFoundException   in case of incorrect assumptions about server class interface
+   * @throws RemoteException
+   */
+  @SuppressWarnings("unchecked")
+  private <I extends RemoteExternalSystemService<S>, C extends I> I getRemote(@NotNull Class<I> interfaceClass,
+                                                                              @NotNull final C impl)
+    throws ClassNotFoundException, IllegalAccessException, InstantiationException, RemoteException
+  {
+    Object cachedResult = myRemotes.get(interfaceClass);
+    if (cachedResult != null) {
+      return (I)cachedResult;
+    }
+    S settings = mySettings.get();
+    if (settings != null) {
+      impl.setNotificationListener(myNotificationListener.get());
+      impl.setSettings(settings);
+    }
+    impl.setNotificationListener(myNotificationListener.get());
+    I proxy = (I)Proxy.newProxyInstance(getClass().getClassLoader(), new Class<?>[] { interfaceClass }, new InvocationHandler() {
+      @Override
+      public Object invoke(Object proxy, Method method, Object[] args) throws Throwable {
+        myCallsInProgressNumber.incrementAndGet();
+        try {
+          return method.invoke(impl, args);
+        }
+        finally {
+          myCallsInProgressNumber.decrementAndGet();
+          updateAutoShutdownTime();
+        }
+      }
+    });
+    try {
+      I stub = (I)UnicastRemoteObject.exportObject(proxy, 0);
+      I stored = (I)myRemotes.putIfAbsent(interfaceClass, stub);
+      return stored == null ? stub : stored;
+    }
+    catch (RemoteException e) {
+      Object raceResult = myRemotes.get(interfaceClass);
+      if (raceResult != null) {
+        // Race condition occurred
+        return (I)raceResult;
+      }
+      else {
+        throw new IllegalStateException(
+          String.format("Can't prepare remote service for interface '%s', implementation '%s'", interfaceClass, impl),
+          e
+        );
+      }
+    }
+  }
+
+  @Override
+  public boolean isTaskInProgress(@NotNull ExternalSystemTaskId id) throws RemoteException {
+    for (RemoteExternalSystemService service : myRemotes.values()) {
+      if (service.isTaskInProgress(id)) {
+        return true;
+      }
+    }
+    return false;
+  }
+
+  @NotNull
+  @Override
+  public Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> getTasksInProgress() throws RemoteException {
+    Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> result = null;
+    for (RemoteExternalSystemService service : myRemotes.values()) {
+      final Map<ExternalSystemTaskType, Set<ExternalSystemTaskId>> tasks = service.getTasksInProgress();
+      if (tasks.isEmpty()) {
+        continue;
+      }
+      if (result == null) {
+        result = new HashMap<ExternalSystemTaskType, Set<ExternalSystemTaskId>>();
+      }
+      for (Map.Entry<ExternalSystemTaskType, Set<ExternalSystemTaskId>> entry : tasks.entrySet()) {
+        Set<ExternalSystemTaskId> ids = result.get(entry.getKey());
+        if (ids == null) {
+          result.put(entry.getKey(), ids = new HashSet<ExternalSystemTaskId>());
+        }
+        ids.addAll(entry.getValue());
+      }
+    }
+    if (result == null) {
+      result = Collections.emptyMap();
+    }
+    return result;
+  }
+
+  @Override
+  public void applySettings(@NotNull S settings) throws RemoteException {
+    mySettings.set(settings);
+    long ttl = settings.getRemoteProcessIdleTtlInMs();
+    if (ttl > 0) {
+      myTtlMs.set(ttl);
+    }
+    List<RemoteExternalSystemService<S>> services = ContainerUtilRt.newArrayList(myRemotes.values());
+    for (RemoteExternalSystemService<S> service : services) {
+      service.setSettings(settings);
+    }
+  }
+
+  @Override
+  public void applyProgressManager(@NotNull RemoteExternalSystemProgressNotificationManager progressManager) throws RemoteException {
+    ExternalSystemTaskNotificationListener listener = new SwallowingNotificationListener(progressManager);
+    myNotificationListener.set(listener);
+    List<RemoteExternalSystemService> services = new ArrayList<RemoteExternalSystemService>(myRemotes.values());
+    for (RemoteExternalSystemService service : services) {
+      service.setNotificationListener(listener);
+    }
+  }
+  
+  /**
+   * Schedules automatic process termination in {@code #REMOTE_GRADLE_PROCESS_TTL_IN_MS} milliseconds.
+   * <p/>
+   * Rationale: it's possible that IJ user performs gradle related activity (e.g. import from gradle) when the works purely
+   * at IJ. We don't want to keep remote process that communicates with the gradle api then.
+   */
+  private void updateAutoShutdownTime() {
+    myShutdownAlarm.cancelAllRequests();
+    myShutdownAlarm.addRequest(new Runnable() {
+      @Override
+      public void run() {
+        if (myCallsInProgressNumber.get() > 0) {
+          updateAutoShutdownTime();
+          return;
+        }
+        System.exit(0);
+      }
+    }, (int)myTtlMs.get());
+  }
+  
+  private static class SwallowingNotificationListener implements ExternalSystemTaskNotificationListener {
+
+    @NotNull private final RemoteExternalSystemProgressNotificationManager myManager;
+
+    SwallowingNotificationListener(@NotNull RemoteExternalSystemProgressNotificationManager manager) {
+      myManager = manager;
+    }
+
+    @Override
+    public void onQueued(@NotNull ExternalSystemTaskId id) {
+    }
+
+    @Override
+    public void onStart(@NotNull ExternalSystemTaskId id) {
+      try {
+        myManager.onStart(id);
+      }
+      catch (RemoteException e) {
+        // Ignore
+      }
+    }
+
+    @Override
+    public void onStatusChange(@NotNull ExternalSystemTaskNotificationEvent event) {
+      try {
+        myManager.onStatusChange(event);
+      }
+      catch (RemoteException e) {
+        // Ignore
+      }
+    }
+
+    @Override
+    public void onEnd(@NotNull ExternalSystemTaskId id) {
+      try {
+        myManager.onEnd(id);
+      }
+      catch (RemoteException e) {
+        // Ignore
+      }
+    }
+  }
+}

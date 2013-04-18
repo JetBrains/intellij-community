@@ -134,12 +134,19 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot) {
+    return addModule(moduleName, sourceRoot, null);
+  }
+
+  protected Module addModule(final String moduleName, final @Nullable VirtualFile sourceRoot, final @Nullable VirtualFile testRoot) {
     return new WriteAction<Module>() {
       @Override
       protected void run(final Result<Module> result) {
         final Module module = createModule(moduleName);
         if (sourceRoot != null) {
-          PsiTestUtil.addSourceContentToRoots(module, sourceRoot);
+          PsiTestUtil.addSourceContentToRoots(module, sourceRoot, false);
+        }
+        if (testRoot != null) {
+          PsiTestUtil.addSourceContentToRoots(module, testRoot, true);
         }
         ModuleRootModificationUtil.setModuleSdk(module, getTestProjectJdk());
         result.setResult(module);
@@ -365,8 +372,12 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected static void assertOutput(Module module, TestFileSystemBuilder item) {
-    File outputDir = getOutputDir(module);
-    Assert.assertTrue("Output directory " + outputDir.getAbsolutePath() + " doesn't exist", outputDir.exists());
+    assertOutput(module, item, false);
+  }
+
+  protected static void assertOutput(Module module, TestFileSystemBuilder item, final boolean forTests) {
+    File outputDir = getOutputDir(module, forTests);
+    Assert.assertTrue((forTests? "Test output" : "Output") +" directory " + outputDir.getAbsolutePath() + " doesn't exist", outputDir.exists());
     item.build().assertDirectoryEqual(outputDir);
   }
 
@@ -376,10 +387,14 @@ public abstract class BaseCompilerTestCase extends ModuleTestCase {
   }
 
   protected static File getOutputDir(Module module) {
+    return getOutputDir(module, false);
+  }
+
+  protected static File getOutputDir(Module module, boolean forTests) {
     CompilerModuleExtension extension = CompilerModuleExtension.getInstance(module);
     Assert.assertNotNull(extension);
-    String outputUrl = extension.getCompilerOutputUrl();
-    Assert.assertNotNull("Output directory for module '" + module.getName() + "' isn't specified", outputUrl);
+    String outputUrl = forTests? extension.getCompilerOutputUrlForTests() : extension.getCompilerOutputUrl();
+    Assert.assertNotNull((forTests? "Test output" : "Output") +" directory for module '" + module.getName() + "' isn't specified", outputUrl);
     return JpsPathUtil.urlToFile(outputUrl);
   }
 

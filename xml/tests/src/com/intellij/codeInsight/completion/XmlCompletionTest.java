@@ -6,7 +6,6 @@ import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
-import com.intellij.codeInsight.template.TemplateManager;
 import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.javaee.ExternalResourceManager;
 import com.intellij.javaee.ExternalResourceManagerEx;
@@ -220,8 +219,7 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
     selectItem(myFixture.getLookupElements()[0], (char)0);
     checkResultByFile(baseTestFileName + "_after.dtd");
 
-    configureByFile(baseTestFileName + "2.dtd");
-    checkResultByFile(baseTestFileName + "2_after.dtd");
+    doCompletionTest(baseTestFileName + "2");
 
     configureByFile(baseTestFileName + "3.dtd");
     checkResultByFile(baseTestFileName + "3_after.dtd");
@@ -231,6 +229,14 @@ public class XmlCompletionTest extends LightCodeInsightFixtureTestCase {
 
     configureByFile(baseTestFileName + "5.dtd");
     checkResultByFile(baseTestFileName + "5_after.dtd");
+
+    // todo uncomment
+//    doCompletionTest("DtdElementCompletion");
+  }
+
+  private void doCompletionTest(String name) {
+    configureByFile(name + ".dtd");
+    checkResultByFile(name + "_after.dtd");
   }
 
   public void testSchemaEnumerationCompletion() throws Exception {

@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
+import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.testFramework.PlatformTestCase;
@@ -27,6 +29,7 @@ import org.jdom.Element;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
 import java.io.File;
+import java.util.concurrent.Future;
 
 /**
  * @author Dmitry Avdeev
@@ -42,52 +45,63 @@ public class FileEditorManagerTest extends LightPlatformCodeInsightFixtureTestCa
 
   public void testManager() throws Exception {
 
-    Document document = JDOMUtil.loadDocument("<component name=\"FileEditorManager\">\n" +
-                                              "    <splitter split-orientation=\"horizontal\" split-proportion=\"0.43304527\">\n" +
-                                              "      <split-first>\n" +
-                                              "        <leaf>\n" +
-                                              "          <file leaf-file-name=\"1.txt\" pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
-                                              "            <entry file=\"file://$PROJECT_DIR$/src/1.txt\">\n" +
-                                              "              <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-                                              "                <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
-                                              "                  <folding />\n" +
-                                              "                </state>\n" +
-                                              "              </provider>\n" +
-                                              "            </entry>\n" +
-                                              "          </file>\n" +
-                                              "          <file leaf-file-name=\"2.txt\" pinned=\"false\" current=\"false\" current-in-tab=\"true\">\n" +
-                                              "            <entry file=\"file://$PROJECT_DIR$/src/2.txt\">\n" +
-                                              "              <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-                                              "                <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
-                                              "                  <folding />\n" +
-                                              "                </state>\n" +
-                                              "              </provider>\n" +
-                                              "            </entry>\n" +
-                                              "          </file>\n" +
-                                              "        </leaf>\n" +
-                                              "      </split-first>\n" +
-                                              "      <split-second>\n" +
-                                              "        <leaf>\n" +
-                                              "          <file leaf-file-name=\"3.txt\" pinned=\"false\" current=\"true\" current-in-tab=\"true\">\n" +
-                                              "            <entry file=\"file://$PROJECT_DIR$/src/3.txt\">\n" +
-                                              "              <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-                                              "                <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
-                                              "                  <folding />\n" +
-                                              "                </state>\n" +
-                                              "              </provider>\n" +
-                                              "            </entry>\n" +
-                                              "          </file>\n" +
-                                              "        </leaf>\n" +
-                                              "      </split-second>\n" +
-                                              "    </splitter>\n" +
-                                              "  </component>");
+    Document document = JDOMUtil.loadDocument("  <component name=\"FileEditorManager\">\n" +
+                                              "    <leaf>\n" +
+                                              "      <file leaf-file-name=\"1.txt\" pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
+                                              "        <entry file=\"file://$PROJECT_DIR$/src/1.txt\">\n" +
+                                              "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
+                                              "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
+                                              "            </state>\n" +
+                                              "          </provider>\n" +
+                                              "        </entry>\n" +
+                                              "      </file>\n" +
+                                              "      <file leaf-file-name=\"foo.xml\" pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
+                                              "        <entry file=\"file://$PROJECT_DIR$/src/foo.xml\">\n" +
+                                              "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
+                                              "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
+                                              "            </state>\n" +
+                                              "          </provider>\n" +
+                                              "        </entry>\n" +
+                                              "      </file>\n" +
+                                              "      <file leaf-file-name=\"2.txt\" pinned=\"false\" current=\"true\" current-in-tab=\"true\">\n" +
+                                              "        <entry file=\"file://$PROJECT_DIR$/src/2.txt\">\n" +
+                                              "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
+                                              "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
+                                              "            </state>\n" +
+                                              "          </provider>\n" +
+                                              "        </entry>\n" +
+                                              "      </file>\n" +
+                                              "      <file leaf-file-name=\"3.txt\" pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
+                                              "        <entry file=\"file://$PROJECT_DIR$/src/3.txt\">\n" +
+                                              "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
+                                              "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
+                                              "            </state>\n" +
+                                              "          </provider>\n" +
+                                              "        </entry>\n" +
+                                              "      </file>\n" +
+                                              "    </leaf>\n" +
+                                              "  </component>\n");
     Element rootElement = document.getRootElement();
     ExpandMacroToPathMap map = new ExpandMacroToPathMap();
     map.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, getTestDataPath());
     map.substitute(rootElement, true, true);
 
     myManager.readExternal(rootElement);
-    myManager.getMainSplitters().openFiles();
+
+    Future<?> future = ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
+      @Override
+      public void run() {
+        myManager.getMainSplitters().openFiles();
+      }
+    });
+    future.get();
+
+    EditorWithProviderComposite[] files = myManager.getSplitters().getEditorsComposites();
+    assertEquals(4, files.length);
+    assertEquals("1.txt", files[0].getFile().getName());
+    assertEquals("foo.xml", files[1].getFile().getName());
+    assertEquals("2.txt", files[2].getFile().getName());
+    assertEquals("3.txt", files[3].getFile().getName());
   }
 
   public void setUp() throws Exception {
@@ -104,5 +118,10 @@ public class FileEditorManagerTest extends LightPlatformCodeInsightFixtureTestCa
   @Override
   protected String getTestDataPath() {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/fileEditorManager";
+  }
+
+  @Override
+  protected boolean isWriteActionRequired() {
+    return false;
   }
 }

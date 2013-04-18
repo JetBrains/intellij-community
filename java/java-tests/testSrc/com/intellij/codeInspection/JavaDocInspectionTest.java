@@ -64,4 +64,10 @@ public class JavaDocInspectionTest extends InspectionTestCase {
     inspection.IGNORE_DUPLICATED_THROWS = true;
     doTest("javaDocInspection/" + getTestName(true), inspection);
   }
+
+  public void testIgnoreAccessors() throws Exception {
+    final JavaDocLocalInspection inspection = new JavaDocLocalInspection();
+    inspection.setIgnoreSimpleAccessors(true);
+    doTest("javaDocInspection/" + getTestName(true), inspection);
+  }
 }

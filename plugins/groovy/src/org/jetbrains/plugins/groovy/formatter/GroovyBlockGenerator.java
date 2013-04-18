@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -62,7 +62,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
-import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -581,12 +580,15 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     processNestedChildrenPrefix(list, aligner, topLevel, children, children.size());
   }
 
-  private static boolean isAfterClosure(ASTNode dot) {
+  private static boolean isAfterMultiLineClosure(ASTNode dot) {
     PsiElement dotPsi = dot.getPsi();
     PsiElement prev = PsiUtil.skipWhitespaces(dotPsi.getPrevSibling(), false);
     if (prev != null) {
       if (prev instanceof GrMethodCall) {
-        return PsiImplUtil.hasClosureArguments((GrMethodCall)prev);
+        final PsiElement last = prev.getLastChild();
+        if (last instanceof GrClosableBlock) {
+          return last.getText().contains("\n");
+        }
       }
     }
 
@@ -611,7 +613,8 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       ASTNode childNode = children.get(i);
       if (canBeCorrectBlock(childNode)) {
         IElementType type = childNode.getElementType();
-        Indent indent = topLevel || NESTED.contains(type) || type == mIDENT || TokenSets.DOTS.contains(type) && !isAfterClosure(childNode) ?
+        Indent indent = topLevel || NESTED.contains(type) || type == mIDENT || TokenSets.DOTS.contains(type) && !isAfterMultiLineClosure(
+          childNode) ?
                         Indent.getContinuationWithoutFirstIndent() :
                         Indent.getNoneIndent();
 

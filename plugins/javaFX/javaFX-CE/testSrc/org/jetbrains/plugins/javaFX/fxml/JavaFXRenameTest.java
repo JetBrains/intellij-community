@@ -53,6 +53,10 @@ public class JavaFXRenameTest extends DaemonAnalyzerTestCase {
     doTest("Foo", true);
   }
 
+  public void testCustomComponentPropertyTag() throws Exception {
+    doTest("Foo", true);
+  }
+
   public void testFromReference() throws Exception {
     final String newName = "lbl1";
     doTest(newName);

@@ -67,6 +67,7 @@
         </SOURCES>
       </library>
     </orderEntry>
+    <orderEntry type="module" module-name="external-system" />
   </component>
 </module>
 

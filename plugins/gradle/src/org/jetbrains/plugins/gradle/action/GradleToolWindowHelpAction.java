@@ -6,7 +6,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
-import org.jetbrains.plugins.gradle.config.GradleSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 /**
@@ -23,7 +23,7 @@ public class GradleToolWindowHelpAction extends ContextHelpAction {
       return;
     }
 
-    if (StringUtil.isEmpty(GradleSettings.getInstance(project).getLinkedProjectPath())) {
+    if (StringUtil.isEmpty(GradleSettings.getInstance(project).getLinkedExternalProjectPath())) {
       event.getPresentation().setVisible(false);
       return;
     }

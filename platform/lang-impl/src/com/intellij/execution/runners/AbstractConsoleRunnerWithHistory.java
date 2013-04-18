@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -30,9 +30,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.ex.EditorEx;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.openapi.wm.ToolWindow;
-import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.openapi.util.Computable;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.NotNullFunction;
 import com.intellij.util.containers.ContainerUtil;
@@ -121,6 +119,16 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     final RunContentDescriptor contentDescriptor =
       new RunContentDescriptor(myConsoleView, myProcessHandler, panel, constructConsoleTitle(myConsoleTitle));
 
+    contentDescriptor.setFocusComputable(new Computable<JComponent>() {
+      @Override
+      public JComponent compute() {
+        final EditorEx editor = getLanguageConsole().getConsoleEditor();
+        return editor != null ? editor.getContentComponent() : null;
+      }
+    });
+    contentDescriptor.setAutoFocusContent(isAutoFocusContent());
+
+
 // tool bar actions
     final List<AnAction> actions = fillToolBarActions(toolbarActions, defaultExecutor, contentDescriptor);
     registerActionShortcuts(actions, getLanguageConsole().getConsoleEditor().getComponent());
@@ -167,6 +175,10 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
     return consoleTitle;
   }
 
+  public boolean isAutoFocusContent() {
+    return true;
+  }
+
   protected boolean shouldAddNumberToTitle() {
     return false;
   }
@@ -174,31 +186,6 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   protected void showConsole(Executor defaultExecutor, RunContentDescriptor myDescriptor) {
     // Show in run toolwindow
     ExecutionManager.getInstance(myProject).getContentManager().showRunContent(defaultExecutor, myDescriptor);
-
-// Request focus
-    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(defaultExecutor.getId());
-    window.activate(new Runnable() {
-      public void run() {
-        requestFocus();
-      }
-    });
-  }
-
-  public void requestFocus() {
-    final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
-    requestFocus(focusManager);
-
-    focusManager.doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        requestFocus(focusManager);
-      }
-    });
-
-  }
-
-  private void requestFocus(IdeFocusManager focusManager) {
-    focusManager.requestFocus(getLanguageConsole().getConsoleEditor().getContentComponent(), true);
   }
 
   protected void finishConsole() {

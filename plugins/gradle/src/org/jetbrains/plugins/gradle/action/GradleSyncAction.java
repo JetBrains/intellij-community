@@ -17,17 +17,15 @@ package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
+import com.intellij.openapi.externalSystem.service.project.manage.EntityManageHelper;
+import com.intellij.openapi.externalSystem.service.project.manage.OutdatedLibraryService;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemTextAttributes;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.autoimport.GradleUserProjectChange;
-import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
-import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
-import org.jetbrains.plugins.gradle.manage.GradleEntityManageHelper;
-import org.jetbrains.plugins.gradle.manage.GradleOutdatedLibraryManager;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import java.util.*;
 
@@ -38,40 +36,42 @@ import java.util.*;
 public class GradleSyncAction extends AbstractGradleSyncTreeNodeAction {
 
   public GradleSyncAction() {
-    getTemplatePresentation().setText(GradleBundle.message("gradle.action.sync.text"));
-    getTemplatePresentation().setDescription(GradleBundle.message("gradle.action.sync.description"));
+    // TODO den implement
+//    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.sync.text"));
+//    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.sync.description"));
   }
 
   @Override
-  protected void filterNodes(@NotNull Collection<GradleProjectStructureNode<?>> nodes) {
-    for (Iterator<GradleProjectStructureNode<?>> iterator = nodes.iterator(); iterator.hasNext(); ) {
-      GradleProjectStructureNode<?> node = iterator.next();
+  protected void filterNodes(@NotNull Collection<ProjectStructureNode<?>> nodes) {
+    for (Iterator<ProjectStructureNode<?>> iterator = nodes.iterator(); iterator.hasNext(); ) {
+      ProjectStructureNode<?> node = iterator.next();
       TextAttributesKey attributes = node.getDescriptor().getAttributes();
-      if (!GradleTextAttributes.OUTDATED_ENTITY.equals(attributes) && node.getConflictChanges().isEmpty()) {
+      if (!ExternalSystemTextAttributes.OUTDATED_ENTITY.equals(attributes) && node.getConflictChanges().isEmpty()) {
         iterator.remove();
       }
     }
   }
 
   @Override
-  protected void doActionPerformed(@NotNull Collection<GradleProjectStructureNode<?>> nodes, @NotNull Project project, @NotNull Tree tree) {
-    GradleOutdatedLibraryManager manager = ServiceManager.getService(project, GradleOutdatedLibraryManager.class);
-    GradleEntityManageHelper helper = ServiceManager.getService(project, GradleEntityManageHelper.class);
+  protected void doActionPerformed(@NotNull Collection<ProjectStructureNode<?>> nodes, @NotNull Project project, @NotNull Tree tree) {
+    OutdatedLibraryService manager = ServiceManager.getService(project, OutdatedLibraryService.class);
+    EntityManageHelper helper = ServiceManager.getService(project, EntityManageHelper.class);
     
-    List<GradleProjectStructureNode<?>> outdatedLibraryNodes = ContainerUtilRt.newArrayList();
-    Set<GradleProjectStructureChange> conflictChanges = ContainerUtilRt.newHashSet();
-    for (GradleProjectStructureNode<?> node : nodes) {
-      if (GradleTextAttributes.OUTDATED_ENTITY.equals(node.getDescriptor().getAttributes())) {
+    List<ProjectStructureNode<?>> outdatedLibraryNodes = ContainerUtilRt.newArrayList();
+    Set<ExternalProjectStructureChange> conflictChanges = ContainerUtilRt.newHashSet();
+    for (ProjectStructureNode<?> node : nodes) {
+      if (ExternalSystemTextAttributes.OUTDATED_ENTITY.equals(node.getDescriptor().getAttributes())) {
         outdatedLibraryNodes.add(node);
       }
       conflictChanges.addAll(node.getConflictChanges());
     }
 
-    if (!outdatedLibraryNodes.isEmpty()) {
-      manager.sync(nodes);
-    }
-    if (!conflictChanges.isEmpty()) {
-      helper.eliminateChange(conflictChanges, Collections.<GradleUserProjectChange>emptySet(), true);
-    }
+    // TODO den implement
+//    if (!outdatedLibraryNodes.isEmpty()) {
+//      manager.sync(nodes);
+//    }
+//    if (!conflictChanges.isEmpty()) {
+//      helper.eliminateChange(conflictChanges, Collections.<UserProjectChange>emptySet(), true);
+//    }
   }
 }

@@ -1,0 +1,30 @@
+<idea-plugin>
+  <extensions defaultExtensionNs="com.intellij">
+
+    <!--Generic services-->
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager"/>
+    <applicationService
+        serviceInterface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager"
+        serviceImplementation="com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.PlatformFacade"
+                        serviceImplementation="com.intellij.openapi.externalSystem.service.project.PlatformFacadeImpl"/>
+    <applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper"
+                        serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapperImpl"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper"/>
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.change.ProjectStructureChangesModel"/>
+
+    <!--Project structure management services-->
+    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataServiceImpl"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.JavaProjectDataService"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataService"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.JarDataService"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataService"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDependencyDataService"/>
+    <externalProjectDataService implementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleDependencyDataService"/>
+
+  </extensions>
+</idea-plugin>
+  

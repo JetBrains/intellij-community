@@ -3,6 +3,8 @@ package org.jetbrains.plugins.gradle.ui;
 import com.intellij.ProjectTopics;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.service.project.ProjectStructureServices;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModuleRootAdapter;
@@ -15,25 +17,23 @@ import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.impl.ContentImpl;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesPanel;
 import org.jetbrains.plugins.gradle.tasks.GradleTasksPanel;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleProjectStructureContext;
 
 public class GradleToolWindowFactory implements ToolWindowFactory, DumbAware {
   
   @Override
   public void createToolWindowContent(final Project project, final ToolWindow toolWindow) {
-    final GradleProjectStructureContext context = ServiceManager.getService(project, GradleProjectStructureContext.class);
+    final ProjectStructureServices context = ServiceManager.getService(project, ProjectStructureServices.class);
     
     // Project structure.
     final GradleProjectStructureChangesPanel projectStructurePanel = new GradleProjectStructureChangesPanel(project, context);
-    final String projectStructureTitle = GradleBundle.message("gradle.sync.title.tab");
+    final String projectStructureTitle = ExternalSystemBundle.message("gradle.sync.title.tab");
     ContentImpl projectStructureContent = new ContentImpl(projectStructurePanel, projectStructureTitle, true);
     ContentManager contentManager = toolWindow.getContentManager();
     contentManager.addContent(projectStructureContent);
     
     // Task.
-    String tasksTitle = GradleBundle.message("gradle.task.title.tab");
+    String tasksTitle = ExternalSystemBundle.message("gradle.task.title.tab");
     ContentImpl tasksContent = new ContentImpl(
       new GradleTasksPanel(project), tasksTitle, true);
     contentManager.addContent(tasksContent);

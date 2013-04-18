@@ -16,9 +16,9 @@
 package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
 import com.intellij.ide.util.projectWizard.NamePathComponent;
+import com.intellij.openapi.externalSystem.model.project.JarData;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.gradle.GradleJar;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 import javax.swing.*;
 
@@ -30,9 +30,9 @@ public class GradleJarSettings implements GradleProjectStructureNodeSettings {
 
   @NotNull private final JComponent myComponent;
 
-  public GradleJarSettings(@NotNull GradleJar jar) {
+  public GradleJarSettings(@NotNull JarData jar) {
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
-    builder.add(new JLabel(GradleBundle.message("gradle.import.structure.settings.label.jar.path")));
+    builder.add(new JLabel(ExternalSystemBundle.message("gradle.import.structure.settings.label.jar.path")));
     NamePathComponent component = new NamePathComponent("", "  ", "", "", false);
     component.setNameComponentVisible(false);
     component.setPath(jar.getPath());

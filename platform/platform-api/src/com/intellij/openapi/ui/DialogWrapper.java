@@ -219,9 +219,9 @@ public abstract class DialogWrapper {
     this((Project)null, canBeParent);
   }
 
-  protected DialogWrapper(boolean canBeParent, boolean toolkitModalIfPossible) {
+  protected DialogWrapper(boolean canBeParent, boolean applicationModalIfPossible) {
     ensureEventDispatchThread();
-    myPeer = createPeer(canBeParent, toolkitModalIfPossible);
+    myPeer = createPeer(canBeParent, applicationModalIfPossible);
     createDefaultActions();
   }
 
@@ -694,8 +694,8 @@ public abstract class DialogWrapper {
     return DialogWrapperPeerFactory.getInstance().createPeer(this, parent, canBeParent);
   }
 
-  protected DialogWrapperPeer createPeer(boolean canBeParent, boolean toolkitModalIfPossible) {
-    return DialogWrapperPeerFactory.getInstance().createPeer(this, canBeParent, toolkitModalIfPossible);
+  protected DialogWrapperPeer createPeer(boolean canBeParent, boolean applicationModalIfPossible) {
+    return DialogWrapperPeerFactory.getInstance().createPeer(this, canBeParent, applicationModalIfPossible);
   }
 
   protected DialogWrapperPeer createPeer(@Nullable final Project project, final boolean canBeParent) {

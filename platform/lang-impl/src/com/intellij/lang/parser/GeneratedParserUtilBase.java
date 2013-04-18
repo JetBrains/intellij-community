@@ -306,7 +306,8 @@ public class GeneratedParserUtilBase {
       state.FRAMES.recycle(frame);
       return result;
     }
-    if (!result && !pinned && initialOffset == frame.offset && state.lastExpectedVariantOffset == frame.offset &&
+    boolean willFail = !result && !pinned;
+    if (willFail && initialOffset == frame.offset && state.lastExpectedVariantOffset == frame.offset &&
         frame.name != null && state.variants.size() - frame.variantCount > 1) {
       state.clearVariants(true, frame.variantCount);
       addVariantInner(state, initialOffset, frame.name);
@@ -322,6 +323,7 @@ public class GeneratedParserUtilBase {
         eatMoreFlagOnce ? builder_.getLatestDoneMarker() : null;
       PsiBuilder.Marker extensionMarker = null;
       IElementType extensionTokenType = null;
+      // whitespace prefix makes the very first frame offset bigger than marker start offset which is always 0
       if (latestDoneMarker instanceof PsiBuilder.Marker && frame.offset >= latestDoneMarker.getStartOffset()) {
         extensionMarker = ((PsiBuilder.Marker)latestDoneMarker).precede();
         extensionTokenType = latestDoneMarker.getTokenType();
@@ -369,8 +371,8 @@ public class GeneratedParserUtilBase {
         reportError(builder_, state, frame, false, false);
       }
     }
-    // propagate errorReportedAt up the stack to avoid duplicate reporting
-    Frame prevFrame = state.frameStack.isEmpty() ? null : state.frameStack.getLast();
+    // propagate errorReportedAt up the stack to avoid duplicate reporting except marker.rollback case
+    Frame prevFrame = willFail && sectionType == _SECTION_GENERAL_ || state.frameStack.isEmpty() ? null : state.frameStack.getLast();
     if (prevFrame != null && prevFrame.errorReportedAt < frame.errorReportedAt) prevFrame.errorReportedAt = frame.errorReportedAt;
     state.FRAMES.recycle(frame);
     return result;

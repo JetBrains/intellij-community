@@ -68,7 +68,7 @@ public class CompileScopeImpl extends CompileScope {
   @Override
   public boolean isBuildForced(@NotNull BuildTarget<?> target) {
     BuildTargetType<?> type = target.getTargetType();
-    return myTypesToForceBuild.contains(type) && myFiles.get(target) == null &&(myTypes.contains(type) || myTargets.contains(target) || isAffectedByAssociatedModule(target));
+    return myTypesToForceBuild.contains(type) && myFiles.isEmpty() && (myTypes.contains(type) || myTargets.contains(target) || isAffectedByAssociatedModule(target));
   }
 
   @Override
@@ -87,10 +87,7 @@ public class CompileScopeImpl extends CompileScope {
       return true;
     }
     final Set<File> files = myFiles.get(target);
-    if (files != null) {
-      return files.contains(file);
-    }
-    return myTypes.contains(target.getTargetType()) || myTargets.contains(target) || isAffectedByAssociatedModule(target);
+    return files != null && files.contains(file);
   }
 
   private boolean isAffectedByAssociatedModule(BuildTarget<?> target) {
