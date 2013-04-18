@@ -52,12 +52,12 @@ class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
 
   @Override
   public String getReportText() {
-    StringBuffer buf = new StringBuffer();
+    StringBuilder buf = new StringBuilder();
     appendNode(buf, myUsageView.getModelRoot(), SystemProperties.getLineSeparator(), "");
     return buf.toString();
   }
 
-  private void appendNode(StringBuffer buf, DefaultMutableTreeNode node, String lineSeparator, String indent) {
+  private void appendNode(StringBuilder buf, DefaultMutableTreeNode node, String lineSeparator, String indent) {
     buf.append(indent);
     final String childIndent;
     if (node.getParent() != null) {
@@ -75,7 +75,11 @@ class ExporterToTextFile implements com.intellij.ide.ExporterToTextFile {
     }
   }
 
-  private void appendNodeText(StringBuffer buf, DefaultMutableTreeNode node, String lineSeparator) {
+  private void appendNodeText(StringBuilder buf, DefaultMutableTreeNode node, String lineSeparator) {
+    if (node instanceof Node && ((Node)node).isExcluded()) {
+      buf.append("(").append(UsageViewBundle.message("usage.excluded")).append(") ");
+    }
+
     if (node instanceof UsageNode) {
       TextChunk[] chunks = ((UsageNode)node).getUsage().getPresentation().getText();
       for (TextChunk chunk : chunks) {
