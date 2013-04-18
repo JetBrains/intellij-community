@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2010 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -22,11 +22,11 @@ import org.jetbrains.annotations.NotNull;
 /**
  * @author Eugene.Kudelevsky
  */
-public class HtmlUnknownTargetInspection extends XmlPathReferenceInspection {
+public class HtmlUnknownAnchorTargetInspection extends XmlPathReferenceInspection {
   @NotNull
   @Override
   public String getShortName() {
-    return "HtmlUnknownTarget";
+    return "HtmlUnknownAnchorTarget";
   }
 
   @Override
@@ -36,6 +36,6 @@ public class HtmlUnknownTargetInspection extends XmlPathReferenceInspection {
 
   @Override
   protected boolean needToCheckRef(PsiReference reference) {
-    return !(reference instanceof AnchorReference);
+    return reference instanceof AnchorReference;
   }
 }
