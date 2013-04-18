@@ -46,7 +46,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Collections;
 import java.util.List;
-    
+
 /**
  * @author cdr
  */
@@ -54,11 +54,11 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
   static final String SHORT_NAME = "SSBasedInspection";
   private List<Configuration> myConfigurations = new ArrayList<Configuration>();
 
-  public void writeSettings(Element node) throws WriteExternalException {
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
     ConfigurationManager.writeConfigurations(node, myConfigurations, Collections.<Configuration>emptyList());
   }
 
-  public void readSettings(Element node) throws InvalidDataException {
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
     myConfigurations.clear();
     ConfigurationManager.readConfigurations(node, myConfigurations, new ArrayList<Configuration>());
   }
@@ -86,7 +86,7 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
       SSBasedInspectionCompiledPatternsCache.getCompiledOptions(holder.getProject());
 
     if (compiledOptions == null) return super.buildVisitor(holder, isOnTheFly);
-    
+
     return new PsiElementVisitor() {
       final List<Pair<MatchContext,Configuration>> contexts = compiledOptions.getMatchContexts();
       final Matcher matcher = new Matcher(holder.getManager().getProject());
@@ -107,13 +107,13 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
           return true;
         }
       };
-      
+
       @Override
       public void visitElement(PsiElement element) {
         for (Pair<MatchContext, Configuration> pair : contexts) {
           Configuration configuration = pair.second;
           MatchContext context = pair.first;
-          
+
           if (Matcher.checkIfShouldAttemptToMatch(context, element)) {
             matcher.processMatchesInElement(context, configuration, element, processor);
           }
