@@ -31,7 +31,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
 import com.intellij.slicer.forward.SliceFUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Processor;
 import gnu.trove.THashMap;
 import gnu.trove.THashSet;
@@ -183,7 +183,8 @@ public class SliceUtil {
         public void visitReturnStatement(final PsiReturnStatement statement) {
           PsiExpression returnValue = statement.getReturnValue();
           if (returnValue == null) return;
-          if (!TypeConversionUtil.isAssignable(parentType, superSubstitutor.substitute(superSubstitutor.substitute(returnValue.getType())))) return;
+          PsiType right = superSubstitutor.substitute(superSubstitutor.substitute(returnValue.getType()));
+          if (right == null || !TypeConversionUtil.isAssignable(parentType, right)) return;
           if (!handToProcessor(returnValue, processor, parent, substitutor)) {
             stopWalking();
             result[0] = false;
@@ -252,7 +253,7 @@ public class SliceUtil {
     final PsiType actualType = parameter.getType();
 
     final PsiParameter[] actualParameters = method.getParameterList().getParameters();
-    final int paramSeqNo = ArrayUtil.find(actualParameters, parameter);
+    final int paramSeqNo = ArrayUtilRt.find(actualParameters, parameter);
     assert paramSeqNo != -1;
 
     Collection<PsiMethod> superMethods = new THashSet<PsiMethod>(Arrays.asList(method.findDeepestSuperMethods()));
