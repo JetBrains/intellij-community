@@ -16,18 +16,15 @@
 
 package com.maddyhome.idea.copyright.util;
 
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.openapi.vfs.VirtualFileAdapter;
-import com.intellij.openapi.vfs.VirtualFileEvent;
-import com.intellij.openapi.vfs.VirtualFileManager;
+import com.intellij.openapi.Disposable;
+import com.intellij.openapi.vfs.*;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.TestOnly;
 
 import java.util.Collections;
 import java.util.Set;
 
-public class NewFileTracker {
+public class NewFileTracker implements Disposable{
   public static NewFileTracker getInstance() {
     return instance;
   }
@@ -37,19 +34,21 @@ public class NewFileTracker {
   }
 
   private NewFileTracker() {
-    VirtualFileManager.getInstance().addVirtualFileListener(new VirtualFileAdapter() {
+    final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
+    virtualFileManager.addVirtualFileListener(new VirtualFileAdapter() {
       @Override
       public void fileCreated(VirtualFileEvent event) {
+        if (event.isFromRefresh()) return;
         newFiles.add(event.getFile());
       }
-    });
+    }, this);
   }
 
   private final Set<VirtualFile> newFiles = Collections.synchronizedSet(new THashSet<VirtualFile>());
   private static final NewFileTracker instance = new NewFileTracker();
 
-  @TestOnly
-  public void clear() {
+  @Override
+  public void dispose() {
     newFiles.clear();
   }
 }

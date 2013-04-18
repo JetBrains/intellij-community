@@ -20,6 +20,7 @@ import com.intellij.ide.CommonActionsManager;
 import com.intellij.ide.TreeExpander;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
@@ -29,7 +30,6 @@ import com.intellij.openapi.vcs.VcsBundle;
 import com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction;
 import com.intellij.openapi.vcs.changes.actions.IgnoreUnversionedAction;
 import com.intellij.openapi.vcs.changes.actions.MoveChangesToAnotherListAction;
-import com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNode;
 import com.intellij.openapi.vcs.changes.ui.ChangesBrowserNodeRenderer;
 import com.intellij.openapi.vcs.changes.ui.ChangesListView;
@@ -121,16 +121,19 @@ public class UnversionedViewDialog extends DialogWrapper {
     final AnAction collapseAction = cam.createCollapseAllAction(expander, myView);
     actions.add(collapseAction);
     actions.add(new ToggleShowFlattenAction());
-    actions.add(new ScheduleForAdditionAction() {
-      {
-        getTemplatePresentation().setIcon(AllIcons.General.Add);
-      }
+
+    final AnAction addAction = ActionManager.getInstance().getAction("ChangesView.AddUnversioned.From.Dialog");
+    actions.add(addAction);
+    addAction.registerCustomShortcutSet(addAction.getShortcutSet(), myView);
+    ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
       @Override
-      public void actionPerformed(AnActionEvent e) {
-        super.actionPerformed(e);
-        refreshView();
+      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        if (addAction.equals(action)) {
+          refreshView();
+        }
       }
     });
+
     actions.add(new MoveChangesToAnotherListAction() {
       @Override
       public void actionPerformed(AnActionEvent e) {

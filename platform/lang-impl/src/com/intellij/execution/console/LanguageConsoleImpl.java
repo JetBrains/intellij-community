@@ -547,6 +547,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   }
 
   protected void appendToHistoryDocument(@NotNull Document history, @NotNull String text) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     history.insertString(history.getTextLength(), text);
   }
 

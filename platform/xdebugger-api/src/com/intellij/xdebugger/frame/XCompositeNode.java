@@ -38,7 +38,6 @@ public interface XCompositeNode extends Obsolescent {
    */
   void addChildren(@NotNull XValueChildrenList children, final boolean last);
 
-
   /**
    * @deprecated use {@link #addChildren(XValueChildrenList, boolean)} instead
    */
@@ -50,6 +49,13 @@ public interface XCompositeNode extends Obsolescent {
    * @param remaining number of remaining children or <code>-1</code> if unknown
    */
   void tooManyChildren(int remaining);
+
+  boolean isAlreadySorted();
+
+  /**
+   * Use sort specified in data view settings (alreadySorted false, by default) or not
+   */
+  void setAlreadySorted(boolean alreadySorted);
 
   /**
    * Indicates that an error occurs

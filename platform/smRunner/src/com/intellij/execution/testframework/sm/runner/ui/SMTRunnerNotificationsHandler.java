@@ -74,7 +74,7 @@ public class SMTRunnerNotificationsHandler extends SMTRunnerEventsAdapter {
         type = MessageType.ERROR;
         break;
       case COMPLETE_INDEX:
-        if (testsRoot.getChildren().size() == 0) {
+        if (testsRoot.getChildren().size() == 0 && !testsRoot.isLeaf()) {
           msg = testsRoot.hasErrors() ? SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found.with.errors")
                                       : testsRoot.isTestsReporterAttached()
                                          ? SMTestsRunnerBundle.message("sm.test.runner.ui.tests.tree.presentation.labels.no.tests.were.found")
