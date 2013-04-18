@@ -836,6 +836,34 @@ public class HighlightInfo implements Segment {
     return isFlagSet(FROM_INJECTION_FLAG);
   }
 
+  @NotNull
+  public String getText() {
+    RangeHighlighterEx highlighter = this.highlighter;
+    if (highlighter == null) throw new RuntimeException("info not applied yet");
+    if (!highlighter.isValid()) return "";
+    return highlighter.getDocument().getText(TextRange.create(highlighter));
+  }
+
+  @NonNls private static final String HTML_HEADER = "<html>";
+  @NonNls private static final String BODY_HEADER = "<body>";
+  @NonNls private static final String HTML_FOOTER = "</html>";
+  @NonNls private static final String BODY_FOOTER = "</body>";
+  @NotNull
+  protected static String wrapInHtml(@NotNull CharSequence result) {
+    return HTML_HEADER + result + HTML_FOOTER;
+  }
+
+  @NotNull
+  protected static String stripHtml(@NotNull String toolTip) {
+    toolTip = StringUtil.trimStart(toolTip, HTML_HEADER);
+    toolTip = StringUtil.trimStart(toolTip, BODY_HEADER);
+    toolTip = StringUtil.trimEnd(toolTip, HTML_FOOTER);
+    toolTip = StringUtil.trimEnd(toolTip, BODY_FOOTER);
+    return toolTip;
+  }
+
+
+
 
   // Deprecated methods for plugin compatibility
 
@@ -950,31 +978,5 @@ public class HighlightInfo implements Segment {
     // do not use HighlightInfoFilter
     return new HighlightInfo(null, attributesKey, type, textRange.getStartOffset(), textRange.getEndOffset(), message,
                              htmlEscapeToolTip(message), type.getSeverity(element), false, Boolean.FALSE, false,0);
-  }
-
-  @NotNull
-  public String getText() {
-    RangeHighlighterEx highlighter = this.highlighter;
-    if (highlighter == null) throw new RuntimeException("info not applied yet");
-    if (!highlighter.isValid()) return "";
-    return highlighter.getDocument().getText(TextRange.create(highlighter));
-  }
-
-  @NonNls private static final String HTML_HEADER = "<html>";
-  @NonNls private static final String BODY_HEADER = "<body>";
-  @NonNls private static final String HTML_FOOTER = "</html>";
-  @NonNls private static final String BODY_FOOTER = "</body>";
-  @NotNull
-  protected static String wrapInHtml(@NotNull CharSequence result) {
-    return HTML_HEADER + result + HTML_FOOTER;
-  }
-
-  @NotNull
-  protected static String stripHtml(@NotNull String toolTip) {
-    toolTip = StringUtil.trimStart(toolTip, HTML_HEADER);
-    toolTip = StringUtil.trimStart(toolTip, BODY_HEADER);
-    toolTip = StringUtil.trimEnd(toolTip, HTML_FOOTER);
-    toolTip = StringUtil.trimEnd(toolTip, BODY_FOOTER);
-    return toolTip;
   }
 }
