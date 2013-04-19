@@ -16,6 +16,7 @@
 package git4idea;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.text.StringUtil;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -26,6 +27,7 @@ import static com.intellij.dvcs.test.Executor.echo;
 import static com.intellij.dvcs.test.Executor.touch;
 import static git4idea.GitCucumberWorld.virtualCommits;
 import static git4idea.test.GitExecutor.git;
+import static org.junit.Assert.assertTrue;
 
 /**
  * 
@@ -202,7 +204,7 @@ public class CommitDetails {
     Pattern reg = Pattern.compile("^\\s*\\[.+ ([a-fA-F0-9]+)\\] (.+)$");
     Matcher matcher = reg.matcher(line);
     boolean matches = matcher.matches();
-    assert matches;
+    assertTrue("The output of the commit command doesn't match the expected pattern: [" + StringUtil.escapeLineBreak(line) + "]", matches);
     return new CommitDetails().hash(matcher.group(1)).message(matcher.group(2));
   }
 
