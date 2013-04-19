@@ -291,6 +291,7 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
 
   public void initMarkers(Place shreds) {
     SmartPointerManager smartPointerManager = SmartPointerManager.getInstance(myProject);
+    int curOffset = -1;
     for (PsiLanguageInjectionHost.Shred shred : shreds) {
       final RangeMarker rangeMarker = myNewDocument.createRangeMarker(
         shred.getRange().getStartOffset() + shred.getPrefix().length(),
@@ -302,10 +303,14 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> markers =
         Trinity.<RangeMarker, RangeMarker, SmartPsiElementPointer>create(origMarker, rangeMarker, elementPointer);
       myMarkers.add(markers);
-      markers.first.setGreedyToRight(true);
-      markers.second.setGreedyToRight(true);
-      markers.first.setGreedyToLeft(true);
-      markers.second.setGreedyToLeft(true);
+
+      origMarker.setGreedyToRight(true);
+      rangeMarker.setGreedyToRight(true);
+      if (origMarker.getStartOffset() > curOffset) {
+        origMarker.setGreedyToLeft(true);
+        rangeMarker.setGreedyToLeft(true);
+      }
+      curOffset = origMarker.getEndOffset();
     }
     initGuardedBlocks(shreds);
   }
