@@ -151,8 +151,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   static class RMNode<T extends RangeMarkerEx> extends IntervalTreeImpl.IntervalNode<T> {
-    private static final int EXPAND_TO_LEFT_FLAG = 3;
-    private static final int EXPAND_TO_RIGHT_FLAG = 4;
+    private static final int EXPAND_TO_LEFT_FLAG = VALID_FLAG+1;
+    private static final int EXPAND_TO_RIGHT_FLAG = EXPAND_TO_LEFT_FLAG+1;
 
     public RMNode(@NotNull RangeMarkerTree<T> rangeMarkerTree,
                   @NotNull T key,
