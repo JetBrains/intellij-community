@@ -678,4 +678,19 @@ class CollectionTypeTest {
 }
 ''')
   }
+
+  void testParameterInitializerWithGenericType() {
+    testHighlighting('''\
+class PsiElement {}
+class Foo extends PsiElement implements I {}
+
+interface I {}
+
+def <T extends PsiElement> T foo1(Class<T> x = <warning descr="Cannot assign 'Class<String>' to 'Class<? extends PsiElement>'">String</warning> ) {}
+def <T extends PsiElement> T foo2(Class<T> x = PsiElement ) {}
+def <T> T foo3(Class<T> x = PsiElement ) {}
+def <T extends PsiElement & I> T foo4(Class<T> x = <warning descr="Cannot assign 'Class<PsiElement>' to 'Class<? extends PsiElement>'">PsiElement</warning> ) {}
+def <T extends PsiElement & I> T foo5(Class<T> x = Foo ) {}
+''')
+  }
 }
