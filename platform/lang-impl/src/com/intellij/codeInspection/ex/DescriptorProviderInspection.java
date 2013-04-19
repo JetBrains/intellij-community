@@ -218,17 +218,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
   @Override
   public void cleanup() {
     super.cleanup();
-    final GlobalInspectionContextImpl context = getContext();
-    if (context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN){
-      if (myOldProblemElements == null) {
-        myOldProblemElements = new HashMap<RefEntity, CommonProblemDescriptor[]>();
-      }
-      myOldProblemElements.clear();
-      myOldProblemElements.putAll(getIgnoredElements());
-      myOldProblemElements.putAll(getProblemElements());
-    } else {
-      myOldProblemElements = null;
-    }
+    myOldProblemElements = null;
 
     synchronized (lock) {
       myProblemElements = null;

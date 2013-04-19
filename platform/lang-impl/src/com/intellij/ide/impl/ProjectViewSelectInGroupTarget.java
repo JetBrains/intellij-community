@@ -68,6 +68,7 @@ public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, 
       if (target.canSelect(context)) {
         if (requestFocus) {
           IdeFocusManager.getInstance(context.getProject()).requestFocus(new FocusCommand() {
+            @NotNull
             @Override
             public ActionCallback run() {
               target.selectIn(context, requestFocus);

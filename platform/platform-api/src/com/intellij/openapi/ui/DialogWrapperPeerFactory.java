@@ -37,8 +37,8 @@ public abstract class DialogWrapperPeerFactory {
     return ServiceManager.getService(DialogWrapperPeerFactory.class);
   }
 
-  public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, @Nullable Project project, boolean canBeParent);
-  public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, boolean canBeParent);
-  public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, boolean canBeParent, boolean applicationModalIfPossible);
-  public abstract DialogWrapperPeer createPeer(DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent);
+  public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent);
+  public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, boolean canBeParent);
+  public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, boolean canBeParent, boolean applicationModalIfPossible);
+  public abstract DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent);
 }

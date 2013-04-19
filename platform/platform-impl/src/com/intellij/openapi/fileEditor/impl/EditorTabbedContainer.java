@@ -84,7 +84,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     myWindow = window;
     myProject = project;
     final ActionManager actionManager = ActionManager.getInstance();
-    myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this); 
+    myTabs = new JBEditorTabs(project, actionManager, IdeFocusManager.getInstance(project), this);
     myTabs.setDataProvider(new MyDataProvider()).setPopupGroup(new Getter<ActionGroup>() {
       public ActionGroup get() {
         return (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_EDITOR_TAB_POPUP);
@@ -112,8 +112,9 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
         }
       }).setAdditionalSwitchProviderWhenOriginal(new MySwitchProvider())
     .setSelectionChangeHandler(new JBTabs.SelectionChangeHandler() {
+      @NotNull
       @Override
-      public ActionCallback execute(TabInfo info, boolean requestFocus, final ActiveRunnable doChangeSelection) {
+      public ActionCallback execute(TabInfo info, boolean requestFocus, @NotNull final ActiveRunnable doChangeSelection) {
         final ActionCallback result = new ActionCallback();
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
           @Override

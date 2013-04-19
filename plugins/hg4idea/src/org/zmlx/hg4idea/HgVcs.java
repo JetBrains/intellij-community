@@ -282,7 +282,7 @@ public class HgVcs extends AbstractVcs<CommittedChangeList> {
     messageBusConnection = myProject.getMessageBus().connect();
     messageBusConnection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         Project project = event.getManager().getProject();
         project.getMessageBus().syncPublisher(BRANCH_TOPIC).update(project, null);
       }

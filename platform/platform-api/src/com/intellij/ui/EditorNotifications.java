@@ -66,7 +66,7 @@ public class EditorNotifications extends AbstractProjectComponent {
     myFileEditorManager = fileEditorManager;
     project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
-      public void fileOpened(FileEditorManager source, VirtualFile file) {
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         updateNotifications(file);
       }
     });

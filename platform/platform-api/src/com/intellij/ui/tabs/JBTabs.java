@@ -37,12 +37,15 @@ public interface JBTabs extends SwitchProvider {
   @NotNull
   TabInfo addTab(TabInfo info);
 
+  @NotNull
   ActionCallback removeTab(@Nullable TabInfo info);
 
   void removeAllTabs();
 
+  @NotNull
   JBTabs setPopupGroup(@NotNull ActionGroup popupGroup, @NotNull String place, final boolean addNavigationGroup);
 
+  @NotNull
   ActionCallback select(@NotNull TabInfo info, boolean requestFocus);
 
   @Nullable
@@ -69,6 +72,7 @@ public interface JBTabs extends SwitchProvider {
 
   JBTabs setSelectionChangeHandler(SelectionChangeHandler handler);
 
+  @Override
   @NotNull
   JComponent getComponent();
 
@@ -94,6 +98,7 @@ public interface JBTabs extends SwitchProvider {
   void processDropOver(TabInfo over, RelativePoint point);
 
   interface SelectionChangeHandler {
-    ActionCallback execute(final TabInfo info, final boolean requestFocus, ActiveRunnable doChangeSelection);
+    @NotNull
+    ActionCallback execute(final TabInfo info, final boolean requestFocus, @NotNull ActiveRunnable doChangeSelection);
   }
 }

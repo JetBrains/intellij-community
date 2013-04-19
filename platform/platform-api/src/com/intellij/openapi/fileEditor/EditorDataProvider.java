@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.fileEditor;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -23,5 +24,5 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author peter
  */
 public interface EditorDataProvider {
-  @Nullable Object getData(String dataId, Editor e, final VirtualFile file);
+  @Nullable Object getData(@NotNull String dataId, @NotNull Editor e, @NotNull VirtualFile file);
 }

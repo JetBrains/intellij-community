@@ -620,7 +620,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private void installEditorFactoryListener() {
     final FileEditorManagerAdapter fileEditorListener = new FileEditorManagerAdapter() {
       @Override
-      public void fileOpened(FileEditorManager source, VirtualFile file) {
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         if (!Comparing.equal(file, myVirtualFile) || myConsoleEditor == null) return;
         Editor selectedTextEditor = source.getSelectedTextEditor();
         for (FileEditor fileEditor : source.getAllEditors(file)) {
@@ -642,7 +642,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       }
 
       @Override
-      public void fileClosed(FileEditorManager source, VirtualFile file) {
+      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         if (!Comparing.equal(file, myVirtualFile)) return;
         if (myUiUpdateRunnable != null && !Boolean.TRUE.equals(file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
           if (myCurrentEditor != null && myCurrentEditor.isDisposed()) myCurrentEditor = null;

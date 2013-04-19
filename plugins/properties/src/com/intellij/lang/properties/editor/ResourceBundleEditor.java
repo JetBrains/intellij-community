@@ -153,7 +153,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     getSplitter().setAndLoadSplitterProportionKey(getClass() + ".splitter");
     project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         onSelectionChanged(event);
       }
     });
@@ -196,7 +196,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
     if (tree == null) {
       return;
     }
-    
+
     Object root = tree.getModel().getRoot();
     if (AbstractTreeUi.isLoadingChildrenFor(root)) {
       mySelectionChangeAlarm.cancelAllRequests();
@@ -204,7 +204,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         @Override
         public void run() {
           mySelectionChangeAlarm.cancelAllRequests();
-          setStructureViewSelection(propertyName); 
+          setStructureViewSelection(propertyName);
         }
       }, 500);
       return;
@@ -259,7 +259,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       }
     }
   }
-  
+
   @Nullable
   private static String getNodeValue(@NotNull DefaultMutableTreeNode node) {
     Object userObject = node.getUserObject();
@@ -391,7 +391,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
         }
       }
     };
-    
+
     virtualFileManager.addVirtualFileListener(myVfsListener, this);
     PsiTreeChangeAdapter psiTreeChangeAdapter = new PsiTreeChangeAdapter() {
       @Override
@@ -465,7 +465,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
             }
             else {
               String rawValue = property.getValue();
-              value = rawValue == null ? "" : ResourceBundleUtil.fromPropertyValueToValueEditor(rawValue); 
+              value = rawValue == null ? "" : ResourceBundleUtil.fromPropertyValueToValueEditor(rawValue);
             }
             final Document document = editor.getDocument();
             CommandProcessor.getInstance().executeCommand(null, new Runnable() {
@@ -784,7 +784,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
    * Renames target property if the one is available.
    * <p/>
    * <b>Note:</b> is assumed to be called under {@link WriteAction write action}.
-   * 
+   *
    * @param oldName   old property name
    * @param newName   new property name
    */
@@ -796,7 +796,7 @@ public class ResourceBundleEditor extends UserDataHolderBase implements FileEdit
       }
     }
   }
-  
+
   public static class ResourceBundleEditorState implements FileEditorState {
     private final String myPropertyName;
 

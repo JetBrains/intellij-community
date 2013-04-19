@@ -83,7 +83,7 @@ public class XDebuggerManagerImpl extends XDebuggerManager
     myExecutionPointHighlighter = new ExecutionPointHighlighter(project);
     messageBus.connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
-      public void fileOpened(final FileEditorManager source, final VirtualFile file) {
+      public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file) {
         if (file instanceof HttpVirtualFile && file.equals(myExecutionPointHighlighter.getCurrentFile())) {
           myExecutionPointHighlighter.update();
         }

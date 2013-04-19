@@ -30,6 +30,7 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiUtilBase;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
@@ -41,7 +42,7 @@ import static com.intellij.util.containers.ContainerUtil.addIfNotNull;
 public class TextEditorPsiDataProvider implements EditorDataProvider {
   @Override
   @Nullable
-  public Object getData(final String dataId, final Editor e, final VirtualFile file) {
+  public Object getData(@NotNull final String dataId, @NotNull final Editor e, @NotNull final VirtualFile file) {
     if (!file.isValid()) return null;
 
     if (dataId.equals(injectedId(EDITOR.getName()))) {
@@ -147,7 +148,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
   }
 
   @Nullable
-  private static PsiElement getPsiElementIn(final Editor editor, VirtualFile file) {
+  private static PsiElement getPsiElementIn(@NotNull Editor editor, @NotNull VirtualFile file) {
     final PsiFile psiFile = getPsiFile(editor, file);
     if (psiFile == null) return null;
 
@@ -160,7 +161,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
   }
 
   @Nullable
-  private static PsiFile getPsiFile(Editor e, VirtualFile file) {
+  private static PsiFile getPsiFile(@NotNull Editor e, @NotNull VirtualFile file) {
     if (!file.isValid()) {
       return null; // fix for SCR 40329
     }
@@ -172,7 +173,7 @@ public class TextEditorPsiDataProvider implements EditorDataProvider {
     return psiFile != null && psiFile.isValid() ? psiFile : null;
   }
 
-  private Language[] computeLanguages(Editor editor, VirtualFile file) {
+  private Language[] computeLanguages(@NotNull Editor editor, @NotNull VirtualFile file) {
     LinkedHashSet<Language> set = new LinkedHashSet<Language>(4);
     Language injectedLanguage = (Language)getData(injectedId(LANGUAGE.getName()), editor, file);
     addIfNotNull(injectedLanguage, set);

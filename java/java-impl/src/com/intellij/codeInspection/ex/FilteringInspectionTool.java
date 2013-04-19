@@ -114,16 +114,7 @@ public abstract class FilteringInspectionTool extends InspectionTool {
   @Override
   public void cleanup() {
     super.cleanup();
-    final GlobalInspectionContextImpl context = getContext();
-    if (context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN){
-      if (myOldPackageContents == null){
-        myOldPackageContents = new HashMap<String, Set<RefEntity>>();
-      }
-      myOldPackageContents.clear();
-      myOldPackageContents.putAll(myPackageContents);
-    } else {
-      myOldPackageContents = null;
-    }
+    myOldPackageContents = null;
     myPackageContents.clear();
     myIgnoreElements.clear();
   }

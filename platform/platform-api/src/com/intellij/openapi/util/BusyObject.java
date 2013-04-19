@@ -109,14 +109,15 @@ public interface BusyObject {
 
     public static class Simple extends Impl {
 
-      private AtomicInteger myBusyCount = new AtomicInteger();
+      private final AtomicInteger myBusyCount = new AtomicInteger();
 
       @Override
       public boolean isReady() {
         return myBusyCount.get() == 0;
       }
 
-      public ActionCallback execute(ActiveRunnable runnable) {
+      @NotNull
+      public ActionCallback execute(@NotNull ActiveRunnable runnable) {
         myBusyCount.addAndGet(1);
         ActionCallback cb = runnable.run();
         cb.doWhenProcessed(new Runnable() {

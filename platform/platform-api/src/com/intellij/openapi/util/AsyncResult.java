@@ -52,6 +52,7 @@ public class AsyncResult<T> extends ActionCallback {
   @NotNull
   public AsyncResult<T> doWhenDone(@NotNull final Handler<T> handler) {
     doWhenDone(new Runnable() {
+      @Override
       public void run() {
         handler.run(myResult);
       }
@@ -72,6 +73,7 @@ public class AsyncResult<T> extends ActionCallback {
   @NotNull
   public AsyncResult<T> doWhenRejected(@NotNull final Handler<T> handler) {
     doWhenRejected(new Runnable() {
+      @Override
       public void run() {
         handler.run(myResult);
       }
@@ -79,6 +81,7 @@ public class AsyncResult<T> extends ActionCallback {
     return this;
   }
 
+  @Override
   @NotNull
   public final AsyncResult<T> notify(@NotNull final ActionCallback child) {
     super.notify(child);

@@ -344,7 +344,7 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   }
 
   @Override
-  public void fileOpened(final FileEditorManager manager, final VirtualFile file) {
+  public void fileOpened(@NotNull final FileEditorManager manager, @NotNull final VirtualFile file) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override
       public void run() {
@@ -403,8 +403,8 @@ public class NavBarListener extends WolfTheProblemSolver.ProblemListener
   public void childRemoved(@NotNull PsiTreeChangeEvent event) {}
 
   @Override
-  public void fileClosed(FileEditorManager source, VirtualFile file) {}
+  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {}
 
   @Override
-  public void selectionChanged(FileEditorManagerEvent event) {}
+  public void selectionChanged(@NotNull FileEditorManagerEvent event) {}
 }
