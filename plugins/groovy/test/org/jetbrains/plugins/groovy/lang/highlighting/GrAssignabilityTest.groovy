@@ -646,4 +646,36 @@ def foo(Date d) {}
 def bar(String s) {}
 ''')
   }
+
+  void testClassTypesWithMadGenerics() {
+    testHighlighting('''\
+//no warnings are expected!
+
+class CollectionTypeTest {
+    void implicitType() {
+        def classes = [String, Integer]
+        assert classNames(classes + [Double, Long]) == ['String', 'Integer', 'Double', 'Long'] // warning here
+        assert classNames([Double, Long] + classes) == ['Double', 'Long', 'String', 'Integer']
+    }
+
+    void explicitInitType() {
+        Collection<Class> classes = [String, Integer]
+        assert classNames(classes + [Double, Long]) == ['String', 'Integer', 'Double', 'Long']
+        assert classNames([Double, Long] + classes) == ['Double', 'Long', 'String', 'Integer'] // warning here
+    }
+
+    void explicitSumType() {
+        Collection<Class> classes = [String, Integer]
+        assert classNames(classes + [Double, Long]) == ['String', 'Integer', 'Double', 'Long']
+
+        Collection<Class> var = [Double, Long] + classes
+        assert classNames(var) == ['Double', 'Long', 'String', 'Integer']
+    }
+
+    private static Collection<String> classNames(Collection<Class> classes) {
+       return classes.collect { it.simpleName }
+    }
+}
+''')
+  }
 }
