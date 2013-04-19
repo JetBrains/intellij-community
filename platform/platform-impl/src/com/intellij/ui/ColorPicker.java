@@ -66,6 +66,8 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
   private final Alarm myUpdateQueue;
   private final ColorPickerListener[] myExternalListeners;
 
+  private final boolean myOpacityInPercent;
+
   private RecentColorsComponent myRecentColorsComponent;
   private final ColorPipette myPicker;
   private final JLabel myR = new JLabel("R:");
@@ -84,23 +86,25 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
       return size;
     }
   };
+
   public ColorPicker(@NotNull Disposable parent, @Nullable Color color, boolean enableOpacity) {
-    this(parent, color, true, enableOpacity, new ColorPickerListener[0]);
+    this(parent, color, true, enableOpacity, new ColorPickerListener[0], false);
   }
 
   private ColorPicker(Disposable parent,
                       @Nullable Color color,
-                      boolean restoreColors,
-                      boolean enableOpacity, ColorPickerListener[] listeners) {
+                      boolean restoreColors, boolean enableOpacity,
+                      ColorPickerListener[] listeners, boolean opacityInPercent) {
     myUpdateQueue = new Alarm(Alarm.ThreadToUse.SWING_THREAD, parent);
     myRed = createColorField(false);
     myGreen = createColorField(false);
     myBlue = createColorField(false);
     myHex = createColorField(true);
+    myOpacityInPercent = opacityInPercent;
     setLayout(new BorderLayout());
     setBorder(BorderFactory.createEmptyBorder(5, 5, 0, 5));
 
-    myColorWheelPanel = new ColorWheelPanel(this, enableOpacity);
+    myColorWheelPanel = new ColorWheelPanel(this, enableOpacity, myOpacityInPercent);
 
     myExternalListeners = listeners;
     myFormat.addActionListener(new ActionListener() {
@@ -328,8 +332,9 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
                                  String caption,
                                  Color preselectedColor,
                                  boolean enableOpacity,
-                                 ColorPickerListener[] listeners) {
-    final ColorPickerDialog dialog = new ColorPickerDialog(parent, caption, preselectedColor, enableOpacity, listeners);
+                                 ColorPickerListener[] listeners,
+                                 boolean opacityInPercent) {
+    final ColorPickerDialog dialog = new ColorPickerDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
     dialog.show();
     if (dialog.getExitCode() == DialogWrapper.OK_EXIT_CODE) {
       return dialog.getColor();
@@ -409,7 +414,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     private SlideComponent myBrightnessComponent;
     private SlideComponent myOpacityComponent = null;
 
-    private ColorWheelPanel(ColorListener listener, boolean enableOpacity) {
+    private ColorWheelPanel(ColorListener listener, boolean enableOpacity, boolean opacityInPercent) {
       setLayout(new BorderLayout());
       setBorder(BorderFactory.createEmptyBorder(5, 0, 5, 0));
 
@@ -432,6 +437,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
 
       if (enableOpacity) {
         myOpacityComponent = new SlideComponent("Opacity", false);
+        myOpacityComponent.setUnits(opacityInPercent ? SlideComponent.Unit.PERCENT : SlideComponent.Unit.LEVEL);
         myOpacityComponent.setToolTipText("Opacity");
         myOpacityComponent.addListener(new Consumer<Integer>() {
           @Override
@@ -882,17 +888,20 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     private ColorPicker myColorPicker;
     private final boolean myEnableOpacity;
     private ColorPipette myPicker;
+    private final boolean myOpacityInPercent;
 
     public ColorPickerDialog(Component parent,
                              String caption,
                              @Nullable Color preselectedColor,
                              boolean enableOpacity,
-                             ColorPickerListener[] listeners) {
+                             ColorPickerListener[] listeners,
+                             boolean opacityInPercent) {
       super(parent, true);
       myListeners = listeners;
       setTitle(caption);
       myPreselectedColor = preselectedColor;
       myEnableOpacity = enableOpacity;
+      myOpacityInPercent = opacityInPercent;
       setResizable(false);
       setOKButtonText("Choose");
       init();
@@ -913,7 +922,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     @Override
     protected JComponent createCenterPanel() {
       if (myColorPicker == null) {
-        myColorPicker = new ColorPicker(myDisposable, myPreselectedColor, true, myEnableOpacity, myListeners);
+        myColorPicker = new ColorPicker(myDisposable, myPreselectedColor, true, myEnableOpacity, myListeners, myOpacityInPercent);
       }
 
       return myColorPicker;
@@ -1288,7 +1297,7 @@ public class ColorPicker extends JPanel implements ColorListener, DocumentListen
     SwingUtilities.invokeLater(new Runnable() {
       @Override
       public void run() {
-        ColorPicker.showDialog(null, "", null, true, null);
+        showDialog(null, "", null, true, null, false);
       }
     });
   }
