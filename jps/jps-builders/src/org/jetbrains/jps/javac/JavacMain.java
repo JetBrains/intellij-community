@@ -88,6 +88,8 @@ public class JavacMain {
 
     fileManager.handleOption("-bootclasspath", Collections.singleton("").iterator()); // this will clear cached stuff
     fileManager.handleOption("-extdirs", Collections.singleton("").iterator()); // this will clear cached stuff
+    fileManager.handleOption("-endorseddirs", Collections.singleton("").iterator()); // this will clear cached stuff
+    final Collection<String> _options = prepareOptions(options, nowUsingJavac);
 
     try {
       fileManager.setOutputDirectories(outputDirToRoots);
@@ -112,7 +114,7 @@ public class JavacMain {
     }
     if (!platformClasspath.isEmpty()) {
       try {
-        fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, platformClasspath);
+        fileManager.setLocation(StandardLocation.PLATFORM_CLASS_PATH, buildPlatformClasspath(platformClasspath, _options));
       }
       catch (IOException e) {
         fileManager.getContext().reportMessage(Diagnostic.Kind.ERROR, e.getMessage());
@@ -143,7 +145,6 @@ public class JavacMain {
     };
 
     try {
-      final Collection<String> _options = prepareOptions(options, nowUsingJavac);
 
       // to be on the safe side, we'll have to apply all options _before_ calling any of manager's methods
       // i.e. getJavaFileObjectsFromFiles()
@@ -229,6 +230,89 @@ public class JavacMain {
       skip = false;
     }
     return result;
+  }
+
+  private static Collection<File> buildPlatformClasspath(Collection<File> platformClasspath, Collection<String> options) {
+    final Map<PathOption, String> argsMap = new HashMap<PathOption, String>();
+    for (Iterator<String> iterator = options.iterator(); iterator.hasNext(); ) {
+      final String arg = iterator.next();
+      for (PathOption pathOption : PathOption.values()) {
+        if (pathOption.parse(argsMap, arg, iterator)) {
+          break;
+        }
+      }
+    }
+    if (argsMap.isEmpty()) {
+      return platformClasspath;
+    }
+    
+    final List<File> result = new ArrayList<File>();
+    appendFiles(argsMap, PathOption.PREPEND_CP, result, false);
+    appendFiles(argsMap, PathOption.ENDORSED, result, true);
+    appendFiles(argsMap, PathOption.D_ENDORSED, result, true);
+    result.addAll(platformClasspath);
+    appendFiles(argsMap, PathOption.APPEND_CP, result, false);
+    appendFiles(argsMap, PathOption.EXTDIRS, result, true);
+    appendFiles(argsMap, PathOption.D_EXTDIRS, result, true);
+    return result;
+  }
+
+  private static void appendFiles(Map<PathOption, String> args, PathOption option, Collection<File> container, boolean listDir) {
+    final String path = args.get(option);
+    if (path == null) {
+      return;
+    }
+    final StringTokenizer tokenizer = new StringTokenizer(path, File.pathSeparator, false);
+    while (tokenizer.hasMoreTokens()) {
+      final File file = new File(tokenizer.nextToken());
+      if (listDir) {
+        final File[] files = file.listFiles();
+        if (files != null) {
+          for (File f : files) {
+            final String fName = f.getName();
+            if (fName.endsWith(".jar") || fName.endsWith(".zip")) {
+              container.add(f);
+            }
+          }
+        }
+      }
+      else {
+        container.add(file);
+      }
+    }
+  }
+
+  enum PathOption {
+    PREPEND_CP("-Xbootclasspath/p:"), 
+    ENDORSED("-endorseddirs"), D_ENDORSED("-Djava.endorsed.dirs="),
+    APPEND_CP("-Xbootclasspath/a:"),
+    EXTDIRS("-extdirs"), D_EXTDIRS("-Djava.ext.dirs=");
+
+    private final String myArgName;
+    private final boolean myIsSuffix;
+
+    PathOption(String name) {
+      myArgName = name;
+      myIsSuffix = name.endsWith("=") || name.endsWith(":");
+    }
+
+    public boolean parse(Map<PathOption, String> container, String arg, Iterator<String> rest) {
+      if (myIsSuffix) {
+        if (arg.startsWith(myArgName)) {
+          container.put(this, arg.substring(myArgName.length()));
+          return true;
+        }
+      }
+      else {
+        if (arg.equals(myArgName)) {
+          if (rest.hasNext()) {
+            container.put(this, rest.next());
+          }
+          return true;
+        }
+      }
+      return false;
+    }
   }
 
   private static class ContextImpl implements JavacFileManager.Context {
