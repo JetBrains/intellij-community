@@ -33,6 +33,7 @@ public class StructureViewModelBase extends TextEditorBasedStructureViewModel {
     myRoot = root;
   }
 
+  @Override
   @NotNull
   public StructureViewTreeElement getRoot() {
     return myRoot;

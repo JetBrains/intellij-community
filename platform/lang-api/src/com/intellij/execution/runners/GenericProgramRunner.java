@@ -37,31 +37,38 @@ public abstract class GenericProgramRunner<Settings extends JDOMExternalizable> 
   public static final DataKey<RunContentDescriptor> CONTENT_TO_REUSE_DATA_KEY = DataKey.create("contentToReuse");
   @Deprecated @NonNls public static final String CONTENT_TO_REUSE = CONTENT_TO_REUSE_DATA_KEY.getName();
 
+  @Override
   @Nullable
   public Settings createConfigurationData(final ConfigurationInfoProvider settingsProvider) {
     return null;
   }
 
+  @Override
   public void checkConfiguration(final RunnerSettings settings, final ConfigurationPerRunnerSettings configurationPerRunnerSettings)
     throws RuntimeConfigurationException {
   }
 
+  @Override
   public void onProcessStarted(final RunnerSettings settings, final ExecutionResult executionResult) {
   }
 
+  @Override
   public AnAction[] createActions(final ExecutionResult executionResult) {
     return AnAction.EMPTY_ARRAY;
   }
 
+  @Override
   @Nullable
   public SettingsEditor<Settings> getSettingsEditor(final Executor executor, final RunConfiguration configuration) {
     return null;
   }
 
+  @Override
   public void execute(@NotNull final Executor executor, @NotNull final ExecutionEnvironment environment) throws ExecutionException {
     execute(executor, environment, null);
   }
 
+  @Override
   public void execute(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env, @Nullable final Callback callback)
       throws ExecutionException {
 

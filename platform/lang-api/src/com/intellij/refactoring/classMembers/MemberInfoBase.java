@@ -91,6 +91,7 @@ public abstract class MemberInfoBase<T extends PsiElement> {
   }
 
   public static class EmptyFilter<T extends PsiElement> implements Filter<T> {
+    @Override
     public boolean includeMember(T member) {
       return true;
     }

@@ -23,14 +23,17 @@ import com.intellij.psi.tree.IElementType;
 
 public interface NodeStructure<T> {
   NodeStructure<LighterASTNode> LIGHTER_NODE_STRUCTURE = new NodeStructure<LighterASTNode>() {
+    @Override
     public int getStartOffset(LighterASTNode node) {
       return node.getStartOffset();
     }
 
+    @Override
     public int getEndOffset(LighterASTNode node) {
       return node.getEndOffset();
     }
 
+    @Override
     public IElementType getTokenType(LighterASTNode node) {
       return node.getTokenType();
     }
@@ -38,19 +41,22 @@ public interface NodeStructure<T> {
 
 
   NodeStructure<ASTNode> AST_NODE_STRUCTURE = new NodeStructure<ASTNode>() {
+    @Override
     public int getStartOffset(ASTNode node) {
       return node.getTextRange().getStartOffset();
     }
 
+    @Override
     public int getEndOffset(ASTNode node) {
       return node.getTextRange().getEndOffset();
     }
 
+    @Override
     public IElementType getTokenType(ASTNode node) {
       return node.getElementType();
     }
   };
-  
+
   int getStartOffset(T node);
   int getEndOffset(T node);
   IElementType getTokenType(T node);

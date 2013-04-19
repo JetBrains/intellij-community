@@ -26,8 +26,10 @@ public abstract class ActionRunner {
   public static  void runInsideWriteAction(final InterruptibleRunnable runnable) throws Exception {
     final Exception[] exception = new Exception[1];
     Runnable swingRunnable = new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             try {
               runnable.run();
@@ -63,8 +65,10 @@ public abstract class ActionRunner {
     final Throwable[] exception = new Throwable[]{null};
     final T[] result = (T[])new Object[1];
     Runnable swingRunnable = new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             try {
               result[0] = runnable.run();
@@ -92,6 +96,7 @@ public abstract class ActionRunner {
 
   public static void runInsideReadAction(final InterruptibleRunnable runnable) throws Exception {
     Throwable exception = ApplicationManager.getApplication().runReadAction(new Computable<Throwable>() {
+      @Override
       public Throwable compute() {
         try {
           runnable.run();

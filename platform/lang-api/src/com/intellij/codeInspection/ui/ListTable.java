@@ -47,10 +47,12 @@ public class ListTable extends JBTable {
         setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
     }
 
+    @Override
     public ListWrappingTableModel getModel() {
         return (ListWrappingTableModel) super.getModel();
     }
 
+    @Override
     public void setModel(TableModel dataModel) {
         if (!(dataModel instanceof ListWrappingTableModel)) {
             throw new IllegalArgumentException(
@@ -59,6 +61,7 @@ public class ListTable extends JBTable {
         super.setModel(dataModel);
     }
 
+    @Override
     public Component prepareRenderer(TableCellRenderer renderer, int row,
                                      int column) {
         final Component component =

@@ -24,6 +24,7 @@ import com.intellij.codeInsight.completion.CompletionService;
 import com.intellij.psi.tree.IElementType;
 
 public class DefaultWordCompletionFilter implements WordCompletionElementFilter {
+  @Override
   public boolean isWordCompletionEnabledIn(final IElementType element) {
     final ParserDefinition parserDefinition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
     return parserDefinition != null && parserDefinition.getCommentTokens().contains(element);

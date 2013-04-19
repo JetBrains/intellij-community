@@ -37,6 +37,7 @@ public class PsiFilePattern<T extends PsiFile, Self extends PsiFilePattern<T, Se
 
   public Self withParentDirectoryName(final StringPattern namePattern) {
     return with(new PatternCondition<T>("withParentDirectoryName") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         PsiDirectory directory = t.getContainingDirectory();
         return directory != null && namePattern.getCondition().accepts(directory.getName(), context);
@@ -52,7 +53,7 @@ public class PsiFilePattern<T extends PsiFile, Self extends PsiFilePattern<T, Se
       }
     });
   }
-  
+
   public Self withVirtualFile(final ElementPattern<? extends VirtualFile> vFilePattern) {
     return with(new PatternCondition<T>("withVirtualFile") {
       @Override

@@ -121,6 +121,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   }
 
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

@@ -61,6 +61,7 @@ public abstract class CreateElementActionBase extends AnAction {
 
   protected abstract String getActionName(PsiDirectory directory, String newName);
 
+  @Override
   public final void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
 
@@ -80,6 +81,7 @@ public abstract class CreateElementActionBase extends AnAction {
     }
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Presentation presentation = e.getPresentation();
@@ -90,6 +92,7 @@ public abstract class CreateElementActionBase extends AnAction {
     presentation.setEnabled(enabled);
   }
 
+  @Override
   public boolean isDumbAware() {
     return false;
   }
@@ -130,6 +133,7 @@ public abstract class CreateElementActionBase extends AnAction {
       myDirectory = directory;
     }
 
+    @Override
     public boolean checkInput(final String inputString) {
       return true;
     }
@@ -144,6 +148,7 @@ public abstract class CreateElementActionBase extends AnAction {
       return CreateElementActionBase.this.getActionName(myDirectory, newName);
     }
 
+    @Override
     public boolean canClose(final String inputString) {
       myCreatedElements = tryCreate(inputString);
       return myCreatedElements.length > 0;

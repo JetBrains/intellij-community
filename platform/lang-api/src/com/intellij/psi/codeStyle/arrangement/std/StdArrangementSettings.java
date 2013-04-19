@@ -54,6 +54,7 @@ public class StdArrangementSettings implements ArrangementSettings {
     return myRules;
   }
 
+  @Override
   @NotNull
   public List<ArrangementGroupingRule> getGroupings() {
     return myGroupings;

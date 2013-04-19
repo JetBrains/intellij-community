@@ -41,6 +41,7 @@ public class StoringPropertyContainer extends AbstractProperty.AbstractPropertyC
     }
   }
 
+  @Override
   protected void setValueOf(final AbstractProperty<Boolean> property, final Object value) {
     myValues.put(property, (Boolean)value);
     onPropertyChanged(property, (Boolean)value);
@@ -51,10 +52,12 @@ public class StoringPropertyContainer extends AbstractProperty.AbstractPropertyC
     return value.toString();
   }
 
+  @Override
   public boolean hasProperty(final AbstractProperty property) {
     return myValues.containsKey(property);
   }
 
+  @Override
   protected Object getValueOf(final AbstractProperty<Boolean> property) {
     Object value = myValues.get(property);
     if (value == null) {

@@ -177,6 +177,7 @@ public class LogFileOptions implements JDOMExternalizable {
     myCharset = charset;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     String file = element.getAttributeValue(PATH);
     if (file != null){
@@ -206,6 +207,7 @@ public class LogFileOptions implements JDOMExternalizable {
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     element.setAttribute(PATH, FileUtil.toSystemIndependentName(getPathPattern()));
     element.setAttribute(CHECKED, String.valueOf(isEnabled()));

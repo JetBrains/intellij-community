@@ -33,46 +33,56 @@ import javax.swing.*;
 public class DefaultRunExecutor extends Executor {
   @NonNls public static final String EXECUTOR_ID = ToolWindowId.RUN;
 
+  @Override
   @NotNull
   public String getStartActionText() {
     return ExecutionBundle.message("default.runner.start.action.text");
   }
 
+  @Override
   public String getToolWindowId() {
     return ToolWindowId.RUN;
   }
 
+  @Override
   public Icon getToolWindowIcon() {
     return AllIcons.Toolwindows.ToolWindowRun;
   }
 
+  @Override
   @NotNull
   public Icon getIcon() {
     return AllIcons.Actions.Execute;
   }
 
+  @Override
   public Icon getDisabledIcon() {
     return AllIcons.Process.DisabledRun;
   }
 
+  @Override
   public String getDescription() {
     return ExecutionBundle.message("standard.runner.description");
   }
 
+  @Override
   @NotNull
   public String getActionName() {
     return UIBundle.message("tool.window.name.run");
   }
 
+  @Override
   @NotNull
   public String getId() {
     return EXECUTOR_ID;
   }
 
+  @Override
   public String getContextActionId() {
     return "RunClass";
   }
 
+  @Override
   public String getHelpId() {
     return "ideaInterface.run";
   }

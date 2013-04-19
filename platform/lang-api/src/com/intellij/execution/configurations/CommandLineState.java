@@ -35,7 +35,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class CommandLineState implements RunnableState {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.CommandLineState");
-  private TextConsoleBuilder myConsoleBuilder;  
+  private TextConsoleBuilder myConsoleBuilder;
 
   private final ExecutionEnvironment myEnvironment;
 
@@ -47,10 +47,12 @@ public abstract class CommandLineState implements RunnableState {
     return myEnvironment;
   }
 
+  @Override
   public RunnerSettings getRunnerSettings() {
     return myEnvironment.getRunnerSettings();
   }
 
+  @Override
   public ConfigurationPerRunnerSettings getConfigurationSettings() {
     return myEnvironment.getConfigurationSettings();
   }
@@ -60,6 +62,7 @@ public abstract class CommandLineState implements RunnableState {
     return myEnvironment.getExecutionTarget();
   }
 
+  @Override
   @NotNull
   public ExecutionResult execute(@NotNull final Executor executor, @NotNull final ProgramRunner runner) throws ExecutionException {
     final ProcessHandler processHandler = startProcess();
@@ -73,8 +76,8 @@ public abstract class CommandLineState implements RunnableState {
   @Nullable
   protected ConsoleView createConsole(@NotNull final Executor executor) throws ExecutionException {
     final TextConsoleBuilder builder = getConsoleBuilder();
-    
-    return builder != null ? builder.getConsole() 
+
+    return builder != null ? builder.getConsole()
                            : null;
   }
 
@@ -110,19 +113,23 @@ public abstract class CommandLineState implements RunnableState {
       myProcessHandler = processHandler;
     }
 
+    @Override
     public boolean isSelected(final AnActionEvent event) {
       return myConsole.isOutputPaused();
     }
 
+    @Override
     public void setSelected(final AnActionEvent event, final boolean flag) {
       myConsole.setOutputPaused(flag);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           update(event);
         }
       });
     }
 
+    @Override
     public void update(final AnActionEvent event) {
       super.update(event);
       final Presentation presentation = event.getPresentation();
@@ -141,6 +148,7 @@ public abstract class CommandLineState implements RunnableState {
         else {
           presentation.setEnabled(true);
           myConsole.performWhenNoDeferredOutput(new Runnable() {
+            @Override
             public void run() {
               update(event);
             }

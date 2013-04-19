@@ -49,6 +49,7 @@ public interface IntentionFilterOwner {
      * This filter reports all intentions are available.
      */
     IntentionActionsFilter EVERYTHING_AVAILABLE = new IntentionActionsFilter() {
+      @Override
       public boolean isAvailable(final IntentionAction intentionAction) {
         return true;
       }

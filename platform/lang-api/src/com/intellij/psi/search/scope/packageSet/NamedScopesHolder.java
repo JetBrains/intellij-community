@@ -152,6 +152,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     return new NamedScope(name, set);
   }
 
+  @Override
   public void loadState(final Element state) {
     myScopes.clear();
     List sets = state.getChildren(SCOPE_TAG);
@@ -161,6 +162,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
     fireScopeListeners();
   }
 
+  @Override
   public Element getState() {
     Element element = new Element("state");
     for (NamedScope myScope : myScopes) {
@@ -182,7 +184,7 @@ public abstract class NamedScopesHolder implements PersistentStateComponent<Elem
   public List<NamedScope> getPredefinedScopes(){
     return Collections.emptyList();
   }
-  
+
   @Nullable
   public NamedScope getPredefinedScope(String name) {
     return null;

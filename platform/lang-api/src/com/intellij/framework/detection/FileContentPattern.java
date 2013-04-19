@@ -86,6 +86,7 @@ public class FileContentPattern extends ObjectPattern<FileContent, FileContentPa
 
   public FileContentPattern xmlWithRootTagNamespace(final ElementPattern<String> namespacePattern) {
     return with(new PatternCondition<FileContent>("xmlWithRootTagNamespace") {
+      @Override
       public boolean accepts(@NotNull final FileContent fileContent, final ProcessingContext context) {
         try {
           String rootTagNamespace = parseHeaderWithException(fileContent).getRootTagNamespace();

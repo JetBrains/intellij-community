@@ -56,6 +56,7 @@ public class UnknownRunConfiguration implements RunConfiguration {
     myDoNotStore = b;
   }
 
+  @Override
   @Nullable
   public Icon getIcon() {
     return null;
@@ -65,35 +66,43 @@ public class UnknownRunConfiguration implements RunConfiguration {
     return myDoNotStore;
   }
 
+  @Override
   public ConfigurationFactory getFactory() {
     return myFactory;
   }
 
+  @Override
   public void setName(final String name) {
     myName = name;
   }
 
+  @Override
   public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
     return new UnknownSettingsEditor();
   }
 
+  @Override
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   @NotNull
   public ConfigurationType getType() {
     return UnknownConfigurationType.INSTANCE;
   }
 
+  @Override
   public JDOMExternalizable createRunnerSettings(final ConfigurationInfoProvider provider) {
     return null;
   }
 
+  @Override
   public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(final ProgramRunner runner) {
     return null;
   }
 
+  @Override
   public RunConfiguration clone() {
     try {
       final UnknownRunConfiguration cloned = (UnknownRunConfiguration) super.clone();
@@ -104,14 +113,17 @@ public class UnknownRunConfiguration implements RunConfiguration {
   }
 
 
+  @Override
   public int getUniqueID() {
     return System.identityHashCode(this);
   }
 
+  @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) throws ExecutionException {
     return null;
   }
 
+  @Override
   public String getName() {
     if (myName == null) {
       myName = String.format("Unknown%s", myUniqueName.getAndAdd(1));
@@ -120,14 +132,17 @@ public class UnknownRunConfiguration implements RunConfiguration {
     return myName;
   }
 
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
     throw new RuntimeConfigurationException("Broken configuration due to unavailable plugin or invalid configuration data.");
   }
 
+  @Override
   public void readExternal(final Element element) throws InvalidDataException {
     myStoredElement = (Element) element.clone();
   }
 
+  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     if (myStoredElement != null) {
       final List attributeList = myStoredElement.getAttributes();
@@ -154,17 +169,21 @@ public class UnknownRunConfiguration implements RunConfiguration {
       myPanel.add(new JLabel("This configuration cannot be edited", JLabel.CENTER));
     }
 
+    @Override
     protected void resetEditorFrom(final UnknownRunConfiguration s) {
     }
 
+    @Override
     protected void applyEditorTo(final UnknownRunConfiguration s) throws ConfigurationException {
     }
 
+    @Override
     @NotNull
     protected JComponent createEditor() {
       return myPanel;
     }
 
+    @Override
     protected void disposeEditor() {
     }
   }

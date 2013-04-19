@@ -55,6 +55,7 @@ public class NonCodeUsageInfo extends MoveRenameUsageInfo{
     return new NonCodeUsageInfo(element, startOffset, endOffset, referencedElement, newText);
   }
 
+  @Override
   @Nullable
   public PsiReference getReference() {
     return null;

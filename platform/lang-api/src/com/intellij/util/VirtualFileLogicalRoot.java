@@ -36,11 +36,13 @@ public class VirtualFileLogicalRoot extends LogicalRoot {
     this(virtualFile, LogicalRootType.SOURCE_ROOT);
   }
 
+  @Override
   @Nullable
   public VirtualFile getVirtualFile() {
     return myVirtualFile;
   }
 
+  @Override
   @NotNull
   public LogicalRootType getType() {
     return myType;

@@ -184,36 +184,44 @@ public class NanoXmlUtil {
 
   public static class IXMLBuilderAdapter implements IXMLBuilder {
 
+    @Override
     public void startBuilding(final String systemID, final int lineNr) throws Exception {
 
     }
 
+    @Override
     public void newProcessingInstruction(final String target, final Reader reader) throws Exception {
 
     }
 
+    @Override
     public void startElement(final String name, final String nsPrefix, final String nsURI, final String systemID, final int lineNr)
         throws Exception {
 
     }
 
+    @Override
     public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type)
         throws Exception {
 
     }
 
+    @Override
     public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
 
     }
 
+    @Override
     public void endElement(final String name, final String nsPrefix, final String nsURI) throws Exception {
 
     }
 
+    @Override
     public void addPCData(final Reader reader, final String systemID, final int lineNr) throws Exception {
 
     }
 
+    @Override
     @Nullable
     public Object getResult() throws Exception {
       return null;
@@ -227,14 +235,17 @@ public class NanoXmlUtil {
   public static class BaseXmlBuilder extends IXMLBuilderAdapter {
     private final Stack<String> myLocation = new Stack<String>();
 
+    @Override
     public void startBuilding(String systemID, int lineNr) throws Exception {
       myLocation.push("");
     }
 
+    @Override
     public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr) throws Exception {
       myLocation.push(myLocation.peek() + "." + name);
     }
 
+    @Override
     public void endElement(String name, String nsPrefix, String nsURI) throws Exception {
       myLocation.pop();
     }
@@ -251,14 +262,17 @@ public class NanoXmlUtil {
   public static class EmptyValidator extends NonValidator {
     private IXMLEntityResolver myParameterEntityResolver;
 
+    @Override
     public void setParameterEntityResolver(IXMLEntityResolver resolver) {
       myParameterEntityResolver = resolver;
     }
 
+    @Override
     public IXMLEntityResolver getParameterEntityResolver() {
       return myParameterEntityResolver;
     }
 
+    @Override
     public void parseDTD(String publicID, IXMLReader reader, IXMLEntityResolver entityResolver, boolean external) throws Exception {
       if (!external) {
         //super.parseDTD(publicID, reader, entityResolver, external);
@@ -281,33 +295,42 @@ public class NanoXmlUtil {
       }
     }
 
+    @Override
     public void elementStarted(String name, String systemId, int lineNr) {
     }
 
+    @Override
     public void elementEnded(String name, String systemId, int lineNr) {
     }
 
+    @Override
     public void attributeAdded(String key, String value, String systemId, int lineNr) {
     }
 
+    @Override
     public void elementAttributesProcessed(String name, Properties extraAttributes, String systemId, int lineNr) {
     }
 
+    @Override
     public void PCDataAdded(String systemId, int lineNr)  {
     }
   }
 
   private static class EmptyEntityResolver implements IXMLEntityResolver {
+    @Override
     public void addInternalEntity(String name, String value) {
     }
 
+    @Override
     public void addExternalEntity(String name, String publicID, String systemID) {
     }
 
+    @Override
     public Reader getEntity(IXMLReader xmlReader, String name) throws XMLParseException {
       return new StringReader("");
     }
 
+    @Override
     public boolean isExternalEntity(String name) {
       return false;
     }
@@ -361,27 +384,34 @@ public class NanoXmlUtil {
     private String myRootTagName;
     private String myNamespace;
 
+    @Override
     public void startBuilding(final String systemID, final int lineNr) throws Exception {
     }
 
+    @Override
     public void newProcessingInstruction(final String target, final Reader reader) throws Exception {
     }
 
+    @Override
     public void startElement(final String name, final String nsPrefix, final String nsURI, final String systemID, final int lineNr) throws Exception {
       myRootTagName = name;
       myNamespace = nsURI;
       throw ParserStoppedXmlException.INSTANCE;
     }
 
+    @Override
     public void addAttribute(final String key, final String nsPrefix, final String nsURI, final String value, final String type) throws Exception {
     }
 
+    @Override
     public void elementAttributesProcessed(final String name, final String nsPrefix, final String nsURI) throws Exception {
     }
 
+    @Override
     public void endElement(final String name, final String nsPrefix, final String nsURI) throws Exception {
     }
 
+    @Override
     public void addPCData(final Reader reader, final String systemID, final int lineNr) throws Exception {
     }
 
@@ -393,6 +423,7 @@ public class NanoXmlUtil {
       return myRootTagName;
     }
 
+    @Override
     public String getResult() {
       return myRootTagName;
     }

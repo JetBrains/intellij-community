@@ -114,10 +114,12 @@ class PreferredProducerFind {
       super(configurationType);
     }
 
+    @Override
     public PsiElement getSourceElement() {
       return myPsiElement;
     }
 
+    @Override
     @Nullable
     protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
       myPsiElement = location.getPsiElement();
@@ -141,6 +143,7 @@ class PreferredProducerFind {
       return null;
     }
 
+    @Override
     public int compareTo(final Object o) {
       return PREFERED;
     }

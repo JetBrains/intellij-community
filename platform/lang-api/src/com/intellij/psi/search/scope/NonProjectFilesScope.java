@@ -35,6 +35,7 @@ public class NonProjectFilesScope extends NamedScope {
 
   public NonProjectFilesScope() {
     super(NAME, new AbstractPackageSet("NonProject") {
+      @Override
       public boolean contains(VirtualFile file, NamedScopesHolder holder) {
         if (file == null) return true;
         if (file.getFileSystem() != LocalFileSystem.getInstance()) return true;

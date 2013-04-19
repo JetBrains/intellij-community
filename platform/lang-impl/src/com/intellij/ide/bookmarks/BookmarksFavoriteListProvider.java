@@ -64,6 +64,7 @@ public class BookmarksFavoriteListProvider extends AbstractFavoritesListProvider
     return "Bookmarks";
   }
 
+  @Override
   protected void updateChildrenImpl() {
     myChildren.clear();
     List<Bookmark> bookmarks = BookmarkManager.getInstance(myProject).getValidBookmarks();

@@ -73,6 +73,7 @@ public class StringLiteralLexer extends LexerBase {
     myAllowHex = allowHex;
   }
 
+  @Override
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
     myStart = startOffset;
@@ -88,10 +89,12 @@ public class StringLiteralLexer extends LexerBase {
     mySeenEscapedSpacesOnly = true;
   }
 
+  @Override
   public int getState() {
     return myLastState;
   }
 
+  @Override
   public IElementType getTokenType() {
     if (myStart >= myEnd) return null;
 
@@ -160,10 +163,12 @@ public class StringLiteralLexer extends LexerBase {
     return true;
   }
 
+  @Override
   public int getTokenStart() {
     return myStart;
   }
 
+  @Override
   public int getTokenEnd() {
     return myEnd;
   }
@@ -237,16 +242,19 @@ public class StringLiteralLexer extends LexerBase {
     return i;
   }
 
+  @Override
   public void advance() {
     myLastState = myState;
     myStart = myEnd;
     myEnd = locateToken(myStart);
   }
 
+  @Override
   public CharSequence getBufferSequence() {
     return myBuffer;
   }
 
+  @Override
   public int getBufferEnd() {
     return myBufferEnd;
   }

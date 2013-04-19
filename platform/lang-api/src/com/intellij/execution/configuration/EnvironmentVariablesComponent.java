@@ -66,6 +66,7 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     setComponent(envsTestField);
     setText(ExecutionBundle.message("environment.variables.component.title"));
     getComponent().addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         new MyEnvironmentVariablesDialog().show();
       }
@@ -167,10 +168,12 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
     return ArrayUtil.find(val.split(File.pathSeparator), "$" + envKey + "$") != -1;
   }
 
+  @Override
   public void addChangeListener(final ChangeListener changeListener) {
     myListeners.add(changeListener);
   }
 
+  @Override
   public void removeChangeListener(final ChangeListener changeListener) {
     myListeners.remove(changeListener);
   }
@@ -201,11 +204,13 @@ public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWit
       init();
     }
 
+    @Override
     @Nullable
     protected JComponent createCenterPanel() {
       return myWholePanel;
     }
 
+    @Override
     protected void doOKAction() {
       myEnvVariablesTable.stopEditing();
       final Map<String, String> envs = new LinkedHashMap<String, String>();

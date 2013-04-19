@@ -64,7 +64,7 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -75,7 +75,7 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -86,7 +86,7 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
         return true;
       }
     }
-    
+
     return false;
   }
 
@@ -98,10 +98,11 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
         return ((ExternalDocumentationHandler)provider).fetchExternalDocumentation(link, project);
       }
     }
-    
+
     throw new IllegalStateException("Unable to find a provider to fetch documentation link!");
   }
 
+  @Override
   public String getQuickNavigateInfo(PsiElement element, PsiElement originalElement) {
     for ( DocumentationProvider provider : myProviders ) {
       String result = provider.getQuickNavigateInfo(element, originalElement);
@@ -114,6 +115,7 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
     return null;
   }
 
+  @Override
   public List<String> getUrlFor(PsiElement element, PsiElement originalElement) {
     for ( DocumentationProvider provider : myProviders ) {
       List<String> result = provider.getUrlFor(element,originalElement);
@@ -126,6 +128,7 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
     return null;
   }
 
+  @Override
   public String generateDoc(PsiElement element, PsiElement originalElement) {
     for ( DocumentationProvider provider : myProviders ) {
       String result = provider.generateDoc(element,originalElement);
@@ -138,6 +141,7 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
     return null;
   }
 
+  @Override
   public PsiElement getDocumentationElementForLookupItem(PsiManager psiManager, Object object, PsiElement element) {
     for ( DocumentationProvider provider : myProviders ) {
       PsiElement result = provider.getDocumentationElementForLookupItem(psiManager,object,element);
@@ -150,6 +154,7 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
     return null;
   }
 
+  @Override
   public PsiElement getDocumentationElementForLink(PsiManager psiManager, String link, PsiElement context) {
     for ( DocumentationProvider provider : myProviders ) {
       PsiElement result = provider.getDocumentationElementForLink(psiManager,link,context);
@@ -173,6 +178,7 @@ public class CompositeDocumentationProvider extends DocumentationProviderEx impl
     return null;
   }
 
+  @Override
   public String fetchExternalDocumentation(Project project, PsiElement element, List<String> docUrls) {
     for (DocumentationProvider provider : myProviders) {
       if (provider instanceof ExternalDocumentationProvider) {

@@ -37,12 +37,14 @@ public final class RunnerSettings<T extends JDOMExternalizable> implements JDOME
     return myConfig;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     if (myData != null) {
       myData.readExternal(element);
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     if (myData != null) {
       myData.writeExternal(element);

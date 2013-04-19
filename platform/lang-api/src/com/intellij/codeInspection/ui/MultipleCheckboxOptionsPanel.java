@@ -90,6 +90,7 @@ public class MultipleCheckboxOptionsPanel extends JPanel {
             this.model = model;
         }
 
+        @Override
         public void stateChanged(ChangeEvent e) {
             setPropertyValue(owner, property, model.isSelected());
         }

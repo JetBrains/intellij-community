@@ -33,11 +33,13 @@ public abstract class AbstractPackageSet extends PackageSetBase {
     myPriority = priority;
   }
 
+  @Override
   @NotNull
   public AbstractPackageSet createCopy() {
     return this;
   }
 
+  @Override
   public int getNodePriority() {
     return myPriority;
   }

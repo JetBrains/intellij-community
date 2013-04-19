@@ -93,6 +93,7 @@ public class SingleIntegerFieldOptionsPanel extends JPanel {
         textField.setValue(getPropertyValue(owner, property));
         final Document document = textField.getDocument();
         document.addDocumentListener(new DocumentAdapter() {
+            @Override
             public void textChanged(DocumentEvent e) {
                 try {
                     textField.commitEdit();

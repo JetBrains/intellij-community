@@ -47,10 +47,12 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
     super(condition);
   }
 
+  @Override
   protected PsiElement[] getChildren(@NotNull final PsiElement element) {
     return element.getChildren();
   }
 
+  @Override
   protected PsiElement getParent(@NotNull final PsiElement element) {
     return element.getContext();
   }
@@ -66,7 +68,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
   public Self afterLeaf(@NotNull final String... withText) {
     return afterLeaf(psiElement().withText(PlatformPatterns.string().oneOf(withText)));
   }
-  
+
   public Self afterLeaf(@NotNull final ElementPattern<? extends PsiElement> pattern) {
     return afterLeafSkipping(psiElement().whitespaceCommentEmptyOrError(), pattern);
   }
@@ -107,6 +109,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   public Self inFile(@NotNull final ElementPattern<? extends PsiFile> filePattern) {
     return with(new PatternCondition<T>("inFile") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return filePattern.accepts(t.getContainingFile(), context);
       }
@@ -115,14 +118,17 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   public Self inVirtualFile(@NotNull final ElementPattern<? extends VirtualFile> filePattern) {
     return with(new PatternCondition<T>("inVirtualFile") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return filePattern.accepts(t.getContainingFile().getViewProvider().getVirtualFile(), context);
       }
     });
   }
 
+  @Override
   public Self equalTo(@NotNull final T o) {
     return with(new PatternCondition<T>("equalTo") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return t.getManager().areElementsEquivalent(t, o);
       }
@@ -132,6 +138,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   public Self withElementType(final ElementPattern<IElementType> pattern) {
     return with(new PatternCondition<T>("withElementType") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         final ASTNode node = t.getNode();
         return node != null && pattern.accepts(node.getElementType());
@@ -162,6 +169,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   public Self afterLeafSkipping(@NotNull final ElementPattern skip, @NotNull final ElementPattern pattern) {
     return with(new PatternCondition<T>("afterLeafSkipping") {
+      @Override
       public boolean accepts(@NotNull T t, final ProcessingContext context) {
         PsiElement element = t;
         while (true) {
@@ -181,6 +189,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   public Self beforeLeafSkipping(@NotNull final ElementPattern skip, @NotNull final ElementPattern pattern) {
     return with(new PatternCondition<T>("beforeLeafSkipping") {
+      @Override
       public boolean accepts(@NotNull T t, final ProcessingContext context) {
         PsiElement element = t;
         while (true) {
@@ -200,6 +209,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   public Self atStartOf(@NotNull final ElementPattern pattern) {
     return with(new PatternCondition<T>("atStartOf") {
+      @Override
       public boolean accepts(@NotNull T t, final ProcessingContext context) {
         PsiElement element = t;
         while (element != null) {
@@ -258,6 +268,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   public Self withLanguage(@NotNull final Language language) {
     return with(new PatternCondition<T>("withLanguage") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return t.getLanguage().equals(language);
       }
@@ -266,14 +277,16 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
 
   public Self withMetaData(final ElementPattern<? extends PsiMetaData> metaDataPattern) {
     return with(new PatternCondition<T>("withMetaData") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         return t instanceof PsiMetaOwner && metaDataPattern.accepts(((PsiMetaOwner)t).getMetaData(), context);
       }
     });
   }
-  
+
   public Self referencing(final ElementPattern<? extends PsiElement> targetPattern) {
     return with(new PatternCondition<T>("referencing") {
+      @Override
       public boolean accepts(@NotNull final T t, final ProcessingContext context) {
         final PsiReference[] references = t.getReferences();
         for (final PsiReference reference : references) {
@@ -288,7 +301,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
       }
     });
   }
-  
+
   public Self compiled() {
     return with(new PatternCondition<T>("compiled") {
       @Override
@@ -306,7 +319,7 @@ public abstract class PsiElementPattern<T extends PsiElement,Self extends PsiEle
       }
     });
   }
-  
+
   public Self insideStarting(final ElementPattern<? extends PsiElement> ancestor) {
     return with(new PatternCondition<PsiElement>("insideStarting") {
       @Override

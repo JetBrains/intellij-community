@@ -74,6 +74,7 @@ public class ProjectClasspathTraversing {
       myIncludeTests = includeTests;
     }
 
+    @Override
     public void visit(ModuleSourceOrderEntry sourceEntry, ProjectRootsTraversing.TraverseState traverseState, RootPolicy<ProjectRootsTraversing.TraverseState> policy) {
       traverseState.addAllUrls(getOutputs(traverseState.getCurrentModuleManager().getModule()));
     }

@@ -52,10 +52,12 @@ public class DefaultExecutionResult implements ExecutionResult {
     myActions = actions;
   }
 
+  @Override
   public ExecutionConsole getExecutionConsole() {
     return myConsole;
   }
 
+  @Override
   public AnAction[] getActions() {
     return myActions;
   }
@@ -76,11 +78,12 @@ public class DefaultExecutionResult implements ExecutionResult {
     myStopActions.add(action);
   }
 
-  @NotNull 
+  @NotNull
   public AnAction[] getAdditionalStopActions() {
     return myStopActions.toArray(new AnAction[myStopActions.size()]);
   }
 
+  @Override
   public ProcessHandler getProcessHandler() {
     return myProcessHandler;
   }
@@ -94,6 +97,7 @@ public class DefaultExecutionResult implements ExecutionResult {
       myProcessHandler = processHandler;
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       if(myProcessHandler.detachIsDefault()) {
         myProcessHandler.detachProcess();
@@ -103,6 +107,7 @@ public class DefaultExecutionResult implements ExecutionResult {
       }
     }
 
+    @Override
     public void update(final AnActionEvent event) {
       event.getPresentation().setEnabled(!myProcessHandler.isProcessTerminating() && !myProcessHandler.isProcessTerminated());
     }

@@ -40,6 +40,7 @@ public abstract class PsiPolyVariantReferenceBase<T extends PsiElement> extends 
     super(element, range, soft);
   }
 
+  @Override
   @Nullable
   public PsiElement resolve() {
     ResolveResult[] resolveResults = multiResolve(false);
