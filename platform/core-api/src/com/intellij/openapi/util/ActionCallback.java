@@ -29,7 +29,7 @@ public class ActionCallback implements Disposable {
   private final ExecutionCallback myDone;
   private final ExecutionCallback myRejected;
 
-  private String myError;
+  protected String myError;
 
   private final String myName;
 
