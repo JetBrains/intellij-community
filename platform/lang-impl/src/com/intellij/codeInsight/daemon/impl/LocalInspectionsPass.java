@@ -625,11 +625,13 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       int start = hostRange.getStartOffset();
       int end = hostRange.getEndOffset();
       HighlightInfo.Builder builder = HighlightInfo.newHighlightInfo(info.type).range(element, start, end);
-      if (info.getDescription() != null) {
-        builder.description(info.getDescription());
+      String description = info.getDescription();
+      if (description != null) {
+        builder.description(description);
       }
-      if (info.getToolTip() != null) {
-        builder.escapedToolTip(info.getToolTip());
+      String toolTip = info.getToolTip();
+      if (toolTip != null) {
+        builder.escapedToolTip(toolTip);
       }
       HighlightInfo patched = builder.createUnconditionally();
       if (patched.startOffset != patched.endOffset || info.startOffset == info.endOffset) {

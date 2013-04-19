@@ -110,7 +110,7 @@ public class HighlightInfo implements Segment {
     String toolTip = this.toolTip;
     String description = this.description;
     if (toolTip == null || description == null || !toolTip.contains(DESCRIPTION_PLACEHOLDER)) return toolTip;
-    String decoded = toolTip.replace(DESCRIPTION_PLACEHOLDER, XmlStringUtil.escapeString(description));
+    String decoded = StringUtil.replace(toolTip, DESCRIPTION_PLACEHOLDER, XmlStringUtil.escapeString(description));
     String niceTooltip = XmlStringUtil.wrapInHtml(decoded);
     return niceTooltip;
   }
@@ -119,12 +119,13 @@ public class HighlightInfo implements Segment {
     if (toolTip == null || description == null) return toolTip;
     String unescaped = StringUtil.unescapeXml(XmlStringUtil.stripHtml(toolTip));
 
-    if (unescaped.contains(description)) {
-      String encoded = unescaped.replace(description, DESCRIPTION_PLACEHOLDER);
-      if (encoded.equals(DESCRIPTION_PLACEHOLDER)) encoded = DESCRIPTION_PLACEHOLDER;
-      return encoded;
+    String encoded = StringUtil.replace(unescaped, description, DESCRIPTION_PLACEHOLDER);
+    //noinspection StringEquality
+    if (encoded == unescaped) {
+      return toolTip;
     }
-    return toolTip;
+    if (encoded.equals(DESCRIPTION_PLACEHOLDER)) encoded = DESCRIPTION_PLACEHOLDER;
+    return encoded;
   }
 
   public String getDescription() {
@@ -135,11 +136,13 @@ public class HighlightInfo implements Segment {
   @interface FlagConstant {}
 
   private boolean isFlagSet(@FlagConstant int flag) {
+    assert flag < 8;
     int state = myFlags >> flag;
     return (state & 1) != 0;
   }
 
   private void setFlag(@FlagConstant int flag, boolean value) {
+    assert flag < 8;
     int state = value ? 1 : 0;
     myFlags = (byte)(myFlags & ~(1 << flag) | state << flag);
   }
