@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,7 +23,6 @@ import gnu.trove.TIntObjectProcedure;
 import gnu.trove.TIntProcedure;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils;
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
@@ -52,13 +51,11 @@ public class ReachingDefinitionsCollector {
   }
 
   @NotNull
-  public static FragmentVariableInfos obtainVariableFlowInformation(final GrStatement first, final GrStatement last) {
-    GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(first);
+  public static FragmentVariableInfos obtainVariableFlowInformation(@NotNull final GrStatement first,
+                                                                    @NotNull final GrStatement last,
+                                                                    @NotNull final GrControlFlowOwner flowOwner,
+                                                                    @NotNull final Instruction[] flow) {
 
-    assert flowOwner != null;
-    assert PsiTreeUtil.isAncestor(flowOwner, last, true);
-
-    final Instruction[] flow = flowOwner.getControlFlow();
     final DefinitionMap dfaResult = inferDfaResult(flow);
 
     final LinkedHashSet<Integer> fragmentInstructions = getFragmentInstructions(first, last, flow);
