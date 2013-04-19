@@ -75,9 +75,6 @@ public class TaskDefaultFavoriteListProvider extends AbstractFavoritesListProvid
     return TASKS_WEIGHT;
   }
 
-  @Override
-  protected void updateChildrenImpl() {
-  }
   //@Override
   //public Comparator<FavoritesTreeNodeDescriptor> getNodeDescriptorComparator() {
   //  return new Comparator<FavoritesTreeNodeDescriptor>() {
