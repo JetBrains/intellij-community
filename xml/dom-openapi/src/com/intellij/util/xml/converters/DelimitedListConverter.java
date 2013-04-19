@@ -126,7 +126,7 @@ public abstract class DelimitedListConverter<T> extends ResolvingConverter<List<
                                          final PsiElement element,
                                          final ConvertContext context) {
 
-    final String text = genericDomValue.getStringValue();
+    final String text = genericDomValue.getRawText();
     if (text == null) {
       return PsiReference.EMPTY_ARRAY;
     }
