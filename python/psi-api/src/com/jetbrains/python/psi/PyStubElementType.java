@@ -24,9 +24,10 @@ public abstract class PyStubElementType<StubT extends StubElement, PsiT extends 
 
   public abstract PsiElement createElement(@NotNull final ASTNode node);
 
-  public void indexStub(final StubT stub, final IndexSink sink) {
+  public void indexStub(@NotNull final StubT stub, @NotNull final IndexSink sink) {
   }
 
+  @NotNull
   public String getExternalId() {
     return "py." + super.toString();
   }

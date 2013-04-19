@@ -164,6 +164,8 @@ class DefaultResolver:
         filterBuiltIn = True
 
         names = dir(var)
+        if not names and hasattr(var, '__members__'):
+            names = var.__members__
         d = {}
 
         #Be aware that the order in which the filters are applied attempts to 

@@ -42,10 +42,11 @@ public class PyImportStatementElementType extends PyStubElementType<PyImportStat
     return new PyImportStatementStubImpl(parentStub, getStubElementType());
   }
 
-  public void serialize(PyImportStatementStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PyImportStatementStub stub, @NotNull StubOutputStream dataStream) throws IOException {
   }
 
-  public PyImportStatementStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  @NotNull
+  public PyImportStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new PyImportStatementStubImpl(parentStub, getStubElementType());
   }
 

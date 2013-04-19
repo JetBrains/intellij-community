@@ -54,7 +54,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
                                getStubElementType());
   }
 
-  public void serialize(final PyClassStub pyClassStub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final PyClassStub pyClassStub, @NotNull final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(pyClassStub.getName());
     final PyQualifiedName[] classes = pyClassStub.getSuperClasses();
     dataStream.writeByte(classes.length);
@@ -66,7 +66,8 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     dataStream.writeUTFFast(docString != null ? docString : "");
   }
 
-  public PyClassStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  @NotNull
+  public PyClassStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     String name = StringRef.toString(dataStream.readName());
     int superClassCount = dataStream.readByte();
     PyQualifiedName[] superClasses = new PyQualifiedName[superClassCount];
@@ -78,7 +79,7 @@ public class PyClassElementType extends PyStubElementType<PyClassStub, PyClass> 
     return new PyClassStubImpl(name, parentStub, superClasses, slots, docString.length() > 0 ? docString : null, getStubElementType());
   }
 
-  public void indexStub(final PyClassStub stub, final IndexSink sink) {
+  public void indexStub(@NotNull final PyClassStub stub, @NotNull final IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {
       sink.occurrence(PyClassNameIndex.KEY, name);

@@ -44,21 +44,22 @@ public class PyFunctionElementType extends PyStubElementType<PyFunctionStub, PyF
                                   message == null ? null : StringRef.fromString(message), parentStub, getStubElementType());
   }
 
-  public void serialize(final PyFunctionStub stub, final StubOutputStream dataStream)
+  public void serialize(@NotNull final PyFunctionStub stub, @NotNull final StubOutputStream dataStream)
       throws IOException {
     dataStream.writeName(stub.getName());
     dataStream.writeUTFFast(stub.getDocString() != null ? stub.getDocString() : "");
     dataStream.writeName(stub.getDeprecationMessage());
   }
 
-  public PyFunctionStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  @NotNull
+  public PyFunctionStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     String name = StringRef.toString(dataStream.readName());
     String docString = dataStream.readUTFFast();
     StringRef deprecationMessage = dataStream.readName();
     return new PyFunctionStubImpl(name, docString.length() > 0 ? docString : null, deprecationMessage, parentStub, getStubElementType());
   }
 
-  public void indexStub(final PyFunctionStub stub, final IndexSink sink) {
+  public void indexStub(@NotNull final PyFunctionStub stub, @NotNull final IndexSink sink) {
     final String name = stub.getName();
     if (name != null) {
       sink.occurrence(PyFunctionNameIndex.KEY, name);

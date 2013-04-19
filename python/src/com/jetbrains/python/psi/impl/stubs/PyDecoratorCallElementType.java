@@ -36,11 +36,12 @@ public class PyDecoratorCallElementType extends PyStubElementType<PyDecoratorStu
     return new PyDecoratorStubImpl(psi.getQualifiedName(), parentStub);
   }
 
-  public void serialize(PyDecoratorStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PyDecoratorStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     PyQualifiedName.serialize(stub.getQualifiedName(), dataStream);
   }
 
-  public PyDecoratorStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  @NotNull
+  public PyDecoratorStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     PyQualifiedName q_name = PyQualifiedName.deserialize(dataStream);
     return new PyDecoratorStubImpl(q_name, parentStub);
   }

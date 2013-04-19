@@ -33,6 +33,8 @@ setProperty("restSrcDir", "${pluginHome}/rest/src")
 setProperty("localizationSrcDir", "${pluginHome}/localization/src")
 
 setProperty("resourcesDir", "${pluginHome}/resources")
+setProperty("restResourcesDir", "${pluginHome}/rest/resources")
+setProperty("localizationResourcesDir", "${pluginHome}/localization/resources")
 setProperty("pluginResourcesDir", "${pluginHome}/pluginResources")
 
 setProperty("classesRootDir", "${outDir}/classes")
@@ -131,6 +133,12 @@ target(name: "compileRest", description: "Compile module rest") {
       type(type: "file")
     }
   }
+  ant.copy(todir: "${restClassesDir}") {
+    fileset(dir: "${restResourcesDir}") {
+      patternset(refid: "resources.pt")
+      type(type: "file")
+    }
+  }
 
   //copy plugin.xml
   ant.mkdir(dir: "${restClassesDir}/META-INF")
@@ -189,6 +197,12 @@ target(name: "compileLocalization", description: "Compile module localization") 
   //copy resources
   ant.copy(todir: "${localizationClassesDir}") {
     fileset(dir: "${localizationSrcDir}") {
+      patternset(refid: "resources.pt")
+      type(type: "file")
+    }
+  }
+  ant.copy(todir: "${localizationClassesDir}") {
+    fileset(dir: "${localizationResourcesDir}") {
       patternset(refid: "resources.pt")
       type(type: "file")
     }

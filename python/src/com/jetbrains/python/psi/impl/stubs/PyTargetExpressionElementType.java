@@ -70,7 +70,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     return new PyTargetExpressionStubImpl(name, initializerType, initializer, psi.getQualifier() != null, parentStub);
   }
 
-  public void serialize(final PyTargetExpressionStub stub, final StubOutputStream stream)
+  public void serialize(@NotNull final PyTargetExpressionStub stub, @NotNull final StubOutputStream stream)
       throws IOException {
     stream.writeName(stub.getName());
     stream.writeVarInt(stub.getInitializerType().getIndex());
@@ -85,7 +85,8 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
     }
   }
 
-  public PyTargetExpressionStub deserialize(final StubInputStream stream, final StubElement parentStub)
+  @NotNull
+  public PyTargetExpressionStub deserialize(@NotNull final StubInputStream stream, final StubElement parentStub)
       throws IOException {
     String name = StringRef.toString(stream.readName());
     PyTargetExpressionStub.InitializerType initializerType = PyTargetExpressionStub.InitializerType.fromIndex(stream.readVarInt());
@@ -126,7 +127,7 @@ public class PyTargetExpressionElementType extends PyStubElementType<PyTargetExp
   }
 
   @Override
-  public void indexStub(PyTargetExpressionStub stub, IndexSink sink) {
+  public void indexStub(@NotNull PyTargetExpressionStub stub, @NotNull IndexSink sink) {
     String name = stub.getName();
     if (name != null && PyUtil.getInitialUnderscores(name) == 0) {
       if (stub.getParentStub() instanceof PyFileStub) {

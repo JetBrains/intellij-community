@@ -14,6 +14,8 @@ else:
     import threading
 
 import traceback
+import fix_getpass
+fix_getpass.fixGetpass()
 
 try:
     if USE_LIB_COPY:
