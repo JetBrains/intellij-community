@@ -108,7 +108,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
       List<PsiElement> result = new ArrayList<PsiElement>();
       PyClass containingClass = PsiTreeUtil.getParentOfType(elt, PyClass.class);
       if (containingClass != null && elt instanceof PyTargetExpression) {
-        for (PyClass ancestor : containingClass.iterateAncestorClasses()) {
+        for (PyClass ancestor : containingClass.getAncestorClasses()) {
           final PyTargetExpression attribute = ancestor.findClassAttribute(((PyTargetExpression)elt).getReferencedName(), false);
           if (attribute != null) {
             result.add(attribute);
@@ -185,7 +185,7 @@ public class PyLineMarkerProvider implements LineMarkerProvider, PyLineSeparator
     }
     PyClass containingClass = PsiTreeUtil.getParentOfType(element, PyClass.class);
     if (containingClass == null) return null;
-    for (PyClass ancestor : containingClass.iterateAncestorClasses()) {
+    for (PyClass ancestor : containingClass.getAncestorClasses()) {
       final PyTargetExpression ancestorAttr = ancestor.findClassAttribute(name, false);
       if (ancestorAttr != null) {
         return new LineMarkerInfo<PsiElement>(element, element.getTextRange().getStartOffset(),

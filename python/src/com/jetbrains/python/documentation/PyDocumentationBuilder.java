@@ -286,7 +286,7 @@ class PyDocumentationBuilder {
     if (cls != null && meth_name != null) {
       final boolean is_constructor = PyNames.INIT.equals(meth_name);
       // look for inherited and its doc
-      Iterable<PyClass> classes = cls.iterateAncestorClasses();
+      Iterable<PyClass> classes = cls.getAncestorClasses();
       if (is_constructor) {
         // look at our own class again and maybe inherit class's doc
         classes = new ChainIterable<PyClass>(cls).add(classes);

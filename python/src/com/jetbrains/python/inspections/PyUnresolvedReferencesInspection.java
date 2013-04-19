@@ -134,8 +134,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             final List<String> slots = pyClass.getSlots();
             final String attrName = node.getReferencedName();
             if (slots != null && !slots.contains(attrName) && !slots.contains(PyNames.DICT)) {
-              for (PyClassRef ref : pyClass.iterateAncestors()) {
-                final PyClass ancestor = ref.getPyClass();
+              for (PyClass ancestor : pyClass.getAncestorClasses(myTypeEvalContext)) {
                 if (ancestor == null) {
                   return;
                 }
@@ -629,7 +628,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       return null;
     }
 
-    private static boolean ignoreUnresolvedMemberForType(@NotNull PyType qtype, PsiReference reference, String refText) {
+    private boolean ignoreUnresolvedMemberForType(@NotNull PyType qtype, PsiReference reference, String refText) {
       if (qtype instanceof PyNoneType || PyTypeChecker.isUnknown(qtype)) {
         // this almost always means that we don't know the type, so don't show an error in this case
         return true;
@@ -668,12 +667,12 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       return false;
     }
 
-    private static boolean isDecoratedAsDynamic(@NotNull PyClass cls, boolean inherited) {
+    private boolean isDecoratedAsDynamic(@NotNull PyClass cls, boolean inherited) {
       if (inherited) {
         if (isDecoratedAsDynamic(cls, false)) {
           return true;
         }
-        for (PyClass base : cls.iterateAncestorClasses()) {
+        for (PyClass base : cls.getAncestorClasses(myTypeEvalContext)) {
           if (base != null && isDecoratedAsDynamic(base, false)) {
             return true;
           }

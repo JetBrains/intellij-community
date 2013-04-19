@@ -505,7 +505,7 @@ public class PyCallExpressionHelper {
           return getSuperClassUnionType(firstClass);
         }
         if (secondClass.isSubclass(firstClass)) {
-          final Iterator<PyClass> iterator = firstClass.iterateAncestorClasses().iterator();
+          final Iterator<PyClass> iterator = firstClass.getAncestorClasses(context).iterator();
           if (iterator.hasNext()) {
             return new PyClassTypeImpl(iterator.next(), false); // super(Foo, self) has type of Foo, modulo __get__()
           }

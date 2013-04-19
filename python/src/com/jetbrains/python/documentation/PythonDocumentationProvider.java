@@ -27,10 +27,7 @@ import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.impl.PyQualifiedName;
 import com.jetbrains.python.psi.resolve.QualifiedNameFinder;
-import com.jetbrains.python.psi.types.PyClassType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeParser;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import com.jetbrains.python.toolbox.ChainIterable;
 import com.jetbrains.python.toolbox.FP;
 import org.apache.commons.httpclient.HttpClient;
@@ -316,9 +313,9 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
       PyClass cls = inferContainingClassOf(context);
       if (cls != null) {
         String desired_name = link.substring(LINK_TYPE_PARENT.length());
-        for (PyClassRef parent : cls.iterateAncestors()) {
-          final String parent_name = parent.getClassName();
-          if (parent_name != null && parent_name.equals(desired_name)) return parent.getPyClass();
+        for (PyClass parent : cls.getAncestorClasses()) {
+          final String parent_name = parent.getName();
+          if (parent_name != null && parent_name.equals(desired_name)) return parent;
         }
       }
     }

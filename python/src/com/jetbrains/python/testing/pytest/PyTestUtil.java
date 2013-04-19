@@ -6,6 +6,8 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiFileSystemItem;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 
 import java.util.HashSet;
 import java.util.List;
@@ -54,13 +56,11 @@ public class PyTestUtil {
   }
 
   public static boolean isPyTestClass(PyClass pyClass) {
-    for (PyClassRef ancestor : pyClass.iterateAncestors()) {
-      String qName = ancestor.getQualifiedName();
-      if (PYTHON_TEST_QUALIFIED_CLASSES.contains(qName)) {
+    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+      if (type != null && PYTHON_TEST_QUALIFIED_CLASSES.contains(type.getClassQName())) {
         return true;
       }
     }
-
     final String className = pyClass.getName();
     if (className == null) return false;
     final String name = className.toLowerCase();

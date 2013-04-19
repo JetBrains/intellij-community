@@ -5,6 +5,8 @@ import com.intellij.execution.Location;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.psi.PsiElement;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.testing.*;
 
@@ -27,9 +29,10 @@ public class PythonAtTestConfigurationProducer extends
 
   protected boolean isTestClass(PyClass pyClass) {
     if (pyClass == null) return false;
-    for (PyClassRef an : pyClass.iterateAncestors()) {
-      if ("TestBase".equals(an.getClassName()) && hasTestFunction(pyClass))
+    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+      if (type != null && "TestBase".equals(type.getName()) && hasTestFunction(pyClass)) {
         return true;
+      }
     }
     return false;
   }

@@ -893,7 +893,6 @@
 
     <!-- SQLAlchemy -->
     <typeProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyTypeProvider"/>
-    <pyClassMembersProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyClassMembersProvider"/>
     <knownDecoratorProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyKnownDecoratorProvider"/>
   </extensions>
 
