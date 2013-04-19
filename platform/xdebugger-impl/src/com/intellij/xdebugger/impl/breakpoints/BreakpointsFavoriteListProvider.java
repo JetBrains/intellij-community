@@ -92,6 +92,8 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
   }
 
   private void updateChildren() {
+    if (myProject.isDisposed()) return;
+    myChildren.clear();
     List<BreakpointItem> items = new ArrayList<BreakpointItem>();
     for (final BreakpointPanelProvider provider : myBreakpointPanelProviders) {
       provider.provideBreakpointItems(myProject, items);
@@ -100,7 +102,6 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
     myTreeController.setGroupingRules(myRulesEnabled);
     myTreeController.rebuildTree(items);
 
-    myChildren.clear();
 
     CheckedTreeNode root = myTreeController.getRoot();
     for (int i = 0; i < root.getChildCount(); i++) {
@@ -186,7 +187,7 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
       case EDIT:
         DebuggerSupport debuggerSupport = XBreakpointUtil.getDebuggerSupport(myProject, breakpointItem);
         if (debuggerSupport == null) return;
-        debuggerSupport.getEditBreakpointAction().editBreakpoint(myProject, component, whereToShow, breakpointItem.getBreakpoint());
+        debuggerSupport.getEditBreakpointAction().editBreakpoint(myProject, component, whereToShow, breakpointItem);
         break;
       case REMOVE:
         breakpointItem.removed(myProject);
