@@ -309,11 +309,13 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     myProfiles.addActionListener(new ActionListener() {
       public void actionPerformed(ActionEvent e) {
         final InspectionProfileImpl profile = (InspectionProfileImpl)myProfiles.getSelectedItem();
-        myDeleteButton.setEnabled(isDeleteEnabled(profile));
-        myLayout.show(myPanel, profile.getName());
-        SingleInspectionProfilePanel panel = getSelectedPanel();
-        if (panel != null) {
-          myShareProfileCheckBox.setSelected(panel.isProfileShared());
+        if (profile != null) {
+          myDeleteButton.setEnabled(isDeleteEnabled(profile));
+          myLayout.show(myPanel, profile.getName());
+          SingleInspectionProfilePanel panel = getSelectedPanel();
+          if (panel != null) {
+            myShareProfileCheckBox.setSelected(panel.isProfileShared());
+          }
         }
       }
     });
@@ -419,7 +421,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     }
   }
 
-  private boolean isDeleteEnabled(InspectionProfileImpl inspectionProfile) {
+  private boolean isDeleteEnabled(@NotNull InspectionProfileImpl inspectionProfile) {
     final ProfileManager profileManager = inspectionProfile.getProfileManager();
 
     boolean projectProfileFound = false;

@@ -1,11 +1,11 @@
 package com.intellij.codeInsight.intention;
 
+import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.MultiFileTestCase;
-import com.intellij.codeInsight.intention.impl.CreateSubclassAction;
 
 /**
  * @author yole
@@ -14,8 +14,16 @@ public class CreateSubclassTest extends MultiFileTestCase {
   public void testGenerics() throws Exception {
     doTest();
   }
-  
+
+  public void testInnerClassImplement() throws Exception {
+    doTestInner();
+  }
+
   public void testInnerClass() throws Exception {
+    doTestInner();
+  }
+
+  private void doTestInner() throws Exception {
     doTest(new PerformAction() {
       @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {

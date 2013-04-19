@@ -21,8 +21,9 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.deadCode.UnusedDeclarationInspection;
 import com.intellij.codeInspection.ex.EntryPointsManagerImpl;
-import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
+import com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool;
 import com.intellij.codeInspection.util.SpecialAnnotationsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiModifierListOwner;
@@ -41,7 +42,7 @@ import java.awt.event.ActionListener;
  * User: anna
  * Date: 17-Feb-2006
  */
-public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool implements UnfairLocalInspectionTool {
+public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool implements PairedUnfairLocalInspectionTool {
 
   @NonNls public static final String SHORT_NAME = HighlightInfoType.UNUSED_SYMBOL_SHORT_NAME;
   @NonNls public static final String DISPLAY_NAME = HighlightInfoType.UNUSED_SYMBOL_DISPLAY_NAME;
@@ -84,6 +85,11 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
 
   public boolean isEnabledByDefault() {
     return true;
+  }
+
+  @Override
+  public String getInspectionForBatchShortName() {
+    return UnusedDeclarationInspection.SHORT_NAME;
   }
 
   public class OptionsPanel {

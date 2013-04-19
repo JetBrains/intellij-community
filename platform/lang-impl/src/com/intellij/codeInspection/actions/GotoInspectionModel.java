@@ -44,18 +44,22 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
     final InspectionProfileImpl rootProfile = (InspectionProfileImpl)InspectionProfileManager.getInstance().getRootProfile();
     for (ScopeToolState state : rootProfile.getAllTools()) {
       final InspectionProfileEntry tool = state.getTool();
-      if (tool instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)tool).isUnfair()) {
-        continue;
+      InspectionProfileEntry workingTool = tool;
+      if (tool instanceof LocalInspectionToolWrapper) {
+        workingTool = LocalInspectionToolWrapper.findTool2RunInBatch(project, null, tool.getShortName());
+        if (workingTool == null) {
+          continue;
+        }
       }
-      myToolNames.put(tool.getDisplayName(), tool);
+      myToolNames.put(tool.getDisplayName(), workingTool);
       final String groupName = tool.getGroupDisplayName();
       Set<InspectionProfileEntry> toolsInGroup = myGroupNames.get(groupName);
       if (toolsInGroup == null) {
         toolsInGroup = new HashSet<InspectionProfileEntry>();
         myGroupNames.put(groupName, toolsInGroup);
       }
-      toolsInGroup.add(tool);
-      myToolShortNames.put(tool.getShortName(), tool);
+      toolsInGroup.add(workingTool);
+      myToolShortNames.put(tool.getShortName(), workingTool);
     }
 
     final Set<String> nameIds = new HashSet<String>();

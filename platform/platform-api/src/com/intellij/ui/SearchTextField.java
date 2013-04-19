@@ -130,7 +130,7 @@ public class SearchTextField extends JPanel {
         add(myToggleHistoryLabel, BorderLayout.WEST);
       }
 
-      myClearFieldLabel = new JLabel(AllIcons.Actions.CleanLight);
+      myClearFieldLabel = new JLabel(UIUtil.isUnderDarcula() ? AllIcons.Actions.Clean : AllIcons.Actions.CleanLight);
       myClearFieldLabel.setOpaque(true);
       add(myClearFieldLabel, BorderLayout.EAST);
       myClearFieldLabel.addMouseListener(new MouseAdapter() {
@@ -142,7 +142,7 @@ public class SearchTextField extends JPanel {
 
       if (!hasIconsOutsideOfTextField()) {
         final Border originalBorder;
-        if (SystemInfo.isMac) {
+        if (SystemInfo.isMac && !UIUtil.isUnderDarcula()) {
           originalBorder = BorderFactory.createLoweredBevelBorder();
         }
         else {

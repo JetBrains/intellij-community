@@ -28,7 +28,9 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.HashSet;
@@ -237,4 +239,20 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
       return map;
     }
   };
+
+  public static InspectionProfileEntry findTool2RunInBatch(Project project, @Nullable PsiElement element, final String name) {
+    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    final InspectionProfileEntry tool = element != null ? inspectionProfile.getInspectionTool(name, element) : inspectionProfile.getInspectionTool(name);
+    if (tool instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)tool).isUnfair()) {
+      final LocalInspectionTool inspectionTool = ((LocalInspectionToolWrapper)tool).getTool();
+      if (inspectionTool instanceof PairedUnfairLocalInspectionTool) {
+        final String oppositeShortName = ((PairedUnfairLocalInspectionTool)inspectionTool).getInspectionForBatchShortName();
+        if (oppositeShortName != null) {
+          return element != null ? inspectionProfile.getInspectionTool(oppositeShortName, element) : inspectionProfile.getInspectionTool(oppositeShortName);
+        }
+      }
+      return null;
+    }
+    return tool;
+  }
 }
