@@ -92,7 +92,6 @@ public class AsyncResult<T> extends ActionCallback {
     return this;
   }
 
-  @Override
   @NotNull
   public AsyncResult<T> doWhenRejected(@NotNull final PairConsumer<T, String> consumer) {
     doWhenRejected(new Runnable() {
