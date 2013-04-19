@@ -52,6 +52,24 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   private volatile Map<String, Property> myPropertyCache;
 
+  private class CachedAncestorsProvider implements CachedValueProvider<List<PyClassLikeType>> {
+    @Nullable private TypeEvalContext myCachedContext;
+
+    @Nullable
+    @Override
+    public Result<List<PyClassLikeType>> compute() {
+      final TypeEvalContext context = myCachedContext != null ? myCachedContext : TypeEvalContext.fastStubOnly(null);
+      final List<PyClassLikeType> ancestorTypes = isNewStyleClass() ? getMROAncestorTypes(context) : getOldStyleAncestorTypes(context);
+      return Result.create(ancestorTypes, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
+    }
+
+    private void setTypeEvalContext(@Nullable TypeEvalContext cachedContext) {
+      myCachedContext = cachedContext;
+    }
+  }
+
+  private final CachedAncestorsProvider myCachedAncestorsProvider = new CachedAncestorsProvider();
+
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
     return new PyClassTypeImpl(this, true);
@@ -1063,7 +1081,19 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @NotNull
   @Override
   public List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context) {
-    return isNewStyleClass() ? getMROAncestorTypes(context) : getOldStyleAncestorTypes(context);
+    return calculateAncestorTypes(context);
+  }
+
+  @NotNull
+  private List<PyClassLikeType> calculateAncestorTypes(@NotNull TypeEvalContext context) {
+    myCachedAncestorsProvider.setTypeEvalContext(context);
+    try {
+      // TODO: Return different cached copies depending on the type eval context parameters
+      return CachedValuesManager.getManager(getProject()).getCachedValue(this, myCachedAncestorsProvider);
+    }
+    finally {
+      myCachedAncestorsProvider.setTypeEvalContext(null);
+    }
   }
 
   @NotNull
