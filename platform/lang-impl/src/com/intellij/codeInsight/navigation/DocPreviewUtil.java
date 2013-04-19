@@ -191,12 +191,12 @@ public class DocPreviewUtil {
         continue;
       }
       if (!"\n".equals(replaceFrom)) {
-        if (end - i > 0 && end < text.length() && !ALLOWED_LINK_SEPARATORS.contains(text.charAt(end))) {
+        if (end < text.length() && !ALLOWED_LINK_SEPARATORS.contains(text.charAt(end))) {
           // Consider a situation when we have, say, replacement from text 'PsiType' and encounter a 'PsiTypeParameter' in the text.
           // We don't want to perform the replacement then.
           continue;
         }
-        if (end - i > 0 && i > 0 && !ALLOWED_LINK_SEPARATORS.contains(text.charAt(i - 1))) {
+        if (i > 0 && !ALLOWED_LINK_SEPARATORS.contains(text.charAt(i - 1))) {
           // Similar situation but targets head match: from = 'TextRange', text = 'getTextRange()'. 
           continue;
         }
