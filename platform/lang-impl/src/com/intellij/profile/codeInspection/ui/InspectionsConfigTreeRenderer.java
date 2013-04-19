@@ -40,6 +40,7 @@ import java.awt.*;
 abstract class InspectionsConfigTreeRenderer extends CheckboxTree.CheckboxTreeCellRenderer {
   protected abstract String getFilter();
 
+  @Override
   public void customizeRenderer(final JTree tree,
                                     final Object value,
                                     final boolean selected,

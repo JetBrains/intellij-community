@@ -3,12 +3,12 @@ package org.jetbrains.plugins.gradle.action;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.fileChooser.FileChooser;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
-import org.jetbrains.plugins.gradle.config.GradleSettings;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 /**
@@ -22,9 +22,10 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 public class GradleLinkToProjectAction extends AnAction implements DumbAware {
 
   public GradleLinkToProjectAction() {
-    getTemplatePresentation().setText(GradleBundle.message("gradle.action.link.project.text"));
-    getTemplatePresentation().setDescription(GradleBundle.message("gradle.action.link.project.description"));
-    getTemplatePresentation().setText(GradleBundle.message("gradle.toolwindow.linked.action.text"));
+    // TODO den implement
+//    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.link.project.text"));
+//    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.link.project.description"));
+//    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.toolwindow.linked.action.text"));
   }
 
   @Override
@@ -37,6 +38,7 @@ public class GradleLinkToProjectAction extends AnAction implements DumbAware {
     if (file == null) {
       return;
     }
-    GradleSettings.applyLinkedProjectPath(file.getPath(), project);
+    // TODO den implement
+//    GradleSettings.applyLinkedProjectPath(file.getPath(), project);
   }
 }

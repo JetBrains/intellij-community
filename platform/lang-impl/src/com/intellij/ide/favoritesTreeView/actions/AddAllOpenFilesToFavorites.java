@@ -39,6 +39,7 @@ public class AddAllOpenFilesToFavorites extends AnAction {
     myFavoritesName = chosenList;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {
@@ -68,6 +69,7 @@ public class AddAllOpenFilesToFavorites extends AnAction {
     return result;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     final Project project = e.getProject();
     if (project == null) {

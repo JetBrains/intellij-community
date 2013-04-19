@@ -100,6 +100,7 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
     return candidates.get(0);
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     Project project = myEnvironment.getProject();
     if (project == null)
@@ -142,6 +143,7 @@ public class RestartAction extends FakeRerunAction implements DumbAware, AnActio
     }
   }
 
+  @Override
   public void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     String name = myEnvironment.getRunProfile().getName();

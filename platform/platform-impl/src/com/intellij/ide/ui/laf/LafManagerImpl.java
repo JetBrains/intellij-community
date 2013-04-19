@@ -36,6 +36,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.IconLoader;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.mac.MacPopupMenuUI;
 import com.intellij.util.PlatformUtils;
@@ -346,6 +347,8 @@ public final class LafManagerImpl extends LafManager implements ApplicationCompo
       DarculaLaf laf = new DarculaLaf();
       try {
         UIManager.setLookAndFeel(laf);
+        JBColor.setDark(true);
+        IconLoader.setUseDarkIcons(true);
       }
       catch (Exception e) {
         Messages.showMessageDialog(

@@ -31,6 +31,7 @@ public abstract class ModuleWizardStep extends StepAdapter {
   protected static final Icon ICON = IconLoader.getIcon("/addmodulewizard.png");
   public static final ModuleWizardStep[] EMPTY_ARRAY = new ModuleWizardStep[0];
 
+  @Override
   public abstract JComponent getComponent();
   public abstract void updateDataModel();
 
@@ -50,6 +51,7 @@ public abstract class ModuleWizardStep extends StepAdapter {
     // empty by default
   }
 
+  @Override
   public Icon getIcon() {
     return ICON;
   }

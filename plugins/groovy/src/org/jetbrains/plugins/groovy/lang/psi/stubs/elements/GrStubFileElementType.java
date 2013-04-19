@@ -58,6 +58,7 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
     return super.getStubVersion() + 16;
   }
 
+  @NotNull
   public String getExternalId() {
     return "groovy.FILE";
   }
@@ -68,20 +69,21 @@ public class GrStubFileElementType extends IStubFileElementType<GrFileStub> {
   }
 
   @Override
-  public void serialize(final GrFileStub stub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final GrFileStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName().toString());
     dataStream.writeBoolean(stub.isScript());
     GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
   }
 
+  @NotNull
   @Override
-  public GrFileStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public GrFileStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
     boolean isScript = dataStream.readBoolean();
     return new GrFileStub(name, isScript, GrStubUtils.readStringArray(dataStream));
   }
 
-  public void indexStub(GrFileStub stub, IndexSink sink) {
+  public void indexStub(@NotNull GrFileStub stub, @NotNull IndexSink sink) {
     String name = stub.getName().toString();
     if (stub.isScript() && name != null) {
       sink.occurrence(GrScriptClassNameIndex.KEY, name);

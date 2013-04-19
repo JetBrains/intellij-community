@@ -141,10 +141,12 @@ public class ProjectRootsTraversing {
       myCurrentModuleManager = restored;
     }
 
+    @Override
     public <T> T getUserData(@NotNull Key<T> key) {
       return myUserData.getUserData(key);
     }
 
+    @Override
     public <T> void putUserData(@NotNull Key<T> key, T value) {
       myUserData.putUserData(key, value);
     }
@@ -174,6 +176,7 @@ public class ProjectRootsTraversing {
       myVisitModule = visitModule;
     }
 
+    @Override
     public TraverseState visitJdkOrderEntry(JdkOrderEntry jdkOrderEntry, TraverseState state) {
       Boolean jdkProcessed = state.getUserData(JDK_PROCESSED);
       if (jdkProcessed != null && jdkProcessed.booleanValue()) return state;
@@ -182,17 +185,20 @@ public class ProjectRootsTraversing {
       return state;
     }
 
+    @Override
     public TraverseState visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, TraverseState traverseState) {
       if (myVisitLibrary != null) myVisitLibrary.visit(libraryOrderEntry, traverseState, this);
       return traverseState;
     }
 
+    @Override
     public TraverseState visitModuleSourceOrderEntry(ModuleSourceOrderEntry sourceEntry,
                                                      TraverseState traverseState) {
       if (myVisitSource != null) myVisitSource.visit(sourceEntry, traverseState, this);
       return traverseState;
     }
 
+    @Override
     public TraverseState visitModuleOrderEntry(ModuleOrderEntry moduleOrderEntry, TraverseState traverseState) {
       if (myVisitModule != null) myVisitModule.visit(moduleOrderEntry, traverseState, this);
       return traverseState;
@@ -222,12 +228,14 @@ public class ProjectRootsTraversing {
     public static final AddModuleSource PRODUCTION_SOURCES = new AddModuleSource(true);
 
     public static final Visit<OrderEntry> ADD_CLASSES = new Visit<OrderEntry>() {
+      @Override
       public void visit(OrderEntry orderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
         state.addAllUrls(orderEntry.getUrls(OrderRootType.CLASSES));
       }
     };
 
     public static final Visit<OrderEntry> ADD_CLASSES_WITHOUT_TESTS = new Visit<OrderEntry>() {
+      @Override
       public void visit(OrderEntry orderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
         if (orderEntry instanceof ExportableOrderEntry) {
           final DependencyScope scope = ((ExportableOrderEntry)orderEntry).getScope();
@@ -251,6 +259,7 @@ public class ProjectRootsTraversing {
         myExcludeTests = excludeTests;
       }
 
+      @Override
       public void visit(ModuleSourceOrderEntry orderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
         state.addAll(ModuleRootManager.getInstance(orderEntry.getOwnerModule()).getSourceRoots(!myExcludeTests));
       }
@@ -263,6 +272,7 @@ public class ProjectRootsTraversing {
         myIncludeTests = includeTests;
       }
 
+      @Override
       public void visit(ModuleOrderEntry moduleOrderEntry, TraverseState state, RootPolicy<TraverseState> policy) {
         final DependencyScope scope = moduleOrderEntry.getScope();
         if (!myIncludeTests && !scope.isForProductionCompile() && !scope.isForProductionRuntime()) return;

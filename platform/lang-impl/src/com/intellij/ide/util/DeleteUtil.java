@@ -40,6 +40,7 @@ public class DeleteUtil {
     }
 
     FactoryMap<String, Integer> countMap = new FactoryMap<String, Integer>() {
+      @Override
       protected Integer create(final String key) {
         return 0;
       }
@@ -80,6 +81,6 @@ public class DeleteUtil {
         buffer.append(" ").append(IdeBundle.message("prompt.delete.directory.paren", directoryCount));
       }
     }
-    return MessageFormat.format(messageTemplate, buffer.toString()); 
+    return MessageFormat.format(messageTemplate, buffer.toString());
   }
 }

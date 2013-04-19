@@ -813,6 +813,6 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
   }
 
   public boolean isFullScreenSupportedInCurrentOS() {
-    return SystemInfo.isMacOSLion || SystemInfo.isWindows || SystemInfo.isXWindow && XlibUiUtil.isFullScreenSupported();
+    return SystemInfo.isMacOSLion || SystemInfo.isWindows || SystemInfo.isXWindow && X11UiUtil.isFullScreenSupported();
   }
 }

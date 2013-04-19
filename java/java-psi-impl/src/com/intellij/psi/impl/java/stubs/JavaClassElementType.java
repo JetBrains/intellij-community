@@ -147,7 +147,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
   }
 
   @Override
-  public void serialize(final PsiClassStub stub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final PsiClassStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
     dataStream.writeByte(((PsiClassStubImpl)stub).getFlags());
     if (!stub.isAnonymous()) {
       dataStream.writeName(stub.getName());
@@ -159,8 +159,9 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     }
   }
 
+  @NotNull
   @Override
-  public PsiClassStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiClassStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     byte flags = dataStream.readByte();
 
     final boolean isAnonymous = PsiClassStubImpl.isAnonymous(flags);
@@ -182,7 +183,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
   }
 
   @Override
-  public void indexStub(final PsiClassStub stub, final IndexSink sink) {
+  public void indexStub(@NotNull final PsiClassStub stub, @NotNull final IndexSink sink) {
     boolean isAnonymous = stub.isAnonymous();
     if (isAnonymous) {
       String baseRef = stub.getBaseClassReferenceText();

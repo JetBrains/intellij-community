@@ -97,6 +97,7 @@ public class IntroduceTargetChooser {
     });
 
     list.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         highlighter.dropHighlight();
         final int index = list.getSelectedIndex();
@@ -114,6 +115,7 @@ public class IntroduceTargetChooser {
           .setResizable(false)
           .setRequestFocus(true)
           .setItemChoosenCallback(new Runnable() {
+                                    @Override
                                     public void run() {
                                       callback.pass((T)list.getSelectedValue());
                                     }

@@ -40,7 +40,7 @@ public class DaemonTooltipUtil {
   }
 
   public static void showInfoTooltip(@NotNull final HighlightInfo info, @NotNull Editor editor, final int defaultOffset, final int currentWidth) {
-    if (info.toolTip == null) return;
+    if (info.getToolTip() == null) return;
     Rectangle visibleArea = editor.getScrollingModel().getVisibleArea();
 
     Point bestPoint = editor.logicalPositionToXY(editor.offsetToLogicalPosition(defaultOffset));
@@ -56,7 +56,7 @@ public class DaemonTooltipUtil {
       editor.getComponent().getRootPane().getLayeredPane()
     );
 
-    TooltipController.getInstance().showTooltip(editor, p, info.toolTip, currentWidth, false, DAEMON_INFO_GROUP, new HintHint(editor, bestPoint).setAwtTooltip(true).setHighlighterType(true).setCalloutShift(
+    TooltipController.getInstance().showTooltip(editor, p, info.getToolTip(), currentWidth, false, DAEMON_INFO_GROUP, new HintHint(editor, bestPoint).setAwtTooltip(true).setHighlighterType(true).setCalloutShift(
       editor.getLineHeight() / 2 - 1));
   }
 }

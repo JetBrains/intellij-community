@@ -30,6 +30,7 @@ import org.jetbrains.annotations.Nullable;
  * @author yole
  */
 public class CustomFileTypeHighlighterProvider implements SyntaxHighlighterProvider {
+  @Override
   @Nullable
   public SyntaxHighlighter create(final FileType fileType, @Nullable final Project project, @Nullable final VirtualFile file) {
     if (fileType instanceof AbstractFileType) {

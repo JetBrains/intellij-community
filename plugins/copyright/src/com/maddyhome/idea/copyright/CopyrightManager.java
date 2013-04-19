@@ -16,7 +16,6 @@
 
 package com.maddyhome.idea.copyright;
 
-import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
@@ -76,6 +75,8 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
                           @NotNull StartupManager startupManager) {
     super(project);
     if (!myProject.isDefault()) {
+      final NewFileTracker newFileTracker = NewFileTracker.getInstance();
+      Disposer.register(myProject, newFileTracker);
       startupManager.runWhenProjectIsInitialized(new Runnable() {
         @Override
         public void run() {
@@ -85,7 +86,7 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
               final Document document = e.getDocument();
               final VirtualFile virtualFile = fileDocumentManager.getFile(document);
               if (virtualFile == null) return;
-              if (!NewFileTracker.getInstance().poll(virtualFile)) return;
+              if (!newFileTracker.poll(virtualFile)) return;
               if (!fileTypeUtil.isSupportedFile(virtualFile)) return;
               final Module module = projectRootManager.getFileIndex().getModuleForFile(virtualFile);
               if (module == null) return;
@@ -106,16 +107,6 @@ public class CopyrightManager extends AbstractProjectComponent implements JDOMEx
             }
           };
           editorFactory.getEventMulticaster().addDocumentListener(listener, myProject);
-        }
-      });
-    }
-
-    // make sure there is no huge pile of new files in tests
-    if (application.isUnitTestMode()) {
-      Disposer.register(myProject, new Disposable() {
-        @Override
-        public void dispose() {
-          NewFileTracker.getInstance().clear();
         }
       });
     }

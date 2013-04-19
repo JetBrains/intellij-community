@@ -22,14 +22,17 @@ import com.intellij.openapi.actionSystem.DataContext;
 import java.io.File;
 
 public final class FilePathRelativeToProjectRootMacro2 extends FilePathRelativeToProjectRootMacro {
+  @Override
   public String getName() {
     return "/FilePathRelativeToProjectRoot";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.file.path.relative.to.root.fwd.slash");
   }
 
+  @Override
   public String expand(DataContext dataContext) {
     String s = super.expand(dataContext);
     return s != null ? s.replace(File.separatorChar, '/') : null;

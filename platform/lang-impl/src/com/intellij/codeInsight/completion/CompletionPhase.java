@@ -297,7 +297,7 @@ public abstract class CompletionPhase implements Disposable {
       MessageBusConnection connection = project.getMessageBus().connect(this);
       connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
         @Override
-        public void selectionChanged(FileEditorManagerEvent event) {
+        public void selectionChanged(@NotNull FileEditorManagerEvent event) {
           stopAutoPopup();
         }
       });

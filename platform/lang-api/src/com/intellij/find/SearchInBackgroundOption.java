@@ -23,10 +23,12 @@ import com.intellij.openapi.progress.PerformInBackgroundOption;
  * @author max
  */
 public class SearchInBackgroundOption implements PerformInBackgroundOption {
+  @Override
   public boolean shouldStartInBackground() {
     return GeneralSettings.getInstance().isSearchInBackground();
   }
 
+  @Override
   public void processSentToBackground() {
     GeneralSettings.getInstance().setSearchInBackground(true);
   }

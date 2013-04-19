@@ -400,7 +400,7 @@ public class DaemonListeners implements Disposable {
   private Result vcsThinksItChanged(VirtualFile virtualFile) {
     AbstractVcs activeVcs = myProjectLevelVcsManager.getVcsFor(virtualFile);
     if (activeVcs == null) return Result.NOT_SURE;
-    
+
     FilePath path = new FilePathImpl(virtualFile);
     boolean vcsIsThinking = !myVcsDirtyScopeManager.whatFilesDirty(Arrays.asList(path)).isEmpty();
     if (vcsIsThinking) return Result.NOT_SURE; // do not modify file which is in the process of updating
@@ -567,7 +567,7 @@ public class DaemonListeners implements Disposable {
           int offset = editor.logicalPositionToOffset(logical);
           if (editor.offsetToLogicalPosition(offset).column != logical.column) return; // we are in virtual space
           HighlightInfo info = myDaemonCodeAnalyzer.findHighlightByOffset(editor.getDocument(), offset, false);
-          if (info == null || info.description == null) return;
+          if (info == null || info.getDescription() == null) return;
           DaemonTooltipUtil.showInfoTooltip(info, editor, offset);
           shown = true;
         }

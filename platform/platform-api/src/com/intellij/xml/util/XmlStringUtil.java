@@ -16,12 +16,20 @@
 
 package com.intellij.xml.util;
 
+import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
  * @author yole
  */
 public class XmlStringUtil {
+  @NonNls private static final String HTML_HEADER = "<html>";
+  @NonNls private static final String BODY_HEADER = "<body>";
+  @NonNls private static final String HTML_FOOTER = "</html>";
+  @NonNls private static final String BODY_FOOTER = "</body>";
+
   private XmlStringUtil() {
   }
 
@@ -31,5 +39,19 @@ public class XmlStringUtil {
 
   public static String escapeString(@Nullable String str, final boolean escapeWhiteSpace) {
     return XmlTagUtilBase.escapeString(str, escapeWhiteSpace);
+  }
+
+  @NotNull
+  public static String wrapInHtml(@NotNull CharSequence result) {
+    return HTML_HEADER + result + HTML_FOOTER;
+  }
+
+  @NotNull
+  public static String stripHtml(@NotNull String toolTip) {
+    toolTip = StringUtil.trimStart(toolTip, HTML_HEADER);
+    toolTip = StringUtil.trimStart(toolTip, BODY_HEADER);
+    toolTip = StringUtil.trimEnd(toolTip, HTML_FOOTER);
+    toolTip = StringUtil.trimEnd(toolTip, BODY_FOOTER);
+    return toolTip;
   }
 }

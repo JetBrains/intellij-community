@@ -18,7 +18,7 @@ import java.util.List;
 /**
  * Defines general re-flow paragraph functionality.
  * Serves plain text files.
- * 
+ *
  * User : ktisha
  */
 public class ParagraphFillHandler {
@@ -49,6 +49,7 @@ public class ParagraphFillHandler {
     final String replacementText = stringBuilder.toString();
 
     CommandProcessor.getInstance().executeCommand(element.getProject(), new Runnable() {
+      @Override
       public void run() {
         document.replaceString(textRange.getStartOffset(), textRange.getEndOffset(),
                                replacementText);

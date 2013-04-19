@@ -49,11 +49,13 @@ public class TogglePopupHintsAction extends AnAction{
     return psiFile;
   }
 
+  @Override
   public void update(AnActionEvent e){
     PsiFile psiFile=getTargetFile(e.getDataContext());
     e.getPresentation().setEnabled(psiFile!=null);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e){
     PsiFile psiFile=getTargetFile(e.getDataContext());
     LOG.assertTrue(psiFile!=null);

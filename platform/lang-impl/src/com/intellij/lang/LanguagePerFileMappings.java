@@ -55,6 +55,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     return null;
   }
 
+  @Override
   public Map<VirtualFile, T> getMappings() {
     synchronized (myMappings) {
       cleanup();
@@ -71,6 +72,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     }
   }
 
+  @Override
   @Nullable
   public T getMapping(@Nullable VirtualFile file) {
     FilePropertyPusher<T> pusher = getFilePropertyPusher();
@@ -134,6 +136,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     }
   }
 
+  @Override
   public void setMappings(final Map<VirtualFile, T> mappings) {
     final Collection<VirtualFile> oldFiles;
     synchronized (myMappings) {
@@ -180,6 +183,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     }
   }
 
+  @Override
   public Collection<T> getAvailableValues(VirtualFile file) {
     return getAvailableValues();
   }
@@ -189,12 +193,14 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
   @Nullable
   protected abstract String serialize(T t);
 
+  @Override
   public Element getState() {
     synchronized (myMappings) {
       cleanup();
       final Element element = new Element("x");
       final List<VirtualFile> files = new ArrayList<VirtualFile>(myMappings.keySet());
       Collections.sort(files, new Comparator<VirtualFile>() {
+        @Override
         public int compare(final VirtualFile o1, final VirtualFile o2) {
           if (o1 == null || o2 == null) return o1 == null ? o2 == null ? 0 : 1 : -1;
           return o1.getPath().compareTo(o2.getPath());
@@ -224,6 +230,7 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
     return "dialect";
   }
 
+  @Override
   public void loadState(final Element state) {
     synchronized (myMappings) {
       final THashMap<String, T> dialectMap = new THashMap<String, T>();
@@ -256,11 +263,11 @@ public abstract class LanguagePerFileMappings<T> implements PersistentStateCompo
       myMappings.clear();
     }
   }
-  
+
   protected Project getProject() {
     return myProject;
   }
-  
+
   protected boolean shouldReparseFiles() {
     return true;
   }

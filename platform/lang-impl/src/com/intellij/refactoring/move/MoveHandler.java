@@ -48,6 +48,7 @@ public class MoveHandler implements RefactoringActionHandler {
   /**
    * called by an Action in AtomicAction when refactoring is invoked from Editor
    */
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     int offset = editor.getCaretModel().getOffset();
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -90,6 +91,7 @@ public class MoveHandler implements RefactoringActionHandler {
   /**
    * called by an Action in AtomicAction
    */
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     final PsiElement targetContainer = dataContext == null ? null : LangDataKeys.TARGET_PSI_ELEMENT.getData(dataContext);
     final Set<PsiElement> filesOrDirs = new HashSet<PsiElement>();

@@ -35,6 +35,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
 import com.intellij.util.net.IOExceptionDialog;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -181,7 +182,7 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
 
   private static boolean suggestToEnableInstalledPlugins(final InstalledPluginsTableModel pluginsModel,
                                                       final Set<IdeaPluginDescriptor> disabled,
-                                                      final Set<IdeaPluginDescriptor> disabledDependants, 
+                                                      final Set<IdeaPluginDescriptor> disabledDependants,
                                                       final ArrayList<PluginNode> list) {
     if (!disabled.isEmpty() || !disabledDependants.isEmpty()) {
       String message = "<html><body>";
@@ -261,26 +262,28 @@ public class ActionInstallPlugin extends AnAction implements DumbAware {
   private static void notifyPluginsWereInstalled(@Nullable String pluginName) {
     final ApplicationEx app = ApplicationManagerEx.getApplicationEx();
     final boolean restartCapable = app.isRestartCapable();
-    String message = "<html>";
-    message += restartCapable ? IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getFullProductName())
-                              : IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getFullProductName());
+    String message =
+      restartCapable ? IdeBundle.message("message.idea.restart.required", ApplicationNamesInfo.getInstance().getFullProductName())
+                     : IdeBundle.message("message.idea.shutdown.required", ApplicationNamesInfo.getInstance().getFullProductName());
     message += "<br><a href=";
     message += restartCapable ? "\"restart\">Restart now" : "\"shutdown\">Shutdown";
-    message += "</a></html>";
-    Notifications.Bus.notify(new Notification("Plugins Lifecycle Group", 
+    message += "</a>";
+    Notifications.Bus.notify(new Notification("Plugins Lifecycle Group",
                                               pluginName != null ? "Plugin \'" + pluginName + "\' was successfully installed" : "Plugins were installed",
-                                              message, NotificationType.INFORMATION, new NotificationListener() {
-      @Override
-      public void hyperlinkUpdate(@NotNull Notification notification, @NotNull HyperlinkEvent event) {
-        notification.expire();
-        if (restartCapable) {
-          app.restart(true);
-        }
-        else {
-          app.exit(true);
-        }
-      }
-    }));
+                                              XmlStringUtil.wrapInHtml(message), NotificationType.INFORMATION,
+                                              new NotificationListener() {
+                                                @Override
+                                                public void hyperlinkUpdate(@NotNull Notification notification,
+                                                                            @NotNull HyperlinkEvent event) {
+                                                  notification.expire();
+                                                  if (restartCapable) {
+                                                    app.restart(true);
+                                                  }
+                                                  else {
+                                                    app.exit(true);
+                                                  }
+                                                }
+                                              }));
   }
 
 

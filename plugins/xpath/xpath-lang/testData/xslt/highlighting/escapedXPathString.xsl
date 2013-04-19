@@ -4,5 +4,7 @@
     <xsl:value-of select="&apos;&apos;" />
     <xsl:value-of select="&apos;&quot;abc&quot;&apos;" />
     <xsl:value-of select="<error descr="Malformed string literal">&apos;a&apos;&apos;b&apos;</error>" />
+
+    <xsl:value-of select="'&#xA;'" />
   </xsl:template>
 </xsl:stylesheet>

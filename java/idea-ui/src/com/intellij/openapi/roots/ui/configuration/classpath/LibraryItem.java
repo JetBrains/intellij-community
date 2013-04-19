@@ -23,6 +23,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.ui.configuration.libraries.LibraryPresentationManager;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.StructureConfigurableContext;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.xml.util.XmlStringUtil;
 
 import java.util.List;
 
@@ -60,6 +61,6 @@ class LibraryItem extends ClasspathTableItem<LibraryOrderEntry> {
     final List<String> descriptions = LibraryPresentationManager.getInstance().getDescriptions(library, myContext);
     if (descriptions.isEmpty()) return null;
 
-    return "<html>" + StringUtil.join(descriptions, "<br>") + "</html>";
+    return XmlStringUtil.wrapInHtml(StringUtil.join(descriptions, "<br>"));
   }
 }

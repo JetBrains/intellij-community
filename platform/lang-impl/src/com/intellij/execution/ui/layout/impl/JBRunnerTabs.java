@@ -63,6 +63,7 @@ public class
   @Override
   protected void paintLastGhost(Graphics2D g2d) {}
 
+  @Override
   protected void doPaintInactive(Graphics2D g2d,
                                  boolean leftGhostExists,
                                  TabLabel label,
@@ -132,6 +133,7 @@ public class
     g2d.drawLine(0, 0, 0, getSize().height);
   }
 
+  @Override
   protected void paintSelectionAndBorder(Graphics2D g2d) {
     if (getSelectedInfo() == null) return;
     final boolean dark = UIUtil.isUnderDarcula();
@@ -227,7 +229,7 @@ public class
     if (label == null || point == null) {
       return true;
     }
-    final Rectangle bounds = label.getBounds();                                                 
+    final Rectangle bounds = label.getBounds();
     return point.y <= bounds.y + bounds.height;
   }
 

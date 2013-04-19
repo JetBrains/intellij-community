@@ -33,23 +33,28 @@ public class ProjectSubViewSelectInTarget implements SelectInTarget {
     myWeight = weight;
   }
 
+  @Override
   public boolean canSelect(SelectInContext context) {
     return myBaseTarget.isSubIdSelectable(mySubId, context);
   }
 
+  @Override
   public void selectIn(SelectInContext context, boolean requestFocus) {
     myBaseTarget.setSubId(mySubId);
     myBaseTarget.selectIn(context, requestFocus);
   }
 
+  @Override
   public String getToolWindowId() {
     return myBaseTarget.getToolWindowId();
   }
 
+  @Override
   public String getMinorViewId() {
     return myBaseTarget.getMinorViewId();
   }
 
+  @Override
   public float getWeight() {
     return myWeight;
   }

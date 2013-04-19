@@ -46,10 +46,12 @@ public class RefactoringSettings implements PersistentStateComponent<Refactoring
 
   public boolean MOVE_SEARCH_FOR_REFERENCES_FOR_FILE = true;
 
+  @Override
   public RefactoringSettings getState() {
     return this;
   }
 
+  @Override
   public void loadState(final RefactoringSettings state) {
     XmlSerializerUtil.copyBean(state, this);
   }

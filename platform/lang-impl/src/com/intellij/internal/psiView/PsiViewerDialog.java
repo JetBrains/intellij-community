@@ -170,21 +170,6 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
     }
   }
 
-  private static class DialectsComparator implements Comparator<Language> {
-    private final Language myDefault;
-
-    public DialectsComparator(final Language aDefault) {
-      myDefault = aDefault;
-    }
-
-    @Override
-    public int compare(final Language o1, final Language o2) {
-      if (myDefault.equals(o1)) return -1;
-      if (myDefault.equals(o2)) return 1;
-      return o1.getID().compareToIgnoreCase(o2.getID());
-    }
-  }
-
   private static class SourceWrapper implements Comparable<SourceWrapper> {
     private final FileType myFileType;
     private final PsiViewerExtension myExtension;
@@ -603,26 +588,24 @@ public class PsiViewerDialog extends DialogWrapper implements DataProvider, Disp
 
   private void updateDialectsCombo(@Nullable final String lastUsed) {
     final Object source = getSource();
+    ArrayList<Language> items = new ArrayList<Language>(); 
     if (source instanceof LanguageFileType) {
       final Language baseLang = ((LanguageFileType)source).getLanguage();
-      final SortedComboBoxModel<Language> model = new SortedComboBoxModel<Language>(new DialectsComparator(baseLang));
-      model.add(baseLang);
-      model.addAll(LanguageUtil.getLanguageDialects(baseLang));
-      myDialectComboBox.setModel(model);
+      items.add(baseLang);
+      Language[] dialects = LanguageUtil.getLanguageDialects(baseLang);
+      Arrays.sort(dialects, LanguageUtil.LANGUAGE_COMPARATOR);
+      items.addAll(Arrays.asList(dialects));
     }
-    else {
-      myDialectComboBox.setModel(new DefaultComboBoxModel());
-    }
+    myDialectComboBox.setModel(new CollectionComboBoxModel(items));
 
-    final int size = myDialectComboBox.getModel().getSize();
+    final int size = items.size();
     final boolean visible = size > 1;
     myDialectLabel.setVisible(visible);
     myDialectComboBox.setVisible(visible);
     if (visible && (myCurrentFile != null || lastUsed != null)) {
-      final SortedComboBoxModel model = (SortedComboBoxModel)myDialectComboBox.getModel();
       String curLanguage = myCurrentFile != null ? myCurrentFile.getLanguage().toString() : lastUsed;
       for (int i = 0; i < size; ++i) {
-        if (curLanguage.equals(model.get(i).toString())) {
+        if (curLanguage.equals(items.get(i).toString())) {
           myDialectComboBox.setSelectedIndex(i);
           return;
         }

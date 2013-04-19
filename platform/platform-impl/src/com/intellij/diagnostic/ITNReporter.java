@@ -38,6 +38,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -143,7 +144,7 @@ public class ITNReporter extends ErrorReportSubmitter {
       login = "idea_anonymous";
       password = "guest";
     }
-    
+
     ErrorReportSender.sendError(project, login, password, errorBean, new Consumer<Integer>() {
       @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
       @Override
@@ -156,20 +157,20 @@ public class ITNReporter extends ErrorReportSubmitter {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
           @Override
           public void run() {
-            StringBuilder text = new StringBuilder("<html>");
+            StringBuilder text = new StringBuilder();
             final String url = IdeErrorsDialog.getUrl(reportInfo, true);
             IdeErrorsDialog.appendSubmissionInformation(reportInfo, text, url);
             text.append(".");
             if (reportInfo.getStatus() != SubmittedReportInfo.SubmissionStatus.FAILED) {
               text.append("<br/>").append(DiagnosticBundle.message("error.report.gratitude"));
             }
-            text.append("</html>");
+
             NotificationType type = reportInfo.getStatus() == SubmittedReportInfo.SubmissionStatus.FAILED
                                     ? NotificationType.ERROR
                                     : NotificationType.INFORMATION;
             NotificationListener listener = url != null ? new NotificationListener.UrlOpeningListener(true) : null;
             ReportMessages.GROUP.createNotification(ReportMessages.ERROR_REPORT,
-                                                    text.toString(),
+                                                    XmlStringUtil.wrapInHtml(text),
                                                     type, listener).setImportant(false).notify(project);
           }
         });

@@ -32,11 +32,13 @@ public class XmlBasedSettingsImpl implements XmlBasedSettings {
     mySettingsFile = context.getOrCreateFile(file);
   }
 
+  @Override
   @NotNull
   public Element getRootElement() {
     return mySettingsFile.getRootElement();
   }
 
+  @Override
   public File getFile() {
     return mySettingsFile.getFile();
   }

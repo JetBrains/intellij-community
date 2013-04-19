@@ -96,7 +96,8 @@ public abstract class AbstractArrangementUiComponent implements ArrangementUiCom
   public void setData(@NotNull Object data) {
     // Do nothing
   }
-  
+
+  @Override
   public void setListener(@Nullable Listener listener) {
     myListener = listener;
   }

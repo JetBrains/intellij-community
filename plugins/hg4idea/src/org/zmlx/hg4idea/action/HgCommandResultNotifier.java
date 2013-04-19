@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vcs.changes.ui.ChangesViewContentManager;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.execution.HgCommandResult;
@@ -69,9 +70,9 @@ public final class HgCommandResultNotifier {
                        "Failure title, failure description and errors log can not be empty at the same time");
         errorMessage = failureDescription;
       } else if (failureDescription.isEmpty()) {
-        errorMessage = "<html>" + StringUtil.join(err, "<br>") + "</html>";
+        errorMessage = XmlStringUtil.wrapInHtml(StringUtil.join(err, "<br>"));
       } else {
-        errorMessage = "<html>" + failureDescription + "<br>" + StringUtil.join(err, "<br>") + "</html>";
+        errorMessage = XmlStringUtil.wrapInHtml(failureDescription + "<br>" + StringUtil.join(err, "<br>"));
       }
     }
     IMPORTANT_ERROR_NOTIFICATION

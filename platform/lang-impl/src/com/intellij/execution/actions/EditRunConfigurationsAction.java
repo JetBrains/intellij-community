@@ -33,6 +33,7 @@ public class EditRunConfigurationsAction extends AnAction{
     getTemplatePresentation().setIcon(icon);
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project != null && project.isDisposed()) {
@@ -46,6 +47,7 @@ public class EditRunConfigurationsAction extends AnAction{
     dialog.show();
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     presentation.setEnabled(true);

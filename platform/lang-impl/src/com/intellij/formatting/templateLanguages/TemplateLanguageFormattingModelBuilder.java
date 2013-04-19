@@ -41,6 +41,7 @@ import java.util.List;
  */
 public abstract class TemplateLanguageFormattingModelBuilder implements DelegatingFormattingModelBuilder, TemplateLanguageBlockFactory {
 
+  @Override
   @NotNull
   public FormattingModel createModel(PsiElement element, CodeStyleSettings settings) {
     final PsiFile file = element.getContainingFile();
@@ -74,24 +75,29 @@ public abstract class TemplateLanguageFormattingModelBuilder implements Delegati
 
   protected AbstractBlock createDummyBlock(final ASTNode node) {
     return new AbstractBlock(node, Wrap.createWrap(WrapType.NONE, false), Alignment.createAlignment()) {
+      @Override
       protected List<Block> buildChildren() {
         return Collections.emptyList();
       }
 
+      @Override
       public Spacing getSpacing(final Block child1, @NotNull final Block child2) {
         return Spacing.getReadOnlySpacing();
       }
 
+      @Override
       public boolean isLeaf() {
         return true;
       }
     };
   }
 
+  @Override
   public TextRange getRangeAffectingIndent(PsiFile file, int offset, ASTNode elementAtOffset) {
     return null;
   }
 
+  @Override
   public boolean dontFormatMyModel() {
     return true;
   }

@@ -1,13 +1,13 @@
 package org.jetbrains.plugins.gradle.action;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.settings.ExternalSystemTextAttributes;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.config.GradleTextAttributes;
-import org.jetbrains.plugins.gradle.manage.GradleLocalNodeManageHelper;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
+import com.intellij.openapi.externalSystem.service.project.manage.GradleLocalNodeManageHelper;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
 
 import java.util.Collection;
 
@@ -21,18 +21,20 @@ import java.util.Collection;
 public class GradleRemoveIdeEntityAction extends AbstractGradleSyncTreeNodeAction {
 
   public GradleRemoveIdeEntityAction() {
-    getTemplatePresentation().setText(GradleBundle.message("gradle.action.remove.entity.text"));
-    getTemplatePresentation().setDescription(GradleBundle.message("gradle.action.remove.entity.description"));
+    // TODO den implement
+//    getTemplatePresentation().setText(ExternalSystemBundle.message("gradle.action.remove.entity.text"));
+//    getTemplatePresentation().setDescription(ExternalSystemBundle.message("gradle.action.remove.entity.description"));
   }
 
   @Override
-  protected void filterNodes(@NotNull Collection<GradleProjectStructureNode<?>> nodes) {
-    filterNodesByAttributes(nodes, GradleTextAttributes.INTELLIJ_LOCAL_CHANGE);
+  protected void filterNodes(@NotNull Collection<ProjectStructureNode<?>> nodes) {
+    filterNodesByAttributes(nodes, ExternalSystemTextAttributes.IDE_LOCAL_CHANGE);
   }
   
   @Override
-  protected void doActionPerformed(@NotNull Collection<GradleProjectStructureNode<?>> nodes, @NotNull Project project, @NotNull Tree tree) {
+  protected void doActionPerformed(@NotNull Collection<ProjectStructureNode<?>> nodes, @NotNull Project project, @NotNull Tree tree) {
     final GradleLocalNodeManageHelper helper = ServiceManager.getService(project, GradleLocalNodeManageHelper.class);
-    helper.removeNodes(nodes);
+    // TODO den implement
+//    helper.removeNodes(nodes);
   }
 }

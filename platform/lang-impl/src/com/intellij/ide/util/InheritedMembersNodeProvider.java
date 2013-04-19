@@ -31,20 +31,24 @@ import org.jetbrains.annotations.NotNull;
 public abstract class InheritedMembersNodeProvider<T extends TreeElement> implements FileStructureNodeProvider<T> {
   @NonNls public static final String ID = "SHOW_INHERITED";
 
+  @Override
   public String getCheckBoxText() {
     return IdeBundle.message("file.structure.toggle.show.inherited");
   }
 
+  @Override
   public Shortcut[] getShortcut() {
     return KeymapManager.getInstance().getActiveKeymap().getShortcuts("FileStructurePopup");
   }
 
 
+  @Override
   @NotNull
   public ActionPresentation getPresentation() {
     return new ActionPresentationData(IdeBundle.message("action.structureview.show.inherited"), null, AllIcons.Hierarchy.Supertypes);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return ID;

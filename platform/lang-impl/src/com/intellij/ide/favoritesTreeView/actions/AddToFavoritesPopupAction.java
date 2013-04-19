@@ -31,6 +31,7 @@ import java.util.List;
  * Date: Feb 24, 2005
  */
 public class AddToFavoritesPopupAction extends QuickSwitchSchemeAction {
+  @Override
   protected void fillActions(Project project, @NotNull DefaultActionGroup group, @NotNull DataContext dataContext) {
     group.removeAll();
 
@@ -43,6 +44,7 @@ public class AddToFavoritesPopupAction extends QuickSwitchSchemeAction {
     group.add(new AddToNewFavoritesListAction());
   }
 
+  @Override
   protected boolean isEnabled() {
     return true;
   }

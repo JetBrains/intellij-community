@@ -29,6 +29,7 @@ import com.intellij.openapi.project.Project;
  * @author yole
  */
 public class AnalyzeStacktraceAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
     AnalyzeStacktraceDialog dialog = new AnalyzeStacktraceDialog(project);

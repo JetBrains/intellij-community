@@ -35,6 +35,7 @@ public class TestScopeProvider extends CustomScopesProviderEx {
     return Extensions.findExtension(CUSTOM_SCOPES_PROVIDER, project, TestScopeProvider.class);
   }
 
+  @Override
   @NotNull
   public List<NamedScope> getCustomScopes() {
     return Collections.<NamedScope>singletonList(myTestsScope);

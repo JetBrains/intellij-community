@@ -59,31 +59,38 @@ public class StructureViewComposite implements StructureView {
     Disposer.register(this, view.structureView);
   }
 
+  @Override
   public FileEditor getFileEditor() {
     return getSelectedStructureView().getFileEditor();
   }
 
+  @Override
   public boolean navigateToSelectedElement(final boolean requestFocus) {
     return getSelectedStructureView().navigateToSelectedElement(requestFocus);
   }
 
+  @Override
   public JComponent getComponent() {
     return mySelectedViewDescriptor.structureView.getComponent();
   }
 
+  @Override
   public void dispose() {
   }
 
+  @Override
   public void centerSelectedRow() {
     getSelectedStructureView().centerSelectedRow();
   }
 
+  @Override
   public void restoreState() {
     for (StructureViewDescriptor descriptor : myStructureViews) {
       descriptor.structureView.restoreState();
     }
   }
 
+  @Override
   public void storeState() {
     for (StructureViewDescriptor descriptor : myStructureViews) {
       descriptor.structureView.storeState();
@@ -95,6 +102,7 @@ public class StructureViewComposite implements StructureView {
     return myStructureViews;
   }
 
+  @Override
   @NotNull
   public StructureViewModel getTreeModel() {
     return getSelectedStructureView().getTreeModel();

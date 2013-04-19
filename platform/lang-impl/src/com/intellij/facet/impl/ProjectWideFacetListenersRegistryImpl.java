@@ -45,10 +45,12 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
   public ProjectWideFacetListenersRegistryImpl(MessageBus messageBus) {
     myFacetListener = new MyFacetManagerAdapter();
     messageBus.connect().subscribe(ProjectTopics.MODULES, new ModuleAdapter() {
+      @Override
       public void moduleAdded(Project project, Module module) {
         onModuleAdded(module);
       }
 
+      @Override
       public void beforeModuleRemoved(final Project project, final Module module) {
         Facet[] allFacets = FacetManager.getInstance(module).getAllFacets();
         for (Facet facet : allFacets) {
@@ -56,6 +58,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
         }
       }
 
+      @Override
       public void moduleRemoved(Project project, Module module) {
         onModuleRemoved(module);
       }
@@ -146,7 +149,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
       getAllFacetsMulticaster().firstFacetAdded();
     }
     getAllFacetsMulticaster().facetAdded(facet);
-    
+
     final EventDispatcher<ProjectWideFacetListener> dispatcher = myDispatchers.get(typeId);
     if (dispatcher != null) {
       if (firstFacetOfType) {
@@ -166,6 +169,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     getAllFacetsMulticaster().facetConfigurationChanged(facet);
   }
 
+  @Override
   public <F extends Facet> void registerListener(@NotNull FacetTypeId<F> typeId, @NotNull ProjectWideFacetListener<? extends F> listener) {
     EventDispatcher<ProjectWideFacetListener> dispatcher = myDispatchers.get(typeId);
     if (dispatcher == null) {
@@ -175,6 +179,7 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     dispatcher.addListener(listener);
   }
 
+  @Override
   public <F extends Facet> void unregisterListener(@NotNull FacetTypeId<F> typeId, @NotNull ProjectWideFacetListener<? extends F> listener) {
     final EventDispatcher<ProjectWideFacetListener> dispatcher = myDispatchers.get(typeId);
     if (dispatcher != null) {
@@ -182,42 +187,51 @@ public class ProjectWideFacetListenersRegistryImpl extends ProjectWideFacetListe
     }
   }
 
+  @Override
   public <F extends Facet> void registerListener(@NotNull final FacetTypeId<F> typeId, @NotNull final ProjectWideFacetListener<? extends F> listener,
                                                  @NotNull final Disposable parentDisposable) {
     registerListener(typeId, listener);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         unregisterListener(typeId, listener);
       }
     });
   }
 
+  @Override
   public void registerListener(@NotNull final ProjectWideFacetListener<Facet> listener) {
     myAllFacetsListener.addListener(listener);
   }
 
+  @Override
   public void unregisterListener(@NotNull final ProjectWideFacetListener<Facet> listener) {
     myAllFacetsListener.removeListener(listener);
   }
 
+  @Override
   public void registerListener(@NotNull final ProjectWideFacetListener<Facet> listener, @NotNull final Disposable parentDisposable) {
     myAllFacetsListener.addListener(listener, parentDisposable);
   }
 
   private class MyFacetManagerAdapter extends FacetManagerAdapter {
 
+    @Override
     public void facetAdded(@NotNull Facet facet) {
       onFacetAdded(facet);
     }
 
+    @Override
     public void beforeFacetRemoved(@NotNull final Facet facet) {
       onFacetRemoved(facet, true);
     }
 
+    @Override
     public void facetRemoved(@NotNull Facet facet) {
       onFacetRemoved(facet, false);
     }
 
+    @Override
     public void facetConfigurationChanged(@NotNull final Facet facet) {
       onFacetChanged(facet);
     }

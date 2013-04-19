@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.ReflectionCache;
 import org.jdom.Element;
 import org.jdom.Verifier;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
@@ -38,14 +39,16 @@ public class DefaultJDOMExternalizer {
   }
 
   public interface JDOMFilter{
-    boolean isAccept(Field field);
+    boolean isAccept(@NotNull Field field);
   }
 
-  public static void writeExternal(Object data, Element parentNode) throws WriteExternalException {
+  public static void writeExternal(@NotNull Object data, @NotNull Element parentNode) throws WriteExternalException {
     writeExternal(data, parentNode, null);
   }
 
-  public static void writeExternal(Object data, Element parentNode, JDOMFilter filter) throws WriteExternalException {
+  public static void writeExternal(@NotNull Object data,
+                                   @NotNull Element parentNode,
+                                   @Nullable("null means all elements accepted") JDOMFilter filter) throws WriteExternalException {
     Field[] fields = data.getClass().getFields();
 
     for (Field field : fields) {
@@ -151,7 +154,7 @@ public class DefaultJDOMExternalizer {
     return value;
   }
 
-  public static void readExternal(Object data, Element parentNode) throws InvalidDataException{
+  public static void readExternal(@NotNull Object data, Element parentNode) throws InvalidDataException{
     if (parentNode == null) return;
 
     for (final Object o : parentNode.getChildren("option")) {

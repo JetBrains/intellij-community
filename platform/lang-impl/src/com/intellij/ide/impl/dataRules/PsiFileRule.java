@@ -25,6 +25,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 
 public class PsiFileRule implements GetDataRule {
+  @Override
   public Object getData(DataProvider dataProvider) {
     final PsiElement element = LangDataKeys.PSI_ELEMENT.getData(dataProvider);
     if (element != null) {

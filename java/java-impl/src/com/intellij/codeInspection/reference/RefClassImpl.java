@@ -68,6 +68,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     super(psiClass, manager);
   }
 
+  @Override
   protected void initialize() {
     myDefaultConstructor = null;
 
@@ -76,7 +77,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     LOG.assertTrue(psiClass != null);
 
     PsiElement psiParent = psiClass.getParent();
-    if (psiParent instanceof PsiFile) {      
+    if (psiParent instanceof PsiFile) {
       if (isSyntheticJSP()) {
         final RefFileImpl refFile = (RefFileImpl)getRefManager().getReference(JspPsiUtil.getJspFile(psiClass));
         LOG.assertTrue(refFile != null);
@@ -198,12 +199,14 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
   }
 
+  @Override
   public boolean isSelfInheritor(PsiClass psiClass) {
     return isSelfInheritor(psiClass, new ArrayList<PsiClass>());
   }
 
+  @Override
   public PsiClass getElement() {
-    return (PsiClass)super.getElement(); 
+    return (PsiClass)super.getElement();
   }
 
   private static boolean isSelfInheritor(PsiClass psiClass, ArrayList<PsiClass> visited) {
@@ -233,6 +236,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     myDefaultConstructor = defaultConstructor;
   }
 
+  @Override
   public void buildReferences() {
     PsiClass psiClass = getElement();
 
@@ -249,7 +253,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
         final PsiExpression initializer = psiField.getInitializer();
         if (initializer != null) {
           RefJavaUtil.getInstance().addReferences(psiClass, this, initializer);
-        }        
+        }
       }
 
       PsiMethod[] psiMethods = psiClass.getMethods();
@@ -260,9 +264,11 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
   }
 
+  @Override
   public void accept(final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
         public void run() {
           ((RefJavaVisitor)visitor).visitClass(RefClassImpl.this);
         }
@@ -272,6 +278,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
   }
 
+  @Override
   @NotNull
   public Set<RefClass> getBaseClasses() {
     if (myBases == null) return EMPTY_CLASS_SET;
@@ -290,6 +297,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     myBases.add(refClass);
   }
 
+  @Override
   @NotNull
   public Set<RefClass> getSubClasses() {
     if (mySubClasses == null) return EMPTY_CLASS_SET;
@@ -317,12 +325,14 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
   }
 
+  @Override
   @NotNull
   public List<RefMethod> getConstructors() {
     if (myConstructors == null) return EMPTY_METHOD_LIST;
     return myConstructors;
   }
 
+  @Override
   @NotNull
   public Set<RefElement> getInTypeReferences() {
     if (myInTypeReferences == null) return EMPTY_SET;
@@ -340,6 +350,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
   }
 
+  @Override
   @NotNull
   public Set<RefElement> getInstanceReferences() {
     if (myInstanceReferences == null) return EMPTY_SET;
@@ -353,6 +364,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     myInstanceReferences.add(from);
   }
 
+  @Override
   public RefMethod getDefaultConstructor() {
     return myDefaultConstructor;
   }
@@ -371,31 +383,38 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     myOverridingMethods.add(refMethod);
   }
 
+  @Override
   @NotNull
   public List<RefMethod> getLibraryMethods() {
     if (myOverridingMethods == null) return EMPTY_METHOD_LIST;
     return myOverridingMethods;
   }
 
+  @Override
   public boolean isAnonymous() {
     return checkFlag(IS_ANONYMOUS_MASK);
   }
 
+  @Override
   public boolean isInterface() {
     return checkFlag(IS_INTERFACE_MASK);
   }
 
+  @Override
   public boolean isSuspicious() {
     return !(isUtilityClass() && getOutReferences().isEmpty()) && super.isSuspicious();
   }
 
+  @Override
   public boolean isUtilityClass() {
     return checkFlag(IS_UTILITY_MASK);
   }
 
+  @Override
   public String getExternalName() {
     final String[] result = new String[1];
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {//todo synthetic JSP
         final PsiClass psiClass = getElement();
         LOG.assertTrue(psiClass != null);
@@ -411,6 +430,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     return (RefClass) manager.getReference(ClassUtil.findPsiClass(PsiManager.getInstance(manager.getProject()), externalName));
   }
 
+  @Override
   public void referenceRemoved() {
     super.referenceRemoved();
 
@@ -443,27 +463,33 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     }
   }
 
+  @Override
   public boolean isAbstract() {
     return checkFlag(IS_ABSTRACT_MASK);
   }
 
+  @Override
   public boolean isApplet() {
     return checkFlag(IS_APPLET_MASK);
   }
 
+  @Override
   public boolean isServlet() {
     return checkFlag(IS_SERVLET_MASK);
   }
 
+  @Override
   public boolean isTestCase() {
     return checkFlag(IS_TESTCASE_MASK);
   }
 
+  @Override
   public boolean isLocalClass() {
     return checkFlag(IS_LOCAL_MASK);
   }
 
- 
+
+  @Override
   public boolean isReferenced() {
     if (super.isReferenced()) return true;
 
@@ -474,6 +500,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     return false;
   }
 
+  @Override
   public boolean hasSuspiciousCallers() {
     if (super.hasSuspiciousCallers()) return true;
 
@@ -526,6 +553,7 @@ public class RefClassImpl extends RefJavaElementImpl implements RefClass {
     setFlag(isLocal, IS_LOCAL_MASK);
   }
 
+  @Override
   @NotNull
   public RefElement getContainingEntry() {
     RefElement defaultConstructor = getDefaultConstructor();

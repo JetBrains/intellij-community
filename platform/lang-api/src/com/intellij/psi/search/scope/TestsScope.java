@@ -32,6 +32,7 @@ public class TestsScope extends NamedScope {
   public static final String NAME = IdeBundle.message("predefined.scope.tests.name");
   public TestsScope() {
     super(NAME, new AbstractPackageSet("test:*..*") {
+      @Override
       public boolean contains(VirtualFile file, NamedScopesHolder holder) {
         final ProjectFileIndex index = ProjectRootManager.getInstance(holder.getProject()).getFileIndex();
         return file != null && index.isInTestSourceContent(file);

@@ -57,7 +57,7 @@ public class GroovyCompilerLoader extends AbstractProjectComponent {
 
     myProject.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
-      public void fileOpened(FileEditorManager source, final VirtualFile file) {
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull final VirtualFile file) {
         if (file.getName().endsWith(".java") && file.getPath().contains(GroovycStubGenerator.GROOVY_STUBS)) {
           final PsiClass psiClass = GroovycStubGenerator.findClassByStub(myProject, file);
           if (psiClass != null) {
@@ -66,7 +66,7 @@ public class GroovyCompilerLoader extends AbstractProjectComponent {
             if (editors.length != 0) {
               decorateStubFile(file, fileEditorManager, editors[0]);
             }
-            
+
           }
         }
       }

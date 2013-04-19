@@ -40,10 +40,12 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     myValue = psiElement;
   }
 
+  @Override
   public ItemPresentation getPresentation() {
     return this;
   }
 
+  @Override
   @NotNull
   public Object getKey() {
     try {
@@ -60,6 +62,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return myValue.isValid() ? myValue : null;
   }
 
+  @Override
   public Icon getIcon(boolean open) {
     final PsiElement element = getElement();
     if (element != null) {
@@ -72,10 +75,12 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     }
   }
 
+  @Override
   public T getValue() {
     return getElement();
   }
 
+  @Override
   public String getLocationString() {
     return null;
   }
@@ -89,6 +94,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return element != null ? element.toString() : "";
   }
 
+  @Override
   public final StructureViewTreeElement[] getChildren() {
     final T element = getElement();
     if (element == null) return EMPTY_ARRAY;
@@ -106,6 +112,7 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     return result.toArray(new StructureViewTreeElement[result.size()]);
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     final T element = getElement();
     if (element != null) {
@@ -113,11 +120,13 @@ public abstract class PsiTreeElementBase <T extends PsiElement> implements Struc
     }
   }
 
+  @Override
   public boolean canNavigate() {
     final T element = getElement();
     return element instanceof Navigatable && ((Navigatable)element).canNavigate();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return canNavigate();
   }

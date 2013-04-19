@@ -190,9 +190,11 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   public abstract boolean isReplaceAllOccurrences();
   public abstract void setReplaceAllOccurrences(boolean allOccurrences);
+  @Override
   protected abstract JComponent getComponent();
 
   protected abstract void saveSettings(@NotNull V variable);
+  @Override
   protected abstract V getVariable();
 
   public abstract E restoreExpression(PsiFile containingFile, V variable, RangeMarker marker, String exprText);
@@ -206,6 +208,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     final boolean replaceAllOccurrences = isReplaceAllOccurrences();
     final Ref<Boolean> result = new Ref<Boolean>();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         final String[] names = suggestNames(replaceAllOccurrences, getLocalVariable());
         final V variable = createFieldToStartTemplateOn(replaceAllOccurrences, names);
@@ -304,6 +307,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   public void restartInplaceIntroduceTemplate() {
     Runnable restartTemplateRunnable = new Runnable() {
+      @Override
       public void run() {
         final TemplateState templateState = TemplateManagerImpl.getTemplateState(myEditor);
         if (templateState != null) {
@@ -313,6 +317,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
             if (range != null && range.isEmpty()) {
               final String[] names = suggestNames(isReplaceAllOccurrences(), getLocalVariable());
               ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
                 public void run() {
                   myEditor.getDocument().insertString(myEditor.getCaretModel().getOffset(), names[0]);
                 }
@@ -343,7 +348,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
       myEditor.getSelectionModel().removeSelection();
     }
   }
- 
+
   public String getInputName() {
     return myInsertedName;
   }
@@ -452,6 +457,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
 
   protected void restoreState(final V psiField) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         final PsiFile containingFile = psiField.getContainingFile();
         final RangeMarker exprMarker = getExprMarker();
@@ -590,6 +596,7 @@ public abstract class AbstractInplaceIntroducer<V extends PsiNameIdentifierOwner
     final TemplateState templateState = TemplateManagerImpl.getTemplateState(editor);
     if (templateState != null) {
       final Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           templateState.gotoEnd(true);
         }

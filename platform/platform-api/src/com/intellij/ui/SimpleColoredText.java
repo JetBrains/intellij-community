@@ -16,7 +16,7 @@
 
 package com.intellij.ui;
 
-import com.intellij.util.StringBuilderSpinAllocator;
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
@@ -25,7 +25,7 @@ public class SimpleColoredText {
   private final ArrayList<String> myTexts;
   private final ArrayList<SimpleTextAttributes> myAttributes;
   private String myCachedToString = null;
-  
+
   public SimpleColoredText() {
     myTexts = new ArrayList<String>(3);
     myAttributes = new ArrayList<SimpleTextAttributes>(3);
@@ -47,7 +47,7 @@ public class SimpleColoredText {
     myCachedToString = null;
     myAttributes.clear();
   }
-  
+
   public void appendToComponent(SimpleColoredComponent component) {
     int size = myTexts.size();
     for (int i=0; i < size; i++){
@@ -59,17 +59,7 @@ public class SimpleColoredText {
 
   public String toString() {
     if (myCachedToString == null) {
-      final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-      try {
-        for (String text : myTexts) {
-          builder.append(text);
-        }
-        myCachedToString = builder.toString();
-      }
-      finally{
-        StringBuilderSpinAllocator.dispose(builder);
-      } 
-        
+      myCachedToString = StringUtil.join(myTexts,"");
     }
     return myCachedToString;
   }

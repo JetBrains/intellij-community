@@ -174,31 +174,6 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
   protected void showConsole(Executor defaultExecutor, RunContentDescriptor myDescriptor) {
     // Show in run toolwindow
     ExecutionManager.getInstance(myProject).getContentManager().showRunContent(defaultExecutor, myDescriptor);
-
-// Request focus
-    final ToolWindow window = ToolWindowManager.getInstance(myProject).getToolWindow(defaultExecutor.getId());
-    window.activate(new Runnable() {
-      public void run() {
-        requestFocus();
-      }
-    });
-  }
-
-  public void requestFocus() {
-    final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
-    requestFocus(focusManager);
-
-    focusManager.doWhenFocusSettlesDown(new Runnable() {
-      @Override
-      public void run() {
-        requestFocus(focusManager);
-      }
-    });
-
-  }
-
-  private void requestFocus(IdeFocusManager focusManager) {
-    focusManager.requestFocus(getLanguageConsole().getConsoleEditor().getContentComponent(), true);
   }
 
   protected void finishConsole() {
@@ -286,10 +261,12 @@ public abstract class AbstractConsoleRunnerWithHistory<T extends LanguageConsole
       EmptyAction.setupAction(this, consoleExecuteActionHandler.getEmptyExecuteAction(), null);
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       myConsoleExecuteActionHandler.runExecuteAction(myLanguageConsole);
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       final EditorEx editor = myLanguageConsole.getConsoleEditor();
       final Lookup lookup = LookupManager.getActiveLookup(editor);

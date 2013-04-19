@@ -35,6 +35,7 @@ public class ChangeListTodosTreeStructure extends TodoTreeStructure {
     super(project);
   }
 
+  @Override
   public boolean accept(final PsiFile psiFile) {
     if (!psiFile.isValid()) return false;
     boolean isAffected = false;
@@ -49,14 +50,17 @@ public class ChangeListTodosTreeStructure extends TodoTreeStructure {
                           (myTodoFilter == null && mySearchHelper.getTodoItemsCount(psiFile) > 0));
   }
 
+  @Override
   public boolean getIsPackagesShown() {
     return myArePackagesShown;
   }
 
+  @Override
   Object getFirstSelectableElement() {
     return ((ToDoRootNode)myRootElement).getSummaryNode();
   }
 
+  @Override
   protected AbstractTreeNode createRootElement() {
     return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);
   }

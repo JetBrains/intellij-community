@@ -32,6 +32,7 @@ public class OfflineRefElementNode extends RefElementNode {
     super(descriptor, inspectionTool);
   }
 
+  @Override
   @Nullable
   public RefEntity getElement() {
     if (userObject instanceof RefEntity) {

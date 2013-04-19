@@ -41,6 +41,7 @@ public class TodoIndexPatternProvider implements IndexPatternProvider {
     myConfiguration = configuration;
   }
 
+  @Override
   @NotNull public IndexPattern[] getIndexPatterns() {
     return myConfiguration.getIndexPatterns();
   }

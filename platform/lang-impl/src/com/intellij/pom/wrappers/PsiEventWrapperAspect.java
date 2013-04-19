@@ -43,6 +43,7 @@ public class PsiEventWrapperAspect implements PomModelAspect{
     model.registerAspect(PsiEventWrapperAspect.class, this, Collections.singleton((PomModelAspect)aspect));
   }
 
+  @Override
   public void update(PomModelEvent event) {
     final TreeChangeEvent changeSet = (TreeChangeEvent)event.getChangeSet(myTreeAspect);
     if(changeSet == null) return;

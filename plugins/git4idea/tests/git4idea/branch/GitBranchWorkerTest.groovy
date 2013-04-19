@@ -749,7 +749,7 @@ class GitBranchWorkerTest extends GitLightTest {
   }
 
   private static LineSeparator detectLineSeparators(String actual) {
-    char[] chars = CharArrayUtil.fromSequenceWithoutCopying(actual);
+    char[] chars = CharArrayUtil.fromSequence(actual);
     for (char c : chars) {
       if (c == '\r') {
         return LineSeparator.CRLF;

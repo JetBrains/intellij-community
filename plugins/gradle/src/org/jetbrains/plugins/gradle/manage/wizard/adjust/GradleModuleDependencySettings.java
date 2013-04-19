@@ -1,8 +1,8 @@
 package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
+import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.util.Pair;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.gradle.GradleModuleDependency;
 
 import javax.swing.*;
 
@@ -17,7 +17,7 @@ public class GradleModuleDependencySettings implements GradleProjectStructureNod
   private final Runnable             myValidateCallback;
   private final JComponent           myComponent;
   
-  public GradleModuleDependencySettings(@NotNull GradleModuleDependency dependency) {
+  public GradleModuleDependencySettings(@NotNull ModuleDependencyData dependency) {
     myModuleSettings = new GradleModuleSettings(dependency.getTarget());
 
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();

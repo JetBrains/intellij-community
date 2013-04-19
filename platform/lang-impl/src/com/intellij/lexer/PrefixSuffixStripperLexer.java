@@ -48,6 +48,7 @@ public class PrefixSuffixStripperLexer extends LexerBase {
     myPrefix = prefix;
   }
 
+  @Override
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     myBuffer = buffer;
     myBufferArray = CharArrayUtil.fromSequenceWithoutCopying(buffer);
@@ -58,33 +59,40 @@ public class PrefixSuffixStripperLexer extends LexerBase {
     myBufferEnd = endOffset;
   }
 
+  @Override
   public IElementType getTokenType() {
     locateToken();
     return myTokenType;
   }
 
+  @Override
   public int getTokenStart() {
     locateToken();
     return myTokenStart;
   }
 
+  @Override
   public int getTokenEnd() {
     locateToken();
     return myTokenEnd;
   }
 
+  @Override
   public int getState() {
     return myState;
   }
 
+  @Override
   public int getBufferEnd() {
     return myBufferEnd;
   }
 
+  @Override
   public CharSequence getBufferSequence() {
     return myBuffer;
   }
 
+  @Override
   public void advance() {
     myTokenType = null;
   }

@@ -63,6 +63,7 @@ public class PatchProjectUtil {
         if (contentRoot == null) continue;
         final Set<VirtualFile> included = new HashSet<VirtualFile>();
         iterate(contentRoot, new ContentIterator() {
+          @Override
           public boolean processFile(final VirtualFile fileOrDir) {
             String relativeName = VfsUtilCore.getRelativePath(fileOrDir, contentRoot, '/');
             for (Pattern module : excludePatterns.keySet()) {
@@ -96,6 +97,7 @@ public class PatchProjectUtil {
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         ModifiableModelCommitter.multiCommit(models, modulesModel);
       }

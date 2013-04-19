@@ -27,6 +27,7 @@ import java.awt.*;
  * @author yole
  */
 public class PlatformModuleRendererFactory extends ModuleRendererFactory {
+  @Override
   public DefaultListCellRenderer getModuleRenderer() {
     return new PlatformModuleRenderer();
   }
@@ -37,6 +38,7 @@ public class PlatformModuleRendererFactory extends ModuleRendererFactory {
   }
 
   public static class PlatformModuleRenderer extends DefaultListCellRenderer {
+    @Override
     public Component getListCellRendererComponent(final JList list,
                                                   final Object value,
                                                   final int index,

@@ -33,11 +33,13 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
     super(other);
   }
 
+  @NotNull
   @Override
   public InspectionToolWrapper<GlobalInspectionTool, InspectionEP> createCopy() {
     return new GlobalInspectionToolWrapper(this);
   }
 
+  @Override
   public void initialize(@NotNull GlobalInspectionContextImpl context) {
     super.initialize(context);
     final RefGraphAnnotator annotator = getTool().getAnnotator(getRefManager());
@@ -46,16 +48,19 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
     }
   }
 
+  @Override
   public void runInspection(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager) {
     getTool().runInspection(scope, manager, getContext(), this);
   }
 
-  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
+  @Override
+  public boolean queryExternalUsagesRequests(@NotNull final InspectionManager manager) {
     return getTool().queryExternalUsagesRequests(manager, getContext(), this);
   }
 
+  @Override
   @NotNull
-  public JobDescriptor[] getJobDescriptors(GlobalInspectionContext context) {
+  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context) {
     final JobDescriptor[] additionalJobs = getTool().getAdditionalJobs();
     if (additionalJobs == null) {
       return isGraphNeeded() ? ((GlobalInspectionContextImpl)context).BUILD_GRAPH_ONLY : JobDescriptor.EMPTY_ARRAY;
@@ -65,6 +70,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
     }
   }
 
+  @Override
   public boolean isGraphNeeded() {
     return getTool().isGraphNeeded();
   }
@@ -74,7 +80,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
                           final GlobalInspectionContext context,
                           final boolean filterSuppressed) {
     context.getRefManager().iterate(new RefVisitor() {
-      @Override public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(@NotNull RefEntity refEntity) {
         CommonProblemDescriptor[] descriptors = getTool()
           .checkElement(refEntity, analysisScope, manager, context, GlobalInspectionToolWrapper.this);
         if (descriptors != null) {
@@ -84,14 +90,18 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
     });
   }
 
+  @NotNull
+  @Override
   public HTMLComposerImpl getComposer() {
     return new DescriptorComposer(this) {
+      @Override
       protected void composeAdditionalDescription(final StringBuffer buf, final RefEntity refEntity) {
         getTool().compose(buf, refEntity, this);
       }
     };
   }
 
+  @Override
   @Nullable
   public IntentionAction findQuickFixes(final CommonProblemDescriptor problemDescriptor, final String hint) {
     final QuickFix fix = getTool().getQuickFix(hint);
@@ -106,24 +116,29 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
       }
       else {
         return new IntentionAction() {
+          @Override
           @NotNull
           public String getText() {
             return fix.getName();
           }
 
+          @Override
           @NotNull
           public String getFamilyName() {
             return fix.getFamilyName();
           }
 
+          @Override
           public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
             return true;
           }
 
+          @Override
           public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
             fix.applyFix(project, problemDescriptor); //todo check type consistency
           }
 
+          @Override
           public boolean startInWriteAction() {
             return true;
           }

@@ -19,7 +19,7 @@
  * User: dsl
  * Date: 09.07.2002
  * Time: 15:20:25
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.refactoring.classMembers;
@@ -31,6 +31,7 @@ public class ANDCombinedMemberInfoModel<T extends PsiElement, M extends MemberIn
   private final MemberInfoModel<T, M> myModel1;
   private final MemberInfoModel<T, M> myModel2;
   private final MemberInfoTooltipManager<T, M> myTooltipManager = new MemberInfoTooltipManager<T, M>(new MemberInfoTooltipManager.TooltipProvider<T, M>() {
+    @Override
     public String getTooltip(M memberInfo) {
       final String tooltipText1 = myModel1.getTooltipText(memberInfo);
       if (tooltipText1 != null) return tooltipText1;
@@ -44,32 +45,39 @@ public class ANDCombinedMemberInfoModel<T extends PsiElement, M extends MemberIn
     myModel2 = model2;
   }
 
+  @Override
   public boolean isMemberEnabled(M member) {
     return myModel1.isMemberEnabled(member) && myModel2.isMemberEnabled(member);
   }
 
+  @Override
   public boolean isCheckedWhenDisabled(M member) {
     return myModel1.isCheckedWhenDisabled(member) && myModel2.isCheckedWhenDisabled(member);
   }
 
+  @Override
   public boolean isAbstractEnabled(M member) {
     return myModel1.isAbstractEnabled(member) && myModel2.isAbstractEnabled(member);
   }
 
+  @Override
   public boolean isAbstractWhenDisabled(M member) {
     return myModel1.isAbstractWhenDisabled(member) && myModel2.isAbstractWhenDisabled(member);
   }
 
+  @Override
   public int checkForProblems(@NotNull M member) {
     return Math.max(myModel1.checkForProblems(member), myModel2.checkForProblems(member));
   }
 
+  @Override
   public void memberInfoChanged(MemberInfoChange<T, M> event) {
     myTooltipManager.invalidate();
     myModel1.memberInfoChanged(event);
     myModel2.memberInfoChanged(event);
   }
 
+  @Override
   public Boolean isFixedAbstract(M member) {
     final Boolean fixedAbstract1 = myModel1.isFixedAbstract(member);
     if(fixedAbstract1 == null) return null;
@@ -85,6 +93,7 @@ public class ANDCombinedMemberInfoModel<T extends PsiElement, M extends MemberIn
     return myModel2;
   }
 
+  @Override
   public String getTooltipText(M member) {
     return myTooltipManager.getTooltip(member);
   }

@@ -39,6 +39,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -178,6 +179,7 @@ class Browser extends JPanel {
     myHTMLViewer = new JEditorPane(UIUtil.HTML_MIME, InspectionsBundle.message("inspection.offline.view.empty.browser.text"));
     myHTMLViewer.setEditable(false);
     myHyperLinkListener = new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           JEditorPane pane = (JEditorPane)e.getSource();
@@ -273,7 +275,7 @@ class Browser extends JPanel {
     }
 
     StyledDocument styledDocument = (StyledDocument)document;
-    
+
     EditorColorsManager colorsManager = EditorColorsManager.getInstance();
     EditorColorsScheme scheme = colorsManager.getGlobalScheme();
 
@@ -299,6 +301,7 @@ class Browser extends JPanel {
     final StringBuffer buf = new StringBuffer();
     if (refEntity instanceof RefElement) {
       final Runnable action = new Runnable() {
+        @Override
         public void run() {
           tool.getComposer().compose(buf, refEntity);
         }
@@ -329,6 +332,7 @@ class Browser extends JPanel {
   private String generateHTML(final RefEntity refEntity, final CommonProblemDescriptor descriptor) {
     final StringBuffer buf = new StringBuffer();
     final Runnable action = new Runnable() {
+      @Override
       public void run() {
         InspectionTool tool = getTool(refEntity);
         tool.getComposer().compose(buf, refEntity, descriptor);
@@ -419,7 +423,7 @@ class Browser extends JPanel {
       showEmpty();
       return;
     }
-    @NonNls StringBuffer page = new StringBuffer("<html>");
+    @NonNls StringBuffer page = new StringBuffer();
     page.append("<table border='0' cellspacing='0' cellpadding='0' width='100%'>");
     page.append("<tr><td colspan='2'>");
     HTMLComposer.appendHeading(page, InspectionsBundle.message("inspection.tool.in.browser.id.title"));
@@ -443,9 +447,10 @@ class Browser extends JPanel {
       page.append(UIUtil.getHtmlBody(description));
 
       page.append("</td></tr></table>");
-      myHTMLViewer.setText(page.toString());
+      myHTMLViewer.setText(XmlStringUtil.wrapInHtml(page));
       setupStyle();
-    } finally {
+    }
+    finally {
       myCurrentEntity = null;
     }
   }
@@ -498,6 +503,7 @@ class Browser extends JPanel {
       @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             final PsiModificationTracker tracker = PsiManager.getInstance(myView.getProject()).getModificationTracker();
             final long startCount = tracker.getModificationCount();

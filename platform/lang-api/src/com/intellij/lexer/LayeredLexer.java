@@ -73,7 +73,8 @@ public class LayeredLexer extends DelegateLexer {
       }
     }
   }
-  
+
+  @Override
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     LOG.assertTrue(initialState != IN_LAYER_STATE, "Restoring to layer is not supported.");
     myState = initialState;
@@ -83,10 +84,12 @@ public class LayeredLexer extends DelegateLexer {
     activateLayerIfNecessary();
   }
 
+  @Override
   public int getState() {
     return myState;
   }
 
+  @Override
   public IElementType getTokenType() {
     if (myState == IN_LAYER_LEXER_FINISHED_STATE) {
       return myCurrentBaseTokenType;
@@ -94,6 +97,7 @@ public class LayeredLexer extends DelegateLexer {
     return isLayerActive() ? myCurrentLayerLexer.getTokenType() : super.getTokenType();
   }
 
+  @Override
   public int getTokenStart() {
     if (myState == IN_LAYER_LEXER_FINISHED_STATE) {
       return myLayerLeftPart;
@@ -101,6 +105,7 @@ public class LayeredLexer extends DelegateLexer {
     return isLayerActive() ? myCurrentLayerLexer.getTokenStart() : super.getTokenStart();
   }
 
+  @Override
   public int getTokenEnd() {
     if (myState == IN_LAYER_LEXER_FINISHED_STATE) {
       return myBaseTokenEnd;
@@ -108,6 +113,7 @@ public class LayeredLexer extends DelegateLexer {
     return isLayerActive() ? myCurrentLayerLexer.getTokenEnd() : super.getTokenEnd();
   }
 
+  @Override
   public void advance() {
     if (myState == IN_LAYER_LEXER_FINISHED_STATE){
       myState = super.getState();
@@ -151,10 +157,12 @@ public class LayeredLexer extends DelegateLexer {
     myState = isLayerActive() ? IN_LAYER_STATE : super.getState();
   }
 
+  @Override
   public LexerPosition getCurrentPosition() {
     return new LexerPositionImpl(getTokenStart(), getState());
   }
 
+  @Override
   public void restore(LexerPosition position) {
     start(getBufferSequence(), position.getOffset(), getBufferEnd(), position.getState());
   }

@@ -48,6 +48,7 @@ public abstract class TextFieldWithAutoCompletionListProvider<T> implements Comp
   @Nullable
   protected abstract String getTypeText(@NotNull final T item);
 
+  @Override
   public abstract int compare(T item1, T item2);
 
   protected TextFieldWithAutoCompletionListProvider(@Nullable final Collection<T> variants) {

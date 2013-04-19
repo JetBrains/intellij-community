@@ -56,17 +56,19 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
     mySingleFileMode=singleFileMode;
   }
 
+  @Override
   public ArrayList<HighlightedRegion> getHighlightedRegions(){
     return myHighlightedRegions;
   }
 
+  @Override
   public Collection<AbstractTreeNode> getChildrenImpl() {
     try {
       if (!mySingleFileMode) {
         return createGeneralList();
       } else {
         return createListForSingleFile();
-  
+
       }
     }
     catch (IndexNotReadyException e) {
@@ -156,6 +158,7 @@ public final class TodoFileNode extends PsiFileNode implements HighlightedRegion
     return myBuilder.getTodoTreeStructure().getTodoFilter();
   }
 
+  @Override
   protected void updateImpl(PresentationData data) {
     super.updateImpl(data);
     String newName;

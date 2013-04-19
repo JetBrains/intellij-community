@@ -72,6 +72,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.actions.ViewOfflineResultsAction");
   @NonNls private static final String XML_EXTENSION = "xml";
 
+  @Override
   public void update(AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final Project project = event.getData(PlatformDataKeys.PROJECT);
@@ -79,6 +80,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
     presentation.setVisible(ActionPlaces.MAIN_MENU.equals(event.getPlace()) && !PlatformUtils.isAppCode());
   }
 
+  @Override
   public void actionPerformed(AnActionEvent event) {
     final Project project = event.getData(PlatformDataKeys.PROJECT);
 
@@ -104,6 +106,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
       new HashMap<String, Map<String, Set<OfflineProblemDescriptor>>>();
     final String [] profileName = new String[1];
     final Runnable process = new Runnable() {
+      @Override
       public void run() {
         final VirtualFile[] files = virtualFile.getChildren();
         try {
@@ -114,6 +117,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
             if (shortName.equals(InspectionApplication.DESCRIPTIONS)) {
               profileName[0] = ApplicationManager.getApplication().runReadAction(
                   new Computable<String>() {
+                    @Override
                     @Nullable
                     public String compute() {
                       return OfflineViewParseUtil.parseProfileName(LoadTextUtil.loadText(inspectionFile).toString());
@@ -124,6 +128,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
             else if (XML_EXTENSION.equals(extension)) {
               resMap.put(shortName, ApplicationManager.getApplication().runReadAction(
                   new Computable<Map<String, Set<OfflineProblemDescriptor>>>() {
+                    @Override
                     public Map<String, Set<OfflineProblemDescriptor>> compute() {
                       return OfflineViewParseUtil.parse(LoadTextUtil.loadText(inspectionFile).toString());
                     }
@@ -134,6 +139,7 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
         }
         catch (final Exception e) {  //all parse exceptions
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               Messages.showInfoMessage(e.getMessage(), InspectionsBundle.message("offline.view.parse.exception.title"));
             }
@@ -143,8 +149,10 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
       }
     };
     ProgressManager.getInstance().runProcessWithProgressAsynchronously(project, InspectionsBundle.message("parsing.inspections.dump.progress.title"), process, new Runnable() {
+      @Override
       public void run() {
         SwingUtilities.invokeLater(new Runnable(){
+          @Override
           public void run() {
             final String name = profileName[0];
             showOfflineView(project, name, resMap,
@@ -178,14 +186,17 @@ public class ViewOfflineResultsAction extends AnAction implements DumbAware {
     }
     else {
       inspectionProfile = new InspectionProfileImpl(profileName != null ? profileName : "Server Side") {
+        @Override
         public boolean isToolEnabled(final HighlightDisplayKey key, PsiElement element) {
           return resMap.containsKey(key.toString());
         }
 
+        @Override
         public HighlightDisplayLevel getErrorLevel(@NotNull final HighlightDisplayKey key, PsiElement element) {
           return ((InspectionProfile)InspectionProfileManager.getInstance().getRootProfile()).getErrorLevel(key, element);
         }
 
+        @Override
         public boolean isEditable() {
           return false;
         }

@@ -63,7 +63,7 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
       if (tooltipObject == null) continue;
       if (tooltipObject instanceof HighlightInfo) {
         HighlightInfo info = (HighlightInfo)tooltipObject;
-        if (info.toolTip != null && tooltips.add(info.toolTip)) {
+        if (info.getToolTip() != null && tooltips.add(info.getToolTip())) {
           infos.add(info);
         }
       }
@@ -86,15 +86,15 @@ public class DaemonTooltipRendererProvider implements ErrorStripTooltipRendererP
         public int compare(final HighlightInfo o1, final HighlightInfo o2) {
           int i = SeverityRegistrar.getInstance(myProject).compare(o2.getSeverity(), o1.getSeverity());
           if (i != 0) return i;
-          return o1.toolTip.compareTo(o2.toolTip);
+          return o1.getToolTip().compareTo(o2.getToolTip());
         }
       });
       final HighlightInfoComposite composite = new HighlightInfoComposite(infos);
       if (bigRenderer == null) {
-        bigRenderer = new MyRenderer(UIUtil.convertSpace2Nbsp(composite.toolTip), new Object[] {highlighters});
+        bigRenderer = new MyRenderer(UIUtil.convertSpace2Nbsp(composite.getToolTip()), new Object[] {highlighters});
       }
       else {
-        final LineTooltipRenderer renderer = new MyRenderer(UIUtil.convertSpace2Nbsp(composite.toolTip), new Object[] {highlighters});
+        final LineTooltipRenderer renderer = new MyRenderer(UIUtil.convertSpace2Nbsp(composite.getToolTip()), new Object[] {highlighters});
         renderer.addBelow(bigRenderer.getText());
         bigRenderer = renderer;
       }

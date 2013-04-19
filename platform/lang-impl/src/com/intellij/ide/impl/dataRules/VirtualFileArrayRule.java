@@ -39,6 +39,7 @@ import java.util.ArrayList;
 import java.util.HashSet;
 
 public class VirtualFileArrayRule implements GetDataRule {
+  @Override
   public Object getData(final DataProvider dataProvider) {
     // Try to detect multiselection.
 

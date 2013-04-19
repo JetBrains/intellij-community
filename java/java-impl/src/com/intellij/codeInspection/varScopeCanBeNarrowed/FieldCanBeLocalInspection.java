@@ -74,7 +74,7 @@ public class FieldCanBeLocalInspection extends BaseLocalInspectionTool {
   }
 
   @Override
-  public void writeSettings(Element node) throws WriteExternalException {
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (!EXCLUDE_ANNOS.isEmpty()) {
       super.writeSettings(node);
     }

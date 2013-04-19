@@ -31,5 +31,6 @@ public abstract class ActiveRunnable extends ComparableObject.Impl {
     super(objects);
   }
 
+  @NotNull
   public abstract ActionCallback run();
 }

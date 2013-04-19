@@ -30,6 +30,7 @@ public class FilterPattern extends ObjectPattern<Object,FilterPattern> {
 
   public FilterPattern(@Nullable final ElementFilter filter) {
     super(new InitialPatternCondition<Object>(Object.class) {
+      @Override
       public boolean accepts(@Nullable final Object o, final ProcessingContext context) {
         return filter == null ||
                o != null &&

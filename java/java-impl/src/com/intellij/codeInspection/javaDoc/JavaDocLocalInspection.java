@@ -26,6 +26,7 @@ import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.impl.source.jsp.jspJava.JspHolderMethod;
 import com.intellij.psi.javadoc.*;
 import com.intellij.psi.util.InheritanceUtil;
+import com.intellij.psi.util.PropertyUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
@@ -70,6 +71,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     ourUniqueTags.add("serialData");
   }
 
+  private static final String IGNORE_ACCESSORS_ATTR_NAME = "IGNORE_ACCESSORS";
 
   public static class Options implements JDOMExternalizable {
     @NonNls public String ACCESS_JAVADOC_REQUIRED_FOR = NONE;
@@ -103,6 +105,11 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   public         String  myAdditionalJavadocTags  = "";
 
   private boolean myIgnoreEmptyDescriptions = false;
+  private boolean myIgnoreSimpleAccessors = false;
+
+  public void setIgnoreSimpleAccessors(boolean ignoreSimpleAccessors) {
+    myIgnoreSimpleAccessors = ignoreSimpleAccessors;
+  }
 
   private static final Logger LOG = Logger.getInstance("com.intellij.codeInspection.javaDoc.JavaDocLocalInspection");
 
@@ -266,6 +273,13 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
         }
       });
       add(ignorePointToItselfCheckBox, gc);
+      final JCheckBox ignoreSimpleAccessorsCheckBox = new JCheckBox("Ignore simple property accessors", myIgnoreSimpleAccessors);
+      ignoreSimpleAccessorsCheckBox.addActionListener(new ActionListener() {
+        public void actionPerformed(ActionEvent e) {
+          myIgnoreSimpleAccessors = ignoreSimpleAccessorsCheckBox.isSelected();
+        }
+      });
+      add(ignoreSimpleAccessorsCheckBox, gc);
     }
 
     public FieldPanel createAdditionalJavadocTagsPanel(){
@@ -292,6 +306,25 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
 
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
+  }
+
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
+    super.writeSettings(node);
+    if (myIgnoreSimpleAccessors) {
+      final Element option = new Element(IGNORE_ACCESSORS_ATTR_NAME);
+      option.setAttribute("value", String.valueOf(true));
+      node.addContent(option);
+    }
+  }
+
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
+    super.readSettings(node);
+    final Element ignoreAccessorsTag = node.getChild(IGNORE_ACCESSORS_ATTR_NAME);
+    if (ignoreAccessorsTag != null) {
+      myIgnoreSimpleAccessors = Boolean.parseBoolean(ignoreAccessorsTag.getAttributeValue("value"));
+    }
   }
 
   private static ProblemDescriptor createDescriptor(@NotNull PsiElement element, String template, InspectionManager manager,
@@ -507,6 +540,9 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
     if (IGNORE_DEPRECATED && (psiMethod.isDeprecated() || psiMethod.getContainingClass().isDeprecated())) {
       return null;
     }
+    if (myIgnoreSimpleAccessors && PropertyUtil.isSimplePropertyAccessor(psiMethod)) {
+      return null;
+    }
     PsiDocComment docComment = psiMethod.getDocComment();
     final PsiMethod[] superMethods = psiMethod.findSuperMethods();
     final boolean required = isJavaDocRequired(psiMethod);
@@ -617,7 +653,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
                                             InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>@param " + valueElement.getText() + "</code>"),
                                             manager, isOnTheFly));
             }
-  
+
           }
         }
       }

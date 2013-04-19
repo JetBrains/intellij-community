@@ -40,6 +40,7 @@ public abstract class BrowseModuleValueActionListener<T extends JComponent> impl
     myField.setButtonEnabled(!myProject.isDefault());
   }
 
+  @Override
   public void actionPerformed(final ActionEvent e) {
     final String text = showDialog();
     if (text != null) ((TextAccessor)myField).setText(text);

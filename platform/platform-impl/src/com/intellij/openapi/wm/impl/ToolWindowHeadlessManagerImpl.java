@@ -315,26 +315,31 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return Collections.emptyList();
     }
 
+    @NotNull
     @Override
     public String getCloseActionName() {
       return "close";
     }
 
+    @NotNull
     @Override
     public String getCloseAllButThisActionName() {
       return "closeallbutthis";
     }
 
+    @NotNull
     @Override
     public String getPreviousContentActionName() {
       return "previous";
     }
 
+    @NotNull
     @Override
     public String getNextContentActionName() {
       return "next";
     }
 
+    @NotNull
     @Override
     public JComponent getComponent() {
       return new JLabel();
@@ -402,6 +407,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       return myContents.remove(content);
     }
 
+    @NotNull
     @Override
     public ActionCallback removeContent(@NotNull Content content, boolean dispose, boolean trackFocus, boolean implicitFocus) {
       return new ActionCallback.Done();
@@ -430,6 +436,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
       mySelected = content;
     }
 
+    @NotNull
     @Override
     public ActionCallback setSelectedContentCB(@NotNull Content content) {
       return new ActionCallback.Done();
@@ -439,6 +446,7 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setSelectedContent(@NotNull final Content content, final boolean requestFocus) {
     }
 
+    @NotNull
     @Override
     public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus) {
       return new ActionCallback.Done();
@@ -448,16 +456,19 @@ public class ToolWindowHeadlessManagerImpl extends ToolWindowManagerEx {
     public void setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus) {
     }
 
+    @NotNull
     @Override
     public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus) {
       return new ActionCallback.Done();
     }
 
+    @NotNull
     @Override
     public ActionCallback setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus, boolean implicit) {
       return new ActionCallback.Done();
     }
 
+    @NotNull
     @Override
     public ActionCallback requestFocus(@Nullable final Content content, final boolean forced) {
       return new ActionCallback.Done();

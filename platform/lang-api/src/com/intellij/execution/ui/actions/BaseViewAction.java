@@ -26,6 +26,7 @@ import org.jetbrains.annotations.Nullable;
 
 public abstract class BaseViewAction extends DumbAwareAction {
 
+  @Override
   public final void update(final AnActionEvent e) {
     ViewContext context = getViewFacade(e);
     Content[] content = getContent(e);
@@ -55,13 +56,14 @@ public abstract class BaseViewAction extends DumbAwareAction {
 
   }
 
+  @Override
   public final void actionPerformed(final AnActionEvent e) {
     actionPerformed(e, getViewFacade(e), getContent(e));
   }
 
 
   protected abstract void actionPerformed(AnActionEvent e, ViewContext context, Content[] content);
-  
+
 
   @Nullable
   private ViewContext getViewFacade(final AnActionEvent e) {

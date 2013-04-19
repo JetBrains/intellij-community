@@ -61,31 +61,38 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     myProject = psiElement.getProject();
 
     myPsiTreeChangeAdapter = new PsiTreeChangeAdapter() {
+      @Override
       public void childAdded(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void childRemoved(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void childReplaced(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
+      @Override
       public void childMoved(@NotNull PsiTreeChangeEvent event) {
         childrenChanged(event);
       }
 
       final Alarm myAlarm = new Alarm();
+      @Override
       public void childrenChanged(@NotNull PsiTreeChangeEvent event) {
         myAlarm.cancelAllRequests();
         myAlarm.addRequest(new Runnable(){
+          @Override
           public void run() {
             if (myProject.isDisposed()) return;
             if (myBaseStructureViewDescriptor != null && ((StructureViewComponent)myBaseStructureViewDescriptor.structureView).getTree() == null) return;
             if (!myVirtualFile.isValid()) return;
             ApplicationManager.getApplication().runReadAction(new Runnable(){
+              @Override
               public void run() {
                 final TemplateLanguageFileViewProvider provider = getViewProvider();
                 if (provider == null) return;
@@ -179,6 +186,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeAdapter);
   }
 
+  @Override
   @NotNull
   public StructureView createStructureView(FileEditor fileEditor, Project project) {
     myFileEditor = fileEditor;
@@ -206,6 +214,7 @@ public abstract class TemplateLanguageStructureViewBuilder implements StructureV
 
     StructureViewComposite.StructureViewDescriptor[] array = viewDescriptors.toArray(new StructureViewComposite.StructureViewDescriptor[viewDescriptors.size()]);
     myStructureViewComposite = new StructureViewComposite(array){
+      @Override
       public void dispose() {
         removeBaseLanguageListener();
         super.dispose();

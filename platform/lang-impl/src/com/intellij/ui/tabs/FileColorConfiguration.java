@@ -111,6 +111,7 @@ class FileColorConfiguration implements Cloneable {
     return result;
   }
 
+  @Override
   public FileColorConfiguration clone() throws CloneNotSupportedException {
     final FileColorConfiguration result = new FileColorConfiguration();
 

@@ -79,6 +79,7 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
     return EditorColorsManager.getInstance().getGlobalScheme().getAttributes(CodeInsightColors.TODO_DEFAULT_ATTRIBUTES).clone();
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     String icon = element.getAttributeValue(ATTRIBUTE_ICON,ICON_DEFAULT);
 
@@ -108,6 +109,7 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     String icon;
     if (myIcon == AllIcons.General.TodoDefault){
@@ -159,6 +161,7 @@ public class TodoAttributes implements JDOMExternalizable, Cloneable {
   }
 
 
+  @Override
   public TodoAttributes clone() {
     try {
       TextAttributes textAttributes = myTextAttributes.clone();

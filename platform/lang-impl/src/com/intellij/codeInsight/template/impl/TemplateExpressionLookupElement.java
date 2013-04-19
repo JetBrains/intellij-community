@@ -63,6 +63,7 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
   void handleTemplateInsert(List<? extends LookupElement> elements) {
     final InsertionContext context = createInsertionContext(this, myState.getPsiFile(), elements, myState.getEditor());
     new WriteCommandAction(context.getProject()) {
+      @Override
       protected void run(Result result) throws Throwable {
         handleInsert(context);
       }

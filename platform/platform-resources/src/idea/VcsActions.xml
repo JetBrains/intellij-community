@@ -122,6 +122,11 @@
       <reference ref="VersionControlsGroup"/>
     </group>
 
+    <!-- Alternative action presentations for the UnversionedViewDialog. Icon is the difference.  -->
+    <action id="ChangesView.AddUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
+            icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" />
+    <action id="ChangesView.DeleteUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.DeleteUnversionedFilesAction" />
+
     <group id="ShelvedChangesPopupMenu">
       <action id="ShelvedChanges.Unshelve" class="com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction"/>
       <action id="ShelveChanges.UnshelveWithDialog" class="com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction"

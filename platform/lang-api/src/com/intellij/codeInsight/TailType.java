@@ -57,6 +57,7 @@ public abstract class TailType {
   }
 
   public static final TailType UNKNOWN = new TailType(){
+    @Override
     public int processTail(final Editor editor, final int tailOffset) {
       return tailOffset;
     }
@@ -68,6 +69,7 @@ public abstract class TailType {
   };
 
   public static final TailType NONE = new TailType(){
+    @Override
     public int processTail(final Editor editor, final int tailOffset) {
       return tailOffset;
     }
@@ -81,6 +83,7 @@ public abstract class TailType {
   @Deprecated public static final TailType EXCLAMATION = new CharTailType('!');
 
   public static final TailType COMMA = new TailType(){
+    @Override
     public int processTail(final Editor editor, int tailOffset) {
       CommonCodeStyleSettings styleSettings = getLocalCodeStyleSettings(editor, tailOffset);
       if (styleSettings.SPACE_BEFORE_COMMA) tailOffset = insertChar(editor, tailOffset, ' ');
@@ -149,6 +152,7 @@ public abstract class TailType {
 
   public static final TailType CASE_COLON = new CharTailType(':');
   public static final TailType COND_EXPR_COLON = new TailType(){
+    @Override
     public int processTail(final Editor editor, final int tailOffset) {
       Document document = editor.getDocument();
       int textLength = document.getTextLength();
@@ -177,6 +181,7 @@ public abstract class TailType {
       return CodeStyleSettingsManager.getSettings(editor.getProject()).SPACE_AROUND_ASSIGNMENT_OPERATORS;
     }
 
+    @Override
     public int processTail(final Editor editor, int tailOffset) {
       Document document = editor.getDocument();
       int textLength = document.getTextLength();

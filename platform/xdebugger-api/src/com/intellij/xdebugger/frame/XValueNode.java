@@ -53,6 +53,11 @@ public interface XValueNode extends Obsolescent {
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);
 
   /**
+   * Setup presentation of the grouping value (value as container)
+   */
+  void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String type, boolean expand);
+
+  /**
    * The same as {@link #setPresentation(javax.swing.Icon, String, String, boolean)} but allows to change default processing of
    * {@code value} parameter using custom {@code valuePresenter} function. By default only invisible characters like tabs or line separators
    * are escaped in the value. {@code valuePresenter} function doesn't affect 'Copy Value' action. It can be used to escape additional

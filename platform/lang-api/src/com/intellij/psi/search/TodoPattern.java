@@ -51,6 +51,7 @@ public class TodoPattern implements Cloneable, JDOMExternalizable {
     myAttributes = attributes;
   }
 
+  @Override
   public TodoPattern clone(){
     try{
       TodoAttributes attributes = myAttributes.clone();
@@ -94,6 +95,7 @@ public class TodoPattern implements Cloneable, JDOMExternalizable {
     return myIndexPattern.getPattern();
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     myAttributes = new TodoAttributes();
     myAttributes.readExternal(element);
@@ -104,6 +106,7 @@ public class TodoPattern implements Cloneable, JDOMExternalizable {
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     myAttributes.writeExternal(element);
     element.setAttribute(CASE_SENS_ATT, Boolean.toString(myIndexPattern.isCaseSensitive()));

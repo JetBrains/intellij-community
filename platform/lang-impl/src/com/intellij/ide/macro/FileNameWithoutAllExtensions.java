@@ -21,14 +21,17 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class FileNameWithoutAllExtensions extends FileNameMacro {
+  @Override
   public String getName() {
     return "FileNameWithoutAllExtensions";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.file.name.without.all.extensions");
   }
 
+  @Override
   public String expand(DataContext dataContext) {
     VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (file == null) {

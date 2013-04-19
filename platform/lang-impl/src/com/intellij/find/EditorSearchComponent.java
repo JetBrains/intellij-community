@@ -41,10 +41,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFocusManager;
-import com.intellij.ui.IdeBorderFactory;
-import com.intellij.ui.LightColors;
-import com.intellij.ui.SearchTextField;
-import com.intellij.ui.TextComponentUndoProvider;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.labels.LinkLabel;
@@ -90,27 +87,30 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     return mySearchField;
   }
 
-  private JSplitPane mySplitPane = new JSplitPane(JSplitPane.HORIZONTAL_SPLIT);
+  private JBSplitter mySplitPane = new JBSplitter(false);
   private JPanel myLeftComponent = new JPanel(new BorderLayout());
   private JPanel myRightComponent = new JPanel(new BorderLayout());
 
   {
-    mySplitPane.setOpaque(false);
     mySplitPane.setBorder(IdeBorderFactory.createEmptyBorder(1, 0, 2, 0));
-    mySplitPane.setContinuousLayout(true);
+    mySplitPane.setHonorComponentsMinimumSize(true);
+    mySplitPane.setProportion(0.25f);
+    mySplitPane.setAndLoadSplitterProportionKey("FindSplitterProportion");
+    mySplitPane.setOpaque(false);
+    mySplitPane.getDivider().setOpaque(false);
     myLeftComponent.setOpaque(false);
     myRightComponent.setOpaque(false);
 
-    mySplitPane.setLeftComponent(myLeftComponent);
-    mySplitPane.setRightComponent(myRightComponent);
+    mySplitPane.setFirstComponent(myLeftComponent);
+    mySplitPane.setSecondComponent(myRightComponent);
     add(mySplitPane, BorderLayout.NORTH);
   }
 
   private JTextComponent mySearchField;
-  private SearchTextField mySearchSearchTextField;
+  private JComponent mySearchRootComponent;
 
   private JTextComponent myReplaceField;
-  private SearchTextField myReplaceSearchTextField;
+  private JComponent myReplaceRootComponent;
 
   private MyUndoProvider mySearchUndo;
   private MyUndoProvider myReplaceUndo;
@@ -305,11 +305,13 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
       mySearchUndo.dispose();
     }
 
-    Ref<SearchTextField> ref = Ref.create();
+    Ref<JComponent> ref = Ref.create();
     mySearchField = createTextField(BorderLayout.NORTH, ref);
-    mySearchSearchTextField = ref.get();
-    if (mySearchSearchTextField != null) {
-      setupHistoryToSearchField(mySearchSearchTextField, FindSettings.getInstance().getRecentFindStrings());
+    mySearchRootComponent = ref.get();
+
+    SearchTextField searchTextField = (ref.get() instanceof SearchTextField) ? (SearchTextField)ref.get() : null;
+    if (searchTextField != null) {
+      setupHistoryToSearchField(searchTextField, FindSettings.getInstance().getRecentFindStrings());
     }
 
     mySearchUndo = new MyUndoProvider(mySearchField);
@@ -508,6 +510,8 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     if ((myFindModel.isMultiline() && mySearchField instanceof JTextField) || (!myFindModel.isMultiline() && mySearchField instanceof JTextArea)) {
       myLeftComponent.removeAll();
       myRightComponent.removeAll();
+      myReplaceRootComponent = null;
+      mySearchRootComponent = null;
       configureLeadPanel();
       if (myReplacementPane != null) {
         myReplacementPane = null;
@@ -525,7 +529,13 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     if (myFindModel.isReplaceState() && myReplacementPane == null) {
       configureReplacementPane();
     } else if (!myFindModel.isReplaceState() && myReplacementPane != null) {
-      myLeftComponent.remove(myReplaceField);
+
+      if (myReplaceRootComponent != null) {
+        myLeftComponent.remove(myReplaceRootComponent);
+        myReplaceRootComponent = null;
+        myReplaceField = null;
+      }
+
       myRightComponent.remove(myReplacementPane);
       myReplacementPane = null;
     }
@@ -562,11 +572,13 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
       myReplaceUndo.dispose();
     }
 
-    Ref<SearchTextField> ref = Ref.create();
+    Ref<JComponent> ref = Ref.create();
     myReplaceField = createTextField(BorderLayout.SOUTH, ref);
-    myReplaceSearchTextField = ref.get();
-    if (myReplaceSearchTextField != null) {
-      setupHistoryToSearchField(myReplaceSearchTextField, FindSettings.getInstance().getRecentReplaceStrings());
+    myReplaceRootComponent = ref.get();
+
+    SearchTextField searchTextField = ref.get() instanceof SearchTextField ? (SearchTextField)ref.get() : null;
+    if (searchTextField != null) {
+      setupHistoryToSearchField(searchTextField, FindSettings.getInstance().getRecentReplaceStrings());
     }
     myReplaceUndo = new MyUndoProvider(myReplaceField);
 
@@ -719,7 +731,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     }
   }
 
-  private JTextComponent createTextField(Object constraint, Ref<SearchTextField> searchTextField) {
+  private JTextComponent createTextField(Object constraint, Ref<JComponent> componentRef) {
     final JTextComponent editorTextField;
     if (myFindModel.isMultiline()) {
       editorTextField = new JTextArea("") {
@@ -735,6 +747,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
                                                      ScrollPaneConstants.VERTICAL_SCROLLBAR_NEVER,
                                                      ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
       myLeftComponent.add(scrollPane, constraint);
+      componentRef.set(scrollPane);
     }
     else {
       SearchTextField stf = new SearchTextField(true);
@@ -744,7 +757,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
         editorTextField.setOpaque(false);
       }
       myLeftComponent.add(stf, constraint);
-      searchTextField.set(stf);
+      componentRef.set(stf);
     }
     editorTextField.setMinimumSize(new Dimension(200, -1));
     editorTextField.putClientProperty("AuxEditorComponent", Boolean.TRUE);
@@ -793,13 +806,13 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     if (text.length() > 0) {
       if (textField == mySearchField) {
         FindSettings.getInstance().addStringToFind(text);
-        if (mySearchSearchTextField != null) {
-          mySearchSearchTextField.addCurrentTextToHistory();
+        if (mySearchRootComponent instanceof SearchTextField) {
+          ((SearchTextField)mySearchRootComponent).addCurrentTextToHistory();
         }
       } else {
         FindSettings.getInstance().addStringToReplace(text);
-        if (myReplaceSearchTextField != null) {
-          myReplaceSearchTextField.addCurrentTextToHistory();
+        if (myReplaceRootComponent instanceof SearchTextField) {
+          ((SearchTextField)myReplaceRootComponent).addCurrentTextToHistory();
         }
       }
     }

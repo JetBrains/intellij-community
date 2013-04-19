@@ -55,6 +55,7 @@ public class IntentionActionBean extends CustomLoadingExtensionPointBean {
       final String[] keys = categoryKey.split("/");
       if (keys.length > 1) {
         return ContainerUtil.map2Array(keys, String.class, new Function<String, String>() {
+          @Override
           public String fun(final String s) {
             return CommonBundle.message(bundle, s);
           }

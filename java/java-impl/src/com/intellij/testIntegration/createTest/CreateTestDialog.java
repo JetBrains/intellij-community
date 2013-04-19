@@ -447,8 +447,15 @@ public class CreateTestDialog extends DialogWrapper {
 
     final VirtualFile selectedRoot = new ReadAction<VirtualFile>() {
       protected void run(Result<VirtualFile> result) throws Throwable {
-        VirtualFile[] roots = ModuleRootManager.getInstance(myTargetModule).getSourceRoots();
-        if (roots.length == 0) return;
+        final HashSet<VirtualFile> testFolders = new HashSet<VirtualFile>();
+        CreateTestAction.checkForTestRoots(myTargetModule, testFolders);
+        VirtualFile[] roots;
+        if (testFolders.isEmpty()) {
+          roots = ModuleRootManager.getInstance(myTargetModule).getSourceRoots();
+          if (roots.length == 0) return;
+        } else {
+          roots = testFolders.toArray(new VirtualFile[testFolders.size()]); 
+        }
 
         if (roots.length == 1) {
           result.setResult(roots[0]);

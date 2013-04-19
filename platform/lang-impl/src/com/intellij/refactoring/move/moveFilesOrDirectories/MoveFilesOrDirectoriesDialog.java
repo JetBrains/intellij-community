@@ -77,19 +77,23 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTargetDirectoryField.getChildComponent();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     myNameLabel = JBLabelDecorator.createJBLabelDecorator().setBold(true);
 
@@ -130,7 +134,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
     if (psiElements.length == 1) {
       String text;
       if (psiElements[0] instanceof PsiFile) {
-        text = RefactoringBundle.message("move.file.0", 
+        text = RefactoringBundle.message("move.file.0",
                                          CopyFilesOrDirectoriesDialog.shortenPath(((PsiFile)psiElements[0]).getVirtualFile()));
       }
       else {
@@ -160,6 +164,7 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
     myHelpID = helpID;
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(myHelpID);
   }
@@ -168,13 +173,16 @@ public class MoveFilesOrDirectoriesDialog extends DialogWrapper {
     setOKActionEnabled(myTargetDirectoryField.getChildComponent().getText().length() > 0);
   }
 
+  @Override
   protected void doOKAction() {
     //myTargetDirectoryField.getChildComponent().addCurrentTextToHistory();
     RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_KEYS, myTargetDirectoryField.getChildComponent().getText());
     RefactoringSettings.getInstance().MOVE_SEARCH_FOR_REFERENCES_FOR_FILE = myCbSearchForReferences.isSelected();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         final Runnable action = new Runnable() {
+          @Override
           public void run() {
             String directoryName = myTargetDirectoryField.getChildComponent().getText().replace(File.separatorChar, '/');
             try {

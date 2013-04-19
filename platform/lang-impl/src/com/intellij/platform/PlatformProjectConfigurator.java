@@ -32,11 +32,13 @@ import org.jetbrains.annotations.NotNull;
  * @author yole
  */
 public class PlatformProjectConfigurator implements DirectoryProjectConfigurator {
+  @Override
   public void configureProject(final Project project, @NotNull final VirtualFile baseDir, final Ref<Module> moduleRef) {
     final ModuleManager moduleManager = ModuleManager.getInstance(project);
     final Module[] modules = moduleManager.getModules();
     if (modules.length == 0) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           String moduleName = baseDir.getName().replace(":", "");     // correct module name when opening root of drive as project (RUBY-5181)
           String imlName = baseDir.getPath() + "/.idea/" + moduleName + ModuleFileType.DOT_DEFAULT_EXTENSION;

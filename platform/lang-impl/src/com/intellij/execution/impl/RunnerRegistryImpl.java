@@ -32,11 +32,13 @@ import java.util.List;
 public class RunnerRegistryImpl extends RunnerRegistry {
   private final List<ProgramRunner> myRunnersOrder = new ArrayList<ProgramRunner>();
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "RunnerRegistryImpl";
   }
 
+  @Override
   public boolean hasRunner(@NotNull final String executorId, @NotNull final RunProfile settings) {
     final ProgramRunner[] runners = getRegisteredRunners();
     for (final ProgramRunner runner : runners) {
@@ -48,6 +50,7 @@ public class RunnerRegistryImpl extends RunnerRegistry {
     return false;
   }
 
+  @Override
   public ProgramRunner getRunner(final String executorId, final RunProfile settings) {
     final ProgramRunner[] runners = getRegisteredRunners();
     for (final ProgramRunner runner : runners) {
@@ -59,6 +62,7 @@ public class RunnerRegistryImpl extends RunnerRegistry {
     return null;
   }
 
+  @Override
   public void initComponent() {
     final ProgramRunner[] runners = Extensions.getExtensions(ProgramRunner.PROGRAM_RUNNER_EP);
     for (ProgramRunner runner : runners) {
@@ -66,6 +70,7 @@ public class RunnerRegistryImpl extends RunnerRegistry {
     }
   }
 
+  @Override
   public synchronized void disposeComponent() {
     while (myRunnersOrder.size() > 0) {
       final ProgramRunner runner = myRunnersOrder.get(myRunnersOrder.size() - 1);
@@ -82,10 +87,12 @@ public class RunnerRegistryImpl extends RunnerRegistry {
     myRunnersOrder.remove(runner);
   }
 
+  @Override
   public synchronized ProgramRunner[] getRegisteredRunners() {
     return myRunnersOrder.toArray(new ProgramRunner[myRunnersOrder.size()]);
   }
 
+  @Override
   @Nullable
   public ProgramRunner findRunnerById(String id) {
     ProgramRunner[] registeredRunners = getRegisteredRunners();

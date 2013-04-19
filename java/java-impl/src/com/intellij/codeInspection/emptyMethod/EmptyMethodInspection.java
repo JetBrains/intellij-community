@@ -201,10 +201,10 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext context,
                                                 final ProblemDescriptionsProcessor descriptionsProcessor) {
      manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefElement && descriptionsProcessor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(final RefMethod refMethod) {
+            @Override public void visitMethod(@NotNull final RefMethod refMethod) {
               context.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
                   PsiCodeBlock body = derivedMethod.getBody();
@@ -241,7 +241,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
   }
 
   @Override
-  public void writeSettings(Element node) throws WriteExternalException {
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (!EXCLUDE_ANNOS.isEmpty()) {
       super.writeSettings(node);
     }

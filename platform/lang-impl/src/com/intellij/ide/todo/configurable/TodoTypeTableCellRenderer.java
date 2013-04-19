@@ -25,6 +25,7 @@ final class TodoTypeTableCellRenderer extends DefaultTableCellRenderer{
     setHorizontalAlignment(JLabel.CENTER);
   }
 
+  @Override
   public Component getTableCellRendererComponent(
     JTable table,
     Object value,

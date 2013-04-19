@@ -102,10 +102,12 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       .showInputDialog(myProject, IdeBundle.message("action.bookmark.edit.description.dialog.message"),
                        IdeBundle.message("action.bookmark.edit.description.dialog.title"), Messages.getQuestionIcon(),
                        bookmark.getDescription(), new InputValidator() {
+        @Override
         public boolean checkInput(String inputString) {
           return true;
         }
 
+        @Override
         public boolean canClose(String inputString) {
           return true;
         }
@@ -431,7 +433,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
       e.consume();
     }
   }
-  
+
   private class MyDocumentListener extends DocumentAdapter {
     @Override
     public void documentChanged(DocumentEvent e) {
@@ -444,7 +446,7 @@ public class BookmarkManager extends AbstractProjectComponent implements Persist
           bookmarksToRemove.add(bookmark);
         }
       }
-      
+
       if (bookmarksToRemove != null) {
         for (Bookmark bookmark : bookmarksToRemove) {
           removeBookmark(bookmark);

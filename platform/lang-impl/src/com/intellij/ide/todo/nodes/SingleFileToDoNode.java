@@ -34,11 +34,13 @@ public class SingleFileToDoNode extends BaseToDoNode<PsiFile>{
     super(project, value, builder);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     return new ArrayList<AbstractTreeNode>(Collections.singleton(myFileNode));
   }
 
+  @Override
   public void update(PresentationData presentation) {
   }
 
@@ -46,10 +48,12 @@ public class SingleFileToDoNode extends BaseToDoNode<PsiFile>{
     return myFileNode;
   }
 
+  @Override
   public int getFileCount(final PsiFile val) {
     return 1;
   }
 
+  @Override
   public int getTodoItemCount(final PsiFile val) {
     return getTreeStructure().getTodoItemCount(val);
   }

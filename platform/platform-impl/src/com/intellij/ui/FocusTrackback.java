@@ -533,6 +533,7 @@ public class FocusTrackback {
 
 
   private class MyFocusCommand extends FocusCommand {
+    @NotNull
     public ActionCallback run() {
       return _restoreFocus();
     }

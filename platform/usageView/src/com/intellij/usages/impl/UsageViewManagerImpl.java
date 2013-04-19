@@ -412,7 +412,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
 
               if (notFoundActions.isEmpty()) {
                 notifyByFindBalloon(createGotToOptionsListener(mySearchFor),
-                                    MessageType.INFO, myProcessPresentation, message, createOptionsHtml());
+                                    MessageType.INFO, myProcessPresentation, StringUtil.escapeXml(message), createOptionsHtml());
                 findStartedBalloonShown.set(false);
               }
               else {

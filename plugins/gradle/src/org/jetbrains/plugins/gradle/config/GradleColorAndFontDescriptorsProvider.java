@@ -1,10 +1,11 @@
 package org.jetbrains.plugins.gradle.config;
 
+import com.intellij.openapi.externalSystem.settings.ExternalSystemTextAttributes;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.options.colors.ColorAndFontDescriptorsProvider;
 import com.intellij.openapi.options.colors.ColorDescriptor;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 
 /**
  * Provides support for defining gradle-specific color settings.
@@ -17,32 +18,32 @@ import org.jetbrains.plugins.gradle.util.GradleBundle;
 public class GradleColorAndFontDescriptorsProvider implements ColorAndFontDescriptorsProvider {
 
   public static final AttributesDescriptor CONFLICT = new AttributesDescriptor(
-    GradleBundle.message("gradle.sync.change.type.conflict"),
-    GradleTextAttributes.CHANGE_CONFLICT
+    ExternalSystemBundle.message("gradle.sync.change.type.conflict"),
+    ExternalSystemTextAttributes.CHANGE_CONFLICT
   );
 
   public static final AttributesDescriptor GRADLE_LOCAL = new AttributesDescriptor(
-    GradleBundle.message("gradle.sync.change.type.gradle"),
-    GradleTextAttributes.GRADLE_LOCAL_CHANGE
+    ExternalSystemBundle.message("gradle.sync.change.type.gradle"),
+    ExternalSystemTextAttributes.EXTERNAL_SYSTEM_LOCAL_CHANGE
   );
 
   public static final AttributesDescriptor INTELLIJ_LOCAL = new AttributesDescriptor(
-    GradleBundle.message("gradle.sync.change.type.intellij"),
+    ExternalSystemBundle.message("gradle.sync.change.type.intellij"),
     //GradleBundle.message("gradle.sync.change.type.intellij", ApplicationNamesInfo.getInstance().getProductName()),
-    GradleTextAttributes.INTELLIJ_LOCAL_CHANGE
+    ExternalSystemTextAttributes.IDE_LOCAL_CHANGE
   );
 
   public static final AttributesDescriptor OUTDATED_ENTITY = new AttributesDescriptor(
-    GradleBundle.message("gradle.sync.change.type.changed.library.version"),
+    ExternalSystemBundle.message("gradle.sync.change.type.changed.library.version"),
     //GradleBundle.message("gradle.sync.change.type.intellij", ApplicationNamesInfo.getInstance().getProductName()),
-    GradleTextAttributes.OUTDATED_ENTITY
+    ExternalSystemTextAttributes.OUTDATED_ENTITY
   );
 
   public static final AttributesDescriptor NO_CHANGE = new AttributesDescriptor(
-    GradleBundle.message("gradle.sync.change.type.unchanged"),
-    GradleTextAttributes.NO_CHANGE
+    ExternalSystemBundle.message("gradle.sync.change.type.unchanged"),
+    ExternalSystemTextAttributes.NO_CHANGE
   );
-  
+
   public static final AttributesDescriptor[] DESCRIPTORS = {
     CONFLICT, GRADLE_LOCAL, INTELLIJ_LOCAL, OUTDATED_ENTITY, NO_CHANGE
   };
@@ -50,7 +51,7 @@ public class GradleColorAndFontDescriptorsProvider implements ColorAndFontDescri
   @NotNull
   @Override
   public String getDisplayName() {
-    return GradleBundle.message("gradle.name");
+    return ExternalSystemBundle.message("gradle.name");
   }
 
   @NotNull

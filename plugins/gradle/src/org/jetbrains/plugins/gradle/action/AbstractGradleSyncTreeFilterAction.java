@@ -7,16 +7,16 @@ import com.intellij.openapi.editor.colors.EditorColorsListener;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.externalSystem.ui.ExternalProjectStructureNodeFilter;
 import com.intellij.openapi.options.colors.AttributesDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ui.ColorIcon;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleSettings;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
-import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeFilter;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import com.intellij.openapi.externalSystem.ui.ExternalProjectStructureTreeModel;
+import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
@@ -28,8 +28,8 @@ import java.awt.*;
  */
 public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
 
-  @NotNull private final GradleProjectStructureNodeFilter myFilter;
-  @NotNull private final TextAttributesKey                myAttributesKey;
+  @NotNull private final ExternalProjectStructureNodeFilter myFilter;
+  @NotNull private final TextAttributesKey                  myAttributesKey;
 
   private Color   myColor;
   private boolean myIconChanged;
@@ -49,17 +49,17 @@ public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
 
   @Override
   public boolean isSelected(AnActionEvent e) {
-    final GradleProjectStructureTreeModel model = GradleUtil.getProjectStructureTreeModel(e.getDataContext());
+    final ExternalProjectStructureTreeModel model = GradleUtil.getProjectStructureTreeModel(e.getDataContext());
     if (model == null) {
       return false;
     }
-    
+
     return model.hasFilter(myFilter);
   }
 
   @Override
   public void setSelected(AnActionEvent e, boolean state) {
-    final GradleProjectStructureTreeModel treeModel = GradleUtil.getProjectStructureTreeModel(e.getDataContext());
+    final ExternalProjectStructureTreeModel treeModel = GradleUtil.getProjectStructureTreeModel(e.getDataContext());
     if (treeModel == null) {
       return;
     }
@@ -74,9 +74,9 @@ public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-    
+
     final Project project = PlatformDataKeys.PROJECT.getData(e.getDataContext());
-    if (project == null || StringUtil.isEmpty(GradleSettings.getInstance(project).getLinkedProjectPath())) {
+    if (project == null || StringUtil.isEmpty(GradleSettings.getInstance(project).getLinkedExternalProjectPath())) {
       e.getPresentation().setEnabled(false);
       return;
     }
@@ -90,7 +90,7 @@ public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
     }
   }
 
-  public static GradleProjectStructureNodeFilter createFilter(@NotNull TextAttributesKey key) {
+  public static ExternalProjectStructureNodeFilter createFilter(@NotNull TextAttributesKey key) {
     return new MyFilter(key);
   }
   
@@ -106,7 +106,7 @@ public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
     }
   }
   
-  private static class MyFilter implements GradleProjectStructureNodeFilter {
+  private static class MyFilter implements ExternalProjectStructureNodeFilter {
 
     @NotNull private final TextAttributesKey myKey;
 
@@ -115,7 +115,7 @@ public abstract class AbstractGradleSyncTreeFilterAction extends ToggleAction {
     }
 
     @Override
-    public boolean isVisible(@NotNull GradleProjectStructureNode<?> node) {
+    public boolean isVisible(@NotNull ProjectStructureNode<?> node) {
       return myKey.equals(node.getDescriptor().getAttributes());
     }
   }

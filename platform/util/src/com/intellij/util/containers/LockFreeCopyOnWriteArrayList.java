@@ -20,9 +20,9 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.concurrency.AtomicFieldUpdater;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.*;
-import java.util.concurrent.atomic.AtomicInteger;
 
 /**
  * This class is a
@@ -291,7 +291,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
   // Positional Access Operations
 
   @SuppressWarnings("unchecked")
-  private E get(Object[] a, int index) {
+  private E get(@NotNull Object[] a, int index) {
     return (E)a[index];
   }
 
@@ -331,14 +331,14 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
     return oldValue;
   }
 
-  private static Object[] createArraySet(Object[] elements, int index, Object element) {
+  @NotNull
+  private static Object[] createArraySet(@NotNull Object[] elements, int index, Object element) {
     int len = elements.length;
     Object[] newElements = Arrays.copyOf(elements, len, Object[].class);
     newElements[index] = element;
     return newElements;
   }
 
-  public static final AtomicInteger RETRIES = new AtomicInteger();
   /**
    * Appends the specified element to the end of this list.
    *
@@ -351,12 +351,12 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
       Object[] elements = array;
       Object[] newElements = createArrayAdd(elements, e);
       if (replaceArray(elements, newElements)) break;
-      logRetry();
     }
     return true;
   }
 
-  private Object[] createArrayAdd(Object[] elements, E e) {
+  @NotNull
+  private Object[] createArrayAdd(@NotNull Object[] elements, E e) {
     int len = elements.length;
     Object[] newElements = new Object[len + 1];
     if (len != 0) {
@@ -382,7 +382,8 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
     }
   }
 
-  private Object[] createArrayAdd(Object[] elements, int index, E element) {
+  @NotNull
+  private Object[] createArrayAdd(@NotNull Object[] elements, int index, E element) {
     int len = elements.length;
     if (index > len || index < 0) {
       throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + len);
@@ -416,12 +417,12 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
         oldValue = get(elements, index);
         break;
       }
-      logRetry();
     }
     return oldValue;
   }
 
-  private static Object[] createArrayRemove(Object[] elements, int index) {
+  @NotNull
+  private static Object[] createArrayRemove(@NotNull Object[] elements, int index) {
     int len = elements.length;
     int numMoved = len - index - 1;
     Object[] newElements = len == 1 ? ArrayUtilRt.EMPTY_OBJECT_ARRAY : new Object[len - 1];
@@ -455,17 +456,13 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
       if (newElements == null) {
         return false;
       }
-      logRetry();
       if (replaceArray(elements, newElements)) return true;
     }
   }
 
-  private void logRetry() {
-    //RETRIES.incrementAndGet();
-  }
-
   // null means not found
-  private static Object[] createArrayRemove(Object[] elements, Object o) {
+  @Nullable
+  private static Object[] createArrayRemove(@NotNull Object[] elements, Object o) {
     int len = elements.length;
     if (len == 0) {
       return null;
@@ -605,7 +602,8 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
   }
 
   // null means not found
-  private static Object[] createArrayRemoveAll(Object[] elements, @NotNull Collection<?> c) {
+  @Nullable
+  private static Object[] createArrayRemoveAll(@NotNull Object[] elements, @NotNull Collection<?> c) {
     int len = elements.length;
     if (len == 0) {
       return null;
@@ -650,7 +648,8 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
     }
   }
 
-  private static Object[] createArrayRetainAll(Object[] elements, @NotNull Collection<?> c) {
+  @Nullable
+  private static Object[] createArrayRetainAll(@NotNull Object[] elements, @NotNull Collection<?> c) {
     int len = elements.length;
     if (len == 0) {
       return null;
@@ -680,7 +679,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
    * @throws NullPointerException if the specified collection is null
    * @see #addIfAbsent(Object)
    */
-  public int addAllAbsent(Collection<? extends E> c) {
+  public int addAllAbsent(@NotNull Collection<? extends E> c) {
     Object[] cs = c.toArray();
     if (cs.length == 0) {
       return 0;
@@ -739,12 +738,12 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
     while (true) {
       Object[] elements = array;
       Object[] newElements = createArrayAddAll(elements, cs);
-      if (newElements == null) return false;
       if (replaceArray(elements, newElements)) return true;
     }
   }
 
-  private static Object[] createArrayAddAll(Object[] elements, Object[] cs) {
+  @NotNull
+  private static Object[] createArrayAddAll(@NotNull Object[] elements, @NotNull Object[] cs) {
     int len = elements.length;
     Object[] newElements = Arrays.copyOf(elements, len + cs.length, Object[].class);
     System.arraycopy(cs, 0, newElements, len, cs.length);
@@ -782,7 +781,8 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
     return true;
   }
 
-  private static Object[] createArrayAddAll(Object[] elements, int index, Object[] cs) {
+  @NotNull
+  private static Object[] createArrayAddAll(@NotNull Object[] elements, int index, @NotNull Object[] cs) {
     int len = elements.length;
     if (index > len || index < 0) {
       throw new IndexOutOfBoundsException("Index: " + index + ", Size: " + len);
@@ -811,6 +811,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
    *
    * @return a string representation of this list
    */
+  @NotNull
   public String toString() {
     return Arrays.toString(array);
   }
@@ -928,7 +929,7 @@ class LockFreeCopyOnWriteArrayList<E> implements List<E>, RandomAccess {
      */
     private int cursor;
 
-    private COWIterator(Object[] elements, int initialCursor) {
+    private COWIterator(@NotNull Object[] elements, int initialCursor) {
       cursor = initialCursor;
       snapshot = elements;
     }

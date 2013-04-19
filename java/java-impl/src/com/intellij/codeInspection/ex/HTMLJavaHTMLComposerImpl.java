@@ -27,6 +27,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.psi.*;
 import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
@@ -140,7 +141,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     }
     refElement.accept(new RefJavaVisitor() {
       @Override
-      public void visitClass(RefClass refClass) {
+      public void visitClass(@NotNull RefClass refClass) {
         if (refClass.isStatic()) {
           buf.append(InspectionsBundle.message("inspection.export.results.static"));
           buf.append(HTMLComposerImpl.NBSP);
@@ -154,7 +155,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
       }
 
       @Override
-      public void visitField(RefField field) {
+      public void visitField(@NotNull RefField field) {
         PsiField psiField = field.getElement();
         if (psiField != null) {
           if (field.isStatic()) {
@@ -173,7 +174,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
       }
 
       @Override
-      public void visitMethod(RefMethod method) {
+      public void visitMethod(@NotNull RefMethod method) {
         PsiMethod psiMethod = (PsiMethod)method.getElement();
         if (psiMethod != null) {
           PsiType returnType = psiMethod.getReturnType();
@@ -205,7 +206,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
       }
 
       @Override
-      public void visitFile(RefFile file) {
+      public void visitFile(@NotNull RefFile file) {
         final PsiFile psiFile = file.getElement();
         buf.append(HTMLComposerImpl.B_OPENING);
         buf.append(psiFile.getName());

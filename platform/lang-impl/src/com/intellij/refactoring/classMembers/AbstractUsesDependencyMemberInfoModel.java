@@ -30,12 +30,14 @@ public abstract class AbstractUsesDependencyMemberInfoModel<T extends Navigatabl
     super(new UsesMemberDependencyGraph<T, C, M>(aClass, superClass, recursive), ERROR);
     myClass = aClass;
     setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider<T, M>() {
+      @Override
       public String getTooltip(M memberInfo) {
         return ((UsesMemberDependencyGraph<T, C, M>) myMemberDependencyGraph).getElementTooltip(memberInfo.getMember());
       }
     });
   }
 
+  @Override
   public int checkForProblems(@NotNull M memberInfo) {
     final int problem = super.checkForProblems(memberInfo);
     return doCheck(memberInfo, problem);
@@ -47,10 +49,12 @@ public abstract class AbstractUsesDependencyMemberInfoModel<T extends Navigatabl
     setMemberDependencyGraph(new UsesMemberDependencyGraph<T, C, M>(myClass, superClass, false));
   }
 
+  @Override
   public boolean isCheckedWhenDisabled(M member) {
     return false;
   }
 
+  @Override
   public Boolean isFixedAbstract(M member) {
     return null;
   }

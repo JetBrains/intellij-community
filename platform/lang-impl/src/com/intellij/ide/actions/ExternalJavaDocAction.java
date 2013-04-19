@@ -44,6 +44,7 @@ public class ExternalJavaDocAction extends AnAction {
     setInjectedContext(true);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -68,11 +69,11 @@ public class ExternalJavaDocAction extends AnAction {
     PsiElement originalElement = getOriginalElement(context, editor);
     DocumentationManager.storeOriginalElement(project, originalElement, element);
     final DocumentationProvider provider = DocumentationManager.getProviderFromElement(element);
-    
+
     if (provider instanceof ExternalDocumentationHandler && ((ExternalDocumentationHandler)provider).handleExternal(element, originalElement)) {
       return;
     }
-    
+
     final List<String> urls = provider.getUrlFor(element, originalElement);
     if (urls != null && !urls.isEmpty()) {
       showExternalJavadoc(urls);
@@ -89,6 +90,7 @@ public class ExternalJavaDocAction extends AnAction {
     final HashSet<String> set = new HashSet<String>(urls);
     if (set.size() > 1) {
       JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<String>("Choose external documentation root", ArrayUtil.toStringArray(set)) {
+        @Override
         public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
           BrowserUtil.launchBrowser(selectedValue);
           return FINAL_CHOICE;
@@ -105,6 +107,7 @@ public class ExternalJavaDocAction extends AnAction {
     return (context!=null && editor!=null)? context.findElementAt(editor.getCaretModel().getOffset()):null;
   }
 
+  @Override
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();

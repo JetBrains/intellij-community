@@ -35,11 +35,13 @@ import java.util.LinkedHashSet;
  * @author yole
  */
 public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, DumbAware {
+  @Override
   @NotNull
   public Collection<SelectInTarget> getSubTargets(SelectInContext context) {
     return ProjectView.getInstance(context.getProject()).getSelectInTargets();
   }
 
+  @Override
   public boolean canSelect(SelectInContext context) {
     ProjectView projectView = ProjectView.getInstance(context.getProject());
     Collection<SelectInTarget> targets = projectView.getSelectInTargets();
@@ -49,6 +51,7 @@ public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, 
     return false;
   }
 
+  @Override
   public void selectIn(final SelectInContext context, final boolean requestFocus) {
     ProjectView projectView = ProjectView.getInstance(context.getProject());
     Collection<SelectInTarget> targets = projectView.getSelectInTargets();
@@ -65,6 +68,8 @@ public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, 
       if (target.canSelect(context)) {
         if (requestFocus) {
           IdeFocusManager.getInstance(context.getProject()).requestFocus(new FocusCommand() {
+            @NotNull
+            @Override
             public ActionCallback run() {
               target.selectIn(context, requestFocus);
               return new ActionCallback.Done();
@@ -79,14 +84,17 @@ public class ProjectViewSelectInGroupTarget implements CompositeSelectInTarget, 
     }
   }
 
+  @Override
   public String getToolWindowId() {
     return ToolWindowId.PROJECT_VIEW;
   }
 
+  @Override
   public String getMinorViewId() {
     return null;
   }
 
+  @Override
   public float getWeight() {
     return 0;
   }

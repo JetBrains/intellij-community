@@ -122,6 +122,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return filesCount > 0 ? " (" + AnalysisScopeBundle.message("package.dependencies.node.items.count", filesCount) + ")" : "";
   }
 
+  @Override
   public void add(MutableTreeNode newChild) {
     super.add(newChild);
     boolean hasUnmarked = ((PackageDependenciesNode)newChild).hasUnmarked();
@@ -140,6 +141,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     }
   }
 
+  @Override
   public void navigate(boolean focus) {
     if (canNavigate()) {
       openTextEditor(focus);
@@ -155,6 +157,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return null;
   }
 
+  @Override
   public boolean canNavigate() {
     if (getProject() == null) return false;
     final PsiElement psiElement = getPsiElement();
@@ -163,6 +166,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return virtualFile != null && virtualFile.isValid();
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return canNavigate();
   }
@@ -186,6 +190,7 @@ public class PackageDependenciesNode extends DefaultMutableTreeNode implements N
     return new OpenFileDescriptor(getProject(), virtualFile, psiElement.getTextOffset());
   }
 
+  @Override
   public Object getUserObject() {
     return toString();
   }

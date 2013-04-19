@@ -24,12 +24,14 @@ public class PsiMatcherImpl implements PsiMatcher {
     myElement = element;
   }
 
+  @Override
   public PsiMatcher parent(PsiMatcherExpression e) {
     myElement = myElement.getParent();
     if (myElement == null || (e != null && e.match(myElement) != Boolean.TRUE)) return NullPsiMatcherImpl.INSTANCE;
     return this;
   }
 
+  @Override
   public PsiMatcher firstChild(PsiMatcherExpression e) {
     final PsiElement[] children = myElement.getChildren();
     for (PsiElement child : children) {
@@ -41,6 +43,7 @@ public class PsiMatcherImpl implements PsiMatcher {
     return NullPsiMatcherImpl.INSTANCE;
   }
 
+  @Override
   public PsiMatcher ancestor(PsiMatcherExpression e) {
     while (myElement != null) {
       Boolean res = e == null ? Boolean.TRUE : e.match(myElement);
@@ -52,6 +55,7 @@ public class PsiMatcherImpl implements PsiMatcher {
     return this;
   }
 
+  @Override
   public PsiMatcher descendant(PsiMatcherExpression e) {
     final PsiElement[] children = myElement.getChildren();
     for (PsiElement child : children) {
@@ -68,36 +72,44 @@ public class PsiMatcherImpl implements PsiMatcher {
     return NullPsiMatcherImpl.INSTANCE;
   }
 
+  @Override
   public PsiMatcher dot(PsiMatcherExpression e) {
     return e == null || e.match(myElement) == Boolean.TRUE ? this : NullPsiMatcherImpl.INSTANCE;
   }
 
 
+  @Override
   public PsiElement getElement() {
     return myElement;
   }
 
   private static class NullPsiMatcherImpl implements PsiMatcher {
+    @Override
     public PsiMatcher parent(PsiMatcherExpression e) {
       return this;
     }
 
+    @Override
     public PsiMatcher firstChild(PsiMatcherExpression e) {
       return this;
     }
 
+    @Override
     public PsiMatcher ancestor(PsiMatcherExpression e) {
       return this;
     }
 
+    @Override
     public PsiMatcher descendant(PsiMatcherExpression e) {
       return this;
     }
 
+    @Override
     public PsiMatcher dot(PsiMatcherExpression e) {
       return this;
     }
 
+    @Override
     public PsiElement getElement() {
       return null;
     }

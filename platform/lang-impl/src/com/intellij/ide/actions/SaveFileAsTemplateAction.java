@@ -28,6 +28,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiFile;
 
 public class SaveFileAsTemplateAction extends AnAction{
+  @Override
   public void actionPerformed(AnActionEvent e){
     Project project = e.getData(PlatformDataKeys.PROJECT);
     String fileText = e.getData(PlatformDataKeys.FILE_TEXT);
@@ -48,6 +49,7 @@ public class SaveFileAsTemplateAction extends AnAction{
     dialog.show();
   }
 
+  @Override
   public void update(AnActionEvent e) {
     VirtualFile file = e.getData(PlatformDataKeys.VIRTUAL_FILE);
     String fileText = e.getData(PlatformDataKeys.FILE_TEXT);

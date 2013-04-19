@@ -30,7 +30,6 @@ import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Set;
 
@@ -42,7 +41,7 @@ public class GeneralIdBasedToSMTRunnerEventsConvertor implements GeneralTestEven
 
   private final TIntObjectHashMap<Node> myNodeByIdMap = new TIntObjectHashMap<Node>();
   private final Set<Node> myRunningNodes = ContainerUtil.newHashSet();
-  private final List<SMTRunnerEventsListener> myEventsListeners = ContainerUtil.createLockFreeCopyOnWriteList();
+  private final List<SMTRunnerEventsListener> myEventsListeners = ContainerUtil.createEmptyCOWList();
   private final SMTestProxy.SMRootTestProxy myTestsRootProxy;
   private final Node myTestsRootNode;
   private final String myTestFrameworkName;

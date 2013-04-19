@@ -58,12 +58,14 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
     }
     myLanguage = language;
   }
-  
+
+  @Override
   @NotNull
   public TextRange getTextRange() {
     return myOriginal.getTextRange();
   }
 
+  @Override
   @NotNull
   public List<Block> getSubBlocks() {
     if (myBlocks == null) {
@@ -100,23 +102,28 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
     return BlockUtil.setParent(children, this);
   }
 
+  @Override
   public Wrap getWrap() {
     return myOriginal.getWrap();
   }
 
+  @Override
   @NotNull
   public ChildAttributes getChildAttributes(final int newChildIndex) {
     return myOriginal.getChildAttributes(newChildIndex);
   }
 
+  @Override
   public Indent getIndent() {
     return myOriginal.getIndent();
   }
 
+  @Override
   public Alignment getAlignment() {
     return myOriginal.getAlignment();
   }
 
+  @Override
   @Nullable
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     if (child1 instanceof DataLanguageBlockWrapper && child2 instanceof DataLanguageBlockWrapper) {
@@ -125,10 +132,12 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
     return null;
   }
 
+  @Override
   public boolean isIncomplete() {
     return myOriginal.isIncomplete();
   }
 
+  @Override
   public boolean isLeaf() {
     return myTlBlocks == null && myOriginal.isLeaf();
   }
@@ -158,15 +167,18 @@ public class DataLanguageBlockWrapper implements ASTBlock, BlockEx, BlockWithPar
     return doesntNeedWrapper ? null : new DataLanguageBlockWrapper(original, indent);
   }
 
+  @Override
   @Nullable
   public ASTNode getNode() {
     return myOriginal instanceof ASTBlock ? ((ASTBlock)myOriginal).getNode() : null;
   }
 
+  @Override
   public BlockWithParent getParent() {
     return myParent;
   }
 
+  @Override
   public void setParent(BlockWithParent parent) {
     myParent = parent;
   }

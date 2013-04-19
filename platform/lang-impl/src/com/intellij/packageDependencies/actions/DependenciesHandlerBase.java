@@ -54,10 +54,12 @@ public abstract class DependenciesHandlerBase {
     final Task task;
     if (canStartInBackground()) {
       task = new Task.Backgroundable(myProject, getProgressTitle(), true, new PerformAnalysisInBackgroundOption(myProject)) {
+        @Override
         public void run(@NotNull final ProgressIndicator indicator) {
           perform(builders);
         }
 
+        @Override
         public void onSuccess() {
           DependenciesHandlerBase.this.onSuccess(builders);
         }
@@ -104,6 +106,7 @@ public abstract class DependenciesHandlerBase {
   private void onSuccess(final List<DependenciesBuilder> builders) {
     //noinspection SSBasedInspection
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (shouldShowDependenciesPanel(builders)) {
           final String displayName = getPanelDisplayName(builders.get(0).getScope());

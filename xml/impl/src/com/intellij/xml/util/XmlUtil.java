@@ -36,12 +36,14 @@ import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.patterns.StandardPatterns;
 import com.intellij.patterns.StringPattern;
 import com.intellij.patterns.XmlPatterns;
 import com.intellij.psi.*;
-import com.intellij.psi.XmlElementFactory;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.filters.ElementFilter;
 import com.intellij.psi.filters.XmlTagFilter;
@@ -58,7 +60,10 @@ import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.NullableFunction;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.XmlCharsetDetector;
 import com.intellij.xml.*;
@@ -900,7 +905,7 @@ public class XmlUtil {
 
     return null;
   }
-  
+
   @Nullable
   public static String getDtdUri(XmlDocument document) {
     XmlProlog prolog = document.getProlog();
@@ -1035,7 +1040,7 @@ public class XmlUtil {
       final String namespaceByPrefix = findNamespaceByPrefix(findPrefixByQualifiedName(type), xmlTag);
       XmlNSDescriptor typeDecr = xmlTag.getNSDescriptor(namespaceByPrefix, true);
 
-      if (typeDecr == null && namespaceByPrefix.length() == 0) {
+      if (typeDecr == null && namespaceByPrefix.isEmpty()) {
         if (context != null) typeDecr = context.getNSDescriptor("", true);
 
         if (typeDecr == null) {
@@ -1103,28 +1108,15 @@ public class XmlUtil {
                                       boolean enforceNamespacesDeep) {
     String qname;
     final String prefix = xmlTag.getPrefixByNamespace(namespace);
-    if (prefix != null && prefix.length() > 0) {
+    if (prefix != null && !prefix.isEmpty()) {
       qname = prefix + ":" + localName;
     }
     else {
       qname = localName;
     }
     try {
-      @NonNls StringBuilder tagStartBuilder = StringBuilderSpinAllocator.alloc();
-      String tagStart;
-      try {
-        tagStartBuilder.append(qname);
-        if (!StringUtil.isEmpty(namespace) && xmlTag.getPrefixByNamespace(namespace) == null &&
-            !(StringUtil.isEmpty(xmlTag.getNamespacePrefix()) && namespace.equals(xmlTag.getNamespace()))) {
-          tagStartBuilder.append(" xmlns=\"");
-          tagStartBuilder.append(namespace);
-          tagStartBuilder.append("\"");
-        }
-        tagStart = tagStartBuilder.toString();
-      }
-      finally {
-        StringBuilderSpinAllocator.dispose(tagStartBuilder);
-      }
+      String tagStart = qname + (!StringUtil.isEmpty(namespace) && xmlTag.getPrefixByNamespace(namespace) == null &&
+                  !(StringUtil.isEmpty(xmlTag.getNamespacePrefix()) && namespace.equals(xmlTag.getNamespace()))? " xmlns=\"" + namespace + "\"" : "");
       Language language = xmlTag.getLanguage();
       if (!(language instanceof HTMLLanguage)) language = StdFileTypes.XML.getLanguage();
       XmlTag retTag;
@@ -1136,9 +1128,9 @@ public class XmlUtil {
             @Override
             public void visitXmlTag(XmlTag tag) {
               final String namespacePrefix = tag.getNamespacePrefix();
-              if (namespacePrefix.length() == 0) {
+              if (namespacePrefix.isEmpty()) {
                 String qname;
-                if (prefix != null && prefix.length() > 0) {
+                if (prefix != null && !prefix.isEmpty()) {
                   qname = prefix + ":" + tag.getLocalName();
                 }
                 else {
@@ -1328,65 +1320,39 @@ public class XmlUtil {
     if (name == null || "".equals(name)) return "";
     if (name.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) return "";
 
-    @NonNls final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      buffer.append("<!ELEMENT ").append(name).append(" ");
-      if (tags.isEmpty()) {
-        buffer.append("(#PCDATA)>\n");
-      }
-      else {
-        buffer.append("(");
-        final Iterator<String> iter = tags.iterator();
-        while (iter.hasNext()) {
-          final String tagName = iter.next();
-          buffer.append(tagName);
-          if (iter.hasNext()) {
-            buffer.append("|");
-          }
-          else {
-            buffer.append(")*");
-          }
-        }
-        buffer.append(">\n");
-      }
-      if (!attributes.isEmpty()) {
-        buffer.append("<!ATTLIST ").append(name);
-        for (final MyAttributeInfo info : attributes) {
-          buffer.append("\n    ").append(generateAttributeDTD(info));
-        }
-        buffer.append(">\n");
-      }
-      return buffer.toString();
+    @NonNls final StringBuilder buffer = new StringBuilder();
+    buffer.append("<!ELEMENT ").append(name).append(" ");
+    if (tags.isEmpty()) {
+      buffer.append("(#PCDATA)>\n");
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
+    else {
+      buffer.append("(");
+      final Iterator<String> iter = tags.iterator();
+      while (iter.hasNext()) {
+        final String tagName = iter.next();
+        buffer.append(tagName);
+        if (iter.hasNext()) {
+          buffer.append("|");
+        }
+        else {
+          buffer.append(")*");
+        }
+      }
+      buffer.append(">\n");
     }
+    if (!attributes.isEmpty()) {
+      buffer.append("<!ATTLIST ").append(name);
+      for (final MyAttributeInfo info : attributes) {
+        buffer.append("\n    ").append(generateAttributeDTD(info));
+      }
+      buffer.append(">\n");
+    }
+    return buffer.toString();
   }
 
   private static String generateAttributeDTD(MyAttributeInfo info) {
     if (info.myName.contains(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED)) return "";
-    @NonNls final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      buffer.append(info.myName).append(" ");
-      //if ("id".equals(info.myName)) {
-      //  buffer.append("ID");
-      //}
-      //else if ("ref".equals(info.myName)) {
-      //  buffer.append("IDREF");
-      //} else {
-      buffer.append("CDATA");
-      //}
-      if (info.myRequired) {
-        buffer.append(" #REQUIRED");
-      }
-      else {
-        buffer.append(" #IMPLIED");
-      }
-      return buffer.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    return info.myName + " " + "CDATA" + (info.myRequired ? " #REQUIRED" : " #IMPLIED");
   }
 
   @Nullable
@@ -1470,7 +1436,7 @@ public class XmlUtil {
   }
 
   public static String decode(@NonNls String text) {
-    if (text.length() == 0) return text;
+    if (text.isEmpty()) return text;
     if (text.charAt(0) != '&' || text.length() < 3) {
       if (text.indexOf('<') < 0 && text.indexOf('>') < 0) return text;
       return text.replaceAll("<!\\[CDATA\\[", "").replaceAll("\\]\\]>", "");

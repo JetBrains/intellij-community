@@ -28,8 +28,9 @@ public class LanguageNamesValidation extends LanguageExtension<NamesValidator> {
   private LanguageNamesValidation() {
     super("com.intellij.lang.namesValidator", new DefaultNamesValidator());
   }
-  
+
   protected static class DefaultNamesValidator implements NamesValidator {
+    @Override
     public boolean isIdentifier(final String name, final Project project) {
       final int len = name.length();
       if (len == 0) return false;
@@ -43,6 +44,7 @@ public class LanguageNamesValidation extends LanguageExtension<NamesValidator> {
       return true;
     }
 
+    @Override
     public boolean isKeyword(final String name, final Project project) {
       return false;
     }

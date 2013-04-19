@@ -919,9 +919,6 @@ public class MavenProjectsManagerTest extends MavenImportingTestCase {
                   "    </plugin>" +
                   "  </plugins>" +
                   "</build>");
-    assertSources("project", "src/main/java", "src/main/resources");
-
-    resolveFoldersAndImport();
 
     assertSources("project", "src/main/java", "src/main/resources", "src1", "src2");
   }

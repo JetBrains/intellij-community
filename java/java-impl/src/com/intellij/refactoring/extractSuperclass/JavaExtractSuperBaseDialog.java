@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.ComponentWithBrowseButton;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Pass;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.refactoring.MoveDestination;
@@ -127,7 +128,9 @@ public abstract class JavaExtractSuperBaseDialog extends ExtractSuperBaseDialog<
   protected void preparePackage() throws OperationFailedException {
     final String targetPackageName = getTargetPackageName();
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(myProject);
-    if (!psiFacade.getNameHelper().isQualifiedName(targetPackageName)) {
+    final PsiFile containingFile = mySourceClass.getContainingFile();
+    final boolean fromDefaultPackage = containingFile instanceof PsiClassOwner && ((PsiClassOwner)containingFile).getPackageName().isEmpty(); 
+    if (!(fromDefaultPackage && StringUtil.isEmpty(targetPackageName)) && !psiFacade.getNameHelper().isQualifiedName(targetPackageName)) {
       throw new OperationFailedException("Invalid package name: " + targetPackageName);
     }
     final PsiPackage aPackage = psiFacade.findPackage(targetPackageName);

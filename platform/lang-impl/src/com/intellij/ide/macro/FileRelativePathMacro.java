@@ -25,14 +25,17 @@ import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class FileRelativePathMacro extends Macro {
+  @Override
   public String getName() {
     return "FileRelativePath";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.file.path.relative");
   }
 
+  @Override
   public String expand(DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final VirtualFile baseDir = project == null ? null : project.getBaseDir();

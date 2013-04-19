@@ -29,6 +29,7 @@ public final class SmartTodoItemPointerComparator implements Comparator{
 
   private SmartTodoItemPointerComparator(){}
 
+  @Override
   public int compare(Object obj1,Object obj2){
     TextRange range1=((TodoItemNode)obj1).getValue().getTodoItem().getTextRange();
     TextRange range2=((TodoItemNode)obj2).getValue().getTodoItem().getTextRange();

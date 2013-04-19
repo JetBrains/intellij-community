@@ -125,7 +125,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
     }
 
     @Override
-    public void indexStub(GrMethodStub stub, IndexSink sink) {
+    public void indexStub(@NotNull GrMethodStub stub, @NotNull IndexSink sink) {
       super.indexStub(stub, sink);
       String name = stub.getName();
       sink.occurrence(GrAnnotationMethodNameIndex.KEY, name);
@@ -246,7 +246,7 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
   GroovyElementType ARRAY_TYPE = new GroovyElementType("Array type");
 
   GroovyElementType BUILT_IN_TYPE = new GroovyElementType("Built in type");
-  
+
   GroovyElementType DISJUNCTION_TYPE_ELEMENT = new GroovyElementType("Disjunction type element");
 
   // GStrings
@@ -279,12 +279,13 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
     }
 
     @Override
-    public void serialize(GrTypeParameterStub stub, StubOutputStream dataStream) throws IOException {
+    public void serialize(@NotNull GrTypeParameterStub stub, @NotNull StubOutputStream dataStream) throws IOException {
       dataStream.writeName(stub.getName());
     }
 
+    @NotNull
     @Override
-    public GrTypeParameterStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+    public GrTypeParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
       return new GrTypeParameterStub(parentStub, dataStream.readName());
     }
   };
@@ -321,12 +322,13 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
     }
 
     @Override
-    public void serialize(GrAnnotationStub stub, StubOutputStream dataStream) throws IOException {
+    public void serialize(@NotNull GrAnnotationStub stub, @NotNull StubOutputStream dataStream) throws IOException {
       dataStream.writeName(stub.getAnnotationName());
     }
 
+    @NotNull
     @Override
-    public GrAnnotationStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+    public GrAnnotationStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
       return new GrAnnotationStub(parentStub, dataStream.readName());
     }
   };
@@ -351,14 +353,15 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
     }
 
     @Override
-    public void serialize(GrParameterStub stub, StubOutputStream dataStream) throws IOException {
+    public void serialize(@NotNull GrParameterStub stub, @NotNull StubOutputStream dataStream) throws IOException {
       dataStream.writeName(stub.getName());
       GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
       GrStubUtils.writeNullableString(dataStream, stub.getTypeText());
     }
 
+    @NotNull
     @Override
-    public GrParameterStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+    public GrParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
       final StringRef name = dataStream.readName();
       final String[] annotations = GrStubUtils.readStringArray(dataStream);
       final String typeText = GrStubUtils.readNullableString(dataStream);

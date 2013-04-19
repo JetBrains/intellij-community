@@ -19,6 +19,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.ui.JBColor;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -36,7 +37,7 @@ public class NotificationsUtil {
   }
 
   public static String buildHtml(@NotNull final Notification notification, @Nullable String style) {
-    String result = "<html>";
+    String result = "";
     if (style != null) {
       result += "<div style=\"" + style + "\">";
     }
@@ -44,8 +45,7 @@ public class NotificationsUtil {
     if (style != null) {
       result += "</div>";
     }
-    result += "</html>";
-    return result;
+    return XmlStringUtil.wrapInHtml(result);
   }
 
   @Nullable
@@ -70,7 +70,7 @@ public class NotificationsUtil {
     if (icon != null) {
       return icon;
     }
-    
+
     switch (notification.getType()) {
       case ERROR:
         return MessageType.ERROR.getDefaultIcon();

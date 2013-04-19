@@ -93,10 +93,12 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
       myModule = module;
     }
 
+    @Override
     public boolean checkInput(String inputString) {
       return inputString != null && inputString.length() > 0;
     }
 
+    @Override
     public boolean canClose(final String inputString) {
       if (!inputString.equals(myProject.getName())) {
         myProject.setProjectName(inputString);
@@ -115,8 +117,10 @@ public class RenameProjectHandler implements RenameHandler, TitledHandler {
         }
         final Ref<Boolean> success = Ref.create(Boolean.TRUE);
         CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+          @Override
           public void run() {
             ApplicationManager.getApplication().runWriteAction(new Runnable() {
+              @Override
               public void run() {
                 modifiableModel.commit();
               }

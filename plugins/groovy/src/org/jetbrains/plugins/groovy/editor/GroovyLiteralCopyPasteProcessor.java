@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.*;
@@ -49,7 +50,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
   @Override
   protected boolean isStringLiteral(@NotNull PsiElement token) {
     ASTNode node = token.getNode();
-    return node != null && TokenSets.STRING_LITERALS.contains(node.getElementType());
+    return node != null && (TokenSets.STRING_LITERALS.contains(node.getElementType()) || node.getElementType() == GroovyElementTypes.GSTRING_INJECTION);
   }
 
   @Nullable
@@ -65,8 +66,16 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
       if (elementAtSelectionStart == null) return null;
       elementType = elementAtSelectionStart.getNode().getElementType();
     }
+    if (elementType == mDOLLAR) {
+      elementAtSelectionStart = elementAtSelectionStart.getParent();
+      elementType = elementAtSelectionStart.getNode().getElementType();
+    }
 
-    if (!isStringLiteral(elementAtSelectionStart) && !isCharLiteral(elementAtSelectionStart)) {
+
+
+    if (!isStringLiteral(elementAtSelectionStart) &&
+        !isCharLiteral(elementAtSelectionStart) &&
+        !(elementType == GroovyElementTypes.GSTRING_INJECTION)) {
       return null;
     }
 
@@ -84,7 +93,10 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     final TextRange textRange = elementAtSelectionStart.getTextRange();
 
     //content elements don't have quotes, so they are shorter than whole string literals
-    if (elementType == mREGEX_CONTENT || elementType == mGSTRING_CONTENT || elementType == mDOLLAR_SLASH_REGEX_CONTENT) {
+    if (elementType == mREGEX_CONTENT ||
+        elementType == mGSTRING_CONTENT ||
+        elementType == mDOLLAR_SLASH_REGEX_CONTENT ||
+        elementType == GroovyElementTypes.GSTRING_INJECTION) {
       selectionStart++;
       selectionEnd--;
     }
@@ -156,7 +168,7 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
       return GrStringUtil.escapeSymbolsForDollarSlashyStrings(s);
     }
 
-    if (tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL) {
+    if (tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL || tokenType == GroovyElementTypes.GSTRING_INJECTION) {
       return GrStringUtil.escapeSymbolsForGString(s, !token.getParent().getText().contains("\"\"\""), false);
     }
 

@@ -115,7 +115,7 @@ public class PackageNamingConventionInspection extends BaseGlobalInspection {
   }
 
   @Override
-  public void readSettings(Element element) throws InvalidDataException {
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
     m_regexPattern = Pattern.compile(m_regex);
   }

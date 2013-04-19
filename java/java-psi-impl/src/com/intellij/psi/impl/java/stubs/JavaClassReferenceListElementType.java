@@ -73,7 +73,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
   }
 
   @Override
-  public void serialize(PsiClassReferenceListStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PsiClassReferenceListStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     byte role = encodeRole(stub.getRole());
     dataStream.writeByte(role);
 
@@ -84,8 +84,9 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
     }
   }
 
+  @NotNull
   @Override
-  public PsiClassReferenceListStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public PsiClassReferenceListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     byte role = dataStream.readByte();
 
     int len = dataStream.readVarInt();
@@ -99,7 +100,7 @@ public abstract class JavaClassReferenceListElementType extends JavaStubElementT
   }
 
   @Override
-  public void indexStub(PsiClassReferenceListStub stub, IndexSink sink) {
+  public void indexStub(@NotNull PsiClassReferenceListStub stub, @NotNull IndexSink sink) {
     PsiReferenceList.Role role = stub.getRole();
     if (role == PsiReferenceList.Role.EXTENDS_LIST || role == PsiReferenceList.Role.IMPLEMENTS_LIST) {
       String[] names = stub.getReferencedNames();

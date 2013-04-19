@@ -57,7 +57,7 @@ public abstract class OccurrencesChooser<T> {
       return myDescription;
     }
   }
-  
+
   public static <T extends PsiElement> OccurrencesChooser<T> simpleChooser(Editor editor) {
     return new OccurrencesChooser<T>(editor) {
       @Override
@@ -118,6 +118,7 @@ public abstract class OccurrencesChooser<T> {
       }
     });
     list.addListSelectionListener(new ListSelectionListener() {
+      @Override
       public void valueChanged(final ListSelectionEvent e) {
         final ReplaceChoice value = (ReplaceChoice)list.getSelectedValue();
         if (value == null) return;
@@ -140,6 +141,7 @@ public abstract class OccurrencesChooser<T> {
       .setResizable(false)
       .setRequestFocus(true)
       .setItemChoosenCallback(new Runnable() {
+        @Override
         public void run() {
           callback.pass((ReplaceChoice)list.getSelectedValue());
         }

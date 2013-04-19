@@ -112,7 +112,7 @@ public class BraceHighlighter implements StartupActivity {
 
     fileEditorManager.addFileEditorManagerListener(new FileEditorManagerAdapter() {
       @Override
-      public void selectionChanged(FileEditorManagerEvent e) {
+      public void selectionChanged(@NotNull FileEditorManagerEvent e) {
         myAlarm.cancelAllRequests();
       }
     }, project);

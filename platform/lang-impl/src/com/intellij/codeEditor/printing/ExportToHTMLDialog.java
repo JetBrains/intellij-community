@@ -66,6 +66,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     OptionGroup optionGroup = new OptionGroup();
 
@@ -94,6 +95,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
     buttonGroup.add(myRbCurrentPackage);
 
     ActionListener actionListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myCbIncludeSubpackages.setEnabled(myRbCurrentPackage.isSelected());
       }
@@ -116,6 +118,7 @@ public class ExportToHTMLDialog extends DialogWrapper {
     return labeledComponent;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     OptionGroup optionGroup = new OptionGroup(CodeEditorBundle.message("export.to.html.options.group"));
 
@@ -184,11 +187,13 @@ public class ExportToHTMLDialog extends DialogWrapper {
     }
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(),getCancelAction(), getHelpAction()};
   }
 
+  @Override
   public void doHelpAction() {
     HelpManager.getInstance().invokeHelp(HelpID.EXPORT_TO_HTML);
   }

@@ -87,15 +87,17 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   public StructureViewWrapperImpl(Project project, ToolWindowEx toolWindow) {
     myProject = project;
     myToolWindow = toolWindow;
-    
+
     myUpdateQueue = new MergingUpdateQueue("StructureView", Registry.intValue("structureView.coalesceTime"), false, myToolWindow.getComponent(), this, myToolWindow.getComponent(), true);
     myUpdateQueue.setRestartTimerOnAdd(true);
 
     final TimerListener timerListener = new TimerListener() {
+      @Override
       public ModalityState getModalityState() {
         return ModalityState.stateForComponent(myToolWindow.getComponent());
       }
 
+      @Override
       public void run() {
         checkUpdate();
       }
@@ -109,6 +111,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
     });
 
     myToolWindow.getComponent().addHierarchyListener(new HierarchyListener() {
+      @Override
       public void hierarchyChanged(HierarchyEvent e) {
         if ((e.getChangeFlags() & HierarchyEvent.DISPLAYABILITY_CHANGED) != 0) {
           scheduleRebuild();
@@ -200,17 +203,20 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
   // StructureView interface implementation
   // -------------------------------------------------------------------------
 
+  @Override
   public void dispose() {
     //we don't really need it
     //rebuild();
   }
 
+  @Override
   public boolean selectCurrentElement(final FileEditor fileEditor, final VirtualFile file, final boolean requestFocus) {
     //todo [kirillk]
     // this is dirty hack since some bright minds decided to used different TreeUi every time, so selection may be followed
     // by rebuild on completely different instance of TreeUi
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         if (myStructureView != null) {
           if (!Comparing.equal(myStructureView.getFileEditor(), fileEditor)) {
@@ -237,6 +243,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
 
   private void scheduleRebuild() {
     myUpdateQueue.queue(new Update("rebuild") {
+      @Override
       public void run() {
         if (myProject.isDisposed()) return;
         rebuild();
@@ -405,6 +412,7 @@ public class StructureViewWrapperImpl implements StructureViewWrapper, Disposabl
       super(new BorderLayout());
     }
 
+    @Override
     public Object getData(@NonNls String dataId) {
       if (dataId.equals(myKey)) return StructureViewWrapperImpl.this;
       return null;

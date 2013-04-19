@@ -31,6 +31,7 @@ import java.awt.*;
  */
 public class EditorTabColorProviderImpl implements EditorTabColorProvider {
 
+  @Override
   @Nullable
   public Color getEditorTabColor(Project project, VirtualFile file) {
     final FileColorManager colorManager = FileColorManagerImpl.getInstance(project);

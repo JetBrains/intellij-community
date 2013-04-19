@@ -50,6 +50,7 @@ public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
     this(project, file, line, 0);
   }
 
+  @Override
   public OpenFileDescriptor getDescriptor() {
     if (!myFile.isValid()) {
       return null;
@@ -63,8 +64,10 @@ public final class OpenFileHyperlinkInfo implements FileHyperlinkInfo {
     return new OpenFileDescriptor(myProject, myFile, myDocumentLine, myDocumentColumn);
   }
 
+  @Override
   public void navigate(final Project project) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         final VirtualFile file = myFile;
         if (file.isValid()) {

@@ -35,6 +35,7 @@ public class ProjectInspectionToolsConfigurable extends InspectionToolsConfigura
     super(projectProfileManager, profileManager);
   }
 
+  @Override
   protected InspectionProfileImpl getCurrentProfile() {
     return (InspectionProfileImpl)myProjectProfileManager.getProjectProfileImpl();
   }

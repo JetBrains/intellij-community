@@ -63,7 +63,7 @@ public abstract class AlignmentStrategy {
   /**
    * Delegates to {@link #createAlignmentPerTypeStrategy(Collection, IElementType, boolean, Alignment.Anchor)} with no parent type
    * check (<code>null</code> is delivered as a parent type) and {@link Alignment.Anchor#LEFT left anchor}.
-   * 
+   *
    * @param targetTypes           target child types
    * @param allowBackwardShift    flag that defines if backward alignment shift is allowed
    * @return                      alignment strategy for the given arguments
@@ -77,7 +77,7 @@ public abstract class AlignmentStrategy {
   /**
    * Delegates the processing to {@link #createAlignmentPerTypeStrategy(Collection, IElementType, boolean, Alignment.Anchor)}
    * with the given arguments and {@link Alignment.Anchor#LEFT left anchor}.
-   * 
+   *
    * @param targetTypes        target types for which cached alignment should be returned
    * @param parentType         target parent type
    * @param allowBackwardShift flag that specifies if former aligned element may be shifted to right in order to align
@@ -89,7 +89,7 @@ public abstract class AlignmentStrategy {
   {
     return createAlignmentPerTypeStrategy(targetTypes, parentType, allowBackwardShift, Alignment.Anchor.LEFT);
   }
-  
+
   /**
    * Creates strategy that creates and caches one alignment per given type internally and returns it on subsequent calls
    * to {@link #getAlignment(IElementType, IElementType)} for elements which type is listed at the given collection and parent type
@@ -114,7 +114,7 @@ public abstract class AlignmentStrategy {
    * @return                   alignment retrieval strategy that follows the rules described above
    */
   public static AlignmentPerTypeStrategy createAlignmentPerTypeStrategy(
-    @NotNull Collection<IElementType> targetTypes, @Nullable IElementType parentType, boolean allowBackwardShift, 
+    @NotNull Collection<IElementType> targetTypes, @Nullable IElementType parentType, boolean allowBackwardShift,
     @NotNull Alignment.Anchor anchor)
   {
     return new AlignmentPerTypeStrategy(targetTypes, parentType, allowBackwardShift, anchor);
@@ -123,7 +123,7 @@ public abstract class AlignmentStrategy {
   /**
    * Delegates the processing to {@link #getAlignment(IElementType, IElementType)} without parent element type
    * filtering (<code>null</code> is used as parent element type).
-   * 
+   *
    * @param childType     target child type
    * @return              alignment to use
    */
@@ -134,7 +134,7 @@ public abstract class AlignmentStrategy {
 
   /**
    * Requests current strategy for alignment to use for the child of the given type assuming that parent node has the given type.
-   * 
+   *
    * @param parentType    parent type to use for filtering (if not <code>null</code>)
    * @param childType     child type to use for filtering (if not <code>null</code>)
    * @return              alignment to use for the given arguments
@@ -159,6 +159,7 @@ public abstract class AlignmentStrategy {
       myFilterElementTypes.addAll(asList(disabledElementTypes));
     }
 
+    @Override
     @Nullable
     public Alignment getAlignment(@Nullable IElementType parentType, @Nullable IElementType childType) {
       return (myFilterElementTypes.contains(childType) ^ myIgnoreFilterTypes) ? myAlignment : null;

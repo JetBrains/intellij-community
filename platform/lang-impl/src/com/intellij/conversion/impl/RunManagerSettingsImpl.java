@@ -58,6 +58,7 @@ public class RunManagerSettingsImpl implements RunManagerSettings {
     }
   }
 
+  @Override
   @NotNull
   public Collection<? extends Element> getRunConfigurations() {
     final List<Element> result = new ArrayList<Element>();

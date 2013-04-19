@@ -25,6 +25,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilBase;
 
 public class VirtualFileRule implements GetDataRule {
+  @Override
   public Object getData(final DataProvider dataProvider) {
     // Try to detect multiselection.
     PsiElement[] psiElements = LangDataKeys.PSI_ELEMENT_ARRAY.getData(dataProvider);

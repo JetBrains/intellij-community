@@ -48,11 +48,11 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
   public void runInspection(@NotNull AnalysisScope scope, @NotNull final InspectionManager manager) {}
 
   @Override
-  public void exportResults(@NotNull Element parentNode, RefEntity refEntity) {
+  public void exportResults(@NotNull Element parentNode, @NotNull RefEntity refEntity) {
   }
 
   @NotNull
-  public JobDescriptor[] getJobDescriptors(GlobalInspectionContext globalInspectionContext) {
+  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext globalInspectionContext) {
     return new JobDescriptor[0];
   }
 
@@ -71,15 +71,17 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
     return "";
   }
 
+  @NotNull
   public HTMLComposerImpl getComposer() {
     return new DeadHTMLComposer(this);
   }
 
+  @NotNull
   public GlobalInspectionContextImpl getContext() {
     return myOwner.getContext();
   }
 
-  public QuickFixAction[] getQuickFixes(final RefEntity[] refElements) {
+  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements) {
     if (myQuickFixActions == null) {
       myQuickFixActions = new QuickFixAction[]{new MoveEntriesToSuspicious()};
     }

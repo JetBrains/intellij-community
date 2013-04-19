@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,12 +25,16 @@ import com.intellij.psi.codeStyle.PackageEntry;
 import com.intellij.psi.codeStyle.PackageEntryTable;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
+import com.intellij.psi.scope.NameHint;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.psi.util.CachedValueProvider;
 import com.intellij.psi.util.CachedValuesManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ConcurrencyUtil;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import icons.JetgroovyIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -50,6 +54,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.GrTopStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.packaging.GrPackageDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightParameter;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.stubs.GrFileStub;
@@ -62,6 +67,7 @@ import javax.swing.*;
 import java.util.ArrayList;
 import java.util.Comparator;
 import java.util.List;
+import java.util.concurrent.ConcurrentMap;
 
 import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.processImplicitImports;
 import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.processImports;
@@ -74,6 +80,15 @@ import static org.jetbrains.plugins.groovy.editor.GroovyImportHelper.processImpo
 public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
   private static final Logger LOG = Logger.getInstance("org.jetbrains.plugins.groovy.lang.psi.impl.GroovyFileImpl");
   private static final Object lock = new Object();
+
+  private static final CachedValueProvider<ConcurrentMap<String, GrBindingVariable>> BINDING_PROVIDER = new CachedValueProvider<ConcurrentMap<String, GrBindingVariable>>() {
+    @Nullable
+    @Override
+    public Result<ConcurrentMap<String, GrBindingVariable>> compute() {
+      final ConcurrentMap<String, GrBindingVariable> map = ContainerUtil.newConcurrentMap();
+      return Result.create(map, PsiModificationTracker.MODIFICATION_COUNT);
+    }
+  };
 
   private volatile Boolean myScript;
   private GroovyScriptClass myScriptClass;
@@ -182,7 +197,41 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
       if (!ResolveUtil.processElement(processor, getSyntheticArgsParameter(), state)) return false;
     }
 
+    if (isScript() && !(lastParent instanceof GrTypeDefinition) && PsiTreeUtil.getParentOfType(place, GrTypeDefinition.class, false) == null) {
+      if (!processBindings(processor, state, place)) return false;
+    }
+
     return true;
+  }
+
+  private boolean processBindings(@NotNull final PsiScopeProcessor processor, @NotNull ResolveState state, PsiElement place) {
+    if (!isPhysical()) return true;
+
+    final NameHint nameHint = processor.getHint(NameHint.KEY);
+    if (nameHint == null) return true;
+
+    final String name = nameHint.getName(state);
+    if (name == null) return true;
+
+    final ClassHint classHint = processor.getHint(ClassHint.KEY);
+    if (classHint != null && !classHint.shouldProcess(ClassHint.ResolveKind.PROPERTY)) return true;
+
+
+    final ConcurrentMap<String, GrBindingVariable> bindings = getBindings();
+
+    GrBindingVariable variable = bindings.get(name);
+    if (variable == null) {
+      variable = ConcurrencyUtil.cacheOrGet(bindings, name, new GrBindingVariable(this, name, null));
+    }
+    variable.updateWriteAccessIfNeeded(place);
+
+    if (!variable.hasWriteAccess()) return true;
+
+    return processor.execute(variable, state);
+  }
+
+  private ConcurrentMap<String, GrBindingVariable> getBindings() {
+    return CachedValuesManager.getManager(getProject()).getCachedValue(this, BINDING_PROVIDER);
   }
 
   @Nullable

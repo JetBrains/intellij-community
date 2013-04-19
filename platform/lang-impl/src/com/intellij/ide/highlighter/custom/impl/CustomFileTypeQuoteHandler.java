@@ -27,6 +27,7 @@ import com.intellij.psi.tree.IElementType;
  * @author Maxim.Mossienko
  */
 class CustomFileTypeQuoteHandler implements QuoteHandler {
+  @Override
   public boolean isClosingQuote(HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
 
@@ -40,6 +41,7 @@ class CustomFileTypeQuoteHandler implements QuoteHandler {
     return false;
   }
 
+  @Override
   public boolean isOpeningQuote(HighlighterIterator iterator, int offset) {
     final IElementType tokenType = iterator.getTokenType();
 
@@ -52,6 +54,7 @@ class CustomFileTypeQuoteHandler implements QuoteHandler {
     return false;
   }
 
+  @Override
   public boolean hasNonClosedLiteral(Editor editor, HighlighterIterator iterator, int offset) {
     try {
       Document doc = editor.getDocument();
@@ -79,6 +82,7 @@ class CustomFileTypeQuoteHandler implements QuoteHandler {
     return false;
   }
 
+  @Override
   public boolean isInsideLiteral(HighlighterIterator iterator) {
     final IElementType tokenType = iterator.getTokenType();
 

@@ -41,11 +41,13 @@ public class UiScriptFileType implements FileType {
     return myInstance;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return "UI Script";
   }
 
+  @Override
   @NotNull
   public String getDescription() {
     return "UI test scripts.";
@@ -53,23 +55,28 @@ public class UiScriptFileType implements FileType {
 
   public static final String myExtension = "ijs";
 
+  @Override
   @NotNull
   public String getDefaultExtension() {
     return myExtension;
   }
 
+  @Override
   public Icon getIcon() {
     return null;
   }
 
+  @Override
   public boolean isBinary() {
     return false;
   }
 
+  @Override
   public boolean isReadOnly() {
     return false;
   }
 
+  @Override
   public String getCharset(@NotNull VirtualFile file, byte[] content) {
     return CharsetToolkit.UTF8;
   }

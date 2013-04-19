@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.NonClasspathClassFinder;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 
 import java.util.Collections;
 import java.util.List;

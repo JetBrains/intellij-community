@@ -26,6 +26,7 @@ import org.jetbrains.annotations.NotNull;
 
 public class LineMover extends StatementUpDownMover {
 
+  @Override
   public boolean checkAvailable(@NotNull final Editor editor, @NotNull final PsiFile file, @NotNull final MoveInfo info, final boolean down) {
     LineRange range = StatementUpDownMover.getLineRangeFromSelection(editor);
 

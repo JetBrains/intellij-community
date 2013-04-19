@@ -71,6 +71,7 @@ public class FileContentUtil {
 
   public static void reparseFiles(@NotNull final Project project, @NotNull final Collection<VirtualFile> files, final boolean includeOpenFiles) {
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         // files must be processed under one write action to prevent firing event for invalid files.
 

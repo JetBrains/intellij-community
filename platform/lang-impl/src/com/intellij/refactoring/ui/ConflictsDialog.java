@@ -101,6 +101,7 @@ public class ConflictsDialog extends DialogWrapper{
     init();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions(){
     final Action okAction = getOKAction();
@@ -115,6 +116,7 @@ public class ConflictsDialog extends DialogWrapper{
     return getExitCode() == SHOW_CONFLICTS_EXIT_CODE;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout(0, 2));
 
@@ -148,6 +150,7 @@ public class ConflictsDialog extends DialogWrapper{
       putValue(DEFAULT_ACTION,Boolean.TRUE);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       doCancelAction();
     }
@@ -160,6 +163,7 @@ public class ConflictsDialog extends DialogWrapper{
       super("Show conflicts in view");
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       final UsageViewPresentation presentation = new UsageViewPresentation();
       final String codeUsagesString = "Conflicts";
@@ -215,6 +219,7 @@ public class ConflictsDialog extends DialogWrapper{
       final Collection<String> elementConflicts = new LinkedHashSet<String>(myElementConflictDescription.get(element));
       final String conflictDescription = " (" + Pattern.compile("<[^<>]*>").matcher(StringUtil.join(elementConflicts, "\n")).replaceAll("") + ")";
       return new UsagePresentation() {
+        @Override
         @NotNull
         public TextChunk[] getText() {
           final TextChunk[] chunks = usagePresentation.getText();
@@ -222,15 +227,18 @@ public class ConflictsDialog extends DialogWrapper{
             .append(chunks, new TextChunk(SimpleTextAttributes.GRAY_ITALIC_ATTRIBUTES.toTextAttributes(), conflictDescription));
         }
 
+        @Override
         @NotNull
         public String getPlainText() {
           return usagePresentation.getPlainText() + conflictDescription;
         }
 
+        @Override
         public Icon getIcon() {
           return usagePresentation.getIcon();
         }
 
+        @Override
         public String getTooltipText() {
           return usagePresentation.getTooltipText();
         }
@@ -240,23 +248,28 @@ public class ConflictsDialog extends DialogWrapper{
     private class DescriptionOnlyUsage implements Usage {
       private final String myConflictDescription = Pattern.compile("<[^<>]*>").matcher(StringUtil.join(new LinkedHashSet<String>(myElementConflictDescription.get(null)), "\n")).replaceAll("");
 
+      @Override
       @NotNull
       public UsagePresentation getPresentation() {
         return new UsagePresentation() {
+          @Override
           @NotNull
           public TextChunk[] getText() {
             return new TextChunk[0];
           }
 
+          @Override
           @Nullable
           public Icon getIcon() {
             return null;
           }
 
+          @Override
           public String getTooltipText() {
             return myConflictDescription;
           }
 
+          @Override
           @NotNull
           public String getPlainText() {
             return myConflictDescription;
@@ -264,28 +277,36 @@ public class ConflictsDialog extends DialogWrapper{
         };
       }
 
+      @Override
       public boolean canNavigateToSource() {
         return false;
       }
 
+      @Override
       public boolean canNavigate() {
         return false;
       }
+      @Override
       public void navigate(boolean requestFocus) {}
 
+      @Override
       public FileEditorLocation getLocation() {
         return null;
       }
 
+      @Override
       public boolean isReadOnly() {
         return false;
       }
 
+      @Override
       public boolean isValid() {
         return true;
       }
 
+      @Override
       public void selectInEditor() {}
+      @Override
       public void highlightInEditor() {}
     }
   }

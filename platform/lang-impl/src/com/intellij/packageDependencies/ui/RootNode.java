@@ -39,6 +39,7 @@ public class RootNode extends PackageDependenciesNode {
     return "Root";
   }
 
+  @Override
   public void fillFiles(Set<PsiFile> set, boolean recursively) {
     super.fillFiles(set, recursively);
     int count = getChildCount();

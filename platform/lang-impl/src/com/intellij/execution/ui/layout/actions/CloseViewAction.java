@@ -24,12 +24,14 @@ import com.intellij.ui.content.Content;
 
 public class CloseViewAction extends BaseViewAction {
 
+  @Override
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     setEnabled(e, isEnabled(content));
     e.getPresentation().setIcon(AllIcons.Actions.CloseNew);
     e.getPresentation().setHoveredIcon(AllIcons.Actions.CloseNewHovered);
   }
 
+  @Override
   protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {
     perform(context, content[0]);
   }
@@ -41,5 +43,5 @@ public class CloseViewAction extends BaseViewAction {
   public static boolean isEnabled(Content[] content) {
     return content.length == 1 && content[0].isCloseable();
   }
-  
+
 }

@@ -1,4 +1,4 @@
-def foo = {
+§def foo = {
   p<caret> ppp
 }
 -----

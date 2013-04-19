@@ -445,7 +445,15 @@ public class GrClosureSignatureUtil {
     if (argType == null) {
       return true;
     }
-    return TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context);
+    if (TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context)) {
+      return true;
+    }
+
+    final PsiType lType = TypesUtil.rawSecondGeneric(paramType, context.getProject());
+    final PsiType rType = TypesUtil.rawSecondGeneric(argType, context.getProject());
+    if (lType == null && rType == null) return false;
+
+    return TypesUtil.isAssignableByMethodCallConversion(lType != null ? lType : paramType, rType != null ? rType : argType, context);
   }
 
   public static void checkAndAddSignature(List<GrClosureSignature> list,

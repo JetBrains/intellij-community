@@ -1,28 +1,27 @@
 package org.jetbrains.plugins.gradle.diff.dependency;
 
+import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
+import com.intellij.openapi.externalSystem.service.project.change.ExternalProjectChangesCalculationContext;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.diff.GradleChangesCalculationContext;
-import org.jetbrains.plugins.gradle.model.gradle.GradleModuleDependency;
 
 /**
  * @author Denis Zhdanov
  * @since 2/20/12 11:10 AM
  */
 public class GradleModuleDependencyStructureChangesCalculator
-  extends AbstractGradleDependencyStructureChangesCalculator<GradleModuleDependency, ModuleOrderEntry>
+  extends AbstractGradleDependencyStructureChangesCalculator<ModuleDependencyData, ModuleOrderEntry>
 {
   
   @Override
-  public void doCalculate(@NotNull GradleModuleDependency gradleEntity,
+  public void doCalculate(@NotNull ModuleDependencyData gradleEntity,
                           @NotNull ModuleOrderEntry intellijEntity,
-                          @NotNull GradleChangesCalculationContext context)
+                          @NotNull ExternalProjectChangesCalculationContext context)
   {
     // Assuming that the modules referenced by the given dependencies are compared independently.
   }
 
   @NotNull
-  @Override
   public Object getIdeKey(@NotNull ModuleOrderEntry entity) {
     final String intellijModuleName = entity.getModuleName();
     if (intellijModuleName == null) {
@@ -32,8 +31,7 @@ public class GradleModuleDependencyStructureChangesCalculator
   }
 
   @NotNull
-  @Override
-  public Object getGradleKey(@NotNull GradleModuleDependency entity, @NotNull GradleChangesCalculationContext context) {
+  public Object getGradleKey(@NotNull ModuleDependencyData entity, @NotNull ExternalProjectChangesCalculationContext context) {
     return entity.getTarget().getName();
   }
 }

@@ -49,6 +49,7 @@ import java.util.regex.Pattern;
 @SuppressWarnings({"AssignmentToStaticFieldFromInstanceMethod"})
 public class LogConsolePreferences extends LogFilterRegistrar {
   private final SortedMap<LogFilter, Boolean> myRegisteredLogFilters = new TreeMap<LogFilter, Boolean>(new Comparator<LogFilter>() {
+    @Override
     public int compare(final LogFilter o1, final LogFilter o2) {
       return -1;
     }
@@ -143,6 +144,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     return null;
   }
 
+  @Override
   public Element getState() {
     @NonNls Element element = new Element("LogFilters");
     try {
@@ -160,6 +162,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     return element;
   }
 
+  @Override
   public void loadState(final Element object) {
     try {
       final List children = object.getChildren(FILTER);
@@ -176,14 +179,17 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     }
   }
 
+  @Override
   public void registerFilter(LogFilter filter) {
     myRegisteredLogFilters.put(filter, Boolean.FALSE);
   }
 
+  @Override
   public List<LogFilter> getRegisteredLogFilters() {
     return new ArrayList<LogFilter>(myRegisteredLogFilters.keySet());
   }
 
+  @Override
   public boolean isFilterSelected(LogFilter filter) {
     final Boolean isSelected = myRegisteredLogFilters.get(filter);
     if (isSelected != null) {
@@ -195,6 +201,7 @@ public class LogConsolePreferences extends LogFilterRegistrar {
     return false;
   }
 
+  @Override
   public void setFilterSelected(LogFilter filter, boolean state) {
     if (filter instanceof IndependentLogFilter) {
       ((IndependentLogFilter)filter).selectFilter();

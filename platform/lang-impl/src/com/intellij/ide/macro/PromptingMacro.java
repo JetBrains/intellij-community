@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public abstract class PromptingMacro extends Macro{
 
+  @Override
   public final String expand(DataContext dataContext) throws ExecutionCancelledException {
     final String userInput = promptUser(dataContext);
     if (userInput == null) {

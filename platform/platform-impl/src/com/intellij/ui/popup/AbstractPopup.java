@@ -855,6 +855,7 @@ public class AbstractPopup implements JBPopup {
 
     if (myRequestFocus) {
       getFocusManager().requestFocus(new FocusCommand() {
+        @NotNull
         @Override
         public ActionCallback run() {
           if (isDisposed()) {
@@ -884,6 +885,7 @@ public class AbstractPopup implements JBPopup {
                 }
 
                 furtherRequestor.requestFocus(new FocusCommand() {
+                  @NotNull
                   @Override
                   public ActionCallback run() {
                     if (isDisposed()) {
@@ -1094,6 +1096,7 @@ public class AbstractPopup implements JBPopup {
     if (!myFocusable) return false;
 
     getFocusManager().requestFocus(new FocusCommand() {
+      @NotNull
       @Override
       public ActionCallback run() {
         _requestFocus();

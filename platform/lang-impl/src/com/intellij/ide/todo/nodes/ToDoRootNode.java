@@ -36,11 +36,13 @@ public final class ToDoRootNode extends BaseToDoNode{
     mySummaryNode = new SummaryNode(getProject(), summary, myBuilder);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     return new ArrayList<AbstractTreeNode>(Collections.singleton(mySummaryNode));
   }
 
+  @Override
   public void update(PresentationData presentation) {
   }
 
@@ -48,14 +50,17 @@ public final class ToDoRootNode extends BaseToDoNode{
     return mySummaryNode;
   }
 
+  @Override
   public String getTestPresentation() {
     return "Root";
   }
 
+  @Override
   public int getFileCount(final Object val) {
     return mySummaryNode.getFileCount(null);
   }
 
+  @Override
   public int getTodoItemCount(final Object val) {
     return mySummaryNode.getTodoItemCount(null);
   }

@@ -87,6 +87,7 @@ public class NameSuggestionsField extends JPanel {
     if (editor == null) return;
     // later here because EditorTextField creates Editor during addNotify()
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         final int offset = editor.getCaretModel().getOffset();
         List<TextRange> ranges = new ArrayList<TextRange>();
@@ -117,9 +118,10 @@ public class NameSuggestionsField extends JPanel {
   protected boolean shouldSelectAll() {
     return true;
   }
-  
+
   public void selectNameWithoutExtension() {
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         Editor editor = getEditor();
         if (editor == null) return;
@@ -195,11 +197,13 @@ public class NameSuggestionsField extends JPanel {
     }
 
     // implements javax.swing.ListModel
+    @Override
     public int getSize() {
       return mySuggestions.length;
     }
 
     // implements javax.swing.ListModel
+    @Override
     public Object getElementAt(int index) {
       return mySuggestions[index];
     }
@@ -287,6 +291,7 @@ public class NameSuggestionsField extends JPanel {
     }
   }
 
+  @Override
   public boolean requestFocusInWindow() {
     if(myComponent instanceof JComboBox) {
       return ((JComboBox) myComponent).getEditor().getEditorComponent().requestFocusInWindow();
@@ -296,15 +301,18 @@ public class NameSuggestionsField extends JPanel {
     }
   }
 
+  @Override
   public void setEnabled (boolean enabled) {
     myComponent.setEnabled(enabled);
   }
 
   private class MyDocumentListener implements DocumentListener {
+    @Override
     public void beforeDocumentChange(DocumentEvent event) {
 
     }
 
+    @Override
     public void documentChanged(DocumentEvent event) {
       if (!myNonHumanChange && myComponent instanceof JComboBox && ((JComboBox)myComponent).isPopupVisible()) {
         ((JComboBox)myComponent).hidePopup();
@@ -316,6 +324,7 @@ public class NameSuggestionsField extends JPanel {
   }
 
   private class MyComboBoxItemListener implements ItemListener {
+    @Override
     public void itemStateChanged(ItemEvent e) {
       fireDataChanged();
     }

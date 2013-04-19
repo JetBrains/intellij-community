@@ -56,6 +56,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     super(new BorderLayout());
   }
 
+  @Override
   public Component getListCellRendererComponent(
     JList list,
     Object value,
@@ -95,6 +96,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
     return this;
   }
 
+  @Override
   public void setPatternMatcher(final Matcher matcher) {
     myMatcher = matcher;
   }
@@ -125,6 +127,7 @@ public class NavigationItemListCellRenderer extends OpaquePanel implements ListC
       myMatcher = matcher;
     }
 
+    @Override
     protected void customizeCellRenderer(
       JList list,
       Object value,

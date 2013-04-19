@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class UsageTargetsRule implements GetDataRule {
+  @Override
   @Nullable
   public Object getData(DataProvider dataProvider) {
     return UsageTargetUtil.findUsageTargets(dataProvider);

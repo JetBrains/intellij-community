@@ -234,6 +234,7 @@ class WrapImpl extends Wrap {
    * Allows to instruct current wrap to ignore all parent wraps, i.e. all calls to {@link #isChildOf(WrapImpl, LeafBlockWrapper)}
    * return <code>'false'</code> after invocation of this method.
    */
+  @Override
   public void ignoreParentWraps() {
     myFlags |= IGNORE_PARENT_WRAPS_MASK;
   }

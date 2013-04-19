@@ -224,6 +224,7 @@ public class ExecutionEnvironment extends UserDataHolderBase {
   @Deprecated
   public DataContext getDataContext() {
     return new DataContext() {
+      @Override
       public Object getData(@NonNls String dataId) {
         return PlatformDataKeys.PROJECT.is(dataId) ? myProject : null;
       }

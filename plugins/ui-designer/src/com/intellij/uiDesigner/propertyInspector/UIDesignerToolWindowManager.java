@@ -229,11 +229,11 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
   }
 
   private class MyFileEditorManagerListener implements FileEditorManagerListener {
-    public void fileOpened(FileEditorManager source, VirtualFile file) {
+    public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       processFileEditorChange(getActiveFormFileEditor());
     }
 
-    public void fileClosed(FileEditorManager source, VirtualFile file) {
+    public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -242,7 +242,7 @@ public class UIDesignerToolWindowManager implements ProjectComponent {
       });
     }
 
-    public void selectionChanged(FileEditorManagerEvent event) {
+    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
       UIFormEditor newEditor = event.getNewEditor() instanceof UIFormEditor ? (UIFormEditor)event.getNewEditor() : null;
       processFileEditorChange(newEditor);
     }

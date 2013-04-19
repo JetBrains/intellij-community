@@ -34,6 +34,7 @@ public abstract class NamedStubBase<T extends PsiNamedElement> extends StubBase<
     this(parent, elementType, StringRef.fromString(name));
   }
 
+  @Override
   public String getName() {
     return myName.getString();
   }

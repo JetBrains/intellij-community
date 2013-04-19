@@ -29,6 +29,7 @@ import com.intellij.psi.search.scope.packageSet.NamedScopesHolder;
 public class ProjectProductionScope extends NamedScope {
   public ProjectProductionScope() {
     super(IdeBundle.message("predefined.scope.production.name"), new AbstractPackageSet("src:*..*") {
+      @Override
       public boolean contains(VirtualFile file, NamedScopesHolder holder) {
         final ProjectFileIndex index = ProjectRootManager.getInstance(holder.getProject()).getFileIndex();
         return file != null

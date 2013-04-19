@@ -81,6 +81,7 @@ public class TodoConfiguration implements NamedComponent, JDOMExternalizable {
     return ServiceManager.getService(TodoConfiguration.class);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "TodoConfiguration";
@@ -158,6 +159,7 @@ public class TodoConfiguration implements NamedComponent, JDOMExternalizable {
     myPropertyChangeMulticaster.removeListener(listener);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     ArrayList<TodoPattern> patternsList = new ArrayList<TodoPattern>();
     ArrayList<TodoFilter> filtersList = new ArrayList<TodoFilter>();
@@ -179,6 +181,7 @@ public class TodoConfiguration implements NamedComponent, JDOMExternalizable {
     setTodoFilters(filtersList.toArray(new TodoFilter[filtersList.size()]));
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     for (TodoPattern pattern : myTodoPatterns) {
       Element child = new Element(ELEMENT_PATTERN);

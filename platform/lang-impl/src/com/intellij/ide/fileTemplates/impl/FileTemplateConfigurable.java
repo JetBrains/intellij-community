@@ -148,14 +148,17 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myAdjustBox.setEnabled(show);
   }
 
+  @Override
   public String getDisplayName() {
     return IdeBundle.message("title.file.templates");
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }
 
+  @Override
   public JComponent createComponent() {
     myMainPanel = new JPanel(new GridBagLayout());
     myNameField = new JTextField();
@@ -192,11 +195,13 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     setShowInternalMessage(null);
 
     myNameField.addFocusListener(new FocusAdapter() {
+      @Override
       public void focusLost(FocusEvent e) {
         onNameChanged();
       }
     });
     myExtensionField.addFocusListener(new FocusAdapter() {
+      @Override
       public void focusLost(FocusEvent e) {
         onNameChanged();
       }
@@ -223,6 +228,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     scheme.setColor(EditorColors.CARET_ROW_COLOR, null);
 
     editor.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       public void documentChanged(DocumentEvent e) {
         onTextChanged();
       }
@@ -262,6 +268,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     myChangeListeners.remove(listener);
   }
 
+  @Override
   public boolean isModified() {
     if (myModified) {
       return true;
@@ -282,6 +289,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     return false;
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     if (myTemplate != null) {
       myTemplate.setText(myTemplateEditor.getDocument().getText());
@@ -311,6 +319,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     return FileUtil.ensureCanCreateFile(tempFile);
   }
 
+  @Override
   public void reset() {
     final String text = (myTemplate == null) ? "" : myTemplate.getText();
     String name = (myTemplate == null) ? "" : myTemplate.getName();
@@ -362,6 +371,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
     return file;
   }
 
+  @Override
   public void disposeUIResources() {
     myMainPanel = null;
     if (myTemplateEditor != null) {
@@ -402,6 +412,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
       templateLexer = new MergingLexerAdapter(templateLexer, TOKENS_TO_MERGE);
 
       myLexer = new CompositeLexer(originalLexer, templateLexer) {
+        @Override
         protected IElementType getCompositeTokenType(IElementType type1, IElementType type2) {
           if (type2 == FileTemplateTokenType.MACRO || type2 == FileTemplateTokenType.DIRECTIVE) {
             return type2;
@@ -413,11 +424,13 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
       };
     }
 
+    @Override
     @NotNull
     public Lexer getHighlightingLexer() {
       return myLexer;
     }
 
+    @Override
     @NotNull
     public TextAttributesKey[] getTokenHighlights(IElementType tokenType) {
       if (tokenType == FileTemplateTokenType.MACRO) {

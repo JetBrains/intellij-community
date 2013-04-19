@@ -200,11 +200,11 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
     project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerListener() {
       @Override
-      public void fileOpened(FileEditorManager source, VirtualFile file) {
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       }
 
       @Override
-      public void fileClosed(FileEditorManager source, VirtualFile file) {
+      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         getFocusManagerImpl(myProject).doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
           @Override
           public void run() {
@@ -216,7 +216,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       }
 
       @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
       }
     });
 
@@ -621,6 +621,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
         @Override
         public void run() {
           requestor.requestFocus(new FocusCommand() {
+            @NotNull
             @Override
             public ActionCallback run() {
               runnable.run();
@@ -657,6 +658,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
       public void run() {
         if (forced) {
           getFocusManagerImpl(myProject).requestFocus(new FocusCommand() {
+            @NotNull
             @Override
             public ActionCallback run() {
               final ArrayList<FinalizableCommand> cmds = new ArrayList<FinalizableCommand>();
@@ -2263,6 +2265,7 @@ public final class ToolWindowManagerImpl extends ToolWindowManagerEx implements 
 
   public ActionCallback requestDefaultFocus(final boolean forced) {
     return getFocusManagerImpl(myProject).requestFocus(new FocusCommand() {
+      @NotNull
       @Override
       public ActionCallback run() {
         return processDefaultFocusRequest(forced);

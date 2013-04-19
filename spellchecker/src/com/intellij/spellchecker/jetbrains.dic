@@ -24,6 +24,7 @@ backend
 backtrace
 barcode
 basedir
+basename
 basicfile
 batis
 bfile

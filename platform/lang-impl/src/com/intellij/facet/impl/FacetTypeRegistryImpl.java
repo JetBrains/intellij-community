@@ -33,6 +33,7 @@ import java.util.*;
 public class FacetTypeRegistryImpl extends FacetTypeRegistry {
   private static final Logger LOG = Logger.getInstance("#com.intellij.facet.impl.FacetTypeRegistryImpl");
   private static final Comparator<FacetType> FACET_TYPE_COMPARATOR = new Comparator<FacetType>() {
+    @Override
     public int compare(final FacetType o1, final FacetType o2) {
       return o1.getPresentableName().compareToIgnoreCase(o2.getPresentableName());
     }
@@ -41,6 +42,7 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
   private final Map<FacetTypeId, FacetType> myFacetTypes = new HashMap<FacetTypeId, FacetType>();
   private boolean myExtensionsLoaded = false;
 
+  @Override
   public synchronized void registerFacetType(FacetType facetType) {
     final FacetTypeId typeId = facetType.getId();
     String id = facetType.getStringId();
@@ -52,6 +54,7 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
     myTypeIds.put(id, typeId);
   }
 
+  @Override
   public synchronized void unregisterFacetType(FacetType facetType) {
     final FacetTypeId id = facetType.getId();
     final String stringId = facetType.getStringId();
@@ -60,12 +63,14 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
     myTypeIds.remove(stringId);
   }
 
+  @Override
   public synchronized FacetTypeId[] getFacetTypeIds() {
     loadExtensions();
     final Set<FacetTypeId> ids = myFacetTypes.keySet();
     return ids.toArray(new FacetTypeId[ids.size()]);
   }
 
+  @Override
   public synchronized FacetType[] getFacetTypes() {
     loadExtensions();
     final Collection<FacetType> types = myFacetTypes.values();
@@ -81,6 +86,7 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
     return types;
   }
 
+  @Override
   @Nullable
   public synchronized FacetType findFacetType(String id) {
     loadExtensions();
@@ -88,6 +94,7 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
     return typeId == null ? null : myFacetTypes.get(typeId);
   }
 
+  @Override
   @Nullable
   public synchronized <F extends Facet<C>, C extends FacetConfiguration> FacetType<F, C> findFacetType(FacetTypeId<F> typeId) {
     loadExtensions();
@@ -99,10 +106,12 @@ public class FacetTypeRegistryImpl extends FacetTypeRegistry {
       myExtensionsLoaded = true;
       final ExtensionPoint<FacetType> extensionPoint = Extensions.getArea(null).getExtensionPoint(FacetType.EP_NAME);
       extensionPoint.addExtensionPointListener(new ExtensionPointListener<FacetType>() {
+        @Override
         public void extensionAdded(@NotNull final FacetType extension, @Nullable final PluginDescriptor pluginDescriptor) {
           registerFacetType(extension);
         }
 
+        @Override
         public void extensionRemoved(@NotNull final FacetType extension, @Nullable final PluginDescriptor pluginDescriptor) {
           unregisterFacetType(extension);
         }

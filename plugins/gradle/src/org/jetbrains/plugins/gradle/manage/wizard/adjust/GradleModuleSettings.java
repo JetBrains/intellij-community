@@ -1,15 +1,16 @@
 package org.jetbrains.plugins.gradle.manage.wizard.adjust;
 
 import com.intellij.ide.util.BrowseFilesListener;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
+import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.ui.MessageType;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.gradle.GradleModule;
-import org.jetbrains.plugins.gradle.model.gradle.SourceType;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
@@ -17,7 +18,7 @@ import java.awt.event.ItemEvent;
 import java.awt.event.ItemListener;
 
 /**
- * Manages settings of {@link GradleModule gradle module} component.
+ * Manages settings of {@link ModuleData gradle module} component.
  * 
  * @author Denis Zhdanov
  * @since 8/12/11 3:39 PM
@@ -25,13 +26,13 @@ import java.awt.event.ItemListener;
 public class GradleModuleSettings implements GradleProjectStructureNodeSettings {
 
   private final JComponent                myComponent;
-  private final GradleModule              myModule;
+  private final ModuleData                myModule;
   private final JRadioButton              myInheritProjectCompileOutputPathButton;
   private final JRadioButton              myUseModuleCompileOutputPathButton;
   private final TextFieldWithBrowseButton myOutputLocationField;
   private final TextFieldWithBrowseButton myTestOutputLocationField;
 
-  public GradleModuleSettings(@NotNull GradleModule module) {
+  public GradleModuleSettings(@NotNull ModuleData module) {
     myModule = module;
     GradleProjectSettingsBuilder builder = new GradleProjectSettingsBuilder();
     Pair<JRadioButton, JRadioButton> pair = setupCompileOutput(builder);
@@ -43,7 +44,7 @@ public class GradleModuleSettings implements GradleProjectStructureNodeSettings 
     myComponent = builder.build();
     refresh();
   }
-  
+
   @NotNull
   private Pair<JRadioButton, JRadioButton> setupCompileOutput(@NotNull GradleProjectSettingsBuilder builder) {
     JRadioButton inheritButton = new JRadioButton(ProjectBundle.message("project.inherit.compile.output.path"));
@@ -87,24 +88,27 @@ public class GradleModuleSettings implements GradleProjectStructureNodeSettings 
     if (myUseModuleCompileOutputPathButton.isSelected()) {
       String outputLocation = myOutputLocationField.getText();
       if (outputLocation == null || StringUtil.isEmpty(outputLocation.trim())) {
-        GradleUtil.showBalloon(
-          myOutputLocationField,
-          MessageType.ERROR,
-          GradleBundle.message("gradle.import.text.error.file.module.compile.output.location")
-        );
-        return false;
+        // TODO den uncomment
       }
+      //  ExternalSystemUiUtil.showBalloon(
+      //    myOutputLocationField,
+      //    MessageType.ERROR,
+      //    ExternalSystemBundle.message("gradle.import.text.error.file.module.compile.output.location")
+      //  );
+      //  return false;
+      //}
       String testOutputLocation = myTestOutputLocationField.getText();
-      if (testOutputLocation == null || StringUtil.isEmpty(testOutputLocation.trim())) {
-        GradleUtil.showBalloon(
-          myTestOutputLocationField,
-          MessageType.ERROR,
-          GradleBundle.message("gradle.import.text.error.file.module.test.output.location")
-        );
-        return false;
-      }
-      myModule.setCompileOutputPath(SourceType.SOURCE, outputLocation.trim());
-      myModule.setCompileOutputPath(SourceType.TEST, testOutputLocation.trim());
+      // TODO den uncomment
+      //if (testOutputLocation == null || StringUtil.isEmpty(testOutputLocation.trim())) {
+      //  ExternalSystemUiUtil.showBalloon(
+      //    myTestOutputLocationField,
+      //    MessageType.ERROR,
+      //    ExternalSystemBundle.message("gradle.import.text.error.file.module.test.output.location")
+      //  );
+      //  return false;
+      //}
+      myModule.setCompileOutputPath(ExternalSystemSourceType.SOURCE, outputLocation.trim());
+      myModule.setCompileOutputPath(ExternalSystemSourceType.TEST, testOutputLocation.trim());
     }
     myModule.setInheritProjectCompileOutputPath(myInheritProjectCompileOutputPathButton.isSelected());
     return true;
@@ -118,8 +122,8 @@ public class GradleModuleSettings implements GradleProjectStructureNodeSettings 
     else {
       myUseModuleCompileOutputPathButton.setSelected(true);
     }
-    myOutputLocationField.setText(myModule.getCompileOutputPath(SourceType.SOURCE));
-    myTestOutputLocationField.setText(myModule.getCompileOutputPath(SourceType.TEST));
+    myOutputLocationField.setText(myModule.getCompileOutputPath(ExternalSystemSourceType.SOURCE));
+    myTestOutputLocationField.setText(myModule.getCompileOutputPath(ExternalSystemSourceType.TEST));
   }
 
   @NotNull

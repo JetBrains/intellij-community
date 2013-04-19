@@ -33,6 +33,7 @@ public abstract class IndentationParser implements PsiParser {
     myIndentTokenType = indentTokenType;
   }
 
+  @Override
   @NotNull
   public final ASTNode parse(final IElementType root, final PsiBuilder builder) {
     final PsiBuilder.Marker fileMarker = builder.mark();

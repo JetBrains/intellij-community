@@ -1,5 +1,6 @@
 package org.jetbrains.plugins.gradle.sync.conflict;
 
+import com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChange;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.LibraryOrderEntry;
@@ -8,9 +9,8 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.Ref;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.diff.GradleProjectStructureChange;
-import org.jetbrains.plugins.gradle.model.intellij.IdeEntityVisitor;
-import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
+import com.intellij.openapi.externalSystem.util.IdeEntityVisitor;
+import com.intellij.openapi.externalSystem.service.project.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import javax.swing.*;
@@ -49,36 +49,37 @@ public class GradleConflictControlFactory {
    *                 <code>null</code> if there are no differences or if we don't know how to show them
    */
   @Nullable
-  public JComponent getDiffControl(@NotNull Object entity, final @NotNull Collection<GradleProjectStructureChange> changes) {
+  public JComponent getDiffControl(@NotNull Object entity, final @NotNull Collection<ExternalProjectStructureChange> changes) {
     final Ref<JComponent> result = new Ref<JComponent>();
-    GradleUtil.dispatch(entity, new IdeEntityVisitor() {
-      @Override
-      public void visit(@NotNull Project project) {
-        result.set(myProjectFactory.getControl(changes));
-      }
-
-      @Override
-      public void visit(@NotNull Module module) {
-      }
-
-      @Override
-      public void visit(@NotNull ModuleAwareContentRoot contentRoot) {
-      }
-
-      @Override
-      public void visit(@NotNull LibraryOrderEntry libraryDependency) {
-        result.set(myCommonDependencyFactory.getControl(libraryDependency, changes));
-      }
-
-      @Override
-      public void visit(@NotNull ModuleOrderEntry moduleDependency) {
-        result.set(myCommonDependencyFactory.getControl(moduleDependency, changes));
-      }
-
-      @Override
-      public void visit(@NotNull Library library) {
-      }
-    });
+    // TODO den implement
+//    GradleUtil.dispatch(entity, new IdeEntityVisitor() {
+//      @Override
+//      public void visit(@NotNull Project project) {
+//        result.set(myProjectFactory.getControl(changes));
+//      }
+//
+//      @Override
+//      public void visit(@NotNull Module module) {
+//      }
+//
+//      @Override
+//      public void visit(@NotNull ModuleAwareContentRoot contentRoot) {
+//      }
+//
+//      @Override
+//      public void visit(@NotNull LibraryOrderEntry libraryDependency) {
+//        result.set(myCommonDependencyFactory.getControl(libraryDependency, changes));
+//      }
+//
+//      @Override
+//      public void visit(@NotNull ModuleOrderEntry moduleDependency) {
+//        result.set(myCommonDependencyFactory.getControl(moduleDependency, changes));
+//      }
+//
+//      @Override
+//      public void visit(@NotNull Library library) {
+//      }
+//    });
     return result.get();
   }
 }

@@ -107,7 +107,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
   private static final String SKIP_FOR_ENUM = "ignoreForEnumConstant";
   @Override
-  public void writeSettings(Element node) throws WriteExternalException {
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
     super.writeSettings(node);
     if (ignoreForEnumConstants) {
       final Element e = new Element("option");
@@ -117,7 +117,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     }
   }
 
-  public void readSettings(Element node) throws InvalidDataException {
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
     for (Object o : node.getChildren()) {
       if (o instanceof Element && Comparing.strEqual(node.getAttributeValue("name"), SKIP_FOR_ENUM)) {
@@ -208,7 +208,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
         ignoreToString = chkToString.isSelected();
       }
     });
-    
+
     final JCheckBox ignoreEnumConstants = new JCheckBox("Ignore enum constants", ignoreForEnumConstants);
     ignoreEnumConstants.addChangeListener(new ChangeListener() {
       public void stateChanged(ChangeEvent e) {

@@ -134,7 +134,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
   }
 
   @Override
-  public void readSettings(Element node) throws InvalidDataException {
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
     final Element element = node.getChild(EFFECTIVE_LL);
     if (element != null) {
       myEffectiveLanguageLevel = LanguageLevel.valueOf(element.getAttributeValue("value"));
@@ -142,7 +142,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
   }
 
   @Override
-  public void writeSettings(Element node) throws WriteExternalException {
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (myEffectiveLanguageLevel != null) {
       final Element llElement = new Element(EFFECTIVE_LL);
       llElement.setAttribute("value", myEffectiveLanguageLevel.toString());

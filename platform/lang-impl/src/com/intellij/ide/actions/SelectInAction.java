@@ -30,6 +30,7 @@ import org.jetbrains.annotations.NotNull;
 import java.util.*;
 
 public class SelectInAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     FeatureUsageTracker.getInstance().triggerFeatureUsed("navigation.select.in");
     SelectInContext context = SelectInContextImpl.createContext(e);
@@ -37,6 +38,7 @@ public class SelectInAction extends AnAction implements DumbAware {
     invoke(e.getDataContext(), context);
   }
 
+  @Override
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
 
@@ -79,6 +81,7 @@ public class SelectInAction extends AnAction implements DumbAware {
       init(IdeBundle.message("title.popup.select.target"), myVisibleTargets, null);
     }
 
+    @Override
     @NotNull
     public String getTextFor(final SelectInTarget value) {
       String text = value.toString();
@@ -86,6 +89,7 @@ public class SelectInAction extends AnAction implements DumbAware {
       return numberingText(n, text);
     }
 
+    @Override
     public PopupStep onChosen(final SelectInTarget target, final boolean finalChoice) {
       if (finalChoice) {
         target.selectIn(mySelectInContext, true);
@@ -101,15 +105,18 @@ public class SelectInAction extends AnAction implements DumbAware {
       return FINAL_CHOICE;
     }
 
+    @Override
     public boolean hasSubstep(final SelectInTarget selectedValue) {
       return selectedValue instanceof CompositeSelectInTarget &&
              ((CompositeSelectInTarget)selectedValue).getSubTargets(mySelectInContext).size() != 0;
     }
 
+    @Override
     public boolean isSelectable(final SelectInTarget target) {
       return target.canSelect(mySelectInContext);
     }
 
+    @Override
     public boolean isMnemonicsNavigationEnabled() {
       return true;
     }
@@ -137,6 +144,7 @@ public class SelectInAction extends AnAction implements DumbAware {
       super(IdeBundle.message("message.no.targets.available"));
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
     }
   }

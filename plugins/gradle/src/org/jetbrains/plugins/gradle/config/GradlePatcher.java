@@ -6,7 +6,8 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 
 import java.io.File;
 
@@ -45,7 +46,8 @@ public class GradlePatcher {
     File autodetectedGradleHome = libraryManager.getAutodetectedGradleHome();
     // We don't want to store auto-detected value at the settings.
     if (autodetectedGradleHome == null || !FileUtil.filesEqual(autodetectedGradleHome, new File(projectGradleHome))) {
-      GradleSettings.applyGradleHome(projectGradleHome, defaultProject);
+      // TODO den implement
+//      GradleSettings.applyGradleHome(projectGradleHome, defaultProject);
     }
   }
 }

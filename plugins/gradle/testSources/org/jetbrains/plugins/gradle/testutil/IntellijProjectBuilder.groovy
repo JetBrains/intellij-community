@@ -12,7 +12,7 @@ import com.intellij.openapi.roots.libraries.LibraryTable
 import com.intellij.openapi.util.IconLoader
 import com.intellij.openapi.vfs.VirtualFile
 import com.intellij.pom.java.LanguageLevel
-import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot
+import com.intellij.openapi.externalSystem.service.project.ModuleAwareContentRoot
 import org.jetbrains.plugins.gradle.util.GradleUtil
 
 /** 

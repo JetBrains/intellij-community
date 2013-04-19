@@ -30,10 +30,12 @@ class TemplateConfigurable extends SettingsEditorConfigurable<RunnerAndConfigura
     myTemplate = template;
   }
 
+  @Override
   public String getDisplayName() {
     return myTemplate.getConfiguration().getName();
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }

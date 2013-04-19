@@ -20,18 +20,20 @@
  */
 package com.intellij.codeInspection.reference;
 
-public class RefVisitor {
-  public void visitElement(RefEntity elem) {}
+import org.jetbrains.annotations.NotNull;
 
-  public void visitFile(RefFile file) {
+public class RefVisitor {
+  public void visitElement(@NotNull RefEntity elem) {}
+
+  public void visitFile(@NotNull RefFile file) {
     visitElement(file);
   }
 
-  public void visitModule(RefModule module){
+  public void visitModule(@NotNull RefModule module){
     visitElement(module);
   }
 
-  public void visitDirectory(RefDirectory directory) {
+  public void visitDirectory(@NotNull RefDirectory directory) {
     visitElement(directory);
   }
 }

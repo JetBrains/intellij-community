@@ -29,6 +29,7 @@ import java.awt.*;
  * @author Konstantin Bulenkov
  */
 public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction {
+  @Override
   public void actionPerformed(AnActionEvent e){
     final DataContext context = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(context);
@@ -53,6 +54,7 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
   }
 
 
+  @Override
   public void update(final AnActionEvent e){
     final boolean enabled = e.getData(PlatformDataKeys.PROJECT) != null;
     e.getPresentation().setEnabled(enabled);

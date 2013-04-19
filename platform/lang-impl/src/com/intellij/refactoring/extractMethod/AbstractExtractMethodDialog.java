@@ -94,6 +94,7 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
     updateOkStatus();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myMethodNameTextField;
   }
@@ -147,20 +148,24 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
     return "refactoring.extractMethod";
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return myContentPane;
   }
 
   private void createUIComponents() {
     myParametersPanel = new AbstractParameterTablePanel(myValidator){
+      @Override
       protected void doCancelAction() {
         AbstractExtractMethodDialog.this.doCancelAction();
       }
 
+      @Override
       protected void doEnterAction() {
         doOKAction();
       }
 
+      @Override
       protected void updateSignature() {
         updateOutputVariables();
         AbstractExtractMethodDialog.this.updateSignature();
@@ -194,10 +199,12 @@ public class AbstractExtractMethodDialog extends DialogWrapper implements Extrac
     setOKActionEnabled(myValidator.isValidName(getMethodName()));
   }
 
+  @Override
   public String getMethodName() {
     return myMethodNameTextField.getText().trim();
   }
 
+  @Override
   public AbstractVariableData[] getVariableData() {
     return myVariableData;
   }

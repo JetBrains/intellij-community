@@ -28,6 +28,7 @@ import java.io.FileNotFoundException;
 
 public class ExportToHTMLAction extends AnAction {
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -43,6 +44,7 @@ public class ExportToHTMLAction extends AnAction {
     }
   }
 
+  @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();

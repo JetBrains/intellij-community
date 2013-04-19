@@ -41,19 +41,23 @@ public class DefaultModulesProvider implements ModulesProvider {
     myProject = project;
   }
 
+  @Override
   @NotNull
   public Module[] getModules() {
     return ModuleManager.getInstance(myProject).getModules();
   }
 
+  @Override
   public Module getModule(String name) {
     return ModuleManager.getInstance(myProject).findModuleByName(name);
   }
 
+  @Override
   public ModuleRootModel getRootModel(@NotNull Module module) {
     return ModuleRootManager.getInstance(module);
   }
 
+  @Override
   public FacetModel getFacetModel(@NotNull Module module) {
     return FacetManager.getInstance(module);
   }

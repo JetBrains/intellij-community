@@ -112,6 +112,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     if (initialFile != null) {
       // dialog does not exist yet
       SwingUtilities.invokeLater(new Runnable(){
+        @Override
         public void run() {
           selectFile(initialFile);
         }
@@ -119,47 +120,57 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
 
     SwingUtilities.invokeLater(new Runnable(){
+      @Override
       public void run() {
         handleSelectionChanged();
       }
     });
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     final DefaultTreeModel model = new DefaultTreeModel(new DefaultMutableTreeNode());
     myTree = new Tree(model);
 
     final ProjectAbstractTreeStructureBase treeStructure = new AbstractProjectTreeStructure(myProject) {
+      @Override
       public boolean isFlattenPackages() {
         return false;
       }
 
+      @Override
       public boolean isShowMembers() {
         return false;
       }
 
+      @Override
       public boolean isHideEmptyMiddlePackages() {
         return true;
       }
 
+      @Override
       public Object[] getChildElements(final Object element) {
         return filterFiles(super.getChildElements(element));
       }
 
+      @Override
       public boolean isAbbreviatePackageNames() {
         return false;
       }
 
+      @Override
       public boolean isShowLibraryContents() {
         return myShowLibraryContents;
       }
 
+      @Override
       public boolean isShowModules() {
         return false;
       }
 
+      @Override
       public List<TreeStructureProvider> getProviders() {
-        return myDisableStructureProviders ? null : super.getProviders(); 
+        return myDisableStructureProviders ? null : super.getProviders();
       }
     };
     myBuilder = new ProjectTreeBuilder(myProject, myTree, model, AlphaComparator.INSTANCE, treeStructure);
@@ -174,6 +185,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     scrollPane.setPreferredSize(new Dimension(500, 300));
 
     myTree.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(final KeyEvent e) {
         if (KeyEvent.VK_ENTER == e.getKeyCode()) {
           doOKAction();
@@ -195,6 +207,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
     myTree.addTreeSelectionListener(
       new TreeSelectionListener() {
+        @Override
         public void valueChanged(final TreeSelectionEvent e) {
           handleSelectionChanged();
         }
@@ -212,6 +225,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }
     PsiElement context = myInitialFile == null ? null : myInitialFile;
     myGotoByNamePanel = new ChooseByNamePanel(myProject, new MyGotoFileModel(), name, true, context) {
+      @Override
       protected void close(final boolean isOk) {
         super.close(isOk);
 
@@ -223,6 +237,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
         }
       }
 
+      @Override
       protected void initUI(final ChooseByNamePopupComponent.Callback callback,
                             final ModalityState modalityState,
                             boolean allowMultipleSelection) {
@@ -238,6 +253,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       protected void showTextFieldPanel() {
       }
 
+      @Override
       protected void chosenElementMightChange() {
         handleSelectionChanged();
       }
@@ -247,6 +263,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     myTabbedPane.addTab(IdeBundle.message("tab.chooser.search.by.name"), dummyPanel);
 
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         myGotoByNamePanel.invoke(new MyCallback(), ModalityState.stateForComponent(getRootPane()), false);
       }
@@ -254,6 +271,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
     myTabbedPane.addChangeListener(
       new ChangeListener() {
+        @Override
         public void stateChanged(final ChangeEvent e) {
           handleSelectionChanged();
         }
@@ -272,24 +290,29 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     setOKActionEnabled(selection != null);
   }
 
+  @Override
   protected void doOKAction() {
     mySelectedFile = calcSelectedClass();
     if (mySelectedFile == null) return;
     super.doOKAction();
   }
 
+  @Override
   public void doCancelAction() {
     mySelectedFile = null;
     super.doCancelAction();
   }
 
+  @Override
   public PsiFile getSelectedFile(){
     return mySelectedFile;
   }
 
+  @Override
   public void selectFile(@NotNull final PsiFile file) {
     // Select element in the tree
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myBuilder != null) {
           myBuilder.select(file, file.getVirtualFile(), true);
@@ -298,6 +321,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     }, ModalityState.stateForComponent(getWindow()));
   }
 
+  @Override
   public void showDialog() {
     show();
   }
@@ -323,6 +347,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   }
 
 
+  @Override
   public void dispose() {
     if (myBuilder != null) {
       Disposer.dispose(myBuilder);
@@ -331,16 +356,19 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
     super.dispose();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.ide.util.TreeFileChooserDialog";
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myTree;
   }
 
   private final class MyGotoFileModel implements ChooseByNameModel {
     private final int myMaxSize = WindowManagerEx.getInstanceEx().getFrame(myProject).getSize().width;
+    @Override
     @NotNull
     public Object[] getElementsByName(final String name, final boolean checkBoxState, final String pattern) {
       GlobalSearchScope scope = myShowLibraryContents ? GlobalSearchScope.allScope(myProject) : GlobalSearchScope.projectScope(myProject);
@@ -348,37 +376,46 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       return filterFiles(psiFiles);
     }
 
+    @Override
     public String getPromptText() {
       return IdeBundle.message("prompt.filechooser.enter.file.name");
     }
 
+    @Override
     public String getCheckBoxName() {
       return null;
     }
 
+    @Override
     public char getCheckBoxMnemonic() {
       return 0;
     }
 
+    @Override
     public String getNotInMessage() {
       return "";
     }
 
+    @Override
     public String getNotFoundMessage() {
       return "";
     }
 
+    @Override
     public boolean loadInitialCheckBoxState() {
       return true;
     }
 
+    @Override
     public void saveInitialCheckBoxState(final boolean state) {
     }
 
+    @Override
     public PsiElementListCellRenderer getListCellRenderer() {
       return new GotoFileCellRenderer(myMaxSize);
     }
 
+    @Override
     @NotNull
     public String[] getNames(final boolean checkBoxState) {
       final String[] fileNames;
@@ -412,11 +449,13 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       return true;
     }
 
+    @Override
     public String getElementName(final Object element) {
       if (!(element instanceof PsiFile)) return null;
       return ((PsiFile)element).getName();
     }
 
+    @Override
     @Nullable
     public String getFullName(final Object element) {
       if (element instanceof PsiFile) {
@@ -427,10 +466,12 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
       return getElementName(element);
     }
 
+    @Override
     public String getHelpId() {
       return null;
     }
 
+    @Override
     @NotNull
     public String[] getSeparators() {
       return new String[] {"/", "\\"};
@@ -443,6 +484,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
   }
 
   private final class MyCallback extends ChooseByNamePopupComponent.Callback {
+    @Override
     public void elementChosen(final Object element) {
       mySelectedFile = (PsiFile)element;
       close(OK_EXIT_CODE);
@@ -451,6 +493,7 @@ public final class TreeFileChooserDialog extends DialogWrapper implements TreeFi
 
   private Object[] filterFiles(final Object[] list) {
     Condition<PsiFile> condition = new Condition<PsiFile>() {
+      @Override
       public boolean value(final PsiFile psiFile) {
         if (myFilter != null && !myFilter.accept(psiFile)) {
           return false;

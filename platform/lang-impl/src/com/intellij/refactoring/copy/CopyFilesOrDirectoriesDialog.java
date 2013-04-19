@@ -56,7 +56,7 @@ import java.util.List;
 
 public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
   public static final int MAX_PATH_LENGTH = 70;
-  
+
   private JLabel myInformationLabel;
   private TextFieldWithHistoryWithBrowseButton myTargetDirectoryField;
   private JTextField myNewNameField;
@@ -145,24 +145,29 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
     }
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     return new Action[]{getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myShowNewNameField ? myNewNameField : myTargetDirectoryField.getChildComponent();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return new JPanel(new BorderLayout());
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     myInformationLabel = JBLabelDecorator.createJBLabelDecorator().setBold(true);
     final FormBuilder formBuilder = FormBuilder.createFormBuilder().addComponent(myInformationLabel).addVerticalGap(
       UIUtil.LARGE_VGAP - UIUtil.DEFAULT_VGAP);
     DocumentListener documentListener = new DocumentAdapter() {
+      @Override
       public void textChanged(DocumentEvent event) {
         validateOKButton();
       }
@@ -210,6 +215,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
     return myNewNameField != null ? myNewNameField.getText().trim() : null;
   }
 
+  @Override
   protected void doOKAction() {
     if (myShowNewNameField) {
       String newName = getNewName();
@@ -233,8 +239,10 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
       RecentsManager.getInstance(myProject).registerRecentEntry(RECENT_KEYS, targetDirectoryName);
 
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+        @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               try {
                 myTargetDirectory =
@@ -274,6 +282,7 @@ public class CopyFilesOrDirectoriesDialog extends DialogWrapper {
     setOKActionEnabled(true);
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp("refactoring.copyClass");
   }

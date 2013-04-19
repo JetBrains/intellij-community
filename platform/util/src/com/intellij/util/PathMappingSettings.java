@@ -15,7 +15,6 @@
  */
 package com.intellij.util;
 
-import com.google.common.collect.Lists;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -59,7 +58,7 @@ public class PathMappingSettings implements Cloneable {
   }
 
   public List<String> convertToRemote(Collection<String> paths) {
-    List<String> result = Lists.newArrayList();
+    List<String> result = ContainerUtil.newArrayList();
     for (String p: paths) {
       result.add(convertToRemote(p));
     }

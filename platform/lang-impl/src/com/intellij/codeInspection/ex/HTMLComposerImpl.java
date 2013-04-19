@@ -19,7 +19,7 @@
  * User: max
  * Date: Dec 22, 2001
  * Time: 4:54:17 PM
- * To change template for new interface use 
+ * To change template for new interface use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.ex;
@@ -40,6 +40,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.net.URL;
@@ -61,7 +62,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
   @NonNls protected static final String CODE_OPENING = "<code>";
   @NonNls protected static final String B_OPENING = "<b>";
   @NonNls protected static final String B_CLOSING = "</b>";
-  
+
   @NonNls protected static final String CLOSE_TAG = "\">";
   @NonNls protected static final String A_HREF_OPENING = "<a HREF=\"";
   @NonNls protected static final String A_CLOSING = "</a>";
@@ -131,7 +132,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       extension.appendShortName(refElement, buf);
     } else {
       refElement.accept(new RefVisitor() {
-        @Override public void visitFile(RefFile file) {
+        @Override public void visitFile(@NotNull RefFile file) {
           final PsiFile psiFile = file.getElement();
           if (psiFile != null) {
             buf.append(B_OPENING);
@@ -165,11 +166,13 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     buf.append(qName);
   }
 
+  @Override
   public void appendElementReference(final StringBuffer buf, RefElement refElement) {
     appendElementReference(buf, refElement, true);
   }
 
-  public void appendElementReference(final StringBuffer buf, RefElement refElement, String linkText, @NonNls String frameName) {    
+  @Override
+  public void appendElementReference(final StringBuffer buf, RefElement refElement, String linkText, @NonNls String frameName) {
     if (myExporter == null) {
       final URL url = ((RefElementImpl)refElement).getURL();
       if (url != null) {
@@ -181,6 +184,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     }
   }
 
+  @Override
   public void appendElementReference(final StringBuffer buf, String url, String linkText, @NonNls String frameName) {
     buf.append(A_HREF_OPENING);
     buf.append(url);
@@ -204,9 +208,10 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     }
   }
 
+  @Override
   public void appendElementReference(final StringBuffer buf, RefElement refElement, boolean isPackageIncluded) {
     final HTMLComposerExtension extension = getLanguageExtension(refElement);
-    
+
     if (extension != null) {
       extension.appendReferencePresentation(refElement, buf, isPackageIncluded);
     } else if (refElement instanceof RefFile) {
@@ -233,6 +238,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     }
   }
 
+  @Override
   public String composeNumereables(int n, String statement, String singleEnding, String multipleEnding) {
     final StringBuilder buf = new StringBuilder();
     buf.append(n);
@@ -248,6 +254,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     return buf.toString();
   }
 
+  @Override
   public void appendElementInReferences(StringBuffer buf, RefElement refElement) {
     if (refElement.getInReferences().size() > 0) {
       appendHeading(buf, InspectionsBundle.message("inspection.export.results.used.from"));
@@ -259,6 +266,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     }
   }
 
+  @Override
   public void appendElementOutReferences(StringBuffer buf, RefElement refElement) {
     if (refElement.getOutReferences().size() > 0) {
       buf.append(BR);
@@ -271,6 +279,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     }
   }
 
+  @Override
   public void appendListItem(StringBuffer buf, RefElement refElement) {
     startListItem(buf);
     buf.append(CLOSE_TAG);
@@ -309,12 +318,14 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     }
   }
 
+  @Override
   public void startList(@NonNls final StringBuffer buf) {
     buf.append("<ul>");
     myListStackTop++;
     myListStack[myListStackTop] = 0;
   }
 
+  @Override
   public void doneList(@NonNls StringBuffer buf) {
     buf.append("</ul>");
     if (myListStack[myListStackTop] != 0) {
@@ -323,6 +334,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     myListStackTop--;
   }
 
+  @Override
   public void startListItem(@NonNls StringBuffer buf) {
     myListStack[myListStackTop]++;
     buf.append("<li>");
@@ -332,6 +344,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     buf.append("</li>");
   }
 
+  @Override
   public void appendNoProblems(StringBuffer buf) {
     buf.append(BR);
     appendAfterHeaderIndention(buf);
@@ -340,6 +353,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     buf.append(B_CLOSING).append(BR);
   }
 
+  @Override
   public <T> T getExtension(final Key<T> key) {
     return (T)myExtensions.get(key);
   }

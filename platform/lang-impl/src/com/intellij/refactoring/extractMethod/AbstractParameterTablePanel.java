@@ -64,6 +64,7 @@ public abstract class AbstractParameterTablePanel extends JPanel {
     myTable.getSelectionModel().setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
     myTable.getColumnModel().getColumn(MyTableModel.CHECKMARK_COLUMN).setMaxWidth(new JCheckBox().getPreferredSize().width);
     myTable.getColumnModel().getColumn(MyTableModel.PARAMETER_NAME_COLUMN).setCellRenderer(new DefaultTableCellRenderer() {
+      @Override
       public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
         super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
         AbstractVariableData data = myVariableData[row];
@@ -80,6 +81,7 @@ public abstract class AbstractParameterTablePanel extends JPanel {
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_SPACE, 0), "enable_disable");
     @NonNls final ActionMap actionMap = myTable.getActionMap();
     actionMap.put("enable_disable", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (myTable.isEditing()) return;
         int[] rows = myTable.getSelectedRows();
@@ -102,6 +104,7 @@ public abstract class AbstractParameterTablePanel extends JPanel {
     // F2 should edit the name
     inputMap.put(KeyStroke.getKeyStroke(KeyEvent.VK_F2, 0), "edit_parameter_name");
     actionMap.put("edit_parameter_name", new AbstractAction() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (!myTable.isEditing()) {
           int row = myTable.getSelectedRow();
@@ -120,6 +123,7 @@ public abstract class AbstractParameterTablePanel extends JPanel {
     }
   }
 
+  @Override
   public void setEnabled(boolean enabled) {
     myTable.setEnabled(enabled);
     super.setEnabled(enabled);
@@ -133,14 +137,17 @@ public abstract class AbstractParameterTablePanel extends JPanel {
     public static final int CHECKMARK_COLUMN = 0;
     public static final int PARAMETER_NAME_COLUMN = 1;
 
+    @Override
     public int getRowCount() {
       return myVariableData.length;
     }
 
+    @Override
     public int getColumnCount() {
       return 2;
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKMARK_COLUMN: {
@@ -154,6 +161,7 @@ public abstract class AbstractParameterTablePanel extends JPanel {
       return null;
     }
 
+    @Override
     public void setValueAt(Object aValue, int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKMARK_COLUMN: {
@@ -175,6 +183,7 @@ public abstract class AbstractParameterTablePanel extends JPanel {
       }
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKMARK_COLUMN:
@@ -186,6 +195,7 @@ public abstract class AbstractParameterTablePanel extends JPanel {
       }
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       if (columnIndex == CHECKMARK_COLUMN) {
         return Boolean.class;

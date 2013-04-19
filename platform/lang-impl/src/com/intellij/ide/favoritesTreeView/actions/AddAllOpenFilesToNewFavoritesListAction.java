@@ -32,6 +32,7 @@ class AddAllOpenFilesToNewFavoritesListAction extends AnAction {
           IdeBundle.message("action.add.to.new.favorites.list"), AllIcons.General.AddFavoritesList);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final String newName = AddNewFavoritesListAction.doAddNewFavoritesList(e.getProject());
     if (newName != null) {
@@ -39,6 +40,7 @@ class AddAllOpenFilesToNewFavoritesListAction extends AnAction {
     }
   }
 
+  @Override
   public void update(AnActionEvent e) {
     Project project = e.getProject();
     if (project == null) {

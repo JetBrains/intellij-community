@@ -28,6 +28,7 @@ import com.intellij.openapi.fileTypes.impl.AbstractFileType;
 import com.intellij.openapi.fileTypes.impl.CustomSyntaxTableFileType;
 
 public class StandardFileTypeRegistrator implements FileTypeRegistrator {
+  @Override
   public void initFileType(final FileType fileType) {
     if (fileType instanceof AbstractFileType) {
       init(((AbstractFileType)fileType));
@@ -59,22 +60,27 @@ public class StandardFileTypeRegistrator implements FileTypeRegistrator {
       myAbstractFileType = abstractFileType;
     }
 
+    @Override
     public String getLineCommentPrefix() {
       return myAbstractFileType.getSyntaxTable().getLineComment();
     }
 
+    @Override
     public String getBlockCommentPrefix() {
       return myAbstractFileType.getSyntaxTable().getStartComment();
     }
 
+    @Override
     public String getBlockCommentSuffix() {
       return myAbstractFileType.getSyntaxTable().getEndComment();
     }
 
+    @Override
     public String getCommentedBlockCommentPrefix() {
       return null;
     }
 
+    @Override
     public String getCommentedBlockCommentSuffix() {
       return null;
     }

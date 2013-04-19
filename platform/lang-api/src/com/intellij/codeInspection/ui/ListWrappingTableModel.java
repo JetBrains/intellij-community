@@ -72,6 +72,7 @@ public class ListWrappingTableModel extends AbstractTableModel {
     return String.class;
   }
 
+  @Override
   public int getColumnCount() {
     return columnNames.size();
   }
@@ -84,6 +85,7 @@ public class ListWrappingTableModel extends AbstractTableModel {
     return null;
   }
 
+  @Override
   public int getRowCount() {
     final List<String> column0 = list.get(0);
     if (column0 == null) {
@@ -92,6 +94,7 @@ public class ListWrappingTableModel extends AbstractTableModel {
     return column0.size();
   }
 
+  @Override
   public Object getValueAt(int rowIndex, int columnIndex) {
     return list.get(columnIndex).get(rowIndex);
   }

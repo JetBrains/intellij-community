@@ -58,10 +58,12 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
     myHighlightedRegions = new ArrayList<HighlightedRegion>(2);
   }
 
+  @Override
   public ArrayList<HighlightedRegion> getHighlightedRegions() {
     return myHighlightedRegions;
   }
 
+  @Override
   protected void updateImpl(PresentationData data) {
     super.updateImpl(data);
     int fileCount = getFileCount(getValue());
@@ -110,6 +112,7 @@ public final class TodoDirNode extends PsiDirectoryNode implements HighlightedRe
     return myBuilder.getTodoTreeStructure();
   }
 
+  @Override
   public Collection<AbstractTreeNode> getChildrenImpl() {
     return TodoTreeHelper.getInstance(getProject()).getDirectoryChildren(getValue(), myBuilder, getSettings().isFlattenPackages());
   }

@@ -30,6 +30,7 @@ import com.intellij.psi.stubs.*;
 import com.intellij.psi.tree.ILightStubFileElementType;
 import com.intellij.util.diff.FlyweightCapableTreeStructure;
 import com.intellij.util.io.StringRef;
+import org.jetbrains.annotations.NotNull;
 
 import java.io.IOException;
 
@@ -84,26 +85,28 @@ public class JavaFileElementType extends ILightStubFileElementType<PsiJavaFileSt
     root.done(this);
   }
 
+  @NotNull
   @Override
   public String getExternalId() {
     return "java.FILE";
   }
 
   @Override
-  public void serialize(final PsiJavaFileStub stub, final StubOutputStream dataStream)
+  public void serialize(@NotNull final PsiJavaFileStub stub, @NotNull final StubOutputStream dataStream)
       throws IOException {
     dataStream.writeBoolean(stub.isCompiled());
     dataStream.writeName(stub.getPackageName());
   }
 
+  @NotNull
   @Override
-  public PsiJavaFileStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  public PsiJavaFileStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     boolean compiled = dataStream.readBoolean();
     StringRef packName = dataStream.readName();
     return new PsiJavaFileStubImpl(null, packName, compiled);
   }
 
   @Override
-  public void indexStub(final PsiJavaFileStub stub, final IndexSink sink) {
+  public void indexStub(@NotNull final PsiJavaFileStub stub, @NotNull final IndexSink sink) {
   }
 }

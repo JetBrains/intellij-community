@@ -72,7 +72,7 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
   }
 
   @Override
-  public void writeSettings(Element node) throws WriteExternalException {
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (IGNORE_ANNOTATED_METHODS || IGNORE_SUSPICIOUS_METHOD_CALLS) {
       super.writeSettings(node);
     }

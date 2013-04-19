@@ -39,11 +39,12 @@ import org.jetbrains.annotations.Nullable;
 
 public class ViewStructureAction extends AnAction {
   private static final String PLACE = "StructureViewPopup";
-  
+
   public ViewStructureAction() {
     setEnabledInModalContext(true);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
     if (project == null) return;
@@ -88,7 +89,7 @@ public class ViewStructureAction extends AnAction {
     StructureView structureView = structureViewBuilder.createStructureView(fileEditor, project);
     return createStructureViewBasedDialog(structureView.getTreeModel(), editor, project, navigatable, structureView);
   }
-  
+
   @Nullable
   public static FileStructurePopup createPopup(final Editor editor, Project project, @Nullable Navigatable navigatable, final FileEditor fileEditor) {
     final StructureViewBuilder structureViewBuilder = fileEditor.getStructureViewBuilder();
@@ -101,7 +102,7 @@ public class ViewStructureAction extends AnAction {
     }
     return createStructureViewPopup(model, editor, project, navigatable, structureView);
   }
-  
+
   public static boolean isInStructureViewPopup(@NotNull PlaceHolder<String> model) {
     return PLACE.equals(model.getPlace());
   }
@@ -120,7 +121,8 @@ public class ViewStructureAction extends AnAction {
                                                                    final @NotNull Disposable alternativeDisposable) {
     return new FileStructurePopup(structureViewModel, editor, project, alternativeDisposable, true);
   }
-  
+
+  @Override
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();

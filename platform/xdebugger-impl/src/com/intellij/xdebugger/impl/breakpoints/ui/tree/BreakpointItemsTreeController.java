@@ -197,6 +197,7 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
 
   public void removeSelectedBreakpoints(Project project) {
     final TreePath[] paths = myTreeView.getSelectionPaths();
+    if (paths == null) return;
     final List<BreakpointItem> breakpoints = getSelectedBreakpoints();
     for (TreePath path : paths) {
       final Object node = path.getLastPathComponent();

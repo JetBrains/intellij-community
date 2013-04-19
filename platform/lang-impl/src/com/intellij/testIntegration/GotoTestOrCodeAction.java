@@ -30,6 +30,7 @@ import com.intellij.psi.util.PsiUtilBase;
 import org.jetbrains.annotations.NotNull;
 
 public class GotoTestOrCodeAction extends BaseCodeInsightAction {
+  @Override
   @NotNull
   protected CodeInsightActionHandler getHandler(){
     return new GotoTestOrCodeHandler();

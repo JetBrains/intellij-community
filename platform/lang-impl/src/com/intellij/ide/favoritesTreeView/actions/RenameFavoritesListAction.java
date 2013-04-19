@@ -36,6 +36,7 @@ public class RenameFavoritesListAction extends AnAction implements DumbAware {
           AllIcons.Actions.Menu_replace);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final Project project = e.getProject();
@@ -48,6 +49,7 @@ public class RenameFavoritesListAction extends AnAction implements DumbAware {
     favoritesManager.renameList(project, listName);
   }
 
+  @Override
   public void update(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = e.getProject();

@@ -47,12 +47,14 @@ public abstract class SelectInContextImpl implements SelectInContext {
     myPsiFile = psiFile;
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myPsiFile.getProject();
   }
 
 
+  @Override
   @NotNull
   public VirtualFile getVirtualFile() {
     final VirtualFile vFile = myPsiFile.getVirtualFile();
@@ -60,6 +62,7 @@ public abstract class SelectInContextImpl implements SelectInContext {
     return vFile;
   }
 
+  @Override
   public Object getSelectorInFile() {
     return myPsiFile;
   }
@@ -173,14 +176,17 @@ public abstract class SelectInContextImpl implements SelectInContext {
       myEditor = editor;
     }
 
+    @Override
     public FileEditorProvider getFileEditorProvider() {
       return new FileEditorProvider() {
+        @Override
         public FileEditor openFileEditor() {
           return myEditor;
         }
       };
     }
 
+    @Override
     public Object getSelectorInFile() {
       if (myPsiFile.getViewProvider() instanceof TemplateLanguageFileViewProvider) {
         return super.getSelectorInFile();
@@ -200,8 +206,10 @@ public abstract class SelectInContextImpl implements SelectInContext {
       super(psiFile);
     }
 
+    @Override
     public FileEditorProvider getFileEditorProvider() {
       return new FileEditorProvider() {
+        @Override
         public FileEditor openFileEditor() {
           return FileEditorManager.getInstance(getProject()).openFile(getVirtualFile(), false)[0];
         }
@@ -225,8 +233,10 @@ public abstract class SelectInContextImpl implements SelectInContext {
       this(psiFile, psiFile);
     }
 
+    @Override
     public FileEditorProvider getFileEditorProvider() {
       return new FileEditorProvider() {
+        @Override
         public FileEditor openFileEditor() {
           final VirtualFile file = myElementToSelect.getContainingFile().getVirtualFile();
           if (file == null) {
@@ -252,21 +262,25 @@ public abstract class SelectInContextImpl implements SelectInContext {
       myVirtualFile = virtualFile;
     }
 
+    @Override
     @NotNull
     public Project getProject() {
       return myProject;
     }
 
+    @Override
     @NotNull
     public VirtualFile getVirtualFile() {
       return myVirtualFile;
     }
 
+    @Override
     @Nullable
     public Object getSelectorInFile() {
       return myVirtualFile;
     }
 
+    @Override
     @Nullable
     public FileEditorProvider getFileEditorProvider() {
       return null;

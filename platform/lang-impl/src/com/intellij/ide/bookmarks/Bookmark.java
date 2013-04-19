@@ -176,6 +176,7 @@ public class Bookmark implements Navigatable {
     return myTarget.canNavigateToSource();
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     myTarget.navigate(requestFocus);
   }
@@ -240,7 +241,7 @@ public class Bookmark implements Navigatable {
     }
     return result.toString();
   }
-  
+
   static class MnemonicIcon implements Icon {
     private static final MnemonicIcon[] cache = new MnemonicIcon[36];//0..9  + A..Z
     private final char myMnemonic;

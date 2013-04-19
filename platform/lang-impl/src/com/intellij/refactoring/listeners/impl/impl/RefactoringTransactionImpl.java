@@ -65,6 +65,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
   }
 
 
+  @Override
   public RefactoringElementListener getElementListener(PsiElement oldElement) {
     RefactoringElementListener listener =
       myOldElementToTransactionListenerMap.get(oldElement);
@@ -82,8 +83,10 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
       myListenerList = myOldElementToListenerListMap.get(oldElement);
     }
 
+    @Override
     public void elementMoved(@NotNull final PsiElement newElement) {
       myRunnables.add(new Runnable() {
+        @Override
         public void run() {
           for (RefactoringElementListener refactoringElementListener : myListenerList) {
             try {
@@ -97,8 +100,10 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
       });
     }
 
+    @Override
     public void elementRenamed(@NotNull final PsiElement newElement) {
       myRunnables.add(new Runnable() {
+        @Override
         public void run() {
           for (RefactoringElementListener refactoringElementListener : myListenerList) {
             try {
@@ -122,6 +127,7 @@ public class RefactoringTransactionImpl implements RefactoringTransaction {
     }
   }
 
+  @Override
   public void commit() {
     for (Runnable runnable : myRunnables) {
       runnable.run();

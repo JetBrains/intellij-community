@@ -39,10 +39,12 @@ public class FileColorSharedConfigurationManager implements PersistentStateCompo
     myProject = project;
   }
 
+  @Override
   public Element getState() {
     return ((FileColorManagerImpl)FileColorManager.getInstance(myProject)).getState(true);
   }
 
+  @Override
   public void loadState(Element state) {
     ((FileColorManagerImpl)FileColorManager.getInstance(myProject)).loadState(state, true);
   }

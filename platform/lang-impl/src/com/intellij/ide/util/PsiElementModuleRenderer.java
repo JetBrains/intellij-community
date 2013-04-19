@@ -34,6 +34,7 @@ import java.io.File;
 public class PsiElementModuleRenderer extends DefaultListCellRenderer{
   private String myText;
 
+  @Override
   public Component getListCellRendererComponent(
     JList list,
     Object value,
@@ -46,6 +47,7 @@ public class PsiElementModuleRenderer extends DefaultListCellRenderer{
     return listCellRendererComponent;
   }
 
+  @Override
   public String getText() {
     return myText;
   }

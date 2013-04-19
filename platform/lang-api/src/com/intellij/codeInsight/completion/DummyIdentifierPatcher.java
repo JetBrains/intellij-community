@@ -30,6 +30,7 @@ public class DummyIdentifierPatcher extends FileCopyPatcher {
     myDummyIdentifier = dummyIdentifier;
   }
 
+  @Override
   public void patchFileCopy(@NotNull final PsiFile fileCopy, @NotNull final Document document, @NotNull final OffsetMap map) {
     if (StringUtil.isEmpty(myDummyIdentifier)) return;
     int startOffset = map.getOffset(CompletionInitializationContext.START_OFFSET);

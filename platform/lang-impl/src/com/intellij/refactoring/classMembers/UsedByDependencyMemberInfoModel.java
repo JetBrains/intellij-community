@@ -27,16 +27,19 @@ public class UsedByDependencyMemberInfoModel<T extends NavigatablePsiElement, C 
   public UsedByDependencyMemberInfoModel(C aClass) {
     super(new UsedByMemberDependencyGraph<T, C, M>(aClass), ERROR);
     setTooltipProvider(new MemberInfoTooltipManager.TooltipProvider<T, M>() {
+      @Override
       public String getTooltip(M memberInfo) {
         return ((UsedByMemberDependencyGraph<T, C, M>) myMemberDependencyGraph).getElementTooltip(memberInfo.getMember());
       }
     });
   }
 
+  @Override
   public boolean isCheckedWhenDisabled(M member) {
     return false;
   }
 
+  @Override
   public Boolean isFixedAbstract(M member) {
     return null;
   }

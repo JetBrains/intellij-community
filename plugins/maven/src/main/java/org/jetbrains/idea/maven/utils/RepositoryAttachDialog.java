@@ -40,6 +40,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.PairProcessor;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.AsyncProcessIcon;
+import com.intellij.xml.util.XmlStringUtil;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -87,8 +88,10 @@ public class RepositoryAttachDialog extends DialogWrapper {
     myProject = project;
     myManaged = managed;
     myProgressIcon.suspend();
-    myCaptionLabel.setText("<html>" + StringUtil.escapeXml("enter keyword, pattern or class name to search by or Maven coordinates," +
-                           "i.e. 'springframework', 'Logger' or 'org.hibernate:hibernate-core:3.5.0.GA':") + "</html>");
+    myCaptionLabel.setText(
+      XmlStringUtil.wrapInHtml(StringUtil.escapeXml("enter keyword, pattern or class name to search by or Maven coordinates," +
+                                                    "i.e. 'springframework', 'Logger' or 'org.hibernate:hibernate-core:3.5.0.GA':")
+      ));
     myInfoLabel.setPreferredSize(
       new Dimension(myInfoLabel.getFontMetrics(myInfoLabel.getFont()).stringWidth("Showing: 1000"), myInfoLabel.getPreferredSize().height));
 

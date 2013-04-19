@@ -560,7 +560,7 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       supportProvider != null &&
       editor.getSettings().isVariableInplaceRenameEnabled() &&
       supportProvider.isInplaceIntroduceAvailable(expr, nameSuggestionContext) &&
-      !ApplicationManager.getApplication().isUnitTestMode() &&
+      (!ApplicationManager.getApplication().isUnitTestMode() || isInplaceAvailableInTestMode()) &&
       !isInJspHolderMethod(expr);
 
     if (isInplaceAvailableOnDataContext) {
@@ -651,6 +651,10 @@ public abstract class IntroduceVariableBase extends IntroduceHandlerBase {
       OccurrencesChooser.<PsiExpression>simpleChooser(editor).showChooser(callback, occurrencesMap);
     }
     return wasSucceed[0];
+  }
+
+  protected boolean isInplaceAvailableInTestMode() {
+    return false;
   }
 
   private static ExpressionOccurrenceManager createOccurrenceManager(PsiExpression expr, PsiElement tempContainer) {

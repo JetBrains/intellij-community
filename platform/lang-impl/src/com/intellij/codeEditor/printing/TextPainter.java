@@ -153,6 +153,7 @@ public class TextPainter implements Printable {
 
   boolean isPrintingPass = true;
 
+  @Override
   public int print(final Graphics g, final PageFormat pageFormat, final int pageIndex) throws PrinterException {
     if (myOffset >= mySegmentEnd || myProgress.isCanceled()) {
       return Printable.NO_SUCH_PAGE;
@@ -165,6 +166,7 @@ public class TextPainter implements Printable {
     myProgress.setText(CodeEditorBundle.message("print.file.page.progress", myFileName, (pageIndex + 1)));
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         myPageIndex = pageIndex;
         Graphics2D g2D = (Graphics2D) g;

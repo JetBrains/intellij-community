@@ -114,7 +114,7 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
 
     //repaint();
   }
-  
+
   public boolean isInactive() {
     final NavBarModel model = myPanel.getModel();
     return model.getSelectedIndex() < myIndex && model.getSelectedIndex() != -1;
@@ -198,14 +198,17 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
 
   private Icon wrapIcon(final Icon openIcon, final Icon closedIcon, final int idx) {
     return new Icon() {
+      @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
         closedIcon.paintIcon(c, g, x, y);
       }
 
+      @Override
       public int getIconWidth() {
         return closedIcon.getIconWidth();
       }
 
+      @Override
       public int getIconHeight() {
         return openIcon.getIconHeight();
       }
@@ -217,7 +220,7 @@ public class NavBarItem extends SimpleColoredComponent implements Disposable {
     //count--;
     //System.out.println(count);
   }
-    
+
 
   public boolean isNextSelected() {
     return myIndex == myPanel.getModel().getSelectedIndex() - 1;

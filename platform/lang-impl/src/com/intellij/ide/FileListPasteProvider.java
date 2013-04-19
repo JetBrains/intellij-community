@@ -43,6 +43,7 @@ import java.util.List;
  * @author yole
  */
 public class FileListPasteProvider implements PasteProvider {
+  @Override
   public void performPaste(@NotNull DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);
@@ -79,10 +80,12 @@ public class FileListPasteProvider implements PasteProvider {
     }
   }
 
+  @Override
   public boolean isPastePossible(@NotNull DataContext dataContext) {
     return true;
   }
 
+  @Override
   public boolean isPasteEnabled(@NotNull DataContext dataContext) {
     final Transferable contents = CopyPasteManager.getInstance().getContents();
     final IdeView ideView = LangDataKeys.IDE_VIEW.getData(dataContext);

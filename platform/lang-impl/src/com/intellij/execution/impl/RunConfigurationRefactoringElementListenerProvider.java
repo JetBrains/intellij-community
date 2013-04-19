@@ -30,6 +30,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListenerProvider;
 public class RunConfigurationRefactoringElementListenerProvider implements RefactoringElementListenerProvider {
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.impl.RunConfigurationRefactoringElementListenerProvider");
 
+  @Override
   public RefactoringElementListener getListener(final PsiElement element) {
     RefactoringElementListenerComposite composite = null;
     final RunConfiguration[] configurations = RunManager.getInstance(element.getProject()).getAllConfigurations();

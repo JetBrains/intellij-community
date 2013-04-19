@@ -40,6 +40,7 @@ import org.jetbrains.annotations.Nullable;
 import java.awt.datatransfer.Transferable;
 
 public class PasteReferenceProvider implements PasteProvider {
+  @Override
   public void performPaste(@NotNull DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
@@ -62,12 +63,14 @@ public class PasteReferenceProvider implements PasteProvider {
     }
   }
 
+  @Override
   public boolean isPastePossible(@NotNull DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
     return project != null && editor != null && getCopiedFqn(dataContext) != null;
   }
 
+  @Override
   public boolean isPasteEnabled(@NotNull DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     String fqn = getCopiedFqn(dataContext);
@@ -93,8 +96,10 @@ public class PasteReferenceProvider implements PasteProvider {
     if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
           public void run() {
             Document document = editor.getDocument();
             documentManager.doPostponedOperationsAndUnblockDocument(document);

@@ -26,14 +26,17 @@ public class LanguageLiteralEscapers extends LanguageExtension<LiteralEscaper> {
 
   private LanguageLiteralEscapers() {
     super("com.intellij.lang.literalEscaper", new LiteralEscaper() {
+      @Override
       public String getEscapedText(final PsiElement context, final String originalText) {
         return originalText;
       }
 
+      @Override
       public String escapeText(String originalText) {
         return originalText;
       }
 
+      @Override
       public String unescapeText(String originalText) {
         return originalText;
       }

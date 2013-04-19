@@ -17,6 +17,7 @@ public class FavoritesComparator extends GroupByTypeComparator {
     super(view, id);
   }
 
+  @Override
   public int compare(NodeDescriptor d1, NodeDescriptor d2) {
     if (d1 instanceof FavoritesTreeNodeDescriptor && d2 instanceof FavoritesTreeNodeDescriptor) {
       d1 = ((FavoritesTreeNodeDescriptor)d1).getElement();

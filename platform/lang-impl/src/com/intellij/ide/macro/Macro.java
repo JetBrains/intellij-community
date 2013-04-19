@@ -85,14 +85,17 @@ public abstract class Macro {
       myValue = value;
     }
 
+    @Override
     public String expand(DataContext dataContext) throws ExecutionCancelledException {
       return myValue;
     }
 
+    @Override
     public String getDescription() {
       return myDelegate.getDescription();
     }
 
+    @Override
     public String getName() {
       return myDelegate.getName();
     }

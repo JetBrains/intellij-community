@@ -319,7 +319,8 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       final Map<StubIndexKey, Map<Object, StubIdList>> stubTree;
       if (!data.isEmpty()) {
         final SerializedStubTree stub = data.values().iterator().next();
-        Map<StubIndexKey, Map<Object, int[]>> map = new ObjectStubTree((ObjectStubBase)stub.getStub(true), false).indexStubTree();
+        ObjectStubBase root = (ObjectStubBase)stub.getStub(true);
+        Map<StubIndexKey, Map<Object, int[]>> map = new ObjectStubTree(root, false).indexStubTree();
 
         // xxx:fix refs inplace
         stubTree = (Map)map;

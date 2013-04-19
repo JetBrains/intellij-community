@@ -97,7 +97,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
     public void writeExternal(Element element) throws WriteExternalException {
       DefaultJDOMExternalizer.writeExternal(this, element, new DefaultJDOMExternalizer.JDOMFilter() {
         @Override
-        public boolean isAccept(Field field) {
+        public boolean isAccept(@NotNull Field field) {
           try {
             if (field.getType().equals(Color.class) && field.get(Externalizable.this) == null) return false;
             if (field.getType().equals(int.class) && field.getInt(Externalizable.this) == 0) return false;
@@ -277,7 +277,7 @@ public class TextAttributes implements JDOMExternalizable, Cloneable {
   public void readExternal(Element element) throws InvalidDataException {
     Externalizable ext = new Externalizable();
     ext.readExternal(element);
-    myAttrs = AttributesFlyweight.create(ext.FOREGROUND, 
+    myAttrs = AttributesFlyweight.create(ext.FOREGROUND,
                                          ext.BACKGROUND,
                                          ext.FONT_TYPE,
                                          ext.EFFECT_COLOR,

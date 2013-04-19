@@ -45,6 +45,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   @NotNull
   protected Action[] createActions() {
     final ViewUsagesAction viewUsagesAction = new ViewUsagesAction();
@@ -55,6 +56,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
     return new Action[]{viewUsagesAction, ignoreAction, new CancelAction()};
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     myMessagePane = new JEditorPane(UIUtil.HTML_MIME, "");
@@ -73,6 +75,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
     return panel;
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return "#com.intellij.refactoring.safeDelete.UnsafeUsagesDialog";
   }
@@ -91,6 +94,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
       super(RefactoringBundle.message("cancel.button"));
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       doCancelAction();
     }
@@ -102,6 +106,7 @@ public class UnsafeUsagesDialog extends DialogWrapper {
       putValue(DialogWrapper.DEFAULT_ACTION, Boolean.TRUE);
     }
 
+    @Override
     public void actionPerformed(ActionEvent e) {
       close(VIEW_USAGES_EXIT_CODE);
     }

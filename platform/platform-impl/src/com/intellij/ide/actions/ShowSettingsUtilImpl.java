@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import com.intellij.openapi.options.newEditor.OptionsEditor;
 import com.intellij.openapi.options.newEditor.OptionsEditorDialog;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import org.jetbrains.annotations.NotNull;
@@ -60,8 +61,11 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
   private static void _showSettingsDialog(final Project project, ConfigurableGroup[] group, @Nullable Configurable toSelect) {
     group = filterEmptyGroups(group);
-
-    new OptionsEditorDialog(project, group, toSelect).show();
+    if (Registry.is("ide.mac.modalDialogsOnFullscreen")) {
+      new OptionsEditorDialog(project, group, toSelect, true).show();
+    } else {
+      new OptionsEditorDialog(project, group, toSelect).show();
+    }
   }
 
   public void showSettingsDialog(@Nullable final Project project, final Class configurableClass) {
@@ -100,7 +104,12 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
 
     group = filterEmptyGroups(group);
 
-    OptionsEditorDialog dialog = new OptionsEditorDialog(actualProject, group, nameToSelect);
+    OptionsEditorDialog dialog;
+    if (Registry.is("ide.mac.modalDialogsOnFullscreen")) {
+      dialog = new OptionsEditorDialog(actualProject, group, nameToSelect, true);
+    } else {
+      dialog = new OptionsEditorDialog(actualProject, group, nameToSelect);
+    }
     dialog.show();
 
   }
@@ -119,7 +128,13 @@ public class ShowSettingsUtilImpl extends ShowSettingsUtil {
     group = filterEmptyGroups(group);
     final Configurable configurable2Select = findConfigurable2Select(id2Select, group);
 
-    final OptionsEditorDialog dialog = new OptionsEditorDialog(actualProject, group, configurable2Select);
+    final OptionsEditorDialog dialog;
+    if (Registry.is("ide.mac.modalDialogsOnFullscreen")) {
+      dialog = new OptionsEditorDialog(actualProject, group, configurable2Select, true);
+    } else {
+      dialog = new OptionsEditorDialog(actualProject, group, configurable2Select);
+    }
+
     new UiNotifyConnector.Once(dialog.getContentPane(), new Activatable.Adapter() {
       @Override
       public void showNotify() {

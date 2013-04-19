@@ -26,6 +26,7 @@ import javax.swing.*;
  * @author peter
  */
 public abstract class MutableLookupElement<T> extends LookupElement{
+  @Override
   @NotNull
   public abstract T getObject();
 

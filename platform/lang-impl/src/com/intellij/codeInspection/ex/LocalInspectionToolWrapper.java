@@ -28,7 +28,9 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.util.TripleFunction;
 import com.intellij.util.containers.HashSet;
@@ -47,11 +49,12 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.LocalInspectionToolWrapper");
 
   /** This should be used in tests primarily */
+  @TestOnly
   public LocalInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
     super(tool, ourEPMap.getValue().get(tool.getShortName()));
   }
 
-  public LocalInspectionToolWrapper(LocalInspectionEP ep) {
+  public LocalInspectionToolWrapper(@NotNull LocalInspectionEP ep) {
     super(ep);
   }
 
@@ -60,10 +63,11 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     super(tool, ep);
   }
 
-  private LocalInspectionToolWrapper(LocalInspectionToolWrapper other) {
+  private LocalInspectionToolWrapper(@NotNull LocalInspectionToolWrapper other) {
     super(other);
   }
 
+  @NotNull
   @Override
   public LocalInspectionToolWrapper createCopy() {
     return new LocalInspectionToolWrapper(this);
@@ -93,8 +97,9 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     addProblemDescriptors(holder.getResults(), filterSuppressed);
   }
 
+  @Override
   @NotNull
-  public JobDescriptor[] getJobDescriptors(GlobalInspectionContext context) {
+  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context) {
     return ((GlobalInspectionContextImpl)context).LOCAL_ANALYSIS_ARRAY;
   }
 
@@ -118,7 +123,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
   };
 
   @Override
-  protected void addProblemElement(RefEntity refElement, boolean filterSuppressed, CommonProblemDescriptor... descriptions) {
+  protected void addProblemElement(RefEntity refElement, boolean filterSuppressed, @NotNull CommonProblemDescriptor... descriptions) {
     final GlobalInspectionContextImpl context = getContext();
     if (context == null) return;
     super.addProblemElement(refElement, filterSuppressed, descriptions);
@@ -142,6 +147,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
       content.add(refElement);
 
       UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
         public void run() {
           final GlobalInspectionContextImpl context = getContext();
           if (context != null) {
@@ -200,6 +206,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     }
   }
 
+  @Override
   public void runInspection(@NotNull AnalysisScope scope, @NotNull final InspectionManager manager) {
     LOG.assertTrue(ApplicationManager.getApplication().isUnitTestMode());
     scope.accept(new PsiRecursiveElementVisitor() {
@@ -237,4 +244,20 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
       return map;
     }
   };
+
+  public static InspectionProfileEntry findTool2RunInBatch(Project project, @Nullable PsiElement element, final String name) {
+    final InspectionProfile inspectionProfile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
+    final InspectionProfileEntry tool = element != null ? inspectionProfile.getInspectionTool(name, element) : inspectionProfile.getInspectionTool(name);
+    if (tool instanceof LocalInspectionToolWrapper && ((LocalInspectionToolWrapper)tool).isUnfair()) {
+      final LocalInspectionTool inspectionTool = ((LocalInspectionToolWrapper)tool).getTool();
+      if (inspectionTool instanceof PairedUnfairLocalInspectionTool) {
+        final String oppositeShortName = ((PairedUnfairLocalInspectionTool)inspectionTool).getInspectionForBatchShortName();
+        if (oppositeShortName != null) {
+          return element != null ? inspectionProfile.getInspectionTool(oppositeShortName, element) : inspectionProfile.getInspectionTool(oppositeShortName);
+        }
+      }
+      return null;
+    }
+    return tool;
+  }
 }

@@ -36,6 +36,7 @@ public class RenameInputValidatorRegistry {
       final ProcessingContext context = new ProcessingContext();
       if (validator.getPattern().accepts(element, context)) {
         return new Condition<String>() {
+          @Override
           public boolean value(final String s) {
             return validator.isInputValid(s, element, context);
           }

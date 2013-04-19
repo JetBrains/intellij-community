@@ -29,6 +29,7 @@ public class ProjectFilesScope extends NamedScope {
   public static final String NAME = "Project Files";
   public ProjectFilesScope() {
     super(NAME, new AbstractPackageSet("ProjectFiles") {
+      @Override
       public boolean contains(VirtualFile file, NamedScopesHolder holder) {
         if (file == null) return false;
         final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(holder.getProject()).getFileIndex();

@@ -151,7 +151,7 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
     if (!(group instanceof ActionGroup)) {
       return;
     }
-    
+
     ListPopup popup = JBPopupFactory.getInstance().createActionGroupPopup(
       "Line separator",
       (ActionGroup)group,
@@ -190,7 +190,7 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
                                                                             editor == null ? null : editor.getComponent(), parent)
       ));
   }
-  
+
   @Override
   public JComponent getComponent() {
     return myComponent;
@@ -214,13 +214,13 @@ public class LineSeparatorPanel extends EditorBasedWidget implements StatusBarWi
   }
 
   @Override
-  public void selectionChanged(FileEditorManagerEvent event) {
+  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
     if (ApplicationManager.getApplication().isUnitTestMode()) return;
     update();
   }
 
   @Override
-  public void fileOpened(FileEditorManager source, VirtualFile file) {
+  public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     update();
   }
 }

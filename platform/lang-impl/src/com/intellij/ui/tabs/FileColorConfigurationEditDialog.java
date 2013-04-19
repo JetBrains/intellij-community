@@ -95,6 +95,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
 
     myScopeComboBox = new JComboBox(ArrayUtil.toStringArray(myScopeNames.keySet()));
     myScopeComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateCustomButton();
         updateOKButton();
@@ -236,6 +237,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
     return scopeName != null && scopeName.length() > 0 && getColorName() != null;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
@@ -248,6 +250,7 @@ public class FileColorConfigurationEditDialog extends DialogWrapper {
       setUI(new ColorButtonUI());
       myColor = color;
       addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           doPerformAction(e);
         }

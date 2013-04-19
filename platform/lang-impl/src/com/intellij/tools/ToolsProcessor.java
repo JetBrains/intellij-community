@@ -55,6 +55,7 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
 
   @NonNls private static final String APPLICATION_HOME_MACRO = "$APPLICATION_HOME_DIR$";
 
+  @Override
   public ToolsGroup<T> readScheme(final Document document) throws InvalidDataException, IOException, JDOMException {
     Element root = document.getRootElement();
     if (root == null || !TOOL_SET.equals(root.getName())) {
@@ -129,6 +130,7 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
 
   protected abstract T createTool();
 
+  @Override
   public Document writeScheme(final ToolsGroup<T> scheme) throws WriteExternalException {
     Element groupElement = new Element(TOOL_SET);
     if (scheme.getName() != null) {
@@ -142,6 +144,7 @@ abstract public class ToolsProcessor<T extends Tool> extends BaseSchemeProcessor
     return new Document(groupElement);
   }
 
+  @Override
   public boolean shouldBeSaved(final ToolsGroup scheme) {
     return true;
   }

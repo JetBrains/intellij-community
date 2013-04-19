@@ -61,10 +61,10 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
     if (context != null) {
       if (myPsiClass != null) {
         final List<XmlElementDescriptor> children = new ArrayList<XmlElementDescriptor>();
-        collectProperties(children, new Function<PsiField, XmlElementDescriptor>() {
+        collectProperties(children, new Function<PsiMember, XmlElementDescriptor>() {
           @Override
-          public XmlElementDescriptor fun(PsiField field) {
-            return new JavaFxPropertyElementDescriptor(myPsiClass, field.getName(), false);
+          public XmlElementDescriptor fun(PsiMember member) {
+            return new JavaFxPropertyElementDescriptor(myPsiClass, member instanceof PsiMethod ? PropertyUtil.getPropertyName(member) : member.getName(), false);
           }
         }, false);
 
@@ -78,11 +78,6 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         }
 
         collectStaticElementDescriptors(context, children);
-
-        final PsiType returnType = JavaFxPsiUtil.getDefaultPropertyExpectedType(myPsiClass);
-        if (returnType != null) {
-          JavaFxPropertyElementDescriptor.collectDescriptorsByCollection(returnType, myPsiClass.getResolveScope(), children, myPsiClass.getProject());
-        }
 
         if (!children.isEmpty()) {
           return children.toArray(new XmlElementDescriptor[children.size()]);
@@ -232,21 +227,21 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
   }
 
   protected void collectInstanceProperties(List<XmlAttributeDescriptor> simpleAttrs) {
-    collectProperties(simpleAttrs, new Function<PsiField, XmlAttributeDescriptor>() {
+    collectProperties(simpleAttrs, new Function<PsiMember, XmlAttributeDescriptor>() {
       @Override
-      public XmlAttributeDescriptor fun(PsiField field) {
-        return new JavaFxPropertyAttributeDescriptor(field.getName(), myPsiClass);
+      public XmlAttributeDescriptor fun(PsiMember member) {
+        return new JavaFxPropertyAttributeDescriptor(member instanceof PsiMethod ? PropertyUtil.getPropertyName(member) : member.getName(), myPsiClass);
       }
     }, true);
   }
 
-  private <T> void collectProperties(final List<T> children, final Function<PsiField, T> factory, final boolean acceptPrimitive) {
-    final List<PsiField> fieldList =
-      CachedValuesManager.getManager(myPsiClass.getProject()).getCachedValue(myPsiClass, new CachedValueProvider<List<PsiField>>() {
+  private <T> void collectProperties(final List<T> children, final Function<PsiMember, T> factory, final boolean acceptPrimitive) {
+    final List<PsiMember> fieldList =
+      CachedValuesManager.getManager(myPsiClass.getProject()).getCachedValue(myPsiClass, new CachedValueProvider<List<PsiMember>>() {
         @Nullable
         @Override
-        public Result<List<PsiField>> compute() {
-          List<PsiField> acceptableFields = new ArrayList<PsiField>();
+        public Result<List<PsiMember>> compute() {
+          List<PsiMember> acceptableFields = new ArrayList<PsiMember>();
           final PsiField[] fields = myPsiClass.getAllFields();
           if (fields.length > 0) {
             for (PsiField field : fields) {
@@ -254,18 +249,36 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
               final PsiType fieldType = field.getType();
               if (!JavaFxPsiUtil.isReadOnly(myPsiClass, field) &&
                   InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_BEANS_PROPERTY) ||
-                  fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
-                  (acceptPrimitive && fieldType instanceof PsiPrimitiveType) ||
-                  GenericsHighlightUtil.getCollectionItemType(field.getType(), myPsiClass.getResolveScope()) != null) {
+                  acceptablePropertyType(fieldType)) {
                 acceptableFields.add(field);
               }
             }
           }
+          for (PsiMethod method : myPsiClass.getAllMethods()) {
+            if (PropertyUtil.isSimplePropertySetter(method) && !method.hasModifierProperty(PsiModifier.STATIC)) {
+              final String propertyName = PropertyUtil.getPropertyName(method);
+              assert propertyName != null;
+              final PsiParameter[] parameters = method.getParameterList().getParameters();
+              if (parameters.length != 1) continue;
+              if (myPsiClass.findFieldByName(propertyName, true) != null) continue;
+              final PsiType propertyType = parameters[0].getType();
+              final String suggestedGetterName = PropertyUtil.suggestGetterName(propertyName, propertyType);
+              if (myPsiClass.findMethodsByName(suggestedGetterName, true).length == 0) continue;
+              if (!acceptablePropertyType(propertyType)) continue;
+              acceptableFields.add(method);
+            }
+          }
           return Result.create(acceptableFields, PsiModificationTracker.JAVA_STRUCTURE_MODIFICATION_COUNT);
+        }
+
+        private boolean acceptablePropertyType(PsiType fieldType) {
+          return fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
+                 (acceptPrimitive && fieldType instanceof PsiPrimitiveType) ||
+                 InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_OBSERVABLE_LIST_PROPERTY) && GenericsHighlightUtil.getCollectionItemType(fieldType, myPsiClass.getResolveScope()) != null;
         }
       });
     if (fieldList != null) {
-      for (PsiField field : fieldList) {
+      for (PsiMember field : fieldList) {
         children.add(factory.fun(field));
       }
     }

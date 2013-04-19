@@ -123,8 +123,11 @@ public interface GitSSHHandler {
    * @param userName  the user name
    * @param method    the authentication method, the empty string means that authentication failed
    * @param error     the error shown in the case when authentication process failed
+   *
+   * @return The method doesn't return any sensible value, but it is needed here, since the Apache XML-RPC implementation which we use
+   *         doesn't allow void methods: "IllegalArgumentException: void return types for handler methods not supported".
    */
-  void setLastSuccessful(final int handlerNo, final String userName, final String method, final String error);
+  String setLastSuccessful(final int handlerNo, final String userName, final String method, final String error);
 
   /**
    * Get last successful authentication method

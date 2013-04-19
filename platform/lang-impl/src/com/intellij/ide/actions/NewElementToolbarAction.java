@@ -38,6 +38,7 @@ public class NewElementToolbarAction extends NewElementAction {
       final Project project = e.getData(PlatformDataKeys.PROJECT);
       final PsiFileSystemItem psiFile = e.getData(LangDataKeys.PSI_FILE).getParent();
       ProjectViewImpl.getInstance(project).selectCB(psiFile, psiFile.getVirtualFile(), true).doWhenDone(new Runnable() {
+        @Override
         public void run() {
           showPopup(DataManager.getInstance().getDataContext());
         }

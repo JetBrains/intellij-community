@@ -123,20 +123,24 @@ public class FileStructureDialog extends DialogWrapper {
     return PsiDocumentManager.getInstance(project).getPsiFile(myEditor.getDocument());
   }
 
+  @Override
   @Nullable
   protected Border createContentPaneBorder() {
     return null;
   }
 
+  @Override
   public void dispose() {
     myCommanderPanel.dispose();
     super.dispose();
   }
 
+  @Override
   protected String getDimensionServiceKey() {
     return DockManager.getInstance(myProject).getDimensionKeyForFocus("#com.intellij.ide.util.FileStructureDialog");
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myCommanderPanel);
   }
@@ -155,6 +159,7 @@ public class FileStructureDialog extends DialogWrapper {
     return null;
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     myCommanderPanel = new MyCommanderPanel(myProject);
     myTreeStructure = new MyStructureTreeStructure();
@@ -187,10 +192,12 @@ public class FileStructureDialog extends DialogWrapper {
         return myBaseTreeModel.shouldEnterElement(((StructureViewTreeElement)((AbstractTreeNode)rootChild).getValue()).getValue());
       }
 
+      @Override
       protected boolean nodeIsAcceptableForElement(AbstractTreeNode node, Object element) {
         return Comparing.equal(((StructureViewTreeElement)node.getValue()).getValue(), element);
       }
 
+      @Override
       protected void refreshSelection() {
         myCommanderPanel.scrollSelectionInView();
         if (myShouldNarrowDown) {
@@ -198,6 +205,7 @@ public class FileStructureDialog extends DialogWrapper {
         }
       }
 
+      @Override
       protected List<AbstractTreeNode> getAllAcceptableNodes(final Object[] childElements, VirtualFile file) {
         ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
         for (Object childElement : childElements) {
@@ -210,6 +218,7 @@ public class FileStructureDialog extends DialogWrapper {
     myCommanderPanel.setTitlePanelVisible(false);
 
     new AnAction() {
+      @Override
       public void actionPerformed(AnActionEvent e) {
         final boolean succeeded = myCommanderPanel.navigateSelectedElement();
         if (succeeded) {
@@ -250,6 +259,7 @@ public class FileStructureDialog extends DialogWrapper {
     final JCheckBox checkBox = new JCheckBox(IdeBundle.message("checkbox.narrow.down.the.list.on.typing"));
     checkBox.setSelected(PropertiesComponent.getInstance().isTrueValue(ourPropertyKey));
     checkBox.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         myShouldNarrowDown = checkBox.isSelected();
         PropertiesComponent.getInstance().setValue(ourPropertyKey, Boolean.toString(myShouldNarrowDown));
@@ -279,6 +289,7 @@ public class FileStructureDialog extends DialogWrapper {
 
     final JCheckBox chkFilter = new JCheckBox();
     chkFilter.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         ProjectListBuilder builder = (ProjectListBuilder)myCommanderPanel.getBuilder();
         PsiElement currentParent = null;
@@ -320,6 +331,7 @@ public class FileStructureDialog extends DialogWrapper {
     if (shortcuts.length > 0) {
       text += " (" + KeymapUtil.getShortcutText(shortcuts [0]) + ")";
       new AnAction() {
+        @Override
         public void actionPerformed(final AnActionEvent e) {
           chkFilter.doClick();
         }
@@ -330,6 +342,7 @@ public class FileStructureDialog extends DialogWrapper {
       //,new GridBagConstraints(0, GridBagConstraints.RELATIVE, 1, 1, 0, 0, GridBagConstraints.WEST, GridBagConstraints.NONE, new Insets(0, 5, 0, 5), 0, 0));
   }
 
+  @Override
   @Nullable
   protected JComponent createSouthPanel() {
     return null;
@@ -349,6 +362,7 @@ public class FileStructureDialog extends DialogWrapper {
       super(_project, false, true);
       myList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
       myListSpeedSearch.addChangeListener(new PropertyChangeListener() {
+        @Override
         public void propertyChange(PropertyChangeEvent evt) {
           ProjectListBuilder builder = (ProjectListBuilder)getBuilder();
           if (builder == null) {
@@ -356,6 +370,7 @@ public class FileStructureDialog extends DialogWrapper {
           }
           builder.addUpdateRequest(hasPrefixShortened(evt));
           ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
             public void run() {
               int index = myList.getSelectedIndex();
               if (index != -1 && index < myList.getModel().getSize()) {
@@ -379,10 +394,12 @@ public class FileStructureDialog extends DialogWrapper {
              ((String)evt.getNewValue()).length() < ((String)evt.getOldValue()).length();
     }
 
+    @Override
     public boolean navigateSelectedElement() {
       final Ref<Boolean> succeeded = new Ref<Boolean>();
       final CommandProcessor commandProcessor = CommandProcessor.getInstance();
       commandProcessor.executeCommand(myProject, new Runnable() {
+        @Override
         public void run() {
           succeeded.set(MyCommanderPanel.super.navigateSelectedElement());
           IdeDocumentHistory.getInstance(myProject).includeCurrentCommandAsNavigation();
@@ -394,6 +411,7 @@ public class FileStructureDialog extends DialogWrapper {
       return succeeded.get();
     }
 
+    @Override
     public Object getData(String dataId) {
       Object selectedElement = myCommanderPanel.getSelectedValue();
 
@@ -429,6 +447,7 @@ public class FileStructureDialog extends DialogWrapper {
       super(FileStructureDialog.this.myProject, myTreeModel);
     }
 
+    @Override
     public Object[] getChildElements(Object element) {
       Object[] childElements = super.getChildElements(element);
 
@@ -462,6 +481,7 @@ public class FileStructureDialog extends DialogWrapper {
       return ArrayUtil.toObjectArray(filteredElements);
     }
 
+    @Override
     public void rebuildTree() {
       getChildElements(getRootElement());   // for some reason necessary to rebuild tree correctly
       super.rebuildTree();

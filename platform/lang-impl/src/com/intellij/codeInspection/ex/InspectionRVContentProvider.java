@@ -187,6 +187,7 @@ public abstract class InspectionRVContentProvider {
             for (RefElementNode parentNode : parentNodes) {
               final List<ProblemDescriptionNode> nodes = new ArrayList<ProblemDescriptionNode>();
               TreeUtil.traverse(parentNode, new TreeUtil.Traverse() {
+                @Override
                 public boolean accept(final Object node) {
                   if (node instanceof ProblemDescriptionNode) {
                     nodes.add((ProblemDescriptionNode)node);
@@ -220,6 +221,7 @@ public abstract class InspectionRVContentProvider {
       final UserObjectContainer finalContainer = container;
       final RefElementNode finalPrevNode = prevNode;
       TreeUtil.traverseDepth(parentNode, new TreeUtil.Traverse() {
+        @Override
         public boolean accept(Object node) {
           if (node instanceof RefElementNode) {
             final RefElementNode refElementNode = (RefElementNode)node;

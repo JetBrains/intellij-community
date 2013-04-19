@@ -19,7 +19,7 @@
  * User: max
  * Date: Nov 16, 2001
  * Time: 12:50:45 AM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.reference;
@@ -33,10 +33,12 @@ public class RefProjectImpl extends RefEntityImpl implements RefProject {
     super(refManager.getProject().getName(), refManager);
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }
 
+  @Override
   public Icon getIcon(final boolean expanded) {
     return PlatformIcons.PROJECT_ICON;
   }

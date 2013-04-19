@@ -40,14 +40,17 @@ public class AnalyzeDependenciesHandler extends DependenciesHandlerBase {
     this(project, Collections.singletonList(scope), transitiveBorder, new HashSet<PsiFile>());
   }
 
+  @Override
   protected DependenciesBuilder createDependenciesBuilder(AnalysisScope scope) {
     return new ForwardDependenciesBuilder(myProject, scope, myTransitiveBorder);
   }
 
+  @Override
   protected String getPanelDisplayName(final AnalysisScope scope) {
     return AnalysisScopeBundle.message("package.dependencies.toolwindow.title", scope.getDisplayName());
   }
 
+  @Override
   protected String getProgressTitle() {
     return AnalysisScopeBundle.message("package.dependencies.progress.title");
   }

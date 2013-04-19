@@ -71,7 +71,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.signatures.GrClosureSignatureU
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.GrReferenceResolveUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.statements.expressions.TypesUtil;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.ClosureSyntheticParameter;
-import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrLightLocalVariable;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
@@ -448,7 +448,7 @@ public class ExpressionGenerator extends Generator {
         writeAssignmentWithSetter(((GrReferenceExpression)realLValue).getQualifier(), (PsiMethod)resolved, expression);
         return;
       }
-      else if (resolved == null || resolved instanceof GrLightLocalVariable) {
+      else if (resolved == null || resolved instanceof GrBindingVariable) {
         //write unresolved reference assignment via setter GroovyObject.setProperty(String name, Object value)
         final GrExpression qualifier = ((GrReferenceExpression)realLValue).getQualifier();
         final PsiType type = GrReferenceResolveUtil.getQualifierType((GrReferenceExpression)realLValue);
@@ -979,7 +979,7 @@ public class ExpressionGenerator extends Generator {
     //all refs in script that are not resolved are saved in 'binding' of the script
     if (qualifier == null &&
         (resolved == null ||
-         resolved instanceof GrLightLocalVariable ||
+         resolved instanceof GrBindingVariable ||
          resolved instanceof LightElement && !(resolved instanceof ClosureSyntheticParameter)) &&
         (referenceExpression.getParent() instanceof GrIndexProperty || !(referenceExpression.getParent() instanceof GrCall)) &&
         PsiUtil.getContextClass(referenceExpression) instanceof GroovyScriptClass) {
@@ -1031,7 +1031,7 @@ public class ExpressionGenerator extends Generator {
         builder.append('.');
       }
 
-      if (resolved instanceof PsiNamedElement && !(resolved instanceof GrLightLocalVariable)) {
+      if (resolved instanceof PsiNamedElement && !(resolved instanceof GrBindingVariable)) {
         final String refName = ((PsiNamedElement)resolved).getName();
 
         if (resolved instanceof GrVariable && context.analyzedVars.toWrap((GrVariable)resolved)) {

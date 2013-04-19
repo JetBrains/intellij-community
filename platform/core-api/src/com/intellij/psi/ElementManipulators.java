@@ -36,6 +36,9 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
     super(EP_NAME);
   }
 
+  /**
+   * @see #getNotNullManipulator(PsiElement)
+   */
   public static <T extends PsiElement> ElementManipulator<T> getManipulator(@NotNull T element) {
     //noinspection unchecked
     return INSTANCE.forClass(element.getClass());
@@ -46,7 +49,7 @@ public class ElementManipulators extends ClassExtension<ElementManipulator> {
     return manipulator.getRangeInElement(element).getStartOffset();
   }
 
-  private static <T extends PsiElement> ElementManipulator<T> getNotNullManipulator(T element) {
+  public static <T extends PsiElement> ElementManipulator<T> getNotNullManipulator(T element) {
     final ElementManipulator<T> manipulator = getManipulator(element);
     LOG.assertTrue(manipulator != null, element.getClass().getName());
     return manipulator;

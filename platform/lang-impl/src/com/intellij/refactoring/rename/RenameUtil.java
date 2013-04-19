@@ -112,6 +112,7 @@ public class RenameUtil {
   private static void addTextOccurrence(final PsiElement element, final List<UsageInfo> result, final GlobalSearchScope projectScope,
                                         final String stringToSearch, final String stringToReplace) {
     TextOccurrencesUtil.UsageInfoFactory factory = new TextOccurrencesUtil.UsageInfoFactory() {
+      @Override
       public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
         TextRange textRange = usage.getTextRange();
         int start = textRange == null ? 0 : textRange.getStartOffset();
@@ -169,6 +170,7 @@ public class RenameUtil {
     final String fqn = element instanceof PsiFile ? ((PsiFile)element).getVirtualFile().getPath() : CopyReferenceAction.elementToFqn(element);
     if (fqn != null) {
       UndoableAction action = new BasicUndoableAction() {
+        @Override
         public void undo() throws UnexpectedUndoException {
           if (listener instanceof UndoRefactoringElementListener) {
             ((UndoRefactoringElementListener)listener).undoElementMovedOrRenamed(element, fqn);
@@ -192,6 +194,7 @@ public class RenameUtil {
       //return;
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         final String helpID = RenamePsiElementProcessor.forElement(element).getHelpID(element);
         String message = e.getMessage();
@@ -305,7 +308,7 @@ public class RenameUtil {
         list = new ArrayList<UsageOffset>();
         docsToOffsetsMap.put(document, list);
       }
-      
+
       list.add(new UsageOffset(fileOffset, fileOffset + rangeInElement.getLength(), usage.newText));
     }
 
@@ -359,6 +362,7 @@ public class RenameUtil {
       this.newText = newText;
     }
 
+    @Override
     public int compareTo(final UsageOffset o) {
       return startOffset - o.startOffset;
     }

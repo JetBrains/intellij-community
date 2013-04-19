@@ -37,6 +37,7 @@ public class AnalyzeStacktraceDialog extends DialogWrapper {
     init();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     JPanel panel = new JPanel(new BorderLayout());
     panel.add(new JLabel("Put a thread dump here:"), BorderLayout.NORTH);

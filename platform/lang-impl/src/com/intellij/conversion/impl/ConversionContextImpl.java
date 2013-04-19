@@ -129,6 +129,7 @@ public class ConversionContextImpl implements ConversionContext {
     return myPerformedConversionIds.contains(provider.getId());
   }
 
+  @Override
   @NotNull
   public File getProjectBaseDir() {
     return myProjectBaseDir;
@@ -178,6 +179,7 @@ public class ConversionContextImpl implements ConversionContext {
     return map.substitute(path, SystemInfo.isFileSystemCaseSensitive);
   }
 
+  @Override
   @NotNull
   public String collapsePath(@NotNull String path) {
     ReplacePathToMacroMap map = createCollapseMacroMap(PathMacrosImpl.PROJECT_DIR_MACRO_NAME, myProjectBaseDir);
@@ -196,6 +198,7 @@ public class ConversionContextImpl implements ConversionContext {
     return map;
   }
 
+  @Override
   public Collection<File> getLibraryClassRoots(@NotNull String name, @NotNull String level) {
     try {
       Element libraryElement = null;
@@ -234,6 +237,7 @@ public class ConversionContextImpl implements ConversionContext {
     return files;
   }
 
+  @Override
   public ComponentManagerSettings getCompilerSettings() {
     if (myCompilerManagerSettings == null) {
       myCompilerManagerSettings = createProjectSettings("compiler.xml");
@@ -241,6 +245,7 @@ public class ConversionContextImpl implements ConversionContext {
     return myCompilerManagerSettings;
   }
 
+  @Override
   public ComponentManagerSettings getProjectRootManagerSettings() {
     if (myProjectRootManagerSettings == null) {
       myProjectRootManagerSettings = createProjectSettings("misc.xml");
@@ -255,7 +260,7 @@ public class ConversionContextImpl implements ConversionContext {
     }
     return myModulesSettings;
   }
-  
+
   @Nullable
   public ComponentManagerSettings getProjectFileVersionSettings() {
     if (myProjectFileVersionSettings == null) {
@@ -318,14 +323,17 @@ public class ConversionContextImpl implements ConversionContext {
     return macros;
   }
 
+  @Override
   public File getSettingsBaseDir() {
     return mySettingsBaseDir;
   }
 
+  @Override
   public File getProjectFile() {
     return myProjectFile;
   }
 
+  @Override
   public ProjectSettings getProjectSettings() throws CannotConvertException {
     if (myProjectSettings == null) {
       myProjectSettings = new ProjectSettingsImpl(myProjectFile, this);
@@ -333,6 +341,7 @@ public class ConversionContextImpl implements ConversionContext {
     return myProjectSettings;
   }
 
+  @Override
   public RunManagerSettingsImpl getRunManagerSettings() throws CannotConvertException {
     if (myRunManagerSettings == null) {
       if (myStorageScheme == StorageScheme.DEFAULT) {
@@ -340,6 +349,7 @@ public class ConversionContextImpl implements ConversionContext {
       }
       else {
         final File[] files = new File(mySettingsBaseDir, "runConfigurations").listFiles(new FileFilter() {
+          @Override
           public boolean accept(File file) {
             return !file.isDirectory() && file.getName().endsWith(".xml");
           }
@@ -350,6 +360,7 @@ public class ConversionContextImpl implements ConversionContext {
     return myRunManagerSettings;
   }
 
+  @Override
   public WorkspaceSettings getWorkspaceSettings() throws CannotConvertException {
     if (myWorkspaceSettings == null) {
       myWorkspaceSettings = new WorkspaceSettingsImpl(myWorkspaceFile, this);
@@ -358,6 +369,7 @@ public class ConversionContextImpl implements ConversionContext {
   }
 
 
+  @Override
   public ModuleSettings getModuleSettings(File moduleFile) throws CannotConvertException {
     ModuleSettingsImpl settings = myFile2ModuleSettings.get(moduleFile);
     if (settings == null) {
@@ -368,6 +380,7 @@ public class ConversionContextImpl implements ConversionContext {
     return settings;
   }
 
+  @Override
   public ModuleSettings getModuleSettings(@NotNull String moduleName) {
     if (!myName2ModuleSettings.containsKey(moduleName)) {
       for (File moduleFile : myModuleFiles) {
@@ -385,6 +398,7 @@ public class ConversionContextImpl implements ConversionContext {
     return myNonExistingModuleFiles;
   }
 
+  @Override
   public StorageScheme getStorageScheme() {
     return myStorageScheme;
   }
@@ -448,6 +462,7 @@ public class ConversionContextImpl implements ConversionContext {
     return settingsFile;
   }
 
+  @Override
   public ProjectLibrariesSettingsImpl getProjectLibrariesSettings() throws CannotConvertException {
     if (myProjectLibrariesSettings == null) {
       if (myStorageScheme == StorageScheme.DEFAULT) {
@@ -456,6 +471,7 @@ public class ConversionContextImpl implements ConversionContext {
       else {
         final File librariesDir = new File(mySettingsBaseDir, "libraries");
         final File[] files = librariesDir.exists() ? librariesDir.listFiles(new FileFilter() {
+          @Override
           public boolean accept(File file) {
             return !file.isDirectory() && file.getName().endsWith(".xml");
           }

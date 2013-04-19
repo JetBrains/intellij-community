@@ -58,12 +58,14 @@ public class NavBarPopup extends LightweightHint implements Disposable{
     setFocusRequestor(getComponent());
     setForceShowAsPopup(true);
     ListenerUtil.addMouseListener(getComponent(), new MouseAdapter() {
+      @Override
       public void mouseReleased(final MouseEvent e) {
         if (SystemInfo.isWindows) {
           click(e);
         }
       }
 
+      @Override
       public void mousePressed(final MouseEvent e) {
         if (!SystemInfo.isWindows) {
           click(e);
@@ -204,7 +206,7 @@ public class NavBarPopup extends LightweightHint implements Disposable{
   public Object getSelectedValue() {
     return getList().getSelectedValue();
   }
-  
+
   public Object[] getSelectedValues() {
     return getList().getSelectedValues();
   }

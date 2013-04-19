@@ -118,6 +118,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
     addAdditionalTabComponent(log, id, icon);
 
     getUi().addListener(new ContentManagerAdapter() {
+      @Override
       public void selectionChanged(final ContentManagerEvent event) {
         log.activate();
       }
@@ -129,6 +130,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
     return content != null && content.isSelected();
   }
 
+  @Override
   public void removeLogConsole(final String path) {
     final Content content = getUi().findContent(path);
     if (content != null) {
@@ -137,6 +139,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
     }
   }
 
+  @Override
   public void addAdditionalTabComponent(final AdditionalTabComponent tabComponent, final String id) {
     addAdditionalTabComponent(tabComponent, id, getDefaultIcon());
   }
@@ -153,6 +156,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
                                  tabComponent.getPreferredFocusableComponent());
   }
 
+  @Override
   public void removeAdditionalTabComponent(AdditionalTabComponent component) {
     Disposer.dispose(component);
     final Content content = myAdditionalContent.remove(component);
@@ -161,6 +165,7 @@ public abstract class LogConsoleManagerBase implements LogConsoleManager, Dispos
     }
   }
 
+  @Override
   public void dispose() {
     for (AdditionalTabComponent component : ArrayUtil.toObjectArray(myAdditionalContent.keySet(), AdditionalTabComponent.class)) {
       removeAdditionalTabComponent(component);

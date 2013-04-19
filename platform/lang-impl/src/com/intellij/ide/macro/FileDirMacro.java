@@ -21,14 +21,17 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public final class FileDirMacro extends Macro {
+  @Override
   public String getName() {
     return "FileDir";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.file.directory");
   }
 
+  @Override
   public String expand(DataContext dataContext) {
     VirtualFile vFile = getVirtualDirOrParent(dataContext);
     return vFile != null ? getPath(vFile) : null;

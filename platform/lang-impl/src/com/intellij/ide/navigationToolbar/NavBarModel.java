@@ -151,6 +151,7 @@ public class NavBarModel {
     final List<Object> updatedModel = new ArrayList<Object>();
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         traverseToRoot(psiElement, roots, updatedModel);
       }
@@ -300,6 +301,7 @@ public class NavBarModel {
     if (object instanceof PsiElement) {
       return ApplicationManager.getApplication().runReadAction(
           new Computable<Boolean>() {
+            @Override
             public Boolean compute() {
               return ((PsiElement)object).isValid();
             }
@@ -343,6 +345,7 @@ public class NavBarModel {
     if (object instanceof Project) {
       ContainerUtil.addAll(result, ApplicationManager.getApplication().runReadAction(
         new Computable<Module[]>() {
+          @Override
           public Module[] compute() {
             return ModuleManager.getInstance((Project)object).getModules();
           }
@@ -357,6 +360,7 @@ public class NavBarModel {
         for (final VirtualFile root : roots) {
           final PsiDirectory psiDirectory = ApplicationManager.getApplication().runReadAction(
               new Computable<PsiDirectory>() {
+                @Override
                 public PsiDirectory compute() {
                   return psiManager.findDirectory(root);
                 }
@@ -372,6 +376,7 @@ public class NavBarModel {
       final PsiDirectoryContainer psiPackage = (PsiDirectoryContainer)object;
       final PsiDirectory[] psiDirectories = ApplicationManager.getApplication().runReadAction(
           new Computable<PsiDirectory[]>() {
+            @Override
             public PsiDirectory[] compute() {
               return rootElement instanceof Module
                                             ? psiPackage.getDirectories(GlobalSearchScope.moduleScope((Module)rootElement))
@@ -381,6 +386,7 @@ public class NavBarModel {
       );
       for (final PsiDirectory psiDirectory : psiDirectories) {
         ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
             public void run(){
               getDirectoryChildren(psiDirectory, rootElement, result);
             }
@@ -389,6 +395,7 @@ public class NavBarModel {
     }
     else if (object instanceof PsiDirectory) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run(){
               getDirectoryChildren((PsiDirectory)object, rootElement, result);
           }
@@ -397,6 +404,7 @@ public class NavBarModel {
     }
     else if (object instanceof PsiFileSystemItem) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
+          @Override
           public void run() {
             ((PsiFileSystemItem)object).processChildren(new PsiFileSystemItemProcessor() {
               @Override
@@ -437,6 +445,7 @@ public class NavBarModel {
   }
 
   private static final class SiblingsComparator implements Comparator<Object> {
+    @Override
     public int compare(final Object o1, final Object o2) {
       final Pair<Integer, String> w1 = getWeightedName(o1);
       final Pair<Integer, String> w2 = getWeightedName(o2);

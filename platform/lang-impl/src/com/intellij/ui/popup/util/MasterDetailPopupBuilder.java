@@ -113,8 +113,10 @@ public class MasterDetailPopupBuilder implements MasterController {
 
 
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         IdeFocusManager.getInstance(myProject).doWhenFocusSettlesDown(new Runnable() {
+          @Override
           public void run() {
             Object[] values = getSelectedItems();
             if (values.length == 1) {
@@ -198,6 +200,7 @@ public class MasterDetailPopupBuilder implements MasterController {
       setMayBeParent(true).
       setDimensionServiceKey(myDimensionServiceKey).
       setFilteringEnabled(new Function<Object, String>() {
+        @Override
         public String fun(Object o) {
           return ((ItemWrapper)o).speedSearchText();
         }
@@ -360,6 +363,7 @@ public class MasterDetailPopupBuilder implements MasterController {
   private void setChooser(JComponent list) {
     myChooserComponent = list;
     list.addKeyListener(new KeyAdapter() {
+      @Override
       public void keyPressed(KeyEvent e) {
         if (e.getKeyCode() == KeyEvent.VK_DELETE) {
           removeSelectedItems(myProject);
@@ -436,6 +440,7 @@ public class MasterDetailPopupBuilder implements MasterController {
       add(myRenderer, BorderLayout.CENTER);
     }
 
+    @Override
     public Component getListCellRendererComponent(JList list, Object value, int index, boolean isSelected, boolean cellHasFocus) {
       if (value instanceof SplitterItem) {
         String label = ((SplitterItem)value).getText();

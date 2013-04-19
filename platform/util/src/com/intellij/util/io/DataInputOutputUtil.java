@@ -15,6 +15,7 @@
  */
 package com.intellij.util.io;
 
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
@@ -31,32 +32,32 @@ public class DataInputOutputUtil {
 
   @SuppressWarnings("UnusedDeclaration")
   /** @deprecated obsolete (use {@link IOUtil} methods) (to remove in IDEA 13) */
-  public static void skipUTF(DataInput record) throws IOException {
+  public static void skipUTF(@NotNull DataInput record) throws IOException {
     record.skipBytes(record.readUnsignedShort());
   }
 
-  public static StringRef readNAME(DataInput record, AbstractStringEnumerator nameStore) throws IOException {
+  public static StringRef readNAME(@NotNull DataInput record, @NotNull AbstractStringEnumerator nameStore) throws IOException {
     return StringRef.fromStream(record, nameStore);
   }
 
-  public static void writeNAME(DataOutput record, @Nullable String name, AbstractStringEnumerator nameStore) throws IOException {
+  public static void writeNAME(@NotNull DataOutput record, @Nullable String name, @NotNull AbstractStringEnumerator nameStore) throws IOException {
     final int nameId = name != null ? nameStore.enumerate(name) : 0;
     writeINT(record, nameId);
   }
 
   @SuppressWarnings("UnusedDeclaration")
   /** @deprecated use {@linkplain #readNAME(java.io.DataInput, AbstractStringEnumerator)} (to remove in IDEA 13) */
-  public static void skipNAME(DataInput record) throws IOException {
+  public static void skipNAME(@NotNull DataInput record) throws IOException {
     readINT(record);
   }
 
   /** @deprecated use {@linkplain #readINT(java.io.DataInput)} (to remove in IDEA 13) */
   @SuppressWarnings("UnusedDeclaration")
-  public static void skipINT(DataInput record) throws IOException {
+  public static void skipINT(@NotNull DataInput record) throws IOException {
     readINT(record);
   }
 
-  public static int readINT(DataInput record) throws IOException {
+  public static int readINT(@NotNull DataInput record) throws IOException {
     final int val = record.readUnsignedByte();
     if (val < 192) {
       return val;
@@ -72,7 +73,7 @@ public class DataInputOutputUtil {
     }
   }
 
-  public static void writeINT(DataOutput record, int val) throws IOException {
+  public static void writeINT(@NotNull DataOutput record, int val) throws IOException {
     if (0 <= val && val < 192) {
       record.writeByte(val);
     }
@@ -89,19 +90,19 @@ public class DataInputOutputUtil {
 
   /** @deprecated use {@linkplain #readSINT(java.io.DataInput)} (to remove in IDEA 13) */
   @SuppressWarnings("UnusedDeclaration")
-  public static void skipSINT(DataInput record) throws IOException {
+  public static void skipSINT(@NotNull DataInput record) throws IOException {
     readSINT(record);
   }
 
-  public static int readSINT(DataInput record) throws IOException {
+  public static int readSINT(@NotNull DataInput record) throws IOException {
     return readINT(record) - 64;
   }
 
-  public static void writeSINT(DataOutput record, int val) throws IOException {
+  public static void writeSINT(@NotNull DataOutput record, int val) throws IOException {
     writeINT(record, val + 64);
   }
 
-  public static void writeTIME(DataOutput record, long timestamp) throws IOException {
+  public static void writeTIME(@NotNull DataOutput record, long timestamp) throws IOException {
     long relStamp = timestamp - timeBase;
     if (relStamp < 0 || relStamp >= 0xFF00000000L) {
       record.writeByte(255);
@@ -116,7 +117,7 @@ public class DataInputOutputUtil {
     }
   }
 
-  public static long readTIME(DataInput record) throws IOException {
+  public static long readTIME(@NotNull DataInput record) throws IOException {
     final int first = record.readUnsignedByte();
     if (first == 255) {
       return record.readLong();

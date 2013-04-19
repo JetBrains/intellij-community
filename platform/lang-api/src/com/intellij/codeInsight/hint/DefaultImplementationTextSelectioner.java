@@ -28,12 +28,14 @@ import org.jetbrains.annotations.NotNull;
 public class DefaultImplementationTextSelectioner implements ImplementationTextSelectioner {
   private static final Logger LOG = Logger.getInstance("#" + DefaultImplementationTextSelectioner.class.getName());
 
+  @Override
   public int getTextStartOffset(@NotNull final PsiElement parent) {
     final TextRange textRange = parent.getTextRange();
     LOG.assertTrue(textRange != null, parent);
     return textRange.getStartOffset();
   }
 
+  @Override
   public int getTextEndOffset(@NotNull PsiElement element) {
     final TextRange textRange = element.getTextRange();
     LOG.assertTrue(textRange != null, element);

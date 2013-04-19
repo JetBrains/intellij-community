@@ -48,21 +48,26 @@ public class RefDirectoryImpl extends RefElementImpl implements RefDirectory{
     ((RefProjectImpl)refManager.getRefProject()).add(this);
   }
 
+  @Override
   public void accept(final RefVisitor visitor) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         visitor.visitDirectory(RefDirectoryImpl.this);
       }
     });
   }
 
+  @Override
   protected void initialize() {
   }
 
+  @Override
   public String getQualifiedName() {
     return getName(); //todo relative name
   }
 
+  @Override
   public String getExternalName() {
     final PsiElement element = getElement();
     assert element != null;

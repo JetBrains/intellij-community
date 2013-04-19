@@ -30,6 +30,7 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
 
 public class ReloadFromDiskAction extends AnAction implements DumbAware {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -48,9 +49,11 @@ public class ReloadFromDiskAction extends AnAction implements DumbAware {
 
     CommandProcessor.getInstance().executeCommand(
         project, new Runnable() {
+        @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(
             new Runnable() {
+              @Override
               public void run() {
                 PsiManager.getInstance(project).reloadFromDisk(psiFile);
               }
@@ -63,6 +66,7 @@ public class ReloadFromDiskAction extends AnAction implements DumbAware {
     );
   }
 
+  @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();

@@ -35,6 +35,7 @@ import com.intellij.openapi.vcs.checkin.VcsCheckinHandlerFactory;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.PairConsumer;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import git4idea.GitPlatformFacade;
 import git4idea.GitUtil;
 import git4idea.GitVcs;
@@ -61,7 +62,7 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Kirill Likhodedov
 */
 public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
-  
+
   private static final Logger LOG = Logger.getInstance(GitCheckinHandlerFactory.class);
 
   public GitCheckinHandlerFactory() {
@@ -89,7 +90,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       if (emptyCommitMessage()) {
         return ReturnResult.CANCEL;
       }
-      
+
       if (commitOrCommitAndPush(executor)) {
         ReturnResult result = checkUserName();
         if (result != ReturnResult.COMMIT) {
@@ -195,7 +196,7 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
           // doing nothing - let commit with possibly empty user.name/email
         }
       }
-      
+
       if (notDefined.isEmpty()) {
         return ReturnResult.COMMIT;
       }
@@ -255,14 +256,14 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
       }
       return ReturnResult.CLOSE_WINDOW;
     }
-    
+
     @NotNull
     private Pair<String, String> getUserNameAndEmailFromGitConfig(@NotNull Project project, @NotNull VirtualFile root) throws VcsException {
       String name = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_NAME);
       String email = GitConfigUtil.getValue(project, root, GitConfigUtil.USER_EMAIL);
       return Pair.create(name, email);
     }
-    
+
     private boolean emptyCommitMessage() {
       if (myPanel.getCommitMessage().trim().isEmpty()) {
         Messages.showMessageDialog(myPanel.getComponent(), GitBundle.message("git.commit.message.empty"),
@@ -297,8 +298,9 @@ public class GitCheckinHandlerFactory extends VcsCheckinHandlerFactory {
                   readMore("http://sitaramc.github.com/concepts/detached-head.html", "Read more about detached HEAD");
       }
 
-      final int choice = Messages.showOkCancelDialog(myPanel.getComponent(), "<html>" + message + "</html>", title,
-                                                     "Cancel", "Commit", Messages.getWarningIcon());
+      final int choice = Messages.showOkCancelDialog(myPanel.getComponent(), XmlStringUtil.wrapInHtml(message), title,
+                                                                                                      "Cancel", "Commit",
+                                                                                                      Messages.getWarningIcon());
       if (choice == 1) {
         return ReturnResult.COMMIT;
       } else {

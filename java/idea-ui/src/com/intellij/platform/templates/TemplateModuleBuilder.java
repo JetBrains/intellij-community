@@ -214,9 +214,9 @@ public class TemplateModuleBuilder extends ModuleBuilder {
       };
       ZipUtil.unzip(ProgressManager.getInstance().getProgressIndicator(), dir, zipInputStream, pathConvertor, new ZipUtil.ContentProcessor() {
         @Override
-        public byte[] processContent(byte[] content, String fileName) throws IOException {
-          FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(fileName));
-          return fileType.isBinary() ? content : processTemplates(projectName, new String(content));
+        public byte[] processContent(byte[] content, File file) throws IOException {
+          FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension(FileUtilRt.getExtension(file.getName()));
+          return fileType.isBinary() ? content : processTemplates(projectName, new String(content), file);
         }
       });
       String iml = ContainerUtil.find(dir.list(), new Condition<String>() {
@@ -250,7 +250,14 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     return "/" + value.replace('.', '/') + "/";
   }
 
-  private byte[] processTemplates(@Nullable String projectName, String s) throws IOException {
+  @SuppressWarnings("UseOfPropertiesAsHashtable")
+  @Nullable
+  private byte[] processTemplates(@Nullable String projectName, String content, File file) throws IOException {
+    for (WizardInputField field : myAdditionalFields) {
+      if (!field.acceptFile(file)) {
+        return null;
+      }
+    }
     Properties properties = FileTemplateManager.getInstance().getDefaultProperties();
     for (WizardInputField field : myAdditionalFields) {
       properties.putAll(field.getValues());
@@ -258,7 +265,7 @@ public class TemplateModuleBuilder extends ModuleBuilder {
     if (projectName != null) {
       properties.put(ProjectTemplateParameterFactory.IJ_PROJECT_NAME, projectName);
     }
-    String merged = FileTemplateUtil.mergeTemplate(properties, s, true);
+    String merged = FileTemplateUtil.mergeTemplate(properties, content, true);
     return merged.replace("\\$", "$").replace("\\#", "#").getBytes(UTF_8);
   }
 

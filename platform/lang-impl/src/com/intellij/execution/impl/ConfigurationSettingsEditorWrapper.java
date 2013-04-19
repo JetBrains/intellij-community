@@ -86,6 +86,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     myBeforeLaunchContainer.setVisible(!(runConfiguration instanceof UnknownRunConfiguration));
   }
 
+  @Override
   @NotNull
   protected JComponent createEditor() {
     myComponentPlace.setLayout(new BorderLayout());
@@ -94,19 +95,23 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
     return myWholePanel;
   }
 
+  @Override
   protected void disposeEditor() {
   }
 
+  @Override
   public void resetEditorFrom(final RunnerAndConfigurationSettings settings) {
     myEditor.resetEditorFrom(settings);
     doReset(settings);
   }
 
+  @Override
   public void applyEditorTo(final RunnerAndConfigurationSettings settings) throws ConfigurationException {
     myEditor.applyEditorTo(settings);
     doApply(settings);
   }
 
+  @Override
   public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     RunnerAndConfigurationSettings result = myEditor.getSnapshot();
     doApply(result);
@@ -144,6 +149,7 @@ public class ConfigurationSettingsEditorWrapper extends SettingsEditor<RunnerAnd
   }
 
   private class MyDataProvider implements TypeSafeDataProvider {
+    @Override
     public void calcData(DataKey key, DataSink sink) {
       if (key.equals(CONFIGURATION_EDITOR_KEY)) {
         sink.put(CONFIGURATION_EDITOR_KEY, ConfigurationSettingsEditorWrapper.this);

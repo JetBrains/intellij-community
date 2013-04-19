@@ -44,6 +44,7 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
     myFileType = fileType;
   }
 
+  @Override
   public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, final boolean hasFocus, int row, int column) {
     PsiCodeFragment codeFragment = (PsiCodeFragment)value;
 
@@ -52,6 +53,7 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
     if (codeFragment != null) {
       document = PsiDocumentManager.getInstance(myProject).getDocument(codeFragment);
       editorTextField = new EditorTextField(document, myProject, myFileType) {
+        @Override
         protected boolean shouldHaveBorder() {
           return false;
         }
@@ -59,6 +61,7 @@ public class CodeFragmentTableCellRenderer implements TableCellRenderer {
     }
     else {
       editorTextField = new EditorTextField("", myProject, myFileType) {
+        @Override
         protected boolean shouldHaveBorder() {
           return false;
         }

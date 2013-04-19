@@ -46,6 +46,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
     myTodoFilterConsumer = todoFilterConsumer;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     Presentation presentation = e.getPresentation();
     JComponent button = (JComponent)presentation.getClientProperty("button");
@@ -55,6 +56,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
     popupMenu.getComponent().show(button, button.getWidth(), 0);
   }
 
+  @Override
   public JComponent createCustomComponent(Presentation presentation) {
     ActionButton button = new ActionButton(
       this,
@@ -80,6 +82,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
     group.add(
       new AnAction(IdeBundle.message("action.todo.edit.filters"),
                    IdeBundle.message("action.todo.edit.filters"), AllIcons.General.Settings) {
+        @Override
         public void actionPerformed(AnActionEvent e) {
           final ShowSettingsUtil util = ShowSettingsUtil.getInstance();
           util.editConfigurable(project, new TodoConfigurable());
@@ -113,6 +116,7 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
       myFilter = filter;
     }
 
+    @Override
     public void update(AnActionEvent e) {
       super.update(e);
       if (myFilter != null) {
@@ -120,10 +124,12 @@ public class SetTodoFilterAction extends AnAction implements CustomComponentActi
       }
     }
 
+    @Override
     public boolean isSelected(AnActionEvent e) {
       return Comparing.equal(myFilter != null ? myFilter.getName() : null, mySettings.getTodoFilterName());
     }
 
+    @Override
     public void setSelected(AnActionEvent e, boolean state) {
       if (state) {
         myTodoFilterConsumer.consume(myFilter);
