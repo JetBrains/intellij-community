@@ -37,6 +37,7 @@ import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Processor;
@@ -56,6 +57,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   private static final Key<Object> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
   private static final Object IN_SELECTION1 = new Object();
   private static final Object IN_SELECTION2 = new Object();
+  private static final String EMPTY_STRING_DISPLAY_TEXT = "<Empty string>";
 
   private boolean myListeningSelection = false;
   private boolean mySuppressedUpdate = false;
@@ -353,6 +355,9 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     final Editor editor = mySearchResults.getEditor();
     if (myDelegate != null && cursor != null) {
       String replacementPreviewText = myDelegate.getStringToReplace(editor, cursor);
+      if (StringUtil.isEmpty(replacementPreviewText)) {
+        replacementPreviewText = EMPTY_STRING_DISPLAY_TEXT;
+      }
       final FindModel findModel = mySearchResults.getFindModel();
       if (findModel.isRegularExpressions() && findModel.isReplaceState()) {
 
