@@ -780,6 +780,7 @@ public class BuildManager implements ApplicationComponent{
     }
 
     cmdLine.addParameter("-Djava.awt.headless=true");
+    cmdLine.addParameter("-Djava.endorsed.dirs=\"\""); // turn off all jre customizations for predictable behaviour
     if (IS_UNIT_TEST_MODE) {
       cmdLine.addParameter("-Dtest.mode=true");
     }
