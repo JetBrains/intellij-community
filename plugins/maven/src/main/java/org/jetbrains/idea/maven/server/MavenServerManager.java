@@ -452,7 +452,7 @@ public class MavenServerManager extends RemoteObjectWrapper<MavenServer> impleme
   }
 
   public void setMavenEmbedderVMOptions(@NotNull String mavenEmbedderVMOptions) {
-    if (!mavenEmbedderVMOptions.trim().equals(this.mavenEmbedderVMOptions)) {
+    if (!mavenEmbedderVMOptions.trim().equals(this.mavenEmbedderVMOptions.trim())) {
       this.mavenEmbedderVMOptions = mavenEmbedderVMOptions;
       shutdown(false);
     }
