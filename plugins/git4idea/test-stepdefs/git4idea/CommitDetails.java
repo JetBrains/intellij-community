@@ -119,7 +119,7 @@ public class CommitDetails {
     StringBuilder message = new StringBuilder();
     Collection<Change> changes = new ArrayList<Change>();
     ParsingStage stage = ParsingStage.MESSAGE;
-    for (String line : details.split("\n")) {
+    for (String line : StringUtil.splitByLines(details)) {
       Pair<Data, String> data = checkDataLine(line);
       if (data != null) {
         stage = ParsingStage.DATA;
