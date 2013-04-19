@@ -50,7 +50,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
   private final String mySeparator;
 
   protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull LineSeparator separator) {
-    this(text, separator.getSeparatorString());
+    this(separator.toString() + " - " + text, separator.getSeparatorString());
   }
   
   protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull String separator) {
