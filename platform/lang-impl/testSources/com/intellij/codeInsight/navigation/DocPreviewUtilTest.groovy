@@ -182,4 +182,20 @@ com.intellij.openapi.util.TextRange getTextRange ()'''
     
     assertEquals(expected, DocPreviewUtil.buildPreview(header, null, fullText))
   }
+
+  @Test
+  void "single letter 'from' substitution"() {
+    def header = '''\
+E
+org.denis.E A
+Enum constant ordinal: 0'''
+    
+    def fullText = '''\
+<html><head>    <style type="text/css">        #error {            background-color: #eeeeee;            margin-bottom: 10px;        }        p {            margin: 5px 0;        }    </style></head><body><small><b><a href="psi_element://org.denis.E"><code>org.denis.E</code></a></b></small><PRE><a href="psi_element://org.denis.E"><code>E</code></a> <b>A</b></PRE></body></html>'''
+    
+    def expected = '''\
+<a href="psi_element://org.denis.E">E</a><br/><a href="psi_element://org.denis.E">E</a> A<br/>Enum constant ordinal: 0'''
+    
+    assertEquals(expected, DocPreviewUtil.buildPreview(header, null, fullText))
+  }
 }
