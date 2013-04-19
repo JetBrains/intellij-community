@@ -106,9 +106,12 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
       final XmlAttribute xmlAttribute = (XmlAttribute)element;
       isTag = false;
       key = xmlAttribute.getName();
-    } else {
+    } else if (element instanceof XmlElement) {
       nameElement = element;
       isTag = !(element.getParent() instanceof XmlAttribute);
+    } else {
+      nameElement = element;
+      isTag = context != null && element.getText().startsWith(context.getName());
     }
 
     if (nameElement!=null) {
@@ -116,6 +119,11 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     }
 
     key = (key != null)?key.toLowerCase():"";
+
+    int dotIndex = key.indexOf('.');
+    if (dotIndex > 0) {
+      key = key.substring(0, dotIndex);
+    }
 
     if (isTag) {
       return HtmlDescriptorsTable.getTagDescriptor(key);
@@ -141,11 +149,11 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
     if (result == null && ourStyleProvider !=null) {
       result = ourStyleProvider.generateDoc(element, originalElement);
     }
-    
+
     if (result == null && ourScriptProvider !=null) {
       result = ourScriptProvider.generateDoc(element, originalElement);
     }
-    
+
     if (result == null && element instanceof XmlAttributeValue) {
       result = generateDocForHtml(element.getParent(), false, tag, originalElement);
     }
@@ -174,7 +182,7 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
   private static String generateJavaDoc(EntityDescriptor descriptor, boolean ommitHtmlSpecifics, PsiElement element) {
     StringBuilder buf = new StringBuilder();
     final boolean istag = descriptor instanceof HtmlTagDescriptor;
-    
+
     if (istag) {
       DocumentationUtil.formatEntityName(XmlBundle.message("xml.javadoc.tag.name.message"),descriptor.getName(),buf);
     } else {
