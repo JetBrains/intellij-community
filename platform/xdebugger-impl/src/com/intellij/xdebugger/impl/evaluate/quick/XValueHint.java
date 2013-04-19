@@ -99,6 +99,11 @@ public class XValueHint extends AbstractValueHint {
           }
 
           @Override
+          public void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String type, boolean expand) {
+            setPresentation(icon, type, "", "", null, true);
+          }
+
+          @Override
           public void setPresentation(@Nullable Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
                                       @NonNls @NotNull final String value, @Nullable final NotNullFunction<String, String> valuePresenter, final boolean hasChildren) {
             DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
