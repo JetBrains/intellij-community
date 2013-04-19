@@ -19,7 +19,7 @@
  * User: max
  * Date: May 20, 2002
  * Time: 4:13:37 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.openapi.editor.actions;
@@ -29,7 +29,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.LogicalPosition;
 import com.intellij.openapi.editor.SelectionModel;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
-import com.intellij.util.StringBuilderSpinAllocator;
 
 public class ToggleCaseAction extends TextComponentEditorAction {
   public ToggleCaseAction() {
@@ -67,19 +66,13 @@ public class ToggleCaseAction extends TextComponentEditorAction {
       for (int i = 0; i < starts.length; i++) {
         int startOffset = starts[i];
         int endOffset = ends[i];
-        StringBuilder builder = StringBuilderSpinAllocator.alloc();
-        try {
-          final String text = editor.getDocument().getCharsSequence().subSequence(startOffset, endOffset).toString();
-          toCase(builder, text, true);
-          if (text.equals(builder.toString())) {
-            toCase(builder, text, false);
-          }
-          editor.getDocument().replaceString(startOffset, endOffset, builder.toString());
-
+        StringBuilder builder = new StringBuilder();
+        final String text = editor.getDocument().getCharsSequence().subSequence(startOffset, endOffset).toString();
+        toCase(builder, text, true);
+        if (text.equals(builder.toString())) {
+          toCase(builder, text, false);
         }
-        finally {
-          StringBuilderSpinAllocator.dispose(builder);
-        }
+        editor.getDocument().replaceString(startOffset, endOffset, builder.toString());
       }
 
       if (blockStart != null) {
@@ -96,7 +89,7 @@ public class ToggleCaseAction extends TextComponentEditorAction {
       for( int i = 0; i < text.length(); ++i) {
         char c = text.charAt(i);
         if( !prevIsSlash ) {
-          c = (lower) ? Character.toLowerCase(c) : Character.toUpperCase(c);
+          c = lower ? Character.toLowerCase(c) : Character.toUpperCase(c);
         }
         prevIsSlash = c == '\\';
         builder.append(c);
