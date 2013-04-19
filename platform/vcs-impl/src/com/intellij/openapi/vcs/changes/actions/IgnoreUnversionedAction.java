@@ -35,9 +35,6 @@ import java.util.Iterator;
 import java.util.List;
 
 public class IgnoreUnversionedAction extends AnAction {
-  public IgnoreUnversionedAction() {
-    super("Ignore...");
-  }
 
   public void actionPerformed(AnActionEvent e) {
     Project project = e.getData(PlatformDataKeys.PROJECT);
