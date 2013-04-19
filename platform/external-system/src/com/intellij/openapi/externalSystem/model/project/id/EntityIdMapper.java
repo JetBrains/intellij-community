@@ -34,19 +34,6 @@ public class EntityIdMapper {
     myServices = services;
   }
 
-  @NotNull
-  public static <T extends ProjectEntityId> T mapEntityToId(@NotNull Object entity) {
-    final ProjectSystemId owner;
-    if (entity instanceof ProjectEntityData) {
-      owner = ((ProjectEntityData)entity).getOwner();
-    }
-    else {
-      owner = ProjectSystemId.IDE;
-    }
-    T t = mapEntityToId(entity, owner);
-    return t;
-  }
-
   /**
    * Performs {@code 'entity -> id'} mapping. Check class-level javadoc for more details.
    *
@@ -56,9 +43,7 @@ public class EntityIdMapper {
    */
   @SuppressWarnings({"MethodMayBeStatic", "unchecked"})
   @NotNull
-  public static <T extends ProjectEntityId> T mapEntityToId(@NotNull Object entity, @NotNull final ProjectSystemId owner)
-    throws IllegalArgumentException
-  {
+  public static <T extends ProjectEntityId> T mapEntityToId(@NotNull Object entity) throws IllegalArgumentException {
     final Ref<ProjectEntityId> result = new Ref<ProjectEntityId>();
     if (entity instanceof DataNode) {
       Object data = ((DataNode)entity).getData();
