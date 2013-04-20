@@ -186,6 +186,7 @@ public class IncProjectBuilder {
       if (cause instanceof PersistentEnumerator.CorruptedException ||
           cause instanceof MappingFailedException ||
           cause instanceof IOException) {
+        LOG.info(e);
         myMessageDispatcher.processMessage(new CompilerMessage(
           "", BuildMessage.Kind.INFO,
           "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
@@ -204,6 +205,7 @@ public class IncProjectBuilder {
           }
         }
         else {
+          LOG.info(e);
           // the reason for the build stop is unexpected internal error, report it
           myMessageDispatcher.processMessage(new CompilerMessage("", cause));
         }
