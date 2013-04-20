@@ -273,14 +273,14 @@ public class JavaBuilderUtil {
     JpsSdkReference<JpsDummyElement> reference = module.getSdkReference(JpsJavaSdkType.INSTANCE);
     if (reference == null) {
       context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR, "JDK isn't specified for module '" + module.getName() + "'"));
-      throw new ProjectBuildException();
+      throw new StopBuildException();
     }
 
     JpsTypedLibrary<JpsSdk<JpsDummyElement>> sdkLibrary = reference.resolve();
     if (sdkLibrary == null) {
       context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR,
                                                  "Cannot find JDK '" + reference.getSdkName() + "' for module '" + module.getName() + "'"));
-      throw new ProjectBuildException();
+      throw new StopBuildException();
     }
     return sdkLibrary.getProperties();
   }

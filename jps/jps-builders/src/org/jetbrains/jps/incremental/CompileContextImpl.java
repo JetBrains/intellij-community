@@ -132,7 +132,7 @@ public class CompileContextImpl extends UserDataHolderBase implements CompileCon
   @Override
   public final void checkCanceled() throws ProjectBuildException {
     if (getCancelStatus().isCanceled()) {
-      throw new ProjectBuildException(CANCELED_MESSAGE);
+      throw new StopBuildException(CANCELED_MESSAGE);
     }
   }
 

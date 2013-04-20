@@ -16,6 +16,7 @@
 package org.jetbrains.jps.incremental.messages;
 
 import com.intellij.openapi.util.text.StringUtil;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -36,7 +37,7 @@ public class CompilerMessage extends BuildMessage {
   private final long myLine;
   private final long myColumn;
 
-  public CompilerMessage(String compilerName, Throwable internalError) {
+  public CompilerMessage(String compilerName, @NotNull Throwable internalError) {
     this(compilerName, Kind.ERROR, getTextFromThrowable(internalError), null, -1L, -1L, -1L, -1L, -1L);
   }
 
