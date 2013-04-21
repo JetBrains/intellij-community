@@ -111,7 +111,13 @@ public class HtmlDocumentationProvider implements DocumentationProvider {
       isTag = !(element.getParent() instanceof XmlAttribute);
     } else {
       nameElement = element;
-      isTag = context != null && element.getText().startsWith(context.getName());
+      if (context == null) {
+        isTag = false;
+      }
+      else {
+        String text = element.getText();
+        isTag = text != null && text.startsWith(context.getName());
+      }
     }
 
     if (nameElement!=null) {
