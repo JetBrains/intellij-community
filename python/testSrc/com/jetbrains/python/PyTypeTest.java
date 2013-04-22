@@ -340,6 +340,15 @@ public class PyTypeTest extends PyTestCase {
     assertNull(actual);
   }
 
+  // PY-9590
+  public void testYieldParensType() {
+    PyExpression expr = parseExpr("def f():\n" +
+                                  "    expr = (yield 2)\n");
+    TypeEvalContext context = TypeEvalContext.slow().withTracing();
+    PyType actual = context.getType(expr);
+    assertNull(actual);
+  }
+
   // PY-6702
   public void testYieldFromType() {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON33);
