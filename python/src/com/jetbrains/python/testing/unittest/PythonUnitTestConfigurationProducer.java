@@ -4,16 +4,12 @@
  */
 package com.jetbrains.python.testing.unittest;
 
-import com.google.common.collect.Lists;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.jetbrains.python.psi.PyClass;
-import com.jetbrains.python.psi.PyElement;
-import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.*;
 import com.jetbrains.python.testing.*;
 import org.jetbrains.annotations.Nullable;
 
@@ -28,17 +24,24 @@ public class PythonUnitTestConfigurationProducer extends PythonTestConfiguration
     PsiElement element = location.getPsiElement();
     if ((TestRunnerService.getInstance(element.getProject()).getProjectConfiguration().equals(
       PythonTestConfigurationsModel.PYTHONS_UNITTEST_NAME))) {
-
       if (element instanceof PsiDirectory) {
-        List<PyElement> result = Lists.newArrayList();
-        for (PsiFile f : ((PsiDirectory)element).getFiles()) {
-          result.addAll(PythonUnitTestUtil.getTestCaseClassesFromFile(f));
-        }
-        if (!result.isEmpty()) return true;
+        final PyTestVisitor visitor = new PyTestVisitor();
+        element.accept(visitor);
+        return visitor.hasTests;
       }
       else return true;
     }
     return false;
+  }
+
+  private static class PyTestVisitor extends PyRecursiveElementVisitor {
+    boolean hasTests = false;
+
+    @Override
+    public void visitPyFile(PyFile node) {
+      List<PyStatement> testClasses = PythonUnitTestUtil.getTestCaseClassesFromFile(node);
+      if (!testClasses.isEmpty()) hasTests = true;
+    }
   }
 
   @Nullable
