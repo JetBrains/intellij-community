@@ -135,7 +135,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       final PsiElement parent = getParent();
       if (parent instanceof PyAssignmentStatement) {
         final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)parent;
-        final PyExpression assignedValue = assignmentStatement.getAssignedValue();
+        PyExpression assignedValue = assignmentStatement.getAssignedValue();
+        if (assignedValue instanceof PyParenthesizedExpression) {
+          assignedValue = ((PyParenthesizedExpression)assignedValue).getContainedExpression();
+        }
         if (assignedValue != null) {
           if (assignedValue instanceof PyReferenceExpressionImpl) {
             final PyReferenceExpressionImpl refex = (PyReferenceExpressionImpl)assignedValue;
