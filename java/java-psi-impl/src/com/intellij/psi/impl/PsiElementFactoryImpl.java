@@ -580,7 +580,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create variable with type \"null\".");
     }
 
-    final String text = "X " + (initializer != null ? " = x" : "") + " = x";
+    final String text = "X " + name + (initializer != null ? " = x" : "") + ";";
 
     final PsiDeclarationStatement statement = (PsiDeclarationStatement)createStatementFromText(text, null);
     final PsiVariable variable = (PsiVariable)statement.getDeclaredElements()[0];
