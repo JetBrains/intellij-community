@@ -15,7 +15,6 @@
  */
 package org.jetbrains.plugins.javaFX.packaging;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.compiler.CompileContext;
 import com.intellij.openapi.compiler.CompilerMessageCategory;
@@ -371,15 +370,10 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     }
 
     @Override
-    protected String prepareParam(String param) {
-      return GeneralCommandLine.prepareCommand(param);
-    }
-    
-    @Override
     protected String getHtmlParamFile() {
       return myProperties.getHtmlParamFile();
     }
-    
+
     @Override
     protected String getParamFile() {
       return myProperties.getParamFile();

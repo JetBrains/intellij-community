@@ -154,7 +154,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     if (preloaderJar != null) {
       packager.setPreloaderJar(preloaderJar);
     }
-    
+
     final List<JavaFxAntGenerator.SimpleTag> temp = JavaFxAntGenerator
       .createJarAndDeployTasks(packager, artifactFileName, artifactName, "temp");
     final StringBuilder buf = new StringBuilder();
@@ -163,7 +163,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     }
     assertEquals(expected
                    .replaceAll("temp/deploy", "temp\\" + File.separator + "deploy")
-                   .replaceAll("temp/" + artifactFileName, "temp\\" + File.separator + artifactFileName), 
+                   .replaceAll("temp/" + artifactFileName, "temp\\" + File.separator + artifactFileName),
                  buf.toString());
   }
 
@@ -273,11 +273,6 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
 
     @Override
     protected void registerJavaFxPackagerError(String message) {
-    }
-
-    @Override
-    protected String prepareParam(String param) {
-      return param;
     }
 
     @Override

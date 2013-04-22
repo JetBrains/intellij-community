@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.packaging;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
@@ -23,7 +24,10 @@ import com.intellij.util.Base64Converter;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.io.ZipUtil;
 
-import java.io.*;
+import java.io.File;
+import java.io.FileOutputStream;
+import java.io.IOException;
+import java.io.OutputStream;
 import java.nio.charset.Charset;
 import java.util.ArrayList;
 import java.util.List;
@@ -97,7 +101,7 @@ public abstract class AbstractJavaFxPackager {
       buf.append("<target name=\"build artifact\" xmlns:fx=\"javafx:com.sun.javafx.tools.ant\">");
       final String artifactFileName = getArtifactRootName();
       final String artifactName = FileUtil.getNameWithoutExtension(artifactFileName);
-      final List<JavaFxAntGenerator.SimpleTag> tags = 
+      final List<JavaFxAntGenerator.SimpleTag> tags =
         JavaFxAntGenerator.createJarAndDeployTasks(this, artifactFileName, artifactName, tempUnzippedArtifactOutput.getPath());
       for (JavaFxAntGenerator.SimpleTag tag : tags) {
         tag.generate(buf);
@@ -228,16 +232,15 @@ public abstract class AbstractJavaFxPackager {
     registerJavaFxPackagerError(ex.getMessage());
   }
 
-  protected abstract String prepareParam(String param);
-  private void addParameter(List<String> commandLine, String param) {
+  private static void addParameter(List<String> commandLine, String param) {
     if (!StringUtil.isEmptyOrSpaces(param)) {
-      commandLine.add(prepareParam(param));
+      commandLine.add(param);
     }
   }
 
   private int startProcess(List<String> commands) {
     try {
-      final Process process = new ProcessBuilder(commands).start();
+      final Process process = new ProcessBuilder(CommandLineUtil.toCommandLine(commands)).start();
       final String message = new String(FileUtil.loadBytes(process.getErrorStream()));
       if (!StringUtil.isEmptyOrSpaces(message)) {
         registerJavaFxPackagerError(message);
@@ -262,9 +265,9 @@ public abstract class AbstractJavaFxPackager {
     commands.add("-Dant.home=" + antHome);
 
     commands.add("-classpath");
-    commands.add(antHome + "/lib/ant.jar" + File.pathSeparator + 
+    commands.add(antHome + "/lib/ant.jar" + File.pathSeparator +
                  antHome + "/lib/ant-launcher.jar" + File.pathSeparator +
-                 javaHome + "/lib/ant-javafx.jar" + File.pathSeparator + 
+                 javaHome + "/lib/ant-javafx.jar" + File.pathSeparator +
                  javaHome + "/jre/lib/jfxrt.jar");
     commands.add("org.apache.tools.ant.launch.Launcher");
     commands.add("-f");
