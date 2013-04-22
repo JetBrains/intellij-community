@@ -12,7 +12,6 @@
     <orderEntry type="module" module-name="jps-model-api" />
     <orderEntry type="module" module-name="jps-model-serialization" />
     <orderEntry type="module" module-name="jps-model-impl" scope="TEST" />
-    <orderEntry type="module" module-name="javaee-jps-plugin" />
     <orderEntry type="module" module-name="appEngine-runtime" />
   </component>
 </module>
