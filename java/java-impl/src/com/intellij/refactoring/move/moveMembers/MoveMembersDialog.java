@@ -32,6 +32,7 @@ import com.intellij.openapi.util.Ref;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.HelpID;
 import com.intellij.refactoring.JavaRefactoringSettings;
 import com.intellij.refactoring.RefactoringBundle;
@@ -411,7 +412,7 @@ public class MoveMembersDialog extends RefactoringDialog implements MoveMembersO
     }
 
     public boolean isMemberEnabled(MemberInfo member) {
-      if(myTargetClass != null && myTargetClass.isInterface()) {
+      if(myTargetClass != null && myTargetClass.isInterface() && !PsiUtil.isLanguageLevel8OrHigher(myTargetClass)) {
         return !(member.getMember() instanceof PsiMethod);
       }
       return super.isMemberEnabled(member);
