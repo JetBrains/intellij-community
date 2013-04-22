@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,6 +17,7 @@ package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 
 import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -28,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -47,8 +49,8 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
                                      @NotNull ResolveState state) {
     if (!(qualifierType instanceof PsiClassType)) return;
     if (isInAnnotation(place)) return;
-    final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)qualifierType).resolveGenerics();
-    final PsiClass aClass = resolveResult.getElement();
+
+    final PsiClass aClass = getClass((PsiClassType)qualifierType);
     if (aClass == null) return;
 
     final PsiModifierList modifierList = aClass.getModifierList();
@@ -77,6 +79,21 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
     }
   }
 
+  @Nullable
+  private static PsiClass getClass(@NotNull PsiClassType qualifierType) {
+    final PsiClassType.ClassResolveResult resolveResult = qualifierType.resolveGenerics();
+
+    final PsiClass aClass = resolveResult.getElement();
+    if (aClass instanceof ClsClassImpl) {
+      final PsiElement source = aClass.getNavigationElement();
+      if (source instanceof GrTypeDefinition) {
+        return (PsiClass)source;
+      }
+    }
+
+    return aClass;
+  }
+
   public static String getOriginInfoForCategory(PsiMethod element) {
     PsiClass aClass = element.getContainingClass();
     if (aClass != null && aClass.getName() != null) {
@@ -91,7 +108,7 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
 
   private static List<PsiAnnotation> getAllMixins(PsiModifierList modifierList) {
     final ArrayList<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
-    for (PsiAnnotation annotation : modifierList.getApplicableAnnotations()) {
+    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
       if (GroovyCommonClassNames.GROOVY_LANG_MIXIN.equals(annotation.getQualifiedName())) {
         result.add(annotation);
       }

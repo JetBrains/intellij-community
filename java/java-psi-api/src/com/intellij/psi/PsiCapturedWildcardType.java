@@ -93,7 +93,15 @@ public class PsiCapturedWildcardType extends PsiType {
   }
 
   public PsiType getUpperBound () {
-    return myExistential.isExtends() ? myExistential.getBound() : PsiType.getJavaLangObject(myContext.getManager(), getResolveScope());
+    final PsiType bound = myExistential.getBound();
+    if (myExistential.isExtends()) {
+      return bound;
+    }
+    else {
+      return bound instanceof PsiCapturedWildcardType
+             ? ((PsiCapturedWildcardType)bound).getUpperBound()
+             : PsiType.getJavaLangObject(myContext.getManager(), getResolveScope());
+    }
   }
 
   public PsiWildcardType getWildcard() {
