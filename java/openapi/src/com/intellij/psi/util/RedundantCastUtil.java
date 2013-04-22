@@ -241,7 +241,9 @@ public class RedundantCastUtil {
         PsiManager manager = methodExpr.getManager();
         PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
-        PsiMethodCallExpression newCall = (PsiMethodCallExpression)factory.createExpressionFromText(methodCall.getText(), methodCall);
+        final PsiExpression expressionFromText = factory.createExpressionFromText(methodCall.getText(), methodCall);
+        if (!(expressionFromText instanceof PsiMethodCallExpression)) return;
+        PsiMethodCallExpression newCall = (PsiMethodCallExpression)expressionFromText;
         PsiExpression newQualifier = newCall.getMethodExpression().getQualifierExpression();
         PsiExpression newOperand = ((PsiTypeCastExpression)((PsiParenthesizedExpression)newQualifier).getExpression()).getOperand();
         newQualifier.replace(newOperand);
