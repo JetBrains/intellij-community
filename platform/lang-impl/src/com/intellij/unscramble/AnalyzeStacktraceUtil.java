@@ -102,6 +102,7 @@ public class AnalyzeStacktraceUtil {
                                   : new MyConsolePanel(consoleView, toolbarActions);
     final RunContentDescriptor descriptor =
       new RunContentDescriptor(consoleView, null, consoleComponent, tabTitle, icon) {
+      @Override
       public boolean isContentReuseProhibited() {
         return true;
       }
@@ -157,6 +158,7 @@ public class AnalyzeStacktraceUtil {
       add(myEditor.getComponent());
     }
 
+    @Override
     public Object getData(String dataId) {
       if (PlatformDataKeys.EDITOR.is(dataId)) {
         return myEditor;
@@ -170,8 +172,10 @@ public class AnalyzeStacktraceUtil {
 
     public final void setText(@NotNull final String text) {
       Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               final Document document = myEditor.getDocument();
               document.replaceString(0, document.getTextLength(), StringUtil.convertLineSeparators(text));
@@ -190,6 +194,7 @@ public class AnalyzeStacktraceUtil {
 
     }
 
+    @Override
     public void dispose() {
       EditorFactory.getInstance().releaseEditor(myEditor);
     }

@@ -33,10 +33,12 @@ public class CreateAction extends BaseRunConfigurationAction {
     super(ExecutionBundle.message("create.run.configuration.action.name"), null, null);
   }
 
+  @Override
   protected void perform(final ConfigurationContext context) {
     choosePolicy(context).perform(context);
   }
 
+  @Override
   protected void updatePresentation(final Presentation presentation, final String actionText, final ConfigurationContext context) {
     choosePolicy(context).update(presentation, context, actionText);
   }
@@ -96,12 +98,14 @@ public class CreateAction extends BaseRunConfigurationAction {
       super(ActionType.SELECT);
     }
 
+    @Override
     public void perform(final ConfigurationContext context) {
       final RunnerAndConfigurationSettings configuration = context.findExisting();
       if (configuration == null) return;
       ((RunManagerEx)context.getRunManager()).setActiveConfiguration(configuration);
     }
 
+    @Override
     protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
       final RunnerAndConfigurationSettings configuration = context.findExisting();
       if (configuration != null) {
@@ -117,6 +121,7 @@ public class CreateAction extends BaseRunConfigurationAction {
       super(ActionType.CREATE);
     }
 
+    @Override
     public void perform(final ConfigurationContext context) {
       final RunManagerImpl runManager = (RunManagerImpl)context.getRunManager();
       final RunnerAndConfigurationSettings configuration = context.getConfiguration();
@@ -131,11 +136,13 @@ public class CreateAction extends BaseRunConfigurationAction {
   }
 
   private static class CreateAndEditPolicy extends CreatePolicy {
+    @Override
     protected void updateText(final Presentation presentation, final String actionText) {
       presentation.setText(actionText.length() > 0 ? ExecutionBundle.message("create.run.configuration.for.item.action.name", actionText) + "..."
                                                    : ExecutionBundle.message("create.run.configuration.action.name"), false);
     }
 
+    @Override
     public void perform(final ConfigurationContext context) {
       final RunnerAndConfigurationSettings configuration = context.getConfiguration();
       if (RunDialog.editConfiguration(context.getProject(), configuration, ExecutionBundle.message("create.run.configuration.for.item.dialog.title", configuration.getName()))) {
@@ -153,11 +160,13 @@ public class CreateAction extends BaseRunConfigurationAction {
       super(ActionType.SAVE);
     }
 
+    @Override
     public void perform(final ConfigurationContext context) {
       RunnerAndConfigurationSettings settings = context.findExisting();
       if (settings != null) context.getRunManager().makeStable(settings.getConfiguration());
     }
 
+    @Override
     protected void updateIcon(final Presentation presentation, final ConfigurationContext context) {
       final RunnerAndConfigurationSettings configuration = context.findExisting();
       if (configuration != null) {
@@ -172,8 +181,10 @@ public class CreateAction extends BaseRunConfigurationAction {
   private static final BaseCreatePolicy SELECT = new SelectPolicy();
   private static final BaseCreatePolicy SAVE = new SavePolicy();
   private static final BaseCreatePolicy SELECTED_STABLE = new BaseCreatePolicy(BaseCreatePolicy.ActionType.SELECT) {
+    @Override
     public void perform(final ConfigurationContext context) {}
 
+    @Override
     public void update(final Presentation presentation, final ConfigurationContext context, final String actionText) {
       super.update(presentation, context, actionText);
       presentation.setVisible(false);

@@ -43,6 +43,7 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
     super(project, value, builder);
   }
 
+  @Override
   @NotNull
   public Collection<AbstractTreeNode> getChildren() {
     ArrayList<AbstractTreeNode> children = new ArrayList<AbstractTreeNode>();
@@ -93,16 +94,19 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
 
   }
 
+  @Override
   public void update(PresentationData presentation) {
     int todoItemCount = getTodoItemCount(getValue());
     int fileCount = getFileCount(getValue());
     presentation.setPresentableText(IdeBundle.message("node.todo.summary", todoItemCount, fileCount));
   }
 
+  @Override
   public String getTestPresentation() {
     return "Summary";
   }
 
+  @Override
   public int getFileCount(ToDoSummary summary) {
     int count = 0;
     for (Iterator i = myBuilder.getAllFiles(); i.hasNext();) {
@@ -117,11 +121,13 @@ public class SummaryNode extends BaseToDoNode<ToDoSummary> {
     return count;
   }
 
+  @Override
   public int getTodoItemCount(final ToDoSummary val) {
     int count = 0;
     for(final Iterator<PsiFile> i=myBuilder.getAllFiles();i.hasNext();){
         count+= ApplicationManager.getApplication().runReadAction(
             new Computable<Integer>() {
+              @Override
               public Integer compute() {
                 return getTreeStructure().getTodoItemCount(i.next());
               }

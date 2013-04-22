@@ -98,6 +98,7 @@ public class InspectionToolRegistrar {
       for (InspectionToolsFactory factory : Extensions.getExtensions(InspectionToolsFactory.EXTENSION_POINT_NAME)) {
         for (final InspectionProfileEntry profileEntry : factory.createTools()) {
           myInspectionToolFactories.add(new Factory<InspectionToolWrapper>() {
+            @Override
             public InspectionToolWrapper create() {
               return wrapTool(profileEntry);
             }
@@ -107,83 +108,43 @@ public class InspectionToolRegistrar {
     }
   }
 
-  public static InspectionToolWrapper wrapTool(InspectionProfileEntry profileEntry) {
+  public static InspectionToolWrapper wrapTool(@NotNull InspectionProfileEntry profileEntry) {
     if (profileEntry instanceof InspectionToolWrapper) {
       return (InspectionToolWrapper)profileEntry;
     }
-    else if (profileEntry instanceof LocalInspectionTool) {
+    if (profileEntry instanceof LocalInspectionTool) {
       return new LocalInspectionToolWrapper((LocalInspectionTool)profileEntry);
     }
-    else if (profileEntry instanceof GlobalInspectionTool) {
+    if (profileEntry instanceof GlobalInspectionTool) {
       return new GlobalInspectionToolWrapper((GlobalInspectionTool)profileEntry);
     }
     return new CommonInspectionToolWrapper((InspectionTool)profileEntry);
   }
 
-  public void registerTools(final InspectionToolProvider[] providers) {
+  public void registerTools(@NotNull InspectionToolProvider[] providers) {
     for (InspectionToolProvider provider : providers) {
-//      System.out.println("***** " + provider.getClass().getName());
       Class[] classes = provider.getInspectionClasses();
       for (Class aClass : classes) {
-        Factory<InspectionToolWrapper> factory = registerInspectionTool(aClass, true);
-//        printExtension(aClass, factory.create());
+        registerInspectionTool(aClass, true);
       }
     }
   }
 
-  //private static void printExtension(Class aClass, InspectionTool tool) {
-  //  StringBuilder builder = new StringBuilder(tool instanceof GlobalInspectionToolWrapper ? "<globalInspection" : "<localInspection");
-  //  if (tool instanceof LocalInspectionToolWrapper) {
-  //    String id = ((LocalInspectionToolWrapper)tool).getID();
-  //    if (!id.equals(tool.getShortName())) {
-  //      builder.append(" suppressId=\"").append(id).append('"');
-  //    }
-  //    String alternativeID = ((LocalInspectionToolWrapper)tool).getAlternativeID();
-  //    if (alternativeID != null) {
-  //      builder.append(" alternativeId=\"").append(alternativeID).append('"');
-  //    }
-  //  }
-  //  builder.append(" shortName=\"").append(tool.getShortName()).append('"');
-  //
-  //  CommonBundle.lastKey = null;
-  //  String displayName = tool.getDisplayName();
-  //  String lastBundle = CommonBundle.lastBundle;
-  //  if (CommonBundle.lastKey != null) {
-  //    builder.append(" bundle=\"").append(lastBundle).append("\" key=\"").append(CommonBundle.lastKey).append('"');
-  //  }
-  //  else {
-  //    builder.append(" displayName=\"").append(displayName).append('"');
-  //  }
-  //  CommonBundle.lastKey = null;
-  //  String groupName = tool.getGroupDisplayName();
-  //  if (CommonBundle.lastKey != null) {
-  //    if (lastBundle == null || !lastBundle.equals(CommonBundle.lastBundle) ) {
-  //      builder.append(" groupBundle=\"").append(CommonBundle.lastBundle).append('"');
-  //    }
-  //    builder.append(" groupKey=\"").append(CommonBundle.lastKey).append('"');
-  //  }
-  //  else {
-  //    builder.append(" groupName=\"").append(groupName).append('"');
-  //  }
-  //  builder.append(" enabledByDefault=\"" + tool.isEnabledByDefault() + "\" ");
-  //  builder.append(" level=\"").append(tool.getDefaultLevel()).append('"');
-  //  builder.append(" implementationClass=\"" + aClass.getName() + "\"/>");
-  //  System.out.println(builder);
-  //}
-
-  private Factory<InspectionToolWrapper> registerInspectionTool(final Class aClass, boolean store) {
+  @NotNull
+  private Factory<InspectionToolWrapper> registerInspectionTool(@NotNull final Class aClass, boolean store) {
     if (LocalInspectionTool.class.isAssignableFrom(aClass)) {
       return registerLocalInspection(aClass, store);
-    } else if (GlobalInspectionTool.class.isAssignableFrom(aClass)){
-      return registerGlobalInspection(aClass, store);
-    } else {
-      ensureInitialized();
-      return registerInspectionToolFactory(new Factory<InspectionToolWrapper>() {
-        public InspectionToolWrapper create() {
-          return new CommonInspectionToolWrapper((InspectionTool)instantiateTool(aClass));
-        }
-      }, store);
     }
+    if (GlobalInspectionTool.class.isAssignableFrom(aClass)) {
+      return registerGlobalInspection(aClass, store);
+    }
+    ensureInitialized();
+    return registerInspectionToolFactory(new Factory<InspectionToolWrapper>() {
+      @Override
+      public InspectionToolWrapper create() {
+        return new CommonInspectionToolWrapper((InspectionTool)instantiateTool(aClass));
+      }
+    }, store);
   }
 
   public static InspectionToolRegistrar getInstance() {
@@ -193,29 +154,35 @@ public class InspectionToolRegistrar {
   /**
    * make sure that it is not too late
    */
-  public Factory<InspectionToolWrapper> registerInspectionToolFactory(Factory<InspectionToolWrapper> factory, boolean store) {
+  @NotNull
+  public Factory<InspectionToolWrapper> registerInspectionToolFactory(@NotNull Factory<InspectionToolWrapper> factory, boolean store) {
     if (store) {
       myInspectionToolFactories.add(factory);
     }
     return factory;
   }
 
+  @NotNull
   private Factory<InspectionToolWrapper> registerLocalInspection(final Class toolClass, boolean store) {
     return registerInspectionToolFactory(new Factory<InspectionToolWrapper>() {
+      @Override
       public InspectionToolWrapper create() {
         return new LocalInspectionToolWrapper((LocalInspectionTool)instantiateTool(toolClass));
       }
     }, store);
   }
 
-  private Factory<InspectionToolWrapper> registerGlobalInspection(final Class aClass, boolean store) {
+  @NotNull
+  private Factory<InspectionToolWrapper> registerGlobalInspection(@NotNull final Class aClass, boolean store) {
     return registerInspectionToolFactory(new Factory<InspectionToolWrapper>() {
+      @Override
       public InspectionToolWrapper create() {
         return new GlobalInspectionToolWrapper((GlobalInspectionTool) instantiateTool(aClass));
       }
     }, store);
   }
 
+  @NotNull
   public List<InspectionToolWrapper> createTools() {
     ensureInitialized();
 
@@ -236,22 +203,28 @@ public class InspectionToolRegistrar {
     return tools;
   }
 
-  static Object instantiateTool(Class<?> toolClass) {
+  static Object instantiateTool(@NotNull Class<?> toolClass) {
     try {
       Constructor<?> constructor = toolClass.getDeclaredConstructor(ArrayUtil.EMPTY_CLASS_ARRAY);
       constructor.setAccessible(true);
       return constructor.newInstance(ArrayUtil.EMPTY_OBJECT_ARRAY);
-    } catch (SecurityException e) {
+    }
+    catch (SecurityException e) {
       LOG.error(e);
-    } catch (NoSuchMethodException e) {
+    }
+    catch (NoSuchMethodException e) {
       LOG.error(e);
-    } catch (InstantiationException e) {
+    }
+    catch (InstantiationException e) {
       LOG.error(e);
-    } catch (IllegalAccessException e) {
+    }
+    catch (IllegalAccessException e) {
       LOG.error(e);
-    } catch (IllegalArgumentException e) {
+    }
+    catch (IllegalArgumentException e) {
       LOG.error(e);
-    } catch (InvocationTargetException e) {
+    }
+    catch (InvocationTargetException e) {
       LOG.error(e);
     }
 
@@ -264,6 +237,7 @@ public class InspectionToolRegistrar {
       if (app.isUnitTestMode() || app.isHeadlessEnvironment()) return;
 
       app.executeOnPooledThread(new Runnable(){
+        @Override
         public void run() {
           List<InspectionToolWrapper> tools = createTools();
           for (InspectionTool tool : tools) {
@@ -280,7 +254,7 @@ public class InspectionToolRegistrar {
     }
   }
 
-  private void processText(@NotNull @NonNls final String descriptionText, final InspectionTool tool) {
+  private void processText(@NotNull @NonNls String descriptionText, @NotNull InspectionTool tool) {
     if (ApplicationManager.getApplication().isDisposed()) return;
     LOG.assertTrue(myOptionsRegistrar != null);
     final Set<String> words = myOptionsRegistrar.getProcessedWordsWithoutStemming(descriptionText);
@@ -309,8 +283,9 @@ public class InspectionToolRegistrar {
     return true;
   }
 
-  private static void showNotification(final String message) {
+  private static void showNotification(@NotNull final String message) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         Notifications.Bus.notify(new Notification(InspectionManager.INSPECTION_GROUP_ID, InspectionsBundle.message("inspection.disabled.title"),
                                                   message, NotificationType.ERROR));

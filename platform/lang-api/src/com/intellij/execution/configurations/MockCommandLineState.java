@@ -30,6 +30,7 @@ public class MockCommandLineState extends CommandLineState {
     super(env);
   }
 
+  @Override
   protected OSProcessHandler startProcess() throws ExecutionException {
     return null;
   }

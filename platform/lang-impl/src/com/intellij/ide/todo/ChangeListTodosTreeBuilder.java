@@ -30,6 +30,7 @@ public class ChangeListTodosTreeBuilder extends TodoTreeBuilder{
     super(tree,treeModel,project);
   }
 
+  @Override
   @NotNull
   protected TodoTreeStructure createTreeStructure(){
     return new ChangeListTodosTreeStructure(myProject);

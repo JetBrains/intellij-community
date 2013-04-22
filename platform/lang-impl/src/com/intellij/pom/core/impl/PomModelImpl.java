@@ -61,11 +61,13 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     myProject = project;
   }
 
+  @Override
   public <T extends PomModelAspect> T getModelAspect(Class<T> aClass) {
     //noinspection unchecked
     return (T)myAspects.get(aClass);
   }
 
+  @Override
   public void registerAspect(Class<? extends PomModelAspect> aClass, PomModelAspect aspect, Set<PomModelAspect> dependencies) {
     myAspects.put(aClass, aspect);
     final Iterator<PomModelAspect> iterator = dependencies.iterator();
@@ -99,25 +101,30 @@ public class PomModelImpl extends UserDataHolderBase implements PomModel {
     return pomModelAspects != null ? pomModelAspects : Collections.<PomModelAspect>emptyList();
   }
 
+  @Override
   public void addModelListener(PomModelListener listener) {
     myListeners.add(listener);
   }
 
+  @Override
   public void addModelListener(final PomModelListener listener, Disposable parentDisposable) {
     addModelListener(listener);
     Disposer.register(parentDisposable, new Disposable() {
+      @Override
       public void dispose() {
         removeModelListener(listener);
       }
     });
   }
 
+  @Override
   public void removeModelListener(PomModelListener listener) {
     myListeners.remove(listener);
   }
 
   private final Stack<Pair<PomModelAspect, PomTransaction>> myBlockedAspects = new Stack<Pair<PomModelAspect, PomTransaction>>();
 
+  @Override
   public void runTransaction(PomTransaction transaction) throws IncorrectOperationException{
     List<Throwable> throwables = new ArrayList<Throwable>(0);
     synchronized(PsiLock.LOCK){

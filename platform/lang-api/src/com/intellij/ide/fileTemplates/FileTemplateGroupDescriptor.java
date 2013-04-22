@@ -46,6 +46,7 @@ public class FileTemplateGroupDescriptor extends FileTemplateDescriptor {
     return myTemplates.toArray(new FileTemplateDescriptor[myTemplates.size()]);
   }
 
+  @Override
   public String getDisplayName() {
     return getTitle();
   }

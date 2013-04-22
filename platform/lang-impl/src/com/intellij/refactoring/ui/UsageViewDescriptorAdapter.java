@@ -25,10 +25,12 @@ import com.intellij.usageView.UsageViewDescriptor;
  */
 public abstract class UsageViewDescriptorAdapter implements UsageViewDescriptor {
 
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return null;
   }

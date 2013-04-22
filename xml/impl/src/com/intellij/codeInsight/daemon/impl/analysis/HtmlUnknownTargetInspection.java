@@ -15,13 +15,14 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
+import com.intellij.psi.PsiReference;
+import com.intellij.xml.util.AnchorReference;
 import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Eugene.Kudelevsky
  */
 public class HtmlUnknownTargetInspection extends XmlPathReferenceInspection {
-
   @NotNull
   @Override
   public String getShortName() {
@@ -31,5 +32,10 @@ public class HtmlUnknownTargetInspection extends XmlPathReferenceInspection {
   @Override
   protected boolean isForHtml() {
     return true;
+  }
+
+  @Override
+  protected boolean needToCheckRef(PsiReference reference) {
+    return !(reference instanceof AnchorReference);
   }
 }

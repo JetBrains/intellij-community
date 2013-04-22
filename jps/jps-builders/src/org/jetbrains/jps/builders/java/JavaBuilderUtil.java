@@ -273,14 +273,14 @@ public class JavaBuilderUtil {
     JpsSdkReference<JpsDummyElement> reference = module.getSdkReference(JpsJavaSdkType.INSTANCE);
     if (reference == null) {
       context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR, "JDK isn't specified for module '" + module.getName() + "'"));
-      throw new ProjectBuildException();
+      throw new StopBuildException();
     }
 
     JpsTypedLibrary<JpsSdk<JpsDummyElement>> sdkLibrary = reference.resolve();
     if (sdkLibrary == null) {
       context.processMessage(new CompilerMessage(compilerName, BuildMessage.Kind.ERROR,
                                                  "Cannot find JDK '" + reference.getSdkName() + "' for module '" + module.getName() + "'"));
-      throw new ProjectBuildException();
+      throw new StopBuildException();
     }
     return sdkLibrary.getProperties();
   }
@@ -288,12 +288,14 @@ public class JavaBuilderUtil {
   private static class ModulesBasedFileFilter implements Mappings.DependentFilesFilter {
     private final CompileContext myContext;
     private final Set<JpsModule> myChunkModules;
+    private final Set<ModuleBuildTarget> myChunkTargets;
     private final Map<JpsModule, Set<JpsModule>> myCache = new HashMap<JpsModule, Set<JpsModule>>();
     private final BuildRootIndex myBuildRootIndex;
 
     private ModulesBasedFileFilter(CompileContext context, ModuleChunk chunk) {
       myContext = context;
       myChunkModules = chunk.getModules();
+      myChunkTargets = chunk.getTargets();
       myBuildRootIndex = context.getProjectDescriptor().getBuildRootIndex();
     }
 
@@ -316,9 +318,9 @@ public class JavaBuilderUtil {
     }
 
     @Override
-    public boolean belongsToCurrentChunk(File file) {
+    public boolean belongsToCurrentTargetChunk(File file) {
       final JavaSourceRootDescriptor rd = myBuildRootIndex.findJavaRootDescriptor(myContext, file);
-      return rd != null && myChunkModules.contains(rd.target.getModule());
+      return rd != null && myChunkTargets.contains(rd.target);
     }
   }
 }

@@ -49,6 +49,7 @@ public class GotoCustomRegionAction extends AnAction implements DumbAware {
       processor.executeCommand(
         project,
         new Runnable() {
+          @Override
           public void run() {
             GotoCustomRegionDialog dialog = new GotoCustomRegionDialog(project, editor);
             dialog.show();

@@ -34,11 +34,13 @@ import java.util.List;
 public class MockFileManager implements FileManager {
   private final PsiManagerEx myManager;
   private final FactoryMap<VirtualFile,FileViewProvider> myViewProviders = new FactoryMap<VirtualFile, FileViewProvider>() {
+    @Override
     protected FileViewProvider create(final VirtualFile key) {
       return new SingleRootFileViewProvider(myManager, key);
     }
   };
 
+  @Override
   @NotNull
   public FileViewProvider createFileViewProvider(@NotNull final VirtualFile file, final boolean physical) {
     return new SingleRootFileViewProvider(myManager, file, physical);
@@ -48,47 +50,57 @@ public class MockFileManager implements FileManager {
     myManager = manager;
   }
 
+  @Override
   public void dispose() {
     throw new UnsupportedOperationException("Method dispose is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   @Nullable
   public PsiFile findFile(@NotNull VirtualFile vFile) {
     return getCachedPsiFile(vFile);
   }
 
+  @Override
   @Nullable
   public PsiDirectory findDirectory(@NotNull VirtualFile vFile) {
     throw new UnsupportedOperationException("Method findDirectory is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public void reloadFromDisk(@NotNull PsiFile file) //Q: move to PsiFile(Impl)?
   {
     throw new UnsupportedOperationException("Method reloadFromDisk is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   @Nullable
   public PsiFile getCachedPsiFile(@NotNull VirtualFile vFile) {
     final FileViewProvider provider = findCachedViewProvider(vFile);
     return provider.getPsi(provider.getBaseLanguage());
   }
 
+  @Override
   public void cleanupForNextTest() {
     myViewProviders.clear();
   }
 
+  @Override
   public FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     throw new UnsupportedOperationException("Method findViewProvider is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   public FileViewProvider findCachedViewProvider(@NotNull VirtualFile file) {
     return myViewProviders.get(file);
   }
 
+  @Override
   public void setViewProvider(@NotNull VirtualFile virtualFile, FileViewProvider fileViewProvider) {
     myViewProviders.put(virtualFile, fileViewProvider);
   }
 
+  @Override
   @NotNull
   public List<PsiFile> getAllCachedFiles() {
     throw new UnsupportedOperationException("Method getAllCachedFiles is not yet implemented in " + getClass().getName());

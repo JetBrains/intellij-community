@@ -125,10 +125,10 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
                                                 final ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (processor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(final RefMethod refMethod) {
+            @Override public void visitMethod(@NotNull final RefMethod refMethod) {
               globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
                 public boolean process(PsiMethod derivedMethod) {
                   processor.ignoreElement(refMethod);
@@ -163,7 +163,7 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
     QuickFix fix = myQuickFixes.get(hint);
     if (fix == null) {
       fix = new MyQuickFix(processor, hint);
-      if (hint != null) { 
+      if (hint != null) {
         myQuickFixes.put(hint, fix);
       }
     }

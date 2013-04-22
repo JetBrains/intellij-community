@@ -44,10 +44,16 @@ public class StringTableDirectory {
   }
 
   public void setString(int id, String value) {
+    boolean found = false;
     for (Entry entry : myEntries) {
-      if (entry.startID == (id / 16)-1) {
+      if (entry.startID == (id / 16)+1) {
         entry.table.setString(id % 16, value);
+        found = true;
+        break;
       }
+    }
+    if (!found) {
+      throw new IllegalArgumentException("Cannot find string entry with ID " + id);
     }
   }
 

@@ -72,11 +72,12 @@ public class NavBarPresentation {
     try {
       if (object instanceof PsiElement) {
         Icon icon = ApplicationManager.getApplication().runReadAction(new Computable<Icon>() {
+          @Override
           public Icon compute() {
             return ((PsiElement)object).isValid() ? ((PsiElement)object).getIcon(0) : null;
           }
         });
-        
+
         if (icon != null && (icon.getIconHeight() > 16 || icon.getIconWidth() > 16)) {
           icon = IconUtil.cropIcon(icon, 16, 16);
         }
@@ -114,6 +115,7 @@ public class NavBarPresentation {
     if (!NavBarModel.isValid(object)) return SimpleTextAttributes.REGULAR_ATTRIBUTES;
     if (object instanceof PsiElement) {
       if (!ApplicationManager.getApplication().runReadAction(new Computable<Boolean>() {
+        @Override
         public Boolean compute() {
           return ((PsiElement)object).isValid();
         }
@@ -149,6 +151,7 @@ public class NavBarPresentation {
       final Project project = (Project)object;
       final Module[] modules = ApplicationManager.getApplication().runReadAction(
           new Computable<Module[]>() {
+            @Override
             public Module[] compute() {
               return  ModuleManager.getInstance(project).getModules();
             }
@@ -165,6 +168,7 @@ public class NavBarPresentation {
 
   public static boolean wolfHasProblemFilesBeneath(final PsiElement scope) {
     return WolfTheProblemSolver.getInstance(scope.getProject()).hasProblemFilesBeneath(new Condition<VirtualFile>() {
+      @Override
       public boolean value(final VirtualFile virtualFile) {
         if (scope instanceof PsiDirectory) {
           final PsiDirectory directory = (PsiDirectory)scope;

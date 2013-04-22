@@ -76,7 +76,7 @@ public abstract class AutoScrollFromSourceHandler implements Disposable {
     final MessageBusConnection connection = myProject.getMessageBus().connect(myProject);
     connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         final FileEditor editor = event.getNewEditor();
         if (editor != null && myComponent.isShowing() && isAutoScrollEnabled()) {
           myAlarm.cancelAllRequests();

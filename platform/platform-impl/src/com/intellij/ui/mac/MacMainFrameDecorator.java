@@ -45,6 +45,7 @@ import static com.intellij.ui.mac.foundation.Foundation.invoke;
  */
 public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettingsListener {
   private static final Logger LOG = Logger.getInstance("#com.intellij.ui.mac.MacMainFrameDecorator");
+  private final static boolean ORACLE_BUG_ID_8003173 = SystemInfo.isJavaVersionAtLeast("1.7");
 
   // Fullscreen listener delivers event too late,
   // so we use method swizzling here
@@ -52,26 +53,32 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
     public void callback(ID self,
                          ID nsNotification)
     {
-      myInFullScreen = true;
-      myFrame.storeFullScreenStateIfNeeded(true);
+      enterFullscreen();
       invoke(self, "oldWindowWillEnterFullScreen:", nsNotification);
     }
   };
+
+  private void enterFullscreen() {
+    myInFullScreen = true;
+    myFrame.storeFullScreenStateIfNeeded(true);
+  }
 
   private final Callback windowWillExitFullScreenCallBack = new Callback() {
     public void callback(ID self,
                          ID nsNotification)
     {
-      myInFullScreen = false;
-      myFrame.storeFullScreenStateIfNeeded(false);
-
-
-      JRootPane rootPane = myFrame.getRootPane();
-      if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
-
+      exitFullscreen();
       invoke(self, "oldWindowWillExitFullScreen:", nsNotification);
     }
   };
+
+  private void exitFullscreen() {
+    myInFullScreen = false;
+    myFrame.storeFullScreenStateIfNeeded(false);
+
+    JRootPane rootPane = myFrame.getRootPane();
+    if (rootPane != null) rootPane.putClientProperty(FULL_SCREEN, null);
+  }
 
   public static final String FULL_SCREEN = "Idea.Is.In.FullScreen.Mode.Now";
   private static boolean HAS_FULLSCREEN_UTILITIES;
@@ -153,22 +160,8 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
     final ID pool = invoke("NSAutoreleasePool", "new");
 
-    if (SystemInfo.isMac) {
-      ID awtWindow = Foundation.getObjcClass("AWTWindow");
-
-      Pointer  windowWillEnterFullScreenMethod = Foundation.createSelector("windowWillEnterFullScreen:");
-      ID originalWindowWillEnterFullScreen = Foundation.class_replaceMethod(awtWindow, windowWillEnterFullScreenMethod,
-                                                                            windowWillEnterFullScreenCallBack, "v@::@");
-
-      Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowWillEnterFullScreen:"),
-                               originalWindowWillEnterFullScreen, "v@::@");
-
-      Pointer  windowWillExitFullScreenMethod = Foundation.createSelector("windowWillExitFullScreen:");
-      ID originalWindowWillExitFullScreen = Foundation.class_replaceMethod(awtWindow, windowWillExitFullScreenMethod,
-                                                                           windowWillExitFullScreenCallBack, "v@::@");
-
-      Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowWillExitFullScreen:"),
-                               originalWindowWillExitFullScreen, "v@::@");
+    if (ORACLE_BUG_ID_8003173) {
+      replaceNativeFullscreenListenerCallback();
     }
 
     int v = UNIQUE_COUNTER.incrementAndGet();
@@ -182,6 +175,7 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
         }
       });
     }
+
     try {
       if (SystemInfo.isMacOSLion) {
         if (!FULL_SCREEN_AVAILABLE) return;
@@ -191,15 +185,25 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
         FullScreenUtilities.addFullScreenListenerTo(frame, new FullScreenAdapter() {
           @Override
           public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
-            LOG.assertTrue(SystemInfo.isMac, "For mac we set myInFullScreen in the windowWillEnterFullScreenCallBack methods");
+            if (!ORACLE_BUG_ID_8003173) {
+              enterFullscreen();
+              myFrame.validate();
+            }
           }
 
           @Override
           public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
-            LOG.assertTrue(SystemInfo.isMac, "For mac we set myInFullScreen in the windowWillExitFullScreenCallBack methods");
+            if (!ORACLE_BUG_ID_8003173) {
+              exitFullscreen();
+              myFrame.validate();
+            }
           }
         });
-      } else {
+      }
+      else {
+        final ID window = MacUtil.findWindowForTitle(frame.getTitle());
+        if (window == null) return;
+
         // toggle toolbar
         String className = "IdeaToolbar" + v;
         final ID ownToolbar = Foundation.allocateObjcClassPair(Foundation.getObjcClass("NSToolbar"), className);
@@ -212,9 +216,6 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
 
         Foundation.addMethod(ownToolbar, Foundation.createSelector("setVisible:"), SET_VISIBLE_CALLBACK, "v*");
         Foundation.addMethod(ownToolbar, Foundation.createSelector("isVisible"), IS_VISIBLE, "B*");
-
-        final ID window = MacUtil.findWindowForTitle(frame.getTitle());
-        if (window == null) return;
 
         Foundation.executeOnMainThread(new Runnable() {
           @Override
@@ -239,12 +240,30 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       }
       ourProtocolHandler = new CustomProtocolHandler();
       Application.getApplication().setOpenURIHandler(new OpenURIHandler() {
-      @Override
-      public void openURI(AppEvent.OpenURIEvent event) {
-        ourProtocolHandler.openLink(event.getURI());
-      }
-    });
+        @Override
+        public void openURI(AppEvent.OpenURIEvent event) {
+          ourProtocolHandler.openLink(event.getURI());
+        }
+      });
     }
+  }
+
+  private void replaceNativeFullscreenListenerCallback() {
+    ID awtWindow = Foundation.getObjcClass("AWTWindow");
+
+    Pointer windowWillEnterFullScreenMethod = Foundation.createSelector("windowWillEnterFullScreen:");
+    ID originalWindowWillEnterFullScreen = Foundation.class_replaceMethod(awtWindow, windowWillEnterFullScreenMethod,
+                                                                          windowWillEnterFullScreenCallBack, "v@::@");
+
+    Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowWillEnterFullScreen:"),
+                             originalWindowWillEnterFullScreen, "v@::@");
+
+    Pointer  windowWillExitFullScreenMethod = Foundation.createSelector("windowWillExitFullScreen:");
+    ID originalWindowWillExitFullScreen = Foundation.class_replaceMethod(awtWindow, windowWillExitFullScreenMethod,
+                                                                         windowWillExitFullScreenCallBack, "v@::@");
+
+    Foundation.addMethodByID(awtWindow, Foundation.createSelector("oldWindowWillExitFullScreen:"),
+                             originalWindowWillExitFullScreen, "v@::@");
   }
 
   @Override

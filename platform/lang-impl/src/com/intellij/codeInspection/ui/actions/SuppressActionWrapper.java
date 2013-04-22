@@ -53,6 +53,7 @@ public class SuppressActionWrapper extends ActionGroup {
       final Object node = path.getLastPathComponent();
       if (!(node instanceof TreeNode)) continue;
       TreeUtil.traverse((TreeNode)node, new TreeUtil.Traverse() {
+        @Override
         public boolean accept(final Object node) {    //fetch leaves
           final InspectionTreeNode n = (InspectionTreeNode)node;
           if (n.isLeaf()) {
@@ -65,6 +66,7 @@ public class SuppressActionWrapper extends ActionGroup {
     myTool = tool;
   }
 
+  @Override
   @NotNull
   public SuppressTreeAction[] getChildren(@Nullable final AnActionEvent e) {
     final SuppressIntentionAction[] suppressActions = myTool.getSuppressActions();
@@ -80,6 +82,7 @@ public class SuppressActionWrapper extends ActionGroup {
   private boolean suppress(final PsiElement element, final SuppressIntentionAction action) {
     final PsiModificationTracker tracker = PsiManager.getInstance(myProject).getModificationTracker();
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
+      @Override
       public void run() {
         PsiDocumentManager.getInstance(myProject).commitAllDocuments();
         try {
@@ -102,6 +105,7 @@ public class SuppressActionWrapper extends ActionGroup {
     return true;
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     super.update(e);
     e.getPresentation().setEnabled(myTool != null && myTool.getSuppressActions() != null);
@@ -134,10 +138,13 @@ public class SuppressActionWrapper extends ActionGroup {
       mySuppressAction = suppressAction;
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+            @Override
             public void run() {
               for (InspectionTreeNode node : myNodesToSuppress) {
                 final Pair<PsiElement, CommonProblemDescriptor> content = getContentToSuppress(node);
@@ -156,6 +163,7 @@ public class SuppressActionWrapper extends ActionGroup {
       });
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       super.update(e);
       if (!isAvailable()) e.getPresentation().setVisible(false);

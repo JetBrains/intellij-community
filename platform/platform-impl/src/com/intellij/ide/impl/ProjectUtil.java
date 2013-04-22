@@ -123,6 +123,7 @@ public class ProjectUtil {
 
       if (project != null) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             if (!project.isDisposed()) {
               final ToolWindow toolWindow = ToolWindowManager.getInstance(project).getToolWindow(ToolWindowId.PROJECT_VIEW);
@@ -251,6 +252,7 @@ public class ProjectUtil {
 
   public static void focusProjectWindow(final Project p, boolean executeIfAppInactive) {
     FocusCommand cmd = new FocusCommand() {
+      @NotNull
       @Override
       public ActionCallback run() {
         JFrame f = WindowManager.getInstance().getFrame(p);

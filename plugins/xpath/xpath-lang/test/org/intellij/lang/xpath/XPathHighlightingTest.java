@@ -77,6 +77,10 @@ public class XPathHighlightingTest extends TestBase {
       doXPathHighlighting();
     }
 
+    public void testMalformedStringLiteral2() throws Throwable {
+      doXPathHighlighting();
+    }
+
     public void testMalformedEmptyStringLiteral() throws Throwable {
       doXPathHighlighting();
     }

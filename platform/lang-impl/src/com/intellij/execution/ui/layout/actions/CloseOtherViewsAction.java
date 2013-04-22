@@ -23,10 +23,12 @@ import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 
 public class CloseOtherViewsAction extends BaseViewAction {
+  @Override
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     setEnabled(e, isEnabled(context, content, e.getPlace()));
   }
 
+  @Override
   protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {
     final ContentManager manager = context.getContentManager();
     for (Content c : manager.getContents()) {

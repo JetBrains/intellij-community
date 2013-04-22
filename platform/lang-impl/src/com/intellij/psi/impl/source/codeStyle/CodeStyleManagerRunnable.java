@@ -34,15 +34,15 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
-* @author nik
-*/
+ * @author nik
+ */
 abstract class CodeStyleManagerRunnable<T> {
-  protected              CodeStyleSettings                     mySettings;
-  protected              CommonCodeStyleSettings.IndentOptions myIndentOptions;
-  protected              FormattingModel                       myModel;
-  protected              TextRange                             mySignificantRange;
-  private final          CodeStyleManagerImpl                  myCodeStyleManager;
-  @NotNull private final FormattingMode                        myMode;
+  protected CodeStyleSettings mySettings;
+  protected CommonCodeStyleSettings.IndentOptions myIndentOptions;
+  protected FormattingModel myModel;
+  protected TextRange mySignificantRange;
+  private final CodeStyleManagerImpl myCodeStyleManager;
+  @NotNull private final FormattingMode myMode;
 
   CodeStyleManagerRunnable(CodeStyleManagerImpl codeStyleManager, @NotNull FormattingMode mode) {
     myCodeStyleManager = codeStyleManager;
@@ -91,12 +91,21 @@ abstract class CodeStyleManagerRunnable<T> {
     FormattingModelBuilder elementBuilder = element != null ? LanguageFormatting.INSTANCE.forContext(element) : builder;
     if (builder != null && elementBuilder != null) {
       mySettings = CodeStyleSettingsManager.getSettings(myCodeStyleManager.getProject());
-      myIndentOptions = mySettings.getIndentOptions(file.getFileType());
+
       mySignificantRange = offset != -1 ? getSignificantRange(file, offset) : null;
+
+      if (builder instanceof FormattingModelBuilderEx) {
+        myIndentOptions = ((FormattingModelBuilderEx)builder).getIndentOptionsToUse(file, new FormatTextRanges(mySignificantRange, true), mySettings);
+      }
+      if (myIndentOptions == null) {
+        myIndentOptions = mySettings.getIndentOptions(file.getFileType());
+      }
+
       myModel = CoreFormatterUtil.buildModel(builder, file, mySettings, myMode);
 
       if (document != null && useDocumentBaseFormattingModel()) {
-        myModel = new DocumentBasedFormattingModel(myModel.getRootBlock(), document, myCodeStyleManager.getProject(), mySettings, file.getFileType(), file);
+        myModel = new DocumentBasedFormattingModel(myModel.getRootBlock(), document, myCodeStyleManager.getProject(), mySettings,
+                                                   file.getFileType(), file);
       }
 
       final T result = doPerform(offset, range);
@@ -135,7 +144,8 @@ abstract class CodeStyleManagerRunnable<T> {
   }
 
   private static TextRange getSignificantRange(final PsiFile file, final int offset) {
-    final ASTNode elementAtOffset = SourceTreeToPsiMap.psiElementToTree(CodeStyleManagerImpl.findElementInTreeWithFormatterEnabled(file, offset));
+    final ASTNode elementAtOffset =
+      SourceTreeToPsiMap.psiElementToTree(CodeStyleManagerImpl.findElementInTreeWithFormatterEnabled(file, offset));
     if (elementAtOffset == null) {
       int significantRangeStart = CharArrayUtil.shiftBackward(file.getText(), offset - 1, "\r\t ");
       return new TextRange(significantRangeStart, offset);

@@ -25,6 +25,7 @@ import com.intellij.psi.xml.XmlElement;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.xml.XmlAttributeDescriptor;
 import com.intellij.xml.XmlElementDescriptor;
+import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.plugins.relaxNG.model.descriptors.CompositeDescriptor;
 import org.intellij.plugins.relaxNG.model.descriptors.RngElementDescriptor;
 import org.intellij.plugins.relaxNG.model.descriptors.RngXmlAttributeDescriptor;
@@ -95,11 +96,11 @@ public class RngDocumentationProvider implements DocumentationProvider {
 
   private static String makeDocumentation(StringBuilder sb) {
     if (sb == null) return null;
-    if (!sb.toString().startsWith("<html>")) {
-      sb.insert(0, "<html>");
-      sb.append("</html>");
+    String s = sb.toString().replaceAll("\n", "<br>");
+    if (!s.startsWith("<html>")) {
+      s = XmlStringUtil.wrapInHtml(s);
     }
-    return sb.toString().replaceAll("\n", "<br>");
+    return s;
   }
 
   private static StringBuilder getDocumentationFromTag(XmlTag tag, String localName, String kind) {

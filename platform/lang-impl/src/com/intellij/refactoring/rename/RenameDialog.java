@@ -36,6 +36,7 @@ import com.intellij.ui.NonFocusableCheckBox;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
+import com.intellij.xml.util.XmlStringUtil;
 import com.intellij.xml.util.XmlTagUtilBase;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -78,7 +79,8 @@ public class RenameDialog extends RefactoringDialog {
     createNewNameComponent();
     init();
 
-    myNameLabel.setText("<html>" + XmlTagUtilBase.escapeString(RefactoringBundle.message("rename.0.and.its.usages.to", getFullName()), false) + "</html>");
+    myNameLabel.setText(XmlStringUtil.wrapInHtml(
+      XmlTagUtilBase.escapeString(RefactoringBundle.message("rename.0.and.its.usages.to", getFullName()), false)));
     boolean toSearchInComments = isToSearchInCommentsForRename();
     myCbSearchInComments.setSelected(toSearchInComments);
 
@@ -100,6 +102,7 @@ public class RenameDialog extends RefactoringDialog {
     return RenamePsiElementProcessor.forElement(myPsiElement).showRenamePreviewButton(myPsiElement);
   }
 
+  @Override
   protected void dispose() {
     myNameSuggestionsField.removeDataChangedListener(myNameChangedListener);
     super.dispose();
@@ -130,6 +133,7 @@ public class RenameDialog extends RefactoringDialog {
       myNameSuggestionsField.selectNameWithoutExtension();
     }
     myNameChangedListener = new NameSuggestionsField.DataChanged() {
+      @Override
       public void dataChanged() {
         processNewNameChanged();
       }
@@ -169,14 +173,17 @@ public class RenameDialog extends RefactoringDialog {
     return myCbSearchTextOccurences.isSelected();
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent() {
     return myNameSuggestionsField.getFocusableComponent();
   }
 
+  @Override
   protected JComponent createCenterPanel() {
     return null;
   }
 
+  @Override
   protected JComponent createNorthPanel() {
     JPanel panel = new JPanel(new GridBagLayout());
     GridBagConstraints gbConstraints = new GridBagConstraints();
@@ -254,10 +261,12 @@ public class RenameDialog extends RefactoringDialog {
     }
   }
 
+  @Override
   protected void doHelpAction() {
     HelpManager.getInstance().invokeHelp(myHelpID);
   }
 
+  @Override
   protected void doAction() {
     LOG.assertTrue(myPsiElement.isValid());
 
@@ -304,6 +313,7 @@ public class RenameDialog extends RefactoringDialog {
     }
   }
 
+  @Override
   protected boolean areButtonsValid() {
     final String newName = getNewName();
     return RenameUtil.isValidName(myProject, myPsiElement, newName);

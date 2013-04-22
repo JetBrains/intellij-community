@@ -75,9 +75,11 @@ public class FileTemplateUtil{
       final FileTemplateManager templateManager = FileTemplateManager.getInstance();
 
       LogSystem emptyLogSystem = new LogSystem() {
+        @Override
         public void init(RuntimeServices runtimeServices) throws Exception {
         }
 
+        @Override
         public void logVelocityMessage(int i, String s) {
           //todo[myakovlev] log somethere?
         }
@@ -87,9 +89,11 @@ public class FileTemplateUtil{
       Velocity.setProperty(RuntimeConstants.PARSER_POOL_SIZE, 3);
       Velocity.setProperty(RuntimeConstants.RESOURCE_LOADER, "includes");
       Velocity.setProperty("includes.resource.loader.instance", new ResourceLoader() {
+        @Override
         public void init(ExtendedProperties configuration) {
         }
 
+        @Override
         public InputStream getResourceStream(String resourceName) throws ResourceNotFoundException {
           final FileTemplate include = templateManager.getPattern(resourceName);
           if (include == null) {
@@ -104,10 +108,12 @@ public class FileTemplateUtil{
           }
         }
 
+        @Override
         public boolean isSourceModified(Resource resource) {
           return true;
         }
 
+        @Override
         public long getLastModified(Resource resource) {
           return 0L;
         }
@@ -118,7 +124,7 @@ public class FileTemplateUtil{
       LOG.error("Unable to init Velocity", e);
     }
   }
-  
+
   public static String[] calculateAttributes(String templateContent, Properties properties, boolean includeDummies) throws ParseException {
     Set<String> propertiesNames = new HashSet<String>();
     for (Enumeration e = properties.propertyNames(); e.hasMoreElements(); ) {
@@ -246,6 +252,7 @@ public class FileTemplateUtil{
     catch (final VelocityException e) {
       LOG.error("Error evaluating template:\n"+templateContent,e);
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           Messages.showErrorDialog(IdeBundle.message("error.parsing.file.template", e.getMessage()),
                                    IdeBundle.message("title.velocity.error"));
@@ -253,14 +260,14 @@ public class FileTemplateUtil{
       });
     }
     final String result = stringWriter.toString();
-    
+
     if (useSystemLineSeparators) {
       final String newSeparator = CodeStyleSettingsManager.getSettings(ProjectManagerEx.getInstanceEx().getDefaultProject()).getLineSeparator();
       if (!"\n".equals(newSeparator)) {
         return StringUtil.convertLineSeparators(result, newSeparator);
       }
     }
-    
+
     return result;
   }
 
@@ -343,8 +350,10 @@ public class FileTemplateUtil{
     final Exception[] commandException = new Exception[1];
     final PsiElement[] result = new PsiElement[1];
     CommandProcessor.getInstance().executeCommand(project, new Runnable(){
+      @Override
       public void run(){
         ApplicationManager.getApplication().runWriteAction(new Runnable(){
+          @Override
           public void run(){
             try{
               result[0] = handler.createFromTemplate(project, directory, fileName_, template, templateText, props_);

@@ -33,6 +33,7 @@ public class RadioUpDownListener extends KeyAdapter {
     }
   }
 
+  @Override
   public void keyPressed(final KeyEvent e) {
     final int selected = getSelected();
     if (selected != -1) {

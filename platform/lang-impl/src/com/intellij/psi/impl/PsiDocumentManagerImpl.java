@@ -817,6 +817,7 @@ public class PsiDocumentManagerImpl extends PsiDocumentManager implements Projec
   public void save() {
     // Ensure all documents are committed on save so file content dependent indices, that use PSI to build have consistent content.
     UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
         try {
           commitAllDocuments();

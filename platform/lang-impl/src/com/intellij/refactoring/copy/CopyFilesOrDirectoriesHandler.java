@@ -60,6 +60,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     return filteredElements.length == elements.length;
   }
 
+  @Override
   public void doCopy(final PsiElement[] elements, PsiDirectory defaultTargetDirectory) {
     if (defaultTargetDirectory == null) {
       defaultTargetDirectory = getCommonParentDirectory(elements);
@@ -106,6 +107,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
     }
   }
 
+  @Override
   public void doClone(final PsiElement element) {
     doCloneFile(element);
   }
@@ -181,8 +183,10 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
 
     final Project project = targetDirectory.getProject();
     Runnable command = new Runnable() {
+      @Override
       public void run() {
         final Runnable action = new Runnable() {
+          @Override
           public void run() {
             try {
               PsiFile firstFile = null;
@@ -199,6 +203,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
                 if (!(firstFile instanceof PsiBinaryFile)){
                   EditorHelper.openInEditor(firstFile);
                   ApplicationManager.getApplication().invokeLater(new Runnable() {
+                                  @Override
                                   public void run() {
                                     ToolWindowManager.getInstance(project).activateEditorComponent();
                                   }
@@ -208,6 +213,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
             }
             catch (final IncorrectOperationException ex) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
                 public void run() {
                   Messages.showMessageDialog(project, ex.getMessage(), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
                 }
@@ -215,6 +221,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
             }
             catch (final IOException ex) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
                 public void run() {
                   Messages.showMessageDialog(project, ex.getMessage(), RefactoringBundle.message("error.title"), Messages.getErrorIcon());
                 }
@@ -270,6 +277,7 @@ public class CopyFilesOrDirectoriesHandler extends CopyHandlerDelegateBase {
       final PsiDirectory existing = targetDirectory.findSubdirectory(newName);
       final PsiDirectory subdirectory = existing == null ? targetDirectory.createSubdirectory(newName) : existing;
       EncodingRegistry.doActionAndRestoreEncoding(directory.getVirtualFile(), new ThrowableComputable<VirtualFile, IOException>() {
+        @Override
         public VirtualFile compute() {
           return subdirectory.getVirtualFile();
         }

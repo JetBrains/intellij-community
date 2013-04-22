@@ -133,8 +133,9 @@ public class Mock {
       return null;
     }
 
+    @NotNull
     @Override
-    public ActionCallback notifyPublisher(Runnable runnable) {
+    public ActionCallback notifyPublisher(@NotNull Runnable runnable) {
       runnable.run();
       return new ActionCallback.Done();
     }
@@ -149,7 +150,7 @@ public class Mock {
     public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                           boolean focusEditor,
                                                                           @NotNull EditorWindow window) {
-      return null;  //To change body of implemented methods use File | Settings | File Templates.
+      throw new RuntimeException("not implemented");
     }
 
     @Override
@@ -167,14 +168,16 @@ public class Mock {
       return null;
     }
 
+    @NotNull
     @Override
     public EditorsSplitters getSplitters() {
-      return null;
+      throw new RuntimeException("not implemented");
     }
 
+    @NotNull
     @Override
     public AsyncResult<EditorWindow> getActiveWindow() {
-      return null;
+      throw new RuntimeException("not implemented");
     }
 
     @Override
@@ -223,7 +226,7 @@ public class Mock {
     }
 
     @Override
-    public void updateFilePresentation(VirtualFile file) {
+    public void updateFilePresentation(@NotNull VirtualFile file) {
     }
 
     @Override
@@ -244,7 +247,7 @@ public class Mock {
 
     @Override
     @NotNull
-    public VirtualFile[] getSiblings(VirtualFile file) {
+    public VirtualFile[] getSiblings(@NotNull VirtualFile file) {
       return new VirtualFile[0];
     }
 
@@ -328,7 +331,7 @@ public class Mock {
     }
 
     @Override
-    public Editor openTextEditor(OpenFileDescriptor descriptor, boolean focusEditor) {
+    public Editor openTextEditor(@NotNull OpenFileDescriptor descriptor, boolean focusEditor) {
       return null;
     }
 
@@ -374,7 +377,7 @@ public class Mock {
     @NotNull
     @Override
     public FileEditor[] getAllEditors(@NotNull VirtualFile file) {
-      return new FileEditor[0]; 
+      return new FileEditor[0];
     }
 
     @Override
@@ -425,7 +428,7 @@ public class Mock {
     }
 
     @Override
-    public void setSelectedEditor(VirtualFile file, String fileEditorProviderId) {
+    public void setSelectedEditor(@NotNull VirtualFile file, String fileEditorProviderId) {
     }
   }
 

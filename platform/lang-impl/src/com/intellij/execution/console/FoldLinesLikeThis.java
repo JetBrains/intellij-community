@@ -68,6 +68,7 @@ public class FoldLinesLikeThis extends DumbAwareAction {
       public void reset() {
         super.reset();
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             addRule(selection);
           }

@@ -50,7 +50,7 @@ class WhiteSpace {
 
   private final int myStart;
   private       int myEnd;
-  
+
   private int mySpaces;
   private int myIndentSpaces;
   private int myInitialLastLinesSpaces;
@@ -216,7 +216,7 @@ class WhiteSpace {
     // last line feed and new end offset.
     int newLineFeedsNumber = getLineFeeds() - lineFeedsNumberAtRemovedText;
     assert newLineFeedsNumber >= 0;
-    newLineFeedsNumber = newLineFeedsNumber < 0 ? 0 : newLineFeedsNumber; // Never expect the defense to be triggered. 
+    newLineFeedsNumber = newLineFeedsNumber < 0 ? 0 : newLineFeedsNumber; // Never expect the defense to be triggered.
     setLineFeeds(newLineFeedsNumber);
     int startOffset = CharArrayUtil.shiftForwardUntil(oldText, newEndOffset - 1, "\n") + 1;
     WhiteSpaceInfo info = parse(oldText, startOffset, newEndOffset, 0, tabSize);
@@ -226,9 +226,9 @@ class WhiteSpace {
 
   /**
    * Parses information about white space symbols at the target region of the given text.
-   * 
+   *
    * @param text         target text
-   * @param startOffset  target text range's start offset (inclusive) 
+   * @param startOffset  target text range's start offset (inclusive)
    * @param endOffset    target text range's end offset (exclusive)
    * @param startColumn  given start offset's column. It affects how tab width is calculated, say, a tab symbol which
    *                     occupies four columns, will occupy only three if located at the first column
@@ -238,7 +238,7 @@ class WhiteSpace {
   @NotNull
   private static WhiteSpaceInfo parse(@NotNull CharSequence text, int startOffset, int endOffset, int startColumn, int tabSize) {
     assert startOffset <= endOffset;
-    
+
     int spaces = 0;
     int indentSpaces = 0;
     int lineFeeds = 0;
@@ -260,10 +260,10 @@ class WhiteSpace {
         default: spaces++; column++;
       }
     }
-    
+
     return new WhiteSpaceInfo(lineFeeds, indentSpaces, spaces);
   }
-  
+
   /**
    * Builds string that contains line feeds, white spaces and tabulation symbols known to the current {@link WhiteSpace} object.
    *
@@ -289,6 +289,7 @@ class WhiteSpace {
    */
   public void setSpaces(final int spaces, final int indent) {
     performModification(new Runnable() {
+      @Override
       public void run() {
         if (!isKeepFirstColumn() || (myFlags & CONTAINS_SPACES_INITIALLY) != 0) {
           mySpaces = spaces;
@@ -305,7 +306,7 @@ class WhiteSpace {
   public int getStartOffset() {
     return myStart;
   }
-  
+
   public int getEndOffset() {
     return myEnd;
   }
@@ -368,6 +369,7 @@ class WhiteSpace {
    */
   public void arrangeSpaces(final SpacingImpl spaceProperty) {
     performModification(new Runnable() {
+      @Override
       public void run() {
         if (spaceProperty != null) {
           if (getLineFeeds() == 0) {
@@ -392,6 +394,7 @@ class WhiteSpace {
    */
   public void arrangeLineFeeds(final SpacingImpl spaceProperty, final FormatProcessor formatProcessor) {
     performModification(new Runnable() {
+      @Override
       public void run() {
         if (spaceProperty != null) {
           spaceProperty.refresh(formatProcessor);
@@ -476,6 +479,7 @@ class WhiteSpace {
    */
   public void ensureLineFeed() {
     performModification(new Runnable() {
+      @Override
       public void run() {
         if (!containsLineFeeds()) {
           setLineFeeds(1);
@@ -544,6 +548,7 @@ class WhiteSpace {
    */
   public void removeLineFeeds(final SpacingImpl spacing, final FormatProcessor formatProcessor) {
     performModification(new Runnable() {
+      @Override
       public void run() {
         setLineFeeds(0);
         mySpaces = 0;
@@ -638,7 +643,7 @@ class WhiteSpace {
       if (currentOffset == offset) {
         break;
       }
-      
+
     }
     final String newIndentSpaces = indent.generateNewWhiteSpace(indentOptions);
     result.append(newIndentSpaces);
@@ -658,7 +663,7 @@ class WhiteSpace {
 
   @NotNull
   public IndentInside getInitialLastLineIndent() {
-    return new IndentInside(myInitialLastLinesSpaces, myInitialLastLinesTabs); 
+    return new IndentInside(myInitialLastLinesSpaces, myInitialLastLinesTabs);
   }
 
   private static void appendNonWhitespaces(StringBuilder result, CharSequence[] lines, int currentLine) {
@@ -752,9 +757,9 @@ class WhiteSpace {
   public String toString() {
     return "WhiteSpace(" + myStart + "-" + myEnd + " spaces=" + mySpaces + " LFs=" + getLineFeeds() + ")";
   }
-  
+
   private static class WhiteSpaceInfo {
-    
+
     public final int spaces;
     public final int indentSpaces;
     public final int lineFeeds;

@@ -28,6 +28,7 @@ import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -66,24 +67,29 @@ public class EditorNotifications extends AbstractProjectComponent {
     myFileEditorManager = fileEditorManager;
     project.getMessageBus().connect(project).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
-      public void fileOpened(FileEditorManager source, VirtualFile file) {
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         updateNotifications(file);
       }
     });
   }
 
   public void updateNotifications(final VirtualFile file) {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
       public void run() {
-        if (myProject.isDisposed()) return;
-        FileEditor[] editors = myFileEditorManager.getAllEditors(file);
-        for (FileEditor editor : editors) {
-          for (Provider<?> provider : PROVIDERS.getValue()) {
-            JComponent component = provider.createNotificationPanel(file, editor);
-            Key<? extends JComponent> key = provider.getKey();
-            updateNotification(editor, key, component);
+        ApplicationManager.getApplication().runReadAction(new Runnable() {
+          public void run() {
+            if (myProject.isDisposed()) return;
+            FileEditor[] editors = myFileEditorManager.getAllEditors(file);
+            for (FileEditor editor : editors) {
+              for (Provider<?> provider : PROVIDERS.getValue()) {
+                JComponent component = provider.createNotificationPanel(file, editor);
+                Key<? extends JComponent> key = provider.getKey();
+                updateNotification(editor, key, component);
+              }
+            }
           }
-        }
+        });
       }
     });
   }

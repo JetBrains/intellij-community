@@ -33,6 +33,7 @@ import java.util.HashSet;
 public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
   private static final Logger LOG = Logger.getInstance("#com.intellij.refactoring.move.moveFilesOrDirectories.MoveFilesOrDirectoriesHandler");
 
+  @Override
   public boolean canMove(final PsiElement[] elements, final PsiElement targetContainer) {
     HashSet<String> names = new HashSet<String>();
     for (PsiElement element : elements) {
@@ -57,6 +58,7 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
     return super.canMove(elements, targetContainer);
   }
 
+  @Override
   public boolean isValidTarget(final PsiElement psiElement, PsiElement[] sources) {
     return isValidTarget(psiElement);
   }
@@ -70,14 +72,16 @@ public class MoveFilesOrDirectoriesHandler extends MoveHandlerDelegate {
     doMove(project, elements, targetContainer, null);
   }
 
+  @Override
   public void doMove(final Project project, final PsiElement[] elements, final PsiElement targetContainer, @Nullable final MoveCallback callback) {
-    if (!LOG.assertTrue(targetContainer == null || targetContainer instanceof PsiDirectory || targetContainer instanceof PsiDirectoryContainer, 
+    if (!LOG.assertTrue(targetContainer == null || targetContainer instanceof PsiDirectory || targetContainer instanceof PsiDirectoryContainer,
                         "container: " + targetContainer + "; elements: " + Arrays.toString(elements))) {
       return;
     }
     MoveFilesOrDirectoriesUtil.doMove(project, adjustForMove(project, elements, targetContainer), new PsiElement[] {targetContainer}, callback);
   }
 
+  @Override
   public boolean tryToMove(final PsiElement element, final Project project, final DataContext dataContext, final PsiReference reference,
                            final Editor editor) {
     if ((element instanceof PsiFile && ((PsiFile)element).getVirtualFile() != null)

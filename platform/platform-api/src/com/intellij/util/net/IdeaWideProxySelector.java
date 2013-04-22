@@ -26,6 +26,7 @@ import java.io.IOException;
 import java.net.*;
 import java.util.Collections;
 import java.util.List;
+import java.util.concurrent.atomic.AtomicReference;
 import java.util.regex.Pattern;
 
 /**
@@ -37,7 +38,7 @@ import java.util.regex.Pattern;
 public class IdeaWideProxySelector extends ProxySelector {
   private final static Logger LOG = Logger.getInstance("#com.intellij.util.net.IdeaWideProxySelector");
   private final HttpConfigurable myHttpConfigurable;
-  private ProxySelector myPacProxySelector;
+  private final AtomicReference<ProxySelector> myPacProxySelector = new AtomicReference<ProxySelector>();
 
   public IdeaWideProxySelector(HttpConfigurable configurable) {
     myHttpConfigurable = configurable;
@@ -65,16 +66,17 @@ public class IdeaWideProxySelector extends ProxySelector {
       myHttpConfigurable.LAST_ERROR = null;
       return Collections.singletonList(proxy);
     } else if (myHttpConfigurable.USE_PROXY_PAC) {
-      synchronized (this) {
-        if (myPacProxySelector == null) {
-          final ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
-          proxySearch.setPacCacheSettings(32, 10 * 60 * 1000); // Cache 32 urls for up to 10 min.
-          myPacProxySelector = proxySearch.getProxySelector();
-        }
+      ProxySelector pacProxySelector = myPacProxySelector.get();
+      if (pacProxySelector == null) {
+        final ProxySearch proxySearch = ProxySearch.getDefaultProxySearch();
+        proxySearch.setPacCacheSettings(32, 10 * 60 * 1000); // Cache 32 urls for up to 10 min.
+        pacProxySelector = proxySearch.getProxySelector();
+
+        myPacProxySelector.lazySet(pacProxySelector);
       }
 
-      if (myPacProxySelector != null) {
-        final List<Proxy> select = myPacProxySelector.select(uri);
+      if (pacProxySelector != null) {
+        final List<Proxy> select = pacProxySelector.select(uri);
         LOG.debug("IDEA-wide proxy selector found autodetected proxies: " + select);
         return select;
       }

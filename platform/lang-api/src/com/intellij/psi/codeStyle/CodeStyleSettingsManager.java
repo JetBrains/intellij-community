@@ -35,7 +35,8 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
   private volatile CodeStyleSettings myTemporarySettings;
   private volatile boolean myIsLoaded = false;
 
-  public static CodeStyleSettingsManager getInstance(@NotNull Project project) {
+  public static CodeStyleSettingsManager getInstance(@Nullable Project project) {
+    if (project == null || project.isDefault()) return getInstance();
     ProjectCodeStyleSettingsManager projectSettingsManager = ServiceManager.getService(project, ProjectCodeStyleSettingsManager.class);
     if (!projectSettingsManager.isLoaded()) {
       synchronized (projectSettingsManager) {
@@ -62,8 +63,7 @@ public class CodeStyleSettingsManager implements PersistentStateComponent<Elemen
 
   @NotNull
   public static CodeStyleSettings getSettings(@Nullable final Project project) {
-    final CodeStyleSettingsManager instance = project == null || project.isDefault() ? getInstance() : getInstance(project);
-    return instance.getCurrentSettings();
+    return getInstance(project).getCurrentSettings();
   }
 
   @NotNull

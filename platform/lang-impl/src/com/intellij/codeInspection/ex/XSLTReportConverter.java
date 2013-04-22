@@ -52,6 +52,7 @@ public class XSLTReportConverter implements InspectionsReportConverter {
     return true;
   }
 
+  @Override
   public void convert(@NotNull final String rawDataDirectoryPath,
                       @Nullable final String outputPath,
                       @NotNull final Map<String, Tools> tools,

@@ -119,6 +119,7 @@ public class RunContentExecutor {
 
     if (myAfterCompletion != null) {
       myProcess.addProcessListener(new ProcessAdapter() {
+        @Override
         public void processTerminated(ProcessEvent event) {
           SwingUtilities.invokeLater(myAfterCompletion);
         }
@@ -130,6 +131,7 @@ public class RunContentExecutor {
 
   public void activateToolWindow() {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         ToolWindowManager.getInstance(myProject).getToolWindow(ToolWindowId.RUN).activate(null);
       }
@@ -156,6 +158,7 @@ public class RunContentExecutor {
       registerCustomShortcutSet(CommonShortcuts.getRerun(), consolePanel);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       myRerunAction.run();
     }
@@ -172,6 +175,7 @@ public class RunContentExecutor {
             AllIcons.Actions.Suspend);
     }
 
+    @Override
     public void actionPerformed(AnActionEvent e) {
       myStopAction.run();
     }

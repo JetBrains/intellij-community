@@ -22,7 +22,7 @@ import org.jetbrains.annotations.NotNull;
  *         Date: 4/6/11
  */
 public final class BundledFileTemplate extends FileTemplateBase {
-  
+
   private final DefaultTemplate myDefaultTemplate;
   private final boolean myInternal;
   private boolean myEnabled = true; // when user 'deletes' bundled plugin, it simply becomes disabled
@@ -31,35 +31,42 @@ public final class BundledFileTemplate extends FileTemplateBase {
     myDefaultTemplate = defaultTemplate;
     myInternal = internal;
   }
-  
+
+  @Override
   @NotNull
   public String getName() {
     return myDefaultTemplate.getName();
   }
-  
+
+  @Override
   @NotNull
   public String getExtension() {
     return myDefaultTemplate.getExtension();
   }
 
+  @Override
   public void setName(@NotNull String name) {
     // empty, cannot change name for bundled template
   }
 
+  @Override
   public void setExtension(@NotNull String extension) {
     // empty, cannot change extension for bundled template
   }
 
+  @Override
   @NotNull
   protected String getDefaultText() {
     return myDefaultTemplate.getText();
   }
 
+  @Override
   @NotNull
   public final String getDescription() {
     return myDefaultTemplate.getDescriptionText();
   }
 
+  @Override
   public boolean isDefault() {
     // todo: consider isReformat option here?
     if (!getText().equals(getDefaultText())) {
@@ -90,7 +97,7 @@ public final class BundledFileTemplate extends FileTemplateBase {
     setText(null);
     setReformatCode(DEFAULT_REFORMAT_CODE_VALUE);
   }
-  
+
   public boolean isTextModified() {
     return !getText().equals(getDefaultText());
   }

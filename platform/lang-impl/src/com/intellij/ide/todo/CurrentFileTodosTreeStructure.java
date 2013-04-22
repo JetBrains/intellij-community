@@ -40,6 +40,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
     super(project);
   }
 
+  @Override
   protected void validateCache(){
     super.validateCache();
     if(myFile!=null && !myFile.isValid()){
@@ -65,6 +66,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
     myRootElement = createRootElement();
   }
 
+  @Override
   public boolean accept(PsiFile psiFile){
     if(myFile==null||!myFile.equals(psiFile)||!myFile.isValid()){
       return false;
@@ -73,6 +75,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
       (myTodoFilter==null&&mySearchHelper.getTodoItemsCount(psiFile)>0);
   }
 
+  @Override
   boolean isAutoExpandNode(NodeDescriptor descriptor){
     Object element=descriptor.getElement();
     if(element==myFile){
@@ -82,6 +85,7 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
     }
   }
 
+  @Override
   Object getFirstSelectableElement(){
     if (myRootElement instanceof SingleFileToDoNode){
       return ((SingleFileToDoNode)myRootElement).getFileNode();
@@ -90,10 +94,12 @@ public final class CurrentFileTodosTreeStructure extends TodoTreeStructure{
     }
   }
 
+  @Override
   public boolean getIsPackagesShown() {
     return myArePackagesShown;
   }
 
+  @Override
   protected AbstractTreeNode createRootElement() {
     if  (!accept(myFile)) {
       return new ToDoRootNode(myProject, new Object(), myBuilder, mySummaryElement);

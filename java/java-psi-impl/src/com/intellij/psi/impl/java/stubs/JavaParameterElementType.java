@@ -67,14 +67,15 @@ public abstract class JavaParameterElementType extends JavaStubElementType<PsiPa
   }
 
   @Override
-  public void serialize(PsiParameterStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PsiParameterStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     TypeInfo.writeTYPE(dataStream, stub.getType(false));
     dataStream.writeBoolean(stub.isParameterTypeEllipsis());
   }
 
+  @NotNull
   @Override
-  public PsiParameterStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  public PsiParameterStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     StringRef name = dataStream.readName();
     TypeInfo type = TypeInfo.readTYPE(dataStream);
     boolean isEllipsis = dataStream.readBoolean();
@@ -82,6 +83,6 @@ public abstract class JavaParameterElementType extends JavaStubElementType<PsiPa
   }
 
   @Override
-  public void indexStub(PsiParameterStub stub, IndexSink sink) {
+  public void indexStub(@NotNull PsiParameterStub stub, @NotNull IndexSink sink) {
   }
 }

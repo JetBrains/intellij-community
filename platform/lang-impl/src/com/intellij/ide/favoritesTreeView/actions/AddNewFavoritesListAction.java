@@ -31,6 +31,7 @@ import java.util.List;
  * Date: Feb 24, 2005
  */
 public class AddNewFavoritesListAction extends AnAction {
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Project project = e.getProject();
     if (project != null) {
@@ -45,10 +46,12 @@ public class AddNewFavoritesListAction extends AnAction {
                                                  IdeBundle.message("title.add.new.favorites.list"),
                                                  Messages.getInformationIcon(),
                                                  getUniqueName(project), new InputValidator() {
+      @Override
       public boolean checkInput(String inputString) {
         return inputString != null && inputString.trim().length() > 0;
       }
 
+      @Override
       public boolean canClose(String inputString) {
         inputString = inputString.trim();
         if (favoritesManager.getAvailableFavoritesListNames().contains(inputString)) {

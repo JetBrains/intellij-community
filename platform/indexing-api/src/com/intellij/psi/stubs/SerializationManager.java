@@ -48,6 +48,7 @@ public abstract class SerializationManager {
         holderEP.initialize();
       }
       final IElementType[] stubElementTypes = IElementType.enumerate(new IElementType.Predicate() {
+        @Override
         public boolean matches(final IElementType type) {
           return type instanceof StubSerializer;
         }

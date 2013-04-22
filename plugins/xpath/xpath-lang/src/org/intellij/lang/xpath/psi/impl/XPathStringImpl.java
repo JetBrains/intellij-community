@@ -44,12 +44,12 @@ public class XPathStringImpl extends XPathElementImpl implements XPathString {
       final String unescaped = unescape(quoteChar, value);
       return escape(quoteChar, unescaped).equals(value);
     } else {
-      if (getValue().indexOf(quoteChar) != getValue().lastIndexOf(quoteChar)) {
+      if (getValue().indexOf(quoteChar) != -1) {
         return false;
       }
     }
 
-    return text.indexOf('\n') == -1 && text.indexOf('\r') == -1;
+    return !textContains('\n') && !textContains('\r');
   }
 
   public String getValue() {

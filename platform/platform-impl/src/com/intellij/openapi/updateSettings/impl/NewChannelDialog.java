@@ -23,6 +23,7 @@ import com.intellij.ui.BrowserHyperlinkListener;
 import com.intellij.ui.LicensingFacade;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -84,7 +85,7 @@ public class NewChannelDialog extends DialogWrapper {
   }
 
   private void initInfo() {
-    StringBuilder builder = new StringBuilder().append("<html>");
+    StringBuilder builder = new StringBuilder();
     builder.append("<head>").append(UIUtil.getCssFontDeclaration(UIUtil.getLabelFont())).append("</head><body>");
     builder.append("<b>").append(myChannel.getName()).append("</b><br>");
     builder.append(StringUtil.formatLinks(myChannel.getLatestBuild().getMessage())).append("<br><br>");
@@ -108,7 +109,7 @@ public class NewChannelDialog extends DialogWrapper {
         builder.append("The new version has an expiration date and does not require a license key.");
       }
     }
-    myInformationText = builder.toString();
+    myInformationText = XmlStringUtil.wrapInHtml(builder);
   }
 
   @Override

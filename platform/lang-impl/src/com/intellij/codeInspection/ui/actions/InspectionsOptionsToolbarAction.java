@@ -44,9 +44,10 @@ public class InspectionsOptionsToolbarAction extends AnAction {
 
   public InspectionsOptionsToolbarAction(final InspectionResultsView view) {
     super(getToolOptions(null), getToolOptions(null), AllIcons.General.InspectionsOff);
-    myView = view;    
+    myView = view;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DefaultActionGroup options = new DefaultActionGroup();
     final List<AnAction> actions = createActions();
@@ -65,6 +66,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
     return myView.getTree().getSelectedTool();
   }
 
+  @Override
   public void update(AnActionEvent e) {
     if (!myView.isSingleToolInSelection()) {
       e.getPresentation().setEnabled(false);
@@ -97,6 +99,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
     result.add(new DisableInspectionAction(key));
 
     result.add(new AnAction(InspectionsBundle.message("run.inspection.on.file.intention.text")) {
+      @Override
       public void actionPerformed(final AnActionEvent e) {
         final PsiElement psiElement = getPsiElement(tree);
         assert psiElement != null;
@@ -124,7 +127,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
     });
 
     result.add(new SuppressActionWrapper(myView.getProject(), tool, tree.getSelectionPaths()));
-    
+
 
     return result;
   }
@@ -137,6 +140,7 @@ public class InspectionsOptionsToolbarAction extends AnAction {
       myKey = key;
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       try {
         if (myView.isProfileDefined()) {

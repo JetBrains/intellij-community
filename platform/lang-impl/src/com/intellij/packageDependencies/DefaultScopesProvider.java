@@ -50,6 +50,7 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
     final NamedScope nonProjectScope = new NonProjectFilesScope();
     final String text = FilePatternPackageSet.SCOPE_FILE + ":*//*";
     myProblemsScope = new NamedScope(IdeBundle.message("predefined.scope.problems.name"), new AbstractPackageSet(text) {
+      @Override
       public boolean contains(VirtualFile file, NamedScopesHolder holder) {
         return holder.getProject() == myProject
                && WolfTheProblemSolver.getInstance(myProject).isProblemFile(file);
@@ -58,6 +59,7 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
     myScopes = Arrays.asList(projectScope, getProblemsScope(), getAllScope(), nonProjectScope);
   }
 
+  @Override
   @NotNull
   public List<NamedScope> getCustomScopes() {
     return myScopes;
@@ -67,6 +69,7 @@ public class DefaultScopesProvider extends CustomScopesProviderEx {
   private static class AllScopeHolder {
     private static final String TEXT = FilePatternPackageSet.SCOPE_FILE + ":*//*";
     private static final NamedScope ALL = new NamedScope("All", new AbstractPackageSet(TEXT, 0) {
+      @Override
       public boolean contains(final VirtualFile file, final NamedScopesHolder scopesHolder) {
         return true;
       }

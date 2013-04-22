@@ -32,6 +32,7 @@ public class NonCodeSearchDescriptionLocation extends ElementDescriptionLocation
   public static final NonCodeSearchDescriptionLocation NON_JAVA = new NonCodeSearchDescriptionLocation(true);
   public static final NonCodeSearchDescriptionLocation STRINGS_AND_COMMENTS = new NonCodeSearchDescriptionLocation(false);
 
+  @Override
   public ElementDescriptionProvider getDefaultProvider() {
     return DefaultNonCodeSearchElementDescriptionProvider.INSTANCE;
   }

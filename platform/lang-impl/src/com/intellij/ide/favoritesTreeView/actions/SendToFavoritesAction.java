@@ -40,6 +40,7 @@ public class SendToFavoritesAction extends AnAction {
     toName = name;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     Project project = e.getProject();
@@ -69,6 +70,7 @@ public class SendToFavoritesAction extends AnAction {
   }
 
 
+  @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(isEnabled(e));
   }

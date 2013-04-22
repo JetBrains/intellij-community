@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.psi.PsiElement;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -29,6 +30,7 @@ public interface ProblemDescriptor extends CommonProblemDescriptor{
   PsiElement getStartElement();
   PsiElement getEndElement();
   int getLineNumber();
+  @NotNull
   ProblemHighlightType getHighlightType();
   boolean isAfterEndOfLine();
 

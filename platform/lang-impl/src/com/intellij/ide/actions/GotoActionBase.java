@@ -53,6 +53,7 @@ public abstract class GotoActionBase extends AnAction {
   private static final Map<Class, Pair<String, Integer>> ourLastStrings = ContainerUtil.newHashMap();
 
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     LOG.assertTrue (!getClass ().equals (myInAction));
     try {
@@ -67,6 +68,7 @@ public abstract class GotoActionBase extends AnAction {
 
   protected abstract void gotoActionPerformed(AnActionEvent e);
 
+  @Override
   public void update(final AnActionEvent event) {
     final Presentation presentation = event.getPresentation();
     final DataContext dataContext = event.getDataContext();
@@ -167,7 +169,7 @@ public abstract class GotoActionBase extends AnAction {
   protected <T> void showNavigationPopup(final GotoActionCallback<T> callback,
                                          @Nullable final String findUsagesTitle,
                                          final ChooseByNamePopup popup) {
-   
+
 
     final Class startedAction = myInAction;
     LOG.assertTrue(startedAction != null);

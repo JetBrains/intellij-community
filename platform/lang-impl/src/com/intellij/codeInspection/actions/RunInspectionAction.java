@@ -77,6 +77,7 @@ public class RunInspectionAction extends GotoActionBase {
       @Override
       public void elementChosen(ChooseByNamePopup popup, final Object element) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             runInspection(project, (InspectionProfileEntry)element, virtualFile, psiElement, psiFile);
           }

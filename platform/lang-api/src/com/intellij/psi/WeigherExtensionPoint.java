@@ -39,6 +39,7 @@ public class WeigherExtensionPoint extends AbstractExtensionPointBean implements
   public String id;
 
   private final NotNullLazyValue<Weigher> myHandler = new NotNullLazyValue<Weigher>() {
+    @Override
     @NotNull
     protected final Weigher compute() {
       try {
@@ -64,10 +65,12 @@ public class WeigherExtensionPoint extends AbstractExtensionPointBean implements
     }
   };
 
+  @Override
   public Weigher getInstance() {
     return myHandler.getValue();
   }
 
+  @Override
   public String getKey() {
     return key;
   }

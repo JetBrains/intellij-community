@@ -24,14 +24,17 @@ import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 
 public final class ProjectFileDirMacro extends Macro {
+  @Override
   public String getName() {
     return "ProjectFileDir";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.project.file.directory");
   }
 
+  @Override
   @Nullable
   public String expand(DataContext dataContext) {
     final VirtualFile baseDir = PlatformDataKeys.PROJECT_FILE_DIRECTORY.getData(dataContext);

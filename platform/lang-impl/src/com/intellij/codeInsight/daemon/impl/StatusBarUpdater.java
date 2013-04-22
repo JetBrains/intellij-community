@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 public class StatusBarUpdater implements Disposable {
   private final Project myProject;
@@ -52,7 +53,7 @@ public class StatusBarUpdater implements Disposable {
 
     project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         updateLater();
       }
     });
@@ -96,7 +97,7 @@ public class StatusBarUpdater implements Disposable {
     int offset = editor.getCaretModel().getOffset();
     DaemonCodeAnalyzer codeAnalyzer = DaemonCodeAnalyzer.getInstance(myProject);
     HighlightInfo info = ((DaemonCodeAnalyzerImpl)codeAnalyzer).findHighlightByOffset(document, offset, false, HighlightSeverity.WARNING);
-    String text = info != null && info.description != null ? info.description : "";
+    String text = info != null && info.getDescription() != null ? info.getDescription() : "";
 
     StatusBar statusBar = WindowManager.getInstance().getStatusBar(editor.getContentComponent(), myProject);
     if (statusBar instanceof StatusBarEx) {

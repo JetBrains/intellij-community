@@ -27,6 +27,7 @@ import com.intellij.openapi.wm.ex.ToolWindowEx;
  * @author yole
  */
 public class StructureViewToolWindowFactory implements ToolWindowFactory, DumbAware {
+  @Override
   public void createToolWindowContent(Project project, ToolWindow toolWindow) {
     StructureViewFactoryImpl factory = (StructureViewFactoryImpl)StructureViewFactory.getInstance(project);
     factory.initToolWindow((ToolWindowEx)toolWindow);

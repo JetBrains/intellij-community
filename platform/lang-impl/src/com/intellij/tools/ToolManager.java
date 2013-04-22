@@ -60,6 +60,7 @@ public class ToolManager extends BaseToolManager<Tool> {
     return ApplicationManager.getApplication().getComponent(ToolManager.class);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "ToolManager";

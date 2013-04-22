@@ -62,6 +62,7 @@ public class DeleteHandler {
   }
 
   public static class DefaultDeleteProvider implements DeleteProvider {
+    @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
       if (PlatformDataKeys.PROJECT.getData(dataContext) == null) {
         return false;
@@ -88,6 +89,7 @@ public class DeleteHandler {
       return elements;
     }
 
+    @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       PsiElement[] elements = getPsiElements(dataContext);
       if (elements == null) return;
@@ -122,9 +124,11 @@ public class DeleteHandler {
     if (safeDeleteApplicable && !dumb) {
       final Ref<Boolean> exit = Ref.create(false);
       DeleteDialog dialog = new DeleteDialog(project, elements, new DeleteDialog.Callback() {
+        @Override
         public void run(final DeleteDialog dialog) {
           if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), true)) return;
           SafeDeleteProcessor.createInstance(project, new Runnable() {
+            @Override
             public void run() {
               exit.set(true);
               dialog.close(DialogWrapper.OK_EXIT_CODE);
@@ -174,6 +178,7 @@ public class DeleteHandler {
     }
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
       public void run() {
         if (!CommonRefactoringUtil.checkReadOnlyStatusRecursively(project, Arrays.asList(elements), false)) {
           return;
@@ -233,12 +238,14 @@ public class DeleteHandler {
           }
 
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
             public void run() {
               try {
                 elementToDelete.delete();
               }
               catch (final IncorrectOperationException ex) {
                 ApplicationManager.getApplication().invokeLater(new Runnable() {
+                  @Override
                   public void run() {
                     Messages.showMessageDialog(project, ex.getMessage(), CommonBundle.getErrorTitle(), Messages.getErrorIcon());
                   }
@@ -254,8 +261,10 @@ public class DeleteHandler {
   private static boolean clearReadOnlyFlag(final VirtualFile virtualFile, final Project project) {
     final boolean[] success = new boolean[1];
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
+      @Override
       public void run() {
         Runnable action = new Runnable() {
+          @Override
           public void run() {
             try {
               ReadOnlyAttributeUtil.setReadOnlyAttribute(virtualFile, false);

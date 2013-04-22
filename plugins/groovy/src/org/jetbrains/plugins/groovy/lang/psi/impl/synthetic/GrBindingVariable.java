@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrTypeElement;
 
 import javax.swing.*;
@@ -119,6 +120,11 @@ public class GrBindingVariable extends GrLightVariable implements GrVariable {
           myHasWriteAccess = true;
         }
         super.visitAssignmentExpression(expression);
+      }
+
+      @Override
+      public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+        //don't go inside type definitions
       }
 
       @Override

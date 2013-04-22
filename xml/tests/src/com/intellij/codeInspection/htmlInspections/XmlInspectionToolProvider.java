@@ -40,7 +40,8 @@ public class XmlInspectionToolProvider implements InspectionToolProvider {
       XmlUnusedNamespaceInspection.class,
       XmlHighlightVisitorBasedInspection.class,
       XmlPathReferenceInspection.class,
-      HtmlUnknownTargetInspection.class
+      HtmlUnknownTargetInspection.class,
+      HtmlUnknownAnchorTargetInspection.class
     };
   }
 }

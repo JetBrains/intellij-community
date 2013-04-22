@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.util.io;
 
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.Nullable;
 
@@ -174,30 +173,25 @@ public final class FileAttributes {
 
   @Override
   public String toString() {
-    final StringBuilder sb = StringBuilderSpinAllocator.alloc();
-    try {
-      sb.append("[type:");
-      if (type == Type.FILE) sb.append('f');
-      else if (type == Type.DIRECTORY) sb.append('d');
-      else if (type == Type.SPECIAL) sb.append('!');
-      else sb.append('-');
+    final StringBuilder sb = new StringBuilder();
+    sb.append("[type:");
+    if (type == Type.FILE) sb.append('f');
+    else if (type == Type.DIRECTORY) sb.append('d');
+    else if (type == Type.SPECIAL) sb.append('!');
+    else sb.append('-');
 
-      if (isSet(flags, SYM_LINK)) sb.append('l');
-      if (isSet(flags, HIDDEN)) sb.append('.');
+    if (isSet(flags, SYM_LINK)) sb.append('l');
+    if (isSet(flags, HIDDEN)) sb.append('.');
 
-      sb.append(" length:").append(length);
+    sb.append(" length:").append(length);
 
-      sb.append(" modified:").append(lastModified);
+    sb.append(" modified:").append(lastModified);
 
-      if (permissions != -1) {
-        sb.append(" mode:").append(Integer.toOctalString(permissions));
-      }
-
-      sb.append(']');
-      return sb.toString();
+    if (permissions != -1) {
+      sb.append(" mode:").append(Integer.toOctalString(permissions));
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(sb);
-    }
+
+    sb.append(']');
+    return sb.toString();
   }
 }

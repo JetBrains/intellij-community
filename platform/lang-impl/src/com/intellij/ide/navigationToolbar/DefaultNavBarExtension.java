@@ -36,6 +36,7 @@ import java.util.Collection;
 import java.util.Collections;
 
 public class DefaultNavBarExtension implements NavBarModelExtension{
+  @Override
   @Nullable
   public String getPresentableText(final Object object) {
     if (object instanceof Project) {
@@ -64,11 +65,13 @@ public class DefaultNavBarExtension implements NavBarModelExtension{
     return null;
   }
 
+  @Override
   @Nullable
   public PsiElement getParent(final PsiElement object) {
     return null;
   }
 
+  @Override
   public PsiElement adjustElement(final PsiElement psiElement) {
     final PsiFile containingFile = psiElement.getContainingFile();
     if (containingFile != null) return containingFile;

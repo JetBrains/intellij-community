@@ -63,6 +63,7 @@ public class CreateFromTemplatePanel{
   public JComponent getComponent() {
     if (myMainPanel == null){
       myMainPanel = new JPanel(new GridBagLayout()){
+        @Override
         public Dimension getPreferredSize(){
           return getMainPanelPreferredSize(super.getPreferredSize());
         }

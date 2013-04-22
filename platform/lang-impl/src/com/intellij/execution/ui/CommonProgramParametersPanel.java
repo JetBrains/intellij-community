@@ -60,7 +60,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
   public CommonProgramParametersPanel() {
     super();
     setLayout(new VerticalFlowLayout(VerticalFlowLayout.MIDDLE, 0, 5, true, false));
-    
+
     initComponents();
     copyDialogCaption(myProgramParametersComponent);
     updateUI();
@@ -72,6 +72,7 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
 
     final JPanel panel = new JPanel(new BorderLayout());
     myWorkingDirectoryField = new TextFieldWithBrowseButton(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         FileChooserDescriptor fileChooserDescriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         fileChooserDescriptor.setTitle(ExecutionBundle.message("select.working.directory.message"));
@@ -93,12 +94,14 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     final FixedSizeButton button = new FixedSizeButton(myWorkingDirectoryField);
     button.setIcon(AllIcons.RunConfigurations.Variables);
     button.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final List<String> macros = new ArrayList<String>(PathMacros.getInstance().getUserMacroNames());
         if (myHaveModuleContext) macros.add("MODULE_DIR");
 
         final JList list = new JBList(ArrayUtil.toStringArray(macros));
         final JBPopup popup = JBPopupFactory.getInstance().createListPopupBuilder(list).setItemChoosenCallback(new Runnable() {
+          @Override
           public void run() {
             final Object value = list.getSelectedValue();
             if (value instanceof String) {
@@ -159,10 +162,12 @@ public class CommonProgramParametersPanel extends JPanel implements PanelWithAnc
     return myProgramParametersComponent;
   }
 
+  @Override
   public JComponent getAnchor() {
     return myAnchor;
   }
 
+  @Override
   public void setAnchor(JComponent anchor) {
     this.myAnchor = anchor;
     myProgramParametersComponent.setAnchor(anchor);

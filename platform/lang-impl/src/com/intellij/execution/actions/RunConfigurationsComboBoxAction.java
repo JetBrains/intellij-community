@@ -49,6 +49,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   public static final Icon CHECKED_SELECTED_ICON = new SizedIcon(AllIcons.Actions.Checked_selected, 16, 16);
   public static final Icon EMPTY_ICON = EmptyIcon.ICON_16;
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     final IdeFrame ideFrame = findFrame(e.getData(PlatformDataKeys.CONTEXT_COMPONENT));
     final ComboBoxButton button = (ComboBoxButton)ideFrame.getComponent().getRootPane().getClientProperty(BUTTON_KEY);
@@ -60,6 +61,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     return UIUtil.getParentOfType(IdeFrame.class, component);
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     final Presentation presentation = e.getPresentation();
     final Project project = e.getData(PlatformDataKeys.PROJECT);
@@ -131,8 +133,10 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
     }
   }
 
+  @Override
   public JComponent createCustomComponent(final Presentation presentation) {
     final ComboBoxButton comboBoxButton = new ComboBoxButton(presentation) {
+      @Override
       public void addNotify() {
         super.addNotify();    //To change body of overriden methods use Options | File Templates.;
         final IdeFrame frame = findFrame(this);
@@ -157,6 +161,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
   }
 
 
+  @Override
   @NotNull
   protected DefaultActionGroup createPopupActionGroup(final JComponent button) {
     final DefaultActionGroup allActionsGroup = new DefaultActionGroup();
@@ -225,6 +230,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       presentation.setIcon(AllIcons.Actions.Menu_saveall);
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       final Project project = e.getData(PlatformDataKeys.PROJECT);
       if (project != null) {
@@ -236,6 +242,7 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       }
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       final Presentation presentation = e.getPresentation();
       final Project project = e.getData(PlatformDataKeys.PROJECT);
@@ -322,11 +329,13 @@ public class RunConfigurationsComboBoxAction extends ComboBoxAction implements D
       setConfigurationIcon(presentation, myConfiguration, myProject);
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       RunManagerEx.getInstanceEx(myProject).setActiveConfiguration(myConfiguration);
       updateButton(ExecutionTargetManager.getActiveTarget(myProject), myConfiguration, myProject, e.getPresentation());
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       super.update(e);
       updateIcon(e.getPresentation());

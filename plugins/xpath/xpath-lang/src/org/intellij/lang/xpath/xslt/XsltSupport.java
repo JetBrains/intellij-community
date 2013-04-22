@@ -108,6 +108,10 @@ public class XsltSupport {
         return XSLT_NS.equals(s) || s.startsWith(XALAN_EXTENSION_PREFIX);
     }
 
+    private static boolean isXsltCoreTag(@NotNull XmlTag tag) {
+      return tag.isValid() && XSLT_NS.equals(tag.getNamespace());
+    }
+
     public static boolean isXPathAttribute(@NotNull XmlAttribute attribute) {
         if (attribute.getValueElement() == null) return false;
 
@@ -146,7 +150,7 @@ public class XsltSupport {
 
     public static boolean isVariableOrParam(@NotNull XmlTag tag) {
         final String localName = tag.getLocalName();
-        return ("variable".equals(localName) || "param".equals(localName)) && isXsltTag(tag);
+        return ("variable".equals(localName) || "param".equals(localName)) && isXsltCoreTag(tag);
     }
 
     public static boolean isVariable(@NotNull XmlAttribute attribute) {
@@ -155,7 +159,7 @@ public class XsltSupport {
 
     public static boolean isVariable(@NotNull XmlTag tag) {
         final String localName = tag.getLocalName();
-        return "variable".equals(localName) && isXsltTag(tag);
+        return "variable".equals(localName) && isXsltCoreTag(tag);
     }
 
     public static boolean isParam(@NotNull XmlAttribute attribute) {
@@ -164,7 +168,7 @@ public class XsltSupport {
 
     public static boolean isParam(@NotNull XmlTag tag) {
         final String localName = tag.getLocalName();
-        return "param".equals(localName) && isXsltTag(tag);
+        return "param".equals(localName) && isXsltCoreTag(tag);
     }
 
     public static boolean isPatternAttribute(@NotNull XmlAttribute attribute) {
@@ -180,16 +184,16 @@ public class XsltSupport {
     }
 
     public static boolean isTemplateCall(@NotNull XmlTag tag) {
-        return "call-template".equals(tag.getLocalName()) && hasNameAttribute(tag) && isXsltTag(tag);
+        return "call-template".equals(tag.getLocalName()) && hasNameAttribute(tag) && isXsltCoreTag(tag);
     }
 
     public static boolean isFunction(@NotNull XmlTag tag) {
-        return "function".equals(tag.getLocalName()) && hasNameAttribute(tag) && isXsltTag(tag);
+        return "function".equals(tag.getLocalName()) && hasNameAttribute(tag) && isXsltCoreTag(tag);
     }
 
     public static boolean isApplyTemplates(@NotNull XmlTag tag) {
         final String localName = tag.getLocalName();
-        return "apply-templates".equals(localName) && isXsltTag(tag);
+        return "apply-templates".equals(localName) && isXsltCoreTag(tag);
     }
 
     private static boolean hasNameAttribute(@NotNull XmlTag tag) {
@@ -217,7 +221,7 @@ public class XsltSupport {
     }
 
     public static boolean isTemplate(@NotNull XmlTag element, boolean requireName) {
-        return "template".equals(element.getLocalName()) && (!requireName || hasNameAttribute(element)) && isXsltTag(element);
+        return "template".equals(element.getLocalName()) && (!requireName || hasNameAttribute(element)) && isXsltCoreTag(element);
     }
 
     public static boolean isXsltFile(@NotNull PsiFile psiFile) {
@@ -236,7 +240,7 @@ public class XsltSupport {
 
     public static boolean isXsltRootTag(@NotNull XmlTag tag) {
         final String localName = tag.getLocalName();
-        return ("stylesheet".equals(localName) || "transform".equals(localName)) && XSLT_NS.equals(tag.getNamespace());
+        return ("stylesheet".equals(localName) || "transform".equals(localName)) && isXsltCoreTag(tag);
     }
 
     public static boolean isTemplateCallParamName(@NotNull XmlAttribute attribute) {
@@ -244,7 +248,7 @@ public class XsltSupport {
     }
 
     private static boolean isTemplateCallParam(@NotNull XmlTag parent) {
-        return "with-param".equals(parent.getLocalName()) && hasNameAttribute(parent) && isXsltTag(parent);
+        return "with-param".equals(parent.getLocalName()) && hasNameAttribute(parent) && isXsltCoreTag(parent);
     }
 
     public static boolean isTopLevelElement(XmlTag tag) {
@@ -270,15 +274,13 @@ public class XsltSupport {
     }
 
     public static boolean isIncludeOrImport(XmlTag tag) {
-        if (tag == null || !isXsltTag(tag)) return false;
-        final String localName = tag.getLocalName();
-        return isIncludeOrImport(localName) && tag.getAttribute("href", null) != null;
+      if (tag == null) return false;
+      return isIncludeOrImport(tag.getLocalName()) && isXsltCoreTag(tag) && tag.getAttribute("href", null) != null;
     }
 
     public static boolean isImport(XmlTag tag) {
-        if (tag == null || !isXsltTag(tag)) return false;
-        final String localName = tag.getLocalName();
-        return "import".equals(localName) && tag.getAttribute("href", null) != null;
+      if (tag == null) return false;
+      return "import".equals(tag.getLocalName()) && isXsltCoreTag(tag) && tag.getAttribute("href", null) != null;
     }
 
     @Nullable

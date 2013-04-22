@@ -90,13 +90,13 @@ public class IgnoreResultOfCallInspection extends BaseInspection {
   }
 
   @Override
-  public void readSettings(Element element) throws InvalidDataException {
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
     parseString(callCheckString, classNames, methodNamePatterns);
   }
 
   @Override
-  public void writeSettings(Element element) throws WriteExternalException {
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
     callCheckString = formatString(classNames, methodNamePatterns);
     super.writeSettings(element);
   }

@@ -41,24 +41,29 @@ public class RefFileImpl extends RefElementImpl implements RefFile {
     }
   }
 
+  @Override
   public PsiFile getElement() {
     return (PsiFile)super.getElement();
   }
 
+  @Override
   public void accept(final RefVisitor visitor) {
     ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
       public void run() {
         visitor.visitFile(RefFileImpl.this);
       }
     });
   }
 
+  @Override
   public String getExternalName() {
     final PsiFile psiFile = getElement();
     final VirtualFile virtualFile = psiFile != null ? psiFile.getVirtualFile() : null;
     return virtualFile != null ? virtualFile.getUrl() : getName();
   }
 
+  @Override
   protected void initialize() {
   }
 

@@ -109,7 +109,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   private void fileOpenedImpl(@NotNull final VirtualFile file) {
     fileOpenedImpl(file, null, null);
   }
-  
+
   /**
    * Makes file most recent one
    */
@@ -161,11 +161,11 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
       trimToSize();
     }
   }
-  
+
   private void updateHistoryEntry(@Nullable final VirtualFile file, final boolean changeEntryOrderOnly) {
     updateHistoryEntry(file, null, null, changeEntryOrderOnly);
   }
-  
+
   private void updateHistoryEntry(@Nullable final VirtualFile file,
                                   @Nullable final FileEditor fallbackEditor,
                                   @Nullable FileEditorProvider fallbackProvider,
@@ -182,7 +182,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
       editors = new FileEditor[] {fallbackEditor};
       providers = new FileEditorProvider[] {fallbackProvider};
     }
-    
+
     if (editors.length == 0) {
       // obviously not opened in any editor at the moment,
       // makes no sense to put the file in the history
@@ -312,9 +312,9 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   }
 
   public void readExternal(final Element element) {
-    // we have to delay xml processing because history entries require EditorStates to be created 
-    // which is done via corresponding EditorProviders, those are not accessible before their 
-    // is initComponent() called 
+    // we have to delay xml processing because history entries require EditorStates to be created
+    // which is done via corresponding EditorProviders, those are not accessible before their
+    // is initComponent() called
     myElement = (Element)element.clone();
   }
 
@@ -337,11 +337,11 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
    * Updates history
    */
   private final class MyEditorManagerListener extends FileEditorManagerAdapter{
-    public void fileOpened(final FileEditorManager source, final VirtualFile file){
+    public void fileOpened(@NotNull final FileEditorManager source, @NotNull final VirtualFile file){
       fileOpenedImpl(file);
     }
 
-    public void selectionChanged(final FileEditorManagerEvent event){
+    public void selectionChanged(@NotNull final FileEditorManagerEvent event){
       updateHistoryEntry(event.getOldFile(), event.getOldEditor(), event.getOldProvider(), false);
       updateHistoryEntry(event.getNewFile(), true);
     }
@@ -349,7 +349,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
 
   private final class MyEditorManagerBeforeListener extends FileEditorManagerListener.Before.Adapter {
     @Override
-    public void beforeFileClosed(FileEditorManager source, VirtualFile file) {
+    public void beforeFileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       updateHistoryEntry(file, false);
     }
   }

@@ -50,7 +50,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
                                         flags);
   }
 
-  public void serialize(GrTypeDefinitionStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull GrTypeDefinitionStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     dataStream.writeName(stub.getQualifiedName());
     dataStream.writeByte(stub.getFlags());
@@ -65,7 +65,8 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
     }
   }
 
-  public GrTypeDefinitionStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  @NotNull
+  public GrTypeDefinitionStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     String name = StringRef.toString(dataStream.readName());
     String qname = StringRef.toString(dataStream.readName());
     byte flags = dataStream.readByte();
@@ -83,7 +84,7 @@ public abstract class GrTypeDefinitionElementType<TypeDef extends GrTypeDefiniti
     return superClasses;
   }
 
-  public void indexStub(GrTypeDefinitionStub stub, IndexSink sink) {
+  public void indexStub(@NotNull GrTypeDefinitionStub stub, @NotNull IndexSink sink) {
     if (stub.isAnonymous()) {
       final String[] classNames = stub.getSuperClassNames();
       if (classNames.length != 1) return;

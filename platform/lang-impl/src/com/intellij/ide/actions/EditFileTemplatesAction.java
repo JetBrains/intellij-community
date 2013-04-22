@@ -26,6 +26,7 @@ public class EditFileTemplatesAction extends AnAction{
     super(text);
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e){
     ConfigureTemplatesDialog dialog = new ConfigureTemplatesDialog(PlatformDataKeys.PROJECT.getData(e.getDataContext()));
     dialog.show();

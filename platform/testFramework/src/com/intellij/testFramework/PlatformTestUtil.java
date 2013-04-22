@@ -46,7 +46,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
 import com.intellij.util.Alarm;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ThrowableRunnable;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.io.ZipUtil;
@@ -127,7 +126,7 @@ public class PlatformTestUtil {
     StringBuilder buffer = new StringBuilder();
     final Collection<String> strings = printAsList(tree, withSelection, nodePrintCondition);
     for (String string : strings) {
-      buffer.append(string).append("\n");  
+      buffer.append(string).append("\n");
     }
     return buffer.toString();
   }
@@ -158,37 +157,32 @@ public class PlatformTestUtil {
 
     if (nodePrintCondition != null && !nodePrintCondition.value(nodeText)) return;
 
-    final StringBuilder buff = StringBuilderSpinAllocator.alloc();
-    try {
-      StringUtil.repeatSymbol(buff, ' ', level);
+    final StringBuilder buff = new StringBuilder();
+    StringUtil.repeatSymbol(buff, ' ', level);
 
-      final boolean expanded = tree.isExpanded(new TreePath(defaultMutableTreeNode.getPath()));
-      if (!defaultMutableTreeNode.isLeaf()) {
-        buff.append(expanded ? "-" : "+");
-      }
-
-      final boolean selected = tree.getSelectionModel().isPathSelected(new TreePath(defaultMutableTreeNode.getPath()));
-      if (withSelection && selected) {
-        buff.append("[");
-      }
-
-      buff.append(nodeText);
-
-      if (withSelection && selected) {
-        buff.append("]");
-      }
-
-      strings.add(buff.toString());
-
-      int childCount = tree.getModel().getChildCount(root);
-      if (expanded) {
-        for (int i = 0; i < childCount; i++) {
-          printImpl(tree, tree.getModel().getChild(root, i), strings, level + 1, withSelection, nodePrintCondition);
-        }
-      }
+    final boolean expanded = tree.isExpanded(new TreePath(defaultMutableTreeNode.getPath()));
+    if (!defaultMutableTreeNode.isLeaf()) {
+      buff.append(expanded ? "-" : "+");
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(buff);
+
+    final boolean selected = tree.getSelectionModel().isPathSelected(new TreePath(defaultMutableTreeNode.getPath()));
+    if (withSelection && selected) {
+      buff.append("[");
+    }
+
+    buff.append(nodeText);
+
+    if (withSelection && selected) {
+      buff.append("]");
+    }
+
+    strings.add(buff.toString());
+
+    int childCount = tree.getModel().getChildCount(root);
+    if (expanded) {
+      for (int i = 0; i < childCount; i++) {
+        printImpl(tree, tree.getModel().getChild(root, i), strings, level + 1, withSelection, nodePrintCondition);
+      }
     }
   }
 
@@ -289,7 +283,7 @@ public class PlatformTestUtil {
                                     int maxRowCount,
                                     char paddingChar,
                                     @Nullable Queryable.PrintInfo printInfo) {
-    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
+    StringBuilder buffer = new StringBuilder();
     doPrint(buffer, currentLevel, node, structure, comparator, maxRowCount, 0, paddingChar, printInfo);
     return buffer;
   }

@@ -45,8 +45,9 @@ public class DescriptorComposer extends HTMLComposerImpl {
     myTool = tool;
   }
 
+  @Override
   public void compose(StringBuffer buf, RefEntity refEntity) {
-    genPageHeader(buf, refEntity);      
+    genPageHeader(buf, refEntity);
     if (myTool.getDescriptions(refEntity) != null) {
       appendHeading(buf, InspectionsBundle.message("inspection.problem.synopsis"));
 
@@ -74,6 +75,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
 
   protected void composeAdditionalDescription(final StringBuffer buf, final RefEntity refEntity) {}
 
+  @Override
   public void compose(StringBuffer buf, RefEntity refElement, CommonProblemDescriptor descriptor) {
     CommonProblemDescriptor[] descriptions = myTool.getDescriptions(refElement);
 

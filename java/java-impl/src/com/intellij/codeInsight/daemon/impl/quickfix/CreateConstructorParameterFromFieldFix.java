@@ -317,11 +317,9 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
     boolean created = false;
     // do not introduce assignment in chanined constructor
     if (HighlightControlFlowUtil.getChainedConstructors(constructor) == null) {
-      final JavaCodeStyleManager styleManager = JavaCodeStyleManager.getInstance(project);
-
       for (PsiField field : fields.keySet()) {
         final String defaultParamName = fields.get(field);
-        PsiParameter parameter = findParamByName(defaultParamName, newParameters);
+        PsiParameter parameter = findParamByName(defaultParamName, field.getType(), newParameters, parameterInfos);
         if (parameter == null) {
           continue;
         }
@@ -342,15 +340,25 @@ public class CreateConstructorParameterFromFieldFix implements IntentionAction {
   }
 
   @Nullable
-  private static PsiParameter findParamByName(String newName, PsiParameter[] newParameters) {
-    PsiParameter parameter = null;
+  private static PsiParameter findParamByName(String newName,
+                                              PsiType type,
+                                              PsiParameter[] newParameters,
+                                              ParameterInfoImpl[] parameterInfos) {
     for (PsiParameter newParameter : newParameters) {
       if (Comparing.strEqual(newName, newParameter.getName())) {
-        parameter = newParameter;
-        break;
+        return newParameter;
       }
     }
-    return parameter;
+    for (int i = 0; i < newParameters.length; i++) {
+      if (parameterInfos[i].getOldIndex() == -1) {
+        final PsiParameter parameter = newParameters[i];
+        final PsiType paramType = parameterInfos[i].getTypeWrapper().getType(parameter, parameter.getManager());
+        if (type.isAssignableFrom(paramType)){
+          return parameter;
+        }
+      }
+    }
+    return null;
   }
 
   private PsiField getField() {

@@ -49,10 +49,12 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
 
   public BasePlatformRefactoringAction() {
     LanguageRefactoringSupport.INSTANCE.addListener(new ExtensionPointListener<RefactoringSupportProvider>() {
+      @Override
       public void extensionAdded(@NotNull RefactoringSupportProvider extension, @Nullable PluginDescriptor pluginDescriptor) {
         myHidden = null;
       }
 
+      @Override
       public void extensionRemoved(@NotNull RefactoringSupportProvider extension, @Nullable PluginDescriptor pluginDescriptor) {
         myHidden = null;
       }
@@ -124,9 +126,10 @@ public abstract class BasePlatformRefactoringAction extends BaseRefactoringActio
 
   @Override
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull PsiElement element, @NotNull Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
-    return getHandler(context) != null; 
+    return getHandler(context) != null;
   }
 
+  @Override
   protected boolean isAvailableForLanguage(final Language language) {
     List<RefactoringSupportProvider> providers = LanguageRefactoringSupport.INSTANCE.allForLanguage(language);
     return ContainerUtil.find(providers, myCondition) != null;

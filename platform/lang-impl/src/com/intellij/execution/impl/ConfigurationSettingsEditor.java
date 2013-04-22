@@ -50,6 +50,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
   private final SettingsEditor<RunConfiguration> myConfigurationEditor;
   private SettingsEditorGroup<RunnerAndConfigurationSettings> myCompound;
 
+  @Override
   public CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
     init();
     return new GroupSettingsBuilder<RunnerAndConfigurationSettings>(myCompound);
@@ -90,12 +91,15 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
       if (myRunnerEditors.size() > 0) {
         myCompound.addEditor(ExecutionBundle.message("run.configuration.startup.connection.rab.title"),
                              new CompositeSettingsEditor<RunnerAndConfigurationSettings>(getFactory()) {
+                               @Override
                                public CompositeSettingsBuilder<RunnerAndConfigurationSettings> getBuilder() {
                                  return new CompositeSettingsBuilder<RunnerAndConfigurationSettings>() {
+                                   @Override
                                    public Collection<SettingsEditor<RunnerAndConfigurationSettings>> getEditors() {
                                      return myRunnerEditors;
                                    }
 
+                                   @Override
                                    public JComponent createCompoundEditor() {
                                      return myRunnersComponent.getComponent();
                                    }
@@ -124,6 +128,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     if (configEditor != null) {
       wrappedConfigEditor = new SettingsEditorWrapper<RunnerAndConfigurationSettings, JDOMExternalizable>(configEditor,
                                           new Convertor<RunnerAndConfigurationSettings, JDOMExternalizable>() {
+                                            @Override
                                             public JDOMExternalizable convert(RunnerAndConfigurationSettings configurationSettings) {
                                               return configurationSettings.getConfigurationSettings(runner).getSettings();
                                             }
@@ -135,6 +140,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     if (runnerEditor != null) {
       wrappedRunEditor = new SettingsEditorWrapper<RunnerAndConfigurationSettings, JDOMExternalizable>(runnerEditor,
                                          new Convertor<RunnerAndConfigurationSettings, JDOMExternalizable>() {
+                                           @Override
                                            public JDOMExternalizable convert(RunnerAndConfigurationSettings configurationSettings) {
                                              return configurationSettings.getRunnerSettings(runner).getData();
                                            }
@@ -163,6 +169,7 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
     myConfiguration = settings.getConfiguration();
   }
 
+  @Override
   public RunnerAndConfigurationSettings getSnapshot() throws ConfigurationException {
     RunnerAndConfigurationSettings settings = getFactory().create();
     settings.setName(myConfiguration.getName());
@@ -190,12 +197,14 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
       myRunnerPanel.add(myNoRunner, NO_RUNNER_COMPONENT);
       myRunnersList.setModel(myListModel);
       myRunnersList.getSelectionModel().addListSelectionListener(new ListSelectionListener() {
+        @Override
         public void valueChanged(ListSelectionEvent e) {
           updateRunnerComponent();
         }
       });
       updateRunnerComponent();
       myRunnersList.setCellRenderer(new ColoredListCellRenderer() {
+        @Override
         protected void customizeCellRenderer(JList list, Object value, int index, boolean selected, boolean hasFocus) {
           Executor executor = (Executor)value;
           setIcon(executor.getIcon());
@@ -231,19 +240,23 @@ class ConfigurationSettingsEditor extends CompositeSettingsEditor<RunnerAndConfi
       }
     }
 
+    @Override
     public void resetEditorFrom(RunnerAndConfigurationSettings configurationSettings) {
       myConfigEditor.resetFrom(configurationSettings.getConfiguration());
     }
 
+    @Override
     public void applyEditorTo(RunnerAndConfigurationSettings configurationSettings) throws ConfigurationException {
       myConfigEditor.applyTo(configurationSettings.getConfiguration());
     }
 
+    @Override
     @NotNull
     public JComponent createEditor() {
       return myConfigEditor.getComponent();
     }
 
+    @Override
     public void disposeEditor() {
       Disposer.dispose(myConfigEditor);
     }

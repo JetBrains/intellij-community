@@ -96,6 +96,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     return myCreatedElement;
   }
 
+  @Override
   protected void doOKAction(){
     String fileName = myAttrPanel.getFileName();
     if (fileName != null && fileName.length() == 0) {
@@ -145,6 +146,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     return IdeBundle.message("error.unable.to.parse.template.message", myTemplate.getName(), message);
   }
 
+  @Override
   protected JComponent createCenterPanel(){
     myAttrPanel.ensureFitToScreen(200, 200);
     JPanel centerPanel = new JPanel(new GridBagLayout());
@@ -152,6 +154,7 @@ public class CreateFromTemplateDialog extends DialogWrapper {
     return centerPanel;
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent(){
     return IdeFocusTraversalPolicy.getPreferredFocusedComponent(myAttrComponent);
   }

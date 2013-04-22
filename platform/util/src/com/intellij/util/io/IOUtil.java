@@ -16,6 +16,7 @@
 package com.intellij.util.io;
 
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.CharsetToolkit;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -30,18 +31,17 @@ public class IOUtil {
 
   private IOUtil() {}
 
-  private static final Charset UTF_16BE_CHARSET = Charset.forName("UTF-16BE");
-  public static String readString(DataInput stream) throws IOException {
+  public static String readString(@NotNull DataInput stream) throws IOException {
     int length = stream.readInt();
     if (length == -1) return null;
     if (length == 0) return "";
 
     byte[] bytes = new byte[length*2];
     stream.readFully(bytes);
-    return new String(bytes, 0, length*2, UTF_16BE_CHARSET);
+    return new String(bytes, 0, length*2, CharsetToolkit.UTF_16BE_CHARSET);
   }
 
-  public static void writeString(String s, DataOutput stream) throws IOException {
+  public static void writeString(String s, @NotNull DataOutput stream) throws IOException {
     if (s == null) {
       stream.writeInt(-1);
       return;
@@ -63,7 +63,7 @@ public class IOUtil {
     stream.write(bytes);
   }
 
-  public static void writeUTFTruncated(final DataOutput stream, final String text) throws IOException {
+  public static void writeUTFTruncated(@NotNull DataOutput stream, @NotNull String text) throws IOException {
     // we should not compare number of symbols to 65635 -> it is number of bytes what should be compared
     // ? 4 bytes per symbol - rough estimation
     if (text.length() > 16383) {
@@ -74,11 +74,12 @@ public class IOUtil {
     }
   }
 
+  @NotNull
   public static byte[] allocReadWriteUTFBuffer() {
     return new byte[STRING_LENGTH_THRESHOLD + STRING_HEADER_SIZE];
   }
 
-  public static void writeUTFFast(final byte[] buffer, final DataOutput storage, @NotNull final String value) throws IOException {
+  public static void writeUTFFast(@NotNull byte[] buffer, @NotNull DataOutput storage, @NotNull final String value) throws IOException {
     int len = value.length();
     if (len < STRING_LENGTH_THRESHOLD) {
       buffer[0] = (byte)len;
@@ -123,7 +124,7 @@ public class IOUtil {
     return new String(buffer, 0, len, US_ASCII);
   }
 
-  public static boolean isAscii(final String str) {
+  public static boolean isAscii(@NotNull String str) {
     for (int i = 0, length = str.length(); i < length; ++ i) {
       if (str.charAt(i) >= 128) return false;
     }
@@ -134,7 +135,7 @@ public class IOUtil {
     return c < 128;
   }
 
-  public static boolean deleteAllFilesStartingWith(File file) {
+  public static boolean deleteAllFilesStartingWith(@NotNull File file) {
     final String baseName = file.getName();
     File parentFile = file.getParentFile();
     final File[] files = parentFile != null ? parentFile.listFiles(new FileFilter() {

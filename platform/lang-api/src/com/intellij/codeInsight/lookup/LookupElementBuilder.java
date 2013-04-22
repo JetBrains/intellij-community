@@ -142,6 +142,7 @@ public final class LookupElementBuilder extends LookupElement {
                                     Collections.unmodifiableSet(set), myCaseSensitive);
   }
 
+  @Override
   public boolean isCaseSensitive() {
     return myCaseSensitive;
   }

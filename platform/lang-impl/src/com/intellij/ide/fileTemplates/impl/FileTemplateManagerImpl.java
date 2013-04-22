@@ -84,7 +84,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     myCodeTemplatesManager = myTemplateSettings.getCodeTemplatesManager();
     myJ2eeTemplatesManager = myTemplateSettings.getJ2eeTemplatesManager();
     myAllManagers = myTemplateSettings.getAllManagers();
-    
+
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       for (String tname : Arrays.asList("Class", "AnnotationType", "Enum", "Interface")) {
         for (FileTemplate template : myInternalTemplatesManager.getAllTemplates(true)) {
@@ -97,24 +97,28 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
         template.setText(normalizeText(getTestClassTemplateText(tname)));
       }
     }
-    
+
   }
 
+  @Override
   @NotNull
   public FileTemplate[] getAllTemplates() {
     final Collection<FileTemplateBase> templates = myDefaultTemplatesManager.getAllTemplates(false);
     return templates.toArray(new FileTemplate[templates.size()]);
   }
 
+  @Override
   public FileTemplate getTemplate(@NotNull String templateName) {
     return myDefaultTemplatesManager.findTemplateByName(templateName);
   }
 
+  @Override
   @NotNull
   public FileTemplate addTemplate(@NotNull String name, @NotNull String extension) {
     return myDefaultTemplatesManager.addTemplate(name, extension);
   }
 
+  @Override
   public void removeTemplate(@NotNull FileTemplate template) {
     final String qName = ((FileTemplateBase)template).getQualifiedName();
     for (FTManager manager : myAllManagers) {
@@ -122,11 +126,13 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     }
   }
 
+  @Override
   @TestOnly
   public FileTemplate addInternal(@NotNull String name, @NotNull String extension) {
     return myInternalTemplatesManager.addTemplate(name, extension);
   }
 
+  @Override
   @NotNull
   public Properties getDefaultProperties() {
     @NonNls Properties props = new Properties();
@@ -149,7 +155,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
 
     props.setProperty("USER", SystemProperties.getUserName());
     props.setProperty("PRODUCT_NAME", ApplicationNamesInfo.getInstance().getFullProductName());
-    
+
     props.setProperty("DS", "$"); // Dollar sign, strongly needed for PHP, JS, etc. See WI-8979
 
     return props;
@@ -165,16 +171,19 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     return result;
   }
 
+  @Override
   @NotNull
   public Collection<String> getRecentNames() {
     validateRecentNames(); // todo: no need to do it lazily
     return myRecentList.getRecentNames(RECENT_TEMPLATES_SIZE);
   }
 
+  @Override
   public void addRecentName(@NotNull @NonNls String name) {
     myRecentList.addName(name);
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
 
     final Element recentElement = element.getChild(ELEMENT_RECENT_TEMPLATES);
@@ -188,13 +197,13 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     if (deletedTemplatesElement != null) {
       deletedDefaults.readExternal(deletedTemplatesElement);
     }
-    
+
     final DeletedTemplatesManager deletedIncludes = new DeletedTemplatesManager();
     Element deletedIncludesElement = element.getChild(ELEMENT_DELETED_INCLUDES);
     if (deletedIncludesElement != null) {
       deletedIncludes.readExternal(deletedIncludesElement);
     }
-    
+
     final Set<String> templateNamesWithReformatOff = new HashSet<String>();
     final Element templatesElement = element.getChild(ELEMENT_TEMPLATES);
     if (templatesElement != null) {
@@ -218,8 +227,8 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     final boolean hasDeletedDefaultsInOlderFormat = !deletedDefaults.DELETED_DEFAULT_TEMPLATES.isEmpty();
     final boolean hasDeletedincludesinOlderFormat = !deletedIncludes.DELETED_DEFAULT_TEMPLATES.isEmpty();
     final boolean hasTemplatesWithReformatAttibuteAltered = !templateNamesWithReformatOff.isEmpty();
-    final boolean hasSettingsInOlderFormat = hasDeletedDefaultsInOlderFormat || 
-                                             hasDeletedincludesinOlderFormat || 
+    final boolean hasSettingsInOlderFormat = hasDeletedDefaultsInOlderFormat ||
+                                             hasDeletedincludesinOlderFormat ||
                                              hasTemplatesWithReformatAttibuteAltered;
     if (hasSettingsInOlderFormat) {
       final Collection<FileTemplateBase> allDefaults = myDefaultTemplatesManager.getAllTemplates(true);
@@ -254,6 +263,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     for (FTManager child : myAllManagers) {
       child.saveTemplates();
@@ -304,6 +314,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     myRecentList.validateNames(allNames);
   }
 
+  @Override
   @NotNull
   public FileTemplate[] getInternalTemplates() {
     InternalTemplateBean[] internalTemplateBeans = Extensions.getExtensions(InternalTemplateBean.EP_NAME);
@@ -314,6 +325,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     return result;
   }
 
+  @Override
   public FileTemplate getInternalTemplate(@NotNull @NonNls String templateName) {
     LOG.assertTrue(myInternalTemplatesManager != null);
     FileTemplateBase template = myInternalTemplatesManager.findTemplateByName(templateName);
@@ -322,7 +334,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
       // todo: review the hack and try to get rid of this weird logic completely
       template = myDefaultTemplatesManager.findTemplateByName(templateName);
     }
-      
+
     if (template == null) {
       template = (FileTemplateBase)getJ2eeTemplate(templateName); // Hack to be able to register class templates from the plugin.
       if (template != null) {
@@ -352,6 +364,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     return "package $PACKAGE_NAME$;\npublic " + internalTemplateToSubject(templateName) + " $NAME$ { }";
   }
 
+  @Override
   @NotNull
   public String internalTemplateToSubject(@NotNull @NonNls String templateName) {
     //noinspection HardCodedStringLiteral
@@ -363,6 +376,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     return templateName.toLowerCase();
   }
 
+  @Override
   @NotNull
   public String localizeInternalTemplateName(@NotNull final FileTemplate template) {
     return template.getName();
@@ -374,10 +388,12 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
            "package $PACKAGE_NAME$;\n" + "public " + internalTemplateToSubject(templateName) + " $NAME$ { }";
   }
 
+  @Override
   public FileTemplate getCodeTemplate(@NotNull @NonNls String templateName) {
     return getTemplateFromManager(templateName, myCodeTemplatesManager);
   }
 
+  @Override
   public FileTemplate getJ2eeTemplate(@NotNull @NonNls String templateName) {
     return getTemplateFromManager(templateName, myJ2eeTemplatesManager);
   }
@@ -401,6 +417,7 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
     return null;
   }
 
+  @Override
   @NotNull
   public FileTemplate getDefaultTemplate(final @NotNull String name) {
     final String templateQName = myTypeManager.getExtension(name).isEmpty()? FileTemplateBase.getQualifiedName(name, "java") : name;
@@ -413,34 +430,39 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
         return copy;
       }
     }
-    
+
     String message = "Default template not found: " + name;
     LOG.error(message);
     return null;
   }
 
+  @Override
   @NotNull
   public FileTemplate[] getAllPatterns() {
     final Collection<FileTemplateBase> allTemplates = myPatternsManager.getAllTemplates(false);
     return allTemplates.toArray(new FileTemplate[allTemplates.size()]);
   }
 
+  @Override
   public FileTemplate getPattern(@NotNull String name) {
     return myPatternsManager.findTemplateByName(name);
   }
 
+  @Override
   @NotNull
   public FileTemplate[] getAllCodeTemplates() {
     final Collection<FileTemplateBase> templates = myCodeTemplatesManager.getAllTemplates(false);
     return templates.toArray(new FileTemplate[templates.size()]);
   }
 
+  @Override
   @NotNull
   public FileTemplate[] getAllJ2eeTemplates() {
     final Collection<FileTemplateBase> templates = myJ2eeTemplatesManager.getAllTemplates(false);
     return templates.toArray(new FileTemplate[templates.size()]);
   }
 
+  @Override
   public void setTemplates(@NotNull String templatesCategory, Collection<FileTemplate> templates) {
     for (FTManager manager : myAllManagers) {
       if (templatesCategory.equals(manager.getName())) {
@@ -484,10 +506,12 @@ public class FileTemplateManagerImpl extends FileTemplateManager implements JDOM
       RECENT_TEMPLATES.retainAll(validNames);
     }
 
+    @Override
     public void readExternal(Element element) throws InvalidDataException {
       DefaultJDOMExternalizer.readExternal(this, element);
     }
 
+    @Override
     public void writeExternal(Element element) throws WriteExternalException {
       DefaultJDOMExternalizer.writeExternal(this, element);
     }

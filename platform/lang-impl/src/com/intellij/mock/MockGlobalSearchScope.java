@@ -24,18 +24,22 @@ import org.jetbrains.annotations.NotNull;
  * @author peter
  */
 public class MockGlobalSearchScope extends GlobalSearchScope {
+  @Override
   public boolean contains(final VirtualFile file) {
     return true;
   }
 
+  @Override
   public int compare(final VirtualFile file1, final VirtualFile file2) {
     return 0;
   }
 
+  @Override
   public boolean isSearchInModuleContent(@NotNull final Module aModule) {
     return true;
   }
 
+  @Override
   public boolean isSearchInLibraries() {
     return true;
   }

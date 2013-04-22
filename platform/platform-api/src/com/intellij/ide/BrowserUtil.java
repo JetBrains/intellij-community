@@ -180,7 +180,7 @@ public class BrowserUtil {
 
     String browserPath = getGeneralSettingsInstance().getBrowserPath();
     if (StringUtil.isEmptyOrSpaces(browserPath)) {
-      showErrorMessage(IdeBundle.message("error.please.specify.path.to.web.browser", IdeBundle.settingsActionPath()),
+      showErrorMessage(IdeBundle.message("error.please.specify.path.to.web.browser", CommonBundle.settingsActionPath()),
                        IdeBundle.message("title.browser.not.found"));
       return;
     }

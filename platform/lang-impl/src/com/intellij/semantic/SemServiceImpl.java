@@ -55,6 +55,7 @@ import java.util.concurrent.atomic.AtomicInteger;
 @SuppressWarnings({"unchecked"})
 public class SemServiceImpl extends SemService{
   private static final Comparator<SemKey> KEY_COMPARATOR = new Comparator<SemKey>() {
+    @Override
     public int compare(SemKey o1, SemKey o2) {
       return o2.getUniqueId() - o1.getUniqueId();
     }
@@ -71,6 +72,7 @@ public class SemServiceImpl extends SemService{
     myProject = project;
     final MessageBusConnection connection = project.getMessageBus().connect();
     connection.subscribe(PsiModificationTracker.TOPIC, new PsiModificationTracker.Listener() {
+      @Override
       public void modificationCountChanged() {
         if (!isInsideAtomicChange()) {
           clearCache();
@@ -79,6 +81,7 @@ public class SemServiceImpl extends SemService{
     });
 
     ((PsiManagerEx)psiManager).registerRunnableToRunOnChange(new Runnable() {
+      @Override
       public void run() {
         if (!isInsideAtomicChange()) {
           clearCache();
@@ -90,7 +93,7 @@ public class SemServiceImpl extends SemService{
     myProducers = collectProducers();
 
     myInheritors = cacheKeyHierarchy(myProducers.keySet());
-    
+
     final LowMemoryWatcher watcher = LowMemoryWatcher.register(new Runnable() {
       @Override
       public void run() {
@@ -101,6 +104,7 @@ public class SemServiceImpl extends SemService{
       }
     });
     ProjectManager.getInstance().addProjectManagerListener(project, new ProjectManagerAdapter() {
+      @Override
       public void projectClosing(Project project) {
         watcher.stop();
       }
@@ -110,6 +114,7 @@ public class SemServiceImpl extends SemService{
   private static MultiMap<SemKey, SemKey> cacheKeyHierarchy(Collection<SemKey> allKeys) {
     final MultiMap<SemKey, SemKey> result = MultiMap.createSmartList();
     ContainerUtil.process(allKeys, new Processor<SemKey>() {
+      @Override
       public boolean process(SemKey key) {
         result.putValue(key, key);
         for (SemKey parent : key.getSupers()) {
@@ -131,10 +136,12 @@ public class SemServiceImpl extends SemService{
     final MultiMap<SemKey, NullableFunction<PsiElement, ? extends SemElement>> map = MultiMap.createSmartList();
 
     final SemRegistrar registrar = new SemRegistrar() {
+      @Override
       public <T extends SemElement, V extends PsiElement> void registerSemElementProvider(SemKey<T> key,
                                                                                           final ElementPattern<? extends V> place,
                                                                                           final NullableFunction<V, T> provider) {
         map.putValue(key, new NullableFunction<PsiElement, SemElement>() {
+          @Override
           public SemElement fun(PsiElement element) {
             if (place.accepts(element)) {
               return provider.fun((V)element);
@@ -154,6 +161,7 @@ public class SemServiceImpl extends SemService{
     return map;
   }
 
+  @Override
   public void clearCache() {
     for (PsiElement element : myCache.keySet()) {
       final FileChunk chunk = obtainChunk(element);
@@ -186,6 +194,7 @@ public class SemServiceImpl extends SemService{
     return myBulkChange;
   }
 
+  @Override
   @Nullable
   public <T extends SemElement> List<T> getSemElements(final SemKey<T> key, @NotNull final PsiElement psi) {
     final PsiElement root = getRootElement(psi);
@@ -226,7 +235,7 @@ public class SemServiceImpl extends SemService{
     return psi.getContainingFile();
   }
 
-  @NotNull 
+  @NotNull
   private List<SemElement> createSemElements(SemKey key, PsiElement psi) {
     List<SemElement> result = null;
     final Collection<NullableFunction<PsiElement, ? extends SemElement>> producers = myProducers.get(key);
@@ -248,6 +257,7 @@ public class SemServiceImpl extends SemService{
     return result == null ? Collections.<SemElement>emptyList() : Collections.unmodifiableList(result);
   }
 
+  @Override
   @Nullable
   public <T extends SemElement> List<T> getCachedSemElements(SemKey<T> key, @NotNull PsiElement psi) {
     return _getCachedSemElements(key, false, psi, getRootElement(psi));
@@ -304,6 +314,7 @@ public class SemServiceImpl extends SemService{
     return ref == null ? null : ref.get();
   }
 
+  @Override
   public <T extends SemElement> void setCachedSemElement(SemKey<T> key, @NotNull PsiElement psi, @Nullable T semElement) {
     final PsiElement rootElement = getRootElement(psi);
     if (rootElement != null) {

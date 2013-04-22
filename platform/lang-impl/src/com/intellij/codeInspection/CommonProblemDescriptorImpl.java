@@ -19,17 +19,17 @@ public class CommonProblemDescriptorImpl implements CommonProblemDescriptor {
     }
     else {
       myFixes = fixes;
-      //new QuickFix[fixes.length];
-      //System.arraycopy(fixes, 0, myFixes, 0, fixes.length);
     }
     myDescriptionTemplate = descriptionTemplate;
   }
 
+  @Override
   @NotNull
   public String getDescriptionTemplate() {
     return myDescriptionTemplate;
   }
 
+  @Override
   public QuickFix[] getFixes() {
     return myFixes;
   }

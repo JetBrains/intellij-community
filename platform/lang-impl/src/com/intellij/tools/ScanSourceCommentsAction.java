@@ -57,9 +57,11 @@ public class ScanSourceCommentsAction extends AnAction {
       stream.println("Comments in " + p.getName());
 
       ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        @Override
         public void run() {
           final ProgressIndicator indicator = ProgressManager.getInstance().getProgressIndicator();
           ProjectRootManager.getInstance(p).getFileIndex().iterateContent(new ContentIterator() {
+            @Override
             public boolean processFile(VirtualFile fileOrDir) {
               if (fileOrDir.isDirectory()) {
                 indicator.setText("Extracting comments");

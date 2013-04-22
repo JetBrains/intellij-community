@@ -200,6 +200,7 @@ public class TodoFilter implements Cloneable{
     return true;
   }
 
+  @Override
   public TodoFilter clone(){
     try{
       TodoFilter filter = (TodoFilter)super.clone();

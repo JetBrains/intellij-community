@@ -244,8 +244,9 @@ public class CustomRegexpFilter implements Filter {
       final Document document = FileDocumentManager.getInstance().getDocument(file);
 
       final int start = document.getLineStartOffset(line);
+      final int max = document.getLineEndOffset(line);
       final int tabSize = CodeStyleSettingsManager.getInstance(myProject).getCurrentSettings().getTabSize(fileType);
-      column = EditorUtil.calcColumnNumber(null, document.getCharsSequence(), start, start + column, tabSize);
+      column = EditorUtil.calcColumnNumber(null, document.getCharsSequence(), start, Math.min(start + column, max), tabSize);
     }
     return new OpenFileHyperlinkInfo(myProject, file, line, column);
   }

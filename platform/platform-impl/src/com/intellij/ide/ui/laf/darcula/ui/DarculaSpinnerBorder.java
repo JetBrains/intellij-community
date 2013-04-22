@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -52,7 +52,7 @@ public class DarculaSpinnerBorder implements Border, UIResource {
     g.fillRoundRect(x1, y1, width1, height1, 5, 5);
     g.setColor(UIUtil.getPanelBackground());
     if (editor != null) {
-      final int off = editor.getBounds().x + editor.getWidth() + ((JSpinner)c).getInsets().left;
+      final int off = editor.getBounds().x + editor.getWidth() + ((JSpinner)c).getInsets().left + 1;
       g.fillRect(off, y1, 17, height1);
       g.setColor(Gray._100);
       g.drawLine(off, y1, off, height1+2);

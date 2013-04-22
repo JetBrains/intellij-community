@@ -95,13 +95,13 @@ public class TestMethodWithoutAssertionInspection extends BaseInspection {
   }
 
   @Override
-  public void readSettings(Element element) throws InvalidDataException {
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
     parseString(assertionMethods, classNames, methodNamePatterns);
   }
 
   @Override
-  public void writeSettings(Element element) throws WriteExternalException {
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
     assertionMethods = formatString(classNames, methodNamePatterns);
     super.writeSettings(element);
   }

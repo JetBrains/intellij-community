@@ -43,6 +43,7 @@ public abstract class AdditionalTabComponent extends JPanel implements Component
     return null;
   }
 
+  @Override
   @NotNull
   public JComponent getComponent(){
     return this;

@@ -1,11 +1,13 @@
 package org.jetbrains.plugins.gradle.remote.impl;
 
+import com.intellij.openapi.externalSystem.model.DataNode;
+import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.model.gradle.GradleLibrary;
-import org.jetbrains.plugins.gradle.model.gradle.LibraryPathType;
+import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 
 import java.io.File;
 import java.util.*;
@@ -59,11 +61,14 @@ public class GradleLibraryNamesMixer {
    * @param libraries  libraries to process
    */
   @SuppressWarnings("MethodMayBeStatic")
-  public void mixNames(@NotNull Iterable<? extends GradleLibrary> libraries) {
-    Map<String, Wrapped> names = new HashMap<String, Wrapped>();
-    List<Wrapped> data = new ArrayList<Wrapped>();
-    for (GradleLibrary library : libraries) {
-      Wrapped wrapped = new Wrapped(library);
+  public void mixNames(@NotNull Collection<DataNode<LibraryData>> libraries) {
+    if (libraries.isEmpty()) {
+      return;
+    }
+    Map<String, Wrapped> names = ContainerUtilRt.newHashMap();
+    List<Wrapped> data = ContainerUtilRt.newArrayList();
+    for (DataNode<LibraryData> library : libraries) {
+      Wrapped wrapped = new Wrapped(library.getData());
       data.add(wrapped);
     }
     boolean mixed = false;
@@ -73,7 +78,7 @@ public class GradleLibraryNamesMixer {
   }
 
   /**
-   * Does the same as {@link #mixNames(Iterable)} but uses given <code>('library name; wrapped library'}</code> mappings cache.
+   * Does the same as {@link #mixNames(Collection)} but uses given <code>('library name; wrapped library'}</code> mappings cache.
    * 
    * @param libraries  libraries to process
    * @param cache      cache to use
@@ -189,11 +194,11 @@ public class GradleLibraryNamesMixer {
     /** Holds list of files that may be used for name generation. */
     public final Set<File> files = new HashSet<File>();
     /** File that was used for the current name generation. */
-    public File currentFile;
+    public File        currentFile;
     /** Target library. */
-    public GradleLibrary library;
+    public LibraryData library;
 
-    Wrapped(@NotNull GradleLibrary library) {
+    Wrapped(@NotNull LibraryData library) {
       this.library = library;
       for (LibraryPathType pathType : LibraryPathType.values()) {
         for (String path : library.getPaths(pathType)) {
@@ -201,14 +206,14 @@ public class GradleLibraryNamesMixer {
         }
       }
     }
-    
+
     public boolean prepare() {
       if (currentFile != null) {
         return true;
       }
       return nextFile();
     }
-    
+
     public boolean nextFile() {
       if (files.isEmpty()) {
         return false;

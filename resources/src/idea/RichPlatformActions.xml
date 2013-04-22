@@ -247,7 +247,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
       <separator/>
@@ -273,7 +272,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="Compile"/>
       <reference ref="RunContextPopupGroup"/>
@@ -296,7 +294,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="Compile"/>
       <reference ref="RunAPT"/>
@@ -332,7 +329,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="TypeHierarchy"/>
       <reference ref="ReformatCode"/>
@@ -366,7 +362,6 @@
     <!--<action id="UsageView.Exclude" class="com.intellij.usages.actions.ExcludeUsageAction"/>-->
     <!--<separator/>-->
     <!--<reference ref="AddToFavorites"/>-->
-    <!--<reference ref="MoveToChangeList"/>-->
     <!--<reference ref="FindUsages"/>-->
     <!--<action id="UsageView.ShowRecentFindUsages" class="com.intellij.find.impl.ShowRecentFindUsagesAction" icon="/actions/back.png"/>-->
     <!--<separator/>-->

@@ -82,31 +82,37 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     myRegistrar = registrar;
     mySeverityRegistrar = new SeverityRegistrar();
     SchemeProcessor<InspectionProfileImpl> processor = new BaseSchemeProcessor<InspectionProfileImpl>() {
+      @Override
       public InspectionProfileImpl readScheme(final Document document) {
         InspectionProfileImpl profile = new InspectionProfileImpl(getProfileName(document), myRegistrar, InspectionProfileManager.this);
         profile.load(document.getRootElement());
         return profile;
       }
 
+      @Override
       public boolean shouldBeSaved(final InspectionProfileImpl scheme) {
         return scheme.wasInitialized();
       }
 
 
+      @Override
       public Document writeScheme(final InspectionProfileImpl scheme) throws WriteExternalException {
         return scheme.saveToDocument();
       }
 
+      @Override
       public void onSchemeAdded(final InspectionProfileImpl scheme) {
         updateProfileImpl(scheme);
         fireProfileChanged(scheme);
         onProfilesChanged();
       }
 
+      @Override
       public void onSchemeDeleted(final InspectionProfileImpl scheme) {
         onProfilesChanged();
       }
 
+      @Override
       public void onCurrentSchemeChanged(final Scheme oldCurrentScheme) {
         Profile current = mySchemesManager.getCurrentScheme();
         if (current != null) {
@@ -124,16 +130,19 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     return new InspectionProfileImpl("Default");
   }
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
     return new File[]{getProfileDirectory()};
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return InspectionsBundle.message("inspection.profiles.presentable.name");
   }
 
+  @Override
   @NotNull
   public Collection<Profile> getProfiles() {
     initProfiles();
@@ -228,11 +237,13 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     return getRootElementAttribute(file, BASE_PROFILE_ATTR);
   }*/
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "InspectionProfileManager";
   }
 
+  @Override
   public void updateProfile(Profile profile) {
     mySchemesManager.addNewScheme(profile, true);
     updateProfileImpl(profile);
@@ -245,18 +256,22 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     }
   }
 
+  @Override
   public SeverityRegistrar getSeverityRegistrar() {
     return mySeverityRegistrar;
   }
 
+  @Override
   public SeverityRegistrar getOwnSeverityRegistrar() {
     return mySeverityRegistrar;
   }
 
+  @Override
   public void readExternal(final Element element) throws InvalidDataException {
     mySeverityRegistrar.readExternal(element);
   }
 
+  @Override
   public void writeExternal(final Element element) throws WriteExternalException {
     mySeverityRegistrar.writeExternal(element);
   }
@@ -265,34 +280,41 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     return new InspectionProfileConvertor(this);
   }
 
+  @Override
   public Profile createProfile() {
     return createSampleProfile();
   }
 
+  @Override
   public void addProfileChangeListener(final ProfileChangeAdapter listener) {
     myProfileChangeAdapters.add(listener);
   }
 
+  @Override
   public void addProfileChangeListener(ProfileChangeAdapter listener, Disposable parentDisposable) {
     ContainerUtil.add(listener, myProfileChangeAdapters, parentDisposable);
   }
 
+  @Override
   public void removeProfileChangeListener(final ProfileChangeAdapter listener) {
     myProfileChangeAdapters.remove(listener);
   }
 
+  @Override
   public void fireProfileChanged(final Profile profile) {
     for (ProfileChangeAdapter adapter : myProfileChangeAdapters) {
       adapter.profileChanged(profile);
     }
   }
 
+  @Override
   public void fireProfileChanged(final Profile oldProfile, final Profile profile, final NamedScope scope) {
     for (ProfileChangeAdapter adapter : myProfileChangeAdapters) {
       adapter.profileActivated(oldProfile, profile);
     }
   }
 
+  @Override
   public void setRootProfile(String rootProfile) {
     Profile current = mySchemesManager.getCurrentScheme();
     if (current != null && !Comparing.strEqual(rootProfile, current.getName())) {
@@ -302,6 +324,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
   }
 
 
+  @Override
   public Profile getProfile(@NotNull final String name, boolean returnRootProfileIfNamedIsAbsent) {
     Profile found = mySchemesManager.findSchemeByName(name);
     if (found != null) return found;
@@ -314,6 +337,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     }
   }
 
+  @Override
   public Profile getRootProfile() {
     Profile current = mySchemesManager.getCurrentScheme();
     if (current != null) return current;
@@ -322,6 +346,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     return profiles.iterator().next();
   }
 
+  @Override
   public void deleteProfile(final String profile) {
     Profile found = mySchemesManager.findSchemeByName(profile);
     if (found != null) {
@@ -329,6 +354,7 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     }
   }
 
+  @Override
   public void addProfile(final Profile profile) {
     mySchemesManager.addNewScheme(profile, true);
   }
@@ -345,12 +371,14 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
     return directory;
   }
 
+  @Override
   @NotNull
   public String[] getAvailableProfileNames() {
     final Collection<String> names = mySchemesManager.getAllSchemeNames();
     return ArrayUtil.toStringArray(names);
   }
 
+  @Override
   public Profile getProfile(@NotNull final String name) {
     return getProfile(name, true);
   }

@@ -63,6 +63,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
     buildRoot();
   }
 
+  @Override
   protected void updateParentTitle() {
     if (myParentTitle == null) return;
 
@@ -80,10 +81,12 @@ public class ProjectListBuilder extends AbstractListBuilder {
     return true;
   }
 
+  @Override
   protected boolean nodeIsAcceptableForElement(AbstractTreeNode node, Object element) {
     return Comparing.equal(node.getValue(), element);
   }
 
+  @Override
   protected List<AbstractTreeNode> getAllAcceptableNodes(final Object[] childElements, VirtualFile file) {
     ArrayList<AbstractTreeNode> result = new ArrayList<AbstractTreeNode>();
 
@@ -95,6 +98,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
     return result;
   }
 
+  @Override
   public void dispose() {
     super.dispose();
     PsiManager.getInstance(myProject).removePsiTreeChangeListener(myPsiTreeChangeListener);
@@ -107,6 +111,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
   }
   public void addUpdateRequest(final boolean shouldRefreshSelection) {
     final Runnable request = new Runnable() {
+      @Override
       public void run() {
         if (!myProject.isDisposed()) {
           // Rely on project view to commit PSI and wait until it's updated.
@@ -147,18 +152,21 @@ public class ProjectListBuilder extends AbstractListBuilder {
       myOutOfCodeBlockModificationCount = myModificationTracker.getOutOfCodeBlockModificationCount();
     }
 
+    @Override
     public void childRemoved(@NotNull final PsiTreeChangeEvent event) {
       final PsiElement child = event.getOldChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
       childrenChanged();
     }
 
+    @Override
     public void childAdded(@NotNull final PsiTreeChangeEvent event) {
       final PsiElement child = event.getNewChild();
       if (child instanceof PsiWhiteSpace) return; //optimization
       childrenChanged();
     }
 
+    @Override
     public void childReplaced(@NotNull final PsiTreeChangeEvent event) {
       final PsiElement oldChild = event.getOldChild();
       final PsiElement newChild = event.getNewChild();
@@ -166,10 +174,12 @@ public class ProjectListBuilder extends AbstractListBuilder {
       childrenChanged();
     }
 
+    @Override
     public void childMoved(@NotNull final PsiTreeChangeEvent event) {
       childrenChanged();
     }
 
+    @Override
     public void childrenChanged(@NotNull final PsiTreeChangeEvent event) {
       childrenChanged();
     }
@@ -181,6 +191,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
       addUpdateRequest();
     }
 
+    @Override
     public void propertyChanged(@NotNull final PsiTreeChangeEvent event) {
       final String propertyName = event.getPropertyName();
       if (propertyName.equals(PsiTreeChangeEvent.PROP_ROOTS)) {
@@ -199,10 +210,12 @@ public class ProjectListBuilder extends AbstractListBuilder {
   }
 
   private final class MyFileStatusListener implements FileStatusListener {
+    @Override
     public void fileStatusesChanged() {
       addUpdateRequest();
     }
 
+    @Override
     public void fileStatusChanged(final VirtualFile vFile) {
       final PsiManager manager = PsiManager.getInstance(myProject);
 
@@ -222,6 +235,7 @@ public class ProjectListBuilder extends AbstractListBuilder {
   }
 
   private final class MyCopyPasteListener implements CopyPasteManager.ContentChangedListener {
+    @Override
     public void contentChanged(final Transferable oldTransferable, final Transferable newTransferable) {
       updateByTransferable(oldTransferable);
       updateByTransferable(newTransferable);

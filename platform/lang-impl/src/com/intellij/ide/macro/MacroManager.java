@@ -194,6 +194,7 @@ public final class MacroManager {
 
   public String expandSilentMarcos(String str, boolean firstQueueExpand, DataContext dataContext) throws Macro.ExecutionCancelledException {
     final Convertor<Macro, Macro> convertor = new Convertor<Macro, Macro>() {
+      @Override
       public Macro convert(Macro macro) {
         if (macro instanceof PromptingMacro) {
           return new Macro.Silent(macro, "");

@@ -36,7 +36,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.lang.completion.GroovyCompletionUtil;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyRecursiveElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.SpreadState;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
@@ -44,6 +46,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrField;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrVariable;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -53,6 +56,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrRe
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiManager;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyResolveResultImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
+import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrBindingVariable;
 import org.jetbrains.plugins.groovy.lang.psi.typeEnhancers.ClosureParameterEnhancer;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
@@ -128,6 +132,8 @@ public class CompleteReferenceExpression {
       if (qualifier != null) {
         getVariantsFromQualifier(refExpr, processor, qualifier);
       }
+      
+      getBindings(refExpr, processor);
     }
     else {
       if (refExpr.getDotTokenType() != GroovyTokenTypes.mSPREAD_DOT) {
@@ -143,6 +149,38 @@ public class CompleteReferenceExpression {
       }
     }
     ResolveUtil.processCategoryMembers(refExpr, processor, ResolveState.initial());
+  }
+
+  private static void getBindings(final GrReferenceExpression refExpr, final CompleteReferenceProcessor processor) {
+    final PsiClass containingClass = PsiTreeUtil.getParentOfType(refExpr, PsiClass.class);
+    if (containingClass != null) return;
+
+    final PsiFile file = refExpr.getContainingFile();
+    if (file instanceof GroovyFile) {
+      ((GroovyFile)file).accept(new GroovyRecursiveElementVisitor() {
+        @Override
+        public void visitAssignmentExpression(GrAssignmentExpression expression) {
+          super.visitAssignmentExpression(expression);
+
+          final GrExpression value = expression.getLValue();
+          if (value instanceof GrReferenceExpression && !((GrReferenceExpression)value).isQualified()) {
+            final PsiElement resolved = ((GrReferenceExpression)value).resolve();
+            if (resolved instanceof GrBindingVariable) {
+              processor.execute(resolved, ResolveState.initial());
+            }
+            else if (resolved == null) {
+              processor.execute(new GrBindingVariable((GroovyFile)file, ((GrReferenceExpression)value).getReferenceName(), true),
+                                ResolveState.initial());
+            }
+          }
+        }
+
+        @Override
+        public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+          //don't go into classes
+        }
+      });
+    }
   }
 
   private static void getVariantsFromQualifierForSpreadOperator(GrReferenceExpression refExpr,

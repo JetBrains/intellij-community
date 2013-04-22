@@ -47,6 +47,7 @@ import java.util.*;
 public class PsiUtilBase extends PsiUtilCore {
 
   public static final PsiParser NULL_PARSER = new PsiParser() {
+    @Override
     @NotNull
     public ASTNode parse(IElementType root, PsiBuilder builder) {
       throw new IllegalAccessError();
@@ -239,7 +240,7 @@ public class PsiUtilBase extends PsiUtilCore {
         range = elt.getTextRange();
         assert range != null : "Range is null for " + elt + "; " + elt.getClass();
       }
-      
+
       if (elt != null) {
         return elt.getLanguage();
       }

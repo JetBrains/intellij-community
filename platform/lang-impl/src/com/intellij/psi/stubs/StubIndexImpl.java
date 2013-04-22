@@ -88,7 +88,14 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
         requestRebuild();
       }
       else {
-        forceRebuild(new Throwable());
+        final Throwable e = new Throwable();
+        // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            forceRebuild(e);
+          }
+        });
       }
     }
     dropUnregisteredIndices();

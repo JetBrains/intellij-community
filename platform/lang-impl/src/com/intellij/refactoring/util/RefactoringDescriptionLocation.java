@@ -36,6 +36,7 @@ public class RefactoringDescriptionLocation extends ElementDescriptionLocation {
     return myWithParent;
   }
 
+  @Override
   public ElementDescriptionProvider getDefaultProvider() {
     return DefaultRefactoringElementDescriptionProvider.INSTANCE;
   }

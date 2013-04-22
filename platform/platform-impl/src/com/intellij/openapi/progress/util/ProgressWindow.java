@@ -630,7 +630,7 @@ public class ProgressWindow extends BlockingProgressIndicator implements Disposa
       }
 
       @Override
-      protected DialogWrapperPeer createPeer(final Component parent, final boolean canBeParent) {
+      protected DialogWrapperPeer createPeer(@NotNull final Component parent, final boolean canBeParent) {
         if (System.getProperty("vintage.progress") == null) {
           try {
             return new GlassPaneDialogWrapperPeer(this, parent, canBeParent);

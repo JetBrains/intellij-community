@@ -97,16 +97,21 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
                               @NonNls @NotNull String value,
                               @Nullable NotNullFunction<String, String> valuePresenter,
                               boolean hasChildren) {
-    setPresentation(null, icon, type, separator, value, valuePresenter, hasChildren);
+    setPresentation(null, icon, type, separator, value, valuePresenter, hasChildren, false);
   }
 
   public void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
                               @NonNls @NotNull final String value, final boolean hasChildren) {
-    setPresentation(name, icon, type, separator, value, null, hasChildren);
+    setPresentation(name, icon, type, separator, value, null, hasChildren, false);
+  }
+
+  @Override
+  public void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String type, boolean expand) {
+    setPresentation(null, icon, type, "", "", null, true, expand);
   }
 
   private void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
-                               @NonNls @NotNull final String value, @Nullable final NotNullFunction<String, String> valuePresenter, final boolean hasChildren) {
+                               @NonNls @NotNull final String value, @Nullable final NotNullFunction<String, String> valuePresenter, final boolean hasChildren, final boolean expand) {
     DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {
         setIcon(icon);
@@ -122,6 +127,16 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
         setLeaf(!hasChildren);
         fireNodeChanged();
         myTree.nodeLoaded(XValueNodeImpl.this, myName, value);
+        if (expand) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (!isObsolete()) {
+                myTree.expandPath(getPath());
+              }
+            }
+          });
+        }
       }
     });
   }

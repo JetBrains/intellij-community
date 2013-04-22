@@ -720,7 +720,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
       if (!myProjectsNavigator.getGroupModules()
           && myProjectsManager.findAggregator(myMavenProject) == null
           && myProjectsManager.getProjects().size() > myProjectsManager.getRootProjects().size()) {
-        hint = "aggregator";
+        hint = "root";
       }
 
       setNameAndTooltip(getName(), myTooltipCache, hint);

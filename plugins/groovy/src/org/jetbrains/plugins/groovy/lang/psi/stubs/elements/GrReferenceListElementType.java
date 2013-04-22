@@ -54,15 +54,16 @@ public abstract class GrReferenceListElementType<T extends GrReferenceList> exte
 
   }
 
-  public void serialize(GrReferenceListStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull GrReferenceListStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     GrStubUtils.writeStringArray(dataStream, stub.getBaseClasses());
   }
 
-  public GrReferenceListStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  @NotNull
+  public GrReferenceListStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     return new GrReferenceListStub(parentStub, this, GrStubUtils.readStringArray(dataStream));
   }
 
-  public void indexStub(GrReferenceListStub stub, IndexSink sink) {
+  public void indexStub(@NotNull GrReferenceListStub stub, @NotNull IndexSink sink) {
     for (String name : stub.getBaseClasses()) {
       if (name != null) {
         sink.occurrence(GrDirectInheritorsIndex.KEY, PsiNameHelper.getShortClassName(name));

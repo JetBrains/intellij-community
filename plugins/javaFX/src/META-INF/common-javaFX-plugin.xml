@@ -19,11 +19,15 @@
                      enabledByDefault="true" level="WARNING" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxDefaultTagInspection"/>
     <localInspection language="XML" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnresolvedFxIdReferenceInspection" displayName="Unresolved fx:id attribute reference" 
                      enabledByDefault="true" level="WARNING" groupName="JavaFX"/>
+    <localInspection language="XML" shortName="JavaFxUnusedImports" implementationClass="org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections.JavaFxUnusedImportsInspection"
+                         enabledByDefault="true" level="WARNING" displayName="JavaFX unused imports" groupName="JavaFX"/>
+
     <applicationService serviceInterface="org.jetbrains.plugins.javaFX.JavaFxSettings" serviceImplementation="org.jetbrains.plugins.javaFX.JavaFxSettings"/>
     <applicationConfigurable instance="org.jetbrains.plugins.javaFX.JavaFxSettingsConfigurable"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.JavaFxControllerClassIndex"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.JavaFxIdsIndex"/>
     <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.JavaFxCustomComponentsIndex"/>
+    <fileBasedIndex implementation="org.jetbrains.plugins.javaFX.FxmlIndex"/>
     <intentionAction>
       <className>org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions.JavaFxCollapseSubTagToAttributeIntention</className>
       <category>JavaFX</category>

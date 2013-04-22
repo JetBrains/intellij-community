@@ -57,6 +57,7 @@ public class AddToFavoritesAction extends AnAction {
     myFavoritesListName = choosenList;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
 
@@ -92,6 +93,7 @@ public class AddToFavoritesAction extends AnAction {
     return nodesToAdd;
   }
 
+  @Override
   public void update(AnActionEvent e) {
     e.getPresentation().setEnabled(canCreateNodes(e));
   }

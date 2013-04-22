@@ -41,6 +41,7 @@ public class PlatformProjectViewStructureProvider implements TreeStructureProvid
     myProject = project;
   }
 
+  @Override
   public Collection<AbstractTreeNode> modify(final AbstractTreeNode parent, final Collection<AbstractTreeNode> children, final ViewSettings settings) {
     if (parent instanceof PsiDirectoryNode) {
       final VirtualFile vFile = ((PsiDirectoryNode)parent).getVirtualFile();
@@ -62,6 +63,7 @@ public class PlatformProjectViewStructureProvider implements TreeStructureProvid
     return children;
   }
 
+  @Override
   public Object getData(final Collection<AbstractTreeNode> selected, final String dataName) {
     return null;
   }

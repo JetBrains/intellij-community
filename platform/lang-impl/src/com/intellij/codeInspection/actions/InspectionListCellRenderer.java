@@ -56,6 +56,7 @@ public class InspectionListCellRenderer extends DefaultListCellRenderer implemen
   }
 
 
+  @Override
   public Component getListCellRendererComponent(JList list, Object value, int index, boolean sel, boolean focus) {
     final JPanel panel = new JPanel(new BorderLayout());
     panel.setOpaque(true);

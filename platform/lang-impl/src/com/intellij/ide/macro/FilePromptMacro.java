@@ -37,6 +37,7 @@ public class FilePromptMacro extends PromptingMacro implements SecondQueueExpand
     return "Shows a file chooser dialog";
   }
 
+  @Override
   protected String promptUser(DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleLocalFileDescriptor();

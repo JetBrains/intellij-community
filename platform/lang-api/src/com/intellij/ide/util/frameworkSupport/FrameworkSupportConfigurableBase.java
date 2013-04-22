@@ -62,6 +62,7 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
     });
     updateAvailableVersions(versions);
     myVersionComboBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         fireFrameworkVersionChanged();
       }
@@ -92,10 +93,11 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
     myVersionComboBox.setVisible(hasMoreThanOneVersion);
   }
 
+  @Override
   public JComponent getComponent() {
     return myVersions.size() > 1 ? myMainPanel : null;
   }
-  
+
   protected void reloadVersions(List<? extends FrameworkVersion> frameworkVersions) {
     myVersions.clear();
     for (FrameworkVersion version : frameworkVersions) {
@@ -103,6 +105,7 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
     }
   }
 
+  @Override
   @NotNull
   public List<? extends FrameworkVersion> getVersions() {
     return myVersions;
@@ -113,10 +116,12 @@ public class FrameworkSupportConfigurableBase extends FrameworkSupportConfigurab
     return getSelectedVersion().getLibraries();
   }
 
+  @Override
   public void addSupport(@NotNull final Module module, @NotNull final ModifiableRootModel rootModel, final @Nullable Library library) {
     myFrameworkSupportProvider.addSupport(module, rootModel, getSelectedVersion(), library);
   }
 
+  @Override
   public FrameworkVersion getSelectedVersion() {
     return (FrameworkVersion)myVersionComboBox.getSelectedItem();
   }

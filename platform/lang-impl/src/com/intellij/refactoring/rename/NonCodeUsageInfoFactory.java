@@ -33,6 +33,7 @@ public class NonCodeUsageInfoFactory implements TextOccurrencesUtil.UsageInfoFac
     myStringToReplace = stringToReplace;
   }
 
+  @Override
   @Nullable
   public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
     final PsiElement namedElement = TargetElementUtilBase.getInstance().getNamedElement(usage, startOffset);

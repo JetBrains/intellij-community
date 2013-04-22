@@ -1,11 +1,12 @@
 package org.jetbrains.plugins.gradle.config;
 
+import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
+import com.intellij.openapi.externalSystem.service.project.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
-import org.jetbrains.plugins.gradle.util.GradleInstallationManager;
+import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.groovy.annotator.DefaultGroovyFrameworkConfigNotification;
 
 /**

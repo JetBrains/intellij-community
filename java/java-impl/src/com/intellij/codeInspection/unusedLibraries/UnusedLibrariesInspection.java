@@ -177,7 +177,7 @@ public class UnusedLibrariesInspection extends DescriptorProviderInspection {
   }
 
   @NotNull
-  public JobDescriptor[] getJobDescriptors(GlobalInspectionContext globalInspectionContext) {
+  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext globalInspectionContext) {
     return new JobDescriptor[] {BACKWARD_ANALYSIS};
   }
 

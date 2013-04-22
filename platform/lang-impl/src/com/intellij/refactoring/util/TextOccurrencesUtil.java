@@ -49,6 +49,7 @@ public class TextOccurrencesUtil {
                                        @NotNull final Collection<UsageInfo> results,
                                        @NotNull final UsageInfoFactory factory) {
     processTextOccurences(element, stringToSearch, searchScope, new Processor<UsageInfo>() {
+      @Override
       public boolean process(UsageInfo t) {
         results.add(t);
         return true;
@@ -69,6 +70,7 @@ public class TextOccurrencesUtil {
     });
 
     return helper.processUsagesInNonJavaFiles(element, stringToSearch, new PsiNonJavaFileReferenceProcessor() {
+      @Override
       public boolean process(PsiFile psiFile, int startOffset, int endOffset) {
         UsageInfo usageInfo = factory.createUsageInfo(psiFile, startOffset, endOffset);
         return usageInfo == null || processor.process(usageInfo);
@@ -78,6 +80,7 @@ public class TextOccurrencesUtil {
 
   private static boolean processStringLiteralsContainingIdentifier(@NotNull String identifier, @NotNull SearchScope searchScope, PsiSearchHelper helper, final Processor<PsiElement> processor) {
     TextOccurenceProcessor occurenceProcessor = new TextOccurenceProcessor() {
+      @Override
       public boolean execute(PsiElement element, int offsetInElement) {
         final ParserDefinition definition = LanguageParserDefinitions.INSTANCE.forLanguage(element.getLanguage());
         final ASTNode node = element.getNode();
@@ -103,6 +106,7 @@ public class TextOccurrencesUtil {
     SearchScope scope = helper.getUseScope(element);
     scope = GlobalSearchScope.projectScope(element.getProject()).intersectWith(scope);
     Processor<PsiElement> commentOrLiteralProcessor = new Processor<PsiElement>() {
+      @Override
       public boolean process(PsiElement literal) {
         return processTextIn(literal, stringToSearch, ignoreReferences, processor);
       }
@@ -117,6 +121,7 @@ public class TextOccurrencesUtil {
                                                    @NotNull final UsageInfoFactory factory) {
     final Object lock = new Object();
     processUsagesInStringsAndComments(element, stringToSearch, false, new PairProcessor<PsiElement, TextRange>() {
+      @Override
       public boolean process(PsiElement commentOrLiteral, TextRange textRange) {
         UsageInfo usageInfo = factory.createUsageInfo(commentOrLiteral, textRange.getStartOffset(), textRange.getEndOffset());
         if (usageInfo != null) {
@@ -186,6 +191,7 @@ public class TextOccurrencesUtil {
   private static UsageInfoFactory createUsageInfoFactory(final PsiElement element,
                                                         final String newQName) {
     return new UsageInfoFactory() {
+      @Override
       public UsageInfo createUsageInfo(@NotNull PsiElement usage, int startOffset, int endOffset) {
         int start = usage.getTextRange().getStartOffset();
         return NonCodeUsageInfo.create(usage.getContainingFile(), start + startOffset, start + endOffset, element,

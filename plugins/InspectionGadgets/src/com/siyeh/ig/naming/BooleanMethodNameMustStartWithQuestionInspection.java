@@ -76,13 +76,13 @@ public class BooleanMethodNameMustStartWithQuestionInspection extends BaseInspec
   }
 
   @Override
-  public void readSettings(Element element) throws InvalidDataException {
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
     parseString(questionString, questionList);
   }
 
   @Override
-  public void writeSettings(Element element) throws WriteExternalException {
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
     questionString = formatString(questionList);
     super.writeSettings(element);
   }

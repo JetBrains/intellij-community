@@ -26,9 +26,10 @@ import com.intellij.psi.PsiFile;
 public class PrintAction extends AnAction implements DumbAware {
   public PrintAction() {
     super();
-    
+
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     DataContext dataContext = e.getDataContext();
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
@@ -38,6 +39,7 @@ public class PrintAction extends AnAction implements DumbAware {
     PrintManager.executePrint(dataContext);
   }
 
+  @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     DataContext dataContext = event.getDataContext();

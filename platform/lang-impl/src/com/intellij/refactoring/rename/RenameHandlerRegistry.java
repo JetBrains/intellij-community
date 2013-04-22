@@ -145,6 +145,7 @@ public class RenameHandlerRegistry {
         final JRadioButton rb = new JRadioButton(renamer, selected);
         myRButtons[rIdx++] = rb;
         final ActionListener listener = new ActionListener() {
+          @Override
           public void actionPerformed(ActionEvent e) {
             if (rb.isSelected()) {
               mySelection = renamer;

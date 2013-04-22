@@ -18,7 +18,6 @@ package com.intellij.util.execution;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
@@ -178,17 +177,12 @@ public class ParametersListUtil {
 
   @NotNull
   private static String encode(@NotNull String parameter) {
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      builder.append(parameter);
-      StringUtil.escapeQuotes(builder);
-      if (builder.length() == 0 || StringUtil.indexOf(builder, ' ') >= 0 || StringUtil.indexOf(builder, '|') >= 0) {
-        StringUtil.quote(builder);
-      }
-      return builder.toString();
+    final StringBuilder builder = new StringBuilder();
+    builder.append(parameter);
+    StringUtil.escapeQuotes(builder);
+    if (builder.length() == 0 || StringUtil.indexOf(builder, ' ') >= 0 || StringUtil.indexOf(builder, '|') >= 0) {
+      StringUtil.quote(builder);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    return builder.toString();
   }
 }

@@ -118,6 +118,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
     return true;
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     final DataContext dataContext = e.getDataContext();
     final ConfigurationContext context = ConfigurationContext.getFromContext(dataContext);
@@ -128,21 +129,25 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       if (producers.size() > 1) {
         final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
         Collections.sort(producers, new Comparator<RuntimeConfigurationProducer>() {
+          @Override
           public int compare(final RuntimeConfigurationProducer p1, final RuntimeConfigurationProducer p2) {
             return p1.getConfigurationType().getDisplayName().compareTo(p2.getConfigurationType().getDisplayName());
           }
         });
         final ListPopup popup =
           JBPopupFactory.getInstance().createListPopup(new BaseListPopupStep<RuntimeConfigurationProducer>(ExecutionBundle.message("configuration.action.chooser.title"), producers) {
+            @Override
             @NotNull
             public String getTextFor(final RuntimeConfigurationProducer producer) {
               return producer.getConfigurationType().getDisplayName();
             }
 
+            @Override
             public Icon getIconFor(final RuntimeConfigurationProducer producer) {
               return producer.getConfigurationType().getIcon();
             }
 
+            @Override
             public PopupStep onChosen(final RuntimeConfigurationProducer producer, final boolean finalChoice) {
               perform(producer, context);
               return FINAL_CHOICE;
@@ -161,7 +166,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
       }
       return;
     }
-    
+
     perform(context);
   }
 
@@ -179,6 +184,7 @@ public abstract class BaseRunConfigurationAction extends ActionGroup {
 
   protected abstract void perform(ConfigurationContext context);
 
+  @Override
   public void update(final AnActionEvent event){
     final ConfigurationContext context = ConfigurationContext.getFromContext(event.getDataContext());
     final Presentation presentation = event.getPresentation();

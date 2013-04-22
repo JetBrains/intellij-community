@@ -91,6 +91,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return myCanCloseContents;
   }
 
+  @NotNull
   @Override
   public JComponent getComponent() {
     if (myComponent == null) {
@@ -232,6 +233,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return removeContent(content, true, dispose);
   }
 
+  @NotNull
   @Override
   public ActionCallback removeContent(@NotNull Content content, boolean dispose, final boolean trackFocus, final boolean forcedFocus) {
     final ActionCallback result = new ActionCallback();
@@ -385,21 +387,25 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return myContents.indexOf(content);
   }
 
+  @NotNull
   @Override
   public String getCloseActionName() {
     return myUI.getCloseActionName();
   }
 
+  @NotNull
   @Override
   public String getCloseAllButThisActionName() {
     return myUI.getCloseAllButThisActionName();
   }
 
+  @NotNull
   @Override
   public String getPreviousContentActionName() {
     return myUI.getPreviousContentActionName();
   }
 
+  @NotNull
   @Override
   public String getNextContentActionName() {
     return myUI.getNextContentActionName();
@@ -476,6 +482,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     setSelectedContentCB(content, requestFocus);
   }
 
+  @NotNull
   @Override
   public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus) {
     return setSelectedContentCB(content, requestFocus, true);
@@ -486,11 +493,13 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     setSelectedContentCB(content, requestFocus, forcedFocus);
   }
 
+  @NotNull
   @Override
   public ActionCallback setSelectedContentCB(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus) {
     return setSelectedContent(content, requestFocus, forcedFocus, false);
   }
 
+  @NotNull
   @Override
   public ActionCallback setSelectedContent(@NotNull final Content content, final boolean requestFocus, final boolean forcedFocus, boolean implicit) {
     if (isSelected(content) && requestFocus) {
@@ -509,6 +518,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     final Content[] old = getSelectedContents();
 
     final ActiveRunnable selection = new ActiveRunnable() {
+      @NotNull
       @Override
       public ActionCallback run() {
         if (myDisposed || getIndexOfContent(content) == -1) return new ActionCallback.Rejected();
@@ -558,6 +568,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return focused;
   }
 
+  @NotNull
   @Override
   public ActionCallback setSelectedContentCB(@NotNull Content content) {
     return setSelectedContentCB(content, false);
@@ -565,7 +576,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
   @Override
   public void setSelectedContent(@NotNull final Content content) {
-    setSelectedContentCB(content); 
+    setSelectedContentCB(content);
   }
 
   @Override
@@ -643,6 +654,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
     return true;
   }
 
+  @NotNull
   @Override
   public ActionCallback requestFocus(final Content content, final boolean forced) {
     final Content toSelect = content == null ? getSelectedContent() : content;
@@ -651,6 +663,7 @@ public class ContentManagerImpl implements ContentManager, PropertyChangeListene
 
 
     return getFocusManager().requestFocus(new FocusCommand(content, toSelect.getPreferredFocusableComponent()) {
+      @NotNull
       @Override
       public ActionCallback run() {
         return doRequestFocus(toSelect);

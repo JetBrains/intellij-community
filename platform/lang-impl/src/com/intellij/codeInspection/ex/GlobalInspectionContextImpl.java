@@ -361,7 +361,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
           getRefManager().iterate(new RefVisitor() {
             @Override
-            public void visitElement(final RefEntity refEntity) {
+            public void visitElement(@NotNull final RefEntity refEntity) {
               for (Element element : globalTools.keySet()) {
                 final Tools tools = globalTools.get(element);
                 for (ScopeToolState state : tools.getTools()) {
@@ -375,7 +375,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
               }
             }
           });
-          
+
           for (Element element : globalTools.keySet()) {
             final String toolName = globalTools.get(element).getShortName();
             element.setAttribute(LOCAL_TOOL_ATTRIBUTE, Boolean.toString(false));
@@ -670,7 +670,7 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
 
     return new GlobalInspectionToolWrapper(toolWrapper.getTool()) {
       @Override
-      public void addProblemElement(RefEntity refEntity, CommonProblemDescriptor... commonProblemDescriptors) {
+      public void addProblemElement(RefEntity refEntity, @NotNull CommonProblemDescriptor... commonProblemDescriptors) {
         for (CommonProblemDescriptor problemDescriptor : commonProblemDescriptors) {
           if (problemDescriptor instanceof ProblemDescriptor) {
             String problemGroup = ((ProblemDescriptor)problemDescriptor).getProblemGroup();

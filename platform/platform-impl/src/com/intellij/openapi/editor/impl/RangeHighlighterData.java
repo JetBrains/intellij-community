@@ -21,6 +21,7 @@ import com.intellij.openapi.editor.ex.RangeHighlighterEx;
 import com.intellij.openapi.editor.markup.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.Consumer;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -31,31 +32,50 @@ import java.awt.*;
  */
 abstract class RangeHighlighterData {
   private final MarkupModel myModel;
-  private final HighlighterTargetArea myTargetArea;
   private TextAttributes myTextAttributes;
   private LineMarkerRenderer myLineMarkerRenderer;
   private Color myErrorStripeColor;
   private Color myLineSeparatorColor;
   private SeparatorPlacement mySeparatorPlacement;
-  private boolean isAfterEndOfLine;
   private GutterIconRenderer myGutterIconRenderer;
-  private boolean myErrorStripeMarkIsThin;
   private Object myErrorStripeTooltip;
   private MarkupEditorFilter myFilter = MarkupEditorFilter.EMPTY;
   private CustomHighlighterRenderer myCustomRenderer;
   int myLine; // for PersistentRangeHighlighterImpl only
   private LineSeparatorRenderer myLineSeparatorRenderer;
 
+  private byte myFlags;
+
   RangeHighlighterData(@NotNull MarkupModel model,
                        @NotNull HighlighterTargetArea target,
                        TextAttributes textAttributes) {
     myTextAttributes = textAttributes;
-    myTargetArea = target;
+    setFlag(TARGET_AREA_IS_EXACT_FLAG, target == HighlighterTargetArea.EXACT_RANGE);
     myModel = model;
     if (textAttributes != null) {
       myErrorStripeColor = textAttributes.getErrorStripeColor();
     }
   }
+
+  private static final int AFTER_END_OF_LINE_FLAG = 0;
+  private static final int ERROR_STRIPE_IS_THIN_FLAG = 1;
+  private static final int TARGET_AREA_IS_EXACT_FLAG = 2;
+  private static final int IN_BATCH_CHANGE_FLAG = 3;
+  private static final int CHANGED_FLAG = 4;
+  @MagicConstant(intValues = {AFTER_END_OF_LINE_FLAG, ERROR_STRIPE_IS_THIN_FLAG, TARGET_AREA_IS_EXACT_FLAG, IN_BATCH_CHANGE_FLAG, CHANGED_FLAG})
+  @interface FlagConstant {}
+
+  private boolean isFlagSet(@FlagConstant int flag) {
+    int state = myFlags >> flag;
+    return (state & 1) != 0;
+  }
+
+  private void setFlag(@FlagConstant int flag, boolean value) {
+    assert flag < 8;
+    int state = value ? 1 : 0;
+    myFlags = (byte)(myFlags & ~(1 << flag) | state << flag);
+  }
+
 
   @NotNull
   public abstract RangeHighlighterEx getRangeHighlighter();
@@ -72,8 +92,9 @@ abstract class RangeHighlighterData {
     }
   }
 
+  @NotNull
   public HighlighterTargetArea getTargetArea() {
-    return myTargetArea;
+    return isFlagSet(TARGET_AREA_IS_EXACT_FLAG) ? HighlighterTargetArea.EXACT_RANGE : HighlighterTargetArea.LINES_IN_RANGE;
   }
 
   public LineMarkerRenderer getLineMarkerRenderer() {
@@ -131,13 +152,13 @@ abstract class RangeHighlighterData {
   }
 
   public boolean isThinErrorStripeMark() {
-    return myErrorStripeMarkIsThin;
+    return isFlagSet(ERROR_STRIPE_IS_THIN_FLAG);
   }
 
   public void setThinErrorStripeMark(boolean value) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    boolean old = myErrorStripeMarkIsThin;
-    myErrorStripeMarkIsThin = value;
+    boolean old = isThinErrorStripeMark();
+    setFlag(ERROR_STRIPE_IS_THIN_FLAG, value);
     if (old != value) {
       fireChanged();
     }
@@ -178,23 +199,21 @@ abstract class RangeHighlighterData {
   }
 
   public boolean isAfterEndOfLine() {
-    return isAfterEndOfLine;
+    return isFlagSet(AFTER_END_OF_LINE_FLAG);
   }
 
   public void setAfterEndOfLine(boolean afterEndOfLine) {
-    boolean old = isAfterEndOfLine;
-    isAfterEndOfLine = afterEndOfLine;
+    boolean old = isAfterEndOfLine();
+    setFlag(AFTER_END_OF_LINE_FLAG, afterEndOfLine);
     if (old != afterEndOfLine) {
       fireChanged();
     }
   }
 
-  private boolean inBatchChange = false;
-  private boolean changed = false;
   private void fireChanged() {
     if (myModel instanceof MarkupModelImpl) {
-      if (inBatchChange) {
-        changed = true;
+      if (isFlagSet(IN_BATCH_CHANGE_FLAG)) {
+        setFlag(CHANGED_FLAG, true);
       }
       else {
         ((MarkupModelImpl)myModel).fireAttributesChanged(getRangeHighlighter());
@@ -222,17 +241,17 @@ abstract class RangeHighlighterData {
 
   // returns true if change was detected
   boolean changeAttributesInBatch(@NotNull Consumer<RangeHighlighterEx> change) {
-    assert !inBatchChange;
-    assert !changed;
-    inBatchChange = true;
+    assert !isFlagSet(IN_BATCH_CHANGE_FLAG);
+    assert !isFlagSet(CHANGED_FLAG);
+    setFlag(IN_BATCH_CHANGE_FLAG, true);
     boolean result;
     try {
       change.consume(getRangeHighlighter());
     }
     finally {
-      inBatchChange = false;
-      result = changed;
-      changed = false;
+      setFlag(IN_BATCH_CHANGE_FLAG, false);
+      result = isFlagSet(CHANGED_FLAG);
+      setFlag(CHANGED_FLAG, false);
     }
     return result;
   }

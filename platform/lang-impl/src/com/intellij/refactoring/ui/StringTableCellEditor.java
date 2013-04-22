@@ -40,8 +40,10 @@ public class StringTableCellEditor extends AbstractCellEditor implements TableCe
     myProject = project;
   }
 
+  @Override
   public Component getTableCellEditorComponent(JTable table, Object value, boolean isSelected, int row, int column) {
     final EditorTextField editorTextField = new EditorTextField((String) value, myProject, StdFileTypes.JAVA) {
+            @Override
             protected boolean shouldHaveBorder() {
               return false;
             }
@@ -55,6 +57,7 @@ public class StringTableCellEditor extends AbstractCellEditor implements TableCe
     return editorTextField;
   }
 
+  @Override
   public Object getCellEditorValue() {
     return myDocument.getText();
   }

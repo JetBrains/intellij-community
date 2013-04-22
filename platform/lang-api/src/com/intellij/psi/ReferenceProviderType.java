@@ -30,6 +30,7 @@ public class ReferenceProviderType {
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.ReferenceProviderType");
   private static final KeyedExtensionCollector<PsiReferenceProvider,ReferenceProviderType> COLLECTOR =
     new KeyedExtensionCollector<PsiReferenceProvider, ReferenceProviderType>(EP_NAME) {
+    @Override
     protected String keyToString(final ReferenceProviderType key) {
       return key.myId;
     }

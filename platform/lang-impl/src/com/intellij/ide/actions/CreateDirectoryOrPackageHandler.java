@@ -64,10 +64,12 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
     myDialogParent = dialogParent;
   }
 
+  @Override
   public boolean checkInput(String inputString) {
     return true;
   }
 
+  @Override
   public String getErrorText(String inputString) {
     if (FileTypeManager.getInstance().isFileIgnored(inputString)) {
       return "Trying to create a " + (myIsDirectory ? "directory" : "package") + " with ignored name, result will not be visible";
@@ -78,6 +80,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
     return null;
   }
 
+  @Override
   public boolean canClose(String inputString) {
     final String subDirName = inputString;
 
@@ -98,8 +101,10 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
     }
 
     Runnable command = new Runnable() {
+      @Override
       public void run() {
         final Runnable run = new Runnable() {
+          @Override
           public void run() {
             LocalHistoryAction action = LocalHistoryAction.NULL;
             try {
@@ -112,6 +117,7 @@ public class CreateDirectoryOrPackageHandler implements InputValidatorEx {
             }
             catch (final IncorrectOperationException ex) {
               ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
                 public void run() {
                   showErrorDialog(CreateElementActionBase.filterMessage(ex.getMessage()));
                 }

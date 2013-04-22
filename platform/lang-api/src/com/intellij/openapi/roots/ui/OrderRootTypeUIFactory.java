@@ -29,6 +29,7 @@ import javax.swing.*;
 
 public interface OrderRootTypeUIFactory {
   KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType> FACTORY = new KeyedExtensionFactory<OrderRootTypeUIFactory, OrderRootType>(OrderRootTypeUIFactory.class, "com.intellij.OrderRootTypeUI") {
+    @Override
     public String getKey(final OrderRootType key) {
       return key.name();
     }

@@ -26,6 +26,7 @@ import java.util.List;
  * @author Eugene Belyaev
  */
 public abstract class BaseExternalToolsGroup<T extends Tool> extends SimpleActionGroup implements DumbAware {
+  @Override
   public void update(AnActionEvent event) {
     Presentation presentation = event.getPresentation();
     removeAll();

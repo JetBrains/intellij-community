@@ -51,6 +51,7 @@ public class ProjectLibrariesSettingsImpl implements ProjectLibrariesSettings {
     }
   }
 
+  @Override
   @NotNull
   public Collection<? extends Element> getProjectLibraries() {
     final List<Element> result = new ArrayList<Element>();

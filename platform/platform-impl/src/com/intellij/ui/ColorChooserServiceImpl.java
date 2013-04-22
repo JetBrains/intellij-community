@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -31,6 +31,17 @@ public class ColorChooserServiceImpl extends ColorChooserService {
                           Color preselectedColor,
                           boolean enableOpacity,
                           ColorPickerListener[] listeners) {
-    return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity, listeners);
+    return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity, listeners, false);
+  }
+
+  @Nullable
+  @Override
+  public Color showDialog(Component parent,
+                          String caption,
+                          Color preselectedColor,
+                          boolean enableOpacity,
+                          ColorPickerListener[] listeners,
+                          boolean opacityInPercent) {
+    return ColorPicker.showDialog(parent, caption, preselectedColor, enableOpacity, listeners, opacityInPercent);
   }
 }

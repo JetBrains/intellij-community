@@ -56,6 +56,7 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     myPanel = new ScopeEditorPanel(project, getHolder());
     myIcon = getHolder(myShareScope).getIcon();
     mySharedCheckbox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         myIcon = getHolder().getIcon();
         myPanel.setHolder(getHolder());
@@ -63,6 +64,7 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     });
   }
 
+  @Override
   public void setDisplayName(final String name) {
     if (Comparing.strEqual(myScope.getName(), name)){
       return;
@@ -71,14 +73,17 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     myScope = new NamedScope(name, packageSet != null ? packageSet.createCopy() : null);
   }
 
+  @Override
   public NamedScope getEditableObject() {
     return new NamedScope(myScope.getName(), myPanel.getCurrentScope());
   }
 
+  @Override
   public String getBannerSlogan() {
     return IdeBundle.message("scope.banner.text", myScope.getName());
   }
 
+  @Override
   public String getDisplayName() {
     return myScope.getName();
   }
@@ -93,12 +98,14 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
             : NamedScopeManager.getInstance(myProject));
   }
 
+  @Override
   @Nullable
   @NonNls
   public String getHelpTopic() {
     return "project.scopes";
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     final JPanel wholePanel = new JPanel(new BorderLayout());
     wholePanel.add(myPanel.getPanel(), BorderLayout.CENTER);
@@ -106,12 +113,14 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     return wholePanel;
   }
 
+  @Override
   public boolean isModified() {
     if (mySharedCheckbox.isSelected() != myShareScope) return true;
     final PackageSet currentScope = myPanel.getCurrentScope();
     return !Comparing.strEqual(myPackageSet, currentScope != null ? currentScope.getText() : null);
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     try {
       myPanel.apply();
@@ -125,6 +134,7 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     }
   }
 
+  @Override
   public void reset() {
     mySharedCheckbox.setSelected(myShareScope);
     myPanel.reset(myScope.getValue(), null);
@@ -132,6 +142,7 @@ public class ScopeConfigurable extends NamedConfigurable<NamedScope> {
     myPackageSet = packageSet != null ? packageSet.getText() : null;
   }
 
+  @Override
   public void disposeUIResources() {
     if (myPanel != null){
       myPanel.cancelCurrentProgress();

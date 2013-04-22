@@ -129,7 +129,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
     myProject.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
-      public void selectionChanged(FileEditorManagerEvent e) {
+      public void selectionChanged(@NotNull FileEditorManagerEvent e) {
         onSelectionChanged();
       }
     });
@@ -440,7 +440,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
         removed = true;
       }
     }
-    
+
     return removed;
   }
 

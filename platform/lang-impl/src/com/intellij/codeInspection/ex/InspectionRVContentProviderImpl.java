@@ -44,11 +44,13 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     super(project);
   }
 
+  @Override
   public boolean checkReportedProblems(final InspectionTool tool) {
     tool.updateContent();
     return tool.hasReportedProblems();
   }
 
+  @Override
   @Nullable
   public QuickFixAction[] getQuickFixes(final InspectionTool tool, final InspectionTree tree) {
     final RefEntity[] refEntities = tree.getSelectedElements();
@@ -56,6 +58,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
   }
 
 
+  @Override
   public void appendToolNodeContent(final InspectionNode toolNode,
                                     final InspectionTreeNode parentNode,
                                     final boolean showStructure,
@@ -64,6 +67,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     final InspectionTool tool = toolNode.getTool();
 
     Function<RefEntity, UserObjectContainer<RefEntity>> computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
+      @Override
       public UserObjectContainer<RefEntity> fun(final RefEntity refElement) {
         return new RefElementContainer(refElement, problems != null ? problems.get(refElement) : null);
       }
@@ -89,6 +93,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
         tool instanceof DescriptorProviderInspection && !(tool instanceof CommonInspectionToolWrapper)? ((DescriptorProviderInspection)tool)
           .getOldProblemElements() : null;
       computeContainer = new Function<RefEntity, UserObjectContainer<RefEntity>>() {
+        @Override
         public UserObjectContainer<RefEntity> fun(final RefEntity refElement) {
           return new RefElementContainer(refElement, oldProblems != null ? oldProblems.get(refElement) : null);
         }
@@ -103,6 +108,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
     merge(model, toolNode, parentNode, false);
   }
 
+  @Override
   protected void appendDescriptor(final InspectionTool tool,
                                   final UserObjectContainer container,
                                   final InspectionPackageNode pNode,
@@ -149,6 +155,7 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       myDescriptors = descriptors;
     }
 
+    @Override
     @Nullable
     public RefElementContainer getOwner() {
       final RefEntity entity = myElement.getOwner();
@@ -158,14 +165,17 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       return null;
     }
 
+    @Override
     public RefElementNode createNode(InspectionTool tool) {
       return new RefElementNode(myElement, tool);
     }
 
+    @Override
     public RefEntity getUserObject() {
       return myElement;
     }
 
+    @Override
     @Nullable
     public String getModule() {
       final RefModule refModule = myElement instanceof RefElement
@@ -174,10 +184,12 @@ public class InspectionRVContentProviderImpl extends InspectionRVContentProvider
       return refModule != null ? refModule.getName() : null;
     }
 
+    @Override
     public boolean areEqual(final RefEntity o1, final RefEntity o2) {
       return Comparing.equal(o1, o2);
     }
 
+    @Override
     public boolean supportStructure() {
       return myElement instanceof RefElement && !(myElement instanceof RefDirectory); //do not show structure for refModule and refPackage
     }

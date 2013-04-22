@@ -457,14 +457,9 @@ public class StringUtil extends StringUtilRt {
       @NotNull
       @Override
       public String fun(@NotNull String dom) {
-        final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-        try {
-          escapeStringCharacters(dom.length(), dom, additionalChars, escapeSlash, builder);
-          return builder.toString();
-        }
-        finally {
-          StringBuilderSpinAllocator.dispose(builder);
-        }
+        final StringBuilder builder = new StringBuilder(dom.length());
+        escapeStringCharacters(dom.length(), dom, additionalChars, escapeSlash, builder);
+        return builder.toString();
       }
     };
   }
@@ -1203,7 +1198,7 @@ public class StringUtil extends StringUtilRt {
     }
     return result.toString();
   }
-  
+
   @NotNull
   public static <T> String join(@NotNull Iterable<T> items, @NotNull Function<T, String> f, @NotNull @NonNls String separator) {
     final StringBuilder result = new StringBuilder();
@@ -1243,16 +1238,11 @@ public class StringUtil extends StringUtilRt {
   public static String join(@Nullable final String... strings) {
     if (strings == null || strings.length == 0) return "";
 
-    final StringBuilder builder = StringBuilderSpinAllocator.alloc();
-    try {
-      for (final String string : strings) {
-        builder.append(string);
-      }
-      return builder.toString();
+    final StringBuilder builder = new StringBuilder();
+    for (final String string : strings) {
+      builder.append(string);
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(builder);
-    }
+    return builder.toString();
   }
 
   @NotNull
@@ -1648,15 +1638,9 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   private static String escapeChar(@NotNull final String str, final char character) {
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      buf.append(str);
-      escapeChar(buf, character);
-      return buf.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
+    final StringBuilder buf = new StringBuilder(str);
+    escapeChar(buf, character);
+    return buf.toString();
   }
 
   private static void escapeChar(@NotNull final StringBuilder buf, final char character) {
@@ -1692,14 +1676,9 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   public static String unescapeSlashes(@NotNull final String str) {
-    final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-    try {
-      unescapeSlashes(buf, str);
-      return buf.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buf);
-    }
+    final StringBuilder buf = new StringBuilder(str.length());
+    unescapeSlashes(buf, str);
+    return buf.toString();
   }
 
   private static void unescapeSlashes(@NotNull StringBuilder buf, @NotNull String str) {
@@ -1746,13 +1725,8 @@ public class StringUtil extends StringUtilRt {
 
   @NotNull
   public static String escapeToRegexp(@NotNull String text) {
-    final StringBuilder result = StringBuilderSpinAllocator.alloc();
-    try {
-      return escapeToRegexp(text, result).toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(result);
-    }
+    final StringBuilder result = new StringBuilder(text.length());
+    return escapeToRegexp(text, result).toString();
   }
 
   @NotNull

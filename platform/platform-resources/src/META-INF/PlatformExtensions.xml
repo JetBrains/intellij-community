@@ -154,6 +154,8 @@
     <projectService serviceInterface="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"
                     serviceImplementation="com.intellij.ide.errorTreeView.impl.ErrorTreeViewConfiguration"/>
 
+    <projectService serviceInterface="com.intellij.ui.docking.DockManager"
+                    serviceImplementation="com.intellij.ui.docking.impl.DockManagerImpl"/>
     <projectService serviceInterface="com.intellij.ide.SelectInEditorManager"
                     serviceImplementation="com.intellij.ide.impl.SelectInEditorManagerImpl"/>
     <projectService serviceInterface="com.intellij.ui.RecentsManager"
@@ -295,5 +297,11 @@
     <postStartupActivity implementation="org.jetbrains.ide.WebServerManagerImpl$MyPostStartupActivity"/>
 
     <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
+
+    <getDataRule key="context.ProjectFileDirectory" implementationClass="com.intellij.ide.impl.dataRules.ProjectFileDirectoryRule"/>
+
+    <localInspection shortName="InconsistentLineSeparators" bundle="messages.InspectionsBundle" key="inconsistent.line.separators"
+                     groupKey="group.names.portability.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeStyle.InconsistentLineSeparatorsInspection"/>
   </extensions>
 </idea-plugin>

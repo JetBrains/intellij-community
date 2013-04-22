@@ -32,10 +32,12 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.WeakKeyWeakValueHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -43,15 +45,17 @@ import java.util.Set;
  */
 public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
 
-  private static Logger LOG = Logger.getInstance("#com.strintec.intellij.webmaster.lineSeparator.ConvertLineSeparatorsAction");
+  private static Logger LOG = Logger.getInstance("#com.intellij.codeStyle.AbstractConvertLineSeparatorsAction");
+
+  private static final Map<String, Set<VirtualFile>> CACHED_IGNORED_FILES = new WeakKeyWeakValueHashMap<String, Set<VirtualFile>>();
 
   @NotNull
   private final String mySeparator;
 
   protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull LineSeparator separator) {
-    this(text, separator.getSeparatorString());
+    this(separator.toString() + " - " + text, separator.getSeparatorString());
   }
-  
+
   protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull String separator) {
     super(text);
     mySeparator = separator;
@@ -78,7 +82,6 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     }
   }
 
-
   @Override
   public void actionPerformed(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
@@ -92,7 +95,6 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
       return;
     }
 
-    final Set<VirtualFile> excludedFiles = ContainerUtilRt.newHashSet();
     final VirtualFile projectVirtualDirectory;
     VirtualFile projectBaseDir = project.getBaseDir();
     if (projectBaseDir != null && projectBaseDir.isDirectory()) {
@@ -101,23 +103,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     else {
       projectVirtualDirectory = null;
     }
-
-    VirtualFile projectFile = project.getProjectFile();
-    if (projectFile != null) {
-      excludedFiles.add(projectFile);
-    }
-
-    VirtualFile workspaceFile = project.getWorkspaceFile();
-    if (workspaceFile != null) {
-      excludedFiles.add(workspaceFile);
-    }
-
-    for (Module m : ModuleManager.getInstance(project).getModules()) {
-      VirtualFile moduleFile = m.getModuleFile();
-      if (moduleFile != null) {
-        excludedFiles.add(moduleFile);
-      }
-    }
+    final Set<VirtualFile> excludedFiles = getIgnoredFiles(project);
 
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     for (VirtualFile file : virtualFiles) {
@@ -126,8 +112,8 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
         new Processor<VirtualFile>() {
           @Override
           public boolean process(VirtualFile file) {
-            if (!file.isDirectory() && file.isWritable() && !excludedFiles.contains(file) && !fileTypeManager.isFileIgnored(file.getName())) {
-              changeLineSeparators(project, file);
+            if (shouldProcess(file, excludedFiles)) {
+              changeLineSeparators(project, file, mySeparator);
             }
             return true;
           }
@@ -143,7 +129,53 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     }
   }
 
-  private void changeLineSeparators(@NotNull final Project project, @NotNull final VirtualFile virtualFile) {
+  @NotNull
+  private static Set<VirtualFile> getIgnoredFiles(@NotNull Project project) {
+    String key = project.getName() + project.getLocationHash();
+    Set<VirtualFile> result = CACHED_IGNORED_FILES.get(key);
+    if (result != null) {
+      return result;
+    }
+
+    result = ContainerUtilRt.newHashSet();
+
+    VirtualFile projectFile = project.getProjectFile();
+    if (projectFile != null) {
+      result.add(projectFile);
+    }
+
+    VirtualFile workspaceFile = project.getWorkspaceFile();
+    if (workspaceFile != null) {
+      result.add(workspaceFile);
+    }
+
+    for (Module m : ModuleManager.getInstance(project).getModules()) {
+      VirtualFile moduleFile = m.getModuleFile();
+      if (moduleFile != null) {
+        result.add(moduleFile);
+      }
+    }
+    synchronized (CACHED_IGNORED_FILES) {
+      // We're brave enough to not be scared by double-cached value recalculation. Critical section is introduced only for the
+      // data consistency.
+      CACHED_IGNORED_FILES.put(key, result);
+    }
+    return result;
+  }
+
+  public static boolean shouldProcess(@NotNull VirtualFile file, @NotNull Project project) {
+    return shouldProcess(file, getIgnoredFiles(project));
+  }
+  
+  public static boolean shouldProcess(@NotNull VirtualFile file, @NotNull Set<VirtualFile> toIgnore) {
+    return !file.isDirectory() && file.isWritable() && !toIgnore.contains(file)
+           && !FileTypeManager.getInstance().isFileIgnored(file.getName()) && !file.getFileType().isBinary();
+  }
+
+  public static void changeLineSeparators(@NotNull final Project project,
+                                          @NotNull final VirtualFile virtualFile,
+                                          @NotNull final String newSeparator)
+  {
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     Document document = fileDocumentManager.getCachedDocument(virtualFile);
     if (document != null) {
@@ -153,12 +185,12 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     String currentSeparator = LoadTextUtil.detectLineSeparator(virtualFile, false);
     final String commandText;
     if (StringUtil.isEmpty(currentSeparator)) {
-      commandText = "Changed line separators to " + LineSeparator.fromString(mySeparator);
+      commandText = "Changed line separators to " + LineSeparator.fromString(newSeparator);
     }
     else {
       assert currentSeparator != null;
       commandText = String.format("Changed line separators from %s to %s",
-                                  LineSeparator.fromString(currentSeparator), LineSeparator.fromString(mySeparator));
+                                  LineSeparator.fromString(currentSeparator), LineSeparator.fromString(newSeparator));
     }
 
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
@@ -166,7 +198,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
       @Override
       public void run() {
         try {
-          LoadTextUtil.changeLineSeparators(project, virtualFile, mySeparator, this);
+          LoadTextUtil.changeLineSeparators(project, virtualFile, newSeparator, this);
         }
         catch (IOException e) {
           LOG.warn(e);

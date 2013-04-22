@@ -31,14 +31,17 @@ public class SafeDeleteAction extends BaseRefactoringAction {
     setInjectedContext(true);
   }
 
+  @Override
   public boolean isAvailableInEditorOnly() {
     return false;
   }
 
+  @Override
   protected boolean isAvailableForLanguage(Language language) {
     return true;
   }
 
+  @Override
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     for (PsiElement element : elements) {
       if (!SafeDeleteProcessor.validElement(element)) return false;
@@ -46,10 +49,12 @@ public class SafeDeleteAction extends BaseRefactoringAction {
     return true;
   }
 
+  @Override
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull final PsiElement element, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
     return SafeDeleteProcessor.validElement(element);
   }
 
+  @Override
   public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     return new SafeDeleteHandler();
   }

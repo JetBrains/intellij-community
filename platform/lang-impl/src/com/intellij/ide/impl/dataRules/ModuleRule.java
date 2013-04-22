@@ -31,6 +31,7 @@ import com.intellij.psi.PsiElement;
  *         Date: Feb 10, 2004
  */
 public class ModuleRule implements GetDataRule {
+  @Override
   public Object getData(DataProvider dataProvider) {
     Object moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataProvider);
     if (moduleContext != null) {

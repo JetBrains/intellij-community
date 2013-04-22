@@ -17,7 +17,6 @@
 package com.intellij.ide;
 
 import com.intellij.CommonBundle;
-import com.intellij.openapi.util.SystemInfo;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.PropertyKey;
 
@@ -38,22 +37,6 @@ public class IdeBundle {
 
   public static String message(@PropertyKey(resourceBundle = BUNDLE)String key, Object... params) {
     return CommonBundle.message(getBundle(), key, params);
-  }
-
-  public static String settingsTitle() {
-    return SystemInfo.isMac ? message("title.settings.mac") : message("title.settings");
-  }
-
-  public static String settingsAction() {
-    return SystemInfo.isMac ? message("action.settings.mac") : message("action.settings");
-  }
-
-  public static String settingsActionDescription() {
-    return SystemInfo.isMac ? message("action.settings.description.mac") : message("action.settings.description");
-  }
-
-  public static String settingsActionPath() {
-    return SystemInfo.isMac ? message("action.settings.path.mac") : message("action.settings.path");
   }
 
   private static ResourceBundle getBundle() {

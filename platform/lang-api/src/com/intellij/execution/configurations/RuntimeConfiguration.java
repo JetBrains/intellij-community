@@ -33,31 +33,38 @@ public abstract class RuntimeConfiguration extends RunConfigurationBase implemen
     super(project, factory, name);
   }
 
+  @Override
   @NotNull
   public Module[] getModules() {
     return Module.EMPTY_ARRAY;
   }
 
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
   }
 
 
+  @Override
   public RuntimeConfiguration clone() {
     return (RuntimeConfiguration)super.clone();
   }
 
+  @Override
   public JDOMExternalizable createRunnerSettings(ConfigurationInfoProvider provider) {
     return null;
   }
 
+  @Override
   public SettingsEditor<JDOMExternalizable> getRunnerSettingsEditor(ProgramRunner runner) {
     return null;
   }
 
+  @Override
   public boolean isGeneratedName() {
     return false;
   }
 
+  @Override
   @NonNls public String suggestedName() {
     return null;
   }

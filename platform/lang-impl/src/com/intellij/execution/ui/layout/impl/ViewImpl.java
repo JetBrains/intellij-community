@@ -31,7 +31,7 @@ public class ViewImpl implements View {
 
   private Tab myTab;
   private int myTabIndex;
-  
+
   private int myWindow;
 
   private PlaceInGrid myPlaceInGrid;
@@ -55,15 +55,18 @@ public class ViewImpl implements View {
     content.addContent(XmlSerializer.serialize(this));
   }
 
+  @Override
   public Tab getTab() {
     return myTab;
   }
 
+  @Override
   public PlaceInGrid getPlaceInGrid() {
     return myPlaceInGrid;
   }
 
 
+  @Override
   public boolean isMinimizedInGrid() {
     return myMinimizedInGrid;
   }
@@ -77,22 +80,27 @@ public class ViewImpl implements View {
   }
 
 
+  @Override
   public void setMinimizedInGrid(final boolean minimizedInGrid) {
     myMinimizedInGrid = minimizedInGrid;
   }
 
+  @Override
   public void setPlaceInGrid(PlaceInGrid placeInGrid) {
     myPlaceInGrid = placeInGrid;
   }
 
+  @Override
   public void assignTab(final Tab tab) {
     myTab = tab;
   }
 
+  @Override
   public int getTabIndex() {
     return myTab != null ? myTab.getIndex() : myTabIndex;
   }
 
+  @Override
   public void setTabIndex(final int tabIndex) {
     myTabIndex = tabIndex;
   }

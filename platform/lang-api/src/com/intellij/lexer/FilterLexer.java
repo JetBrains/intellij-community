@@ -34,6 +34,7 @@ public class FilterLexer extends DelegateLexer {
       mySet = set;
     }
 
+    @Override
     public boolean reject(IElementType type) {
       return mySet.contains(type);
     }
@@ -53,6 +54,7 @@ public class FilterLexer extends DelegateLexer {
     return getDelegate();
   }
 
+  @Override
   public void start(CharSequence buffer, int startOffset, int endOffset, int initialState) {
     super.start(buffer, startOffset, endOffset, initialState);
     myPrevTokenEnd = -1;
@@ -60,6 +62,7 @@ public class FilterLexer extends DelegateLexer {
   }
 
 
+  @Override
   public void advance() {
     myPrevTokenEnd = getDelegate().getTokenEnd();
     super.advance();
@@ -70,10 +73,12 @@ public class FilterLexer extends DelegateLexer {
     return myPrevTokenEnd;
   }
 
+  @Override
   public LexerPosition getCurrentPosition() {
     return getDelegate().getCurrentPosition();    //To change body of overridden methods use File | Settings | File Templates.
   }
 
+  @Override
   public void restore(LexerPosition position) {
     getDelegate().restore(position);
     myPrevTokenEnd = -1;

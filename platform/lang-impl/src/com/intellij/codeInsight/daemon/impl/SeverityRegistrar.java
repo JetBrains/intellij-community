@@ -88,7 +88,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     return project != null ? InspectionProjectProfileManager.getInstance(project).getSeverityRegistrar() : getInstance();
   }
 
-  public void registerSeverity(SeverityBasedTextAttributes info, Color renderColor){
+  public void registerSeverity(@NotNull SeverityBasedTextAttributes info, Color renderColor){
     final HighlightSeverity severity = info.getType().getSeverity(null);
     ourMap.put(severity.toString(), info);
     ourRendererColors.put(severity.toString(), renderColor);
@@ -96,6 +96,7 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
     HighlightDisplayLevel.registerSeverity(severity, renderColor);
   }
 
+  @NotNull
   public Collection<SeverityBasedTextAttributes> getRegisteredHighlightingInfoTypes() {
     final Collection<SeverityBasedTextAttributes> collection = new ArrayList<SeverityBasedTextAttributes>(ourMap.values());
     for (HighlightInfoType type : STANDARD_SEVERITIES.values()) {
@@ -114,11 +115,12 @@ public class SeverityRegistrar implements JDOMExternalizable, Comparator<Highlig
   }
 
 
-  public SeverityBasedTextAttributes unregisterSeverity(HighlightSeverity severity){
+  public SeverityBasedTextAttributes unregisterSeverity(@NotNull HighlightSeverity severity){
     return ourMap.remove(severity.toString());
   }
 
-  public HighlightInfoType.HighlightInfoTypeImpl getHighlightInfoTypeBySeverity(HighlightSeverity severity) {
+  @NotNull
+  public HighlightInfoType.HighlightInfoTypeImpl getHighlightInfoTypeBySeverity(@NotNull HighlightSeverity severity) {
     HighlightInfoType infoType = STANDARD_SEVERITIES.get(severity.toString());
     if (infoType != null) {
       return (HighlightInfoType.HighlightInfoTypeImpl)infoType;

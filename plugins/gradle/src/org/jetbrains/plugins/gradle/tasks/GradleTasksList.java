@@ -17,12 +17,12 @@ package org.jetbrains.plugins.gradle.tasks;
 
 import com.intellij.execution.Executor;
 import com.intellij.execution.ExecutorRegistry;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.containers.ContainerUtilRt;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
 
 import javax.swing.*;
 import java.awt.*;
@@ -48,8 +48,8 @@ public class GradleTasksList extends JBList {
     return (GradleTasksModel)super.getModel();
   }
 
-  public void setFirst(@NotNull GradleTaskDescriptor descriptor) {
-    Set<GradleTaskDescriptor> selected = getSelectedDescriptors();
+  public void setFirst(@NotNull ExternalSystemTaskDescriptor descriptor) {
+    Set<ExternalSystemTaskDescriptor> selected = getSelectedDescriptors();
     GradleTasksModel model = getModel();
     model.setFirst(descriptor);
     clearSelection();
@@ -62,17 +62,17 @@ public class GradleTasksList extends JBList {
   }
 
   @NotNull
-  public Set<GradleTaskDescriptor> getSelectedDescriptors() {
+  public Set<ExternalSystemTaskDescriptor> getSelectedDescriptors() {
     int[] indices = getSelectedIndices();
     if (indices == null || indices.length <= 0) {
       return Collections.emptySet();
     }
-    Set<GradleTaskDescriptor> result = ContainerUtilRt.newHashSet();
+    Set<ExternalSystemTaskDescriptor> result = ContainerUtilRt.newHashSet();
     GradleTasksModel model = getModel();
     for (int i : indices) {
       Object e = model.getElementAt(i);
-      if (e instanceof GradleTaskDescriptor) {
-        result.add((GradleTaskDescriptor)e);
+      if (e instanceof ExternalSystemTaskDescriptor) {
+        result.add((ExternalSystemTaskDescriptor)e);
       }
     }
     return result;
@@ -85,8 +85,8 @@ public class GradleTasksList extends JBList {
       if (value instanceof GradleTasksModel.MyEmptyDescriptor) {
         return EMPTY_RENDERER;
       }
-      else if (value instanceof GradleTaskDescriptor) {
-        GradleTaskDescriptor descriptor = (GradleTaskDescriptor)value;
+      else if (value instanceof ExternalSystemTaskDescriptor) {
+        ExternalSystemTaskDescriptor descriptor = (ExternalSystemTaskDescriptor)value;
         setText(descriptor.getName());
         Icon icon = null;
         String executorId = descriptor.getExecutorId();

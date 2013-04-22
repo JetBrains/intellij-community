@@ -194,6 +194,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     EditSourceOnDoubleClickHandler.install(myTree);
     EditSourceOnEnterKeyHandler.install(myTree);
     myCopyPasteDelegator = new CopyPasteDelegator(myProject, this) {
+      @Override
       @NotNull
       protected PsiElement[] getSelectedElements() {
         return getSelectedPsiElements();
@@ -355,6 +356,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     myBuilder.select(selector, file, requestFocus);
   }
 
+  @Override
   public void dispose() {
     Disposer.dispose(myBuilder);
     myBuilder = null;
@@ -398,6 +400,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
     return myFavoritesTreeStructure;
   }
 
+  @Override
   public Object getData(String dataId) {
     if (PlatformDataKeys.PROJECT.is(dataId)) {
       return myProject;
@@ -663,11 +666,13 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
   }
 
   private final class MyDeletePSIElementProvider implements DeleteProvider {
+    @Override
     public boolean canDeleteElement(@NotNull DataContext dataContext) {
       final PsiElement[] elements = getElementsToDelete();
       return DeleteHandler.shouldEnableDeleteAction(elements);
     }
 
+    @Override
     public void deleteElement(@NotNull DataContext dataContext) {
       List<PsiElement> allElements = Arrays.asList(getElementsToDelete());
       List<PsiElement> validElements = new ArrayList<PsiElement>();
@@ -714,6 +719,7 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
   }
 
   private final class MyIdeView implements IdeView {
+    @Override
     public void selectElement(final PsiElement element) {
       if (element != null) {
         selectPsiElement(element, false);
@@ -771,11 +777,13 @@ public class FavoritesTreeViewPanel extends JPanel implements DataProvider, Dock
       return selectedNodeElements[0] instanceof PsiDirectory ? new PsiDirectory[]{(PsiDirectory)selectedNodeElements[0]} : null;
     }
 
+    @Override
     public PsiDirectory[] getDirectories() {
       final PsiDirectory[] directories = getSelectedDirectories();
       return directories == null ? PsiDirectory.EMPTY_ARRAY : directories;
     }
 
+    @Override
     public PsiDirectory getOrChooseDirectory() {
       return DirectoryChooserUtil.getOrChooseDirectory(this);
     }

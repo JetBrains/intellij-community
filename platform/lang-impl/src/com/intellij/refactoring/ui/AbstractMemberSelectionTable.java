@@ -147,6 +147,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
   }
 
+  @Override
   public void calcData(final DataKey key, final DataSink sink) {
     if (key == LangDataKeys.PSI_ELEMENT) {
       final Collection<M> memberInfos = getSelectedMemberInfos();
@@ -166,6 +167,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
   }
 
+  @Override
   public void addNotify() {
     super.addNotify();
     scrollSelectionInView();
@@ -180,34 +182,42 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
   protected abstract Icon getOverrideIcon(M memberInfo);
 
   private static class DefaultMemberInfoModel<T extends PsiElement, M extends MemberInfoBase<T>> implements MemberInfoModel<T, M> {
+    @Override
     public boolean isMemberEnabled(M member) {
       return true;
     }
 
+    @Override
     public boolean isCheckedWhenDisabled(M member) {
       return false;
     }
 
+    @Override
     public boolean isAbstractEnabled(M member) {
       return true;
     }
 
+    @Override
     public boolean isAbstractWhenDisabled(M member) {
       return false;
     }
 
 
+    @Override
     public int checkForProblems(@NotNull M member) {
       return OK;
     }
 
+    @Override
     public void memberInfoChanged(MemberInfoChange<T, M> event) {
     }
 
+    @Override
     public Boolean isFixedAbstract(M member) {
       return null;
     }
 
+    @Override
     public String getTooltipText(M member) {
       return null;
     }
@@ -220,6 +230,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       myTable = table;
     }
 
+    @Override
     public int getColumnCount() {
       if (myTable.myAbstractEnabled) {
         return 3;
@@ -229,10 +240,12 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       }
     }
 
+    @Override
     public int getRowCount() {
       return myTable.myMemberInfos.size();
     }
 
+    @Override
     public Class getColumnClass(int columnIndex) {
       if (columnIndex == CHECKED_COLUMN || columnIndex == ABSTRACT_COLUMN) {
         return Boolean.class;
@@ -240,6 +253,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       return super.getColumnClass(columnIndex);
     }
 
+    @Override
     public Object getValueAt(int rowIndex, int columnIndex) {
       final M memberInfo = myTable.myMemberInfos.get(rowIndex);
       switch (columnIndex) {
@@ -261,6 +275,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       }
     }
 
+    @Override
     public String getColumnName(int column) {
       switch (column) {
         case CHECKED_COLUMN:
@@ -274,6 +289,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       }
     }
 
+    @Override
     public boolean isCellEditable(int rowIndex, int columnIndex) {
       switch (columnIndex) {
         case CHECKED_COLUMN:
@@ -285,6 +301,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
     }
 
 
+    @Override
     public void setValueAt(final Object aValue, final int rowIndex, final int columnIndex) {
       if (columnIndex == CHECKED_COLUMN) {
         myTable.myMemberInfos.get(rowIndex).setChecked(((Boolean)aValue).booleanValue());
@@ -302,10 +319,12 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
 
   private class MyEnableDisableAction extends EnableDisableAction {
 
+    @Override
     protected JTable getTable() {
       return AbstractMemberSelectionTable.this;
     }
 
+    @Override
     protected void applyValue(int[] rows, boolean valueToBeSet) {
       List<M> changedInfo = new ArrayList<M>();
       for (int row : rows) {
@@ -319,6 +338,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       setRowSelectionInterval(selectedRow, selectedRow);
     }
 
+    @Override
     protected boolean isRowChecked(final int row) {
       return myMemberInfos.get(row).isChecked();
     }
@@ -331,6 +351,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       myTable = table;
     }
 
+    @Override
     public void customizeCellRenderer(JTable table, final Object value,
                                       boolean isSelected, boolean hasFocus, final int row, final int column) {
 
@@ -385,6 +406,7 @@ public abstract class AbstractMemberSelectionTable<T extends PsiElement, M exten
       myTable = table;
     }
 
+    @Override
     public Component getTableCellRendererComponent(JTable table, Object value, boolean isSelected, boolean hasFocus, int row, int column) {
       Component component = super.getTableCellRendererComponent(table, value, isSelected, hasFocus, row, column);
       if (component instanceof JCheckBox) {

@@ -44,7 +44,7 @@ import java.util.Set;
 import java.util.TreeSet;
 
 /**
- * Used by Installer's build buildSearchableOptions step. In order to run locally use TraverseUi configuration. 
+ * Used by Installer's build buildSearchableOptions step. In order to run locally use TraverseUi configuration.
  * Pass corresponding -Didea.platform.prefix=YOUR_IDE_PREFIX to vm options and choose main_YOUR_IDE module
  */
 @SuppressWarnings({"CallToPrintStackTrace", "SynchronizeOnThis"})
@@ -59,16 +59,19 @@ public class TraverseUIStarter implements ApplicationStarter {
   @NonNls private static final String PATH = "path";
   @NonNls private static final String HIT = "hit";
 
+  @Override
   @NonNls
   public String getCommandName() {
     return "traverseUI";
   }
 
 
+  @Override
   public void premain(String[] args) {
     OUTPUT_PATH = args[1];
   }
 
+  @Override
   public void main(String[] args){
     System.out.println("Starting searchable options index builder");
     try {
@@ -150,7 +153,7 @@ public class TraverseUIStarter implements ApplicationStarter {
 
   private static void collectOptions(SearchableOptionsRegistrar optionsRegistrar,
                                      TreeSet<OptionDescription> options,
-                                     String text, 
+                                     String text,
                                      String path) {
     final Set<String> strings = optionsRegistrar.getProcessedWordsWithoutStemming(text);
     for (String word : strings) {

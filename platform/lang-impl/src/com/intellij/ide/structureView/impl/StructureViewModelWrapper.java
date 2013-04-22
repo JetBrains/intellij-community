@@ -39,49 +39,60 @@ public class StructureViewModelWrapper implements StructureViewModel {
     myMainFile = mainFile;
   }
 
+  @Override
   public Object getCurrentEditorElement() {
     return myStructureViewModel.getCurrentEditorElement();
   }
 
+  @Override
   public void addEditorPositionListener(final FileEditorPositionListener listener) {
     myStructureViewModel.addEditorPositionListener(listener);
   }
 
+  @Override
   public void removeEditorPositionListener(final FileEditorPositionListener listener) {
     myStructureViewModel.removeEditorPositionListener(listener);
   }
 
+  @Override
   public void addModelListener(final ModelListener modelListener) {
     myStructureViewModel.addModelListener(modelListener);
   }
 
+  @Override
   public void removeModelListener(final ModelListener modelListener) {
     myStructureViewModel.removeModelListener(modelListener);
   }
 
+  @Override
   @NotNull
   public StructureViewTreeElement getRoot() {
     return new StructureViewElementWrapper<PsiElement>(myStructureViewModel.getRoot(), myMainFile);
   }
 
+  @Override
   public void dispose() {
     myStructureViewModel.dispose();
   }
 
+  @Override
   public boolean shouldEnterElement(final Object element) {
     return false;
   }
 
+  @Override
   @NotNull
   public Grouper[] getGroupers() {
     return myStructureViewModel.getGroupers();
   }
 
+  @Override
   @NotNull
   public Sorter[] getSorters() {
     return myStructureViewModel.getSorters();
   }
 
+  @Override
   @NotNull
   public Filter[] getFilters() {
     return myStructureViewModel.getFilters();

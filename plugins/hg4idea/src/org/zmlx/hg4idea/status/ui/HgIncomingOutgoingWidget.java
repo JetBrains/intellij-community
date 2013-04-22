@@ -88,17 +88,17 @@ public class HgIncomingOutgoingWidget extends EditorBasedWidget
   }
 
   @Override
-  public void selectionChanged(FileEditorManagerEvent event) {
+  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
     update();
   }
 
   @Override
-  public void fileOpened(FileEditorManager source, VirtualFile file) {
+  public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     update();
   }
 
   @Override
-  public void fileClosed(FileEditorManager source, VirtualFile file) {
+  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     update();
   }
 

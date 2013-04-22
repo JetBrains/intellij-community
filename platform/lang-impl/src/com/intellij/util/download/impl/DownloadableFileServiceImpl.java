@@ -48,6 +48,7 @@ public class DownloadableFileServiceImpl extends DownloadableFileService {
         return new DownloadableFileSetDescriptionImpl<DownloadableFileDescription>(version.getName(), version.getVersion(), files);
       }
 
+      @Override
       protected DownloadableFileDescription createFileDescription(ArtifactItem item, String url, String prefix) {
         return getInstance().createFileDescription(url, item.getName());
       }

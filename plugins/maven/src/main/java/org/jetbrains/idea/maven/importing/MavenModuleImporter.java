@@ -33,6 +33,7 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
+import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -162,8 +163,27 @@ public class MavenModuleImporter {
         if (buildHelperCfg != null) {
           addAttachArtifactDependency(buildHelperCfg, scope, depProject, artifact);
         }
+
+        if (artifact.getClassifier() != null && !"system".equals(artifact.getScope())) {
+          MavenArtifact a = new MavenArtifact(
+            artifact.getGroupId(),
+            artifact.getArtifactId(),
+            artifact.getVersion(),
+            artifact.getBaseVersion(),
+            artifact.getType(),
+            artifact.getClassifier(),
+            artifact.getScope(),
+            artifact.isOptional(),
+            artifact.getExtension(),
+            null,
+            myMavenProject.getLocalRepository(),
+            false, false
+          );
+
+          myRootModelAdapter.addLibraryDependency(a, scope, myModifiableModelsProvider, myMavenProject);
+        }
       }
-      if ("system".equals(artifact.getScope())) {
+      else if ("system".equals(artifact.getScope())) {
         myRootModelAdapter.addSystemDependency(artifact, scope);
       }
       else {

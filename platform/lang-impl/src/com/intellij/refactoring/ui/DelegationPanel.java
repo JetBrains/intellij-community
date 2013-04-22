@@ -44,11 +44,13 @@ public class DelegationPanel extends JPanel {
     bg.add(myRbGenerateDelegate);
     add(Box.createHorizontalGlue());
     myRbModifyCalls.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         stateModified();
       }
     });
     myRbGenerateDelegate.addItemListener(new ItemListener() {
+      @Override
       public void itemStateChanged(ItemEvent e) {
         stateModified();
       }

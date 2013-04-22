@@ -372,7 +372,7 @@ public class PsiImplUtil {
 
   // todo[r.sh] cache?
   @Nullable
-  private static Set<TargetType> getAnnotationTargets(PsiClass annotationType) {
+  public static Set<TargetType> getAnnotationTargets(PsiClass annotationType) {
     if (!annotationType.isAnnotationType()) return null;
     PsiModifierList modifierList = annotationType.getModifierList();
     if (modifierList == null) return null;

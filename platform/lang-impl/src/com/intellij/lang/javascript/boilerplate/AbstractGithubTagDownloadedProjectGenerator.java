@@ -41,6 +41,7 @@ public abstract class AbstractGithubTagDownloadedProjectGenerator extends WebPro
   @NotNull
   protected abstract String getGithubRepositoryName();
 
+  @Override
   @Nullable
   public abstract String getDescription();
 

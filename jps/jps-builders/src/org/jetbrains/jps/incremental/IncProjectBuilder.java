@@ -181,11 +181,22 @@ public class IncProjectBuilder {
       myProjectDescriptor.dataManager.saveVersion();
       reportRebuiltModules(context);
     }
+    catch (StopBuildException e) {
+      reportRebuiltModules(context);
+      // some builder decided to stop the build
+      // report optional progress message if any
+      final String msg = e.getMessage();
+      if (!StringUtil.isEmptyOrSpaces(msg)) {
+        myMessageDispatcher.processMessage(new ProgressMessage(msg));
+      }
+    }
     catch (ProjectBuildException e) {
+      LOG.info(e);
       final Throwable cause = e.getCause();
       if (cause instanceof PersistentEnumerator.CorruptedException ||
           cause instanceof MappingFailedException ||
           cause instanceof IOException) {
+        
         myMessageDispatcher.processMessage(new CompilerMessage(
           "", BuildMessage.Kind.INFO,
           "Internal caches are corrupted or have outdated format, forcing project rebuild: " +
@@ -194,19 +205,17 @@ public class IncProjectBuilder {
         throw new RebuildRequestedException(cause);
       }
       else {
-        reportRebuiltModules(context);
-        if (cause == null) {
-          // some builder decided to stop the build
-          // report optional progress message if exists
-          final String msg = e.getMessage();
-          if (!StringUtil.isEmpty(msg)) {
-            myMessageDispatcher.processMessage(new ProgressMessage(msg));
-          }
+        // should stop the build with error
+        final String errMessage = e.getMessage();
+        final CompilerMessage msg;
+        if (StringUtil.isEmptyOrSpaces(errMessage)) {
+          msg = new CompilerMessage("", cause != null? cause : e);
         }
         else {
-          // the reason for the build stop is unexpected internal error, report it
-          myMessageDispatcher.processMessage(new CompilerMessage("", cause));
+          final String causeMessage = cause != null? cause.getMessage() : "";
+          msg = new CompilerMessage("", BuildMessage.Kind.ERROR, StringUtil.isEmptyOrSpaces(causeMessage) || errMessage.equals(causeMessage)? errMessage : errMessage + ": " + causeMessage);
         }
+        myMessageDispatcher.processMessage(msg);
       }
     }
     finally {
@@ -1038,7 +1047,7 @@ public class IncProjectBuilder {
             doneSomething |= (buildResult != ModuleLevelBuilder.ExitCode.NOTHING_DONE);
 
             if (buildResult == ModuleLevelBuilder.ExitCode.ABORT) {
-              throw new ProjectBuildException("Builder " + builder.getPresentableName() + " requested build stop");
+              throw new StopBuildException("Builder " + builder.getPresentableName() + " requested build stop");
             }
             context.checkCanceled();
             if (buildResult == ModuleLevelBuilder.ExitCode.ADDITIONAL_PASS_REQUIRED) {

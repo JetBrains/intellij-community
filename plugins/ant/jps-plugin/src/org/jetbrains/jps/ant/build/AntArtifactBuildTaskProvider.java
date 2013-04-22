@@ -35,10 +35,7 @@ import org.jetbrains.jps.ant.model.JpsAntInstallation;
 import org.jetbrains.jps.ant.model.artifacts.JpsAntArtifactExtension;
 import org.jetbrains.jps.ant.model.impl.JpsAntInstallationImpl;
 import org.jetbrains.jps.builders.artifacts.ArtifactBuildTaskProvider;
-import org.jetbrains.jps.incremental.BuildTask;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ExternalProcessUtil;
-import org.jetbrains.jps.incremental.ProjectBuildException;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.model.JpsDummyElement;
@@ -98,20 +95,20 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         jdkLibrary = project.getModel().getGlobal().getLibraryCollection().findLibrary(jdkName, JpsJavaSdkType.INSTANCE);
         if (jdkLibrary == null) {
           reportError(context, "JDK '" + jdkName + "' not found");
-          throw new ProjectBuildException();
+          throw new StopBuildException();
         }
       }
       else {
         JpsSdkReference<JpsDummyElement> reference = project.getSdkReferencesTable().getSdkReference(JpsJavaSdkType.INSTANCE);
         if (reference == null) {
           reportError(context, "project JDK is not specified");
-          throw new ProjectBuildException();
+          throw new StopBuildException();
         }
 
         jdkLibrary = reference.resolve();
         if (jdkLibrary == null) {
           reportError(context, "JDK '" + reference.getSdkName() + "' not found");
-          throw new ProjectBuildException();
+          throw new StopBuildException();
         }
       }
       JpsSdk<?> jdk = jdkLibrary.getProperties();
@@ -120,7 +117,7 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
                                                                                                  myExtension.getFileUrl());
       if (antInstallation == null) {
         reportError(context, "Ant installation is not configured");
-        throw new ProjectBuildException();
+        throw new StopBuildException();
       }
 
       List<String> classpath = new ArrayList<String>();
@@ -199,7 +196,7 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         handler.startNotify();
         handler.waitFor();
         if (hasErrors.get()) {
-          throw new ProjectBuildException();
+          throw new StopBuildException();
         }
       }
       catch (IOException e) {

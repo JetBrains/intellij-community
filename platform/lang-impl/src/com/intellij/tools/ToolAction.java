@@ -38,6 +38,7 @@ public class ToolAction extends AnAction implements DumbAware {
     getTemplatePresentation().setDescription(tool.getDescription());
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     runTool(myActionId, e.getDataContext(), e, 0L, null);
   }

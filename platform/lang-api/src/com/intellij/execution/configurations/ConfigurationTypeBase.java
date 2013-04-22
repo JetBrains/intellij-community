@@ -50,23 +50,28 @@ public abstract class ConfigurationTypeBase implements ConfigurationType {
     myFactories = newFactories.toArray(new ConfigurationFactory[newFactories.size()]);
   }
 
+  @Override
   public String getDisplayName() {
     return myDisplayName;
   }
 
+  @Override
   public String getConfigurationTypeDescription() {
     return myDescription;
   }
 
+  @Override
   public Icon getIcon() {
     return myIcon;
   }
 
+  @Override
   @NotNull
   public String getId() {
     return myId;
   }
 
+  @Override
   public ConfigurationFactory[] getConfigurationFactories() {
     return myFactories;
   }

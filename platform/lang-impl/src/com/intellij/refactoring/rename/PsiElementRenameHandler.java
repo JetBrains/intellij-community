@@ -54,6 +54,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   public static final ExtensionPointName<Condition<PsiElement>> VETO_RENAME_CONDITION_EP = ExtensionPointName.create("com.intellij.vetoRenameCondition");
   public static DataKey<String> DEFAULT_NAME = DataKey.create("DEFAULT_NAME");
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file, DataContext dataContext) {
     PsiElement element = getElement(dataContext);
     editor.getScrollingModel().scrollToCaret(ScrollType.MAKE_VISIBLE);
@@ -61,6 +62,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     invoke(element, project, nameSuggestionContext, editor);
   }
 
+  @Override
   public void invoke(@NotNull Project project, @NotNull PsiElement[] elements, DataContext dataContext) {
     PsiElement element = elements.length == 1 ? elements[0] : null;
     if (element == null) element = getElement(dataContext);
@@ -142,7 +144,7 @@ public class PsiElementRenameHandler implements RenameHandler {
   public static void rename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor) {
     rename(element, project, nameSuggestionContext, editor, null);
   }
-  
+
   private static void rename(PsiElement element, final Project project, PsiElement nameSuggestionContext, Editor editor, String defaultName) {
     RenamePsiElementProcessor processor = RenamePsiElementProcessor.forElement(element);
     element = processor.substituteElementToRename(element, editor);
@@ -173,6 +175,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     }
   }
 
+  @Override
   public boolean isAvailableOnDataContext(DataContext dataContext) {
     return !isVetoed(getElement(dataContext));
   }
@@ -195,6 +198,7 @@ public class PsiElementRenameHandler implements RenameHandler {
     return elementArray[0];
   }
 
+  @Override
   public boolean isRenaming(DataContext dataContext) {
     return isAvailableOnDataContext(dataContext);
   }

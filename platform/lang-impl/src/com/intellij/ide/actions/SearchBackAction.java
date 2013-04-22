@@ -35,12 +35,14 @@ public class SearchBackAction extends AnAction implements DumbAware {
     setEnabledInModalContext(true);
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     final Project project = e.getData(PlatformDataKeys.PROJECT);
     final FileEditor editor = e.getData(PlatformDataKeys.FILE_EDITOR);
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(
         project, new Runnable() {
+        @Override
         public void run() {
           PsiDocumentManager.getInstance(project).commitAllDocuments();
           if(FindManager.getInstance(project).findPreviousUsageInEditor(editor)) {
@@ -54,6 +56,7 @@ public class SearchBackAction extends AnAction implements DumbAware {
     );
   }
 
+  @Override
   public void update(AnActionEvent event){
     Presentation presentation = event.getPresentation();
     Project project = event.getData(PlatformDataKeys.PROJECT);

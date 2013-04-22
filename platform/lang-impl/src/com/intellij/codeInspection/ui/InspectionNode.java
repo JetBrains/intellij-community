@@ -48,6 +48,7 @@ public class InspectionNode extends InspectionTreeNode {
     return (InspectionTool)getUserObject();
   }
 
+  @Override
   public Icon getIcon(boolean expanded) {
     return TOOL;
   }
@@ -57,6 +58,7 @@ public class InspectionNode extends InspectionTreeNode {
     return myTooBigForOnlineRefresh;
   }
 
+  @Override
   public int getProblemCount() {
     int sum = 0;
     Enumeration children = children();

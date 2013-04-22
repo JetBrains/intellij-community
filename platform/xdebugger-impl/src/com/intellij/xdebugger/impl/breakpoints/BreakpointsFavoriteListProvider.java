@@ -20,7 +20,9 @@ import com.intellij.ide.favoritesTreeView.AbstractFavoritesListProvider;
 import com.intellij.ide.favoritesTreeView.FavoritesManager;
 import com.intellij.ide.projectView.PresentationData;
 import com.intellij.ide.util.treeView.AbstractTreeNode;
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.pom.Navigatable;
 import com.intellij.ui.CheckedTreeNode;
 import com.intellij.ui.ColoredTreeCellRenderer;
@@ -65,9 +67,15 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
   public BreakpointsFavoriteListProvider(Project project) {
     super(project, "Breakpoints");
     myBreakpointPanelProviders = XBreakpointUtil.collectPanelProviders();
-    for (BreakpointPanelProvider provider : myBreakpointPanelProviders) {
+    for (final BreakpointPanelProvider provider : myBreakpointPanelProviders) {
       provider.addListener(this, myProject);
       provider.createBreakpointsGroupingRules(myRulesAvailable);
+      Disposer.register(project, new Disposable() {
+        @Override
+        public void dispose() {
+          provider.removeListener(BreakpointsFavoriteListProvider.this);
+        }
+      });
     }
     myTreeController = new BreakpointItemsTreeController(myRulesAvailable);
     myTree = new BreakpointsSimpleTree(myProject, myTreeController);
@@ -92,8 +100,8 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
   }
 
   private void updateChildren() {
-    myChildren.clear();
     if (myProject.isDisposed()) return;
+    myChildren.clear();
     List<BreakpointItem> items = new ArrayList<BreakpointItem>();
     for (final BreakpointPanelProvider provider : myBreakpointPanelProviders) {
       provider.provideBreakpointItems(myProject, items);

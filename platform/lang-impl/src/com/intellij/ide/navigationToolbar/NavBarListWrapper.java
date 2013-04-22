@@ -41,6 +41,7 @@ class NavBarListWrapper extends JBScrollPane implements DataProvider {
     super(list);
     list.addMouseMotionListener(new MouseMotionAdapter() {
       boolean myIsEngaged = false;
+      @Override
       public void mouseMoved(MouseEvent e) {
         if (myIsEngaged && !UIUtil.isSelectionButtonDown(e)) {
           final Point point = e.getPoint();
@@ -66,6 +67,7 @@ class NavBarListWrapper extends JBScrollPane implements DataProvider {
   }
 
 
+  @Override
   @Nullable
   public Object getData(@NonNls String dataId) {
     if (PlatformDataKeys.SELECTED_ITEM.is(dataId)){
@@ -77,16 +79,19 @@ class NavBarListWrapper extends JBScrollPane implements DataProvider {
     return null;
   }
 
+  @Override
   public void setBorder(Border border) {
     if (myList != null){
       myList.setBorder(border);
     }
   }
 
+  @Override
   public void requestFocus() {
     myList.requestFocus();
   }
 
+  @Override
   public synchronized void addMouseListener(MouseListener l) {
     myList.addMouseListener(l);
   }

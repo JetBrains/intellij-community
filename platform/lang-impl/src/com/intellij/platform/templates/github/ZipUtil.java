@@ -22,12 +22,15 @@ import java.util.zip.ZipInputStream;
 /**
  * @author Sergey Simonchik
  */
+@SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
 public class ZipUtil {
 
   private static final Logger LOG = Logger.getInstance(ZipUtil.class);
 
   public interface ContentProcessor {
-    byte[] processContent(byte[] content, String fileName) throws IOException;
+    /** Return null to skip the file */
+    @Nullable
+    byte[] processContent(byte[] content, File file) throws IOException;
   }
 
   public static void unzipWithProgressSynchronously(
@@ -109,17 +112,23 @@ public class ZipUtil {
     if (progress != null) {
       progress.setText("Extracting " + relativeExtractPath + " ...");
     }
-    FileOutputStream fileOutputStream = new FileOutputStream(child);
+    FileOutputStream fileOutputStream = null;
     try {
       if (contentProcessor == null) {
+        fileOutputStream = new FileOutputStream(child);
         FileUtil.copy(stream, fileOutputStream);
       }
       else {
-        byte[] content = contentProcessor.processContent(FileUtil.loadBytes(stream), child.getName());
-        fileOutputStream.write(content);
+        byte[] content = contentProcessor.processContent(FileUtil.loadBytes(stream), child);
+        if (content != null) {
+          fileOutputStream = new FileOutputStream(child);
+          fileOutputStream.write(content);
+        }
       }
     } finally {
-      fileOutputStream.close();
+      if (fileOutputStream != null) {
+        fileOutputStream.close();
+      }
     }
     LOG.info("Extract: " + relativeExtractPath);
   }

@@ -348,14 +348,17 @@ public class Tool implements SchemeElement {
     return commandLine;
   }
 
+  @Override
   public void setGroupName(final String name) {
     setGroup(name);
   }
 
+  @Override
   public String getKey() {
     return getName();
   }
 
+  @Override
   public SchemeElement copy() {
     Tool copy = new Tool();
     copy.copyFrom(this);

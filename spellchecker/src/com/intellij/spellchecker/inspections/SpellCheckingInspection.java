@@ -23,8 +23,6 @@ import com.intellij.lang.refactoring.NamesValidator;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiElementVisitor;
-import com.intellij.psi.PsiPlainText;
-import com.intellij.psi.SingleRootFileViewProvider;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.spellchecker.SpellCheckerManager;
 import com.intellij.spellchecker.quickfixes.SpellCheckerQuickFix;
@@ -137,12 +135,6 @@ public class SpellCheckingInspection extends LocalInspectionTool implements Cust
         }
 
         tokenize(element, language, new MyTokenConsumer(manager, holder, LanguageNamesValidation.INSTANCE.forLanguage(language)));
-      }
-
-      @Override
-      public void visitPlainText(PsiPlainText content) {
-        if (SingleRootFileViewProvider.isTooLargeForIntelligence(content.getContainingFile().getVirtualFile())) return;
-        super.visitPlainText(content);
       }
     };
   }

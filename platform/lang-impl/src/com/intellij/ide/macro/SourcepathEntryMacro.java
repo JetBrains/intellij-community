@@ -27,14 +27,17 @@ import com.intellij.openapi.vfs.VirtualFile;
  * @author Eugene Belyaev
  */
 public final class SourcepathEntryMacro extends Macro {
+  @Override
   public String getName() {
     return "SourcepathEntry";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.sourcepath.entry");
   }
 
+  @Override
   public String expand(final DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {

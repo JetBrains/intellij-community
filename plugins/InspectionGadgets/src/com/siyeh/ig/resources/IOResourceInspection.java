@@ -99,13 +99,13 @@ public class IOResourceInspection extends ResourceInspection {
   }
 
   @Override
-  public void readSettings(Element element) throws InvalidDataException {
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
     parseString(ignoredTypesString, ignoredTypes);
   }
 
   @Override
-  public void writeSettings(Element element) throws WriteExternalException {
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
     ignoredTypesString = formatString(ignoredTypes);
     super.writeSettings(element);
   }

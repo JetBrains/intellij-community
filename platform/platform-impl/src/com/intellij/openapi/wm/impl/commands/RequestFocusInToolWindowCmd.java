@@ -28,6 +28,7 @@ import com.intellij.openapi.wm.impl.FloatingDecorator;
 import com.intellij.openapi.wm.impl.ToolWindowImpl;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.WindowWatcher;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
@@ -157,6 +158,7 @@ public final class RequestFocusInToolWindowCmd extends FinalizableCommand {
     final Component owner = KeyboardFocusManager.getCurrentKeyboardFocusManager().getPermanentFocusOwner();
     if (owner != null && owner == c) {
       myManager.getFocusManager().requestFocus(new FocusCommand() {
+        @NotNull
         public ActionCallback run() {
           return new ActionCallback.Done();
         }

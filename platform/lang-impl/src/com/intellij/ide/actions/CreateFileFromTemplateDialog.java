@@ -68,7 +68,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       }
     }
   }
-  
+
   protected JTextField getNameField() {
     return myNameField;
   }
@@ -122,6 +122,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       return this;
     }
 
+    @Override
     public Builder addKind(@NotNull String name, @Nullable Icon icon, @NotNull String templateName) {
       myDialog.getKindCombo().addItem(name, icon, templateName);
       return this;
@@ -133,6 +134,7 @@ public class CreateFileFromTemplateDialog extends DialogWrapper {
       return this;
     }
 
+    @Override
     public <T extends PsiElement> T show(@NotNull String errorTitle, @Nullable String selectedTemplateName,
                                          @NotNull final FileCreator<T> creator) {
       final Ref<T> created = Ref.create(null);

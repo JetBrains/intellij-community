@@ -21,6 +21,7 @@ package com.intellij.psi.stubs;
 
 import com.intellij.util.CompressionUtil;
 import com.intellij.util.io.UnsyncByteArrayInputStream;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.DataInput;
@@ -37,7 +38,7 @@ public class SerializedStubTree {
     myLength = length;
     myStubElement = stubElement;
   }
-  
+
   public SerializedStubTree(DataInput in) throws IOException {
     myBytes = CompressionUtil.readCompressed(in);
     myLength = myBytes.length;
@@ -48,6 +49,7 @@ public class SerializedStubTree {
   }
 
   // willIndexStub is one time optimization hint, once can safely pass false
+  @NotNull
   public Stub getStub(boolean willIndexStub) throws SerializerNotFoundException {
     Stub stubElement = myStubElement;
     if (stubElement != null) {
@@ -79,7 +81,7 @@ public class SerializedStubTree {
         return false;
       }
     }
-    
+
     return true;
   }
 

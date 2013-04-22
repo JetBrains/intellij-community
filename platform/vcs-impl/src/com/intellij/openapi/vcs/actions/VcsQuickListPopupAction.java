@@ -113,7 +113,7 @@ public class VcsQuickListPopupAction extends QuickSwitchSchemeAction implements 
 
     // additional stuff
     addSeparator(group);
-    addAction("MoveToChangeList", group);
+    addAction("ChangesView.Move", group);
 
     // local history
     addLocalHistoryActions(group);

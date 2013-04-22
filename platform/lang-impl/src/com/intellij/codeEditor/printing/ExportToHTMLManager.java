@@ -233,6 +233,7 @@ class ExportToHTMLManager {
       myProject = project;
     }
 
+    @Override
     public void run() {
       ProgressIndicator progressIndicator = ProgressManager.getInstance().getProgressIndicator();
 

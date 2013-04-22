@@ -70,10 +70,12 @@ class PatternDialog extends DialogWrapper{
 
     myColorAndFontDescription = new TextAttributesDescription(null, null, attributes, null, EditorColorsManager.getInstance().getGlobalScheme(),
                                                               null, null) {
+      @Override
       public void apply(EditorColorsScheme scheme) {
 
       }
 
+      @Override
       public boolean isErrorStripeEnabled() {
         return true;
       }
@@ -83,6 +85,7 @@ class PatternDialog extends DialogWrapper{
 
     updateCustomColorsPanel();
     myUsedDefaultColorsCeckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         updateCustomColorsPanel();
       }
@@ -103,10 +106,12 @@ class PatternDialog extends DialogWrapper{
     }
   }
 
+  @Override
   public JComponent getPreferredFocusedComponent(){
     return myPatternStringField;
   }
 
+  @Override
   protected void doOKAction(){
     myPattern.setPatternString(myPatternStringField.getText().trim());
     myPattern.setCaseSensitive(myCaseSensitiveCheckBox.isSelected());
@@ -126,6 +131,7 @@ class PatternDialog extends DialogWrapper{
     return !myUsedDefaultColorsCeckBox.isSelected();
   }
 
+  @Override
   protected JComponent createCenterPanel(){
     JPanel panel=new JPanel(new GridBagLayout());
 

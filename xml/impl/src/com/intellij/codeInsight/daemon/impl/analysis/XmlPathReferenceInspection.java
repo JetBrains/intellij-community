@@ -33,7 +33,6 @@ import org.jetbrains.annotations.NotNull;
  *         Date: 9/3/12
  */
 public class XmlPathReferenceInspection extends XmlSuppressableInspectionTool {
-
   @NotNull
   @Override
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
@@ -61,6 +60,9 @@ public class XmlPathReferenceInspection extends XmlSuppressableInspectionTool {
       if (!XmlHighlightVisitor.isUrlReference(reference)) {
         continue;
       }
+      if (!needToCheckRef(reference)) {
+        continue;
+      }
       boolean isHtml = HtmlUtil.isHtmlTagContainingFile(element);
       if (isHtml ^ isForHtml()) {
         continue;
@@ -73,6 +75,10 @@ public class XmlPathReferenceInspection extends XmlSuppressableInspectionTool {
                                isHtml ? ProblemHighlightType.GENERIC_ERROR_OR_WARNING : ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
       }
     }
+  }
+
+  protected boolean needToCheckRef(PsiReference reference) {
+    return true;
   }
 
   protected boolean isForHtml() {

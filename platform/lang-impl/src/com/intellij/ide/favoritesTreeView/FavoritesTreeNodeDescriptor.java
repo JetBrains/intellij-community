@@ -44,6 +44,7 @@ public class FavoritesTreeNodeDescriptor extends PresentableNodeDescriptor<Abstr
     myElement = element;
   }
 
+  @Override
   protected void update(PresentationData presentation) {
     myElement.update();
     presentation.copyFrom(myElement.getPresentation());
@@ -91,6 +92,7 @@ public class FavoritesTreeNodeDescriptor extends PresentableNodeDescriptor<Abstr
     return null;
   }
 
+  @Override
   public AbstractTreeNode getElement() {
     return myElement;
   }
@@ -116,6 +118,7 @@ public class FavoritesTreeNodeDescriptor extends PresentableNodeDescriptor<Abstr
     return descriptor;
   }
 
+  @Override
   public PresentableNodeDescriptor getChildToHighlightAt(int index) {
     return myElement.getChildToHighlightAt(index);
   }

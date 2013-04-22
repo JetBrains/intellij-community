@@ -21,6 +21,7 @@ import com.intellij.codeInspection.reference.RefEntity;
 import com.intellij.codeInspection.reference.RefGraphAnnotator;
 import com.intellij.codeInspection.reference.RefManager;
 import com.intellij.codeInspection.reference.RefVisitor;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -65,7 +66,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
                             final GlobalInspectionContext globalContext,
                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     globalContext.getRefManager().iterate(new RefVisitor() {
-      @Override public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (!globalContext.shouldCheck(refEntity, GlobalInspectionTool.this)) return;
         CommonProblemDescriptor[] descriptors = checkElement(refEntity, scope, manager, globalContext, problemDescriptionsProcessor);
         if (descriptors != null) {
@@ -90,7 +91,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   }
 
   /**
-   * Processes and reports problems for a single element of the completed reference graph. 
+   * Processes and reports problems for a single element of the completed reference graph.
    *
    * @param refEntity     the reference graph element to check for problems.
    * @param scope         the scope on which analysis was invoked.
@@ -120,6 +121,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   }
 
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
@@ -181,7 +183,7 @@ public abstract class GlobalInspectionTool extends InspectionProfileEntry {
   /**
    * @return JobDescriptors array to show inspection progress correctly. TotalAmount should be set (e.g. in
    * {@link #runInspection(com.intellij.analysis.AnalysisScope, InspectionManager, GlobalInspectionContext, ProblemDescriptionsProcessor)})
-   * ProgressIndicator should progress with {@link com.intellij.codeInspection.GlobalInspectionContext#incrementJobDoneAmount(com.intellij.codeInspection.ex.JobDescriptor, String)}  
+   * ProgressIndicator should progress with {@link com.intellij.codeInspection.GlobalInspectionContext#incrementJobDoneAmount(com.intellij.codeInspection.ex.JobDescriptor, String)}
    */
   @Nullable
   public JobDescriptor[] getAdditionalJobs() {

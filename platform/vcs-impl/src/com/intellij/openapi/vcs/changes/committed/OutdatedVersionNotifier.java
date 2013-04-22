@@ -160,7 +160,7 @@ public class OutdatedVersionNotifier implements ProjectComponent {
   }
 
   private class MyFileEditorManagerListener implements FileEditorManagerListener {
-    public void fileOpened(FileEditorManager source, VirtualFile file) {
+    public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       if (myCache.getCachedIncomingChanges() == null) {
         requestLoadIncomingChanges();
       }
@@ -175,10 +175,10 @@ public class OutdatedVersionNotifier implements ProjectComponent {
       }
     }
 
-    public void fileClosed(FileEditorManager source, VirtualFile file) {
+    public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
     }
 
-    public void selectionChanged(FileEditorManagerEvent event) {
+    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
     }
   }
 

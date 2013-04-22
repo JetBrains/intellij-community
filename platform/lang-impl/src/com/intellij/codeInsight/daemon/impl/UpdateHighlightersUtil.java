@@ -84,7 +84,7 @@ public class UpdateHighlightersUtil {
         return String.valueOf(o1.getGutterIconRenderer()).compareTo(String.valueOf(o2.getGutterIconRenderer()));
       }
 
-      return Comparing.compare(o1.description, o2.description);
+      return Comparing.compare(o1.getDescription(), o2.getDescription());
     }
   };
 
@@ -99,7 +99,7 @@ public class UpdateHighlightersUtil {
       if (infos == null) continue;
       List<HighlightInfo> infosToRemove = new ArrayList<HighlightInfo>();
       for (HighlightInfo info : infos) {
-        if (info.group == group) {
+        if (info.getGroup() == group) {
           manager.removeTopComponent(fileEditor, info.fileLevelComponent);
           infosToRemove.add(info);
         }
@@ -159,7 +159,7 @@ public class UpdateHighlightersUtil {
                                                   final int group,
                                                   @NotNull Map<TextRange, RangeMarker> ranges2markersCache) {
     ApplicationManager.getApplication().assertIsDispatchThread();
-    if (info.isFileLevelAnnotation || info.getGutterIconRenderer() != null) return;
+    if (info.isFileLevelAnnotation() || info.getGutterIconRenderer() != null) return;
     if (info.getStartOffset() < startOffset || info.getEndOffset() > endOffset) return;
 
     MarkupModel markup = DocumentMarkupModel.forDocument(document, project, true);
@@ -172,7 +172,7 @@ public class UpdateHighlightersUtil {
           return false;
         }
 
-        return oldInfo.group != group || !oldInfo.equalsByActualOffset(info);
+        return oldInfo.getGroup() != group || !oldInfo.equalsByActualOffset(info);
       }
     };
     boolean allIsClear = DaemonCodeAnalyzerImpl.processHighlights(document, project,
@@ -242,7 +242,7 @@ public class UpdateHighlightersUtil {
     DaemonCodeAnalyzerImpl.processHighlightsOverlappingOutside(document, project, null, range.getStartOffset(), range.getEndOffset(), new Processor<HighlightInfo>() {
       @Override
       public boolean process(HighlightInfo info) {
-        if (info.group == group) {
+        if (info.getGroup() == group) {
           RangeHighlighter highlighter = info.highlighter;
           int hiStart = highlighter.getStartOffset();
           int hiEnd = highlighter.getEndOffset();
@@ -272,7 +272,7 @@ public class UpdateHighlightersUtil {
         if (!atStart) return true;
         if (!info.isFromInjection() && info.getEndOffset() < document.getTextLength() && (info.getEndOffset() <= startOffset || info.getStartOffset()>=endOffset)) return true; // injections are oblivious to restricting range
 
-        if (info.isFileLevelAnnotation && psiFile != null && psiFile.getViewProvider().isPhysical()) {
+        if (info.isFileLevelAnnotation() && psiFile != null && psiFile.getViewProvider().isPhysical()) {
           addFileLevelHighlight(project, group, info, psiFile);
           changed[0] = true;
           return true;
@@ -313,7 +313,7 @@ public class UpdateHighlightersUtil {
     DaemonCodeAnalyzerImpl.processHighlights(document, project, null, range.getStartOffset(), range.getEndOffset(), new Processor<HighlightInfo>() {
       @Override
       public boolean process(HighlightInfo info) {
-        if (info.group == group) {
+        if (info.getGroup() == group) {
           RangeHighlighter highlighter = info.highlighter;
           int hiStart = highlighter.getStartOffset();
           int hiEnd = highlighter.getEndOffset();
@@ -343,7 +343,7 @@ public class UpdateHighlightersUtil {
         if (!atStart) {
           return true;
         }
-        if (info.isFileLevelAnnotation && psiFile != null && psiFile.getViewProvider().isPhysical()) {
+        if (info.isFileLevelAnnotation() && psiFile != null && psiFile.getViewProvider().isPhysical()) {
           addFileLevelHighlight(project, group, info, psiFile);
           changed[0] = true;
           return true;
@@ -409,13 +409,12 @@ public class UpdateHighlightersUtil {
       infoEndOffset = docLength;
       infoStartOffset = Math.min(infoStartOffset, infoEndOffset);
     }
-    if (infoEndOffset == infoStartOffset && !info.isAfterEndOfLine) {
+    if (infoEndOffset == infoStartOffset && !info.isAfterEndOfLine()) {
       if (infoEndOffset == docLength) return;  // empty highlighter beyond file boundaries
       infoEndOffset++; //show something in case of empty highlightinfo
     }
 
-    info.text = document.getText().substring(infoStartOffset, infoEndOffset);
-    info.group = group;
+    info.setGroup(group);
 
     int layer = getLayer(info, severityRegistrar);
     RangeHighlighterEx highlighter = infosToRemove == null ? null : (RangeHighlighterEx)infosToRemove.pickupHighlighterFromGarbageBin(info.startOffset, info.endOffset, layer);
@@ -428,7 +427,7 @@ public class UpdateHighlightersUtil {
         finalHighlighter.setTextAttributes(infoAttributes);
 
         info.highlighter = finalHighlighter;
-        finalHighlighter.setAfterEndOfLine(info.isAfterEndOfLine);
+        finalHighlighter.setAfterEndOfLine(info.isAfterEndOfLine());
 
         Color color = info.getErrorStripeMarkColor(psiFile, colorsScheme);
         finalHighlighter.setErrorStripeMarkColor(color);
@@ -505,7 +504,7 @@ public class UpdateHighlightersUtil {
     final FileEditorManager manager = FileEditorManager.getInstance(project);
     for (FileEditor fileEditor : manager.getEditors(vFile)) {
       if (fileEditor instanceof TextEditor) {
-        FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.description, info.getSeverity(), info.quickFixActionRanges,
+        FileLevelIntentionComponent component = new FileLevelIntentionComponent(info.getDescription(), info.getSeverity(), info.quickFixActionRanges,
                                                                                 project, psiFile, ((TextEditor)fileEditor).getEditor());
         manager.addTopComponent(fileEditor, component);
         List<HighlightInfo> fileLevelInfos = fileEditor.getUserData(FILE_LEVEL_HIGHLIGHTS);
@@ -514,7 +513,7 @@ public class UpdateHighlightersUtil {
           fileEditor.putUserData(FILE_LEVEL_HIGHLIGHTS, fileLevelInfos);
         }
         info.fileLevelComponent = component;
-        info.group = group;
+        info.setGroup(group);
         fileLevelInfos.add(info);
       }
     }
@@ -619,7 +618,7 @@ public class UpdateHighlightersUtil {
         if (info.needUpdateOnTyping()) {
           int highlighterStart = highlighter.getStartOffset();
           int highlighterEnd = highlighter.getEndOffset();
-          if (info.isAfterEndOfLine) {
+          if (info.isAfterEndOfLine()) {
             if (highlighterStart < document.getTextLength()) {
               highlighterStart += 1;
             }

@@ -17,8 +17,10 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.LinkedHashSet;
 import java.util.Set;
@@ -26,6 +28,8 @@ import java.util.Set;
 public class ActionCallback implements Disposable {
   private final ExecutionCallback myDone;
   private final ExecutionCallback myRejected;
+
+  protected String myError;
 
   private final String myName;
 
@@ -81,6 +85,18 @@ public class ActionCallback implements Disposable {
   }
 
   @NotNull
+  public ActionCallback reject(String error) {
+    myError = error;
+    setRejected();
+    return this;
+  }
+
+  @Nullable
+  public String getError() {
+    return myError;
+  }
+
+  @NotNull
   public final ActionCallback doWhenDone(@NotNull final Runnable runnable) {
     myDone.doWhenExecuted(runnable);
     return this;
@@ -89,6 +105,17 @@ public class ActionCallback implements Disposable {
   @NotNull
   public final ActionCallback doWhenRejected(@NotNull final Runnable runnable) {
     myRejected.doWhenExecuted(runnable);
+    return this;
+  }
+
+  @NotNull
+  public final ActionCallback doWhenRejected(@NotNull final Consumer<String> consumer) {
+    myRejected.doWhenExecuted(new Runnable() {
+      @Override
+      public void run() {
+        consumer.consume(myError);
+      }
+    });
     return this;
   }
 
@@ -110,7 +137,7 @@ public class ActionCallback implements Disposable {
   }
 
   @NotNull
-  public final ActionCallback notify(@NotNull final ActionCallback child) {
+  public ActionCallback notify(@NotNull final ActionCallback child) {
     return doWhenDone(child.createSetDoneRunnable()).doWhenRejected(child.createSetRejectedRunnable());
   }
 

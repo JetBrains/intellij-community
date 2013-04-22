@@ -431,7 +431,7 @@ public final class Match {
           final PsiElement element = result.getElement();
           if (element instanceof PsiMember) {
             final PsiClass psiClass = ((PsiMember)element).getContainingClass();
-            if (psiClass != null) {
+            if (psiClass != null && psiClass.isPhysical()) {
               final JavaPsiFacade facade = JavaPsiFacade.getInstance(parent.getProject());
               final PsiClassType expressionType = facade.getElementFactory().createType(psiClass, result.getSubstitutor());
               if (weakerType(psiMethod, returnType, expressionType)) {

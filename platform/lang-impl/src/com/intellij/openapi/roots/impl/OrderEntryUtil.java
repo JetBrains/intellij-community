@@ -26,6 +26,7 @@ import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Processor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -167,4 +168,18 @@ public class OrderEntryUtil {
       }
     }
   }
+
+  public static <T extends OrderEntry> void processOrderEntries(@NotNull Module module,
+                                                                @NotNull Class<T> orderEntryClass,
+                                                                @NotNull Processor<T> processor) {
+    OrderEntry[] orderEntries = ModuleRootManager.getInstance(module).getOrderEntries();
+    for (OrderEntry orderEntry : orderEntries) {
+      if (orderEntryClass.isInstance(orderEntry)) {
+        if (!processor.process(orderEntryClass.cast(orderEntry))) {
+          break;
+        }
+      }
+    }
+  }
+
 }

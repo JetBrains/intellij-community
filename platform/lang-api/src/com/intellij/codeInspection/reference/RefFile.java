@@ -29,5 +29,6 @@ public interface RefFile extends RefElement {
    *
    * @return the file for the node.
    */
+  @Override
   PsiFile getElement();
 }

@@ -149,7 +149,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
 
   private final FileEditorManagerListener myFileEditorManagerListener = new FileEditorManagerAdapter() {
     @Override
-    public void selectionChanged(FileEditorManagerEvent e) {
+    public void selectionChanged(@NotNull FileEditorManagerEvent e) {
       disposeHighlighter();
       myTooltipProvider = null;
     }
@@ -270,7 +270,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
     }
     return new Rectangle(hintComponent.getLocationOnScreen(), hintComponent.getSize());
   }
-  
+
   private static BrowseMode getBrowseMode(@JdkConstants.InputEventMask int modifiers) {
     if (modifiers != 0) {
       final Keymap activeKeymap = KeymapManager.getInstance().getActiveKeymap();
@@ -615,7 +615,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            
+
             // There is a possible case that quick doc control width is changed, e.g. it contained text
             // like 'public final class String implements java.io.Serializable, java.lang.Comparable<java.lang.String>' and
             // new text replaces fully-qualified class names by hyperlinks with short name.
@@ -625,7 +625,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
             JComponent component = hint.getComponent();
             Dimension oldSize = component.getPreferredSize();
             newTextConsumer.consume(newHtml);
-            
+
             final int widthIncrease;
             if (component instanceof QuickDocInfoPane) {
               int buttonWidth = ((QuickDocInfoPane)component).getButtonWidth();
@@ -638,16 +638,16 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
             if (oldSize == null) {
               return;
             }
-            
+
             Dimension newSize = component.getPreferredSize();
             if (newSize.width + widthIncrease == oldSize.width) {
               return;
             }
             component.setPreferredSize(new Dimension(newSize.width + widthIncrease, newSize.height));
-            
+
             // We're assuming here that there are two possible hint representation modes: popup and layered pane.
             if (hint.isRealPopup()) {
-              
+
               TooltipProvider tooltipProvider = myTooltipProvider;
               if (tooltipProvider != null) {
                 // There is a possible case that 'raw' control was rather wide but the 'rich' one is narrower. That's why we try to
@@ -674,7 +674,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
                 topLevelLayeredPaneChild = current;
               }
             }
-            
+
             if (adjustBounds && topLevelLayeredPaneChild != null) {
               Rectangle bounds = topLevelLayeredPaneChild.getBounds();
               topLevelLayeredPaneChild.setBounds(bounds.x, bounds.y, bounds.width + newSize.width + widthIncrease - oldSize.width, bounds.height);
@@ -688,7 +688,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
   /**
    * It's possible that we need to expand quick doc control's width in order to provide better visual representation
    * (see http://youtrack.jetbrains.com/issue/IDEA-101425). This method calculates that width expand.
-   * 
+   *
    * @param buttonWidth  icon button's width
    * @param updatedText  text which will be should at the quick doc control
    * @return             width increase to apply to the target quick doc control (zero if no additional width increase is required)
@@ -802,7 +802,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (!info.isValid(myEditor.getDocument())) {
         return;
       }
-      
+
       myHighlighter = installHighlighterSet(info, myEditor);
 
       DocInfo docInfo = info.getInfo();
@@ -812,7 +812,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       if (myDocumentationManager.hasActiveDockedDocWindow()) {
         info.showDocInfo(myDocumentationManager);
       }
-      
+
       HyperlinkListener hyperlinkListener = docInfo.docProvider == null
                                    ? null
                                    : new QuickDocHyperlinkListener(docInfo.docProvider, info.myElementAtPointer);
@@ -850,7 +850,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         quickDocPane = new QuickDocInfoPane(docInfo.documentationAnchor, info.myElementAtPointer, label, docInfo.text);
         quickDocPaneRef.set(quickDocPane);
       }
-      
+
       JComponent hintContent = quickDocPane == null ? label : quickDocPane;
 
       final LightweightHint hint = new LightweightHint(hintContent);
@@ -877,7 +877,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
                                  0, false, HintManagerImpl.createHintHint(myEditor, p,  hint, HintManager.ABOVE).setContentActive(false));
     }
   }
-  
+
   private HighlightersSet installHighlighterSet(Info info, Editor editor) {
     final JComponent internalComponent = editor.getContentComponent();
     internalComponent.addKeyListener(myEditorKeyListener);
@@ -928,7 +928,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       return myStoredInfo;
     }
   }
-  
+
   private static class DocInfo {
 
     public static final DocInfo EMPTY = new DocInfo(null, null, null);
@@ -1030,7 +1030,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
       }
       return new Dimension(Math.max(myMinWidth, base.width), Math.max(myMinHeight, base.height));
     }
-    
+
     @Override
     public void doLayout() {
       Rectangle bounds = getBounds();
@@ -1064,7 +1064,7 @@ public class CtrlMouseHandler extends AbstractProjectComponent {
         return;
       }
 
-      // Skip event triggered when mouse leaves action button area. 
+      // Skip event triggered when mouse leaves action button area.
       if (!mouseEntered && new Rectangle(getLocationOnScreen(), getSize()).contains(mouseScreenLocation)) {
         return;
       }

@@ -100,7 +100,7 @@ public class AutoPopupController implements Disposable {
     if (PowerSaveMode.isEnabled()) {
       return;
     }
-    
+
     if (!CompletionServiceImpl.isPhase(CompletionPhase.CommittingDocuments.class, CompletionPhase.NoCompletion.getClass())) {
       return;
     }
@@ -143,6 +143,7 @@ public class AutoPopupController implements Disposable {
 
   private void addRequest(final Runnable request, final int delay) {
     Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         myAlarm.addRequest(request, delay);
       }

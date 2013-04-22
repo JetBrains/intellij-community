@@ -211,14 +211,14 @@ public class ToggleHighlightingMarkupAction extends AnAction {
   private static void appendTag(StringBuilder sb, HighlightInfo cur, boolean opening, final boolean compact) {
     sb.append("<");
     if (!opening) sb.append("/");
-    if (cur.isAfterEndOfLine) {
+    if (cur.isAfterEndOfLine()) {
       sb.append(cur.getSeverity() == HighlightSeverity.WARNING ? "EOLWarning" : "EOLError");
     }
     else {
       sb.append(cur.getSeverity() == HighlightSeverity.WARNING ? "warning" : "error");
     }
     if (opening && !compact) {
-      sb.append(" descr=\"").append(cur.description).append("\"");
+      sb.append(" descr=\"").append(cur.getDescription()).append("\"");
 
     }
     sb.append(">");

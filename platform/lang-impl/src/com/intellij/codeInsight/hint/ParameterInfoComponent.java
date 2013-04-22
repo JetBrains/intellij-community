@@ -28,6 +28,7 @@ import com.intellij.ui.JBColor;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.SideBorder;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -272,9 +273,11 @@ class ParameterInfoComponent extends JPanel {
 
       Map<TextRange, ParameterInfoUIContextEx.Flag> flagsMap = new TreeMap<TextRange, ParameterInfoUIContextEx.Flag>(TEXT_RANGE_COMPARATOR);
 
+      int added = 0;
       for (int i = 0; i < texts.length; i++) {
         String line = texts[i];
         String text = lines[index];
+        final int paramCount = StringUtil.split(text, ", ").size();
         final EnumSet<ParameterInfoUIContextEx.Flag> flag = flags[i];
         if (flag.contains(ParameterInfoUIContextEx.Flag.HIGHLIGHT)) {
           flagsMap.put(TextRange.create(curOffset, curOffset + line.trim().length()), ParameterInfoUIContextEx.Flag.HIGHLIGHT);
@@ -289,7 +292,7 @@ class ParameterInfoComponent extends JPanel {
         }
 
         curOffset += line.length();
-        if (text.trim().endsWith(line.trim())) {
+        if (i == paramCount + added - 1) {
           myOneLineComponents[index] = new OneLineComponent();
           setBackground(background);
           myOneLineComponents[index].setup(text, flagsMap, background);
@@ -298,6 +301,7 @@ class ParameterInfoComponent extends JPanel {
           index += 1;
           flagsMap.clear();
           curOffset = 1;
+          added += paramCount;
         }
       }
     }
@@ -387,7 +391,7 @@ class ParameterInfoComponent extends JPanel {
         faultMap.put(highlightRange.getEndOffset(), endTag.length());
 
       }
-      return "<html>" + labelText.toString() + "</html>";
+      return XmlStringUtil.wrapInHtml(labelText);
     }
 
     private String getTag(@NotNull final String tagValue) {

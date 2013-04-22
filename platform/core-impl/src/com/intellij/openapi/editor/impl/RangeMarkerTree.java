@@ -151,8 +151,8 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
   }
 
   static class RMNode<T extends RangeMarkerEx> extends IntervalTreeImpl.IntervalNode<T> {
-    private final boolean isExpandToLeft;
-    private final boolean isExpandToRight;
+    private static final int EXPAND_TO_LEFT_FLAG = VALID_FLAG+1;
+    private static final int EXPAND_TO_RIGHT_FLAG = EXPAND_TO_LEFT_FLAG+1;
 
     public RMNode(@NotNull RangeMarkerTree<T> rangeMarkerTree,
                   @NotNull T key,
@@ -161,16 +161,16 @@ public class RangeMarkerTree<T extends RangeMarkerEx> extends IntervalTreeImpl<T
                   boolean greedyToLeft,
                   boolean greedyToRight) {
       super(rangeMarkerTree, key, start, end);
-      isExpandToLeft = greedyToLeft;
-      isExpandToRight = greedyToRight;
+      setFlag(EXPAND_TO_LEFT_FLAG, greedyToLeft);
+      setFlag(EXPAND_TO_RIGHT_FLAG, greedyToRight);
     }
 
     public boolean isGreedyToLeft() {
-      return isExpandToLeft;
+      return isFlagSet(EXPAND_TO_LEFT_FLAG);
     }
 
     public boolean isGreedyToRight() {
-      return isExpandToRight;
+      return isFlagSet(EXPAND_TO_RIGHT_FLAG);
     }
 
     @Override

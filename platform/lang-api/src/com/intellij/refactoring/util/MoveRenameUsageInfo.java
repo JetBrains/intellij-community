@@ -81,6 +81,7 @@ public class MoveRenameUsageInfo extends UsageInfo{
     return myReferencedElement;
   }
 
+  @Override
   @Nullable
   public PsiReference getReference() {
     if (myReference != null) {

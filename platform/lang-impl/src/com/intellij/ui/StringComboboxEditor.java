@@ -54,17 +54,20 @@ public class StringComboboxEditor extends EditorComboBoxEditor {
     super.setItem(document);
   }
 
+  @Override
   public Object getItem() {
     final String text = ((Document) super.getItem()).getText();
     LOG.assertTrue(text != null);
     return text;
   }
 
+  @Override
   public void setItem(Object anObject) {
     if (anObject == null) anObject = "";
     if (anObject.equals(getItem())) return;
     final String s = (String)anObject;
     new WriteCommandAction(myProject) {
+      @Override
       protected void run(Result result) throws Throwable {
         getDocument().setText(s);
       }

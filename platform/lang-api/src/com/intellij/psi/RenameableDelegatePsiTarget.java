@@ -27,15 +27,18 @@ public class RenameableDelegatePsiTarget extends DelegatePsiTarget implements Po
     super(element);
   }
 
+  @Override
   public boolean isWritable() {
     return getNavigationElement().isWritable();
   }
 
+  @Override
   public RenameableDelegatePsiTarget setName(@NotNull String newName) {
     ((PsiNamedElement)getNavigationElement()).setName(newName);
     return this;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return StringUtil.notNullize(((PsiNamedElement)getNavigationElement()).getName());

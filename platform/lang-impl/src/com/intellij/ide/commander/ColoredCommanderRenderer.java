@@ -39,8 +39,9 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
     myCommanderPanel = commanderPanel;
   }
 
+  @Override
   public Component getListCellRendererComponent(final JList list, final Object value, final int index, boolean selected, boolean hasFocus){
-    hasFocus = selected; // border around inactive items 
+    hasFocus = selected; // border around inactive items
 
     if (!myCommanderPanel.isActive()) {
       selected = false;
@@ -49,6 +50,7 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
     return super.getListCellRendererComponent(list, value, index, selected, hasFocus);
   }
 
+  @Override
   protected void customizeCellRenderer(final JList list, final Object value, final int index, final boolean selected, final boolean hasFocus) {
     // Fix GTK background
     if (UIUtil.isUnderGTKLookAndFeel()){
@@ -60,12 +62,12 @@ final class ColoredCommanderRenderer extends ColoredListCellRenderer {
     String locationString = null;
 
     setBorder(BorderFactory.createEmptyBorder(1, 0, 1, 0)); // for separator, see below
-    
+
     if (value instanceof NodeDescriptor) {
       final NodeDescriptor descriptor = (NodeDescriptor)value;
       setIcon(descriptor.getIcon());
       final Color elementColor = descriptor.getColor();
-      
+
       if (elementColor != null) {
         color = elementColor;
       }

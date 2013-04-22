@@ -47,41 +47,51 @@ public class MockPsiManager extends PsiManagerEx {
     myDirectories.put(file, psiDirectory);
   }
 
+  @Override
   @NotNull
   public Project getProject() {
     return myProject;
   }
 
+  @Override
   public PsiFile findFile(@NotNull VirtualFile file) {
     return null;
   }
-  
+
+  @Override
   @Nullable
   public
   FileViewProvider findViewProvider(@NotNull VirtualFile file) {
     return null;
   }
 
+  @Override
   public PsiDirectory findDirectory(@NotNull VirtualFile file) {
     return myDirectories.get(file);
   }
 
+  @Override
   public boolean areElementsEquivalent(PsiElement element1, PsiElement element2) {
     return Comparing.equal(element1, element2);
   }
 
+  @Override
   public void reloadFromDisk(@NotNull PsiFile file) {
   }
 
+  @Override
   public void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener) {
   }
 
+  @Override
   public void addPsiTreeChangeListener(@NotNull PsiTreeChangeListener listener, Disposable parentDisposable) {
   }
 
+  @Override
   public void removePsiTreeChangeListener(@NotNull PsiTreeChangeListener listener) {
   }
 
+  @Override
   @NotNull
   public PsiModificationTracker getModificationTracker() {
     if (myPsiModificationTracker == null) {
@@ -90,35 +100,44 @@ public class MockPsiManager extends PsiManagerEx {
     return myPsiModificationTracker;
   }
 
+  @Override
   public void startBatchFilesProcessingMode() {
   }
 
+  @Override
   public void finishBatchFilesProcessingMode() {
   }
 
+  @Override
   public <T> T getUserData(@NotNull Key<T> key) {
     return null;
   }
 
+  @Override
   public <T> void putUserData(@NotNull Key<T> key, T value) {
   }
 
+  @Override
   public boolean isDisposed() {
     return false;
   }
 
+  @Override
   public void dropResolveCaches() {
     getFileManager().cleanupForNextTest();
   }
 
+  @Override
   public boolean isInProject(@NotNull PsiElement element) {
     return false;
   }
 
+  @Override
   public boolean isBatchFilesProcessingMode() {
     return false;
   }
 
+  @Override
   public boolean isAssertOnFileLoading(@NotNull VirtualFile file) {
     return false;
   }
@@ -133,16 +152,20 @@ public class MockPsiManager extends PsiManagerEx {
     throw new UnsupportedOperationException();
   }
 
+  @Override
   public void registerRunnableToRunOnChange(@NotNull Runnable runnable) {
   }
 
+  @Override
   public void registerRunnableToRunOnAnyChange(@NotNull Runnable runnable) {
   }
 
+  @Override
   public void registerRunnableToRunAfterAnyChange(@NotNull Runnable runnable) {
     throw new UnsupportedOperationException("Method registerRunnableToRunAfterAnyChange is not yet implemented in " + getClass().getName());
   }
 
+  @Override
   @NotNull
   public FileManager getFileManager() {
     if (myMockFileManager == null) {
@@ -151,6 +174,7 @@ public class MockPsiManager extends PsiManagerEx {
     return myMockFileManager;
   }
 
+  @Override
   public void beforeChildRemoval(@NotNull final PsiTreeChangeEventImpl event) {
   }
 

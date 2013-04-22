@@ -15,6 +15,8 @@
  */
 package com.intellij.codeInspection.reference;
 
+import org.jetbrains.annotations.NotNull;
+
 /**
  * Visitor for reference graph nodes.
  *
@@ -23,24 +25,23 @@ package com.intellij.codeInspection.reference;
  * @since 6.0
  */
 public class RefJavaVisitor extends RefVisitor {
-
-  public void visitField(RefField field) {
+  public void visitField(@NotNull RefField field) {
     visitElement(field);
   }
 
-  public void visitMethod(RefMethod method) {
+  public void visitMethod(@NotNull RefMethod method) {
     visitElement(method);
   }
 
-  public void visitParameter(RefParameter parameter) {
+  public void visitParameter(@NotNull RefParameter parameter) {
     visitElement(parameter);
   }
 
-  public void visitClass(RefClass aClass) {
+  public void visitClass(@NotNull RefClass aClass) {
     visitElement(aClass);
   }
 
-  public void visitPackage(RefPackage aPackage) {
+  public void visitPackage(@NotNull RefPackage aPackage) {
     visitElement(aPackage);
   }
 }

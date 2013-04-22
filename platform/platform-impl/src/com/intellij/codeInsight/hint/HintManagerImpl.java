@@ -423,7 +423,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
       hint.show(layeredPane, p.x, p.y, editor.getContentComponent(), hintInfo);
     }
   }
-  
+
   public static void updateLocation(final LightweightHint hint, final Editor editor, Point p) {
     doShowInGivenLocation(hint, editor, p, createHintHint(editor, p, hint, UNDER), false);
   }
@@ -863,7 +863,7 @@ public class HintManagerImpl extends HintManager implements Disposable {
    */
   private final class MyEditorManagerListener extends FileEditorManagerAdapter {
     @Override
-    public void selectionChanged(FileEditorManagerEvent event) {
+    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
       hideHints(0, false, true);
     }
   }

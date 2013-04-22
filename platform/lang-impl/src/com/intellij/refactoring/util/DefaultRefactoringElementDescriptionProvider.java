@@ -29,6 +29,7 @@ import org.jetbrains.annotations.NotNull;
 public class DefaultRefactoringElementDescriptionProvider implements ElementDescriptionProvider {
   public static final DefaultRefactoringElementDescriptionProvider INSTANCE = new DefaultRefactoringElementDescriptionProvider();
 
+  @Override
   public String getElementDescription(@NotNull final PsiElement element, @NotNull final ElementDescriptionLocation location) {
     final String typeString = UsageViewUtil.getType(element);
     final String name = UsageViewUtil.getDescriptiveName(element);

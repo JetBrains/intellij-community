@@ -111,6 +111,7 @@ public class FrameworkDetectionManager extends AbstractProjectComponent implemen
   @Override
   public void projectOpened() {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
+      @Override
       public void run() {
         final Collection<Integer> ids = FrameworkDetectorRegistry.getInstance().getAllDetectorIds();
         synchronized (myLock) {

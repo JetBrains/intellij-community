@@ -20,6 +20,7 @@ import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeRegistry;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.StandardFileSystems;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.FilteringIterator;
@@ -130,20 +131,7 @@ public class PathsList  {
 
   @NotNull
   public String getPathsString() {
-    final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      String separator = "";
-      final List<String> classPath = getPathList();
-      for (final String path : classPath) {
-        buffer.append(separator);
-        buffer.append(path);
-        separator = File.pathSeparator;
-      }
-      return buffer.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    return StringUtil.join(getPathList(), File.pathSeparator);
   }
 
   public List<String> getPathList() {
@@ -176,7 +164,7 @@ public class PathsList  {
   public void addAllFiles(File[] classpathList) {
     addAllFiles(Arrays.asList(classpathList));
   }
-  
+
   public void addAllFiles(List<File> classpathList) {
     for (File file : classpathList) {
       add(file);

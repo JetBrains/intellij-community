@@ -145,7 +145,26 @@ public class MavenProjectReader {
   }
 
   private static void readModelBody(MavenModelBase mavenModelBase, MavenBuildBase mavenBuildBase, Element xmlModel) {
-    mavenModelBase.setModules(MavenJDOMUtil.findChildrenValuesByPath(xmlModel, "modules", "module"));
+    List<Element> profiles = MavenJDOMUtil.findChildrenByPath(xmlModel, "profiles", "profile");
+
+    List<String> modules = MavenJDOMUtil.findChildrenValuesByPath(xmlModel, "modules", "module");
+    boolean isModulesUnmodifiable = true;
+    for (Element profile : profiles) {
+      List<String> profileModules = MavenJDOMUtil.findChildrenValuesByPath(profile, "modules", "module");
+      if (profileModules.size() > 0) {
+        if (isModulesUnmodifiable) {
+          List<String> modifiableModulesList = new ArrayList<String>();
+          modifiableModulesList.addAll(modules);
+          modules = modifiableModulesList;
+          isModulesUnmodifiable = false;
+        }
+
+        modules.addAll(profileModules);
+      }
+    }
+
+    mavenModelBase.setModules(modules);
+
     collectProperties(MavenJDOMUtil.findChildByPath(xmlModel, "properties"), mavenModelBase);
 
     Element xmlBuild = MavenJDOMUtil.findChildByPath(xmlModel, "build");

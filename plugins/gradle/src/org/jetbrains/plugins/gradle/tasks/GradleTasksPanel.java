@@ -22,6 +22,7 @@ import com.intellij.execution.executors.DefaultRunExecutor;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.ui.customization.CustomizationUtil;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
@@ -37,13 +38,10 @@ import com.intellij.util.ui.GridBag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.gradle.config.GradleLocalSettings;
-import org.jetbrains.plugins.gradle.config.GradleSettings;
+import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
+import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.config.GradleToolWindowPanel;
 import org.jetbrains.plugins.gradle.execution.GradleTaskLocation;
-import org.jetbrains.plugins.gradle.model.gradle.GradleTaskDescriptor;
-import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
-import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
@@ -102,14 +100,16 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     int recentTasksNumber = Registry.intValue(GradleConstants.REGISTRY_RECENT_TASKS_NUMBER_KEY, 5);
     myRecentTasksModel.ensureSize(recentTasksNumber);
     myRecentTasksList.setVisibleRowCount(recentTasksNumber);
-    addListPanel(myRecentTasksList, result, GradleBundle.message("gradle.task.recent.title"), false);
+    // TODO den implement
+//    addListPanel(myRecentTasksList, result, ExternalSystemBundle.message("gradle.task.recent.title"), false);
     
     myAllTasksModel.clear();
-    Collection<GradleTaskDescriptor> tasks = myLocalSettings.getAvailableTasks();
+    Collection<ExternalSystemTaskDescriptor> tasks = myLocalSettings.getAvailableTasks();
     if (!tasks.isEmpty()) {
       myAllTasksModel.setTasks(tasks);
     }
-    addListPanel(myAllTasksList, result, GradleBundle.message("gradle.task.all.title"), true);
+    // TODO den implement
+//    addListPanel(myAllTasksList, result, ExternalSystemBundle.message("gradle.task.all.title"), true);
 
     return result;
   }
@@ -121,7 +121,8 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
 
     setupMouseListener(list);
     CustomizationUtil.installPopupHandler(list, GradleConstants.ACTION_GROUP_TASKS, GradleConstants.TASKS_CONTEXT_MENU_PLACE);
-    list.setEmptyText(GradleBundle.message("gradle.text.loading"));
+    // TODO den implement
+//    list.setEmptyText(ExternalSystemBundle.message("gradle.text.loading"));
     JBScrollPane scrollPane = new JBScrollPane(list);
     scrollPane.setBorder(null);
     panel.add(scrollPane, BorderLayout.CENTER);
@@ -160,11 +161,11 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
         }
 
         Object element = model.getElementAt(row);
-        if (!(element instanceof GradleTaskDescriptor)) {
+        if (!(element instanceof ExternalSystemTaskDescriptor)) {
           return;
         }
 
-        String executorId = ((GradleTaskDescriptor)element).getExecutorId();
+        String executorId = ((ExternalSystemTaskDescriptor)element).getExecutorId();
         if (StringUtil.isEmpty(executorId)) {
           executorId = DefaultRunExecutor.EXECUTOR_ID;
         }
@@ -203,19 +204,21 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
   @Nullable
   @Override
   public Object getData(@NonNls String dataId) {
-    if (GradleDataKeys.ALL_TASKS_MODEL.is(dataId)) {
-      return myAllTasksModel;
-    }
-    else if (GradleDataKeys.RECENT_TASKS_LIST.is(dataId)) {
-      return myRecentTasksList;
-    }
-    else if (Location.DATA_KEY.is(dataId)) {
-      Location location = buildLocation();
-      return location == null ? super.getData(dataId) : location;
-    }
-    else {
-      return super.getData(dataId);
-    }
+    return super.getData(dataId);
+    // TODO den implement
+//    if (ExternalSystemDataKeys.ALL_TASKS_MODEL.is(dataId)) {
+//      return myAllTasksModel;
+//    }
+//    else if (ExternalSystemDataKeys.RECENT_TASKS_LIST.is(dataId)) {
+//      return myRecentTasksList;
+//    }
+//    else if (Location.DATA_KEY.is(dataId)) {
+//      Location location = buildLocation();
+//      return location == null ? super.getData(dataId) : location;
+//    }
+//    else {
+//      return super.getData(dataId);
+//    }
   }
 
   @Nullable
@@ -228,7 +231,7 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
       return null;
     }
 
-    String gradleProjectPath = GradleSettings.getInstance(getProject()).getLinkedProjectPath();
+    String gradleProjectPath = GradleSettings.getInstance(getProject()).getLinkedExternalProjectPath();
     if (StringUtil.isEmpty(gradleProjectPath)) {
       return null;
     }
@@ -256,8 +259,8 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     final List<String> tasks = ContainerUtilRt.newArrayList();
     for (int index : selectedIndices) {
       Object data = list.getModel().getElementAt(index);
-      if (data instanceof GradleTaskDescriptor) {
-        tasks.add(((GradleTaskDescriptor)data).getName());
+      if (data instanceof ExternalSystemTaskDescriptor) {
+        tasks.add(((ExternalSystemTaskDescriptor)data).getName());
       }
     }
     return tasks.isEmpty() ? null : tasks;

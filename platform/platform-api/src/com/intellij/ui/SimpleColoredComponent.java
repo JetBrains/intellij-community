@@ -21,7 +21,6 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.TIntIntHashMap;
 import org.intellij.lang.annotations.JdkConstants;
@@ -146,13 +145,13 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     _append(fragment, attributes, isMainText);
     revalidateAndRepaint();
   }
-  
+
   private synchronized void _append(@NotNull final String fragment, @NotNull final SimpleTextAttributes attributes, boolean isMainText) {
     myFragments.add(fragment);
     myAttributes.add(attributes);
     if (isMainText) {
       myMainTextLastIndex = myFragments.size() - 1;
-    }    
+    }
   }
 
   private void revalidateAndRepaint() {
@@ -183,7 +182,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     final int alignIndex = myFragments.size()-1;
     myFixedWidths.put(alignIndex, width);
   }
-  
+
   public void setTextAlign(@JdkConstants.HorizontalAlignment int align) {
     myTextAlign = align;
   }
@@ -447,7 +446,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     label.setIcon(myIcon);
 
     if (myFragments.size() > 0) {
-      final StringBuilder text = StringBuilderSpinAllocator.alloc();
+      final StringBuilder text = new StringBuilder();
       text.append("<html><body style=\"white-space:nowrap\">");
 
       for (int i = 0; i < myFragments.size(); i++) {
@@ -464,7 +463,6 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
 
       text.append("</body></html>");
       label.setText(text.toString());
-      StringBuilderSpinAllocator.dispose(text);
     }
 
     return label;
@@ -593,7 +591,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
     }
 
     final List<Object[]> searchMatches = new ArrayList<Object[]>();
-    
+
     UIUtil.applyRenderingHints(g);
     applyAdditionalHints(g);
     final Font ownFont = getFont();
@@ -746,7 +744,7 @@ public class SimpleColoredComponent extends JComponent implements Accessible {
   protected boolean shouldDrawBackground() {
     return false;
   }
-  
+
   protected void paintIcon(Graphics g, Icon icon, int offset) {
     icon.paintIcon(this, g, offset, (getHeight() - icon.getIconHeight()) / 2);
   }

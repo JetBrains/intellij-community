@@ -131,7 +131,8 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
 
       for(HighlightInfo info:infoCollection) {
         if (info.startOffset == startTagNameRange.getStartOffset() && info.endOffset == startTagNameRange.getEndOffset()) {
-          if (info.description.equals("Attribute \"foo\" bound to namespace \"http://www.w3.org/2000/xmlns/\" was already specified for element \"root\".")) {
+          if (info.getDescription()
+            .equals("Attribute \"foo\" bound to namespace \"http://www.w3.org/2000/xmlns/\" was already specified for element \"root\".")) {
             infoAtTagName = info;
             break;
           }
@@ -944,7 +945,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
           return;
         }
       }
-      assertTrue("There should resolvable reference to "+ schemaAttrName + ", 2", true);              
+      assertTrue("There should resolvable reference to "+ schemaAttrName + ", 2", true);
     }
   }
 
@@ -1236,7 +1237,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     PsiDocumentManager.getInstance(myProject).commitDocument(myEditor.getDocument());
     Collection<HighlightInfo> infos = doHighlighting();
     assertEquals(0, infos.size());
-    
+
     action.actionPerformed(new AnActionEvent(null, DataManager.getInstance().getDataContext(), "", action.getTemplatePresentation(),
                                              ActionManager.getInstance(), 0));
     assertEquals(text,myEditor.getDocument().getText().trim());
@@ -1496,7 +1497,7 @@ public class XmlHighlightingTest extends DaemonAnalyzerTestCase {
     assertEquals("Dtd comment content",XmlTokenType.XML_COMMENT_CHARACTERS,iterator.getTokenType());
     iterator = dtdHighlighter.createIterator(71);
     assertEquals("Dtd comment end",XmlTokenType.XML_COMMENT_END,iterator.getTokenType());
-    
+
     iterator = dtdHighlighter.createIterator(78);
     assertEquals("Dtd comment content",XmlTokenType.XML_COMMENT_CHARACTERS,iterator.getTokenType());
   }

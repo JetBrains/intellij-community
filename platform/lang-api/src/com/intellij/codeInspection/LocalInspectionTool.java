@@ -42,11 +42,11 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   /**
    * Pattern used for inspection ID validation.
    */
-  @Language("RegExp")
+  @NonNls @Language("RegExp")
   public static final String VALID_ID_PATTERN = "[a-zA-Z_0-9.-]+";
 
   public static boolean isValidID(@NotNull String id) {
-    return id.length() > 0 && id.matches(VALID_ID_PATTERN);
+    return !id.isEmpty() && id.matches(VALID_ID_PATTERN);
   }
 
   /**
@@ -161,12 +161,12 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
     return (PsiFile)psiElement;
   }
 
-  public void inspectionStarted(LocalInspectionToolSession session, boolean isOnTheFly) {}
+  public void inspectionStarted(@NotNull LocalInspectionToolSession session, boolean isOnTheFly) {}
 
-  public void inspectionFinished(LocalInspectionToolSession session, ProblemsHolder problemsHolder) {
+  public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
     inspectionFinished(session);
   }
 
   @Deprecated()
-  public void inspectionFinished(LocalInspectionToolSession session) {}
+  public void inspectionFinished(@NotNull LocalInspectionToolSession session) {}
 }

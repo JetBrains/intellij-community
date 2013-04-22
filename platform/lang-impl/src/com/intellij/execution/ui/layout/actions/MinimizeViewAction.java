@@ -25,11 +25,13 @@ import com.intellij.ui.content.Content;
 
 public class MinimizeViewAction extends BaseViewAction {
 
+  @Override
   protected void update(final AnActionEvent e, final ViewContext context, final Content[] content) {
     setEnabled(e, isEnabled(context, content, e.getPlace()));
     e.getPresentation().setIcon(ViewContext.TAB_TOOLBAR_PLACE.equals(e.getPlace()) ? AllIcons.Actions.Move_to_button_top : AllIcons.Actions.Move_to_button);
   }
 
+  @Override
   protected void actionPerformed(final AnActionEvent e, final ViewContext context, final Content[] content) {
     for (Content each : content) {
       context.findCellFor(each).minimize(each);

@@ -90,17 +90,18 @@ public class TrafficLightRenderer implements ErrorStripeRenderer, Disposable {
         public void afterAdded(@NotNull RangeHighlighterEx highlighter) {
           incErrorCount(highlighter, 1);
         }
-  
+
         @Override
         public void beforeRemoved(@NotNull RangeHighlighterEx highlighter) {
           incErrorCount(highlighter, -1);
         }
-  
+
         @Override
         public void attributesChanged(@NotNull RangeHighlighterEx highlighter) {
         }
       });
       UIUtil.invokeLaterIfNeeded(new Runnable() {
+        @Override
         public void run() {
           for (RangeHighlighter rangeHighlighter : model.getAllHighlighters()) {
             incErrorCount(rangeHighlighter, 1);

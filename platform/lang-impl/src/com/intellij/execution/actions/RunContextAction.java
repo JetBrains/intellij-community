@@ -35,6 +35,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
     myExecutor = executor;
   }
 
+  @Override
   protected void perform(final ConfigurationContext context) {
     RunnerAndConfigurationSettings configuration = context.findExisting();
     final RunManagerEx runManager = (RunManagerEx)context.getRunManager();
@@ -64,6 +65,7 @@ public class RunContextAction extends BaseRunConfigurationAction {
     return RunnerRegistry.getInstance().getRunner(myExecutor.getId(), configuration);
   }
 
+  @Override
   protected void updatePresentation(final Presentation presentation, final String actionText, final ConfigurationContext context) {
     presentation.setText(myExecutor.getStartActionText(actionText), true);
 

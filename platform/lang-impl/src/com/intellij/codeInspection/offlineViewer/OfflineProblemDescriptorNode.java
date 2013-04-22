@@ -60,6 +60,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     return PsiUtilBase.toPsiElementArray(result);
   }
 
+  @Override
   @Nullable
   public RefEntity getElement() {
     if (userObject instanceof CommonProblemDescriptor) {
@@ -72,6 +73,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     return myElement;
   }
 
+  @Override
   @Nullable
   public CommonProblemDescriptor getDescriptor() {
     if (userObject == null) return null;
@@ -167,6 +169,7 @@ public class OfflineProblemDescriptorNode extends ProblemDescriptionNode {
     }
   }
 
+  @Override
   public boolean isValid() {
     return getDescriptor() != null && super.isValid();
   }

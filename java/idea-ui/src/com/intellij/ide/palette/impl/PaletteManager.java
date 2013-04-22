@@ -205,15 +205,15 @@ public class PaletteManager implements ProjectComponent {
   }
 
   private class MyFileEditorManagerListener implements FileEditorManagerListener {
-    public void fileOpened(FileEditorManager source, VirtualFile file) {
+    public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       processFileEditorChange(file);
     }
 
-    public void fileClosed(FileEditorManager source, VirtualFile file) {
+    public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
       processFileEditorChange(null);
     }
 
-    public void selectionChanged(FileEditorManagerEvent event) {
+    public void selectionChanged(@NotNull FileEditorManagerEvent event) {
       processFileEditorChange(event.getNewFile());
     }
   }

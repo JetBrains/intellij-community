@@ -96,6 +96,7 @@ public class ExecutionHelper {
       throw new RuntimeException(errors.get(0));
     }
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myProject.isDisposed()) return;
         if (errors.isEmpty() && warnings.isEmpty()) {
@@ -159,6 +160,7 @@ public class ExecutionHelper {
     }
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myProject.isDisposed()) return;
 
@@ -224,6 +226,7 @@ public class ExecutionHelper {
                                        @NotNull final String tabDisplayName) {
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
     commandProcessor.executeCommand(myProject, new Runnable() {
+      @Override
       public void run() {
         final MessageView messageView = ServiceManager.getService(myProject, MessageView.class);
         final Content content = ContentFactory.SERVICE.getInstance().createContent(errorTreeView, tabDisplayName, true);
@@ -360,6 +363,7 @@ public class ExecutionHelper {
 
   private static void descriptorToFront(final Project project, final RunContentDescriptor descriptor) {
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         final ToolWindow toolWindow = ExecutionManager.getInstance(project).getContentManager().getToolWindowByDescriptor(descriptor);
 
@@ -379,6 +383,7 @@ public class ExecutionHelper {
       super(project, "reference.toolWindows.messages");
     }
 
+    @Override
     protected boolean canHideWarnings() {
       return false;
     }
@@ -406,6 +411,7 @@ public class ExecutionHelper {
     else {
       if (mode.getTimeout() <= 0) {
         process = new Runnable() {
+          @Override
           public void run() {
             processHandler.waitFor();
           }
@@ -421,6 +427,7 @@ public class ExecutionHelper {
     }
     else if (mode.inBackGround()) {
       final Task task = new Task.Backgroundable(myProject, title, mode.cancelable()) {
+        @Override
         public void run(@NotNull final ProgressIndicator indicator) {
           process.run();
         }
@@ -444,6 +451,7 @@ public class ExecutionHelper {
       private final Semaphore mySemaphore = new Semaphore();
 
       private final Runnable myWaitThread = new Runnable() {
+        @Override
         public void run() {
           try {
             processHandler.waitFor();
@@ -455,6 +463,7 @@ public class ExecutionHelper {
       };
 
       private final Runnable myCancelListener = new Runnable() {
+        @Override
         public void run() {
           for (; ; ) {
             if ((myProgressIndicator != null && (myProgressIndicator.isCanceled()
@@ -484,6 +493,7 @@ public class ExecutionHelper {
         }
       };
 
+      @Override
       public void run() {
         myProgressIndicator = ProgressManager.getInstance().getProgressIndicator();
         if (myProgressIndicator != null && StringUtil.isEmpty(myProgressIndicator.getText())) {
@@ -508,6 +518,7 @@ public class ExecutionHelper {
       private final Semaphore mySemaphore = new Semaphore();
 
       private final Runnable myProcessThread = new Runnable() {
+        @Override
         public void run() {
           try {
             final boolean finished = processHandler.waitFor(1000 * timeout);
@@ -523,6 +534,7 @@ public class ExecutionHelper {
         }
       };
 
+      @Override
       public void run() {
         mySemaphore.down();
         ApplicationManager.getApplication().executeOnPooledThread(myProcessThread);

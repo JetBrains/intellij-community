@@ -58,6 +58,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
     return (scope.isSearchOutsideRootModel() || index.isInContent(virtualFile) || index.isInLibrarySource(virtualFile)) && !virtualFile.getFileType().isBinary();
   }
 
+  @Override
   @NotNull
   public PsiFile[] getFilesWithTodoItems() {
     if (myProject.isDefault()) {
@@ -100,7 +101,7 @@ public class IndexTodoCacheManagerImpl implements TodoCacheManager {
     }
     return count;
   }
-   
+
   @Override
   public int getTodoCount(@NotNull final VirtualFile file, final IndexPattern pattern) {
     if (myProject.isDefault()) {

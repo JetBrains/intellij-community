@@ -1177,4 +1177,65 @@ def <error descr="Illegal escape character in string literal">'a\\obc'</error>()
       }
     ''')
   }
+
+  void testDuplicatingAnnotations() {
+    testHighlighting('''\
+@interface A {
+  String value()
+}
+
+@A('a')
+@A('a')
+class X{}
+
+@A('a')
+@A('ab')
+class Y{}
+
+<error descr="Duplicate modifier 'public'">public public</error> class Z {}
+''')
+  }
+
+  void testAnnotationAttribute() {
+    testHighlighting('''\
+@interface A {
+  String value() default 'a'
+  String[] values() default []
+}
+
+
+@A('abc')
+def x
+
+@A(<error descr="Expected ''abc' + 'cde'' to be an inline constant">'abc' + 'cde'</error>)
+def y
+
+class C {
+  final static String CONST1 = 'ABC'
+  final static String CONST2 = 'ABC' + 'CDE'
+  final        String CONST3 = 'ABC'
+}
+
+@A(C.CONST1)
+def z
+
+@A(<error descr="Expected ''ABC' + 'CDE'' to be an inline constant">C.CONST2</error>)
+def a
+
+@A(C.CONST3)
+def b
+
+@A(values=['a'])
+def c
+
+@A(values=<error descr="Expected ''a'+'b'' to be an inline constant">['a'+'b']</error>)
+def d
+
+@A(values=[C.CONST1])
+def e
+
+@A(values=<error descr="Expected ''ABC' + 'CDE'' to be an inline constant">[C.CONST1, C.CONST2]</error>)
+def f
+''')
+  }
 }

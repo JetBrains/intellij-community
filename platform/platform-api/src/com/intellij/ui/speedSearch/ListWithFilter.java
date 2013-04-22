@@ -24,22 +24,21 @@ import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.util.PopupUtil;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.LightColors;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.UIBundle;
+import com.intellij.ui.*;
 import com.intellij.util.Function;
 import com.intellij.util.ui.ComponentWithEmptyText;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
+import javax.swing.event.DocumentEvent;
 import java.awt.*;
 import java.awt.event.KeyAdapter;
 import java.awt.event.KeyEvent;
 
 public class ListWithFilter<T> extends JPanel implements DataProvider {
   private final JList myList;
-  private final JTextField mySpeedSearchPatternField;
+  private final SearchTextField mySearchField = new SearchTextField(false);
   private final NameFilteringListModel<T> myModel;
   private final JScrollPane myScroller;
   private final MySpeedSearch mySpeedSearch;
@@ -47,7 +46,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
   @Override
   public Object getData(@NonNls String dataId) {
     if (SpeedSearchSupply.SPEED_SEARCH_CURRENT_QUERY.is(dataId)) {
-      return mySpeedSearchPatternField.getText();
+      return mySearchField.getText();
     }
     return null;
   }
@@ -75,11 +74,10 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
     myList = list;
     myScroller = scroller;
 
-    mySpeedSearchPatternField = new JTextField();
-    mySpeedSearchPatternField.setFocusable(false);
-    mySpeedSearchPatternField.setVisible(false);
+    mySearchField.getTextEditor().setFocusable(false);
+    mySearchField.setVisible(false);
 
-    add(mySpeedSearchPatternField, BorderLayout.NORTH);
+    add(mySearchField, BorderLayout.NORTH);
     add(myScroller, BorderLayout.CENTER);
 
     mySpeedSearch = new MySpeedSearch();
@@ -121,33 +119,53 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
 
   public boolean resetFilter() {
     boolean hadPattern = mySpeedSearch.isHoldingFilter();
-    if (mySpeedSearchPatternField.isVisible()) {
+    if (mySearchField.isVisible()) {
       mySpeedSearch.reset();
     }
     return hadPattern;
   }
 
+  public SpeedSearch getSpeedSearch() {
+    return mySpeedSearch;
+  }
+
   private class MySpeedSearch extends SpeedSearch {
-    boolean searchFieldShown = false;
+    boolean searchFieldShown;
+    boolean myInUpdate;
+
+    private MySpeedSearch() {
+      // native mac "clear button" is not captured by SearchTextField.onFieldCleared
+      mySearchField.addDocumentListener(new DocumentAdapter() {
+        @Override
+        protected void textChanged(DocumentEvent e) {
+          if (myInUpdate) return;
+          if (mySearchField.getText().isEmpty()) {
+            mySpeedSearch.reset();
+          }
+        }
+      });
+    }
 
     public void update() {
-      mySpeedSearchPatternField.setBackground(new JTextField().getBackground());
+      myInUpdate = true;
+      mySearchField.getTextEditor().setBackground(UIUtil.getTextFieldBackground());
       onSpeedSearchPatternChanged();
-      mySpeedSearchPatternField.setText(getFilter());
+      mySearchField.setText(getFilter());
       if (isHoldingFilter() && !searchFieldShown) {
-        mySpeedSearchPatternField.setVisible(true);
+        mySearchField.setVisible(true);
         searchFieldShown = true;
       }
       else if (!isHoldingFilter() && searchFieldShown) {
-        mySpeedSearchPatternField.setVisible(false);
+        mySearchField.setVisible(false);
         searchFieldShown = false;
       }
 
+      myInUpdate = false;
       revalidate();
     }
 
     private void revalidate() {
-      JBPopup popup = PopupUtil.getPopupContainerFor(mySpeedSearchPatternField);
+      JBPopup popup = PopupUtil.getPopupContainerFor(mySearchField);
       if (popup != null) {
         popup.pack(false, true);
       }
@@ -156,9 +174,10 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
   }
 
   protected void onSpeedSearchPatternChanged() {
+    T prevSelection = (T)myList.getSelectedValue(); // save to restore the selection on filter drop
     myModel.refilter();
     if (myModel.getSize() > 0) {
-      int fullMatchIndex = myModel.getClosestMatchIndex();
+      int fullMatchIndex = mySpeedSearch.isHoldingFilter() ? myModel.getClosestMatchIndex() : myModel.getElementIndex(prevSelection);
       if (fullMatchIndex != -1) {
         myList.setSelectedIndex(fullMatchIndex);
       }
@@ -168,7 +187,7 @@ public class ListWithFilter<T> extends JPanel implements DataProvider {
       }
     }
     else {
-      mySpeedSearchPatternField.setBackground(LightColors.RED);
+      mySearchField.getTextEditor().setBackground(LightColors.RED);
       revalidate();
     }
   }

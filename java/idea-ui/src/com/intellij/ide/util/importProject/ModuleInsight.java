@@ -25,7 +25,6 @@ import com.intellij.util.Consumer;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.StringInterner;
-import com.intellij.util.text.CharArrayCharSequence;
 import com.intellij.util.text.StringFactory;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -209,7 +208,7 @@ public abstract class ModuleInsight {
       final Set<String> libNames = new HashSet<String>(myExistingProjectLibraryNames);
       for (LibraryDescriptor library : libraries) {
         final Collection<File> libJars = library.getJars();
-        final String newName = suggestUniqueName(libNames, libJars.size() == 1? libJars.iterator().next().getName() : library.getName());
+        final String newName = suggestUniqueName(libNames, libJars.size() == 1? FileUtil.getNameWithoutExtension(libJars.iterator().next()) : library.getName());
         library.setName(newName);
         libNames.add(newName);
       }

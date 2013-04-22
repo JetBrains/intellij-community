@@ -22,14 +22,17 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.Project;
 
 public final class ProjectNameMacro extends Macro {
+  @Override
   public String getName() {
     return "ProjectName";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.project.file.name");
   }
 
+  @Override
   public String expand(DataContext dataContext) {
     final Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {

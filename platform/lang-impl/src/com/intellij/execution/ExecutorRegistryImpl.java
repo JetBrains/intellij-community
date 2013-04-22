@@ -110,34 +110,42 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     }
   }
 
+  @Override
   @NotNull
   public synchronized Executor[] getRegisteredExecutors() {
     return myExecutors.toArray(new Executor[myExecutors.size()]);
   }
 
+  @Override
   public Executor getExecutorById(final String executorId) {
     return myId2Executor.get(executorId);
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getComponentName() {
     return "ExecutorRegistyImpl";
   }
 
+  @Override
   public void initComponent() {
     ProjectManager.getInstance().addProjectManagerListener(new ProjectManagerAdapter() {
+      @Override
       public void projectOpened(final Project project) {
         final MessageBusConnection connect = project.getMessageBus().connect(project);
         connect.subscribe(ExecutionManager.EXECUTION_TOPIC, new ExecutionAdapter(){
+          @Override
           public void processStartScheduled(String executorId, ExecutionEnvironment env) {
             myInProgress.add(createExecutionId(executorId, env, project));
           }
 
+          @Override
           public void processNotStarted(String executorId, @NotNull ExecutionEnvironment env) {
             myInProgress.remove(createExecutionId(executorId, env, project));
           }
 
+          @Override
           public void processStarted(String executorId, @NotNull ExecutionEnvironment env, @NotNull ProcessHandler handler) {
             myInProgress.remove(createExecutionId(executorId, env, project));
           }
@@ -157,8 +165,8 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
         }
       }
     });
-    
-    
+
+
     final Executor[] executors = Extensions.getExtensions(Executor.EXECUTOR_EXTENSION_NAME);
     for (Executor executor : executors) {
       initExecutor(executor);
@@ -170,10 +178,12 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
     return new Trinity<Project, String, String>(project, executorId, settings != null? settings.getRunnerId() : null);
   }
 
+  @Override
   public boolean isStarting(Project project, final String executorId, final String runnerId) {
     return myInProgress.contains(new Trinity<Project, String, String>(project, executorId, runnerId));
   }
-  
+
+  @Override
   public synchronized void disposeComponent() {
     if (myExecutors.size() > 0) {
       List<Executor> executors = new ArrayList<Executor>(myExecutors);
@@ -195,6 +205,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       myExecutor = executor;
     }
 
+    @Override
     public void update(final AnActionEvent e) {
       super.update(e);
 
@@ -235,6 +246,7 @@ public class ExecutorRegistryImpl extends ExecutorRegistry {
       return RunManagerEx.getInstanceEx(project).getSelectedConfiguration();
     }
 
+    @Override
     public void actionPerformed(final AnActionEvent e) {
       final DataContext dataContext = e.getDataContext();
       final Project project = PlatformDataKeys.PROJECT.getData(dataContext);

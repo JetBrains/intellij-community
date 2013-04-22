@@ -58,6 +58,7 @@ public class ToolRunProfile implements ModuleRunProfile{
     //}
   }
 
+  @Override
   public String getName() {
     return expandMacrosInName(myTool, myContext);
   }
@@ -73,18 +74,22 @@ public class ToolRunProfile implements ModuleRunProfile{
     }
   }
 
+  @Override
   public Icon getIcon() {
     return null;
   }
 
+  @Override
   public void checkConfiguration() throws RuntimeConfigurationException {
   }
 
+  @Override
   @NotNull
   public Module[] getModules() {
     return Module.EMPTY_ARRAY;
   }
 
+  @Override
   public RunProfileState getState(@NotNull final Executor executor, @NotNull final ExecutionEnvironment env) {
     final Project project = env.getProject();
     if (project == null || myCommandLine == null) {
@@ -97,6 +102,7 @@ public class ToolRunProfile implements ModuleRunProfile{
         return myCommandLine;
       }
 
+      @Override
       @NotNull
       protected OSProcessHandler startProcess() throws ExecutionException {
         final GeneralCommandLine commandLine = createCommandLine();
@@ -105,6 +111,7 @@ public class ToolRunProfile implements ModuleRunProfile{
         return processHandler;
       }
 
+      @Override
       @NotNull
       public ExecutionResult execute(@NotNull final Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
         final ExecutionResult result = super.execute(executor, runner);

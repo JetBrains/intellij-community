@@ -22,14 +22,17 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.vfs.VirtualFile;
 
 public class FileNameMacro extends Macro {
+  @Override
   public String getName() {
     return "FileName";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.file.name");
   }
 
+  @Override
   public String expand(DataContext dataContext) {
     VirtualFile file = PlatformDataKeys.VIRTUAL_FILE.getData(dataContext);
     if (file == null) return null;

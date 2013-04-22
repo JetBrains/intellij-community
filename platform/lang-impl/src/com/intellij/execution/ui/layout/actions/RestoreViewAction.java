@@ -33,6 +33,7 @@ public class RestoreViewAction extends AnAction {
     myRestoreAction = restore;
   }
 
+  @Override
   public void update(final AnActionEvent e) {
     Presentation p = e.getPresentation();
     p.setText(ActionsBundle.message("action.Runner.RestoreView.text", myContent.getDisplayName()));
@@ -40,6 +41,7 @@ public class RestoreViewAction extends AnAction {
     p.setIcon(myContent.getIcon());
   }
 
+  @Override
   public void actionPerformed(final AnActionEvent e) {
     myRestoreAction.restoreInGrid();
   }

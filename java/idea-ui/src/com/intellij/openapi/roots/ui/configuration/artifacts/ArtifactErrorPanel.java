@@ -23,6 +23,7 @@ import com.intellij.openapi.ui.popup.util.BaseListPopupStep;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.update.Activatable;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -86,7 +87,7 @@ public class ArtifactErrorPanel {
 
   public void showError(@NotNull String message, @NotNull List<? extends ConfigurationErrorQuickFix> quickFixes) {
     myErrorLabel.setVisible(true);
-    final String errorText = "<html>" + message + "</html>";
+    final String errorText = XmlStringUtil.wrapInHtml(message);
     if (myErrorLabel.isShowing()) {
       myErrorLabel.setText(errorText);
     }

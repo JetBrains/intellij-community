@@ -76,10 +76,10 @@ public class SameParameterValueInspection extends GlobalJavaInspectionTool {
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
                                                 final ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefElement && processor.getDescriptions(refEntity) != null) {
           refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(final RefMethod refMethod) {
+            @Override public void visitMethod(@NotNull final RefMethod refMethod) {
               globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
                 public boolean process(PsiReference psiReference) {
                   processor.ignoreElement(refMethod);

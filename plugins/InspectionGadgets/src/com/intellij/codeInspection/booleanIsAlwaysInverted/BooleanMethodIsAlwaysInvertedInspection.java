@@ -85,7 +85,7 @@ public class BooleanMethodIsAlwaysInvertedInspection extends GlobalJavaInspectio
                                                 final ProblemDescriptionsProcessor descriptionsProcessor) {
     manager.iterate(new RefJavaVisitor() {
       @Override
-      public void visitMethod(final RefMethod refMethod) {
+      public void visitMethod(@NotNull final RefMethod refMethod) {
         if (descriptionsProcessor.getDescriptions(refMethod) != null) { //suspicious method -> need to check external usages
           final GlobalJavaInspectionContext.UsagesProcessor usagesProcessor = new GlobalJavaInspectionContext.UsagesProcessor() {
             public boolean process(PsiReference psiReference) {

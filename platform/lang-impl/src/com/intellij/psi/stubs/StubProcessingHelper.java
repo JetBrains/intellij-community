@@ -48,6 +48,7 @@ public class StubProcessingHelper extends StubProcessingHelperBase {
   }
 
 
+  @Override
   protected String stubTreeAndIndexDoNotMatch(StubTree stubTree,
                                             PsiFileWithStubSupport psiFile,
                                             List<StubElement<?>> plained,

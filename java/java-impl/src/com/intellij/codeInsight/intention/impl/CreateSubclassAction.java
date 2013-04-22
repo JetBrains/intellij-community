@@ -245,7 +245,7 @@ public class CreateSubclassAction extends BaseIntentionAction {
       }
       if (psiClass.hasTypeParameters() || includeClassName) {
         final Editor editor = CodeInsightUtil.positionCursor(project, targetClass.getContainingFile(), targetClass.getLBrace());
-        final TemplateBuilderImpl templateBuilder = editor != null && !ApplicationManager.getApplication().isUnitTestMode() 
+        final TemplateBuilderImpl templateBuilder = editor != null 
                    ? (TemplateBuilderImpl)TemplateBuilderFactory.getInstance().createTemplateBuilder(targetClass) : null;
         
         if (includeClassName && templateBuilder != null) {
@@ -319,9 +319,11 @@ public class CreateSubclassAction extends BaseIntentionAction {
           baseConstructors.add(new PsiMethodMember(baseConstr, substitutor));
         }
       }
+      final int offset = editor.getCaretModel().getOffset();
       CreateConstructorMatchingSuperFix.chooseConstructor2Delegate(project, editor,
                                                                    substitutor,
                                                                    baseConstructors, constructors, targetClass);
+      editor.getCaretModel().moveToOffset(offset);
     }
 
     OverrideImplementUtil.chooseAndImplementMethods(project, editor, targetClass);

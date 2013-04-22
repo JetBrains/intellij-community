@@ -56,19 +56,23 @@ public abstract class BaseToolManager<T extends Tool> implements ExportableAppli
     return s;
   }
 
+  @Override
   @NotNull
   public File[] getExportFiles() {
     return new File[]{mySchemesManager.getRootDirectory()};
   }
 
+  @Override
   @NotNull
   public String getPresentableName() {
     return ToolsBundle.message("tools.settings");
   }
 
+  @Override
   public void disposeComponent() {
   }
 
+  @Override
   public void initComponent() {
   }
 

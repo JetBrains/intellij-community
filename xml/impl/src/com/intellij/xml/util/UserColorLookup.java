@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,7 +65,7 @@ public class UserColorLookup extends LookupElementDecorator<LookupElement> {
 
     ColorPickerListener[] listeners = ColorPickerListenerFactory.createListenersFor(element);
     Color color = ColorChooser.chooseColor(WindowManager.getInstance().suggestParentWindow(context.getProject()),
-                                           XmlBundle.message("choose.color.dialog.title"), myColorAtCaret, true, listeners);
+                                           XmlBundle.message("choose.color.dialog.title"), myColorAtCaret, true, listeners, true);
 
     if (color != null) {
       String s = Integer.toHexString(color.getRGB() & 0xFFFFFF);

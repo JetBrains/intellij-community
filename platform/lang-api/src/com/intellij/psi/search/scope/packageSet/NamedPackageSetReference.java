@@ -25,6 +25,7 @@ public class NamedPackageSetReference extends PackageSetBase {
     myName = name.startsWith("$") ? name.substring(1) : name;
   }
 
+  @Override
   public boolean contains(VirtualFile file, NamedScopesHolder holder) {
     final NamedScope scope = holder.getScope(myName);
     if (scope != null) {
@@ -36,16 +37,19 @@ public class NamedPackageSetReference extends PackageSetBase {
     return false;
   }
 
+  @Override
   @NotNull
   public PackageSet createCopy() {
     return new NamedPackageSetReference(myName);
   }
 
+  @Override
   @NotNull
   public String getText() {
     return "$" + myName;
   }
 
+  @Override
   public int getNodePriority() {
     return 0;
   }

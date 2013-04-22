@@ -42,10 +42,12 @@ public class NamedScopeManager extends NamedScopesHolder {
     return ServiceManager.getService(project, NamedScopeManager.class);
   }
 
+  @Override
   public String getDisplayName() {
     return IdeBundle.message("local.scopes.node.text");
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.Ide.LocalScope;
   }

@@ -73,6 +73,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
    *
    * @return the virtual file instance, or null if the project view node doesn't represent a virtual file.
    */
+  @Override
   @Nullable
   public VirtualFile getVirtualFile() {
     return null;
@@ -162,6 +163,7 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
     return false;
   }
 
+  @Override
   public Collection<VirtualFile> getRoots() {
     Value value = getValue();
 
@@ -182,10 +184,12 @@ public abstract class ProjectViewNode <Value> extends AbstractTreeNode<Value> im
   }
 
 
+  @Override
   protected boolean hasProblemFileBeneath() {
     if (!Registry.is("projectView.showHierarchyErrors")) return false;
 
     return WolfTheProblemSolver.getInstance(getProject()).hasProblemFilesBeneath(new Condition<VirtualFile>() {
+      @Override
       public boolean value(final VirtualFile virtualFile) {
         return contains(virtualFile)
                // in case of flattened packages, when package node a.b.c contains error file, node a.b might not.

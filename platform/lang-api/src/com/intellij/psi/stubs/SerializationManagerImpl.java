@@ -59,6 +59,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
     finally {
       registerSerializer(PsiFileStubImpl.TYPE);
       ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+        @Override
         public void run() {
           performShutdown();
         }
@@ -66,10 +67,12 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
     }
   }
 
+  @Override
   public boolean isNameStorageCorrupted() {
     return myNameStorageCrashed.get();
   }
 
+  @Override
   public void repairNameStorage() {
     if (myNameStorageCrashed.getAndSet(false)) {
       try {
@@ -112,14 +115,17 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
     myNameStorageCrashed.set(true);
   }
 
+  @Override
   @NotNull
   public String getComponentName() {
     return "PSI.SerializationManager";
   }
 
+  @Override
   public void initComponent() {
   }
 
+  @Override
   public void disposeComponent() {
     performShutdown();
   }
@@ -151,7 +157,7 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
   }
 
   @Override
-  public void serialize(Stub rootStub, OutputStream stream) {
+  public void serialize(@NotNull Stub rootStub, @NotNull OutputStream stream) {
     initSerializers();
     try {
       myStubSerializationHelper.serialize(rootStub, stream);
@@ -162,8 +168,9 @@ public class SerializationManagerImpl extends SerializationManagerEx implements 
     }
   }
 
+  @NotNull
   @Override
-  public Stub deserialize(InputStream stream) throws SerializerNotFoundException {
+  public Stub deserialize(@NotNull InputStream stream) throws SerializerNotFoundException {
     initSerializers();
 
     try {

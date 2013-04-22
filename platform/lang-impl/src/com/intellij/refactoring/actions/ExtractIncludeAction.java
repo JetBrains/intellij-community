@@ -31,14 +31,17 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class ExtractIncludeAction extends BaseRefactoringAction {
+  @Override
   public boolean isAvailableInEditorOnly() {
     return true;
   }
 
+  @Override
   public boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     return false;
   }
 
+  @Override
   protected boolean isAvailableForLanguage(Language language) {
     return true;
   }
@@ -55,11 +58,13 @@ public class ExtractIncludeAction extends BaseRefactoringAction {
     }
   }
 
+  @Override
   protected boolean isAvailableForFile(PsiFile file) {
     final Language baseLanguage = file.getViewProvider().getBaseLanguage();
     return LanguageExtractInclude.INSTANCE.forLanguage(baseLanguage) != null;
   }
 
+  @Override
   public RefactoringActionHandler getHandler(@NotNull DataContext dataContext) {
     PsiFile file = LangDataKeys.PSI_FILE.getData(dataContext);
     if (file == null) return null;

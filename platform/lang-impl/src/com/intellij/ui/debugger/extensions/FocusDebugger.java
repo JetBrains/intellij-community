@@ -48,6 +48,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
   private DefaultListModel myLogModel;
   private JEditorPane myAllocation;
 
+  @Override
   public JComponent getComponent() {
     if (myComponent == null) {
       myComponent = init();
@@ -101,6 +102,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     }
   }
 
+  @Override
   public void valueChanged(ListSelectionEvent e) {
     if (myLog.getSelectedIndex() == -1) {
       myAllocation.setText(null);
@@ -120,6 +122,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
     return c == debuggerWindow || SwingUtilities.getWindowAncestor(c) == debuggerWindow;
   }
 
+  @Override
   public void propertyChange(PropertyChangeEvent evt) {
     final Object newValue = evt.getNewValue();
     final Object oldValue = evt.getOldValue();
@@ -145,6 +148,7 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
 
     myLogModel.addElement(new FocusElement(text, new Throwable()));
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         if (myLog != null && myLog.isShowing()) {
           final int h = myLog.getFixedCellHeight();
@@ -194,10 +198,12 @@ public class FocusDebugger implements UiDebuggerExtension, PropertyChangeListene
   }
 
 
+  @Override
   public String getName() {
     return "Focus";
   }
 
+  @Override
   public void disposeUiResources() {
     myComponent = null;
     KeyboardFocusManager.getCurrentKeyboardFocusManager().removePropertyChangeListener(this);

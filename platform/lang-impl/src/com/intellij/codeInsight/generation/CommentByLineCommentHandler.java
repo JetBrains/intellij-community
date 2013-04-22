@@ -46,7 +46,6 @@ import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.Indent;
 import com.intellij.psi.util.PsiUtilBase;
 import com.intellij.util.DocumentUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.text.CharArrayUtil;
 import gnu.trove.THashMap;
@@ -445,25 +444,20 @@ public class CommentByLineCommentHandler implements CodeInsightActionHandler {
         for (int line = myEndLine; line >= myStartLine; line--) {
           int lineStart = myDocument.getLineStartOffset(line);
           int offset = lineStart;
-          final StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-          try {
-            while (true) {
-              String space = buffer.toString();
-              Indent indent = myCodeStyleManager.getIndent(space, fileType);
-              if (indent.isGreaterThan(minIndent) || indent.equals(minIndent)) break;
-              char c = chars.charAt(offset);
-              if (c != ' ' && c != '\t') {
-                String newSpace = myCodeStyleManager.fillIndent(minIndent, fileType);
-                myDocument.replaceString(lineStart, offset, newSpace);
-                offset = lineStart + newSpace.length();
-                break;
-              }
-              buffer.append(c);
-              offset++;
+          final StringBuilder buffer = new StringBuilder();
+          while (true) {
+            String space = buffer.toString();
+            Indent indent = myCodeStyleManager.getIndent(space, fileType);
+            if (indent.isGreaterThan(minIndent) || indent.equals(minIndent)) break;
+            char c = chars.charAt(offset);
+            if (c != ' ' && c != '\t') {
+              String newSpace = myCodeStyleManager.fillIndent(minIndent, fileType);
+              myDocument.replaceString(lineStart, offset, newSpace);
+              offset = lineStart + newSpace.length();
+              break;
             }
-          }
-          finally {
-            StringBuilderSpinAllocator.dispose(buffer);
+            buffer.append(c);
+            offset++;
           }
           commentLine(line, offset, commenter);
         }

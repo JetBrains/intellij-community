@@ -55,15 +55,19 @@ public class ConversionServiceImpl extends ConversionService {
   @Override
   public ConversionResult convertSilently(@NotNull String projectPath) {
     return convertSilently(projectPath, new ConversionListener() {
+      @Override
       public void conversionNeeded() {
       }
 
+      @Override
       public void successfullyConverted(File backupDir) {
       }
 
+      @Override
       public void error(String message) {
       }
 
+      @Override
       public void cannotWriteToFiles(List<File> readonlyFiles) {
       }
     });
@@ -240,6 +244,7 @@ public class ConversionServiceImpl extends ConversionService {
     }
     final Comparator<ConverterProvider> comparator = builder.comparator();
     Collections.sort(runners, new Comparator<ConversionRunner>() {
+      @Override
       public int compare(ConversionRunner o1, ConversionRunner o2) {
         return comparator.compare(o1.getProvider(), o2.getProvider());
       }
@@ -294,6 +299,7 @@ public class ConversionServiceImpl extends ConversionService {
     return new File(PathManager.getSystemPath() + File.separator + "conversion" + File.separator + dirName + ".xml");
   }
 
+  @Override
   @NotNull
   public ConversionResult convertModule(@NotNull final Project project, @NotNull final File moduleFile) {
     final IProjectStore stateStore = ((ProjectImpl)project).getStateStore();
@@ -379,10 +385,12 @@ public class ConversionServiceImpl extends ConversionService {
       myProviders = providers;
     }
 
+    @Override
     public Collection<ConverterProvider> getNodes() {
       return Arrays.asList(myProviders);
     }
 
+    @Override
     public Iterator<ConverterProvider> getIn(ConverterProvider n) {
       List<ConverterProvider> preceding = new ArrayList<ConverterProvider>();
       for (String id : n.getPrecedingConverterIds()) {

@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.containers.HashSet;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 
 import javax.swing.*;
@@ -67,7 +68,7 @@ public class ConvertProjectDialog extends DialogWrapper {
 
     myBackupDir = ProjectConversionUtil.getBackupDir(context.getProjectBaseDir());
     myTextPane.setSize(new Dimension(350, Integer.MAX_VALUE));
-    StringBuilder message = new StringBuilder("<html>");
+    StringBuilder message = new StringBuilder();
     if (myConversionRunners.size() == 1 && myConversionRunners.get(0).getProvider().getConversionDialogText(context) != null) {
       message.append(myConversionRunners.get(0).getProvider().getConversionDialogText(context));
     }
@@ -76,10 +77,10 @@ public class ConvertProjectDialog extends DialogWrapper {
                                        ApplicationNamesInfo.getInstance().getFullProductName()));
     }
     message.append(IdeBundle.message("conversion.dialog.text.2", myBackupDir.getAbsolutePath()));
-    message.append("</html>");
-    Messages.configureMessagePaneUi(myTextPane, message.toString(), false);
+    Messages.configureMessagePaneUi(myTextPane, XmlStringUtil.wrapInHtml(message), false);
 
     myTextPane.addHyperlinkListener(new HyperlinkListener() {
+      @Override
       public void hyperlinkUpdate(HyperlinkEvent e) {
         if (e.getEventType() == HyperlinkEvent.EventType.ACTIVATED) {
           @NonNls StringBuilder descriptions = new StringBuilder("<html>The following conversions will be performed:<br>");

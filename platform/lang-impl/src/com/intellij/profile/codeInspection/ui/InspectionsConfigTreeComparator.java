@@ -25,6 +25,7 @@ import com.intellij.codeInspection.ex.Descriptor;
 import java.util.Comparator;
 
 public class InspectionsConfigTreeComparator implements Comparator<InspectionConfigTreeNode> {
+  @Override
   public int compare(InspectionConfigTreeNode o1, InspectionConfigTreeNode o2) {
     String s1 = null;
     String s2 = null;

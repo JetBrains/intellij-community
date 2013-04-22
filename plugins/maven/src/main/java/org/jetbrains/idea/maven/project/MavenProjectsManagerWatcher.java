@@ -137,10 +137,10 @@ public class MavenProjectsManagerWatcher {
         myChangedDocumentsQueue.queue(new Update(MavenProjectsManagerWatcher.this) {
           @Override
           public void run() {
-            final Set<Document> copy;
+            final Document[] copy;
 
             synchronized (myChangedDocuments) {
-              copy = new THashSet<Document>(myChangedDocuments);
+              copy = myChangedDocuments.toArray(new Document[myChangedDocuments.size()]);
               myChangedDocuments.clear();
             }
 

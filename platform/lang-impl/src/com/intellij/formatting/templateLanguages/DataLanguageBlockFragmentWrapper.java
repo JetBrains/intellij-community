@@ -38,42 +38,51 @@ public class DataLanguageBlockFragmentWrapper implements Block {
     myRange = range;
   }
 
+  @Override
   @NotNull
   public TextRange getTextRange() {
     return myRange;
   }
 
+  @Override
   @NotNull
   public List<Block> getSubBlocks() {
     return AbstractBlock.EMPTY;
   }
 
+  @Override
   public Wrap getWrap() {
     return myOwner.getWrap();
   }
 
+  @Override
   public Indent getIndent() {
     return myOwner.getIndent();
   }
 
+  @Override
   public Alignment getAlignment() {
     return myOwner.getAlignment();
   }
 
+  @Override
   @Nullable
   public Spacing getSpacing(Block child1, @NotNull Block child2) {
     return Spacing.getReadOnlySpacing();
   }
 
+  @Override
   @NotNull
   public ChildAttributes getChildAttributes(int newChildIndex) {
     return myOwner.getChildAttributes(newChildIndex);
   }
 
+  @Override
   public boolean isIncomplete() {
     return myOwner.isIncomplete();
   }
 
+  @Override
   public boolean isLeaf() {
     return true;
   }

@@ -147,6 +147,15 @@ public class ChangeDiffRequest implements ChangeRequestChain {
     return result.getRequest();
   }
 
+  @Nullable
+  @Override
+  public DiffRequestPresentable getCurrentRequest() {
+    if (myIndex < 0 || myIndex >= mySteps.size()) {
+      return null;
+    }
+    return mySteps.get(myIndex);
+  }
+
   private int findRequest(DiffRequestPresentable presentable) {
     for (int i = 0; i < mySteps.size(); i++) {
       DiffRequestPresentable step = mySteps.get(i);

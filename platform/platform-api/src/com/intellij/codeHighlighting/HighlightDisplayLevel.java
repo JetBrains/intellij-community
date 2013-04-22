@@ -69,7 +69,7 @@ public class HighlightDisplayLevel {
     ourMap.put(mySeverity, this);
   }
 
-  public HighlightDisplayLevel(HighlightSeverity severity) {
+  public HighlightDisplayLevel(@NotNull HighlightSeverity severity) {
     mySeverity = severity;
   }
 
@@ -104,6 +104,7 @@ public class HighlightDisplayLevel {
 
   private static final int EMPTY_ICON_DIM = 12;
 
+  @NotNull
   public static Icon createIconByMask(TextAttributesKey key) {
     final EditorColorsManager manager = EditorColorsManager.getInstance();
     if (manager != null) {
@@ -114,19 +115,23 @@ public class HighlightDisplayLevel {
     return createIconByMask(key.getDefaultAttributes().getErrorStripeColor());
   }
 
+  @NotNull
   public static Icon createIconByMask(final Color renderColor) {
     return new Icon() {
+      @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {
         Graphics2D g2 = (Graphics2D)g;
         g2.drawImage(ImageHolder.ourErrorMaskImage, x, y, renderColor, null);
       }
 
 
+      @Override
       public int getIconWidth() {
         return EMPTY_ICON_DIM;
       }
 
 
+      @Override
       public int getIconHeight() {
         return EMPTY_ICON_DIM;
       }

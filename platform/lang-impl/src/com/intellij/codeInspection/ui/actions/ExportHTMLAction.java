@@ -75,9 +75,11 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     myView = view;
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final ListPopup popup = JBPopupFactory.getInstance().createListPopup(
       new BaseListPopupStep<String>(InspectionsBundle.message("inspection.action.export.popup.title"), new String[]{HTML, XML}) {
+        @Override
         public PopupStep onChosen(final String selectedValue, final boolean finalChoice) {
           exportHTML(Comparing.strEqual(selectedValue, HTML));
           return PopupStep.FINAL_CHOICE;
@@ -101,8 +103,10 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
 
     final String outputDirectoryName = exportToHTMLSettings.OUTPUT_DIRECTORY;
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         final Runnable exportRunnable = new Runnable() {
+          @Override
           public void run() {
             if (!exportToHTML) {
               dupm2XML(outputDirectoryName);
@@ -112,6 +116,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
               try {
                 final InspectionTreeNode root = myView.getTree().getRoot();
                 TreeUtil.traverse(root, new TreeUtil.Traverse() {
+                  @Override
                   public boolean accept(final Object node) {
                     if (node instanceof InspectionNode) {
                       exportHTML(maker, (InspectionNode)node);
@@ -148,6 +153,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
       final InspectionTreeNode root = myView.getTree().getRoot();
       final IOException[] ex = new IOException[1];
       TreeUtil.traverse(root, new TreeUtil.Traverse() {
+        @Override
         public boolean accept(final Object node) {
           if (node instanceof InspectionNode) {
             InspectionNode toolNode = (InspectionNode)node;
@@ -184,6 +190,7 @@ public class ExportHTMLAction extends AnAction implements DumbAware {
     }
     catch (final IOException e) {
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           Messages.showErrorDialog(myView, e.getMessage());
         }

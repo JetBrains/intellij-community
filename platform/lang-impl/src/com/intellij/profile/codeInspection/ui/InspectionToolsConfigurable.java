@@ -103,6 +103,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
   public InspectionToolsConfigurable(InspectionProjectProfileManager projectProfileManager, InspectionProfileManager profileManager) {
     InspectionToolRegistrar.getInstance().buildInspectionSearchIndexIfNecessary();
     myAddButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final Set<String> existingProfileNames = myPanels.keySet();
         final ModifiableModel model = SingleInspectionProfilePanel.createNewProfile(-1, getSelectedObject(), myWholePanel, "", existingProfileNames);
@@ -115,6 +116,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     });
 
     myDeleteButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final InspectionProfileImpl selectedProfile = (InspectionProfileImpl)myProfiles.getSelectedItem();
         ((DefaultComboBoxModel)myProfiles.getModel()).removeElement(selectedProfile);
@@ -125,6 +127,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
     final Project project = projectProfileManager.getProject();
     myImportButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final FileChooserDescriptor descriptor = new FileChooserDescriptor(true, false, false, false, false, false) {
           @Override
@@ -205,6 +208,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     });
 
     myExportButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final FileChooserDescriptor descriptor = FileChooserDescriptorFactory.createSingleFolderDescriptor();
         descriptor.setDescription("Choose directory to store profile file");
@@ -241,6 +245,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     });
 
     myCopyButton.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final Set<String> existingProfileNames = myPanels.keySet();
         final InspectionProfileImpl model = (InspectionProfileImpl)
@@ -272,21 +277,26 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     myProfiles.setSelectedItem(model);
   }
 
+  @Override
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   public String getHelpTopic() {
     return "preferences.inspections";
   }
 
+  @Override
   @NotNull
   public String getId() {
     return ID;
   }
 
+  @Override
   public Runnable enableSearch(final String option) {
     return new Runnable(){
+      @Override
       public void run() {
         SingleInspectionProfilePanel panel = getSelectedPanel();
         if (panel != null) {
@@ -296,6 +306,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     };
   }
 
+  @Override
   public JComponent createComponent() {
     myProfiles.setRenderer(new ListCellRendererWrapper<Profile>() {
       @Override
@@ -307,17 +318,21 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       }
     });
     myProfiles.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final InspectionProfileImpl profile = (InspectionProfileImpl)myProfiles.getSelectedItem();
-        myDeleteButton.setEnabled(isDeleteEnabled(profile));
-        myLayout.show(myPanel, profile.getName());
-        SingleInspectionProfilePanel panel = getSelectedPanel();
-        if (panel != null) {
-          myShareProfileCheckBox.setSelected(panel.isProfileShared());
+        if (profile != null) {
+          myDeleteButton.setEnabled(isDeleteEnabled(profile));
+          myLayout.show(myPanel, profile.getName());
+          SingleInspectionProfilePanel panel = getSelectedPanel();
+          if (panel != null) {
+            myShareProfileCheckBox.setSelected(panel.isProfileShared());
+          }
         }
       }
     });
     myShareProfileCheckBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final SingleInspectionProfilePanel panel = getSelectedPanel();
         LOG.assertTrue(panel != null, "No settings panel for: " + getSelectedObject());
@@ -332,6 +347,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
   protected abstract InspectionProfileImpl getCurrentProfile();
 
+  @Override
   public boolean isModified() {
     for (SingleInspectionProfilePanel panel : myPanels.values()) {
       if (panel.isModified()) return true;
@@ -340,6 +356,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     return !myDeletedProfiles.isEmpty();
   }
 
+  @Override
   public void apply() throws ConfigurationException {
     final Map<String, SingleInspectionProfilePanel> panels = new LinkedHashMap<String, SingleInspectionProfilePanel>();
     for (final String name : myPanels.keySet()) {
@@ -383,6 +400,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     }
   }
 
+  @Override
   public void reset() {
     myDeletedProfiles.clear();
     myPanels.clear();
@@ -404,9 +422,11 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
       panel.setVisible(true);//make sure that UI was initialized
       mySelectionAlarm = new Alarm(Alarm.ThreadToUse.SWING_THREAD);
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (mySelectionAlarm != null) {
             mySelectionAlarm.addRequest(new Runnable() {
+              @Override
               public void run() {
                 panel.updateSelection();
               }
@@ -419,7 +439,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     }
   }
 
-  private boolean isDeleteEnabled(InspectionProfileImpl inspectionProfile) {
+  private boolean isDeleteEnabled(@NotNull InspectionProfileImpl inspectionProfile) {
     final ProfileManager profileManager = inspectionProfile.getProfileManager();
 
     boolean projectProfileFound = false;
@@ -438,7 +458,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
 
     return profileManager == myProjectProfileManager ? projectProfileFound : ideProfileFound;
   }
-  
+
   protected Collection<Profile> getProfiles() {
     final Collection<Profile> result = new ArrayList<Profile>();
     result.addAll(new TreeSet<Profile>(myProfileManager.getProfiles()));
@@ -446,6 +466,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     return result;
   }
 
+  @Override
   public void disposeUIResources() {
     for (SingleInspectionProfilePanel panel : myPanels.values()) {
       panel.disposeUI();
@@ -457,6 +478,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     }
   }
 
+  @Override
   public void selectProfile(String name) {
     for (int i = 0; i < myProfiles.getItemCount(); i++) {
       if (Comparing.strEqual(((InspectionProfileImpl)myProfiles.getItemAt(i)).getName(), name)) {
@@ -466,6 +488,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     }
   }
 
+  @Override
   public void selectInspectionTool(String selectedToolShortName) {
     final InspectionProfileImpl inspectionProfile = getSelectedObject();
     assert inspectionProfile != null : configuredProfiles();
@@ -488,6 +511,7 @@ public abstract class InspectionToolsConfigurable extends BaseConfigurable imple
     return myPanels.keySet();
   }
 
+  @Override
   public InspectionProfileImpl getSelectedObject() {
     return (InspectionProfileImpl)myProfiles.getSelectedItem();
   }

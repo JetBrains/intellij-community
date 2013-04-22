@@ -25,10 +25,12 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,6 +66,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrIndexProperty;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.impl.GrClosureType;
@@ -319,6 +322,26 @@ public class GroovyAssignabilityCheckInspection extends BaseInspection {
       PsiType rType = initializer.getType();
       if (rType == null) return;
       if (isNewInstanceInitialingByTuple(initializer)) {
+        return;
+      }
+
+      if (variable instanceof GrParameter && ((GrParameter)variable).getDeclarationScope() instanceof GrMethod) {
+        final GrMethod method = (GrMethod)((GrParameter)variable).getDeclarationScope();
+        final PsiTypeParameter[] parameters = method.getTypeParameters();
+
+        Map<PsiTypeParameter, PsiType> map = ContainerUtil.newHashMap();
+        for (PsiTypeParameter parameter : parameters) {
+          final PsiClassType[] types = parameter.getSuperTypes();
+
+          if (types.length == 1) {
+            map.put(parameter, PsiWildcardType.createExtends(variable.getManager(), types[0]));
+          }
+          else {
+            map.put(parameter, PsiWildcardType.createExtends(variable.getManager(), PsiIntersectionType.createIntersection(types)));
+          }
+        }
+        PsiSubstitutor substitutor = PsiSubstitutorImpl.createSubstitutor(map);
+        checkAssignability(substitutor.substitute(varType), initializer);
         return;
       }
 

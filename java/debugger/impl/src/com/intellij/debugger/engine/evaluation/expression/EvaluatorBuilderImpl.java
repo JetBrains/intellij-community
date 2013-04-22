@@ -152,7 +152,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       Evaluator lEvaluator = myResult;
 
       rEvaluator = handleAssignmentBoxingAndPrimitiveTypeConversions(lType, rExpression.getType(), rEvaluator);
-      
+
       myResult = new AssignmentEvaluator(lEvaluator, rEvaluator);
     }
 
@@ -819,7 +819,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       if (operandExpression == null) {
         throwEvaluateException(DebuggerBundle.message("evaluation.error.unknown.expression.operand", expression.getText()));
       }
-      
+
       operandExpression.accept(this);
       Evaluator operandEvaluator = myResult;
 
@@ -964,7 +964,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
     public void visitLiteralExpression(PsiLiteralExpression expression) {
       final HighlightInfo parsingError = HighlightUtil.checkLiteralExpressionParsingError(expression);
       if (parsingError != null) {
-        throwEvaluateException(parsingError.description);
+        throwEvaluateException(parsingError.getDescription());
         return;
       }
 
@@ -984,7 +984,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
         throwEvaluateException(DebuggerBundle.message("evaluation.error.invalid.expression", expression.getText())); return;
       }
       indexExpression.accept(this);
-      final Evaluator indexEvaluator = handleUnaryNumericPromotion(indexExpression.getType(), myResult); 
+      final Evaluator indexEvaluator = handleUnaryNumericPromotion(indexExpression.getType(), myResult);
 
       expression.getArrayExpression().accept(this);
       Evaluator arrayEvaluator = myResult;
@@ -999,7 +999,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
      * - unary +, -, and ~ operations
      * @param operandExpressionType
      * @param operandEvaluator  @return operandEvaluator possibly 'wrapped' with neccesary unboxing and type-casting evaluators to make returning value
-     * sutable for mentioned contexts            
+     * sutable for mentioned contexts
      */
     private static Evaluator handleUnaryNumericPromotion(final PsiType operandExpressionType, Evaluator operandEvaluator) {
       final PsiPrimitiveType unboxedType = PsiPrimitiveType.getUnboxedType(operandExpressionType);
@@ -1050,7 +1050,7 @@ public class EvaluatorBuilderImpl implements EvaluatorBuilder {
       }
 
       myResult = new TypeCastEvaluator(operandEvaluator, castTypeName, castingToPrimitive);
-      
+
       if (performCastToWrapperClass) {
         myResult = new BoxingEvaluator(myResult);
       }

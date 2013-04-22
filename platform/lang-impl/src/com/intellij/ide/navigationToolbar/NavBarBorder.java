@@ -33,9 +33,10 @@ public class NavBarBorder implements Border {
     myRightOffset = rightOffset;
   }
 
+  @Override
   public void paintBorder(final Component c, final Graphics g, final int x, final int y, final int width, final int height) {
     if (!myDocked) return;
-    
+
     if (UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
       //g.setColor(Gray._180);
       //g.drawLine(x, y, x + width, y);
@@ -45,22 +46,24 @@ public class NavBarBorder implements Border {
     }
   }
 
+  @Override
   public Insets getBorderInsets(final Component c) {
     if (myDocked) {
       if (!UISettings.getInstance().SHOW_MAIN_TOOLBAR) {
         if (NavBarRootPaneExtension.runToolbarExists()) {
           return new Insets(1, 0, 1, 4);
         }
-        
+
         return new Insets(0, 0, 0, 4);
       }
-      
+
       return new Insets(1, 0, 0, 4);
     }
 
     return new Insets(1, 0, 1, 4);
   }
 
+  @Override
   public boolean isBorderOpaque() {
     return false;
   }

@@ -135,6 +135,7 @@ public class RegexpFilter implements Filter {
     return expression;
   }
 
+  @Override
   public Result applyFilter(final String line, final int entireLength) {
 
     final Matcher matcher = myPattern.matcher(line);

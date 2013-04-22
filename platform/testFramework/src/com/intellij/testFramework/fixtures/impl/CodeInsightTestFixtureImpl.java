@@ -1448,7 +1448,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       final HighlightInfo info = it.next();
       if (prevInfo != null &&
           info.getSeverity() == HighlightInfoType.SYMBOL_TYPE_SEVERITY &&
-          info.description == null &&
+          info.getDescription() == null &&
           info.startOffset == prevInfo.startOffset &&
           info.endOffset == prevInfo.endOffset) {
         it.remove();

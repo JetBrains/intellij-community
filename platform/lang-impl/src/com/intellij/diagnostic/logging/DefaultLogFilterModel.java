@@ -49,28 +49,34 @@ public class DefaultLogFilterModel extends LogFilterModel {
     myCheckStandartFilters = checkStandartFilters;
   }
 
+  @Override
   public void updateCustomFilter(String filter) {
     super.updateCustomFilter(filter);
     getPreferences().updateCustomFilter(filter);
   }
 
+  @Override
   public String getCustomFilter() {
     return getPreferences().CUSTOM_FILTER;
   }
 
+  @Override
   public void addFilterListener(LogFilterListener listener) {
     getPreferences().addFilterListener(listener);
   }
 
+  @Override
   public boolean isApplicable(String line) {
     if (!super.isApplicable(line)) return false;
     return getPreferences().isApplicable(line, myPrevType, myCheckStandartFilters);
   }
 
+  @Override
   public void removeFilterListener(LogFilterListener listener) {
     getPreferences().removeFilterListener(listener);
   }
 
+  @Override
   public List<LogFilter> getLogFilters() {
     LogConsolePreferences prefs = getPreferences();
     final ArrayList<LogFilter> filters = new ArrayList<LogFilter>();
@@ -140,14 +146,17 @@ public class DefaultLogFilterModel extends LogFilterModel {
     });
   }
 
+  @Override
   public boolean isFilterSelected(LogFilter filter) {
     return getPreferences().isFilterSelected(filter);
   }
 
+  @Override
   public void selectFilter(LogFilter filter) {
     getPreferences().selectOnlyFilter(filter);
   }
 
+  @Override
   @NotNull
   public MyProcessingResult processLine(String line) {
     final String type = LogConsolePreferences.getType(line);
@@ -169,6 +178,7 @@ public class DefaultLogFilterModel extends LogFilterModel {
       myPrefs = prefs;
     }
 
+    @Override
     public boolean isAcceptable(String line) {
       return myPrefs.isApplicable(line, myPrevType, myCheckStandartFilters);
     }

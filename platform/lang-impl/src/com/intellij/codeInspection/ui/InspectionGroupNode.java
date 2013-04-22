@@ -35,10 +35,12 @@ public class InspectionGroupNode extends InspectionTreeNode {
     return (String) getUserObject();
   }
 
+  @Override
   public Icon getIcon(boolean expanded) {
     return EMPTY;
   }
 
+  @Override
   public boolean appearsBold() {
     return true;
   }

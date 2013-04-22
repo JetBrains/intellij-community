@@ -32,6 +32,7 @@ public class RefactoringFactoryImpl extends RefactoringFactory {
     myProject = project;
   }
 
+  @Override
   public RenameRefactoring createRename(final PsiElement element, final String newName) {
     return new RenameRefactoringImpl(myProject, element, newName, true, true);
   }
@@ -41,6 +42,7 @@ public class RefactoringFactoryImpl extends RefactoringFactory {
     return new RenameRefactoringImpl(myProject, element, newName, searchInComments, searchInNonJavaFiles);
   }
 
+  @Override
   public SafeDeleteRefactoring createSafeDelete(final PsiElement[] elements) {
     return new SafeDeleteRefactoringImpl(myProject, elements);
   }

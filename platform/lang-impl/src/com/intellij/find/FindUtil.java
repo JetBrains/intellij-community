@@ -924,7 +924,7 @@ public class FindUtil {
     final UsageTarget[] usageTargets =
       sourceElement == null ? UsageTarget.EMPTY_ARRAY : new UsageTarget[]{new PsiElement2UsageTargetAdapter(sourceElement)};
 
-    final UsageInfoToUsageConverter.TargetElementsDescriptor targetElementsDescriptor = 
+    final UsageInfoToUsageConverter.TargetElementsDescriptor targetElementsDescriptor =
       sourceElement != null ? new UsageInfoToUsageConverter.TargetElementsDescriptor(sourceElement)
                             : new UsageInfoToUsageConverter.TargetElementsDescriptor(PsiElement.EMPTY_ARRAY);
     final Usage[] usages = {UsageInfoToUsageConverter.convert(targetElementsDescriptor, new UsageInfo(targets[0]))};
@@ -933,11 +933,12 @@ public class FindUtil {
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Updating Usage View ...") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
-        
+
         for (int i = 1; i < targets.length; i++) {
           if (((UsageViewImpl)view).isDisposed()) break;
           final PsiElement target = targets[i];
           ApplicationManager.getApplication().runReadAction(new Runnable() {
+            @Override
             public void run() {
               final Usage usage = UsageInfoToUsageConverter.convert(targetElementsDescriptor, new UsageInfo(target));
               view.appendUsage(usage);

@@ -657,6 +657,7 @@ public class FindModel extends UserDataHolderBase implements Cloneable {
     }
   }
 
+  @Override
   public Object clone() {
     return super.clone();
   }

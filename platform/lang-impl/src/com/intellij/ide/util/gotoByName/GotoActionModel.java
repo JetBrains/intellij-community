@@ -174,6 +174,8 @@ public class GotoActionModel implements ChooseByNameModel, CustomMatcherModel, C
           if (hit.length() > 60) {
             hit = hit.substring(0, 60) + "...";
           }
+          hit = hit.replace("  ", " "); //avoid extra spaces from mnemonics and xml conversion
+
           final Color fg = isSelected ? UIUtil.getListSelectionForeground() : UIUtil.getListForeground();
           final JLabel label = new JLabel(hit.trim());
           label.setIcon(EMPTY_ICON);

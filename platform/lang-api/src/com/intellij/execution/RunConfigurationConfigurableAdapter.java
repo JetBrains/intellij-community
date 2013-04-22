@@ -24,10 +24,12 @@ public class  RunConfigurationConfigurableAdapter<T extends RunConfiguration> ex
     super(settingsEditor, configuration);
  }
 
+  @Override
   public String getDisplayName() {
     return getSettings().getName();
   }
 
+  @Override
   public String getHelpTopic() {
     return null;
   }

@@ -34,6 +34,7 @@ public class IElementTypePattern extends ObjectPattern<IElementType, IElementTyp
 
   public IElementTypePattern tokenSet(@NotNull final TokenSet tokenSet){
     return with(new PatternCondition<IElementType>("tokenSet") {
+      @Override
       public boolean accepts(@NotNull final IElementType type, final ProcessingContext context) {
         return tokenSet.contains(type);
       }

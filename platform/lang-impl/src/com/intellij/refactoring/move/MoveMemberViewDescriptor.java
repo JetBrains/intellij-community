@@ -33,19 +33,23 @@ public class MoveMemberViewDescriptor implements UsageViewDescriptor {
     myElementsToMove = elementsToMove;
   }
 
+  @Override
   @NotNull
   public PsiElement[] getElements() {
     return myElementsToMove;
   }
 
+  @Override
   public String getProcessedElementsHeader() {
     return RefactoringBundle.message("move.members.elements.header");
   }
 
+  @Override
   public String getCodeReferencesText(int usagesCount, int filesCount) {
     return RefactoringBundle.message("references.to.be.changed", UsageViewBundle.getReferencesString(usagesCount, filesCount));
   }
 
+  @Override
   public String getCommentReferencesText(int usagesCount, int filesCount) {
     return null;
   }

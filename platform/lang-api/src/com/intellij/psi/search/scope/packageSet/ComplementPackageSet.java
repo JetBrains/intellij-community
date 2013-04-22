@@ -25,16 +25,19 @@ public class ComplementPackageSet extends PackageSetBase {
     myComplementarySet = set;
   }
 
+  @Override
   public boolean contains(VirtualFile file, NamedScopesHolder holder) {
     return myComplementarySet instanceof PackageSetBase ? !((PackageSetBase)myComplementarySet).contains(file, holder)
                                                         : myComplementarySet.contains(getPsiFile(file, holder), holder);
   }
 
+  @Override
   @NotNull
   public PackageSet createCopy() {
     return new ComplementPackageSet(myComplementarySet.createCopy());
   }
 
+  @Override
   @NotNull
   public String getText() {
     StringBuffer buf = new StringBuffer();
@@ -46,6 +49,7 @@ public class ComplementPackageSet extends PackageSetBase {
     return buf.toString();
   }
 
+  @Override
   public int getNodePriority() {
     return 1;
   }

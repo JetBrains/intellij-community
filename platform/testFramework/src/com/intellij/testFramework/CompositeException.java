@@ -18,7 +18,6 @@ package com.intellij.testFramework;
 import com.intellij.util.CommonProcessors;
 import com.intellij.util.Function;
 import com.intellij.util.Processor;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.PrintStream;
@@ -118,33 +117,28 @@ public class CompositeException extends Exception {
       return s;
     }
 
-    StringBuilder sb = StringBuilderSpinAllocator.alloc();
-    try {
-      String line = "CompositeException ("+myExceptions.size() +" nested):\n------------------------------\n";
+    StringBuilder sb = new StringBuilder();
+    String line = "CompositeException ("+myExceptions.size() +" nested):\n------------------------------\n";
+    stringProcessor.process(line);
+    sb.append(line);
+
+    for (int i = 0; i < myExceptions.size(); i++) {
+      Throwable exception = myExceptions.get(i);
+
+      line = "[" + i + "]: ";
       stringProcessor.process(line);
       sb.append(line);
 
-      for (int i = 0; i < myExceptions.size(); i++) {
-        Throwable exception = myExceptions.get(i);
-
-        line = "[" + i + "]: ";
-        stringProcessor.process(line);
-        sb.append(line);
-
-        line = exceptionProcessor.fun(exception);
-        if (!line.endsWith("\n")) line += '\n';
-        stringProcessor.process(line);
-        sb.append(line);
-      }
-
-      line = "------------------------------\n";
+      line = exceptionProcessor.fun(exception);
+      if (!line.endsWith("\n")) line += '\n';
       stringProcessor.process(line);
       sb.append(line);
+    }
 
-      return sb.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(sb);
-    }
+    line = "------------------------------\n";
+    stringProcessor.process(line);
+    sb.append(line);
+
+    return sb.toString();
   }
 }

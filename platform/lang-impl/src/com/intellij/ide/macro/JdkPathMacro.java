@@ -28,14 +28,17 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 
 public final class JdkPathMacro extends Macro {
+  @Override
   public String getName() {
     return "JDKPath";
   }
 
+  @Override
   public String getDescription() {
     return IdeBundle.message("macro.jdk.path");
   }
 
+  @Override
   public String expand(DataContext dataContext) {
     Project project = PlatformDataKeys.PROJECT.getData(dataContext);
     if (project == null) {

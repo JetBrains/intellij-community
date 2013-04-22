@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.vcs.changes.actions;
 
-import com.intellij.icons.AllIcons;
 import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionPlaces;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -42,11 +41,6 @@ import java.util.*;
  * @author max
  */
 public class MoveChangesToAnotherListAction extends AnAction implements DumbAware {
-  public MoveChangesToAnotherListAction() {
-    super(ActionsBundle.actionText("ChangesView.Move"),
-          ActionsBundle.actionDescription("ChangesView.Move"),
-          AllIcons.Actions.MoveToAnotherChangelist);
-  }
 
   public void update(AnActionEvent e) {
     final boolean isEnabled = isEnabled(e);

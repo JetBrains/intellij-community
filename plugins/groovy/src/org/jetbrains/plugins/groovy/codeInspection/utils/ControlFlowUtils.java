@@ -441,6 +441,10 @@ public class ControlFlowUtils {
     else {
       flow = new ControlFlowBuilder(element.getProject()).buildControlFlow((GroovyPsiElement)element);
     }
+    return collectReturns(flow, allExitPoints);
+  }
+
+  public static List<GrStatement> collectReturns(@NotNull Instruction[] flow, final boolean allExitPoints) {
     boolean[] visited = new boolean[flow.length];
     final List<GrStatement> res = new ArrayList<GrStatement>();
     visitAllExitPointsInner(flow[flow.length - 1], flow[0], visited, new ExitPointVisitor() {

@@ -132,6 +132,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
 
   public static InspectionProfileImpl createSimple(String name, final InspectionProfileEntry... tools) {
     InspectionProfileImpl profile = new InspectionProfileImpl(name, new InspectionToolRegistrar(null) {
+      @NotNull
       @Override
       public List<InspectionToolWrapper> createTools() {
         return ContainerUtil.map(tools, WRAPPER_FUNCTION);
@@ -209,7 +210,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @Override
   public void resetToBase() {
     initInspectionTools(null);
-    
+
     copyToolsConfigurations(myBaseProfile, null);
     myDisplayLevelMap = null;
   }
@@ -558,7 +559,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
           toolsList.readExternal(element, this);
         }
         catch (InvalidDataException e) {
-          LOG.error(e);
+          LOG.error("Can't read settings for " + tool, e);
         }
       }
       myTools.put(tool.getShortName(), toolsList);
@@ -650,9 +651,7 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       if (toolList.isEnabled()) {
         for (InspectionProfileEntry tool : toolList.getAllTools()) {
           tool.projectClosed(project);
-          if (((InspectionTool)tool).getContext() != null) {
-            ((InspectionTool)tool).cleanup();
-          }
+          ((InspectionTool)tool).cleanup();
         }
       }
     }
