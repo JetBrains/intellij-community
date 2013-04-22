@@ -55,7 +55,7 @@ public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
           holder.registerProblem(
             file,
             "Line separators in the current file (" + StringUtil.escapeStringCharacters(curLineSeparator) + ") " +
-            "differs from the project defaults (" + StringUtil.escapeStringCharacters(projectLineSeparator) + ")",
+            "differ from the project defaults (" + StringUtil.escapeStringCharacters(projectLineSeparator) + ")",
             SET_PROJECT_LINE_SEPARATORS);
         }
       }

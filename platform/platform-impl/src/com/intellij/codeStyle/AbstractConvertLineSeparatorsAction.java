@@ -32,10 +32,12 @@ import com.intellij.util.LineSeparator;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Convertor;
+import com.intellij.util.containers.WeakKeyWeakValueHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.util.Map;
 import java.util.Set;
 
 /**
@@ -43,7 +45,9 @@ import java.util.Set;
  */
 public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
 
-  private static Logger LOG = Logger.getInstance("#com.strintec.intellij.webmaster.lineSeparator.ConvertLineSeparatorsAction");
+  private static Logger LOG = Logger.getInstance("#com.intellij.codeStyle.AbstractConvertLineSeparatorsAction");
+
+  private static final Map<String, Set<VirtualFile>> CACHED_IGNORED_FILES = new WeakKeyWeakValueHashMap<String, Set<VirtualFile>>();
 
   @NotNull
   private final String mySeparator;
@@ -51,7 +55,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
   protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull LineSeparator separator) {
     this(separator.toString() + " - " + text, separator.getSeparatorString());
   }
-  
+
   protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull String separator) {
     super(text);
     mySeparator = separator;
@@ -127,7 +131,13 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
 
   @NotNull
   private static Set<VirtualFile> getIgnoredFiles(@NotNull Project project) {
-    final Set<VirtualFile> result = ContainerUtilRt.newHashSet();
+    String key = project.getName() + project.getLocationHash();
+    Set<VirtualFile> result = CACHED_IGNORED_FILES.get(key);
+    if (result != null) {
+      return result;
+    }
+
+    result = ContainerUtilRt.newHashSet();
 
     VirtualFile projectFile = project.getProjectFile();
     if (projectFile != null) {
@@ -145,9 +155,14 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
         result.add(moduleFile);
       }
     }
+    synchronized (CACHED_IGNORED_FILES) {
+      // We're brave enough to not be scared by double-cached value recalculation. Critical section is introduced only for the
+      // data consistency.
+      CACHED_IGNORED_FILES.put(key, result);
+    }
     return result;
   }
-  
+
   public static boolean shouldProcess(@NotNull VirtualFile file, @NotNull Project project) {
     return shouldProcess(file, getIgnoredFiles(project));
   }
