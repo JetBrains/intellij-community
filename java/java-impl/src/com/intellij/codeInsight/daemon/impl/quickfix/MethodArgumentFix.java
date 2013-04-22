@@ -65,8 +65,9 @@ public abstract class MethodArgumentFix implements IntentionAction {
     PsiExpression expression = myArgList.getExpressions()[myIndex];
 
     try {
+      LOG.assertTrue(expression != null && expression.isValid());
       PsiExpression modified = myArgumentFixerActionFactory.getModifiedArgument(expression, myToType);
-      LOG.assertTrue(modified != null);
+      LOG.assertTrue(modified != null, myArgumentFixerActionFactory);
       expression.replace(modified);
     }
     catch (IncorrectOperationException e) {
