@@ -138,9 +138,11 @@ public abstract class InplaceRefactoring {
     if (myElementToRename != null) {
       myInitialName = initialName;
       final PsiFile containingFile = myElementToRename.getContainingFile();
-      if (!notSameFile(getTopLevelVirtualFile(containingFile.getViewProvider()), containingFile)) {
-        myRenameOffset = myElementToRename != null && myElementToRename.getTextRange() != null ? myEditor.getDocument()
-          .createRangeMarker(myElementToRename.getTextRange()) : null;
+      if (!notSameFile(getTopLevelVirtualFile(containingFile.getViewProvider()), containingFile) &&
+          myElementToRename != null && myElementToRename.getTextRange() != null) {
+        myRenameOffset = myEditor.getDocument().createRangeMarker(myElementToRename.getTextRange());
+        myRenameOffset.setGreedyToRight(true);
+        myRenameOffset.setGreedyToLeft(true); // todo not sure if we need this
       }
     }
   }
@@ -483,15 +485,18 @@ public abstract class InplaceRefactoring {
 
   @Nullable
   protected PsiNamedElement getVariable() {
+    // todo we can use more specific class, shouldn't we?
+    //Class clazz = myElementToRename != null? myElementToRename.getClass() : PsiNameIdentifierOwner.class; 
     if (myElementToRename != null && myElementToRename.isValid()) {
       if (Comparing.strEqual(myOldName, myElementToRename.getName())) return myElementToRename;
-      if (myRenameOffset != null) return PsiTreeUtil.getParentOfType(myElementToRename.getContainingFile().findElementAt(myRenameOffset.getStartOffset()), PsiNameIdentifierOwner.class);
+      if (myRenameOffset != null) return PsiTreeUtil.findElementOfClassAtRange(
+        myElementToRename.getContainingFile(), myRenameOffset.getStartOffset(), myRenameOffset.getEndOffset(), PsiNameIdentifierOwner.class);
     }
 
     if (myRenameOffset != null) {
       final PsiFile psiFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
       if (psiFile != null) {
-        return PsiTreeUtil.getParentOfType(psiFile.findElementAt(myRenameOffset.getStartOffset()), PsiNameIdentifierOwner.class);
+        return PsiTreeUtil.findElementOfClassAtRange(psiFile, myRenameOffset.getStartOffset(), myRenameOffset.getEndOffset(), PsiNameIdentifierOwner.class);
       }
     }
     return myElementToRename;
