@@ -79,12 +79,16 @@
     <action id="EditorCodeBlockStartWithSelection" />
     <action id="EditorDeleteToWordEnd">
       <keyboard-shortcut first-keystroke="alt DELETE" />
+    </action>
+    <action id="EditorDeleteToWordEndInDifferentHumpsMode">
       <keyboard-shortcut first-keystroke="control DELETE" />
     </action>
     <action id="EditorDeleteToWordStart">
       <keyboard-shortcut first-keystroke="alt BACK_SPACE" />
-      <keyboard-shortcut first-keystroke="control BACK_SPACE" />
       <keyboard-shortcut first-keystroke="control alt BACK_SPACE" />
+    </action>
+    <action id="EditorDeleteToWordStartInDifferentHumpsMode">
+      <keyboard-shortcut first-keystroke="control BACK_SPACE" />
     </action>
     <action id="EditorIndentSelection">
       <keyboard-shortcut first-keystroke="TAB" />
@@ -104,10 +108,14 @@
     </action>
     <action id="EditorNextWord">
       <keyboard-shortcut first-keystroke="alt RIGHT" />
+    </action>
+    <action id="EditorNextWordInDifferentHumpsMode">
       <keyboard-shortcut first-keystroke="control RIGHT" />
     </action>
     <action id="EditorNextWordWithSelection">
       <keyboard-shortcut first-keystroke="shift alt RIGHT" />
+    </action>
+    <action id="EditorNextWordInDifferentHumpsModeWithSelection">
       <keyboard-shortcut first-keystroke="shift control alt F" />
       <keyboard-shortcut first-keystroke="shift control RIGHT" />
     </action>
@@ -122,10 +130,14 @@
     </action>
     <action id="EditorPreviousWord">
       <keyboard-shortcut first-keystroke="alt LEFT" />
+    </action>
+    <action id="EditorPreviousWordInDifferentHumpsMode">
       <keyboard-shortcut first-keystroke="control LEFT" />
     </action>
     <action id="EditorPreviousWordWithSelection">
       <keyboard-shortcut first-keystroke="shift alt LEFT" />
+    </action>
+    <action id="EditorPreviousWordInDifferentHumpsModeWithSelection">
       <keyboard-shortcut first-keystroke="shift control alt B" />
       <keyboard-shortcut first-keystroke="shift control LEFT" />
     </action>
