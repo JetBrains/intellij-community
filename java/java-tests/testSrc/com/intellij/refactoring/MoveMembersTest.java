@@ -2,7 +2,9 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
@@ -125,6 +127,18 @@ public class MoveMembersTest extends MultiFileTestCase {
 
   public void testInnerToInterface() throws Exception {
     doTest("A", "B", 0);
+  }
+
+  public void testStaticToInterface() throws Exception {
+    final LanguageLevelProjectExtension levelProjectExtension = LanguageLevelProjectExtension.getInstance(getProject());
+    final LanguageLevel level = levelProjectExtension.getLanguageLevel();
+    try {
+      levelProjectExtension.setLanguageLevel(LanguageLevel.JDK_1_8);
+      doTest("A", "B", 0);
+    }
+    finally {
+      levelProjectExtension.setLanguageLevel(level);
+    }
   }
   
   public void testEscalateVisibility1() throws Exception {
