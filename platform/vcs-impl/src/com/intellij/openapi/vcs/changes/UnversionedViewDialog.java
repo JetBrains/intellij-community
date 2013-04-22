@@ -138,6 +138,7 @@ public class UnversionedViewDialog extends DialogWrapper {
         for (AnAction anAction : operatingActions) {
           if (anAction.equals(action)) {
             refreshView();
+            return;
           }
         }
       }
