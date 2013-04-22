@@ -12,7 +12,6 @@
                         serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapperImpl"/>
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager"/>
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper"/>
-    <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.change.ProjectStructureChangesModel"/>
 
     <!--Project structure management services-->
     <applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager"/>
