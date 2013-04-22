@@ -250,6 +250,8 @@
                                order="first"/>
     <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameAliasImportedFieldProcessor"
                                order="first"/>
+    <renamePsiElementProcessor implementation="org.jetbrains.plugins.groovy.refactoring.rename.RenameGroovyScriptProcessor"/>
+
     <rename.inplace.resolveSnapshotProvider language="Groovy"
                                             implementationClass="org.jetbrains.plugins.groovy.refactoring.rename.inplace.GroovyResolveSnapshotProvider"/>
 
