@@ -17,7 +17,6 @@ package org.jetbrains.plugins.groovy.lang.resolve.noncode;
 
 import com.intellij.codeInsight.completion.originInfo.OriginInfoAwareElement;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.compiled.ClsClassImpl;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
@@ -29,7 +28,6 @@ import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationMemberValue;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GrGdkMethodImpl;
 import org.jetbrains.plugins.groovy.lang.psi.util.GdkMethodUtil;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyCommonClassNames;
@@ -84,12 +82,12 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
     final PsiClassType.ClassResolveResult resolveResult = qualifierType.resolveGenerics();
 
     final PsiClass aClass = resolveResult.getElement();
-    if (aClass instanceof ClsClassImpl) {
+    /*if (aClass instanceof ClsClassImpl) {
       final PsiElement source = aClass.getNavigationElement();
       if (source instanceof GrTypeDefinition) {
         return (PsiClass)source;
       }
-    }
+    }*/
 
     return aClass;
   }
