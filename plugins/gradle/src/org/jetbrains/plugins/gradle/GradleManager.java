@@ -17,17 +17,20 @@ package org.jetbrains.plugins.gradle;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.build.ExternalSystemBuildManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +71,7 @@ public class GradleManager
       protected List<GradleProjectResolverExtension> compute() {
         List<GradleProjectResolverExtension> result = ContainerUtilRt.newArrayList();
         Collections.addAll(result, GradleProjectResolverExtension.EP_NAME.getExtensions());
-        ExternalSystemUtil.orderAwareSort(result);
+        ExternalSystemApiUtil.orderAwareSort(result);
         return result;
       }
     };
@@ -171,6 +174,11 @@ public class GradleManager
     }
     for (String jar : gradleJars) {
       parameters.getClassPath().add(new File(gradleJarsDir, jar).getAbsolutePath());
+    }
+
+    String path = PathUtil.getJarPathForClass(JavaProjectData.class);
+    if (!StringUtil.isEmpty(path)) {
+      parameters.getClassPath().add(path);
     }
 
     for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {

@@ -3,8 +3,6 @@ package org.jetbrains.plugins.gradle.config;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.ActionToolbar;
-import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.service.project.ProjectStructureChangesDetector;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.SimpleToolWindowPanel;
 import com.intellij.openapi.util.text.StringUtil;
@@ -125,12 +123,6 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
     boolean showToolbar = cardToShow != NON_LINKED_CARD_NAME;
     for (JComponent component : getToolbarControls()) {
       component.setVisible(showToolbar);
-    }
-
-    if (!NON_LINKED_CARD_NAME.equals(cardToShow)) {
-      updateContent();
-      // Ensure that changes detector service is loaded.
-      ServiceManager.getService(myProject, ProjectStructureChangesDetector.class);
     }
   }
 

@@ -254,6 +254,7 @@ binding.setVariable("platformApiModules", [
         "usageView",
         "xdebugger-api",
         "xml-openapi",
+        "external-system-api",
 ])
 
 
@@ -276,7 +277,7 @@ binding.setVariable("platformImplementationModules", [
         "images",
         "RegExpSupport",
         "dvcs",
-        "external-system"
+        "external-system-impl"
 ])
 
 binding.setVariable("layoutMacApp", { String path, String ch, Map args ->

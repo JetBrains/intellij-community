@@ -15,7 +15,6 @@ import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.ContentManagerAdapter;
 import com.intellij.ui.content.ContentManagerEvent;
 import com.intellij.ui.content.impl.ContentImpl;
-import org.jetbrains.plugins.gradle.sync.GradleProjectStructureChangesPanel;
 import org.jetbrains.plugins.gradle.tasks.GradleTasksPanel;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -25,31 +24,13 @@ public class GradleToolWindowFactory implements ToolWindowFactory, DumbAware {
   public void createToolWindowContent(final Project project, final ToolWindow toolWindow) {
     final ProjectStructureServices context = ServiceManager.getService(project, ProjectStructureServices.class);
     
-    // Project structure.
-    final GradleProjectStructureChangesPanel projectStructurePanel = new GradleProjectStructureChangesPanel(project, context);
-    final String projectStructureTitle = ExternalSystemBundle.message("gradle.sync.title.tab");
-    ContentImpl projectStructureContent = new ContentImpl(projectStructurePanel, projectStructureTitle, true);
     ContentManager contentManager = toolWindow.getContentManager();
-    contentManager.addContent(projectStructureContent);
-    
-    // Task.
-    String tasksTitle = ExternalSystemBundle.message("gradle.task.title.tab");
+    // TODO den implement
+    String tasksTitle = "tasks";
+//    String tasksTitle = ExternalSystemBundle.message("gradle.task.title.tab");
     ContentImpl tasksContent = new ContentImpl(
       new GradleTasksPanel(project), tasksTitle, true);
     contentManager.addContent(tasksContent);
-    project.getMessageBus().connect(project).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
-      @Override
-      public void rootsChanged(ModuleRootEvent event) {
-        // The general idea is to change dependencies order at the UI if they are changed at the module settings.
-        projectStructurePanel.getTreeModel().onModuleRootsChange();
-      }
-    });
-
-    // Restore previously selected tab.
-    String toSelect = PropertiesComponent.getInstance(project).getValue(GradleConstants.ACTIVE_TOOL_WINDOW_TAB_KEY, projectStructureTitle);
-    if (tasksTitle.equals(toSelect)) {
-      contentManager.setSelectedContent(tasksContent);
-    }
 
     contentManager.addContentManagerListener(new ContentManagerAdapter() {
       @Override
