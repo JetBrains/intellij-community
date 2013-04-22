@@ -928,7 +928,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
       <separator/>
