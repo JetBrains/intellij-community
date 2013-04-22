@@ -21,7 +21,6 @@ import com.intellij.lang.java.parser.JavaParserUtil;
 import com.intellij.lexer.JavaLexer;
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
@@ -200,7 +199,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create field with type \"null\".");
     }
 
-    final String text = StringUtil.join("class _Dummy_ { private ", type.getCanonicalText(), " ", name, "; }");
+    final String text = "class _Dummy_ { private " + type.getCanonicalText() + " " + name + "; }";
     final PsiJavaFile aFile = createDummyJavaFile(text);
     final PsiClass[] classes = aFile.getClasses();
     if (classes.length < 1) {
@@ -225,7 +224,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
     }
 
     final String canonicalText = returnType.getCanonicalText();
-    final PsiJavaFile aFile = createDummyJavaFile(StringUtil.join("class _Dummy_ { public " + canonicalText, " ", name, "() {} }"));
+    final PsiJavaFile aFile = createDummyJavaFile("class _Dummy_ { public " + canonicalText + " " + name + "() {} }");
     final PsiClass[] classes = aFile.getClasses();
     if (classes.length < 1) {
       throw new IncorrectOperationException("Class was not created. Method name: " + name + "; return type: " + canonicalText);
@@ -248,7 +247,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiMethod createConstructor(@NotNull @NonNls final String name) {
-    final PsiJavaFile aFile = createDummyJavaFile(StringUtil.join("class ", name, " { public ", name, "() {} }"));
+    final PsiJavaFile aFile = createDummyJavaFile("class " + name + " { public " + name + "() {} }");
     final PsiMethod method = aFile.getClasses()[0].getMethods()[0];
     return (PsiMethod)CodeStyleManager.getInstance(myManager.getProject()).reformat(method);
   }
@@ -274,7 +273,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create parameter with type \"null\".");
     }
 
-    final String text = StringUtil.join(type.getCanonicalText() + " " + name);
+    final String text = type.getCanonicalText() + " " + name;
     PsiParameter parameter = createParameterFromText(text, null);
     final CodeStyleManager codeStyleManager = CodeStyleManager.getInstance(myManager.getProject());
     PsiUtil.setModifierProperty(parameter, PsiModifier.FINAL,
@@ -429,7 +428,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
   @NotNull
   @Override
   public PsiPackageStatement createPackageStatement(@NotNull final String name) throws IncorrectOperationException {
-    final PsiJavaFile aFile = createDummyJavaFile(StringUtil.join("package ", name, ";"));
+    final PsiJavaFile aFile = createDummyJavaFile("package " + name + ";");
     final PsiPackageStatement stmt = aFile.getPackageStatement();
     if (stmt == null) {
       throw new IncorrectOperationException("Incorrect package name: " + name);
@@ -448,7 +447,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create import statement for local class.");
     }
 
-    final PsiJavaFile aFile = createDummyJavaFile(StringUtil.join("import static ", aClass.getQualifiedName(), ".", memberName, ";"));
+    final PsiJavaFile aFile = createDummyJavaFile("import static " + aClass.getQualifiedName() + "." + memberName + ";");
     final PsiImportStatementBase statement = extractImport(aFile, true);
     return (PsiImportStaticStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
   }
@@ -548,7 +547,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Cannot create import statement for local class.");
     }
 
-    final PsiJavaFile aFile = createDummyJavaFile(StringUtil.join("import ", aClass.getQualifiedName(), ";"));
+    final PsiJavaFile aFile = createDummyJavaFile("import " + aClass.getQualifiedName() + ";");
     final PsiImportStatementBase statement = extractImport(aFile, false);
     return (PsiImportStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
   }
@@ -563,7 +562,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Incorrect package name: \"" + packageName + "\".");
     }
 
-    final PsiJavaFile aFile = createDummyJavaFile(StringUtil.join("import ", packageName, ".*;"));
+    final PsiJavaFile aFile = createDummyJavaFile("import " + packageName + ".*;");
     final PsiImportStatementBase statement = extractImport(aFile, false);
     return (PsiImportStatement)CodeStyleManager.getInstance(myManager.getProject()).reformat(statement);
   }
@@ -719,7 +718,7 @@ public class PsiElementFactoryImpl extends PsiJavaParserFacadeImpl implements Ps
       throw new IncorrectOperationException("Unexpected type:" + exceptionType);
     }
 
-    final String text = StringUtil.join("catch (", exceptionType.getCanonicalText(), " ", exceptionName, ") {}");
+    final String text = "catch (" + exceptionType.getCanonicalText() +  " " + exceptionName + ") {}";
     final DummyHolder holder = DummyHolderFactory.createHolder(myManager, new JavaDummyElement(text, CATCH_SECTION, level(context)), context);
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(holder.getTreeElement().getFirstChildNode());
     if (!(element instanceof PsiCatchSection)) {
