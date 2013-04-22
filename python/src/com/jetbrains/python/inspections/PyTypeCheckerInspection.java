@@ -109,7 +109,7 @@ public class PyTypeCheckerInspection extends PyInspection {
   }
 
   @Override
-  public void inspectionFinished(LocalInspectionToolSession session, ProblemsHolder problemsHolder) {
+  public void inspectionFinished(@NotNull LocalInspectionToolSession session, @NotNull ProblemsHolder problemsHolder) {
     if (LOG.isDebugEnabled()) {
       final Long startTime = session.getUserData(TIME_KEY);
       if (startTime != null) {

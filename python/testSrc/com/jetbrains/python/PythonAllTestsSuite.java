@@ -3,6 +3,7 @@ package com.jetbrains.python;
 import com.jetbrains.cython.*;
 import com.jetbrains.django.lang.template.DjangoTemplateParserTest;
 import com.jetbrains.jinja2.Jinja2ParserTest;
+import com.jetbrains.python.codeInsight.PyClassMROTest;
 import com.jetbrains.python.codeInsight.PyCompletionPatternsTest;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.refactoring.*;
@@ -36,6 +37,7 @@ public class PythonAllTestsSuite {
     PyResolveTest.class,
     Py3ResolveTest.class,
     PyMultiFileResolveTest.class,
+    PyClassMROTest.class,
     PyResolveCalleeTest.class,
     CythonResolveTest.class,
     PyAssignmentMappingTest.class,

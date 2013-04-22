@@ -44,14 +44,15 @@ public class PyFromImportStatementElementType extends PyStubElementType<PyFromIm
                                              getStubElementType());
   }
 
-  public void serialize(PyFromImportStatementStub stub, StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull PyFromImportStatementStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     final PyQualifiedName qName = stub.getImportSourceQName();
     PyQualifiedName.serialize(qName, dataStream);
     dataStream.writeBoolean(stub.isStarImport());
     dataStream.writeVarInt(stub.getRelativeLevel());
   }
 
-  public PyFromImportStatementStub deserialize(StubInputStream dataStream, StubElement parentStub) throws IOException {
+  @NotNull
+  public PyFromImportStatementStub deserialize(@NotNull StubInputStream dataStream, StubElement parentStub) throws IOException {
     PyQualifiedName qName = PyQualifiedName.deserialize(dataStream);
     boolean isStarImport = dataStream.readBoolean();
     int relativeLevel = dataStream.readVarInt();

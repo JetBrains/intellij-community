@@ -893,7 +893,7 @@
 
     <!-- SQLAlchemy -->
     <typeProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyTypeProvider"/>
-    <pyClassMembersProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyClassMembersProvider"/>
+    <knownDecoratorProvider implementation="com.jetbrains.sqlalchemy.SQLAlchemyKnownDecoratorProvider"/>
   </extensions>
 
   <project-components>
@@ -928,7 +928,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
       <separator/>

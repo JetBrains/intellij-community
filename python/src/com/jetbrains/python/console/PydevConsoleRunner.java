@@ -116,6 +116,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     return envs;
   }
 
+
   @Override
   protected List<AnAction> fillToolBarActions(final DefaultActionGroup toolbarActions,
                                               final Executor defaultExecutor,
@@ -378,9 +379,6 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
           }
 
           fireConsoleInitializedEvent(consoleView);
-
-
-          requestFocus();
         }
       });
     }

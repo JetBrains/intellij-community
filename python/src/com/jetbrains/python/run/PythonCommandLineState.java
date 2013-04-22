@@ -164,7 +164,9 @@ public abstract class PythonCommandLineState extends CommandLineState {
 
     final ProcessHandler processHandler;
     if (PySdkUtil.isRemote(sdk)) {
-      processHandler = startRemoteProcess(sdk, commandLine);
+      assert sdk != null;
+      processHandler =
+        createRemoteProcessStarter().startRemoteProcess(sdk, commandLine, myConfig.getProject(), myConfig.getMappingSettings());
     }
     else {
       processHandler = doCreateProcess(commandLine);
@@ -177,38 +179,10 @@ public abstract class PythonCommandLineState extends CommandLineState {
     return processHandler;
   }
 
-  private ProcessHandler startRemoteProcess(Sdk sdk, GeneralCommandLine commandLine) throws ExecutionException {
-    PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
-    if (manager != null) {
-      ProcessHandler processHandler =
-        null;
-
-      while (true) {
-        try {
-          processHandler = doStartRemoteProcess(sdk, commandLine, manager);
-          break;
-        }
-        catch (ExecutionException e) {
-          if (Messages.showYesNoDialog(e.getMessage() + "\nTry again?", "Can't Run Remote Interpreter", Messages.getErrorIcon()) ==
-              Messages.NO) {
-            throw new ExecutionException("Can't run remote python interpreter: " + e.getMessage());
-          }
-        }
-      }
-      ProcessTerminatedListener.attach(processHandler);
-      return processHandler;
-    }
-    else {
-      throw new PythonRemoteInterpreterManager.PyRemoteInterpreterExecutionException();
-    }
+  protected PyRemoteProcessStarter createRemoteProcessStarter() {
+    return new PyRemoteProcessStarter();
   }
 
-  protected ProcessHandler doStartRemoteProcess(Sdk sdk, GeneralCommandLine commandLine, PythonRemoteInterpreterManager manager)
-    throws ExecutionException {
-
-    return manager.startRemoteProcess(myConfig.getProject(), (PyRemoteSdkAdditionalData)sdk.getSdkAdditionalData(), commandLine,
-                                      myConfig.getMappingSettings());
-  }
 
   public GeneralCommandLine generateCommandLine(CommandLinePatcher[] patchers) throws ExecutionException {
     GeneralCommandLine commandLine = generateCommandLine();

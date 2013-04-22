@@ -125,7 +125,7 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
             it.set(rrr.replace(init));
           }
           else { // init not found; maybe it's ancestor's
-            for (PyClass ancestor : cls.iterateAncestorClasses()) {
+            for (PyClass ancestor : cls.getAncestorClasses(myContext.getTypeEvalContext())) {
               init = ancestor.findMethodByName(PyNames.INIT, false);
               if (init != null) {
                 // add to results as low priority
@@ -298,10 +298,12 @@ public class PyReferenceImpl implements PsiReferenceEx, PsiPolyVariantReference 
     PyBuiltinCache builtins_cache = PyBuiltinCache.getInstance(realContext);
     if (uexpr == null) {
       // ...as a part of current module
-      PyType otype = builtins_cache.getObjectType(); // "object" as a closest kin to "module"
       String name = myElement.getName();
-      if (otype != null && name != null) {
-        ret.addAll(otype.resolveMember(name, null, AccessDirection.READ, myContext));
+      if (PyModuleType.MODULE_MEMBERS.contains(name)) {
+        PyType otype = builtins_cache.getObjectType(); // "object" as a closest kin to "module"
+        if (otype != null && name != null) {
+          ret.addAll(otype.resolveMember(name, null, AccessDirection.READ, myContext));
+        }
       }
     }
     if (uexpr == null) {

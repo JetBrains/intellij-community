@@ -61,8 +61,8 @@ public class PyMissingConstructorInspection extends PyInspection {
       }
     }
 
-    private static boolean superHasConstructor(@NotNull PyClass cls) {
-      for (PyClass c : cls.iterateAncestorClasses()) {
+    private boolean superHasConstructor(@NotNull PyClass cls) {
+      for (PyClass c : cls.getAncestorClasses(myTypeEvalContext)) {
         final String name = c.getName();
         final String className = cls.getName();
         if (!OBJECT.equals(name) && !FAKE_OLD_BASE.equals(name) && className != null &&
@@ -77,7 +77,7 @@ public class PyMissingConstructorInspection extends PyInspection {
       if (PyBroadExceptionInspection.equalsException(cls, context)) {
         return true;
       }
-      for (PyClass baseClass : cls.iterateAncestorClasses()) {
+      for (PyClass baseClass : cls.getAncestorClasses(myTypeEvalContext)) {
         if (PyBroadExceptionInspection.equalsException(baseClass, context)) {
           return true;
         }
@@ -85,7 +85,7 @@ public class PyMissingConstructorInspection extends PyInspection {
       return false;
     }
 
-    private static boolean hasConstructorCall(PyClass node, PyFunction initMethod) {
+    private boolean hasConstructorCall(PyClass node, PyFunction initMethod) {
       PyStatementList statementList = initMethod.getStatementList();
       CallVisitor visitor = new CallVisitor(node);
       if (statementList != null) {
@@ -95,7 +95,7 @@ public class PyMissingConstructorInspection extends PyInspection {
       return false;
     }
 
-    private static class CallVisitor extends PyRecursiveElementVisitor {
+    private class CallVisitor extends PyRecursiveElementVisitor {
       private boolean myHasConstructorCall = false;
       private PyClass myClass;
       CallVisitor(PyClass node) {
@@ -108,7 +108,7 @@ public class PyMissingConstructorInspection extends PyInspection {
           myHasConstructorCall = true;
       }
 
-      private static boolean isConstructorCall(PyCallExpression expression, PyClass cl) {
+      private boolean isConstructorCall(PyCallExpression expression, PyClass cl) {
         PyExpression callee = expression.getCallee();
         if (callee instanceof PyQualifiedExpression) {
           PyExpression qualifier = ((PyQualifiedExpression)callee).getQualifier();
@@ -127,7 +127,7 @@ public class PyMissingConstructorInspection extends PyInspection {
                   if (firstArg.equals(cl.getName()) || firstArg.equals(CANONICAL_SELF+"."+ CLASS) ||
                       (qualifiedName != null && qualifiedName.endsWith(firstArg)))
                       return true;
-                  for (PyClass s : cl.iterateAncestorClasses()) {
+                  for (PyClass s : cl.getAncestorClasses(myTypeEvalContext)) {
                     if (firstArg.equals(s.getName()))
                       return true;
                   }
@@ -144,7 +144,7 @@ public class PyMissingConstructorInspection extends PyInspection {
         return false;
       }
 
-      private static boolean isSuperClassCall(PyClass cl, PyExpression qualifier) {
+      private boolean isSuperClassCall(PyClass cl, PyExpression qualifier) {
         PsiElement callingClass = null;
         if (qualifier instanceof PyCallExpression) {
           PyExpression innerCallee = ((PyCallExpression)qualifier).getCallee();
@@ -159,7 +159,7 @@ public class PyMissingConstructorInspection extends PyInspection {
           if (ref != null)
             callingClass = ref.resolve();
         }
-        for (PyClass s : cl.iterateAncestorClasses()) {
+        for (PyClass s : cl.getAncestorClasses(myTypeEvalContext)) {
           if (s.equals(callingClass)) {
             return true;
           }

@@ -36,11 +36,12 @@ public class PyDecoratorListElementType extends PyStubElementType<PyDecoratorLis
     return new PyDecoratorListStubImpl(parentStub);
   }
 
-  public void serialize(final PyDecoratorListStub stub, final StubOutputStream dataStream) throws IOException {
+  public void serialize(@NotNull final PyDecoratorListStub stub, @NotNull final StubOutputStream dataStream) throws IOException {
     // nothing
   }
 
-  public PyDecoratorListStub deserialize(final StubInputStream dataStream, final StubElement parentStub) throws IOException {
+  @NotNull
+  public PyDecoratorListStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     return new PyDecoratorListStubImpl(parentStub);
   }
 }

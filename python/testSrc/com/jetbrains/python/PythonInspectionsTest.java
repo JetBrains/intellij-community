@@ -110,8 +110,7 @@ public class PythonInspectionsTest extends PyTestCase {
   }
 
   public void testPyExceptionInheritInspection() {
-    LocalInspectionTool inspection = new PyExceptionInheritInspection();
-    doTest(getTestName(false), inspection);
+    doHighlightingTest(PyExceptionInheritInspection.class);
   }
 
   public void testPyDefaultArgumentInspection() {

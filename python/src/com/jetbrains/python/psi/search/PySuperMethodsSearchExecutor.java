@@ -19,7 +19,7 @@ public class PySuperMethodsSearchExecutor implements QueryExecutor<PsiElement, P
     PyClass containingClass = func.getContainingClass();
     Set<PyClass> foundMethodContainingClasses = new HashSet<PyClass>();
     if (name != null && containingClass != null) {
-      for (PyClass superClass : containingClass.iterateAncestorClasses()) {
+      for (PyClass superClass : containingClass.getAncestorClasses()) {
         if (!queryParameters.isDeepSearch()) {
           boolean isAlreadyFound = false;
           for (PyClass alreadyFound : foundMethodContainingClasses) {

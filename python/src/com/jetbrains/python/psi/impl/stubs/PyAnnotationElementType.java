@@ -38,11 +38,12 @@ public class PyAnnotationElementType extends PyStubElementType<PyAnnotationStub,
     return new PyAnnotationImpl(node);
   }
 
-  public void serialize(final PyAnnotationStub stub, final StubOutputStream dataStream)
+  public void serialize(@NotNull final PyAnnotationStub stub, @NotNull final StubOutputStream dataStream)
       throws IOException {
   }
 
-  public PyAnnotationStub deserialize(final StubInputStream dataStream, final StubElement parentStub)
+  @NotNull
+  public PyAnnotationStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub)
       throws IOException {
     return new PyAnnotationStubImpl(parentStub, PyElementTypes.ANNOTATION);
   }

@@ -9,6 +9,8 @@ import com.intellij.util.ArrayFactory;
 import com.intellij.util.Processor;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyClassStub;
+import com.jetbrains.python.psi.types.PyClassLikeType;
+import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -41,6 +43,9 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
 
   @NotNull
   PsiElement[] getSuperClassElements();
+
+  @NotNull
+  List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context);
 
   @NotNull
   PyClass[] getSuperClasses();
@@ -105,24 +110,17 @@ public interface PyClass extends PsiNameIdentifierOwner, PyStatement, NameDefine
    */
   boolean isNewStyleClass();
 
-  /**
-   * A lazy way to list ancestor classes width first, *not* in method-resolution order.
-   * @return an iterable of ancestor classes.
-   */
-  Iterable<PyClassRef> iterateAncestors();
+  @NotNull
+  List<PyClass> getAncestorClasses();
 
-  Iterable<PyClass> iterateAncestorClasses();
+  @NotNull
+  List<PyClass> getAncestorClasses(@NotNull TypeEvalContext context);
 
   /**
-   * Return the method resolution order list for this class.
-   * <br/>
-   * see http://www.python.org/download/releases/2.3/mro/
-   * <br/>
-   * <i>Note: the list begins with this class.</i> It ends with the builtin 'object'.
-   * If class hierarchy is incorrect, e.g. badly looped, assertions may fail in implementation.
-   * @return list of classes in method resolution order for this class, at least one element long.
+   * Get a list of all ancestor types.
    */
-  @NotNull List<PyClass> getMRO();
+  @NotNull
+  List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context);
 
   /**
    * Scan properties in order of definition, until processor returns true for one of them.
