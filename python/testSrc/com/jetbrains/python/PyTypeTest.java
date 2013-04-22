@@ -486,6 +486,17 @@ public class PyTypeTest extends PyTestCase {
            "expr = f()\n");
   }
 
+  // PY-5084
+  public void testIfIsInstanceElse() {
+    doTest("str",
+           "def test(c):\n" +
+           "    x = 'foo' if c else 42\n" +
+           "    if isinstance(x, int):\n" +
+           "        print(x)\n" +
+           "    else:\n" +
+           "        expr = x\n");
+  }
+
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);
