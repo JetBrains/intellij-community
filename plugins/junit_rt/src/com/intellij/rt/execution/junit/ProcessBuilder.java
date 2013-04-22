@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,8 @@ import java.util.List;
 public class ProcessBuilder {
   public static final boolean isWindows = System.getProperty("os.name").toLowerCase().startsWith("windows");
 
+  private static final String WIN_SHELL_SPECIALS = "&<>()@^|";
+
   private final List myParameters = new ArrayList();
 
   public void add(final String parameter) {
@@ -37,36 +39,55 @@ public class ProcessBuilder {
     }
   }
 
+  // please keep an implementation in sync with [util] CommandLineUtil.toCommandLine()
   public Process createProcess() throws IOException {
     if (myParameters.size() < 1) {
       throw new IllegalArgumentException("Executable name not specified");
     }
 
-    final String[] command = new String[myParameters.size()];
-    for (int i = 0; i < myParameters.size(); i++) {
-      command[i] = prepareCommand(myParameters.get(i).toString());
+    String command = myParameters.get(0).toString();
+    boolean winShell = isWindows &&
+                       ("cmd".equalsIgnoreCase(command) || "cmd.exe".equalsIgnoreCase(command)) &&
+                       myParameters.size() > 1 && "/c".equalsIgnoreCase(myParameters.get(0).toString());
+
+    String[] commandLine = new String[myParameters.size()];
+    commandLine[0] = command;
+
+    for (int i = 1; i < myParameters.size(); i++) {
+      String parameter = myParameters.get(i).toString();
+
+      if (isWindows) {
+        int pos = parameter.indexOf('\"');
+        if (pos >= 0) {
+          StringBuffer buffer = new StringBuffer(parameter);
+          do {
+            buffer.insert(pos, '\\');
+            pos += 2;
+          }
+          while ((pos = parameter.indexOf('\"', pos)) >= 0);
+          parameter = buffer.toString();
+        }
+        else if (parameter.length() == 0) {
+          parameter = "\"\"";
+        }
+
+        if (winShell && containsAnyChar(parameter, WIN_SHELL_SPECIALS)) {
+          parameter = '"' + parameter + '"';
+        }
+      }
+
+      commandLine[i] = parameter;
     }
 
-    return Runtime.getRuntime().exec(command);
+    return Runtime.getRuntime().exec(commandLine);
   }
 
-  // please keep in sync with GeneralCommandLine.prepareCommand()
-  private static String prepareCommand(String parameter) {
-    if (isWindows) {
-      int pos = parameter.indexOf('\"');
-      if (pos >= 0) {
-        final StringBuffer buffer = new StringBuffer(parameter);
-        do {
-          buffer.insert(pos, '\\');
-          pos += 2;
-        }
-        while ((pos = parameter.indexOf('\"', pos)) >= 0);
-        parameter = buffer.toString();
-      }
-      else if (parameter.length() == 0) {
-        parameter = "\"\"";
+  private static boolean containsAnyChar(String value, String chars) {
+    for (int i = 0; i < value.length(); i++) {
+      if (chars.indexOf(value.charAt(i)) >= 0) {
+        return true;
       }
     }
-    return parameter;
+    return false;
   }
 }

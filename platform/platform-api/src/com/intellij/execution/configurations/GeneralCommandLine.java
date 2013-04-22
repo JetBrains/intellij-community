@@ -15,6 +15,7 @@
  */
 package com.intellij.execution.configurations;
 
+import com.intellij.execution.CommandLineUtil;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.process.ProcessNotCreatedException;
 import com.intellij.ide.IdeBundle;
@@ -22,7 +23,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
-import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
@@ -51,7 +51,6 @@ public class GeneralCommandLine implements UserDataHolder {
   @SuppressWarnings("UnusedDeclaration") public static Key<Boolean> DO_NOT_ESCAPE_QUOTES = Key.create("GeneralCommandLine.do.not.escape.quotes");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.GeneralCommandLine");
-  private static final char QUOTE = '\uEFEF';
 
   private String myExePath = null;
   private File myWorkDirectory = null;
@@ -65,12 +64,12 @@ public class GeneralCommandLine implements UserDataHolder {
 
   public GeneralCommandLine() { }
 
-  public GeneralCommandLine(final String... command) {
+  public GeneralCommandLine(@NotNull String... command) {
     this(Arrays.asList(command));
   }
 
-  public GeneralCommandLine(final List<String> command) {
-    final int size = command.size();
+  public GeneralCommandLine(@NotNull List<String> command) {
+    int size = command.size();
     if (size > 0) {
       setExePath(command.get(0));
       if (size > 1) {
@@ -198,13 +197,14 @@ public class GeneralCommandLine implements UserDataHolder {
 
   /**
    * Prepares command (quotes and escapes all arguments) and returns it as a newline-separated list
-   * (suitable e.g. for passing in a environment variable).
+   * (suitable e.g. for passing in an environment variable).
    *
    * @return command as a newline-separated list.
    */
   @NotNull
   public String getPreparedCommandLine() {
-    return StringUtil.join(prepareCommands(), "\n");
+    String exePath = myExePath != null ? myExePath : "";
+    return StringUtil.join(CommandLineUtil.toCommandLine(exePath, myProgramParams.getList()), "\n");
   }
 
   public Process createProcess() throws ExecutionException {
@@ -212,14 +212,15 @@ public class GeneralCommandLine implements UserDataHolder {
       LOG.debug("Executing [" + getCommandLineString() + "]");
     }
 
-    String[] commands;
+    List<String> commands;
     try {
       checkWorkingDirectory();
 
-      commands = prepareCommands();
-      if (StringUtil.isEmptyOrSpaces(commands[0])) {
+      if (StringUtil.isEmptyOrSpaces(myExePath)) {
         throw new ExecutionException(IdeBundle.message("run.configuration.error.executable.not.specified"));
       }
+
+      commands = CommandLineUtil.toCommandLine(myExePath, myProgramParams.getList());
     }
     catch (ExecutionException e) {
       LOG.warn(e);
@@ -228,8 +229,7 @@ public class GeneralCommandLine implements UserDataHolder {
 
     try {
       ProcessBuilder builder = new ProcessBuilder(commands);
-      Map<String, String> environment = builder.environment();
-      setupEnvironment(environment);
+      setupEnvironment(builder.environment());
       builder.directory(myWorkDirectory);
       builder.redirectErrorStream(myRedirectErrorStream);
       return builder.start();
@@ -250,34 +250,6 @@ public class GeneralCommandLine implements UserDataHolder {
     if (!myWorkDirectory.isDirectory()) {
       throw new ExecutionException(IdeBundle.message("run.configuration.error.working.directory.not.directory"));
     }
-  }
-
-  private String[] prepareCommands() {
-    final List<String> parameters = myProgramParams.getList();
-    final String[] result = new String[parameters.size() + 1];
-    result[0] = myExePath != null ? prepareCommand(FileUtil.toSystemDependentName(myExePath)) : null;
-    for (int i = 0; i < parameters.size(); i++) {
-      result[i + 1] = prepareCommand(parameters.get(i));
-    }
-    return result;
-  }
-
-  // please keep in sync with com.intellij.rt.execution.junit.ProcessBuilder.prepareCommand() && org.jetbrains.jps.incremental.ExternalProcessUtil.prepareCommand()
-  public static String prepareCommand(String parameter) {
-    if (SystemInfo.isWindows) {
-      if (parameter.contains("\"")) {
-        parameter = StringUtil.replace(parameter, "\"", "\\\"");
-      }
-      else if (parameter.length() == 0) {
-        parameter = "\"\"";
-      }
-    }
-
-    if (parameter.length() >= 2 && parameter.charAt(0) == QUOTE && parameter.charAt(parameter.length() - 1) == QUOTE) {
-      parameter = '"' + parameter.substring(1, parameter.length() - 1) + '"';
-    }
-
-    return parameter;
   }
 
   private void setupEnvironment(final Map<String, String> environment) {
@@ -313,7 +285,7 @@ public class GeneralCommandLine implements UserDataHolder {
    */
   @NotNull
   public static String inescapableQuote(@NotNull String parameter) {
-    return QUOTE + parameter + QUOTE;
+    return CommandLineUtil.specialQuote(parameter);
   }
 
   @Override
