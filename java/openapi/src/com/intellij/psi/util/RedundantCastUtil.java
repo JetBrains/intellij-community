@@ -539,6 +539,24 @@ public class RedundantCastUtil {
       if (opType instanceof PsiClassType && ((PsiClassType)opType).hasParameters()) return true;
     }
 
+    if (operand instanceof PsiLambdaExpression || operand instanceof PsiMethodReferenceExpression) {
+      if (castType instanceof PsiClassType && InheritanceUtil.isInheritor(PsiUtil.resolveClassInType(castType), CommonClassNames.JAVA_IO_SERIALIZABLE)) return true;
+      if (castType instanceof PsiIntersectionType) {
+        boolean redundant = false;
+        final PsiType[] conjuncts = ((PsiIntersectionType)castType).getConjuncts();
+        for (int i = 1; i < conjuncts.length; i++) {
+          PsiType conjunct = conjuncts[i];
+          if (TypeConversionUtil.isAssignable(conjuncts[0], conjunct)) {
+            redundant = true;
+            break;
+          }
+        }
+        if (!redundant) {
+          return true;
+        }
+      }
+    }
+
     PsiElement parent = typeCast.getParent();
     while(parent instanceof PsiParenthesizedExpression) parent = parent.getParent();
 
