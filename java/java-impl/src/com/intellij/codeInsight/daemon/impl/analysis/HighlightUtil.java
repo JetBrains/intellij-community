@@ -1379,7 +1379,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
     if (expr instanceof PsiThisExpression) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(expr, PsiMethod.class);
-      if (psiMethod == null || psiMethod.getContainingClass() != aClass) {
+      if (psiMethod == null || psiMethod.getContainingClass() != aClass && !isInsideDefaultMethod(psiMethod, aClass)) {
         if (aClass.isInterface()) {
           return thisNotFoundInInterfaceInfo(expr);
         }
@@ -1393,6 +1393,13 @@ public class HighlightUtil extends HighlightUtilBase {
       }
     }
     return null;
+  }
+  
+  private static boolean isInsideDefaultMethod(PsiMethod method, PsiClass aClass) {
+    while (method != null && method.getContainingClass() != aClass) {
+      method = PsiTreeUtil.getParentOfType(method, PsiMethod.class, true);
+    }
+    return method != null && method.hasModifierProperty(PsiModifier.DEFAULT);
   }
 
   private static HighlightInfo thisNotFoundInInterfaceInfo(@NotNull PsiExpression expr) {
