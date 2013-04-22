@@ -1091,11 +1091,6 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @NotNull
   @Override
   public List<PyClassLikeType> getAncestorTypes(@NotNull TypeEvalContext context) {
-    return calculateAncestorTypes(context);
-  }
-
-  @NotNull
-  private List<PyClassLikeType> calculateAncestorTypes(@NotNull TypeEvalContext context) {
     myCachedAncestorsProvider.setTypeEvalContext(context);
     try {
       // TODO: Return different cached copies depending on the type eval context parameters
