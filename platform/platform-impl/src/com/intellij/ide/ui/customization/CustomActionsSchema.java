@@ -29,6 +29,7 @@ import com.intellij.openapi.keymap.impl.ui.ActionsTreeUtil;
 import com.intellij.openapi.keymap.impl.ui.Group;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
@@ -229,7 +230,7 @@ public class CustomActionsSchema implements ExportableComponent, NamedJDOMExtern
     }
 
     final String text = group.getTemplatePresentation().getText();
-    if (text != null) {
+    if (!StringUtil.isEmpty(text)) {
       for (ActionUrl url : myActions) {
         if (url.getGroupPath().contains(text) || url.getGroupPath().contains(defaultGroupName)) {
           return true;
