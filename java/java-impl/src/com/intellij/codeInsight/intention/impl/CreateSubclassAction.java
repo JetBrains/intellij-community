@@ -273,11 +273,14 @@ public class CreateSubclassAction extends BaseIntentionAction {
 
           final TextRange textRange = targetClass.getTextRange();
           final RangeMarker startClassOffset = editor.getDocument().createRangeMarker(textRange.getStartOffset(), textRange.getEndOffset());
+          startClassOffset.setGreedyToLeft(true);
+          startClassOffset.setGreedyToRight(true);
           editor.getDocument().deleteString(textRange.getStartOffset(), textRange.getEndOffset());
           CreateFromUsageBaseFix.startTemplate(editor, template, project, new TemplateEditingAdapter() {
             @Override
             public void templateFinished(Template template, boolean brokenOff) {
               try {
+                LOG.assertTrue(startClassOffset.isValid(), startClassOffset);
                 final PsiElement psiElement = containingFile.findElementAt(startClassOffset.getStartOffset());
                 final PsiClass aTargetClass = PsiTreeUtil.getParentOfType(psiElement, PsiClass.class);
                 LOG.assertTrue(aTargetClass != null, psiElement);
