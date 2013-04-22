@@ -221,7 +221,7 @@ public class PluginManager {
 
   private static void initializePlugins(@Nullable StartupProgress progress) {
     configureExtensions();
-    
+
     final IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(progress);
 
     final Class callerClass = Reflection.getCallerClass(1);
@@ -315,7 +315,7 @@ public class PluginManager {
       if (optionalDescriptors != null && !optionalDescriptors.isEmpty()) {
         for (Map.Entry<PluginId, IdeaPluginDescriptorImpl> entry: optionalDescriptors.entrySet()) {
           if (descriptorsWithModules.containsKey(entry.getKey())) {
-            descriptor.mergeOptionalConfig(entry.getValue());  
+            descriptor.mergeOptionalConfig(entry.getValue());
           }
         }
       }
@@ -839,7 +839,7 @@ public class PluginManager {
       if (processed.contains(dependentPluginId)) continue;
 
       // TODO[yole] should this condition be a parameter?
-      if (isModuleDependency(dependentPluginId) && (ourAvailableModules.isEmpty() || ourAvailableModules.contains(dependentPluginId.getIdString()))) {  
+      if (isModuleDependency(dependentPluginId) && (ourAvailableModules.isEmpty() || ourAvailableModules.contains(dependentPluginId.getIdString()))) {
         continue;
       }
       if (!optionalDependencies.contains(dependentPluginId)) {
@@ -1137,7 +1137,7 @@ public class PluginManager {
   }
 
   public static boolean isPluginClass(String className) {
-    return getPluginByClassName(className) != null;
+    return ourPlugins != null && getPluginByClassName(className) != null;
   }
 
   @Nullable
