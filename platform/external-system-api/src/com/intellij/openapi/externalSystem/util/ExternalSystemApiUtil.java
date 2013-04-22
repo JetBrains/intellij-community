@@ -16,6 +16,7 @@
 package com.intellij.openapi.externalSystem.util;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -32,6 +33,7 @@ import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.BooleanFunction;
 import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -329,5 +331,23 @@ public class ExternalSystemApiUtil {
     else {
       UIUtil.invokeLaterIfNeeded(wrappedTask);
     }
+  }
+
+  /**
+   * Configures given classpath to reference target i18n bundle file(s).
+   *
+   * @param classPath     process classpath
+   * @param bundlePath    path to the target bundle file
+   * @param contextClass  class from the same content root as the target bundle file
+   */
+  public static void addBundle(@NotNull PathsList classPath, @NotNull String bundlePath, @NotNull Class<?> contextClass) {
+    String pathToUse = bundlePath.replace('.', '/');
+    if (!pathToUse.endsWith(".properties")) {
+      pathToUse += ".properties";
+    }
+    if (!pathToUse.startsWith("/")) {
+      pathToUse = '/' + pathToUse;
+    }
+    classPath.add(PathManager.getResourceRoot(contextClass, pathToUse));
   }
 }

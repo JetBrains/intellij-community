@@ -19,12 +19,19 @@ public class ModuleData extends AbstractNamedData implements Named {
 
   @NotNull private final Map<ExternalSystemSourceType, String> myCompileOutputPaths = ContainerUtilRt.newHashMap();
 
+  @NotNull private final String myModuleTypeId;
   @NotNull private String myModuleFilePath;
   private boolean myInheritProjectCompileOutputPath = true;
 
-  public ModuleData(@NotNull ProjectSystemId owner, @NotNull String name, @NotNull String moduleFileDirectoryPath) {
+  public ModuleData(@NotNull ProjectSystemId owner, @NotNull String typeId, @NotNull String name, @NotNull String moduleFileDirectoryPath) {
     super(owner, name);
+    myModuleTypeId = typeId;
     setModuleFileDirectoryPath(moduleFileDirectoryPath);
+  }
+
+  @NotNull
+  public String getModuleTypeId() {
+    return myModuleTypeId;
   }
 
   @NotNull
@@ -65,7 +72,18 @@ public class ModuleData extends AbstractNamedData implements Named {
     myCompileOutputPaths.put(type, ExternalSystemApiUtil.toCanonicalPath(path));
   }
 
-  
+  @Override
+  public int hashCode() {
+    return 31 * super.hashCode() + myModuleTypeId.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (!super.equals(o)) {
+      return false;
+    }
+    return myModuleTypeId.equals(((ModuleData)o).myModuleTypeId);
+  }
 
   @Override
   public String toString() {

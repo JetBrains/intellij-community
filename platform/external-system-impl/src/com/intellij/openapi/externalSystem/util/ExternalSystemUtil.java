@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -38,10 +37,6 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.libraries.Library;
@@ -60,8 +55,6 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.io.PrintWriter;
 import java.io.StringWriter;
-import java.util.Collections;
-import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -180,24 +173,6 @@ public class ExternalSystemUtil {
       }
     }
     return null;
-  }
-
-  /**
-   * Configures given classpath to reference target i18n bundle file(s).
-   *
-   * @param classPath     process classpath
-   * @param bundlePath    path to the target bundle file
-   * @param contextClass  class from the same content root as the target bundle file
-   */
-  public static void addBundle(@NotNull PathsList classPath, @NotNull String bundlePath, @NotNull Class<?> contextClass) {
-    String pathToUse = bundlePath.replace('.', '/');
-    if (!pathToUse.endsWith(".properties")) {
-      pathToUse += ".properties";
-    }
-    if (!pathToUse.startsWith("/")) {
-      pathToUse = '/' + pathToUse;
-    }
-    classPath.add(PathManager.getResourceRoot(contextClass, pathToUse));
   }
 
   /**

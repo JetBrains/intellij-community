@@ -12,7 +12,6 @@ import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelpe
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -93,7 +92,8 @@ public class ModuleDataService implements ProjectDataService<ModuleData> {
           }
 
           private void importModule(@NotNull ModuleManager moduleManager, @NotNull DataNode<ModuleData> module) {
-            final Module created = moduleManager.newModule(module.getData().getModuleFilePath(), StdModuleTypes.JAVA.getId());
+            ModuleData data = module.getData();
+            final Module created = moduleManager.newModule(data.getModuleFilePath(), data.getModuleTypeId());
 
             // Ensure that the dependencies are clear (used to be not clear when manually removing the module and importing it via gradle)
             ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(created);

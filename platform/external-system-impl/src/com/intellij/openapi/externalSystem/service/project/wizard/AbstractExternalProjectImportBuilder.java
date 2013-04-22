@@ -25,8 +25,6 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ex.ProjectRootManagerEx;
 import com.intellij.openapi.roots.impl.libraries.ProjectLibraryTable;
 import com.intellij.openapi.roots.libraries.Library;
@@ -313,11 +311,6 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractExt
   @Nullable
   public DataNode<ProjectData> getExternalProjectNode() {
     return myExternalProjectNode;
-  }
-
-  @Override
-  public boolean isSuitableSdkType(SdkTypeId sdk) {
-    return sdk == JavaSdk.getInstance();
   }
 
   /**

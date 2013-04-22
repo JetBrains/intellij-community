@@ -25,10 +25,7 @@ import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManage
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.JavaSdk;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.ProjectJdkTable;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import icons.GradleIcons;
@@ -143,5 +140,10 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
       }
     }
     return file;
+  }
+
+  @Override
+  public boolean isSuitableSdkType(SdkTypeId sdk) {
+    return sdk == JavaSdk.getInstance();
   }
 }
