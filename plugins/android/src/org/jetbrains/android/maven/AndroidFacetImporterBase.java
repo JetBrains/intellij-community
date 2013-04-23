@@ -465,7 +465,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
 
     if (resolvedInfo != null) {
       final String apiLevel = resolvedInfo.getApiLevel();
-      final Sdk sdk = apiLevel != null ? findOrCreateAndroidPlatform(apiLevel, null) : null;
+      final Sdk sdk = findOrCreateAndroidPlatform(apiLevel, null);
 
       if (sdk != null) {
         apklibModuleModel.setSdk(sdk);
