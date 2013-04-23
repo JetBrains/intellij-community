@@ -82,12 +82,16 @@ public class SLRUMap<K,V> {
     value = myProbationalQueue.remove(key);
     if (value != null) {
       probationalHits++;
-      myProtectedQueue.put(getStableKey(key), value);
+      putToProtectedQueue(key, value);
       return value;
     }
 
     misses++;
     return null;
+  }
+
+  protected void putToProtectedQueue(K key, V value) {
+    myProtectedQueue.put(getStableKey(key), value);
   }
 
   public void put(K key, @NotNull V value) {
