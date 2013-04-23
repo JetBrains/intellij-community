@@ -17,12 +17,15 @@ include "common.rnc" {
 		v5only = empty
 }
 
+include "common-ext.rnc"
+
 # #####################################################################
 ## Language Definitions
 
 start = html.elem
 
 include "meta.rnc"
+include "meta-ext.rnc"
 include "phrase.rnc"
 include "block.rnc"
 include "sectional.rnc"
@@ -32,6 +35,7 @@ include "embed.rnc"
 include "ruby.rnc"
 include "media.rnc"
 include "core-scripting.rnc"
+include "core-scripting-ext.rnc"
 include "tables.rnc"
 include "form-datatypes.rnc"
 include "web-forms.rnc"
