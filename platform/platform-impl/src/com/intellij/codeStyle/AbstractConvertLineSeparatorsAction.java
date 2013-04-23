@@ -125,7 +125,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
   public static boolean shouldProcess(@NotNull VirtualFile file, @NotNull Project project) {
     if (file.isDirectory()
         || !file.isWritable()
-        || FileTypeManager.getInstance().isFileIgnored(file.getName())
+        || FileTypeManager.getInstance().isFileIgnored(file)
         || file.getFileType().isBinary()
         || file.equals(project.getProjectFile())
         || file.equals(project.getWorkspaceFile()))
