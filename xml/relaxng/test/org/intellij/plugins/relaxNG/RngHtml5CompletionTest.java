@@ -32,7 +32,7 @@ public class RngHtml5CompletionTest extends HighlightingTestBase {
   protected void init() {
     super.init();
 
-    ExternalResourceManagerImpl.addTestResource("http://www.w3.org/1999/xhtml/html5", toAbsolutePath("/highlighting/html5/html5.rnc"),
+    ExternalResourceManagerImpl.addTestResource("http://www.w3.org/1999/xhtml", toAbsolutePath("/highlighting/html5/html5.rnc"),
                                                 myTestRootDisposable);
   }
 
