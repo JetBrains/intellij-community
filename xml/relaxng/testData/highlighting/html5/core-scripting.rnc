@@ -15,21 +15,27 @@ datatypes w = "http://whattf.org/datatype-draft"
 		(	common.attrs
 		&	script.attrs.type?
 		&	script.attrs.language? # restricted in Schematron
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
 		)
 	script.elem.imported =
 		element script { script.inner.imported & script.attrs.imported }
 	script.attrs.imported =
 		(	common.attrs
-		&	script.attrs.src
+		&	script.attrs.src?
 		&	script.attrs.defer?
 		&	script.attrs.async?
 		&	script.attrs.type?
 		&	script.attrs.charset?
 		&	script.attrs.language? # restricted in Schematron
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
 		)
 		script.attrs.src =
 			attribute src {
-				common.data.uri
+				common.data.uri.non-empty
 			}
 		script.attrs.defer =
 			attribute defer {
@@ -86,7 +92,11 @@ datatypes w = "http://whattf.org/datatype-draft"
 	noscript.inner.flow =
 		( common.inner.flow )
 	noscript.attrs =
-		( common.attrs )
+		(	common.attrs
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
 
 	common.elem.metadata |= noscript.elem.head
 	common.elem.phrasing |= noscript.elem.phrasing
@@ -116,8 +126,6 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	scripting.attr.onended?
 		&	scripting.attr.onerror?
 		&	scripting.attr.onfocus?
-		&	scripting.attr.onformchange?
-		&	scripting.attr.onforminput?
 		&	scripting.attr.oninput?
 		&	scripting.attr.oninvalid?
 		&	scripting.attr.onkeydown?
@@ -138,7 +146,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	scripting.attr.onplaying?
 		&	scripting.attr.onprogress?
 		&	scripting.attr.onratechange?
-		&	scripting.attr.onreadystatechange?
+		&	scripting.attr.onreset?
 		&	scripting.attr.onscroll?
 		&	scripting.attr.onseeked?
 		&	scripting.attr.onseeking?
@@ -155,113 +163,113 @@ datatypes w = "http://whattf.org/datatype-draft"
 	common.attrs.other &= common.attrs.scripting
 
 	scripting.attr.onabort =
-		attribute onabort { string }
+		attribute onabort { common.data.functionbody }
 	scripting.attr.onblur =
-		attribute onblur { string }
+		attribute onblur { common.data.functionbody }
 	scripting.attr.oncanplay =
-		attribute oncanplay { string }
+		attribute oncanplay { common.data.functionbody }
 	scripting.attr.oncanplaythrough =
-		attribute oncanplaythrough { string }
+		attribute oncanplaythrough { common.data.functionbody }
 	scripting.attr.onchange =
-		attribute onchange { string }
+		attribute onchange { common.data.functionbody }
 	scripting.attr.onclick =
-		attribute onclick { string }
+		attribute onclick { common.data.functionbody }
 	scripting.attr.oncontextmenu =
-		attribute oncontextmenu { string }
+		attribute oncontextmenu { common.data.functionbody }
 	scripting.attr.ondblclick =
-		attribute ondblclick { string }
+		attribute ondblclick { common.data.functionbody }
 	scripting.attr.ondrag =
-		attribute ondrag { string }
+		attribute ondrag { common.data.functionbody }
 	scripting.attr.ondragend =
-		attribute ondragend { string }
+		attribute ondragend { common.data.functionbody }
 	scripting.attr.ondragenter =
-		attribute ondragenter { string }
+		attribute ondragenter { common.data.functionbody }
 	scripting.attr.ondragleave =
-		attribute ondragleave { string }
+		attribute ondragleave { common.data.functionbody }
 	scripting.attr.ondragover =
-		attribute ondragover { string }
+		attribute ondragover { common.data.functionbody }
 	scripting.attr.ondragstart =
-		attribute ondragstart { string }
+		attribute ondragstart { common.data.functionbody }
 	scripting.attr.ondrop =
-		attribute ondrop { string }
+		attribute ondrop { common.data.functionbody }
 	scripting.attr.ondurationchange =
-		attribute ondurationchange { string }
+		attribute ondurationchange { common.data.functionbody }
 	scripting.attr.onemptied =
-		attribute onemptied { string }
+		attribute onemptied { common.data.functionbody }
 	scripting.attr.onended =
-		attribute onended { string }
+		attribute onended { common.data.functionbody }
 	scripting.attr.onerror =
-		attribute onerror { string }
+		attribute onerror { common.data.functionbody }
 	scripting.attr.onfocus =
-		attribute onfocus { string }
+		attribute onfocus { common.data.functionbody }
 	scripting.attr.onformchange =
-		attribute onformchange { string }
+		attribute onformchange { common.data.functionbody }
 	scripting.attr.onforminput =
-		attribute onforminput { string }
+		attribute onforminput { common.data.functionbody }
 	scripting.attr.oninput =
-		attribute oninput { string }
+		attribute oninput { common.data.functionbody }
 	scripting.attr.oninvalid =
-		attribute oninvalid { string }
+		attribute oninvalid { common.data.functionbody }
 	scripting.attr.onkeydown =
-		attribute onkeydown { string }
+		attribute onkeydown { common.data.functionbody }
 	scripting.attr.onkeypress =
-		attribute onkeypress { string }
+		attribute onkeypress { common.data.functionbody }
 	scripting.attr.onkeyup =
-		attribute onkeyup { string }
+		attribute onkeyup { common.data.functionbody }
 	scripting.attr.onload =
-		attribute onload { string }
+		attribute onload { common.data.functionbody }
 	scripting.attr.onloadeddata =
-		attribute onloadeddata { string }
+		attribute onloadeddata { common.data.functionbody }
 	scripting.attr.onloadedmetadata =
-		attribute onloadedmetadata { string }
+		attribute onloadedmetadata { common.data.functionbody }
 	scripting.attr.onloadstart =
-		attribute onloadstart { string }
+		attribute onloadstart { common.data.functionbody }
 	scripting.attr.onmousedown =
-		attribute onmousedown { string }
+		attribute onmousedown { common.data.functionbody }
 	scripting.attr.onmousemove =
-		attribute onmousemove { string }
+		attribute onmousemove { common.data.functionbody }
 	scripting.attr.onmouseout =
-		attribute onmouseout { string }
+		attribute onmouseout { common.data.functionbody }
 	scripting.attr.onmouseover =
-		attribute onmouseover { string }
+		attribute onmouseover { common.data.functionbody }
 	scripting.attr.onmouseup =
-		attribute onmouseup { string }
+		attribute onmouseup { common.data.functionbody }
 	scripting.attr.onmousewheel =
-		attribute onmousewheel { string }
+		attribute onmousewheel { common.data.functionbody }
 	scripting.attr.onpause =
-		attribute onpause { string }
+		attribute onpause { common.data.functionbody }
 	scripting.attr.onplay =
-		attribute onplay { string }
+		attribute onplay { common.data.functionbody }
 	scripting.attr.onplaying =
-		attribute onplaying { string }
+		attribute onplaying { common.data.functionbody }
 	scripting.attr.onprogress =
-		attribute onprogress { string }
+		attribute onprogress { common.data.functionbody }
 	scripting.attr.onratechange =
-		attribute onratechange { string }
-	scripting.attr.onreadystatechange =
-		attribute onreadystatechange { string }
+		attribute onratechange { common.data.functionbody }
+	scripting.attr.onreset =
+		attribute onreset { common.data.functionbody }
 	scripting.attr.onscroll =
-		attribute onscroll { string }
+		attribute onscroll { common.data.functionbody }
 	scripting.attr.onseeked =
-		attribute onseeked { string }
+		attribute onseeked { common.data.functionbody }
 	scripting.attr.onseeking =
-		attribute onseeking { string }
+		attribute onseeking { common.data.functionbody }
 	scripting.attr.onselect =
-		attribute onselect { string }
+		attribute onselect { common.data.functionbody }
 	scripting.attr.onshow =
-		attribute onshow { string }
+		attribute onshow { common.data.functionbody }
 	scripting.attr.onstalled =
-		attribute onstalled { string }
+		attribute onstalled { common.data.functionbody }
 	scripting.attr.onsubmit =
-		attribute onsubmit { string }
+		attribute onsubmit { common.data.functionbody }
 	scripting.attr.onsuspend =
-		attribute onsuspend { string }
+		attribute onsuspend { common.data.functionbody }
 	scripting.attr.ontimeupdate =
-		attribute ontimeupdate { string }
+		attribute ontimeupdate { common.data.functionbody }
 	scripting.attr.onvolumechange =
-		attribute onvolumechange { string }
+		attribute onvolumechange { common.data.functionbody }
 	scripting.attr.onwaiting =
-		attribute onwaiting { string }
+		attribute onwaiting { common.data.functionbody }
 
 #	scripting.attr.common =
 #		(	scripting.attr.mouse

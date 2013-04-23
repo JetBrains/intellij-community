@@ -1,4 +1,4 @@
-default namespace = "http://www.w3.org/1999/html"
+default namespace = "http://www.w3.org/1999/xhtml"
 # #####################################################################
 ##  RELAX NG Schema for HTML 5                                       #
 # #####################################################################

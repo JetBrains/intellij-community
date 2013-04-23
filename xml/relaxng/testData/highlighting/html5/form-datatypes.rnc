@@ -46,7 +46,18 @@ datatypes w = "http://whattf.org/datatype-draft"
 ## Color
 
 	form.data.color =
-		w:color
+		w:simple-color
 #		xsd:string {
 #			pattern = "#[a-fA-F0-9]{6}"
 #		}
+
+## Text without line breaks
+
+	form.data.stringwithoutlinebreaks =
+		w:string-without-line-breaks
+
+## Non-empty string
+
+	form.data.nonemptystring =
+		w:non-empty-string
+

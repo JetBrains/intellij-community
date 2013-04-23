@@ -11,7 +11,11 @@
 		element h1 { h1.inner & h1.attrs }
 	h1.attrs =
 		(	common.attrs
-		&	common.attrs.aria.implicit.structure?
+		&	(	common.attrs.aria.implicit.structure
+			|	common.attrs.aria.role.heading
+			|	common.attrs.aria.role.tab
+			|	common.attrs.aria.role.presentation
+			)?
 		)
 	h1.inner =
 		( common.inner.phrasing )
@@ -24,7 +28,11 @@
 		element h2 { h2.inner & h2.attrs }
 	h2.attrs =
 		(	common.attrs
-		&	common.attrs.aria.implicit.structure?
+		&	(	common.attrs.aria.implicit.structure
+			|	common.attrs.aria.role.heading
+			|	common.attrs.aria.role.tab
+			|	common.attrs.aria.role.presentation
+			)?
 		)
 	h2.inner =
 		( common.inner.phrasing )
@@ -37,7 +45,11 @@
 		element h3 { h3.inner & h3.attrs }
 	h3.attrs =
 		(	common.attrs
-		&	common.attrs.aria.implicit.structure?
+		&	(	common.attrs.aria.implicit.structure
+			|	common.attrs.aria.role.heading
+			|	common.attrs.aria.role.tab
+			|	common.attrs.aria.role.presentation
+			)?
 		)
 	h3.inner =
 		( common.inner.phrasing )
@@ -50,7 +62,11 @@
 		element h4 { h4.inner & h4.attrs }
 	h4.attrs =
 		(	common.attrs
-		&	common.attrs.aria.implicit.structure?
+		&	(	common.attrs.aria.implicit.structure
+			|	common.attrs.aria.role.heading
+			|	common.attrs.aria.role.tab
+			|	common.attrs.aria.role.presentation
+			)?
 		)
 	h4.inner =
 		( common.inner.phrasing )
@@ -63,7 +79,11 @@
 		element h5 { h5.inner & h5.attrs }
 	h5.attrs =
 		(	common.attrs
-		&	common.attrs.aria.implicit.structure?
+		&	(	common.attrs.aria.implicit.structure
+			|	common.attrs.aria.role.heading
+			|	common.attrs.aria.role.tab
+			|	common.attrs.aria.role.presentation
+			)?
 		)
 	h5.inner =
 		( common.inner.phrasing )
@@ -76,7 +96,11 @@
 		element h6 { h6.inner & h6.attrs }
 	h6.attrs =
 		(	common.attrs
-		&	common.attrs.aria.implicit.structure?
+		&	(	common.attrs.aria.implicit.structure
+			|	common.attrs.aria.role.heading
+			|	common.attrs.aria.role.tab
+			|	common.attrs.aria.role.presentation
+			)?
 		)
 	h6.inner =
 		( common.inner.phrasing )
@@ -89,7 +113,11 @@
 		element hgroup { hgroup.inner & hgroup.attrs }
 	hgroup.attrs =
 		(	common.attrs
-		&	common.attrs.aria.implicit.structure?
+		&	(	common.attrs.aria.implicit.structure # not implementing "aria-level property set to the element's outline depth", nor heading role; see http://hsivonen.iki.fi/aria-html5-bis/
+			|	common.attrs.aria.role.heading
+			|	common.attrs.aria.role.tab
+			|	common.attrs.aria.role.presentation
+			)?
 		)
 	hgroup.inner =
 		(	h1.elem
@@ -111,7 +139,10 @@
 		element address { address.inner & address.attrs }
 	address.attrs =
 		(	common.attrs
-		&	common.attrs.aria.implicit.region?
+		&	(	common.attrs.aria.implicit.region
+			|	common.attrs.aria.role.contentinfo
+			|	common.attrs.aria.role.presentation
+			)?
 		)
 	address.inner = 
 		( common.inner.flow )

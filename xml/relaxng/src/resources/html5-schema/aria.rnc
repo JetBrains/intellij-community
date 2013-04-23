@@ -315,6 +315,7 @@ common.attrs.aria.implicit.listitem |=
 			{	string "true"
 			|	string "false" #default
 			}	
+	common.attrs.aria.prop.readonly |= aria.prop.readonly
 
 ## relevant
 	aria.prop.relevant =
@@ -410,6 +411,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "alert" }
 	
 	common.attrs.aria |= aria.alert
+	common.attrs.aria.role.alert |= aria.alert
 
 ## alertdialog
 	aria.alertdialog =
@@ -420,6 +422,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "alertdialog" }
 	
 	common.attrs.aria |= aria.alertdialog
+	common.attrs.aria.role.alertdialog |= aria.alertdialog
 
 ## application
 	aria.application =
@@ -463,6 +466,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "button" }
 	
 	common.attrs.aria |= aria.button
+	common.attrs.aria.role.button |= aria.button
 
 ## checkbox
 	aria.checkbox =
@@ -474,7 +478,18 @@ common.attrs.aria.implicit.listitem |=
 	
 	common.attrs.aria |= aria.checkbox
 
-# XXX columnheader
+# columnheader
+	aria.columnheader =
+		(	aria.role.columnheader
+		&	aria.prop.sort? # not inherited
+		&	aria.prop.readonly? # not inherited
+		&	aria.state.selected? # not inherited
+		&	aria.state.expanded?
+		)
+		aria.role.columnheader = 
+			attribute role { string "columnheader" }
+	
+	common.attrs.aria |= aria.columnheader
 
 ## combobox
 	aria.combobox =
@@ -486,6 +501,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "combobox" }
 	
 	common.attrs.aria |= aria.combobox
+	common.attrs.aria.role.combobox |= aria.combobox
 
 ## complementary
 	aria.complementary =
@@ -528,6 +544,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "dialog" }
 
 	common.attrs.aria |= aria.dialog
+	common.attrs.aria.role.dialog |= aria.dialog
 
 ## directory
 	aria.directory =
@@ -538,6 +555,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "directory" }
 
 	common.attrs.aria |= aria.directory
+	common.attrs.aria.role.directory |= aria.directory
 
 ## document
 	aria.document =
@@ -549,6 +567,17 @@ common.attrs.aria.implicit.listitem |=
 
 	common.attrs.aria |= aria.document
 	common.attrs.aria.landmark.document |= aria.document
+
+## form
+	aria.form =
+		(	aria.role.form
+		&	aria.state.expanded?
+		)
+		aria.role.form =
+			attribute role { string "form" }
+
+	common.attrs.aria |= aria.form
+	common.attrs.aria.landmark.form |= aria.form
 
 ## grid
 	aria.grid =
@@ -588,7 +617,17 @@ common.attrs.aria.implicit.listitem |=
 	
 	common.attrs.aria |= aria.group
 
-## XXX heading
+## heading
+	aria.heading =
+		(	aria.role.heading
+		&	aria.prop.level ? # not inherited
+		&	aria.state.expanded?
+		)
+		aria.role.heading =
+			attribute role { string "heading" }
+	
+	common.attrs.aria |= aria.heading
+	common.attrs.aria.role.heading |= aria.heading
 
 ## img
 	aria.img =
@@ -599,6 +638,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "img" }
 	
 	common.attrs.aria |= aria.img
+	common.attrs.aria.role.img |= aria.img
 
 ## link
 	aria.link =
@@ -608,6 +648,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "link" }
 	
 	common.attrs.aria |= aria.link
+	common.attrs.aria.role.link |= aria.link
 
 ## list
 	aria.list =
@@ -618,6 +659,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "list" }
 	
 	common.attrs.aria |= aria.list
+	common.attrs.aria.role.list |= aria.list
 
 ## listbox
 	aria.listbox =
@@ -630,6 +672,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "listbox" }
 	
 	common.attrs.aria |= aria.listbox
+	common.attrs.aria.role.listbox |= aria.listbox
 
 ## listitem
 	aria.listitem =
@@ -643,6 +686,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "listitem" }
 	
 	common.attrs.aria |= aria.listitem
+	common.attrs.aria.role.listitem |= aria.listitem
 
 ## log
 	aria.log =
@@ -653,6 +697,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "log" }
 	
 	common.attrs.aria |= aria.log
+	common.attrs.aria.role.log |= aria.log
 
 ## main
 	aria.main =
@@ -674,6 +719,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "marquee" }
 	
 	common.attrs.aria |= aria.marquee
+	common.attrs.aria.role.marquee |= aria.marquee
 
 ## math
 	aria.math =
@@ -695,6 +741,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "menu" }
 	
 	common.attrs.aria |= aria.menu
+	common.attrs.aria.role.menu |= aria.menu
 
 ## menubar
 	aria.menubar =
@@ -706,6 +753,8 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "menubar" }
 	
 	common.attrs.aria |= aria.menubar
+	common.attrs.aria.role.menubar |= aria.menubar
+
 
 ## menuitem
 	aria.menuitem =
@@ -714,6 +763,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "menuitem" }
 	
 	common.attrs.aria |= aria.menuitem
+	common.attrs.aria.role.menuitem |= aria.menuitem
 
 ## menuitemcheckbox
 	aria.menuitemcheckbox =
@@ -724,6 +774,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "menuitemcheckbox" }
 	
 	common.attrs.aria |= aria.menuitemcheckbox
+	common.attrs.aria.role.menuitemcheckbox |= aria.menuitemcheckbox
 
 ## menuitemradio
 	aria.menuitemradio =
@@ -735,6 +786,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "menuitemradio" }
 	
 	common.attrs.aria |= aria.menuitemradio
+	common.attrs.aria.role.menuitemradio |= aria.menuitemradio
 
 ## navigation
 	aria.navigation =
@@ -768,6 +820,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "option" }
 	
 	common.attrs.aria |= aria.option
+	common.attrs.aria.role.option |= aria.option
 
 
 ## presentation
@@ -779,6 +832,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "presentation" }
 	
 	common.attrs.aria |= aria.presentation
+	common.attrs.aria.role.presentation |= aria.presentation
 
 ## progressbar
 	aria.progressbar =
@@ -792,6 +846,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "progressbar" }
 	
 	common.attrs.aria |= aria.progressbar
+	common.attrs.aria.role.progressbar |= aria.progressbar
 
 ## radio
 	aria.radio =
@@ -803,6 +858,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "radio" }
 	
 	common.attrs.aria |= aria.radio
+	common.attrs.aria.role.radio |= aria.radio
 
 ## radiogroup
 	aria.radiogroup =
@@ -824,6 +880,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "region" }
 	
 	common.attrs.aria |= aria.region
+	common.attrs.aria.role.region |= aria.region
 
 ## row
 	aria.row =
@@ -838,7 +895,18 @@ common.attrs.aria.implicit.listitem |=
 	
 	common.attrs.aria |= aria.row
 
-# XXX rowheader
+# rowheader
+	aria.rowheader =
+		(	aria.role.rowheader
+		&	aria.prop.sort? # not inherited
+		&	aria.prop.readonly? # not inherited
+		&	aria.state.selected? # not inherited
+		&	aria.state.expanded?
+		)
+		aria.role.rowheader = 
+			attribute role { string "rowheader" }
+	
+	common.attrs.aria |= aria.rowheader
 
 ## search
 	aria.search =
@@ -860,6 +928,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "separator" }
 	
 	common.attrs.aria |= aria.separator
+	common.attrs.aria.role.separator |= aria.separator
 
 ## slider
 	aria.slider =
@@ -873,6 +942,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "slider" }
 	
 	common.attrs.aria |= aria.slider
+	common.attrs.aria.role.slider |= aria.slider
 
 ## spinbutton
 	aria.spinbutton =
@@ -887,6 +957,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "spinbutton" }
 	
 	common.attrs.aria |= aria.spinbutton
+	common.attrs.aria.role.spinbutton |= aria.spinbutton
 
 ## status
 	aria.status =
@@ -898,6 +969,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "status" }
 	
 	common.attrs.aria |= aria.status
+	common.attrs.aria.role.status |= aria.status
 
 ## tab
 	aria.tab =
@@ -909,6 +981,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "tab" }
 	
 	common.attrs.aria |= aria.tab
+	common.attrs.aria.role.tab |= aria.tab
 
 ## tablist
 	aria.tablist =
@@ -918,6 +991,8 @@ common.attrs.aria.implicit.listitem |=
 		)
 		aria.role.tablist = 
 			attribute role { string "tablist" }
+	common.attrs.aria |= aria.tablist
+	common.attrs.aria.role.tablist |= aria.tablist
 
 ## tabpanel
 	aria.tabpanel =
@@ -928,6 +1003,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "tabpanel" }
 	
 	common.attrs.aria |= aria.tabpanel
+	common.attrs.aria.role.tabpanel |= aria.tabpanel
 
 ## textbox
 	aria.textbox =
@@ -940,6 +1016,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "textbox" }
 	
 	common.attrs.aria |= aria.textbox
+	common.attrs.aria.role.textbox |= aria.textbox
 
 ## timer
 	aria.timer =
@@ -962,6 +1039,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "toolbar" }
 	
 	common.attrs.aria |= aria.toolbar
+	common.attrs.aria.role.toolbar |= aria.toolbar
 
 ## tooltip
 	aria.tooltip =
@@ -984,6 +1062,7 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "tree" }
 	
 	common.attrs.aria |= aria.tree
+	common.attrs.aria.role.tree |= aria.tree
 
 ## treegrid
 	aria.treegrid =
@@ -1013,5 +1092,4 @@ common.attrs.aria.implicit.listitem |=
 			attribute role { string "treeitem" }
 	
 	common.attrs.aria |= aria.treeitem
-
-
+	common.attrs.aria.role.treeitem |= aria.treeitem

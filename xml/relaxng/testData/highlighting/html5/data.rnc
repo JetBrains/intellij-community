@@ -11,15 +11,21 @@ datatypes w = "http://whattf.org/datatype-draft"
 	time.attrs =
 		(	common.attrs
 		&	time.attrs.datetime?
-		&	time.attrs.pubdate?
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
 		)
 		time.attrs.datetime =
 			attribute datetime {
-				common.data.date-or-time #REVISIT check format
+				common.data.time-datetime
 			}
-		time.attrs.pubdate =
-			attribute pubdate {
-				w:string "pubdate" | w:string ""
+		time.attrs.datetime.dateonly =
+			attribute datetime {
+				common.data.date
+			}
+		time.attrs.datetime.tz =
+			attribute datetime {
+				common.data.datetime
 			}
 	time.inner =
 		( common.inner.phrasing ) #Cannot enforce textContent format here
@@ -38,6 +44,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	meter.attrs.high?
 		&	meter.attrs.max?
 		&	meter.attrs.optimum?
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
 		)
 		meter.attrs.value =
 			attribute value {
