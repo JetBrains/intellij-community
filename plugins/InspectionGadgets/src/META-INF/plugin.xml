@@ -2297,6 +2297,10 @@
                      key="unnecessary.call.to.string.valueof.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.siyeh.ig.style.UnnecessaryCallToStringValueOfInspection"/>
+    <localInspection language="JAVA" shortName="UnnecessaryToStringCall" bundle="com.siyeh.InspectionGadgetsBundle"
+                     key="unnecessary.tostring.call.display.name" groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.siyeh.ig.style.UnnecessaryToStringCallInspection"/>
     <localInspection language="JAVA" suppressId="RedundantNoArgConstructor" shortName="UnnecessaryConstructor" bundle="com.siyeh.InspectionGadgetsBundle"
                      key="unnecessary.constructor.display.name" groupBundle="messages.InspectionsBundle"
                      groupKey="group.names.code.style.issues" enabledByDefault="false" level="WARNING"
