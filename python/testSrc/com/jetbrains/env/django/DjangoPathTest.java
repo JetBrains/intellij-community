@@ -82,7 +82,7 @@ public class DjangoPathTest extends PyEnvTestCase {
 
       @Override
       protected void configure(AbstractPythonRunConfiguration config) {
-        ((DjangoTestsRunConfiguration)config).setTarget("site.SimpleTest");
+        ((DjangoTestsRunConfiguration)config).setTarget("mysite.SimpleTest");
       }
 
       public void testing() throws Exception {
