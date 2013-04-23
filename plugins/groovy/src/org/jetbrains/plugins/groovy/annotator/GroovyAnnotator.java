@@ -336,7 +336,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     }
     checkTypeDefinition(myHolder, typeDefinition);
 
-    checkDuplicateMethod(typeDefinition.getMethods(), myHolder);
+    checkDuplicateMethod(typeDefinition, myHolder);
     checkImplementedMethodsOfClass(myHolder, typeDefinition);
     checkConstructors(myHolder, typeDefinition);
 
@@ -1279,7 +1279,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public void visitFile(GroovyFileBase file) {
     final PsiClass scriptClass = file.getScriptClass();
     if (scriptClass != null) {
-      checkDuplicateMethod(scriptClass.getMethods(), myHolder);
+      checkDuplicateMethod(scriptClass, myHolder);
     }
   }
 
@@ -1758,8 +1758,8 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     }
   }
 
-  private static void checkDuplicateMethod(PsiMethod[] methods, AnnotationHolder holder) {
-    MultiMap<MethodSignature, PsiMethod> map = GrClosureSignatureUtil.findMethodSignatures(methods);
+  private static void checkDuplicateMethod(PsiClass clazz, AnnotationHolder holder) {
+    MultiMap<MethodSignature, PsiMethod> map = GrClosureSignatureUtil.findRawMethodSignatures(clazz.getMethods(), clazz);
     processMethodDuplicates(map, holder);
   }
 

@@ -1238,4 +1238,28 @@ def e
 def f
 ''')
   }
+
+  void testDuplicateMethodsWithGenerics() {
+    testHighlighting('''\
+class A<T, E> {
+  <error descr="Method with signature foo(Object) is already defined in the class 'A'">def foo(T t)</error> {}
+  <error descr="Method with signature foo(Object) is already defined in the class 'A'">def foo(E e)</error> {}
+}
+
+class B {
+  <error descr="Method with signature foo(Object) is already defined in the class 'B'">def <T> void foo(T t)</error> {}
+  <error descr="Method with signature foo(Object) is already defined in the class 'B'">def <E> void foo(E e)</error> {}
+}
+
+class C<T, E> {
+  <error descr="Method with signature foo(Object) is already defined in the class 'C'">def foo(T t, T t2 = null)</error> {}
+  <error descr="Method with signature foo(Object) is already defined in the class 'C'">def foo(E e)</error> {}
+}
+
+class D<T, E> {
+  <error descr="Method with signature foo(Object, Object) is already defined in the class 'D'">def foo(T t, E e)</error> {}
+  <error descr="Method with signature foo(Object, Object) is already defined in the class 'D'">def foo(E t, T e)</error> {}
+  def foo(E t) {}
+}''')
+  }
 }
