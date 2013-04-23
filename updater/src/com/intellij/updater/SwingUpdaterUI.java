@@ -112,8 +112,7 @@ public class SwingUpdaterUI implements UpdaterUI {
 
     myFrame.setMinimumSize(new Dimension(500, 50));
     myFrame.pack();
-
-    centerOnScreen(myFrame);
+    myFrame.setLocationRelativeTo(null);
 
     myFrame.setVisible(true);
 
@@ -154,12 +153,6 @@ public class SwingUpdaterUI implements UpdaterUI {
         }
       }
     }).start();
-  }
-
-  private static void centerOnScreen(Window frame) {
-    Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-    frame.setLocation((screenSize.width - frame.getWidth()) / 2,
-                      (screenSize.height - frame.getHeight()) / 2);
   }
 
   private void doCancel() {
@@ -273,7 +266,7 @@ public class SwingUpdaterUI implements UpdaterUI {
           dialog.getRootPane().setBorder(FRAME_BORDER);
 
           dialog.setSize(new Dimension(600, 400));
-          centerOnScreen(dialog);
+          dialog.setLocationRelativeTo(null);
           dialog.setVisible(true);
 
           result.putAll(model.getResult());

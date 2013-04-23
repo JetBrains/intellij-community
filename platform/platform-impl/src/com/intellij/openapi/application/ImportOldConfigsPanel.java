@@ -128,12 +128,9 @@ public class ImportOldConfigsPanel extends JDialog {
     setTitle(ApplicationBundle.message("title.complete.installation"));
 
     update();
+
     pack();
-
-    Dimension parentSize = Toolkit.getDefaultToolkit().getScreenSize();
-    Dimension ownSize = getPreferredSize();
-
-    setLocation((parentSize.width - ownSize.width) / 2, (parentSize.height - ownSize.height) / 2);
+    setLocationRelativeTo(null);
   }
 
   @Nullable

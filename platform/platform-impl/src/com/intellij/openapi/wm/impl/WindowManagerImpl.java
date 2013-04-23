@@ -529,9 +529,8 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
                                                 ApplicationManager.getApplication());
     myProject2Frame.put(null, frame);
 
-    if (myFrameBounds == null
-        || !ScreenUtil.isVisible(myFrameBounds)) { //avoid situations when IdeFrame is out of all screens
-      Rectangle rect = ScreenUtil.getScreenRectangle(0, 0);
+    if (myFrameBounds == null || !ScreenUtil.isVisible(myFrameBounds)) { //avoid situations when IdeFrame is out of all screens
+      Rectangle rect = ScreenUtil.getMainScreenBounds();
       int yParts = rect.height / 6;
       int xParts = rect.width / 5;
       myFrameBounds = new Rectangle(xParts, yParts, xParts * 3, yParts * 4);

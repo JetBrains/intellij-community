@@ -19,7 +19,6 @@ import com.intellij.openapi.MnemonicHelper;
 import com.intellij.ui.GuiUtils;
 
 import javax.swing.*;
-import java.awt.*;
 import java.awt.event.*;
 import java.lang.reflect.InvocationTargetException;
 
@@ -83,14 +82,8 @@ public class IOExceptionDialog extends JDialog {
       }
     });
 
-    setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
-
-    Dimension parentSize = Toolkit.getDefaultToolkit().getScreenSize();
-    Dimension ownSize = getPreferredSize();
-
-    setLocation((parentSize.width - ownSize.width) / 2, (parentSize.height - ownSize.height) / 2);
-
     pack();
+    setLocationRelativeTo(null);
     setDefaultCloseOperation(DO_NOTHING_ON_CLOSE);
     addWindowListener(new WindowAdapter() {
       @Override
