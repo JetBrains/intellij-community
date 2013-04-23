@@ -15,6 +15,7 @@
  */
 package org.jetbrains.android.dom;
 
+import com.android.SdkConstants;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.openapi.vfs.VirtualFile;
 
@@ -292,6 +293,14 @@ public class AndroidDrawableResourcesDomTest extends AndroidDomTest {
 
   public void testInlineClip() throws Throwable {
     doTestHighlighting();
+  }
+
+  public void testIds() throws Throwable {
+    myFixture.copyFileToProject(SdkConstants.FN_ANDROID_MANIFEST_XML, SdkConstants.FN_ANDROID_MANIFEST_XML);
+    copyFileToProject("ids.xml");
+    final VirtualFile javaFile = copyFileToProject("IdsClass.java", "src/p1/p2/IdsClass.java");
+    myFixture.configureFromExistingVirtualFile(javaFile);
+    myFixture.checkHighlighting(true, false, false);
   }
 
   private void doTestOnlyDrawableReferences() throws IOException {
