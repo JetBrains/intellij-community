@@ -42,7 +42,7 @@ public class PyImportedModuleType implements PyType {
     final PsiElement resolved = myImportedModule.resolve();
     if (resolved instanceof PyFile) {
       final PyFile file = (PyFile)resolved;
-      return new PyModuleType(file, myImportedModule).resolveMember(name, location, direction, resolveContext, true);
+      return new PyModuleType(file, myImportedModule).resolveMember(name, location, direction, resolveContext, inherited);
     }
     else if (resolved instanceof PsiDirectory) {
       final List<PsiElement> elements = Collections.singletonList(ResolveImportUtil.resolveChild(resolved, name, null, true, true));
