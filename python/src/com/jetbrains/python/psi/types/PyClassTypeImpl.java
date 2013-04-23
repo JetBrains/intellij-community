@@ -102,7 +102,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
                                                           @Nullable PyExpression location,
                                                           AccessDirection direction,
-                                                          PyResolveContext resolveContext) {
+                                                          PyResolveContext resolveContext,
+                                                          boolean inherited) {
     final Set<Pair<PyClass, String>> resolving = ourResolveMemberStack.get();
     final Pair<PyClass, String> key = Pair.create(myClass, name);
     if (resolving.contains(key)) {
@@ -110,7 +111,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     }
     resolving.add(key);
     try {
-      return doResolveMember(name, location, direction, resolveContext);
+      return doResolveMember(name, location, direction, resolveContext, inherited);
     }
     finally {
       resolving.remove(key);
@@ -121,7 +122,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   private List<? extends RatedResolveResult> doResolveMember(@NotNull String name,
                                                              @Nullable PyExpression location,
                                                              @NotNull AccessDirection direction,
-                                                             @NotNull PyResolveContext resolveContext) {
+                                                             @NotNull PyResolveContext resolveContext,
+                                                             boolean inherited) {
     final TypeEvalContext context = resolveContext.getTypeEvalContext();
     PsiElement classMember = resolveByOverridingMembersProviders(this, name); //overriding members provers have priority to normal resolve
     if (classMember != null) {
@@ -157,7 +159,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
           PyClass derived_class = ((PyClassType)first_arg_type).getPyClass();
           final Iterator<PyClass> base_it = derived_class.getAncestorClasses(context).iterator();
           if (base_it.hasNext()) {
-            return new PyClassTypeImpl(base_it.next(), true).resolveMember(name, location, direction, resolveContext);
+            return new PyClassTypeImpl(base_it.next(), true).resolveMember(name, location, direction, resolveContext, true);
           }
           else {
             return null; // no base classes = super() cannot proxy anything meaningful from a base class
@@ -171,17 +173,19 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
       return ResolveResultList.to(classMember);
     }
 
-    for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
-      if (type instanceof PyClassType) {
-        PsiElement superMember = resolveClassMember(((PyClassType)type).getPyClass(), myIsDefinition, name, null);
-        if (superMember != null) {
-          return ResolveResultList.to(superMember);
+    if (inherited) {
+      for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
+        if (type instanceof PyClassType) {
+          PsiElement superMember = resolveClassMember(((PyClassType)type).getPyClass(), myIsDefinition, name, null);
+          if (superMember != null) {
+            return ResolveResultList.to(superMember);
+          }
         }
-      }
-      if (type != null) {
-        final List<? extends RatedResolveResult> results = type.resolveMember(name, location, direction, resolveContext);
-        if (results != null && !results.isEmpty()) {
-          return results;
+        if (type != null) {
+          final List<? extends RatedResolveResult> results = type.resolveMember(name, location, direction, resolveContext, false);
+          if (results != null && !results.isEmpty()) {
+            return results;
+          }
         }
       }
     }
@@ -189,27 +193,31 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (isDefinition() && myClass.isNewStyleClass()) {
       PyClassType typeType = getMetaclassType();
       if (typeType != null) {
-        List<? extends RatedResolveResult> typeMembers = typeType.resolveMember(name, location, direction, resolveContext);
+        List<? extends RatedResolveResult> typeMembers = typeType.resolveMember(name, location, direction, resolveContext, true);
         if (typeMembers != null && !typeMembers.isEmpty()) {
           return typeMembers;
         }
       }
     }
 
-    classMember = resolveByMembersProviders(this, name);  //ask providers after real class introspection as providers have less priority
+    if (inherited) {
+      classMember = resolveByMembersProviders(this, name);  //ask providers after real class introspection as providers have less priority
+    }
 
     if (classMember != null) {
       return ResolveResultList.to(classMember);
     }
 
-    for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
-      if (type instanceof PyClassType) {
-        final PyClass pyClass = ((PyClassType)type).getPyClass();
-        if (pyClass != null) {
-          PsiElement superMember = resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name);
+    if (inherited) {
+      for (PyClassLikeType type : myClass.getAncestorTypes(context)) {
+        if (type instanceof PyClassType) {
+          final PyClass pyClass = ((PyClassType)type).getPyClass();
+          if (pyClass != null) {
+            PsiElement superMember = resolveByMembersProviders(new PyClassTypeImpl(pyClass, isDefinition()), name);
 
-          if (superMember != null) {
-            return ResolveResultList.to(superMember);
+            if (superMember != null) {
+              return ResolveResultList.to(superMember);
+            }
           }
         }
       }

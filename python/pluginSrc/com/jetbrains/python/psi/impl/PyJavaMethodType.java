@@ -43,7 +43,8 @@ public class PyJavaMethodType implements PyCallableType {
   public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
                                                           @Nullable PyExpression location,
                                                           AccessDirection direction,
-                                                          PyResolveContext resolveContext) {
+                                                          PyResolveContext resolveContext,
+                                                          boolean inherited) {
     return Collections.emptyList();
   }
 

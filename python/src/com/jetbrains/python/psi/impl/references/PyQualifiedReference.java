@@ -71,7 +71,8 @@ public class PyQualifiedReference extends PyReferenceImpl {
       qualifierType.assertValid("qualifier: " + qualifier);
       // resolve within the type proper
       AccessDirection ctx = AccessDirection.of(myElement);
-      final List<? extends RatedResolveResult> membersOfQualifier = qualifierType.resolveMember(referencedName, qualifier, ctx, myContext);
+      final List<? extends RatedResolveResult> membersOfQualifier = qualifierType.resolveMember(referencedName, qualifier, ctx, myContext,
+                                                                                                true);
       if (membersOfQualifier == null) {
         return ret; // qualifier is positive that such name cannot exist in it
       }
