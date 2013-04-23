@@ -1423,9 +1423,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   // TODO: tabbed text width is additive, it should be possible to have buckets, containing arguments / values to start with
   private final int[] myLastStartOffsets = new int[2];
   private final int[] myLastTargetColumns = new int[myLastStartOffsets.length];
+  private final int[] myLastXOffsets = new int[myLastStartOffsets.length];
   private final int[] myLastXs = new int[myLastStartOffsets.length];
-  private int myLastPosition;
-  private int hits, totals;
+  private int myCurrentCachePosition;
+  private int myLastCacheHits, myTotalRequests; // todo remove
 
   private int getTabbedTextWidth(int startOffset, int targetColumn, int xOffset) {
     int x = xOffset;
@@ -1434,15 +1435,16 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     }
     if (targetColumn <= 0) return x;
 
-    ++totals;
+    ++myTotalRequests;
     for(int i = 0; i < myLastStartOffsets.length; ++i) {
-      if (startOffset == myLastStartOffsets[i] && targetColumn == myLastTargetColumns[i]) {
-        ++hits;
-        if ((hits & 0xFF) == 0) {
+      if (startOffset == myLastStartOffsets[i] && targetColumn == myLastTargetColumns[i] && xOffset == myLastXOffsets[i]) {
+        ++myLastCacheHits;
+        if ((myLastCacheHits & 0xFF) == 0) {    // todo remove
           PsiFile file = PsiDocumentManager.getInstance(myProject).getCachedPsiFile(myDocument);
-          LOG.info("Hits:" + hits + "," + totals + "," + (file != null ? file.getViewProvider().getVirtualFile():null));
+          LOG.info("Cache hits:" + myLastCacheHits + ", total requests:" +
+                             myTotalRequests + "," + (file != null ? file.getViewProvider().getVirtualFile():null));
         }
-        return myLastXs[i] + xOffset;
+        return myLastXs[i];
       }
     }
 
@@ -1516,10 +1518,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         x += EditorUtil.getSpaceWidth(fontType, this) * (targetColumn - column);
       }
 
-      myLastTargetColumns[myLastPosition] = targetColumn;
-      myLastStartOffsets[myLastPosition] = startOffset;
-      myLastXs[myLastPosition] = x - xOffset;
-      myLastPosition = (myLastPosition + 1) % myLastStartOffsets.length;
+      myLastTargetColumns[myCurrentCachePosition] = targetColumn;
+      myLastStartOffsets[myCurrentCachePosition] = startOffset;
+      myLastXs[myCurrentCachePosition] = x;
+      myLastXOffsets[myCurrentCachePosition] = xOffset;
+      myCurrentCachePosition = (myCurrentCachePosition + 1) % myLastStartOffsets.length;
 
       return x;
     }
@@ -1533,6 +1536,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       myLastTargetColumns[i] = -1;
       myLastStartOffsets[i] = - 1;
       myLastXs[i] = -1;
+      myLastXOffsets[i] = -1;
     }
   }
 
