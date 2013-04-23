@@ -92,7 +92,7 @@ public class DimensionService implements PersistentStateComponent<Element>, Appl
 
     Point point = myKey2Location.get(key);
     if (point != null) {
-      if (!ScreenUtil.getScreenBounds().contains(point)){
+      if (!ScreenUtil.getScreenRectangle(point).contains(point)){
         point = null;
       }
     }

@@ -21,6 +21,7 @@ import com.intellij.openapi.ui.popup.*;
 import com.intellij.openapi.ui.popup.util.MinimizeButton;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.StatusBarEx;
+import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.components.panels.VerticalBox;
 import com.intellij.ui.components.panels.Wrapper;
@@ -183,15 +184,15 @@ public class ProcessPopup  {
     myActiveContentComponent = scrolls;
   }
 
-  private Dimension getEmptyPreferredSize() {
-    final Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+  private static Dimension getEmptyPreferredSize() {
+    final Dimension size = ScreenUtil.getMainScreenBounds().getSize();
     size.width *= 0.3d;
     size.height *= 0.3d;
     return size;
   }
 
-  private Dimension getMinSize() {
-    final Dimension size = Toolkit.getDefaultToolkit().getScreenSize();
+  private static Dimension getMinSize() {
+    final Dimension size = ScreenUtil.getMainScreenBounds().getSize();
     size.width *= 0.1d;
     size.height *= 0.1d;
     return size;

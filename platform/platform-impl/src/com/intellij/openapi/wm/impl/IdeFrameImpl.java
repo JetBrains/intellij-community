@@ -95,8 +95,11 @@ public class IdeFrameImpl extends JFrame implements IdeFrame, DataProvider {
     setRootPane(myRootPane);
     setBackground(UIUtil.getPanelBackground());
     AppUIUtil.updateWindowIcon(this);
-    final Dimension screenSize = Toolkit.getDefaultToolkit().getScreenSize();
-    setBounds(10, 10, screenSize.width - 20, screenSize.height - 40);
+    final Dimension size = ScreenUtil.getMainScreenBounds().getSize();
+    size.width-=20;
+    size.height -=40;
+    setSize(size);
+    setLocationRelativeTo(null);
 
     myLayoutFocusTraversalPolicy = new LayoutFocusTraversalPolicyExt();
     setFocusTraversalPolicy(myLayoutFocusTraversalPolicy);
