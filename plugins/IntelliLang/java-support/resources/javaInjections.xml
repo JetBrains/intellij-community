@@ -67,7 +67,7 @@
   </injection>
   <injection language="RegExp" injector-id="java">
     <display-name>Pattern.regexp (javax.validation.constraints)</display-name>
-    <place><![CDATA[psiParameter().ofMethod(0, psiMethod().withName("regexp").withParameters().definedInClass("javax.validation.constraints.Pattern"))]]></place>
+      <place><![CDATA[psiMethod().withName("regexp").withParameters().definedInClass("javax.validation.constraints.Pattern")]]></place>
   </injection>
   <injection language="HQL" injector-id="java">
     <display-name>Session.createQuery (org.hibernate)</display-name>
