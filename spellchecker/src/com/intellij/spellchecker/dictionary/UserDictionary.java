@@ -30,40 +30,48 @@ public class UserDictionary implements EditableDictionary {
   @NotNull
   private final THashSet<String> words = new THashSet<String>();
 
-  public UserDictionary(String name) {
+  public UserDictionary(@NotNull String name) {
     this.name = name;
   }
 
+  @NotNull
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   @Nullable
-  public Boolean contains(String word) {
+  public Boolean contains(@NotNull String word) {
     boolean contains = words.contains(word);
     if(contains) return true;
     return null;
   }
 
+  @Override
   public int size() {
     return words.size();
   }
 
+  @Override
   @Nullable
   public Set<String> getWords() {
     return words;
   }
 
+  @Override
   @Nullable
   public Set<String> getEditableWords() {
     return words;
   }
 
+  @Override
   public void clear() {
     words.clear();
   }
 
 
+  @Override
   public void addToDictionary(String word) {
     if (word == null) {
       return;
@@ -71,6 +79,7 @@ public class UserDictionary implements EditableDictionary {
     words.add(word);
   }
 
+  @Override
   public void removeFromDictionary(String word) {
     if (word == null) {
       return;
@@ -78,11 +87,13 @@ public class UserDictionary implements EditableDictionary {
     words.remove(word);
   }
 
+  @Override
   public void replaceAll(@Nullable Collection<String> words) {
     clear();
     addToDictionary(words);
   }
 
+  @Override
   public void addToDictionary(@Nullable Collection<String> words) {
     if (words == null || words.isEmpty()) {
       return;
@@ -92,6 +103,7 @@ public class UserDictionary implements EditableDictionary {
     }
   }
 
+  @Override
   public boolean isEmpty() {
     return words.size() == 0;
   }
@@ -107,7 +119,8 @@ public class UserDictionary implements EditableDictionary {
 
   }
 
-  public void traverse(final Consumer<String> consumer) {
+  @Override
+  public void traverse(@NotNull final Consumer<String> consumer) {
     for (String word : words) {
       consumer.consume(word);
     }

@@ -39,10 +39,13 @@ public class ProjectDictionary implements EditableDictionary {
     this.dictionaries = dictionaries;
   }
 
+  @Override
   public boolean isEmpty() {
     return false;
   }
 
+  @NotNull
+  @Override
   public String getName() {
     return DEFAULT_PROJECT_DICTIONARY_NAME;
   }
@@ -52,12 +55,13 @@ public class ProjectDictionary implements EditableDictionary {
   }
 
   public void setActiveName(String name) {
-    this.activeName = name;
+    activeName = name;
   }
 
+  @Override
   @Nullable
-  public Boolean contains(String word) {
-    if (word == null || dictionaries == null) {
+  public Boolean contains(@NotNull String word) {
+    if (dictionaries == null) {
       return false;
     }
     int errors = 0;
@@ -75,10 +79,12 @@ public class ProjectDictionary implements EditableDictionary {
     return false;
   }
 
+  @Override
   public void addToDictionary(String word) {
     getActiveDictionary().addToDictionary(word);
   }
 
+  @Override
   public void removeFromDictionary(String word) {
     getActiveDictionary().removeFromDictionary(word);
   }
@@ -95,7 +101,7 @@ public class ProjectDictionary implements EditableDictionary {
     }
     EditableDictionary result = getDictionaryByName(activeName);
     if (result == null) {
-      result = new UserDictionary(this.activeName);
+      result = new UserDictionary(activeName);
       if (dictionaries == null) {
         dictionaries = new THashSet<EditableDictionary>();
       }
@@ -120,15 +126,18 @@ public class ProjectDictionary implements EditableDictionary {
   }
 
 
+  @Override
   public void replaceAll(@Nullable Collection<String> words) {
     getActiveDictionary().replaceAll(words);
   }
 
+  @Override
   public void clear() {
     getActiveDictionary().clear();
   }
 
 
+  @Override
   @Nullable
   public Set<String> getWords() {
     if (dictionaries == null) {
@@ -141,6 +150,7 @@ public class ProjectDictionary implements EditableDictionary {
     return words;
   }
 
+  @Override
   public int size(){
     int result = 0;
     for (Dictionary dictionary : dictionaries) {
@@ -149,7 +159,8 @@ public class ProjectDictionary implements EditableDictionary {
     return result;
   }
 
-  public void traverse(final Consumer<String> consumer) {
+  @Override
+  public void traverse(@NotNull final Consumer<String> consumer) {
     if (dictionaries == null) {
       return;
     }
@@ -160,12 +171,14 @@ public class ProjectDictionary implements EditableDictionary {
 
   }
 
+  @Override
   @Nullable
   public Set<String> getEditableWords() {
     return getActiveDictionary().getWords();
   }
 
 
+  @Override
   public void addToDictionary(@Nullable Collection<String> words) {
     getActiveDictionary().addToDictionary(words);
   }
