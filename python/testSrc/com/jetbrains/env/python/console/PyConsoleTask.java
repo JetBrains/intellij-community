@@ -97,13 +97,18 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
 
   private void disposeConsole() throws InterruptedException {
     if (myCommunication != null) {
-      try {
-        myCommunication.close();
-      }
-      catch (Exception e) {
-        e.printStackTrace();
-      }
-      myCommunication = null;
+      UIUtil.invokeAndWaitIfNeeded(new Runnable() {
+        @Override
+        public void run() {
+          try {
+            myCommunication.close();
+          }
+          catch (Exception e) {
+            e.printStackTrace();
+          }
+          myCommunication = null;
+        }
+      });
     }
 
     disposeConsoleProcess();
@@ -331,8 +336,13 @@ public class PyConsoleTask extends PyExecutionFixtureTestTask {
     waitFor(mySemaphore);
   }
 
-  protected void execNoWait(String command) {
-    myConsoleView.executeCode(command, null);
+  protected void execNoWait(final String command) {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        myConsoleView.executeCode(command, null);
+      }
+    });
   }
 
   protected void interrupt() {
