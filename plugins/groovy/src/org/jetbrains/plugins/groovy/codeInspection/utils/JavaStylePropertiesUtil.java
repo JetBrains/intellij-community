@@ -59,10 +59,14 @@ public class JavaStylePropertiesUtil {
     String name = getPropertyNameBySetterName(accessorName);
     GrExpression value = call.getExpressionArguments()[0];
     GrReferenceExpression refExpr = (GrReferenceExpression)call.getInvokedExpression();
-    String oldNameStr = refExpr.getReferenceNameElement().getText();
-    String newRefExpr = StringUtil.trimEnd(refExpr.getText(), oldNameStr) + name;
+
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(call.getProject());
-    return (GrAssignmentExpression)factory.createStatementFromText(newRefExpr + " = " + value.getText(), call);
+    final GrAssignmentExpression assignment = (GrAssignmentExpression)factory.createStatementFromText(name + " = xxx", call);
+
+    ((GrReferenceExpression)assignment.getLValue()).setQualifier(refExpr.getQualifier());
+    assignment.getRValue().replaceWithExpression(value, true);
+
+    return assignment;
   }
 
   private static GrExpression genRefForGetter(GrMethodCall call, String accessorName) {
