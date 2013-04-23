@@ -181,10 +181,9 @@ public class SvnConfiguration implements PersistentStateComponent<Element> {
     String groupName = SvnAuthenticationManager.getGroupForHost(host, configFile);
 
     if (StringUtil.isEmptyOrSpaces(groupName)) {
-      groupName = StringUtil.replace(host, " ", "_");
+      groupName = host;
       final Map<String,ProxyGroup> groups = configFile.getAllGroups();
-      while (true) {
-        if (! groups.containsKey(groupName)) break;
+      while (StringUtil.isEmptyOrSpaces(groupName) || groups.containsKey(groupName)) {
         groupName += "1";
       }
     }
