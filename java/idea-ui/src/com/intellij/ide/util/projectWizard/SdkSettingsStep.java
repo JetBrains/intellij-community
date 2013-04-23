@@ -17,9 +17,12 @@ package com.intellij.ide.util.projectWizard;
 
 import com.intellij.CommonBundle;
 import com.intellij.ide.IdeBundle;
+import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
+import com.intellij.openapi.projectRoots.ProjectJdkTable;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.projectRoots.SdkTypeId;
 import com.intellij.openapi.roots.ProjectRootManager;
@@ -31,6 +34,8 @@ import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 
 /**
  * @author Dmitry Avdeev
@@ -52,6 +57,19 @@ public class SdkSettingsStep extends ModuleWizardStep {
 
     myJdkComboBox = new JdkComboBox(myModel, sdkFilter);
 
+    final PropertiesComponent component = project == null ? PropertiesComponent.getInstance() : PropertiesComponent.getInstance(project);
+    ModuleType moduleType = moduleBuilder.getModuleType();
+    final String selectedJdkProperty = "jdk.selected." + (moduleType == null ? "" : moduleType.getId());
+    myJdkComboBox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent e) {
+        Sdk jdk = myJdkComboBox.getSelectedJdk();
+        if (jdk != null) {
+          component.setValue(selectedJdkProperty, jdk.getName());
+        }
+      }
+    });
+
     if (project != null) {
       Sdk sdk = ProjectRootManager.getInstance(project).getProjectSdk();
       if (sdk != null && moduleBuilder.isSuitableSdkType(sdk.getSdkType())) {
@@ -65,6 +83,14 @@ public class SdkSettingsStep extends ModuleWizardStep {
       Sdk sdk = ProjectRootManager.getInstance(defaultProject).getProjectSdk();
       if (sdk != null && sdkFilter.value(sdk.getSdkType())) {
         myJdkComboBox.setSelectedJdk(sdk);
+      }
+    }
+
+    String value = component.getValue(selectedJdkProperty);
+    if (value != null) {
+      Sdk jdk = ProjectJdkTable.getInstance().findJdk(value);
+      if (jdk != null) {
+        myJdkComboBox.setSelectedJdk(jdk);
       }
     }
 

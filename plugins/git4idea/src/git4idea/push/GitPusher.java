@@ -59,6 +59,11 @@ import java.util.concurrent.atomic.AtomicInteger;
  */
 public final class GitPusher {
 
+  /**
+   * if diff-log is not available (new branch is created, for example), we show a few recent commits made on the branch
+   */
+  static final int RECENT_COMMITS_NUMBER = 5;
+  
   @Deprecated
   static final GitRemoteBranch NO_TARGET_BRANCH = new GitStandardRemoteBranch(GitRemote.DOT, "", GitBranch.DUMMY_HASH);
 
@@ -182,7 +187,7 @@ public final class GitPusher {
       List<GitCommit> commits;
       GitPushBranchInfo.Type type;
       if (dest == NO_TARGET_BRANCH) {
-        commits = collectCommitsToPushForNewBranch(repository, source, dest.getRemote());
+        commits = collectRecentCommitsOnBranch(repository, source);
         type = GitPushBranchInfo.Type.NO_TRACKED_OR_TARGET;
       }
       else if (GitUtil.repoContainsRemoteBranch(repository, dest)) {
@@ -190,7 +195,7 @@ public final class GitPusher {
         type = GitPushBranchInfo.Type.STANDARD;
       } 
       else {
-        commits = collectCommitsToPushForNewBranch(repository, source, dest.getRemote());
+        commits = collectRecentCommitsOnBranch(repository, source);
         type = GitPushBranchInfo.Type.NEW_BRANCH;
       }
       commitsByBranch.put(source, new GitPushBranchInfo(source, dest, commits, type));
@@ -199,13 +204,8 @@ public final class GitPusher {
     return new GitCommitsByBranch(commitsByBranch);
   }
 
-  @NotNull
-  private static List<GitCommit> collectCommitsToPushForNewBranch(@NotNull GitRepository repository, @NotNull GitBranch source,
-                                                                  @NotNull GitRemote remote) throws VcsException {
-    // `git log new_branch --not --remotes=origin`
-    // shows all commits that are in the given branch, but not in any remote branches in the given remote
-    return GitHistoryUtils.history(repository.getProject(), repository.getRoot(),
-                                   source.getName(), "--not", "--remotes=" + remote.getName());
+  private List<GitCommit> collectRecentCommitsOnBranch(GitRepository repository, GitBranch source) throws VcsException {
+    return GitHistoryUtils.history(myProject, repository.getRoot(), "--max-count=" + RECENT_COMMITS_NUMBER, source.getName());
   }
 
   @NotNull
@@ -239,12 +239,7 @@ public final class GitPusher {
     
     GitCommitsByRepoAndBranch commits = pushInfo.getCommits();
     for (GitRepository repository : commits.getRepositories()) {
-      GitCommitsByBranch commitsForRepo = commits.get(repository);
-      GitLocalBranch sourceBranch = pushInfo.getPushSpecs().get(repository).getSource();
-      if (commitsForRepo.get(sourceBranch).getType() == GitPushBranchInfo.Type.STANDARD &&
-          commitsForRepo.getAllCommits().size() == 0) {
-         // don't push repositories where there is nothing to push.
-         // however, do push if new branch is created, even without commits
+      if (commits.get(repository).getAllCommits().size() == 0) {  // don't push repositories where there is nothing to push. Note that when a branch is created, several recent commits are stored in the pushInfo.
         continue;
       }
       GitPushRepoResult repoResult = pushRepository(pushInfo, commits, repository);

@@ -157,7 +157,7 @@ public class ChunkExtractor {
     final CharSequence chars = myDocument.getCharsSequence();
     if (lineEndOffset - lineStartOffset > MAX_LINE_LENGTH_TO_SHOW) {
       Segment segment = usageInfo2UsageAdapter.getUsageInfo().getSegment();
-      int usage_length = segment.getEndOffset() - segment.getStartOffset();
+      int usage_length = segment != null ? segment.getEndOffset() - segment.getStartOffset():0;
       lineStartOffset = Math.max(lineStartOffset, absoluteStartOffset - OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE);
       lineEndOffset = Math.min(lineEndOffset, absoluteStartOffset + usage_length + OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE);
     }

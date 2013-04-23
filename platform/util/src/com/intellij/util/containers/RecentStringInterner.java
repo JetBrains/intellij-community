@@ -1,7 +1,6 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.util.containers.SLRUCache;
 import jsr166e.SequenceLock;
 import org.jetbrains.annotations.NotNull;
 
@@ -24,6 +23,7 @@ public class RecentStringInterner {
 
   public RecentStringInterner(int capacity) {
     final int stripes = 16;
+    //noinspection unchecked
     myInterns = new SLRUCache[stripes];
     myStripeLocks = new Lock[myInterns.length];
     for(int i = 0; i < myInterns.length; ++i) {
@@ -32,6 +32,26 @@ public class RecentStringInterner {
         @Override
         public String createValue(String key) {
           return key;
+        }
+
+        @NotNull
+        @Override
+        public String get(String key) {
+          String value = myProtectedQueue.get(key);
+          if (value == null) {
+            value = myProbationalQueue.remove(key);
+            if (value != null) {
+              myProtectedQueue.put(value, value);
+            }
+          }
+          if (value != null) {
+            return value;
+          }
+
+          value = key;
+          put(key, value);
+
+          return value;
         }
       };
       myStripeLocks[i] = new SequenceLock();
@@ -43,7 +63,7 @@ public class RecentStringInterner {
       @Override
       public void run() {
         clear();
-      };
+      }
     });
   }
 

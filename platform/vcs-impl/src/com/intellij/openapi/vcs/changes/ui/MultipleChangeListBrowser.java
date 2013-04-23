@@ -24,6 +24,7 @@ package com.intellij.openapi.vcs.changes.ui;
 
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
@@ -205,12 +206,16 @@ public class MultipleChangeListBrowser extends ChangesBrowser {
   protected void buildToolBar(final DefaultActionGroup toolBarGroup) {
     super.buildToolBar(toolBarGroup);
 
-    final MoveChangesToAnotherListAction moveAction = new MoveChangesToAnotherListAction() {
-      public void actionPerformed(AnActionEvent e) {
-        super.actionPerformed(e);
-        rebuildList();
+    ActionManager actionManager = ActionManager.getInstance();
+    final AnAction moveAction = actionManager.getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST);
+    actionManager.addAnActionListener(new AnActionListener.Adapter() {
+      @Override
+      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        if (moveAction.equals(action)) {
+          rebuildList();
+        }
       }
-    };
+    });
 
     moveAction.registerCustomShortcutSet(CommonShortcuts.getMove(), myViewer);
     toolBarGroup.add(moveAction);

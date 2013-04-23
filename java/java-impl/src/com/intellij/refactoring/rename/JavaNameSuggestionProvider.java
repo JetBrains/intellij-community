@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.NameUtil;
 import com.intellij.psi.codeStyle.SuggestedNameInfo;
 import com.intellij.psi.codeStyle.VariableKind;
 import com.intellij.psi.util.PropertyUtil;
+import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.usageView.UsageViewUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -33,48 +34,23 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
   @Nullable
   public SuggestedNameInfo getSuggestedNames(final PsiElement element, final PsiElement nameSuggestionContext, Set<String> result) {
     String initialName = UsageViewUtil.getShortName(element);
-    SuggestedNameInfo info = suggestNamesForElement(element);
+    SuggestedNameInfo info = suggestNamesForElement(element, nameSuggestionContext);
     if (info != null) {
       info = JavaCodeStyleManager.getInstance(element.getProject()).suggestUniqueVariableName(info, element, true, true);
     }
 
     String parameterName = null;
     String superMethodName = null;
-    if (nameSuggestionContext != null) {
+    if (nameSuggestionContext instanceof PsiParameter) {
       final PsiElement nameSuggestionContextParent = nameSuggestionContext.getParent();
-      if (nameSuggestionContextParent != null) {
+      if (nameSuggestionContextParent instanceof PsiParameterList) {
         final PsiElement parentOfParent = nameSuggestionContextParent.getParent();
-        if (parentOfParent instanceof PsiExpressionList) {
-          final PsiExpressionList expressionList = (PsiExpressionList)parentOfParent;
-          final PsiElement parent = expressionList.getParent();
-          if (parent instanceof PsiCallExpression) {
-            final PsiMethod method = ((PsiCallExpression)parent).resolveMethod();
-            if (method != null) {
-              final PsiParameter[] parameters = method.getParameterList().getParameters();
-              final PsiExpression[] expressions = expressionList.getExpressions();
-              for (int i = 0; i < expressions.length; i++) {
-                PsiExpression expression = expressions[i];
-                if (expression == nameSuggestionContextParent) {
-                  if (i < parameters.length) {
-                    parameterName = parameters[i].getName();
-                  }
-                  break;
-                }
-              }
-            }
+        if (parentOfParent instanceof PsiMethod) {
+          final String propName = PropertyUtil.getPropertyName((PsiMethod)parentOfParent);
+          if (propName != null) {
+            parameterName = propName;
           }
-        }
-        else if (parentOfParent instanceof PsiParameterList) {
-          final PsiElement parent3 = parentOfParent.getParent();
-          if (parent3 instanceof PsiMethod) {
-            final String propName = PropertyUtil.getPropertyName((PsiMethod)parent3);
-            if (propName != null) {
-              parameterName = propName;
-            }
-            if (nameSuggestionContextParent instanceof PsiParameter) {
-              superMethodName = getSuperMethodName((PsiParameter) nameSuggestionContextParent, (PsiMethod) parent3);
-            }
-          }
+          superMethodName = getSuperMethodName((PsiParameter) nameSuggestionContext, (PsiMethod) parentOfParent);
         }
       }
     }
@@ -166,7 +142,7 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
   }
 
   @Nullable
-  private static SuggestedNameInfo suggestNamesForElement(final PsiElement element) {
+  private static SuggestedNameInfo suggestNamesForElement(final PsiElement element, PsiElement nameSuggestionContext) {
     PsiVariable var = null;
     if (element instanceof PsiVariable) {
       var = (PsiVariable)element;
@@ -182,7 +158,13 @@ public class JavaNameSuggestionProvider implements NameSuggestionProvider {
 
     JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(element.getProject());
     VariableKind variableKind = codeStyleManager.getVariableKind(var);
-    return codeStyleManager.suggestVariableName(variableKind, null, var.getInitializer(), var.getType());
+    final SuggestedNameInfo nameInfo = codeStyleManager.suggestVariableName(variableKind, null, var.getInitializer(), var.getType());
+    final PsiExpression expression = PsiTreeUtil.getParentOfType(nameSuggestionContext, PsiExpression.class, false);
+    if (expression != null) {
+      return new SuggestedNameInfo.Delegate(codeStyleManager.suggestVariableName(variableKind, null, expression, var.getType()).names, nameInfo);
+      
+    }
+    return nameInfo;
   }
 
 }
