@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public class ActionLink extends LinkLabel implements DataProvider {
     setListener(new LinkListener() {
       @Override
       public void linkSelected(LinkLabel aSource, Object aLinkData) {
-        final Presentation presentation = (Presentation)myAction.getTemplatePresentation().clone();
+        final Presentation presentation = myAction.getTemplatePresentation().clone();
         final AnActionEvent event = new AnActionEvent(myEvent,
                                                       DataManager.getInstance().getDataContext(ActionLink.this),
                                                       myPlace,
