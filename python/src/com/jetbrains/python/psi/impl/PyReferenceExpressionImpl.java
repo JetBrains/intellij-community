@@ -16,6 +16,7 @@ import com.jetbrains.python.PyTokenTypes;
 import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
+import com.jetbrains.python.codeInsight.dataflow.scope.ScopeUtil;
 import com.jetbrains.python.console.PydevConsoleRunner;
 import com.jetbrains.python.console.completion.PydevConsoleReference;
 import com.jetbrains.python.console.pydev.ConsoleCommunication;
@@ -204,7 +205,9 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         }
       }
       ResolveResult[] targets = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context)).multiResolve(false);
-      if (targets.length == 0) return null;
+      if (targets.length == 0) {
+        return getQualifiedReferenceTypeByControlFlow(context);
+      }
       for (ResolveResult resolveResult : targets) {
         PsiElement target = resolveResult.getElement();
         if (target == this || target == null) {
@@ -224,6 +227,24 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     finally {
       TypeEvalStack.evaluated(this);
     }
+  }
+
+  @Nullable
+  public PyType getQualifiedReferenceTypeByControlFlow(@NotNull TypeEvalContext context) {
+    PyExpression qualifier = getQualifier();
+    if (context.allowDataFlow(this) && qualifier != null) {
+      PyExpression next = qualifier;
+      while (next != null) {
+        qualifier = next;
+        next = qualifier instanceof PyQualifiedExpression ? ((PyQualifiedExpression)qualifier).getQualifier() : null;
+      }
+      final ScopeOwner scopeOwner = ScopeUtil.getScopeOwner(this);
+      final PyQualifiedName qname = asQualifiedName();
+      if (qname != null && scopeOwner != null) {
+        return getTypeByControlFlow(qname.toString(), context, qualifier, scopeOwner);
+      }
+    }
+    return null;
   }
 
   @Nullable
@@ -309,22 +330,12 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
     if ((target instanceof PyTargetExpression || target instanceof PyNamedParameter) && anchor != null && context.allowDataFlow(anchor)) {
       final ScopeOwner scopeOwner = PsiTreeUtil.getStubOrPsiParentOfType(anchor, ScopeOwner.class);
       if (scopeOwner != null && scopeOwner == PsiTreeUtil.getStubOrPsiParentOfType(target, ScopeOwner.class)) {
-        PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(anchor, PyAugAssignmentStatement.class);
-        try {
-          final List<ReadWriteInstruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner,
-                                                                             ((PyElement)target).getName(),
-                                                                             augAssignment != null ? augAssignment : anchor,
-                                                                             true);
-          if (!defs.isEmpty()) {
-            PyType type = defs.get(0).getType(context, anchor);
-            for (int i = 1; i < defs.size(); i++) {
-              type = PyUnionType.union(type, defs.get(i).getType(context, anchor));
-            }
+        final String name = ((PyElement)target).getName();
+        if (name != null) {
+          final PyType type = getTypeByControlFlow(name, context, anchor, scopeOwner);
+          if (type != null) {
             return type;
           }
-        }
-        catch (PyDefUseUtil.InstructionNotFoundException e) {
-          // ignore
         }
       }
     }
@@ -352,6 +363,27 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
       if (file != null) {
         return getTypeFromTarget(file, context, anchor);
       }
+    }
+    return null;
+  }
+
+  private static PyType getTypeByControlFlow(@NotNull String name,
+                                            @NotNull TypeEvalContext context,
+                                            @NotNull PyExpression anchor,
+                                            @NotNull ScopeOwner scopeOwner) {
+    PyAugAssignmentStatement augAssignment = PsiTreeUtil.getParentOfType(anchor, PyAugAssignmentStatement.class);
+    try {
+      final PyElement element = augAssignment != null ? augAssignment : anchor;
+      final List<ReadWriteInstruction> defs = PyDefUseUtil.getLatestDefs(scopeOwner, name, element, true);
+      if (!defs.isEmpty()) {
+        PyType type = defs.get(0).getType(context, anchor);
+        for (int i = 1; i < defs.size(); i++) {
+          type = PyUnionType.union(type, defs.get(i).getType(context, anchor));
+        }
+        return type;
+      }
+    }
+    catch (PyDefUseUtil.InstructionNotFoundException ignored) {
     }
     return null;
   }

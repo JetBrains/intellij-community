@@ -497,6 +497,45 @@ public class PyTypeTest extends PyTestCase {
            "        expr = x\n");
   }
 
+  // PY-5614
+  public void testUnknownReferenceTypeAttribute() {
+    doTest("str",
+           "def f(x):\n" +
+           "    if isinstance(x.foo, str):\n" +
+           "        expr = x.foo\n");
+  }
+
+  // PY-5614
+  public void testUnknownTypeAttribute() {
+    doTest("str",
+           "class C(object):\n" +
+           "    def __init__(self, foo):\n" +
+           "        self.foo = foo\n" +
+           "    def f(self):\n" +
+           "        if isinstance(self.foo, str):\n" +
+           "            expr = self.foo\n");
+  }
+
+  // PY-5614
+  public void testKnownTypeAttribute() {
+    doTest("str",
+           "class C(object):\n" +
+           "    def __init__(self):\n" +
+           "        self.foo = 42\n" +
+           "    def f(self):\n" +
+           "        if isinstance(self.foo, str):\n" +
+           "            expr = self.foo\n");
+  }
+
+  // PY-5614
+  public void testNestedUnknownReferenceTypeAttribute() {
+    doTest("str",
+           "def f(x):\n" +
+           "    if isinstance(x.foo.bar, str):\n" +
+           "        expr = x.foo.bar\n");
+
+  }
+
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);

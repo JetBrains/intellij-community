@@ -160,6 +160,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
               if (typeOfProperty != null) {
                 return typeOfProperty.get();
               }
+              final PyType cfgType = refex.getQualifiedReferenceTypeByControlFlow(context);
+              if (cfgType != null) {
+                return cfgType;
+              }
               return typeFromTarget;
             }
           }

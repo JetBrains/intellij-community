@@ -12,6 +12,7 @@ import com.jetbrains.python.codeInsight.controlflow.ReadWriteInstruction;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.PyAugAssignmentStatementNavigator;
+import com.jetbrains.python.psi.impl.PyQualifiedName;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -74,6 +75,12 @@ public class PyDefUseUtil {
   private static String elementName(PsiElement element) {
     if (element instanceof PyImportElement) {
       return ((PyImportElement) element).getVisibleName();
+    }
+    if (element instanceof PyReferenceExpression) {
+      final PyQualifiedName qname = ((PyReferenceExpression)element).asQualifiedName();
+      if (qname != null) {
+        return qname.toString();
+      }
     }
     return element instanceof PyElement ? ((PyElement)element).getName() : null;
   }
