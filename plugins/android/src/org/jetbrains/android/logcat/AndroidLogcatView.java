@@ -374,7 +374,10 @@ public abstract class AndroidLogcatView implements Disposable {
 
   private void updateLogConsole() {
     IDevice device = getSelectedDevice();
-    myClearLogButton.setEnabled(device != null);
+
+    if (myClearLogButton != null) {
+      myClearLogButton.setEnabled(device != null);
+    }
 
     if (myDevice != device) {
       synchronized (myLock) {
