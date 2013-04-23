@@ -120,7 +120,7 @@ public class UnversionedViewDialog extends DialogWrapper {
     actions.add(new ToggleShowFlattenAction());
 
     AnAction addAction = ActionManager.getInstance().getAction("ChangesView.AddUnversioned.From.Dialog");
-    AnAction moveAction = ActionManager.getInstance().getAction("ChangesView.Move");
+    AnAction moveAction = ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST);
     AnAction deleteAction = ActionManager.getInstance().getAction("ChangesView.DeleteUnversioned.From.Dialog");
     AnAction ignoreAction = ActionManager.getInstance().getAction("ChangesView.Ignore");
 

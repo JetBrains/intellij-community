@@ -260,4 +260,5 @@ public interface IdeActions {
   String CHANGES_VIEW_ROLLBACK = "ChangesView.Rollback";
 
   String CONSOLE_CLEAR_ALL = "ConsoleView.ClearAll";
+  String MOVE_TO_ANOTHER_CHANGE_LIST = "ChangesView.Move";
 }
