@@ -35,10 +35,6 @@ import java.util.List;
  */
 public interface QuickMergeInteraction {
   void setTitle(@NotNull final String title);
-  /**
-   * @return {@link com.intellij.openapi.ui.Messages.CANCEL} - cancel,
-   * {@link com.intellij.openapi.ui.Messages.OK} - merge all, {@link com.intellij.openapi.ui.Messages.NO} - select revisions to merge
-   */
   QuickMergeContentsVariants selectMergeVariant();
   boolean shouldContinueSwitchedRootFound();
 
