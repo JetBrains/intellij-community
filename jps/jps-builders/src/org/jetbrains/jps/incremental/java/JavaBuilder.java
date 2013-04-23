@@ -507,6 +507,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
 
   private static final Key<List<String>> JAVAC_OPTIONS = Key.create("_javac_options_");
   private static final Key<List<String>> JAVAC_VM_OPTIONS = Key.create("_javac_vm_options_");
+  private static final Key<String> USER_DEFINED_BYTECODE_TARGET = Key.create("_user_defined_bytecode_target_");
 
   private static List<String> getCompilationVMOptions(CompileContext context) {
     List<String> cached = JAVAC_VM_OPTIONS.get(context);
@@ -580,6 +581,13 @@ public class JavaBuilder extends ModuleLevelBuilder {
         }
       }
     }
+    
+    if (bytecodeTarget == null) {
+      // last resort and backward compatibility: 
+      // check if user explicitly defined bytecode target in additional compiler options
+      bytecodeTarget = USER_DEFINED_BYTECODE_TARGET.get(context);
+    }
+    
     if (bytecodeTarget != null) {
       options.add("-target");
       options.add(bytecodeTarget);
@@ -684,13 +692,22 @@ public class JavaBuilder extends ModuleLevelBuilder {
     if (customArgs != null) {
       final StringTokenizer customOptsTokenizer = new StringTokenizer(customArgs, " \t\r\n");
       boolean skip = false;
+      boolean targetOptionFound = false;
       while (customOptsTokenizer.hasMoreTokens()) {
         final String userOption = customOptsTokenizer.nextToken();
         if (FILTERED_OPTIONS.contains(userOption)) {
           skip = true;
+          targetOptionFound = "-target".equals(userOption);
           continue;
         }
-        if (!skip) {
+        if (skip) {
+          skip = false;
+          if (targetOptionFound) {
+            targetOptionFound = false;
+            USER_DEFINED_BYTECODE_TARGET.set(context, userOption);
+          }
+        }
+        else {
           if (!FILTERED_SINGLE_OPTIONS.contains(userOption)) {
             if (userOption.startsWith("-J-")) {
               vmOptions.add(userOption.substring("-J".length()));

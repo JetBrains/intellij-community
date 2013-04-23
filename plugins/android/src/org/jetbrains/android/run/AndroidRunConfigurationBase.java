@@ -25,41 +25,38 @@ import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.executors.DefaultDebugExecutor;
 import com.intellij.execution.executors.DefaultRunExecutor;
+import com.intellij.execution.process.ProcessHandler;
+import com.intellij.execution.process.ProcessOutputTypes;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ModuleOrderEntry;
-import com.intellij.openapi.roots.ModuleRootManager;
-import com.intellij.openapi.roots.OrderEntry;
 import com.intellij.openapi.roots.ui.configuration.ClasspathEditor;
 import com.intellij.openapi.roots.ui.configuration.ModulesConfigurator;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.DefaultJDOMExternalizer;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.WriteExternalException;
-import com.intellij.psi.xml.XmlAttributeValue;
-import com.intellij.util.PsiNavigateUtil;
-import com.intellij.util.containers.HashMap;
-import com.intellij.util.xml.GenericAttributeValue;
+import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.PathUtil;
 import org.jdom.Element;
 import org.jetbrains.android.dom.manifest.Application;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.facet.AndroidFacetConfiguration;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.sdk.AndroidPlatform;
 import org.jetbrains.android.sdk.AndroidSdkUtils;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -148,32 +145,6 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     TARGET_SELECTION_MODE = mode.name();
   }
 
-  private static boolean fillRuntimeAndTestDependencies(@NotNull Module module,
-                                                        @NotNull Map<AndroidFacet, String> module2PackageName) {
-    for (OrderEntry entry : ModuleRootManager.getInstance(module).getOrderEntries()) {
-      if (entry instanceof ModuleOrderEntry) {
-        ModuleOrderEntry moduleOrderEntry = (ModuleOrderEntry)entry;
-        Module depModule = moduleOrderEntry.getModule();
-        if (depModule != null) {
-          AndroidFacet depFacet = AndroidFacet.getInstance(depModule);
-          if (depFacet != null &&
-              !module2PackageName.containsKey(depFacet) &&
-              !depFacet.getProperties().LIBRARY_PROJECT) {
-            String packageName = getPackageName(depFacet);
-            if (packageName == null) {
-              return false;
-            }
-            module2PackageName.put(depFacet, packageName);
-            if (!fillRuntimeAndTestDependencies(depModule, module2PackageName)) {
-              return false;
-            }
-          }
-        }
-      }
-    }
-    return true;
-  }
-
   public AndroidRunningState getState(@NotNull final Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
     final Module module = getConfigurationModule().getModule();
     if (module == null) {
@@ -217,12 +188,6 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
 
     if (platform.getSdkData().getDebugBridge(getProject()) == null) return null;
 
-    String aPackage = getPackageName(facet);
-    if (aPackage == null) return null;
-
-    Map<AndroidFacet, String> depModule2PackageName = new HashMap<AndroidFacet, String>();
-    if (!fillRuntimeAndTestDependencies(module, depModule2PackageName)) return null;
-
     TargetChooser targetChooser = null;
     switch (getTargetSelectionMode()) {
       case SHOW_DIALOG:
@@ -242,36 +207,35 @@ public abstract class AndroidRunConfigurationBase extends ModuleBasedConfigurati
     AndroidApplicationLauncher applicationLauncher = getApplicationLauncher(facet);
     if (applicationLauncher != null) {
       final boolean supportMultipleDevices = supportMultipleDevices() && executor.getId().equals(DefaultRunExecutor.EXECUTOR_ID);
-      return new AndroidRunningState(env, facet, targetChooser, computeCommandLine(), aPackage, applicationLauncher,
-                                     depModule2PackageName, supportMultipleDevices, CLEAR_LOGCAT, this, nonDebuggableOnDevice);
+      return new AndroidRunningState(env, facet, targetChooser, computeCommandLine(), applicationLauncher,
+                                     supportMultipleDevices, CLEAR_LOGCAT, this, nonDebuggableOnDevice);
     }
     return null;
   }
 
   @Nullable
-  private static String getPackageName(AndroidFacet facet) {
-    if (facet.getProperties().USE_CUSTOM_MANIFEST_PACKAGE) {
-      return facet.getProperties().CUSTOM_MANIFEST_PACKAGE;
+  protected static Pair<File, String> getCopyOfCompilerManifestFile(@NotNull AndroidFacet facet, @Nullable ProcessHandler processHandler) {
+    final VirtualFile manifestFile = AndroidRootUtil.getCustomManifestFileForCompiler(facet);
+
+    if (manifestFile == null) {
+      return null;
     }
-    else {
-      Manifest manifest = facet.getManifest();
-      if (manifest == null) return null;
-      GenericAttributeValue<String> packageAttrValue = manifest.getPackage();
-      String aPackage = packageAttrValue.getValue();
-      if (aPackage == null || aPackage.length() == 0) {
-        Project project = facet.getModule().getProject();
-        Messages.showErrorDialog(project, AndroidBundle.message("specify.main.package.error", facet.getModule().getName()),
-                                 CommonBundle.getErrorTitle());
-        XmlAttributeValue attrValue = packageAttrValue.getXmlAttributeValue();
-        if (attrValue != null) {
-          PsiNavigateUtil.navigate(attrValue);
-        }
-        else {
-          PsiNavigateUtil.navigate(manifest.getXmlElement());
-        }
-        return null;
+    File tmpDir = null;
+    try {
+      tmpDir = FileUtil.createTempDirectory("android_manifest_file_for_execution", "tmp");
+      final File manifestCopy = new File(tmpDir, manifestFile.getName());
+      FileUtil.copy(new File(manifestFile.getPath()), manifestCopy);
+      return Pair.create(manifestCopy, PathUtil.getLocalPath(manifestFile));
+    }
+    catch (IOException e) {
+      if (processHandler != null) {
+        processHandler.notifyTextAvailable("I/O error: " + e.getMessage(), ProcessOutputTypes.STDERR);
       }
-      return aPackage;
+      LOG.info(e);
+      if (tmpDir != null) {
+        FileUtil.delete(tmpDir);
+      }
+      return null;
     }
   }
 

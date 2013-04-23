@@ -18,6 +18,7 @@ package org.jetbrains.android.dom.layout;
 import com.intellij.psi.PsiClass;
 import com.intellij.util.xml.Attribute;
 import com.intellij.util.xml.Convert;
+import com.intellij.util.xml.DefinesXml;
 import com.intellij.util.xml.GenericAttributeValue;
 import org.jetbrains.android.dom.AndroidAttributeValue;
 import org.jetbrains.android.dom.converters.FragmentClassConverter;
@@ -25,6 +26,7 @@ import org.jetbrains.android.dom.converters.FragmentClassConverter;
 /**
  * @author Eugene.Kudelevsky
  */
+@DefinesXml
 public interface Fragment extends LayoutElement {
   @Attribute("name")
   @Convert(FragmentClassConverter.class)

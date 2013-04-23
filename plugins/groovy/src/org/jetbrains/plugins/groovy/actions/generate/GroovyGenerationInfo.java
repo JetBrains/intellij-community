@@ -36,6 +36,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
+import org.jetbrains.plugins.groovy.refactoring.GroovyChangeContextUtil;
 
 import static org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil.isWhiteSpace;
 
@@ -55,6 +56,13 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
 
   @Override
   public void insert(@NotNull PsiClass aClass, @Nullable PsiElement anchor, boolean before) throws IncorrectOperationException {
+
+    final T proto = getPsiMember();
+    if (proto instanceof GrMethod) {
+      GroovyChangeContextUtil.encodeContextInfo(((GrMethod)proto).getParameterList());
+    }
+
+
     super.insert(aClass, anchor, before);
 
     final T member = getPsiMember();
@@ -64,13 +72,23 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(member.getProject());
 
     final PsiElement prev = member.getPrevSibling();
-    if (prev!=null && GroovyTokenTypes.mNLS == prev.getNode().getElementType()) {
+    if (prev != null && GroovyTokenTypes.mNLS == prev.getNode().getElementType()) {
       prev.replace(factory.createLineTerminator(1));
+    }
+    else if (prev instanceof PsiMember) {
+      member.getParent().getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", member.getNode());
     }
 
     final PsiElement next = member.getNextSibling();
     if (next != null && GroovyTokenTypes.mNLS == next.getNode().getElementType()) {
       next.replace(factory.createLineTerminator(1));
+    }
+    else if (next instanceof PsiMember) {
+      member.getParent().getNode().addLeaf(GroovyTokenTypes.mNLS, "\n", next.getNode());
+    }
+
+    if (member instanceof GrMethod) {
+      GroovyChangeContextUtil.decodeContextInfo(((GrMethod)member).getParameterList(), null, null);
     }
 
     GrReferenceAdjuster.shortenReferences(member);

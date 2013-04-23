@@ -33,12 +33,14 @@ import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.RefreshQueue;
+import com.intellij.util.SmartList;
 import com.intellij.util.io.storage.HeavyProcessLatch;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.UIUtil;
@@ -219,23 +221,23 @@ public class StartupManagerImpl extends StartupManagerEx {
     VirtualFile[] roots = ProjectRootManager.getInstance(myProject).getContentRoots();
     if (roots.length == 0) return;
 
-    boolean nonWatched = false;
-    loop:
+    List<String> nonWatched = new SmartList<String>();
     for (VirtualFile root : roots) {
       if (!(root.getFileSystem() instanceof LocalFileSystem)) continue;
       String rootPath = root.getPath();
       for (String manualWatchRoot : manualWatchRoots) {
         if (FileUtil.isAncestor(manualWatchRoot, rootPath, false)) {
-          LOG.info("'" + root + "' is under manual watch root '" + manualWatchRoot + "', others are " + manualWatchRoot);
-          nonWatched = true;
-          break loop;
+          nonWatched.add(rootPath);
         }
       }
     }
 
-    if (nonWatched) {
+    if (!nonWatched.isEmpty()) {
+      LOG.info("unwatched roots: " + nonWatched);
+      LOG.info("manual watches: " + manualWatchRoots);
       String title = ApplicationBundle.message("watcher.slow.sync");
       String message = ApplicationBundle.message("watcher.non.watchable.project");
+      StringUtil.join(nonWatched, "<br>");
       Notifications.Bus.notify(FileWatcher.NOTIFICATION_GROUP.getValue().createNotification(title, message, NotificationType.WARNING, null));
     }
   }

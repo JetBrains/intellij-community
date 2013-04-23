@@ -28,6 +28,16 @@
     <orderEntry type="library" scope="TEST" name="Groovy" level="project" />
     <orderEntry type="module" module-name="jps-builders" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="library" name="Xerces" level="project" />
+    <orderEntry type="module-library">
+      <library name="DTDParser">
+        <CLASSES>
+          <root url="jar://$MODULE_DIR$/lib/dtdparser113.jar!/" />
+        </CLASSES>
+        <JAVADOC />
+        <SOURCES />
+      </library>
+    </orderEntry>
   </component>
 </module>
 

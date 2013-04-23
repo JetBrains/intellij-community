@@ -19,6 +19,9 @@ public class JavaCompletion1 {
     n5 = R.styleable.MyStyleable_android_text;
     int n6 = R.plurals.plural1;
     n6 = R.plurals.<error>plural2</error>;
+    int n7 = R.fraction.my_fraction1;
+    n7 = R.fraction.my_fraction2;
+    n7 = R.fraction.<error>my_fraction3</error>;
 
     switch(n1) {
       case R.string.my_string:

@@ -1,0 +1,10 @@
+<resources>
+  <style name="mySt<caret>yle">
+  </style>
+
+  <style name="myStyle.st">
+  </style>
+
+  <style name="s1" parent="myStyle.st">
+  </style>
+</resources>

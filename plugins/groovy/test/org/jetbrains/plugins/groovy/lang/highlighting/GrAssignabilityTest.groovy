@@ -512,4 +512,128 @@ Money d = [amount: 100, currency:'USA']
 ''')
   }
 
+  void testArrayAccess() {
+    testHighlighting('''\
+int [] i = [1, 2]
+
+print i[1]
+print i<warning descr="'getAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.Integer, java.lang.Integer)'">[1, 2]</warning>
+print i[1..2]
+print i['a']
+print i<warning descr="'getAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.String, java.lang.String)'">['a', 'b']</warning>
+''')
+  }
+
+  void testArrayAccess2() {
+    testHighlighting('''\
+int[] i() { [1, 2] }
+
+print i()[1]
+print i()<warning descr="'getAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.Integer, java.lang.Integer)'">[1, 2]</warning>
+print i()[1..2]
+print i()['a']
+print i()<warning descr="'getAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.String, java.lang.String)'">['a', 'b']</warning>
+''')
+  }
+
+  void testArrayAccess3() {
+    testHighlighting('''\
+class X {
+  def getAt(int x) {''}
+}
+
+X i() { new X() }
+
+print i()[1]
+print i()<warning descr="'getAt' in 'X' cannot be applied to '(java.lang.Integer, java.lang.Integer)'">[1, 2]</warning>
+print i()<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer..java.lang.Integer])'">[1..2]</warning>
+print i()['a']
+print i()<warning descr="'getAt' in 'X' cannot be applied to '(java.lang.String, java.lang.String)'">['a', 'b']</warning>
+''')
+  }
+
+  void testArrayAccess4() {
+    testHighlighting('''\
+class X {
+  def getAt(int x) {''}
+}
+
+X i = new X()
+
+print i[1]
+print i<warning descr="'getAt' in 'X' cannot be applied to '(java.lang.Integer, java.lang.Integer)'">[1, 2]</warning>
+print i<warning descr="'getAt' in 'X' cannot be applied to '([java.lang.Integer..java.lang.Integer])'">[1..2]</warning>
+print i['a']
+print i<warning descr="'getAt' in 'X' cannot be applied to '(java.lang.String, java.lang.String)'">['a', 'b']</warning>
+''')
+  }
+
+  void testArrayAccess5() {
+    testHighlighting('''\
+print a<warning descr="Cannot resolve index access with arguments (java.lang.Integer)">[1]</warning>
+''')
+  }
+
+  void testArrayAccess6() {
+    testHighlighting('''\
+int[] i = [1, 2]
+
+i[1] = 2
+i<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.Integer, java.lang.Integer, java.lang.Integer)'">[1, 2]</warning> = 2
+i<warning descr="Cannot resolve index access with arguments (java.lang.Integer, java.lang.String)">[1]</warning> = 'a'
+i['a'] = 'b'
+i<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.String, java.lang.String, java.lang.Integer)'">['a', 'b']</warning> = 1
+''')
+  }
+
+  void testArrayAccess7() {
+    testHighlighting('''\
+int[] i() { [1, 2] }
+
+i()[1] = 2
+i()<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.Integer, java.lang.Integer, java.lang.Integer)'">[1, 2]</warning> = 2
+i()<warning descr="Cannot resolve index access with arguments (java.lang.Integer, java.lang.String)">[1]</warning> = 'a'
+i()['a'] = 'b'
+i()<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.String, java.lang.String, java.lang.Integer)'">['a', 'b']</warning> = 1
+''')
+  }
+
+  void testArrayAccess8() {
+    testHighlighting('''\
+class X {
+  def putAt(int x, int y) {''}
+}
+
+X i() { new X() }
+
+i()[1] = 2
+i()<warning descr="'putAt' in 'X' cannot be applied to '(java.lang.Integer, java.lang.Integer, java.lang.Integer)'">[1, 2]</warning> = 2
+i()<warning descr="'putAt' in 'X' cannot be applied to '(java.lang.Integer, java.lang.String)'">[1]</warning> = 'a'
+i()['a'] = 'b'
+i()<warning descr="'putAt' in 'X' cannot be applied to '(java.lang.String, java.lang.String, java.lang.Integer)'">['a', 'b']</warning> = 1
+''')
+  }
+
+  void testArrayAccess9() {
+    testHighlighting('''\
+class X {
+  def putAt(int x, int y) {''}
+}
+
+X i = new X()
+
+i[1] = 2
+i<warning descr="'putAt' in 'X' cannot be applied to '(java.lang.Integer, java.lang.Integer, java.lang.Integer)'">[1, 2]</warning> = 2
+i<warning descr="'putAt' in 'X' cannot be applied to '(java.lang.Integer, java.lang.String)'">[1]</warning> = 'a'
+i['a'] = 'b'
+i<warning descr="'putAt' in 'X' cannot be applied to '(java.lang.String, java.lang.String, java.lang.Integer)'">['a', 'b']</warning> = 1
+''')
+  }
+
+  void testArrayAccess10() {
+    testHighlighting('''\
+a<warning descr="Cannot resolve index access with arguments (java.lang.Integer, java.lang.Integer)">[1]</warning> = 2
+''')
+  }
+
 }

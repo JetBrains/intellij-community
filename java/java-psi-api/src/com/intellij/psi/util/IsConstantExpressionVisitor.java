@@ -87,6 +87,11 @@ public class IsConstantExpressionVisitor extends JavaElementVisitor {
     for (PsiExpression operand : expression.getOperands()) {
       operand.accept(this);
       if (!myIsConstant) return;
+      final PsiType type = operand.getType();
+      if (type != null && !(type instanceof PsiPrimitiveType) && !type.equalsToText(CommonClassNames.JAVA_LANG_STRING)) {
+        myIsConstant = false;
+        return;
+      }
     }
   }
 

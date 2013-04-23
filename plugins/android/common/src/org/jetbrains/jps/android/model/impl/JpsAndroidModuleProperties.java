@@ -60,6 +60,8 @@ public class JpsAndroidModuleProperties {
   public boolean USE_CUSTOM_MANIFEST_PACKAGE = false;
   public String CUSTOM_MANIFEST_PACKAGE = "";
 
+  public String UPDATE_PROPERTY_FILES = "";
+
   @Tag(AndroidCommonUtils.INCLUDE_SYSTEM_PROGUARD_FILE_ELEMENT_NAME)
   public boolean myIncludeSystemProguardCfgPath = true;
 

@@ -20,9 +20,6 @@ import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-/**
- * @author nik
- */
 public abstract class WebBrowserService {
   public static WebBrowserService getInstance() {
     return ServiceManager.getService(WebBrowserService.class);
@@ -31,8 +28,8 @@ public abstract class WebBrowserService {
   public abstract boolean canOpenInBrowser(@NotNull PsiElement psiElement);
 
   @Nullable
-  public abstract String getUrlToOpen(@NotNull PsiElement psiElement);
+  public abstract Url getUrlToOpen(@NotNull PsiElement psiElement);
 
   @Nullable
-  public abstract String getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
+  public abstract Url getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException;
 }

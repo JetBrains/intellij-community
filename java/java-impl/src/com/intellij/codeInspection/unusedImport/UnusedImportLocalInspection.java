@@ -19,7 +19,7 @@ package com.intellij.codeInspection.unusedImport;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ex.UnfairLocalInspectionTool;
+import com.intellij.codeInspection.ex.PairedUnfairLocalInspectionTool;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +27,7 @@ import org.jetbrains.annotations.NotNull;
  * User: anna
  * Date: 17-Feb-2006
  */
-public class UnusedImportLocalInspection extends BaseJavaLocalInspectionTool implements UnfairLocalInspectionTool {
+public class UnusedImportLocalInspection extends BaseJavaLocalInspectionTool implements PairedUnfairLocalInspectionTool {
   @NonNls public static final String SHORT_NAME = "UNUSED_IMPORT";
   public static final String DISPLAY_NAME = InspectionsBundle.message("unused.import");
 
@@ -49,5 +49,10 @@ public class UnusedImportLocalInspection extends BaseJavaLocalInspectionTool imp
 
   public boolean isEnabledByDefault() {
     return true;
+  }
+
+  @Override
+  public String getInspectionForBatchShortName() {
+    return "UnusedImport";
   }
 }

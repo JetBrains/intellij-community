@@ -195,12 +195,23 @@ public class IntroduceFieldDialogPanel extends IntroduceFieldCentralPanel {
   }
 
   @Override
-  protected boolean updateInitializationPlaceModel() {
+  protected boolean updateInitializationPlaceModel(boolean initializedInSetup) {
     myRbInFieldDeclaration.setEnabled(false);
     myRbInConstructor.setEnabled(false);
-    if (myRbInSetUp != null) myRbInSetUp.setEnabled(false);
     enableFinal(false);
+    if (myRbInSetUp != null){
+      if (!initializedInSetup) {
+        myRbInSetUp.setEnabled(false);
+      } else {
+        return true;
+      }
+    }
     return false;
+  }
+
+  @Override
+  protected boolean hasSetUpChoice() {
+    return myRbInSetUp != null;
   }
 
   public void setInitializeInFieldDeclaration() {

@@ -172,7 +172,8 @@ public class EquivalenceChecker {
   }
 
   private static boolean assertStatementsAreEquivalent(GrAssertStatement statement1, GrAssertStatement statement2) {
-    return expressionsAreEquivalent(statement1.getAssertion(), statement2.getAssertion());
+    return expressionsAreEquivalent(statement1.getAssertion(), statement2.getAssertion()) &&
+      expressionsAreEquivalent(statement1.getErrorMessage(), statement2.getErrorMessage());
   }
 
   private static boolean synchronizedStatementsAreEquivalent(GrSynchronizedStatement statement1,
@@ -328,11 +329,19 @@ public class EquivalenceChecker {
   }
 
   private static boolean caseClausesAreEquivalent(GrCaseSection clause1, GrCaseSection clause2) {
-    final GrCaseLabel label1 = clause1.getCaseLabel();
-    final GrCaseLabel label2 = clause2.getCaseLabel();
-    if (!expressionsAreEquivalent(label1.getValue(), label2.getValue())) {
-      return false;
+    final GrCaseLabel[] label1 = clause1.getCaseLabels();
+    final GrCaseLabel[] label2 = clause2.getCaseLabels();
+    if (label1.length != label2.length) return false;
+
+    for (int i = 0; i < label1.length; i++) {
+      GrCaseLabel l1 = label1[i];
+      GrCaseLabel l2 = label2[i];
+
+      if (!expressionsAreEquivalent(l1.getValue(), l2.getValue())) {
+        return false;
+      }
     }
+
     final GrStatement[] statements1 = clause1.getStatements();
     final GrStatement[] statements2 = clause2.getStatements();
     if (statements1.length != statements2.length) {

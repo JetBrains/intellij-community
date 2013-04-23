@@ -97,7 +97,7 @@ public class CompilerMessage extends BuildMessage {
     return getCompilerName() + ":" + getKind().name() + ":" + super.toString();
   }
 
-  private static String getTextFromThrowable(Throwable internalError) {
+  public static String getTextFromThrowable(Throwable internalError) {
     StringBuilder text = new StringBuilder();
     text.append("Error: ");
     final String msg = internalError.getMessage();

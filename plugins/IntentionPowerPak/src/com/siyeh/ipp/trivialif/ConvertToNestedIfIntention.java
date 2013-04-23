@@ -15,8 +15,10 @@
  */
 package com.siyeh.ipp.trivialif;
 
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
+import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.tree.IElementType;
 import com.siyeh.ipp.base.Intention;
 import com.siyeh.ipp.base.PsiElementPredicate;
@@ -60,7 +62,13 @@ public class ConvertToNestedIfIntention extends Intention {
       return;
     }
     final String newStatementText = buildIf(returnValue, new StringBuilder()).toString();
-    addStatementBefore(newStatementText, returnStatement);
+    final Project project = returnStatement.getProject();
+    final PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    final PsiBlockStatement blockStatement = (PsiBlockStatement)elementFactory.createStatementFromText("{" + newStatementText + "}", returnStatement);
+    final PsiElement parent = returnStatement.getParent();
+    for (PsiStatement st : blockStatement.getCodeBlock().getStatements()) {
+      CodeStyleManager.getInstance(project).reformat(parent.addBefore(st, returnStatement));
+    }
     replaceStatement("return false;", returnStatement);
   }
 
@@ -79,14 +87,7 @@ public class ConvertToNestedIfIntention extends Intention {
         return out;
       }
       else if (JavaTokenType.OROR.equals(tokenType)) {
-        boolean insertElse = false;
         for (PsiExpression operand : operands) {
-          if (insertElse) {
-            out.append("else ");
-          }
-          else {
-            insertElse = true;
-          }
           buildIf(operand, out);
           if (!StringUtil.endsWith(out, "return true;")) {
             out.append("return true;");

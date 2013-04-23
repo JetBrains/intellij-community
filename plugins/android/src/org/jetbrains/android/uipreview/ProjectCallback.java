@@ -33,6 +33,7 @@ import com.intellij.util.containers.HashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import org.jetbrains.android.AndroidXmlSchemaProvider;
+import org.jetbrains.android.dom.layout.FragmentLayoutDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NotNull;
@@ -49,8 +50,6 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
 
   private final Module myModule;
   private final ProjectResources myProjectResources;
-
-  public static final String FRAGMENT_TAG_NAME = "fragment";
 
   private final Set<String> myMissingClasses = new TreeSet<String>();
   private final Map<String, Throwable> myBrokenClasses = new HashMap<String, Throwable>();
@@ -134,11 +133,11 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     }
     catch (LinkageError e) {
       LOG.debug(e);
-      myBrokenClasses.put(className, e.getCause());
+      myBrokenClasses.put(className, getCauseIfNotNull(e));
     }
     catch (ClassNotFoundException e) {
       LOG.debug(e);
-      myBrokenClasses.put(className, e.getCause());
+      myBrokenClasses.put(className, getCauseIfNotNull(e));
     }
     catch (InvocationTargetException e) {
       LOG.debug(e);
@@ -153,15 +152,15 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     }
     catch (IllegalAccessException e) {
       LOG.debug(e);
-      myBrokenClasses.put(className, e.getCause());
+      myBrokenClasses.put(className, getCauseIfNotNull(e));
     }
     catch (InstantiationException e) {
       LOG.debug(e);
-      myBrokenClasses.put(className, e.getCause());
+      myBrokenClasses.put(className, getCauseIfNotNull(e));
     }
     catch (NoSuchMethodException e) {
       LOG.debug(e);
-      myBrokenClasses.put(className, e.getCause());
+      myBrokenClasses.put(className, getCauseIfNotNull(e));
     }
     catch (IncompatibleClassFileFormatException e) {
       myClassesWithIncorrectFormat.add(e.getClassName());
@@ -195,6 +194,12 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     }
   }
 
+  @NotNull
+  private static Throwable getCauseIfNotNull(@NotNull Throwable e) {
+    final Throwable cause = e.getCause();
+    return cause != null ? cause : e;
+  }
+
   @Nullable
   private Class<?> loadClass(String className) throws IncompatibleClassFileFormatException {
     try {
@@ -205,7 +210,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
     }
     catch (ClassNotFoundException e) {
       LOG.debug(e);
-      if (!className.equals(FRAGMENT_TAG_NAME)) {
+      if (!className.equals(FragmentLayoutDomFileDescription.FRAGMENT_TAG_NAME)) {
         myMissingClasses.add(className);
       }
       return null;
@@ -282,7 +287,7 @@ class ProjectCallback extends LegacyCallback implements IProjectCallback {
 
     final Method setTextMethod = viewObject.getClass().getMethod("setText", CharSequence.class);
     String label = getShortClassName(className);
-    if (label.equals(FRAGMENT_TAG_NAME)) {
+    if (label.equals(FragmentLayoutDomFileDescription.FRAGMENT_TAG_NAME)) {
       label = "<fragment>";
     }
     setTextMethod.invoke(viewObject, label);

@@ -95,3 +95,8 @@ public class A42 {
 class D42 extends A42.B {
   D42() {new A42().super();}
 }
+
+class IDEA105004 {
+  class A {}
+  static class B extends <error descr="No enclosing instance of type 'IDEA105004' is in scope">A</error> {}
+}

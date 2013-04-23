@@ -246,13 +246,17 @@ public class QuickEditHandler extends DocumentAdapter implements Disposable {
       SmartPsiElementPointer<PsiLanguageInjectionHost> elementPointer = smartPointerManager.createSmartPsiElementPointer(shred.getHost());
       myMarkers.add(Trinity.<RangeMarker, RangeMarker, SmartPsiElementPointer>create(origMarker, rangeMarker, elementPointer));
     }
+    int curOffset = -1;
     for (Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> markers : myMarkers) {
-      markers.first.setGreedyToLeft(true);
-      markers.second.setGreedyToLeft(true);
       markers.first.setGreedyToRight(true);
       markers.second.setGreedyToRight(true);
+      if (markers.first.getStartOffset() > curOffset) {
+        markers.first.setGreedyToLeft(true);
+        markers.second.setGreedyToLeft(true);
+      }
+      curOffset = markers.first.getEndOffset();
     }
-    int curOffset = 0;
+    curOffset = 0;
     for (Trinity<RangeMarker, RangeMarker, SmartPsiElementPointer> markerPair : myMarkers) {
       final RangeMarker marker = markerPair.second;
       final int start = marker.getStartOffset();

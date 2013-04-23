@@ -17,6 +17,7 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.LiteralTextEscaper;
@@ -128,10 +129,11 @@ class LeafPatcher extends RecursiveTreeElementWalkingVisitor {
     return text;
   }
 
+  static final Key<String> UNESCAPED_TEXT = Key.create("INJECTED_UNESCAPED_TEXT");
   private static void storeUnescapedTextFor(final LeafElement leaf, final String leafText) {
     PsiElement psi = leaf.getPsi();
     if (psi != null) {
-      psi.putCopyableUserData(InjectedLanguageManagerImpl.UNESCAPED_TEXT, leafText);
+      psi.putCopyableUserData(UNESCAPED_TEXT, leafText);
     }
   }
 }

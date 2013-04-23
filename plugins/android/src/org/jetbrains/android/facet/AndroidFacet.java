@@ -36,9 +36,6 @@ import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetTypeId;
 import com.intellij.facet.FacetTypeRegistry;
-import com.intellij.lang.properties.IProperty;
-import com.intellij.lang.properties.psi.PropertiesElementFactory;
-import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.module.Module;
@@ -56,9 +53,10 @@ import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Computable;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.JarFileSystem;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.search.ProjectScope;
@@ -74,7 +72,6 @@ import org.jetbrains.android.compiler.AndroidAptCompiler;
 import org.jetbrains.android.compiler.AndroidAutogeneratorMode;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.dom.manifest.Manifest;
-import org.jetbrains.android.importDependencies.ImportDependenciesUtil;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
 import org.jetbrains.android.resourceManagers.ResourceManager;
 import org.jetbrains.android.resourceManagers.SystemResourceManager;
@@ -412,7 +409,7 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
         }
 
         addResourceFolderToSdkRootsIfNecessary();
-        
+
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           public void run() {
             Module module = getModule();
@@ -436,7 +433,6 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
 
     getModule().getMessageBus().connect(this).subscribe(ProjectTopics.PROJECT_ROOTS, new ModuleRootAdapter() {
       private Sdk myPrevSdk;
-      private String[] myDependencies;
 
       public void rootsChanged(final ModuleRootEvent event) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
@@ -456,40 +452,12 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
               }
             }
             myPrevSdk = newSdk;
-
-            final Project project = getModule().getProject();
-            PsiDocumentManager.getInstance(project).commitAllDocuments();
-
-            final Pair<PropertiesFile, VirtualFile> pair =
-              AndroidRootUtil.findPropertyFile(getModule(), SdkConstants.FN_PROJECT_PROPERTIES);
-            if (pair == null) {
-              return;
-            }
-            final PropertiesFile projectProperties = pair.getFirst();
-            final VirtualFile projectPropertiesVFile = pair.getSecond();
-
-            if (!ReadonlyStatusHandler.ensureFilesWritable(project, projectPropertiesVFile)) {
-              return;
-            }
-            final Pair<Properties, VirtualFile> localProperties = 
-              AndroidRootUtil.readPropertyFile(getModule(), SdkConstants.FN_LOCAL_PROPERTIES);
-
-            updateTargetProperty(projectProperties);
-            updateLibraryProperty(projectProperties);
-
-            final VirtualFile[] dependencies = collectDependencies();
-            final String[] dependencyPaths = toSortedPaths(dependencies);
-
-            if (myDependencies == null || !Comparing.equal(myDependencies, dependencyPaths)) {
-              updateDependenciesInPropertyFile(projectProperties, localProperties, dependencies);
-              myDependencies = dependencyPaths;
-            }
           }
         });
       }
     });
   }
-  
+
   private void addResourceFolderToSdkRootsIfNecessary() {
     final Sdk sdk = ModuleRootManager.getInstance(getModule()).getSdk();
     if (sdk == null || !(sdk.getSdkType() instanceof AndroidSdkType)) {
@@ -541,130 +509,6 @@ public class AndroidFacet extends Facet<AndroidFacetConfiguration> {
       }
       modificator.commitChanges();
     }
-  }
-
-  private static void updateDependenciesInPropertyFile(@NotNull final PropertiesFile projectProperties,
-                                                       @Nullable final Pair<Properties, VirtualFile> localProperties,
-                                                       @NotNull final VirtualFile[] dependencies) {
-    final VirtualFile vFile = projectProperties.getVirtualFile();
-    if (vFile == null) {
-      return;
-    }
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        for (IProperty property : projectProperties.getProperties()) {
-          final String name = property.getName();
-          if (name != null && name.startsWith(AndroidUtils.ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX)) {
-            property.getPsiElement().delete();
-          }
-        }
-
-        final VirtualFile baseDir = vFile.getParent();
-        final String baseDirPath = baseDir.getPath();
-        final Set<VirtualFile> localDependencies = localProperties != null
-                                                   ? ImportDependenciesUtil.getLibDirs(localProperties)
-                                                   : Collections.<VirtualFile>emptySet();
-        int index = 1;
-        for (VirtualFile dependency : dependencies) {
-          if (!localDependencies.contains(dependency)) {
-            final String relPath = FileUtil.getRelativePath(baseDirPath, dependency.getPath(), '/');
-            final String value = relPath != null ? relPath : dependency.getPath();
-            projectProperties.addProperty(AndroidUtils.ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX + index, value);
-            index++;
-          }
-        }
-      }
-    });
-  }
-
-  @NotNull
-  private VirtualFile[] collectDependencies() {
-    final List<VirtualFile> dependenciesList = new ArrayList<VirtualFile>();
-
-    for (AndroidFacet depFacet : AndroidUtils.getAndroidLibraryDependencies(getModule())) {
-      final Module depModule = depFacet.getModule();
-      final VirtualFile libDir = getBaseAndroidContentRoot(depModule);
-      if (libDir != null) {
-        dependenciesList.add(libDir);
-      }
-    }
-    return dependenciesList.toArray(new VirtualFile[dependenciesList.size()]);
-  }
-
-  @NotNull
-  private static String[] toSortedPaths(@NotNull VirtualFile[] files) {
-    final String[] result = new String[files.length];
-    
-    for (int i = 0; i < files.length; i++) {
-      result[i] = files[i].getPath();
-    }
-    Arrays.sort(result);
-    return result;
-  }
-
-  @Nullable
-  private static VirtualFile getBaseAndroidContentRoot(@NotNull Module module) {
-    final AndroidFacet facet = getInstance(module);
-    final VirtualFile manifestFile = facet != null ? AndroidRootUtil.getManifestFile(facet) : null;
-    final VirtualFile[] contentRoots = ModuleRootManager.getInstance(module).getContentRoots();
-    if (manifestFile != null) {
-      for (VirtualFile contentRoot : contentRoots) {
-        if (VfsUtilCore.isAncestor(contentRoot, manifestFile, true)) {
-          return contentRoot;
-        }
-      }
-    }
-    return contentRoots.length > 0 ? contentRoots[0] : null;
-  }
-
-  private void updateTargetProperty(@NotNull final PropertiesFile propertiesFile) {
-    final IAndroidTarget androidTarget = getConfiguration().getAndroidTarget();
-    if (androidTarget != null) {
-      final String targetPropertyValue = androidTarget.hashString();
-      final IProperty property = propertiesFile.findPropertyByKey(AndroidUtils.ANDROID_TARGET_PROPERTY);
-      ApplicationManager.getApplication().runWriteAction(new Runnable() {
-        @Override
-        public void run() {
-          if (property == null) {
-            propertiesFile.addProperty(createProperty(targetPropertyValue));
-          }
-          else {
-            if (!Comparing.equal(property.getValue(), targetPropertyValue)) {
-              final PsiElement element = property.getPsiElement();
-              if (element != null) {
-                element.replace(createProperty(targetPropertyValue).getPsiElement());
-              }
-            }
-          }
-        }
-      });
-    }
-  }
-
-  // workaround for behavior of Android SDK , which uses non-escaped ':' characters
-  @NotNull
-  private IProperty createProperty(String targetPropertyValue) {
-    final String text = AndroidUtils.ANDROID_TARGET_PROPERTY + "=" + targetPropertyValue;
-    final PropertiesFile dummyFile = PropertiesElementFactory.createPropertiesFile(getModule().getProject(), text);
-    return dummyFile.getProperties().get(0);
-  }
-
-  public void updateLibraryProperty(@NotNull final PropertiesFile propertiesFile) {
-    final IProperty property = propertiesFile.findPropertyByKey(AndroidUtils.ANDROID_LIBRARY_PROPERTY);
-
-    ApplicationManager.getApplication().runWriteAction(new Runnable() {
-      @Override
-      public void run() {
-        if (property != null) {
-          property.setValue(Boolean.toString(getProperties().LIBRARY_PROJECT));
-        }
-        else if (getProperties().LIBRARY_PROJECT) {
-          propertiesFile.addProperty(AndroidUtils.ANDROID_LIBRARY_PROPERTY, Boolean.TRUE.toString());
-        }
-      }
-    });
   }
 
   @Override

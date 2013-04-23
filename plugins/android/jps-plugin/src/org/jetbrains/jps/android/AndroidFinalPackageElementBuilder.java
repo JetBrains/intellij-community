@@ -59,7 +59,12 @@ public class AndroidFinalPackageElementBuilder extends LayoutElementBuilderServi
     if (extension == null) {
       return null;
     }
-    final File moduleOutputDir = JpsJavaExtensionService.getInstance().getOutputDirectory(module, false);
+    return getApkPath(extension);
+  }
+
+  @Nullable
+  public static String getApkPath(@NotNull JpsAndroidModuleExtension extension) {
+    final File moduleOutputDir = JpsJavaExtensionService.getInstance().getOutputDirectory(extension.getModule(), false);
 
     if (moduleOutputDir == null) {
       return null;

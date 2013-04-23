@@ -1,0 +1,11 @@
+<resources>
+  <style name="Deli<caret>miter.Horisontal">
+    <item name="android:layout_width">0dp</item>
+    <item name="android:layout_height">1dp</item>
+    <item name="android:layout_gravity">center_vertical</item>
+  </style>
+
+  <style name="Dilimiter.Horisontal.Gray" parent="Delimiter.Horisontal">
+    <item name="android:background">#dedede</item>
+  </style>
+</resources>

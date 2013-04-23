@@ -37,10 +37,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.*;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrForInClause;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrStringInjection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
@@ -905,7 +902,7 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private static boolean containsAllCases(GrSwitchStatement statement) {
     final GrCaseSection[] sections = statement.getCaseSections();
     for (GrCaseSection section : sections) {
-      if (section.getCaseLabel().isDefault()) return true;
+      if (section.isDefault()) return true;
     }
 
     final GrExpression condition = statement.getCondition();
@@ -938,9 +935,11 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   @Override
   public void visitCaseSection(GrCaseSection caseSection) {
-    GrExpression value = caseSection.getCaseLabel().getValue();
-    if (value != null) {
-      value.accept(this);
+    for (GrCaseLabel label : caseSection.getCaseLabels()) {
+      GrExpression value = label.getValue();
+      if (value != null) {
+        value.accept(this);
+      }
     }
 
     final GrStatement[] statements = caseSection.getStatements();

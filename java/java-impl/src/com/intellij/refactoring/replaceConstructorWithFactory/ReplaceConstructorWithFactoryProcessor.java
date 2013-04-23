@@ -250,15 +250,16 @@ public class ReplaceConstructorWithFactoryProcessor extends BaseRefactoringProce
     if (myConstructor != null) {
       factoryMethod.getParameterList().replace(myConstructor.getParameterList());
       factoryMethod.getThrowsList().replace(myConstructor.getThrowsList());
+    }
 
-      Collection<String> names = new HashSet<String>();
-      for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(myConstructor)) {
-        if (!names.contains(typeParameter.getName())) { //Otherwise type parameter is hidden in the constructor
-          names.add(typeParameter.getName());
-          factoryMethod.getTypeParameterList().addAfter(typeParameter, null);
-        }
+    Collection<String> names = new HashSet<String>();
+    for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(myConstructor != null ? myConstructor : containingClass)) {
+      if (!names.contains(typeParameter.getName())) { //Otherwise type parameter is hidden in the constructor
+        names.add(typeParameter.getName());
+        factoryMethod.getTypeParameterList().addAfter(typeParameter, null);
       }
     }
+
     PsiReturnStatement returnStatement =
       (PsiReturnStatement)myFactory.createStatementFromText("return new A();", null);
     PsiNewExpression newExpression = (PsiNewExpression)returnStatement.getReturnValue();

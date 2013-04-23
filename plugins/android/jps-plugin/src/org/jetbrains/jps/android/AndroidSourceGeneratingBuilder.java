@@ -14,6 +14,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import gnu.trove.THashSet;
 import org.jetbrains.android.compiler.artifact.AndroidArtifactSigningMode;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.compiler.tools.AndroidIdl;
@@ -28,6 +29,7 @@ import org.jetbrains.jps.android.model.JpsAndroidApplicationArtifactProperties;
 import org.jetbrains.jps.android.model.JpsAndroidModuleExtension;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.FileProcessor;
+import org.jetbrains.jps.builders.java.ExcludedJavaSourceRootProvider;
 import org.jetbrains.jps.builders.java.JavaBuilderUtil;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
 import org.jetbrains.jps.builders.java.JavaSourceRootDescriptor;
@@ -45,6 +47,8 @@ import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.module.JpsDependencyElement;
 import org.jetbrains.jps.model.module.JpsModule;
 import org.jetbrains.jps.model.module.JpsModuleDependency;
+import org.jetbrains.jps.model.module.JpsModuleSourceRoot;
+import org.jetbrains.jps.service.JpsServiceManager;
 
 import java.io.*;
 import java.util.*;
@@ -218,6 +222,43 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
   }
 
   @NotNull
+  private static List<String> filterExcludedByOtherProviders(@NotNull JpsModule module, @NotNull Collection<String> genRoots) {
+    final Set<String> genRootPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+
+    for (String genRoot : genRoots) {
+      genRootPaths.add(FileUtil.toSystemIndependentName(genRoot));
+    }
+    final List<String> result = new ArrayList<String>();
+    final List<JpsModuleSourceRoot> genSourceRoots = new ArrayList<JpsModuleSourceRoot>();
+
+    for (JpsModuleSourceRoot root : module.getSourceRoots()) {
+      if (genRootPaths.contains(FileUtil.toSystemIndependentName(root.getFile().getPath()))) {
+        genSourceRoots.add(root);
+      }
+    }
+    final Iterable<ExcludedJavaSourceRootProvider> excludedRootProviders = JpsServiceManager.
+      getInstance().getExtensions(ExcludedJavaSourceRootProvider.class);
+
+    for (JpsModuleSourceRoot genSourceRoot : genSourceRoots) {
+      boolean excluded = false;
+
+      for (ExcludedJavaSourceRootProvider provider : excludedRootProviders) {
+        if (!(provider instanceof AndroidExcludedJavaSourceRootProvider) &&
+            provider.isExcludedFromCompilation(module, genSourceRoot)) {
+          excluded = true;
+          break;
+        }
+      }
+      final String genRootFilePath = genSourceRoot.getFile().getPath();
+
+      if (!excluded) {
+        result.add(genRootFilePath);
+      }
+    }
+    return result;
+  }
+
+  @NotNull
   private static MyExitStatus copyGeneratedSources(@NotNull Map<JpsModule, MyModuleData> moduleDataMap,
                                                    @NotNull BuildDataManager dataManager,
                                                    @NotNull final CompileContext context)
@@ -234,17 +275,19 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
         moduleTarget, AndroidGenSourcesCopyingStorage.PROVIDER);
 
       final Set<String> genDirs = AndroidJpsUtil.getGenDirs(data.getAndroidExtension());
+      final List<String> filteredGenDirs = filterExcludedByOtherProviders(module, genDirs);
+
+      final Set<String> forciblyExcludedDirs = new HashSet<String>(genDirs);
+      forciblyExcludedDirs.removeAll(filteredGenDirs);
+      warnUserAboutForciblyExcludedRoots(forciblyExcludedDirs, context);
+
       final AndroidFileSetState savedState = storage.read();
 
-      final AndroidFileSetState currentState = new AndroidFileSetState(genDirs, new Condition<File>() {
+      final AndroidFileSetState currentState = new AndroidFileSetState(filteredGenDirs, new Condition<File>() {
         @Override
         public boolean value(File file) {
-          if (!file.isFile()) {
-            return false;
-          }
           try {
-            return !FileUtilRt.extensionEquals(file.getName(), "java") ||
-                   !isGeneratedByIdea(file);
+            return shouldBeCopied(file);
           }
           catch (IOException e) {
             return false;
@@ -259,7 +302,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
       clearDirectoryIfNotEmpty(outDir, context, ANDROID_GENERATED_SOURCES_PROCESSOR);
       final List<Pair<String, String>> copiedFiles = new ArrayList<Pair<String, String>>();
 
-      for (String path : genDirs) {
+      for (String path : filteredGenDirs) {
         final File dir = new File(path);
 
         if (dir.isDirectory()) {
@@ -267,11 +310,7 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
             @Override
             public boolean process(File file) {
               try {
-                if (FileUtilRt.extensionEquals(file.getName(), "java") &&
-                    isGeneratedByIdea(file)) {
-                  return true;
-                }
-                if (!file.isFile()) {
+                if (!shouldBeCopied(file)) {
                   return true;
                 }
                 final String relPath = FileUtil.getRelativePath(dir, file);
@@ -320,6 +359,34 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     else {
       return MyExitStatus.NOTHING_CHANGED;
     }
+  }
+
+  private static void warnUserAboutForciblyExcludedRoots(@NotNull Set<String> paths, @NotNull CompileContext context) {
+    for (String dir : paths) {
+      final boolean hasFileToCopy = !FileUtil.processFilesRecursively(new File(dir), new Processor<File>() {
+        @Override
+        public boolean process(File file) {
+          try {
+            return !shouldBeCopied(file);
+          }
+          catch (IOException e) {
+            return false;
+          }
+        }
+      });
+
+      if (hasFileToCopy) {
+        context.processMessage(new CompilerMessage(ANDROID_GENERATED_SOURCES_PROCESSOR, BuildMessage.Kind.WARNING,
+                                                   "Source root " + FileUtil.toSystemDependentName(dir) +
+                                                   " was forcibly excluded by the IDE, so custom generated files won't be compiled"));
+      }
+    }
+  }
+
+  private static boolean shouldBeCopied(@NotNull File file) throws IOException {
+    return file.isFile() &&
+           (!FileUtilRt.extensionEquals(file.getName(), "java") ||
+           !isGeneratedByIdea(file));
   }
 
   private static boolean removeCopiedFilesDuplicatingGeneratedFiles(final CompileContext context,
@@ -1290,7 +1357,9 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
     return null;
   }
 
-  private static boolean checkUnambiguousArtifacts(CompileContext context, List<JpsArtifact> artifacts) {
+  private static boolean checkUnambiguousAndRecursiveArtifacts(CompileContext context, List<JpsArtifact> artifacts) {
+    boolean success = true;
+
     for (JpsArtifact artifact : artifacts) {
       if (artifact.getArtifactType() instanceof AndroidApplicationArtifactType) {
         final List<JpsAndroidModuleExtension> facets = AndroidJpsUtil.getAllPackagedFacets(artifact);
@@ -1299,17 +1368,31 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
           context.processMessage(new CompilerMessage(
             ANDROID_VALIDATOR, BuildMessage.Kind.ERROR, "Cannot build artifact '" + artifact.getName() +
                                                         "' because it contains more than one Android package"));
-          return false;
+          success = false;
+          continue;
+        }
+        final String artifactOutputPath = artifact.getOutputFilePath();
+
+        if (artifactOutputPath != null && facets.size() > 0) {
+          final JpsAndroidModuleExtension facet = facets.get(0);
+          final String apkPath = AndroidFinalPackageElementBuilder.getApkPath(facet);
+
+          if (FileUtil.pathsEqual(apkPath, artifactOutputPath)) {
+            context.processMessage(new CompilerMessage(
+              ANDROID_VALIDATOR, BuildMessage.Kind.ERROR,
+              "Incorrect output path for artifact '" + artifact.getName() + "': " + FileUtil.toSystemDependentName(apkPath)));
+            success = false;
+          }
         }
       }
     }
-    return true;
+    return success;
   }
 
   private static boolean checkArtifacts(@NotNull CompileContext context) {
     final List<JpsArtifact> artifacts = AndroidJpsUtil.getAndroidArtifactsToBuild(context);
 
-    if (!checkUnambiguousArtifacts(context, artifacts)) {
+    if (!checkUnambiguousAndRecursiveArtifacts(context, artifacts)) {
       return false;
     }
 

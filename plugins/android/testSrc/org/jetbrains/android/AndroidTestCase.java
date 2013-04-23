@@ -192,7 +192,7 @@ public abstract class AndroidTestCase extends UsefulTestCase {
     ModuleRootModificationUtil.setModuleSdk(module, androidSdk);
   }
 
-  private static Sdk createAndroidSdk(String sdkPath) {
+  protected static Sdk createAndroidSdk(String sdkPath) {
     Sdk sdk = ProjectJdkTable.getInstance().createSdk("android_test_sdk", AndroidSdkType.getInstance());
     SdkModificator sdkModificator = sdk.getSdkModificator();
     sdkModificator.setHomePath(sdkPath);

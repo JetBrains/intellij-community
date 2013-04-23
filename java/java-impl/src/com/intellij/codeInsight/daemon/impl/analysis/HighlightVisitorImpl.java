@@ -183,6 +183,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkDuplicateAnnotations(annotation));
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkForeignInnerClassesUsed(annotation));
     if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkFunctionalInterface(annotation));
+    if (!myHolder.hasErrorResults()) myHolder.add(AnnotationsHighlightUtil.checkRepeatableAnnotation(annotation));
   }
 
   @Override
@@ -216,6 +217,7 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
 
     myHolder.add(AnnotationsHighlightUtil.checkValidAnnotationType(method.getReturnTypeElement()));
     myHolder.add(AnnotationsHighlightUtil.checkCyclicMemberType(method.getReturnTypeElement(), method.getContainingClass()));
+    myHolder.add(AnnotationsHighlightUtil.checkClashesWithSuperMethods(method));
   }
 
   @Override public void visitArrayInitializerExpression(PsiArrayInitializerExpression expression) {

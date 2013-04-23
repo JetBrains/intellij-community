@@ -304,11 +304,6 @@
     <option name="DEFAULT_BRACKETS">
       <value />
     </option>
-    <option name="DEFAULT_CLASS_NAME">
-      <value>
-        <option name="FOREGROUND" value="da4939" />
-      </value>
-    </option>
     <option name="DEFAULT_CLASS_REFERENCE">
       <value>
         <option name="FOREGROUND" value="769aa5" />
@@ -1531,6 +1526,7 @@
       <value>
         <option name="FOREGROUND" value="a8c023" />
         <option name="FONT_TYPE" value="2" />
+        <option name="ERROR_STRIPE_COLOR" value="a74c0" />
       </value>
     </option>
     <option name="TYPEDEF">

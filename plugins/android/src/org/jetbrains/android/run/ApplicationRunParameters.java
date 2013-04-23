@@ -138,7 +138,7 @@ class ApplicationRunParameters implements ConfigurationSpecificEditor<AndroidRun
 
   private void createUIComponents() {
     myActivityField = new EditorTextFieldWithBrowseButton(myProject, true,
-                                                          new AndroidClassVisibilityChecker(myProject, myModuleSelector,
+                                                          new AndroidInheritingClassVisibilityChecker(myProject, myModuleSelector,
                                                                                             AndroidUtils.ACTIVITY_BASE_CLASS_NAME));
   }
 }

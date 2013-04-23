@@ -14,6 +14,7 @@ import org.jetbrains.android.dom.converters.AndroidResourceReferenceBase;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.inspections.CreateValueResourceQuickFix;
 import org.jetbrains.android.resourceManagers.LocalResourceManager;
+import org.jetbrains.android.resourceManagers.ValueResourceInfoImpl;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidResourceUtil;
 import org.jetbrains.annotations.NonNls;
@@ -117,16 +118,39 @@ public class ResourceNameConverter extends ResolvingConverter<String> implements
       return PsiReference.EMPTY_ARRAY;
     }
     final List<PsiReference> result = new ArrayList<PsiReference>(ids.length - 1);
-    int offset = 0;
+    int offset = s.length();
 
-    for (int i = 0; i < ids.length - 1; i++) {
-      offset += ids[i].length();
-      final String parentStyleName = s.substring(0, offset);
-      final ResourceValue val = ResourceValue.referenceTo((char)0, null, ResourceType.STYLE.getName(), parentStyleName);
-      result.add(new MyParentStyleReference(value, new TextRange(1, 1 + offset), val, facet));
-      offset++;
+    for (int i = ids.length - 1; i >= 0; i--) {
+      if (i < ids.length - 1) {
+        final String parentStyleName = s.substring(0, offset);
+        final ResourceValue val = ResourceValue.referenceTo((char)0, null, ResourceType.STYLE.getName(), parentStyleName);
+        result.add(new MyParentStyleReference(value, new TextRange(1, 1 + offset), val, facet));
+
+        if (hasExplicitParent(facet, parentStyleName)) {
+          break;
+        }
+      }
+      offset = offset - ids[i].length() - 1;
     }
     return result.toArray(new PsiReference[result.size()]);
+  }
+
+  public static boolean hasExplicitParent(@NotNull AndroidFacet facet, @NotNull String localStyleName) {
+    final List<ValueResourceInfoImpl> styles = facet.getLocalResourceManager().
+      findValueResourceInfos(ResourceType.STYLE.getName(), localStyleName, true, false);
+
+    if (styles.size() == 0) {
+      return false;
+    }
+    // all resolved styles have explicit parents
+    for (ValueResourceInfoImpl info : styles) {
+      final ResourceElement domElement = info.computeDomElement();
+
+      if (!(domElement instanceof Style) || ((Style)domElement).getParentStyle().getStringValue() == null) {
+        return false;
+      }
+    }
+    return true;
   }
 
   public static class MyParentStyleReference extends AndroidResourceReferenceBase implements LocalQuickFixProvider {

@@ -154,6 +154,9 @@ public class TypesDistinctProver {
                                                     PsiType type2,
                                                     PsiClass boundClass1,
                                                     PsiClass boundClass2) {
+    if (boundClass1 == null || boundClass2 == null) {
+      return false;
+    }
     if (boundClass1.isInterface() && boundClass2.isInterface()) return false;
     if (boundClass1.isInterface()) {
       return !(boundClass2.hasModifierProperty(PsiModifier.FINAL) ? InheritanceUtil.isInheritorOrSelf(boundClass2, boundClass1, true) : true);

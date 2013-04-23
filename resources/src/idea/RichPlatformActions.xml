@@ -150,8 +150,7 @@
 
       <action internal="true" id="CompilerTest" class="com.intellij.compiler.impl.javaCompiler.api.CompilerPerfTestAction"
               text="Test Rebuild Performance"/>
-      <action internal="true" id="GenerateDomModel" class="com.intellij.util.dom.generator.GenerateDomModelAction"
-              text="Generate Dom Model"/>
+
       <add-to-group group-id="Internal" anchor="last"/>
     </group>
 

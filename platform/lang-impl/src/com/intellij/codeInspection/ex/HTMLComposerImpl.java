@@ -33,9 +33,12 @@ import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.Extensions;
+import com.intellij.openapi.project.ProjectUtil;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiUtilCore;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -207,7 +210,7 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
     if (extension != null) {
       extension.appendReferencePresentation(refElement, buf, isPackageIncluded);
     } else if (refElement instanceof RefFile) {
-      buf.append(HTMLComposerImpl.A_HREF_OPENING);
+      buf.append(A_HREF_OPENING);
 
       if (myExporter == null) {
         buf.append(((RefElementImpl)refElement).getURL());
@@ -217,13 +220,21 @@ public abstract class HTMLComposerImpl extends HTMLComposer {
       }
 
       buf.append("\">");
-      buf.append(refElement.getName());
-      buf.append(HTMLComposerImpl.A_CLOSING);
+      String refElementName = refElement.getName();
+      final PsiElement element = refElement.getElement();
+      if (element != null) {
+        final VirtualFile virtualFile = PsiUtilCore.getVirtualFile(element);
+        if (virtualFile != null) {
+          refElementName = ProjectUtil.calcRelativeToProjectPath(virtualFile, element.getProject());
+        }
+      }
+      buf.append(refElementName);
+      buf.append(A_CLOSING);
     }
   }
 
   public String composeNumereables(int n, String statement, String singleEnding, String multipleEnding) {
-    final StringBuffer buf = new StringBuffer();
+    final StringBuilder buf = new StringBuilder();
     buf.append(n);
     buf.append(' ');
     buf.append(statement);

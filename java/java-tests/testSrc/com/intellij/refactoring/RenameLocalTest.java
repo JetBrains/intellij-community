@@ -89,6 +89,10 @@ public class RenameLocalTest extends LightRefactoringTestCase {
     doTestInplaceRename("a");
   }
 
+  public void testRenameInPlaceOnRef() throws Exception {
+    doTestInplaceRename("a");
+  }
+
   public void testRenameInPlaceParamInOverriderAutomaticRenamer() throws Exception {
     doTestInplaceRename("pp");
   }
@@ -120,7 +124,7 @@ public class RenameLocalTest extends LightRefactoringTestCase {
   private void doTestInplaceRename(final String newName) throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
 
-    final PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED);
+    final PsiElement element = TargetElementUtilBase.findTargetElement(myEditor, TargetElementUtilBase.ELEMENT_NAME_ACCEPTED | TargetElementUtilBase.REFERENCED_ELEMENT_ACCEPTED);
     assertNotNull(element);
     assertTrue("In-place rename not allowed for " + element,
                JavaRefactoringSupportProvider.mayRenameInplace(element, null));

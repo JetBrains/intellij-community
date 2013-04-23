@@ -299,7 +299,6 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
   }
 
 
-  static final Key<String> UNESCAPED_TEXT = Key.create("INJECTED_UNESCAPED_TEXT");
   @Override
   public String getUnescapedText(@NotNull final PsiElement injectedNode) {
     final StringBuilder text = new StringBuilder(injectedNode.getTextLength());
@@ -307,13 +306,9 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     injectedNode.accept(new PsiRecursiveElementWalkingVisitor() {
       @Override
       public void visitElement(PsiElement element) {
-        String unescaped = element.getCopyableUserData(UNESCAPED_TEXT);
-        if (unescaped != null) {
-          text.append(unescaped);
-          return;
-        }
-        if (element.getFirstChild() == null) {
-          text.append(element.getText());
+        String leafText = InjectedLanguageUtil.getUnescapedLeafText(element, false);
+        if (leafText != null) {
+          text.append(leafText);
           return;
         }
         super.visitElement(element);

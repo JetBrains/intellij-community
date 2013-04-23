@@ -28,19 +28,14 @@ import com.intellij.util.Function;
 import com.intellij.util.indexing.*;
 import com.intellij.util.io.EnumeratorStringDescriptor;
 import com.intellij.util.io.KeyDescriptor;
+import com.intellij.util.xml.NanoXmlUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.javaFX.fxml.FxmlConstants;
 import org.jetbrains.plugins.javaFX.fxml.JavaFXNamespaceProvider;
 import org.jetbrains.plugins.javaFX.fxml.JavaFxFileTypeFactory;
-import org.xml.sax.Attributes;
-import org.xml.sax.InputSource;
-import org.xml.sax.SAXException;
-import org.xml.sax.helpers.DefaultHandler;
 
-import javax.xml.parsers.SAXParser;
-import javax.xml.parsers.SAXParserFactory;
 import java.io.StringReader;
 import java.util.*;
 
@@ -79,21 +74,10 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
 
   @Override
   public int getVersion() {
-    return 0;
+    return 1;
   }
 
   private static class MyDataIndexer implements DataIndexer<String, Void, FileContent> {
-    private static final SAXParser SAX_PARSER = createParser();
-
-    private static SAXParser createParser() {
-      try {
-        return SAXParserFactory.newInstance().newSAXParser();
-      }
-      catch (Exception e) {
-        return null;
-      }
-    }
-
     @Override
     @NotNull
     public Map<String, Void> map(final FileContent inputData) {
@@ -111,23 +95,34 @@ public class JavaFxControllerClassIndex extends ScalarIndexExtension<String> {
       }
 
       final String[] className = new String[]{null};
+      
+      class StopException extends RuntimeException {}
+
       try {
-        SAX_PARSER.parse(new InputSource(new StringReader(content)), new DefaultHandler() {
-          public void startElement(String uri, String localName, String qName, Attributes attributes) throws SAXException {
-            className[0] = attributes.getValue("", FxmlConstants.FX_CONTROLLER);
-            if (className[0] == null) {
-              if (FxmlConstants.FX_ROOT.equals(qName)) {
-                className[0] = attributes.getValue("", FxmlConstants.TYPE);
-              }
+        NanoXmlUtil.parse(new StringReader(content), new NanoXmlUtil.IXMLBuilderAdapter() {
+          private boolean myFxRootUsed = false;
+
+          @Override
+          public void addAttribute(String key, String nsPrefix, String nsURI, String value, String type) throws Exception {
+            if (value != null &&
+                (FxmlConstants.FX_CONTROLLER.equals(nsPrefix + ":" + key) || FxmlConstants.TYPE.equals(key) && myFxRootUsed)) {
+              className[0] = value;
             }
-            throw new SAXException("controllers are accepted on top level only");
+          }
+
+          @Override
+          public void elementAttributesProcessed(String name, String nsPrefix, String nsURI) throws Exception {
+            throw new StopException();
+          }
+
+          @Override
+          public void startElement(String name, String nsPrefix, String nsURI, String systemID, int lineNr)
+            throws Exception {
+            myFxRootUsed = FxmlConstants.FX_ROOT.equals(nsPrefix + ":" + name);
           }
         });
       }
-      catch (Exception e) {
-        // Do nothing.
-      }
-
+      catch (StopException ignore){}
       return className[0];
     }
   }

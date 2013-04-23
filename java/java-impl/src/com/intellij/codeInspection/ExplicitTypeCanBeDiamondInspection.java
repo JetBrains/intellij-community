@@ -67,7 +67,7 @@ public class ExplicitTypeCanBeDiamondInspection extends BaseJavaLocalInspectionT
           LOG.assertTrue(classReference != null);
           final PsiReferenceParameterList parameterList = classReference.getParameterList();
           LOG.assertTrue(parameterList != null);
-          holder.registerProblem(parameterList,  "Redundant type argument #ref #loc",
+          holder.registerProblem(parameterList,  "Explicit type argument #ref #loc can be replaced with <>",
                                  ProblemHighlightType.LIKE_UNUSED_SYMBOL, new ReplaceWithDiamondFix());
         }
       }

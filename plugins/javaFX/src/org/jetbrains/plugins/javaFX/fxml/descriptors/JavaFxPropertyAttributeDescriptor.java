@@ -178,8 +178,9 @@ public class JavaFxPropertyAttributeDescriptor implements XmlAttributeDescriptor
       attrType = JavaFxPsiUtil.getWrappedPropertyType((PsiField)declaration, declaration.getProject(), JavaFxCommonClassNames.ourWritableMap);
     } else if (declaration instanceof PsiMethod) {
       final PsiParameter[] parameters = ((PsiMethod)declaration).getParameterList().getParameters();
-      if (parameters.length == 2) {
-        attrType = parameters[1].getType();
+      final boolean isStatic = ((PsiMethod)declaration).hasModifierProperty(PsiModifier.STATIC);
+      if (isStatic && parameters.length == 2 || !isStatic && parameters.length == 1) {
+        attrType = parameters[parameters.length - 1].getType();
       }
     }
 

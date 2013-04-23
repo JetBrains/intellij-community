@@ -2,7 +2,7 @@ ______ENTRY_0:
 android-generated-sources-processor
 Copied files
 $PROJECT_DIR$/root/gen/com/example/simple/MyGeneratedClass.java
-$DATA_STORAGE_ROOT$/android/copied_sources/module/com/example/simple/MyGeneratedClass.java
+$DATA_STORAGE_ROOT$/targets/java-production/module/android/copied_sources/com/example/simple/MyGeneratedClass.java
 
 ______ENTRY_1:0
 $JAVA_PATH$

@@ -210,17 +210,22 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
 
   @Override
   public void setEncoding(@Nullable final VirtualFile virtualFileOrDir, @Nullable final Charset charset) {
+    Charset oldCharset;
+
     if (charset == null) {
-      myMapping.remove(virtualFileOrDir);
+      oldCharset = myMapping.remove(virtualFileOrDir);
     }
     else {
-      myMapping.put(virtualFileOrDir, charset);
+      oldCharset = myMapping.put(virtualFileOrDir, charset);
     }
-    myModificationCount++;
-    if (virtualFileOrDir != null) {
-      virtualFileOrDir.setCharset(virtualFileOrDir.getBOM() == null ? charset : null);
+
+    if (!Comparing.equal(oldCharset, charset)) {
+      myModificationCount++;
+      if (virtualFileOrDir != null) {
+        virtualFileOrDir.setCharset(virtualFileOrDir.getBOM() == null ? charset : null);
+      }
+      reloadAllFilesUnder(virtualFileOrDir);
     }
-    reloadAllFilesUnder(virtualFileOrDir);
   }
 
   private static void clearAndReload(@NotNull VirtualFile virtualFileOrDir) {

@@ -52,6 +52,9 @@ public interface Resources extends AndroidDomElement {
   List<IntegerElement> getIntegers();
   IntegerElement addInteger();
 
+  List<FractionElement> getFractions();
+  FractionElement addFraction();
+
   List<IntegerArray> getIntegerArrays();
   IntegerArray addIntegerArray();
 

@@ -28,11 +28,12 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
 import com.intellij.packaging.elements.ArtifactRootElement;
@@ -65,8 +66,17 @@ public class PackageFileWorker {
     myRelativeOutputPath = relativeOutputPath;
   }
 
-  public static void startPackagingFiles(final Project project, final List<VirtualFile> files,
-                                         final Artifact[] artifacts, final Runnable onFinished) {
+  public static void startPackagingFiles(Project project, List<VirtualFile> files, Artifact[] artifacts, final @NotNull Runnable onFinishedInAwt) {
+    startPackagingFiles(project, files, artifacts).doWhenProcessed(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().invokeLater(onFinishedInAwt);
+      }
+    });
+  }
+
+  public static ActionCallback startPackagingFiles(final Project project, final List<VirtualFile> files, final Artifact[] artifacts) {
+    final ActionCallback callback = new ActionCallback();
     ProgressManager.getInstance().run(new Task.Backgroundable(project, "Packaging Files") {
       @Override
       public void run(@NotNull ProgressIndicator indicator) {
@@ -84,19 +94,23 @@ public class PackageFileWorker {
                 }
               }
             }.execute();
+            callback.setDone();
           }
         }
         finally {
-          ApplicationManager.getApplication().invokeLater(onFinished);
+          if (!callback.isDone()) {
+            callback.setRejected();
+          }
         }
       }
     });
+    return callback;
   }
 
   public static void packageFile(@NotNull VirtualFile file, @NotNull Project project, final Artifact[] artifacts) throws IOException {
     LOG.debug("Start packaging file: " + file.getPath());
     final Collection<Trinity<Artifact, PackagingElementPath, String>> items = ArtifactUtil.findContainingArtifactsWithOutputPaths(file, project, artifacts);
-    File ioFile = VfsUtil.virtualToIoFile(file);
+    File ioFile = VfsUtilCore.virtualToIoFile(file);
     for (Trinity<Artifact, PackagingElementPath, String> item : items) {
       final Artifact artifact = item.getFirst();
       final String outputPath = artifact.getOutputPath();

@@ -17,6 +17,9 @@
       <implementation-class>org.jetbrains.android.AndroidProjectComponent</implementation-class>
     </component>
     <component>
+      <implementation-class>org.jetbrains.android.AndroidPropertyFilesUpdater</implementation-class>
+    </component>
+    <component>
       <implementation-class>org.jetbrains.android.uipreview.AndroidLayoutPreviewToolWindowManager</implementation-class>
       <skipForDefaultProject/>
       <headless-implementation-class></headless-implementation-class>
@@ -119,7 +122,8 @@
     <dom.fileDescription implementation="org.jetbrains.android.dom.color.ColorDomFileDescription"/>
 
     <dom.fileDescription implementation="org.jetbrains.android.dom.manifest.ManifestDomFileDescription"/>
-    <dom.fileDescription implementation="org.jetbrains.android.dom.layout.LayoutDomFileDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.android.dom.layout.ViewLayoutDomFileDescription"/>
+    <dom.fileDescription implementation="org.jetbrains.android.dom.layout.FragmentLayoutDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.animation.AnimationDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.animator.AnimatorDomFileDescription"/>
     <dom.fileDescription implementation="org.jetbrains.android.dom.menu.MenuDomFileDescription"/>

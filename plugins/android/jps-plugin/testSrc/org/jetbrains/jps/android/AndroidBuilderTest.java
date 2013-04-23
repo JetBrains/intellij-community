@@ -1,7 +1,7 @@
 package org.jetbrains.jps.android;
 
 import com.android.SdkConstants;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -15,15 +15,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.android.model.*;
 import org.jetbrains.jps.android.model.impl.JpsAndroidModuleExtensionImpl;
 import org.jetbrains.jps.android.model.impl.JpsAndroidModuleProperties;
+import org.jetbrains.jps.builders.BuildResult;
 import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
+import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.impl.JpsSimpleElementImpl;
 import org.jetbrains.jps.model.java.JavaSourceRootType;
 import org.jetbrains.jps.model.java.JpsJavaExtensionService;
 import org.jetbrains.jps.model.java.JpsJavaLibraryType;
+import org.jetbrains.jps.model.java.compiler.JpsJavaCompilerConfiguration;
+import org.jetbrains.jps.model.java.compiler.ProcessorConfigProfile;
 import org.jetbrains.jps.model.library.JpsLibrary;
 import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
@@ -35,6 +39,7 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.*;
 import java.nio.charset.Charset;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 import java.util.zip.CRC32;
 import java.util.zip.ZipEntry;
@@ -137,7 +142,7 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
     executor.clear();
     makeAll().assertSuccessful();
     checkBuildLog(executor, "expected_log_3");
-    assertCompiled(JavaBuilder.BUILDER_NAME, "android/generated_sources/module/aapt/com/example/simple/R.java");
+    assertCompiled(JavaBuilder.BUILDER_NAME, "targets/java-production/module/android/generated_sources/aapt/com/example/simple/R.java");
     checkMakeUpToDate(executor);
 
     FileUtil.rename(new File(getProjectPath("res/drawable-hdpi/ic_launcher.png")),
@@ -146,7 +151,7 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
     executor.clear();
     makeAll().assertSuccessful();
     checkBuildLog(executor, "expected_log_4");
-    assertCompiled(JavaBuilder.BUILDER_NAME, "android/generated_sources/module/aapt/com/example/simple/R.java");
+    assertCompiled(JavaBuilder.BUILDER_NAME, "targets/java-production/module/android/generated_sources/aapt/com/example/simple/R.java");
     checkMakeUpToDate(executor);
 
     FileUtil.writeToFile(new File(getProjectPath("res/drawable-hdpi/new_file.png")),
@@ -155,7 +160,7 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
     executor.clear();
     makeAll().assertSuccessful();
     checkBuildLog(executor, "expected_log_5");
-    assertCompiled(JavaBuilder.BUILDER_NAME, "android/generated_sources/module/aapt/com/example/simple/R.java");
+    assertCompiled(JavaBuilder.BUILDER_NAME, "targets/java-production/module/android/generated_sources/aapt/com/example/simple/R.java");
 
     checkMakeUpToDate(executor);
 
@@ -193,8 +198,8 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
     makeAll().assertSuccessful();
     checkBuildLog(executor, "expected_log_7");
     assertCompiled(JavaBuilder.BUILDER_NAME,
-                   "android/generated_sources/module/aapt/com/example/simple1/R.java",
-                   "android/generated_sources/module/build_config/com/example/simple1/BuildConfig.java");
+                   "targets/java-production/module/android/generated_sources/aapt/com/example/simple1/R.java",
+                   "targets/java-production/module/android/generated_sources/build_config/com/example/simple1/BuildConfig.java");
 
     checkMakeUpToDate(executor);
 
@@ -457,7 +462,7 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
     checkMakeUpToDate(executor);
 
     appModule.getDependenciesList().addModuleDependency(libModule);
-    makeAll();
+    makeAll().assertSuccessful();
     checkBuildLog(executor, "expected_log_1");
     checkMakeUpToDate(executor);
 
@@ -687,7 +692,7 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
 
   public void testGeneratedSources() throws Exception {
     final MyExecutor executor = new MyExecutor("com.example.simple");
-    setUpSimpleAndroidStructure(new String[]{"src", "gen"}, executor, null).getFirst();
+    final JpsModule module = setUpSimpleAndroidStructure(new String[]{"src", "gen"}, executor, null).getFirst();
 
     rebuildAll();
     checkBuildLog(executor, "expected_log");
@@ -700,7 +705,8 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
 
     makeAll().assertSuccessful();
     checkBuildLog(executor, "expected_log_1");
-    assertCompiled(JavaBuilder.BUILDER_NAME, "android/copied_sources/module/com/example/simple/MyGeneratedClass.java");
+    assertCompiled(JavaBuilder.BUILDER_NAME,
+                   "targets/java-production/module/android/copied_sources/com/example/simple/MyGeneratedClass.java");
     checkMakeUpToDate(executor);
 
     change(getProjectPath("gen/com/example/simple/R.java"));
@@ -714,7 +720,8 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
 
     makeAll().assertSuccessful();
     checkBuildLog(executor, "expected_log_3");
-    assertCompiled(JavaBuilder.BUILDER_NAME, "android/copied_sources/module/com/example/simple/MyGeneratedClass.java");
+    assertCompiled(JavaBuilder.BUILDER_NAME,
+                   "targets/java-production/module/android/copied_sources/com/example/simple/MyGeneratedClass.java");
     checkMakeUpToDate(executor);
 
     change(getProjectPath("gen/com/example/simple/MyGeneratedClass.java"),
@@ -726,7 +733,88 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
     checkBuildLog(executor, "expected_log_4");
     assertCompiled(JavaBuilder.BUILDER_NAME);
     checkMakeUpToDate(executor);
+
+    change(getProjectPath("gen/com/example/simple/MyGeneratedClass.java"),
+           "package com.example.simple;\n" +
+           "public class MyGeneratedClass {}");
+
+    change(getProjectPath("src/com/example/simple/MyActivity.java"),
+           "package com.example.simple;\n" +
+           "import android.app.Activity;\n" +
+           "import android.os.Bundle;\n" +
+           "public class MyActivity extends Activity {\n" +
+           "    public void onCreate(Bundle savedInstanceState) {\n" +
+           "        super.onCreate(savedInstanceState);\n" +
+           "        new MyGeneratedClass();" +
+           "    }\n" +
+           "}\n");
+
+    makeAll().assertSuccessful();
+    checkBuildLog(executor, "expected_log_5");
+    assertCompiled(JavaBuilder.BUILDER_NAME,
+                   "root/src/com/example/simple/MyActivity.java",
+                   "targets/java-production/module/android/copied_sources/com/example/simple/MyGeneratedClass.java");
+    checkMakeUpToDate(executor);
+
+    final JpsJavaCompilerConfiguration compilerConfig = JpsJavaExtensionService.getInstance().getOrCreateCompilerConfiguration(myProject);
+    final ProcessorConfigProfile profile = compilerConfig.getAnnotationProcessingProfile(module);
+    profile.setEnabled(true);
+    profile.setOutputRelativeToContentRoot(true);
+    profile.setGeneratedSourcesDirectoryName("gen", false);
+    final BuildResult result = makeAll();
+    result.assertFailed();
+    final List<BuildMessage> warnMessages = result.getWarnMessages();
+    boolean containsForciblyExcludedRootWarn = false;
+
+    for (BuildMessage message : warnMessages) {
+      if (message.getMessageText().endsWith("was forcibly excluded by the IDE, so custom generated files won't be compiled")) {
+        containsForciblyExcludedRootWarn = true;
+      }
+    }
+    assertTrue(containsForciblyExcludedRootWarn);
   }
+
+  /*public void testMaven() throws Exception {
+    final MyExecutor executor = new MyExecutor("com.example.simple");
+    final JpsSdk<JpsSimpleElement<JpsAndroidSdkProperties>> androidSdk = addJdkAndAndroidSdk();
+    addPathPatterns(executor, androidSdk);
+
+    final JpsModule appModule = addAndroidModule("app", new String[]{"src"}, "app", "app", androidSdk).getFirst();
+    final JpsModule libModule = addAndroidModule("lib", new String[]{"src"}, "lib", "lib", androidSdk).getFirst();
+    final JpsModule libModule1 = addAndroidModule("lib1", new String[]{"src"}, "lib1", "lib1", androidSdk).getFirst();
+
+    JpsMavenExtensionService.getInstance().getOrCreateExtension(appModule);
+
+    final JpsAndroidModuleExtension libExtension = AndroidJpsUtil.getExtension(libModule);
+    assert libExtension != null;
+    final JpsAndroidModuleProperties libProps = ((JpsAndroidModuleExtensionImpl)libExtension).getProperties();
+    libProps.LIBRARY_PROJECT = true;
+
+    final JpsAndroidModuleExtension libExtension1 = AndroidJpsUtil.getExtension(libModule1);
+    assert libExtension1 != null;
+    final JpsAndroidModuleProperties libProps1 = ((JpsAndroidModuleExtensionImpl)libExtension1).getProperties();
+    libProps1.LIBRARY_PROJECT = true;
+
+    appModule.getDependenciesList().addModuleDependency(libModule);
+    libModule.getDependenciesList().addModuleDependency(libModule1);
+
+    rebuildAll();
+    checkBuildLog(executor, "expected_log");
+
+    assertOutput(appModule, TestFileSystemItem.fs()
+      .file("com")
+      .archive("app.apk")
+      .dir("lib")
+      .file("lib_resource.txt")
+      .end()
+      .dir("com")
+      .file("app_resource.txt")
+      .end()
+      .file("META-INF")
+      .file("res_apk_entry", "res_apk_entry_content")
+      .file("classes.dex", "classes_dex_content"));
+    checkMakeUpToDate(executor);
+  }*/
 
   private void checkMakeUpToDate(MyExecutor executor) {
     executor.clear();
@@ -772,6 +860,10 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
     executor.addRegexPathPattern("JAVA_PATH", ".*/java");
     executor.addRegexPathPattern("IDEA_RT_PATH", ".*/idea_rt.jar");
     executor.addRegexPathPattern("PROGUARD_INPUT_JAR", ".*/proguard_input\\S*\\.jar");
+
+    // for running on buildserver
+    executor.addRegexPathPattern("IDEA_RT_PATH", ".*/production/java-runtime");
+
     AndroidBuildTestingManager.startBuildTesting(executor);
   }
 
@@ -861,11 +953,9 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
   @NotNull
   private static String getAndroidHomePath() {
     final String androidHomePath = System.getProperty("android.home.path");
-
-    if (androidHomePath != null) {
-      return androidHomePath;
-    }
-    return new File(PathManager.getHomePath(), "community/plugins/android").getPath();
+    return androidHomePath != null
+           ? androidHomePath
+           : PluginPathManager.getPluginHomePath("android");
   }
 
   private static void createTextFile(@NotNull String path, @NotNull String text) throws IOException {
@@ -919,13 +1009,15 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
       if (args[0].endsWith(SdkConstants.FN_AAPT)) {
         if ("package".equals(args[1])) {
           if ("-m".equals(args[2])) {
-            final String outputDir = args[4];
-            createTextFile(outputDir + "/" + myPackage.replace('.', '/') + "/R.java",
-                           "package " + myPackage + ";\n" +
-                           "public class R {" + myRClassContent + "}");
+            final String outputDir = getAaptOutputDirFromArgs(args);
+            if (outputDir != null) {
+              createTextFile(outputDir + "/" + myPackage.replace('.', '/') + "/R.java",
+                             "package " + myPackage + ";\n" +
+                             "public class R {" + myRClassContent + "}");
 
-            if ("-G".equals(args[args.length - 2])) {
-              createTextFile(args[args.length - 1], "generated_proguard_file_by_aapt");
+              if ("-G".equals(args[args.length - 2])) {
+                createTextFile(args[args.length - 1], "generated_proguard_file_by_aapt");
+              }
             }
           }
           else if ("-S".equals(args[2])) {
@@ -947,6 +1039,16 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
         }
       }
       return new MyProcess(0, "", "");
+    }
+
+    private static String getAaptOutputDirFromArgs(@NotNull String[] args) {
+      for (int i = 0; i < args.length; i++) {
+        final String arg = args[i];
+        if ("-J".equals(arg) && i + 1 < args.length) {
+          return args[i + 1];
+        }
+      }
+      return null;
     }
 
     private static void appendEntry(ZipOutputStream zos, String name, byte[] content) throws Exception {

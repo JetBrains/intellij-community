@@ -18,7 +18,6 @@ package org.jetbrains.plugins.javaFX.fxml.refs;
 import com.intellij.psi.*;
 import com.intellij.psi.xml.XmlAttributeValue;
 import com.intellij.psi.xml.XmlFile;
-import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
 import org.jetbrains.annotations.NotNull;
@@ -64,21 +63,17 @@ public class JavaFxFieldIdReferenceProvider extends JavaFxControllerBasedReferen
     @Nullable
     @Override
     public PsiElement resolve() {
-      if (myField != null) {
-        return myField;
-      }
-      else {
-        if (myAClass != null) {
-          final XmlFile xmlFile = (XmlFile)myXmlAttributeValue.getContainingFile();
-          final XmlTag rootTag = xmlFile.getRootTag();
-          if (rootTag != null) {
-            if (!JavaFxPsiUtil.isOutOfHierarchy(myXmlAttributeValue)) {
-              return null;
-            }
-          }
+      return myField != null ? myField : myXmlAttributeValue;
+    }
+
+    public boolean isUnresolved() {
+      if (myField == null && myAClass != null) {
+        final XmlFile xmlFile = (XmlFile)myXmlAttributeValue.getContainingFile();
+        if (xmlFile.getRootTag() != null && !JavaFxPsiUtil.isOutOfHierarchy(myXmlAttributeValue)) {
+          return true;
         }
-        return myXmlAttributeValue;
       }
+      return false;
     }
 
     @NotNull

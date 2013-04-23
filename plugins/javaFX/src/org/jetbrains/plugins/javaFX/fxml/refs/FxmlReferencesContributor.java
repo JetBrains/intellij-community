@@ -93,9 +93,9 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                         new JavaFxComponentIdReferenceProvider());
 
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName("url")).and(attributeValueInFxml),
-                                        new JavaFxLocationReferenceProvider());
+                                        new JavaFxLocationReferenceProvider(false, "png"));
     registrar.registerReferenceProvider(XmlPatterns.xmlAttributeValue().withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.STYLESHEETS)).and(attributeValueInFxml),
-                                        new JavaFxLocationReferenceProvider(true));
+                                        new JavaFxLocationReferenceProvider(true, "css"));
 
     registrar.registerReferenceProvider(PlatformPatterns.psiElement(XmlProcessingInstruction.class).inVirtualFile(virtualFile().withExtension(JavaFxFileTypeFactory.FXML_EXTENSION)),
                                         new ImportReferenceProvider());
@@ -110,7 +110,7 @@ public class FxmlReferencesContributor extends PsiReferenceContributor {
                                           .withParent(XmlPatterns.xmlAttribute().withName(FxmlConstants.FX_VALUE)
                                                         .withParent(XmlPatterns.xmlTag().withParent(XmlPatterns.xmlTag().withName(FxmlConstants.STYLESHEETS))))
                                           .and(attributeValueInFxml),
-                                        new JavaFxLocationReferenceProvider(true));
+                                        new JavaFxLocationReferenceProvider(true, "css"));
   }
 
   private static class MyJavaClassReferenceProvider extends JavaClassReferenceProvider {

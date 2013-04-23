@@ -15,8 +15,8 @@
  */
 package org.jetbrains.android.run;
 
+import com.android.SdkConstants;
 import com.android.ddmlib.*;
-import com.intellij.CommonBundle;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.Executor;
 import com.intellij.execution.JavaExecutionUtil;
@@ -26,11 +26,16 @@ import com.intellij.execution.filters.TextConsoleBuilderFactory;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.ui.ConsoleView;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.options.SettingsEditor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.Computable;
+import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.vfs.LocalFileSystem;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.JavaPsiFacade;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
@@ -43,12 +48,14 @@ import org.jetbrains.android.dom.manifest.Activity;
 import org.jetbrains.android.dom.manifest.IntentFilter;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.android.facet.AndroidRootUtil;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.android.util.AndroidUtils;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.io.File;
 import java.io.IOException;
 
 import static com.intellij.execution.process.ProcessOutputTypes.STDERR;
@@ -71,6 +78,7 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
   }
 
   protected void checkConfiguration(@NotNull AndroidFacet facet) throws RuntimeConfigurationException {
+    final boolean packageContainMavenProperty = doesPackageContainMavenProperty(facet);
     final JavaRunConfigurationModule configurationModule = getConfigurationModule();
     if (MODE.equals(LAUNCH_SPECIFIC_ACTIVITY)) {
       Project project = configurationModule.getProject();
@@ -84,21 +92,33 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
         throw new RuntimeConfigurationError(AndroidBundle.message("not.activity.subclass.error", ACTIVITY_CLASS));
       }
 
-      final Activity activity = AndroidDomUtil.getActivityDomElementByClass(facet.getModule(), c);
-      if (activity == null) {
-        throw new RuntimeConfigurationError(AndroidBundle.message("activity.not.declared.in.manifest", c.getName()));
-      }
-      if (!isActivityLaunchable(activity)) {
-        throw new RuntimeConfigurationError(AndroidBundle.message("activity.not.launchable.error", AndroidUtils.LAUNCH_ACTION_NAME));
+      if (!packageContainMavenProperty) {
+        final Activity activity = AndroidDomUtil.getActivityDomElementByClass(facet.getModule(), c);
+        if (activity == null) {
+          throw new RuntimeConfigurationError(AndroidBundle.message("activity.not.declared.in.manifest", c.getName()));
+        }
+        if (!isActivityLaunchable(activity)) {
+          throw new RuntimeConfigurationError(AndroidBundle.message("activity.not.launchable.error", AndroidUtils.LAUNCH_ACTION_NAME));
+        }
       }
     }
     else if (MODE.equals(LAUNCH_DEFAULT_ACTIVITY)) {
       Manifest manifest = facet.getManifest();
       if (manifest != null) {
-        if (AndroidUtils.getDefaultActivityName(manifest) != null) return;
+        if (packageContainMavenProperty || AndroidUtils.getDefaultActivityName(manifest) != null) return;
       }
       throw new RuntimeConfigurationError(AndroidBundle.message("default.activity.not.found.error"));
     }
+  }
+
+  private static boolean doesPackageContainMavenProperty(@NotNull AndroidFacet facet) {
+    final Manifest manifest = facet.getManifest();
+
+    if (manifest == null) {
+      return false;
+    }
+    final String aPackage = manifest.getPackage().getStringValue();
+    return aPackage != null && aPackage.contains("${");
   }
 
   @Override
@@ -155,18 +175,30 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
 
   @Nullable
   @Override
-  protected AndroidApplicationLauncher getApplicationLauncher(AndroidFacet facet) {
+  protected AndroidApplicationLauncher getApplicationLauncher(final AndroidFacet facet) {
+    return new MyApplicationLauncher() {
+      @Nullable
+      @Override
+      protected String getActivityName(@Nullable ProcessHandler processHandler) {
+        return getActivityToLaunch(facet, processHandler);
+      }
+    };
+  }
+
+  @Nullable
+  private String getActivityToLaunch(@NotNull AndroidFacet facet, @Nullable ProcessHandler processHandler) {
     String activityToLaunch = null;
+
     if (MODE.equals(LAUNCH_DEFAULT_ACTIVITY)) {
-      Manifest manifest = facet.getManifest();
-      if (manifest == null) return null;
-      String defaultActivityName = AndroidUtils.getDefaultActivityName(manifest);
+      final String defaultActivityName = computeDefaultActivity(facet, processHandler);
+
       if (defaultActivityName != null) {
         activityToLaunch = defaultActivityName;
       }
       else {
-        Messages.showErrorDialog(facet.getModule().getProject(), AndroidBundle.message("default.activity.not.found.error"),
-                                 CommonBundle.getErrorTitle());
+        if (processHandler != null) {
+          processHandler.notifyTextAvailable(AndroidBundle.message("default.activity.not.found.error"), STDERR);
+        }
         return null;
       }
     }
@@ -181,7 +213,47 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
         activityToLaunch = JavaExecutionUtil.getRuntimeQualifiedName(activityClass);
       }
     }
-    return new MyApplicationLauncher(activityToLaunch);
+    return activityToLaunch;
+  }
+
+  @Nullable
+  private static String computeDefaultActivity(@NotNull final AndroidFacet facet, @Nullable final ProcessHandler processHandler) {
+    File manifestCopy = null;
+    final VirtualFile manifestVFile;
+
+    try {
+      if (facet.getProperties().USE_CUSTOM_COMPILER_MANIFEST) {
+        final Pair<File,String> pair = getCopyOfCompilerManifestFile(facet, processHandler);
+        manifestCopy = pair != null ? pair.getFirst() : null;
+        manifestVFile = manifestCopy != null
+                        ? LocalFileSystem.getInstance().findFileByIoFile(manifestCopy)
+                        : null;
+      }
+      else {
+        manifestVFile = AndroidRootUtil.getManifestFile(facet);
+      }
+      return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
+        @Override
+        public String compute() {
+          final Manifest manifest = manifestVFile != null
+                                    ? AndroidUtils.loadDomElement(facet.getModule(), manifestVFile, Manifest.class)
+                                    : null;
+
+          if (manifest == null) {
+            if (processHandler != null) {
+              processHandler.notifyTextAvailable("Cannot find " + SdkConstants.FN_ANDROID_MANIFEST_XML + " file\n", STDERR);
+            }
+            return null;
+          }
+          return AndroidUtils.getDefaultActivityName(manifest);
+        }
+      });
+    }
+    finally {
+      if (manifestCopy != null) {
+        FileUtil.delete(manifestCopy.getParentFile());
+      }
+    }
   }
 
   private static boolean isActivityLaunchable(Activity activity) {
@@ -193,18 +265,17 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
     return false;
   }
 
-  private static class MyApplicationLauncher extends AndroidApplicationLauncher {
+  private static abstract class MyApplicationLauncher extends AndroidApplicationLauncher {
     private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.run.AndroidRunConfiguration.MyApplicationLauncher");
-    private final String myActivityName;
 
-    private MyApplicationLauncher(@Nullable String activityName) {
-      myActivityName = activityName;
-    }
+    @Nullable
+    protected abstract String getActivityName(@Nullable ProcessHandler processHandler);
 
     @SuppressWarnings({"EnumSwitchStatementWhichMissesCases"})
     @Override
     public boolean isReadyForDebugging(ClientData data, ProcessHandler processHandler) {
-      if (myActivityName == null) {
+      final String activityName = getActivityName(processHandler);
+      if (activityName == null) {
         ClientData.DebuggerStatus status = data.getDebuggerConnectionStatus();
         switch (status) {
           case ERROR:
@@ -228,11 +299,11 @@ public class AndroidRunConfiguration extends AndroidRunConfigurationBase impleme
 
     public LaunchResult launch(@NotNull AndroidRunningState state, @NotNull IDevice device)
       throws IOException, AdbCommandRejectedException, TimeoutException {
-      String activityName = myActivityName;
+      ProcessHandler processHandler = state.getProcessHandler();
+      String activityName = getActivityName(processHandler);
       if (activityName == null) return LaunchResult.NOTHING_TO_DO;
       activityName = activityName.replace("$", "\\$");
       final String activityPath = state.getPackageName() + '/' + activityName;
-      ProcessHandler processHandler = state.getProcessHandler();
       if (state.isStopped()) return LaunchResult.STOP;
       processHandler.notifyTextAvailable("Launching application: " + activityPath + ".\n", STDOUT);
       AndroidRunningState.MyReceiver receiver = state.new MyReceiver();

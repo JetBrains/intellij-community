@@ -122,6 +122,10 @@
       <reference ref="VersionControlsGroup"/>
     </group>
 
+    <action id="ChangesView.AddUnversioned.From.Dialog" class="com.intellij.openapi.vcs.changes.actions.ScheduleForAdditionAction"
+            icon="AllIcons.General.Add" use-shortcut-of="ChangesView.AddUnversioned" >
+    </action>
+
     <group id="ShelvedChangesPopupMenu">
       <action id="ShelvedChanges.Unshelve" class="com.intellij.openapi.vcs.changes.shelf.UnshelveChangesAction"/>
       <action id="ShelveChanges.UnshelveWithDialog" class="com.intellij.openapi.vcs.changes.shelf.UnshelveWithDialogAction"

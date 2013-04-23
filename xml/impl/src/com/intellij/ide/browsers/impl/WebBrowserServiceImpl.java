@@ -15,10 +15,11 @@
  */
 package com.intellij.ide.browsers.impl;
 
+import com.intellij.ide.browsers.Url;
+import com.intellij.ide.browsers.Urls;
 import com.intellij.ide.browsers.WebBrowserService;
 import com.intellij.ide.browsers.WebBrowserUrlProvider;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.impl.http.HttpVirtualFile;
 import com.intellij.psi.PsiElement;
@@ -30,9 +31,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Arrays;
 import java.util.List;
 
-/**
- * @author nik
- */
 public class WebBrowserServiceImpl extends WebBrowserService {
   @Override
   public boolean canOpenInBrowser(@NotNull PsiElement psiElement) {
@@ -43,7 +41,7 @@ public class WebBrowserServiceImpl extends WebBrowserService {
 
   @Override
   @Nullable
-  public String getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
+  public Url getUrlToOpen(@NotNull PsiElement psiElement, boolean preferLocalUrl) throws WebBrowserUrlProvider.BrowserException {
     final PsiFile psiFile = psiElement instanceof PsiFile ? (PsiFile)psiElement : psiElement.getContainingFile();
     if (psiFile == null) {
       return null;
@@ -53,14 +51,15 @@ public class WebBrowserServiceImpl extends WebBrowserService {
       return null;
     }
     if (virtualFile instanceof HttpVirtualFile) {
-      return virtualFile.getUrl();
+      return Urls.newFromVirtualFile(virtualFile);
     }
 
     if (!(preferLocalUrl && HtmlUtil.isHtmlFile(psiFile))) {
       WebBrowserUrlProvider provider = getProvider(psiElement);
       if (provider != null) {
         try {
-          return provider.getUrl(psiElement, psiFile, virtualFile);
+          // I (develar) don't want to change API right now, so, just wrap result
+          return Urls.newFromIdea(provider.getUrl(psiElement, psiFile, virtualFile));
         }
         catch (WebBrowserUrlProvider.BrowserException e) {
           if (!HtmlUtil.isHtmlFile(psiFile)) {
@@ -69,11 +68,11 @@ public class WebBrowserServiceImpl extends WebBrowserService {
         }
       }
     }
-    return VfsUtil.toUri(virtualFile).toASCIIString();
+    return Urls.newFromVirtualFile(virtualFile);
   }
 
   @Nullable
-  public String getUrlToOpen(@NotNull PsiElement psiElement) {
+  public Url getUrlToOpen(@NotNull PsiElement psiElement) {
     try {
       return getUrlToOpen(psiElement, false);
     }

@@ -16,6 +16,19 @@
 package org.jetbrains.android.dom.converters;
 
 import com.android.resources.ResourceType;
+import com.intellij.openapi.util.TextRange;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiReference;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.xml.ConvertContext;
+import com.intellij.util.xml.GenericDomValue;
+import org.jetbrains.android.dom.resources.ResourceNameConverter;
+import org.jetbrains.android.dom.resources.ResourceValue;
+import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author Eugene.Kudelevsky
@@ -24,5 +37,50 @@ public class ParentStyleConverter extends ResourceReferenceConverter {
   public ParentStyleConverter() {
     super(ResourceType.STYLE.getName(), false, false);
     setAllowAttributeReferences(false);
+  }
+
+  @NotNull
+  @Override
+  public PsiReference[] createReferences(GenericDomValue<ResourceValue> value, PsiElement element, ConvertContext context) {
+    final PsiReference[] refsFromSuper = super.createReferences(value, element, context);
+    final AndroidFacet facet = AndroidFacet.getInstance(context);
+
+    if (facet != null) {
+      final PsiReference[] refs = getReferencesInStyleName(value, facet);
+
+      if (refs.length > 0) {
+        return ArrayUtil.mergeArrays(refsFromSuper, refs);
+      }
+    }
+    return refsFromSuper;
+  }
+
+  @NotNull
+  private static PsiReference[] getReferencesInStyleName(@NotNull GenericDomValue<?> value, @NotNull AndroidFacet facet) {
+    final String s = value.getStringValue();
+
+    if (s == null) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+    final String[] ids = s.split("\\.");
+    if (ids.length < 2) {
+      return PsiReference.EMPTY_ARRAY;
+    }
+    final List<PsiReference> result = new ArrayList<PsiReference>(ids.length - 1);
+    int offset = s.length();
+
+    for (int i = ids.length - 1; i >= 0; i--) {
+      final String styleName = s.substring(0, offset);
+
+      if (i < ids.length - 1) {
+        final ResourceValue val = ResourceValue.referenceTo((char)0, null, ResourceType.STYLE.getName(), styleName);
+        result.add(new ResourceNameConverter.MyParentStyleReference(value, new TextRange(1, 1 + offset), val, facet));
+      }
+      if (ResourceNameConverter.hasExplicitParent(facet, styleName)) {
+        break;
+      }
+      offset = offset - ids[i].length() - 1;
+    }
+    return result.toArray(new PsiReference[result.size()]);
   }
 }

@@ -455,7 +455,7 @@ public class InjectedLanguageUtil {
         if (element == endElement) myState = Boolean.FALSE;
         if (Boolean.FALSE == myState) return;
         if (Boolean.TRUE == myState && element.getFirstChild() == null) {
-          sb.append(manager.getUnescapedText(element));
+          sb.append(getUnescapedLeafText(element, false));
         }
         else {
           super.visitElement(element);
@@ -463,5 +463,26 @@ public class InjectedLanguageUtil {
       }
     });
     return sb.toString();
+  }
+
+  @Nullable
+  public static String getUnescapedLeafText(PsiElement element, boolean strict) {
+    String unescaped = element.getCopyableUserData(LeafPatcher.UNESCAPED_TEXT);
+    if (unescaped != null) {
+      return unescaped;
+    }
+    if (!strict && element.getFirstChild() == null) {
+      return element.getText();
+    }
+    return null;
+  }
+
+  @Nullable
+  public static DocumentWindow getDocumentWindow(PsiElement element) {
+    PsiFile file = element.getContainingFile();
+    if (file == null) return null;
+    VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile instanceof VirtualFileWindow) return ((VirtualFileWindow)virtualFile).getDocumentWindow();
+    return null;
   }
 }

@@ -9,4 +9,6 @@
   <attr name="myAttr2" format="string"/>
   <plurals name="plural1">
   </plurals>
+  <fraction name="my_fraction1">1.0%</fraction>
+  <item name="my_fraction2" type="fraction">2.0%</item>
 </resources>

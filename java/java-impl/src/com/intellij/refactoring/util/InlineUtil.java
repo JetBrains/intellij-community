@@ -86,7 +86,7 @@ public class InlineUtil {
                   if (method.getModifierList().hasModifierProperty(PsiModifier.STATIC)) {
                     methodExpression.setQualifierExpression(elementFactory.createReferenceExpression(containingClass));
                   } else {
-                    methodExpression.setQualifierExpression(createThisExpression(manager, containingClass, refParent));
+                    methodExpression.setQualifierExpression(createThisExpression(manager, thisClass, refParent));
                   }
                 }
               }

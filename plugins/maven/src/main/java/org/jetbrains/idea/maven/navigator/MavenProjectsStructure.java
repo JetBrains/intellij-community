@@ -715,7 +715,15 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     @Override
     protected void doUpdate() {
-      setNameAndTooltip(getName(), myTooltipCache);
+      String hint = null;
+
+      if (!myProjectsNavigator.getGroupModules()
+          && myProjectsManager.findAggregator(myMavenProject) == null
+          && myProjectsManager.getProjects().size() > myProjectsManager.getRootProjects().size()) {
+        hint = "root";
+      }
+
+      setNameAndTooltip(getName(), myTooltipCache, hint);
     }
 
     @Override

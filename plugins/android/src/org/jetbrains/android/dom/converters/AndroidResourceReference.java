@@ -15,13 +15,13 @@
  */
 package org.jetbrains.android.dom.converters;
 
+import com.android.resources.ResourceType;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.impl.ConvertContextFactory;
-import com.intellij.util.xml.impl.ConvertContextImpl;
 import com.intellij.util.xml.impl.DomCompletionContributor;
 import org.jetbrains.android.dom.AndroidDomUtil;
 import org.jetbrains.android.dom.resources.ResourceValue;
@@ -79,8 +79,11 @@ public class AndroidResourceReference extends AndroidResourceReferenceBase {
 
     if (resType != null && newElementName != null) {
       // todo: do not allow new value resource name to contain dot, because it is impossible to check if it file or value otherwise
+      final ResourceType resTypeObj = ResourceType.getEnum(resType);
 
-      final String newResName = newElementName.contains(".") // it is file
+      final String newResName = resTypeObj != null &&
+                                AndroidResourceUtil.XML_FILE_RESOURCE_TYPES.contains(resTypeObj) &&
+                                newElementName.contains(".") // it is file
                                 ? AndroidCommonUtils.getResourceName(resType, newElementName)
                                 : newElementName;
       myValue.setValue(ResourceValue.referenceTo(value.getPrefix(), value.getPackage(), resType, newResName));

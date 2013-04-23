@@ -356,7 +356,7 @@ public class IdeTooltipManager implements ApplicationComponent, AWTEventListener
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})
   public String getUlImg(boolean awtTooltip) {
     AllIcons.General.Mdot.getIconWidth();  // keep icon reference
-    return "/general/mdot.png";
+    return UIUtil.isUnderDarcula() ? "/general/mdot-white.png" : "/general/mdot.png";
   }
 
   @SuppressWarnings({"MethodMayBeStatic", "UnusedParameters"})

@@ -145,6 +145,8 @@ public class ExecutionManagerImpl extends ExecutionManager implements ProjectCom
           @Override
           public void run() {
             for (BeforeRunTask task : activeTasks) {
+              if (myProject.isDisposed())
+                return;
               BeforeRunTaskProvider<BeforeRunTask> provider = BeforeRunTaskProvider.getProvider(myProject, task.getProviderId());
               if (provider == null) {
                 LOG.warn("Cannot find BeforeRunTaskProvider for id='" + task.getProviderId() + "'");

@@ -21,6 +21,8 @@ import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.testFramework.LightProjectDescriptor;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.List;
+
 /**
  * User: anna
  * Date: 1/17/13
@@ -159,11 +161,33 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
     assertContainsElements(myFixture.getLookupElementStrings(), "true", "false");
   }
 
+  public void testBooleanValuesNonStatic() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    complete();
+    assertContainsElements(myFixture.getLookupElementStrings(), "true", "false");
+  }
+
+  public void testPropertyNameWithoutField() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    complete();
+    assertContainsElements(myFixture.getLookupElementStrings(), "disable");
+  }
+
+  public void testSubclassesAndDefaultProperty() throws Exception {
+    myFixture.configureByFiles(getTestName(true) + ".fxml");
+    complete();
+    final List<String> lookupElementStrings = myFixture.getLookupElementStrings();
+    assertNotNull(lookupElementStrings);
+    final String buttonVariant = "Button";
+    assertContainsElements(lookupElementStrings, buttonVariant);
+    assertTrue(lookupElementStrings.toString(), lookupElementStrings.lastIndexOf(buttonVariant) == lookupElementStrings.indexOf(buttonVariant));
+  }
+
   public void testDefaultPropertyIncludeOnce() throws Exception {
     myFixture.configureByFiles(getTestName(true) + ".fxml");
     myItems = myFixture.completeBasic();
     assertContainsElements(myFixture.getLookupElementStrings(), "fx:reference");
-    assertEquals(5, myItems.length);
+    assertEquals(3, myItems.length);
   }
 
   public void testAcceptableSourceOnly() throws Exception {
@@ -187,6 +211,24 @@ public class JavaFxCompletionTest extends LightFixtureCompletionTestCase {
 
   public void testAllowPropertyTypeClass() throws Exception {
     doTest("ColumnConstraints");
+  }
+
+  public void testOnlyCssAsStylesheets() throws Exception {
+    myFixture.addFileToProject("my.fxml", "");
+    myFixture.addFileToProject("my.png", "");
+    myFixture.addFileToProject("sample.css", ".root{}");
+    configureByFile(getTestName(true) + ".fxml");
+    assertTrue(myItems.length == 1);
+    LookupElement selectionElement = null;
+    for (LookupElement item : myItems) {
+      if (item.getLookupString().equals("sample.css")) {
+        selectionElement = item;
+        break;
+      }
+    }
+    if (selectionElement == null) {
+      fail("sample.css was not found");
+    }
   }
 
   public void testReadOnly() throws Exception {

@@ -21,6 +21,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
+import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
@@ -49,7 +50,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
   private final String mySeparator;
 
   protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull LineSeparator separator) {
-    this(text, separator.getSeparatorString());
+    this(separator.toString() + " - " + text, separator.getSeparatorString());
   }
   
   protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull String separator) {
@@ -126,7 +127,11 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
         new Processor<VirtualFile>() {
           @Override
           public boolean process(VirtualFile file) {
-            if (!file.isDirectory() && file.isWritable() && !excludedFiles.contains(file) && !fileTypeManager.isFileIgnored(file.getName())) {
+            if (file.isDirectory() || !file.isWritable() || excludedFiles.contains(file) || fileTypeManager.isFileIgnored(file.getName())) {
+              return true;
+            }
+
+            if (!file.getFileType().isBinary()) {
               changeLineSeparators(project, file);
             }
             return true;

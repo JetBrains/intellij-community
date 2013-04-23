@@ -62,9 +62,10 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     if (systemPropertyVariables != null) {
       for (Element element : (List<Element>)systemPropertyVariables.getChildren()) {
         String propertyName = element.getName();
-        String value = element.getValue();
 
-        javaParameters.getVMParametersList().addProperty(propertyName, value);
+        if (!javaParameters.getVMParametersList().hasProperty(propertyName)) {
+          javaParameters.getVMParametersList().addProperty(propertyName, element.getValue());
+        }
       }
     }
 
@@ -72,9 +73,10 @@ public class MavenJUnitPatcher extends JUnitPatcher {
     if (environmentVariables != null) {
       for (Element element : (List<Element>)environmentVariables.getChildren()) {
         String variableName = element.getName();
-        String value = element.getValue();
 
-        javaParameters.addEnv(variableName, value);
+        if (javaParameters.getEnv() == null || !javaParameters.getEnv().containsKey(variableName)) {
+          javaParameters.addEnv(variableName, element.getValue());
+        }
       }
     }
   }

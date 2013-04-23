@@ -68,6 +68,7 @@ import java.util.concurrent.CopyOnWriteArraySet;
  */
 public class EditorsSplitters extends JBPanel {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorsSplitters");
+  private static final String PINNED = "pinned";
 
   private EditorWindow myCurrentWindow;
   final Set<EditorWindow> myWindows = new CopyOnWriteArraySet<EditorWindow>();
@@ -280,7 +281,7 @@ public class EditorsSplitters extends JBPanel {
     fileElement.setAttribute("leaf-file-name", file.getName()); // TODO: all files
     final HistoryEntry entry = composite.currentStateAsHistoryEntry();
     entry.writeExternal(fileElement, getManager().getProject());
-    fileElement.setAttribute("pinned",         Boolean.toString(pinned));
+    fileElement.setAttribute(PINNED,         Boolean.toString(pinned));
     fileElement.setAttribute("current",        Boolean.toString(composite.equals (getManager ().getLastSelected ())));
     fileElement.setAttribute("current-in-tab", Boolean.toString(composite.equals (selectedEditor)));
     res.addContent(fileElement);
@@ -334,14 +335,23 @@ public class EditorsSplitters extends JBPanel {
       Collections.reverse(children);
     }
 
+    // trim to EDITOR_TAB_LIMIT, ignoring CLOSE_NON_MODIFIED_FILES_FIRST policy
+    for (Iterator<Element> iterator = children.iterator(); iterator.hasNext() && UISettings.getInstance().EDITOR_TAB_LIMIT < children.size(); ) {
+      Element child = iterator.next();
+      if (!Boolean.valueOf(child.getAttributeValue(PINNED)).booleanValue()) {
+        iterator.remove();
+      }
+    }
+
     VirtualFile currentFile = null;
-    for (final Element file : children) {
+    for (int i = 0; i < children.size(); i++) {
+      Element file = children.get(i);
       try {
         final HistoryEntry entry = new HistoryEntry(getManager().getProject(), file.getChild(HistoryEntry.TAG), true);
         boolean isCurrent = Boolean.valueOf(file.getAttributeValue("current")).booleanValue();
-        getManager().openFileImpl3(window, entry.myFile, false, entry, isCurrent);
+        getManager().openFileImpl4(window, entry.myFile, false, entry, isCurrent, i);
         if (getManager().isFileOpen(entry.myFile)) {
-          window.setFilePinned(entry.myFile, Boolean.valueOf(file.getAttributeValue("pinned")).booleanValue());
+          window.setFilePinned(entry.myFile, Boolean.valueOf(file.getAttributeValue(PINNED)).booleanValue());
           if (Boolean.valueOf(file.getAttributeValue("current-in-tab")).booleanValue()) {
             currentFile = entry.myFile;
           }

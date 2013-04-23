@@ -19,7 +19,7 @@ package org.jetbrains.plugins.groovy.config;
 import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.libraries.Library;
@@ -38,6 +38,7 @@ import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.util.GroovyUtils;
 import org.jetbrains.plugins.groovy.util.LibrariesUtil;
 
+import java.io.File;
 import java.util.Collection;
 import java.util.regex.Pattern;
 
@@ -45,7 +46,7 @@ import java.util.regex.Pattern;
  * @author ilyas
  */
 public abstract class GroovyConfigUtils extends AbstractConfigUtils {
-  @NonNls public static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all-(.*)\\.jar");
+  @NonNls private static final Pattern GROOVY_ALL_JAR_PATTERN = Pattern.compile("groovy-all-(.*)\\.jar");
 
   private static GroovyConfigUtils myGroovyConfigUtils;
   @NonNls public static final String GROOVY_JAR_PATTERN_NOVERSION = "groovy\\.jar";
@@ -70,6 +71,15 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   @NotNull
+  public static File[] getGroovyAllJars(@NotNull String path) {
+    return GroovyUtils.getFilesInDirectoryByPattern(path, GROOVY_ALL_JAR_PATTERN);
+  }
+
+  public static boolean matchesGroovyAll(@NotNull String name) {
+    return GROOVY_ALL_JAR_PATTERN.matcher(name).matches() && !name.contains("src") && !name.contains("doc");
+  }
+
+  @NotNull
   public String getSDKVersion(@NotNull final String path) {
     String groovyJarVersion = getSDKJarVersion(path + "/lib", GROOVY_JAR_PATTERN, MANIFEST_PATH);
     if (groovyJarVersion == null) {
@@ -80,6 +90,9 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
     }
     if (groovyJarVersion == null) {
       groovyJarVersion = getSDKJarVersion(path + "/embeddable", GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
+    }
+    if (groovyJarVersion == null) {
+      groovyJarVersion = getSDKJarVersion(path, GROOVY_ALL_JAR_PATTERN, MANIFEST_PATH);
     }
     return groovyJarVersion == null ? UNDEFINED_VERSION : groovyJarVersion;
   }
@@ -106,7 +119,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   }
 
   public boolean isVersionAtLeast(PsiElement psiElement, String version, boolean unknownResult) {
-    Module module = ModuleUtil.findModuleForPsiElement(psiElement);
+    Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
     if (module == null) return unknownResult;
     final String sdkVersion = getSDKVersion(module);
     if (sdkVersion == null) return unknownResult;
@@ -115,7 +128,7 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
 
   @NotNull
   public String getSDKVersion(PsiElement psiElement) {
-    final Module module = ModuleUtil.findModuleForPsiElement(psiElement);
+    final Module module = ModuleUtilCore.findModuleForPsiElement(psiElement);
     if (module == null) {
       return NO_VERSION;
     }
@@ -128,13 +141,10 @@ public abstract class GroovyConfigUtils extends AbstractConfigUtils {
   public boolean isSDKHome(VirtualFile file) {
     if (file != null && file.isDirectory()) {
       final String path = file.getPath();
-      if (GroovyUtils.getFilesInDirectoryByPattern(path + "/lib", GROOVY_JAR_PATTERN).length > 0) {
-        return true;
-      }
-      if (GroovyUtils.getFilesInDirectoryByPattern(path + "/lib", GROOVY_JAR_PATTERN_NOVERSION).length > 0) {
-        return true;
-      }
-      if (GroovyUtils.getFilesInDirectoryByPattern(path + "/embeddable", GROOVY_ALL_JAR_PATTERN).length > 0) {
+      if (GroovyUtils.getFilesInDirectoryByPattern(path + "/lib", GROOVY_JAR_PATTERN).length > 0 ||
+          GroovyUtils.getFilesInDirectoryByPattern(path + "/lib", GROOVY_JAR_PATTERN_NOVERSION).length > 0 ||
+          GroovyUtils.getFilesInDirectoryByPattern(path + "/embeddable", GROOVY_ALL_JAR_PATTERN).length > 0 ||
+          GroovyUtils.getFilesInDirectoryByPattern(path, GROOVY_JAR_PATTERN).length > 0) {
         return true;
       }
     }

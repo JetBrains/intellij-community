@@ -295,6 +295,10 @@ public class AndroidValueResourcesTest extends AndroidDomTest {
     doTestJavaHighlighting("p1.p2");
   }
 
+  public void testFraction() throws Throwable {
+    toTestCompletion("bool.xml", "bool_after.xml");
+  }
+
   public void testInlineResourceField() throws Exception {
     copyFileToProject("value_resources.xml", "res/values/value_resources.xml");
     final VirtualFile virtualFile = copyFileToProject(getTestName(false) + ".java", "src/p1/p2/" + getTestName(false) + ".java");

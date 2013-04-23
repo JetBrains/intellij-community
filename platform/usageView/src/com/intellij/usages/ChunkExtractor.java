@@ -55,9 +55,9 @@ import java.util.Map;
  */
 public class ChunkExtractor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.usages.ChunkExtractor");
-  public static final int MAX_LINE_TO_SHOW = 140;
-  public static final int OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE = MAX_LINE_TO_SHOW / 2;
-  public static final int OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE = MAX_LINE_TO_SHOW / 2;
+  public static final int MAX_LINE_LENGTH_TO_SHOW = 200;
+  public static final int OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE = 1;
+  public static final int OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE = 1;
 
   private final EditorColorsScheme myColorsScheme;
 
@@ -155,9 +155,11 @@ public class ChunkExtractor {
     if (lineStartOffset > lineEndOffset) return TextChunk.EMPTY_ARRAY;
 
     final CharSequence chars = myDocument.getCharsSequence();
-    if (lineEndOffset - lineStartOffset > MAX_LINE_TO_SHOW) {
+    if (lineEndOffset - lineStartOffset > MAX_LINE_LENGTH_TO_SHOW) {
+      Segment segment = usageInfo2UsageAdapter.getUsageInfo().getSegment();
+      int usage_length = segment != null ? segment.getEndOffset() - segment.getStartOffset():0;
       lineStartOffset = Math.max(lineStartOffset, absoluteStartOffset - OFFSET_BEFORE_TO_SHOW_WHEN_LONG_LINE);
-      lineEndOffset = Math.min(lineEndOffset, absoluteStartOffset + OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE);
+      lineEndOffset = Math.min(lineEndOffset, absoluteStartOffset + usage_length + OFFSET_AFTER_TO_SHOW_WHEN_LONG_LINE);
     }
     if (myDocument instanceof DocumentWindow) {
       List<TextRange> editable = InjectedLanguageManager.getInstance(file.getProject())
@@ -191,28 +193,23 @@ public class ChunkExtractor {
     }
     boolean isBeginning = true;
 
-    while (lexer.getTokenType() != null) {
-      try {
-        int hiStart = lexer.getTokenStart();
-        int hiEnd = lexer.getTokenEnd();
+    for(;lexer.getTokenType() != null; lexer.advance()) {
+      int hiStart = lexer.getTokenStart();
+      int hiEnd = lexer.getTokenEnd();
 
-        if (hiStart >= end) break;
+      if (hiStart >= end) break;
 
-        hiStart = Math.max(hiStart, start);
-        hiEnd = Math.min(hiEnd, end);
-        if (hiStart >= hiEnd) { continue; }
+      hiStart = Math.max(hiStart, start);
+      hiEnd = Math.min(hiEnd, end);
+      if (hiStart >= hiEnd) { continue; }
 
-        String text = chars.subSequence(hiStart, hiEnd).toString();
-        if (isBeginning && text.trim().isEmpty()) continue;
-        isBeginning = false;
-        IElementType tokenType = lexer.getTokenType();
-        TextAttributesKey[] tokenHighlights = highlighter.getTokenHighlights(tokenType);
+      String text = chars.subSequence(hiStart, hiEnd).toString();
+      if (isBeginning && text.trim().isEmpty()) continue;
+      isBeginning = false;
+      IElementType tokenType = lexer.getTokenType();
+      TextAttributesKey[] tokenHighlights = highlighter.getTokenHighlights(tokenType);
 
-        processIntersectingRange(usageInfo2UsageAdapter, chars, hiStart, hiEnd, tokenHighlights, selectUsageWithBold, result);
-      }
-      finally {
-        lexer.advance();
-      }
+      processIntersectingRange(usageInfo2UsageAdapter, chars, hiStart, hiEnd, tokenHighlights, selectUsageWithBold, result);
     }
 
     return result.toArray(new TextChunk[result.size()]);

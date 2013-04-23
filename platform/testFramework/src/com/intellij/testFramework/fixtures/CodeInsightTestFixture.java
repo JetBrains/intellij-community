@@ -19,6 +19,7 @@ package com.intellij.testFramework.fixtures;
 import com.intellij.codeInsight.completion.CompletionType;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupEx;
 import com.intellij.codeInspection.InspectionProfileEntry;
@@ -42,6 +43,7 @@ import com.intellij.testFramework.HighlightTestInfo;
 import com.intellij.testFramework.TestDataFile;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.Consumer;
+import org.intellij.lang.annotations.MagicConstant;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -452,7 +454,7 @@ public interface CodeInsightTestFixture extends IdeaProjectTestFixture {
   @Nullable
   List<String> getLookupElementStrings();
 
-  void finishLookup();
+  void finishLookup(@MagicConstant(valuesFromClass = Lookup.class) char completionChar);
 
   LookupEx getLookup();
 

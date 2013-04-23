@@ -84,10 +84,10 @@ public abstract class WriteCommandAction<T> extends BaseActionRunnable<T> {
         GuiUtils.invokeAndWait(runnable);
       }
     }
-    catch (Throwable e) {
-      if (e instanceof InvocationTargetException) e = e.getCause();
-      throw new RuntimeException(e);
+    catch (InvocationTargetException e) {
+      throw new RuntimeException(e.getCause()); // save both stacktraces: current & EDT
     }
+    catch (InterruptedException ignored) { }
     return result;
   }
 
