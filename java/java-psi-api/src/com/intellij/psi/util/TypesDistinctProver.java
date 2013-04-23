@@ -58,6 +58,11 @@ public class TypesDistinctProver {
               proveArrayTypeDistinct(((PsiWildcardType)type1).getManager().getProject(), (PsiArrayType)extendsBound, type2)) return true;
           final PsiClass boundClass1 = PsiUtil.resolveClassInType(extendsBound);
           if (boundClass1 == null) return false;
+
+          if (CommonClassNames.JAVA_LANG_OBJECT.equals(psiClass2.getQualifiedName())) {
+            return !CommonClassNames.JAVA_LANG_OBJECT.equals(boundClass1.getQualifiedName());
+          }
+
           return proveExtendsBoundsDistinct(type1, type2, boundClass1, psiClass2);
         }
 
