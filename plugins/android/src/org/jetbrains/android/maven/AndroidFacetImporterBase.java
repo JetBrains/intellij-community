@@ -76,6 +76,8 @@ import java.util.*;
  * @author Eugene.Kudelevsky
  */
 public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFacet, AndroidFacetConfiguration, AndroidFacetType> {
+  public static volatile String ANDROID_SDK_PATH_TEST = null;
+
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.maven.AndroidFacetImporterBase");
 
   private static final Key<Boolean> MODULE_IMPORTED = Key.create("ANDROID_NEWLY_CREATED_KEY");
@@ -684,8 +686,14 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
         return sdk;
       }
     }
+    String sdkPath;
 
-    String sdkPath = System.getenv(AndroidSdkUtils.ANDROID_HOME_ENV);
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      sdkPath = ANDROID_SDK_PATH_TEST;
+    }
+    else {
+      sdkPath = System.getenv(AndroidSdkUtils.ANDROID_HOME_ENV);
+    }
     LOG.info("android home: " + sdkPath);
 
     if (sdkPath != null) {
