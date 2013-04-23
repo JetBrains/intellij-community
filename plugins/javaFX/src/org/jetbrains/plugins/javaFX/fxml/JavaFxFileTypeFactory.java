@@ -21,8 +21,11 @@ public class JavaFxFileTypeFactory extends FileTypeFactory {
   }
 
   public static boolean isFxml(@NotNull VirtualFile virtualFile) {
-    return FXML_EXTENSION.equals(virtualFile.getExtension()) &&
-           virtualFile.getFileType() == FileTypeManager.getInstance().getFileTypeByExtension(FXML_EXTENSION);
+    if (FXML_EXTENSION.equals(virtualFile.getExtension())) {
+      final FileType fileType = virtualFile.getFileType();
+      if (fileType == FileTypeManager.getInstance().getFileTypeByExtension(FXML_EXTENSION) && !fileType.isBinary()) return true;
+    }
+    return false;
   }
 
   @Override
