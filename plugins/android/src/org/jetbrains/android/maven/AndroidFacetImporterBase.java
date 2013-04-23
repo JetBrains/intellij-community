@@ -465,7 +465,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
 
     if (resolvedInfo != null) {
       final String apiLevel = resolvedInfo.getApiLevel();
-      final Sdk sdk = findOrCreateAndroidPlatform(apiLevel, resolvedInfo.getSdkPath());
+      final Sdk sdk = apiLevel != null ? findOrCreateAndroidPlatform(apiLevel, resolvedInfo.getSdkPath()) : null;
 
       if (sdk != null) {
         apklibModuleModel.setSdk(sdk);
@@ -661,11 +661,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     if (!(sdk.getSdkType() == AndroidSdkType.getInstance())) {
       return false;
     }
-
     final String platformId = getPlatformFromConfig(mavenProject);
-    if (platformId == null) {
-      return false;
-    }
 
     final AndroidSdkAdditionalData sdkAdditionalData = (AndroidSdkAdditionalData)sdk.getSdkAdditionalData();
     if (sdkAdditionalData == null) {
@@ -678,7 +674,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     }
 
     final IAndroidTarget target = androidPlatform.getTarget();
-    return AndroidSdkUtils.targetHasId(target, platformId) &&
+    return (platformId == null || AndroidSdkUtils.targetHasId(target, platformId)) &&
            AndroidSdkUtils.checkSdkRoots(sdk, target, true);
   }
 
@@ -720,15 +716,13 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
   }
 
   @Nullable
-  private static Sdk doFindOrCreateAndroidPlatform(String sdkPath, String apiLevel) {
+  private static Sdk doFindOrCreateAndroidPlatform(@Nullable String sdkPath, @Nullable String apiLevel) {
     if (sdkPath != null) {
-      if (apiLevel == null) {
-        return null;
-      }
-
       AndroidSdkData sdkData = AndroidSdkData.parse(sdkPath, new EmptySdkLog());
       if (sdkData != null) {
-        IAndroidTarget target = sdkData.findTargetByApiLevel(apiLevel);
+        IAndroidTarget target = apiLevel != null
+                                ? sdkData.findTargetByApiLevel(apiLevel)
+                                : findNewestPlatformTarget(sdkData);
         if (target != null) {
           Sdk library = AndroidSdkUtils.findAppropriateAndroidPlatform(target, sdkData, true);
           if (library == null) {
@@ -739,6 +733,18 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       }
     }
     return null;
+  }
+
+  @Nullable
+  private static IAndroidTarget findNewestPlatformTarget(AndroidSdkData data) {
+    IAndroidTarget result = null;
+
+    for (IAndroidTarget target : data.getTargets()) {
+      if (target.isPlatform() && (result == null || result.getVersion().compareTo(target.getVersion()) < 0)) {
+        result = target;
+      }
+    }
+    return result;
   }
 
   @Nullable
