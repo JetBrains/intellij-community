@@ -166,12 +166,9 @@ public class PyRemoteDebuggerTask extends PyBaseDebuggerTask {
           }
         }
 
-        ProcessOutput output =
-          PySdkUtil
-            .getProcessOutput(getWorkingFolder(), new String[]{sdkHome, getScriptPath(), Integer.toString(serverSocket.getLocalPort())},
-                              new String[]{
-                                PythonEnvUtil.PYTHONUNBUFFERED + "=x",
-                                PythonEnvUtil.PYTHONPATH + "=" + PythonHelpersLocator.getHelpersRoot()}, 0);
+        String[] cmd = {sdkHome, getScriptPath(), Integer.toString(serverSocket.getLocalPort())};
+        String[] env = {PythonEnvUtil.PYTHONUNBUFFERED + "=1", PythonEnvUtil.PYTHONPATH + "=" + PythonHelpersLocator.getHelpersRoot()};
+        ProcessOutput output = PySdkUtil.getProcessOutput(getWorkingFolder(), cmd, env, 0);
         checkOutput(output);
       }
     }).start();
