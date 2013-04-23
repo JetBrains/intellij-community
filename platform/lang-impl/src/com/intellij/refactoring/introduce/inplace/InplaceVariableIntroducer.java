@@ -23,7 +23,6 @@ import com.intellij.codeInsight.template.impl.TemplateManagerImpl;
 import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageTokenSeparatorGenerators;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -172,7 +171,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
  
 
   @Override
-  protected MyLookupExpression createLookupExpression() {
+  protected MyLookupExpression createLookupExpression(PsiElement selectedElement) {
     return new MyIntroduceLookupExpression(getInitialName(), myNameSuggestions, myElementToRename, shouldSelectAll(), myAdvertisementText);
   }
 
@@ -184,7 +183,7 @@ public abstract class InplaceVariableIntroducer<E extends PsiElement> extends In
                                        final PsiNamedElement elementToRename,
                                        final boolean shouldSelectAll,
                                        final String advertisementText) {
-      super(initialName, names, elementToRename, shouldSelectAll, advertisementText);
+      super(initialName, names, elementToRename, elementToRename, shouldSelectAll, advertisementText);
       myPointer = SmartPointerManager.getInstance(elementToRename.getProject()).createSmartPsiElementPointer(elementToRename);
     }
 
