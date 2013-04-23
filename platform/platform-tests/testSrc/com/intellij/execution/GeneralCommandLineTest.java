@@ -229,8 +229,8 @@ public class GeneralCommandLineTest {
   }
 
   private static void checkEnvPassing(GeneralCommandLine commandLine, Map<String, String> testEnv, boolean passParentEnv) throws Exception {
-    commandLine.setEnvParams(testEnv);
-    commandLine.setPassParentEnvs(passParentEnv);
+    commandLine.setEnvironment(testEnv);
+    commandLine.setPassParentEnvironment(passParentEnv);
     String output = execAndGetOutput(commandLine, null);
 
     Set<String> lines = new HashSet<String>(Arrays.asList(StringUtil.convertLineSeparators(output).split("\n")));

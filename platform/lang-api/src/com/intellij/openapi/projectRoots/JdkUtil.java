@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -164,8 +164,8 @@ public class JdkUtil {
     commandLine.setExePath(exePath);
 
     final ParametersList vmParametersList = javaParameters.getVMParametersList();
-    commandLine.setEnvParams(javaParameters.getEnv());
-    commandLine.setPassParentEnvs(javaParameters.isPassParentEnvs());
+    commandLine.setEnvironment(javaParameters.getEnv());
+    commandLine.setPassParentEnvironment(javaParameters.isPassParentEnvs());
 
     final Class commandLineWrapper;
     if ((commandLineWrapper = getCommandLineWrapperClass()) != null) {

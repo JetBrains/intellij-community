@@ -26,7 +26,6 @@ import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.HashMap;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
 import org.jetbrains.annotations.NonNls;
@@ -36,10 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import java.io.File;
 import java.io.IOException;
 import java.nio.charset.Charset;
-import java.util.ArrayList;
-import java.util.Arrays;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 /**
  * OS-independent way of executing external processes with complex parameters.
@@ -48,12 +44,6 @@ import java.util.Map;
  * as required by the underlying platform.
  */
 public class GeneralCommandLine implements UserDataHolder {
-  /**
-   * @deprecated use {@linkplain #inescapableQuote(String)} (to remove in IDEA 13)
-   */
-  @SuppressWarnings("UnusedDeclaration") public static Key<Boolean> DO_NOT_ESCAPE_QUOTES =
-    Key.create("GeneralCommandLine.do.not.escape.quotes");
-
   private static final Logger LOG = Logger.getInstance("#com.intellij.execution.configurations.GeneralCommandLine");
 
   private String myExePath = null;
@@ -66,8 +56,7 @@ public class GeneralCommandLine implements UserDataHolder {
   private boolean myRedirectErrorStream = false;
   private Map<Object, Object> myUserData = null;
 
-  public GeneralCommandLine() {
-  }
+  public GeneralCommandLine() { }
 
   public GeneralCommandLine(@NotNull String... command) {
     this(Arrays.asList(command));
@@ -103,25 +92,52 @@ public class GeneralCommandLine implements UserDataHolder {
     myWorkDirectory = workDirectory;
   }
 
-  @Nullable
+  @NotNull
+  public Map<String, String> getEnvironment() {
+    return myEnvParams != null ? Collections.unmodifiableMap(myEnvParams) : Collections.<String, String>emptyMap();
+  }
+
+  /** @deprecated use {@link #getEnvironment()} (to remove in IDEA 14) */
+  @SuppressWarnings("unused")
   public Map<String, String> getEnvParams() {
     return myEnvParams;
   }
 
-  @NotNull
-  public Map<String, String> getEnvParamsNotNull() {
-    if (myEnvParams == null) {
-      myEnvParams = new HashMap<String, String>();
+  public void setEnvironment(@Nullable Map<String, String> envVars) {
+    if (envVars != null) {
+      if (myEnvParams == null) myEnvParams = ContainerUtil.newHashMap();
+      myEnvParams.putAll(envVars);
     }
-    return myEnvParams;
   }
 
+  public void setEnvironment(@NotNull String name, @NotNull String value) {
+    if (myEnvParams == null) myEnvParams = ContainerUtil.newHashMap();
+    myEnvParams.put(name, value);
+  }
+
+  public void removeEnvironment(@NotNull String name) {
+    if (myEnvParams != null) {
+      myEnvParams.remove(name);
+      if (myEnvParams.isEmpty()) {
+        myEnvParams = null;
+      }
+    }
+  }
+
+  /** @deprecated use {@link #setEnvironment(Map)} (to remove in IDEA 14) */
+  @SuppressWarnings("unused")
   public void setEnvParams(@Nullable final Map<String, String> envParams) {
     myEnvParams = envParams;
   }
 
-  public void setPassParentEnvs(final boolean passParentEnvironment) {
+  public void setPassParentEnvironment(boolean passParentEnvironment) {
     myPassParentEnvironment = passParentEnvironment;
+  }
+
+  /** @deprecated use {@link #setPassParentEnvironment(boolean)} (to remove in IDEA 14) */
+  @SuppressWarnings({"unused", "SpellCheckingInspection"})
+  public void setPassParentEnvs(boolean passParentEnvironment) {
+    setPassParentEnvironment(passParentEnvironment);
   }
 
   public boolean isPassParentEnvironment() {
