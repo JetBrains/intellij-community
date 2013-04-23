@@ -1205,6 +1205,68 @@ print a<caret>a
 ''', GrBindingVariable)
   }
 
+  void testVarVsPackage1() {
+    myFixture.addClass('''package p; public class A {}''')
 
+    resolveByText('''\
+      def p = [A:5]
+
+      print <caret>p.A
+''', PsiPackage)
+  }
+
+  void testVarVsPackage2() {
+    myFixture.addClass('''package p; public class A {}''')
+
+    resolveByText('''\
+      def p = [A:5]
+
+      print <caret>p
+''', PsiVariable)
+  }
+
+  void testVarVsPackage3() {
+    myFixture.addClass('''package p; public class A {}''')
+
+    resolveByText('''\
+      def p = [A:{2}]
+
+      print <caret>p.A()
+''', PsiVariable)
+  }
+
+  void testVarVsPackage4() {
+    myFixture.addClass('''package p; public class A {public static int foo(){return 2;}}''')
+
+    resolveByText('''\
+      def p = [A:[foo:{-2}]]
+
+      print <caret>p.A.foo()
+''', PsiVariable)
+  }
+
+  void testVarVsClass1() {
+    myFixture.addClass('package p; public class A {public static int foo() {return 1;}}')
+
+    resolveByText('''\
+import p.A
+
+def A = [a:{-1}]
+
+print <caret>A
+''', PsiVariable)
+  }
+
+  void testVarVsClass2() {
+    myFixture.addClass('package p; public class A {public static int foo() {return 1;}}')
+
+    resolveByText('''\
+import p.A
+
+def A = [a:{-1}]
+
+print <caret>A.a()
+''', PsiVariable)
+  }
 
 }
