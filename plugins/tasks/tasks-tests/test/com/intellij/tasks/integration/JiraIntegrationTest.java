@@ -38,6 +38,14 @@ public class JiraIntegrationTest extends TaskManagerTestCase {
     assertFalse(issues[0].isClosed());
   }
 
+  public void testLogin() throws Exception {
+    myRepository.setUsername("german");
+    myRepository.setUsername("wrong password");
+    Exception exception = myRepository.createCancellableConnection().call();
+    assertNotNull(exception);
+    assertEquals(JiraRepository.LOGIN_FAILED_CHECK_YOUR_PERMISSIONS, exception.getMessage());
+  }
+
   @Override
   public void setUp() throws Exception {
     super.setUp();

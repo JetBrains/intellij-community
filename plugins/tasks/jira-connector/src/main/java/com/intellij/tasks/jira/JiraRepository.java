@@ -39,6 +39,8 @@ import java.util.List;
 public class JiraRepository extends BaseRepositoryImpl {
 
   private final static Logger LOG = Logger.getInstance("#com.intellij.tasks.jira.JiraRepository");
+  public static final String LOGIN_FAILED_CHECK_YOUR_PERMISSIONS = "Login failed. Check your permissions.";
+
   private boolean myJira4 = true;
 
   /**
@@ -159,6 +161,9 @@ public class JiraRepository extends BaseRepositoryImpl {
     }
     if (statusCode != HttpStatus.SC_OK && statusCode != HttpStatus.SC_MOVED_TEMPORARILY) {
       throw new IOException("Can't login: " + statusCode + " (" + HttpStatus.getStatusText(statusCode) + ")");
+    }
+    if (statusCode == HttpStatus.SC_OK && new String(postMethod.getResponseBody(2000)).contains("\"loginSucceeded\":false")) {
+      throw new IOException(LOGIN_FAILED_CHECK_YOUR_PERMISSIONS);
     }
     return true;
   }
