@@ -224,10 +224,10 @@ public class ReimportingTest extends MavenImportingTestCase {
     configConfirmationForYesAnswer(); // will ask about absent modules
 
     importProjectWithProfiles("profile1");
-    assertModules("project", "m1");
+    assertModules("project", "m1", "m2");
 
     importProjectWithProfiles("profile2");
-    assertModules("project", "m2");
+    assertModules("project", "m1", "m2");
   }
 
   public void testChangingDependencyTypeToTestJar() throws Exception {
