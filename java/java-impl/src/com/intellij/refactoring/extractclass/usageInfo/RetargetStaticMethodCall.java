@@ -15,10 +15,7 @@
  */
 package com.intellij.refactoring.extractclass.usageInfo;
 
-import com.intellij.psi.PsiExpression;
-import com.intellij.psi.PsiExpressionList;
-import com.intellij.psi.PsiMethodCallExpression;
-import com.intellij.psi.PsiReferenceExpression;
+import com.intellij.psi.*;
 import com.intellij.refactoring.psi.MutationUtils;
 import com.intellij.refactoring.util.FixableUsageInfo;
 import com.intellij.util.IncorrectOperationException;
@@ -39,8 +36,7 @@ public class RetargetStaticMethodCall extends FixableUsageInfo {
         if (qualifier == null) {
             MutationUtils.replaceExpression(delegateClassName + '.' + call.getText(), call);
         } else {
-            final PsiExpressionList parameterList = call.getArgumentList();
-            MutationUtils.replaceExpression(delegateClassName + '.' + methodExpression.getReferenceName()  +parameterList.getText() , call);
+            MutationUtils.replaceExpression(delegateClassName , qualifier);
         }
     }
 }
