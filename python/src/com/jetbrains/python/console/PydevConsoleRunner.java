@@ -157,16 +157,21 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     myCommandLineArgumentsProvider = createCommandLineArgumentsProvider(mySdk, myEnvironmentVariables, myPorts);
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), "Connecting to console", false) {
-      public void run(@NotNull final ProgressIndicator indicator) {
-        indicator.setText("Connecting to console...");
-        try {
-          initAndRun(myStatementsToExecute);
-        }
-        catch (ExecutionException e) {
-          LOG.warn("Error running console", e);
-          ExecutionHelper.showErrors(myProject, Arrays.<Exception>asList(e), getTitle(), null);
-        }
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), "Connecting to console", false) {
+          public void run(@NotNull final ProgressIndicator indicator) {
+            indicator.setText("Connecting to console...");
+            try {
+              initAndRun(myStatementsToExecute);
+            }
+            catch (ExecutionException e) {
+              LOG.warn("Error running console", e);
+              ExecutionHelper.showErrors(myProject, Arrays.<Exception>asList(e), getTitle(), null);
+            }
+          }
+        });
       }
     });
   }
