@@ -46,7 +46,7 @@ public class CompileQrcAction extends AnAction {
     }
 
     GeneralCommandLine cmdLine = new GeneralCommandLine();
-    cmdLine.setPassParentEnvs(true);
+    cmdLine.setPassParentEnvironment(true);
     cmdLine.setExePath(path);
     cmdLine.addParameters("-o", dialog.getOutputPath());
     for (VirtualFile vFile : vFiles) {

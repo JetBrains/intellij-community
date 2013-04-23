@@ -2,8 +2,8 @@ package com.jetbrains.python.sdk;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
+import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.util.containers.HashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -17,36 +17,20 @@ import java.util.Set;
  * @author traff
  */
 public class PythonEnvUtil {
-  public static final String PYTHONPATH = "PYTHONPATH";
-  public static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
-  public static final String PYTHONIOENCODING = "PYTHONIOENCODING";
+  @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONPATH = "PYTHONPATH";
+  @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONUNBUFFERED = "PYTHONUNBUFFERED";
+  @SuppressWarnings("SpellCheckingInspection") public static final String PYTHONIOENCODING = "PYTHONIOENCODING";
 
-  private PythonEnvUtil() {
+  private PythonEnvUtil() { }
+
+  public static Map<String, String> setPythonUnbuffered(@NotNull Map<String, String> env) {
+    env.put(PYTHONUNBUFFERED, "1");
+    return env;
   }
 
-  public static Map<String, String> setPythonUnbuffered(@NotNull Map<String, String> envs) {
-    envs.put(PYTHONUNBUFFERED, "1");
-    return envs;
-  }
-
-  public static Map<String, String> setPythonIOEncoding(@NotNull Map<String, String> envs, @NotNull String encoding) {
-    envs.put(PYTHONIOENCODING, encoding);
-    return envs;
-  }
-
-  /**
-   * @param source
-   * @return a copy of source map, or a new map if source is null.
-   */
-  public static Map<String, String> cloneEnv(@Nullable Map<String, String> source) {
-    Map<String, String> new_env;
-    if (source != null) {
-      new_env = new HashMap<String, String>(source);
-    }
-    else {
-      new_env = new HashMap<String, String>();
-    }
-    return new_env;
+  public static Map<String, String> setPythonIOEncoding(@NotNull Map<String, String> env, @NotNull String encoding) {
+    env.put(PYTHONIOENCODING, encoding);
+    return env;
   }
 
   /**
@@ -58,58 +42,48 @@ public class PythonEnvUtil {
    */
   @NotNull
   public static String appendToPathEnvVar(@Nullable String source, @NotNull String value) {
-    if (StringUtil.isNotEmpty(source)) {
-      assert source != null;
-      Set<String> vals = Sets.newHashSet(source.split(File.pathSeparator));
-      if (!vals.contains(value)) {
-        return source + File.pathSeparator + value;
-      }
-      else {
-        return source;
-      }
-    }
-    return value;
+    if (StringUtil.isEmpty(source)) return value;
+    Set<String> paths = Sets.newHashSet(source.split(File.pathSeparator));
+    return !paths.contains(value) ? source + File.pathSeparator + value : source;
   }
 
-  public static void addToEnv(@NotNull Map<String, String> envs, String key, @NotNull Collection<String> values) {
+  public static void addPathsToEnv(@NotNull Map<String, String> env, String key, @NotNull Collection<String> values) {
     for (String val : values) {
-      addPathToEnv(envs, key, val);
+      addPathToEnv(env, key, val);
     }
   }
 
-  public static void addPathToEnv(@NotNull Map<String, String> envs, String key, String value) {
+  public static void addPathToEnv(@NotNull Map<String, String> env, String key, String value) {
     if (!StringUtil.isEmpty(value)) {
-      if (envs.containsKey(key)) {
-        envs.put(key, appendToPathEnvVar(envs.get(key), value));
+      if (env.containsKey(key)) {
+        env.put(key, appendToPathEnvVar(env.get(key), value));
       }
       else {
-        envs.put(key, value);
+        env.put(key, value);
       }
     }
   }
 
-  public static void addToPythonPath(@NotNull Map<String, String> envs, @NotNull Collection<String> values) {
-    addToEnv(envs, PYTHONPATH, values);
+  public static void addPathToEnv(@NotNull GeneralCommandLine cmd, @NotNull String key, @NotNull String value) {
+    String currentPath = cmd.getEnvironment().get(key);
+    cmd.setEnvironment(key, appendToPathEnvVar(currentPath, value));
   }
 
-  public static void addToPythonPath(@NotNull Map<String, String> envs, String value) {
-    addPathToEnv(envs, PYTHONPATH, value);
+  public static void addToPythonPath(@NotNull Map<String, String> env, @NotNull Collection<String> values) {
+    addPathsToEnv(env, PYTHONPATH, values);
   }
 
+  public static void addToPythonPath(@NotNull Map<String, String> env, String value) {
+    addPathToEnv(env, PYTHONPATH, value);
+  }
+
+  public static void addToPythonPath(@NotNull GeneralCommandLine cmd, @NotNull String value) {
+    addPathToEnv(cmd, PYTHONPATH, value);
+  }
 
   @Nullable
-  public static List<String> getPythonPathList(Map<String, String> envs) {
-    return getPathListFromEnv(envs, PYTHONPATH);
-  }
-
-  public static List<String> getPathListFromEnv(@NotNull Map<String, String> envs, String envKey) {
-    String pythonPath = envs.get(envKey);
-    if (pythonPath != null) {
-      String[] paths = pythonPath.split(Character.toString(File.pathSeparatorChar));
-      return Lists.newArrayList(paths);
-    }
-    else {
-      return null;
-    }
+  public static List<String> getPathListFromEnv(@NotNull GeneralCommandLine cmd, @NotNull String envKey) {
+    String pythonPath = cmd.getEnvironment().get(envKey);
+    return pythonPath != null ? Lists.newArrayList(pythonPath.split(File.pathSeparator)) : null;
   }
 }

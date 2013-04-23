@@ -266,12 +266,14 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     }
   }
 
-  private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager, String[] command, Map<String, String> envs)
+  private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager, String[] command, Map<String, String> env)
     throws ExecutionException {
     RemoteSdkData data = (RemoteSdkData)mySdk.getSdkAdditionalData();
 
     GeneralCommandLine commandLine = new GeneralCommandLine(command);
-    commandLine.setEnvParams(envs);
+    if (env != null) {
+      commandLine.setEnvironment(env);
+    }
 
     commandLine.getParametersList().set(1, PythonRemoteInterpreterManager.toSystemDependent(new File(data.getHelpersPath(),
                                                                                                      PYDEV_PYDEVCONSOLE_PY)

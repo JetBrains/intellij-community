@@ -1,7 +1,6 @@
 package com.jetbrains.rest.sphinx;
 
 import com.google.common.collect.Lists;
-import com.google.common.collect.Maps;
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.RunContentExecutor;
 import com.intellij.execution.configurations.GeneralCommandLine;
@@ -18,12 +17,12 @@ import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.jetbrains.python.ReSTService;
 import com.jetbrains.python.buildout.BuildoutFacet;
 import com.jetbrains.python.run.PythonCommandLineState;
 import com.jetbrains.python.run.PythonProcessRunner;
 import com.jetbrains.python.run.PythonTracebackFilter;
 import com.jetbrains.python.sdk.PythonSdkType;
-import com.jetbrains.python.ReSTService;
 import com.jetbrains.rest.RestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -33,8 +32,8 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonIOEncoding;
-import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
+import static com.jetbrains.python.sdk.PythonEnvUtil.PYTHONIOENCODING;
+import static com.jetbrains.python.sdk.PythonEnvUtil.PYTHONUNBUFFERED;
 
 /**
  * User : catherine
@@ -141,8 +140,10 @@ public class SphinxBaseCommand {
     ParamsGroup script_params = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
     assert script_params != null;
 
-    if (getCommandPath(sdk) != null)
-      cmd.setExePath(getCommandPath(sdk));
+    String commandPath = getCommandPath(sdk);
+    if (commandPath != null) {
+      cmd.setExePath(commandPath);
+    }
 
     if (params != null) {
       for (String p : params) {
@@ -150,8 +151,9 @@ public class SphinxBaseCommand {
       }
     }
 
-    cmd.setPassParentEnvs(true);
-    cmd.setEnvParams(setPythonUnbuffered(setPythonIOEncoding(Maps.<String, String>newHashMap(), "utf-8")));
+    cmd.setPassParentEnvironment(true);
+    cmd.setEnvironment(PYTHONIOENCODING, "utf-8");
+    cmd.setEnvironment(PYTHONUNBUFFERED, "1");
 
     List<String> pathList = Lists.newArrayList(PythonCommandLineState.getAddedPaths(sdk));
     pathList.addAll(PythonCommandLineState.collectPythonPath(module));

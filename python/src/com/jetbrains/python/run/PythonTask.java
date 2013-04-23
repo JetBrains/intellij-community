@@ -24,9 +24,7 @@ import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Base class for tasks which are run from PyCharm with results displayed in a toolwindow (manage.py, setup.py, Sphinx etc).
@@ -112,8 +110,8 @@ public class PythonTask {
     PythonCommandLineState.createStandardGroupsIn(cmd);
     ParamsGroup scriptParams = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
     assert scriptParams != null;
-    cmd.setPassParentEnvs(true);
-    Map<String, String> envs = new HashMap<String, String>();
+
+    cmd.setPassParentEnvironment(true);
     if (!SystemInfo.isWindows && !PySdkUtil.isRemote(mySdk)) {
       cmd.setExePath("bash");
       ParamsGroup bashParams = cmd.getParametersList().addParamsGroupAt(0, "Bash");
@@ -128,11 +126,10 @@ public class PythonTask {
       bashParams.addParameter(paramString.toString());
     }
     else {
-      final String PATH_KEY = OSUtil.getPATHenvVariableName();
-      String sysPath = System.getenv().get(PATH_KEY);
-      if (!StringUtil.isEmpty(sysPath)) {
-        final String path = envs.get(PATH_KEY);
-        envs.put(PATH_KEY, OSUtil.appendToPATHenvVariable(path, sysPath));
+      String pathKey = OSUtil.getPATHenvVariableName();
+      String sysPath = System.getenv().get(pathKey);
+      if (pathKey != null && !StringUtil.isEmpty(sysPath)) {
+        cmd.setEnvironment(pathKey, OSUtil.appendToPATHenvVariable(null, sysPath));
       }
 
       cmd.setExePath(homePath);
@@ -140,8 +137,7 @@ public class PythonTask {
       scriptParams.addParameters(myParameters);
     }
 
-    PythonEnvUtil.setPythonUnbuffered(envs);
-    cmd.setEnvParams(envs);
+    cmd.setEnvironment(PythonEnvUtil.PYTHONUNBUFFERED, "1");
 
     List<String> pythonPath = setupPythonPath();
     PythonCommandLineState.initPythonPath(cmd, true, pythonPath, homePath);

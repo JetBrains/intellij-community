@@ -1,6 +1,5 @@
 package com.jetbrains.python.sdk.flavors;
 
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.text.StringUtil;
 import icons.PythonIcons;
 import org.jetbrains.annotations.NotNull;
@@ -66,11 +65,6 @@ public class IronPythonSdkFlavor extends PythonSdkFlavor {
   @Override
   public Collection<String> getExtraDebugOptions() {
     return Collections.singletonList("-X:Frames");
-  }
-
-  @Override
-  public void initPythonPath(GeneralCommandLine cmd, Collection<String> path) {
-    initPythonPath(path, cmd.getEnvParamsNotNull());
   }
 
   @Override
