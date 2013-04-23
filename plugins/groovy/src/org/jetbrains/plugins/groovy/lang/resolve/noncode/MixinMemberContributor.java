@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,10 +46,9 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
                                      @NotNull PsiScopeProcessor processor,
                                      @NotNull final PsiElement place,
                                      @NotNull ResolveState state) {
-    if (!(qualifierType instanceof PsiClassType)) return;
     if (isInAnnotation(place)) return;
 
-    final PsiClass aClass = getClass((PsiClassType)qualifierType);
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(qualifierType);
     if (aClass == null) return;
 
     final PsiModifierList modifierList = aClass.getModifierList();
@@ -75,21 +75,6 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
         return;
       }
     }
-  }
-
-  @Nullable
-  private static PsiClass getClass(@NotNull PsiClassType qualifierType) {
-    final PsiClassType.ClassResolveResult resolveResult = qualifierType.resolveGenerics();
-
-    final PsiClass aClass = resolveResult.getElement();
-    /*if (aClass instanceof ClsClassImpl) {
-      final PsiElement source = aClass.getNavigationElement();
-      if (source instanceof GrTypeDefinition) {
-        return (PsiClass)source;
-      }
-    }*/
-
-    return aClass;
   }
 
   public static String getOriginInfoForCategory(PsiMethod element) {
