@@ -788,6 +788,12 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
         return platform.getValue();
       }
     }
+    final String platformFromProperty =
+      project.getProperties().getProperty("android.sdk.platform");
+
+    if (platformFromProperty != null) {
+      return platformFromProperty;
+    }
     return null;
   }
 
@@ -799,6 +805,12 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
       if (path != null) {
         return path.getValue();
       }
+    }
+    final String pathFromProperty =
+      project.getProperties().getProperty("android.sdk.path");
+
+    if (pathFromProperty != null) {
+      return pathFromProperty;
     }
     return null;
   }
