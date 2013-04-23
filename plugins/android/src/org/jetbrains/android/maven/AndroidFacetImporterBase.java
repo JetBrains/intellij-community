@@ -465,7 +465,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
 
     if (resolvedInfo != null) {
       final String apiLevel = resolvedInfo.getApiLevel();
-      final Sdk sdk = apiLevel != null ? findOrCreateAndroidPlatform(apiLevel, resolvedInfo.getSdkPath()) : null;
+      final Sdk sdk = apiLevel != null ? findOrCreateAndroidPlatform(apiLevel, null) : null;
 
       if (sdk != null) {
         apklibModuleModel.setSdk(sdk);
@@ -609,7 +609,6 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     projectForExternalApklib.resolve(project, generalSettings, embedder, mavenProjectReader, locator);
 
     final String apiLevel = getPlatformFromConfig(projectForExternalApklib);
-    final String sdkPath = getSdkPathFromConfig(projectForExternalApklib);
 
     final List<AndroidExternalApklibDependenciesManager.MavenDependencyInfo> dependencies =
       new ArrayList<AndroidExternalApklibDependenciesManager.MavenDependencyInfo>();
@@ -626,11 +625,10 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     final AndroidExternalApklibDependenciesManager apklibDependenciesManager =
       AndroidExternalApklibDependenciesManager.getInstance(project);
 
-    final AndroidExternalApklibDependenciesManager.MyResolvedInfo info = new AndroidExternalApklibDependenciesManager.MyResolvedInfo(
+    final AndroidExternalApklibDependenciesManager.MyResolvedInfo info =
+      new AndroidExternalApklibDependenciesManager.MyResolvedInfo(
       apiLevel != null ? apiLevel : "",
-      sdkPath != null ? sdkPath : "",
-      dependencies
-    );
+      dependencies);
 
     apklibDependenciesManager.setSdkInfoForArtifact(artifact.getMavenId(), info);
   }
