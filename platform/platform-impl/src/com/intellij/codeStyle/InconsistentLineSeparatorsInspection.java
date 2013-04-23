@@ -39,17 +39,23 @@ public class InconsistentLineSeparatorsInspection extends LocalInspectionTool {
     return new PsiElementVisitor() {
       @Override
       public void visitFile(PsiFile file) {
+        if (!file.getLanguage().equals(file.getViewProvider().getBaseLanguage())) {
+          // There is a possible case that more than a single virtual file/editor contains more than one language (e.g. php and html).
+          // We want to process a virtual file once than, hence, ignore all non-base psi files.
+          return;
+        }
+
         final Project project = holder.getProject();
         final String projectLineSeparator = CodeStyleFacade.getInstance(project).getLineSeparator();
         if (projectLineSeparator == null) {
           return;
         }
-        
+
         final VirtualFile virtualFile = file.getVirtualFile();
         if (virtualFile == null || !AbstractConvertLineSeparatorsAction.shouldProcess(virtualFile, project)) {
           return;
         }
-        
+
         final String curLineSeparator = LoadTextUtil.detectLineSeparator(virtualFile, true);
         if (curLineSeparator != null && !curLineSeparator.equals(projectLineSeparator)) {
           holder.registerProblem(
