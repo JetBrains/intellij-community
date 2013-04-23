@@ -59,6 +59,10 @@ class LoadRecentBranchRevisions extends TaskDescriptor {
   private final Integer myTestBunchSize;
 
   LoadRecentBranchRevisions(String branchName, long first, WCInfo info, SvnVcs vcs, String url) {
+    this(branchName, first, info, vcs, url, -1);
+  }
+
+  LoadRecentBranchRevisions(String branchName, long first, WCInfo info, SvnVcs vcs, String url, final int bunchSize) {
     super("Loading recent " + branchName + " revisions", Where.POOLED);
     myFirst = first;
     myWcInfo = info;
@@ -69,13 +73,8 @@ class LoadRecentBranchRevisions extends TaskDescriptor {
     if (myTestBunchSize != null) {
       myBunchSize = myTestBunchSize.intValue();
     } else {
-      myBunchSize = BUNCH_SIZE;
+      myBunchSize = bunchSize > 0 ? bunchSize : BUNCH_SIZE;
     }
-  }
-
-  void setBunchSize(int bunchSize) {
-    if (myTestBunchSize != null) return;
-    myBunchSize = bunchSize;
   }
 
   public boolean isLastLoaded() {
