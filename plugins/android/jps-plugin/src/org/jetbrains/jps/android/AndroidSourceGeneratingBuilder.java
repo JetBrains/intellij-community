@@ -14,6 +14,7 @@ import com.intellij.util.ArrayUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import gnu.trove.THashSet;
 import org.jetbrains.android.compiler.artifact.AndroidArtifactSigningMode;
 import org.jetbrains.android.compiler.tools.AndroidApt;
 import org.jetbrains.android.compiler.tools.AndroidIdl;
@@ -222,16 +223,16 @@ public class AndroidSourceGeneratingBuilder extends ModuleLevelBuilder {
 
   @NotNull
   private static List<String> filterExcludedByOtherProviders(@NotNull JpsModule module, @NotNull Collection<String> genRoots) {
-    final Set<String> genRootPaths = new HashSet<String>(genRoots.size());
+    final Set<String> genRootPaths = new THashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
 
     for (String genRoot : genRoots) {
-      genRootPaths.add(FileUtil.toCanonicalPath(genRoot));
+      genRootPaths.add(FileUtil.toSystemIndependentName(genRoot));
     }
     final List<String> result = new ArrayList<String>();
     final List<JpsModuleSourceRoot> genSourceRoots = new ArrayList<JpsModuleSourceRoot>();
 
     for (JpsModuleSourceRoot root : module.getSourceRoots()) {
-      if (genRootPaths.contains(FileUtil.toCanonicalPath(root.getFile().getPath()))) {
+      if (genRootPaths.contains(FileUtil.toSystemIndependentName(root.getFile().getPath()))) {
         genSourceRoots.add(root);
       }
     }
