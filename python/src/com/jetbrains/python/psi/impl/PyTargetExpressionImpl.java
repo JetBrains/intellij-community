@@ -135,7 +135,10 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
       final PsiElement parent = getParent();
       if (parent instanceof PyAssignmentStatement) {
         final PyAssignmentStatement assignmentStatement = (PyAssignmentStatement)parent;
-        final PyExpression assignedValue = assignmentStatement.getAssignedValue();
+        PyExpression assignedValue = assignmentStatement.getAssignedValue();
+        if (assignedValue instanceof PyParenthesizedExpression) {
+          assignedValue = ((PyParenthesizedExpression)assignedValue).getContainedExpression();
+        }
         if (assignedValue != null) {
           if (assignedValue instanceof PyReferenceExpressionImpl) {
             final PyReferenceExpressionImpl refex = (PyReferenceExpressionImpl)assignedValue;
@@ -447,7 +450,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
             final PyType type = TypeEvalContext.fastStubOnly(null).getType((PyClass)parent);
             if (type != null) {
               final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ,
-                                                                                    PyResolveContext.noImplicits());
+                                                                                    PyResolveContext.noImplicits(), true);
               if (results != null && !results.isEmpty()) {
                 return results.get(0).getElement();
               }

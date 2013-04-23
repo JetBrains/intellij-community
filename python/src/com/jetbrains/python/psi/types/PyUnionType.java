@@ -27,12 +27,12 @@ public class PyUnionType implements PyType {
   public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
                                                           PyExpression location,
                                                           AccessDirection direction,
-                                                          PyResolveContext resolveContext) {
+                                                          PyResolveContext resolveContext, boolean inherited) {
     SmartList<RatedResolveResult> ret = new SmartList<RatedResolveResult>();
     boolean all_nulls = true;
     for (PyType member : myMembers) {
       if (member != null) {
-        List<? extends RatedResolveResult> result = member.resolveMember(name, null, direction, resolveContext);
+        List<? extends RatedResolveResult> result = member.resolveMember(name, null, direction, resolveContext, true);
         if (result != null) {
           all_nulls = false;
           ret.addAll(result);

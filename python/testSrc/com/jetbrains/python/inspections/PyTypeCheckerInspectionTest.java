@@ -160,4 +160,9 @@ public class PyTypeCheckerInspectionTest extends PyTestCase {
   public void testBytesSubclassAsStr() {
     doTest();
   }
+
+  // PY-9118
+  public void testNegativeIsInstance() {
+    doTest();
+  }
 }

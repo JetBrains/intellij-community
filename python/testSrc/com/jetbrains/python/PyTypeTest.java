@@ -340,6 +340,15 @@ public class PyTypeTest extends PyTestCase {
     assertNull(actual);
   }
 
+  // PY-9590
+  public void testYieldParensType() {
+    PyExpression expr = parseExpr("def f():\n" +
+                                  "    expr = (yield 2)\n");
+    TypeEvalContext context = TypeEvalContext.slow().withTracing();
+    PyType actual = context.getType(expr);
+    assertNull(actual);
+  }
+
   // PY-6702
   public void testYieldFromType() {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON33);
@@ -475,6 +484,17 @@ public class PyTypeTest extends PyTestCase {
            "def f():\n" +
            "    return [f()]\n" +
            "expr = f()\n");
+  }
+
+  // PY-5084
+  public void testIfIsInstanceElse() {
+    doTest("str",
+           "def test(c):\n" +
+           "    x = 'foo' if c else 42\n" +
+           "    if isinstance(x, int):\n" +
+           "        print(x)\n" +
+           "    else:\n" +
+           "        expr = x\n");
   }
 
   private PyExpression parseExpr(String text) {

@@ -299,15 +299,43 @@ public class PyControlFlowBuilder extends PyRecursiveElementVisitor {
       });
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     }
+    boolean noPendingInScopeEdges = false;
+    if (!assertionEvaluator.getDefinitions().isEmpty()) {
+      final Ref<Boolean> pendingInScopeEdges = Ref.create(false);
+      myBuilder.processPending(new ControlFlowBuilder.PendingProcessor() {
+        @Override
+        public void process(PsiElement pendingScope, Instruction instruction) {
+          if (pendingScope != null && PsiTreeUtil.isAncestor(node, pendingScope, false)) {
+            pendingInScopeEdges.set(true);
+          }
+          myBuilder.addPendingEdge(pendingScope, instruction);
+        }
+      });
+      noPendingInScopeEdges = !pendingInScopeEdges.get();
+    }
+    final PyTypeAssertionEvaluator negativeAssertionEvaluator = new PyTypeAssertionEvaluator(false);
+    final PyExpression ifCondition = ifPart.getCondition();
+    // TODO: Add support for 'elif'
+    if (ifCondition != null) {
+      ifCondition.accept(negativeAssertionEvaluator);
+    }
     final PyElsePart elseBranch = node.getElsePart();
     if (elseBranch != null) {
       // Set the head as the false branch
       myBuilder.prevInstruction = lastBranchingPoint;
       myBuilder.startConditionalNode(elseBranch, lastCondition, false);
+      InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator);
       elseBranch.accept(this);
       myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
     } else {
-      myBuilder.addPendingEdge(node, lastBranchingPoint);
+      if (noPendingInScopeEdges) {
+        myBuilder.prevInstruction = lastBranchingPoint;
+        InstructionBuilder.addAssertInstructions(myBuilder, negativeAssertionEvaluator);
+        myBuilder.addPendingEdge(node, myBuilder.prevInstruction);
+      }
+      else {
+        myBuilder.addPendingEdge(node, lastBranchingPoint);
+      }
     }
   }
 
