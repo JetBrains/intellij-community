@@ -207,7 +207,7 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
                                                        Map<MavenProject, String> mavenProject2ModuleName,
                                                        List<MavenProjectsProcessorTask> tasks) {
     final ModifiableRootModel rootModel = rootModelAdapter.getRootModel();
-    removeExtApklibDependencies(rootModel);
+    removeExtApklibDependencies(rootModel, modelsProvider);
 
     for (MavenArtifact depArtifact : mavenProject.getDependencies()) {
       if (AndroidMavenUtil.APKLIB_DEPENDENCY_AND_PACKAGING_TYPE.equals(depArtifact.getType()) &&
@@ -266,7 +266,8 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
     return null;
   }
 
-  private static void removeExtApklibDependencies(ModifiableRootModel modifiableRootModel) {
+  private static void removeExtApklibDependencies(ModifiableRootModel modifiableRootModel,
+                                                  MavenModifiableModelsProvider modelsProvider) {
     for (OrderEntry entry : modifiableRootModel.getOrderEntries()) {
       if (entry instanceof ModuleOrderEntry) {
         final Module depModule = ((ModuleOrderEntry)entry).getModule();
@@ -275,14 +276,17 @@ public abstract class AndroidFacetImporterBase extends FacetImporter<AndroidFace
         }
       }
       else if (entry instanceof LibraryOrderEntry &&
-               containsDependencyOnApklibFile((LibraryOrderEntry)entry)) {
+               containsDependencyOnApklibFile((LibraryOrderEntry)entry, modelsProvider)) {
         modifiableRootModel.removeOrderEntry(entry);
       }
     }
   }
 
-  private static boolean containsDependencyOnApklibFile(@NotNull LibraryOrderEntry libraryOrderEntry) {
-    final String[] urls = libraryOrderEntry.getRootUrls(OrderRootType.CLASSES);
+  private static boolean containsDependencyOnApklibFile(@NotNull LibraryOrderEntry libraryOrderEntry,
+                                                        @NotNull MavenModifiableModelsProvider modelsProvider) {
+    final Library library = libraryOrderEntry.getLibrary();
+    final Library.ModifiableModel libraryModel = modelsProvider.getLibraryModel(library);
+    final String[] urls = libraryModel.getUrls(OrderRootType.CLASSES);
 
     for (String url : urls) {
       final String fileName = PathUtil.getFileName(PathUtil.toPresentableUrl(url));
