@@ -401,19 +401,30 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     final DocumentEx history = myHistoryViewer.getDocument();
     final int oldHistoryLength = history.getTextLength();
     appendToHistoryDocument(history, sb.toString());
-    assert oldHistoryLength + offsets[i] == history.getTextLength()
+
+    assert oldHistoryLength + offsets[i] >= history.getTextLength()
       : "unexpected history length " + oldHistoryLength + " " + offsets[i] + " " + history.getTextLength();
+
+    if (oldHistoryLength + offsets[i] != history.getTextLength()) {
+      // due to usage of cyclic buffer old text can be dropped
+      final int correction = oldHistoryLength + offsets[i] - history.getTextLength();
+      for (i = 0; i < offsets.length; ++i) {
+        offsets[i] -= correction;
+      }
+    }
     LOG.debug("printToHistory(): text processed");
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
     i = 0;
     for (final Pair<String, TextAttributes> pair : attributedText) {
-      markupModel.addRangeHighlighter(
-        oldHistoryLength + offsets[i],
-        oldHistoryLength + offsets[i+1],
-        HighlighterLayer.SYNTAX,
-        pair.getSecond(),
-        HighlighterTargetArea.EXACT_RANGE
-      );
+      if (offsets[i] >= 0) {
+        markupModel.addRangeHighlighter(
+          oldHistoryLength + offsets[i],
+          oldHistoryLength + offsets[i+1],
+          HighlighterLayer.SYNTAX,
+          pair.getSecond(),
+          HighlighterTargetArea.EXACT_RANGE
+        );
+      }
       ++i;
     }
     LOG.debug("printToHistory(): markup added");
