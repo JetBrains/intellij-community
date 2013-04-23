@@ -32,7 +32,7 @@ public class PyUnionType implements PyType {
     boolean all_nulls = true;
     for (PyType member : myMembers) {
       if (member != null) {
-        List<? extends RatedResolveResult> result = member.resolveMember(name, null, direction, resolveContext, true);
+        List<? extends RatedResolveResult> result = member.resolveMember(name, null, direction, resolveContext, inherited);
         if (result != null) {
           all_nulls = false;
           ret.addAll(result);
