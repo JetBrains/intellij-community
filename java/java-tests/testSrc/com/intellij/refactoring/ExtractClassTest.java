@@ -101,6 +101,10 @@ public class ExtractClassTest extends MultiFileTestCase{
     doTestMethod();
   }
 
+  public void testImplicitReferenceTypeParameters() throws Exception {
+    doTestMethod();
+  }
+
   public void testNoConstructorParams() throws Exception {
     doTestFieldAndMethod();
   }
