@@ -219,23 +219,7 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
 
     ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
       public void run() {
-        LocalFileSystem.getInstance().refresh(false);
-
-        myPackageName = computePackageName(myFacet);
-
-        if (myPackageName == null) {
-          getProcessHandler().destroyProcess();
-          return;
-        }
-        myTargetPackageName = myPackageName;
-        final HashMap<AndroidFacet, String> depFacet2PackageName = new HashMap<AndroidFacet, String>();
-
-        if (!fillRuntimeAndTestDependencies(getModule(), depFacet2PackageName)) {
-          getProcessHandler().destroyProcess();
-          return;
-        }
-        myAdditionalFacet2PackageName = depFacet2PackageName;
-        chooseTargetDeviceAndStart();
+        start(true);
       }
     });
     return new DefaultExecutionResult(console, myProcessHandler);
@@ -539,19 +523,36 @@ public class AndroidRunningState implements RunProfileState, AndroidDebugBridge.
     }
   }
 
-  private void chooseTargetDeviceAndStart() {
-    message("Waiting for device.", STDOUT);
-    if (myTargetDevices.length == 0) {
-      if (!chooseOrLaunchDevice()) {
+  void start(boolean chooseTargetDevice) {
+    LocalFileSystem.getInstance().refresh(false);
+    myPackageName = computePackageName(myFacet);
+
+    if (myPackageName == null) {
+      getProcessHandler().destroyProcess();
+      return;
+    }
+    myTargetPackageName = myPackageName;
+    final HashMap<AndroidFacet, String> depFacet2PackageName = new HashMap<AndroidFacet, String>();
+
+    if (!fillRuntimeAndTestDependencies(getModule(), depFacet2PackageName)) {
+      getProcessHandler().destroyProcess();
+      return;
+    }
+    myAdditionalFacet2PackageName = depFacet2PackageName;
+
+    if (chooseTargetDevice) {
+      message("Waiting for device.", STDOUT);
+
+      if (myTargetDevices.length == 0 && !chooseOrLaunchDevice()) {
         getProcessHandler().destroyProcess();
         fireExecutionFailed();
         return;
       }
     }
-    start();
+    doStart();
   }
 
-  void start() {
+  private void doStart() {
     if (myDebugMode) {
       AndroidDebugBridge.addClientChangeListener(this);
     }
