@@ -65,6 +65,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     return ApplicationManager.getApplication().getComponent(TextEditorProvider.class);
   }
 
+  @Override
   public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
     if (file.isDirectory() || !file.isValid()) {
       return false;
@@ -77,16 +78,19 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     return !ft.isBinary() || BinaryFileTypeDecompilers.INSTANCE.forFileType(ft) != null;
   }
 
+  @Override
   @NotNull
   public FileEditor createEditor(@NotNull Project project, @NotNull final VirtualFile file) {
     LOG.assertTrue(accept(project, file));
     return new TextEditorImpl(project, file, this);
   }
 
+  @Override
   public void disposeEditor(@NotNull FileEditor editor) {
     Disposer.dispose(editor);
   }
 
+  @Override
   @NotNull
   public FileEditorState readState(@NotNull Element element, @NotNull Project project, @NotNull VirtualFile file) {
     TextEditorState state = new TextEditorState();
@@ -104,6 +108,7 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     return state;
   }
 
+  @Override
   public void writeState(@NotNull FileEditorState _state, @NotNull Project project, @NotNull Element element) {
     TextEditorState state = (TextEditorState)_state;
 
@@ -114,11 +119,13 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     element.setAttribute(VERTICAL_SCROLL_PROPORTION_ATTR, Float.toString(state.VERTICAL_SCROLL_PROPORTION));
   }
 
+  @Override
   @NotNull
   public String getEditorTypeId() {
     return TYPE_ID;
   }
 
+  @Override
   @NotNull
   public FileEditorPolicy getPolicy() {
     return FileEditorPolicy.NONE;
@@ -135,7 +142,8 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
     return textEditor;
   }
 
-  protected EditorWrapper createWrapperForEditor(final Editor editor) {
+  @NotNull
+  protected EditorWrapper createWrapperForEditor(@NotNull Editor editor) {
     return new EditorWrapper(editor);
   }
 
@@ -210,77 +218,95 @@ public class TextEditorProvider implements FileEditorProvider, DumbAware {
   protected class EditorWrapper extends UserDataHolderBase implements TextEditor {
     private final Editor myEditor;
 
-    public EditorWrapper(Editor editor) {
+    public EditorWrapper(@NotNull Editor editor) {
       myEditor = editor;
     }
 
+    @Override
     @NotNull
     public Editor getEditor() {
       return myEditor;
     }
 
+    @Override
     @NotNull
     public JComponent getComponent() {
       return myEditor.getComponent();
     }
 
+    @Override
     public JComponent getPreferredFocusedComponent() {
       return myEditor.getContentComponent();
     }
 
+    @Override
     @NotNull
     public String getName() {
       return "Text";
     }
 
+    @Override
     public StructureViewBuilder getStructureViewBuilder() {
       VirtualFile file = FileDocumentManager.getInstance().getFile(myEditor.getDocument());
       if (file == null) return null;
-      
+
       final Project project = myEditor.getProject();
       LOG.assertTrue(project != null);
       return StructureViewBuilder.PROVIDER.getStructureViewBuilder(file.getFileType(), file, project);
     }
 
+    @Override
     @NotNull
     public FileEditorState getState(@NotNull FileEditorStateLevel level) {
       return getStateImpl(null, myEditor, level);
     }
 
+    @Override
     public void setState(@NotNull FileEditorState state) {
       setStateImpl(null, myEditor, (TextEditorState)state);
     }
 
+    @Override
     public boolean isModified() {
       return false;
     }
 
+    @Override
     public boolean isValid() {
       return true;
     }
 
+    @Override
     public void dispose() { }
 
+    @Override
     public void selectNotify() { }
 
+    @Override
     public void deselectNotify() { }
 
+    @Override
     public void addPropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
+    @Override
     public void removePropertyChangeListener(@NotNull PropertyChangeListener listener) { }
 
+    @Override
     public BackgroundEditorHighlighter getBackgroundHighlighter() {
       return null;
     }
 
+    @Override
     public FileEditorLocation getCurrentLocation() {
       return null;
     }
 
+    @Override
     public boolean canNavigateTo(@NotNull final Navigatable navigatable) {
       return false;
     }
 
+    @Override
     public void navigateTo(@NotNull final Navigatable navigatable) {
     }
   }
