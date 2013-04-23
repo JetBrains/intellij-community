@@ -13,13 +13,9 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.resolve;
+package org.jetbrains.plugins.groovy.lang.resolve
 
-
-import com.intellij.psi.JavaPsiFacade
-import com.intellij.psi.PsiClass
-import com.intellij.psi.PsiElement
-import com.intellij.psi.PsiReference
+import com.intellij.psi.*
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod
 import org.jetbrains.plugins.groovy.util.TestUtils
 
@@ -131,7 +127,7 @@ public class ResolveClassTest extends GroovyResolveTestCase {
   public void testEnumVsProperty() throws Exception {
     PsiReference ref = configureByFile("enumVsProperty/Test.groovy");
     final PsiElement resolved = ref.resolve();
-    assertInstanceOf(resolved, PsiClass.class);
+    assertInstanceOf(resolved, PsiField.class);
   }
 
   public void testTwoStaticImports() throws Exception {
