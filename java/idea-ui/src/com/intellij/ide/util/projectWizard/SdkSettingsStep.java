@@ -64,7 +64,9 @@ public class SdkSettingsStep extends ModuleWizardStep {
       @Override
       public void actionPerformed(ActionEvent e) {
         Sdk jdk = myJdkComboBox.getSelectedJdk();
-        component.setValue(selectedJdkProperty, jdk == null ? "" : jdk.getName());
+        if (jdk != null) {
+          component.setValue(selectedJdkProperty, jdk.getName());
+        }
       }
     });
 
