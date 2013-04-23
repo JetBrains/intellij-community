@@ -16,6 +16,7 @@
     <orderEntry type="module" module-name="jps-model-api" />
     <orderEntry type="module" module-name="jps-model-serialization" />
     <orderEntry type="module" module-name="jps-model-impl" />
+    <orderEntry type="module" module-name="maven-jps-plugin" scope="TEST" />
   </component>
 </module>
 

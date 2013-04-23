@@ -1,5 +1,6 @@
 package org.jetbrains.jps.android;
 
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
@@ -27,20 +28,20 @@ abstract class AndroidBuildTestingCommandExecutor implements AndroidBuildTesting
   public static final String ENTRY_HEADER = "______ENTRY_";
 
   private volatile StringWriter myStringWriter = new StringWriter();
-  private final Map<String, Pattern> myPathPatterns = new HashMap<String, Pattern>();
+  private final List<Pair<String, Pattern>> myPathPatterns = new ArrayList<Pair<String, Pattern>>();
 
   private final Set<String> myCheckedJars = new HashSet<String>();
 
   public void addPathPrefix(@NotNull String id, @NotNull String prefix) {
-    myPathPatterns.put(id, Pattern.compile("(" + FileUtil.toSystemIndependentName(prefix) + ").*"));
+    myPathPatterns.add(Pair.create(id, Pattern.compile("(" + FileUtil.toSystemIndependentName(prefix) + ").*")));
   }
 
   public void addRegexPathPattern(@NotNull String id, @NotNull String regex) {
-    myPathPatterns.put(id, Pattern.compile("(" + regex + ")"));
+    myPathPatterns.add(Pair.create(id, Pattern.compile("(" + regex + ")")));
   }
 
   public void addRegexPathPatternPrefix(@NotNull String id, @NotNull String regex) {
-    myPathPatterns.put(id, Pattern.compile("(" + regex + ").*"));
+    myPathPatterns.add(Pair.create(id, Pattern.compile("(" + regex + ").*")));
   }
 
   @NotNull
@@ -111,9 +112,9 @@ abstract class AndroidBuildTestingCommandExecutor implements AndroidBuildTesting
   private String progessArg(String arg) {
     String s = FileUtil.toSystemIndependentName(arg);
 
-    for (Map.Entry<String, Pattern> entry : myPathPatterns.entrySet()) {
-      final Pattern prefixPattern = entry.getValue();
-      final String id = entry.getKey();
+    for (Pair<String, Pattern> pair : myPathPatterns) {
+      final String id = pair.getFirst();
+      final Pattern prefixPattern = pair.getSecond();
       final Matcher matcher = prefixPattern.matcher(s);
 
       if (matcher.matches()) {

@@ -1,0 +1,1 @@
+lib1_resource_content
