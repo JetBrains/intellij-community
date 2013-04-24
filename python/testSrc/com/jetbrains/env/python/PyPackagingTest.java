@@ -12,8 +12,8 @@ import com.intellij.util.Processor;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.packaging.*;
-import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonSdkType;
+import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -84,7 +84,7 @@ public class PyPackagingTest extends PyTestCase {
           throw new RuntimeException(e);
         }
         catch (PyExternalProcessException e) {
-          fail(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()));
+          throw new RuntimeException(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()), e);
         }
         return true;
       }
@@ -120,7 +120,7 @@ public class PyPackagingTest extends PyTestCase {
           assertNull(pip2);
         }
         catch (PyExternalProcessException e) {
-          fail(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()));
+          new RuntimeException(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()), e);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
