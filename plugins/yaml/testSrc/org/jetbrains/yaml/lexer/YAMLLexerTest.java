@@ -114,4 +114,7 @@ public class YAMLLexerTest extends LexerTestCase {
     doFileTest("yml");
   }
 
+  public void testNested_seqs() {
+    doFileTest("yml");
+  }
 }
