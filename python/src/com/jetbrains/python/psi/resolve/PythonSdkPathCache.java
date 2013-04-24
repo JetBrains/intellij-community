@@ -23,7 +23,7 @@ import java.util.concurrent.atomic.AtomicReference;
 public class PythonSdkPathCache extends PythonPathCache implements Disposable {
   private static final Key<Map<Project, PythonSdkPathCache>> KEY = Key.create("PythonPathCache");
 
-  public static PythonSdkPathCache getInstance(Project project, Sdk sdk) {
+  public static PythonSdkPathCache getInstance(@NotNull Project project, @NotNull Sdk sdk) {
     synchronized (KEY) {
       Map<Project, PythonSdkPathCache> cacheMap = sdk.getUserData(KEY);
       if (cacheMap == null) {
@@ -43,7 +43,7 @@ public class PythonSdkPathCache extends PythonPathCache implements Disposable {
   private final Sdk mySdk;
   private final AtomicReference<PyBuiltinCache> myBuiltins = new AtomicReference<PyBuiltinCache>();
 
-  public PythonSdkPathCache(final Project project, final Sdk sdk) {
+  public PythonSdkPathCache(@NotNull final Project project, @NotNull final Sdk sdk) {
     myProject = project;
     mySdk = sdk;
     sdk.getRootProvider().addRootSetChangedListener(new RootProvider.RootSetChangedListener() {
