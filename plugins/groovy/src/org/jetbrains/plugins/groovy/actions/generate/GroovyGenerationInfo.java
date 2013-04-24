@@ -20,14 +20,18 @@ import com.intellij.codeInsight.generation.PsiGenerationInfo;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiMember;
+import com.intellij.psi.codeStyle.CodeStyleManager;
+import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
+import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -92,6 +96,19 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
     }
 
     GrReferenceAdjuster.shortenReferences(member);
+
+    adjustDocCommentIfExists(member);
+  }
+
+  private static void adjustDocCommentIfExists(PsiMember member) {
+    final PsiElement child = member.getFirstChild();
+    if (child instanceof PsiDocComment) {
+      final Project project = member.getProject();
+      final GrDocComment groovyDoc = GroovyPsiElementFactory.getInstance(project).createDocCommentFromText(child.getText());
+      child.delete();
+      CodeStyleManager.getInstance(project).reformat(member);
+      member.getParent().addBefore(groovyDoc, member);
+    }
   }
 
   @Override
