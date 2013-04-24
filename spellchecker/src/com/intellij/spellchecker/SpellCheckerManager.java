@@ -238,13 +238,7 @@ public class SpellCheckerManager {
           Strings.upperCase(suggestions);
         }
       }
-      List<String> result = new ArrayList<String>();
-      for (String s : suggestions) {
-        if (!result.contains(s)) {
-          result.add(s);
-        }
-      }
-      return result;
+      return new ArrayList<String>(new LinkedHashSet<String>(suggestions));
     }
     return Collections.emptyList();
   }

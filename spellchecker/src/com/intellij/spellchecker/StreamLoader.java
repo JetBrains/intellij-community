@@ -35,10 +35,12 @@ public class StreamLoader implements Loader {
     this.name=name;
   }
 
+  @Override
   public String getName() {
     return name;
   }
 
+  @Override
   public void load(@NotNull Consumer<String> consumer) {
     DataInputStream in = new DataInputStream(stream);
     BufferedReader br = null;

@@ -60,6 +60,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   }
 
 
+  @Override
   public void loadDictionary(@NotNull Loader loader) {
     if (loader instanceof EditableDictionaryLoader) {
       final EditableDictionary dictionary = ((EditableDictionaryLoader)loader).getDictionary();
@@ -75,9 +76,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   private void loadCompressedDictionary(@NotNull Loader loader) {
     if (ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment()) {
       final CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
-      if (dictionary != null) {
-        addCompressedFixedDictionary(dictionary);
-      }
+      addCompressedFixedDictionary(dictionary);
     }
     else {
       loadDictionaryAsync(loader, new Consumer<Dictionary>() {
@@ -121,20 +120,16 @@ public class BaseSpellChecker implements SpellCheckerEngine {
             public void run(@NotNull ProgressIndicator indicator) {
               indicator.setText(String.format("Loading %s...", loader.getName()));
               final CompressedDictionary dictionary = CompressedDictionary.create(loader, transform);
-              if (dictionary != null) {
-                LOG.debug(loader.getName() + " loaded!");
-                consumer.consume(dictionary);
-              }
+              LOG.debug(loader.getName() + " loaded!");
+              consumer.consume(dictionary);
 
               while (!myDictionariesToLoad.isEmpty()) {
                 final Pair<Loader, Consumer<Dictionary>> nextDictionary = myDictionariesToLoad.remove(0);
                 Loader nextDictionaryLoader = nextDictionary.getFirst();
                 indicator.setText(String.format("Loading %s...", nextDictionaryLoader.getName()));
                 CompressedDictionary dictionary1 = CompressedDictionary.create(nextDictionaryLoader, transform);
-                if (dictionary1 != null) {
-                  LOG.debug(nextDictionaryLoader.getName() + " loaded!");
-                  nextDictionary.getSecond().consume(dictionary1);
-                }
+                LOG.debug(nextDictionaryLoader.getName() + " loaded!");
+                nextDictionary.getSecond().consume(dictionary1);
               }
 
               LOG.debug("Loading finished, restarting daemon...");
@@ -186,36 +181,30 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     bundledDictionaries.add(dictionary);
   }
 
+  @Override
   public Transformation getTransformation() {
     return transform;
   }
 
   @NotNull
-  private static List<String> restore(char startFrom, int i, int j, @Nullable Collection dictionaries) {
-    if (dictionaries == null) {
-      return Collections.emptyList();
-    }
+  private static List<String> restore(char startFrom, int i, int j, @NotNull Collection<? extends Dictionary> dictionaries) {
     List<String> results = new ArrayList<String>();
 
-    for (Object o : dictionaries) {
-      if (o instanceof Dictionary) {
-        results.addAll(restore(startFrom, i, j, (Dictionary)o));
-      }
+    for (Dictionary o : dictionaries) {
+      results.addAll(restore(startFrom, i, j, o));
     }
     return results;
   }
 
   @NotNull
-  private static List<String> restore(final char first, final int i, final int j, @Nullable Dictionary dictionary) {
-    if (dictionary == null) {
-      return Collections.emptyList();
-    }
+  private static List<String> restore(final char first, final int i, final int j, @NotNull Dictionary dictionary) {
     final List<String> result = new ArrayList<String>();
     if (dictionary instanceof CompressedDictionary) {
-      result.addAll(((CompressedDictionary)dictionary).getWords(first));
+      result.addAll(((CompressedDictionary)dictionary).getWords(first, i, j));
     }
     else {
       dictionary.traverse(new Consumer<String>() {
+        @Override
         public void consume(String s) {
           if (StringUtil.isEmpty(s)) {
             return;
@@ -254,6 +243,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
     return -1;
   }
 
+  @Override
   public boolean isCorrect(@NotNull String word) {
     //System.out.println("---\n"+word);
     final String transformed = transform.transform(word);
@@ -268,8 +258,9 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   }
 
 
+  @Override
   @NotNull
-  public List<String> getSuggestions(final @NotNull String word, int threshold, int quality) {
+  public List<String> getSuggestions(@NotNull final String word, int threshold, int quality) {
     final String transformed = transform.transform(word);
     if (transformed == null) {
       return Collections.emptyList();
@@ -298,6 +289,7 @@ public class BaseSpellChecker implements SpellCheckerEngine {
   }
 
 
+  @Override
   @NotNull
   public List<String> getVariants(@NotNull String prefix) {
     //if (StringUtil.isEmpty(prefix)) {
@@ -306,15 +298,18 @@ public class BaseSpellChecker implements SpellCheckerEngine {
 
   }
 
+  @Override
   public void reset() {
     bundledDictionaries.clear();
     dictionaries.clear();
   }
 
+  @Override
   public boolean isDictionaryLoad(@NotNull String name) {
     return getBundledDictionaryByName(name) != null;
   }
 
+  @Override
   public void removeDictionary(@NotNull String name) {
     final Dictionary dictionaryByName = getBundledDictionaryByName(name);
     if (dictionaryByName != null) {

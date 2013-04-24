@@ -260,12 +260,12 @@ public class SpellCheckingInspection extends LocalInspectionTool implements Cust
 
       boolean hasProblems = myManager.hasProblem(word);
       if (hasProblems) {
-        if (!myHolder.isOnTheFly()) {
-          myAlreadyChecked.add(word);
-          addBatchDescriptor(myElement, myOffset, textRange, myHolder);
+        if (myHolder.isOnTheFly()) {
+          addRegularDescriptor(myElement, myOffset, textRange, myHolder, myUseRename, word);
         }
         else {
-          addRegularDescriptor(myElement, myOffset, textRange, myHolder, myUseRename, word);
+          myAlreadyChecked.add(word);
+          addBatchDescriptor(myElement, myOffset, textRange, myHolder);
         }
       }
     }
