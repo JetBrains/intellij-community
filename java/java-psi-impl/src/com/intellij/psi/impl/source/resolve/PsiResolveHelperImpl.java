@@ -34,10 +34,7 @@ import com.intellij.psi.scope.processor.MethodCandidatesProcessor;
 import com.intellij.psi.scope.processor.MethodResolverProcessor;
 import com.intellij.psi.scope.util.PsiScopesUtil;
 import com.intellij.psi.search.GlobalSearchScope;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
-import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
@@ -1015,88 +1012,50 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
                                                                                   PsiSubstitutor substitutor,
                                                                                   ParameterTypeInferencePolicy policy) {
     Pair<PsiType, ConstraintType> constraint = null;
-    PsiType expectedType = null;
+    PsiType expectedType = PsiTypesUtil.getExpectedTypeByParent(methodCall);
 
-    if (parent instanceof PsiVariable) {
-      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiVariable)parent).getInitializer()))) {
-        expectedType = ((PsiVariable)parent).getType();
-      }
-    }
-    else if (parent instanceof PsiAssignmentExpression) {
-      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiAssignmentExpression)parent).getRExpression()))) {
-        expectedType = ((PsiAssignmentExpression)parent).getLExpression().getType();
-      }
-    }
-    else if (parent instanceof PsiIfStatement) {
-      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiIfStatement)parent).getCondition()))) {
-        expectedType = PsiType.BOOLEAN.getBoxedType(parent);
-      }
-    }
-    else if (parent instanceof PsiWhileStatement) {
-      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiWhileStatement)parent).getCondition()))) {
-        expectedType = PsiType.BOOLEAN.getBoxedType(parent);
-      }
-    }
-    else if (parent instanceof PsiForStatement) {
-      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiForStatement)parent).getCondition()))) {
-        expectedType = PsiType.BOOLEAN.getBoxedType(parent);
-      }
-    }
-    else if (parent instanceof PsiDoWhileStatement) {
-      if (methodCall.equals(PsiUtil.skipParenthesizedExprDown(((PsiDoWhileStatement)parent).getCondition()))) {
-        expectedType = PsiType.BOOLEAN.getBoxedType(parent);
-      }
-    }
-    else if (parent instanceof PsiReturnStatement) {
-      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
-      if (lambdaExpression != null) {
-        expectedType = LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression.getFunctionalInterfaceType());
-        if (expectedType == null) {
+    if (expectedType == null) {
+      if (parent instanceof PsiReturnStatement) {
+        final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
+        if (lambdaExpression != null) {
           return getFailedInferenceConstraint(typeParameter);
         }
-      } else {
-        PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
-        if (method != null) {
-          expectedType = method.getReturnType();
-        }
       }
-    }
-    else if (parent instanceof PsiExpressionList) {
-      final PsiElement pParent = parent.getParent();
-      if (pParent instanceof PsiCallExpression && parent.equals(((PsiCallExpression)pParent).getArgumentList())) {
-        constraint = policy.inferTypeConstraintFromCallContext(methodCall, (PsiExpressionList)parent, (PsiCallExpression)pParent, typeParameter);
-        if (constraint == null && PsiUtil.isLanguageLevel8OrHigher(methodCall)) {
-          constraint = graphInferenceFromCallContext(methodCall, typeParameter, (PsiCallExpression)pParent);
-          if (constraint != null) {
-            final PsiType constraintFirst = constraint.getFirst();
-            if (constraintFirst == null || constraintFirst.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
-              constraint = null;
+      else if (parent instanceof PsiExpressionList) {
+        final PsiElement pParent = parent.getParent();
+        if (pParent instanceof PsiCallExpression && parent.equals(((PsiCallExpression)pParent).getArgumentList())) {
+          constraint = policy.inferTypeConstraintFromCallContext(methodCall, (PsiExpressionList)parent, (PsiCallExpression)pParent, typeParameter);
+          if (constraint == null && PsiUtil.isLanguageLevel8OrHigher(methodCall)) {
+            constraint = graphInferenceFromCallContext(methodCall, typeParameter, (PsiCallExpression)pParent);
+            if (constraint != null) {
+              final PsiType constraintFirst = constraint.getFirst();
+              if (constraintFirst == null || constraintFirst.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)) {
+                constraint = null;
+              }
             }
           }
         }
-      }
-    } else if (parent instanceof PsiLambdaExpression) {
-      expectedType = ourGraphGuard.doPreventingRecursion(methodCall, true, new Computable<PsiType>() {
-        @Override
-        public PsiType compute() {
-          return LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
-        }
-      });
-      if (expectedType == null) {
-        return null;
-      }
-    } else if (parent instanceof PsiTypeCastExpression) {
-      expectedType = ((PsiTypeCastExpression)parent).getType();
-    } else if (parent instanceof PsiConditionalExpression) {
-      if (PsiUtil.isLanguageLevel8OrHigher(parent)) {
-        try {
-          final Pair<PsiType, ConstraintType> pair = inferFromConditionalExpression(parent, methodCall, typeParameter, substitutor, policy);
-          if (pair != null) {
-            return pair;
+      } else if (parent instanceof PsiLambdaExpression) {
+        expectedType = ourGraphGuard.doPreventingRecursion(methodCall, true, new Computable<PsiType>() {
+          @Override
+          public PsiType compute() {
+            return LambdaUtil.getFunctionalInterfaceReturnType(((PsiLambdaExpression)parent).getFunctionalInterfaceType());
           }
+        });
+        if (expectedType == null) {
+          return null;
         }
-        finally {
-          GraphInferencePolicy.forget(parent);
+      } else if (parent instanceof PsiConditionalExpression) {
+        if (PsiUtil.isLanguageLevel8OrHigher(parent)) {
+          try {
+            final Pair<PsiType, ConstraintType> pair = inferFromConditionalExpression(parent, methodCall, typeParameter, substitutor, policy);
+            if (pair != null) {
+              return pair;
+            }
+          }
+          finally {
+            GraphInferencePolicy.forget(parent);
+          }
         }
       }
     }
@@ -1194,6 +1153,10 @@ public class PsiResolveHelperImpl implements PsiResolveHelper {
 
     result = new Pair<PsiType, ConstraintType>(guess, constraint.getSecond());
     return result;
+  }
+
+  private static boolean checkSameExpression(PsiExpression templateExpr, final PsiExpression expression) {
+    return templateExpr.equals(PsiUtil.skipParenthesizedExprDown(expression));
   }
 
   private static Pair<PsiType, ConstraintType> inferExceptionConstrains(PsiTypeParameter typeParameter,
