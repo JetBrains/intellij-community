@@ -61,8 +61,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
       if (parent instanceof PsiMethodReferenceExpression) return null;
       if (parent instanceof PsiJavaCodeReferenceElement && ((PsiJavaCodeReferenceElement)parent).getQualifier() != null) {
         PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)parent;
-        PsiReferenceParameterList parameterList = refExpr.getParameterList();
-        if (parameterList != null && parameterList.getFirstChild() != null) return null;
+        if (checkParameterizedReference(refExpr)) return null;
         PsiElement resolved = refExpr.resolve();
         if (resolved instanceof PsiMember && ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
           PsiClass aClass = getResolvedClass(element, (PsiMember)resolved);
@@ -97,6 +96,11 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
     }
 
     return null;
+  }
+
+  private static boolean checkParameterizedReference(PsiJavaCodeReferenceElement refExpr) {
+    PsiReferenceParameterList parameterList = refExpr instanceof PsiReferenceExpression ? refExpr.getParameterList() : null;
+    return parameterList != null && parameterList.getFirstChild() != null;
   }
 
   @Nullable
@@ -158,58 +162,61 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
 
-        if (reference.getParameterList() != null &&
-            reference.getParameterList().getFirstChild() != null) return;
+        try {
+          if (checkParameterizedReference(reference)) return;
 
-        if (referenceName.equals(reference.getReferenceName()) && !(reference instanceof PsiMethodReferenceExpression)) {
-          final PsiElement qualifierExpression = reference.getQualifier();
-          PsiElement referent = reference.getUserData(TEMP_REFERENT_USER_DATA);
-          if (!reference.isQualified()) {
-            if (referent instanceof PsiMember && referent != reference.resolve()) {
-              PsiElementFactory factory = JavaPsiFacade.getInstance(reference.getProject()).getElementFactory();
-              try {
-                final PsiClass containingClass = ((PsiMember)referent).getContainingClass();
-                if (containingClass != null) {
-                  PsiReferenceExpression copy = (PsiReferenceExpression)factory.createExpressionFromText("A." + reference.getReferenceName(), null);
-                  reference = (PsiReferenceExpression)reference.replace(copy);
-                  ((PsiReferenceExpression)reference.getQualifier()).bindToElement(containingClass);
+          if (referenceName.equals(reference.getReferenceName()) && !(reference instanceof PsiMethodReferenceExpression)) {
+            final PsiElement qualifierExpression = reference.getQualifier();
+            PsiElement referent = reference.getUserData(TEMP_REFERENT_USER_DATA);
+            if (!reference.isQualified()) {
+              if (referent instanceof PsiMember && referent != reference.resolve()) {
+                PsiElementFactory factory = JavaPsiFacade.getInstance(reference.getProject()).getElementFactory();
+                try {
+                  final PsiClass containingClass = ((PsiMember)referent).getContainingClass();
+                  if (containingClass != null) {
+                    PsiReferenceExpression copy = (PsiReferenceExpression)factory.createExpressionFromText("A." + reference.getReferenceName(), null);
+                    reference = (PsiReferenceExpression)reference.replace(copy);
+                    ((PsiReferenceExpression)reference.getQualifier()).bindToElement(containingClass);
+                  }
+                }
+                catch (IncorrectOperationException e) {
+                  LOG.error (e);
                 }
               }
-              catch (IncorrectOperationException e) {
-                LOG.error (e);
+              reference.putUserData(TEMP_REFERENT_USER_DATA, null);
+            } else {
+              if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
+                PsiElement aClass = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
+                if (aClass instanceof PsiVariable) {
+                  aClass = PsiUtil.resolveClassInClassTypeOnly(((PsiVariable)aClass).getType());
+                }
+                if (aClass instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)aClass, resolvedClass, true)) {
+                  boolean foundMemberByName = false;
+                  if (referent instanceof PsiMember) {
+                    final String memberName = ((PsiMember)referent).getName();
+                    final PsiClass containingClass = PsiTreeUtil.getParentOfType(reference, PsiClass.class);
+                    if (containingClass != null) {
+                      foundMemberByName |= containingClass.findFieldByName(memberName, true) != null;
+                      foundMemberByName |= containingClass.findMethodsByName(memberName, true).length > 0;
+                    }
+                  }
+                  if (!foundMemberByName) {
+                    try {
+                      qualifierExpression.delete();
+                    }
+                    catch (IncorrectOperationException e) {
+                      LOG.error(e);
+                    }
+                  }
+                }
               }
             }
             reference.putUserData(TEMP_REFERENT_USER_DATA, null);
-          } else {
-            if (qualifierExpression instanceof PsiJavaCodeReferenceElement) {
-              PsiElement aClass = ((PsiJavaCodeReferenceElement)qualifierExpression).resolve();
-              if (aClass instanceof PsiVariable) {
-                aClass = PsiUtil.resolveClassInClassTypeOnly(((PsiVariable)aClass).getType());
-              }
-              if (aClass instanceof PsiClass && InheritanceUtil.isInheritorOrSelf((PsiClass)aClass, resolvedClass, true)) {
-                boolean foundMemberByName = false;
-                if (referent instanceof PsiMember) {
-                  final String memberName = ((PsiMember)referent).getName();
-                  final PsiClass containingClass = PsiTreeUtil.getParentOfType(reference, PsiClass.class);
-                  if (containingClass != null) {
-                    foundMemberByName |= containingClass.findFieldByName(memberName, true) != null;
-                    foundMemberByName |= containingClass.findMethodsByName(memberName, true).length > 0;
-                  }
-                }
-                if (!foundMemberByName) {
-                  try {
-                    qualifierExpression.delete();
-                  }
-                  catch (IncorrectOperationException e) {
-                    LOG.error(e);
-                  }
-                }
-              }
-            }
           }
-          reference.putUserData(TEMP_REFERENT_USER_DATA, null);
         }
-        super.visitReferenceElement(reference);
+        finally {
+          super.visitReferenceElement(reference);
+        }
       }
     });
   }
