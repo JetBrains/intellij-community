@@ -15,6 +15,9 @@ public class RecentStringInterner {
   private final int myStripeMask;
   private final SLRUCache<String, String>[] myInterns;
   private final Lock[] myStripeLocks;
+  // LowMemoryWatcher relies on field holding it
+  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
+  private final LowMemoryWatcher myLowMemoryWatcher;
 
   public RecentStringInterner() {
     this(8192);
@@ -43,7 +46,7 @@ public class RecentStringInterner {
 
     assert Integer.highestOneBit(stripes) == stripes;
     myStripeMask = stripes - 1;
-    LowMemoryWatcher.register(new Runnable() {
+    myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
       @Override
       public void run() {
         clear();
