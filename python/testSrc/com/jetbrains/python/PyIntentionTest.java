@@ -398,6 +398,10 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.replace.plus.with.format.operator"), LanguageLevel.PYTHON25);
   }
 
+  public void testConvertStaticMethodToFunction() {
+    doTest(PyBundle.message("INTN.convert.static.method.to.function"));
+  }
+
   private void doDocStubTest(LanguageLevel languageLevel) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
     try {
