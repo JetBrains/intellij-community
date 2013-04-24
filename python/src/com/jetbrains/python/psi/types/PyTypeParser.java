@@ -241,7 +241,7 @@ public class PyTypeParser {
       final String shortName = classRange.substring(qName);
       if (moduleType != null) {
         final PyResolveContext context = PyResolveContext.defaultContext();
-        final List<? extends RatedResolveResult> results = moduleType.resolveMember(shortName, null, AccessDirection.READ, context);
+        final List<? extends RatedResolveResult> results = moduleType.resolveMember(shortName, null, AccessDirection.READ, context, true);
         if (results != null && !results.isEmpty()) {
           final RatedResolveResult result = results.get(0);
           final PsiElement resolved = result.getElement();

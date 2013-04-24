@@ -194,7 +194,7 @@ public class PyDebugRunner extends GenericProgramRunner {
     }
 
     if (PyDebuggerOptionsProvider.getInstance(project).isSupportGeventDebugging()) {
-      generalCommandLine.getEnvParamsNotNull().put(GEVENT_SUPPORT, "True");
+      generalCommandLine.setEnvironment(GEVENT_SUPPORT, "True");
     }
 
     final String[] debuggerArgs = new String[]{
@@ -214,6 +214,6 @@ public class PyDebugRunner extends GenericProgramRunner {
       roots.add(contentRoot.getPath());
     }
 
-    commandLine.getEnvParamsNotNull().put(PYCHARM_PROJECT_ROOTS, StringUtil.join(roots, File.pathSeparator));
+    commandLine.setEnvironment(PYCHARM_PROJECT_ROOTS, StringUtil.join(roots, File.pathSeparator));
   }
 }

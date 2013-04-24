@@ -34,7 +34,8 @@ public class PyJavaClassType implements PyClassLikeType {
   public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
                                                           PyExpression location,
                                                           AccessDirection direction,
-                                                          PyResolveContext resolveContext) {
+                                                          PyResolveContext resolveContext,
+                                                          boolean inherited) {
     final PsiMethod[] methods = myClass.findMethodsByName(name, true);
     if (methods.length > 0) {
       ResolveResultList resultList = new ResolveResultList();

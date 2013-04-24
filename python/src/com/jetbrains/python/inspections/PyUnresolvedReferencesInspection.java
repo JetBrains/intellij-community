@@ -805,7 +805,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       final PyType type = context.getType(cls);
       if (type != null) {
         final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ,
-                                                                              PyResolveContext.noImplicits().withTypeEvalContext(context));
+                                                                              PyResolveContext.noImplicits().withTypeEvalContext(context),
+                                                                              true);
         if (results != null && !results.isEmpty()) {
           return results.get(0).getElement();
         }

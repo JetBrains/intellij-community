@@ -157,16 +157,21 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     myCommandLineArgumentsProvider = createCommandLineArgumentsProvider(mySdk, myEnvironmentVariables, myPorts);
 
-    ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), "Connecting to console", false) {
-      public void run(@NotNull final ProgressIndicator indicator) {
-        indicator.setText("Connecting to console...");
-        try {
-          initAndRun(myStatementsToExecute);
-        }
-        catch (ExecutionException e) {
-          LOG.warn("Error running console", e);
-          ExecutionHelper.showErrors(myProject, Arrays.<Exception>asList(e), getTitle(), null);
-        }
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        ProgressManager.getInstance().run(new Task.Backgroundable(getProject(), "Connecting to console", false) {
+          public void run(@NotNull final ProgressIndicator indicator) {
+            indicator.setText("Connecting to console...");
+            try {
+              initAndRun(myStatementsToExecute);
+            }
+            catch (ExecutionException e) {
+              LOG.warn("Error running console", e);
+              ExecutionHelper.showErrors(myProject, Arrays.<Exception>asList(e), getTitle(), null);
+            }
+          }
+        });
       }
     });
   }
@@ -261,12 +266,14 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
     }
   }
 
-  private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager, String[] command, Map<String, String> envs)
+  private Process createRemoteConsoleProcess(PythonRemoteInterpreterManager manager, String[] command, Map<String, String> env)
     throws ExecutionException {
     RemoteSdkData data = (RemoteSdkData)mySdk.getSdkAdditionalData();
 
     GeneralCommandLine commandLine = new GeneralCommandLine(command);
-    commandLine.setEnvParams(envs);
+    if (env != null) {
+      commandLine.setEnvironment(env);
+    }
 
     commandLine.getParametersList().set(1, PythonRemoteInterpreterManager.toSystemDependent(new File(data.getHelpersPath(),
                                                                                                      PYDEV_PYDEVCONSOLE_PY)

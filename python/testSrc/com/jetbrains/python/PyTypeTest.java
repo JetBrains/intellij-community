@@ -340,6 +340,15 @@ public class PyTypeTest extends PyTestCase {
     assertNull(actual);
   }
 
+  // PY-9590
+  public void testYieldParensType() {
+    PyExpression expr = parseExpr("def f():\n" +
+                                  "    expr = (yield 2)\n");
+    TypeEvalContext context = TypeEvalContext.slow().withTracing();
+    PyType actual = context.getType(expr);
+    assertNull(actual);
+  }
+
   // PY-6702
   public void testYieldFromType() {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), LanguageLevel.PYTHON33);
@@ -475,6 +484,56 @@ public class PyTypeTest extends PyTestCase {
            "def f():\n" +
            "    return [f()]\n" +
            "expr = f()\n");
+  }
+
+  // PY-5084
+  public void testIfIsInstanceElse() {
+    doTest("str",
+           "def test(c):\n" +
+           "    x = 'foo' if c else 42\n" +
+           "    if isinstance(x, int):\n" +
+           "        print(x)\n" +
+           "    else:\n" +
+           "        expr = x\n");
+  }
+
+  // PY-5614
+  public void testUnknownReferenceTypeAttribute() {
+    doTest("str",
+           "def f(x):\n" +
+           "    if isinstance(x.foo, str):\n" +
+           "        expr = x.foo\n");
+  }
+
+  // PY-5614
+  public void testUnknownTypeAttribute() {
+    doTest("str",
+           "class C(object):\n" +
+           "    def __init__(self, foo):\n" +
+           "        self.foo = foo\n" +
+           "    def f(self):\n" +
+           "        if isinstance(self.foo, str):\n" +
+           "            expr = self.foo\n");
+  }
+
+  // PY-5614
+  public void testKnownTypeAttribute() {
+    doTest("str",
+           "class C(object):\n" +
+           "    def __init__(self):\n" +
+           "        self.foo = 42\n" +
+           "    def f(self):\n" +
+           "        if isinstance(self.foo, str):\n" +
+           "            expr = self.foo\n");
+  }
+
+  // PY-5614
+  public void testNestedUnknownReferenceTypeAttribute() {
+    doTest("str",
+           "def f(x):\n" +
+           "    if isinstance(x.foo.bar, str):\n" +
+           "        expr = x.foo.bar\n");
+
   }
 
   private PyExpression parseExpr(String text) {

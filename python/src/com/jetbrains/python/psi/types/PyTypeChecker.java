@@ -7,7 +7,6 @@ import com.intellij.psi.ResolveResult;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.psi.*;
-import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
@@ -465,7 +464,8 @@ public class PyTypeChecker {
         for (PyType member : unionType.getMembers()) {
           if (member != null) {
             final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-            final List<? extends RatedResolveResult> results = member.resolveMember(name, callee, AccessDirection.READ, resolveContext);
+            final List<? extends RatedResolveResult> results = member.resolveMember(name, callee, AccessDirection.READ, resolveContext,
+                                                                                    true);
             if (results != null && !results.isEmpty()) {
               sameNameCount++;
             }

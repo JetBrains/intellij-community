@@ -41,7 +41,8 @@ public class JythonSdkFlavor extends PythonSdkFlavor {
 
   @Override
   public void initPythonPath(GeneralCommandLine cmd, Collection<String> path) {
-    initPythonPath(path, cmd.getEnvParamsNotNull());
+    super.initPythonPath(cmd, path);
+
     ParamsGroup paramGroup = cmd.getParametersList().getParamsGroup(PythonCommandLineState.GROUP_EXE_OPTIONS);
     assert paramGroup != null;
     for (String param : paramGroup.getParameters()) {

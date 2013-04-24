@@ -16,7 +16,15 @@ import java.util.Stack;
  */
 public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   private Stack<Assertion> myStack = new Stack<Assertion>();
-  private boolean myPositive = true;
+  private boolean myPositive;
+
+  public PyTypeAssertionEvaluator() {
+    this(true);
+  }
+
+  public PyTypeAssertionEvaluator(boolean positive) {
+    myPositive = positive;
+  }
 
   public List<Assertion> getDefinitions() {
     return myStack;
@@ -24,7 +32,7 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
 
   @Override
   public void visitPyPrefixExpression(PyPrefixExpression node) {
-    if (myPositive && node.getOperator() == PyTokenTypes.NOT_KEYWORD) {
+    if (node.getOperator() == PyTokenTypes.NOT_KEYWORD) {
       myPositive = !myPositive;
       super.visitPyPrefixExpression(node);
       myPositive = !myPositive;
@@ -74,12 +82,13 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
   @Override
   public void visitPyReferenceExpression(final PyReferenceExpression node) {
     if (node.getParent() instanceof PyIfPart) {
+      final boolean positive = myPositive;
       pushAssertion(node, new InstructionTypeCallback() {
         @Override
         public PyType getType(TypeEvalContext context, PsiElement anchor) {
           final List<PyType> types = new ArrayList<PyType>();
           types.add(PyNoneType.INSTANCE);
-          return createAssertionType(context.getType(node), types, false, context);
+          return createAssertionType(context.getType(node), types, !positive, context);
         }
       });
       return;
@@ -95,12 +104,13 @@ public class PyTypeAssertionEvaluator extends PyRecursiveElementVisitor {
       if (lhs instanceof PyReferenceExpression && rhs instanceof PyReferenceExpression) {
         final PyReferenceExpression target = (PyReferenceExpression)lhs;
         if (PyNames.NONE.equals(rhs.getName())) {
+          final boolean positive = myPositive;
           pushAssertion(target, new InstructionTypeCallback() {
             @Override
             public PyType getType(TypeEvalContext context, @Nullable PsiElement anchor) {
               final List<PyType> types = new ArrayList<PyType>();
               types.add(PyNoneType.INSTANCE);
-              return createAssertionType(context.getType(target), types, false, context);
+              return createAssertionType(context.getType(target), types, !positive, context);
             }
           });
           return;
