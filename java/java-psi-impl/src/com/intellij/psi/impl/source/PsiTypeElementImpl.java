@@ -16,11 +16,13 @@
 package com.intellij.psi.impl.source;
 
 import com.intellij.lang.ASTNode;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
-import com.intellij.psi.impl.source.tree.*;
+import com.intellij.psi.impl.source.tree.CompositePsiElement;
+import com.intellij.psi.impl.source.tree.ElementType;
+import com.intellij.psi.impl.source.tree.JavaElementType;
+import com.intellij.psi.impl.source.tree.TreeElement;
 import com.intellij.psi.scope.PsiScopeProcessor;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -36,8 +38,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.List;
 
 public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeElement {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.PsiTypeElementImpl");
-
   private volatile PsiType myCachedType = null;
 
   @SuppressWarnings({"UnusedDeclaration"})
@@ -120,22 +120,16 @@ public class PsiTypeElementImpl extends CompositePsiElement implements PsiTypeEl
 
       if (PsiUtil.isJavaToken(child, JavaTokenType.QUEST)) {
         assert type == null : this;
-        PsiElement next = PsiTreeUtil.skipSiblingsForward(child, PsiComment.class, PsiWhiteSpace.class);
-        if (next == null) {
-          type = PsiWildcardType.createUnbounded(getManager());
+        PsiElement boundKind = PsiTreeUtil.skipSiblingsForward(child, PsiComment.class, PsiWhiteSpace.class);
+        PsiElement boundType = PsiTreeUtil.skipSiblingsForward(boundKind, PsiComment.class, PsiWhiteSpace.class);
+        if (PsiUtil.isJavaToken(boundKind, JavaTokenType.EXTENDS_KEYWORD) && boundType instanceof PsiTypeElement) {
+          type = PsiWildcardType.createExtends(getManager(), ((PsiTypeElement)boundType).getType());
+        }
+        else if (PsiUtil.isJavaToken(boundKind, JavaTokenType.SUPER_KEYWORD) && boundType instanceof PsiTypeElement) {
+          type = PsiWildcardType.createSuper(getManager(), ((PsiTypeElement)boundType).getType());
         }
         else {
-          PsiElement bound = PsiTreeUtil.skipSiblingsForward(next, PsiComment.class, PsiWhiteSpace.class);
-          if (PsiUtil.isJavaToken(next, JavaTokenType.EXTENDS_KEYWORD) && bound instanceof PsiTypeElement) {
-            type = PsiWildcardType.createExtends(getManager(), ((PsiTypeElement)bound).getType());
-          }
-          else if (PsiUtil.isJavaToken(next, JavaTokenType.SUPER_KEYWORD) && bound instanceof PsiTypeElement) {
-            type = PsiWildcardType.createSuper(getManager(), ((PsiTypeElement)bound).getType());
-          }
-          else {
-            LOG.error("next=" + next + " bound=" + bound + ": " + this);
-            type = PsiWildcardType.createUnbounded(getManager());
-          }
+          type = PsiWildcardType.createUnbounded(getManager());
         }
         PsiAnnotation[] array = ContainerUtil.copyAndClear(annotations, PsiAnnotation.ARRAY_FACTORY, true);
         type = ((PsiWildcardType)type).annotate(array);
