@@ -866,27 +866,23 @@ public class CompileDriver {
         indicator.setText("");
       }
       if (compileContext.isAnnotationProcessorsEnabled()) {
-        final Set<VirtualFile> genSourceRoots = new HashSet<VirtualFile>();
+        final Set<File> genSourceRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
         final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
         for (Module module : affectedModules) {
           if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
             final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
             if (path != null) {
-              final File genPath = new File(path);
-              final VirtualFile vFile = lfs.findFileByIoFile(genPath);
-              if (vFile != null && ModuleRootManager.getInstance(module).getFileIndex().isInSourceContent(vFile)) {
-                genSourceRoots.add(vFile);
-              }
+              genSourceRoots.add(new File(path));
             }
           }
         }
         if (!genSourceRoots.isEmpty()) {
           // refresh generates source roots asynchronously; needed for error highlighting update
-          lfs.refreshFiles(genSourceRoots, true, true, null);
+          lfs.refreshIoFiles(genSourceRoots, true, true, null);
         }
       }
     }
-    SwingUtilities.invokeLater(new Runnable() {
+    SwingUtilities.invokeLater(new Runnable() {                                                                 
       public void run() {
         int errorCount = 0;
         int warningCount = 0;
