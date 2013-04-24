@@ -65,6 +65,10 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("IFoo");
   }
 
+  public void testUsageInExtendsList() throws Exception {
+    doSingleFileTest();
+  }
+
   public void testParameterInHierarchy() throws Exception {
     myDoCompare = false;
     doTest("C2");
