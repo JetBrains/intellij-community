@@ -16,11 +16,14 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.ide.ui.UISettings;
+import com.intellij.mock.Mock;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ExpandMacroToPathMap;
 import com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.JDOMUtil;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.fixtures.LightPlatformCodeInsightFixtureTestCase;
@@ -30,8 +33,10 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jdom.JDOMException;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.jps.model.serialization.PathMacroUtil;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.IOException;
 import java.util.Arrays;
@@ -46,7 +51,6 @@ import java.util.concurrent.Future;
 public class FileEditorManagerTest extends LightPlatformCodeInsightFixtureTestCase {
 
   private FileEditorManagerImpl myManager;
-
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   public FileEditorManagerTest() {
     PlatformTestCase.initPlatformLangPrefix();
@@ -54,7 +58,7 @@ public class FileEditorManagerTest extends LightPlatformCodeInsightFixtureTestCa
 
   public void testTabOrder() throws Exception {
 
-    openFiles();
+    openFiles(STRING);
     assertOpenFiles("1.txt", "foo.xml", "2.txt", "3.txt");
   }
 
@@ -63,7 +67,7 @@ public class FileEditorManagerTest extends LightPlatformCodeInsightFixtureTestCa
     int limit = UISettings.getInstance().EDITOR_TAB_LIMIT;
     try {
       UISettings.getInstance().EDITOR_TAB_LIMIT = 2;
-      openFiles();
+      openFiles(STRING);
       // note that foo.xml is pinned
       assertOpenFiles("foo.xml", "3.txt");
     }
@@ -71,6 +75,65 @@ public class FileEditorManagerTest extends LightPlatformCodeInsightFixtureTestCa
       UISettings.getInstance().EDITOR_TAB_LIMIT = limit;
     }
   }
+
+  public void testOpenRecentEditorTab() throws Exception {
+    PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new MyFileEditorProvider(), getTestRootDisposable());
+
+    openFiles("  <component name=\"FileEditorManager\">\n" +
+        "    <leaf>\n" +
+        "      <file leaf-file-name=\"foo.xsd\" pinned=\"false\" current=\"true\" current-in-tab=\"true\">\n" +
+        "        <entry selected=\"true\" file=\"file://$PROJECT_DIR$/src/1.txt\">\n" +
+        "          <provider editor-type-id=\"mock\" selected=\"true\">\n" +
+        "            <state />\n" +
+        "          </provider>\n" +
+        "          <provider editor-type-id=\"text-editor\">\n" +
+        "            <state/>\n" +
+        "          </provider>\n" +
+        "        </entry>\n" +
+        "      </file>\n" +
+        "    </leaf>\n" +
+        "  </component>\n");
+    FileEditor[] selectedEditors = myManager.getSelectedEditors();
+    assertEquals(1, selectedEditors.length);
+    assertEquals("mockEditor", selectedEditors[0].getName());
+  }
+
+  private static final String STRING = "<component name=\"FileEditorManager\">\n" +
+      "    <leaf>\n" +
+      "      <file leaf-file-name=\"1.txt\" pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
+      "        <entry file=\"file://$PROJECT_DIR$/src/1.txt\">\n" +
+      "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
+      "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
+      "            </state>\n" +
+      "          </provider>\n" +
+      "        </entry>\n" +
+      "      </file>\n" +
+      "      <file leaf-file-name=\"foo.xml\" pinned=\"true\" current=\"false\" current-in-tab=\"false\">\n" +
+      "        <entry file=\"file://$PROJECT_DIR$/src/foo.xml\">\n" +
+      "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
+      "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
+      "            </state>\n" +
+      "          </provider>\n" +
+      "        </entry>\n" +
+      "      </file>\n" +
+      "      <file leaf-file-name=\"2.txt\" pinned=\"false\" current=\"true\" current-in-tab=\"true\">\n" +
+      "        <entry file=\"file://$PROJECT_DIR$/src/2.txt\">\n" +
+      "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
+      "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
+      "            </state>\n" +
+      "          </provider>\n" +
+      "        </entry>\n" +
+      "      </file>\n" +
+      "      <file leaf-file-name=\"3.txt\" pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
+      "        <entry file=\"file://$PROJECT_DIR$/src/3.txt\">\n" +
+      "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
+      "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
+      "            </state>\n" +
+      "          </provider>\n" +
+      "        </entry>\n" +
+      "      </file>\n" +
+      "    </leaf>\n" +
+      "  </component>\n";
 
   private void assertOpenFiles(String... fileNames) {
     EditorWithProviderComposite[] files = myManager.getSplitters().getEditorsComposites();
@@ -83,43 +146,8 @@ public class FileEditorManagerTest extends LightPlatformCodeInsightFixtureTestCa
     assertEquals(Arrays.asList(fileNames), names);
   }
 
-  private void openFiles() throws IOException, JDOMException, InterruptedException, ExecutionException {
-    Document document = JDOMUtil.loadDocument("  <component name=\"FileEditorManager\">\n" +
-                                              "    <leaf>\n" +
-                                              "      <file leaf-file-name=\"1.txt\" pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
-                                              "        <entry file=\"file://$PROJECT_DIR$/src/1.txt\">\n" +
-                                              "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-                                              "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
-                                              "            </state>\n" +
-                                              "          </provider>\n" +
-                                              "        </entry>\n" +
-                                              "      </file>\n" +
-                                              "      <file leaf-file-name=\"foo.xml\" pinned=\"true\" current=\"false\" current-in-tab=\"false\">\n" +
-                                              "        <entry file=\"file://$PROJECT_DIR$/src/foo.xml\">\n" +
-                                              "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-                                              "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
-                                              "            </state>\n" +
-                                              "          </provider>\n" +
-                                              "        </entry>\n" +
-                                              "      </file>\n" +
-                                              "      <file leaf-file-name=\"2.txt\" pinned=\"false\" current=\"true\" current-in-tab=\"true\">\n" +
-                                              "        <entry file=\"file://$PROJECT_DIR$/src/2.txt\">\n" +
-                                              "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-                                              "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
-                                              "            </state>\n" +
-                                              "          </provider>\n" +
-                                              "        </entry>\n" +
-                                              "      </file>\n" +
-                                              "      <file leaf-file-name=\"3.txt\" pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +
-                                              "        <entry file=\"file://$PROJECT_DIR$/src/3.txt\">\n" +
-                                              "          <provider selected=\"true\" editor-type-id=\"text-editor\">\n" +
-                                              "            <state line=\"0\" column=\"0\" selection-start=\"0\" selection-end=\"0\" vertical-scroll-proportion=\"0.0\">\n" +
-                                              "            </state>\n" +
-                                              "          </provider>\n" +
-                                              "        </entry>\n" +
-                                              "      </file>\n" +
-                                              "    </leaf>\n" +
-                                              "  </component>\n");
+  private void openFiles(String s) throws IOException, JDOMException, InterruptedException, ExecutionException {
+    Document document = JDOMUtil.loadDocument(s);
     Element rootElement = document.getRootElement();
     ExpandMacroToPathMap map = new ExpandMacroToPathMap();
     map.addMacroExpand(PathMacroUtil.PROJECT_DIR_MACRO_NAME, getTestDataPath());
@@ -155,5 +183,61 @@ public class FileEditorManagerTest extends LightPlatformCodeInsightFixtureTestCa
   @Override
   protected boolean isWriteActionRequired() {
     return false;
+  }
+
+  private static class MyFileEditorProvider implements FileEditorProvider {
+    @NotNull
+    @Override
+    public String getEditorTypeId() {
+      return "mock";
+    }
+
+    @NotNull
+    @Override
+    public FileEditorState readState(@NotNull Element sourceElement, @NotNull Project project, @NotNull VirtualFile file) {
+      return FileEditorState.INSTANCE;
+    }
+
+    @Override
+    public void writeState(@NotNull FileEditorState state, @NotNull Project project, @NotNull Element targetElement) {
+    }
+
+    @Override
+    public boolean accept(@NotNull Project project, @NotNull VirtualFile file) {
+      return true;
+    }
+
+    @NotNull
+    @Override
+    public FileEditor createEditor(@NotNull Project project, @NotNull VirtualFile file) {
+      return new Mock.MyFileEditor() {
+        @Override
+        public boolean isValid() {
+          return true;
+        }
+
+        @NotNull
+        @Override
+        public JComponent getComponent() {
+          return new JLabel();
+        }
+
+        @NotNull
+        @Override
+        public String getName() {
+          return "mockEditor";
+        }
+      };
+    }
+
+    @Override
+    public void disposeEditor(@NotNull FileEditor editor) {
+    }
+
+    @NotNull
+    @Override
+    public FileEditorPolicy getPolicy() {
+      return FileEditorPolicy.PLACE_AFTER_DEFAULT_EDITOR;
+    }
   }
 }
