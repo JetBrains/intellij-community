@@ -855,7 +855,7 @@
     <annotation name="org.jetbrains.annotations.NotNull" />
   </item>
   <item name="java.util.SortedSet java.util.Comparator&lt;? super E&gt; comparator()">
-    <annotation name="org.jetbrains.annotations.NotNull" />
+    <annotation name="org.jetbrains.annotations.Nullable" />
   </item>
   <item name="java.util.SortedSet java.util.SortedSet&lt;E&gt; headSet(E)">
     <annotation name="org.jetbrains.annotations.NotNull" />
