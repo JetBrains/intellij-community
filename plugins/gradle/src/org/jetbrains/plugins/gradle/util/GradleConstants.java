@@ -1,10 +1,7 @@
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.ui.ProjectStructureNodeDescriptor;
-import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import org.jetbrains.annotations.NonNls;
-import com.intellij.openapi.externalSystem.model.project.id.GradleSyntheticId;
 import org.jetbrains.annotations.NotNull;
 
 /**

@@ -549,7 +549,13 @@ public class FileReference implements FileReferenceOwner, PsiPolyVariantReferenc
   protected PsiElement rename(final String newName) throws IncorrectOperationException {
     final TextRange range = new TextRange(myFileReferenceSet.getStartInElement(), getRangeInElement().getEndOffset());
     PsiElement element = getElement();
-    return CachingReference.getManipulator(element).handleContentChange(element, range, newName);
+    try {
+      return CachingReference.getManipulator(element).handleContentChange(element, range, newName);
+    }
+    catch (IncorrectOperationException e) {
+      LOG.error("Cannot rename " + getClass() + " from " + myFileReferenceSet.getClass() + " to " + newName);
+      throw e;
+    }
   }
 
   @Override

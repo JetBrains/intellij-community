@@ -734,7 +734,7 @@ public class JavaSafeDeleteProcessor extends SafeDeleteProcessorDelegateBase {
 
   public static boolean isInside (PsiElement place, PsiElement ancestor) {
     if (SafeDeleteProcessor.isInside(place, ancestor)) return true;
-    if (place instanceof PsiComment && ancestor instanceof PsiClass) {
+    if (PsiTreeUtil.getParentOfType(place, PsiComment.class, false) != null && ancestor instanceof PsiClass) {
       final PsiClass aClass = (PsiClass)ancestor;
       if (aClass.getParent() instanceof PsiJavaFile) {
         final PsiJavaFile file = (PsiJavaFile)aClass.getParent();

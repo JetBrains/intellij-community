@@ -38,10 +38,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WelcomeScreen;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBPanel;
-import com.intellij.util.PlatformUtils;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -99,8 +99,6 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
   private static final Color BUTTON_POPPED_COLOR = UIUtil.isUnderDarcula() ? Gray.get(WELCOME_PANEL_BACKGROUND.getRed() + 10) : Gray._241;
   private static final Color BUTTON_PUSHED_COLOR = UIUtil.isUnderDarcula() ? Gray.get(WELCOME_PANEL_BACKGROUND.getRed() + 5) : Gray._228;
 
-  @NonNls private static final String HTML_PREFIX = "<html>";
-  @NonNls private static final String HTML_SUFFIX = "</html>";
   @NonNls private static final String ___HTML_SUFFIX = "...</html>";
   @NonNls private static final String ESC_NEW_LINE = "\\n";
 
@@ -117,7 +115,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
   private int mySelectedColumn = -1;
   private int mySelectedGroup = -1;
   private int myPluginsIdx = -1;
-  
+
   private JComponent myRecentProjectsPanel;
 
   public JPanel getWelcomePanel() {
@@ -555,13 +553,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
 
     if (!StringUtil.isEmpty(description)) {
       //noinspection ConstantConditions
-      description = description.trim();
-      if (description.startsWith(HTML_PREFIX)) {
-        description = description.replaceAll(HTML_PREFIX, "");
-        if (description.endsWith(HTML_SUFFIX)) {
-          description = description.replaceAll(HTML_SUFFIX, "");
-        }
-      }
+      description = XmlStringUtil.stripHtml(description.trim());
       description = description.replaceAll(ESC_NEW_LINE, "");
       String shortenedDcs = adjustStringBreaksByWidth(description, TEXT_FONT, false, PLUGIN_DSC_MAX_WIDTH, PLUGIN_DSC_MAX_ROWS);
       JLabel pluginDescription = new JLabel(shortenedDcs);
@@ -598,7 +590,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
                                                   final int maxRows) {
     string = string.trim();
     if (StringUtil.isEmpty(string)) {
-      return "<html>" + UIBundle.message("welcome.screen.text.not.specified.message") + "</html>";
+      return XmlStringUtil.wrapInHtml(UIBundle.message("welcome.screen.text.not.specified.message"));
     }
 
     string = string.replaceAll("<li>", " <>&gt; ");
@@ -672,7 +664,7 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
       string = prefix + suffix;
     }
     string = string.replaceAll(" <>", "<br>");
-    return HTML_PREFIX + string + HTML_SUFFIX;
+    return XmlStringUtil.wrapInHtml(string);
   }
 
   @SuppressWarnings({"HardCodedStringLiteral"})
@@ -729,15 +721,11 @@ public class DefaultWelcomeScreen implements WelcomeScreen {
       gBC = new GridBagConstraints(1, y, 1, 1, 0, 0, SOUTHWEST, NONE, ACTION_NAME_INSETS, 5, 0);
       myPanel.add(name, gBC);
 
-      description = wrapWithHtml(description);
+      description = XmlStringUtil.wrapInHtml(description);
       JLabel shortDescription = new JLabel(description);
       shortDescription.setFont(TEXT_FONT);
       gBC = new GridBagConstraints(1, y + 1, 1, 1, 0, 0, NORTHWEST, HORIZONTAL, ACTION_DESCRIPTION_INSETS, 5, 0);
       myPanel.add(shortDescription, gBC);
-    }
-
-    private String wrapWithHtml(final String description) {
-      return HTML_PREFIX + description + HTML_SUFFIX;
     }
 
     private void appendActionsFromGroup(final ActionGroup group) {

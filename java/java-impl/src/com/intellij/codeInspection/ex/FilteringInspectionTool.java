@@ -27,6 +27,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vcs.FileStatus;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
@@ -38,16 +39,17 @@ import java.util.Set;
  */
 public abstract class FilteringInspectionTool extends InspectionTool {
   public abstract RefFilter getFilter();
-  private HashMap<String, Set<RefEntity>> myPackageContents = new HashMap<String, Set<RefEntity>>();
+  private Map<String, Set<RefEntity>> myPackageContents = new HashMap<String, Set<RefEntity>>();
 
-  private HashMap<String, Set<RefEntity>> myOldPackageContents = null;
+  private Map<String, Set<RefEntity>> myOldPackageContents = null;
 
   private final Set<RefEntity> myIgnoreElements = new HashSet<RefEntity>();
- 
+
+  @Override
   public void updateContent() {
     myPackageContents = new HashMap<String, Set<RefEntity>>();
     getContext().getRefManager().iterate(new RefJavaVisitor() {
-      @Override public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (!(refEntity instanceof RefJavaElement)) return;//dead code doesn't work with refModule | refPackage
         RefJavaElement refElement = (RefJavaElement)refEntity;
         if (!(getContext().getUIOptions().FILTER_RESOLVED_ITEMS && myIgnoreElements.contains(refElement)) && refElement.isValid() && getFilter().accepts(refElement)) {
@@ -63,18 +65,18 @@ public abstract class FilteringInspectionTool extends InspectionTool {
     });
   }
 
+  @Override
   public boolean hasReportedProblems() {
     final GlobalInspectionContextImpl context = getContext();
     if (context != null && context.getUIOptions().SHOW_ONLY_DIFF){
       return containsOnlyDiff(myPackageContents) ||
              myOldPackageContents != null && containsOnlyDiff(myOldPackageContents);
-    } else {
-      if (!myPackageContents.isEmpty()) return true;
     }
-    return isOldProblemsIncluded() && myOldPackageContents.size() > 0;
+    if (!myPackageContents.isEmpty()) return true;
+    return isOldProblemsIncluded() && !myOldPackageContents.isEmpty();
   }
 
-  private boolean containsOnlyDiff(final HashMap<String, Set<RefEntity>> packageContents) {
+  private boolean containsOnlyDiff(@NotNull Map<String, Set<RefEntity>> packageContents) {
     for (String packageName : packageContents.keySet()) {
       final Set<RefEntity> refElements = packageContents.get(packageName);
       if (refElements != null){
@@ -88,49 +90,48 @@ public abstract class FilteringInspectionTool extends InspectionTool {
     return false;
   }
 
+  @Override
   public Map<String, Set<RefEntity>> getContent() {
     return myPackageContents;
   }
 
+  @Override
   public Map<String, Set<RefEntity>> getOldContent() {
     return myOldPackageContents;
   }
 
+  @Override
   public void ignoreCurrentElement(RefEntity refEntity) {
     if (refEntity == null) return;
     myIgnoreElements.add(refEntity);
   }
 
+  @Override
   public void amnesty(RefEntity refEntity) {
-    myIgnoreElements.remove(refEntity);    
+    myIgnoreElements.remove(refEntity);
   }
 
+  @Override
   public void cleanup() {
     super.cleanup();
-    final GlobalInspectionContextImpl context = getContext();
-    if (context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN){
-      if (myOldPackageContents == null){
-        myOldPackageContents = new HashMap<String, Set<RefEntity>>();
-      }
-      myOldPackageContents.clear();
-      myOldPackageContents.putAll(myPackageContents);
-    } else {
-      myOldPackageContents = null;
-    }
+    myOldPackageContents = null;
     myPackageContents.clear();
     myIgnoreElements.clear();
   }
 
 
+  @Override
   public void finalCleanup() {
     super.finalCleanup();
     myOldPackageContents = null;
   }
 
+  @Override
   public boolean isGraphNeeded() {
     return true;
   }
 
+  @Override
   public boolean isElementIgnored(final RefEntity element) {
     for (RefEntity entity : myIgnoreElements) {
       if (Comparing.equal(entity, element)) {
@@ -141,6 +142,8 @@ public abstract class FilteringInspectionTool extends InspectionTool {
   }
 
 
+  @NotNull
+  @Override
   public FileStatus getElementStatus(final RefEntity element) {
     final GlobalInspectionContextImpl context = getContext();
     if (context != null && context.getUIOptions().SHOW_DIFF_WITH_PREVIOUS_RUN){
@@ -154,11 +157,13 @@ public abstract class FilteringInspectionTool extends InspectionTool {
     return FileStatus.NOT_CHANGED;
   }
 
+  @NotNull
+  @Override
   public Collection<RefEntity> getIgnoredRefElements() {
     return myIgnoreElements;
   }
 
-  private static Set<RefEntity> collectRefElements(HashMap<String, Set<RefEntity>> packageContents) {
+  private static Set<RefEntity> collectRefElements(Map<String, Set<RefEntity>> packageContents) {
     Set<RefEntity> allAvailable = new HashSet<RefEntity>();
     for (Set<RefEntity> elements : packageContents.values()) {
       allAvailable.addAll(elements);
@@ -166,6 +171,7 @@ public abstract class FilteringInspectionTool extends InspectionTool {
     return allAvailable;
   }
 
+  @Override
   @Nullable
   public SuppressIntentionAction[] getSuppressActions() {
     return SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(getShortName()));

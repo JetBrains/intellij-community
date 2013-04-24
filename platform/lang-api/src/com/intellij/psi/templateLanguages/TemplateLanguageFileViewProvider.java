@@ -28,6 +28,7 @@ public interface TemplateLanguageFileViewProvider extends FileViewProvider {
    * e.g. JSP
    * @return instanceof {@link com.intellij.psi.templateLanguages.TemplateLanguage}
    */
+  @Override
   @NotNull
   Language getBaseLanguage();
 

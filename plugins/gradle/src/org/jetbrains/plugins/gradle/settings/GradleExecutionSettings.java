@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.gradle.settings;
 
-import com.intellij.openapi.externalSystem.service.remote.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;

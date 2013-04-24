@@ -134,7 +134,7 @@ public class AppUIUtil {
       }
     }
     catch (Exception e) {
-      LOG.error(e);
+      LOG.error("Cannot register font: " + name, e);
     }
   }
 

@@ -31,6 +31,7 @@ public interface ContentManager extends Disposable, BusyObject {
 
   boolean canCloseContents();
 
+  @NotNull
   JComponent getComponent();
 
   void addContent(@NotNull Content content);
@@ -38,29 +39,38 @@ public interface ContentManager extends Disposable, BusyObject {
   void addContent(@NotNull Content content, Object constraints);
 
   boolean removeContent(@NotNull Content content, final boolean dispose);
+  @NotNull
   ActionCallback removeContent(@NotNull Content content, final boolean dispose, boolean trackFocus, boolean forcedFocus);
 
   void setSelectedContent(@NotNull Content content);
+  @NotNull
   ActionCallback setSelectedContentCB(@NotNull Content content);
   void setSelectedContent(@NotNull Content content, boolean requestFocus);
+  @NotNull
   ActionCallback setSelectedContentCB(@NotNull Content content, boolean requestFocus);
   void setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus);
+
+  @NotNull
   ActionCallback setSelectedContentCB(@NotNull Content content, boolean requestFocus, boolean forcedFocus);
 
+  @NotNull
   ActionCallback setSelectedContent(@NotNull Content content, boolean requestFocus, boolean forcedFocus, boolean implicit);
 
   void addSelectedContent(@NotNull Content content);
 
   @Nullable
   Content getSelectedContent();
-  @NotNull Content[] getSelectedContents();
+
+  @NotNull
+  Content[] getSelectedContents();
 
 
   void removeAllContents(final boolean dispose);
 
   int getContentCount();
 
-  @NotNull Content[] getContents();
+  @NotNull
+  Content[] getContents();
 
   //TODO[anton,vova] is this method needed?
   Content findContent(String displayName);
@@ -72,6 +82,7 @@ public interface ContentManager extends Disposable, BusyObject {
 
   int getIndexOfContent(Content content);
 
+  @NotNull
   String getCloseActionName();
 
   boolean canCloseAllContents();
@@ -90,10 +101,13 @@ public interface ContentManager extends Disposable, BusyObject {
    * @return the action name.
    * @since 5.1
    */
+  @NotNull
   String getCloseAllButThisActionName();
-  
+
+  @NotNull
   String getPreviousContentActionName();
 
+  @NotNull
   String getNextContentActionName();
 
   List<AnAction> getAdditionalPopupActions(@NotNull  Content content);
@@ -102,11 +116,13 @@ public interface ContentManager extends Disposable, BusyObject {
 
   boolean isSelected(@NotNull Content content);
 
+  @NotNull
   ActionCallback requestFocus(@Nullable Content content, boolean forced);
 
   void addDataProvider(@NotNull DataProvider provider);
-  
-  @NotNull ContentFactory getFactory();
+
+  @NotNull
+  ContentFactory getFactory();
 
   boolean isDisposed();
 

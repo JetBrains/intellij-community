@@ -22,10 +22,7 @@ import org.jetbrains.jps.builders.BuildOutputConsumer;
 import org.jetbrains.jps.builders.BuildRootDescriptor;
 import org.jetbrains.jps.builders.DirtyFilesHolder;
 import org.jetbrains.jps.builders.java.JavaModuleBuildTargetType;
-import org.jetbrains.jps.incremental.CompileContext;
-import org.jetbrains.jps.incremental.ModuleBuildTarget;
-import org.jetbrains.jps.incremental.ProjectBuildException;
-import org.jetbrains.jps.incremental.TargetBuilder;
+import org.jetbrains.jps.incremental.*;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
 import org.jetbrains.jps.incremental.messages.CompilerMessage;
 import org.jetbrains.jps.incremental.messages.ProgressMessage;
@@ -80,15 +77,15 @@ public class AndroidPackagingBuilder extends TargetBuilder<BuildRootDescriptor, 
       fillStates(modules, resourcesStates, assetsStates, manifestFiles);
 
       if (!doCaching(context, modules, resourcesStates)) {
-        throw new ProjectBuildException();
+        throw new StopBuildException();
       }
 
       if (!doResourcePackaging(context, modules, resourcesStates, assetsStates, manifestFiles)) {
-        throw new ProjectBuildException();
+        throw new StopBuildException();
       }
 
       if (!doPackaging(context, modules, outputConsumer)) {
-        throw new ProjectBuildException();
+        throw new StopBuildException();
       }
     }
     catch (ProjectBuildException e) {

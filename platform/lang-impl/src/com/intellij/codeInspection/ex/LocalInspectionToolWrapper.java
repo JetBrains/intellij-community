@@ -49,11 +49,12 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.ex.LocalInspectionToolWrapper");
 
   /** This should be used in tests primarily */
+  @TestOnly
   public LocalInspectionToolWrapper(@NotNull LocalInspectionTool tool) {
     super(tool, ourEPMap.getValue().get(tool.getShortName()));
   }
 
-  public LocalInspectionToolWrapper(LocalInspectionEP ep) {
+  public LocalInspectionToolWrapper(@NotNull LocalInspectionEP ep) {
     super(ep);
   }
 
@@ -62,10 +63,11 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     super(tool, ep);
   }
 
-  private LocalInspectionToolWrapper(LocalInspectionToolWrapper other) {
+  private LocalInspectionToolWrapper(@NotNull LocalInspectionToolWrapper other) {
     super(other);
   }
 
+  @NotNull
   @Override
   public LocalInspectionToolWrapper createCopy() {
     return new LocalInspectionToolWrapper(this);
@@ -97,7 +99,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
 
   @Override
   @NotNull
-  public JobDescriptor[] getJobDescriptors(GlobalInspectionContext context) {
+  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context) {
     return ((GlobalInspectionContextImpl)context).LOCAL_ANALYSIS_ARRAY;
   }
 
@@ -121,7 +123,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
   };
 
   @Override
-  protected void addProblemElement(RefEntity refElement, boolean filterSuppressed, CommonProblemDescriptor... descriptions) {
+  protected void addProblemElement(RefEntity refElement, boolean filterSuppressed, @NotNull CommonProblemDescriptor... descriptions) {
     final GlobalInspectionContextImpl context = getContext();
     if (context == null) return;
     super.addProblemElement(refElement, filterSuppressed, descriptions);

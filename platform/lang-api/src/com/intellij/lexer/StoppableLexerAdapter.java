@@ -36,6 +36,7 @@ public class StoppableLexerAdapter extends DelegateLexer {
     myStopped = myCondition.stopsAt(original.getTokenType(), original.getTokenStart(), original.getTokenEnd());
   }
 
+  @Override
   public void advance() {
     if (myStopped) return;
     super.advance();
@@ -50,18 +51,22 @@ public class StoppableLexerAdapter extends DelegateLexer {
     return delegate instanceof StoppableLexerAdapter ? ((StoppableLexerAdapter)delegate).getPrevTokenEnd() : ((FilterLexer)delegate).getPrevTokenEnd();
   }
 
+  @Override
   public int getTokenEnd() {
     return myStopped ? super.getTokenStart() : super.getTokenEnd();
   }
 
+  @Override
   public IElementType getTokenType() {
     return myStopped ? null : super.getTokenType();
   }
 
+  @Override
   public LexerPosition getCurrentPosition() {
     return getDelegate().getCurrentPosition();
   }
 
+  @Override
   public void restore(LexerPosition position) {
     getDelegate().restore(position);
   }

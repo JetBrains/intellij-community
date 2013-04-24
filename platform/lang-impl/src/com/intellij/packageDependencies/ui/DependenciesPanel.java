@@ -61,6 +61,7 @@ import com.intellij.usageView.UsageViewBundle;
 import com.intellij.util.*;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.tree.TreeUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jdom.Document;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
@@ -806,7 +807,7 @@ public class DependenciesPanel extends JPanel implements Disposable, DataProvide
           return true;
         }
       });
-      final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, "<html>" + buf.toString()+ "</html>");
+      final JEditorPane pane = new JEditorPane(UIUtil.HTML_MIME, XmlStringUtil.wrapInHtml(buf));
       pane.setForeground(JBColor.foreground());
       pane.setBackground(HintUtil.INFORMATION_COLOR);
       pane.setOpaque(true);

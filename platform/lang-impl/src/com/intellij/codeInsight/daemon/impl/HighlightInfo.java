@@ -110,26 +110,22 @@ public class HighlightInfo implements Segment {
     String toolTip = this.toolTip;
     String description = this.description;
     if (toolTip == null || description == null || !toolTip.contains(DESCRIPTION_PLACEHOLDER)) return toolTip;
-    String decoded = toolTip.replace(DESCRIPTION_PLACEHOLDER, XmlStringUtil.escapeString(description));
-    String niceTooltip = "<html><body>" + decoded + "</body></html>";
+    String decoded = StringUtil.replace(toolTip, DESCRIPTION_PLACEHOLDER, XmlStringUtil.escapeString(description));
+    String niceTooltip = XmlStringUtil.wrapInHtml(decoded);
     return niceTooltip;
   }
 
   private static String encodeTooltip(String toolTip, String description) {
     if (toolTip == null || description == null) return toolTip;
-    String unescaped = StringUtil.unescapeXml(
-    StringUtil.trimEnd(
-    StringUtil.trimEnd(
-    StringUtil.trimStart(
-    StringUtil.trimStart(
-      toolTip, "<html>"),"<body>"), "</html>"), "</body>"));
+    String unescaped = StringUtil.unescapeXml(XmlStringUtil.stripHtml(toolTip));
 
-    if (unescaped.contains(description)) {
-      String encoded = unescaped.replace(description, DESCRIPTION_PLACEHOLDER);
-      if (encoded.equals(DESCRIPTION_PLACEHOLDER)) encoded = DESCRIPTION_PLACEHOLDER;
-      return encoded;
+    String encoded = description.isEmpty() ? unescaped : StringUtil.replace(unescaped, description, DESCRIPTION_PLACEHOLDER);
+    //noinspection StringEquality
+    if (encoded == unescaped) {
+      return toolTip;
     }
-    return toolTip;
+    if (encoded.equals(DESCRIPTION_PLACEHOLDER)) encoded = DESCRIPTION_PLACEHOLDER;
+    return encoded;
   }
 
   public String getDescription() {
@@ -140,11 +136,13 @@ public class HighlightInfo implements Segment {
   @interface FlagConstant {}
 
   private boolean isFlagSet(@FlagConstant int flag) {
+    assert flag < 8;
     int state = myFlags >> flag;
     return (state & 1) != 0;
   }
 
   private void setFlag(@FlagConstant int flag, boolean value) {
+    assert flag < 8;
     int state = value ? 1 : 0;
     myFlags = (byte)(myFlags & ~(1 << flag) | state << flag);
   }
@@ -253,7 +251,7 @@ public class HighlightInfo implements Segment {
   @Nullable
   @NonNls
   private static String htmlEscapeToolTip(@Nullable String unescapedTooltip) {
-    return unescapedTooltip == null ? null : "<html><body>"+ XmlStringUtil.escapeString(unescapedTooltip)+"</body></html>";
+    return unescapedTooltip == null ? null : XmlStringUtil.wrapInHtml(XmlStringUtil.escapeString(unescapedTooltip));
   }
 
   @NotNull
@@ -290,12 +288,6 @@ public class HighlightInfo implements Segment {
     description = escapedDescription;
     // optimisation: do not retain extra memory if can recompute
     toolTip = encodeTooltip(escapedToolTip, escapedDescription);
-    //if (escapedToolTip != null && escapedToolTip.equals(htmlEscapeToolTip(escapedDescription))) {
-    //  toolTip = ESCAPED_DESCRIPTION;
-    //}
-    //else {
-    //  toolTip = escapedToolTip;
-    //}
     this.severity = severity;
     setFlag(AFTER_END_OF_LINE_FLAG, afterEndOfLine);
     setFlag(NEEDS_UPDATE_ON_TYPING_FLAG, calcNeedUpdateOnTyping(needsUpdateOnTyping, type));
@@ -847,6 +839,14 @@ public class HighlightInfo implements Segment {
     return isFlagSet(FROM_INJECTION_FLAG);
   }
 
+  @NotNull
+  public String getText() {
+    RangeHighlighterEx highlighter = this.highlighter;
+    if (highlighter == null) throw new RuntimeException("info not applied yet");
+    if (!highlighter.isValid()) return "";
+    return highlighter.getDocument().getText(TextRange.create(highlighter));
+  }
+
 
   // Deprecated methods for plugin compatibility
 
@@ -961,13 +961,5 @@ public class HighlightInfo implements Segment {
     // do not use HighlightInfoFilter
     return new HighlightInfo(null, attributesKey, type, textRange.getStartOffset(), textRange.getEndOffset(), message,
                              htmlEscapeToolTip(message), type.getSeverity(element), false, Boolean.FALSE, false,0);
-  }
-
-  @NotNull
-  public String getText() {
-    RangeHighlighterEx highlighter = this.highlighter;
-    if (highlighter == null) throw new RuntimeException("info not applied yet");
-    if (!highlighter.isValid()) return "";
-    return highlighter.getDocument().getText(TextRange.create(highlighter));
   }
 }

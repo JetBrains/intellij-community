@@ -40,29 +40,29 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   protected T myTool;
   protected final E myEP;
 
-  protected InspectionToolWrapper(E ep) {
-    myTool = null;
-    myEP = ep;
+  protected InspectionToolWrapper(@NotNull E ep) {
+    this(null, ep);
   }
 
-  protected InspectionToolWrapper(T tool) {
-    myTool = tool;
-    myEP = null;
+  protected InspectionToolWrapper(@NotNull T tool) {
+    this(tool, null);
   }
 
   protected InspectionToolWrapper(@Nullable T tool, @Nullable E ep) {
+    assert tool != null || ep != null : "must not be both null";
     myEP = ep;
     myTool = tool;
   }
 
   /** Copy ctor */
-  protected InspectionToolWrapper(InspectionToolWrapper<T, E> other) {
+  protected InspectionToolWrapper(@NotNull InspectionToolWrapper<T, E> other) {
     myEP = other.myEP;
     // we need to create a copy for buffering
     //noinspection unchecked
     myTool = other.myTool == null ? null : (T)InspectionToolRegistrar.instantiateTool(other.myTool.getClass());
   }
 
+  @NotNull
   public abstract InspectionToolWrapper<T, E> createCopy();
 
   @NotNull
@@ -71,12 +71,7 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
       //noinspection unchecked
       myTool = (T)myEP.instantiateTool();
       if (!myTool.getShortName().equals(myEP.getShortName())) {
-        LOG.error("Short name not matched for " +
-                  myTool.getClass() +
-                  ": getShortName() = " +
-                  myTool.getShortName() +
-                  "; ep.shortName = " +
-                  myEP.getShortName());
+        LOG.error("Short name not matched for " + myTool.getClass() + ": getShortName() = " + myTool.getShortName() + "; ep.shortName = " + myEP.getShortName());
       }
     }
     return myTool;
@@ -150,12 +145,12 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
   }
 
   @Override
-  public void readSettings(Element element) throws InvalidDataException {
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
     getTool().readSettings(element);
   }
 
   @Override
-  public void writeSettings(Element element) throws WriteExternalException {
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
     getTool().writeSettings(element);
   }
 

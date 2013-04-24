@@ -15,6 +15,7 @@
  */
 package com.intellij.codeStyle;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.util.LineSeparator;
 
 /**
@@ -23,6 +24,6 @@ import com.intellij.util.LineSeparator;
 public class ConvertToUnixLineSeparatorsAction extends AbstractConvertLineSeparatorsAction {
 
   public ConvertToUnixLineSeparatorsAction() {
-    super("Unix (\\n)", LineSeparator.LF);
+    super(ApplicationBundle.message("combobox.crlf.unix"), LineSeparator.LF);
   }
 }

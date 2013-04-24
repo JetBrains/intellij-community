@@ -15,29 +15,29 @@
  */
 package org.jetbrains.plugins.gradle.service.settings;
 
+import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.project.JavaProjectData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.project.manage.*;
+import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.project.wizard.AbstractExternalProjectImportBuilder;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
-import com.intellij.openapi.projectRoots.JavaSdkVersion;
-import com.intellij.openapi.projectRoots.Sdk;
+import com.intellij.openapi.projectRoots.*;
 import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import icons.GradleIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import javax.swing.*;
 import java.io.File;
+import java.util.List;
 
 /**
  * @author Denis Zhdanov
@@ -71,7 +71,7 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
 
   @Override
   protected void beforeCommit(@NotNull DataNode<ProjectData> dataNode, @NotNull Project project) {
-    DataNode<JavaProjectData> javaProjectNode = ExternalSystemUtil.find(dataNode, ProjectKeys.JAVA_PROJECT);
+    DataNode<JavaProjectData> javaProjectNode = ExternalSystemApiUtil.find(dataNode, JavaProjectData.KEY);
     if (javaProjectNode == null) {
       return;
     }
@@ -90,17 +90,35 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
       return;
     }
 
-    DataNode<JavaProjectData> javaProjectNode = ExternalSystemUtil.find(node, ProjectKeys.JAVA_PROJECT);
+    DataNode<JavaProjectData> javaProjectNode = ExternalSystemApiUtil.find(node, JavaProjectData.KEY);
     if (javaProjectNode != null) {
       JavaProjectData data = javaProjectNode.getData();
       context.setCompilerOutputDirectory(data.getCompileOutputPath());
       JavaSdkVersion version = data.getJdkVersion();
-      Sdk jdk = ExternalSystemUtil.findJdk(version);
+      Sdk jdk = findJdk(version);
       if (jdk != null) {
         context.setProjectJdk(jdk);
       }
     }
   }
+
+  @Nullable
+  private static Sdk findJdk(@NotNull JavaSdkVersion version) {
+    JavaSdk javaSdk = JavaSdk.getInstance();
+    List<Sdk> javaSdks = ProjectJdkTable.getInstance().getSdksOfType(javaSdk);
+    Sdk candidate = null;
+    for (Sdk sdk : javaSdks) {
+      JavaSdkVersion v = javaSdk.getVersion(sdk);
+      if (v == version) {
+        return sdk;
+      }
+      else if (candidate == null && v != null && version.getMaxLanguageLevel().isAtLeast(version.getMaxLanguageLevel())) {
+        candidate = sdk;
+      }
+    }
+    return candidate;
+  }
+
 
   @Override
   protected void onProjectInit(@NotNull Project project) {
@@ -122,5 +140,10 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
       }
     }
     return file;
+  }
+
+  @Override
+  public boolean isSuitableSdkType(SdkTypeId sdk) {
+    return sdk == JavaSdk.getInstance();
   }
 }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -76,7 +76,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     addDefaultSchemes();
 
     // Load default schemes from providers
-    if (!ApplicationManager.getApplication().isUnitTestMode() && !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (!isUnitTestOrHeadlessMode()) {
       loadSchemesFromBeans();
     }
 
@@ -85,6 +85,10 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
     loadAdditionalTextAttributes();
 
     setGlobalScheme(myDefaultColorSchemesManager.getAllSchemes()[0]);
+  }
+
+  private static boolean isUnitTestOrHeadlessMode() {
+    return ApplicationManager.getApplication().isUnitTestMode() || ApplicationManager.getApplication().isHeadlessEnvironment();
   }
 
   public TextAttributes getDefaultAttributes(TextAttributesKey key) {
@@ -113,10 +117,12 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   }
 
   private void loadAdditionalTextAttributes() {
-    for(AdditionalTextAttributesEP attributesEP : AdditionalTextAttributesEP.EP_NAME.getExtensions()){
+    for (AdditionalTextAttributesEP attributesEP : AdditionalTextAttributesEP.EP_NAME.getExtensions()) {
       final EditorColorsScheme editorColorsScheme = mySchemesManager.findSchemeByName(attributesEP.scheme);
-      if(editorColorsScheme == null){
-        LOG.warn("Cannot find scheme: " + attributesEP.scheme);
+      if (editorColorsScheme == null) {
+        if (!isUnitTestOrHeadlessMode()) {
+          LOG.warn("Cannot find scheme: " + attributesEP.scheme + " from plugin: " + attributesEP.getPluginDescriptor().getPluginId());
+        }
         continue;
       }
       try {

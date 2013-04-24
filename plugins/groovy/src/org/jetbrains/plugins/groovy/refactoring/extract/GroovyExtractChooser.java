@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -38,6 +38,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpres
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
@@ -119,7 +121,8 @@ public class GroovyExtractChooser {
     Set<GrStatement> allReturnStatements = new HashSet<GrStatement>();
     GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(statement0);
     LOG.assertTrue(controlFlowOwner != null);
-    allReturnStatements.addAll(ControlFlowUtils.collectReturns(controlFlowOwner, true));
+    final Instruction[] flow = new ControlFlowBuilder(project, true).buildControlFlow(controlFlowOwner);
+    allReturnStatements.addAll(ControlFlowUtils.collectReturns(flow, true));
 
     ArrayList<GrStatement> returnStatements = new ArrayList<GrStatement>();
     for (GrStatement returnStatement : allReturnStatements) {
@@ -132,8 +135,8 @@ public class GroovyExtractChooser {
     }
 
     // collect information about variables in selected block
-    FragmentVariableInfos
-      fragmentVariableInfos = ReachingDefinitionsCollector.obtainVariableFlowInformation(statement0, statements[statements.length - 1]);
+    FragmentVariableInfos fragmentVariableInfos =
+      ReachingDefinitionsCollector.obtainVariableFlowInformation(statement0, statements[statements.length - 1], controlFlowOwner, flow);
     VariableInfo[] inputInfos = fragmentVariableInfos.getInputVariableNames();
     VariableInfo[] outputInfos = fragmentVariableInfos.getOutputVariableNames();
     if (outputInfos.length == 1 && returnStatements.size() > 0) {

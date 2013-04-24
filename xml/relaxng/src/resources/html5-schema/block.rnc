@@ -25,7 +25,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 	hr.elem =
 		element hr { hr.inner & hr.attrs }
 	hr.attrs =
-		( common.attrs )
+		(	common.attrs
+		&	(	common.attrs.aria.role.separator
+			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
+		)
 	hr.inner =
 		( empty )
 
@@ -56,8 +61,17 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element ul { ul.inner & ul.attrs }
 	ul.attrs =
 		(	common.attrs
-		&	(	common.attrs.aria
-			|	common.attrs.aria.implicit.region
+		&	(	(	common.attrs.aria.role.directory
+				|	common.attrs.aria.role.list
+				|	common.attrs.aria.role.listbox
+				|	common.attrs.aria.role.menu
+				|	common.attrs.aria.role.menubar
+				|	common.attrs.aria.role.tablist
+				|	common.attrs.aria.role.toolbar
+				|	common.attrs.aria.role.tree
+				|	common.attrs.aria.role.presentation
+				)
+				|	common.attrs.aria.implicit.region
 			)?
 		)
 	ul.inner =
@@ -71,9 +85,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element li { li.inner & li.attrs }
 	li.attrs =
 		(	common.attrs 
-		&	(	common.attrs.aria
-			|	common.attrs.aria.implicit.listitem
-			)?
+		&	common.attrs.aria?
 		)
 	li.inner =
 		( common.inner.flow )
@@ -87,8 +99,17 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	ol.attrs.start?
 		&	ol.attrs.reversed?
 		&	ol.attrs.type?
-		&	(	common.attrs.aria
-			|	common.attrs.aria.implicit.region
+		&	(	(	common.attrs.aria.role.directory
+				|	common.attrs.aria.role.list
+				|	common.attrs.aria.role.listbox
+				|	common.attrs.aria.role.menu
+				|	common.attrs.aria.role.menubar
+				|	common.attrs.aria.role.tablist
+				|	common.attrs.aria.role.toolbar
+				|	common.attrs.aria.role.tree
+				|	common.attrs.aria.role.presentation
+				)
+				|	common.attrs.aria.implicit.region
 			)?
 		)
 		ol.attrs.start =
@@ -115,9 +136,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 	oli.attrs =
 		(	common.attrs
 		&	oli.attrs.value?
-		&	(	common.attrs.aria
-			|	common.attrs.aria.implicit.listitem
-			)?
+		&	common.attrs.aria?
 		)
 		oli.attrs.value =
 			attribute value {
@@ -154,7 +173,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.aria?
 		)
 	dt.inner =
-		( common.inner.phrasing )
+		( common.inner.flow )
 
 ## Definition Description: <dd>
 
@@ -183,9 +202,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common.attrs.aria?
 		)
 	div.inner =
-		(	style.elem.scoped*
-		,	common.inner.flow 
-		)
+		( common.inner.flow )
 
 	common.elem.flow |= div.elem
 
@@ -195,7 +212,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element legend { legend.inner & legend.attrs }
 	legend.attrs =
 		(	common.attrs
-		&	common.attrs.aria.implicit.region?
+		&	(	common.attrs.aria.implicit.region
+			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
 		)	
 	legend.inner =
 		( common.inner.phrasing )

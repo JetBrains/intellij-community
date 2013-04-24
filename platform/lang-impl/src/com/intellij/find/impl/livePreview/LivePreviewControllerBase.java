@@ -19,8 +19,6 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.livePreview.LivePreviewControllerBase");
 
-  private static final String EMPTY_STRING_DISPLAY_TEXT = "<Empty string>";
-
   private static final int USER_ACTIVITY_TRIGGERING_DELAY = 30;
 
   private int myUserActivityDelay = USER_ACTIVITY_TRIGGERING_DELAY;
@@ -157,9 +155,6 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
         }
         catch (FindManager.MalformedReplacementStringException e) {
           return null;
-        }
-        if (stringToReplace != null && stringToReplace.isEmpty()) {
-          stringToReplace = EMPTY_STRING_DISPLAY_TEXT;
         }
       }
     }

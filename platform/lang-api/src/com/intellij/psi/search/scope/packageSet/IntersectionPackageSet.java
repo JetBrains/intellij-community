@@ -27,6 +27,7 @@ public class IntersectionPackageSet extends PackageSetBase {
     mySecondSet = secondSet;
   }
 
+  @Override
   public boolean contains(VirtualFile file, NamedScopesHolder holder) {
     if (myFirstSet instanceof PackageSetBase ? ((PackageSetBase)myFirstSet).contains(file, holder) : myFirstSet.contains(getPsiFile(file, holder), holder)) {
       if (mySecondSet instanceof PackageSetBase ? ((PackageSetBase)mySecondSet).contains(file, holder) : mySecondSet.contains(getPsiFile(file, holder), holder)) {
@@ -36,15 +37,18 @@ public class IntersectionPackageSet extends PackageSetBase {
     return false;
   }
 
+  @Override
   @NotNull
   public PackageSet createCopy() {
     return new IntersectionPackageSet(myFirstSet.createCopy(), mySecondSet.createCopy());
   }
 
+  @Override
   public int getNodePriority() {
     return 2;
   }
 
+  @Override
   @NotNull
   public String getText() {
     StringBuffer buf = new StringBuffer();

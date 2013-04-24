@@ -53,6 +53,7 @@ import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.vcsUtil.VcsUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
@@ -145,13 +146,13 @@ class AnnotateStackTraceAction extends AnAction {
           public String getToolTip(int line, Editor editor) {
             final VcsFileRevision revision = cache.get(line);
             if (revision != null) {
-              return "<html>" +
-                     revision.getAuthor() +
-                     " " +
-                     DateFormatUtil.formatDateTime(revision.getRevisionDate()) +
-                     "<br/>" +
-                     revision.getCommitMessage() +
-                     "</html>";
+              return XmlStringUtil.wrapInHtml(
+                revision.getAuthor() +
+                " " +
+                DateFormatUtil.formatDateTime(revision.getRevisionDate()) +
+                "<br/>" +
+                revision.getCommitMessage()
+              );
             }
             return null;
           }

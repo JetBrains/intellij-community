@@ -196,20 +196,20 @@ public class XDebuggerTestUtil {
 
   public static void assertVariableValueMatches(@NotNull Collection<XValue> vars,
                                                 @Nullable String name,
-                                                @Nullable String valuePattern) throws InterruptedException {
+                                                @Nullable @Language("RegExp") String valuePattern) throws InterruptedException {
     assertVariableValueMatches(findVar(vars, name), name, valuePattern);
   }
 
   public static void assertVariableValueMatches(@NotNull XValue var,
                                                 @Nullable String name,
-                                                @Nullable String valuePattern) throws InterruptedException {
+                                                @Nullable @Language("RegExp") String valuePattern) throws InterruptedException {
     assertVariableValueMatches(var, name, null, valuePattern);
   }
 
   public static void assertVariableValueMatches(@NotNull XValue var,
                                                 @Nullable String name,
                                                 @Nullable String type,
-                                                @Nullable String valuePattern) throws InterruptedException {
+                                                @Nullable @Language("RegExp") String valuePattern) throws InterruptedException {
     XTestValueNode node = computePresentation(var);
     if (name != null) Assert.assertEquals(name, node.myName);
     if (type != null) Assert.assertEquals(type, node.myType);

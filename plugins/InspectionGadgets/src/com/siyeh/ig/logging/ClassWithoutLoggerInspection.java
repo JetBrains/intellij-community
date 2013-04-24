@@ -69,13 +69,13 @@ public class ClassWithoutLoggerInspection extends BaseInspection {
   }
 
   @Override
-  public void readSettings(Element element) throws InvalidDataException {
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
     parseString(loggerNamesString, loggerNames);
   }
 
   @Override
-  public void writeSettings(Element element) throws WriteExternalException {
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
     loggerNamesString = formatString(loggerNames);
     super.writeSettings(element);
   }

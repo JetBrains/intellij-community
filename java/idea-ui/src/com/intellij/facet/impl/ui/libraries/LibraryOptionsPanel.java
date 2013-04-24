@@ -51,6 +51,7 @@ import com.intellij.util.PathUtil;
 import com.intellij.util.PlatformIcons;
 import com.intellij.util.download.DownloadableFileSetVersions;
 import com.intellij.util.ui.RadioButtonEnumModel;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -374,7 +375,7 @@ public class LibraryOptionsPanel implements Disposable {
                                               "name", 10));
     }
     ((CardLayout)myConfigurationPanel.getLayout()).show(myConfigurationPanel, showConfigurePanel ? "configure" : "empty");
-    myMessageLabel.setText("<html>" + message + "</html>");
+    myMessageLabel.setText(XmlStringUtil.wrapInHtml(message));
   }
 
   private String getDownloadFilesMessage() {

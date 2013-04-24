@@ -1,29 +1,19 @@
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
-import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.model.project.id.GradleSyntheticId;
-import com.intellij.openapi.externalSystem.model.project.id.ProjectEntityId;
-import com.intellij.openapi.externalSystem.ui.ExternalProjectStructureTreeModel;
-import com.intellij.openapi.externalSystem.ui.ProjectStructureNode;
-import com.intellij.openapi.externalSystem.ui.ProjectStructureNodeDescriptor;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.ui.treeStructure.Tree;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.ui.MatrixControlBuilder;
 
-import javax.swing.*;
-import javax.swing.tree.TreePath;
-import java.awt.*;
 import java.io.*;
 import java.util.Arrays;
 import java.util.Properties;
@@ -154,55 +144,6 @@ public class GradleUtil {
       }
     }
     return null;
-  }
-
-  @NotNull
-  public static <T extends ProjectEntityId> ProjectStructureNodeDescriptor<T> buildDescriptor(@NotNull T id, @NotNull String name) {
-    return new ProjectStructureNodeDescriptor<T>(id, name, id.getType().getIcon());
-  }
-
-  @NotNull
-  public static ProjectStructureNodeDescriptor<GradleSyntheticId> buildSyntheticDescriptor(@NotNull String text) {
-    return buildSyntheticDescriptor(text, null);
-  }
-
-  public static ProjectStructureNodeDescriptor<GradleSyntheticId> buildSyntheticDescriptor(@NotNull String text, @Nullable Icon icon) {
-    return new ProjectStructureNodeDescriptor<GradleSyntheticId>(new GradleSyntheticId(text), text, icon);
-  }
-
-  /**
-   * Tries to calculate the position to use for showing hint for the given node of the given tree.
-   *
-   * @param node  target node for which a hint should be shown
-   * @param tree  target tree that contains given node
-   * @return      preferred hint position (in coordinates relative to the given tree) if it's possible to calculate the one;
-   *              <code>null</code> otherwise
-   */
-  @Nullable
-  public static Point getHintPosition(@NotNull ProjectStructureNode<?> node, @NotNull Tree tree) {
-    final Rectangle bounds = tree.getPathBounds(new TreePath(node.getPath()));
-    if (bounds == null) {
-      return null;
-    }
-    final Icon icon = ((ProjectStructureNode)node).getDescriptor().getIcon();
-    int xAdjustment = 0;
-    if (icon != null) {
-      xAdjustment = icon.getIconWidth();
-    }
-    return new Point(bounds.x + xAdjustment, bounds.y + bounds.height);
-  }
-
-  /**
-   * Tries to find the current {@link ExternalProjectStructureTreeModel} instance.
-   *
-   * @param context  target context (if defined)
-   * @return         current {@link ExternalProjectStructureTreeModel} instance (if any has been found); <code>null</code> otherwise
-   */
-  @Nullable
-  public static ExternalProjectStructureTreeModel getProjectStructureTreeModel(@Nullable DataContext context) {
-    // TODO den implement
-    return null;
-//    return getToolWindowElement(ExternalProjectStructureTreeModel.class, context, ExternalSystemDataKeys.PROJECT_TREE_MODEL);
   }
 
   /**

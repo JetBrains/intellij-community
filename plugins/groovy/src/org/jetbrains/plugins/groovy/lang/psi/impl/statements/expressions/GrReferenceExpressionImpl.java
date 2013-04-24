@@ -94,9 +94,17 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
 
   private boolean findClassOrPackageAtFirst() {
     final String name = getReferenceName();
-    if (name == null || name.length() == 0 || hasAt()) return false;
-    return Character.isUpperCase(name.charAt(0)) ||
+    if (StringUtil.isEmpty(name) || hasAt()) return false;
+    assert name != null;
+
+    return Character.isUpperCase(name.charAt(0)) && !isMethodCallRef() ||
            getParent() instanceof GrReferenceExpressionImpl && ((GrReferenceExpressionImpl)getParent()).findClassOrPackageAtFirst();
+  }
+
+  private boolean isMethodCallRef() {
+    final PsiElement parent = getParent();
+    return parent instanceof GrMethodCall ||
+           parent instanceof GrReferenceExpressionImpl && ((GrReferenceExpressionImpl)parent).isMethodCallRef();
   }
 
   private boolean isDefinitelyKeyOfMap() {
@@ -190,13 +198,10 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     boolean canBeClassOrPackage = ResolveUtil.canBeClassOrPackage(this);
 
     if (canBeClassOrPackage && findClassOrPackageAtFirst()) {
-      boolean preferVar = containsLocalVar(fieldCandidates);
-      if (!preferVar) {
-        ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
-        GrReferenceResolveUtil.resolveImpl(classProcessor, this);
-        classCandidates = classProcessor.getCandidates();
-        if (classCandidates.length > 0) return classCandidates;
-      }
+      ResolverProcessor classProcessor = new ClassResolverProcessor(name, this, kinds);
+      GrReferenceResolveUtil.resolveImpl(classProcessor, this);
+      classCandidates = classProcessor.getCandidates();
+      if (classCandidates.length > 0 && containsPackage(classCandidates)) return classCandidates;
     }
 
     //if reference expression is in class we need to return field instead of accessor method
@@ -244,6 +249,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     if (classCandidates != null && classCandidates.length > 0) return classCandidates;
     if (accessorResults.size() > 0) return new GroovyResolveResult[]{accessorResults.get(0)};
     return GroovyResolveResult.EMPTY_ARRAY;
+  }
+
+  private static boolean containsPackage(@NotNull GroovyResolveResult[] candidates) {
+    for (GroovyResolveResult candidate : candidates) {
+      if (candidate.getElement() instanceof PsiPackage) return true;
+    }
+    return false;
   }
 
   private static boolean containsLocalVar(GroovyResolveResult[] fieldCandidates) {
@@ -727,7 +739,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   @Nullable
   private static PsiType getInferredTypes(GrReferenceExpressionImpl refExpr, @Nullable PsiElement resolved) {
     final GrExpression qualifier = refExpr.getQualifier();
-    if (qualifier == null && !(resolved instanceof PsiClass)) {
+    if (qualifier == null && !(resolved instanceof PsiClass || resolved instanceof PsiPackage)) {
       return TypeInferenceHelper.getCurrentContext().getVariableType(refExpr);
     }
     else if (qualifier != null) {

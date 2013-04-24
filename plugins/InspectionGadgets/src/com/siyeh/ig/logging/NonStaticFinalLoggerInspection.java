@@ -68,13 +68,13 @@ public class NonStaticFinalLoggerInspection extends BaseInspection {
   }
 
   @Override
-  public void readSettings(Element element) throws InvalidDataException {
+  public void readSettings(@NotNull Element element) throws InvalidDataException {
     super.readSettings(element);
     parseString(loggerClassName, loggerClassNames);
   }
 
   @Override
-  public void writeSettings(Element element) throws WriteExternalException {
+  public void writeSettings(@NotNull Element element) throws WriteExternalException {
     loggerClassName = formatString(loggerClassNames);
     super.writeSettings(element);
   }

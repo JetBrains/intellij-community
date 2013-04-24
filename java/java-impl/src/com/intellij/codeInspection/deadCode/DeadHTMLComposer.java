@@ -19,7 +19,7 @@
  * User: max
  * Date: Dec 22, 2001
  * Time: 4:58:38 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.deadCode;
@@ -32,6 +32,7 @@ import com.intellij.codeInspection.reference.*;
 import com.intellij.codeInspection.ui.InspectionTreeNode;
 import com.intellij.codeInspection.ui.RefElementNode;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.tree.TreeNode;
 import java.util.HashSet;
@@ -64,7 +65,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         buf.append("<br><br>");
         appendResolution(buf, myTool, refElement);
         refElement.accept(new RefJavaVisitor() {
-          @Override public void visitClass(RefClass aClass) {
+          @Override public void visitClass(@NotNull RefClass aClass) {
             appendClassInstantiations(buf, aClass);
             myComposer.appendDerivedClasses(buf, aClass);
             myComposer.appendClassExtendsImplements(buf, aClass);
@@ -72,20 +73,20 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
             myComposer.appendTypeReferences(buf, aClass);
           }
 
-          @Override public void visitMethod(RefMethod method) {
+          @Override public void visitMethod(@NotNull RefMethod method) {
             appendElementInReferences(buf, method);
             appendElementOutReferences(buf, method);
             myComposer.appendDerivedMethods(buf, method);
             myComposer.appendSuperMethods(buf, method);
           }
 
-          @Override public void visitField(RefField field) {
+          @Override public void visitField(@NotNull RefField field) {
             appendElementInReferences(buf, field);
             appendElementOutReferences(buf, field);
           }
         });
       } else {
-        appendNoProblems(buf);        
+        appendNoProblems(buf);
       }
       appendCallesList(refElement, buf, new HashSet<RefElement>(), true);
     }
@@ -93,7 +94,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
 
   public static void appendProblemSynopsis(final RefElement refElement, final StringBuffer buf) {
     refElement.accept(new RefJavaVisitor() {
-      @Override public void visitField(RefField field) {
+      @Override public void visitField(@NotNull RefField field) {
         if (field.isUsedForReading() && !field.isUsedForWriting()) {
           buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis"));
           return;
@@ -119,7 +120,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         }
       }
 
-      @Override public void visitClass(RefClass refClass) {
+      @Override public void visitClass(@NotNull RefClass refClass) {
         if (refClass.isAnonymous()) {
           buf.append(InspectionsBundle.message("inspection.dead.code.problem.synopsis10"));
         } else if (refClass.isInterface() || refClass.isAbstract()) {
@@ -156,7 +157,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
         }
       }
 
-      @Override public void visitMethod(RefMethod method) {
+      @Override public void visitMethod(@NotNull RefMethod method) {
         RefClass refClass = method.getOwnerClass();
         if (method.isExternalOverride()) {
           String classOrInterface = HTMLJavaHTMLComposer.getClassOrInterface(refClass, false);

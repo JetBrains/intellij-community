@@ -41,6 +41,7 @@ public class CharTailType extends TailType {
     return !context.shouldAddCompletionChar() || context.getCompletionChar() != myChar;
   }
 
+  @Override
   public int processTail(final Editor editor, final int tailOffset) {
     return insertChar(editor, tailOffset, myChar, myOverwrite);
   }

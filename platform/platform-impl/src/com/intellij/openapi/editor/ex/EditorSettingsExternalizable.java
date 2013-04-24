@@ -148,7 +148,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(myOptions, element, new DefaultJDOMExternalizer.JDOMFilter() {
       @Override
-      public boolean isAccept(final Field field) {
+      public boolean isAccept(@NotNull final Field field) {
         return !field.getName().equals("IS_NATIVE2ASCII_FOR_PROPERTIES_FILES") && !field.getName().equals("DEFAULT_PROPERTIES_FILES_CHARSET_NAME");
       }
     });
@@ -278,7 +278,7 @@ public class EditorSettingsExternalizable implements NamedJDOMExternalizable, Ex
     if (myPlacesToUseSoftWraps.contains(place)) {
       return true;
     }
-    
+
     // For now use soft wraps at vcs diff if they are enabled for the main editors.
     if (place == SoftWrapAppliancePlaces.VCS_DIFF) {
       return myPlacesToUseSoftWraps.contains(SoftWrapAppliancePlaces.MAIN_EDITOR);

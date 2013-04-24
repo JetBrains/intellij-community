@@ -75,13 +75,18 @@ public class SelectWordAtCaretAction extends TextComponentEditorAction implement
       int startWordOffset = Math.max(0, ranges.get(0).getStartOffset());
       int endWordOffset = Math.min(ranges.get(0).getEndOffset(), document.getTextLength());
 
-      if (camel && ranges.size() == 2 && editor.getSelectionModel().getSelectionStart() == startWordOffset &&
-          editor.getSelectionModel().getSelectionEnd() == endWordOffset) {
+      final SelectionModel selectionModel = editor.getSelectionModel();
+      if (camel && ranges.size() == 2 && selectionModel.getSelectionStart() == startWordOffset &&
+          selectionModel.getSelectionEnd() == endWordOffset) {
         startWordOffset = Math.max(0, ranges.get(1).getStartOffset());
         endWordOffset = Math.min(ranges.get(1).getEndOffset(), document.getTextLength());
       }
 
-      editor.getSelectionModel().setSelection(startWordOffset, endWordOffset);
+      if (startWordOffset >= selectionModel.getSelectionStart() && selectionModel.getSelectionEnd() >= endWordOffset && ranges.size() == 1) {
+        startWordOffset = 0;
+        endWordOffset = document.getTextLength();
+      }
+      selectionModel.setSelection(startWordOffset, endWordOffset);
     }
   }
 

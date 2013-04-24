@@ -17,6 +17,7 @@ package com.intellij.help.impl;
 
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.AppUIUtil;
+import com.intellij.ui.ScreenUtil;
 import org.jetbrains.annotations.NotNull;
 
 import javax.help.*;
@@ -603,8 +604,8 @@ class IdeaHelpBroker extends DefaultHelpBroker implements KeyListener{
   /**
    * Private methods.
    */
-  private int HELP_WIDTH = (int)(Toolkit.getDefaultToolkit().getScreenSize().width * 0.8);
-  private int HELP_HEIGHT = (int)(Toolkit.getDefaultToolkit().getScreenSize().height * 0.8);
+  private int HELP_WIDTH = (int)(ScreenUtil.getMainScreenBounds().width * 0.8);
+  private int HELP_HEIGHT = (int)(ScreenUtil.getMainScreenBounds().height * 0.8);
 
   private synchronized void createJHelp(){
     if(jhelp==null){

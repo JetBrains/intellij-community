@@ -1,12 +1,14 @@
 package org.jetbrains.plugins.gradle.service.project;
 
+import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.roots.DependencyScope;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.io.FileUtil;
@@ -98,14 +100,14 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     // populating dependent module object.
     Map<String, Pair<DataNode<ModuleData>, IdeaModule>> modules = createModules(project, result);
     populateModules(modules.values(), result);
-    Collection<DataNode<LibraryData>> libraries = ExternalSystemUtil.getChildren(result, ProjectKeys.LIBRARY);
+    Collection<DataNode<LibraryData>> libraries = ExternalSystemApiUtil.getChildren(result, ProjectKeys.LIBRARY);
     myLibraryNamesMixer.mixNames(libraries);
     return result;
   }
 
   @NotNull
   private static DataNode<ProjectData> populateProject(@NotNull IdeaProject project, @NotNull String projectPath) {
-    String projectDirPath = ExternalSystemUtil.toCanonicalPath(PathUtil.getParentPath(projectPath));
+    String projectDirPath = ExternalSystemApiUtil.toCanonicalPath(PathUtil.getParentPath(projectPath));
 
     ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, projectDirPath);
     projectData.setName(project.getName());
@@ -116,7 +118,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     javaProjectData.setLanguageLevel(project.getLanguageLevel().getLevel());
 
     DataNode<ProjectData> result = new DataNode<ProjectData>(ProjectKeys.PROJECT, projectData, null);
-    result.createChild(ProjectKeys.JAVA_PROJECT, javaProjectData);
+    result.createChild(JavaProjectData.KEY, javaProjectData);
     return result;
   }
 
@@ -140,7 +142,9 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         throw new IllegalStateException("Module with undefined name detected: " + gradleModule);
       }
       ProjectData projectData = ideProject.getData();
-      ModuleData ideModule = new ModuleData(GradleConstants.SYSTEM_ID, moduleName, projectData.getProjectFileDirectoryPath());
+      ModuleData ideModule = new ModuleData(
+        GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), moduleName, projectData.getProjectFileDirectoryPath()
+      );
       Pair<DataNode<ModuleData>, IdeaModule> previouslyParsedModule = result.get(moduleName);
       if (previouslyParsedModule != null) {
         throw new IllegalStateException(
@@ -305,7 +309,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     Set<String> registeredModuleNames = ContainerUtilRt.newHashSet();
-    Collection<DataNode<ModuleData>> modulesDataNode = ExternalSystemUtil.getChildren(ideProject, ProjectKeys.MODULE);
+    Collection<DataNode<ModuleData>> modulesDataNode = ExternalSystemApiUtil.getChildren(ideProject, ProjectKeys.MODULE);
     for (DataNode<ModuleData> moduleDataNode : modulesDataNode) {
       String name = moduleDataNode.getData().getName();
       registeredModuleNames.add(name);
@@ -347,7 +351,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     }
 
     DataNode<LibraryData> libraryData =
-      ExternalSystemUtil.find(ideProject, ProjectKeys.LIBRARY, new BooleanFunction<DataNode<LibraryData>>() {
+      ExternalSystemApiUtil.find(ideProject, ProjectKeys.LIBRARY, new BooleanFunction<DataNode<LibraryData>>() {
         @Override
         public boolean fun(DataNode<LibraryData> node) {
           return library.equals(node.getData());

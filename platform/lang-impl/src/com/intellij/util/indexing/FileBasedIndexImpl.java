@@ -1470,57 +1470,35 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     final long currentDocStamp = content.getModificationStamp();
-    if (currentDocStamp != myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp)) {
-      final Ref<StorageException> exRef = new Ref<StorageException>(null);
-      ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            final String contentText = content.getText();
-            if (isTooLarge(vFile, contentText.length())) {
-              return;
-            }
-
-            // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
-            WeakReference<FileContentImpl> previousContentRef = document.getUserData(ourFileContentKey);
-            FileContentImpl previousContent = previousContentRef != null ? previousContentRef.get() : null;
-            final FileContentImpl newFc;
-            if (previousContent != null && previousContent.getStamp() == currentDocStamp) {
-              newFc = previousContent;
-            }
-            else {
-              newFc = new FileContentImpl(vFile, contentText, vFile.getCharset(), currentDocStamp);
-              document.putUserData(ourFileContentKey, new WeakReference<FileContentImpl>(newFc));
-            }
-
-            if (dominantContentFile != null) {
-              dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
-              newFc.putUserData(IndexingDataKeys.PSI_FILE, dominantContentFile);
-            }
-
-            if (content instanceof AuthenticContent) {
-              newFc.putUserData(EDITOR_HIGHLIGHTER, EditorHighlighterCache.getEditorHighlighterForCachesBuilding(document));
-            }
-
-            if (getInputFilter(requestedIndexId).acceptInput(vFile)) {
-              newFc.putUserData(IndexingDataKeys.PROJECT, project);
-              final int inputId = Math.abs(getFileId(vFile));
-              getIndex(requestedIndexId).update(inputId, newFc);
-            }
-
-            if (dominantContentFile != null) {
-              dominantContentFile.putUserData(PsiFileImpl.BUILDING_STUB, null);
-            }
-          }
-          catch (StorageException e) {
-            exRef.set(e);
-          }
+    if (currentDocStamp != myLastIndexedDocStamps.get(document, requestedIndexId)) {
+      final String contentText = content.getText();
+      if (!isTooLarge(vFile, contentText.length()) && getInputFilter(requestedIndexId).acceptInput(vFile)) {
+        // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
+        WeakReference<FileContentImpl> previousContentRef = document.getUserData(ourFileContentKey);
+        FileContentImpl previousContent = previousContentRef != null ? previousContentRef.get() : null;
+        final FileContentImpl newFc;
+        if (previousContent != null && previousContent.getStamp() == currentDocStamp) {
+          newFc = previousContent;
         }
-      });
-      final StorageException storageException = exRef.get();
-      if (storageException != null) {
-        throw storageException;
+        else {
+          newFc = new FileContentImpl(vFile, contentText, vFile.getCharset(), currentDocStamp);
+          document.putUserData(ourFileContentKey, new WeakReference<FileContentImpl>(newFc));
+        }
+
+        initFileContent(newFc, project, dominantContentFile);
+
+        if (content instanceof AuthenticContent) {
+          newFc.putUserData(EDITOR_HIGHLIGHTER, EditorHighlighterCache.getEditorHighlighterForCachesBuilding(document));
+        }
+
+        final int inputId = Math.abs(getFileId(vFile));
+        try {
+          getIndex(requestedIndexId).update(inputId, newFc);
+        } finally {
+          cleanFileContent(newFc, dominantContentFile);
+        }
       }
+      myLastIndexedDocStamps.set(document, requestedIndexId, currentDocStamp);
     }
     return true;
   }
@@ -1625,9 +1603,9 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     });
   }
 
-  public void processRefreshedFile(@NotNull Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent) {
+  void processRefreshedFile(@NotNull Project project, @NotNull final com.intellij.ide.caches.FileContent fileContent) {
     myChangedFilesCollector.ensureAllInvalidateTasksCompleted();
-    myChangedFilesCollector.processFileImpl(project, fileContent, false);
+    myChangedFilesCollector.processFileImpl(project, fileContent, false); // ProcessCanceledException will cause readding the file to processing list
   }
 
   public void indexFileContent(@Nullable Project project, @NotNull com.intellij.ide.caches.FileContent content) {
@@ -1649,16 +1627,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
               currentBytes = ArrayUtil.EMPTY_BYTE_ARRAY;
             }
             fc = new FileContentImpl(file, currentBytes);
-
-            psiFile = content.getUserData(IndexingDataKeys.PSI_FILE);
-            if (psiFile != null) {
-              psiFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
-              fc.putUserData(IndexingDataKeys.PSI_FILE, psiFile);
-            }
             if (project == null) {
               project = ProjectUtil.guessProjectForFile(file);
             }
-            fc.putUserData(IndexingDataKeys.PROJECT, project);
+
+            psiFile = content.getUserData(IndexingDataKeys.PSI_FILE);
+            initFileContent(fc, project, psiFile);
           }
 
           try {
@@ -1666,7 +1640,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             updateSingleIndex(indexId, file, fc);
           }
           catch (ProcessCanceledException e) {
-            myChangedFilesCollector.scheduleForUpdate(file);
+            cleanFileContent(fc, psiFile);
             throw e;
           }
           catch (StorageException e) {
@@ -1685,6 +1659,20 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
   }
 
+  private static void cleanFileContent(FileContentImpl fc, PsiFile psiFile) {
+    if (psiFile != null) psiFile.putUserData(PsiFileImpl.BUILDING_STUB, false);
+    fc.putUserData(IndexingDataKeys.PSI_FILE, null);
+  }
+
+  private static void initFileContent(FileContentImpl fc, Project project, PsiFile psiFile) {
+    if (psiFile != null) {
+      psiFile.putUserData(PsiFileImpl.BUILDING_STUB, true);
+      fc.putUserData(IndexingDataKeys.PSI_FILE, psiFile);
+    }
+
+    fc.putUserData(IndexingDataKeys.PROJECT, project);
+  }
+
   private void updateSingleIndex(final ID<?, ?> indexId, @NotNull final VirtualFile file, @Nullable final FileContent currentFC)
     throws StorageException {
     if (ourRebuildStatus.get(indexId).get() == REQUIRES_REBUILD) {
@@ -1695,29 +1683,13 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     final int inputId = Math.abs(getFileId(file));
     final UpdatableIndex<?, ?, FileContent> index = getIndex(indexId);
     assert index != null;
-    final Ref<StorageException> exRef = new Ref<StorageException>(null);
 
     final StorageGuard.Holder lock = setDataBufferingEnabled(false);
     try {
-      ProgressManager.getInstance().executeNonCancelableSection(new Runnable() {
-        @Override
-        public void run() {
-          try {
-            index.update(inputId, currentFC);
-          }
-          catch (StorageException e) {
-            exRef.set(e);
-          }
-        }
-      });
+      index.update(inputId, currentFC);
     }
     finally {
       lock.leave();
-    }
-
-    final StorageException storageException = exRef.get();
-    if (storageException != null) {
-      throw storageException;
     }
 
     ApplicationManager.getApplication().runReadAction(new Runnable() {
@@ -2089,6 +2061,10 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             myForceUpdateSemaphore.down();
             // process only files that can affect result
             processFileImpl(project, new com.intellij.ide.caches.FileContent(file), onlyRemoveOutdatedData);
+          } catch (ProcessCanceledException ex) {
+            LOG.assertTrue(!onlyRemoveOutdatedData);
+            myChangedFilesCollector.scheduleForUpdate(file);
+            throw ex;
           }
           finally {
             myForceUpdateSemaphore.up();

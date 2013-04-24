@@ -23,35 +23,33 @@ import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.impl.LoadTextUtil;
 import com.intellij.openapi.fileTypes.FileTypeManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.LineSeparator;
 import com.intellij.util.Processor;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
-import java.util.Set;
 
 /**
  * @author Nikolai Matveev
  */
 public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
 
-  private static Logger LOG = Logger.getInstance("#com.strintec.intellij.webmaster.lineSeparator.ConvertLineSeparatorsAction");
+  private static Logger LOG = Logger.getInstance("#com.intellij.codeStyle.AbstractConvertLineSeparatorsAction");
 
   @NotNull
   private final String mySeparator;
 
   protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull LineSeparator separator) {
-    this(text, separator.getSeparatorString());
+    this(separator.toString() + " - " + text, separator.getSeparatorString());
   }
-  
+
   protected AbstractConvertLineSeparatorsAction(@Nullable String text, @NotNull String separator) {
     super(text);
     mySeparator = separator;
@@ -78,7 +76,6 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     }
   }
 
-
   @Override
   public void actionPerformed(AnActionEvent event) {
     final DataContext dataContext = event.getDataContext();
@@ -92,7 +89,6 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
       return;
     }
 
-    final Set<VirtualFile> excludedFiles = ContainerUtilRt.newHashSet();
     final VirtualFile projectVirtualDirectory;
     VirtualFile projectBaseDir = project.getBaseDir();
     if (projectBaseDir != null && projectBaseDir.isDirectory()) {
@@ -102,23 +98,6 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
       projectVirtualDirectory = null;
     }
 
-    VirtualFile projectFile = project.getProjectFile();
-    if (projectFile != null) {
-      excludedFiles.add(projectFile);
-    }
-
-    VirtualFile workspaceFile = project.getWorkspaceFile();
-    if (workspaceFile != null) {
-      excludedFiles.add(workspaceFile);
-    }
-
-    for (Module m : ModuleManager.getInstance(project).getModules()) {
-      VirtualFile moduleFile = m.getModuleFile();
-      if (moduleFile != null) {
-        excludedFiles.add(moduleFile);
-      }
-    }
-
     final FileTypeManager fileTypeManager = FileTypeManager.getInstance();
     for (VirtualFile file : virtualFiles) {
       VfsUtil.processFilesRecursively(
@@ -126,8 +105,8 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
         new Processor<VirtualFile>() {
           @Override
           public boolean process(VirtualFile file) {
-            if (!file.isDirectory() && file.isWritable() && !excludedFiles.contains(file) && !fileTypeManager.isFileIgnored(file.getName())) {
-              changeLineSeparators(project, file);
+            if (shouldProcess(file, project)) {
+              changeLineSeparators(project, file, mySeparator);
             }
             return true;
           }
@@ -143,7 +122,24 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     }
   }
 
-  private void changeLineSeparators(@NotNull final Project project, @NotNull final VirtualFile virtualFile) {
+  public static boolean shouldProcess(@NotNull VirtualFile file, @NotNull Project project) {
+    if (file.isDirectory()
+        || !file.isWritable()
+        || FileTypeManager.getInstance().isFileIgnored(file)
+        || file.getFileType().isBinary()
+        || file.equals(project.getProjectFile())
+        || file.equals(project.getWorkspaceFile()))
+    {
+      return false;
+    }
+    Module module = FileIndexFacade.getInstance(project).getModuleForFile(file);
+    return module == null || !file.equals(module.getModuleFile());
+  }
+
+  public static void changeLineSeparators(@NotNull final Project project,
+                                          @NotNull final VirtualFile virtualFile,
+                                          @NotNull final String newSeparator)
+  {
     FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
     Document document = fileDocumentManager.getCachedDocument(virtualFile);
     if (document != null) {
@@ -153,12 +149,11 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
     String currentSeparator = LoadTextUtil.detectLineSeparator(virtualFile, false);
     final String commandText;
     if (StringUtil.isEmpty(currentSeparator)) {
-      commandText = "Changed line separators to " + LineSeparator.fromString(mySeparator);
+      commandText = "Changed line separators to " + LineSeparator.fromString(newSeparator);
     }
     else {
-      assert currentSeparator != null;
       commandText = String.format("Changed line separators from %s to %s",
-                                  LineSeparator.fromString(currentSeparator), LineSeparator.fromString(mySeparator));
+                                  LineSeparator.fromString(currentSeparator), LineSeparator.fromString(newSeparator));
     }
 
     CommandProcessor commandProcessor = CommandProcessor.getInstance();
@@ -166,7 +161,7 @@ public abstract class AbstractConvertLineSeparatorsAction extends AnAction {
       @Override
       public void run() {
         try {
-          LoadTextUtil.changeLineSeparators(project, virtualFile, mySeparator, this);
+          LoadTextUtil.changeLineSeparators(project, virtualFile, newSeparator, this);
         }
         catch (IOException e) {
           LOG.warn(e);

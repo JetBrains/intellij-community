@@ -81,6 +81,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
       myPackageLocalForMembersCheckbox = new JCheckBox(InspectionsBundle.message("inspection.visibility.option"));
       myPackageLocalForMembersCheckbox.setSelected(SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS);
       myPackageLocalForMembersCheckbox.getModel().addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           SUGGEST_PACKAGE_LOCAL_FOR_MEMBERS = myPackageLocalForMembersCheckbox.isSelected();
         }
@@ -92,6 +93,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
       myPackageLocalForTopClassesCheckbox = new JCheckBox(InspectionsBundle.message("inspection.visibility.option1"));
       myPackageLocalForTopClassesCheckbox.setSelected(SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES);
       myPackageLocalForTopClassesCheckbox.getModel().addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           SUGGEST_PACKAGE_LOCAL_FOR_TOP_CLASSES = myPackageLocalForTopClassesCheckbox.isSelected();
         }
@@ -104,6 +106,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
       myPrivateForInnersCheckbox = new JCheckBox(InspectionsBundle.message("inspection.visibility.option2"));
       myPrivateForInnersCheckbox.setSelected(SUGGEST_PRIVATE_FOR_INNERS);
       myPrivateForInnersCheckbox.getModel().addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           SUGGEST_PRIVATE_FOR_INNERS = myPrivateForInnersCheckbox.isSelected();
         }
@@ -115,25 +118,30 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
     }
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }
 
+  @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(final RefEntity refEntity,
                                                 final AnalysisScope scope,
@@ -394,6 +402,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
   }
 
 
+  @Override
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
                                                 final ProblemDescriptionsProcessor processor) {
     final EntryPointsManager entryPointsManager = globalContext.getEntryPointsManager(manager);
@@ -406,13 +415,14 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
       addin.fillIgnoreList(manager, processor);
     }
     manager.iterate(new RefJavaVisitor() {
-      @Override public void visitElement(final RefEntity refEntity) {
+      @Override public void visitElement(@NotNull final RefEntity refEntity) {
         if (!(refEntity instanceof RefElement)) return;
         if (processor.getDescriptions(refEntity) == null) return;
         refEntity.accept(new RefJavaVisitor() {
-          @Override public void visitField(final RefField refField) {
+          @Override public void visitField(@NotNull final RefField refField) {
             if (refField.getAccessModifier() != PsiModifier.PRIVATE) {
               globalContext.enqueueFieldUsagesProcessor(refField, new GlobalJavaInspectionContext.UsagesProcessor() {
+                @Override
                 public boolean process(PsiReference psiReference) {
                   ignoreElement(processor, refField);
                   return false;
@@ -421,10 +431,11 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
             }
           }
 
-          @Override public void visitMethod(final RefMethod refMethod) {
+          @Override public void visitMethod(@NotNull final RefMethod refMethod) {
             if (!refMethod.isExternalOverride() && refMethod.getAccessModifier() != PsiModifier.PRIVATE &&
                 !(refMethod instanceof RefImplicitConstructor)) {
               globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
+                @Override
                 public boolean process(PsiMethod derivedMethod) {
                   ignoreElement(processor, refMethod);
                   return false;
@@ -432,6 +443,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
               });
 
               globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
+                @Override
                 public boolean process(PsiReference psiReference) {
                   ignoreElement(processor, refMethod);
                   return false;
@@ -446,6 +458,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
                     final Project project = manager.getProject();
                     PsiSearchHelper.SERVICE.getInstance(project)
                       .processUsagesInNonJavaFiles(qualifiedName, new PsiNonJavaFileReferenceProcessor() {
+                        @Override
                         public boolean process(PsiFile file, int startOffset, int endOffset) {
                           entryPointsManager.addEntryPoint(refMethod, false);
                           ignoreElement(processor, refMethod);
@@ -458,9 +471,10 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
             }
           }
 
-          @Override public void visitClass(final RefClass refClass) {
+          @Override public void visitClass(@NotNull final RefClass refClass) {
             if (!refClass.isAnonymous()) {
               globalContext.enqueueDerivedClassesProcessor(refClass, new GlobalJavaInspectionContext.DerivedClassesProcessor() {
+                @Override
                 public boolean process(PsiClass inheritor) {
                   ignoreElement(processor, refClass);
                   return false;
@@ -468,6 +482,7 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
               });
 
               globalContext.enqueueClassUsagesProcessor(refClass, new GlobalJavaInspectionContext.UsagesProcessor() {
+                @Override
                 public boolean process(PsiReference psiReference) {
                   ignoreElement(processor, refClass);
                   return false;
@@ -482,31 +497,36 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
     return false;
   }
 
-  private static void ignoreElement(ProblemDescriptionsProcessor processor, RefEntity refElement){
+  private static void ignoreElement(@NotNull ProblemDescriptionsProcessor processor, @NotNull RefEntity refElement){
     processor.ignoreElement(refElement);
 
     if (refElement instanceof RefClass) {
       RefClass refClass = (RefClass) refElement;
-      if (refClass.getDefaultConstructor() != null) {
-        processor.ignoreElement(refClass.getDefaultConstructor());
+      RefMethod defaultConstructor = refClass.getDefaultConstructor();
+      if (defaultConstructor != null) {
+        processor.ignoreElement(defaultConstructor);
         return;
       }
     }
 
-    if (refElement.getOwner() instanceof RefElement) {
-      processor.ignoreElement(refElement.getOwner());
+    RefEntity owner = refElement.getOwner();
+    if (owner instanceof RefElement) {
+      processor.ignoreElement(owner);
     }
   }
 
+  @Override
   public void compose(final StringBuffer buf, final RefEntity refEntity, final HTMLComposer composer) {
     composer.appendElementInReferences(buf, (RefElement)refEntity);
   }
 
+  @Override
   @Nullable
   public QuickFix getQuickFix(final String hint) {
     return new AcceptSuggestedAccess(null, hint);
   }
 
+  @Override
   @Nullable
   public String getHint(final QuickFix fix) {
     return ((AcceptSuggestedAccess)fix).getHint();
@@ -521,16 +541,19 @@ public class VisibilityInspection extends GlobalJavaInspectionTool {
       myHint = hint;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.visibility.accept.quickfix");
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (!CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) return;
       final PsiModifierListOwner element = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiModifierListOwner.class);

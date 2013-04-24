@@ -27,7 +27,6 @@ import com.intellij.psi.impl.java.stubs.impl.*;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.ArrayUtil;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.cls.ClsFormatException;
 import com.intellij.util.io.StringRef;
 import org.jetbrains.annotations.NonNls;
@@ -736,19 +735,14 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     }
 
     if (value.getClass().isArray()) {
-      StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-      try {
-        buffer.append('{');
-        for (int i = 0, length = Array.getLength(value); i < length; i++) {
-          if (i > 0) buffer.append(", ");
-          buffer.append(Array.get(value, i));
-        }
-        buffer.append('}');
-        return buffer.toString();
+      StringBuilder buffer = new StringBuilder();
+      buffer.append('{');
+      for (int i = 0, length = Array.getLength(value); i < length; i++) {
+        if (i > 0) buffer.append(", ");
+        buffer.append(Array.get(value, i));
       }
-      finally {
-        StringBuilderSpinAllocator.dispose(buffer);
-      }
+      buffer.append('}');
+      return buffer.toString();
     }
 
     return null;

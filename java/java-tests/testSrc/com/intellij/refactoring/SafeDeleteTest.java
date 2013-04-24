@@ -70,6 +70,12 @@ public class SafeDeleteTest extends MultiFileTestCase {
     doTest("C2");
   }
 
+
+  public void testTopLevelDocComment() throws Exception {
+    myDoCompare = false;
+    doTest("foo.C1");
+  }
+
   public void testTopParameterInHierarchy() throws Exception {
     myDoCompare = false;
     doTest("I");

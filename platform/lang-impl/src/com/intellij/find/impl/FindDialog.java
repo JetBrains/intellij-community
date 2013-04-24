@@ -958,7 +958,8 @@ public class FindDialog extends DialogWrapper {
     }
     if (selected != null && selected.indexOf('\n') < 0) {
       strings = ArrayUtil.remove(strings, selected);
-      strings = ArrayUtil.append(strings, selected);
+      // this ensures that last searched string will be selected if selected == ""
+      if (selected.length() > 0) strings = ArrayUtil.append(strings, selected);
     }
     for(int i = strings.length - 1; i >= 0; i--){
       combo.addItem(strings[i]);

@@ -69,6 +69,8 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
+import com.intellij.psi.PsiDocumentManager;
+import com.intellij.psi.PsiFile;
 import com.intellij.ui.GuiUtils;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.LightweightHint;
@@ -641,6 +643,8 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     myLineHeight = -1;
     myDescent = -1;
     myPlainFontMetrics = null;
+
+    clearTextWidthCache();
 
     boolean softWrapsUsedBefore = mySoftWrapModel.isSoftWrappingEnabled();
 
@@ -1416,12 +1420,34 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     return result + columnsToProcess;
   }
 
+  // TODO: tabbed text width is additive, it should be possible to have buckets, containing arguments / values to start with
+  private final int[] myLastStartOffsets = new int[2];
+  private final int[] myLastTargetColumns = new int[myLastStartOffsets.length];
+  private final int[] myLastXOffsets = new int[myLastStartOffsets.length];
+  private final int[] myLastXs = new int[myLastStartOffsets.length];
+  private int myCurrentCachePosition;
+  private int myLastCacheHits, myTotalRequests; // todo remove
+
   private int getTabbedTextWidth(int startOffset, int targetColumn, int xOffset) {
     int x = xOffset;
     if (startOffset == 0 && myPrefixText != null) {
       x += myPrefixWidthInPixels;
     }
     if (targetColumn <= 0) return x;
+
+    ++myTotalRequests;
+    for(int i = 0; i < myLastStartOffsets.length; ++i) {
+      if (startOffset == myLastStartOffsets[i] && targetColumn == myLastTargetColumns[i] && xOffset == myLastXOffsets[i]) {
+        ++myLastCacheHits;
+        if ((myLastCacheHits & 0xFF) == 0) {    // todo remove
+          PsiFile file = myProject != null ? PsiDocumentManager.getInstance(myProject).getCachedPsiFile(myDocument):null;
+          LOG.info("Cache hits:" + myLastCacheHits + ", total requests:" +
+                             myTotalRequests + "," + (file != null ? file.getViewProvider().getVirtualFile():null));
+        }
+        return myLastXs[i];
+      }
+    }
+
     int offset = startOffset;
     CharSequence text = myDocument.getCharsNoThreadCheck();
     int textLength = myDocument.getTextLength();
@@ -1492,10 +1518,25 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         x += EditorUtil.getSpaceWidth(fontType, this) * (targetColumn - column);
       }
 
+      myLastTargetColumns[myCurrentCachePosition] = targetColumn;
+      myLastStartOffsets[myCurrentCachePosition] = startOffset;
+      myLastXs[myCurrentCachePosition] = x;
+      myLastXOffsets[myCurrentCachePosition] = xOffset;
+      myCurrentCachePosition = (myCurrentCachePosition + 1) % myLastStartOffsets.length;
+
       return x;
     }
     finally {
       state.dispose();
+    }
+  }
+
+  private void clearTextWidthCache() {
+    for(int i = 0; i < myLastStartOffsets.length; ++i) {
+      myLastTargetColumns[i] = -1;
+      myLastStartOffsets[i] = - 1;
+      myLastXs[i] = -1;
+      myLastXOffsets[i] = -1;
     }
   }
 
@@ -1601,6 +1642,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
   private void changedUpdate(DocumentEvent e) {
     if (myScrollPane == null || myDocument.isInBulkUpdate()) return;
 
+    clearTextWidthCache();
     stopOptimizedScrolling();
     mySelectionModel.removeBlockSelection();
 
@@ -2235,6 +2277,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
     // Perform additional activity if soft wrap is added or removed during repainting.
     if (mySoftWrapsChanged) {
       mySoftWrapsChanged = false;
+      clearTextWidthCache();
       validateSize();
 
       // Repaint editor to the bottom in order to ensure that its content is shown correctly after new soft wrap introduction.

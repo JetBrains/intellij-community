@@ -24,10 +24,12 @@ import com.intellij.util.IncorrectOperationException;
  */
 public abstract class AbstractElementManipulator<T extends PsiElement> implements ElementManipulator<T> {
 
+  @Override
   public T handleContentChange(final T element, final String newContent) throws IncorrectOperationException {
     return handleContentChange(element, getRangeInElement(element), newContent);
   }
 
+  @Override
   public TextRange getRangeInElement(final T element) {
     return new TextRange(0, element.getTextLength());
   }

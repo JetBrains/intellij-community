@@ -21,6 +21,7 @@ import com.intellij.ui.*;
 import com.intellij.ui.content.tabs.PinToolwindowTabAction;
 import com.intellij.ui.content.tabs.TabbedContentAction;
 import com.intellij.util.IJSwingUtilities;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ChangeEvent;
@@ -66,7 +67,7 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
     return myTabbedPaneWrapper.getComponent();
   }
 
-  public void setManager(ContentManager manager) {
+  public void setManager(@NotNull ContentManager manager) {
     if (myManager != null) {
       throw new IllegalStateException();
     }
@@ -317,25 +318,29 @@ public class TabbedPaneContentUI implements ContentUI, PropertyChangeListener {
   public void beforeDispose() {
   }
 
-  public boolean canChangeSelectionTo(Content content, boolean implicit) {
+  public boolean canChangeSelectionTo(@NotNull Content content, boolean implicit) {
     return true;
   }
 
+  @NotNull
   @Override
   public String getCloseActionName() {
     return UIBundle.message("tabbed.pane.close.tab.action.name");
   }
 
+  @NotNull
   @Override
   public String getCloseAllButThisActionName() {
     return UIBundle.message("tabbed.pane.close.all.tabs.but.this.action.name");
   }
 
+  @NotNull
   @Override
   public String getPreviousContentActionName() {
     return "Select Previous Tab";
   }
 
+  @NotNull
   @Override
   public String getNextContentActionName() {
     return "Select Next Tab";

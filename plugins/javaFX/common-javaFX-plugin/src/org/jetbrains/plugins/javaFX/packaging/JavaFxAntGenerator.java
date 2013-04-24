@@ -118,7 +118,11 @@ public class JavaFxAntGenerator {
     if (bundle != JavaFxPackagerConstants.NativeBundles.none) {
       deployTag.addAttribute(new Pair<String, String>("nativeBundles", bundle.name()));
     }
-    
+
+    if (packager.isEnabledSigning()) {
+      deployTag.add(new SimpleTag("fx:permissions", new Pair<String, String>("elevated", "true")));                         
+    }
+
     deployTag.add(new SimpleTag("fx:application", new Pair<String, String>("refid", appId)));
 
     final List<Pair> infoPairs = new ArrayList<Pair>();

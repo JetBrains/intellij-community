@@ -15,6 +15,7 @@
  */
 package com.intellij.util.xml.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.MultiValuesMap;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
@@ -40,6 +41,7 @@ import java.util.*;
  */
 public class StaticGenericInfoBuilder {
   private static final Set ADDER_PARAMETER_TYPES = new THashSet<Class>(Arrays.asList(Class.class, int.class));
+  private static final Logger LOG = Logger.getInstance(StaticGenericInfoBuilder.class);
   private final Class myClass;
   private final MultiValuesMap<XmlName, JavaMethod> myCollectionGetters = new MultiValuesMap<XmlName, JavaMethod>();
   final MultiValuesMap<XmlName, JavaMethod> collectionAdders = new MultiValuesMap<XmlName, JavaMethod>();
@@ -223,7 +225,10 @@ public class StaticGenericInfoBuilder {
       final String qname = getSubTagName(method);
       if (qname != null) {
         final XmlName xmlName = DomImplUtil.createXmlName(qname, method);
-        assert !myCollectionChildrenTypes.containsKey(xmlName) : "Collection and fixed children cannot intersect: " + qname;
+        Type collectionType = myCollectionChildrenTypes.get(xmlName);
+        if (collectionType != null) {
+          LOG.error("Collection (" + collectionType + ") and fixed children cannot intersect: " + qname + " for " + myClass);
+        }
         int index = 0;
         final SubTag subTagAnnotation = method.getAnnotation(SubTag.class);
         if (subTagAnnotation != null && subTagAnnotation.index() != 0) {

@@ -38,6 +38,8 @@ bool
 breakpoint
 breakpoints
 btree
+buffered
+buffering
 builtin
 bzip
 calc
@@ -457,6 +459,7 @@ twitter
 typedef
 typedefs
 unboxing
+unbuffered
 uncomment
 uncommented
 underwave

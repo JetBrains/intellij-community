@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -46,7 +46,7 @@ public abstract class ConnectionOnProcess implements IConnection {
   private final ErrorRegistry myErrorRegistry;
 
   private boolean myContainsError = false;
-  
+
   protected final StringBuffer myErrorText = new StringBuffer();
   private Future<?> myStdErrFuture;
   private ReadProcessThread myErrThread;
@@ -142,7 +142,7 @@ public abstract class ConnectionOnProcess implements IConnection {
 
   protected synchronized void execute(GeneralCommandLine commandLine) throws AuthenticationException {
     try {
-      commandLine.setEnvParams(EnvironmentUtil.getEnvironmentProperties());
+      commandLine.setEnvironment(EnvironmentUtil.getEnvironmentProperties());
       myProcess = commandLine.createProcess();
 
       myErrThread = new ReadProcessThread(

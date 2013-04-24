@@ -52,6 +52,7 @@ import com.intellij.util.CommonProcessors;
 import com.intellij.util.Processor;
 import com.intellij.util.ui.RangeBlinker;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -456,7 +457,12 @@ public class UsageViewManagerImpl extends UsageViewManager {
           usageView.setSearchInProgress(false);
         }
         if (!myProcessPresentation.getLargeFiles().isEmpty()) {
-          notifyByFindBalloon(null, MessageType.INFO, myProcessPresentation);
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              notifyByFindBalloon(null, MessageType.INFO, myProcessPresentation);
+            }
+          }, ModalityState.NON_MODAL, myProject.getDisposed());
         }
       }
 
@@ -510,7 +516,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
             String detailedMessage = detailedLargeFilesMessage(largeFiles);
             List<String> strings = new ArrayList<String>(lines);
             strings.add(detailedMessage);
-            ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, info, wrapHtml(strings), AllIcons.Actions.Find, listener);
+            ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, info, wrapInHtml(strings), AllIcons.Actions.Find, listener);
           }
           else if (listener != null) {
             listener.hyperlinkUpdate(e);
@@ -519,12 +525,12 @@ public class UsageViewManagerImpl extends UsageViewManager {
       };
     }
 
-    ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, info, wrapHtml(resultLines), AllIcons.Actions.Find, resultListener);
+    ToolWindowManager.getInstance(myProject).notifyByBalloon(ToolWindowId.FIND, info, wrapInHtml(resultLines), AllIcons.Actions.Find, resultListener);
   }
 
   @NotNull
-  private static String wrapHtml(@NotNull List<String> strings) {
-    return "<html><body>"+ StringUtil.join(strings, "<br>") + "</body></html>";
+  private static String wrapInHtml(@NotNull List<String> strings) {
+    return XmlStringUtil.wrapInHtml(StringUtil.join(strings, "<br>"));
   }
 
   @NotNull

@@ -45,7 +45,7 @@ public interface ViewContext extends Disposable {
   @Nullable
   Tab getTabFor(final Grid grid);
 
-  View getStateFor(Content content);
+  View getStateFor(@NotNull Content content);
 
   void saveUiState();
 
@@ -61,7 +61,7 @@ public interface ViewContext extends Disposable {
 
   GridCell findCellFor(@NotNull final Content content);
 
-  Grid findGridFor(Content content);
+  Grid findGridFor(@NotNull Content content);
 
   ActionCallback select(Content content, boolean requestFocus);
 

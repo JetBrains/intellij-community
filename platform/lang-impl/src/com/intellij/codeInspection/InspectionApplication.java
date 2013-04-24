@@ -44,7 +44,6 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiManager;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.thoughtworks.xstream.io.xml.PrettyPrintWriter;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -250,17 +249,11 @@ public class InspectionApplication {
 
           if (myVerboseLevel == 3) {
             if (!isIndeterminate() && getFraction() > 0) {
-              final StringBuilder buf = StringBuilderSpinAllocator.alloc();
-              try {
-                final int percent = (int)(getFraction() * 100);
-                if (myLastPercent == percent) return;
-                myLastPercent = percent;
-                buf.append(InspectionsBundle.message("inspection.display.name")).append(" ").append(percent).append("%");
-                logMessageLn(2, buf.toString());
-              }
-              finally {
-                StringBuilderSpinAllocator.dispose(buf);
-              }
+              final int percent = (int)(getFraction() * 100);
+              if (myLastPercent == percent) return;
+              myLastPercent = percent;
+              String msg = InspectionsBundle.message("inspection.display.name") + " " + percent + "%";
+              logMessageLn(2, msg);
             }
             return;
           }

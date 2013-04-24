@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.project.DumbAware;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.resolve.CompletionParameterTypeInferencePolicy;
 import com.intellij.psi.infos.CandidateInfo;
@@ -396,7 +397,7 @@ public class MethodParameterInfoHandler implements ParameterInfoHandlerWithTabAc
             paramType = substitutor.substitute(paramType);
           }
           appendModifierList(buffer, param);
-          buffer.append(paramType.getPresentableText());
+          buffer.append(StringUtil.escapeXml(paramType.getPresentableText()));
           String name = param.getName();
           if (name != null) {
             buffer.append(" ");

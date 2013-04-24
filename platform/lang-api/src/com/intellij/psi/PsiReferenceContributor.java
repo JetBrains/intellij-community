@@ -30,6 +30,7 @@ public abstract class PsiReferenceContributor implements Disposable {
 
   public abstract void registerReferenceProviders(PsiReferenceRegistrar registrar);
 
+  @Override
   public void dispose() {
   }
 }

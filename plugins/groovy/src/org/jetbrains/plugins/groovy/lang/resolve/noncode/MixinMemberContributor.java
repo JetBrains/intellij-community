@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.light.LightMethod;
 import com.intellij.psi.scope.DelegatingScopeProcessor;
 import com.intellij.psi.scope.PsiScopeProcessor;
+import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.ObjectUtils;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -45,10 +46,9 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
                                      @NotNull PsiScopeProcessor processor,
                                      @NotNull final PsiElement place,
                                      @NotNull ResolveState state) {
-    if (!(qualifierType instanceof PsiClassType)) return;
     if (isInAnnotation(place)) return;
-    final PsiClassType.ClassResolveResult resolveResult = ((PsiClassType)qualifierType).resolveGenerics();
-    final PsiClass aClass = resolveResult.getElement();
+
+    final PsiClass aClass = PsiUtil.resolveClassInClassTypeOnly(qualifierType);
     if (aClass == null) return;
 
     final PsiModifierList modifierList = aClass.getModifierList();
@@ -91,7 +91,7 @@ public class MixinMemberContributor extends NonCodeMembersContributor {
 
   private static List<PsiAnnotation> getAllMixins(PsiModifierList modifierList) {
     final ArrayList<PsiAnnotation> result = new ArrayList<PsiAnnotation>();
-    for (PsiAnnotation annotation : modifierList.getApplicableAnnotations()) {
+    for (PsiAnnotation annotation : modifierList.getAnnotations()) {
       if (GroovyCommonClassNames.GROOVY_LANG_MIXIN.equals(annotation.getQualifiedName())) {
         result.add(annotation);
       }

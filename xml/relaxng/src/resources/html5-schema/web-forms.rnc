@@ -54,10 +54,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	input.text.attrs.type?
 		&	shared-form.attrs.maxlength? 
-		&	shared-form.attrs.readonly? 
+		&	shared-form.attrs.readonly?
 		&	shared-form.attrs.size?
 		&	input.text.attrs.value? 
-		&	(	common.attrs.aria
+		&	(	common.attrs.aria?
 			|	common.attrs.aria.implicit.input
 			)?
 		)		
@@ -84,7 +84,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	shared-form.attrs.readonly? 
 		&	shared-form.attrs.size?
 		&	input.password.attrs.value? 
-		&	common.attrs.aria.implicit.input?
+		&	common.attrs.aria?
 		)
 		input.password.attrs.type = 
 			attribute type {
@@ -107,7 +107,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.checkbox.attrs.type
 		&	input.attrs.checked? 
 		&	input.checkbox.attrs.value? 
-		&	common.attrs.aria.implicit.input?
+		&	common.attrs.aria?
 		)
 		input.checkbox.attrs.type = 
 			attribute type {
@@ -130,7 +130,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.radio.attrs.type
 		&	input.attrs.checked? 
 		&	input.radio.attrs.value? 
-		&	common.attrs.aria.implicit.input?
+		&	(	common.attrs.aria.role.radio
+			|	common.attrs.aria.role.menuitemradio
+			)?
 		)
 		input.radio.attrs.type = 
 			attribute type {
@@ -152,8 +154,13 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	input.button.attrs.type
 		&	input.button.attrs.value? 
-		&	(	common.attrs.aria
-			|	common.attrs.aria.implicit.button
+		&	(	common.attrs.aria.implicit.button
+			|	common.attrs.aria.role.button
+			|	common.attrs.aria.role.link
+			|	common.attrs.aria.role.menuitem
+			|	common.attrs.aria.role.menuitemcheckbox
+			|	common.attrs.aria.role.menuitemradio
+			|	common.attrs.aria.role.radio
 			)?
 		)
 		input.button.attrs.type = 
@@ -177,7 +184,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	input.submit.attrs.type
 		&	input.submit.attrs.value? 
-		&	common.attrs.aria.implicit.button?
+		&	common.attrs.aria?
 		)
 		input.submit.attrs.type = 
 			attribute type {
@@ -199,7 +206,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	input.reset.attrs.type
 		&	input.reset.attrs.value? 
-		&	common.attrs.aria.implicit.button?
+		&	common.attrs.aria?
 		)
 		input.reset.attrs.type = 
 			attribute type {
@@ -222,7 +229,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	input.file.attrs.type
 		&	input.file.attrs.accept?
-		&	common.attrs.aria.implicit.input?
+		&	common.attrs.aria?
 		)
 		input.file.attrs.type = 
 			attribute type {
@@ -244,6 +251,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	input.hidden.attrs.type
 		&	input.hidden.attrs.value? 
+		&	common.attrs.aria?
 		)
 		input.hidden.attrs.type = 
 			attribute type {
@@ -266,8 +274,13 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	input.image.attrs.type
 		&	input.image.attrs.alt 
 		&	input.image.attrs.src? 
-		&	(	common.attrs.aria
-			|	common.attrs.aria.implicit.button
+		&	(	common.attrs.aria.implicit.button
+			|	common.attrs.aria.role.button
+			|	common.attrs.aria.role.link
+			|	common.attrs.aria.role.menuitem
+			|	common.attrs.aria.role.menuitemcheckbox
+			|	common.attrs.aria.role.menuitemradio
+			|	common.attrs.aria.role.radio
 			)?
 		)	
 		input.image.attrs.type = 
@@ -296,7 +309,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	shared-form.attrs.readonly?
 		&	textarea.attrs.rows-and-cols-wf1
-		&	common.attrs.aria.implicit.input?
+		&	(	common.attrs.aria.implicit.input
+			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			|	common.attrs.aria.role.combobox
+			|	common.attrs.aria.role.textbox
+			)?
 		#FIXME onfocus, onblur, onselect,onchange
 		)
 		# This is ugly. 
@@ -333,7 +351,12 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	option.attrs.selected?
 		&	option.attrs.label?
 		&	option.attrs.value?
-		&	common.attrs.aria.implicit.input?
+		&	(	common.attrs.aria.implicit.input
+			|	common.attrs.aria.role.option
+			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitemradio
+			|	common.attrs.aria.role.menuitemcheckbox
+			)?
 		)
 		option.attrs.selected =
 			attribute selected {
@@ -358,6 +381,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		(	common.attrs
 		&	optgroup.attrs.label
 		&	common-form.attrs.disabled?
+		&	(	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
 		)
 		optgroup.attrs.label =
 			attribute label {
@@ -369,13 +395,17 @@ datatypes w = "http://whattf.org/datatype-draft"
 ## Selection Menu: <select>
 
 	select.elem =
-		element select { select.inner & select.attrs }	
+		element select { select.inner & select.attrs }
 	select.attrs =
 		(	common.attrs
 		&	common-form.attrs
 		&	select.attrs.size?
 		&	select.attrs.multiple?
 		# FIXME onfocus, onblur, onchange
+		&	(	common.attrs.aria.role.listbox # aria-multiselectable depends on "multiple" value; check in assertions
+			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
 		)
 		select.attrs.size =
 			attribute size {
@@ -410,7 +440,14 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	button.submit.attrs.type?
 		&	button.attrs.value?
-		&	common.attrs.aria.implicit.button?
+		&	(	common.attrs.aria.implicit.button
+			|	common.attrs.aria.role.button
+			|	common.attrs.aria.role.link
+			|	common.attrs.aria.role.menuitem
+			|	common.attrs.aria.role.menuitemcheckbox
+			|	common.attrs.aria.role.menuitemradio
+			|	common.attrs.aria.role.radio
+			)?
 		)
 		button.submit.attrs.type =
 			attribute type {
@@ -428,7 +465,14 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	button.reset.attrs.type
 		&	button.attrs.value? #REVISIT I guess this still affects the DOM
-		&	common.attrs.aria.implicit.button?
+		&	(	common.attrs.aria.implicit.button
+			|	common.attrs.aria.role.button
+			|	common.attrs.aria.role.link
+			|	common.attrs.aria.role.menuitem
+			|	common.attrs.aria.role.menuitemcheckbox
+			|	common.attrs.aria.role.menuitemradio
+			|	common.attrs.aria.role.radio
+			)?
 		)
 		button.reset.attrs.type =
 			attribute type {
@@ -446,8 +490,13 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	common-form.attrs
 		&	button.button.attrs.type
 		&	button.attrs.value? #REVISIT I guess this still affects the DOM
-		&	(	common.attrs.aria
-			|	common.attrs.aria.implicit.button
+		&	(	common.attrs.aria.implicit.button
+			|	common.attrs.aria.role.button
+			|	common.attrs.aria.role.link
+			|	common.attrs.aria.role.menuitem
+			|	common.attrs.aria.role.menuitemcheckbox
+			|	common.attrs.aria.role.menuitemradio
+			|	common.attrs.aria.role.radio
 			)?
 		)
 		button.button.attrs.type =
@@ -470,7 +519,7 @@ datatypes w = "http://whattf.org/datatype-draft"
 		&	form.attrs.enctype?
 		&	common-form.attrs.name?
 		&	form.attrs.accept-charset?
-		&	(	common.attrs.aria
+		&	(	common.attrs.aria?
 			|	common.attrs.aria.implicit.region
 			)?
 		)
@@ -507,7 +556,9 @@ datatypes w = "http://whattf.org/datatype-draft"
 		element fieldset { fieldset.inner & fieldset.attrs }
 	fieldset.attrs =
 		(	common.attrs
-		&	common.attrs.aria.implicit.group?
+		&	(	common.attrs.aria?
+			|	common.attrs.aria.implicit.region
+			)?
 		)	
 	fieldset.inner =
 		(	legend.elem? #REVISIT should this be required?
@@ -523,7 +574,10 @@ datatypes w = "http://whattf.org/datatype-draft"
 	label.attrs =
 		(	common.attrs
 		&	label.attrs.for?
-		&	common.attrs.aria.implicit.region?
+		&	(	common.attrs.aria.implicit.region
+			|	common.attrs.aria.role.presentation
+			|	common.attrs.aria.role.menuitem
+			)?
 		)
 		label.attrs.for =
 			attribute for {

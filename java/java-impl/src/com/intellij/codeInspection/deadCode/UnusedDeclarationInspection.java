@@ -30,7 +30,7 @@ import com.intellij.analysis.AnalysisScope;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtilBase;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
@@ -60,7 +60,7 @@ import com.intellij.psi.search.PsiNonJavaFileReferenceProcessor;
 import com.intellij.psi.search.PsiSearchHelper;
 import com.intellij.psi.util.PsiMethodUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.refactoring.safeDelete.SafeDeleteHandler;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorFactory;
@@ -124,6 +124,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       }
     }
     Arrays.sort(deadCodeAddins, new Comparator<EntryPoint>() {
+      @Override
       public int compare(final EntryPoint o1, final EntryPoint o2) {
         return o1.getDisplayName().compareToIgnoreCase(o2.getDisplayName());
       }
@@ -131,6 +132,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     myExtensions = deadCodeAddins;
   }
 
+  @Override
   public void initialize(@NotNull final GlobalInspectionContextImpl context) {
     super.initialize(context);
     ((EntryPointsManagerImpl)getEntryPointsManager()).setAddNonJavaEntries(ADD_NONJAVA_TO_ENTRIES);
@@ -154,6 +156,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       myMainsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option"));
       myMainsCheckbox.setSelected(ADD_MAINS_TO_ENTRIES);
       myMainsCheckbox.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           ADD_MAINS_TO_ENTRIES = myMainsCheckbox.isSelected();
         }
@@ -165,6 +168,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       myAppletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option3"));
       myAppletToEntries.setSelected(ADD_APPLET_TO_ENTRIES);
       myAppletToEntries.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           ADD_APPLET_TO_ENTRIES = myAppletToEntries.isSelected();
         }
@@ -175,6 +179,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       myServletToEntries = new JCheckBox(InspectionsBundle.message("inspection.dead.code.option4"));
       myServletToEntries.setSelected(ADD_SERVLET_TO_ENTRIES);
       myServletToEntries.addActionListener(new ActionListener(){
+        @Override
         public void actionPerformed(ActionEvent e) {
           ADD_SERVLET_TO_ENTRIES = myServletToEntries.isSelected();
         }
@@ -187,6 +192,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
           final JCheckBox extCheckbox = new JCheckBox(extension.getDisplayName());
           extCheckbox.setSelected(extension.isSelected());
           extCheckbox.addActionListener(new ActionListener() {
+            @Override
             public void actionPerformed(ActionEvent e) {
               extension.setSelected(extCheckbox.isSelected());
             }
@@ -200,6 +206,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       new JCheckBox(InspectionsBundle.message("inspection.dead.code.option5"));
       myNonJavaCheckbox.setSelected(ADD_NONJAVA_TO_ENTRIES);
       myNonJavaCheckbox.addActionListener(new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           ADD_NONJAVA_TO_ENTRIES = myNonJavaCheckbox.isSelected();
         }
@@ -218,6 +225,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     }
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     final JPanel scrollPane = new JPanel(new BorderLayout());
     scrollPane.add(SeparatorFactory.createSeparator("Entry points", null), BorderLayout.NORTH);
@@ -241,29 +249,34 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     return ADD_NONJAVA_TO_ENTRIES;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }
 
-  public void readSettings(Element node) throws InvalidDataException {
+  @Override
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
     for (EntryPoint extension : myExtensions) {
       extension.readExternal(node);
     }
   }
 
-  public void writeSettings(Element node) throws WriteExternalException {
+  @Override
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
     super.writeSettings(node);
     for (EntryPoint extension : myExtensions) {
       extension.writeExternal(node);
@@ -281,7 +294,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
 
   private static boolean isSerializationImplicitlyUsedField(PsiField field) {
     @NonNls final String name = field.getName();
-    if (!HighlightUtil.SERIAL_VERSION_UID_FIELD_NAME.equals(name) && !"serialPersistentFields".equals(name)) return false;
+    if (!HighlightUtilBase.SERIAL_VERSION_UID_FIELD_NAME.equals(name) && !"serialPersistentFields".equals(name)) return false;
     if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = field.getContainingClass();
     return aClass == null || isSerializable(aClass, null);
@@ -333,19 +346,13 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
 
   private static boolean isSerializable(PsiClass aClass, @Nullable RefClass refClass) {
     final PsiClass serializableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.io.Serializable", aClass.getResolveScope());
-    if (serializableClass != null) {
-      return isSerializable(aClass, refClass, serializableClass);
-    }
-    return false;
+    return serializableClass != null && isSerializable(aClass, refClass, serializableClass);
   }
 
   private static boolean isExternalizable(PsiClass aClass, RefClass refClass) {
     final GlobalSearchScope scope = aClass.getResolveScope();
     final PsiClass externalizableClass = JavaPsiFacade.getInstance(aClass.getProject()).findClass("java.io.Externalizable", scope);
-    if (externalizableClass == null) {
-      return false;
-    }
-    return isSerializable(aClass, refClass, externalizableClass);
+    return externalizableClass != null && isSerializable(aClass, refClass, externalizableClass);
   }
 
   private static boolean isSerializable(PsiClass aClass, RefClass refClass, PsiClass serializableClass) {
@@ -360,9 +367,10 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     return false;
   }
 
+  @Override
   public void runInspection(@NotNull final AnalysisScope scope, @NotNull final InspectionManager manager) {
     getRefManager().iterate(new RefJavaVisitor() {
-      @Override public void visitElement(final RefEntity refEntity) {
+      @Override public void visitElement(@NotNull final RefEntity refEntity) {
         if (refEntity instanceof RefJavaElement) {
           final RefElementImpl refElement = (RefElementImpl)refEntity;
           if (!refElement.isSuspicious()) return;
@@ -379,13 +387,13 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
           }
 
           refElement.accept(new RefJavaVisitor() {
-            @Override public void visitMethod(RefMethod method) {
+            @Override public void visitMethod(@NotNull RefMethod method) {
               if (isAddMainsEnabled() && method.isAppMain()) {
                 getEntryPointsManager().addEntryPoint(method, false);
               }
             }
 
-            @Override public void visitClass(RefClass aClass) {
+            @Override public void visitClass(@NotNull RefClass aClass) {
               if (isAddAppletEnabled() && aClass.isApplet() ||
                   isAddServletEnabled() && aClass.isServlet()) {
                 getEntryPointsManager().addEntryPoint(aClass, false);
@@ -399,11 +407,12 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     if (isAddNonJavaUsedEnabled()) {
       checkForReachables();
       ProgressManager.getInstance().runProcess(new Runnable() {
+        @Override
         public void run() {
           final RefFilter filter = new StrictUnreferencedFilter(UnusedDeclarationInspection.this);
           final PsiSearchHelper helper = PsiSearchHelper.SERVICE.getInstance(getRefManager().getProject());
           getRefManager().iterate(new RefJavaVisitor() {
-            @Override public void visitElement(final RefEntity refEntity) {
+            @Override public void visitElement(@NotNull final RefEntity refEntity) {
               if (refEntity instanceof RefClass && filter.accepts((RefClass)refEntity)) {
                 findExternalClassReferences((RefClass)refEntity);
               }
@@ -421,6 +430,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
               if (qualifiedName != null) {
                 helper.processUsagesInNonJavaFiles(qualifiedName,
                                                    new PsiNonJavaFileReferenceProcessor() {
+                                                     @Override
                                                      public boolean process(PsiFile file, int startOffset, int endOffset) {
                                                        getEntryPointsManager().addEntryPoint(refElement, false);
                                                        return false;
@@ -509,6 +519,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       super(tool);
     }
 
+    @Override
     public int getElementProblemCount(RefJavaElement refElement) {
       final int problemCount = super.getElementProblemCount(refElement);
       if (problemCount > -1) return problemCount;
@@ -521,6 +532,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       super(tool);
     }
 
+    @Override
     public int getElementProblemCount(final RefJavaElement refElement) {
       final int problemCount = super.getElementProblemCount(refElement);
       if (problemCount > - 1) return problemCount;
@@ -529,19 +541,20 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     }
   }
 
-  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
+  @Override
+  public boolean queryExternalUsagesRequests(@NotNull final InspectionManager manager) {
     checkForReachables();
     final RefFilter filter = myPhase == 1 ? new StrictUnreferencedFilter(this) : new RefUnreachableFilter(this);
     final boolean[] requestAdded = {false};
 
     getRefManager().iterate(new RefJavaVisitor() {
-      @Override public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (!(refEntity instanceof RefJavaElement)) return;
         if (refEntity instanceof RefClass && ((RefClass)refEntity).isAnonymous()) return;
         RefJavaElement refElement= (RefJavaElement)refEntity;
         if (filter.accepts(refElement) && !myProcessedSuspicious.contains(refElement)) {
           refEntity.accept(new RefJavaVisitor() {
-            @Override public void visitField(final RefField refField) {
+            @Override public void visitField(@NotNull final RefField refField) {
               myProcessedSuspicious.add(refField);
               PsiField psiField = refField.getElement();
               if (isSerializationImplicitlyUsedField(psiField)) {
@@ -549,6 +562,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
               }
               else {
                 getJavaContext().enqueueFieldUsagesProcessor(refField, new GlobalJavaInspectionContext.UsagesProcessor() {
+                  @Override
                   public boolean process(PsiReference psiReference) {
                     getEntryPointsManager().addEntryPoint(refField, false);
                     return false;
@@ -558,7 +572,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
               }
             }
 
-            @Override public void visitMethod(final RefMethod refMethod) {
+            @Override public void visitMethod(@NotNull final RefMethod refMethod) {
               myProcessedSuspicious.add(refMethod);
               if (refMethod instanceof RefImplicitConstructor) {
                 visitClass(refMethod.getOwnerClass());
@@ -579,10 +593,11 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
               }
             }
 
-            @Override public void visitClass(final RefClass refClass) {
+            @Override public void visitClass(@NotNull final RefClass refClass) {
               myProcessedSuspicious.add(refClass);
               if (!refClass.isAnonymous()) {
                 getJavaContext().enqueueDerivedClassesProcessor(refClass, new GlobalJavaInspectionContext.DerivedClassesProcessor() {
+                  @Override
                   public boolean process(PsiClass inheritor) {
                     getEntryPointsManager().addEntryPoint(refClass, false);
                     return false;
@@ -590,6 +605,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
                 });
 
                 getJavaContext().enqueueClassUsagesProcessor(refClass, new GlobalJavaInspectionContext.UsagesProcessor() {
+                  @Override
                   public boolean process(PsiReference psiReference) {
                     getEntryPointsManager().addEntryPoint(refClass, false);
                     return false;
@@ -624,6 +640,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   private void enqueueMethodUsages(final RefMethod refMethod) {
     if (refMethod.getSuperMethods().isEmpty()) {
       getJavaContext().enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
+        @Override
         public boolean process(PsiReference psiReference) {
           getEntryPointsManager().addEntryPoint(refMethod, false);
           return false;
@@ -641,6 +658,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     return getContext().getExtension(GlobalJavaInspectionContext.CONTEXT);
   }
 
+  @Override
   public RefFilter getFilter() {
     if (myFilter == null) {
       myFilter = new WeakUnreferencedFilter(this);
@@ -648,6 +666,8 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     return myFilter;
   }
 
+  @Override
+  @NotNull
   public HTMLComposerImpl getComposer() {
     if (myComposer == null) {
       myComposer = new DeadHTMLComposer(this);
@@ -656,7 +676,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
   }
 
   @Override
-  public void exportResults(@NotNull final Element parentNode, RefEntity refEntity) {
+  public void exportResults(@NotNull final Element parentNode, @NotNull RefEntity refEntity) {
     if (!(refEntity instanceof RefJavaElement)) return;
     final WeakUnreferencedFilter filter = new WeakUnreferencedFilter(this);
     if (!getIgnoredRefElements().contains(refEntity) && filter.accepts((RefJavaElement)refEntity)) {
@@ -665,14 +685,12 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       if (element == null) return;
       @NonNls Element problemClassElement = new Element(InspectionsBundle.message("inspection.export.results.problem.element.tag"));
 
-      if (refEntity instanceof RefElement) {
-        final RefElement refElement = (RefElement)refEntity;
-        final HighlightSeverity severity = getCurrentSeverity(refElement);
-        final String attributeKey =
-          getTextAttributeKey(refElement.getRefManager().getProject(), severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
-        problemClassElement.setAttribute("severity", severity.myName);
-        problemClassElement.setAttribute("attribute_key", attributeKey);
-      }
+      final RefElement refElement = (RefElement)refEntity;
+      final HighlightSeverity severity = getCurrentSeverity(refElement);
+      final String attributeKey =
+        getTextAttributeKey(refElement.getRefManager().getProject(), severity, ProblemHighlightType.LIKE_UNUSED_SYMBOL);
+      problemClassElement.setAttribute("severity", severity.myName);
+      problemClassElement.setAttribute("attribute_key", attributeKey);
 
       problemClassElement.addContent(InspectionsBundle.message("inspection.export.results.dead.code"));
       element.addContent(problemClassElement);
@@ -695,13 +713,14 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     }
   }
 
-  public QuickFixAction[] getQuickFixes(final RefEntity[] refElements) {
+  @Override
+  public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements) {
     return myQuickFixActions;
   }
 
   @NotNull
   @Override
-  public JobDescriptor[] getJobDescriptors(GlobalInspectionContext context) {
+  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context) {
     return new JobDescriptor[]{((GlobalInspectionContextImpl)context).BUILD_GRAPH, ((GlobalInspectionContextImpl)context).FIND_EXTERNAL_USAGES};
   }
 
@@ -745,6 +764,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     }
   }
 
+  @Override
   @Nullable
   public IntentionAction findQuickFixes(final CommonProblemDescriptor descriptor, final String hint) {
     if (descriptor instanceof ProblemDescriptor) {
@@ -762,6 +782,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       super(DELETE_QUICK_FIX, AllIcons.Actions.Cancel, KeyStroke.getKeyStroke(KeyEvent.VK_DELETE, 0), UnusedDeclarationInspection.this);
     }
 
+    @Override
     protected boolean applyFix(final RefElement[] refElements) {
       if (!super.applyFix(refElements)) return false;
       final ArrayList<PsiElement> psiElements = new ArrayList<PsiElement>();
@@ -773,9 +794,11 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       }
 
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           final Project project = getContext().getProject();
-          SafeDeleteHandler.invoke(project, PsiUtilBase.toPsiElementArray(psiElements), false, new Runnable() {
+          SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElements), false, new Runnable() {
+            @Override
             public void run() {
               removeElements(refElements, project, UnusedDeclarationInspection.this);
             }
@@ -794,23 +817,28 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       myElement = element;
     }
 
+    @Override
     @NotNull
     public String getText() {
       return DELETE_QUICK_FIX;
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getText();
     }
 
+    @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
       return true;
     }
 
+    @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       if (myElement != null && myElement.isValid()) {
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             SafeDeleteHandler
               .invoke(myElement.getProject(), new PsiElement[]{PsiTreeUtil.getParentOfType(myElement, PsiModifierListOwner.class)}, false);
@@ -819,6 +847,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       }
     }
 
+    @Override
     public boolean startInWriteAction() {
       return true;
     }
@@ -830,6 +859,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
             UnusedDeclarationInspection.this);
     }
 
+    @Override
     protected boolean applyFix(RefElement[] refElements) {
       if (!super.applyFix(refElements)) return false;
       ArrayList<RefElement> deletedRefs = new ArrayList<RefElement>(1);
@@ -857,26 +887,31 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       myElement = element;
     }
 
+    @Override
     @NotNull
     public String getText() {
       return COMMENT_OUT_QUICK_FIX;
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getText();
     }
 
+    @Override
     public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
       return true;
     }
 
+    @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
       if (myElement != null && myElement.isValid()) {
-        commentOutDead(PsiTreeUtil.getParentOfType(myElement, PsiModifierListOwner.class));        
+        commentOutDead(PsiTreeUtil.getParentOfType(myElement, PsiModifierListOwner.class));
       }
     }
 
+    @Override
     public boolean startInWriteAction() {
       return true;
     }
@@ -887,6 +922,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       super(InspectionsBundle.message("inspection.dead.code.entry.point.quickfix"), null, KeyStroke.getKeyStroke(KeyEvent.VK_INSERT, 0), UnusedDeclarationInspection.this);
     }
 
+    @Override
     protected boolean applyFix(RefElement[] refElements) {
       final EntryPointsManager entryPointsManager = getEntryPointsManager();
       for (RefElement refElement : refElements) {
@@ -904,7 +940,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
 
     // Cleanup previous reachability information.
     getRefManager().iterate(new RefJavaVisitor() {
-      @Override public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefJavaElement) {
           final RefJavaElementImpl refElement = (RefJavaElementImpl)refEntity;
           if (!getContext().isToCheckMember(refElement, UnusedDeclarationInspection.this)) return;
@@ -941,7 +977,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       myInstantiatedClassesCount = 0;
     }
 
-    @Override public void visitMethod(RefMethod method) {
+    @Override public void visitMethod(@NotNull RefMethod method) {
       if (!myProcessedMethods.contains(method)) {
         // Process class's static intitializers
         if (method.isStatic() || method.isConstructor()) {
@@ -971,7 +1007,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       }
     }
 
-    @Override public void visitClass(RefClass refClass) {
+    @Override public void visitClass(@NotNull RefClass refClass) {
       boolean alreadyActive = refClass.isReachable();
       ((RefClassImpl)refClass).setReachable(true);
 
@@ -983,7 +1019,7 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
       addInstantiatedClass(refClass);
     }
 
-    @Override public void visitField(RefField field) {
+    @Override public void visitField(@NotNull RefField field) {
       // Process class's static intitializers.
       if (!field.isReachable()) {
         makeContentReachable((RefJavaElementImpl)field);
@@ -1056,11 +1092,13 @@ public class UnusedDeclarationInspection extends FilteringInspectionTool {
     }
   }
 
+  @Override
   public void updateContent() {
     checkForReachables();
     super.updateContent();
   }
 
+  @Override
   public InspectionNode createToolNode(final InspectionRVContentProvider provider, final InspectionTreeNode parentNode, final boolean showStructure) {
     final InspectionNode toolNode = super.createToolNode(provider, parentNode, showStructure);
     final EntryPointsNode entryPointsNode = new EntryPointsNode(this);

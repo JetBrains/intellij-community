@@ -134,7 +134,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     if (Extensions.getExtensions(FileEditorAssociateFinder.EP_NAME).length > 0) {
       myListenerList.add(new FileEditorManagerAdapter() {
         @Override
-        public void selectionChanged(FileEditorManagerEvent event) {
+        public void selectionChanged(@NotNull FileEditorManagerEvent event) {
           EditorsSplitters splitters = getSplitters();
           openAssociatedFile(event.getNewFile(), splitters.getCurrentWindow(), splitters);
         }
@@ -164,6 +164,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return myPanels;
   }
 
+  @NotNull
   public EditorsSplitters getMainSplitters() {
     initUI();
 
@@ -311,7 +312,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return FileUtil.getLocationRelativeToUserHome(file.getPresentableUrl());
   }
 
-  public void updateFilePresentation(VirtualFile file) {
+  public void updateFilePresentation(@NotNull VirtualFile file) {
     if (!isFileOpen(file)) return;
 
     updateFileColor(file);
@@ -505,10 +506,12 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return getActiveSplitters(true).getResult().getCurrentFile();
   }
 
+  @NotNull
   public AsyncResult<EditorWindow> getActiveWindow() {
     return _getActiveWindow(false);
   }
 
+  @NotNull
   private AsyncResult<EditorWindow> _getActiveWindow(boolean now) {
     final AsyncResult<EditorWindow> result = new AsyncResult<EditorWindow>();
     getActiveSplitters(now).doWhenDone(new AsyncResult.Handler<EditorsSplitters>() {
@@ -926,11 +929,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return editorHistoryManager.getSelectedProvider(file);
   }
 
+  @NotNull
   @Override
-  public ActionCallback notifyPublisher(final Runnable runnable) {
+  public ActionCallback notifyPublisher(@NotNull final Runnable runnable) {
     final IdeFocusManager focusManager = IdeFocusManager.getInstance(myProject);
     final ActionCallback done = new ActionCallback();
     return myBusyObject.execute(new ActiveRunnable() {
+      @NotNull
       @Override
       public ActionCallback run() {
         focusManager.doWhenFocusSettlesDown(new ExpirableRunnable.ForProject(myProject) {
@@ -946,7 +951,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   @Override
-  public void setSelectedEditor(VirtualFile file, String fileEditorProviderId) {
+  public void setSelectedEditor(@NotNull VirtualFile file, String fileEditorProviderId) {
     EditorWithProviderComposite composite = getCurrentEditorWithProviderComposite(file);
     if (composite == null) {
       final List<EditorWithProviderComposite> composites = getEditorComposites(file);
@@ -1080,7 +1085,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   @Nullable
-  public Editor openTextEditor(final OpenFileDescriptor descriptor, final boolean focusEditor) {
+  public Editor openTextEditor(@NotNull final OpenFileDescriptor descriptor, final boolean focusEditor) {
     final Collection<FileEditor> fileEditors = openEditor(descriptor, focusEditor);
     for (FileEditor fileEditor : fileEditors) {
       if (fileEditor instanceof TextEditor) {
@@ -1146,6 +1151,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     return selectedEditors.toArray(new FileEditor[selectedEditors.size()]);
   }
 
+  @NotNull
   public EditorsSplitters getSplitters() {
     EditorsSplitters active = getActiveSplitters(true).getResult();
     return active == null ? getMainSplitters() : active;
@@ -1459,7 +1465,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       });
     }
   }
-  
+
   @NotNull
   private static Trinity<VirtualFile, FileEditor, FileEditorProvider> extract(@Nullable EditorComposite composite) {
     final VirtualFile file;
@@ -1478,7 +1484,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
     return new Trinity<VirtualFile, FileEditor, FileEditorProvider>(file, editor, provider);
   }
-  
+
   public boolean isChanged(@NotNull final EditorComposite editor) {
     final FileStatusManager fileStatusManager = FileStatusManager.getInstance(myProject);
     if (fileStatusManager != null) {
@@ -1796,7 +1802,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   @NotNull
-  public VirtualFile[] getSiblings(VirtualFile file) {
+  public VirtualFile[] getSiblings(@NotNull VirtualFile file) {
     return getOpenFiles();
   }
 

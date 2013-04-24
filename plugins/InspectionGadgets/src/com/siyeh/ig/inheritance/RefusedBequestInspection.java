@@ -17,6 +17,7 @@ package com.siyeh.ig.inheritance;
 
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
+import com.intellij.xml.util.XmlStringUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -47,8 +48,8 @@ public class RefusedBequestInspection extends BaseInspection {
   public JComponent createOptionsPanel() {
     //noinspection HardCodedStringLiteral
     return new SingleCheckboxOptionsPanel(
-      "<html>" + InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option") +
-      "</html>", this, "ignoreEmptySuperMethods");
+      XmlStringUtil.wrapInHtml(InspectionGadgetsBundle.message("refused.bequest.ignore.empty.super.methods.option"))
+      , this, "ignoreEmptySuperMethods");
   }
 
   @Override

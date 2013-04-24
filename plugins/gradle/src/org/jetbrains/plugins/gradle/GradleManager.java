@@ -17,17 +17,25 @@ package org.jetbrains.plugins.gradle;
 
 import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.SimpleJavaParameters;
+import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.build.ExternalSystemBuildManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.module.EmptyModuleType;
+import com.intellij.openapi.module.JavaModuleType;
+import com.intellij.openapi.module.ModuleType;
+import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
@@ -68,7 +76,7 @@ public class GradleManager
       protected List<GradleProjectResolverExtension> compute() {
         List<GradleProjectResolverExtension> result = ContainerUtilRt.newArrayList();
         Collections.addAll(result, GradleProjectResolverExtension.EP_NAME.getExtensions());
-        ExternalSystemUtil.orderAwareSort(result);
+        ExternalSystemApiUtil.orderAwareSort(result);
         return result;
       }
     };
@@ -149,8 +157,10 @@ public class GradleManager
 
   @Override
   public void enhanceParameters(@NotNull SimpleJavaParameters parameters) throws ExecutionException {
+    PathsList classPath = parameters.getClassPath();
+    
     // Gradle i18n bundle.
-    ExternalSystemUtil.addBundle(parameters.getClassPath(), GradleBundle.PATH_TO_BUNDLE, GradleBundle.class);
+    ExternalSystemApiUtil.addBundle(classPath, GradleBundle.PATH_TO_BUNDLE, GradleBundle.class);
 
     // Gradle tool jars.
     String toolingApiPath = PathManager.getJarPathForClass(ProjectConnection.class);
@@ -170,7 +180,18 @@ public class GradleManager
       throw new ExecutionException("Can't find gradle libraries at " + gradleJarsDir.getAbsolutePath());
     }
     for (String jar : gradleJars) {
-      parameters.getClassPath().add(new File(gradleJarsDir, jar).getAbsolutePath());
+      classPath.add(new File(gradleJarsDir, jar).getAbsolutePath());
+    }
+    
+    List<String> additionalEntries = ContainerUtilRt.newArrayList();
+    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(JavaProjectData.class));
+    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(LanguageLevel.class));
+    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(StdModuleTypes.class));
+    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(JavaModuleType.class));
+    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(ModuleType.class));
+    ContainerUtilRt.addIfNotNull(additionalEntries, PathUtil.getJarPathForClass(EmptyModuleType.class));
+    for (String entry : additionalEntries) {
+      classPath.add(entry);
     }
 
     for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {

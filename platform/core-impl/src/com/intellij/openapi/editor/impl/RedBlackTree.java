@@ -299,7 +299,7 @@ public abstract class RedBlackTree<K> {
     protected Node<K> parent = null;
 
     private volatile byte myFlags;
-    private static final int COLOR_FLAG = 0;
+    protected static final int COLOR_FLAG = 0;
 
     protected boolean isFlagSet(int flag) {
       int state = myFlags >> flag;
@@ -307,6 +307,7 @@ public abstract class RedBlackTree<K> {
     }
 
     protected void setFlag(int flag, boolean value) {
+      assert flag < 8;
       int state = value ? 1 : 0;
       myFlags = (byte)(myFlags & ~(1 << flag) | state << flag);
     }

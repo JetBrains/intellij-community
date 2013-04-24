@@ -145,6 +145,8 @@ public final class HgCommandExecutor {
       return null;
     }
 
+    logCommand(operation, arguments);
+
     final List<String> cmdLine = new LinkedList<String>();
     cmdLine.add(myVcs.getGlobalSettings().getHgExecutable());
     if (repo != null) {
@@ -214,13 +216,13 @@ public final class HgCommandExecutor {
     String warnings = warningReceiver.getWarnings();
     result.setWarnings(warnings);
 
-    log(operation, arguments, result);
+    logResult(result);
     return result;
   }
 
   // logging to the Version Control console (without extensions and configs)
   @SuppressWarnings("UseOfSystemOutOrSystemErr")
-  private void log(@NotNull String operation, @Nullable List<String> arguments, @NotNull HgCommandResult result) {
+  private void logCommand(@NotNull String operation, @Nullable List<String> arguments) {
     if (myProject.isDisposed()) {
       return;
     }
@@ -244,10 +246,15 @@ public final class HgCommandExecutor {
     else {
       LOG.debug(cmdString);
     }
+  }
+
+  @SuppressWarnings("UseOfSystemOutOrSystemErr")
+  private void logResult(@NotNull HgCommandResult result) {
+    final boolean unitTestMode = ApplicationManager.getApplication().isUnitTestMode();
 
     // log output if needed
     if (!result.getRawOutput().isEmpty()) {
-      if (isUnitTestMode) {
+      if (unitTestMode) {
         System.out.print(result.getRawOutput() + "\n");
       }
       if (!myIsSilent && myShowOutput) {
@@ -261,7 +268,7 @@ public final class HgCommandExecutor {
 
     // log error
     if (!result.getRawError().isEmpty()) {
-      if (isUnitTestMode) {
+      if (unitTestMode) {
         System.out.print(result.getRawError() + "\n");
       }
       if (!myIsSilent) {

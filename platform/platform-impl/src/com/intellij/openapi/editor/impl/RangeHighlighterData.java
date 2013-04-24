@@ -71,6 +71,7 @@ abstract class RangeHighlighterData {
   }
 
   private void setFlag(@FlagConstant int flag, boolean value) {
+    assert flag < 8;
     int state = value ? 1 : 0;
     myFlags = (byte)(myFlags & ~(1 << flag) | state << flag);
   }

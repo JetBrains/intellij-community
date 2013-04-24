@@ -74,7 +74,7 @@ public class XmlElementFactoryImpl extends XmlElementFactory {
     XmlTag tag = document.getRootTag();
     assert tag != null;
     XmlAttribute[] attributes = tag.getAttributes();
-    LOG.assertTrue(attributes.length == 1, tag.getText());
+    LOG.assertTrue(attributes.length == 1, document.getText());
     return attributes[0];
   }
 

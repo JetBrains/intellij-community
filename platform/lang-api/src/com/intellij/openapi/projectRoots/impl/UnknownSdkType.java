@@ -44,26 +44,31 @@ public class UnknownSdkType extends SdkType{
     if (instance == null) {
       instance = new UnknownSdkType(typeName);
       ourTypeNameToInstanceMap.put(typeName, instance);
-    }                                                                  
+    }
     return instance;
   }
 
+  @Override
   public String suggestHomePath() {
     return null;
   }
 
+  @Override
   public boolean isValidSdkHome(String path) {
     return false;
   }
 
+  @Override
   public String getVersionString(String sdkHome) {
     return "";
   }
 
+  @Override
   public String suggestSdkName(String currentSdkName, String sdkHome) {
     return currentSdkName;
   }
 
+  @Override
   public AdditionalDataConfigurable createAdditionalDataConfigurable(SdkModel sdkModel, SdkModificator sdkModificator) {
     return null;
   }
@@ -80,13 +85,16 @@ public class UnknownSdkType extends SdkType{
     return null;
   }
 
+  @Override
   public void saveAdditionalData(SdkAdditionalData additionalData, Element additional) {
   }
 
+  @Override
   public String getPresentableName() {
     return ProjectBundle.message("sdk.unknown.name");
   }
 
+  @Override
   public Icon getIcon() {
     return AllIcons.Nodes.UnknownJdk;
   }

@@ -47,7 +47,7 @@ public class RngXmlHighlightingTest extends HighlightingTestBase {
         ExternalResourceManagerImpl.addTestResource("http://www.w3.org/1999/XSL/Format", toAbsolutePath("highlighting/rnc/fo/main.rnc"), myTestRootDisposable);
         ExternalResourceManagerImpl.addTestResource("http://docbook.org/ns/docbook", toAbsolutePath("highlighting/docbook.rng"), myTestRootDisposable);
         ExternalResourceManagerImpl.addTestResource("urn:intelliForm:AttachmentFilter", toAbsolutePath("highlighting/attachment-filter.rng"), myTestRootDisposable);
-        ExternalResourceManagerImpl.addTestResource("http://www.w3.org/1999/xhtml/html5", toAbsolutePath("highlighting/html5/xhtml5.rnc"), myTestRootDisposable);
+        ExternalResourceManagerImpl.addTestResource("http://www.w3.org/1999/xhtml", toAbsolutePath("highlighting/html5/xhtml5.rnc"), myTestRootDisposable);
 
         m.addIgnoredResource("urn:intelliForm:Spaces");
         m.addIgnoredResource("http://www.w3.org/1999/xlink");

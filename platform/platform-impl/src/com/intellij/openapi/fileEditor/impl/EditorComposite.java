@@ -177,7 +177,7 @@ public abstract class EditorComposite implements Disposable {
 
     myFileEditorManager.addFileEditorManagerListener(new FileEditorManagerAdapter() {
       @Override
-      public void selectionChanged(final FileEditorManagerEvent event) {
+      public void selectionChanged(@NotNull final FileEditorManagerEvent event) {
         final VirtualFile oldFile = event.getOldFile();
         final VirtualFile newFile = event.getNewFile();
         if (Comparing.equal(oldFile, newFile) && Comparing.equal(getFile(), newFile)) {
@@ -436,7 +436,7 @@ public abstract class EditorComposite implements Disposable {
           return result == null ? Color.black : result;
         }
       });
-      
+
       add(component);
     }
   }

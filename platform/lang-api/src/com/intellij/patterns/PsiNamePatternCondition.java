@@ -33,6 +33,7 @@ public class PsiNamePatternCondition<T extends PsiElement> extends PropertyPatte
     return getValuePattern();
   }
 
+  @Override
   public String getPropertyValue(@NotNull final Object o) {
     return o instanceof PsiNamedElement ? ((PsiNamedElement)o).getName() : null;
   }

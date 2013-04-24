@@ -17,30 +17,35 @@ package org.jetbrains.jps.incremental;
 
 /**
  * Use this exception to signal that the build must be stopped
- * If Throwable cause of the stop is provided, the reason is assumed to be an unexpected internal error,
- * so the corresponding error message "internal error" with stacktrace is additionally reported
  *
- * If no Throwable cause is provided, it is assumed that all the errors were reported by the builder previously and the build is just stopped
- * Optional message, if provided, is reported as a progress message.
+ * If message is provided, the build is stopped and specified message is shown as an error message and exception is logged to log.
+ * If only Throwable cause of the stop is provided, the reason is assumed to be an unexpected internal error,
+ * so the corresponding error message "internal error" with stacktrace is reported
  */
 public class ProjectBuildException extends Exception{
-  public ProjectBuildException() {
-  }
 
+  /**
+   * Causes the build to be stopped and error message shown 
+   * @param message a message to be shown as an error 
+   */
   public ProjectBuildException(String message) {
     super(message);
   }
 
+  /**
+   * Causes the build to be stopped and error message shown 
+   * @param message a message to be shown as an error
+   * @param cause additional information that caused error; its stacktrace will be only logged and not shown in UI 
+   */
   public ProjectBuildException(String message, Throwable cause) {
     super(message, cause);
   }
 
+  /**
+   * Such exception is treated as an unexpected internal error, so the trace of the 'cause' will be shown in UI
+   * @param cause
+   */
   public ProjectBuildException(Throwable cause) {
     super(cause);
-  }
-
-  @Override
-  public Throwable fillInStackTrace() {
-    return this;
   }
 }

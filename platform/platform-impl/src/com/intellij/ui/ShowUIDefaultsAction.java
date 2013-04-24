@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -97,7 +97,7 @@ public class ShowUIDefaultsAction extends AnAction implements DumbAware {
           public boolean editCellAt(int row, int column, EventObject e) {
             if (isCellEditable(row, column) && e instanceof MouseEvent) {
               final Object color = getValueAt(row, column);
-              final Color newColor = ColorPicker.showDialog(this, "Choose Color", (Color)color, true, null);
+              final Color newColor = ColorPicker.showDialog(this, "Choose Color", (Color)color, true, null, true);
               if (newColor != null) {
                 final ColorUIResource colorUIResource = new ColorUIResource(newColor);
                 final Object key = getValueAt(row, 0);

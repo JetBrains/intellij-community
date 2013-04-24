@@ -14,7 +14,6 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import com.intellij.openapi.externalSystem.service.task.ExternalSystemTaskManager;
 import org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager;
-import com.intellij.openapi.externalSystem.ui.ExternalProjectStructureTreeModel;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 import org.jetbrains.plugins.gradle.util.GradleUtil;
 
@@ -40,10 +39,11 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
   protected void doUpdate(@NotNull AnActionEvent event, @NotNull Project project, @NotNull String linkedProjectPath) {
     String message = myErrorMessage.get();
     if (message != null) {
-      ExternalProjectStructureTreeModel model = GradleUtil.getProjectStructureTreeModel(event.getDataContext());
-      if (model != null) {
-        model.rebuild();
-      }
+      // TODO den implement
+//      ExternalProjectStructureTreeModel model = GradleUtil.getProjectStructureTreeModel(event.getDataContext());
+//      if (model != null) {
+//        model.rebuild();
+//      }
       GradleConfigNotificationManager notificationManager = ServiceManager.getService(project, GradleConfigNotificationManager.class);
       notificationManager.processRefreshError(message);
       myErrorMessage.set(null);

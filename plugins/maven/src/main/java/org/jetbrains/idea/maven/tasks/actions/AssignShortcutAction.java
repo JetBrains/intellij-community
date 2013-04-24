@@ -54,7 +54,11 @@ public class AssignShortcutAction extends MavenAction {
     if (project == null) return null;
 
     final List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(context);
-    String goal = (goals == null || goals.size() != 1) ? null : goals.get(0);
+    if (goals == null || goals.size() != 1) {
+      return null;
+    }
+
+    String goal = goals.get(0);
 
     return getShortcutsManager(context).getActionId(project.getPath(), goal);
   }

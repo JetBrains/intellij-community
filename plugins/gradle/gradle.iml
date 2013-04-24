@@ -279,7 +279,8 @@
         </SOURCES>
       </library>
     </orderEntry>
-    <orderEntry type="module" module-name="external-system" />
+    <orderEntry type="module" module-name="external-system-impl" />
+    <orderEntry type="module" module-name="external-system-api" />
   </component>
 </module>
 

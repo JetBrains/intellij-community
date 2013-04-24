@@ -31,6 +31,7 @@ import com.intellij.ui.table.JBTable;
 import com.intellij.util.IconUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
 
@@ -65,8 +66,9 @@ public class IssueNavigationConfigurationPanel extends JPanel implements Searcha
     myLinkTable = new JBTable();
     myLinkTable.getEmptyText().setText(VcsBundle.message("issue.link.no.patterns"));
     reset();
-    add(new JLabel("<html>" + ApplicationNamesInfo.getInstance().getFullProductName() + " will search for the specified patterns in " +
-                   "checkin comments and link them to issues in your issue tracker:</html>"), BorderLayout.NORTH);
+    add(new JLabel(
+      XmlStringUtil.wrapInHtml(ApplicationNamesInfo.getInstance().getFullProductName() + " will search for the specified patterns in " +
+                               "checkin comments and link them to issues in your issue tracker:")), BorderLayout.NORTH);
     add(
       ToolbarDecorator.createDecorator(myLinkTable)
         .setAddAction(new AnActionButtonRunnable() {

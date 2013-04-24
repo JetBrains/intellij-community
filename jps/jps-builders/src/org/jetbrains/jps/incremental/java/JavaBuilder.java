@@ -193,6 +193,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
       throw e;
     }
     catch (Exception e) {
+      LOG.info(e);
       String message = e.getMessage();
       if (message == null) {
         final ByteArrayOutputStream out = new ByteArrayOutputStream();
@@ -206,7 +207,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
         message = "Internal error: \n" + out.toString();
       }
       context.processMessage(new CompilerMessage(BUILDER_NAME, BuildMessage.Kind.ERROR, message));
-      throw new ProjectBuildException(message, e);
+      throw new StopBuildException();
     }
   }
 
@@ -285,7 +286,7 @@ public class JavaBuilder extends ModuleLevelBuilder {
           if (!compiledOk) {
             diagnosticSink.report(new PlainMessageDiagnostic(Diagnostic.Kind.OTHER, "Errors occurred while compiling module '" + chunkName + "'"));
           }
-          throw new ProjectBuildException(
+          throw new StopBuildException(
             "Compilation failed: errors: " + diagnosticSink.getErrorCount() + "; warnings: " + diagnosticSink.getWarningCount()
           );
         }

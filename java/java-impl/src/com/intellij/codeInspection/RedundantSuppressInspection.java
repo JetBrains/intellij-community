@@ -48,7 +48,7 @@ import java.util.*;
 public class RedundantSuppressInspection extends GlobalInspectionTool{
   private BidirectionalMap<String, QuickFix> myQuickFixes = null;
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.RedundantSuppressInspection");
-  
+
   public boolean IGNORE_ALL = false;
 
   @NotNull
@@ -73,7 +73,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
   }
 
   @Override
-  public void writeSettings(Element node) throws WriteExternalException {
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (IGNORE_ALL) {
       super.writeSettings(node);
     }
@@ -84,7 +84,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
                             final GlobalInspectionContext globalContext,
                             final ProblemDescriptionsProcessor problemDescriptionsProcessor) {
     globalContext.getRefManager().iterate(new RefJavaVisitor() {
-      @Override public void visitClass(RefClass refClass) {
+      @Override public void visitClass(@NotNull RefClass refClass) {
         if (!globalContext.shouldCheck(refClass, RedundantSuppressInspection.this)) return;
         CommonProblemDescriptor[] descriptors = checkElement(refClass, manager, globalContext.getProject());
         if (descriptors != null) {

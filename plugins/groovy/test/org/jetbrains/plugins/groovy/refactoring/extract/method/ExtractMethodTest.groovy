@@ -160,4 +160,6 @@ public class ExtractMethodTest extends LightGroovyTestCase {
   public void testNonIdentifierName() {doTest('f*f')}
 
   public void testAutoSelectExpression() { doTest() }
+
+  public void testUnassignedVar() { doTest() }
 }

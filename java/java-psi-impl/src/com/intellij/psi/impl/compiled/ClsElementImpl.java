@@ -31,7 +31,6 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -228,15 +227,10 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
     PsiElement mirror = getMirror();
     if (mirror != null) return mirror.getText();
 
-    StringBuilder buffer = StringBuilderSpinAllocator.alloc();
-    try {
-      appendMirrorText(0, buffer);
-      LOG.error("Mirror wasn't set for " + this + ", expected text:\n" + buffer);
-      return buffer.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(buffer);
-    }
+    StringBuilder buffer = new StringBuilder();
+    appendMirrorText(0, buffer);
+    LOG.error("Mirror wasn't set for " + this + ", expected text:\n" + buffer);
+    return buffer.toString();
   }
 
   @Override

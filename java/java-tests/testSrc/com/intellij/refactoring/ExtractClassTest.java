@@ -6,6 +6,7 @@ package com.intellij.refactoring;
 
 import com.intellij.JavaTestUtil;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
@@ -42,10 +43,16 @@ public class ExtractClassTest extends MultiFileTestCase{
   }
 
   private void doTestMethod(final String methodName, final String conflicts) throws Exception {
+    doTestMethod(methodName, conflicts, "Test");
+  }
+
+  private void doTestMethod(final String methodName,
+                            final String conflicts,
+                            final String qualifiedName) throws Exception {
     doTest(new PerformAction() {
       @Override
       public void performAction(final VirtualFile rootDir, final VirtualFile rootAfter) throws Exception {
-        PsiClass aClass = myJavaFacade.findClass("Test", GlobalSearchScope.projectScope(myProject));
+        PsiClass aClass = myJavaFacade.findClass(qualifiedName, GlobalSearchScope.projectScope(myProject));
 
         assertNotNull("Class Test not found", aClass);
 
@@ -99,6 +106,14 @@ public class ExtractClassTest extends MultiFileTestCase{
 
   public void testEnumSwitch() throws Exception {
     doTestMethod();
+  }
+
+  public void testImplicitReferenceTypeParameters() throws Exception {
+    doTestMethod();
+  }
+
+  public void testStaticImports() throws Exception {
+    doTestMethod("foo", null, "foo.Test");
   }
 
   public void testNoConstructorParams() throws Exception {
@@ -161,7 +176,8 @@ public class ExtractClassTest extends MultiFileTestCase{
   private static void doTest(final PsiClass aClass, final ArrayList<PsiMethod> methods, final ArrayList<PsiField> fields, final String conflicts,
                              boolean generateGettersSetters) {
     try {
-      ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), "", null, "Extracted", null, generateGettersSetters, Collections.<MemberInfo>emptyList());
+      ExtractClassProcessor processor = new ExtractClassProcessor(aClass, fields, methods, new ArrayList<PsiClass>(), StringUtil.getPackageName(aClass.getQualifiedName()), null,
+                                                                  "Extracted", null, generateGettersSetters, Collections.<MemberInfo>emptyList());
       processor.run();
       LocalFileSystem.getInstance().refresh(false);
       FileDocumentManager.getInstance().saveAllDocuments();

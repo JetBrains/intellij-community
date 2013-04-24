@@ -178,8 +178,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       return PsiReference.EMPTY_ARRAY;
     }
     XmlAttributeValue value = locationAttr.getValueElement();
-    assert value != null;
-    return getLocationReferences(namespace, value);
+    return value == null ? PsiReference.EMPTY_ARRAY : getLocationReferences(namespace, value);
   }
 
   private static PsiReference[] getLocationReferences(String namespace, XmlAttributeValue value) {

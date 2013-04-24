@@ -26,22 +26,22 @@ import java.awt.*;
 
 public class DialogWrapperPeerFactoryImpl extends DialogWrapperPeerFactory {
   @Override
-  public DialogWrapperPeer createPeer(DialogWrapper wrapper, @Nullable Project project, boolean canBeParent) {
+  public DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @Nullable Project project, boolean canBeParent) {
     return new DialogWrapperPeerImpl(wrapper, project, canBeParent);
   }
 
   @Override
-  public DialogWrapperPeer createPeer(DialogWrapper wrapper, boolean canBeParent) {
+  public DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, boolean canBeParent) {
     return new DialogWrapperPeerImpl(wrapper, canBeParent);
   }
 
   @Override
-  public DialogWrapperPeer createPeer(final DialogWrapper wrapper, final boolean canBeParent, final boolean applicationModalIfPossible) {
+  public DialogWrapperPeer createPeer(@NotNull final DialogWrapper wrapper, final boolean canBeParent, final boolean applicationModalIfPossible) {
     return new DialogWrapperPeerImpl(wrapper, canBeParent, applicationModalIfPossible);
   }
 
   @Override
-  public DialogWrapperPeer createPeer(DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
+  public DialogWrapperPeer createPeer(@NotNull DialogWrapper wrapper, @NotNull Component parent, boolean canBeParent) {
     return new DialogWrapperPeerImpl(wrapper, parent, canBeParent);
   }
 }

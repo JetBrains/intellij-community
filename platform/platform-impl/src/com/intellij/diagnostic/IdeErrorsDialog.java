@@ -45,6 +45,7 @@ import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -536,8 +537,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
       return;
     }
 
-    StringBuilder text = new StringBuilder("<html>");
-    String url = null;
+    StringBuilder text = new StringBuilder();
     PluginId pluginId = findPluginId(throwable);
     if (pluginId == null || ApplicationInfoEx.getInstanceEx().isEssentialPlugin(pluginId.getIdString())) {
       if (throwable instanceof AbstractMethodError) {
@@ -554,6 +554,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
                                                      DateFormatUtil.formatPrettyDateTime(message.getDate()),
                                                      myMergedMessages.get(myIndex).size()));
 
+    String url = null;
     if (message.isSubmitted()) {
       final SubmittedReportInfo info = message.getSubmissionInfo();
       url = getUrl(info, getSubmitter(throwable) instanceof ITNReporter);
@@ -566,7 +567,7 @@ public class IdeErrorsDialog extends DialogWrapper implements MessagePoolListene
     else if (!message.isRead()) {
       text.append(" ").append(DiagnosticBundle.message("error.list.message.unread"));
     }
-    myInfoLabel.setHtmlText(text.toString());
+    myInfoLabel.setHtmlText(XmlStringUtil.wrapInHtml(text));
     myInfoLabel.setHyperlinkTarget(url);
   }
 

@@ -21,7 +21,7 @@ import java.util.List;
 
 /**
  * Represents a PSI element visitor which recursively visits the children of the element
- * on which the visit was started. 
+ * on which the visit was started.
  */
 public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
   private final boolean myVisitAllFileRoots;
@@ -34,6 +34,7 @@ public abstract class PsiRecursiveElementVisitor extends PsiElementVisitor {
     myVisitAllFileRoots = visitAllFileRoots;
   }
 
+  @Override
   public void visitElement(final PsiElement element) {
     ProgressIndicatorProvider.checkCanceled();
     element.acceptChildren(this);

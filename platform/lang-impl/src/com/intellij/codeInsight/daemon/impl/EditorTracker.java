@@ -74,7 +74,7 @@ public class EditorTracker extends AbstractProjectComponent {
     myIdeFrame = ((WindowManagerEx)myWindowManager).getFrame(myProject);
     myProject.getMessageBus().connect(myProject).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         if (myIdeFrame == null || myIdeFrame.getFocusOwner() == null) return;
         setActiveWindow(myIdeFrame);
       }
@@ -165,7 +165,7 @@ public class EditorTracker extends AbstractProjectComponent {
       List<Editor> editorsList = myWindowToEditorsMap.get(oldWindow);
       boolean removed = editorsList.remove(editor);
       LOG.assertTrue(removed);
-      
+
       if (editorsList.isEmpty()) {
         myWindowToEditorsMap.remove(oldWindow);
         final WindowFocusListener listener = myWindowToWindowFocusListenerMap.remove(oldWindow);

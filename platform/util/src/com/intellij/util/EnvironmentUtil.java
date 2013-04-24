@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,9 +44,8 @@ public class EnvironmentUtil {
   private EnvironmentUtil() {
   }
 
-  @SuppressWarnings("UnusedDeclaration")
-  @Deprecated
-  @NonNls
+  /** @deprecated use {@link #getEnvironmentProperties()} (to remove in IDEA 14) */
+  @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
   public static Map<String, String> getEnviromentProperties() {
     return getEnvironmentProperties();
   }

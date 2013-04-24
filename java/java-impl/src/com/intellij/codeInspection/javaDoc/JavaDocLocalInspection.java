@@ -309,7 +309,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   }
 
   @Override
-  public void writeSettings(Element node) throws WriteExternalException {
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
     super.writeSettings(node);
     if (myIgnoreSimpleAccessors) {
       final Element option = new Element(IGNORE_ACCESSORS_ATTR_NAME);
@@ -319,7 +319,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
   }
 
   @Override
-  public void readSettings(Element node) throws InvalidDataException {
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
     final Element ignoreAccessorsTag = node.getChild(IGNORE_ACCESSORS_ATTR_NAME);
     if (ignoreAccessorsTag != null) {
@@ -653,7 +653,7 @@ public class JavaDocLocalInspection extends BaseLocalInspectionTool {
                                             InspectionsBundle.message("inspection.javadoc.method.problem.missing.tag.description", "<code>@param " + valueElement.getText() + "</code>"),
                                             manager, isOnTheFly));
             }
-  
+
           }
         }
       }

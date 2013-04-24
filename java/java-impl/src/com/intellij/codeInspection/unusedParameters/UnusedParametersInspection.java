@@ -112,7 +112,7 @@ public class UnusedParametersInspection extends GlobalJavaInspectionTool {
     final AnalysisScope scope = manager.getScope();
     manager.iterate(new RefJavaVisitor() {
       @Override
-      public void visitElement(RefEntity refEntity) {
+      public void visitElement(@NotNull RefEntity refEntity) {
         if (refEntity instanceof RefMethod) {
           RefMethod refMethod = (RefMethod)refEntity;
           final PsiModifierListOwner element = refMethod.getElement();

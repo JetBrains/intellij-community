@@ -136,12 +136,16 @@ public class FrameDiffTool implements DiffTool {
   @Nullable
   private DiffPanelImpl createDiffPanelIfShouldShow(DiffRequest request, Window window, @NotNull Disposable parentDisposable,
                                                            final boolean showMessage) {
-    DiffPanelImpl diffPanel = (DiffPanelImpl)DiffManagerImpl.createDiffPanel(request, window, parentDisposable, this);
+    DiffPanelImpl diffPanel = createDiffPanelImpl(request, window, parentDisposable);
     if (checkNoDifferenceAndNotify(diffPanel, request, window, showMessage)) {
       Disposer.dispose(diffPanel);
       diffPanel = null;
     }
     return diffPanel;
+  }
+
+  protected DiffPanelImpl createDiffPanelImpl(@NotNull DiffRequest request, @Nullable Window window, @NotNull Disposable parentDisposable) {
+    return (DiffPanelImpl) DiffManagerImpl.createDiffPanel(request, window, parentDisposable, this);
   }
 
   static void showDiffDialog(DialogBuilder builder, Collection hints) {

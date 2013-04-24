@@ -26,6 +26,7 @@ import com.intellij.ui.components.JBLabel;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.ui.GridBag;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -53,7 +54,7 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
   private JBCheckBox myGlobalCheckbox;
 
   GitUserNameNotDefinedDialog(@NotNull Project project,
-                                        @NotNull Collection<VirtualFile> rootsWithUndefinedProps, 
+                                        @NotNull Collection<VirtualFile> rootsWithUndefinedProps,
                                         @NotNull Collection<VirtualFile> allRootsAffectedByCommit,
                                         @NotNull Map<VirtualFile, Pair<String, String>> rootsWithDefinedProps) {
     super(project, false);
@@ -64,7 +65,7 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
 
     setTitle("Git User Name Is Not Defined");
     setOKButtonText("Set and Commit");
-    
+
     init();
   }
 
@@ -103,10 +104,10 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
 
   @Override
   protected JComponent createCenterPanel() {
-    
+
     JLabel icon = new JLabel(UIUtil.getWarningIcon(), SwingConstants.LEFT);
     JLabel description = new JLabel(getMessageText());
-    
+
     myNameTextField = new JTextField(20);
     JBLabel nameLabel = new JBLabel("Name: ");
     nameLabel.setDisplayedMnemonic('n');
@@ -133,7 +134,7 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
       .setDefaultInsets(new Insets(0, 0, DEFAULT_VGAP, DEFAULT_HGAP))
       .setDefaultAnchor(GridBagConstraints.LINE_START)
       .setDefaultFill(GridBagConstraints.HORIZONTAL);
-    
+
     rootPanel.add(description, g.nextLine().next().coverLine(3).pady(DEFAULT_HGAP));
     rootPanel.add(icon, g.nextLine().next().coverColumn(3));
     rootPanel.add(nameLabel, g.next().fillCellNone().insets(new Insets(0, 6, DEFAULT_VGAP, DEFAULT_HGAP)));
@@ -159,7 +160,7 @@ class GitUserNameNotDefinedDialog extends DialogWrapper {
     for (VirtualFile root : myRootsWithUndefinedProps) {
       text += root.getPresentableUrl() + "<br/>";
     }
-    return "<html>" + text + "</html>";
+    return XmlStringUtil.wrapInHtml(text);
   }
 
   public String getUserName() {

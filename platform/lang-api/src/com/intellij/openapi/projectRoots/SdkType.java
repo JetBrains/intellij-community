@@ -54,7 +54,7 @@ public abstract class SdkType implements SdkTypeId {
   /**
    * If a path selected in the file chooser is not a valid SDK home path, returns an adjusted version of the path that is again
    * checked for validity.
-   * 
+   *
    * @param homePath the path selected in the file chooser.
    * @return the path to be used as the SDK home.
    */
@@ -99,6 +99,7 @@ public abstract class SdkType implements SdkTypeId {
     return null;
   }
 
+  @Override
   @Nullable
   public SdkAdditionalData loadAdditionalData(Sdk currentSdk, Element additional) {
     return loadAdditionalData(additional);
@@ -109,6 +110,7 @@ public abstract class SdkType implements SdkTypeId {
     myName = name;
   }
 
+  @Override
   public String getName() {
     return myName;
   }
@@ -150,6 +152,7 @@ public abstract class SdkType implements SdkTypeId {
 
   public FileChooserDescriptor getHomeChooserDescriptor() {
     final FileChooserDescriptor descriptor = new FileChooserDescriptor(false, true, false, false, false, false) {
+      @Override
       public void validateSelectedFiles(VirtualFile[] files) throws Exception {
         if (files.length != 0){
           final String selectedPath = files[0].getPath();

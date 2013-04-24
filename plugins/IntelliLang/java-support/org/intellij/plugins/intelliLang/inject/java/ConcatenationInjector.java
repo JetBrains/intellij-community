@@ -142,7 +142,7 @@ public class ConcatenationInjector implements ConcatenationAwareInjector {
                                       boolean unparsable) {
         InjectorUtils.registerInjection(language, list, containingFile, registrar);
         InjectorUtils.registerSupport(mySupport, settingsAvailable, registrar);
-        if (unparsable) InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, Boolean.TRUE);
+        InjectorUtils.putInjectedFileUserData(registrar, InjectedLanguageUtil.FRANKENSTEIN_INJECTION, unparsable ? Boolean.TRUE : null);
       }
 
       @Override

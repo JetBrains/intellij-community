@@ -17,6 +17,7 @@ package com.intellij.openapi.project;
 
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.caches.FileContent;
+import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
@@ -233,12 +234,35 @@ class CacheUpdateRunner {
             }
           };
           try {
-            if (myProcessInReadAction) {
-              myApplication.runReadAction(action);
-            }
-            else {
-              action.run();
-            }
+            ProgressManager.getInstance().runProcess(new Runnable() {
+              @Override
+              public void run() {
+                if (myProcessInReadAction) {
+                  myApplication.runReadAction(action);
+                }
+                else {
+                  action.run();
+                }
+              }
+            }, new DelegatingProgressIndicator(myInnerIndicator) {
+               boolean myStarted;
+
+               @Override
+               public void start() {
+                 myStarted = true;
+               }
+
+               @Override
+               public void stop() {
+                 myStarted = false;
+               }
+
+               @Override
+               public boolean isRunning() {
+                 return myStarted;
+               }
+             }
+            );
           }
           catch (ProcessCanceledException e) {
             myQueue.pushback(fileContent);

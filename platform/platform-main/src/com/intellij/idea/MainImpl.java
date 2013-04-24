@@ -83,7 +83,8 @@ public class MainImpl {
     // http://weblogs.java.net/blog/shan_man/archive/2005/06/improved_drag_g.html
     System.setProperty("sun.swing.enableImprovedDragGesture", "");
 
-    final Logger LOG = Logger.getInstance(LOG_CATEGORY);
+    Logger LOG = Logger.getInstance(LOG_CATEGORY);
+    StartupUtil.fixProcessEnvironment(LOG);
     StartupUtil.loadSystemLibraries(LOG);
 
     startApplication(args);

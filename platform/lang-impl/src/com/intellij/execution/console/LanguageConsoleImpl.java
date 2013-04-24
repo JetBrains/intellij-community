@@ -401,19 +401,30 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
     final DocumentEx history = myHistoryViewer.getDocument();
     final int oldHistoryLength = history.getTextLength();
     appendToHistoryDocument(history, sb.toString());
-    assert oldHistoryLength + offsets[i] == history.getTextLength()
+
+    assert oldHistoryLength + offsets[i] >= history.getTextLength()
       : "unexpected history length " + oldHistoryLength + " " + offsets[i] + " " + history.getTextLength();
+
+    if (oldHistoryLength + offsets[i] != history.getTextLength()) {
+      // due to usage of cyclic buffer old text can be dropped
+      final int correction = oldHistoryLength + offsets[i] - history.getTextLength();
+      for (i = 0; i < offsets.length; ++i) {
+        offsets[i] -= correction;
+      }
+    }
     LOG.debug("printToHistory(): text processed");
     final MarkupModel markupModel = DocumentMarkupModel.forDocument(history, myProject, true);
     i = 0;
     for (final Pair<String, TextAttributes> pair : attributedText) {
-      markupModel.addRangeHighlighter(
-        oldHistoryLength + offsets[i],
-        oldHistoryLength + offsets[i+1],
-        HighlighterLayer.SYNTAX,
-        pair.getSecond(),
-        HighlighterTargetArea.EXACT_RANGE
-      );
+      if (offsets[i] >= 0) {
+        markupModel.addRangeHighlighter(
+          oldHistoryLength + offsets[i],
+          oldHistoryLength + offsets[i+1],
+          HighlighterLayer.SYNTAX,
+          pair.getSecond(),
+          HighlighterTargetArea.EXACT_RANGE
+        );
+      }
       ++i;
     }
     LOG.debug("printToHistory(): markup added");
@@ -620,7 +631,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
   private void installEditorFactoryListener() {
     final FileEditorManagerAdapter fileEditorListener = new FileEditorManagerAdapter() {
       @Override
-      public void fileOpened(FileEditorManager source, VirtualFile file) {
+      public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         if (!Comparing.equal(file, myVirtualFile) || myConsoleEditor == null) return;
         Editor selectedTextEditor = source.getSelectedTextEditor();
         for (FileEditor fileEditor : source.getAllEditors(file)) {
@@ -642,7 +653,7 @@ public class LanguageConsoleImpl implements Disposable, TypeSafeDataProvider {
       }
 
       @Override
-      public void fileClosed(FileEditorManager source, VirtualFile file) {
+      public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {
         if (!Comparing.equal(file, myVirtualFile)) return;
         if (myUiUpdateRunnable != null && !Boolean.TRUE.equals(file.getUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN))) {
           if (myCurrentEditor != null && myCurrentEditor.isDisposed()) myCurrentEditor = null;

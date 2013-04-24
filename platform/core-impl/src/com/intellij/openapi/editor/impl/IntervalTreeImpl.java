@@ -51,7 +51,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
   protected static class IntervalNode<E extends MutableInterval> extends RedBlackTree.Node<E> implements MutableInterval {
     private volatile int myStart;
     private volatile int myEnd;
-    private static final int ATTACHED_TO_TREE_FLAG = 2; // true if the node is inserted to the tree
+    private static final int ATTACHED_TO_TREE_FLAG = COLOR_FLAG+1; // true if the node is inserted to the tree
     protected final List<Getter<E>> intervals;
     protected int maxEnd; // max of all intervalEnd()s among all children.
     protected int delta;  // delta of startOffset. getStartOffset() = myStartOffset + Sum of deltas up to root
@@ -268,7 +268,7 @@ public abstract class IntervalTreeImpl<T extends MutableInterval> extends RedBla
       return myEnd = end;
     }
 
-    private static final int VALID_FLAG = 1;
+    protected static final int VALID_FLAG = ATTACHED_TO_TREE_FLAG + 1;
     @Override
     public boolean isValid() {
       return isFlagSet(VALID_FLAG);

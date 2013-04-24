@@ -212,8 +212,8 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       public void visitReferenceExpression(final PsiReferenceExpression expression) {
         super.visitReferenceExpression(expression);
         final PsiElement resolved = expression.resolve();
-        if (resolved != null) {
-          dependsOnMoved[0] |= isInMovedElement(resolved);
+        if (resolved instanceof PsiMember) {
+          dependsOnMoved[0] |= !((PsiMember)resolved).hasModifierProperty(PsiModifier.STATIC) && isInMovedElement(resolved);
         }
       }
     });
@@ -550,6 +550,7 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
     final Project project = psiManager.getProject();
     final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
     final Iterable<PsiReference> calls = ReferencesSearch.search(method, scope);
+    final String fullyQualifiedName = StringUtil.getQualifiedName(newPackageName, newClassName);
     for (PsiReference reference : calls) {
       final PsiElement referenceElement = reference.getElement();
 
@@ -557,8 +558,15 @@ public class ExtractClassProcessor extends FixableUsagesRefactoringProcessor {
       if (parent instanceof PsiMethodCallExpression) {
         final PsiMethodCallExpression call = (PsiMethodCallExpression)parent;
         if (!isInMovedElement(call)) {
-          final String fullyQualifiedName = StringUtil.getQualifiedName(newPackageName, newClassName);
           usages.add(new RetargetStaticMethodCall(call, fullyQualifiedName));
+        }
+      } else if (parent instanceof PsiImportStaticStatement) {
+        final PsiJavaCodeReferenceElement importReference = ((PsiImportStaticStatement)parent).getImportReference();
+        if (importReference != null) {
+          final PsiElement qualifier = importReference.getQualifier();
+          if (qualifier instanceof PsiJavaCodeReferenceElement) {
+            usages.add(new ReplaceClassReference((PsiJavaCodeReferenceElement)qualifier, fullyQualifiedName));
+          }
         }
       }
     }

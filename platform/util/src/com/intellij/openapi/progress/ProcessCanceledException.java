@@ -23,4 +23,12 @@ public class ProcessCanceledException extends RuntimeException {
   public ProcessCanceledException(Throwable cause) {
     super(cause);
   }
+
+  @Override
+  public synchronized Throwable fillInStackTrace() {
+    // https://wikis.oracle.com/display/HotSpotInternals/PerformanceTechniques
+    // http://www.javaspecialists.eu/archive/Issue129.html
+    // http://java-performance.info/throwing-an-exception-in-java-is-very-slow/
+    return this;
+  }
 }

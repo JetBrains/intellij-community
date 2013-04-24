@@ -29,6 +29,7 @@ public class PsiReferenceProcessorAdapter extends ReadActionProcessor<PsiReferen
     myProcessor = processor;
   }
 
+  @Override
   public boolean processInReadAction(final PsiReference psiReference) {
     return myProcessor.execute(psiReference);
   }

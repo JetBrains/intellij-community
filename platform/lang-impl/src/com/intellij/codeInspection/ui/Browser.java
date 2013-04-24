@@ -39,6 +39,7 @@ import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -422,7 +423,7 @@ class Browser extends JPanel {
       showEmpty();
       return;
     }
-    @NonNls StringBuffer page = new StringBuffer("<html>");
+    @NonNls StringBuffer page = new StringBuffer();
     page.append("<table border='0' cellspacing='0' cellpadding='0' width='100%'>");
     page.append("<tr><td colspan='2'>");
     HTMLComposer.appendHeading(page, InspectionsBundle.message("inspection.tool.in.browser.id.title"));
@@ -446,9 +447,10 @@ class Browser extends JPanel {
       page.append(UIUtil.getHtmlBody(description));
 
       page.append("</td></tr></table>");
-      myHTMLViewer.setText(page.toString());
+      myHTMLViewer.setText(XmlStringUtil.wrapInHtml(page));
       setupStyle();
-    } finally {
+    }
+    finally {
       myCurrentEntity = null;
     }
   }

@@ -56,6 +56,7 @@ public abstract class CustomCodeStyleSettings implements Cloneable {
     }
   }
 
+  @Override
   public Object clone() {
     try {
       return super.clone();

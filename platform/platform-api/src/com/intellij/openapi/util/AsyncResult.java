@@ -18,9 +18,12 @@ package com.intellij.openapi.util;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
+import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 
 public class AsyncResult<T> extends ActionCallback {
+  private static final Logger LOG = Logger.getInstance(AsyncResult.class);
+
   protected T myResult;
 
   @NotNull
@@ -50,8 +53,16 @@ public class AsyncResult<T> extends ActionCallback {
   }
 
   @NotNull
+  public ActionCallback subCallback(@NotNull Consumer<T> doneHandler) {
+    ActionCallback subCallback = new ActionCallback();
+    doWhenDone(new SubCallbackDoneCallback<T>(subCallback, doneHandler)).notifyWhenRejected(subCallback);
+    return subCallback;
+  }
+
+  @NotNull
   public AsyncResult<T> doWhenDone(@NotNull final Handler<T> handler) {
     doWhenDone(new Runnable() {
+      @Override
       public void run() {
         handler.run(myResult);
       }
@@ -62,6 +73,7 @@ public class AsyncResult<T> extends ActionCallback {
   @NotNull
   public AsyncResult<T> doWhenDone(@NotNull final Consumer<T> consumer) {
     doWhenDone(new Runnable() {
+      @Override
       public void run() {
         consumer.consume(myResult);
       }
@@ -72,8 +84,20 @@ public class AsyncResult<T> extends ActionCallback {
   @NotNull
   public AsyncResult<T> doWhenRejected(@NotNull final Handler<T> handler) {
     doWhenRejected(new Runnable() {
+      @Override
       public void run() {
         handler.run(myResult);
+      }
+    });
+    return this;
+  }
+
+  @NotNull
+  public AsyncResult<T> doWhenRejected(@NotNull final PairConsumer<T, String> consumer) {
+    doWhenRejected(new Runnable() {
+      @Override
+      public void run() {
+        consumer.consume(myResult, myError);
       }
     });
     return this;
@@ -111,8 +135,6 @@ public class AsyncResult<T> extends ActionCallback {
 
   // we don't use inner class, avoid memory leak, we don't want to hold this result while dependent is computing
   private static class SubResultDoneCallback<Result, SubResult, AsyncSubResult extends AsyncResult<SubResult>> implements Handler<Result> {
-    private static final Logger LOG = Logger.getInstance(SubResultDoneCallback.class);
-
     private final AsyncSubResult subResult;
     private final Function<Result, SubResult> doneHandler;
 
@@ -133,6 +155,29 @@ public class AsyncResult<T> extends ActionCallback {
         return;
       }
       subResult.setDone(v);
+    }
+  }
+
+  private static class SubCallbackDoneCallback<Result> implements Handler<Result> {
+    private final ActionCallback subResult;
+    private final Consumer<Result> doneHandler;
+
+    public SubCallbackDoneCallback(ActionCallback subResult, Consumer<Result> doneHandler) {
+      this.subResult = subResult;
+      this.doneHandler = doneHandler;
+    }
+
+    @Override
+    public void run(Result result) {
+      try {
+        doneHandler.consume(result);
+      }
+      catch (Throwable e) {
+        subResult.reject(e.getMessage());
+        LOG.error(e);
+        return;
+      }
+      subResult.setDone();
     }
   }
 }

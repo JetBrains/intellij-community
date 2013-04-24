@@ -33,15 +33,18 @@ public class UnionPackageSet extends PackageSetBase {
            (mySecondSet instanceof PackageSetBase ? ((PackageSetBase)mySecondSet).contains(file, holder) : mySecondSet.contains(getPsiFile(file, holder), holder));
   }
 
+  @Override
   @NotNull
   public PackageSet createCopy() {
     return new UnionPackageSet(myFirstSet.createCopy(), mySecondSet.createCopy());
   }
 
+  @Override
   public int getNodePriority() {
     return 3;
   }
 
+  @Override
   @NotNull
   public String getText() {
     return myFirstSet.getText() + "||" + mySecondSet.getText();

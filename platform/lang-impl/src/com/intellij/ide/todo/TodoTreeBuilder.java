@@ -116,7 +116,10 @@ public abstract class TodoTreeBuilder extends AbstractTreeBuilder {
     setTreeStructure(todoTreeStructure);
     todoTreeStructure.setTreeBuilder(this);
 
-    rebuildCache();
+    try {
+      rebuildCache();
+    }
+    catch (IndexNotReadyException ignore) {}
     initRootNode();
 
     Object selectableElement = todoTreeStructure.getFirstSelectableElement();

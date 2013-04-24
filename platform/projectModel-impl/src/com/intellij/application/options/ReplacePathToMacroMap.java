@@ -19,7 +19,6 @@ import com.intellij.openapi.components.PathMacroMap;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import gnu.trove.TObjectIntHashMap;
@@ -105,15 +104,7 @@ public class ReplacePathToMacroMap extends PathMacroMap {
       return text;
     }
 
-    final StringBuilder newText = StringBuilderSpinAllocator.alloc();
-    try {
-      newText.append(myMacroMap.get(path));
-      newText.append(text.substring(endOfOccurrence));
-      return newText.toString();
-    }
-    finally {
-      StringBuilderSpinAllocator.dispose(newText);
-    }
+    return myMacroMap.get(path) + text.substring(endOfOccurrence);
   }
 
   @Override
@@ -131,51 +122,46 @@ public class ReplacePathToMacroMap extends PathMacroMap {
 
     if (path.isEmpty()) return text;
 
-    final StringBuilder newText = StringBuilderSpinAllocator.alloc();
-    try {
-      final boolean isWindowsRoot = path.endsWith(":/");
-      int i = 0;
-      while (i < text.length()) {
-        int occurrenceOfPath = caseSensitive ? text.indexOf(path, i) : StringUtil.indexOfIgnoreCase(text, path, i);
-        if (occurrenceOfPath >= 0) {
-          int endOfOccurrence = occurrenceOfPath + path.length();
-          if (!isWindowsRoot &&
-              endOfOccurrence < text.length() &&
-              text.charAt(endOfOccurrence) != '/' &&
-              text.charAt(endOfOccurrence) != '\"' &&
-              text.charAt(endOfOccurrence) != ' ' &&
-              !text.substring(endOfOccurrence).startsWith("!/")) {
+    final StringBuilder newText = new StringBuilder();
+    final boolean isWindowsRoot = path.endsWith(":/");
+    int i = 0;
+    while (i < text.length()) {
+      int occurrenceOfPath = caseSensitive ? text.indexOf(path, i) : StringUtil.indexOfIgnoreCase(text, path, i);
+      if (occurrenceOfPath >= 0) {
+        int endOfOccurrence = occurrenceOfPath + path.length();
+        if (!isWindowsRoot &&
+            endOfOccurrence < text.length() &&
+            text.charAt(endOfOccurrence) != '/' &&
+            text.charAt(endOfOccurrence) != '\"' &&
+            text.charAt(endOfOccurrence) != ' ' &&
+            !text.substring(endOfOccurrence).startsWith("!/")) {
+          newText.append(text.substring(i, endOfOccurrence));
+          i = endOfOccurrence;
+          continue;
+        }
+        if (occurrenceOfPath > 0) {
+          char prev = text.charAt(occurrenceOfPath - 1);
+          if (Character.isLetterOrDigit(prev) || prev == '_') {
             newText.append(text.substring(i, endOfOccurrence));
             i = endOfOccurrence;
             continue;
           }
-          if (occurrenceOfPath > 0) {
-            char prev = text.charAt(occurrenceOfPath - 1);
-            if (Character.isLetterOrDigit(prev) || prev == '_') {
-              newText.append(text.substring(i, endOfOccurrence));
-              i = endOfOccurrence;
-              continue;
-            }
-          }
-        }
-        if (occurrenceOfPath < 0) {
-          if (newText.length() == 0) {
-            return text;
-          }
-          newText.append(text.substring(i));
-          break;
-        }
-        else {
-          newText.append(text.substring(i, occurrenceOfPath));
-          newText.append(myMacroMap.get(path));
-          i = occurrenceOfPath + path.length();
         }
       }
-      return newText.toString();
+      if (occurrenceOfPath < 0) {
+        if (newText.length() == 0) {
+          return text;
+        }
+        newText.append(text.substring(i));
+        break;
+      }
+      else {
+        newText.append(text.substring(i, occurrenceOfPath));
+        newText.append(myMacroMap.get(path));
+        i = occurrenceOfPath + path.length();
+      }
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(newText);
-    }
+    return newText.toString();
   }
 
   private static int getIndex(final Map.Entry<String, String> s) {

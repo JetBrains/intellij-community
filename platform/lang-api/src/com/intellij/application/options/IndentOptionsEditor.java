@@ -31,6 +31,7 @@ public class IndentOptionsEditor extends OptionGroup {
   protected JLabel myTabSizeLabel;
   protected JLabel myIndentLabel;
 
+  @Override
   public JPanel createPanel() {
     addComponents();
 

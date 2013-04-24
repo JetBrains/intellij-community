@@ -42,7 +42,7 @@ public class PositionPanel extends EditorBasedWidget implements StatusBarWidget.
   }
 
   @Override
-  public void selectionChanged(FileEditorManagerEvent event) {
+  public void selectionChanged(@NotNull FileEditorManagerEvent event) {
     updatePosition(getEditor());
   }
 

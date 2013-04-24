@@ -21,7 +21,6 @@ import com.intellij.openapi.util.Clock;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.foundation.Foundation;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 
 import java.text.DateFormat;
@@ -386,92 +385,87 @@ public class DateFormatUtil {
 
   @NotNull
   static String convertMacPattern(@NotNull String macPattern) {
-    StringBuilder b = StringBuilderSpinAllocator.alloc();
-    try {
-      boolean isSpecial = false;
-      boolean isText = false;
+    StringBuilder b = new StringBuilder();
+    boolean isSpecial = false;
+    boolean isText = false;
 
-      for (int i = 0; i < macPattern.length(); i++) {
-        char c = macPattern.charAt(i);
+    for (int i = 0; i < macPattern.length(); i++) {
+      char c = macPattern.charAt(i);
+      if (isSpecial) {
+        String replacement = null;
+        if (c == '%') replacement = "$";
+
+        // year
+        if (c == 'y') replacement = "yy";
+        if (c == 'Y') replacement = "yyyy";
+
+        // month
+        if (c == 'm') replacement = "MM";
+        if (c == 'b') replacement = "MMM";
+        if (c == 'B') replacement = "MMMMM";
+
+        // day on month
+        if (c == 'e') replacement = "d";
+        if (c == 'd') replacement = "dd";
+
+        // day of year
+        if (c == 'j') replacement = "DDD";
+
+        // day of week
+        if (c == 'w') replacement = "E"; // SimpleDateFormat doesn't support formatting weekday as a number
+        if (c == 'a') replacement = "EEE";
+        if (c == 'A') replacement = "EEEEE";
+
+        // hours
+        if (c == 'H') replacement = "HH"; // 0-24
+        //if (c == 'H') replacement = "k"; // 1-24
+        //if (c == 'I') replacement = "K"; // 0-11
+        if (c == 'I') replacement = "hh"; // 1-12
+
+        //minute
+        if (c == 'M') replacement = "mm";
+        //second
+        if (c == 'S') replacement = "ss";
+        //millisecond
+        if (c == 'F') replacement = "SSS";
+
+        //millisecond
+        if (c == 'p') replacement = "a";
+
+        //millisecond
+        if (c == 'Z') replacement = "zzz";
+        //millisecond
+        if (c == 'z') replacement = "Z";
+
+
+        //todo if (c == 'c') replacement = "MMMMM";, x, X
+
+        if (replacement == null) replacement = "'?%" + c + "?'";
+
+        b.append(replacement);
+        isSpecial = false;
+      }
+      else {
+        isSpecial = c == '%';
         if (isSpecial) {
-          String replacement = null;
-          if (c == '%') replacement = "$";
-
-          // year
-          if (c == 'y') replacement = "yy";
-          if (c == 'Y') replacement = "yyyy";
-
-          // month
-          if (c == 'm') replacement = "MM";
-          if (c == 'b') replacement = "MMM";
-          if (c == 'B') replacement = "MMMMM";
-
-          // day on month
-          if (c == 'e') replacement = "d";
-          if (c == 'd') replacement = "dd";
-
-          // day of year
-          if (c == 'j') replacement = "DDD";
-
-          // day of week
-          if (c == 'w') replacement = "E"; // SimpleDateFormat doesn't support formatting weekday as a number
-          if (c == 'a') replacement = "EEE";
-          if (c == 'A') replacement = "EEEEE";
-
-          // hours
-          if (c == 'H') replacement = "HH"; // 0-24
-          //if (c == 'H') replacement = "k"; // 1-24
-          //if (c == 'I') replacement = "K"; // 0-11
-          if (c == 'I') replacement = "hh"; // 1-12
-
-          //minute
-          if (c == 'M') replacement = "mm";
-          //second
-          if (c == 'S') replacement = "ss";
-          //millisecond
-          if (c == 'F') replacement = "SSS";
-
-          //millisecond
-          if (c == 'p') replacement = "a";
-
-          //millisecond
-          if (c == 'Z') replacement = "zzz";
-          //millisecond
-          if (c == 'z') replacement = "Z";
-
-
-          //todo if (c == 'c') replacement = "MMMMM";, x, X
-
-          if (replacement == null) replacement = "'?%" + c + "?'";
-
-          b.append(replacement);
-          isSpecial = false;
+          isText = false;
         }
         else {
-          isSpecial = c == '%';
-          if (isSpecial) {
-            isText = false;
+          if (isText) {
+            if (c == '\'' || Character.isWhitespace(c)) b.append('\'');
+            isText = !Character.isWhitespace(c);
           }
           else {
-            if (isText) {
-              if (c == '\'' || Character.isWhitespace(c)) b.append('\'');
-              isText = !Character.isWhitespace(c);
-            }
-            else {
-              if (c == '\'' || !Character.isWhitespace(c)) b.append('\'');
-              isText = !Character.isWhitespace(c) && c != '\'';
-            }
-            b.append(c);
-
-            if (isText && i == macPattern.length() - 1) b.append('\'');
+            if (c == '\'' || !Character.isWhitespace(c)) b.append('\'');
+            isText = !Character.isWhitespace(c) && c != '\'';
           }
+          b.append(c);
+
+          if (isText && i == macPattern.length() - 1) b.append('\'');
         }
       }
-      return b.toString();
     }
-    finally {
-      StringBuilderSpinAllocator.dispose(b);
-    }
+    return b.toString();
   }
 
   /** @deprecated use {@linkplain DateFormatUtilRt#formatBuildDate(Calendar)} (to remove in IDEA 13) */

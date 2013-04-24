@@ -34,6 +34,7 @@ import com.intellij.openapi.wm.StatusBar;
 import com.intellij.openapi.wm.WindowManager;
 import com.intellij.openapi.wm.ex.StatusBarEx;
 import com.intellij.util.Alarm;
+import org.jetbrains.annotations.NotNull;
 
 public class StatusBarUpdater implements Disposable {
   private final Project myProject;
@@ -52,7 +53,7 @@ public class StatusBarUpdater implements Disposable {
 
     project.getMessageBus().connect(this).subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new FileEditorManagerAdapter() {
       @Override
-      public void selectionChanged(FileEditorManagerEvent event) {
+      public void selectionChanged(@NotNull FileEditorManagerEvent event) {
         updateLater();
       }
     });

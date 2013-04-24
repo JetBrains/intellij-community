@@ -61,13 +61,6 @@ public abstract class AbstractFavoritesListProvider<T> implements FavoritesListP
     };
   }
 
-  protected final void updateChildren() {
-    if (myProject.isDisposed()) return;
-    updateChildrenImpl();
-  }
-
-  protected abstract void updateChildrenImpl();
-
   @Override
   public String getListName(Project project) {
     return myListName;

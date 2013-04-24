@@ -99,7 +99,8 @@ public class BreakpointsFavoriteListProvider extends AbstractFavoritesListProvid
     }
   }
 
-  protected void updateChildrenImpl() {
+  private void updateChildren() {
+    if (myProject.isDisposed()) return;
     myChildren.clear();
     List<BreakpointItem> items = new ArrayList<BreakpointItem>();
     for (final BreakpointPanelProvider provider : myBreakpointPanelProviders) {

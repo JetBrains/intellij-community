@@ -29,5 +29,5 @@ public class JspHighlighterColors {
   public static final TextAttributesKey JSP_ACTION_AND_DIRECTIVE_NAME = TextAttributesKey.createTextAttributesKey("JSP_DIRECTIVE_NAME", DefaultLanguageHighlighterColors.KEYWORD);
   public static final TextAttributesKey JSP_ATTRIBUTE_NAME = TextAttributesKey.createTextAttributesKey("JSP_ATTRIBUTE_NAME", DefaultLanguageHighlighterColors.MARKUP_ATTRIBUTE);
   public static final TextAttributesKey JSP_ATTRIBUTE_VALUE = TextAttributesKey.createTextAttributesKey("JSP_ATTRIBUTE_VALUE", DefaultLanguageHighlighterColors.STRING);
-  public static final TextAttributesKey JSP_COMMENT = TextAttributesKey.createTextAttributesKey("JSP_COMMENT", JSP_ACTION_AND_DIRECTIVE_BACKGROUND);
+  public static final TextAttributesKey JSP_COMMENT = TextAttributesKey.createTextAttributesKey("JSP_COMMENT", DefaultLanguageHighlighterColors.BLOCK_COMMENT);
 }

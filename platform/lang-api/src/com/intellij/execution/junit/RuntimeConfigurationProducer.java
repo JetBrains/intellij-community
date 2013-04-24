@@ -34,7 +34,7 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Comparator;
 
 public abstract class RuntimeConfigurationProducer implements Comparable, Cloneable {
-  public static final ExtensionPointName<RuntimeConfigurationProducer> RUNTIME_CONFIGURATION_PRODUCER = ExtensionPointName.create("com.intellij.configurationProducer"); 
+  public static final ExtensionPointName<RuntimeConfigurationProducer> RUNTIME_CONFIGURATION_PRODUCER = ExtensionPointName.create("com.intellij.configurationProducer");
 
   public static final Comparator<RuntimeConfigurationProducer> COMPARATOR = new ProducerComparator();
   protected static final int PREFERED = -1;
@@ -98,6 +98,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
     return null;
   }
 
+  @Override
   public RuntimeConfigurationProducer clone() {
     assert !isClone;
     try {
@@ -128,7 +129,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   public ConfigurationType getConfigurationType() {
     return myConfigurationFactory.getType();
   }
-  
+
   public void perform(ConfigurationContext context, Runnable performRunnable){
     performRunnable.run();
   }
@@ -145,6 +146,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
   }
 
   private static class ProducerComparator implements Comparator<RuntimeConfigurationProducer> {
+    @Override
     public int compare(final RuntimeConfigurationProducer producer1, final RuntimeConfigurationProducer producer2) {
       final PsiElement psiElement1 = producer1.getSourceElement();
       final PsiElement psiElement2 = producer2.getSourceElement();
@@ -170,6 +172,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
       myConfig = config;
     }
 
+    @Override
     public SettingsEditor<? extends RunConfiguration> getConfigurationEditor() {
       return myConfig.getConfigurationEditor();
     }
@@ -180,6 +183,7 @@ public abstract class RuntimeConfigurationProducer implements Comparable, Clonea
       return new DelegatingRuntimeConfiguration<T>((T)myConfig.clone());
     }
 
+    @Override
     public RunProfileState getState(@NotNull Executor executor, @NotNull ExecutionEnvironment env) throws ExecutionException {
       return myConfig.getState(executor, env);
     }

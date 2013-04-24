@@ -59,7 +59,16 @@ public class InspectionManagerEx extends InspectionManager {
 
   public InspectionManagerEx(Project project) {
     myProject = project;
-    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+    if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      myContentManager = new NotNullLazyValue<ContentManager>() {
+        @NotNull
+        @Override
+        protected ContentManager compute() {
+          return ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, myProject);
+        }
+      };
+    }
+    else {
       myContentManager = new NotNullLazyValue<ContentManager>() {
         @NotNull
         @Override
@@ -71,15 +80,6 @@ public class InspectionManagerEx extends InspectionManager {
           toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowInspection);
           new ContentManagerWatcher(toolWindow, contentManager);
           return contentManager;
-        }
-      };
-    }
-    else {
-      myContentManager = new NotNullLazyValue<ContentManager>() {
-        @NotNull
-        @Override
-        protected ContentManager compute() {
-          return ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, myProject);
         }
       };
     }
@@ -102,7 +102,8 @@ public class InspectionManagerEx extends InspectionManager {
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
                                                    LocalQuickFix fix,
-                                                   ProblemHighlightType highlightType, boolean onTheFly) {
+                                                   @NotNull ProblemHighlightType highlightType,
+                                                   boolean onTheFly) {
     LocalQuickFix[] quickFixes = fix != null ? new LocalQuickFix[]{fix} : null;
     return createProblemDescriptor(psiElement, descriptionTemplate, onTheFly, quickFixes, highlightType);
   }
@@ -113,7 +114,7 @@ public class InspectionManagerEx extends InspectionManager {
                                                    @NotNull String descriptionTemplate,
                                                    boolean onTheFly,
                                                    LocalQuickFix[] fixes,
-                                                   ProblemHighlightType highlightType) {
+                                                   @NotNull ProblemHighlightType highlightType) {
     return createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, onTheFly, false);
   }
 
@@ -122,7 +123,9 @@ public class InspectionManagerEx extends InspectionManager {
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
                                                    LocalQuickFix[] fixes,
-                                                   ProblemHighlightType highlightType, boolean onTheFly, boolean isAfterEndOfLine) {
+                                                   @NotNull ProblemHighlightType highlightType,
+                                                   boolean onTheFly,
+                                                   boolean isAfterEndOfLine) {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, null, onTheFly);
   }
 
@@ -131,20 +134,24 @@ public class InspectionManagerEx extends InspectionManager {
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
                                                    @NotNull PsiElement endElement,
                                                    @NotNull String descriptionTemplate,
-                                                   ProblemHighlightType highlightType, boolean onTheFly, LocalQuickFix... fixes) {
+                                                   @NotNull ProblemHighlightType highlightType,
+                                                   boolean onTheFly,
+                                                   LocalQuickFix... fixes) {
     return new ProblemDescriptorImpl(startElement, endElement, descriptionTemplate, fixes, highlightType, false, null, onTheFly);
   }
 
+  @NotNull
   @Override
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                    final TextRange rangeInElement,
                                                    @NotNull final String descriptionTemplate,
-                                                   final ProblemHighlightType highlightType, boolean onTheFly, final LocalQuickFix... fixes) {
+                                                   @NotNull final ProblemHighlightType highlightType, boolean onTheFly, final LocalQuickFix... fixes) {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, rangeInElement, onTheFly);
   }
 
+  @NotNull
   @Override
-  public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement, @NotNull final String descriptionTemplate, final ProblemHighlightType highlightType,
+  public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement, @NotNull final String descriptionTemplate, @NotNull final ProblemHighlightType highlightType,
                                                    @Nullable final HintAction hintAction,
                                                    boolean onTheFly,
                                                    final LocalQuickFix... fixes) {
@@ -152,11 +159,12 @@ public class InspectionManagerEx extends InspectionManager {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction, onTheFly);
   }
 
+  @NotNull
   @Override
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
                                                    boolean showTooltip,
-                                                   ProblemHighlightType highlightType, boolean onTheFly, LocalQuickFix... fixes) {
+                                                   @NotNull ProblemHighlightType highlightType, boolean onTheFly, LocalQuickFix... fixes) {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, showTooltip, null,
                                      onTheFly);
   }
@@ -235,7 +243,7 @@ public class InspectionManagerEx extends InspectionManager {
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
                                                    LocalQuickFix fix,
-                                                   ProblemHighlightType highlightType) {
+                                                   @NotNull ProblemHighlightType highlightType) {
     LocalQuickFix[] quickFixes = fix != null ? new LocalQuickFix[]{fix} : null;
     return createProblemDescriptor(psiElement, descriptionTemplate, quickFixes, highlightType);
   }
@@ -246,7 +254,7 @@ public class InspectionManagerEx extends InspectionManager {
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
                                                    LocalQuickFix[] fixes,
-                                                   ProblemHighlightType highlightType) {
+                                                   @NotNull ProblemHighlightType highlightType) {
     return createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, false);
   }
 
@@ -256,7 +264,7 @@ public class InspectionManagerEx extends InspectionManager {
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
                                                    LocalQuickFix[] fixes,
-                                                   ProblemHighlightType highlightType,
+                                                   @NotNull ProblemHighlightType highlightType,
                                                    boolean isAfterEndOfLine) {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, null, true);
   }
@@ -267,38 +275,41 @@ public class InspectionManagerEx extends InspectionManager {
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
                                                    @NotNull PsiElement endElement,
                                                    @NotNull String descriptionTemplate,
-                                                   ProblemHighlightType highlightType,
+                                                   @NotNull ProblemHighlightType highlightType,
                                                    LocalQuickFix... fixes) {
     return new ProblemDescriptorImpl(startElement, endElement, descriptionTemplate, fixes, highlightType, false, null, true);
   }
 
+  @NotNull
   @Override
   @Deprecated
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                    final TextRange rangeInElement,
                                                    @NotNull final String descriptionTemplate,
-                                                   final ProblemHighlightType highlightType,
+                                                   @NotNull final ProblemHighlightType highlightType,
                                                    final LocalQuickFix... fixes) {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, rangeInElement, true);
   }
 
+  @NotNull
   @Override
   @Deprecated
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                    @NotNull final String descriptionTemplate,
-                                                   final ProblemHighlightType highlightType,
+                                                   @NotNull final ProblemHighlightType highlightType,
                                                    @Nullable final HintAction hintAction,
                                                    final LocalQuickFix... fixes) {
 
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction, true);
   }
 
+  @NotNull
   @Deprecated
   @Override
   public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
                                                    @NotNull String descriptionTemplate,
                                                    boolean showTooltip,
-                                                   ProblemHighlightType highlightType,
+                                                   @NotNull ProblemHighlightType highlightType,
                                                    LocalQuickFix... fixes) {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, showTooltip, null,
                                      true);

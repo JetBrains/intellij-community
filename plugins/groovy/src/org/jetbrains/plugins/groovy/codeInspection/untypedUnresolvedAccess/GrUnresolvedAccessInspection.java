@@ -379,7 +379,7 @@ public class GrUnresolvedAccessInspection extends GroovySuppressableInspectionTo
       return HighlightInfo.newHighlightInfo(HighlightInfoType.WRONG_REF).range(refNameElement).descriptionAndTooltip(message).create();
     }
 
-    if (displayLevel == HighlightDisplayLevel.WARNING) {
+    if (displayLevel == HighlightDisplayLevel.WEAK_WARNING) {
       boolean isTestMode = ApplicationManager.getApplication().isUnitTestMode();
       HighlightInfoType infotype = isTestMode ? HighlightInfoType.WARNING : HighlightInfoType.INFORMATION;
 

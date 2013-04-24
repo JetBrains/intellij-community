@@ -28,14 +28,6 @@ public class RngHtml5CompletionTest extends HighlightingTestBase {
     return "completion";
   }
 
-  @Override
-  protected void init() {
-    super.init();
-
-    ExternalResourceManagerImpl.addTestResource("http://www.w3.org/1999/xhtml/html5", toAbsolutePath("/highlighting/html5/html5.rnc"),
-                                                myTestRootDisposable);
-  }
-
   public void testHtml5_1() throws Throwable {
     myTestFixture.testCompletionTyping("html5_1.xml", "\n", "html5_1_after.xml");
   }

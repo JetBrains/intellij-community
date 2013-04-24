@@ -34,11 +34,13 @@ public interface CellTransform {
         myActions.add(restore);
       }
 
+      @Override
       public ActionCallback restoreInGrid() {
         myRestoringNow = true;
         if (myActions.size() == 0) return new ActionCallback.Done();
         final ActionCallback topCallback = restore(0);
         return topCallback.doWhenDone(new Runnable() {
+          @Override
           public void run() {
             myActions.clear();
             myRestoringNow = false;
@@ -51,6 +53,7 @@ public interface CellTransform {
         final Restore action = myActions.get(index);
         final ActionCallback actionCalback = action.restoreInGrid();
         actionCalback.doWhenDone(new Runnable() {
+          @Override
           public void run() {
             if (index < myActions.size() - 1) {
               restore(index + 1).notifyWhenDone(result);
@@ -73,5 +76,5 @@ public interface CellTransform {
   interface Facade {
     void minimize(Content content, Restore restore);
   }
- 
+
 }

@@ -62,7 +62,7 @@ import java.util.List;
  * Most often this string is an identifier (see {@link com.intellij.codeInsight.completion.CompletionInitializationContext#DUMMY_IDENTIFIER}).
  * This is usually done to guarantee that there'll always be some non-empty element there, which will be easy to describe via {@link ElementPattern}s.
  * Also a reference can suddenly appear in that position, which will certainly help invoking its {@link PsiReference#getVariants()}.
- * Dummy identifier string can be easily changed in {@link #beforeCompletion(CompletionInitializationContext)} method.<p>  
+ * Dummy identifier string can be easily changed in {@link #beforeCompletion(CompletionInitializationContext)} method.<p>
  *
  * Q: How do I get automatic lookup element filtering by prefix?<br>
  * A: When you return variants from reference ({@link PsiReference#getVariants()}), the filtering will be done
@@ -119,7 +119,7 @@ import java.util.List;
  * If your contributor isn't even invoked, probably there was another contributor that said 'stop' to the system, and yours happened to be ordered after
  * that contributor. To test this hypothesis, put a breakpoint to
  * {@link CompletionService#getVariantsFromContributors(CompletionParameters, CompletionContributor, com.intellij.util.Consumer)},
- * to the 'return false' line.<p> 
+ * to the 'return false' line.<p>
  *
  * @author peter
  */
@@ -228,6 +228,7 @@ public abstract class CompletionContributor {
 
   public static List<CompletionContributor> forParameters(final CompletionParameters parameters) {
     return ApplicationManager.getApplication().runReadAction(new Computable<List<CompletionContributor>>() {
+      @Override
       public List<CompletionContributor> compute() {
         return forLanguage(PsiUtilBase.getLanguageAtOffset(parameters.getPosition().getContainingFile(), parameters.getOffset()));
       }
@@ -256,6 +257,7 @@ public abstract class CompletionContributor {
       return buildExtensions(allowed);
     }
 
+    @Override
     protected String keyToString(Language key) {
       return key.getID();
     }

@@ -34,6 +34,7 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
     setComponent(pathTextField);
     setText("Path mappings:");
     getComponent().addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         showConfigureMappingsDialog();
       }
@@ -73,10 +74,12 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
     getComponent().setText(sb.toString());
   }
 
+  @Override
   public void addChangeListener(final ChangeListener changeListener) {
     myListeners.add(changeListener);
   }
 
+  @Override
   public void removeChangeListener(final ChangeListener changeListener) {
     myListeners.remove(changeListener);
   }
@@ -104,11 +107,13 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
       init();
     }
 
+    @Override
     @Nullable
     protected JComponent createCenterPanel() {
       return myWholePanel;
     }
 
+    @Override
     protected void doOKAction() {
       myPathMappingTable.stopEditing();
 

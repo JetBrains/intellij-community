@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -45,6 +45,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.search.GlobalSearchScope;
@@ -104,7 +105,7 @@ public abstract class MvcFramework {
   public List<Module> reorderModulesForMvcView(List<Module> modules) {
     return modules;
   }
-  
+
   public abstract String getApplicationDirectoryName();
 
   public void syncSdkAndLibrariesInPluginsModule(@NotNull Module module) {
@@ -379,7 +380,7 @@ public abstract class MvcFramework {
   @NotNull
   public GeneralCommandLine createCommand(@NotNull Module module,
                                           @Nullable String jvmParams,
-                                          final boolean forCreation,
+                                          boolean forCreation,
                                           @NotNull MvcCommand command) throws ExecutionException {
     final JavaParameters params = createJavaParameters(module, forCreation, false, true, jvmParams, command);
     addJavaHome(params, module);
@@ -388,11 +389,11 @@ public abstract class MvcFramework {
 
     final VirtualFile griffonHome = getSdkRoot(module);
     if (griffonHome != null) {
-      commandLine.setEnvParams(Collections.singletonMap(getSdkHomePropertyName(), FileUtil.toSystemDependentName(griffonHome.getPath())));
+      commandLine.setEnvironment(getSdkHomePropertyName(), FileUtil.toSystemDependentName(griffonHome.getPath()));
     }
 
     final VirtualFile root = findAppRoot(module);
-    final File ioRoot = root != null ? VfsUtil.virtualToIoFile(root) : new File(module.getModuleFilePath()).getParentFile();
+    final File ioRoot = root != null ? VfsUtilCore.virtualToIoFile(root) : new File(module.getModuleFilePath()).getParentFile();
     commandLine.setWorkDirectory(forCreation ? ioRoot.getParentFile() : ioRoot);
 
     return commandLine;

@@ -44,6 +44,7 @@ public class DelegatePsiTarget implements PsiTarget {
     return myElement.getTextOffset();
   }
 
+  @Override
   public void navigate(boolean requestFocus) {
     final int offset = getTextOffset();
     final VirtualFile virtualFile = PsiUtilBase.getVirtualFile(myElement);
@@ -52,14 +53,17 @@ public class DelegatePsiTarget implements PsiTarget {
     }
   }
 
+  @Override
   public boolean canNavigate() {
     return EditSourceUtil.canNavigate(myElement);
   }
 
+  @Override
   public boolean canNavigateToSource() {
     return EditSourceUtil.canNavigate(myElement);
   }
 
+  @Override
   @NotNull
   public final PsiElement getNavigationElement() {
     return myElement;
@@ -82,6 +86,7 @@ public class DelegatePsiTarget implements PsiTarget {
     return myElement.hashCode();
   }
 
+  @Override
   public boolean isValid() {
     return getNavigationElement().isValid();
   }

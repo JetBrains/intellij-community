@@ -250,7 +250,7 @@ public class CommonCodeStyleSettings {
     final LanguageCodeStyleSettingsProvider provider = LanguageCodeStyleSettingsProvider.forLanguage(myLanguage);
     return provider == null ? null : provider.getSupportedFields();
   }
-  
+
   private static class SupportedFieldsDiffFilter extends DifferenceFilter<CommonCodeStyleSettings> {
     private final Set<String> mySupportedFieldNames;
 
@@ -262,7 +262,7 @@ public class CommonCodeStyleSettings {
     }
 
     @Override
-    public boolean isAccept(Field field) {
+    public boolean isAccept(@NotNull Field field) {
       if (mySupportedFieldNames == null ||
           mySupportedFieldNames.contains(field.getName())) {
         return super.isAccept(field);

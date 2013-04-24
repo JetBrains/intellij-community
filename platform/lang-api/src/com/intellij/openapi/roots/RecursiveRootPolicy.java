@@ -30,6 +30,7 @@ import java.util.Set;
 public class RecursiveRootPolicy<R> extends RootPolicy<R> {
   private final Set<Module> myProcessedModules = new HashSet<Module>();
 
+  @Override
   public R visitModuleOrderEntry(final ModuleOrderEntry moduleOrderEntry, final R value) {
     final Module module = moduleOrderEntry.getModule();
     if (module != null && !myProcessedModules.contains(module)) {

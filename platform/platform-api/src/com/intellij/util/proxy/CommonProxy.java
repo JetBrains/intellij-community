@@ -244,9 +244,9 @@ public class CommonProxy extends ProxySelector {
   private int correctPortByProtocol(@NotNull URI uri) {
     if (uri.getPort() == -1) {
       if ("http".equals(uri.getScheme())) {
-        return 80;
+        return ProtocolDefaultPorts.HTTP;
       } else if ("https".equals(uri.getScheme())) {
-        return 443;
+        return ProtocolDefaultPorts.SSL;
       }
     }
     return uri.getPort();

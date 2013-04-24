@@ -16,11 +16,12 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 
 public abstract class FileEditorManagerAdapter implements FileEditorManagerListener{
-  public void fileOpened(FileEditorManager source, VirtualFile file) {}
+  public void fileOpened(@NotNull FileEditorManager source, @NotNull VirtualFile file) {}
 
-  public void fileClosed(FileEditorManager source, VirtualFile file) {}
+  public void fileClosed(@NotNull FileEditorManager source, @NotNull VirtualFile file) {}
 
-  public void selectionChanged(FileEditorManagerEvent event) {}
+  public void selectionChanged(@NotNull FileEditorManagerEvent event) {}
 }

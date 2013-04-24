@@ -422,7 +422,6 @@
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
@@ -459,7 +458,6 @@
       <reference ref="ProjectViewPopupMenuRefactoringGroup"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
@@ -492,7 +490,6 @@
       <action id="EditFavorites" class="com.intellij.ide.favoritesTreeView.actions.EditFavoritesAction"/>
       <reference ref="AddToFavorites"/>
       <reference ref="SendToFavoritesGroup"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="ProjectViewPopupMenuModifyGroup"/>
       <separator/>
@@ -525,8 +522,6 @@
       <reference ref="RefactoringMenu"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
-      <separator/>
       <separator/>
       <reference ref="CutCopyPasteGroup"/>
       <separator/>
@@ -544,7 +539,7 @@
       <reference ref="FoldingGroup"/>
       <separator/>
 
-      <add-to-group group-id="EditorPopupMenu" relative-to-action="MoveToChangeList" anchor="before"/>
+      <add-to-group group-id="EditorPopupMenu" relative-to-action="EditorToggleColumnMode" anchor="after"/>
     </group>
 
     <group id="EditorLangPopupMenu">
@@ -575,7 +570,6 @@
       <separator/>
       <reference ref="AddToFavorites"/>
       <reference ref="AddAllToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
       <reference ref="RunContextPopupGroup"/>
       <reference ref="VersionControlsGroup"/>

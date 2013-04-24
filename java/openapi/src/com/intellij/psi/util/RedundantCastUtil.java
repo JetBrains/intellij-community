@@ -241,7 +241,9 @@ public class RedundantCastUtil {
         PsiManager manager = methodExpr.getManager();
         PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
 
-        PsiMethodCallExpression newCall = (PsiMethodCallExpression)factory.createExpressionFromText(methodCall.getText(), methodCall);
+        final PsiExpression expressionFromText = factory.createExpressionFromText(methodCall.getText(), methodCall);
+        if (!(expressionFromText instanceof PsiMethodCallExpression)) return;
+        PsiMethodCallExpression newCall = (PsiMethodCallExpression)expressionFromText;
         PsiExpression newQualifier = newCall.getMethodExpression().getQualifierExpression();
         PsiExpression newOperand = ((PsiTypeCastExpression)((PsiParenthesizedExpression)newQualifier).getExpression()).getOperand();
         newQualifier.replace(newOperand);
@@ -541,6 +543,24 @@ public class RedundantCastUtil {
       if (opType instanceof PsiClassType && ((PsiClassType)opType).isRaw()) return true;
     } else if (castType instanceof PsiClassType && ((PsiClassType)castType).isRaw()) {
       if (opType instanceof PsiClassType && ((PsiClassType)opType).hasParameters()) return true;
+    }
+
+    if (operand instanceof PsiLambdaExpression || operand instanceof PsiMethodReferenceExpression) {
+      if (castType instanceof PsiClassType && InheritanceUtil.isInheritor(PsiUtil.resolveClassInType(castType), CommonClassNames.JAVA_IO_SERIALIZABLE)) return true;
+      if (castType instanceof PsiIntersectionType) {
+        boolean redundant = false;
+        final PsiType[] conjuncts = ((PsiIntersectionType)castType).getConjuncts();
+        for (int i = 1; i < conjuncts.length; i++) {
+          PsiType conjunct = conjuncts[i];
+          if (TypeConversionUtil.isAssignable(conjuncts[0], conjunct)) {
+            redundant = true;
+            break;
+          }
+        }
+        if (!redundant) {
+          return true;
+        }
+      }
     }
 
     PsiElement parent = typeCast.getParent();

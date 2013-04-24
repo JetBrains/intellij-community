@@ -64,6 +64,7 @@ public abstract class ElementCreator {
 
     final String commandName = getActionName(inputString);
     new WriteCommandAction(myProject, commandName) {
+      @Override
       protected void run(Result result) throws Throwable {
         LocalHistoryAction action = LocalHistoryAction.NULL;
         try {

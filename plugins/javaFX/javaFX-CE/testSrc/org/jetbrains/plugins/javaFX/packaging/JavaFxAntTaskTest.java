@@ -32,6 +32,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
   private static final String PRELOADER_CLASS = "preloaderClass";
   private static final String TITLE = "title";
   private static final String PRELOADER_JAR = "preloaderJar";
+  private static final String SIGNED = "signed";
 
   public void testJarDeployNoInfo() throws Exception {
     doTest("<fx:fileset id=\"all_but_jarDeployNoInfo\" dir=\"temp\" includes=\"*.jar\">\n" +
@@ -91,6 +92,37 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "</fx:fileset>\n" +
            "</fx:resources>\n" +
            "</fx:deploy>\n", Collections.singletonMap(TITLE, "My App"));
+  }
+
+  public void testJarDeploySigned() throws Exception {
+    doTest("<fx:fileset id=\"all_but_jarDeploySigned\" dir=\"temp\" includes=\"*.jar\">\n" +
+           "<exclude name=\"jarDeploySigned.jar\">\n" +
+           "</exclude>\n" +
+           "</fx:fileset>\n" +
+           "<fx:fileset id=\"all_jarDeploySigned\" dir=\"temp\" includes=\"*.jar\">\n" +
+           "</fx:fileset>\n" +
+           "<fx:application id=\"jarDeploySigned_id\" name=\"jarDeploySigned\" mainClass=\"Main\">\n" +
+           "</fx:application>\n" +
+           "<fx:jar destfile=\"temp" + File.separator + "jarDeploySigned.jar\">\n" +
+           "<fx:application refid=\"jarDeploySigned_id\">\n" +
+           "</fx:application>\n" +
+           "<fileset dir=\"temp\" excludes=\"*.jar\">\n" +
+           "</fileset>\n" +
+           "<fx:resources>\n" +
+           "<fx:fileset refid=\"all_but_jarDeploySigned\">\n" +
+           "</fx:fileset>\n" +
+           "</fx:resources>\n" +
+           "</fx:jar>\n" +
+           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp" + File.separator + "deploy\" outfile=\"jarDeploySigned\">\n" +
+           "<fx:permissions elevated=\"true\">\n" +
+           "</fx:permissions>\n" +
+           "<fx:application refid=\"jarDeploySigned_id\">\n" +
+           "</fx:application>\n" +
+           "<fx:resources>\n" +
+           "<fx:fileset refid=\"all_jarDeploySigned\">\n" +
+           "</fx:fileset>\n" +
+           "</fx:resources>\n" +
+           "</fx:deploy>\n", Collections.singletonMap(SIGNED, "true"));
   }
 
   public void testJarDeployPreloader() throws Exception {
@@ -154,7 +186,11 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     if (preloaderJar != null) {
       packager.setPreloaderJar(preloaderJar);
     }
-    
+
+    if (options.containsKey(SIGNED)) {
+      packager.setSigned(true);
+    }
+
     final List<JavaFxAntGenerator.SimpleTag> temp = JavaFxAntGenerator
       .createJarAndDeployTasks(packager, artifactFileName, artifactName, "temp");
     final StringBuilder buf = new StringBuilder();
@@ -163,7 +199,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     }
     assertEquals(expected
                    .replaceAll("temp/deploy", "temp\\" + File.separator + "deploy")
-                   .replaceAll("temp/" + artifactFileName, "temp\\" + File.separator + artifactFileName), 
+                   .replaceAll("temp/" + artifactFileName, "temp\\" + File.separator + artifactFileName),
                  buf.toString());
   }
 
@@ -178,6 +214,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     private String myPreloaderClass;
     private String myPreloaderJar;
     private boolean myConvertCss2Bin;
+    private boolean mySigned;
 
     private MockJavaFxPackager(String outputPath) {
       myOutputPath = outputPath;
@@ -211,6 +248,10 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
       myPreloaderJar = preloaderJar;
     }
 
+    public void setSigned(boolean signed) {
+      mySigned = signed;
+    }
+    
     @Override
     protected String getArtifactOutputPath() {
       return new File(myOutputPath).getParent();
@@ -276,11 +317,6 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     }
 
     @Override
-    protected String prepareParam(String param) {
-      return param;
-    }
-
-    @Override
     public String getKeypass() {
       return null;
     }
@@ -307,7 +343,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
 
     @Override
     public boolean isEnabledSigning() {
-      return false;
+      return mySigned;
     }
 
     @Override

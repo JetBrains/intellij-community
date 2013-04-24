@@ -22,8 +22,8 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,10 +32,6 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class HighlightInfoComposite extends HighlightInfo {
-  @NonNls private static final String HTML_HEADER = "<html>";
-  @NonNls private static final String BODY_HEADER = "<body>";
-  @NonNls private static final String HTML_FOOTER = "</html>";
-  @NonNls private static final String BODY_FOOTER = "</body>";
   @NonNls private static final String LINE_BREAK = "<hr size=1 noshade>";
 
   public HighlightInfoComposite(@NotNull List<HighlightInfo> infos) {
@@ -89,18 +85,13 @@ public class HighlightInfoComposite extends HighlightInfo {
         if (result.length() != 0) {
           result.append(LINE_BREAK);
         }
-        toolTip = StringUtil.trimStart(toolTip, HTML_HEADER);
-        toolTip = StringUtil.trimStart(toolTip, BODY_HEADER);
-        toolTip = StringUtil.trimEnd(toolTip, HTML_FOOTER);
-        toolTip = StringUtil.trimEnd(toolTip, BODY_FOOTER);
+        toolTip = XmlStringUtil.stripHtml(toolTip);
         result.append(toolTip);
       }
     }
     if (result.length() == 0) {
       return null;
     }
-    result.insert(0, HTML_HEADER);
-    result.append(HTML_FOOTER);
-    return result.toString();
+    return XmlStringUtil.wrapInHtml(result);
   }
 }

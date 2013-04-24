@@ -65,7 +65,8 @@ public abstract class InspectionProfileEntry {
    * @see InspectionEP#groupKey
    * @see InspectionEP#groupBundle
    */
-  @Nls @NotNull
+  @Nls
+  @NotNull
   public String getGroupDisplayName() {
     if (myNameProvider != null) {
       final String name = myNameProvider.getDefaultGroupDisplayName();
@@ -83,7 +84,7 @@ public abstract class InspectionProfileEntry {
   @NotNull
   public String[] getGroupPath() {
     String groupDisplayName = getGroupDisplayName();
-    if (groupDisplayName.length() == 0) {
+    if (groupDisplayName.isEmpty()) {
       groupDisplayName = GENERAL_GROUP_NAME;
     }
     return new String[]{groupDisplayName};
@@ -94,7 +95,8 @@ public abstract class InspectionProfileEntry {
    * @see InspectionEP#key
    * @see InspectionEP#bundle
    */
-  @Nls @NotNull
+  @Nls
+  @NotNull
   public String getDisplayName() {
     if (myNameProvider != null) {
       final String name = myNameProvider.getDefaultDisplayName();
@@ -111,7 +113,8 @@ public abstract class InspectionProfileEntry {
    *
    * @see InspectionEP#shortName
    */
-  @NonNls @NotNull
+  @NonNls
+  @NotNull
   public String getShortName() {
     if (myNameProvider != null) {
       final String name = myNameProvider.getDefaultShortName();
@@ -122,7 +125,8 @@ public abstract class InspectionProfileEntry {
     return getShortName(getClass().getSimpleName());
   }
 
-  public static String getShortName(String className) {
+  @NotNull
+  public static String getShortName(@NotNull String className) {
     return StringUtil.trimEnd(className, "Inspection");
   }
 
@@ -163,7 +167,7 @@ public abstract class InspectionProfileEntry {
    * @throws InvalidDataException if the loaded data was not valid.
    */
   @SuppressWarnings("deprecation")
-  public void readSettings(Element node) throws InvalidDataException {
+  public void readSettings(@NotNull Element node) throws InvalidDataException {
     if (useNewSerializer()) {
       try {
         XmlSerializer.deserializeInto(this, node);
@@ -187,7 +191,7 @@ public abstract class InspectionProfileEntry {
    * @throws WriteExternalException if no data should be saved for this component.
    */
   @SuppressWarnings("deprecation")
-  public void writeSettings(Element node) throws WriteExternalException {
+  public void writeSettings(@NotNull Element node) throws WriteExternalException {
     if (useNewSerializer()) {
       XmlSerializer.serializeInto(this, node, getSerializationFilter());
     }
@@ -219,7 +223,7 @@ public abstract class InspectionProfileEntry {
         String line;
         while ((line = reader.readLine()) != null) {
           line = line.trim();
-          if (line.length() > 0) ourBlackList.add(line);
+          if (!line.isEmpty()) ourBlackList.add(line);
         }
       }
       finally {

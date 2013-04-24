@@ -98,11 +98,13 @@ public final class PsiElementRef<T extends PsiElement> {
         myElement = element;
       }
 
+      @Override
       @NotNull
       public T getPsiElement() {
         return myElement;
       }
 
+      @Override
       public boolean isValid() {
         return myElement.isValid();
       }
@@ -124,11 +126,13 @@ public final class PsiElementRef<T extends PsiElement> {
         return myElement.hashCode();
       }
 
+      @Override
       @NotNull
       public Real<T> makeReal() {
         return this;
       }
 
+      @Override
       @NotNull
       public PsiElement getRoot() {
         return myElement;
@@ -144,10 +148,12 @@ public final class PsiElementRef<T extends PsiElement> {
         myCreator = creator;
       }
 
+      @Override
       public boolean isValid() {
         return myParent.isValid();
       }
 
+      @Override
       public Child getPsiElement() {
         return null;
       }
@@ -172,11 +178,13 @@ public final class PsiElementRef<T extends PsiElement> {
         return result;
       }
 
+      @Override
       @NotNull
       public Real<Child> makeReal() {
         return new Real<Child>(myCreator.createChild(myParent.ensurePsiElementExists()));
       }
 
+      @Override
       @NotNull
       public PsiElement getRoot() {
         return myParent.getRoot();

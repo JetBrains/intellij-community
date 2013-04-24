@@ -33,6 +33,11 @@ public class RecentStringInterner {
         public String createValue(String key) {
           return key;
         }
+
+        @Override
+        protected void putToProtectedQueue(String key, String value) {
+          super.putToProtectedQueue(value, value);
+        }
       };
       myStripeLocks[i] = new SequenceLock();
     }

@@ -206,7 +206,6 @@
       <reference ref="VersionControlsGroup"/>
       <separator/>
       <reference ref="AddToFavorites"/>
-      <reference ref="MoveToChangeList"/>
       <separator/>
     </group>
 

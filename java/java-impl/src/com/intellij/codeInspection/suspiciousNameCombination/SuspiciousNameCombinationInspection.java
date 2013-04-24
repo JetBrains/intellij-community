@@ -95,7 +95,7 @@ public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool
     return new MyOptionsPanel();
   }
 
-  @Override public void readSettings(Element node) throws InvalidDataException {
+  @Override public void readSettings(@NotNull Element node) throws InvalidDataException {
     clearNameGroups();
     for(Object o: node.getChildren(ELEMENT_GROUPS)) {
       Element e = (Element) o;
@@ -103,7 +103,7 @@ public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool
     }
   }
 
-  @Override public void writeSettings(Element node) throws WriteExternalException {
+  @Override public void writeSettings(@NotNull Element node) throws WriteExternalException {
     for(String group: myNameGroups) {
       Element e = new Element(ELEMENT_GROUPS);
       node.addContent(e);

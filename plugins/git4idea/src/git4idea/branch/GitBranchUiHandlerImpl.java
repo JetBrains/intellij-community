@@ -29,6 +29,7 @@ import com.intellij.openapi.vcs.changes.ui.SelectFilesDialog;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.components.JBLabel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import git4idea.*;
 import git4idea.commands.Git;
 import git4idea.history.browser.GitCommit;
@@ -45,8 +46,6 @@ import java.util.Collection;
 import java.util.List;
 import java.util.Map;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.intellij.openapi.util.text.StringUtil.stripHtml;
 
 /**
  * @author Kirill Likhodedov
@@ -92,12 +91,12 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        StringBuilder description = new StringBuilder("<html>");
+        StringBuilder description = new StringBuilder();
         if (!StringUtil.isEmptyOrSpaces(message)) {
           description.append(message).append("<br/>");
         }
-        description.append(rollbackProposal).append("</html>");
-        ok.set(Messages.OK == MessageManager.showYesNoDialog(myProject, description.toString(), title,
+        description.append(rollbackProposal);
+        ok.set(Messages.OK == MessageManager.showYesNoDialog(myProject, XmlStringUtil.wrapInHtml(description), title,
                                                              "Rollback", "Don't rollback", Messages.getErrorIcon()));
       }
     });
@@ -154,7 +153,7 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     String title = "Couldn't " + operationName;
     String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(operationName, false);
 
-    final SelectFilesDialog dialog = new UntrackedFilesDialog(myProject, untrackedFiles, stripHtml(description, true), rollbackProposal);
+    final SelectFilesDialog dialog = new UntrackedFilesDialog(myProject, untrackedFiles, StringUtil.stripHtml(description, true), rollbackProposal);
     dialog.setTitle(title);
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
@@ -217,7 +216,7 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
     protected JComponent createSouthPanel() {
       JComponent buttons = super.createSouthPanel();
       JPanel panel = new JPanel(new VerticalFlowLayout());
-      panel.add(new JBLabel("<html>" + myRollbackProposal + "</html>"));
+      panel.add(new JBLabel(XmlStringUtil.wrapInHtml(myRollbackProposal)));
       panel.add(buttons);
       return panel;
     }

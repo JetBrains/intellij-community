@@ -28,6 +28,7 @@ import com.intellij.util.PlatformIcons;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
 import com.intellij.util.ui.UIUtil;
+import com.intellij.xml.util.XmlStringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -98,7 +99,7 @@ public abstract class AbstractTableView<T> extends JPanel implements TypeSafeDat
     myInnerPanel.add(ScrollPaneFactory.createScrollPane(myTable), TREE);
     if (getEmptyPaneText() != null) {
       //noinspection HardCodedStringLiteral
-      myEmptyPane = new EmptyPane("<html>" + getEmptyPaneText() + "</html>");
+      myEmptyPane = new EmptyPane(XmlStringUtil.wrapInHtml(getEmptyPaneText()));
       final JComponent emptyPanel = myEmptyPane.getComponent();
       myInnerPanel.add(emptyPanel, EMPTY_PANE);
     }

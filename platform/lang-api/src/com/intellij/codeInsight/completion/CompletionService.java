@@ -64,7 +64,7 @@ public abstract class CompletionService {
 
   /**
    * Run all contributors until any of them returns false or the list is exhausted. If from parameter is not null, contributors
-   * will be run starting from the next one after that. 
+   * will be run starting from the next one after that.
    * @param parameters
    * @param from
    * @param consumer
@@ -90,7 +90,7 @@ public abstract class CompletionService {
 
   /**
    * Create a {@link com.intellij.codeInsight.completion.CompletionResultSet} that will filter variants based on default camel-hump
-   * {@link com.intellij.codeInsight.completion.PrefixMatcher} and give the filtered variants to consumer.  
+   * {@link com.intellij.codeInsight.completion.PrefixMatcher} and give the filtered variants to consumer.
    * @param parameters
    * @param consumer
    * @param contributor
@@ -113,6 +113,7 @@ public abstract class CompletionService {
     final Collection<LookupElement> lookupSet = new LinkedHashSet<LookupElement>();
 
     getVariantsFromContributors(parameters, null, new Consumer<CompletionResult>() {
+      @Override
       public void consume(final CompletionResult result) {
         if (lookupSet.add(result.getLookupElement())) {
           consumer.consume(result);

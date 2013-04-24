@@ -19,7 +19,6 @@ import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.StringBuilderSpinAllocator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -56,23 +55,18 @@ public class FileElement {
   @NotNull
   public final String getPath() {
     if (myPath == null) {
-      final StringBuilder sb = StringBuilderSpinAllocator.alloc();
-      try {
-        FileElement element = this;
-        while (element != null) {
-          if (element.myParent != null || !element.myName.equals(File.separator)) {
-            sb.insert(0, element.myName);
-          }
-          element = element.myParent;
-          if (element != null) {
-            sb.insert(0, File.separator);
-          }
+      final StringBuilder sb = new StringBuilder();
+      FileElement element = this;
+      while (element != null) {
+        if (element.myParent != null || !element.myName.equals(File.separator)) {
+          sb.insert(0, element.myName);
         }
-        myPath = sb.toString();
+        element = element.myParent;
+        if (element != null) {
+          sb.insert(0, File.separator);
+        }
       }
-      finally {
-        StringBuilderSpinAllocator.dispose(sb);
-      }
+      myPath = sb.toString();
     }
     return myPath;
   }

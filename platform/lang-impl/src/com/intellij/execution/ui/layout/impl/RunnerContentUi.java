@@ -587,7 +587,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Override
-  public void setManager(final ContentManager manager) {
+  public void setManager(@NotNull final ContentManager manager) {
     assert myManager == null;
 
     myManager = manager;
@@ -661,7 +661,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Nullable
-  private GridImpl getGridFor(Content content, boolean createIfMissing) {
+  private GridImpl getGridFor(@NotNull Content content, boolean createIfMissing) {
     GridImpl grid = (GridImpl)findGridFor(content);
     if (grid != null || !createIfMissing) return grid;
 
@@ -1004,7 +1004,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   @Override
   @Nullable
-  public Grid findGridFor(Content content) {
+  public Grid findGridFor(@NotNull Content content) {
     TabImpl tab = (TabImpl)getStateFor(content).getTab();
     for (TabInfo each : myTabs.getTabs()) {
       TabImpl t = getTabFor(each);
@@ -1058,7 +1058,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Override
-  public boolean canChangeSelectionTo(Content content, boolean implicit) {
+  public boolean canChangeSelectionTo(@NotNull Content content, boolean implicit) {
     if (implicit) {
       GridImpl grid = getGridFor(content, false);
       if (grid != null) {
@@ -1069,21 +1069,25 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     return true;
   }
 
+  @NotNull
   @Override
   public String getCloseActionName() {
     return UIBundle.message("tabbed.pane.close.tab.action.name");
   }
 
+  @NotNull
   @Override
   public String getCloseAllButThisActionName() {
     return UIBundle.message("tabbed.pane.close.all.tabs.but.this.action.name");
   }
 
+  @NotNull
   @Override
   public String getPreviousContentActionName() {
     return "Select Previous Tab";
   }
 
+  @NotNull
   @Override
   public String getNextContentActionName() {
     return "Select Next Tab";
@@ -1447,7 +1451,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   }
 
   @Override
-  public View getStateFor(final Content content) {
+  public View getStateFor(@NotNull final Content content) {
     return myLayoutSettings.getStateFor(content);
   }
 

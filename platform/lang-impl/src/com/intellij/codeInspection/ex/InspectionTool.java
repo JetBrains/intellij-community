@@ -56,10 +56,12 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     projectOpened(context.getProject());
   }
 
+  @NotNull
   public GlobalInspectionContextImpl getContext() {
     return myContext;
   }
 
+  @NotNull
   public RefManager getRefManager() {
     return getContext().getRefManager();
   }
@@ -69,24 +71,24 @@ public abstract class InspectionTool extends InspectionProfileEntry {
   public void exportResults(@NotNull final Element parentNode) {
     getRefManager().iterate(new RefVisitor(){
       @Override
-      public void visitElement(RefEntity elem) {
+      public void visitElement(@NotNull RefEntity elem) {
         exportResults(parentNode, elem);
       }
     });
   }
 
-  public abstract void exportResults(@NotNull Element parentNode, RefEntity refEntity);
+  public abstract void exportResults(@NotNull Element parentNode, @NotNull RefEntity refEntity);
 
   public abstract boolean isGraphNeeded();
   @Nullable
-  public QuickFixAction[] getQuickFixes(final RefEntity[] refElements) {
+  public QuickFixAction[] getQuickFixes(@NotNull RefEntity[] refElements) {
     return null;
   }
 
   @NotNull
-  public abstract JobDescriptor[] getJobDescriptors(GlobalInspectionContext globalInspectionContext);
+  public abstract JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext globalInspectionContext);
 
-  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
+  public boolean queryExternalUsagesRequests(@NotNull InspectionManager manager) {
     return false;
   }
 
@@ -97,6 +99,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
 
   @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
+  @NotNull
   public final String getDescriptionFileName() {
     return getShortName() + ".html";
   }
@@ -116,6 +119,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     cleanup();
   }
 
+  @NotNull
   public abstract HTMLComposerImpl getComposer();
 
   public abstract boolean hasReportedProblems();
@@ -139,15 +143,17 @@ public abstract class InspectionTool extends InspectionProfileEntry {
 
   public abstract void ignoreCurrentElement(RefEntity refElement);
 
+  @NotNull
   public abstract Collection<RefEntity> getIgnoredRefElements();
 
   public abstract void amnesty(RefEntity refEntity);
 
   public abstract boolean isElementIgnored(final RefEntity element);
 
-
+  @NotNull
   public abstract FileStatus getElementStatus(final RefEntity element);
 
+  @NotNull
   protected static FileStatus calcStatus(boolean old, boolean current) {
     if (old) {
       if (!current) {
@@ -160,7 +166,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return FileStatus.NOT_CHANGED;
   }
 
-  protected static boolean contains(RefEntity element, Collection<RefEntity> entities){
+  protected static boolean contains(RefEntity element, @NotNull Collection<RefEntity> entities){
     for (RefEntity refEntity : entities) {
       if (Comparing.equal(refEntity, element)) {
         return true;
@@ -169,7 +175,7 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return false;
   }
 
-  protected HighlightSeverity getCurrentSeverity(RefElement element) {
+  protected HighlightSeverity getCurrentSeverity(@NotNull RefElement element) {
     final PsiElement psiElement = element.getPointer().getContainingFile();
     if (psiElement != null) {
       if (myContext != null) {
@@ -190,14 +196,14 @@ public abstract class InspectionTool extends InspectionProfileEntry {
     return null;
   }
 
-  protected static String getTextAttributeKey(final Project project, HighlightSeverity severity, ProblemHighlightType highlightType) {
+  protected static String getTextAttributeKey(@NotNull Project project, @NotNull HighlightSeverity severity, @NotNull ProblemHighlightType highlightType) {
     if (highlightType == ProblemHighlightType.LIKE_DEPRECATED) {
       return HighlightInfoType.DEPRECATED.getAttributesKey().getExternalName();
     }
-    else if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL && severity == HighlightSeverity.ERROR) {
+    if (highlightType == ProblemHighlightType.LIKE_UNKNOWN_SYMBOL && severity == HighlightSeverity.ERROR) {
       return HighlightInfoType.WRONG_REF.getAttributesKey().getExternalName();
     }
-    else if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
+    if (highlightType == ProblemHighlightType.LIKE_UNUSED_SYMBOL) {
       return HighlightInfoType.UNUSED_SYMBOL.getAttributesKey().getExternalName();
     }
     return SeverityRegistrar.getInstance(project).getHighlightInfoTypeBySeverity(severity).getAttributesKey().getExternalName();

@@ -55,7 +55,7 @@ public class ClassWithTooManyDependenciesInspection
     refManager.iterate(new RefJavaVisitor() {
 
       @Override
-      public void visitClass(RefClass refClass) {
+      public void visitClass(@NotNull RefClass refClass) {
         super.visitClass(refClass);
         if (!(refClass.getOwner() instanceof RefFile)) {
           return;

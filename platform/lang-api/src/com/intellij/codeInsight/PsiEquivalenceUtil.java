@@ -26,7 +26,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiReference;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtilBase;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.PairConsumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -97,10 +97,10 @@ public class PsiEquivalenceUtil {
     return areElementsEquivalent(element1, element2, null, false);
   }
 
-  private static PsiElement[] getFilteredChildren(PsiElement element1,
-                                                  @Nullable Condition<PsiElement> isElementSignificantCondition,
-                                                  boolean areCommentsSignificant) {
-    ASTNode[] children1 = element1.getNode().getChildren(null);
+  public static PsiElement[] getFilteredChildren(@NotNull final PsiElement element,
+                                                 @Nullable Condition<PsiElement> isElementSignificantCondition,
+                                                 boolean areCommentsSignificant) {
+    ASTNode[] children1 = element.getNode().getChildren(null);
     ArrayList<PsiElement> array = new ArrayList<PsiElement>();
     for (ASTNode node : children1) {
       final PsiElement child = node.getPsi();
@@ -109,13 +109,14 @@ public class PsiEquivalenceUtil {
         array.add(child);
       }
     }
-    return PsiUtilBase.toPsiElementArray(array);
+    return PsiUtilCore.toPsiElementArray(array);
   }
 
   public static void findChildRangeDuplicates(PsiElement first, PsiElement last,
                                               final List<Pair<PsiElement, PsiElement>> result,
                                               PsiElement scope) {
     findChildRangeDuplicates(first, last, scope, new PairConsumer<PsiElement, PsiElement>() {
+      @Override
       public void consume(final PsiElement start, final PsiElement end) {
         result.add(new Pair<PsiElement, PsiElement>(start, end));
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class ShowColorPickerAction extends AnAction {
     if (root != null) {
       ColorPickerListener[] listeners = ColorPickerListenerFactory.createListenersFor(e.getData(LangDataKeys.PSI_ELEMENT));
       final ColorPicker.ColorPickerDialog picker =
-        new ColorPicker.ColorPickerDialog(root, "Color Picker", null, true, listeners);
+        new ColorPicker.ColorPickerDialog(root, "Color Picker", null, true, listeners, true);
       picker.setModal(false);
       picker.show();
     }

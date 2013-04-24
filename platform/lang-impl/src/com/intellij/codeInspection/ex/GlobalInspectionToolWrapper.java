@@ -33,6 +33,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
     super(other);
   }
 
+  @NotNull
   @Override
   public InspectionToolWrapper<GlobalInspectionTool, InspectionEP> createCopy() {
     return new GlobalInspectionToolWrapper(this);
@@ -53,13 +54,13 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
   }
 
   @Override
-  public boolean queryExternalUsagesRequests(final InspectionManager manager) {
+  public boolean queryExternalUsagesRequests(@NotNull final InspectionManager manager) {
     return getTool().queryExternalUsagesRequests(manager, getContext(), this);
   }
 
   @Override
   @NotNull
-  public JobDescriptor[] getJobDescriptors(GlobalInspectionContext context) {
+  public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext context) {
     final JobDescriptor[] additionalJobs = getTool().getAdditionalJobs();
     if (additionalJobs == null) {
       return isGraphNeeded() ? ((GlobalInspectionContextImpl)context).BUILD_GRAPH_ONLY : JobDescriptor.EMPTY_ARRAY;
@@ -79,7 +80,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
                           final GlobalInspectionContext context,
                           final boolean filterSuppressed) {
     context.getRefManager().iterate(new RefVisitor() {
-      @Override public void visitElement(RefEntity refEntity) {
+      @Override public void visitElement(@NotNull RefEntity refEntity) {
         CommonProblemDescriptor[] descriptors = getTool()
           .checkElement(refEntity, analysisScope, manager, context, GlobalInspectionToolWrapper.this);
         if (descriptors != null) {
@@ -89,6 +90,7 @@ public class GlobalInspectionToolWrapper extends InspectionToolWrapper<GlobalIns
     });
   }
 
+  @NotNull
   @Override
   public HTMLComposerImpl getComposer() {
     return new DescriptorComposer(this) {

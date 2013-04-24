@@ -30,15 +30,18 @@ public class PsiMetaDataTarget extends DelegatePsiTarget implements PomRenameabl
     myMetaData = metaData;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myMetaData.getName();
   }
 
+  @Override
   public boolean isWritable() {
     return myMetaData instanceof PsiWritableMetaData && getNavigationElement().isWritable();
   }
 
+  @Override
   public PsiMetaDataTarget setName(@NotNull String newName) {
     ((PsiWritableMetaData) myMetaData).setName(newName);
     return this;

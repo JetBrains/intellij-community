@@ -37,12 +37,14 @@ public final class ConfigurationPerRunnerSettings implements JDOMExternalizable 
     return mySettings;
   }
 
+  @Override
   public void readExternal(Element element) throws InvalidDataException {
     if (mySettings != null) {
       mySettings.readExternal(element);
     }
   }
 
+  @Override
   public void writeExternal(Element element) throws WriteExternalException {
     if (mySettings != null) {
       mySettings.writeExternal(element);

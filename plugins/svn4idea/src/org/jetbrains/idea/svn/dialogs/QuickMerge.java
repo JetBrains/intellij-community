@@ -200,8 +200,7 @@ public class QuickMerge {
         @Override
         public void consume(Long bunchSize, final MergeDialogI dialog) {
           final LoadRecentBranchRevisions loader =
-            new LoadRecentBranchRevisions(myBranchName, dialog.getLastNumber(), myWcInfo, myVcs, mySourceUrl);
-          loader.setBunchSize(bunchSize.intValue());
+            new LoadRecentBranchRevisions(myBranchName, dialog.getLastNumber(), myWcInfo, myVcs, mySourceUrl, bunchSize.intValue());
           final TaskDescriptor updater = new TaskDescriptor("", Where.AWT) {
             @Override
             public void run(ContinuationContext context) {

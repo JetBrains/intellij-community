@@ -254,6 +254,7 @@ binding.setVariable("platformApiModules", [
         "usageView",
         "xdebugger-api",
         "xml-openapi",
+        "external-system-api",
 ])
 
 

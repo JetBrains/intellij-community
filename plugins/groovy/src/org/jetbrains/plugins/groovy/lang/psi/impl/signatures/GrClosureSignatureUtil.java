@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.signatures;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Trinity;
 import com.intellij.psi.*;
+import com.intellij.psi.impl.PsiSubstitutorImpl;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.MethodSignature;
@@ -445,7 +446,15 @@ public class GrClosureSignatureUtil {
     if (argType == null) {
       return true;
     }
-    return TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context);
+    if (TypesUtil.isAssignableByMethodCallConversion(paramType, argType, context)) {
+      return true;
+    }
+
+    final PsiType lType = TypesUtil.rawSecondGeneric(paramType, context.getProject());
+    final PsiType rType = TypesUtil.rawSecondGeneric(argType, context.getProject());
+    if (lType == null && rType == null) return false;
+
+    return TypesUtil.isAssignableByMethodCallConversion(lType != null ? lType : paramType, rType != null ? rType : argType, context);
   }
 
   public static void checkAndAddSignature(List<GrClosureSignature> list,
@@ -762,14 +771,41 @@ public class GrClosureSignatureUtil {
     return result;
   }
 
-  public static MultiMap<MethodSignature, PsiMethod> findMethodSignatures(PsiMethod[] methods) {
-    MultiMap<MethodSignature, PsiMethod> map = new MultiMap<MethodSignature, PsiMethod>();
-    for (PsiMethod method : methods) {
-      final PsiMethod actual = method instanceof GrReflectedMethod ? ((GrReflectedMethod)method).getBaseMethod() : method;
-      map.putValue(method.getSignature(PsiSubstitutor.EMPTY), actual);
+  @NotNull
+  public static MultiMap<MethodSignature, PsiMethod> findRawMethodSignatures(@NotNull PsiMethod[] methods, @NotNull PsiClass clazz) {
+    Map<PsiTypeParameter, PsiType> initialMap = ContainerUtil.newHashMap();
+
+    for (PsiTypeParameter parameter : clazz.getTypeParameters()) {
+      initialMap.put(parameter, null);
     }
 
-    return map;
+    final PsiSubstitutor initialSubstitutor = PsiSubstitutorImpl.createSubstitutor(initialMap);
+
+    MultiMap<MethodSignature, PsiMethod> result = new MultiMap<MethodSignature, PsiMethod>();
+    for (PsiMethod method : methods) {
+      final PsiMethod actual = method instanceof GrReflectedMethod ? ((GrReflectedMethod)method).getBaseMethod() : method;
+
+      PsiSubstitutor substitutor = calcRawSubstitutor(initialMap, initialSubstitutor, actual);
+      result.putValue(method.getSignature(substitutor), actual);
+    }
+
+    return result;
+  }
+
+  @NotNull
+  private static PsiSubstitutor calcRawSubstitutor(@NotNull Map<PsiTypeParameter, PsiType> initialMap,
+                                                   @NotNull PsiSubstitutor initialSubstitutor,
+                                                   @NotNull PsiMethod actual) {
+    if (actual.hasTypeParameters()) {
+      final HashMap<PsiTypeParameter, PsiType> map1 = ContainerUtil.newHashMap(initialMap);
+      for (PsiTypeParameter parameter : actual.getTypeParameters()) {
+        map1.put(parameter, null);
+      }
+      return PsiSubstitutorImpl.createSubstitutor(map1);
+    }
+    else {
+      return initialSubstitutor;
+    }
   }
 
   private static MethodSignature generateSignature(String name,

@@ -450,13 +450,14 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   public void addTool(InspectionTool tool, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
-    final InspectionTreeNode parentNode = getToolParentNode(tool.getGroupDisplayName().length() > 0 ? tool.getGroupDisplayName() : InspectionProfileEntry.GENERAL_GROUP_NAME, errorLevel, groupedBySeverity);
+    final InspectionTreeNode parentNode = getToolParentNode(
+      !tool.getGroupDisplayName().isEmpty() ? tool.getGroupDisplayName() : InspectionProfileEntry.GENERAL_GROUP_NAME, errorLevel, groupedBySeverity);
     tool.createToolNode(myProvider, parentNode, myGlobalInspectionContext.getUIOptions().SHOW_STRUCTURE);
     registerActionShortcuts(tool);
   }
 
   private void registerActionShortcuts(InspectionTool tool) {
-    final QuickFixAction[] fixes = tool.getQuickFixes(null);
+    final QuickFixAction[] fixes = tool.getQuickFixes(new RefEntity[0]);
     if (fixes != null) {
       for (QuickFixAction fix : fixes) {
         fix.registerCustomShortcutSet(fix.getShortcutSet(), this);
@@ -517,7 +518,7 @@ public class InspectionResultsView extends JPanel implements Disposable, Occuren
   }
 
   public InspectionTreeNode getToolParentNode(String groupName, HighlightDisplayLevel errorLevel, boolean groupedBySeverity) {
-    if (groupName == null || groupName.length() == 0) {
+    if (groupName == null || groupName.isEmpty()) {
       return getRelativeRootNode(groupedBySeverity, errorLevel);
     }
     if (myGroups == null) {
