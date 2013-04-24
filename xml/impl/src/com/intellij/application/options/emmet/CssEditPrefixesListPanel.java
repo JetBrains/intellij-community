@@ -28,6 +28,10 @@ import javax.swing.table.TableCellEditor;
 import javax.swing.table.TableCellRenderer;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Set;
+
+import static com.google.common.collect.Lists.newArrayList;
+import static com.google.common.collect.Sets.newHashSet;
 
 /**
  * User: zolotov
@@ -66,12 +70,12 @@ public class CssEditPrefixesListPanel {
     myPrefixesTableView.setEnabled(value);
   }
 
-  public void setState(List<CssPrefixInfo> prefixInfos) {
-    myPrefixesModel.setItems(prefixInfos);
+  public void setState(Set<CssPrefixInfo> prefixInfos) {
+    myPrefixesModel.setItems(newArrayList(prefixInfos));
   }
 
-  public List<CssPrefixInfo> getState() {
-    return myPrefixesModel.getItems();
+  public Set<CssPrefixInfo> getState() {
+    return newHashSet(myPrefixesModel.getItems());
   }
 
   public JPanel createMainComponent() {
