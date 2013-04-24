@@ -19,7 +19,7 @@ public class SourceLineCounterUtil {
     if (content == null) return false;
     ClassReader reader = new ClassReader(content, 0, content.length);
 
-    SourceLineCounter counter = new SourceLineCounter(null, excludeLines);
+    SourceLineCounter counter = new SourceLineCounter(null, excludeLines, null);
     reader.accept(counter, 0);
     classCoverageInfo.totalLineCount += counter.getNSourceLines();
     classCoverageInfo.totalMethodCount += counter.getNMethodsWithCode();
@@ -34,7 +34,7 @@ public class SourceLineCounterUtil {
   public static void collectSrcLinesForUntouchedFiles(final List<Integer> uncoveredLines,
                                                       byte[] content, final boolean excludeLines) {
     final ClassReader reader = new ClassReader(content);
-    final SourceLineCounter collector = new SourceLineCounter(null, excludeLines);
+    final SourceLineCounter collector = new SourceLineCounter(null, excludeLines, null);
     reader.accept(collector, 0);
     final TIntObjectHashMap lines = collector.getSourceLines();
     lines.forEachKey(new TIntProcedure() {
