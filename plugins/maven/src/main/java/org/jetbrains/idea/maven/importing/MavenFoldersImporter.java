@@ -186,8 +186,10 @@ public class MavenFoldersImporter {
 
     myModel.unregisterAll(targetDir.getPath(), true, false);
 
-    myModel.addSourceFolder(myMavenProject.getAnnotationProcessorDirectory(true), true, true);
-    myModel.addSourceFolder(myMavenProject.getAnnotationProcessorDirectory(false), false, true);
+    if (myImportingSettings.getGeneratedSourcesFolder() != MavenImportingSettings.GeneratedSourcesFolder.IGNORE) {
+      myModel.addSourceFolder(myMavenProject.getAnnotationProcessorDirectory(true), true, true);
+      myModel.addSourceFolder(myMavenProject.getAnnotationProcessorDirectory(false), false, true);
+    }
 
     File[] targetChildren = targetDir.listFiles();
 
