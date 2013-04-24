@@ -186,7 +186,7 @@ public class StartupUtil {
     try {
       String shell = System.getenv("SHELL");
       if (shell != null && new File(shell).canExecute()) {
-        String[] command = {shell, "-l", "-c", "/usr/bin/printenv -0"};
+        String[] command = {shell, "-l", "-c", "/usr/bin/printenv"};
         Process process = Runtime.getRuntime().exec(command);
 
         InputStream input = process.getInputStream();
@@ -194,7 +194,7 @@ public class StartupUtil {
         ByteArrayOutputStream lineBuf = new ByteArrayOutputStream();
         int b;
         while ((b = input.read()) >= 0) {
-          if (b != 0) {
+          if (b != '\n') {
             lineBuf.write(b);
           }
           else {
