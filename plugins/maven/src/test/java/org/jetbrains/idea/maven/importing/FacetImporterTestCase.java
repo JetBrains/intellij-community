@@ -3,8 +3,7 @@ package org.jetbrains.idea.maven.importing;
 import com.intellij.facet.Facet;
 import com.intellij.facet.FacetManager;
 import com.intellij.facet.FacetType;
-import com.intellij.openapi.vfs.VfsUtil;
-import com.intellij.util.ArrayUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
 
 import java.util.ArrayList;
@@ -25,11 +24,11 @@ public abstract class FacetImporterTestCase<FACET_TYPE extends Facet, FACET_TYPE
     List<String> expectedRootUrls = new ArrayList<String>();
 
     for (String r : roots) {
-      String url = VfsUtil.pathToUrl(getProjectPath() + "/" + r);
+      String url = VfsUtilCore.pathToUrl(getProjectPath() + "/" + r);
       expectedRootUrls.add(url);
     }
 
-    assertUnorderedElementsAreEqual(actualRoots, ArrayUtil.toStringArray(expectedRootUrls));
+    assertUnorderedPathsAreEqual(actualRoots, expectedRootUrls);
   }
 
   protected FACET_TYPE getFacet(String module) {

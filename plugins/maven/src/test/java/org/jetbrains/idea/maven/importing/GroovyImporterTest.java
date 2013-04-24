@@ -8,11 +8,10 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import org.jetbrains.idea.maven.MavenImportingTestCase;
-import org.jetbrains.idea.maven.importing.MavenDefaultModifiableModelsProvider;
-import org.jetbrains.idea.maven.importing.MavenRootModelAdapter;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
+import java.util.Arrays;
 
 public class GroovyImporterTest extends MavenImportingTestCase {
   @Override
@@ -67,9 +66,9 @@ public class GroovyImporterTest extends MavenImportingTestCase {
     Library[] libraries = GroovyConfigUtils.getInstance().getSDKLibrariesByModule(getModule("project"));
     assertTrue("unexpected groovy libs configuration: " + libraries.length, libraries.length > 0);
     Library library = libraries[0];
-    assertUnorderedElementsAreEqual(
-      library.getUrls(OrderRootType.CLASSES),
-      "jar://" + getRepositoryPath() + "/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/");
+    assertUnorderedPathsAreEqual(
+      Arrays.asList(library.getUrls(OrderRootType.CLASSES)),
+      Arrays.asList("jar://" + getRepositoryPath() + "/org/codehaus/groovy/groovy-all-minimal/1.5.6/groovy-all-minimal-1.5.6.jar!/"));
   }
 
   public void testAddingGroovySpecificSources() throws Exception {
