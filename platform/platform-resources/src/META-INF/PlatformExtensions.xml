@@ -295,5 +295,9 @@
     <postStartupActivity implementation="org.jetbrains.ide.WebServerManagerImpl$MyPostStartupActivity"/>
 
     <editorNotificationProvider implementation="com.intellij.ide.FileChangedNotificationProvider"/>
+
+    <localInspection shortName="InconsistentLineSeparators" bundle="messages.InspectionsBundle" key="inconsistent.line.separators"
+                     groupKey="group.names.portability.issues" enabledByDefault="false" level="WARNING"
+                     implementationClass="com.intellij.codeStyle.InconsistentLineSeparatorsInspection"/>
   </extensions>
 </idea-plugin>

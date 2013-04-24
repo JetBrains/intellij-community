@@ -15,6 +15,7 @@
  */
 package com.intellij.codeStyle;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.util.LineSeparator;
 
 /**
@@ -22,6 +23,6 @@ import com.intellij.util.LineSeparator;
  */
 public class ConvertToMacLineSeparatorsAction extends AbstractConvertLineSeparatorsAction {
   public ConvertToMacLineSeparatorsAction() {
-    super("Old Mac (\\r)", LineSeparator.CR);
+    super(ApplicationBundle.message("combobox.crlf.mac"), LineSeparator.CR);
   }
 }
