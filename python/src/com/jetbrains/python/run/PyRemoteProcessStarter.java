@@ -4,6 +4,8 @@ import com.intellij.execution.ExecutionException;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.execution.process.ProcessTerminatedListener;
+import com.intellij.openapi.application.Application;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.Messages;
@@ -17,7 +19,10 @@ import org.jetbrains.annotations.Nullable;
  * @author traff
  */
 public class PyRemoteProcessStarter {
-  public ProcessHandler startRemoteProcess(@NotNull Sdk sdk, @NotNull GeneralCommandLine commandLine, @Nullable Project project, @Nullable PathMappingSettings mappingSettings)
+  public ProcessHandler startRemoteProcess(@NotNull Sdk sdk,
+                                           @NotNull GeneralCommandLine commandLine,
+                                           @Nullable Project project,
+                                           @Nullable PathMappingSettings mappingSettings)
     throws ExecutionException {
     PythonRemoteInterpreterManager manager = PythonRemoteInterpreterManager.getInstance();
     if (manager != null) {
@@ -29,6 +34,10 @@ public class PyRemoteProcessStarter {
           break;
         }
         catch (ExecutionException e) {
+          final Application application = ApplicationManager.getApplication();
+          if (application != null && (application.isUnitTestMode() || application.isHeadlessEnvironment())) {
+            throw new RuntimeException(e);
+          }
           if (Messages.showYesNoDialog(e.getMessage() + "\nTry again?", "Can't Run Remote Interpreter", Messages.getErrorIcon()) ==
               Messages.NO) {
             throw new ExecutionException("Can't run remote python interpreter: " + e.getMessage());
