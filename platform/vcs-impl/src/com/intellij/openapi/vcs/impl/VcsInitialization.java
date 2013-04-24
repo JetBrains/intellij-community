@@ -42,10 +42,13 @@ public class VcsInitialization {
 
     StartupManager.getInstance(myProject).registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         ApplicationManager.getApplication().executeOnPooledThread(new Runnable() {
           @Override
           public void run() {
-            execute();
+            if (!myProject.isDisposed()) {
+              execute();
+            }
           }
         });
       }
