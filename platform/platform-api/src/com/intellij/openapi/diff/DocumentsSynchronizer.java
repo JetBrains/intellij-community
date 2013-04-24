@@ -15,26 +15,29 @@
  */
 package com.intellij.openapi.diff;
 
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 
-abstract class DocumentsSynchonizer {
+abstract class DocumentsSynchronizer {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.DocumentsSynchonizer");
   private Document myOriginal = null;
   private Document myCopy = null;
   private final Project myProject;
 
-  private boolean myDuringModification = false;
+  private volatile boolean myDuringModification = false;
   private int myAssignedCount = 0;
 
   private final DocumentAdapter myOriginalListener = new DocumentAdapter() {
+    @Override
     public void documentChanged(DocumentEvent e) {
       if (myDuringModification) return;
       onOriginalChanged(e, getCopy());
@@ -42,39 +45,47 @@ abstract class DocumentsSynchonizer {
   };
 
   private final DocumentAdapter myCopyListener = new DocumentAdapter() {
+    @Override
     public void documentChanged(DocumentEvent e) {
       if (myDuringModification) return;
       onCopyChanged(e, getOriginal());
     }
   };
   private final PropertyChangeListener myROListener = new PropertyChangeListener() {
+    @Override
     public void propertyChange(PropertyChangeEvent evt) {
       if (Document.PROP_WRITABLE.equals(evt.getPropertyName())) getCopy().setReadOnly(!getOriginal().isWritable());
     }
   };
 
-  protected DocumentsSynchonizer(Project project) {
+  protected DocumentsSynchronizer(Project project) {
     myProject = project;
   }
 
-  protected abstract void onCopyChanged(DocumentEvent event, Document original);
+  protected abstract void onCopyChanged(@NotNull DocumentEvent event, @NotNull Document original);
 
-  protected abstract void onOriginalChanged(DocumentEvent event, Document copy);
+  protected abstract void onOriginalChanged(@NotNull DocumentEvent event, @NotNull Document copy);
 
-  protected abstract void beforeListenersAttached(Document original, Document copy);
+  protected abstract void beforeListenersAttached(@NotNull Document original, @NotNull Document copy);
 
   protected abstract Document createOriginal();
 
   protected abstract Document createCopy();
 
-  protected void replaceString(final Document document, final int startOffset, final int endOffset, final String newText) {
+  protected void replaceString(@NotNull final Document document, final int startOffset, final int endOffset, @NotNull final String newText) {
     LOG.assertTrue(!myDuringModification);
     try {
       myDuringModification = true;
       CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
+        @Override
         public void run() {
           LOG.assertTrue(endOffset <= document.getTextLength());
-          document.replaceString(startOffset, endOffset, newText);
+          ApplicationManager.getApplication().runWriteAction(new Runnable() {
+            @Override
+            public void run() {
+              document.replaceString(startOffset, endOffset, newText);
+            }
+          });
         }
       }, DiffBundle.message("save.merge.result.command.name"), document);
     }
