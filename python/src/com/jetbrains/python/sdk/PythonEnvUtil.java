@@ -2,7 +2,6 @@ package com.jetbrains.python.sdk;
 
 import com.google.common.collect.Lists;
 import com.google.common.collect.Sets;
-import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -64,11 +63,6 @@ public class PythonEnvUtil {
     }
   }
 
-  public static void addPathToEnv(@NotNull GeneralCommandLine cmd, @NotNull String key, @NotNull String value) {
-    String currentPath = cmd.getEnvironment().get(key);
-    cmd.setEnvironment(key, appendToPathEnvVar(currentPath, value));
-  }
-
   public static void addToPythonPath(@NotNull Map<String, String> env, @NotNull Collection<String> values) {
     addPathsToEnv(env, PYTHONPATH, values);
   }
@@ -77,13 +71,8 @@ public class PythonEnvUtil {
     addPathToEnv(env, PYTHONPATH, value);
   }
 
-  public static void addToPythonPath(@NotNull GeneralCommandLine cmd, @NotNull String value) {
-    addPathToEnv(cmd, PYTHONPATH, value);
-  }
-
-  @Nullable
-  public static List<String> getPathListFromEnv(@NotNull GeneralCommandLine cmd, @NotNull String envKey) {
-    String pythonPath = cmd.getEnvironment().get(envKey);
+  public static List<String> getPathListFromEnv(@NotNull Map<String, String> env, String envKey) {
+    String pythonPath = env.get(envKey);
     return pythonPath != null ? Lists.newArrayList(pythonPath.split(File.pathSeparator)) : null;
   }
 }

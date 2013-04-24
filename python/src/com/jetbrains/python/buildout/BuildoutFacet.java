@@ -242,6 +242,7 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
   }
 
   public void patchCommandLineForBuildout(GeneralCommandLine commandLine) {
+    Map<String, String> env = commandLine.getEnvironment();
     ParametersList params = commandLine.getParametersList();
     // alter execution script
     ParamsGroup script_params = params.getParamsGroup(PythonCommandLineState.GROUP_SCRIPT);
@@ -249,19 +250,18 @@ public class BuildoutFacet extends Facet<BuildoutFacetConfiguration> implements 
     if (script_params.getParameters().size() > 0) {
       String normal_script = script_params.getParameters().get(0); // expect DjangoUtil.MANAGE_FILE
       String engulfer_path = PythonHelpersLocator.getHelperPath("pycharm/buildout_engulfer.py");
-      commandLine.setEnvironment("PYCHARM_ENGULF_SCRIPT", getConfiguration().getScriptName());
+      env.put("PYCHARM_ENGULF_SCRIPT", getConfiguration().getScriptName());
       script_params.getParametersList().replaceOrPrepend(normal_script, engulfer_path);
     }
-
     // add pycharm helpers to pythonpath so that fixGetpass is importable
-    PythonEnvUtil.addToPythonPath(commandLine, PythonHelpersLocator.getHelpersRoot().getAbsolutePath());
 
+    PythonEnvUtil.addToPythonPath(env, PythonHelpersLocator.getHelpersRoot().getAbsolutePath());
     /*
     // set prependable paths
     List<String> paths = facet.getAdditionalPythonPath();
     if (paths != null) {
       path_value = PyUtil.joinWith(File.pathSeparator, paths);
-      new_env.put("PYCHARM_PREPEND_SYSPATH", path_value);
+      env.put("PYCHARM_PREPEND_SYSPATH", path_value);
     }
     */
   }

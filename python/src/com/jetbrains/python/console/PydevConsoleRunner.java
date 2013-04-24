@@ -272,7 +272,7 @@ public class PydevConsoleRunner extends AbstractConsoleRunnerWithHistory<PythonC
 
     GeneralCommandLine commandLine = new GeneralCommandLine(command);
     if (env != null) {
-      commandLine.setEnvironment(env);
+      commandLine.getEnvironment().putAll(env);
     }
 
     commandLine.getParametersList().set(1, PythonRemoteInterpreterManager.toSystemDependent(new File(data.getHelpersPath(),

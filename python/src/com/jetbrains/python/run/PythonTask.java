@@ -25,6 +25,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Base class for tasks which are run from PyCharm with results displayed in a toolwindow (manage.py, setup.py, Sphinx etc).
@@ -112,6 +113,7 @@ public class PythonTask {
     assert scriptParams != null;
 
     cmd.setPassParentEnvironment(true);
+    Map<String, String> env = cmd.getEnvironment();
     if (!SystemInfo.isWindows && !PySdkUtil.isRemote(mySdk)) {
       cmd.setExePath("bash");
       ParamsGroup bashParams = cmd.getParametersList().addParamsGroupAt(0, "Bash");
@@ -129,7 +131,7 @@ public class PythonTask {
       String pathKey = OSUtil.getPATHenvVariableName();
       String sysPath = System.getenv().get(pathKey);
       if (pathKey != null && !StringUtil.isEmpty(sysPath)) {
-        cmd.setEnvironment(pathKey, OSUtil.appendToPATHenvVariable(null, sysPath));
+        env.put(pathKey, OSUtil.appendToPATHenvVariable(null, sysPath));
       }
 
       cmd.setExePath(homePath);
@@ -137,7 +139,7 @@ public class PythonTask {
       scriptParams.addParameters(myParameters);
     }
 
-    cmd.setEnvironment(PythonEnvUtil.PYTHONUNBUFFERED, "1");
+    PythonEnvUtil.setPythonUnbuffered(env);
 
     List<String> pythonPath = setupPythonPath();
     PythonCommandLineState.initPythonPath(cmd, true, pythonPath, homePath);

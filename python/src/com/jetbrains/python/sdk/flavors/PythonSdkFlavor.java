@@ -11,7 +11,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
 import com.intellij.util.PatternUtil;
-import com.intellij.util.containers.ContainerUtil;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.sdk.PySdkUtil;
 import com.jetbrains.python.sdk.PythonEnvUtil;
@@ -192,18 +191,11 @@ public abstract class PythonSdkFlavor {
   }
 
   public void initPythonPath(GeneralCommandLine cmd, Collection<String> path) {
-    Map<String, String> env = ContainerUtil.newHashMap(cmd.getEnvironment());
-    initPythonPath(path, env);
-    cmd.setEnvironment(env);
+    initPythonPath(path, cmd.getEnvironment());
   }
 
-  public void initPythonPath(Collection<String> path, Map<String, String> env) {
-    path = appendSystemPythonPath(path);
-    addToEnv(PythonEnvUtil.PYTHONPATH, StringUtil.join(path, File.pathSeparator), env);
-  }
-
-  public static void addToEnv(final String key, String value, Map<String, String> env) {
-    PythonEnvUtil.addPathToEnv(env, key, value);
+  public static void addToEnv(final String key, String value, Map<String, String> envs) {
+    PythonEnvUtil.addPathToEnv(envs, key, value);
   }
 
   @SuppressWarnings({"MethodMayBeStatic"})
@@ -229,5 +221,10 @@ public abstract class PythonSdkFlavor {
 
   public Icon getIcon() {
     return PythonIcons.Python.Python;
+  }
+
+  public void initPythonPath(Collection<String> path, Map<String, String> env) {
+    path = appendSystemPythonPath(path);
+    addToEnv(PythonEnvUtil.PYTHONPATH, StringUtil.join(path, File.pathSeparator), env);
   }
 }

@@ -28,7 +28,6 @@ import com.intellij.openapi.roots.*;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.HashMap;
 import com.jetbrains.python.PythonHelpersLocator;
 import com.jetbrains.python.console.PyDebugConsoleBuilder;
@@ -225,8 +224,6 @@ public abstract class PythonCommandLineState extends CommandLineState {
   }
 
   protected void initEnvironment(GeneralCommandLine commandLine) {
-    boolean passParentEnvironment = myConfig.isPassParentEnvs();
-
     Map<String, String> env = myConfig.getEnvs();
     if (env == null) {
       env = new HashMap<String, String>();
@@ -234,15 +231,20 @@ public abstract class PythonCommandLineState extends CommandLineState {
     else {
       env = new HashMap<String, String>(env);
     }
-    addPredefinedEnvironmentVariables(env, passParentEnvironment);
-    commandLine.setEnvironment(env);
 
-    commandLine.setEnvironment(PythonEnvUtil.PYTHONUNBUFFERED, "1");
-    commandLine.setEnvironment("PYCHARM_HOSTED", "1");
+    addPredefinedEnvironmentVariables(env, myConfig.isPassParentEnvs());
+    addCommonEnvironmentVariables(env);
 
-    commandLine.setPassParentEnvironment(passParentEnvironment);
+    commandLine.getEnvironment().clear();
+    commandLine.getEnvironment().putAll(env);
+    commandLine.setPassParentEnvironment(myConfig.isPassParentEnvs());
 
-    buildPythonPath(commandLine, passParentEnvironment);
+    buildPythonPath(commandLine, myConfig.isPassParentEnvs());
+  }
+
+  protected static void addCommonEnvironmentVariables(Map<String, String> env) {
+    PythonEnvUtil.setPythonUnbuffered(env);
+    env.put("PYCHARM_HOSTED", "1");
   }
 
   public void addPredefinedEnvironmentVariables(Map<String, String> envs, boolean passParentEnvs) {
@@ -270,9 +272,7 @@ public abstract class PythonCommandLineState extends CommandLineState {
       flavor.initPythonPath(commandLine, pathList);
     }
     else {
-      Map<String, String> env = ContainerUtil.newHashMap(commandLine.getEnvironment());
-      PythonSdkFlavor.initPythonPath(env, passParentEnvs, pathList);
-      commandLine.setEnvironment(env);
+      PythonSdkFlavor.initPythonPath(commandLine.getEnvironment(), passParentEnvs, pathList);
     }
   }
 

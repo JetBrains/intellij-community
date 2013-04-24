@@ -337,8 +337,8 @@ public class PythonSdkType extends SdkType {
       }
       String virtualenvBin = bin.getPath();
 
-      String pathValue;
       Map<String, String> env = commandLine.getEnvironment();
+      String pathValue;
       if (env.containsKey(PATH)) {
         pathValue = PythonEnvUtil.appendToPathEnvVar(env.get(PATH), virtualenvBin);
       }
@@ -349,10 +349,9 @@ public class PythonSdkType extends SdkType {
       else {
         pathValue = virtualenvBin;
       }
-      commandLine.setEnvironment(PATH, pathValue);
+      env.put(PATH, pathValue);
     }
   }
-
 
   public String suggestSdkName(final String currentSdkName, final String sdkHome) {
     String name = getVersionString(sdkHome);

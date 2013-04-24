@@ -32,8 +32,8 @@ import java.awt.*;
 import java.util.Collections;
 import java.util.List;
 
-import static com.jetbrains.python.sdk.PythonEnvUtil.PYTHONIOENCODING;
-import static com.jetbrains.python.sdk.PythonEnvUtil.PYTHONUNBUFFERED;
+import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonIOEncoding;
+import static com.jetbrains.python.sdk.PythonEnvUtil.setPythonUnbuffered;
 
 /**
  * User : catherine
@@ -152,8 +152,8 @@ public class SphinxBaseCommand {
     }
 
     cmd.setPassParentEnvironment(true);
-    cmd.setEnvironment(PYTHONIOENCODING, "utf-8");
-    cmd.setEnvironment(PYTHONUNBUFFERED, "1");
+    setPythonIOEncoding(cmd.getEnvironment(), "utf-8");
+    setPythonUnbuffered(cmd.getEnvironment());
 
     List<String> pathList = Lists.newArrayList(PythonCommandLineState.getAddedPaths(sdk));
     pathList.addAll(PythonCommandLineState.collectPythonPath(module));
