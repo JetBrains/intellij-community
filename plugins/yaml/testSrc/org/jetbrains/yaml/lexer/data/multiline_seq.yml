@@ -1,0 +1,9 @@
+item:
+-
+  property: [
+   'value[]'
+  ]
+-
+  property: [
+   'value'
+  ]

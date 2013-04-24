@@ -43,6 +43,10 @@ import org.jetbrains.yaml.YAMLTokenTypes;
     return 0 <= loc && loc < zzBuffer.length() ? zzBuffer.charAt(loc) : (char) -1;
   }
 
+  private boolean isAfterEol() {
+    final char prev = previousChar();
+    return prev == (char)-1 || prev == '\n';
+  }
 %}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////// REGEXPS DECLARATIONS //////////////////////////////////////////////////////////////////////////
@@ -84,7 +88,9 @@ STRING=                         '([^']|(''))*?'?
                                          COMMENT : TEXT;
                                 }
 
-{EOL}                           {   yybegin(YYINITIAL);
+{EOL}                           {   if (braceCount == 0) {
+                                      yybegin(YYINITIAL);
+                                    }
                                     return EOL;
                                 }
 "{"                             {   braceCount++;
@@ -137,15 +143,18 @@ STRING=                         '([^']|(''))*?'?
                                 }
 }
 
+<YYINITIAL, BRACES, VALUE, VALUE_OR_KEY> {
+
+{WHITE_SPACE}                   { return isAfterEol() ? INDENT : WHITESPACE; }
+
+}
+
 <YYINITIAL, BRACES>{
 
 "---"                           {   braceCount = 0;
                                     yybegin(YYINITIAL);
                                     return DOCUMENT_MARKER; }
 
-{WHITE_SPACE}                   {   final char prev = previousChar();
-                                    return prev == (char)-1 || prev == '\n' ? INDENT : WHITESPACE;
-                                }
 "-" / ({WHITE_SPACE} | {EOL})   {   yybegin(VALUE_OR_KEY);
                                     return SEQUENCE_MARKER; }
 
@@ -154,8 +163,6 @@ STRING=                         '([^']|(''))*?'?
 
 
 <BRACES, VALUE, VALUE_OR_KEY>{
-
-{WHITE_SPACE}                   {   return WHITESPACE; }
 
 {STRING}                        {   return SCALAR_STRING; }
 
@@ -205,7 +212,7 @@ STRING=                         '([^']|(''))*?'?
                                                 yybegin(YYINITIAL);
                                                 //System.out.println("return to initial state");
                                             }
-                                            return previousChar() == '\n' ? INDENT : WHITESPACE;
+                                            return isAfterEol() ? INDENT : WHITESPACE;
                                         }
 [^ \n\t] {LINE}?                        {   if (afterEOL){
                                                 yypushback(yylength());
