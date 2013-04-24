@@ -24,6 +24,8 @@ public class RedundantCast15Test extends InspectionTestCase {
 
   public void testBoxingInRef() throws Exception { doTest(); }
 
+  public void testBoxingInConditional() throws Exception { doTest(); }
+
   public void testInference1() throws Exception { doTest(); }
 
   public void testInference2() throws Exception { doTest(); }
