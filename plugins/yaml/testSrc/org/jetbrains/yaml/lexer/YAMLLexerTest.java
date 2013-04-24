@@ -109,4 +109,9 @@ public class YAMLLexerTest extends LexerTestCase {
   public void testKey_with_brackets() {
     doFileTest("yml");
   }
+
+  public void testStrings() {
+    doFileTest("yml");
+  }
+
 }
