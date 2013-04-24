@@ -17,6 +17,7 @@ package com.intellij.spellchecker.dictionary;
 
 import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -25,8 +26,7 @@ import java.util.HashSet;
 import java.util.Set;
 
 public class ProjectDictionary implements EditableDictionary {
-
-  private static final String DEFAULT_CURRENT_USER_NAME = "default.user";
+  @NonNls private static final String DEFAULT_CURRENT_USER_NAME = "default.user";
   private static final String DEFAULT_PROJECT_DICTIONARY_NAME = "project";
   private String activeName;
   private Set<EditableDictionary> dictionaries;
@@ -35,7 +35,7 @@ public class ProjectDictionary implements EditableDictionary {
   public ProjectDictionary() {
   }
 
-  public ProjectDictionary(Set<EditableDictionary> dictionaries) {
+  public ProjectDictionary(@NotNull Set<EditableDictionary> dictionaries) {
     this.dictionaries = dictionaries;
   }
 
@@ -70,8 +70,7 @@ public class ProjectDictionary implements EditableDictionary {
       if (contains == null) {
         errors++;
       }
-      else
-      if (contains) {
+      else if (contains) {
         return true;
       }
     }
@@ -208,6 +207,7 @@ public class ProjectDictionary implements EditableDictionary {
     return result;
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "ProjectDictionary{" + "activeName='" + activeName + '\'' + ", dictionaries=" + dictionaries + '}';

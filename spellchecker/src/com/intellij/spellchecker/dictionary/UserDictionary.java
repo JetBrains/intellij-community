@@ -17,6 +17,7 @@ package com.intellij.spellchecker.dictionary;
 
 import com.intellij.util.Consumer;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -24,11 +25,10 @@ import java.util.Collection;
 import java.util.Set;
 
 public class UserDictionary implements EditableDictionary {
-
   private final String name;
 
   @NotNull
-  private final THashSet<String> words = new THashSet<String>();
+  private final Set<String> words = new THashSet<String>();
 
   public UserDictionary(@NotNull String name) {
     this.name = name;
@@ -105,7 +105,7 @@ public class UserDictionary implements EditableDictionary {
 
   @Override
   public boolean isEmpty() {
-    return words.size() == 0;
+    return words.isEmpty();
   }
 
   @Override
@@ -115,7 +115,7 @@ public class UserDictionary implements EditableDictionary {
 
     UserDictionary that = (UserDictionary)o;
 
-    return !(name != null ? !name.equals(that.name) : that.name != null);
+    return name.equals(that.name);
 
   }
 
@@ -128,9 +128,10 @@ public class UserDictionary implements EditableDictionary {
 
   @Override
   public int hashCode() {
-    return name != null ? name.hashCode() : 0;
+    return name.hashCode();
   }
 
+  @NonNls
   @Override
   public String toString() {
     return "UserDictionary{" + "name='" + name + '\'' + ", words.count=" + words.size() + '}';

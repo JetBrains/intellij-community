@@ -22,7 +22,6 @@ import org.jetbrains.annotations.Nullable;
 import java.util.Set;
 
 public interface Dictionary {
-
   @NotNull
   String getName();
 
