@@ -6,11 +6,15 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usageView.UsageInfo;
 import com.intellij.util.IncorrectOperationException;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * User: ktisha
@@ -49,7 +53,7 @@ public class PyConvertStaticMethodToFunctionIntention extends BaseIntentionActio
     if (problemFunction == null) return;
     final PyClass containingClass = problemFunction.getContainingClass();
     if (containingClass == null) return;
-
+    final List<UsageInfo> usages = PyRefactoringUtil.findUsages(problemFunction, false);
     final PyDecoratorList decoratorList = problemFunction.getDecoratorList();
     if (decoratorList != null) {
       final PyDecorator decorator = decoratorList.findDecorator(PyNames.STATICMETHOD);
@@ -64,5 +68,12 @@ public class PyConvertStaticMethodToFunctionIntention extends BaseIntentionActio
       classStatementList.add(generator.createPassStatement());
     }
     file.addAfter(copy, containingClass);
+
+    for (UsageInfo usage : usages) {
+      final PsiElement usageElement = usage.getElement();
+      if (usageElement instanceof PyReferenceExpression) {
+        PyUtil.removeQualifier((PyReferenceExpression)usageElement);
+      }
+    }
   }
 }

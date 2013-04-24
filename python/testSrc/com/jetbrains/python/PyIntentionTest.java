@@ -402,6 +402,10 @@ public class PyIntentionTest extends PyTestCase {
     doTest(PyBundle.message("INTN.convert.static.method.to.function"));
   }
 
+  public void testConvertStaticMethodToFunctionUsage() {
+    doTest(PyBundle.message("INTN.convert.static.method.to.function"));
+  }
+
   private void doDocStubTest(LanguageLevel languageLevel) {
     PythonLanguageLevelPusher.setForcedLanguageLevel(myFixture.getProject(), languageLevel);
     try {
