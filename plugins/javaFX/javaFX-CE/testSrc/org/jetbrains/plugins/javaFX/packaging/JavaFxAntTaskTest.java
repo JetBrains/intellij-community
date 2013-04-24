@@ -32,20 +32,21 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
   private static final String PRELOADER_CLASS = "preloaderClass";
   private static final String TITLE = "title";
   private static final String PRELOADER_JAR = "preloaderJar";
+  private static final String SIGNED = "signed";
 
   public void testJarDeployNoInfo() throws Exception {
-    doTest("<fx:fileset id=\"all_but_jarDeployNoInfo\" dir=\"temp\" includes=\"*.jar\">\n" +
+    doTest("<fx:fileset id=\"all_but_jarDeployNoInfo\" dir=\"temp\" includes=\"**/*.jar\">\n" +
            "<exclude name=\"jarDeployNoInfo.jar\">\n" +
            "</exclude>\n" +
            "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_jarDeployNoInfo\" dir=\"temp\" includes=\"*.jar\">\n" +
+           "<fx:fileset id=\"all_jarDeployNoInfo\" dir=\"temp\" includes=\"**/*.jar\">\n" +
            "</fx:fileset>\n" +
            "<fx:application id=\"jarDeployNoInfo_id\" name=\"jarDeployNoInfo\" mainClass=\"Main\">\n" +
            "</fx:application>\n" +
            "<fx:jar destfile=\"temp/jarDeployNoInfo.jar\">\n" +
            "<fx:application refid=\"jarDeployNoInfo_id\">\n" +
            "</fx:application>\n" +
-           "<fileset dir=\"temp\" excludes=\"*.jar\">\n" +
+           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
            "</fileset>\n" +
            "<fx:resources>\n" +
            "<fx:fileset refid=\"all_but_jarDeployNoInfo\">\n" +
@@ -63,18 +64,18 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
   }
 
   public void testJarDeployTitle() throws Exception {
-    doTest("<fx:fileset id=\"all_but_jarDeployTitle\" dir=\"temp\" includes=\"*.jar\">\n" +
+    doTest("<fx:fileset id=\"all_but_jarDeployTitle\" dir=\"temp\" includes=\"**/*.jar\">\n" +
            "<exclude name=\"jarDeployTitle.jar\">\n" +
            "</exclude>\n" +
            "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_jarDeployTitle\" dir=\"temp\" includes=\"*.jar\">\n" +
+           "<fx:fileset id=\"all_jarDeployTitle\" dir=\"temp\" includes=\"**/*.jar\">\n" +
            "</fx:fileset>\n" +
            "<fx:application id=\"jarDeployTitle_id\" name=\"jarDeployTitle\" mainClass=\"Main\">\n" +
            "</fx:application>\n" +
            "<fx:jar destfile=\"temp/jarDeployTitle.jar\">\n" +
            "<fx:application refid=\"jarDeployTitle_id\">\n" +
            "</fx:application>\n" +
-           "<fileset dir=\"temp\" excludes=\"*.jar\">\n" +
+           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
            "</fileset>\n" +
            "<fx:resources>\n" +
            "<fx:fileset refid=\"all_but_jarDeployTitle\">\n" +
@@ -93,28 +94,59 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
            "</fx:deploy>\n", Collections.singletonMap(TITLE, "My App"));
   }
 
+  public void testJarDeploySigned() throws Exception {
+    doTest("<fx:fileset id=\"all_but_jarDeploySigned\" dir=\"temp\" includes=\"**/*.jar\">\n" +
+           "<exclude name=\"jarDeploySigned.jar\">\n" +
+           "</exclude>\n" +
+           "</fx:fileset>\n" +
+           "<fx:fileset id=\"all_jarDeploySigned\" dir=\"temp\" includes=\"**/*.jar\">\n" +
+           "</fx:fileset>\n" +
+           "<fx:application id=\"jarDeploySigned_id\" name=\"jarDeploySigned\" mainClass=\"Main\">\n" +
+           "</fx:application>\n" +
+           "<fx:jar destfile=\"temp" + File.separator + "jarDeploySigned.jar\">\n" +
+           "<fx:application refid=\"jarDeploySigned_id\">\n" +
+           "</fx:application>\n" +
+           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
+           "</fileset>\n" +
+           "<fx:resources>\n" +
+           "<fx:fileset refid=\"all_but_jarDeploySigned\">\n" +
+           "</fx:fileset>\n" +
+           "</fx:resources>\n" +
+           "</fx:jar>\n" +
+           "<fx:deploy width=\"800\" height=\"400\" updatemode=\"background\" outdir=\"temp" + File.separator + "deploy\" outfile=\"jarDeploySigned\">\n" +
+           "<fx:permissions elevated=\"true\">\n" +
+           "</fx:permissions>\n" +
+           "<fx:application refid=\"jarDeploySigned_id\">\n" +
+           "</fx:application>\n" +
+           "<fx:resources>\n" +
+           "<fx:fileset refid=\"all_jarDeploySigned\">\n" +
+           "</fx:fileset>\n" +
+           "</fx:resources>\n" +
+           "</fx:deploy>\n", Collections.singletonMap(SIGNED, "true"));
+  }
+
   public void testJarDeployPreloader() throws Exception {
     final HashMap<String, String> options = new HashMap<String, String>();
     options.put(PRELOADER_CLASS, "MyPreloader");
     options.put(PRELOADER_JAR, "preloader.jar");
     doTest("<fx:fileset id=\"jarDeployPreloader_preloader_files\" requiredFor=\"preloader\" dir=\"temp\" includes=\"preloader.jar\">\n" +
            "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_but_preloader_jarDeployPreloader\" dir=\"temp\" excludes=\"preloader.jar\" includes=\"*.jar\">\n" +
+           "<fx:fileset id=\"all_but_preloader_jarDeployPreloader\" dir=\"temp\" excludes=\"preloader.jar\" includes=\"**/*.jar\">\n" +
            "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_but_jarDeployPreloader\" dir=\"temp\" includes=\"*.jar\">\n" +
+           "<fx:fileset id=\"all_but_jarDeployPreloader\" dir=\"temp\" includes=\"**/*.jar\">\n" +
            "<exclude name=\"jarDeployPreloader.jar\">\n" +
            "</exclude>\n" +
            "<exclude name=\"preloader.jar\">\n" +
            "</exclude>\n" +
            "</fx:fileset>\n" +
-           "<fx:fileset id=\"all_jarDeployPreloader\" dir=\"temp\" includes=\"*.jar\">\n" +
+           "<fx:fileset id=\"all_jarDeployPreloader\" dir=\"temp\" includes=\"**/*.jar\">\n" +
            "</fx:fileset>\n" +
            "<fx:application id=\"jarDeployPreloader_id\" name=\"jarDeployPreloader\" mainClass=\"Main\" preloaderClass=\"MyPreloader\">\n" +
            "</fx:application>\n" +
            "<fx:jar destfile=\"temp/jarDeployPreloader.jar\">\n" +
            "<fx:application refid=\"jarDeployPreloader_id\">\n" +
            "</fx:application>\n" +
-           "<fileset dir=\"temp\" excludes=\"*.jar\">\n" +
+           "<fileset dir=\"temp\" excludes=\"**/*.jar\">\n" +
            "</fileset>\n" +
            "<fx:resources>\n" +
            "<fx:fileset refid=\"jarDeployPreloader_preloader_files\">\n" +
@@ -155,6 +187,10 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
       packager.setPreloaderJar(preloaderJar);
     }
 
+    if (options.containsKey(SIGNED)) {
+      packager.setSigned(true);
+    }
+
     final List<JavaFxAntGenerator.SimpleTag> temp = JavaFxAntGenerator
       .createJarAndDeployTasks(packager, artifactFileName, artifactName, "temp");
     final StringBuilder buf = new StringBuilder();
@@ -178,6 +214,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     private String myPreloaderClass;
     private String myPreloaderJar;
     private boolean myConvertCss2Bin;
+    private boolean mySigned;
 
     private MockJavaFxPackager(String outputPath) {
       myOutputPath = outputPath;
@@ -211,6 +248,10 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
       myPreloaderJar = preloaderJar;
     }
 
+    public void setSigned(boolean signed) {
+      mySigned = signed;
+    }
+    
     @Override
     protected String getArtifactOutputPath() {
       return new File(myOutputPath).getParent();
@@ -302,7 +343,7 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
 
     @Override
     public boolean isEnabledSigning() {
-      return false;
+      return mySigned;
     }
 
     @Override

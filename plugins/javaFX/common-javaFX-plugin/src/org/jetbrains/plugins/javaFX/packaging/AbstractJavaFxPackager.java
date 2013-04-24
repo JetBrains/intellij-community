@@ -20,6 +20,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Base64Converter;
 import com.intellij.util.PathUtilRt;
 import com.intellij.util.io.ZipUtil;
@@ -38,6 +39,7 @@ import java.util.List;
  */
 public abstract class AbstractJavaFxPackager {
   private static final Logger LOG = Logger.getInstance("#" + AbstractJavaFxPackager.class.getName());
+  private static final String JB_JFX_JKS = "jb-jfx.jks";
 
   //artifact description
   protected String getArtifactRootName() {
@@ -84,7 +86,7 @@ public abstract class AbstractJavaFxPackager {
       tempUnzippedArtifactOutput = FileUtil.createTempDirectory("artifact", "unzipped");
       final File artifactOutputFile = new File(zipPath);
       ZipUtil.extract(artifactOutputFile, tempUnzippedArtifactOutput, null);
-      copyLibraries(artifactOutputFile.getName(), tempUnzippedArtifactOutput);
+      copyLibraries(FileUtil.getNameWithoutExtension(artifactOutputFile), tempUnzippedArtifactOutput);
     }
     catch (IOException e) {
       registerJavaFxPackagerError(e);
@@ -128,11 +130,15 @@ public abstract class AbstractJavaFxPackager {
   private void copyLibraries(String zipPath, File tempUnzippedArtifactOutput) throws IOException {
     final File[] outFiles = new File(getArtifactOutputPath()).listFiles();
     if (outFiles != null) {
+      final String[] generatedItems = new String[] {JB_JFX_JKS, zipPath + ".jar", zipPath + ".jnlp", zipPath + ".html"};
       for (File file : outFiles) {
-        if (file.isFile()) {
-          final String fileName = file.getName();
-          if (fileName.endsWith(".jar") && !zipPath.equals(fileName)) {
-            FileUtil.copy(file, new File(tempUnzippedArtifactOutput, fileName));
+        final String fileName = file.getName();
+        if (ArrayUtilRt.find(generatedItems, fileName) < 0) {
+          final File destination = new File(tempUnzippedArtifactOutput, fileName);
+          if (file.isFile()) {
+            FileUtil.copy(file, destination);
+          } else {
+            FileUtil.copyDir(file, destination, true);
           }
         }
       }
@@ -320,7 +326,7 @@ public abstract class AbstractJavaFxPackager {
   }
 
   private String getKeystore(boolean selfSigning) {
-    return selfSigning ? getArtifactOutputPath() + File.separator + "jb-jfx.jks" : getKeystore();
+    return selfSigning ? getArtifactOutputPath() + File.separator + JB_JFX_JKS : getKeystore();
   }
 
   private String getStorepass(boolean selfSigning) {

@@ -53,13 +53,13 @@ public class JavaFxAntGenerator {
       topLevelTagsCollector.add(new SimpleTag("fx:fileset", new Pair<String, String>("id", allButPreloader),
                                                             new Pair<String, String>("dir", tempDirPath),
                                                             new Pair<String, String>("excludes", preloaderJar),
-                                                            new Pair<String, String>("includes", "*.jar")));
+                                                            new Pair<String, String>("includes", "**/*.jar")));
     }
 
     final String allButSelf = "all_but_" + artifactName;
     final SimpleTag allButSelfAndPreloader = new SimpleTag("fx:fileset", new Pair<String, String>("id", allButSelf),
                                                                          new Pair<String, String>("dir", tempDirPath),
-                                                                         new Pair<String, String>("includes", "*.jar"));
+                                                                         new Pair<String, String>("includes", "**/*.jar"));
     allButSelfAndPreloader.add(new SimpleTag("exclude", new Pair<String, String>("name", artifactFileName)));
     if (preloaderJar != null) {
       allButSelfAndPreloader.add(new SimpleTag("exclude", new Pair<String, String>("name", preloaderJar)));
@@ -69,7 +69,7 @@ public class JavaFxAntGenerator {
     final String all = "all_" + artifactName;
     final SimpleTag allIncluded = new SimpleTag("fx:fileset", new Pair<String, String>("id", all),
                                                               new Pair<String, String>("dir", tempDirPath),
-                                                              new Pair<String, String>("includes", "*.jar"));
+                                                              new Pair<String, String>("includes", "**/*.jar"));
     topLevelTagsCollector.add(allIncluded);
 
     //register application
@@ -100,7 +100,7 @@ public class JavaFxAntGenerator {
 
     final List<Pair> fileset2Jar = new ArrayList<Pair>();
     fileset2Jar.add(new Pair<String, String>("dir", tempDirPath));
-    fileset2Jar.add(new Pair<String, String>("excludes", "*.jar"));
+    fileset2Jar.add(new Pair<String, String>("excludes", "**/*.jar"));
     createJarTag.add(new SimpleTag("fileset", fileset2Jar.toArray(new Pair[fileset2Jar.size()])));
 
     createJarTag.add(createResourcesTag(preloaderFiles, false, allButPreloader, allButSelf, all));
