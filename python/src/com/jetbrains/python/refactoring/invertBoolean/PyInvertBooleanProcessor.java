@@ -1,10 +1,7 @@
 package com.jetbrains.python.refactoring.invertBoolean;
 
 import com.intellij.openapi.util.Ref;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiReference;
-import com.intellij.psi.SmartPointerManager;
-import com.intellij.psi.SmartPsiElementPointer;
+import com.intellij.psi.*;
 import com.intellij.psi.search.searches.ReferencesSearch;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.BaseRefactoringProcessor;
@@ -30,6 +27,7 @@ import java.util.Map;
  */
 public class PyInvertBooleanProcessor extends BaseRefactoringProcessor {
   private PsiElement myElement;
+  private String myNewName;
   private final RenameProcessor myRenameProcessor;
   private final Map<UsageInfo, SmartPsiElementPointer> myToInvert = new HashMap<UsageInfo, SmartPsiElementPointer>();
   private final SmartPointerManager mySmartPointerManager;
@@ -37,6 +35,7 @@ public class PyInvertBooleanProcessor extends BaseRefactoringProcessor {
   public PyInvertBooleanProcessor(@NotNull final PsiElement namedElement, @NotNull final String newName) {
     super(namedElement.getProject());
     myElement = namedElement;
+    myNewName = newName;
     mySmartPointerManager = SmartPointerManager.getInstance(myProject);
     myRenameProcessor = new RenameProcessor(myProject, namedElement, newName, false, false);
   }
@@ -49,11 +48,15 @@ public class PyInvertBooleanProcessor extends BaseRefactoringProcessor {
 
   @Override
   protected boolean preprocessUsages(Ref<UsageInfo[]> refUsages) {
-    if (myRenameProcessor.preprocessUsages(refUsages)) {
-      prepareSuccessful();
-      return true;
+    if (!myNewName.equals(myElement instanceof PsiNamedElement ? ((PsiNamedElement)myElement).getName() : myElement.getText())) {
+      if (myRenameProcessor.preprocessUsages(refUsages)) {
+        prepareSuccessful();
+        return true;
+      }
+      return false;
     }
-    return false;
+    prepareSuccessful();
+    return true;
   }
 
   @Override

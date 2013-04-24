@@ -21,12 +21,13 @@ public class PyInvertBooleanDialog extends RefactoringDialog {
   private JLabel myCaptionLabel;
 
   private final PsiElement myElement;
+  private final String myName;
 
   public PyInvertBooleanDialog(final PsiElement element) {
     super(element.getProject(), false);
     myElement = element;
-    final String name = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : element.getText();
-    myNameField.setText(name);
+    myName = element instanceof PsiNamedElement ? ((PsiNamedElement)element).getName() : element.getText();
+    myNameField.setText(myName);
     myLabel.setLabelFor(myNameField);
     final String typeString = UsageViewUtil.getType(myElement);
     myLabel.setText(RefactoringBundle.message("invert.boolean.name.of.inverted.element", typeString));
@@ -45,7 +46,7 @@ public class PyInvertBooleanDialog extends RefactoringDialog {
   protected void doAction() {
     Project project = myElement.getProject();
     final String name = myNameField.getText().trim();
-    if (name.length() == 0 || !RenameUtil.isValidName(myProject, myElement, name)) {
+    if (name.length() == 0 || (!name.equals(myName) && !RenameUtil.isValidName(myProject, myElement, name))) {
       CommonRefactoringUtil.showErrorMessage(PyInvertBooleanHandler.REFACTORING_NAME,
                                              RefactoringBundle.message("please.enter.a.valid.name.for.inverted.element",
                                                                        UsageViewUtil.getType(myElement)),
