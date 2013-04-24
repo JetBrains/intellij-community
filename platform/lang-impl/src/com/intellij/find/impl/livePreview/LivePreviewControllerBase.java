@@ -2,6 +2,7 @@ package com.intellij.find.impl.livePreview;
 
 import com.intellij.find.FindManager;
 import com.intellij.find.FindModel;
+import com.intellij.find.FindResult;
 import com.intellij.find.FindUtil;
 import com.intellij.find.impl.FindResultImpl;
 import com.intellij.openapi.application.ApplicationManager;
@@ -33,9 +34,9 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     SelectionModel selection = editor.getSelectionModel();
     FindModel findModel = mySearchResults.getFindModel();
     if (findModel != null && findModel.isGlobal()) {
-      LiveOccurrence cursor = mySearchResults.getCursor();
+      FindResult cursor = mySearchResults.getCursor();
       if (cursor != null) {
-        TextRange range = cursor.getPrimaryRange();
+        TextRange range = cursor;
         FoldingModel foldingModel = editor.getFoldingModel();
         final FoldRegion startFolding = foldingModel.getCollapsedRegionAtOffset(range.getStartOffset());
         final FoldRegion endFolding = foldingModel.getCollapsedRegionAtOffset(range.getEndOffset());
@@ -86,7 +87,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   }
 
   public interface ReplaceListener {
-    void replacePerformed(LiveOccurrence occurrence, final String replacement, final Editor editor);
+    void replacePerformed(FindResult occurrence, final String replacement, final Editor editor);
     void replaceAllPerformed(Editor e);
   }
 
@@ -137,11 +138,11 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   }
 
   @Override
-  public String getStringToReplace(Editor editor, LiveOccurrence liveOccurrence) {
-    if (liveOccurrence == null) {
+  public String getStringToReplace(Editor editor, FindResult findResult) {
+    if (findResult == null) {
       return null;
     }
-    String foundString = editor.getDocument().getText(liveOccurrence.getPrimaryRange());
+    String foundString = editor.getDocument().getText(findResult);
     String documentText = editor.getDocument().getText();
     FindModel currentModel = mySearchResults.getFindModel();
     String stringToReplace = null;
@@ -151,7 +152,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
         FindManager findManager = FindManager.getInstance(editor.getProject());
         try {
           stringToReplace = findManager.getStringToReplace(foundString, currentModel,
-                                                           liveOccurrence.getPrimaryRange().getStartOffset(), documentText);
+                                                           findResult.getStartOffset(), documentText);
         }
         catch (FindManager.MalformedReplacementStringException e) {
           return null;
@@ -163,9 +164,9 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
 
   @Nullable
   @Override
-  public TextRange performReplace(final LiveOccurrence occurrence, final String replacement, final Editor editor) {
+  public TextRange performReplace(final FindResult occurrence, final String replacement, final Editor editor) {
     if (myReplaceDenied || !ReadonlyStatusHandler.ensureDocumentWritable(editor.getProject(), editor.getDocument())) return null;
-    TextRange range = occurrence.getPrimaryRange();
+    TextRange range = occurrence;
     FindModel findModel = mySearchResults.getFindModel();
     TextRange result = FindUtil.doReplace(editor.getProject(),
                                 editor.getDocument(),
