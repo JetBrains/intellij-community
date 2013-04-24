@@ -143,6 +143,11 @@
     </intentionAction>
 
     <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyConvertStaticMethodToFunctionIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.SpecifyTypeInDocstringIntention</className>
       <category>Python</category>
     </intentionAction>
@@ -906,6 +911,11 @@
   </project-components>
 
   <actions>
+    <action id="PyInvertBooleanAction" class="com.jetbrains.python.refactoring.invertBoolean.PyInvertBooleanAction" text="Invert Boolean">
+      <add-to-group group-id="RefactoringMenu" anchor="last" />
+    </action>
+
+
     <group id="PyProjectViewGroup" internal="true" class="com.intellij.ide.actions.NonEmptyActionGroup" popup="true" text="Python">
       <action id="Devmode.AnalyzeReturns" class="com.jetbrains.python.devmode.AnalyzeReturnsAction" text="Analyze return types"
               internal="true"/>

@@ -17,12 +17,12 @@ def adjust_sys_path(add_script_parent=True, script_index=1):
   sys.path.pop(0)
   if add_script_parent:
     script_path = os.path.dirname(sys.argv[script_index])
-    sys.path.insert(0, script_path)
+    insert_to_sys_path(script_path)
 
 def adjust_django_sys_path():
   sys.path.pop(0)
   script_path = sys.argv[-1]
-  sys.path.insert(0, script_path)
+  insert_to_sys_path(script_path)
 
 def import_system_module(name):
   f, filename, desc = imp.find_module(name)
@@ -31,4 +31,7 @@ def import_system_module(name):
 def getModuleName(prefix, cnt):
   return prefix + "%" + str(cnt)
 
-
+def insert_to_sys_path(script_path):
+  while script_path in sys.path:
+    sys.path.remove(script_path)
+  sys.path.insert(0, script_path)

@@ -57,7 +57,7 @@ public class PythonDocTestUtil {
     return false;
   }
 
-  private static boolean hasExample(String docString) {
+  public static boolean hasExample(final String docString) {
     boolean hasExample = false;
     StringTokenizer tokenizer = new StringTokenizer(docString, "\n");
     while (tokenizer.hasMoreTokens()) {

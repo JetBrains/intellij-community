@@ -6,7 +6,10 @@ package com.jetbrains.python.testing.doctest;
 import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.openapi.module.Module;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiRecursiveElementVisitor;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyElement;
 import com.jetbrains.python.psi.PyFile;
@@ -51,9 +54,32 @@ public class PythonDocTestConfigurationProducer extends PythonTestConfigurationP
     myPsiElement = pyFile;
     return settings;
   }
+
   protected boolean isAvailable(Location location) {
     final Module module = location.getModule();
     if (!isPythonModule(module)) return false;
-    return true;
+    final PsiElement element = location.getPsiElement();
+    if (element instanceof PsiDirectory) {
+      final PyDocTestVisitor visitor = new PyDocTestVisitor();
+      element.accept(visitor);
+      return visitor.hasTests;
+    }
+    else return true;
+  }
+
+  private static class PyDocTestVisitor extends PsiRecursiveElementVisitor {
+    boolean hasTests = false;
+
+    @Override
+    public void visitFile(PsiFile node) {
+      if (node instanceof PyFile) {
+        List<PyElement> testClasses = PythonDocTestUtil.getDocTestCasesFromFile((PyFile)node);
+        if (!testClasses.isEmpty()) hasTests = true;
+      }
+      else {
+        final String text = node.getText();
+        if (PythonDocTestUtil.hasExample(text)) hasTests = true;
+      }
+    }
   }
 }
