@@ -6,10 +6,14 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.usageView.UsageInfo;
 import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.refactoring.PyRefactoringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+
+import java.util.List;
 
 /**
  * User: ktisha
@@ -36,6 +40,7 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
     final PyClass containingClass = problemFunction.getContainingClass();
     if (containingClass == null) return;
 
+    final List<UsageInfo> usages = PyRefactoringUtil.findUsages(problemFunction, false);
     PyUtil.deleteParameter(problemFunction, 0);
 
     final PsiElement copy = problemFunction.copy();
@@ -46,5 +51,12 @@ public class PyMakeFunctionFromMethodQuickFix implements LocalQuickFix {
     }
     final PsiFile file = containingClass.getContainingFile();
     file.addAfter(copy, containingClass);
+
+    for (UsageInfo usage : usages) {
+      final PsiElement usageElement = usage.getElement();
+      if (usageElement instanceof PyReferenceExpression) {
+        PyUtil.removeQualifier((PyReferenceExpression)usageElement);
+      }
+    }
   }
 }

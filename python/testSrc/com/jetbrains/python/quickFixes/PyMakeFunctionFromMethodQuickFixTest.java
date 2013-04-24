@@ -32,4 +32,8 @@ public class PyMakeFunctionFromMethodQuickFixTest extends PyQuickFixTestCase {
     doInspectionTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.function"));
   }
 
+  public void testUpdateUsage() {
+    doInspectionTest(PyMethodMayBeStaticInspection.class, PyBundle.message("QFIX.NAME.make.function"));
+  }
+
 }

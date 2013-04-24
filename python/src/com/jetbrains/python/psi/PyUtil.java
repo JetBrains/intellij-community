@@ -656,6 +656,15 @@ public class PyUtil {
     return true;
   }
 
+  public static void removeQualifier(PyReferenceExpression element) {
+    final PyExpression qualifier = element.getQualifier();
+    if (qualifier != null) {
+      final PsiElement dot = qualifier.getNextSibling();
+      if (dot != null) dot.delete();
+      qualifier.delete();
+    }
+  }
+
   public static class KnownDecoratorProviderHolder {
     public static PyKnownDecoratorProvider[] KNOWN_DECORATOR_PROVIDERS = Extensions.getExtensions(PyKnownDecoratorProvider.EP_NAME);
 
