@@ -123,11 +123,14 @@ public class MavenArtifactSearchPanel extends JPanel {
 
     new DoubleClickListener() {
       @Override
-      protected boolean onDoubleClick(MouseEvent event) {
-        Object sel = myResultList.getLastSelectedPathComponent();
-        if (sel != null && myResultList.getModel().isLeaf(sel)) {
-          myListener.itemSelected();
-          return true;
+      protected boolean onDoubleClick(MouseEvent e) {
+        final TreePath path = myResultList.getPathForLocation(e.getX(), e.getY());
+        if (path != null && myResultList.isPathSelected(path)) {
+          Object sel = path.getLastPathComponent();
+          if (sel != null && myResultList.getModel().isLeaf(sel)) {
+            myListener.itemSelected();
+            return true;
+          }
         }
         return false;
       }
