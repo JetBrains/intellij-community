@@ -70,12 +70,12 @@ public class ProjectFileIndexFacade extends FileIndexFacade {
 
   @Nullable
   @Override
-  public Module getModuleForFile(VirtualFile file) {
+  public Module getModuleForFile(@NotNull VirtualFile file) {
     return myFileIndex.getModuleForFile(file);
   }
 
   @Override
-  public boolean isValidAncestor(final VirtualFile baseDir, VirtualFile childDir) {
+  public boolean isValidAncestor(@NotNull final VirtualFile baseDir, @NotNull VirtualFile childDir) {
     if (!childDir.isDirectory()) {
       childDir = childDir.getParent();
     }
