@@ -7,10 +7,7 @@ import com.intellij.openapi.module.ModuleTypeManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.testFramework.LightProjectDescriptor;
 import com.intellij.testFramework.builders.ModuleFixtureBuilder;
-import com.intellij.testFramework.fixtures.IdeaProjectTestFixture;
-import com.intellij.testFramework.fixtures.IdeaTestFixtureFactory;
-import com.intellij.testFramework.fixtures.ModuleFixture;
-import com.intellij.testFramework.fixtures.TestFixtureBuilder;
+import com.intellij.testFramework.fixtures.*;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureBuilderImpl;
 import com.intellij.testFramework.fixtures.impl.ModuleFixtureImpl;
 import com.intellij.util.ui.UIUtil;
@@ -29,7 +26,7 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
   public static final int NORMAL_TIMEOUT = 30000;
   public static final int LONG_TIMEOUT = 120000;
   private int myTimeout = NORMAL_TIMEOUT;
-  protected IdeaProjectTestFixture myFixture;
+  protected CodeInsightTestFixture myFixture;
 
   public Project getProject() {
     return myFixture.getProject();
@@ -43,24 +40,27 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     myTimeout = LONG_TIMEOUT;
   }
 
-  public void setUp() throws Exception {
+  public void setUp(final String testName) throws Exception {
     initFixtureBuilder();
 
-    IdeaTestFixtureFactory factory = IdeaTestFixtureFactory.getFixtureFactory();
-    final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = factory.createFixtureBuilder();
+    final TestFixtureBuilder<IdeaProjectTestFixture> fixtureBuilder = IdeaTestFixtureFactory.getFixtureFactory().createFixtureBuilder(
+      testName);
 
-    myFixture = fixtureBuilder.getFixture();
+    myFixture = IdeaTestFixtureFactory.getFixtureFactory().createCodeInsightFixture(fixtureBuilder.getFixture());
 
     UIUtil.invokeAndWaitIfNeeded(
       new Runnable() {
         @Override
         public void run() {
           ModuleFixtureBuilder moduleFixtureBuilder = fixtureBuilder.addModule(MyModuleFixtureBuilder.class);
+          moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
           moduleFixtureBuilder.addSourceContentRoot(getTestDataPath());
         }
       });
 
+
     myFixture.setUp();
+    myFixture.setTestDataPath(getTestDataPath());
   }
 
   protected String getTestDataPath() {

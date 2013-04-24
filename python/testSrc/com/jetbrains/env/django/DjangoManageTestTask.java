@@ -60,8 +60,8 @@ public abstract class DjangoManageTestTask extends PyExecutionFixtureTestTask {
   protected abstract String getTestDataPath();
 
   @Override
-  public void setUp() throws Exception {
-    super.setUp();
+  public void setUp(String testName) throws Exception {
+    super.setUp(testName);
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       public void run() {
         Module module = myFixture.getModule();

@@ -11,7 +11,6 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.testFramework.UsefulTestCase;
 import com.intellij.util.ui.UIUtil;
 import com.jetbrains.env.PyTestRemoteSdkProvider;
-import com.jetbrains.env.RemoteSdkTestable;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.remote.PyRemoteSdkAdditionalData;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -71,7 +70,7 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
     runTest(testTask, getTestName(false));
   }
 
-  public static void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
+  public void runTest(@NotNull PyTestTask testTask, @NotNull String testName) {
     if (notEnvConfiguration()) {
       fail("Running under teamcity but not by Env configuration. Skipping.");
       return;
@@ -102,7 +101,9 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
         taskRunner.runTask(testTask, testName);
       }
       else {
-        fail("Cant run with remote sdk: password isn't set");
+        if (PyTestRemoteSdkProvider.shouldFailWhenCantRunRemote()) {
+          fail("Cant run with remote sdk: password isn't set");
+        }
       }
     }
   }
@@ -127,7 +128,7 @@ public abstract class PyEnvTestCase extends UsefulTestCase {
         }
 
         try {
-          testTask.setUp();
+          testTask.setUp(testName);
           wasExecuted = true;
           if (isJython(root)) {
             testTask.useLongTimeout();

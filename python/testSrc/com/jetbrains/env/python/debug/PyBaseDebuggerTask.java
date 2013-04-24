@@ -1,12 +1,9 @@
 package com.jetbrains.env.python.debug;
 
 import com.google.common.collect.Sets;
-import com.intellij.openapi.application.Application;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -215,13 +212,13 @@ public abstract class PyBaseDebuggerTask extends PyExecutionFixtureTestTask {
   }
 
   @Override
-  public void setUp() throws Exception {
+  public void setUp(final String testName) throws Exception {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         try {
           if (myFixture == null) {
-            PyBaseDebuggerTask.super.setUp();
+            PyBaseDebuggerTask.super.setUp(testName);
           }
         }
         catch (Exception e) {

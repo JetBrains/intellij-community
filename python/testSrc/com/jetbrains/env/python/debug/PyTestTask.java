@@ -25,7 +25,7 @@ public abstract class PyTestTask {
     myScriptParameters = scriptParameters;
   }
 
-  public void setUp() throws Exception {
+  public void setUp(String testName) throws Exception {
   }
 
   public void tearDown() throws Exception {

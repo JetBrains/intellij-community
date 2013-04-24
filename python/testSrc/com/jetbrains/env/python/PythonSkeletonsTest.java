@@ -1,8 +1,8 @@
 package com.jetbrains.env.python;
 
 import com.google.common.collect.ImmutableSet;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
@@ -10,20 +10,20 @@ import com.intellij.openapi.projectRoots.SdkModificator;
 import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.roots.ModuleRootModificationUtil;
 import com.intellij.openapi.roots.OrderRootType;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiReference;
+import com.intellij.testFramework.fixtures.CodeInsightTestFixture;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
+import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
 import com.jetbrains.env.python.debug.PyTestTask;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.inspections.PyUnresolvedReferencesInspection;
 import com.jetbrains.python.psi.LanguageLevel;
-import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyFile;
-import com.jetbrains.python.psi.PyFunction;
 import com.jetbrains.python.psi.impl.PyBuiltinCache;
 import com.jetbrains.python.psi.resolve.PythonSdkPathCache;
 import com.jetbrains.python.sdk.InvalidSdkException;
@@ -39,13 +39,13 @@ import java.util.Set;
 
 /**
  * Heavyweight integration tests of skeletons of Python binary modules.
- *
+ * <p/>
  * An environment test environment must have a 'skeletons' tag in order to be compatible with this test case. No specific packages are
  * required currently. Both Python 2 and Python 3 are OK. All platforms are OK. At least one Python 2.6+ environment is required.
  *
  * @author vlan
  */
-public class PythonSkeletonsTest extends PyTestCase {
+public class PythonSkeletonsTest extends PyEnvTestCase {
   public static final ImmutableSet<String> TAGS = ImmutableSet.of("skeletons");
 
   public void testBuiltins() {
@@ -66,13 +66,14 @@ public class PythonSkeletonsTest extends PyTestCase {
         assertTrue("Header version must be > 0, currently it is " + version, version > 0);
         assertEquals(SkeletonVersionChecker.BUILTIN_NAME, header.getBinaryFile());
 
-        // Resolve a single reference to built-ins
-        myFixture.configureByText("a.py", "len('foo')");
-        final PyExpression expr = myFixture.findElementByText("len", PyExpression.class);
-        assertNotNull(expr);
+        // Run inspections on a file that uses builtins
+        myFixture.configureByFile(getTestName(false) + ".py");
 
-        final Module module = ModuleUtil.findModuleForPsiElement(expr.getContainingFile());
-        assertEquals(getSingleModule(project), module);
+
+        PsiFile expr = myFixture.getFile();
+
+        final Module module = ModuleUtil.findModuleForPsiElement(expr);
+
         final Sdk sdkFromModule = PythonSdkType.findPythonSdk(module);
         assertNotNull(sdkFromModule);
 
@@ -85,20 +86,13 @@ public class PythonSkeletonsTest extends PyTestCase {
         assertNotNull(builtinsFromPsi);
         assertEquals(builtins, builtinsFromPsi);
 
-        final PsiReference ref = expr.getReference();
-        assertNotNull(ref);
-        final PsiElement resolved = ref.resolve();
-        assertNotNull(resolved);
-        assertInstanceOf(resolved, PyFunction.class);
-        final PyFunction len = (PyFunction)resolved;
-        assertEquals("len", len.getName());
-        final PsiFile file = resolved.getContainingFile();
-        assertEquals(builtins, file);
-
-        // Run inspections on a file that uses builtins
-        myFixture.configureByFile("skeletons/" + getTestName(false) + ".py");
         myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-        myFixture.checkHighlighting(true, false, false);
+        edt(new Runnable() {
+          @Override
+          public void run() {
+            myFixture.checkHighlighting(true, false, false);
+          }
+        });
       }
     });
   }
@@ -115,16 +109,35 @@ public class PythonSkeletonsTest extends PyTestCase {
         }
 
         // Run inspections on code that uses named tuples
-        myFixture.configureByFile("skeletons/" + getTestName(false) + ".py");
+        myFixture.configureByFile(getTestName(false) + ".py");
         myFixture.enableInspections(PyUnresolvedReferencesInspection.class);
-        myFixture.checkHighlighting(true, false, false);
+
+        edt(new Runnable() {
+          @Override
+          public void run() {
+            myFixture.checkHighlighting(true, false, false);
+          }
+        });
       }
     });
   }
 
-  private void generateTempSkeletons(@NotNull Sdk sdk) throws InvalidSdkException, IOException {
-    final Project project = myFixture.getProject();
-    ModuleRootModificationUtil.setModuleSdk(getSingleModule(project), sdk);
+  private void generateTempSkeletons(CodeInsightTestFixture fixture, final @NotNull Sdk sdk) throws InvalidSdkException, IOException {
+    final Project project = fixture.getProject();
+    ModuleRootModificationUtil.setModuleSdk(fixture.getModule(), sdk);
+
+    edt(new Runnable() {
+      @Override
+      public void run() {
+        ApplicationManager.getApplication().runWriteAction(new Runnable() {
+          @Override
+          public void run() {
+            ProjectRootManager.getInstance(project).setProjectSdk(sdk);
+          }
+        });
+      }
+    });
+
 
     final SdkModificator modificator = sdk.getSdkModificator();
     modificator.removeRoots(OrderRootType.CLASSES);
@@ -136,7 +149,13 @@ public class PythonSkeletonsTest extends PyTestCase {
     FileUtil.createDirectory(skeletonsDir);
     final String skeletonsPath = skeletonsDir.toString();
     PythonSdkType.addSdkRoot(modificator, skeletonsPath);
-    modificator.commitChanges();
+
+    edt(new Runnable() {
+      @Override
+      public void run() {
+        modificator.commitChanges();
+      }
+    });
 
     final SkeletonVersionChecker checker = new SkeletonVersionChecker(0);
     final PySkeletonRefresher refresher = new PySkeletonRefresher(project, null, sdk, skeletonsPath, null);
@@ -144,31 +163,39 @@ public class PythonSkeletonsTest extends PyTestCase {
     assertEmpty(errors);
   }
 
-  @NotNull
-  private static Module getSingleModule(@NotNull Project project) {
-    Module[] modules = ModuleManager.getInstance(project).getModules();
-    assertEquals(1, modules.length);
-    return modules[0];
-  }
-
   private void runTest(@NotNull PyTestTask task) {
-    PyEnvTestCase.runTest(task, getTestName(false));
+    runPythonTest(task);
   }
 
   @NotNull
-  private static Sdk createTempSdk(@NotNull String sdkHome) {
+  public static Sdk createTempSdk(@NotNull String sdkHome) {
     final VirtualFile binary = LocalFileSystem.getInstance().findFileByPath(sdkHome);
     assertNotNull("Interpreter file not found: " + sdkHome, binary);
-    final Sdk sdk = SdkConfigurationUtil.setupSdk(new Sdk[0], binary, PythonSdkType.getInstance(), true, null, null);
-    assertNotNull(sdk);
-    return sdk;
+    final Ref<Sdk> ref = Ref.create();
+    edt(new Runnable() {
+
+      @Override
+      public void run() {
+        final Sdk sdk = SdkConfigurationUtil.setupSdk(new Sdk[0], binary, PythonSdkType.getInstance(), true, null, null);
+        assertNotNull(sdk);
+        ref.set(sdk);
+      }
+    });
+
+    return ref.get();
   }
 
-  private abstract class SkeletonsTask extends PyTestTask {
+
+  private abstract class SkeletonsTask extends PyExecutionFixtureTestTask {
+    @Override
+    protected String getTestDataPath() {
+      return PythonTestUtil.getTestDataPath() + "/skeletons/";
+    }
+
     @Override
     public void runTestOn(String sdkHome) throws Exception {
       final Sdk sdk = createTempSdk(sdkHome);
-      generateTempSkeletons(sdk);
+      generateTempSkeletons(myFixture, sdk);
       runTestOn(sdk);
     }
 

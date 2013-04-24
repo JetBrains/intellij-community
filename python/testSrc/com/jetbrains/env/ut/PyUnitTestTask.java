@@ -22,8 +22,8 @@ import com.intellij.openapi.util.Key;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
-import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.PythonEnvUtil;
+import com.jetbrains.python.sdk.flavors.JythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.testing.AbstractPythonTestRunConfiguration;
 import com.jetbrains.python.testing.PythonTestConfigurationType;
@@ -57,13 +57,13 @@ public abstract class PyUnitTestTask extends PyExecutionFixtureTestTask {
   }
 
   @Override
-  public void setUp() throws Exception {
+  public void setUp(final String testName) throws Exception {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
         try {
           if (myFixture == null) {
-            PyUnitTestTask.super.setUp();
+            PyUnitTestTask.super.setUp(testName);
             mySetUp = true;
           }
         }

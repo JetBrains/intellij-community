@@ -95,6 +95,10 @@ public class PyTestRemoteSdkProvider {
     return !StringUtils.isEmpty(System.getenv(LOCAL_SSH_WITHOUT_PASSWORD)) || !StringUtils.isEmpty(getPassword());
   }
 
+  public static boolean shouldFailWhenCantRunRemote() {
+    return !StringUtils.isEmpty(System.getenv("FAIL_WHEN_CANT_RUN_REMOTE")) || PyEnvSufficiencyTest.IS_UNDER_TEAMCITY;
+  }
+
   private static String getHelpersPath(PyRemoteSdkAdditionalData data) throws IOException {
     final File dir = new File("/tmp");
 
