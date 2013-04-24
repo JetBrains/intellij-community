@@ -6,6 +6,8 @@ import com.jetbrains.jinja2.Jinja2ParserTest;
 import com.jetbrains.python.codeInsight.PyClassMROTest;
 import com.jetbrains.python.codeInsight.PyCompletionPatternsTest;
 import com.jetbrains.python.inspections.*;
+import com.jetbrains.python.intentions.PyIntentionTest;
+import com.jetbrains.python.intentions.PythonDemorganLawIntentionTest;
 import com.jetbrains.python.refactoring.*;
 import com.jetbrains.python.refactoring.changeSignature.PyChangeSignatureTest;
 import com.jetbrains.python.refactoring.classes.PyExtractSuperclassTest;

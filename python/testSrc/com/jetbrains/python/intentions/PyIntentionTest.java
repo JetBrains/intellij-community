@@ -1,7 +1,8 @@
-package com.jetbrains.python;
+package com.jetbrains.python.intentions;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.jetbrains.python.PyBundle;
 import com.jetbrains.python.documentation.DocStringFormat;
 import com.jetbrains.python.documentation.PyDocumentationSettings;
 import com.jetbrains.python.fixtures.PyTestCase;

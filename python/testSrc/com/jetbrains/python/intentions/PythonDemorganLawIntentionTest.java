@@ -2,9 +2,10 @@
  * User: anna
  * Date: 06-Mar-2008
  */
-package com.jetbrains.python;
+package com.jetbrains.python.intentions;
 
 import com.intellij.codeInsight.intention.IntentionAction;
+import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 
 public class PythonDemorganLawIntentionTest extends PyTestCase {
