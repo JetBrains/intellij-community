@@ -15,6 +15,7 @@
  */
 package com.intellij.codeStyle;
 
+import com.intellij.openapi.application.ApplicationBundle;
 import com.intellij.util.LineSeparator;
 
 /**
@@ -23,6 +24,6 @@ import com.intellij.util.LineSeparator;
 public class ConvertToWindowsLineSeparatorsAction extends AbstractConvertLineSeparatorsAction {
 
   public ConvertToWindowsLineSeparatorsAction() {
-    super("Windows (\\r\\n)", LineSeparator.CRLF);
+    super(ApplicationBundle.message("combobox.crlf.windows"), LineSeparator.CRLF);
   }
 }
