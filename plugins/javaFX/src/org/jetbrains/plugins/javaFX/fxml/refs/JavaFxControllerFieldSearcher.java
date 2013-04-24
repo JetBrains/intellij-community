@@ -70,11 +70,11 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
             }
             file.accept(new XmlRecursiveElementVisitor() {
               @Override
-              public void visitXmlAttributeValue(XmlAttributeValue value) {
-                final PsiReference reference = value.getReference();
-                if (reference != null) {
-                  Runnable runnable = new Runnable() {
-                    public void run() {
+              public void visitXmlAttributeValue(final XmlAttributeValue value) {
+                Runnable runnable = new Runnable() {
+                  public void run() {
+                    final PsiReference reference = value.getReference();
+                    if (reference != null) {
                       final PsiElement resolve = reference.resolve();
                       if (resolve instanceof XmlAttributeValue) {
                         final PsiElement parent = resolve.getParent();
@@ -86,9 +86,9 @@ public class JavaFxControllerFieldSearcher implements QueryExecutor<PsiReference
                         }
                       }
                     }
-                  };
-                  ApplicationManager.getApplication().runReadAction(runnable);
-                }
+                  }
+                };
+                ApplicationManager.getApplication().runReadAction(runnable);
               }
             });
           }
