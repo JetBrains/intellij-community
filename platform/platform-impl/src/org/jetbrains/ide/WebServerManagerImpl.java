@@ -13,6 +13,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupActivity;
 import com.intellij.openapi.util.Disposer;
+import com.intellij.openapi.util.ShutDownTracker;
 import org.jboss.netty.channel.ChannelException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -106,6 +107,16 @@ public class WebServerManagerImpl extends WebServerManager {
         }
 
         Disposer.register(ApplicationManager.getApplication(), server);
+        ShutDownTracker.getInstance().registerShutdownTask(new Runnable() {
+          @Override
+          public void run() {
+            if (!Disposer.isDisposed(server)) {
+              // something went wrong
+              Disposer.dispose(server);
+            }
+          }
+        });
+
         detectedPortNumber = server.start(getDefaultPort(), PORTS_COUNT, true);
         if (detectedPortNumber == -1) {
           LOG.info("web server cannot be started, cannot bind to port");
