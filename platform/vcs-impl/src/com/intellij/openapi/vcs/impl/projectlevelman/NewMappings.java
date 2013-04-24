@@ -148,7 +148,7 @@ public class NewMappings {
     mappingsChanged();
   }
 
-  private void keepActiveVcs(final Runnable runnable) {
+  private void keepActiveVcs(@NotNull Runnable runnable) {
     final MyVcsActivator activator;
     synchronized (myLock) {
       if (! myActivated) {
