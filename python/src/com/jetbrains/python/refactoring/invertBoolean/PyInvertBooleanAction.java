@@ -3,6 +3,8 @@ package com.jetbrains.python.refactoring.invertBoolean;
 import com.intellij.lang.Language;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.roots.ProjectRootManager;
+import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -25,12 +27,14 @@ public class PyInvertBooleanAction extends BaseRefactoringAction {
   @Override
   protected boolean isEnabledOnElements(@NotNull PsiElement[] elements) {
     if (elements.length == 1) {
-      return isApplicable(elements[0]);
+      return isApplicable(elements[0], elements[0].getContainingFile());
     }
     return false;
   }
 
-  private static boolean isApplicable(@NotNull final PsiElement element) {
+  private static boolean isApplicable(@NotNull final PsiElement element, @NotNull final PsiFile file) {
+    final VirtualFile virtualFile = file.getVirtualFile();
+    if (virtualFile != null && ProjectRootManager.getInstance(element.getProject()).getFileIndex().isInLibraryClasses(virtualFile)) return false;
     if (element instanceof PyTargetExpression) {
       final PyAssignmentStatement assignmentStatement = PsiTreeUtil.getParentOfType(element, PyAssignmentStatement.class);
       if (assignmentStatement != null) {
@@ -49,7 +53,7 @@ public class PyInvertBooleanAction extends BaseRefactoringAction {
 
   @Override
   protected boolean isAvailableOnElementInEditorAndFile(@NotNull final PsiElement element, @NotNull final Editor editor, @NotNull PsiFile file, @NotNull DataContext context) {
-    return isApplicable(element);
+    return isApplicable(element, element.getContainingFile());
   }
 
   @Override
