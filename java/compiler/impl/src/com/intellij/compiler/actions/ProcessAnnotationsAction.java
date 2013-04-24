@@ -15,8 +15,8 @@
  */
 package com.intellij.compiler.actions;
 
-import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 import com.intellij.compiler.CompilerConfiguration;
+import com.intellij.compiler.CompilerWorkspaceConfiguration;
 import com.intellij.compiler.impl.FileSetCompileScope;
 import com.intellij.compiler.impl.ModuleCompileScope;
 import com.intellij.compiler.impl.javaCompiler.AnnotationProcessingCompiler;
@@ -37,6 +37,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.jps.model.java.compiler.AnnotationProcessingConfiguration;
 
 import java.text.MessageFormat;
 import java.util.ArrayList;
@@ -79,7 +80,13 @@ public class ProcessAnnotationsAction extends CompileActionBase {
       return;
     }
 
-    CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
+    if (CompilerWorkspaceConfiguration.getInstance(project).useOutOfProcessBuild()) {
+      presentation.setEnabled(false);
+      return;
+    }
+    
+    final CompilerConfiguration compilerConfiguration = CompilerConfiguration.getInstance(project);
+    
     final Module module = LangDataKeys.MODULE.getData(dataContext);
     final Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
 
