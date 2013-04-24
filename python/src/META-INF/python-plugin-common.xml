@@ -138,6 +138,11 @@
     <joinLinesHandler implementation="com.jetbrains.python.editor.PyJoinLinesHandler"/>
 
     <intentionAction>
+      <className>com.jetbrains.python.codeInsight.intentions.PyConvertMethodToPropertyIntention</className>
+      <category>Python</category>
+    </intentionAction>
+
+    <intentionAction>
       <className>com.jetbrains.python.codeInsight.intentions.ImportToImportFromIntention</className>
       <category>Python</category>
     </intentionAction>
