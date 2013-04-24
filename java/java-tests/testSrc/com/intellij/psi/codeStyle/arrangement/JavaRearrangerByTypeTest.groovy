@@ -366,4 +366,26 @@ class Test {
 }'''
     )
   }
+
+  void "test multiple elements at the same line"() {
+    doTest(
+      initial: '''\
+class Test {
+  int i;int getI() {
+    return i;
+  }int j;int getJ() {
+    return j;
+  }
+}''',
+      rules: [rule(FIELD), rule(METHOD)],
+      expected: '''\
+class Test {
+  int i;int j;int getI() {
+    return i;
+  }int getJ() {
+    return j;
+  }
+}'''
+    )
+  }
 }

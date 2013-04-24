@@ -28,6 +28,7 @@ import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchCondition;
 import com.intellij.psi.codeStyle.arrangement.model.ArrangementMatchConditionVisitor;
 import com.intellij.psi.codeStyle.arrangement.std.*;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.text.CharArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -91,13 +92,8 @@ public class ArrangementUtil {
   //region ArrangementEntry
 
   /**
-   * Tries to build a text range on the given arguments basis. It should conform to the criteria below:
-   * <pre>
-   * <ul>
-   *   <li>it's start offset is located at the start of the same line where given range starts;</li>
-   *   <li>it's end offset is located at the end of the same line where given range ends;</li>
-   * </ul>
-   * </pre>
+   * Tries to build a text range on the given arguments basis. Expands to the line start/end if possible.
+   * <p/>
    * This method is expected to be used in a situation when we want to arrange complete rows.
    * Example:
    * <pre>
@@ -124,20 +120,34 @@ public class ArrangementUtil {
    *        }
    *   }
    * </pre>
+   * However, this method is expected to just return given range if there are multiple distinct elements at the same line:
+   * <pre>
+   *   class Test {
+   *     void test1(){} void test2() {} int i;
+   *   }
+   * </pre>
    * 
    * @param initialRange  anchor range
    * @param document      target document against which the ranges are built
    * @return              expanded range if possible; <code>null</code> otherwise
    */
   @NotNull
-  public static TextRange expandToLine(@NotNull TextRange initialRange, @NotNull Document document) {
+  public static TextRange expandToLineIfPossible(@NotNull TextRange initialRange, @NotNull Document document) {
+    CharSequence text = document.getCharsSequence();
+    String ws = " \t";
+    
     int startLine = document.getLineNumber(initialRange.getStartOffset());
-    int startOffsetToUse = document.getLineStartOffset(startLine);
+    int lineStartOffset = document.getLineStartOffset(startLine);
+    int i = CharArrayUtil.shiftBackward(text, lineStartOffset, initialRange.getStartOffset(), ws);
+    if (i != lineStartOffset) {
+      return initialRange;
+    }
 
     int endLine = document.getLineNumber(initialRange.getEndOffset());
-    int endOffsetToUse = document.getLineEndOffset(endLine);
-
-    return TextRange.create(startOffsetToUse, endOffsetToUse);
+    int lineEndOffset = document.getLineEndOffset(endLine);
+    i = CharArrayUtil.shiftForward(text, initialRange.getEndOffset(), lineEndOffset, ws);
+    
+    return i == lineEndOffset ? TextRange.create(lineStartOffset, lineEndOffset) : initialRange;
   }
   //endregion
   

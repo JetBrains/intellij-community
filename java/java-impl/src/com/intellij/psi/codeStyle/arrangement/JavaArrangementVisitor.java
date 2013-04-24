@@ -340,7 +340,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     DefaultArrangementEntry current = getCurrent();
     JavaElementArrangementEntry entry;
     if (canArrange) {
-      TextRange expandedRange = myDocument == null ? null : ArrangementUtil.expandToLine(range, myDocument);
+      TextRange expandedRange = myDocument == null ? null : ArrangementUtil.expandToLineIfPossible(range, myDocument);
       TextRange rangeToUse = expandedRange == null ? range : expandedRange;
       entry = new JavaElementArrangementEntry(current, rangeToUse, type, name, true);
     }
