@@ -29,6 +29,7 @@ import com.intellij.xdebugger.XDebuggerTestUtil;
 import com.jetbrains.django.facet.DjangoFacet;
 import com.jetbrains.django.fixtures.DjangoTestCase;
 import com.jetbrains.django.manage.DjangoManageTask;
+import com.jetbrains.django.testRunner.DjangoTestsConfigurationType;
 import com.jetbrains.django.ui.DjangoBundle;
 import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
 import com.jetbrains.python.PythonHelpersLocator;
@@ -177,6 +178,8 @@ public abstract class DjangoManageTestTask extends PyExecutionFixtureTestTask {
         RunManager.getInstance(project).createRunConfiguration("test", factory);
 
       final AbstractPythonRunConfiguration config = (AbstractPythonRunConfiguration)settings.getConfiguration();
+      config.addSourceRoots(DjangoTestsConfigurationType.getInstance().getDjangoTestsFactory().equals(factory));
+      config.addContentRoots(DjangoTestsConfigurationType.getInstance().getDjangoTestsFactory().equals(factory));
       config.setSdkHome(sdkHome);
       config.setWorkingDirectory(getWorkingFolder());
       configure(config);
