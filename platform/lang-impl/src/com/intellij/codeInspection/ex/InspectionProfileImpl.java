@@ -126,7 +126,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   }
 
   public InspectionProfileImpl(@NotNull @NonNls String profileName) {
-    this(profileName, InspectionToolRegistrar.getInstance(), InspectionProfileManager.getInstance());
+    super(profileName);
+    myRegistrar = InspectionToolRegistrar.getInstance();
+    setProfileManager(InspectionProfileManager.getInstance());
+    myDeinstalledInspectionsSettings = new TreeMap<String, Element>();
   }
 
   @NotNull
