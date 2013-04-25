@@ -86,13 +86,6 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     @Nullable
     String getStringToReplace(Editor editor, FindResult findResult);
 
-    @Nullable
-    TextRange performReplace(FindResult occurrence, String replacement, Editor editor);
-
-    void performReplaceAll(Editor e);
-
-    void getFocusBack();
-
   }
 
   private final Set<RangeHighlighter> myHighlighters = new HashSet<RangeHighlighter>();

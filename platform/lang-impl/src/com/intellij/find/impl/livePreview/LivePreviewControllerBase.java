@@ -25,7 +25,7 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   private int myUserActivityDelay = USER_ACTIVITY_TRIGGERING_DELAY;
 
   private final Alarm myLivePreviewAlarm = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
-  private SearchResults mySearchResults;
+  protected SearchResults mySearchResults;
   private LivePreview myLivePreview;
   private boolean myReplaceDenied = false;
 
@@ -163,15 +163,13 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   }
 
   @Nullable
-  @Override
   public TextRange performReplace(final FindResult occurrence, final String replacement, final Editor editor) {
     if (myReplaceDenied || !ReadonlyStatusHandler.ensureDocumentWritable(editor.getProject(), editor.getDocument())) return null;
-    TextRange range = occurrence;
     FindModel findModel = mySearchResults.getFindModel();
     TextRange result = FindUtil.doReplace(editor.getProject(),
                                 editor.getDocument(),
                                 findModel,
-                                new FindResultImpl(range.getStartOffset(), range.getEndOffset()),
+                                new FindResultImpl(occurrence.getStartOffset(), occurrence.getEndOffset()),
                                 replacement,
                                 true,
                                 new ArrayList<Pair<TextRange, String>>());
@@ -183,7 +181,6 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     return result;
   }
 
-  @Override
   public void performReplaceAll(Editor e) {
     if (!ReadonlyStatusHandler.ensureDocumentWritable(e.getProject(), e.getDocument())) return;
     if (mySearchResults.getFindModel() != null) {
@@ -206,9 +203,6 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
       }
     }
   }
-
-  @Override
-  public void getFocusBack() {}
 
   @Override
   public boolean shouldReplace(TextRange range, String replace) {

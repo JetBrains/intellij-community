@@ -1008,15 +1008,6 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
       super(EditorSearchComponent.this.mySearchResults, EditorSearchComponent.this.myLivePreview);
     }
 
-    @Override
-    public void getFocusBack() {
-      if (myFindModel != null && myFindModel.isReplaceState()) {
-        requestFocus(myReplaceField);
-      } else {
-        requestFocus(mySearchField);
-      }
-    }
-
     public boolean canReplace() {
       if (mySearchResults != null && mySearchResults.getCursor() != null &&
           !myLivePreviewController.isReplaceDenied() && (mySearchResults.getFindModel().isGlobal() ||
