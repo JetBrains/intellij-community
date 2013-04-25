@@ -283,18 +283,25 @@ public final class LoadTextUtil {
 
   @NotNull
   public static Pair<Charset, byte[]> chooseMostlyHarmlessCharset(Charset existing, Charset specified, @NotNull String text) {
-    if (existing == null) return Pair.create(specified, toBytes(text, specified));
-    if (specified == null || specified.equals(existing)) return Pair.create(specified, toBytes(text, existing));
+    try {
+      if (existing == null) return Pair.create(specified, toBytes(text, specified));
+      if (specified == null || specified.equals(existing)) return Pair.create(specified, toBytes(text, existing));
+      if (existing == null) return Pair.create(specified, toBytes(text, specified));
+      if (specified == null || specified.equals(existing)) return Pair.create(specified, toBytes(text, existing));
 
-    byte[] out = isSupported(specified, text);
-    if (out != null) return Pair.create(specified, out); //if explicitly specified encoding is safe, return it
-    out = isSupported(existing, text);
-    if (out != null) return Pair.create(existing, out);   //otherwise stick to the old encoding if it's ok
-    return Pair.create(specified, toBytes(text, specified)); //if both are bad there is no difference
+      byte[] out = isSupported(specified, text);
+      if (out != null) return Pair.create(specified, out); //if explicitly specified encoding is safe, return it
+      out = isSupported(existing, text);
+      if (out != null) return Pair.create(existing, out);   //otherwise stick to the old encoding if it's ok
+      return Pair.create(specified, toBytes(text, specified)); //if both are bad there is no difference
+    }
+    catch (RuntimeException e) {
+      return Pair.create(Charset.defaultCharset(), toBytes(text, null)); //if both are bad and there is no hope, use the default charset
+    }
   }
 
   @NotNull
-  private static byte[] toBytes(@NotNull String text, @Nullable Charset charset) {
+  private static byte[] toBytes(@NotNull String text, @Nullable Charset charset) throws RuntimeException {
     //noinspection SSBasedInspection
     return charset == null ? text.getBytes() : text.getBytes(charset);
   }
