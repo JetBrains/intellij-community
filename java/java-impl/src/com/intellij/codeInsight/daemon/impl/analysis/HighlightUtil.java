@@ -1358,9 +1358,9 @@ public class HighlightUtil extends HighlightUtilBase {
       }
     }
 
-    final PsiClass aClass;
+    PsiClass aClass;
     if (qualifier != null) {
-      final PsiElement resolved = qualifier.resolve();
+      PsiElement resolved = qualifier.advancedResolve(true).getElement();
       if (resolved != null && !(resolved instanceof PsiClass)) {
         String description = JavaErrorMessages.message("class.expected");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(qualifier).descriptionAndTooltip(description).create();
