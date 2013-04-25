@@ -184,9 +184,15 @@ public class NewMappings {
   }
 
   public void mappingsChanged() {
-    myMessageBus.syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
-    myFileStatusManager.fileStatusesChanged();
-    myFileWatchRequestsManager.ping();
+    ApplicationManager.getApplication().runReadAction(new Runnable() {
+      @Override
+      public void run() {
+        if (myProject.isDisposed()) return;
+        myMessageBus.syncPublisher(ProjectLevelVcsManager.VCS_CONFIGURATION_CHANGED).directoryMappingChanged();
+        myFileStatusManager.fileStatusesChanged();
+        myFileWatchRequestsManager.ping();
+      }
+    });
   }
 
   @Modification
