@@ -329,6 +329,9 @@ public class StaticImportMethodFix implements IntentionAction {
                 JPanel panel = new JPanel(new BorderLayout());
                 if (moduleRenderer != null) {
                   Component moduleComponent = moduleRenderer.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
+                  if (!isSelected) {
+                    moduleComponent.setBackground(getBackgroundColor(value));
+                  }
                   panel.add(moduleComponent, BorderLayout.CENTER);
                 }
                 rightArrow.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
