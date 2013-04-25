@@ -1,7 +1,7 @@
 package com.jetbrains.python.psi;
 
 import com.google.common.collect.Maps;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.PrioritizedLookupElement;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
@@ -296,7 +296,7 @@ public class PyUtil {
    */
   public static void addListNode(PsiElement parent, PsiElement newItem, ASTNode beforeThis,
                                  boolean isFirst, boolean isLast, boolean addWhitespace) {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(parent)) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(parent)) {
       return;
     }
     ASTNode node = parent.getNode();
@@ -319,7 +319,7 @@ public class PyUtil {
    */
   public static void removeListNode(PsiElement item) {
     PsiElement parent = item.getParent();
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(parent)) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(parent)) {
       return;
     }
     // remove comma after the item

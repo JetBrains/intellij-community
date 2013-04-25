@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -59,7 +60,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
       self_name = params[0].getName();
     }
     PyStatement new_stmt = callback.fun(self_name);
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(stmt_list)) return null;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(stmt_list)) return null;
     final PsiElement result = stmt_list.addAfter(new_stmt, last_stmt);
     PyPsiUtils.removeRedundantPass(stmt_list);
     return result;
@@ -135,7 +136,7 @@ public class AddFieldQuickFix implements LocalQuickFix {
   @Nullable
   private static PyFunction createInitMethod(Project project, PyClass cls, @Nullable PyFunction ancestorInit) {
     // found it; copy its param list and make a call to it.
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(cls)) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(cls)) {
       return null;
     }
     String paramList = ancestorInit != null ? ancestorInit.getParameterList().getText() : "(self)";

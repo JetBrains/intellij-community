@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -22,7 +23,7 @@ import org.jetbrains.annotations.NotNull;
 import static com.jetbrains.python.psi.PyUtil.sure;
 
 /**
- * Adds a method foo to class X if X.foo() is unresolved. 
+ * Adds a method foo to class X if X.foo() is unresolved.
  * User: dcheryasov
  * Date: Apr 5, 2009 6:51:26 PM
  */
@@ -59,7 +60,7 @@ public class AddMethodQuickFix implements LocalQuickFix {
       String item_name = myIdentifier;
       sure(item_name);
       PyStatementList cls_stmt_list = cls.getStatementList();
-      sure(CodeInsightUtilBase.preparePsiElementForWrite(cls_stmt_list));
+      sure(FileModificationService.getInstance().preparePsiElementForWrite(cls_stmt_list));
       // try to at least match parameter count
       // TODO: get parameter style from code style
       PyFunctionBuilder builder = new PyFunctionBuilder(item_name);

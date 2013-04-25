@@ -1,6 +1,6 @@
 package com.jetbrains.python.codeInsight.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -74,7 +74,7 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
   }
 
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) {
       return;
     }
 
