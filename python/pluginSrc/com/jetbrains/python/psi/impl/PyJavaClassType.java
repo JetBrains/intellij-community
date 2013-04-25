@@ -33,10 +33,19 @@ public class PyJavaClassType implements PyClassLikeType {
   @Nullable
   public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
                                                           PyExpression location,
-                                                          AccessDirection direction,
-                                                          PyResolveContext resolveContext,
+                                                          @NotNull AccessDirection direction,
+                                                          @NotNull PyResolveContext resolveContext) {
+    return resolveMember(name, location, direction, resolveContext, true);
+  }
+
+  @Nullable
+  @Override
+  public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
+                                                          @Nullable PyExpression location,
+                                                          @NotNull AccessDirection direction,
+                                                          @NotNull PyResolveContext resolveContext,
                                                           boolean inherited) {
-    final PsiMethod[] methods = myClass.findMethodsByName(name, true);
+    final PsiMethod[] methods = myClass.findMethodsByName(name, inherited);
     if (methods.length > 0) {
       ResolveResultList resultList = new ResolveResultList();
       for (PsiMethod method : methods) {
@@ -44,7 +53,7 @@ public class PyJavaClassType implements PyClassLikeType {
       }
       return resultList;
     }
-    final PsiField field = myClass.findFieldByName(name, true);
+    final PsiField field = myClass.findFieldByName(name, inherited);
     if (field != null) return ResolveResultList.to(field);
     return null;
   }

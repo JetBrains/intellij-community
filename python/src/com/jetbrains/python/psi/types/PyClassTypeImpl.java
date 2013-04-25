@@ -99,6 +99,16 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   }
 
   @Nullable
+  @Override
+  public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
+                                                          @Nullable PyExpression location,
+                                                          AccessDirection direction,
+                                                          PyResolveContext resolveContext) {
+    return resolveMember(name, location, direction, resolveContext, true);
+  }
+
+  @Nullable
+  @Override
   public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
                                                           @Nullable PyExpression location,
                                                           AccessDirection direction,
@@ -159,7 +169,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
           PyClass derived_class = ((PyClassType)first_arg_type).getPyClass();
           final Iterator<PyClass> base_it = derived_class.getAncestorClasses(context).iterator();
           if (base_it.hasNext()) {
-            return new PyClassTypeImpl(base_it.next(), true).resolveMember(name, location, direction, resolveContext, true);
+            return new PyClassTypeImpl(base_it.next(), true).resolveMember(name, location, direction, resolveContext);
           }
           else {
             return null; // no base classes = super() cannot proxy anything meaningful from a base class
@@ -181,8 +191,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
             return ResolveResultList.to(superMember);
           }
         }
-        else if (type != null) {
-          final List<? extends RatedResolveResult> results = type.resolveMember(name, location, direction, resolveContext, false);
+        if (type != null) {
+          final List<? extends RatedResolveResult> results = type.resolveMember(name, location, direction, resolveContext);
           if (results != null && !results.isEmpty()) {
             return results;
           }
@@ -193,7 +203,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     if (isDefinition() && myClass.isNewStyleClass()) {
       PyClassType typeType = getMetaclassType();
       if (typeType != null) {
-        List<? extends RatedResolveResult> typeMembers = typeType.resolveMember(name, location, direction, resolveContext, true);
+        List<? extends RatedResolveResult> typeMembers = typeType.resolveMember(name, location, direction, resolveContext);
         if (typeMembers != null && !typeMembers.isEmpty()) {
           return typeMembers;
         }

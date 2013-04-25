@@ -62,7 +62,7 @@ public class PyModuleType implements PyType { // Modules don't descend from obje
   public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
                                                           @Nullable PyExpression location,
                                                           AccessDirection direction,
-                                                          PyResolveContext resolveContext, boolean inherited) {
+                                                          PyResolveContext resolveContext) {
     for (PyModuleMembersProvider provider : Extensions.getExtensions(PyModuleMembersProvider.EP_NAME)) {
       final PsiElement element = provider.resolveMember(myModule, name);
       if (element != null) {

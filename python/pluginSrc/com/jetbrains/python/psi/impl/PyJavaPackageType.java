@@ -38,8 +38,7 @@ public class PyJavaPackageType implements PyType {
   public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
                                                           @Nullable PyExpression location,
                                                           AccessDirection direction,
-                                                          PyResolveContext resolveContext,
-                                                          boolean inherited) {
+                                                          PyResolveContext resolveContext) {
     Project project = myPackage.getProject();
     JavaPsiFacade facade = JavaPsiFacade.getInstance(project);
     String childName = myPackage.getQualifiedName() + "." + name;

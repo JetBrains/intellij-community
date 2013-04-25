@@ -274,7 +274,7 @@ public class ResolveImportUtil {
       PyType refType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(parent, TypeEvalContext.fast(), null);
       if (refType != null) {
         final List<? extends RatedResolveResult> result = refType.resolveMember(referencedName, null, AccessDirection.READ,
-                                                                                PyResolveContext.defaultContext(), true);
+                                                                                PyResolveContext.defaultContext());
         if (result != null && !result.isEmpty()) {
           return result.get(0).getElement();
         }

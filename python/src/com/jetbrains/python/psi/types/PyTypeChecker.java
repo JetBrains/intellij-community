@@ -464,8 +464,8 @@ public class PyTypeChecker {
         for (PyType member : unionType.getMembers()) {
           if (member != null) {
             final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
-            final List<? extends RatedResolveResult> results = member.resolveMember(name, callee, AccessDirection.READ, resolveContext,
-                                                                                    true);
+            final List<? extends RatedResolveResult> results = member.resolveMember(name, callee, AccessDirection.READ, resolveContext
+            );
             if (results != null && !results.isEmpty()) {
               sameNameCount++;
             }

@@ -23,7 +23,7 @@ public abstract class PyTypeReferenceImpl implements PyTypeReference {
   public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
                                                           PyExpression location,
                                                           AccessDirection direction,
-                                                          PyResolveContext resolveContext, boolean inherited) {
+                                                          PyResolveContext resolveContext) {
     return Collections.emptyList();
   }
 

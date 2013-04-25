@@ -131,7 +131,7 @@ public class PyOperatorReference extends PyReferenceImpl {
       final PyType type = typeEvalContext.getType(object);
       typeEvalContext.trace("Side text is %s, type is %s", object.getText(), type);
       if (type != null && !(type instanceof PyTypeReference)) {
-        List<? extends RatedResolveResult> res = type.resolveMember(name, object, AccessDirection.of(myElement), myContext, true);
+        List<? extends RatedResolveResult> res = type.resolveMember(name, object, AccessDirection.of(myElement), myContext);
         if (res != null && res.size() > 0) {
           results.addAll(res);
         }
@@ -141,7 +141,7 @@ public class PyOperatorReference extends PyReferenceImpl {
             final PyClass pyClass = ((PyClassType)type).getPyClass();
             vFile = pyClass.getContainingFile().getVirtualFile();
           }
-          type.resolveMember(name, object, AccessDirection.of(myElement), myContext, true);
+          type.resolveMember(name, object, AccessDirection.of(myElement), myContext);
           typeEvalContext.trace("Could not resolve member %s in type %s from file %s", name, type, vFile);
         }
       }

@@ -1,5 +1,9 @@
 package com.jetbrains.python.psi.types;
 
+import com.jetbrains.python.psi.AccessDirection;
+import com.jetbrains.python.psi.PyExpression;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
+import com.jetbrains.python.psi.resolve.RatedResolveResult;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -18,6 +22,10 @@ public interface PyClassLikeType extends PyCallableType {
 
   @NotNull
   List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context);
+
+  @Nullable
+  List<? extends RatedResolveResult> resolveMember(@NotNull final String name, @Nullable PyExpression location, AccessDirection direction,
+                                                   PyResolveContext resolveContext, boolean inherited);
 
   boolean isValid();
 }
