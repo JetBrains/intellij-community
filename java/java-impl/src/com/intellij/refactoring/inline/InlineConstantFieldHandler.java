@@ -40,7 +40,8 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
   }
 
   public void inlineElement(Project project, Editor editor, PsiElement element) {
-    final PsiField field = (PsiField) element.getNavigationElement();
+    final PsiElement navigationElement = element.getNavigationElement();
+    final PsiField field = (PsiField)(navigationElement instanceof PsiField ? navigationElement : element);
 
     if (!field.hasInitializer()) {
       String message = RefactoringBundle.message("no.initializer.present.for.the.field");
