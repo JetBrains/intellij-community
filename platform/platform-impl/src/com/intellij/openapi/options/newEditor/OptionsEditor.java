@@ -191,7 +191,14 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
     */
 
 
-    myLeftSide = new JPanel(new BorderLayout());
+    myLeftSide = new JPanel(new BorderLayout()) {
+      @Override
+      public Dimension getMinimumSize() {
+        Dimension dimension = super.getMinimumSize();
+        dimension.width = Math.max(myTree.getMinimumSize().width, mySearchWrapper.getPreferredSize().width);
+        return dimension;
+      }
+    };
 
     /* [back/forward]
 
@@ -207,7 +214,6 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
 
     myMainSplitter = new Splitter(false);
     myMainSplitter.setFirstComponent(myLeftSide);
-    myMainSplitter.setHonorComponentsMinimumSize(false);
 
     myLoadingDecorator = new LoadingDecorator(myOwnDetails.getComponent(), this, 150);
     myMainSplitter.setSecondComponent(myLoadingDecorator.getComponent());
