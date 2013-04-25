@@ -18,6 +18,7 @@ package com.intellij.psi.impl.source;
 
 import com.intellij.formatting.FormatTextRanges;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationListener;
 import com.intellij.openapi.application.ApplicationManager;
@@ -45,7 +46,6 @@ import com.intellij.psi.impl.source.codeStyle.CodeEditUtil;
 import com.intellij.psi.impl.source.codeStyle.CodeFormatterFacade;
 import com.intellij.psi.impl.source.codeStyle.IndentHelperImpl;
 import com.intellij.psi.impl.source.tree.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.LocalTimeCounter;
 import com.intellij.util.text.CharArrayUtil;
 import org.jetbrains.annotations.TestOnly;
@@ -168,7 +168,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
         if (changeSet == null) return;
         final PsiElement psiElement = changeSet.getRootElement().getPsi();
         if (psiElement == null) return;
-        PsiFile containingFile = InjectedLanguageUtil.getTopLevelFile(psiElement);
+        PsiFile containingFile = InjectedLanguageManager.getInstance(psiElement.getProject()).getTopLevelFile(psiElement);
         final FileViewProvider viewProvider = containingFile.getViewProvider();
 
         if (!viewProvider.isEventSystemEnabled()) return;
@@ -396,7 +396,7 @@ public class PostprocessReformattingAspect implements PomModelAspect {
       else {
         if (!(accumulatedTask instanceof ReindentTask)) {
           iterator.remove();
-          
+
           boolean withLeadingWhitespace = accumulatedTask instanceof ReformatWithHeadingWhitespaceTask;
           if (accumulatedTask instanceof ReformatTask &&
               currentTask instanceof ReformatWithHeadingWhitespaceTask &&

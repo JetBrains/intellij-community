@@ -19,6 +19,7 @@ package com.intellij.find.findUsages;
 import com.intellij.codeInsight.highlighting.HighlightUsagesHandler;
 import com.intellij.find.FindManager;
 import com.intellij.find.impl.FindManagerImpl;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.navigation.NavigationItem;
 import com.intellij.navigation.PsiElementNavigationItem;
@@ -27,9 +28,9 @@ import com.intellij.openapi.actionSystem.DataSink;
 import com.intellij.openapi.actionSystem.TypeSafeDataProvider;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.meta.PsiMetaData;
 import com.intellij.psi.meta.PsiMetaOwner;
 import com.intellij.psi.meta.PsiPresentableMetaData;
@@ -127,17 +128,18 @@ public class PsiElement2UsageTargetAdapter implements PsiElementUsageTarget, Typ
 
     if (file instanceof PsiCompiledFile) file = ((PsiCompiledFile)file).getDecompiledPsiFile();
 
-    final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(target.getProject())).getFindUsagesManager();
+    Project project = target.getProject();
+    final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(target, true);
 
     // in case of injected file, use host file to highlight all occurrences of the target in each injected file
-    PsiFile context = InjectedLanguageUtil.getTopLevelFile(file);
+    PsiFile context = InjectedLanguageManager.getInstance(project).getTopLevelFile(file);
     SearchScope searchScope = new LocalSearchScope(context);
     Collection<PsiReference> refs = handler == null
                                     ? ReferencesSearch.search(target, searchScope, false).findAll()
                                     : handler.findReferencesToHighlight(target, searchScope);
 
-    new HighlightUsagesHandler.DoHighlightRunnable(new ArrayList<PsiReference>(refs), target.getProject(), target,
+    new HighlightUsagesHandler.DoHighlightRunnable(new ArrayList<PsiReference>(refs), project, target,
                                                    editor, context, clearHighlights).run();
   }
 

@@ -382,6 +382,11 @@ public class InjectedLanguageManagerImpl extends InjectedLanguageManager impleme
     InjectedLanguageUtil.clearCachedInjectedFragmentsForFile(file);
   }
 
+  @Override
+  public PsiFile getTopLevelFile(@NotNull PsiElement element) {
+    return InjectedLanguageUtil.getTopLevelFile(element);
+  }
+
   private final Map<Class,MultiHostInjector[]> myInjectorsClone = new HashMap<Class, MultiHostInjector[]>();
   @TestOnly
   public static void pushInjectors(@NotNull Project project) {

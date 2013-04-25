@@ -83,4 +83,6 @@ public abstract class InjectedLanguageManager {
   public abstract List<Pair<PsiElement, TextRange>> getInjectedPsiFiles(@NotNull PsiElement host);
 
   public abstract void dropFileCaches(@NotNull PsiFile file);
+
+  public abstract PsiFile getTopLevelFile(@NotNull PsiElement element);
 }

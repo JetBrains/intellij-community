@@ -508,7 +508,8 @@ public class CodeCompletionHandlerBase {
                                      final boolean hasModifiers,
                                      final int invocationCount) {
     final PsiFile originalFile = initContext.getFile();
-    final PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(originalFile);
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(originalFile.getProject());
+    final PsiFile hostFile = manager.getTopLevelFile(originalFile);
     final Editor hostEditor = InjectedLanguageUtil.getTopLevelEditor(initContext.getEditor());
     final OffsetMap hostMap = translateOffsetMapToHost(initContext, originalFile, hostFile, hostEditor);
 

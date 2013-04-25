@@ -30,6 +30,7 @@ import com.intellij.codeInsight.template.impl.TemplateState;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.featureStatistics.FeatureUsageTrackerImpl;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
@@ -58,7 +59,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     PsiDocumentManager.getInstance(project).commitAllDocuments();
     if (editor instanceof EditorWindow) {
       editor = ((EditorWindow)editor).getDelegate();
-      file = InjectedLanguageUtil.getTopLevelFile(file);
+      file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
     }
 
     final LookupEx lookup = LookupManager.getActiveLookup(editor);
@@ -82,7 +83,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
 
     ShowIntentionsPass.IntentionsInfo intentions = new ShowIntentionsPass.IntentionsInfo();
     ShowIntentionsPass.getActionsToShow(editor, file, intentions, -1);
-    
+
     if (!intentions.isEmpty()) {
       IntentionHintComponent.showIntentionHint(project, file, editor, intentions, true);
     }
@@ -102,7 +103,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     boolean inProject = file.getManager().isInProject(file);
     return isAvailableHere(editor, file, element, inProject, action);
   }
-  
+
   private static boolean isAvailableHere(Editor editor, PsiFile psiFile, PsiElement psiElement, boolean inProject, IntentionAction action) {
     try {
       Project project = psiFile.getProject();
@@ -141,7 +142,7 @@ public class ShowIntentionActionsHandler implements CodeInsightActionHandler {
     if (editorToApply == null) return null;
     return Pair.create(fileToApply, editorToApply);
   }
-  
+
   public static boolean chooseActionAndInvoke(PsiFile hostFile, final Editor hostEditor, final IntentionAction action, final String text) {
     final Project project = hostFile.getProject();
     FeatureUsageTracker.getInstance().triggerFeatureUsed("codeassists.quickFix");

@@ -19,6 +19,7 @@ import com.intellij.formatting.*;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -58,7 +59,7 @@ abstract class CodeStyleManagerRunnable<T> {
     Document document = documentManager.getDocument(file);
     if (document instanceof DocumentWindow) {
       final DocumentWindow documentWindow = (DocumentWindow)document;
-      final PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(file);
+      final PsiFile topLevelFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
       if (!file.equals(topLevelFile)) {
         if (range != null) {
           range = documentWindow.injectedToHost(range);

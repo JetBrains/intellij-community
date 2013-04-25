@@ -16,6 +16,7 @@
 package com.intellij.refactoring.rename.inplace;
 
 import com.intellij.codeInsight.TargetElementUtilBase;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.command.impl.FinishMarkAction;
 import com.intellij.openapi.command.impl.StartMarkAction;
@@ -138,7 +139,9 @@ public class MemberInplaceRenamer extends VariableInplaceRenamer {
   @Override
   protected boolean notSameFile(@Nullable VirtualFile file, @NotNull PsiFile containingFile) {
     final PsiFile currentFile = PsiDocumentManager.getInstance(myProject).getPsiFile(myEditor.getDocument());
-    return currentFile == null || InjectedLanguageUtil.getTopLevelFile(containingFile) != InjectedLanguageUtil.getTopLevelFile(currentFile);
+    if (currentFile == null) return true;
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(containingFile.getProject());
+    return manager.getTopLevelFile(containingFile) != manager.getTopLevelFile(currentFile);
   }
 
   @Override
