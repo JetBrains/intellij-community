@@ -116,34 +116,6 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   private Balloon myReplacementBalloon;
 
   @Override
-  public void performReplacement(FindResult occurrence, String replacement) {
-    if (myDelegate != null) {
-      myDelegate.performReplace(occurrence, replacement, mySearchResults.getEditor());
-      myDelegate.getFocusBack();
-    }
-  }
-
-  @Override
-  public void performReplaceAll() {
-    myDelegate.performReplaceAll(mySearchResults.getEditor());
-  }
-
-  @Override
-  public boolean isExcluded(FindResult occurrence) {
-    return mySearchResults.isExcluded(occurrence);
-  }
-
-  @Override
-  public void exclude(FindResult occurrence) {
-    mySearchResults.exclude(occurrence);
-    myDelegate.getFocusBack();
-  }
-
-  public boolean hasMatches() {
-    return mySearchResults.hasMatches();
-  }
-
-  @Override
   public void searchResultsUpdated(SearchResults sr) {
     final Project project = mySearchResults.getProject();
     if (project == null || project.isDisposed()) return;

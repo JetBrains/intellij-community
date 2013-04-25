@@ -29,10 +29,7 @@ public class ReplacementView extends JPanel {
   private JButton myStatusButton;
 
   public interface Delegate {
-    void performReplacement(FindResult occurrence, String replacement);
-    void performReplaceAll();
-    boolean isExcluded(FindResult occurrence);
-    void exclude(FindResult occurrence);
+
   }
 
   private Delegate myDelegate;

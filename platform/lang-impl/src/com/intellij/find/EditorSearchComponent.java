@@ -962,7 +962,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   }
 
   public boolean hasMatches() {
-    return myLivePreview != null && myLivePreview.hasMatches();
+    return mySearchResults != null && mySearchResults.hasMatches();
   }
 
   @Override
