@@ -742,7 +742,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private static void addAutoImportFix(PyElement node, PsiReference reference, List<LocalQuickFix> actions) {
-      final PsiFile file = InjectedLanguageUtil.getTopLevelFile(node);
+      final PsiFile file = InjectedLanguageManager.getInstance(node.getProject()).getTopLevelFile(node);
       if (!(file instanceof PyFile)) return;
       AutoImportQuickFix importFix = PythonReferenceImporter.proposeImportFix(node, reference);
       if (importFix != null) {
