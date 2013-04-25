@@ -27,10 +27,11 @@ public abstract class EditorColorsManager {
     return ServiceManager.getService(EditorColorsManager.class);
   }
 
-  public abstract void addColorsScheme(EditorColorsScheme scheme);
+  public abstract void addColorsScheme(@NotNull EditorColorsScheme scheme);
 
   public abstract void removeAllSchemes();
 
+  @NotNull
   public abstract EditorColorsScheme[] getAllSchemes();
 
   public abstract void setGlobalScheme(EditorColorsScheme scheme);
@@ -42,9 +43,9 @@ public abstract class EditorColorsManager {
 
   public abstract boolean isDefaultScheme(EditorColorsScheme scheme);
 
-  public abstract void addEditorColorsListener(EditorColorsListener listener);
-  public abstract void removeEditorColorsListener(EditorColorsListener listener);
-  public abstract void addEditorColorsListener(EditorColorsListener listener, Disposable disposable);
+  public abstract void addEditorColorsListener(@NotNull EditorColorsListener listener);
+  public abstract void removeEditorColorsListener(@NotNull EditorColorsListener listener);
+  public abstract void addEditorColorsListener(@NotNull EditorColorsListener listener, @NotNull Disposable disposable);
 
   public abstract boolean isUseOnlyMonospacedFonts();
   public abstract void setUseOnlyMonospacedFonts(boolean b);
