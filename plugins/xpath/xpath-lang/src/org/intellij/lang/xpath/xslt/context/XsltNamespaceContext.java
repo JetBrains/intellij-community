@@ -170,7 +170,7 @@ public class XsltNamespaceContext implements NamespaceContext {
         }
 
         @Override
-        public boolean showHint(Editor editor) {
+        public boolean showHint(@NotNull Editor editor) {
             return false; // doesn't work properly yet
         }
 

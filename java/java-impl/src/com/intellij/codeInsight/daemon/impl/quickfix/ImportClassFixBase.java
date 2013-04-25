@@ -258,7 +258,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   protected abstract boolean isQualified(R reference);
 
   @Override
-  public boolean showHint(final Editor editor) {
+  public boolean showHint(@NotNull final Editor editor) {
     if (isQualified(myRef)) {
       return false;
     }

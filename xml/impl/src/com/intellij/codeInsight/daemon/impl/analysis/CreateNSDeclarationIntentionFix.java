@@ -204,7 +204,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   @Override
-  public boolean showHint(final Editor editor) {
+  public boolean showHint(@NotNull final Editor editor) {
     if (myToken == null) return false;
     XmlToken token = (XmlToken)myToken.retrieve();
     if (token == null) return false;
@@ -223,7 +223,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
           HintManager.getInstance().showQuestionHint(editor, message,
                                                      token.getTextOffset(),
                                                      token.getTextOffset() + myNamespacePrefix.length(), action);
-          return true;        
+          return true;
         }
       } else {
         HintManager.getInstance().showQuestionHint(editor, message,
@@ -281,7 +281,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
                                                                                            String title,
                                                                                            final IntentionAction requestor,
                                                                                            final Editor editor) throws IncorrectOperationException {
-    
+
     if (namespacesToChooseFrom.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
       final JList list = new JBList(namespacesToChooseFrom);
       list.setCellRenderer(XmlNSRenderer.INSTANCE);
@@ -356,7 +356,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   public static class TagMetaHandler implements MetaHandler {
     private final String myName;
-    
+
 
     public TagMetaHandler(final String name) {
       myName = name;

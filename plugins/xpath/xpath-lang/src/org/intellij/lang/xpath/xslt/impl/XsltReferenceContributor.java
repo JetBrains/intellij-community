@@ -98,7 +98,7 @@ public class XsltReferenceContributor {
       if (valueElement != null) {
         QuickFixAction.registerQuickFixAction(info, new CreateNSDeclarationIntentionFix(valueElement, getCanonicalText()) {
           @Override
-          public boolean showHint(Editor editor) {
+          public boolean showHint(@NotNull Editor editor) {
             return false;
           }
         });
