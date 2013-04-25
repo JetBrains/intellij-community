@@ -201,7 +201,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
         appendChosenAnnotationsRoot(entry, newRoot);
         XmlFile xmlFileInRoot = findXmlFileInRoot(findExternalAnnotationsXmlFiles(listOwner), newRoot);
         if (xmlFileInRoot != null) { //file already exists under appeared content root
-          if (!CodeInsightUtilBase.preparePsiElementForWrite(xmlFileInRoot)) {
+          if (!FileModificationService.getInstance().preparePsiElementForWrite(xmlFileInRoot)) {
             notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
             return;
           }
@@ -292,7 +292,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     List<XmlFile> xmlFiles = findExternalAnnotationsXmlFiles(listOwner);
 
     final XmlFile existingXml = findXmlFileInRoot(xmlFiles, root);
-    if (existingXml != null && !CodeInsightUtilBase.preparePsiElementForWrite(existingXml)) {
+    if (existingXml != null && !FileModificationService.getInstance().preparePsiElementForWrite(existingXml)) {
       notifyAfterAnnotationChanging(listOwner, annotationFQName, false);
       return;
     }

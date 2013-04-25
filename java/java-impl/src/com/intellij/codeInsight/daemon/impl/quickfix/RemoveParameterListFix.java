@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -26,7 +26,7 @@ import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
 public class RemoveParameterListFix implements IntentionAction {
-  
+
   private final PsiMethod myMethod;
 
   public RemoveParameterListFix(PsiMethod method) {
@@ -52,7 +52,7 @@ public class RemoveParameterListFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     final PsiMethod emptyMethod = JavaPsiFacade.getElementFactory(project).createMethodFromText("void foo(){}", myMethod);
     myMethod.getParameterList().replace(emptyMethod.getParameterList());
   }

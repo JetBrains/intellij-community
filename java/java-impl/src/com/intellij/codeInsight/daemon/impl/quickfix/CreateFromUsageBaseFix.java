@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.codeInsight.template.Template;
@@ -101,7 +101,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   }
 
   private void doInvoke(Project project, final PsiClass targetClass) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(targetClass.getContainingFile())) {
+    if (!FileModificationService.getInstance().prepareFileForWrite(targetClass.getContainingFile())) {
       return;
     }
 
@@ -180,7 +180,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
   }
 
   protected static boolean shouldCreateStaticMember(PsiReferenceExpression ref, PsiClass targetClass) {
-    
+
     PsiExpression qualifierExpression = ref.getQualifierExpression();
     while (qualifierExpression instanceof PsiParenthesizedExpression) {
       qualifierExpression = ((PsiParenthesizedExpression) qualifierExpression).getExpression();
@@ -375,7 +375,7 @@ public abstract class CreateFromUsageBaseFix extends BaseIntentionAction {
       }
     }
   }
-  
+
   protected boolean canBeTargetClass(PsiClass psiClass) {
     return psiClass.getManager().isInProject(psiClass);
   }

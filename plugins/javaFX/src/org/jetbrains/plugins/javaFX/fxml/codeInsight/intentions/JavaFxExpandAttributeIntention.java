@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -44,7 +44,7 @@ public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionActio
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementsForWrite(element)) return;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
     final XmlAttribute attr = (XmlAttribute)element.getParent();
     final String name = attr.getName();
     final XmlAttributeDescriptor descriptor = attr.getDescriptor();
@@ -78,7 +78,7 @@ public class JavaFxExpandAttributeIntention extends PsiElementBaseIntentionActio
       if (parent instanceof XmlAttribute) {
         final XmlAttributeDescriptor descriptor = ((XmlAttribute)parent).getDescriptor();
         if (descriptor instanceof JavaFxPropertyAttributeDescriptor && !(descriptor instanceof JavaFxDefaultAttributeDescriptor)) {
-          
+
           PsiType tagType = null;
           final PsiElement declaration = descriptor.getDeclaration();
           if (declaration instanceof PsiField) {

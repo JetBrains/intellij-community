@@ -16,7 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
@@ -66,7 +66,7 @@ public class MoveToPackageFix implements LocalQuickFix {
     if (element == null) return;
     final PsiFile myFile = element.getContainingFile();
 
-    if (!CodeInsightUtilBase.prepareFileForWrite(myFile)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myFile)) return;
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
       @Override

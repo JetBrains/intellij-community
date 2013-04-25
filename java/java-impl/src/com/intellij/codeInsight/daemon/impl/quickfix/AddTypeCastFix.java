@@ -24,7 +24,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
@@ -71,7 +71,7 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
                      @Nullable("is null when called from inspection") Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     addTypeCast(project, (PsiExpression)startElement, myType);
   }
 
@@ -91,7 +91,7 @@ public class AddTypeCastFix extends LocalQuickFixAndIntentionActionOnPsiElement 
     PsiTypeCastExpression typeCast = (PsiTypeCastExpression)factory.createExpressionFromText("(Type)value", null);
     typeCast = (PsiTypeCastExpression)CodeStyleManager.getInstance(project).reformat(typeCast);
     typeCast.getCastType().replace(factory.createTypeElement(type));
-    
+
     if (element instanceof PsiConditionalExpression) {
       // we'd better cast one branch of ternary expression if we could
       PsiConditionalExpression expression = (PsiConditionalExpression)element.copy();

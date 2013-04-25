@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -61,7 +61,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
       messageKey = toAdd ? "add.interface.to.implements.list" : "remove.interface.from.implements.list";
     }
 
-    myName = QuickFixBundle.message(messageKey, aClass.getName(), classToExtendFrom == null ? "" : classToExtendFrom instanceof PsiTypeParameter ? classToExtendFrom.getName() 
+    myName = QuickFixBundle.message(messageKey, aClass.getName(), classToExtendFrom == null ? "" : classToExtendFrom instanceof PsiTypeParameter ? classToExtendFrom.getName()
                                                                                                                                                  : classToExtendFrom.getQualifiedName());
   }
 
@@ -110,7 +110,7 @@ public class ExtendsListFix extends LocalQuickFixAndIntentionActionOnPsiElement 
   }
 
   protected void invokeImpl(PsiClass myClass) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myClass.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myClass.getContainingFile())) return;
     PsiReferenceList extendsList = !(myClass instanceof PsiTypeParameter) &&
                                    myClass.isInterface() != myClassToExtendFrom.isInterface() ?
                                    myClass.getImplementsList() : myClass.getExtendsList();

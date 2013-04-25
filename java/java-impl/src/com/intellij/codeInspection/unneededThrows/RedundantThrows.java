@@ -16,8 +16,8 @@
 package com.intellij.codeInspection.unneededThrows;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
@@ -266,7 +266,7 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
         }
 
         //check read-only status for derived methods
-        if (!CodeInsightUtilBase.preparePsiElementsForWrite(refsToDelete)) return;
+        if (!FileModificationService.getInstance().preparePsiElementsForWrite(refsToDelete)) return;
 
         for (final PsiJavaCodeReferenceElement aRefsToDelete : refsToDelete) {
           aRefsToDelete.delete();

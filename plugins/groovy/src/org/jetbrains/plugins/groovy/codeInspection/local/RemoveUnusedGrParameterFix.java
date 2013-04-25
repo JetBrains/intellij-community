@@ -1,6 +1,6 @@
 package org.jetbrains.plugins.groovy.codeInspection.local;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -57,7 +57,7 @@ public class RemoveUnusedGrParameterFix implements IntentionAction {
     GrParameter parameter = PsiTreeUtil.getParentOfType(at, GrParameter.class);
     if (parameter == null) return;
 
-    if (!CodeInsightUtilBase.prepareFileForWrite(parameter.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(parameter.getContainingFile())) return;
 
     GrMethod method = (GrMethod)parameter.getDeclarationScope();
     GrChangeSignatureProcessor processor = new GrChangeSignatureProcessor(parameter.getProject(), createChangeInfo(method, parameter));

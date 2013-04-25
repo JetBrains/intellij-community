@@ -19,6 +19,7 @@ package com.intellij.codeInsight.template.impl;
 import com.intellij.codeInsight.CodeInsightActionHandler;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.template.CustomLiveTemplate;
 import com.intellij.ide.DataManager;
@@ -69,7 +70,7 @@ public class SurroundWithTemplateHandler implements CodeInsightActionHandler {
       return null;
     }
 
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return null;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return null;
 
     Set<Character> usedMnemonicsSet = new HashSet<Character>();
     DefaultActionGroup group = new DefaultActionGroup();

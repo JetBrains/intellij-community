@@ -16,7 +16,7 @@
 
 package com.intellij.uiDesigner.propertyInspector.properties;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.components.ServiceManager;
@@ -140,7 +140,7 @@ public class CustomCreateProperty extends Property<RadComponent, Boolean> {
     if (psiFile == null) return;
     final VirtualFile vFile = psiFile.getVirtualFile();
     if (vFile == null) return;
-    if (!CodeInsightUtilBase.prepareFileForWrite(psiFile)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
 
     final Ref<SmartPsiElementPointer> refMethod = new Ref<SmartPsiElementPointer>();
     CommandProcessor.getInstance().executeCommand(

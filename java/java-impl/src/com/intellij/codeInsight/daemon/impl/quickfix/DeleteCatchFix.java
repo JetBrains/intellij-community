@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -52,7 +52,7 @@ public class DeleteCatchFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(myCatchParameter.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myCatchParameter.getContainingFile())) return;
 
     final PsiTryStatement tryStatement = ((PsiCatchSection)myCatchParameter.getDeclarationScope()).getTryStatement();
     if (tryStatement.getCatchBlocks().length == 1 && tryStatement.getFinallyBlock() == null) {

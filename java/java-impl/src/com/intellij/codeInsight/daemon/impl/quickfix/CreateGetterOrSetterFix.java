@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.LowPriorityAction;
@@ -112,7 +112,7 @@ public class CreateGetterOrSetterFix implements IntentionAction, LowPriorityActi
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(myField)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(myField)) return;
     PsiClass aClass = myField.getContainingClass();
     final List<PsiMethod> methods = new ArrayList<PsiMethod>();
     if (myCreateGetter) {

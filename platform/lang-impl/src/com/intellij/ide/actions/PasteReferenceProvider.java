@@ -16,7 +16,7 @@
 
 package com.intellij.ide.actions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.editorActions.PasteHandler;
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.PasteProvider;
@@ -93,7 +93,7 @@ public class PasteReferenceProvider implements PasteProvider {
     documentManager.commitDocument(editor.getDocument());
 
     final PsiFile file = documentManager.getPsiFile(editor.getDocument());
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     CommandProcessor.getInstance().executeCommand(project, new Runnable() {
       @Override

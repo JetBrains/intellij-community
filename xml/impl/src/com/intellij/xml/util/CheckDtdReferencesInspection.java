@@ -17,7 +17,7 @@
 package com.intellij.xml.util;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInsight.template.Template;
 import com.intellij.codeInsight.template.TemplateManager;
@@ -161,7 +161,7 @@ public class CheckDtdReferencesInspection extends XmlSuppressableInspectionTool 
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiElement element = descriptor.getPsiElement();
       final PsiFile containingFile = element.getContainingFile();
-      if (!CodeInsightUtilBase.prepareFileForWrite(containingFile)) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(containingFile)) return;
 
       @NonNls String prefixToInsert = "";
       @NonNls String suffixToInsert = "";

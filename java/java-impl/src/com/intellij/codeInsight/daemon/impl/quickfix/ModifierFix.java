@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.application.ApplicationManager;
@@ -140,7 +140,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                      @NotNull PsiElement endElement) {
     final PsiModifierList myModifierList = (PsiModifierList)startElement;
     final PsiVariable variable = myVariable == null ? null : myVariable.getElement();
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(myModifierList)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(myModifierList)) return;
     final List<PsiModifierList> modifierLists = new ArrayList<PsiModifierList>();
     final PsiFile containingFile = myModifierList.getContainingFile();
     final PsiModifierList modifierList;
@@ -180,7 +180,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
         }));
     }
 
-    if (!CodeInsightUtilBase.prepareFileForWrite(containingFile)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(containingFile)) return;
 
     if (!modifierLists.isEmpty()) {
       if (Messages.showYesNoDialog(project,
@@ -190,7 +190,7 @@ public class ModifierFix extends LocalQuickFixAndIntentionActionOnPsiElement {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
           @Override
           public void run() {
-            if (!CodeInsightUtilBase.preparePsiElementsForWrite(modifierLists)) {
+            if (!FileModificationService.getInstance().preparePsiElementsForWrite(modifierLists)) {
               return;
             }
 

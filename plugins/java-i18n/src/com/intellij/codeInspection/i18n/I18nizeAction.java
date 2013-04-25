@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.lang.properties.psi.PropertiesFile;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -112,10 +112,10 @@ public class I18nizeAction extends AnAction {
     dialog.show();
     if (!dialog.isOK()) return;
 
-    if (!CodeInsightUtilBase.prepareFileForWrite(psiFile)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) return;
     final Collection<PropertiesFile> propertiesFiles = dialog.getAllPropertiesFiles();
     for (PropertiesFile file : propertiesFiles) {
-      if (!CodeInsightUtilBase.prepareFileForWrite(file.getContainingFile())) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(file.getContainingFile())) return;
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable(){

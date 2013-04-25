@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -49,7 +49,7 @@ public class AddAssertStatementFix implements LocalQuickFix {
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiExpression expressionToAssert = myExpressionToAssert.getElement();
     if (expressionToAssert == null) return;
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
     PsiElement element = descriptor.getPsiElement();
     PsiElement anchorElement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
     LOG.assertTrue(anchorElement != null);

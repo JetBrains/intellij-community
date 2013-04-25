@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.duplicateStringLiteral;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
@@ -371,7 +371,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       final PsiLiteralExpression myOriginalExpression = (PsiLiteralExpression)startElement;
       final PsiField myConstant = myConst.getElement();
       if (myConstant == null) return;
-      if (!CodeInsightUtilBase.prepareFileForWrite(myOriginalExpression.getContainingFile())) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(myOriginalExpression.getContainingFile())) return;
       try {
         final PsiReferenceExpression reference = createReferenceTo(myConstant, myOriginalExpression);
         if (reference != null) {

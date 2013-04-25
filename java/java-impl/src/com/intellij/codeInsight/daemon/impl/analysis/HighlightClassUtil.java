@@ -22,8 +22,8 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeInsight.ClassUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExceptionUtil;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
@@ -974,7 +974,7 @@ public class HighlightClassUtil {
                        @NotNull final PsiElement startElement,
                        @NotNull PsiElement endElement) {
       final PsiFile containingFile = startElement.getContainingFile();
-      if (editor == null || !CodeInsightUtilBase.prepareFileForWrite(containingFile)) return;
+      if (editor == null || !FileModificationService.getInstance().prepareFileForWrite(containingFile)) return;
       PsiJavaCodeReferenceElement classReference = ((PsiNewExpression)startElement).getClassReference();
       if (classReference == null) return;
       final PsiClass psiClass = (PsiClass)classReference.resolve();

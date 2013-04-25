@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,7 +50,7 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
 
   /**
    * Allows to check if static import may be performed for the given element.
-   * 
+   *
    * @param element     element to check
    * @return            target class that may be statically imported if any; <code>null</code> otherwise
    */
@@ -81,10 +81,10 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
       PsiClass staticResolve = statement.resolveTargetClass();
       if (psiClass == staticResolve) return null; //already imported
     }
-    
+
     return psiClass;
   }
-  
+
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
     PsiClass classToImport = getClassToPerformStaticImport(element);
@@ -96,8 +96,8 @@ public class AddOnDemandStaticImportAction extends PsiElementBaseIntentionAction
   }
 
   public static void invoke(final Project project, PsiFile file, final Editor editor, PsiElement element) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-    
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+
     final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     final PsiClass aClass = (PsiClass)refExpr.resolve();
     if (aClass == null) {

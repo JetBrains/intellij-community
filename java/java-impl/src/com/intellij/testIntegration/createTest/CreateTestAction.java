@@ -16,7 +16,7 @@
 package com.intellij.testIntegration.createTest;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.command.CommandProcessor;
@@ -102,7 +102,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(final @NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
     final Module srcModule = ModuleUtilCore.findModuleForPsiElement(element);
     final PsiClass srcClass = getContainingClass(element);
 
@@ -164,7 +164,7 @@ public class CreateTestAction extends PsiElementBaseIntentionAction {
     final HashSet<Module> modules = new HashSet<Module>();
     ModuleUtilCore.collectModulesDependsOn(srcModule, modules);
     for (Module module : modules) {
-      
+
       checkForTestRoots(module, testFolders, processed);
     }
   }

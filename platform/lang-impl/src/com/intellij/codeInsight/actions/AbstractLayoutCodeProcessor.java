@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.actions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.lang.LanguageFormatting;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -146,7 +146,7 @@ public abstract class AbstractLayoutCodeProcessor {
 
   /**
    * Ensures that given file is ready to reformatting and prepares it if necessary.
-   * 
+   *
    * @param file                    file to process
    * @param processChangedTextOnly  flag that defines is only the changed text (in terms of VCS change) should be processed
    * @return          task that triggers formatting of the given file. Returns value of that task indicates whether formatting
@@ -331,9 +331,9 @@ public abstract class AbstractLayoutCodeProcessor {
       }
     }
   }
-  
+
   private void runProcessOnFiles(final String where, final List<PsiFile> array) {
-    boolean success = CodeInsightUtilBase.preparePsiElementsForWrite(array);
+    boolean success = FileModificationService.getInstance().preparePsiElementsForWrite(array);
 
     if (!success) {
       List<PsiFile> writeables = new ArrayList<PsiFile>();
@@ -380,7 +380,7 @@ public abstract class AbstractLayoutCodeProcessor {
    * <p/>
    * This method allows to collect set of file system entries (either files or directories) which contents should be ignored
    * during bulk reformatting.
-   * 
+   *
    * @param project  target project
    * @return         collection of file system entries that shouldn't be touched during bulk reformatting
    */
@@ -398,7 +398,7 @@ public abstract class AbstractLayoutCodeProcessor {
     VirtualFile projectFile = project.getProjectFile();
     if (projectFile != null) {
       result.add(projectFile);
-    } 
+    }
 
     VirtualFile workspaceFile = project.getWorkspaceFile();
     if (workspaceFile != null) {
@@ -414,7 +414,7 @@ public abstract class AbstractLayoutCodeProcessor {
 
     return result;
   }
-  
+
   private static void collectFilesToProcess(ArrayList<PsiFile> array, PsiDirectory dir, @NotNull Set<VirtualFile> ignoreRoots,
                                             boolean recursive)
   {
@@ -436,7 +436,7 @@ public abstract class AbstractLayoutCodeProcessor {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile == null) {
       return false;
-    } 
+    }
     for (VirtualFile root : ignoreRoots) {
       if (VfsUtilCore.isAncestor(root, virtualFile, false)) {
         return true;
@@ -444,7 +444,7 @@ public abstract class AbstractLayoutCodeProcessor {
     }
     return false;
   }
-  
+
   private void runLayoutCodeProcess(final Runnable readAction, final Runnable writeAction, final boolean globalAction) {
     final ProgressWindow progressWindow = new ProgressWindow(true, myProject);
     progressWindow.setTitle(myCommandName);
@@ -520,12 +520,12 @@ public abstract class AbstractLayoutCodeProcessor {
     final Runnable runnable = preprocessFile(myFile, myProcessChangedTextOnly);
     runnable.run();
   }
-  
+
   private class ReformatFilesTask implements SequentialTask {
 
     private final List<FutureTask<Boolean>> myTasks;
     private final int                       myTotalTasksNumber;
-    
+
     private SequentialModalProgressTask myCompositeTask;
 
     ReformatFilesTask(@NotNull List<FutureTask<Boolean>> tasks) {
@@ -571,14 +571,14 @@ public abstract class AbstractLayoutCodeProcessor {
         if (indicator != null) {
           indicator.setText(myProgressText + (myTotalTasksNumber - myTasks.size()) + "/" + myTotalTasksNumber);
           indicator.setFraction((double)(myTotalTasksNumber - myTasks.size()) / myTotalTasksNumber);
-        } 
+        }
       }
       return myTasks.isEmpty();
     }
 
     @Override
     public void stop() {
-      myTasks.clear(); 
+      myTasks.clear();
     }
 
     public void setCompositeTask(@Nullable SequentialModalProgressTask compositeTask) {

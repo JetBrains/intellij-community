@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
@@ -31,7 +31,10 @@ import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
-import com.intellij.psi.util.*;
+import com.intellij.psi.util.PsiExpressionTrimRenderer;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.PsiUtilCore;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -81,7 +84,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
     final PsiReferenceExpression myExpression = (PsiReferenceExpression)startElement;
 
     if (!myExpression.isValid()) return;
-    if (!CodeInsightUtilBase.prepareFileForWrite(myExpression.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myExpression.getContainingFile())) return;
     PsiElement element = myExpression.resolve();
     if (!(element instanceof PsiMember)) return;
     PsiMember myMember = (PsiMember)element;

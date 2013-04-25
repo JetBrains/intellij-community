@@ -15,7 +15,7 @@
  */
 package org.intellij.plugins.intelliLang.util;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.navigation.NavigationItem;
@@ -58,7 +58,7 @@ public class AnnotateFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(myElement)) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(myElement)) {
       return;
     }
     final PsiElementFactory factory = JavaPsiFacade.getInstance(project).getElementFactory();

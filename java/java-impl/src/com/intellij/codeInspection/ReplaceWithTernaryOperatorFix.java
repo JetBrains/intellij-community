@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
@@ -65,7 +65,7 @@ public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
     final PsiExpression expression = (PsiExpression)element;
 
     final PsiFile file = expression.getContainingFile();
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     final PsiConditionalExpression conditionalExpression = replaceWthConditionalExpression(project, myText + "!=null", expression, suggestDefaultValue(expression));
 
     final PsiExpression elseExpression = conditionalExpression.getElseExpression();

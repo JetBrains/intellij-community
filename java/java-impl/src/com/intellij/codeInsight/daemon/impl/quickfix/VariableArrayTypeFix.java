@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -156,7 +156,7 @@ public class VariableArrayTypeFix extends LocalQuickFixAndIntentionActionOnPsiEl
      */
     final PsiNewExpression myNewExpression = getNewExpressionLocal(myInitializer);
 
-    if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myVariable.getContainingFile())) return;
     final PsiElementFactory factory = JavaPsiFacade.getInstance(file.getProject()).getElementFactory();
 
     if (! myTargetType.equals(myVariable.getType())) {
@@ -170,7 +170,7 @@ public class VariableArrayTypeFix extends LocalQuickFixAndIntentionActionOnPsiEl
     }
 
     if (myNewExpression != null) {
-      if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
       @NonNls String text = "new " + myTargetType.getCanonicalText() + "{}";
       final PsiNewExpression newExpression = (PsiNewExpression) factory.createExpressionFromText(text, myNewExpression.getParent());

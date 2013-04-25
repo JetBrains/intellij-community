@@ -15,7 +15,7 @@
  */
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.EmptyResolveMessageProvider;
 import com.intellij.codeInsight.daemon.QuickFixProvider;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -406,7 +406,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
           "schema".equals(rootTag.getLocalName()) &&
           XmlUtil.ourSchemaUrisList.indexOf(rootTag.getNamespace()) != -1 ) {
         final String targetNS = rootTag.getAttributeValue(TARGET_NAMESPACE);
-        
+
         if (targetNS != null) {
           final String targetNsPrefix = rootTag.getPrefixByNamespace(targetNS);
 
@@ -546,7 +546,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     }
 
     private static class MyResolver implements ResolveCache.Resolver {
-      static MyResolver INSTANCE = new MyResolver(); 
+      static MyResolver INSTANCE = new MyResolver();
       public PsiElement resolve(@NotNull PsiReference ref, boolean incompleteCode) {
         return ((TypeOrElementOrAttributeReference)ref).resolveInner();
       }
@@ -599,7 +599,7 @@ public class SchemaReferencesProvider extends PsiReferenceProvider {
     }
 
     public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-      if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
       final XmlTag rootTag = myTargetFile.getDocument().getRootTag();
 

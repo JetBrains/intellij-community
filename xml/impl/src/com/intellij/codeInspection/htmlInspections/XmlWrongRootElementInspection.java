@@ -17,7 +17,7 @@
 package com.intellij.codeInspection.htmlInspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.XmlHighlightVisitor;
 import com.intellij.codeInspection.*;
@@ -147,7 +147,7 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final XmlTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlTag.class);
 
-      if (!CodeInsightUtilBase.prepareFileForWrite(myTag.getContainingFile())) {
+      if (!FileModificationService.getInstance().prepareFileForWrite(myTag.getContainingFile())) {
         return;
       }
 

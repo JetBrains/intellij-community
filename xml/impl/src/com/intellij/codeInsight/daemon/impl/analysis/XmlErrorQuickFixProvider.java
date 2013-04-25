@@ -15,17 +15,17 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.psi.PsiErrorElement;
-import com.intellij.psi.PsiFile;
-import com.intellij.psi.xml.XmlTag;
-import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.codeInsight.FileModificationService;
+import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
-import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtilBase;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
+import com.intellij.psi.PsiErrorElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
@@ -57,7 +57,7 @@ public class XmlErrorQuickFixProvider implements ErrorQuickFixProvider {
         }
 
         public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-          if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+          if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
           final int textOffset = element.getTextOffset();
           editor.getDocument().replaceString(textOffset,textOffset + 1,AMP_ENTITY);
         }

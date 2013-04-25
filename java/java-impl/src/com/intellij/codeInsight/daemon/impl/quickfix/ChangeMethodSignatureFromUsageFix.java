@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.TargetElementUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
@@ -170,7 +170,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
 
   @Override
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     final PsiMethod method = SuperMethodWarningUtil.checkSuperMethod(myTargetMethod, RefactoringBundle.message("to.refactor"));
     if (method == null) return;
@@ -191,7 +191,7 @@ public class ChangeMethodSignatureFromUsageFix implements IntentionAction/*, Hig
                                                       final ParameterInfoImpl[] newParametersInfo,
                                                       final boolean changeAllUsages,
                                                       final boolean allowDelegation) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(method.getContainingFile())) return null;
+    if (!FileModificationService.getInstance().prepareFileForWrite(method.getContainingFile())) return null;
     final FindUsagesManager findUsagesManager = ((FindManagerImpl)FindManager.getInstance(project)).getFindUsagesManager();
     final FindUsagesHandler handler = findUsagesManager.getFindUsagesHandler(method, false);
     if (handler == null) return null;//on failure or cancel (e.g. cancel of super methods dialog)

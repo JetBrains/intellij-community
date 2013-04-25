@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -61,7 +61,7 @@ public abstract class CreateFieldFromParameterActionBase extends BaseIntentionAc
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
     final PsiParameter myParameter = FieldFromParameterUtils.findParameterAtCursor(file, editor);
-    if (myParameter == null || !CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (myParameter == null || !FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     IdeDocumentHistory.getInstance(project).includeCurrentPlaceAsChangePlace();
     try {
