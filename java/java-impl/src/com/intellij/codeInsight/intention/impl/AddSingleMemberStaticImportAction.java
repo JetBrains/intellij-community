@@ -29,9 +29,7 @@ import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.source.tree.java.PsiReferenceExpressionImpl;
-import com.intellij.psi.util.InheritanceUtil;
-import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.psi.util.PsiUtil;
+import com.intellij.psi.util.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -66,10 +64,12 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
         if (resolved instanceof PsiMember && ((PsiModifierListOwner)resolved).hasModifierProperty(PsiModifier.STATIC)) {
           PsiClass aClass = getResolvedClass(element, (PsiMember)resolved);
           if (aClass != null && !PsiTreeUtil.isAncestor(aClass, element, true) && !aClass.hasModifierProperty(PsiModifier.PRIVATE)) {
-            String qName = aClass.getQualifiedName();
-            if (qName != null && !Comparing.strEqual(qName, aClass.getName())) {
-              return qName + "." +refExpr.getReferenceName();
-              
+            if (findExistingImport(element.getContainingFile(), aClass, refExpr.getReferenceName()) == null) {
+              String qName = aClass.getQualifiedName();
+              if (qName != null && !Comparing.strEqual(qName, aClass.getName())) {
+                return qName + "." +refExpr.getReferenceName();
+
+              }
             }
           }
         }
