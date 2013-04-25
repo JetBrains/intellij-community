@@ -19,7 +19,7 @@
  * User: max
  * Date: Feb 3, 2002
  * Time: 9:49:29 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.dataFlow;
@@ -112,6 +112,7 @@ public class DfaVariableState implements Cloneable {
            myNullability == aState.myNullability;
   }
 
+  @Override
   protected DfaVariableState clone() {
     return new DfaVariableState(this);
   }

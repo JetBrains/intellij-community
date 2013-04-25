@@ -32,6 +32,7 @@ import org.jetbrains.annotations.NotNull;
 public class ReplaceWithTernaryOperatorFix implements LocalQuickFix {
   private final String myText;
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionsBundle.message("inspection.replace.ternary.quickfix", myText);

@@ -37,6 +37,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     myComposer = composer;
   }
 
+  @Override
   public void appendClassOrInterface(StringBuffer buf, RefClass refClass, boolean capitalizeFirstLetter) {
     if (refClass.isInterface()) {
       buf.append(capitalizeFirstLetter
@@ -55,6 +56,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     }
   }
 
+  @Override
   public void appendClassExtendsImplements(StringBuffer buf, RefClass refClass) {
     if (refClass.getBaseClasses().size() > 0) {
       HTMLComposerImpl.appendHeading(buf, InspectionsBundle.message("inspection.export.results.extends.implements"));
@@ -66,6 +68,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     }
   }
 
+  @Override
   public void appendDerivedClasses(StringBuffer buf, RefClass refClass) {
     if (refClass.getSubClasses().size() > 0) {
       if (refClass.isInterface()) {
@@ -83,6 +86,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     }
   }
 
+  @Override
   public void appendLibraryMethods(StringBuffer buf, RefClass refClass) {
     if (refClass.getLibraryMethods().size() > 0) {
       HTMLComposerImpl.appendHeading(buf, InspectionsBundle.message("inspection.export.results.overrides.library.methods"));
@@ -95,6 +99,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     }
   }
 
+  @Override
   public void appendSuperMethods(StringBuffer buf, RefMethod refMethod) {
     if (refMethod.getSuperMethods().size() > 0) {
       HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.overrides.implements"));
@@ -107,6 +112,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     }
   }
 
+  @Override
   public void appendDerivedMethods(StringBuffer buf, RefMethod refMethod) {
     if (refMethod.getDerivedMethods().size() > 0) {
       HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.derived.methods"));
@@ -119,6 +125,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     }
   }
 
+  @Override
   public void appendTypeReferences(StringBuffer buf, RefClass refClass) {
     if (refClass.getInTypeReferences().size() > 0) {
       HTMLComposer.appendHeading(buf, InspectionsBundle.message("inspection.export.results.type.references"));
@@ -131,6 +138,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     }
   }
 
+  @Override
   public void appendShortName(final RefEntity refElement, final StringBuffer buf) {
     if (refElement instanceof RefJavaElement) {
       String modifier = ((RefJavaElement)refElement).getAccessModifier();
@@ -215,6 +223,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     });
   }
 
+  @Override
   public void appendLocation(final RefEntity entity, final StringBuffer buf) {
     RefEntity owner = entity.getOwner();
     if (owner instanceof RefPackage) {
@@ -242,6 +251,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     }
   }
 
+  @Override
   @Nullable
   public String getQualifiedName(final RefEntity refEntity) {
     if (refEntity instanceof RefJavaElement && ((RefJavaElement)refEntity).isSyntheticJSP()) {
@@ -259,6 +269,7 @@ public class HTMLJavaHTMLComposerImpl extends HTMLJavaHTMLComposer {
     return null;
   }
 
+  @Override
   public void appendReferencePresentation(RefEntity refElement, final StringBuffer buf, final boolean isPackageIncluded) {
     if (refElement instanceof RefImplicitConstructor) {
       buf.append(InspectionsBundle.message("inspection.export.results.implicit.constructor"));

@@ -50,11 +50,13 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
     myAnnosToRemove = annosToRemove;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionsBundle.message("annotate.overridden.methods.parameters", ClassUtil.extractClassName(myAnnotation));
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement psiElement = descriptor.getPsiElement();
 
@@ -91,6 +93,7 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
     }
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getName();

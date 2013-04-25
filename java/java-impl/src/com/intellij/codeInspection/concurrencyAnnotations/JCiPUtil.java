@@ -119,6 +119,7 @@ public class JCiPUtil {
   private static class GuardedTagVisitor extends JavaRecursiveElementVisitor {
     private String guardString = null;
 
+    @Override
     public void visitDocTag(PsiDocTag tag) {
       super.visitDocTag(tag);
       final String text = tag.getText();
@@ -136,6 +137,7 @@ public class JCiPUtil {
   private static class ImmutableTagVisitor extends JavaRecursiveElementWalkingVisitor {
     private boolean found = false;
 
+    @Override
     public void visitDocTag(PsiDocTag tag) {
       super.visitDocTag(tag);
       final String text = tag.getText();

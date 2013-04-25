@@ -37,6 +37,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.SurroundWithIfFix");
   private final String myText;
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionsBundle.message("inspection.surround.if.quickfix", myText);
@@ -46,6 +47,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
     myText = expressionToAssert.getText();
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     PsiStatement anchorStatement = PsiTreeUtil.getParentOfType(element, PsiStatement.class);
@@ -76,6 +78,7 @@ public class SurroundWithIfFix implements LocalQuickFix {
     }
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("inspection.surround.if.family");

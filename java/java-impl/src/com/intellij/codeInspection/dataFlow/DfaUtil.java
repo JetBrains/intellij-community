@@ -60,6 +60,7 @@ public class DfaUtil {
     if (cachedValue == null) {
       final PsiElement codeBlock = getEnclosingCodeBlock(variable, context);
       cachedValue = CachedValuesManager.getManager(context.getProject()).createCachedValue(new CachedValueProvider<MultiValuesMap<PsiVariable, PsiExpression>>() {
+        @Override
         public Result<MultiValuesMap<PsiVariable, PsiExpression>> compute() {
           final MultiValuesMap<PsiVariable, PsiExpression> result;
           if (codeBlock == null) {
@@ -240,6 +241,7 @@ public class DfaUtil {
     final List<PsiExpression> list = ContainerUtil.mapNotNull(
       ReferencesSearch.search(psiVariable, new LocalSearchScope(new PsiElement[] {psiVariable.getContainingFile()}, null, true)).findAll(),
       new NullableFunction<PsiReference, PsiExpression>() {
+        @Override
         public PsiExpression fun(final PsiReference psiReference) {
           if (modificationRef.get()) return null;
           final PsiElement parent = psiReference.getElement().getParent();

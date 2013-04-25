@@ -244,6 +244,7 @@ class MethodCheckerDetailsDialog extends DialogWrapper implements PropertyChange
     }
   }
 
+  @Override
   public boolean isOKActionEnabled() {
     if (!myOKAction.isEnabled()) return false;
     PsiClass psiClass = classField.getPsiClass();

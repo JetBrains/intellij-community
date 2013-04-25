@@ -39,11 +39,13 @@ public class AddAssertStatementFix implements LocalQuickFix {
     myText = expressionToAssert.getText();
   }
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionsBundle.message("inspection.assert.quickfix", myText);
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiExpression expressionToAssert = myExpressionToAssert.getElement();
     if (expressionToAssert == null) return;
@@ -81,6 +83,7 @@ public class AddAssertStatementFix implements LocalQuickFix {
     }
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("inspection.quickfix.assert.family");

@@ -49,6 +49,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     myComposer = getExtension(HTMLJavaHTMLComposer.COMPOSER);
   }
 
+  @Override
   public void compose(final StringBuffer buf, RefEntity refEntity) {
     genPageHeader(buf, refEntity);
 
@@ -211,6 +212,7 @@ public class DeadHTMLComposer extends HTMLComposerImpl {
     });
   }
 
+  @Override
   protected void appendAdditionalListItemInfo(StringBuffer buf, RefElement refElement) {
     if (refElement instanceof RefImplicitConstructor) {
       refElement = ((RefImplicitConstructor)refElement).getOwnerClass();

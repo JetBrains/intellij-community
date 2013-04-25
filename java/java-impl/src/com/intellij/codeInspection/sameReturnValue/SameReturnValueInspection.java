@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public class SameReturnValueInspection extends GlobalJavaInspectionTool {
+  @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(RefEntity refEntity, AnalysisScope scope, InspectionManager manager, GlobalInspectionContext globalContext,
                                                 ProblemDescriptionsProcessor processor) {
@@ -55,6 +56,7 @@ public class SameReturnValueInspection extends GlobalJavaInspectionTool {
   }
 
 
+  @Override
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
                                                 final ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
@@ -63,6 +65,7 @@ public class SameReturnValueInspection extends GlobalJavaInspectionTool {
           refEntity.accept(new RefJavaVisitor() {
             @Override public void visitMethod(@NotNull final RefMethod refMethod) {
               globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
+                @Override
                 public boolean process(PsiMethod derivedMethod) {
                   processor.ignoreElement(refMethod);
                   return false;
@@ -77,16 +80,19 @@ public class SameReturnValueInspection extends GlobalJavaInspectionTool {
     return false;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.same.return.value.display.name");
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "SameReturnValue";

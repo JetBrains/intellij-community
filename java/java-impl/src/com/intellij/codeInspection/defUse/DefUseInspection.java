@@ -59,6 +59,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
   public static final String DISPLAY_NAME = InspectionsBundle.message("inspection.unused.assignment.display.name");
   @NonNls public static final String SHORT_NAME = "UnusedAssignment";
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -81,6 +82,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
 
     if (unusedDefs != null && !unusedDefs.isEmpty()) {
       Collections.sort(unusedDefs, new Comparator<DefUseUtil.Info>() {
+        @Override
         public int compare(DefUseUtil.Info o1, DefUseUtil.Info o2) {
           int offset1 = o1.getContext().getTextOffset();
           int offset2 = o2.getContext().getTextOffset();
@@ -167,6 +169,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
     });
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
   }
@@ -188,6 +191,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       myReportInitializer = new JCheckBox(InspectionsBundle.message("inspection.unused.assignment.option2"));
       myReportInitializer.setSelected(REPORT_REDUNDANT_INITIALIZER);
       myReportInitializer.getModel().addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           REPORT_REDUNDANT_INITIALIZER = myReportInitializer.isSelected();
         }
@@ -199,6 +203,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       myReportPrefix = new JCheckBox(InspectionsBundle.message("inspection.unused.assignment.option"));
       myReportPrefix.setSelected(REPORT_PREFIX_EXPRESSIONS);
       myReportPrefix.getModel().addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           REPORT_PREFIX_EXPRESSIONS = myReportPrefix.isSelected();
         }
@@ -210,6 +215,7 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       myReportPostfix = new JCheckBox(InspectionsBundle.message("inspection.unused.assignment.option1"));
       myReportPostfix.setSelected(REPORT_POSTFIX_EXPRESSIONS);
       myReportPostfix.getModel().addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           REPORT_POSTFIX_EXPRESSIONS = myReportPostfix.isSelected();
         }
@@ -224,11 +230,13 @@ public class DefUseInspection extends BaseLocalInspectionTool {
 
   private static class RemoveInitializerFix implements LocalQuickFix {
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.unused.assignment.remove.quickfix");
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiElement psiInitializer = descriptor.getPsiElement();
       if (!(psiInitializer instanceof PsiExpression)) return;
@@ -263,22 +271,26 @@ public class DefUseInspection extends BaseLocalInspectionTool {
       }
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
     }
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return SHORT_NAME;

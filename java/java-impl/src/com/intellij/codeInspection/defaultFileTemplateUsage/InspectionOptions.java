@@ -34,6 +34,7 @@ public class InspectionOptions {
     inspectFileHeader.setSelected(inspection.CHECK_FILE_HEADER);
 
     ActionListener listener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
          inspection.CHECK_FILE_HEADER = inspectFileHeader.isSelected();
          inspection.CHECK_METHOD_BODY = inspectMethodBody.isSelected();

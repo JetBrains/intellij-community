@@ -38,6 +38,7 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
     myOwner = owner;
   }
 
+  @Override
   public RefFilter getFilter() {
     if (myFilter == null) {
       myFilter = new RefEntryPointFilter();
@@ -45,42 +46,50 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
     return myFilter;
   }
 
+  @Override
   public void runInspection(@NotNull AnalysisScope scope, @NotNull final InspectionManager manager) {}
 
   @Override
   public void exportResults(@NotNull Element parentNode, @NotNull RefEntity refEntity) {
   }
 
+  @Override
   @NotNull
   public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext globalInspectionContext) {
     return new JobDescriptor[0];
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.dead.code.entry.points.display.name");
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "";
   }
 
+  @Override
   @NotNull
   public HTMLComposerImpl getComposer() {
     return new DeadHTMLComposer(this);
   }
 
+  @Override
   @NotNull
   public GlobalInspectionContextImpl getContext() {
     return myOwner.getContext();
   }
 
+  @Override
   public QuickFixAction[] getQuickFixes(@NotNull final RefEntity[] refElements) {
     if (myQuickFixActions == null) {
       myQuickFixActions = new QuickFixAction[]{new MoveEntriesToSuspicious()};
@@ -93,6 +102,7 @@ public class DummyEntryPointsTool extends FilteringInspectionTool {
       super(InspectionsBundle.message("inspection.dead.code.remove.from.entry.point.quickfix"), null, null, DummyEntryPointsTool.this);
     }
 
+    @Override
     protected boolean applyFix(RefElement[] refElements) {
       final EntryPointsManager entryPointsManager =
         getContext().getExtension(GlobalJavaInspectionContextImpl.CONTEXT).getEntryPointsManager(getContext().getRefManager());

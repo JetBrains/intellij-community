@@ -55,22 +55,26 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
   public boolean REPORT_PARAMETER_FOR_PUBLIC_METHODS = true;
 
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
     return SHORT_NAME;
   }
 
+  @Override
   @Pattern(VALID_ID_PATTERN)
   @NotNull
   @NonNls
@@ -83,6 +87,7 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     return "unused";
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
@@ -113,6 +118,7 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
       myReportUnusedParametersInPublics.setEnabled(PARAMETER);
 
       final ActionListener listener = new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           LOCAL_VARIABLE = myCheckLocalVariablesCheckBox.isSelected();
           CLASS = myCheckClassesCheckBox.isSelected();
@@ -140,6 +146,7 @@ public class UnusedSymbolLocalInspection extends BaseJavaLocalInspectionTool imp
     }
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new OptionsPanel().getPanel();

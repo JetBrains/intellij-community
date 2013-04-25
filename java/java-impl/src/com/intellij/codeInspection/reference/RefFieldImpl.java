@@ -42,13 +42,15 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     if (ownerClass.isInterface()) {
       setIsStatic(true);
       setIsFinal(true);
-    }    
+    }
   }
 
+  @Override
   public PsiField getElement() {
-    return (PsiField)super.getElement(); 
+    return (PsiField)super.getElement();
   }
 
+  @Override
   protected void markReferenced(RefElementImpl refFrom, PsiElement psiFrom, PsiElement psiWhat, boolean forWriting, boolean forReading, PsiReferenceExpression expressionFrom) {
     addInReference(refFrom);
 
@@ -73,6 +75,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     getRefManager().fireNodeMarkedReferenced(this, refFrom, referencedFromClassInitializer, forReading, forWriting);
   }
 
+  @Override
   public boolean isUsedForReading() {
     return checkFlag(USED_FOR_READING_MASK);
   }
@@ -81,6 +84,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     setFlag(usedForReading, USED_FOR_READING_MASK);
   }
 
+  @Override
   public boolean isUsedForWriting() {
     return checkFlag(USED_FOR_WRITING_MASK);
   }
@@ -90,13 +94,16 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     setFlag(usedForWriting, USED_FOR_WRITING_MASK);
   }
 
+  @Override
   public boolean isOnlyAssignedInInitializer() {
     return checkFlag(ASSIGNED_ONLY_IN_INITIALIZER);
   }
 
+  @Override
   public void accept(final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
         public void run() {
           ((RefJavaVisitor)visitor).visitField(RefFieldImpl.this);
         }
@@ -106,6 +113,7 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     }
   }
 
+  @Override
   public void buildReferences() {
     PsiField psiField = getElement();
     if (psiField != null) {
@@ -143,10 +151,12 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     }
   }
 
+  @Override
   public RefClass getOwnerClass() {
     return (RefClass) getOwner();
   }
 
+  @Override
   public String getExternalName() {
     return ApplicationManager.getApplication().runReadAction(new Computable<String>() {
       @Override
@@ -176,12 +186,14 @@ public class RefFieldImpl extends RefJavaElementImpl implements RefField {
     return null;
   }
 
+  @Override
   public boolean isSuspicious() {
     if (isEntry()) return false;
     if (super.isSuspicious()) return true;
     return isUsedForReading() != isUsedForWriting();
   }
 
+  @Override
   protected void initialize() {
   }
 }

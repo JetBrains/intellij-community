@@ -50,11 +50,13 @@ public class AnnotateMethodFix implements LocalQuickFix {
     myAnnotationsToRemove = annotationsToRemove;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionsBundle.message("inspection.annotate.method.quickfix.name", ClassUtil.extractClassName(myAnnotation));
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement psiElement = descriptor.getPsiElement();
 
@@ -104,6 +106,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
     return false;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getName();

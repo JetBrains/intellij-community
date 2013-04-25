@@ -192,6 +192,7 @@ public class ConditionCheckDialog extends DialogWrapper {
         });
 
       myList.addMouseListener(new MouseAdapter() {
+        @Override
         public void mouseClicked(MouseEvent e) {
           if (e.getClickCount() == 2) {
             int index = myList.locationToIndex(e.getPoint());

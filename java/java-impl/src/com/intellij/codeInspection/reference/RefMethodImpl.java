@@ -79,6 +79,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     setConstructor(true);
   }
 
+  @Override
   protected void initialize() {
     final PsiMethod method = (PsiMethod)getElement();
     LOG.assertTrue(method != null);
@@ -175,6 +176,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
+  @Override
   @NotNull
   public Collection<RefMethod> getSuperMethods() {
     if (mySuperMethods == null) return EMPTY_METHOD_LIST;
@@ -184,20 +186,24 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     return mySuperMethods;
   }
 
+  @Override
   @NotNull
   public Collection<RefMethod> getDerivedMethods() {
     if (myDerivedMethods == null) return EMPTY_METHOD_LIST;
     return myDerivedMethods;
   }
 
+  @Override
   public boolean isBodyEmpty() {
     return checkFlag(IS_BODY_EMPTY_MASK);
   }
 
+  @Override
   public boolean isOnlyCallsSuper() {
     return checkFlag(IS_ONLY_CALLS_SUPER_MASK);
   }
 
+  @Override
   public boolean hasBody() {
     return !isAbstract() && !getOwnerClass().isInterface() || !isBodyEmpty();
   }
@@ -235,12 +241,14 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
+  @Override
   @NotNull
   public RefParameter[] getParameters() {
     if (myParameters == null) return EMPTY_PARAMS_ARRAY;
     return myParameters;
   }
 
+  @Override
   public void buildReferences() {
     // Work on code block to find what we're referencing...
     PsiMethod method = (PsiMethod) getElement();
@@ -316,9 +324,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
+  @Override
   public void accept(final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
         public void run() {
           ((RefJavaVisitor)visitor).visitMethod(RefMethodImpl.this);
         }
@@ -328,6 +338,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
+  @Override
   public boolean isExternalOverride() {
     return isLibraryOverride(new HashSet<RefMethod>());
   }
@@ -347,18 +358,22 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     return false;
   }
 
+  @Override
   public boolean isAppMain() {
     return checkFlag(IS_APPMAIN_MASK);
   }
 
+  @Override
   public boolean isAbstract() {
     return checkFlag(IS_ABSTRACT_MASK);
   }
 
+  @Override
   public boolean hasSuperMethods() {
     return !getSuperMethods().isEmpty() || isExternalOverride();
   }
 
+  @Override
   public boolean isReferenced() {
     // Directly called from somewhere..
     for (RefElement refCaller : getInReferences()) {
@@ -369,6 +384,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     return isExternalOverride();
   }
 
+  @Override
   public boolean hasSuspiciousCallers() {
     // Directly called from somewhere..
     for (RefElement refCaller : getInReferences()) {
@@ -391,18 +407,22 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     return false;
   }
 
+  @Override
   public boolean isConstructor() {
     return checkFlag(IS_CONSTRUCTOR_MASK);
   }
 
+  @Override
   public RefClass getOwnerClass() {
     return (RefClass) getOwner();
   }
 
+  @Override
   public String getName() {
     if (isValid()) {
       final String[] result = new String[1];
       final Runnable runnable = new Runnable() {
+        @Override
         public void run() {
           PsiMethod psiMethod = (PsiMethod) getElement();
           if (psiMethod instanceof JspHolderMethod) {
@@ -426,9 +446,11 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
+  @Override
   public String getExternalName() {
     final String[] result = new String[1];
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         final PsiMethod psiMethod = (PsiMethod)getElement();
         LOG.assertTrue(psiMethod != null);
@@ -463,6 +485,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
+  @Override
   public void referenceRemoved() {
     if (getOwnerClass() != null) {
       ((RefClassImpl)getOwnerClass()).methodRemoved(this);
@@ -484,6 +507,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
+  @Override
   public boolean isSuspicious() {
     if (isConstructor() && PsiModifier.PRIVATE.equals(getAccessModifier()) && getParameters().length == 0 && getOwnerClass().getConstructors().size() == 1) return false;
     return super.isSuspicious();
@@ -497,6 +521,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
+  @Override
   public boolean isReturnValueUsed() {
     return checkFlag(IS_RETURN_VALUE_USED_MASK);
   }
@@ -562,6 +587,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
+  @Override
   public String getReturnValueIfSame() {
     //noinspection StringEquality
     if (myReturnValueTemplate == RETURN_VALUE_UNDEFINED) return null;
@@ -594,6 +620,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     }
   }
 
+  @Override
   @Nullable
   public PsiClass[] getUnThrownExceptions() {
     if (myUnThrownExceptions == null) return null;
@@ -633,6 +660,7 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     setFlag(constructor, IS_CONSTRUCTOR_MASK);
   }
 
+  @Override
   public boolean isTestMethod() {
     return checkFlag(IS_TEST_METHOD_MASK);
   }
@@ -641,10 +669,12 @@ public class RefMethodImpl extends RefJavaElementImpl implements RefMethod {
     setFlag(testMethod, IS_TEST_METHOD_MASK);
   }
 
+  @Override
   public PsiModifierListOwner getElement() {
     return (PsiModifierListOwner)super.getElement();
   }
 
+  @Override
   public boolean isCalledOnSubClass() {
     return checkFlag(IS_CALLED_ON_SUBCLASS);
   }

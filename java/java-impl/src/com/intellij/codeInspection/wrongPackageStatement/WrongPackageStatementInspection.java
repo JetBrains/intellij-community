@@ -33,6 +33,7 @@ import java.util.List;
  * Date: 14-Nov-2005
  */
 public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool {
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     // does not work in tests since CodeInsightTestCase copies file into temporary location
@@ -86,27 +87,32 @@ public class WrongPackageStatementInspection extends BaseJavaLocalInspectionTool
     return null;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("wrong.package.statement");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
     return "WrongPackageStatement";
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

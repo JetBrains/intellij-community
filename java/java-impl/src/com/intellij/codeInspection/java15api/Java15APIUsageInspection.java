@@ -106,16 +106,19 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     catch (IOException ignored) { }
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.LANGUAGE_LEVEL_SPECIFIC_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.1.5.display.name");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
@@ -186,6 +189,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
       }
     });
     llCombo.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         myEffectiveLanguageLevel = (LanguageLevel)llCombo.getSelectedItem();
       }
@@ -196,6 +200,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     panel.add(comboPanel);
 
     final ActionListener actionListener = new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         if (projectRb.isSelected()) {
           myEffectiveLanguageLevel = null;
@@ -213,6 +218,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     return panel;
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new MyVisitor(holder, isOnTheFly);

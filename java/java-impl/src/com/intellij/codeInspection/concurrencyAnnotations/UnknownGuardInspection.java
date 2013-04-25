@@ -32,22 +32,26 @@ import org.jetbrains.annotations.NotNull;
  */
 public class UnknownGuardInspection extends BaseJavaLocalInspectionTool {
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.CONCURRENCY_ANNOTATION_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Unknown @GuardedBy field";
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "UnknownGuard";
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new Visitor(holder);
@@ -60,6 +64,7 @@ public class UnknownGuardInspection extends BaseJavaLocalInspectionTool {
       myHolder = holder;
     }
 
+    @Override
     public void visitAnnotation(PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       if (!JCiPUtil.isGuardedByAnnotation(annotation)) {
@@ -143,6 +148,7 @@ public class UnknownGuardInspection extends BaseJavaLocalInspectionTool {
       return false;
     }
 
+    @Override
     public void visitDocTag(PsiDocTag psiDocTag) {
       super.visitDocTag(psiDocTag);
       if (!JCiPUtil.isGuardedByTag(psiDocTag)) {

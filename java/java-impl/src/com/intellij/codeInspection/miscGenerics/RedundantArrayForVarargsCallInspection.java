@@ -41,6 +41,7 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
   private final LocalQuickFix myQuickFixAction = new MyQuickFix();
 
   private static class MyQuickFix implements LocalQuickFix {
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiNewExpression arrayCreation = (PsiNewExpression) descriptor.getPsiElement();
       if (arrayCreation == null || !arrayCreation.isValid()) return;
@@ -48,17 +49,20 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
       InlineUtil.inlineArrayCreationForVarargs(arrayCreation);
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.redundant.array.creation.quickfix");
     }
   }
 
+  @Override
   public ProblemDescriptor[] getDescriptions(PsiElement place, final InspectionManager manager, final boolean isOnTheFly) {
     if (!PsiUtil.isLanguageLevel5OrHigher(place)) return null;
     final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
@@ -177,16 +181,19 @@ public class RedundantArrayForVarargsCallInspection extends GenericsInspectionTo
     return null;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.VERBOSE_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.redundant.array.creation.display.name");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {

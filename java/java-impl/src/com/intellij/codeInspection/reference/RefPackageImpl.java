@@ -19,7 +19,7 @@
  * User: max
  * Date: Nov 15, 2001
  * Time: 5:17:38 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.reference;
@@ -38,6 +38,7 @@ public class RefPackageImpl extends RefEntityImpl implements RefPackage {
     myQualifiedName = name;
   }
 
+  @Override
   public String getQualifiedName() {
     return myQualifiedName;
   }
@@ -48,9 +49,11 @@ public class RefPackageImpl extends RefEntityImpl implements RefPackage {
   }
 
 
+  @Override
   public void accept(final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
         public void run() {
           ((RefJavaVisitor)visitor).visitPackage(RefPackageImpl.this);
         }
@@ -60,6 +63,7 @@ public class RefPackageImpl extends RefEntityImpl implements RefPackage {
     }
   }
 
+  @Override
   public String getExternalName() {
     return getQualifiedName();
   }
@@ -68,10 +72,12 @@ public class RefPackageImpl extends RefEntityImpl implements RefPackage {
     return manager.getExtension(RefJavaManager.MANAGER).getPackage(name);
   }
 
+  @Override
   public boolean isValid() {
     return true;
   }
 
+  @Override
   public Icon getIcon(final boolean expanded) {
     return PlatformIcons.PACKAGE_ICON;
   }

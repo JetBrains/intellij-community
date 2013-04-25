@@ -38,11 +38,13 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
     myListOwner = listOwner;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return CodeInsightBundle.message("remove.annotation");
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     if (myAnnotation.isPhysical()) {
       try {
@@ -57,6 +59,7 @@ public class RemoveAnnotationQuickFix implements LocalQuickFix {
     }
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getName();

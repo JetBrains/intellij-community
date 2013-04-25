@@ -36,6 +36,7 @@ public class GtkPreferredJComboBoxRendererInspection extends InternalInspection 
     "Default ListCellRenderer implementations are known to cause UI artifacts under GTK+ look&feel, " +
     "so please use ListCellRendererWrapper or ColoredListCellRenderer instead.";
 
+  @Override
   @NotNull
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {

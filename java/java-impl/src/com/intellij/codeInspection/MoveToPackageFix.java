@@ -39,11 +39,13 @@ public class MoveToPackageFix implements LocalQuickFix {
     myTargetPackage = targetPackage;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return QuickFixBundle.message("move.class.to.package.text", myTargetPackage);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("move.class.to.package.family");
@@ -58,6 +60,7 @@ public class MoveToPackageFix implements LocalQuickFix {
         && myTargetPackage != null;
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     if (element == null) return;
@@ -66,6 +69,7 @@ public class MoveToPackageFix implements LocalQuickFix {
     if (!CodeInsightUtilBase.prepareFileForWrite(myFile)) return;
 
     ApplicationManager.getApplication().invokeLater(new Runnable() {
+      @Override
       public void run() {
         chooseDirectoryAndMove(project, myFile);
       }

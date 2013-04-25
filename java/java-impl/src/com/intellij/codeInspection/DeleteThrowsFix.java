@@ -34,16 +34,19 @@ public class DeleteThrowsFix implements LocalQuickFix {
     myQuickFix = new MethodThrowsFix(method, exceptionClass, false, false);
   }
 
+  @Override
   @NotNull
   public String getName() {
     return myQuickFix.getText();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("fix.throws.list.family");
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     if (element == null) return;

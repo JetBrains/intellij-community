@@ -52,24 +52,29 @@ public class DependencyInspection extends BaseLocalInspectionTool {
   public static final String DISPLAY_NAME = InspectionsBundle.message("illegal.package.dependencies");
   @NonNls public static final String SHORT_NAME = "Dependency";
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return DependencyInspection.GROUP_DISPLAY_NAME;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return DependencyInspection.DISPLAY_NAME;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return DependencyInspection.SHORT_NAME;
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     final JButton editDependencies = new JButton(InspectionsBundle.message("inspection.dependency.configure.button.text"));
     editDependencies.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext(editDependencies));
         if (project == null) project = ProjectManager.getInstance().getDefaultProject();
@@ -82,6 +87,7 @@ public class DependencyInspection extends BaseLocalInspectionTool {
     return depPanel;
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull final PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
     if (file == null) return null;
@@ -92,6 +98,7 @@ public class DependencyInspection extends BaseLocalInspectionTool {
     final ArrayList<ProblemDescriptor> problems =  new ArrayList<ProblemDescriptor>();
     ForwardDependenciesBuilder builder = new ForwardDependenciesBuilder(file.getProject(), new AnalysisScope(file));
         DependenciesBuilder.analyzeFileDependencies(file, new DependenciesBuilder.DependencyProcessor() {
+          @Override
           public void process(PsiElement place, PsiElement dependency) {
             PsiFile dependencyFile = dependency.getContainingFile();
             if (dependencyFile != null && dependencyFile.isPhysical() && dependencyFile.getVirtualFile() != null) {
@@ -110,6 +117,7 @@ public class DependencyInspection extends BaseLocalInspectionTool {
     return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
@@ -121,16 +129,19 @@ public class DependencyInspection extends BaseLocalInspectionTool {
       myRule = rule;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionsBundle.message("edit.dependency.rules.text", myRule.getDisplayText());
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return InspectionsBundle.message("edit.dependency.rules.family");
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       ShowSettingsUtil.getInstance().editConfigurable(project, new DependencyConfigurable(project));
     }

@@ -50,6 +50,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     }
   }
 
+  @Override
   public void parameterReferenced(boolean forWriting) {
     if (forWriting) {
       setUsedForWriting();
@@ -58,6 +59,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     }
   }
 
+  @Override
   public boolean isUsedForReading() {
     return checkFlag(USED_FOR_READING_MASK);
   }
@@ -66,10 +68,12 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     setFlag(true, USED_FOR_READING_MASK);
   }
 
+  @Override
   public PsiParameter getElement() {
     return (PsiParameter)super.getElement();
   }
 
+  @Override
   public boolean isUsedForWriting() {
     return checkFlag(USED_FOR_WRITING_MASK);
   }
@@ -78,9 +82,11 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     setFlag(true, USED_FOR_WRITING_MASK);
   }
 
+  @Override
   public void accept(final RefVisitor visitor) {
     if (visitor instanceof RefJavaVisitor) {
       ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
         public void run() {
           ((RefJavaVisitor)visitor).visitParameter(RefParameterImpl.this);
         }
@@ -90,6 +96,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     }
   }
 
+  @Override
   public int getIndex() {
     return myIndex;
   }
@@ -121,17 +128,21 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
     }
   }
 
+  @Override
   public String getActualValueIfSame() {
     if (myActualValueTemplate == VALUE_UNDEFINED) return null;
     return myActualValueTemplate;
   }
 
+  @Override
   protected void initialize() {
   }
 
+  @Override
   public String getExternalName() {
     final String[] result = new String[1];
     final Runnable runnable = new Runnable() {
+      @Override
       public void run() {
         PsiParameter parameter = getElement();
         LOG.assertTrue(parameter != null);
@@ -165,7 +176,7 @@ public class RefParameterImpl extends RefJavaElementImpl implements RefParameter
         }
       }
     }
-    return null; 
+    return null;
   }
 
   @Nullable

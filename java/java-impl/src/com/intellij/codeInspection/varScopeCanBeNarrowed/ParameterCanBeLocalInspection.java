@@ -39,16 +39,19 @@ public class ParameterCanBeLocalInspection extends BaseJavaLocalInspectionTool {
 
   @NonNls public static final String SHORT_NAME = "ParameterCanBeLocal";
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.CLASS_LAYOUT_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.parameter.can.be.local.display.name");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
@@ -168,7 +171,7 @@ public class ParameterCanBeLocalInspection extends BaseJavaLocalInspectionTool {
         }
         final ParameterInfoImpl[] newParams = info.toArray(new ParameterInfoImpl[info.size()]);
         final String visibilityModifier = VisibilityUtil.getVisibilityModifier(method.getModifierList());
-        final ChangeSignatureProcessor cp = new ChangeSignatureProcessor(project, method, false, visibilityModifier, 
+        final ChangeSignatureProcessor cp = new ChangeSignatureProcessor(project, method, false, visibilityModifier,
                                                                          method.getName(), method.getReturnType(), newParams) {
           @Override
           protected void performRefactoring(UsageInfo[] usages) {

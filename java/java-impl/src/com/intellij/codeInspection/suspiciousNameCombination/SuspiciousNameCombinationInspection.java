@@ -69,22 +69,26 @@ public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool
     }
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("suspicious.name.combination.display.name");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
     return "SuspiciousNameCombination";
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new MyVisitor(holder);
@@ -205,20 +209,24 @@ public class SuspiciousNameCombinationInspection extends BaseLocalInspectionTool
     public MyOptionsPanel() {
       super(InspectionsBundle.message("suspicious.name.combination.options.title"), myNameGroups);
       myListModel.addListDataListener(new ListDataListener() {
+        @Override
         public void intervalAdded(ListDataEvent e) {
           saveChanges();
         }
 
+        @Override
         public void intervalRemoved(ListDataEvent e) {
           saveChanges();
         }
 
+        @Override
         public void contentsChanged(ListDataEvent e) {
           saveChanges();
         }
       });
     }
 
+    @Override
     protected String findItemToAdd() {
       return Messages.showInputDialog(this,
                                       InspectionsBundle.message("suspicious.name.combination.options.prompt"),

@@ -42,6 +42,7 @@ public class UndesirableClassUsageInspection extends InternalInspection {
     CLASSES.put(BufferedImage.class.getName(), "UIUtil.createImage()");
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {

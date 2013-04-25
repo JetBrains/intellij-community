@@ -30,6 +30,7 @@ import java.util.List;
  * @author ven
  */
 public abstract class GenericsInspectionToolBase extends BaseLocalInspectionTool {
+  @Override
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
     if (initializers.length == 0) return null;
@@ -44,6 +45,7 @@ public abstract class GenericsInspectionToolBase extends BaseLocalInspectionTool
     return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
   }
 
+  @Override
   public ProblemDescriptor[] checkField(@NotNull PsiField field, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiExpression initializer = field.getInitializer();
     if (initializer != null) {
@@ -55,6 +57,7 @@ public abstract class GenericsInspectionToolBase extends BaseLocalInspectionTool
     return null;
   }
 
+  @Override
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod psiMethod, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiCodeBlock body = psiMethod.getBody();
     if (body != null) {

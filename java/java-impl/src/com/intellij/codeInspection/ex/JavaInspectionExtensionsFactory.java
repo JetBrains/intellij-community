@@ -35,27 +35,33 @@ import org.jetbrains.annotations.Nullable;
 
 public class JavaInspectionExtensionsFactory extends InspectionExtensionsFactory {
 
+  @Override
   public GlobalInspectionContextExtension createGlobalInspectionContextExtension() {
     return new GlobalJavaInspectionContextImpl();
   }
 
+  @Override
   public RefManagerExtension createRefManagerExtension(final RefManager refManager) {
     return new RefJavaManagerImpl((RefManagerImpl)refManager);
   }
 
+  @Override
   public HTMLComposerExtension createHTMLComposerExtension(final HTMLComposer composer) {
     return new HTMLJavaHTMLComposerImpl((HTMLComposerImpl)composer);
   }
 
+  @Override
   public boolean isToCheckMember(final PsiElement element, final String id) {
     return SuppressManager.getInstance().getElementToolSuppressedIn(element, id) == null;
   }
 
+  @Override
   @Nullable
   public String getSuppressedInspectionIdsIn(final PsiElement element) {
     return SuppressManager.getInstance().getSuppressedInspectionIdsIn(element);
   }
 
+  @Override
   public boolean isProjectConfiguredToRunInspections(final Project project, final boolean online) {
     return GlobalJavaInspectionContextImpl.isInspectionsEnabled(online, project);
   }

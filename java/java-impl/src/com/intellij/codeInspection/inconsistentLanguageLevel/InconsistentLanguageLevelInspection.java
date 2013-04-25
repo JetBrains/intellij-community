@@ -50,9 +50,11 @@ import java.util.Set;
 public class InconsistentLanguageLevelInspection extends DescriptorProviderInspection{
   private static final Logger LOGGER = Logger.getInstance("#" + InconsistentLanguageLevelInspection.class.getName());
 
+  @Override
   public void runInspection(@NotNull AnalysisScope scope, @NotNull InspectionManager manager) {
     final Set<Module> modules = new THashSet<Module>();
     scope.accept(new PsiElementVisitor(){
+      @Override
       public void visitElement(PsiElement element) {
         final Module module = ModuleUtil.findModuleForPsiElement(element);
         if (module != null) {
@@ -90,26 +92,31 @@ public class InconsistentLanguageLevelInspection extends DescriptorProviderInspe
     }
   }
 
+  @Override
   @NotNull
   public JobDescriptor[] getJobDescriptors(@NotNull GlobalInspectionContext globalInspectionContext) {
     return JobDescriptor.EMPTY_ARRAY;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return false;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.MODULARIZATION_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return "Inconsistent language level settings";
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
@@ -123,16 +130,19 @@ public class InconsistentLanguageLevelInspection extends DescriptorProviderInspe
       myModule = module;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return "Open module " + myModule.getName() + " settings";
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull CommonProblemDescriptor descriptor) {
       if (!myModule.isDisposed()) {
         ProjectSettingsService.getInstance(project).showModuleConfigurationDialog(myModule.getName(), ProjectBundle.message("modules.classpath.title"));

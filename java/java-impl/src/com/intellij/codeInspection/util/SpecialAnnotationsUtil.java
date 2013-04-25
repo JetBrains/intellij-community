@@ -65,6 +65,7 @@ public class SpecialAnnotationsUtil {
                                                            final String borderTitle,
                                                            final boolean acceptPatterns) {
     final SortedListModel<String> listModel = new SortedListModel<String>(new Comparator<String>() {
+      @Override
       public int compare(final String o1, final String o2) {
         return o1.compareTo(o2);
       }
@@ -75,6 +76,7 @@ public class SpecialAnnotationsUtil {
     }
     injectionList.setSelectionMode(ListSelectionModel.SINGLE_INTERVAL_SELECTION);
     injectionList.getModel().addListDataListener(new ListDataListener() {
+      @Override
       public void intervalAdded(ListDataEvent e) {
         listChanged();
       }
@@ -86,10 +88,12 @@ public class SpecialAnnotationsUtil {
         }
       }
 
+      @Override
       public void intervalRemoved(ListDataEvent e) {
         listChanged();
       }
 
+      @Override
       public void contentsChanged(ListDataEvent e) {
         listChanged();
       }
@@ -146,24 +150,29 @@ public class SpecialAnnotationsUtil {
                                                                                  final List<String> targetList,
                                                                                  final String qualifiedName) {
     return new IntentionAction() {
+      @Override
       @NotNull
       public String getText() {
         return text;
       }
 
+      @Override
       @NotNull
       public String getFamilyName() {
         return family;
       }
 
+      @Override
       public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
         return true;
       }
 
+      @Override
       public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
         doQuickFixInternal(project, targetList, qualifiedName);
       }
 
+      @Override
       public boolean startInWriteAction() {
         return true;
       }
@@ -176,16 +185,19 @@ public class SpecialAnnotationsUtil {
                                                                         final String qualifiedName,
                                                                         final PsiElement context) {
     return new LocalQuickFix() {
+      @Override
       @NotNull
       public String getName() {
         return text;
       }
 
+      @Override
       @NotNull
       public String getFamilyName() {
         return family;
       }
 
+      @Override
       public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
         doQuickFixInternal(project, targetList, qualifiedName);
       }
@@ -218,7 +230,7 @@ public class SpecialAnnotationsUtil {
       for (PsiAnnotation psiAnnotation : psiAnnotations) {
         @NonNls final String name = psiAnnotation.getQualifiedName();
         if (name == null) continue;
-        if (name.startsWith("java.") || name.startsWith("javax.") || 
+        if (name.startsWith("java.") || name.startsWith("javax.") ||
             (name.startsWith("org.jetbrains.") && AnnotationUtil.isJetbrainsAnnotation(StringUtil.getShortName(name)))) continue;
         if (!processor.process(name)) break;
       }

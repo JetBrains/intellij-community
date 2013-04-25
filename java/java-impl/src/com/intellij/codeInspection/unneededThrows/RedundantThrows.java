@@ -50,6 +50,7 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
   private final BidirectionalMap<String, QuickFix> myQuickFixes = new BidirectionalMap<String, QuickFix>();
   @NonNls private static final String SHORT_NAME = "RedundantThrows";
 
+  @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(RefEntity refEntity,
                                                 AnalysisScope scope,
@@ -122,6 +123,7 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
   }
 
 
+  @Override
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
                                                 final ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
@@ -130,6 +132,7 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
           refEntity.accept(new RefJavaVisitor() {
             @Override public void visitMethod(@NotNull final RefMethod refMethod) {
               globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
+                @Override
                 public boolean process(PsiMethod derivedMethod) {
                   processor.ignoreElement(refMethod);
                   return true;
@@ -144,16 +147,19 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
     return false;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
@@ -171,11 +177,13 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
   }
 
 
+  @Override
   @Nullable
   public QuickFix getQuickFix(String hint) {
     return getFix(null, hint);
   }
 
+  @Override
   @Nullable
   public String getHint(final QuickFix fix) {
     final List<String> hints = myQuickFixes.getKeysByValue(fix);
@@ -192,11 +200,13 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
       myHint = hint;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.redundant.throws.remove.quickfix");
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       if (myProcessor != null) {
         RefElement refElement = (RefElement)myProcessor.getElement(descriptor);
@@ -216,6 +226,7 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
       }
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
@@ -287,6 +298,7 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
       } else {
         final Query<Pair<PsiMethod,PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
         query.forEach(new Processor<Pair<PsiMethod, PsiMethod>>(){
+          @Override
           public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
             if (pair.first == psiMethod) {
               removeException(null, exceptionType, refsToDelete, pair.second);

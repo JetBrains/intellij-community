@@ -33,16 +33,19 @@ public class AdjustPackageNameFix implements LocalQuickFix {
     myName = targetPackage;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return QuickFixBundle.message("adjust.package.text", myName);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return QuickFixBundle.message("adjust.package.family");
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
     if (element == null) return;

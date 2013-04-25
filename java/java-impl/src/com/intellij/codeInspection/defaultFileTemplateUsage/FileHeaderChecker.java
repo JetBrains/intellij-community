@@ -108,6 +108,7 @@ public class FileHeaderChecker {
     final FileTemplate template = FileTemplateManager.getInstance().getPattern(FileTemplateManager.FILE_HEADER_TEMPLATE_NAME);
 
     final ReplaceWithFileTemplateFix replaceTemplateFix = new ReplaceWithFileTemplateFix() {
+      @Override
       public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
         PsiElement element = descriptor.getPsiElement();
         if (element == null || !element.isValid()) return;
