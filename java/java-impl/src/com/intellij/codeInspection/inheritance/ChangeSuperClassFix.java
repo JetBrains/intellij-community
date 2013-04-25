@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.inheritance;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -37,10 +37,10 @@ public class ChangeSuperClassFix implements LocalQuickFix {
   private final PsiClass myOldSuperClass;
   private final int myPercent;
 
-  public ChangeSuperClassFix(final @NotNull PsiClass newSuperClass, final int percent, final @NotNull PsiClass oldSuperClass) {
-    this.myNewSuperClass = newSuperClass;
-    this.myOldSuperClass = oldSuperClass;
-    this.myPercent = percent;
+  public ChangeSuperClassFix(@NotNull final PsiClass newSuperClass, final int percent, @NotNull final PsiClass oldSuperClass) {
+    myNewSuperClass = newSuperClass;
+    myOldSuperClass = oldSuperClass;
+    myPercent = percent;
   }
 
   @NotNull
@@ -77,10 +77,10 @@ public class ChangeSuperClassFix implements LocalQuickFix {
    * 1. not checks that myOldSuperClass is really super of aClass
    * 2. not checks that myNewSuperClass not exists in currently existed supers
    */
-  private static void changeSuperClass(final @NotNull PsiClass aClass,
-                                       final @NotNull PsiClass oldSuperClass,
-                                       final @NotNull PsiClass newSuperClass) {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(aClass)) return;
+  private static void changeSuperClass(@NotNull final PsiClass aClass,
+                                       @NotNull final PsiClass oldSuperClass,
+                                       @NotNull final PsiClass newSuperClass) {
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(aClass)) return;
 
     new WriteCommandAction.Simple(newSuperClass.getProject(), aClass.getContainingFile()) {
       @Override
