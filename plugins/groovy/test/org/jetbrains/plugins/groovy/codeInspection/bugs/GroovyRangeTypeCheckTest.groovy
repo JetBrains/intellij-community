@@ -46,7 +46,7 @@ class GroovyRangeTypeCheckTest extends LightCodeInsightFixtureTestCase {
 
     GroovyFix fix = inspection.buildFix(range)
 
-    final ProblemDescriptor descriptor = InspectionManager.getInstance(project).createProblemDescriptor(range, "bla-bla", fix, ProblemHighlightType.WEAK_WARNING);
+    final ProblemDescriptor descriptor = InspectionManager.getInstance(project).createProblemDescriptor(range, "bla-bla", false, fix, ProblemHighlightType.WEAK_WARNING);
     ApplicationManager.application.runWriteAction(new Runnable() {
       @Override
       void run() {

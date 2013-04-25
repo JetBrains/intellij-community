@@ -69,10 +69,10 @@ public class IntentionDescriptionNotFoundInspection extends DevKitInspectionBase
           ProblemDescriptor problemDescriptor = manager.createProblemDescriptor(problem == null ? nameIdentifier : problem,
                                                                                 "Intention must have 'before.*.template' and 'after.*.template' beside 'description.html'",
                                                                                 isOnTheFly,
-                                                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+                                                                                ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false);
           return new ProblemDescriptor[]{problemDescriptor};
         }
-        
+
         return null;
       }
     }
@@ -119,7 +119,7 @@ public class IntentionDescriptionNotFoundInspection extends DevKitInspectionBase
 
     return hasBefore && hasAfter;
   }
-  
+
   public static List<VirtualFile> getPotentialRoots(Module module) {
     final PsiDirectory[] dirs = getIntentionDescriptionsDirs(module);
     final List<VirtualFile> result = new ArrayList<VirtualFile>();
