@@ -26,7 +26,6 @@ import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.help.HelpManager;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.registry.Registry;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
 
@@ -42,7 +41,7 @@ public class HelpManagerImpl extends HelpManager {
 
   private HelpSet myHelpSet = null;
   private IdeaHelpBroker myBroker = null;
-  private FXHelpBrowser myFXHelpBrowser;
+  //private FXHelpBrowser myFXHelpBrowser;
 
   public void invokeHelp(@Nullable String id) {
     if (MacHelpUtil.isApplicable()) {
@@ -52,14 +51,14 @@ public class HelpManagerImpl extends HelpManager {
       myHelpSet = createHelpSet();
     }
 
-    if (Registry.is("ide.help.fxbrowser")) {
-      if (myFXHelpBrowser == null) {
-        myFXHelpBrowser = new FXHelpBrowser(myHelpSet);
-      }
-
-      myFXHelpBrowser.showDocumentation(id);
-      return;
-    }
+    //if (Registry.is("ide.help.fxbrowser")) {
+    //  if (myFXHelpBrowser == null) {
+    //    myFXHelpBrowser = new FXHelpBrowser(myHelpSet);
+    //  }
+    //
+    //  myFXHelpBrowser.showDocumentation(id);
+    //  return;
+    //}
 
     if (myHelpSet == null) {
       BrowserUtil.launchBrowser(ApplicationInfoEx.getInstanceEx().getWebHelpUrl() + "?" + id);

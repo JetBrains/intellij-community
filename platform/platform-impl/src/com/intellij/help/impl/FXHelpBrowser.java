@@ -13,6 +13,7 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+/*
 package com.intellij.help.impl;
 
 import com.intellij.openapi.application.impl.LaterInvocator;
@@ -56,9 +57,11 @@ import java.net.URL;
 import java.util.Enumeration;
 import java.util.Locale;
 
+*/
 /**
  * @author Denis.Fokin
- */
+ *//*
+
 
 public class FXHelpBrowser  implements SearchListener {
 
@@ -200,9 +203,11 @@ public class FXHelpBrowser  implements SearchListener {
     LaterInvocator.invokeLater(new Runnable() {
       @Override
       public void run() {
+*/
 /*      helpDialog.invalidate();
         helpDialog.validate();
-        helpDialog.repaint();*/
+        helpDialog.repaint();*//*
+
 
         helpDialog.getContentPane().add(fxPanel, BorderLayout.CENTER);
         helpDialog.setDefaultCloseOperation(WindowConstants.DO_NOTHING_ON_CLOSE);
@@ -406,3 +411,4 @@ public class FXHelpBrowser  implements SearchListener {
     }
   }
 }
+*/
