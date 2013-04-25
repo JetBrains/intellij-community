@@ -4,7 +4,7 @@
  */
 package com.intellij.refactoring.typeMigration.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.lang.java.JavaLanguage;
@@ -71,7 +71,7 @@ public class ConvertFieldToThreadLocalIntention extends PsiElementBaseIntentionA
     for (PsiReference reference : refs) {
       elements.add(reference.getElement());
     }
-    if (!CodeInsightUtilBase.preparePsiElementsForWrite(elements)) return;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(elements)) return;
 
     final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
     final PsiElementFactory elementFactory = JavaPsiFacade.getElementFactory(project);

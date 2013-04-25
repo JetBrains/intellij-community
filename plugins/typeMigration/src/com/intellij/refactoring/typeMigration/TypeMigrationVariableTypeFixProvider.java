@@ -4,7 +4,7 @@
  */
 package com.intellij.refactoring.typeMigration;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
@@ -41,7 +41,7 @@ public class TypeMigrationVariableTypeFixProvider implements ChangeVariableTypeQ
                          @NotNull PsiElement endElement) {
         final PsiVariable myVariable = (PsiVariable)startElement;
 
-        if (!CodeInsightUtilBase.prepareFileForWrite(myVariable.getContainingFile())) return;
+        if (!FileModificationService.getInstance().prepareFileForWrite(myVariable.getContainingFile())) return;
         try {
           myVariable.normalizeDeclaration();
           final TypeMigrationRules rules = new TypeMigrationRules(TypeMigrationLabeler.getElementType(myVariable));
