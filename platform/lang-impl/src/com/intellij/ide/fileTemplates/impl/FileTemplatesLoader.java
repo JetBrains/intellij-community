@@ -23,6 +23,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginDescriptor;
 import com.intellij.openapi.fileTypes.ex.FileTypeManagerEx;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.util.lang.UrlClassLoader;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -162,9 +163,9 @@ public class FileTemplatesLoader {
             final String filename = path.substring(prefix.length(), path.length() - FTManager.TEMPLATE_EXTENSION_SUFFIX.length());
             final String extension = myTypeManager.getExtension(filename);
             final String templateName = filename.substring(0, filename.length() - extension.length() - 1);
-            final URL templateUrl = new URL(root.toExternalForm() + "/" + path);
+            final URL templateUrl = UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + path));
             final String descriptionPath = getDescriptionPath(prefix, templateName, extension, descriptionPaths);
-            final URL descriptionUrl = descriptionPath != null ? new URL(root.toExternalForm() + "/" + descriptionPath) : null;
+            final URL descriptionUrl = descriptionPath != null ? UrlClassLoader.internProtocol(new URL(root.toExternalForm() + "/" + descriptionPath)) : null;
             entry.getValue().addDefaultTemplate(new DefaultTemplate(templateName, extension, templateUrl, descriptionUrl));
           }
           break; // FTManagers loop
