@@ -624,7 +624,10 @@
     <localInspection language="JAVA" shortName="MagicConstant" displayName="Magic Constant"
                      groupName="Probable bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.magicConstant.MagicConstantInspection" />
-
+    <localInspection language="JAVA" shortName="SmartInheritanceChecking"
+                     groupName="Refactorings" enabledByDefault="true" level="WARNING"
+                     implementationClass="com.intellij.codeInspection.inheritance.SuperClassHasFrequentlyUsedInheritorsInspection"
+                     displayName="Super class IntelliJence Advisor"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.quickFix.RedundantLambdaParameterTypeIntention</className>
