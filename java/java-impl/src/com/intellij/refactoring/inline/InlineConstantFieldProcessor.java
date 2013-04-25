@@ -15,7 +15,6 @@
  */
 package com.intellij.refactoring.inline;
 
-import com.intellij.codeInsight.ChangeContextUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Ref;
@@ -36,9 +35,7 @@ import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.MultiMap;
 import org.jetbrains.annotations.NotNull;
 
-import java.util.ArrayList;
-import java.util.HashSet;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author ven
@@ -170,7 +167,9 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
   private void inlineExpressionUsage(PsiExpression expr,
                                      final PsiConstantEvaluationHelper evalHelper,
                                      PsiExpression initializer1) throws IncorrectOperationException {
-    myField.normalizeDeclaration();
+    if (myField.isWritable()) {
+      myField.normalizeDeclaration();
+    }
     if (expr instanceof PsiReferenceExpression) {
       PsiExpression qExpression = ((PsiReferenceExpression)expr).getQualifierExpression();
       if (qExpression != null) {
@@ -264,5 +263,15 @@ public class InlineConstantFieldProcessor extends BaseRefactoringProcessor {
     }
 
     return PsiUtil.isAccessedForWriting(expr);
+  }
+
+  @NotNull
+  protected Collection<? extends PsiElement> getElementsToWrite(@NotNull final UsageViewDescriptor descriptor) {
+    if (myInlineThisOnly) {
+      return Collections.singletonList(myRefExpr);
+    }
+    else {
+      return super.getElementsToWrite(descriptor);
+    }
   }
 }
