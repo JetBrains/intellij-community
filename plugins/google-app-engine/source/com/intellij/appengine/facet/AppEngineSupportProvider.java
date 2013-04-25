@@ -39,6 +39,10 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.packaging.artifacts.Artifact;
+import com.intellij.packaging.artifacts.ArtifactManager;
+import com.intellij.packaging.artifacts.ArtifactType;
+import com.intellij.packaging.elements.ArtifactRootElement;
+import com.intellij.packaging.elements.PackagingElementFactory;
 import com.intellij.packaging.impl.artifacts.ArtifactUtil;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.HyperlinkLabel;
@@ -94,28 +98,29 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
 
   private void addSupport(final Module module, final ModifiableRootModel rootModel, String sdkPath, @Nullable PersistenceApi persistenceApi) {
     super.addSupport(module, rootModel, null, null);
-    final VirtualFile descriptorDir = AppEngineWebIntegration.getInstance().suggestParentDirectoryForAppEngineWebXml(module, rootModel);
-    if (descriptorDir != null) {
-      createFileFromTemplate(AppEngineTemplateGroupDescriptorFactory.APP_ENGINE_WEB_XML_TEMPLATE, descriptorDir,
-                             AppEngineUtil.APP_ENGINE_WEB_XML_NAME);
-    }
-
 
     final AppEngineFacet appEngineFacet = AppEngineFacet.getAppEngineFacetByModule(module);
     LOG.assertTrue(appEngineFacet != null);
     final AppEngineFacetConfiguration facetConfiguration = appEngineFacet.getConfiguration();
     facetConfiguration.setSdkHomePath(sdkPath);
     final AppEngineSdk sdk = appEngineFacet.getSdk();
-    final Artifact artifact = findContainingArtifact(appEngineFacet);
+    final Artifact artifact = findOrCreateArtifact(appEngineFacet);
+
+    final VirtualFile descriptorDir = AppEngineWebIntegration.getInstance().suggestParentDirectoryForAppEngineWebXml(module, rootModel);
+    if (descriptorDir != null) {
+      VirtualFile descriptor = createFileFromTemplate(AppEngineTemplateGroupDescriptorFactory.APP_ENGINE_WEB_XML_TEMPLATE, descriptorDir,
+                                                      AppEngineUtil.APP_ENGINE_WEB_XML_NAME);
+      if (descriptor != null) {
+        AppEngineWebIntegration.getInstance().addDescriptor(artifact, module.getProject(), descriptor);
+      }
+    }
 
     final Project project = module.getProject();
     AppEngineWebIntegration.getInstance().setupRunConfiguration(rootModel, sdk, artifact, project);
 
     final Library apiJar = addProjectLibrary(module, "AppEngine API", sdk.getLibUserDirectoryPath(), VirtualFile.EMPTY_ARRAY);
     rootModel.addLibraryEntry(apiJar);
-    if (artifact != null) {
-      AppEngineWebIntegration.getInstance().addLibraryToArtifact(apiJar, artifact, project);
-    }
+    AppEngineWebIntegration.getInstance().addLibraryToArtifact(apiJar, artifact, project);
 
     if (persistenceApi != null) {
       facetConfiguration.setRunEnhancerOnMake(true);
@@ -146,21 +151,25 @@ public class AppEngineSupportProvider extends FacetBasedFrameworkSupportProvider
       }
       final Library library = addProjectLibrary(module, "AppEngine ORM", sdk.getOrmLibDirectoryPath(), sdk.getOrmLibSources());
       rootModel.addLibraryEntry(library);
-      if (artifact != null) {
-        AppEngineWebIntegration.getInstance().addLibraryToArtifact(library, artifact, project);
-      }
+      AppEngineWebIntegration.getInstance().addLibraryToArtifact(library, artifact, project);
     }
   }
 
-  @Nullable
-  private static Artifact findContainingArtifact(AppEngineFacet appEngineFacet) {
-    final Collection<Artifact> artifacts = ArtifactUtil.getArtifactsContainingModuleOutput(appEngineFacet.getModule());
+  @NotNull
+  private static Artifact findOrCreateArtifact(AppEngineFacet appEngineFacet) {
+    Module module = appEngineFacet.getModule();
+    ArtifactType artifactType = AppEngineWebIntegration.getInstance().getAppEngineTargetArtifactType();
+    final Collection<Artifact> artifacts = ArtifactUtil.getArtifactsContainingModuleOutput(module);
     for (Artifact artifact : artifacts) {
-      if (AppEngineWebIntegration.getInstance().getAppEngineTargetArtifactType().equals(artifact.getArtifactType())) {
+      if (artifactType.equals(artifact.getArtifactType())) {
         return artifact;
       }
     }
-    return null;
+    ArtifactManager artifactManager = ArtifactManager.getInstance(module.getProject());
+    PackagingElementFactory elementFactory = PackagingElementFactory.getInstance();
+    ArtifactRootElement<?> root = elementFactory.createArtifactRootElement();
+    elementFactory.getOrCreateDirectory(root, "WEB-INF/classes").addOrFindChild(elementFactory.createModuleOutput(module));
+    return artifactManager.addArtifact(module.getName(), artifactType, root);
   }
 
   private static Library addProjectLibrary(final Module module, final String name, final String path, final VirtualFile[] sources) {

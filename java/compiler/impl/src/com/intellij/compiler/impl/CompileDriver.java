@@ -854,17 +854,35 @@ public class CompileDriver {
     if (refreshOutputRoots) {
       // refresh on output roots is required in order for the order enumerator to see all roots via VFS
       final Set<File> outputs = new HashSet<File>();
-      for (final String path : CompilerPathsEx.getOutputPaths(ModuleManager.getInstance(myProject).getModules())) {
+      final Module[] affectedModules = compileContext.getCompileScope().getAffectedModules();
+      for (final String path : CompilerPathsEx.getOutputPaths(affectedModules)) {
         outputs.add(new File(path));
       }
+      final LocalFileSystem lfs = LocalFileSystem.getInstance();
       if (!outputs.isEmpty()) {
         final ProgressIndicator indicator = compileContext.getProgressIndicator();
         indicator.setText("Synchronizing output directories...");
-        LocalFileSystem.getInstance().refreshIoFiles(outputs, false, false, null);
+        lfs.refreshIoFiles(outputs, false, false, null);
         indicator.setText("");
       }
+      if (compileContext.isAnnotationProcessorsEnabled()) {
+        final Set<File> genSourceRoots = new THashSet<File>(FileUtil.FILE_HASHING_STRATEGY);
+        final CompilerConfiguration config = CompilerConfiguration.getInstance(myProject);
+        for (Module module : affectedModules) {
+          if (config.getAnnotationProcessingConfiguration(module).isEnabled()) {
+            final String path = CompilerPaths.getAnnotationProcessorsGenerationPath(module);
+            if (path != null) {
+              genSourceRoots.add(new File(path));
+            }
+          }
+        }
+        if (!genSourceRoots.isEmpty()) {
+          // refresh generates source roots asynchronously; needed for error highlighting update
+          lfs.refreshIoFiles(genSourceRoots, true, true, null);
+        }
+      }
     }
-    SwingUtilities.invokeLater(new Runnable() {
+    SwingUtilities.invokeLater(new Runnable() {                                                                 
       public void run() {
         int errorCount = 0;
         int warningCount = 0;

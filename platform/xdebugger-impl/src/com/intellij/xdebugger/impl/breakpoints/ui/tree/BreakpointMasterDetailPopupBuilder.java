@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui.tree;
 
+import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CheckboxAction;
 import com.intellij.openapi.project.Project;
@@ -23,6 +24,7 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.ui.popup.util.DetailViewImpl;
@@ -177,8 +179,9 @@ public class BreakpointMasterDetailPopupBuilder {
       }
     };
 
+    final Disposable listenerDisposable = Disposer.newDisposable();
     for (BreakpointPanelProvider provider : myBreakpointsPanelProviders) {
-      provider.addListener(listener, myProject);
+      provider.addListener(listener, myProject, listenerDisposable);
     }
 
     final MasterDetailPopupBuilder.Delegate delegate = new MasterDetailPopupBuilder.Delegate() {
@@ -247,9 +250,7 @@ public class BreakpointMasterDetailPopupBuilder {
 
       @Override
       public void onClosed(LightweightWindowEvent event) {
-        for (BreakpointPanelProvider provider : myBreakpointsPanelProviders) {
-          provider.removeListener(listener);
-        }
+        Disposer.dispose(listenerDisposable);
         saveBreakpointsDialogState();
       }
     });

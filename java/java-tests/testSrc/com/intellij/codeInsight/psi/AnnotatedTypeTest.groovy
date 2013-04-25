@@ -19,7 +19,7 @@ import com.intellij.psi.PsiElement
 import com.intellij.psi.PsiFile
 import com.intellij.testFramework.LightIdeaTestCase
 
-@SuppressWarnings(["GrUnresolvedAccess"])
+@SuppressWarnings(["GrUnresolvedAccess", "GroovyAssignabilityCheck"])
 class AnnotatedTypeTest extends LightIdeaTestCase {
 
   public void testTypeComposition() {
@@ -55,6 +55,9 @@ class E2 extends Exception { }
 
     psi = javaFacade.elementFactory.createStatementFromText("@A java.lang.@TA(1) String s", context)
     assertEquals("@TA(1) String", psi.declaredElements[0].type.presentableText)
+
+    psi = javaFacade.elementFactory.createStatementFromText("Collection<? extends> s", context)
+    assertEquals("Collection<?>", psi.declaredElements[0].type.presentableText)
   }
 
 }

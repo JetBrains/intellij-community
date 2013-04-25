@@ -451,7 +451,8 @@ public abstract class GitHandler {
         LOG.debug(String.format("handler=%s, port=%s", myHandlerNo, port));
         addAuthListener(httpAuthenticator);
       }
-      myCommandLine.setEnvironment(myEnv);
+      myCommandLine.getEnvironment().clear();
+      myCommandLine.getEnvironment().putAll(myEnv);
       // start process
       myProcess = startProcess();
       startHandlingStreams();

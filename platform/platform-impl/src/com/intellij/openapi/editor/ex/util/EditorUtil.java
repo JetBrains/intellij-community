@@ -301,7 +301,7 @@ public class EditorUtil {
     boolean useOptimization = true;
     boolean hasNonTabs = false;
     boolean hasTabs = false;
-    int scanEndOffset = Math.min(end, start + columnNumber - currentColumn[0]);
+    int scanEndOffset = Math.min(end, start + columnNumber - currentColumn[0] + 1);
     for (int i = start; i < scanEndOffset; i++) {
       char c = text.charAt(i);
       if (debugBuffer != null) {

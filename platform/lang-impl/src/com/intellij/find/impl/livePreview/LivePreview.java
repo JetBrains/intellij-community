@@ -291,7 +291,11 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
       final TextRange range = o.getPrimaryRange();
 
       TextAttributes attributes = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(EditorColors.TEXT_SEARCH_RESULT_ATTRIBUTES);
-
+      if (range.getLength() == 0) {
+        attributes = attributes.clone();
+        attributes.setEffectType(EffectType.BOXED);
+        attributes.setEffectColor(attributes.getBackgroundColor());
+      }
       if (mySearchResults.isExcluded(o)) {
         highlightRange(range, strikout(attributes), myHighlighters);
       } else {

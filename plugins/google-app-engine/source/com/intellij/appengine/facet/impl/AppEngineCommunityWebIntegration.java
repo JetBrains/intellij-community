@@ -94,4 +94,9 @@ public class AppEngineCommunityWebIntegration extends AppEngineWebIntegration {
   public List<? extends AppEngineSdk> getSdkForConfiguredDevServers() {
     return Collections.emptyList();
   }
+
+  @Override
+  public void addDescriptor(@NotNull Artifact artifact, @NotNull Project project, @NotNull VirtualFile descriptor) {
+    ArtifactManager.getInstance(project).addElementsToDirectory(artifact, "WEB-INF", PackagingElementFactory.getInstance().createFileCopy(descriptor.getPath(), null));
+  }
 }

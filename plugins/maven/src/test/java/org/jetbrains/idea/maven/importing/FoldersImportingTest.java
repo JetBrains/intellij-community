@@ -608,6 +608,25 @@ public class FoldersImportingTest extends MavenImportingTestCase {
                   "target/generated-sources");
   }
 
+  public void testIgnoreGeneratedSources() throws Exception {
+    createStdProjectFolders();
+
+    MavenProjectsManager.getInstance(myProject).getImportingSettings().setGeneratedSourcesFolder(
+      MavenImportingSettings.GeneratedSourcesFolder.IGNORE);
+
+    createProjectSubFile("target/generated-sources/annotations/A.java", "package com; class A {}");
+    createProjectSubFile("target/generated-sources/annotations/com/B.java", "package com; class B {}");
+
+    importProject("<groupId>test</groupId>" +
+                  "<artifactId>project</artifactId>" +
+                  "<version>1</version>");
+
+    assertSources("project",
+                  "src/main/java",
+                  "src/main/resources");
+  }
+
+
   public void testAddingExistingGeneratedSources4() throws Exception {
     createStdProjectFolders();
 

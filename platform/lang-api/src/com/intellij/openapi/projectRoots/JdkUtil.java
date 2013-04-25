@@ -164,7 +164,9 @@ public class JdkUtil {
     commandLine.setExePath(exePath);
 
     final ParametersList vmParametersList = javaParameters.getVMParametersList();
-    commandLine.setEnvironment(javaParameters.getEnv());
+    if (javaParameters.getEnv() != null) {
+      commandLine.getEnvironment().putAll(javaParameters.getEnv());
+    }
     commandLine.setPassParentEnvironment(javaParameters.isPassParentEnvs());
 
     final Class commandLineWrapper;

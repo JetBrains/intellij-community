@@ -37,16 +37,16 @@ public abstract class FileIndexFacade {
     return ServiceManager.getService(project, FileIndexFacade.class);
   }
 
-  public abstract boolean isInContent(VirtualFile file);
-  public abstract boolean isInSource(VirtualFile file);
-  public abstract boolean isInSourceContent(VirtualFile file);
-  public abstract boolean isInLibraryClasses(VirtualFile file);
+  public abstract boolean isInContent(@NotNull VirtualFile file);
+  public abstract boolean isInSource(@NotNull VirtualFile file);
+  public abstract boolean isInSourceContent(@NotNull VirtualFile file);
+  public abstract boolean isInLibraryClasses(@NotNull VirtualFile file);
 
-  public abstract boolean isInLibrarySource(VirtualFile file);
-  public abstract boolean isExcludedFile(VirtualFile file);
+  public abstract boolean isInLibrarySource(@NotNull VirtualFile file);
+  public abstract boolean isExcludedFile(@NotNull VirtualFile file);
 
   @Nullable
-  public abstract Module getModuleForFile(VirtualFile file);
+  public abstract Module getModuleForFile(@NotNull VirtualFile file);
 
   /**
    * Checks if <code>file</code> is an ancestor of <code>baseDir</code> and none of the files
@@ -56,7 +56,7 @@ public abstract class FileIndexFacade {
    * @param child the child directory or file to check for ancestry.
    * @return true if it's a valid ancestor, false otherwise.
    */
-  public abstract boolean isValidAncestor(final VirtualFile baseDir, final VirtualFile child);
+  public abstract boolean isValidAncestor(@NotNull VirtualFile baseDir, @NotNull VirtualFile child);
 
   public boolean shouldBeFound(GlobalSearchScope scope, VirtualFile virtualFile) {
     return (scope.isSearchOutsideRootModel() || isInContent(virtualFile) || isInLibrarySource(virtualFile)) && !virtualFile.getFileType().isBinary();

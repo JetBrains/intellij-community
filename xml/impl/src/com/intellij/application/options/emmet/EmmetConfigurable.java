@@ -137,7 +137,7 @@ public class EmmetConfigurable implements SearchableConfigurable, Disposable, Co
   public void apply() throws ConfigurationException {
     EmmetOptions emmetOptions = EmmetOptions.getInstance();
     emmetOptions.setEmmetEnabled(myEnableEmmetJBCheckBox.isSelected());
-    emmetOptions.setEnableBemFilterByDefault(myEnableBEMFilterJBCheckBox.isSelected());
+    emmetOptions.setBemFilterEnabledByDefault(myEnableBEMFilterJBCheckBox.isSelected());
     emmetOptions.setEmmetExpandShortcut(getSelectedEmmetExpandShortcut());
     emmetOptions.setAutoInsertCssPrefixedEnabled(myAutoInsertCssVendorJBCheckBox.isSelected());
     emmetOptions.setFuzzySearchEnabled(myEnabledFuzzySearchJBCheckBox.isSelected());

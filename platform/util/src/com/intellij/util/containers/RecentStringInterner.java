@@ -1,7 +1,6 @@
 package com.intellij.util.containers;
 
 import com.intellij.openapi.util.LowMemoryWatcher;
-import com.intellij.util.containers.SLRUCache;
 import jsr166e.SequenceLock;
 import org.jetbrains.annotations.NotNull;
 
@@ -16,7 +15,9 @@ public class RecentStringInterner {
   private final int myStripeMask;
   private final SLRUCache<String, String>[] myInterns;
   private final Lock[] myStripeLocks;
-  private final LowMemoryWatcher myClearingCallback;
+  // LowMemoryWatcher relies on field holding it
+  @SuppressWarnings({"FieldCanBeLocal", "UnusedDeclaration"})
+  private final LowMemoryWatcher myLowMemoryWatcher;
 
   public RecentStringInterner() {
     this(8192);
@@ -24,6 +25,7 @@ public class RecentStringInterner {
 
   public RecentStringInterner(int capacity) {
     final int stripes = 16;
+    //noinspection unchecked
     myInterns = new SLRUCache[stripes];
     myStripeLocks = new Lock[myInterns.length];
     for(int i = 0; i < myInterns.length; ++i) {
@@ -44,11 +46,11 @@ public class RecentStringInterner {
 
     assert Integer.highestOneBit(stripes) == stripes;
     myStripeMask = stripes - 1;
-    myClearingCallback = LowMemoryWatcher.register(new Runnable() {
+    myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
       @Override
       public void run() {
         clear();
-      };
+      }
     });
   }
 

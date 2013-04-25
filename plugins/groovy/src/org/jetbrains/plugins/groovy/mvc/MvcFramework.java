@@ -389,7 +389,7 @@ public abstract class MvcFramework {
 
     final VirtualFile griffonHome = getSdkRoot(module);
     if (griffonHome != null) {
-      commandLine.setEnvironment(getSdkHomePropertyName(), FileUtil.toSystemDependentName(griffonHome.getPath()));
+      commandLine.getEnvironment().put(getSdkHomePropertyName(), FileUtil.toSystemDependentName(griffonHome.getPath()));
     }
 
     final VirtualFile root = findAppRoot(module);

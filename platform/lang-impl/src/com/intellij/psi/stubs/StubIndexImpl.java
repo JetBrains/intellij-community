@@ -20,6 +20,7 @@
 package com.intellij.psi.stubs;
 
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -90,12 +91,14 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
       else {
         final Throwable e = new Throwable();
         // avoid direct forceRebuild as it produces dependency cycle (IDEA-105485)
-        ApplicationManager.getApplication().invokeLater(new Runnable() {
+        ApplicationManager.getApplication().invokeLater(
+          new Runnable() {
           @Override
           public void run() {
             forceRebuild(e);
           }
-        });
+        }, ModalityState.NON_MODAL
+        );
       }
     }
     dropUnregisteredIndices();

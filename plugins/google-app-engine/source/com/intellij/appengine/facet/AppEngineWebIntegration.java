@@ -52,4 +52,7 @@ public abstract class AppEngineWebIntegration {
   public abstract void addLibraryToArtifact(@NotNull Library library, @NotNull Artifact artifact, @NotNull Project project);
 
   public abstract List<? extends AppEngineSdk> getSdkForConfiguredDevServers();
+
+  public void addDescriptor(@NotNull Artifact artifact, @NotNull Project project, @NotNull VirtualFile descriptor) {
+  }
 }

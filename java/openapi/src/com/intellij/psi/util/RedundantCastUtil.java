@@ -383,7 +383,9 @@ public class RedundantCastUtil {
         PsiElement parent = typeCast.getParent();
         if (parent instanceof PsiConditionalExpression) {
           //branches need to be of the same type
-          if (!Comparing.equal(operand.getType(), ((PsiConditionalExpression)parent).getType())) {
+          final PsiType operandType = operand.getType();
+          final PsiType conditionalType = ((PsiConditionalExpression)parent).getType();
+          if (!Comparing.equal(operandType, conditionalType)) {
             if (!PsiUtil.isLanguageLevel5OrHigher(typeCast)) {
               return;
             }
@@ -577,6 +579,12 @@ public class RedundantCastUtil {
       }
       if (firstOperand != null && otherOperand != null && wrapperCastChangeSemantics(firstOperand, otherOperand, operand)) {
         return true;
+      }
+    } else if (parent instanceof PsiConditionalExpression) {
+      if (opType instanceof PsiPrimitiveType && !(((PsiConditionalExpression)parent).getType() instanceof PsiPrimitiveType)) {
+        if (PsiPrimitiveType.getUnboxedType(PsiTypesUtil.getExpectedTypeByParent((PsiExpression)parent)) != null) {
+          return true;
+        }
       }
     }
     return false;

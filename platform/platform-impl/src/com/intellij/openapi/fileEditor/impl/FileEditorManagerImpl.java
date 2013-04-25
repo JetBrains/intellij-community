@@ -847,7 +847,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
 
     // Restore selected editor
-    final FileEditorProvider selectedProvider = getSelectedFileEditorProvider(editorHistoryManager, file);
+    final FileEditorProvider selectedProvider = entry == null ? getSelectedFileEditorProvider(editorHistoryManager, file) : entry.mySelectedProvider;
     if (selectedProvider != null) {
       final FileEditor[] _editors = newSelectedComposite.getEditors();
       final FileEditorProvider[] _providers = newSelectedComposite.getProviders();

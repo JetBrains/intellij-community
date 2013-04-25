@@ -15,6 +15,7 @@
  */
 package com.intellij.application.options.emmet;
 
+import com.google.common.collect.Sets;
 import com.intellij.application.options.editor.WebEditorOptions;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.*;
@@ -29,10 +30,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.List;
+import java.util.Collection;
 import java.util.Map;
+import java.util.Set;
 
-import static com.google.common.collect.Lists.newLinkedList;
 import static com.google.common.collect.Maps.newHashMap;
 import static com.google.common.io.Resources.getResource;
 
@@ -48,7 +49,7 @@ import static com.google.common.io.Resources.getResource;
     )}
 )
 public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, ExportableComponent {
-  private boolean myEnableBemFilterByDefault = false;
+  private boolean myBemFilterEnabledByDefault = false;
   private boolean myEmmetEnabled = WebEditorOptions.getInstance().isZenCodingEnabled();
   private int myEmmetExpandShortcut = WebEditorOptions.getInstance().getZenCodingExpandShortcut();
   private boolean myFuzzySearchEnabled = true;
@@ -56,7 +57,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
   @Nullable
   private Map<String, Integer> prefixes = null;
 
-  public void setPrefixInfo(List<CssPrefixInfo> prefixInfos) {
+  public void setPrefixInfo(Collection<CssPrefixInfo> prefixInfos) {
     prefixes = newHashMap();
     for (CssPrefixInfo state : prefixInfos) {
       prefixes.put(state.getPropertyName(), state.toIntegerValue());
@@ -67,8 +68,8 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
     return CssPrefixInfo.fromIntegerValue(propertyName, getPrefixes().get(propertyName));
   }
 
-  public List<CssPrefixInfo> getAllPrefixInfo() {
-    List<CssPrefixInfo> result = newLinkedList();
+  public Set<CssPrefixInfo> getAllPrefixInfo() {
+    Set<CssPrefixInfo> result = Sets.newHashSetWithExpectedSize(getPrefixes().size());
     for (Map.Entry<String, Integer> entry : getPrefixes().entrySet()) {
       result.add(CssPrefixInfo.fromIntegerValue(entry.getKey(), entry.getValue()));
     }
@@ -76,11 +77,11 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
   }
 
   public boolean isBemFilterEnabledByDefault() {
-    return myEnableBemFilterByDefault;
+    return myBemFilterEnabledByDefault;
   }
 
-  public void setEnableBemFilterByDefault(boolean enableBemFilterByDefault) {
-    myEnableBemFilterByDefault = enableBemFilterByDefault;
+  public void setBemFilterEnabledByDefault(boolean enableBemFilterByDefault) {
+    myBemFilterEnabledByDefault = enableBemFilterByDefault;
   }
 
   public void setEmmetExpandShortcut(int emmetExpandShortcut) {
@@ -141,7 +142,6 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
     return ServiceManager.getService(EmmetOptions.class);
   }
 
-  @SuppressWarnings("UnusedDeclaration")
   @NotNull
   public Map<String, Integer> getPrefixes() {
     if (prefixes == null) {
@@ -155,7 +155,7 @@ public class EmmetOptions implements PersistentStateComponent<EmmetOptions>, Exp
     this.prefixes = prefixes;
   }
 
-  public static Map<String, Integer> loadDefaultPrefixes() {
+  public Map<String, Integer> loadDefaultPrefixes() {
     Map<String, Integer> result = newHashMap();
     try {
       Document document = JDOMUtil.loadDocument(getResource(EmmetOptions.class, "emmet_default_options.xml"));

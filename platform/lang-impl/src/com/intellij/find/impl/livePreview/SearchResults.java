@@ -303,13 +303,16 @@ public class SearchResults implements DocumentListener {
   private void findInRange(TextRange r, Editor editor, FindModel findModel, ArrayList<FindResult> results) {
     VirtualFile virtualFile = FileDocumentManager.getInstance().getFile(editor.getDocument());
 
+    CharSequence charSequence = editor.getDocument().getCharsSequence();
+
     int offset = r.getStartOffset();
+    int maxOffset = Math.min(r.getEndOffset(), charSequence.length());
+    FindManager findManager = FindManager.getInstance(getProject());
 
     while (true) {
-      FindManager findManager = FindManager.getInstance(getProject());
       FindResult result;
       try {
-        CharSequence bombedCharSequence = StringUtil.newBombedCharSequence(editor.getDocument().getCharsSequence(), 3000);
+        CharSequence bombedCharSequence = StringUtil.newBombedCharSequence(charSequence, 3000);
         result = findManager.findString(bombedCharSequence, offset, findModel, virtualFile);
       } catch(PatternSyntaxException e) {
         result = null;
@@ -318,8 +321,17 @@ public class SearchResults implements DocumentListener {
       }
       if (result == null || !result.isStringFound()) break;
       int newOffset = result.getEndOffset();
-      if (offset == newOffset || result.getEndOffset() > r.getEndOffset()) break;
-      offset = newOffset;
+      if (result.getEndOffset() > maxOffset) break;
+      if (offset == newOffset) {
+        if (offset < maxOffset - 1) {
+          offset++;
+        } else {
+          results.add(result);
+          break;
+        }
+      } else {
+        offset = newOffset;
+      }
       results.add(result);
     }
   }
@@ -494,7 +506,7 @@ public class SearchResults implements DocumentListener {
   private LiveOccurrence firstOccurrenceAfterOffset(int offset) {
     LiveOccurrence afterCaret = null;
     for (LiveOccurrence occurrence : getOccurrences()) {
-      if (occurrence.getPrimaryRange().getStartOffset() >= offset) {
+      if (occurrence.getPrimaryRange().getStartOffset() >= offset && occurrence.getPrimaryRange().getEndOffset() > offset) {
         if (afterCaret == null || occurrence.getPrimaryRange().getStartOffset() < afterCaret.getPrimaryRange().getStartOffset() ) {
           afterCaret = occurrence;
         }

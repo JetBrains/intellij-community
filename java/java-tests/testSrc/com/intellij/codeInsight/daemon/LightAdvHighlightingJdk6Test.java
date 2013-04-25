@@ -28,22 +28,17 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * This class is for "lightweight" tests only, i.e. those which can run inside default light project set up
- * For "heavyweight" tests use AdvHighlightingTest
+ * This class is for "lightweight" tests only, i.e. those which can run inside default light project set up.
+ * For "heavyweight" tests use AdvHighlightingTest.
  */
 public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
   @NonNls static final String BASE_PATH = "/codeInsight/daemonCodeAnalyzer/advHighlighting6";
 
   private void doTest(boolean checkWarnings, boolean checkInfos, Class<?>... classes) {
-    setLanguageLevel(LanguageLevel.JDK_1_6); 
+    setLanguageLevel(LanguageLevel.JDK_1_6);
     ((JavaVersionServiceImpl)JavaVersionService.getInstance()).setTestVersion(JavaSdkVersion.JDK_1_6, myTestRootDisposable);
     enableInspectionTools(classes);
     doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkInfos);
-  }
-
-  private void doTest(boolean checkWarnings, boolean checkWeakWarnings, boolean checkInfos, Class<?>... classes) {
-    enableInspectionTools(classes);
-    doTest(BASE_PATH + "/" + getTestName(false) + ".java", checkWarnings, checkWeakWarnings, checkInfos);
   }
 
   @NotNull
@@ -57,6 +52,6 @@ public class LightAdvHighlightingJdk6Test extends LightDaemonAnalyzerTestCase {
     };
   }
 
-  public void testJavacQuirks() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(true, false); }
-  public void testMethodReturnTypeSubstitutability() throws Exception { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(true, false); }
+  public void testJavacQuirks() { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(true, false); }
+  public void testMethodReturnTypeSubstitutability() { setLanguageLevel(LanguageLevel.JDK_1_6); doTest(true, false); }
 }

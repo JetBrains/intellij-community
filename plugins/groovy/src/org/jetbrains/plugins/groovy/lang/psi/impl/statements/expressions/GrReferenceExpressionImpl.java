@@ -73,7 +73,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ClosureMissingMethodContributor;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.processors.*;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
 import org.jetbrains.plugins.groovy.util.ResolveProfiler;
 
 import java.util.*;
@@ -95,7 +94,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
   private boolean findClassOrPackageAtFirst() {
     final String name = getReferenceName();
     if (StringUtil.isEmpty(name) || hasAt()) return false;
-    assert name != null;
 
     return Character.isUpperCase(name.charAt(0)) && !isMethodCallRef() ||
            getParent() instanceof GrReferenceExpressionImpl && ((GrReferenceExpressionImpl)getParent()).findClassOrPackageAtFirst();
@@ -216,6 +214,8 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       }
     }
 
+    if (classCandidates != null && classCandidates.length > 0) return classCandidates;
+
     final boolean isLValue = PsiUtil.isLValue(this);
     String[] accessorNames = isLValue ? GroovyPropertyUtils.suggestSettersName(name) : GroovyPropertyUtils.suggestGettersName(name);
     List<GroovyResolveResult> accessorResults = new ArrayList<GroovyResolveResult>();
@@ -257,22 +257,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     }
     return false;
   }
-
-  private static boolean containsLocalVar(GroovyResolveResult[] fieldCandidates) {
-    boolean preferVar = false;
-    if (fieldCandidates.length > 0) {
-      for (GroovyResolveResult candidate : fieldCandidates) {
-        PsiElement element = candidate.getElement();
-        LOG.assertTrue(element != null, candidate);
-        if (GroovyRefactoringUtil.isLocalVariable(element) && !(element instanceof GrBindingVariable)) {
-          preferVar = true;
-          break;
-        }
-      }
-    }
-    return preferVar;
-  }
-
 
   public GroovyResolveResult[] getCallVariants(GrExpression upToArgument) {
     return resolveMethodOrProperty(true, upToArgument, true);

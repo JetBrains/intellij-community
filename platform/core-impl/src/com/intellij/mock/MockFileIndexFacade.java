@@ -63,7 +63,7 @@ public class MockFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
-  public boolean isInLibrarySource(VirtualFile file) {
+  public boolean isInLibrarySource(@NotNull VirtualFile file) {
     return false;
   }
 
@@ -73,12 +73,12 @@ public class MockFileIndexFacade extends FileIndexFacade {
   }
 
   @Override
-  public Module getModuleForFile(VirtualFile file) {
+  public Module getModuleForFile(@NotNull VirtualFile file) {
     return myModule;
   }
 
   @Override
-  public boolean isValidAncestor(VirtualFile baseDir, VirtualFile child) {
+  public boolean isValidAncestor(@NotNull VirtualFile baseDir, @NotNull VirtualFile child) {
     return VfsUtilCore.isAncestor(baseDir, child, false);
   }
 

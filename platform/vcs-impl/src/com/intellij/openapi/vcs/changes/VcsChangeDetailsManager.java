@@ -339,6 +339,7 @@ public class VcsChangeDetailsManager {
     protected JPanel dataToPresentation(ValueWithVcsException<PreparedFragmentedContent> value) {
       final PreparedFragmentedContent requestForChange;
       try {
+        if (value == null) return noDifferences();
         requestForChange = value.get();
         if (requestForChange == null) return noDifferences();
         if (requestForChange.isEmpty()) {

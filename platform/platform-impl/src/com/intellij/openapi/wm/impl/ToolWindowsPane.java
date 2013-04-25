@@ -38,7 +38,6 @@ import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
 import java.awt.*;
-import java.awt.event.ComponentEvent;
 import java.awt.image.BufferedImage;
 import java.util.ArrayList;
 import java.util.Comparator;
@@ -1005,7 +1004,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
     }
   }
 
-  private final class MyLayeredPane extends JLayeredPane{
+  private final class MyLayeredPane extends JBLayeredPane {
     /*
      * These images are used to perform animated showing and hiding of components.
      * They are the member for performance reason.
@@ -1018,8 +1017,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
       myTopImageRef=new SoftReference<BufferedImage>(null);
       setOpaque(!UIUtil.isUnderDarcula());
       add(splitter,JLayeredPane.DEFAULT_LAYER);
-      splitter.setBounds(0,0,getWidth(),getHeight());
-      enableEvents(ComponentEvent.COMPONENT_EVENT_MASK);
     }
 
     @Override
@@ -1067,8 +1064,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
     /**
      * When component size becomes larger then bottom and top images should be enlarged.
      */
-    protected final void processComponentEvent(final ComponentEvent e) {
-      if(ComponentEvent.COMPONENT_RESIZED==e.getID()){
+    public void doLayout() {
         final int width=getWidth();
         final int height=getHeight();
         if(width<0||height<0){
@@ -1102,11 +1098,6 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
           }
           setBoundsInPaletteLayer(component, info.getAnchor(), weight);
         }
-        validate();
-        repaint();
-      }else{
-        super.processComponentEvent(e);
-      }
     }
 
     public final void setBoundsInPaletteLayer(final Component component,final ToolWindowAnchor anchor,float weight){

@@ -184,4 +184,59 @@ public class PsiTypesUtil {
     }
     return null;
   }
+
+  @Nullable
+  public static PsiType getExpectedTypeByParent(PsiExpression methodCall) {
+    final PsiElement parent = PsiUtil.skipParenthesizedExprUp(methodCall.getParent());
+    if (parent instanceof PsiVariable) {
+      if (checkSameExpression(methodCall, ((PsiVariable)parent).getInitializer())) {
+        return ((PsiVariable)parent).getType();
+      }
+    }
+    else if (parent instanceof PsiAssignmentExpression) {
+      if (checkSameExpression(methodCall, ((PsiAssignmentExpression)parent).getRExpression())) {
+        return ((PsiAssignmentExpression)parent).getLExpression().getType();
+      }
+    }
+    else if (parent instanceof PsiIfStatement) {
+      if (checkSameExpression(methodCall, ((PsiIfStatement)parent).getCondition())) {
+        return PsiType.BOOLEAN.getBoxedType(parent);
+      }
+    }
+    else if (parent instanceof PsiWhileStatement) {
+      if (checkSameExpression(methodCall, ((PsiWhileStatement)parent).getCondition())) {
+        return PsiType.BOOLEAN.getBoxedType(parent);
+      }
+    }
+    else if (parent instanceof PsiForStatement) {
+      if (checkSameExpression(methodCall, ((PsiForStatement)parent).getCondition())) {
+        return PsiType.BOOLEAN.getBoxedType(parent);
+      }
+    }
+    else if (parent instanceof PsiDoWhileStatement) {
+      if (checkSameExpression(methodCall, ((PsiDoWhileStatement)parent).getCondition())) {
+        return PsiType.BOOLEAN.getBoxedType(parent);
+      }
+    }
+    else if (parent instanceof PsiTypeCastExpression) {
+      return ((PsiTypeCastExpression)parent).getType();
+    }
+    else if (parent instanceof PsiReturnStatement) {
+      final PsiLambdaExpression lambdaExpression = PsiTreeUtil.getParentOfType(parent, PsiLambdaExpression.class);
+      if (lambdaExpression != null) {
+        return LambdaUtil.getFunctionalInterfaceReturnType(lambdaExpression.getFunctionalInterfaceType());
+      }
+      else {
+        PsiMethod method = PsiTreeUtil.getParentOfType(parent, PsiMethod.class);
+        if (method != null) {
+          return method.getReturnType();
+        }
+      }
+    }
+    return null;
+  }
+
+  private static boolean checkSameExpression(PsiExpression templateExpr, final PsiExpression expression) {
+    return templateExpr.equals(PsiUtil.skipParenthesizedExprDown(expression));
+  }
 }

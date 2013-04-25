@@ -156,7 +156,8 @@ public abstract class CreateClassFromUsageBaseFix extends BaseIntentionAction {
         final PsiClassType.ClassResolveResult classResolveResult = PsiUtil.resolveGenericsClassInType(expectedTypes[0].getType());
         final PsiClass psiClass = classResolveResult.getElement();
         if (psiClass != null && CommonClassNames.JAVA_LANG_CLASS.equals(psiClass.getQualifiedName())) {
-          PsiType psiType = classResolveResult.getSubstitutor().substitute(psiClass.getTypeParameters()[0]);
+          final PsiTypeParameter[] typeParameters = psiClass.getTypeParameters();
+          PsiType psiType = typeParameters.length == 1 ? classResolveResult.getSubstitutor().substitute(typeParameters[0]) : null;
           if (psiType instanceof PsiWildcardType && ((PsiWildcardType)psiType).isExtends()) {
             psiType = ((PsiWildcardType)psiType).getExtendsBound();
           }
