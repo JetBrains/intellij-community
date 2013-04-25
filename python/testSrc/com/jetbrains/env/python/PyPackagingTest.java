@@ -10,6 +10,8 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Processor;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
+import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
+import com.jetbrains.python.PythonTestUtil;
 import com.jetbrains.python.fixtures.PyTestCase;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -23,22 +25,24 @@ import java.io.IOException;
 import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
+import java.util.Set;
 
 /**
  * @author vlan
  */
-public class PyPackagingTest extends PyTestCase {
+public class PyPackagingTest extends PyEnvTestCase {
   private static final Logger LOG = Logger.getInstance(PyEnvTestCase.class.getName());
   public static final String PIP_VERSION = "1.1";
   public static final String DISTRIBUTE_VERSION = "0.6.27";
 
   public void testGetPackages() {
-    forAllPythonEnvs(getTestName(false), new Processor<Sdk>() {
+    runPythonTest(new PyPackagingTestTask() {
       @Override
-      public boolean process(Sdk sdk) {
+      public void runPackageTestOn(String sdkHome) throws Exception {
+        final Sdk sdk = PythonSkeletonsTest.createTempSdk(sdkHome);
         List<PyPackage> packages = null;
         try {
-          packages = ((PyPackageManagerImpl) PyPackageManager.getInstance(sdk)).getPackages();
+          packages = ((PyPackageManagerImpl)PyPackageManager.getInstance(sdk)).getPackages();
         }
         catch (PyExternalProcessException e) {
           final int retcode = e.getRetcode();
@@ -52,25 +56,25 @@ public class PyPackagingTest extends PyTestCase {
             assertTrue(pkg.getName().length() > 0);
           }
         }
-        return true;
       }
     });
   }
 
   public void testCreateVirtualEnv() {
-    forAllPythonEnvs(getTestName(false), new Processor<Sdk>() {
+    runPythonTest(new PyPackagingTestTask() {
       @Override
-      public boolean process(Sdk sdk) {
+      public void runPackageTestOn(String sdkHome) throws Exception {
+        final Sdk sdk = PythonSkeletonsTest.createTempSdk(sdkHome);
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
           final File venvDir = new File(tempDir, "venv");
-          final String venvSdkHome = ((PyPackageManagerImpl) PyPackageManagerImpl.getInstance(sdk)).createVirtualEnv(venvDir.toString(),
-                                                                                                                     false);
-          final Sdk venvSdk = createTempSdk(venvSdkHome);
+          final String venvSdkHome = ((PyPackageManagerImpl)PyPackageManagerImpl.getInstance(sdk)).createVirtualEnv(venvDir.toString(),
+                                                                                                                    false);
+          final Sdk venvSdk = PythonSkeletonsTest.createTempSdk(venvSdkHome);
           assertNotNull(venvSdk);
           assertTrue(PythonSdkType.isVirtualEnv(venvSdk));
           assertInstanceOf(PythonSdkFlavor.getPlatformIndependentFlavor(venvSdk.getHomePath()), VirtualEnvSdkFlavor.class);
-          final List<PyPackage> packages = ((PyPackageManagerImpl) PyPackageManagerImpl.getInstance(venvSdk)).getPackages();
+          final List<PyPackage> packages = ((PyPackageManagerImpl)PyPackageManagerImpl.getInstance(venvSdk)).getPackages();
           final PyPackage distribute = findPackage("distribute", packages);
           assertNotNull(distribute);
           assertEquals("distribute", distribute.getName());
@@ -86,20 +90,21 @@ public class PyPackagingTest extends PyTestCase {
         catch (PyExternalProcessException e) {
           throw new RuntimeException(String.format("Error for interpreter '%s': %s", sdk.getHomePath(), e.getMessage()), e);
         }
-        return true;
       }
     });
   }
 
   public void testInstallPackage() {
-    forAllPythonEnvs(getTestName(false), new Processor<Sdk>() {
+    runPythonTest(new PyPackagingTestTask() {
+
       @Override
-      public boolean process(final Sdk sdk) {
+      public void runPackageTestOn(String sdkHome) throws Exception {
+        final Sdk sdk = PythonSkeletonsTest.createTempSdk(sdkHome);
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
           final File venvDir = new File(tempDir, "venv");
           final String venvSdkHome = ((PyPackageManagerImpl)PyPackageManager.getInstance(sdk)).createVirtualEnv(venvDir.getPath(), false);
-          final Sdk venvSdk = createTempSdk(venvSdkHome);
+          final Sdk venvSdk = PythonSkeletonsTest.createTempSdk(venvSdkHome);
           assertNotNull(venvSdk);
           final PyPackageManagerImpl manager = (PyPackageManagerImpl)PyPackageManager.getInstance(venvSdk);
           final List<PyPackage> packages1 = manager.getPackages();
@@ -125,7 +130,6 @@ public class PyPackagingTest extends PyTestCase {
         catch (IOException e) {
           throw new RuntimeException(e);
         }
-        return true;
       }
     });
   }
@@ -140,46 +144,25 @@ public class PyPackagingTest extends PyTestCase {
     return null;
   }
 
-  public static void forAllPythonEnvs(@NotNull String testName, @NotNull Processor<Sdk> processor) {
-    final List<String> roots = PyEnvTestCase.getPythonRoots();
-
-    if (PyEnvTestCase.notEnvConfiguration()) {
-      LOG.info("Running under teamcity but not by Env configuration. Skipping.");
-      return;
-    }
-
-    if (PyEnvTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
-      return; //Don't run under Windows as after deleting from created virtualenvs original interpreter got spoiled
-    }
-
-    if (roots.size() == 0) {
-      String msg = testName + ": environments are not defined. Skipping.";
-      LOG.warn(msg);
-      System.out.println(msg);
-      return;
-    }
-    for (String root : roots) {
-      if (!PyEnvTestCase.isSuitableForTags(PyEnvTestCase.loadEnvTags(root), Sets.newHashSet("packaging"))) {
-        continue; // Run only on special test-envs as because of downloading packages on every run is is too heavy to run it on all envs
-      }
-      final String sdkHome = PythonSdkType.getPythonExecutable(root);
-      assertNotNull(sdkHome);
-      final Sdk sdk = createTempSdk(sdkHome);
-      assertNotNull(sdk);
-      processor.process(sdk);
-    }
-  }
-
-  @Nullable
-  private static Sdk createTempSdk(@NotNull String sdkHome) {
-    final VirtualFile binary = LocalFileSystem.getInstance().findFileByPath(sdkHome);
-    if (binary != null) {
-      return SdkConfigurationUtil.setupSdk(new Sdk[0], binary, PythonSdkType.getInstance(), true, null, null);
-    }
-    return null;
-  }
-
   private static <T> List<T> list(T... xs) {
     return Arrays.asList(xs);
+  }
+
+
+  private abstract static class PyPackagingTestTask extends PyExecutionFixtureTestTask {
+    @Override
+    public Set<String> getTags() {
+      return Sets.newHashSet("packaging");
+    }
+
+    @Override
+    public void runTestOn(String sdkHome) throws Exception {
+      if (PyEnvTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
+        return; //Don't run under Windows as after deleting from created virtualenvs original interpreter got spoiled
+      }
+      runPackageTestOn(sdkHome);
+    }
+
+    protected abstract void runPackageTestOn(String sdkHome) throws Exception;
   }
 }
