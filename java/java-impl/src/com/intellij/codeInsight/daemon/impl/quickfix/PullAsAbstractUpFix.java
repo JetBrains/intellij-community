@@ -39,7 +39,7 @@ import java.util.LinkedHashSet;
 
 public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#" + PullAsAbstractUpFix.class.getName());
-  private String myName;
+  private final String myName;
 
   public PullAsAbstractUpFix(PsiMethod psiMethod, final String name) {
     super(psiMethod);

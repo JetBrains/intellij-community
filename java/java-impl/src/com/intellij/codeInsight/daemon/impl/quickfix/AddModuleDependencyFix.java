@@ -122,6 +122,7 @@ class AddModuleDependencyFix extends OrderEntryFix {
         .setResizable(false)
         .setRequestFocus(true)
         .setItemChoosenCallback(new Runnable() {
+          @Override
           public void run() {
             final Object value = list.getSelectedValue();
             if (value instanceof Module) {
