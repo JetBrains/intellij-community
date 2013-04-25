@@ -75,6 +75,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
     final PyFromImportStatementStub stub = getStub();
     if (stub != null) {
       return stub.getChildrenByType(PyElementTypes.IMPORT_ELEMENT, new ArrayFactory<PyImportElement>() {
+        @NotNull
         public PyImportElement[] create(int count) {
           return new PyImportElement[count];
         }
@@ -182,7 +183,7 @@ public class PyFromImportStatementImpl extends PyBaseElementImpl<PyFromImportSta
       ASTNode comma = PyElementGenerator.getInstance(getProject()).createComma();
       super.addInternal(comma, comma, prevNode, false);
     }
-    
+
     return result;
   }
 

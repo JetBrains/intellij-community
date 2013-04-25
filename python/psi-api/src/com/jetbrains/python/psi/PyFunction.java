@@ -8,6 +8,7 @@ import com.intellij.util.ArrayFactory;
 import com.jetbrains.python.codeInsight.controlflow.ScopeOwner;
 import com.jetbrains.python.psi.stubs.PyFunctionStub;
 import com.jetbrains.python.psi.types.PyType;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -22,6 +23,7 @@ extends
 
   PyFunction[] EMPTY_ARRAY = new PyFunction[0];
   ArrayFactory<PyFunction> ARRAY_FACTORY = new ArrayFactory<PyFunction>() {
+    @NotNull
     @Override
     public PyFunction[] create(int count) {
       return new PyFunction[count];
