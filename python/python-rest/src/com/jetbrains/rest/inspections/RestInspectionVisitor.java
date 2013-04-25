@@ -47,17 +47,6 @@ public abstract class RestInspectionVisitor extends RestElementVisitor {
     }
   }
 
-  protected final void registerProblem(final PsiElement element,
-                                       final String message,
-                                       final ProblemHighlightType type,
-                                       final HintAction action) {
-    if (element == null || element.getTextLength() == 0){
-        return;
-    }
-    if (myHolder != null) {
-      myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(element, message, type,  action, myHolder.isOnTheFly()));
-    }
-  }
 
   /**
    * The most full-blown version.

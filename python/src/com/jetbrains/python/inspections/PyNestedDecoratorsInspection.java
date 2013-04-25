@@ -57,9 +57,8 @@ public class PyNestedDecoratorsInspection extends PyInspection {
             if ((PyNames.CLASSMETHOD.equals(deconame) || PyNames.STATICMETHOD.equals(deconame)) && deco.isBuiltin()) {
               registerProblem(
                 decos[i-1],
-                PyBundle.message("INSP.decorator.receives.unexpected.builtin"), 
-                ProblemHighlightType.GENERIC_ERROR_OR_WARNING,
-                null
+                PyBundle.message("INSP.decorator.receives.unexpected.builtin"),
+                ProblemHighlightType.GENERIC_ERROR_OR_WARNING
               );
             }
           }

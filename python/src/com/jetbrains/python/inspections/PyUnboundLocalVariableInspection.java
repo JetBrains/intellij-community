@@ -182,7 +182,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
         final ScopeOwner owner = ScopeUtil.getDeclarationScopeOwner(var, name);
         if (owner == null || owner instanceof PyFile) {
           registerProblem(var, PyBundle.message("INSP.unbound.nonlocal.variable", name),
-                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING, null);
+                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
         }
       }
     }
@@ -190,8 +190,7 @@ public class PyUnboundLocalVariableInspection extends PyInspection {
     private void registerLargeFunction(ScopeOwner owner) {
       registerProblem((owner instanceof PyFunction) ? ((PyFunction)owner).getNameIdentifier() : owner,
                       PyBundle.message("INSP.unbound.function.too.large", owner.getName()),
-                      ProblemHighlightType.WEAK_WARNING,
-                      null);
+                      ProblemHighlightType.WEAK_WARNING);
     }
   };
 }

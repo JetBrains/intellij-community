@@ -13,7 +13,6 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.*;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.Consumer;
 import com.jetbrains.cython.psi.CythonFile;
@@ -370,7 +369,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
             registerProblem(toHighlight,
                             PyBundle.message("INSP.try.except.import.error",
                                              visibleName),
-                            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL, null);
+                            ProblemHighlightType.LIKE_UNKNOWN_SYMBOL);
           }
         }
       }
