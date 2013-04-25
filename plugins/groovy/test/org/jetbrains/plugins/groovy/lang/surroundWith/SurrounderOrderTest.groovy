@@ -31,6 +31,7 @@ class SurrounderOrderTest extends LightCodeInsightFixtureTestCase {
                         "if", "if / else",
                         "while",
                         "{ -> ... }.call()",
+                        "{}",
                         "for", "try / catch",
                         "try / finally",
                         "try / catch / finally",
@@ -46,6 +47,7 @@ class SurrounderOrderTest extends LightCodeInsightFixtureTestCase {
     assertOrderedEquals names,
                         "if", "if / else", "while",
                         "{ -> ... }.call()",
+                        "{}",
                         "for", "try / catch", "try / finally", "try / catch / finally",
                         "shouldFail () {...}",
                         "with () {...}"
@@ -59,6 +61,7 @@ println c /*also important */
     assertOrderedEquals names,
                         "if", "if / else", "while",
                         "{ -> ... }.call()",
+                        "{}",
                         "for", "try / catch", "try / finally", "try / catch / finally",
                         "shouldFail () {...}",
                         "with () {...}"
@@ -76,6 +79,7 @@ println c /*also important */
                         "if / else",
                         "while",
                         "{ -> ... }.call()",
+                        "{}",
                         "for",
                         "try / catch",
                         "try / finally",

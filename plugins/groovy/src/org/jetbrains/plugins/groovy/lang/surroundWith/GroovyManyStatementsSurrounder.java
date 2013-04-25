@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,9 +28,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrBlockStatement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 /**
  * User: Dmitry.Krasilschikov
@@ -53,11 +52,7 @@ public abstract class GroovyManyStatementsSurrounder implements Surrounder {
   }
 
   public static boolean isStatement(@NotNull PsiElement element) {
-    if (!(element instanceof GrStatement) && !(element instanceof PsiComment) &&
-        !element.getText().equals(";") && !StringUtil.isEmptyOrSpaces(element.getText())) {
-      return false;
-    }
-    return element.getParent() instanceof GrStatementOwner;
+    return ";".equals(element.getText()) || element instanceof PsiComment || StringUtil.isEmptyOrSpaces(element.getText()) || PsiUtil.isExpressionStatement(element);
   }
 
   @Nullable
