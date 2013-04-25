@@ -624,10 +624,11 @@
     <localInspection language="JAVA" shortName="MagicConstant" displayName="Magic Constant"
                      groupName="Probable bugs" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.magicConstant.MagicConstantInspection" />
-    <localInspection language="JAVA" shortName="SmartInheritanceChecking"
-                     groupName="Refactorings" enabledByDefault="true" level="WARNING"
+    <localInspection language="JAVA" shortName="SuperClassHasFrequentlyUsedInheritors"
+                     groupBundle="messages.InspectionsBundle"
+                     groupKey="group.names.inheritance.issues" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.inheritance.SuperClassHasFrequentlyUsedInheritorsInspection"
-                     displayName="Super class IntelliJence Advisor"/>
+                     displayName="Class may extend a commonly used base class instead of implementing interface"/>
 
     <intentionAction>
       <className>com.intellij.codeInsight.daemon.quickFix.RedundantLambdaParameterTypeIntention</className>
