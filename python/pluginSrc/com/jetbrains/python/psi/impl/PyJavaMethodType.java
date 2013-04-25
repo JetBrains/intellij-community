@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl;
 
+import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiMethod;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ProcessingContext;
@@ -55,7 +56,8 @@ public class PyJavaMethodType implements PyCallableType {
   @Nullable
   @Override
   public String getName() {
-    return "Java method(" + myMethod.getContainingClass().getQualifiedName() + "." + myMethod.getName() + ")";
+    final PsiClass cls = myMethod.getContainingClass();
+    return "Java method(" + (cls != null ? cls.getQualifiedName() : cls) + "." + myMethod.getName() + ")";
   }
 
   @Override
