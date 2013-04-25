@@ -26,6 +26,10 @@ public class RncParsingTest extends AbstractParsingTest {
     super("complex");
   }
 
+  public void testExternal() throws Throwable {
+    doTest(true);
+  }
+
   public void testMain() throws Throwable {
    doTest(true);
   }
