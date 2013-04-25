@@ -41,12 +41,14 @@ public class PyNamedTupleType extends PyClassTypeImpl implements PyCallableType 
     myDefinitionLevel = definitionLevel;
   }
 
+  @Nullable
   @Override
   public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
                                                           @Nullable PyExpression location,
                                                           @NotNull AccessDirection direction,
-                                                          @NotNull PyResolveContext resolveContext) {
-    final List<? extends RatedResolveResult> classMembers = super.resolveMember(name, location, direction, resolveContext);
+                                                          @NotNull PyResolveContext resolveContext,
+                                                          boolean inherited) {
+    final List<? extends RatedResolveResult> classMembers = super.resolveMember(name, location, direction, resolveContext, inherited);
     if (classMembers != null && !classMembers.isEmpty()) {
       return classMembers;
     }
