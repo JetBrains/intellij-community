@@ -36,10 +36,9 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     if (findModel != null && findModel.isGlobal()) {
       FindResult cursor = mySearchResults.getCursor();
       if (cursor != null) {
-        TextRange range = cursor;
         FoldingModel foldingModel = editor.getFoldingModel();
-        final FoldRegion startFolding = foldingModel.getCollapsedRegionAtOffset(range.getStartOffset());
-        final FoldRegion endFolding = foldingModel.getCollapsedRegionAtOffset(range.getEndOffset());
+        final FoldRegion startFolding = foldingModel.getCollapsedRegionAtOffset(cursor.getStartOffset());
+        final FoldRegion endFolding = foldingModel.getCollapsedRegionAtOffset(cursor.getEndOffset());
         foldingModel.runBatchFoldingOperation(new Runnable() {
           @Override
           public void run() {
@@ -51,9 +50,9 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
             }
           }
         });
-        selection.setSelection(range.getStartOffset(), range.getEndOffset());
+        selection.setSelection(cursor.getStartOffset(), cursor.getEndOffset());
 
-        editor.getCaretModel().moveToOffset(range.getEndOffset());
+        editor.getCaretModel().moveToOffset(cursor.getEndOffset());
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
 
       }
@@ -84,21 +83,6 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
 
   public boolean isReplaceDenied() {
     return myReplaceDenied;
-  }
-
-  public interface ReplaceListener {
-    void replacePerformed(FindResult occurrence, final String replacement, final Editor editor);
-    void replaceAllPerformed(Editor e);
-  }
-
-  private ReplaceListener myReplaceListener;
-
-  public ReplaceListener getReplaceListener() {
-    return myReplaceListener;
-  }
-
-  public void setReplaceListener(ReplaceListener replaceListener) {
-    myReplaceListener = replaceListener;
   }
 
   public LivePreviewControllerBase(SearchResults searchResults, LivePreview livePreview) {
@@ -173,9 +157,6 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
                                 replacement,
                                 true,
                                 new ArrayList<Pair<TextRange, String>>());
-    if (myReplaceListener != null) {
-      myReplaceListener.replacePerformed(occurrence, replacement, editor);
-    }
     myLivePreview.inSmartUpdate();
     mySearchResults.updateThreadSafe(findModel, true, result, mySearchResults.getStamp());
     return result;
@@ -197,10 +178,6 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
         offset = selectionModel.getBlockSelectionStarts()[0];
       }
       FindUtil.replace(e.getProject(), e, offset, copy, this);
-
-      if (myReplaceListener != null) {
-        myReplaceListener.replaceAllPerformed(e);
-      }
     }
   }
 

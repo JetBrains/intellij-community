@@ -62,8 +62,7 @@ import java.util.regex.Pattern;
 /**
  * @author max, andrey.zaytsev
  */
-public class EditorSearchComponent extends EditorHeaderComponent implements DataProvider, SelectionListener, SearchResults.SearchResultsListener,
-                                                             LivePreviewControllerBase.ReplaceListener {
+public class EditorSearchComponent extends EditorHeaderComponent implements DataProvider, SelectionListener, SearchResults.SearchResultsListener {
   private static final int MATCHES_LIMIT = 10000;
 
   private JLabel myMatchInfoLabel;
@@ -165,12 +164,6 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   public JComponent getToolbarComponent() {
     return myToolbarComponent;
   }
-
-  @Override
-  public void replacePerformed(FindResult occurrence, String replacement, Editor editor) {  }
-
-  @Override
-  public void replaceAllPerformed(Editor e) {  }
 
   private void updateReplaceButton() {
     if (myReplaceButton != null) {
@@ -872,7 +865,6 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
     myLivePreview = new LivePreview(mySearchResults);
 
     myLivePreviewController = new MyLivePreviewController();
-    myLivePreviewController.setReplaceListener(this);
     mySearchResults.addListener(this);
   }
 
