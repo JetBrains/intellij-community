@@ -36,9 +36,9 @@ public class PyImportedModuleType implements PyType {
   @Nullable
   @Override
   public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
-                                                          PyExpression location,
-                                                          AccessDirection direction,
-                                                          PyResolveContext resolveContext) {
+                                                          @Nullable PyExpression location,
+                                                          @NotNull AccessDirection direction,
+                                                          @NotNull PyResolveContext resolveContext) {
     final PsiElement resolved = myImportedModule.resolve();
     if (resolved instanceof PyFile) {
       final PyFile file = (PyFile)resolved;

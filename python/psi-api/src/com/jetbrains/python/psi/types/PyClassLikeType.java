@@ -24,8 +24,9 @@ public interface PyClassLikeType extends PyCallableType {
   List<PyClassLikeType> getSuperClassTypes(@NotNull TypeEvalContext context);
 
   @Nullable
-  List<? extends RatedResolveResult> resolveMember(@NotNull final String name, @Nullable PyExpression location, AccessDirection direction,
-                                                   PyResolveContext resolveContext, boolean inherited);
+  List<? extends RatedResolveResult> resolveMember(@NotNull final String name, @Nullable PyExpression location,
+                                                   @NotNull AccessDirection direction, @NotNull PyResolveContext resolveContext,
+                                                   boolean inherited);
 
   boolean isValid();
 }

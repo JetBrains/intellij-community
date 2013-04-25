@@ -102,8 +102,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Override
   public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
                                                           @Nullable PyExpression location,
-                                                          AccessDirection direction,
-                                                          PyResolveContext resolveContext) {
+                                                          @NotNull AccessDirection direction,
+                                                          @NotNull PyResolveContext resolveContext) {
     return resolveMember(name, location, direction, resolveContext, true);
   }
 
@@ -111,8 +111,8 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
   @Override
   public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
                                                           @Nullable PyExpression location,
-                                                          AccessDirection direction,
-                                                          PyResolveContext resolveContext,
+                                                          @NotNull AccessDirection direction,
+                                                          @NotNull PyResolveContext resolveContext,
                                                           boolean inherited) {
     final Set<Pair<PyClass, String>> resolving = ourResolveMemberStack.get();
     final Pair<PyClass, String> key = Pair.create(myClass, name);

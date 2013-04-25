@@ -22,9 +22,9 @@ public class PyNoneType implements PyType { // TODO must extend ClassType. It's 
 
   @Nullable
   public List<? extends RatedResolveResult> resolveMember(@NotNull final String name,
-                                                          PyExpression location,
-                                                          AccessDirection direction,
-                                                          PyResolveContext resolveContext) {
+                                                          @Nullable PyExpression location,
+                                                          @NotNull AccessDirection direction,
+                                                          @NotNull PyResolveContext resolveContext) {
     return null;
   }
 

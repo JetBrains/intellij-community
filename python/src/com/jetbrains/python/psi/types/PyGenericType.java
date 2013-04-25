@@ -24,8 +24,8 @@ public class PyGenericType implements PyType {
   @Override
   public List<? extends RatedResolveResult> resolveMember(@NotNull String name,
                                                           @Nullable PyExpression location,
-                                                          AccessDirection direction,
-                                                          PyResolveContext resolveContext) {
+                                                          @NotNull AccessDirection direction,
+                                                          @NotNull PyResolveContext resolveContext) {
     return null;
   }
 
