@@ -13,13 +13,11 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.intellij.lang.xpath.xslt;
+package org.intellij.lang.xpath;
 
 import com.intellij.lexer.Lexer;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.testFramework.LexerTestCase;
-import org.intellij.lang.xpath.TestBase;
-import org.intellij.lang.xpath.XPathLexer;
 
 /*
 * Created by IntelliJ IDEA.
@@ -65,8 +63,20 @@ public class XPath2LexerTest extends LexerTestCase {
     doTest("attribute()");
   }
 
+  public void testElementNodeType() {
+    doTest("element()");
+  }
+
   public void testAttributeNCName() {
     doTest("attribute/*");
+  }
+
+  public void testElementNCName() {
+    doTest("element/*");
+  }
+
+  public void testPrefixedNameAnd() {
+    doTest("child::xsd:element and contains('a', 'a')");
   }
 
   public void testQualifiedVar() {

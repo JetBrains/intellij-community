@@ -94,6 +94,11 @@ public class XPathHighlightingTest extends TestBase {
       doXPathHighlighting();
     }
 
+    // IDEA-102422
+    public void testPrefixedNameAnd() throws Throwable {
+      doXPathHighlighting();
+    }
+
     private void doXPathHighlighting(String... moreFiles) throws Throwable {
         final String name = getTestFileName();
         myFixture.testHighlighting(true, false, false, ArrayUtil.append(moreFiles, name + ".xpath"));
