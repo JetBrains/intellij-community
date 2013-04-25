@@ -662,6 +662,7 @@ public class SoftWrapModelImpl implements SoftWrapModelEx, PrioritizedDocumentLi
   @Override
   public void recalculate() {
     myApplianceManager.reset();
+    myStorage.removeAll();
     myDeferredFoldRegions.clear();
     myEditor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
     myApplianceManager.recalculateIfNecessary();
