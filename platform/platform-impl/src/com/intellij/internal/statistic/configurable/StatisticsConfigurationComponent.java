@@ -15,7 +15,9 @@
  */
 package com.intellij.internal.statistic.configurable;
 
+import com.intellij.internal.statistic.StatisticsBundle;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.util.ui.UIUtil;
 
@@ -35,10 +37,13 @@ public class StatisticsConfigurationComponent {
   private JPanel myRadioButtonPanel;
 
   public StatisticsConfigurationComponent() {
-    myTitle.setText("Help improve "+ ApplicationNamesInfo.getInstance().getFullProductName() + " by sending anonymous usage statistics to JetBrains");
-    myLabel.setText("<html>We're asking your permission to send information about your plugins configuration (what is enabled <br>and what is not) and feature usage statistics (e.g. how frequently you're using code completion).<br>    This data is anonymous, does not contain any personal information, collected for use only by JetBrains<br> and will never be transmitted to any third party.</html>");
+    String product = ApplicationNamesInfo.getInstance().getFullProductName();
+    String company = ApplicationInfo.getInstance().getCompanyName();
+    myTitle.setText(StatisticsBundle.message("stats.title", product, company));
+    myLabel.setText(StatisticsBundle.message("stats.config.details", company));
     myLabel.setFont(UIUtil.getLabelFont(UIUtil.FontSize.SMALL));
 
+    myAllowToSendUsagesCheckBox.setText(StatisticsBundle.message("stats.config.allow.send.stats.text", company));
     myAllowToSendUsagesCheckBox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
