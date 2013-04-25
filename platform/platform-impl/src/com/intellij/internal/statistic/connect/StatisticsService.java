@@ -16,7 +16,12 @@
 package com.intellij.internal.statistic.connect;
 
 
+import com.intellij.openapi.extensions.ExtensionPointName;
+
 public interface StatisticsService {
+
+  ExtensionPointName<StatisticsService> EP_NAME =
+    ExtensionPointName.create("com.intellij.statisticsService");
 
   StatisticsResult send();
 }

@@ -19,22 +19,31 @@ import com.intellij.internal.statistic.StatisticsUploadAssistant;
 import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsService;
 import com.intellij.internal.statistic.connect.StatisticsConnectionService;
 import com.intellij.internal.statistic.connect.StatisticsHttpClientSender;
+import com.intellij.internal.statistic.connect.StatisticsService;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationsConfiguration;
 import com.intellij.notification.impl.NotificationsConfigurationImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.util.Alarm;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
+import java.util.Arrays;
+import java.util.Collection;
+
 public class SendStatisticsProjectComponent implements ProjectComponent {
+
+  private static final Logger LOG = Logger.getInstance("#" + SendStatisticsProjectComponent.class.getName());
+
   private static final int DELAY_IN_MIN = 10;
 
   private Project myProject;
-  private Alarm myAlarm;
+  private Alarm   myAlarm;
 
   public SendStatisticsProjectComponent(Project project) {
     myProject = project;
@@ -68,21 +77,33 @@ public class SendStatisticsProjectComponent implements ProjectComponent {
       StatisticsNotificationManager.showNotification(statisticsService, myProject);
     }
     else {
+      Collection<StatisticsService> services = ContainerUtilRt.newArrayList();
       if (StatisticsUploadAssistant.isSendAllowed() && StatisticsUploadAssistant.isTimeToSend()) {
-        runWithDelay(statisticsService);
+        services.add(statisticsService);
+      }
+      services.addAll(Arrays.asList(StatisticsService.EP_NAME.getExtensions()));
+      if (!services.isEmpty()) {
+        runWithDelay(services);
       }
     }
   }
 
-  private void runWithDelay(final @NotNull RemotelyConfigurableStatisticsService statisticsService) {
+  private void runWithDelay(final @NotNull Collection<StatisticsService> statisticsServices) {
     myAlarm.addRequest(new Runnable() {
       @Override
       public void run() {
         if (DumbService.isDumb(myProject)) {
-          runWithDelay(statisticsService);
+          runWithDelay(statisticsServices);
         }
         else {
-          statisticsService.send();
+          for (StatisticsService service : statisticsServices) {
+            try {
+              service.send();
+            }
+            catch (Exception e) {
+              LOG.warn("Unexpected error during sending stats data via service " + service, e);
+            }
+          }
         }
       }
     }, DELAY_IN_MIN * 60 * 1000);
