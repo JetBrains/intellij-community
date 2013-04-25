@@ -19,6 +19,8 @@ import com.intellij.openapi.Forceable;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ConcurrentIntObjectMap;
+import com.intellij.util.containers.StripedLockIntObjectConcurrentHashMap;
 import com.intellij.util.containers.hash.LinkedHashMap;
 import jsr166e.SequenceLock;
 import org.jetbrains.annotations.NonNls;
@@ -32,7 +34,6 @@ import java.io.RandomAccessFile;
 import java.lang.reflect.Field;
 import java.nio.ByteBuffer;
 import java.util.*;
-import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 /**
@@ -437,7 +438,7 @@ public class PagedFileStorage implements Forceable {
     private static final int FILE_INDEX_MASK = 0xFFFF0000;
     private static final int FILE_INDEX_SHIFT = 16;
     public final StorageLockContext myDefaultStorageLockContext;
-    private final ConcurrentHashMap<Integer, PagedFileStorage> myIndex2Storage = new ConcurrentHashMap<Integer, PagedFileStorage>();
+    private final ConcurrentIntObjectMap<PagedFileStorage> myIndex2Storage = new StripedLockIntObjectConcurrentHashMap<PagedFileStorage>();
 
     private final LinkedHashMap<Integer, ByteBufferWrapper> mySegments;
     private final SequenceLock mySegmentsAccessLock = new SequenceLock(); // protects map operations of mySegments, needed for LRU order, mySize and myMappingChangeCount
@@ -486,11 +487,11 @@ public class PagedFileStorage implements Forceable {
       myDefaultStorageLockContext.myLock.unlock();
     }
 
-    private int registerPagedFileStorage(PagedFileStorage storage) {
-      int registered = myIndex2Storage.size();
+    private int registerPagedFileStorage(@NotNull PagedFileStorage storage) {
+      int registered = myIndex2Storage.keys().length;
       assert registered <= MAX_LIVE_STORAGES_COUNT;
       int value = registered << FILE_INDEX_SHIFT;
-      while(myIndex2Storage.putIfAbsent(value, storage) != null) {
+      while(myIndex2Storage.cacheOrGet(value, storage) != storage) {
         ++registered;
         assert registered <= MAX_LIVE_STORAGES_COUNT;
         value = registered << FILE_INDEX_SHIFT;
