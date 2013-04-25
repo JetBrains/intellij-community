@@ -371,6 +371,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     return new TypeInfo(getTypeText(type), (byte)dim, false, Collections.<PsiAnnotationStub>emptyList()); //todo read annos from .class file
   }
 
+  private static final String[] parameterNames = {"p1", "p2", "p3", "p4", "p5", "p6", "p7", "p8", "p9",};
   @Override
   @Nullable
   public MethodVisitor visitMethod(final int access,
@@ -434,7 +435,8 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       boolean isEllipsisParam = isVarargs && i == paramCount - 1;
       final TypeInfo typeInfo = TypeInfo.fromString(arg, isEllipsisParam);
 
-      PsiParameterStubImpl parameterStub = new PsiParameterStubImpl(parameterList, "p" + (i + 1), typeInfo, isEllipsisParam);
+      String paramName = i < parameterNames.length ? parameterNames[i] : "p" + (i + 1);
+      PsiParameterStubImpl parameterStub = new PsiParameterStubImpl(parameterList, paramName, typeInfo, isEllipsisParam);
       paramStubs [i] = parameterStub;
       new PsiModifierListStubImpl(parameterStub, 0);
     }
