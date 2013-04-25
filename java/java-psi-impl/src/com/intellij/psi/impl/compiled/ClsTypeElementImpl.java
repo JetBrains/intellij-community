@@ -38,7 +38,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
   private volatile PsiType myCachedType;
   private final char myVariance;
 
-  public ClsTypeElementImpl(@NotNull PsiElement parent, String typeText, char variance) {
+  public ClsTypeElementImpl(@NotNull PsiElement parent, @NotNull String typeText, char variance) {
     myParent = parent;
     myTypeText = typeText;
     myVariance = variance;
