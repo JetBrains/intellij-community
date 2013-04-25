@@ -21,6 +21,7 @@ import com.intellij.codeInspection.InspectionProfile;
 import com.intellij.codeInspection.InspectionProfileEntry;
 import com.intellij.codeInspection.ModifiableModel;
 import com.intellij.codeInspection.ex.InspectionProfileImpl;
+import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.JDOMUtil;
 import com.intellij.profile.codeInspection.InspectionProfileManager;
@@ -42,8 +43,8 @@ import java.util.HashMap;
  */
 public class InspectionProfileConvertor {
   private final HashMap<String, HighlightDisplayLevel> myDisplayLevelMap = new HashMap<String, HighlightDisplayLevel>();
-  public static final @NonNls String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHighlightingSettings";
-  public static final @NonNls String OLD_DEFAUL_PROFILE = "OldDefaultProfile";
+  @NonNls public static final String OLD_HIGHTLIGHTING_SETTINGS_PROFILE = "EditorHighlightingSettings";
+  @NonNls public static final String OLD_DEFAUL_PROFILE = "OldDefaultProfile";
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettingsConvertor");
 
@@ -85,14 +86,12 @@ public class InspectionProfileConvertor {
         Element e = (Element)o;
         String key = e.getName();
         String levelName = e.getAttributeValue(LEVEL_ATT);
-        HighlightDisplayLevel level = HighlightDisplayLevel.find(myManager.getSeverityRegistrar().getSeverity(levelName));
+        HighlightSeverity severity = myManager.getSeverityRegistrar().getSeverity(levelName);
+        HighlightDisplayLevel level = severity == null ? null : HighlightDisplayLevel.find(severity);
         if (level == null) continue;
         myDisplayLevelMap.put(key, level);
       }
       return true;
-    }
-    else {
-
     }
     return false;
   }
