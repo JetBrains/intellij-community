@@ -34,7 +34,7 @@ public interface ProfileManager {
 
   Profile getProfile(@NotNull String name);
 
-  void updateProfile(Profile profile);
+  void updateProfile(@NotNull Profile profile);
 
   @NotNull
   String[] getAvailableProfileNames();

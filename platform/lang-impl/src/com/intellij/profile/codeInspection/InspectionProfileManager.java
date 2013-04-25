@@ -244,12 +244,12 @@ public class InspectionProfileManager extends ApplicationProfileManager implemen
   }
 
   @Override
-  public void updateProfile(Profile profile) {
+  public void updateProfile(@NotNull Profile profile) {
     mySchemesManager.addNewScheme(profile, true);
     updateProfileImpl(profile);
   }
 
-  private static void updateProfileImpl(final Profile profile) {
+  private static void updateProfileImpl(@NotNull Profile profile) {
     final Project[] projects = ProjectManager.getInstance().getOpenProjects();
     for (Project project : projects) {
       InspectionProjectProfileManager.getInstance(project).initProfileWrapper(profile);
