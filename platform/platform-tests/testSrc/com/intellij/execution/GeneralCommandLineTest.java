@@ -161,6 +161,13 @@ public class GeneralCommandLineTest {
   }
 
   @Test
+  public void hackyEnvMap () throws Exception {
+    GeneralCommandLine commandLine = new GeneralCommandLine();
+    //noinspection ConstantConditions
+    commandLine.getEnvironment().putAll(null);
+  }
+
+  @Test
   public void environmentPassing() throws Exception {
     Map<String, String> testEnv = new HashMap<String, String>();
     testEnv.put("VALUE_1", "some value");
