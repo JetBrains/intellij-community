@@ -37,7 +37,7 @@ public class ProfileEx implements Profile {
     myName = name;
   }
 
-  public ProfileEx(final String name, final Element element) {
+  public ProfileEx(@NotNull String name, final Element element) {
     this(name);
   }
 

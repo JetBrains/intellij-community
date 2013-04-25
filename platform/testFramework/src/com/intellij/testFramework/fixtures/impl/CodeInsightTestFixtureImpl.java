@@ -1170,7 +1170,7 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
       }
 
       @Override
-      public InspectionProfileEntry getToolById(String id, @NotNull PsiElement element) {
+      public InspectionProfileEntry getToolById(@NotNull String id, @NotNull PsiElement element) {
         if (myAvailableTools.containsKey(id)) {
           return myAvailableTools.get(id);
         }

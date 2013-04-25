@@ -49,7 +49,7 @@ public interface InspectionProfile extends Profile {
   <T extends InspectionProfileEntry>
   T getUnwrappedTool(@NotNull Key<T> shortNameKey, @NotNull PsiElement element);
 
-  void modifyProfile(Consumer<ModifiableModel> modelConsumer);
+  void modifyProfile(@NotNull Consumer<ModifiableModel> modelConsumer);
 
   /**
    * Allows a plugin to modify the settings of the inspection tool with the specified ID programmatically, without going through
@@ -84,7 +84,7 @@ public interface InspectionProfile extends Profile {
 
   boolean isExecutable();
 
-  boolean isEditable();  
+  boolean isEditable();
 
   @NotNull
   String getDisplayName();
