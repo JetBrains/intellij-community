@@ -217,7 +217,7 @@ public class RefreshWorker {
     boolean currentIsSpecial = child.isSpecialFile();
     boolean upToDateIsDirectory = childAttributes.isDirectory();
     boolean upToDateIsSymlink = childAttributes.isSymLink();
-    boolean upToDateIsSpecial = child.isSpecialFile();
+    boolean upToDateIsSpecial = childAttributes.isSpecial();
 
     if (currentIsDirectory != upToDateIsDirectory || currentIsSymlink != upToDateIsSymlink || currentIsSpecial != upToDateIsSpecial) {
       scheduleDeletion(child);
