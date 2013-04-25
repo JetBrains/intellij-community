@@ -15,7 +15,7 @@
  */
 package com.intellij.structuralsearch.inspection.highlightTemplate;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
@@ -136,7 +136,7 @@ public class SSBasedInspection extends BaseJavaLocalInspectionTool {
 
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         PsiElement element = descriptor.getPsiElement();
-        if (element != null && CodeInsightUtilBase.preparePsiElementsForWrite(element)) {
+        if (element != null && FileModificationService.getInstance().preparePsiElementsForWrite(element)) {
           replacer.replace(replacementInfo);
         }
       }
