@@ -35,6 +35,7 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.File;
+import java.io.FileNotFoundException;
 import java.util.*;
 import java.util.List;
 import java.util.jar.JarEntry;
@@ -424,6 +425,9 @@ public class ApplicationInfoImpl extends ApplicationInfoEx implements JDOMExtern
       try {
         Document doc = JDOMUtil.loadDocument(ApplicationInfoImpl.class, IDEA_PATH + ApplicationNamesInfo.getComponentName() + XML_EXTENSION);
         ourShadowInstance.readExternal(doc.getRootElement());
+      }
+      catch (FileNotFoundException e) {
+        LOG.error("Resource is not in classpath or wrong platform prefix: " + System.getProperty(PlatformUtils.PLATFORM_PREFIX_KEY), e);
       }
       catch (Exception e) {
         LOG.error(e);
