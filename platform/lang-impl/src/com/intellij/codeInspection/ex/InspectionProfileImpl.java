@@ -20,6 +20,7 @@ import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.daemon.InspectionProfileConvertor;
 import com.intellij.codeInspection.*;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -41,7 +42,6 @@ import com.intellij.psi.search.scope.packageSet.NamedScope;
 import com.intellij.util.Consumer;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.StringInterner;
 import gnu.trove.THashMap;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -264,11 +264,10 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
       ((SeverityProvider)getProfileManager()).getOwnSeverityRegistrar().readExternal(highlightElement);
     }
 
-    StringInterner interner = new StringInterner();
     for (final Object o : element.getChildren(INSPECTION_TOOL_TAG)) {
       // make clone to avoid retaining memory via o.parent pointers
       Element toolElement = (Element)((Element)o).clone();
-      JDOMUtil.internElement(toolElement, interner);
+      IdeaPluginDescriptorImpl.internJDOMElement(toolElement);
 
       String toolClassName = toolElement.getAttributeValue(CLASS_TAG);
 
