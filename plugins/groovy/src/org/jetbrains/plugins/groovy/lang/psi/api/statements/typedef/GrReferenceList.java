@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
  */
 public interface GrReferenceList extends GroovyPsiElement {
   ArrayFactory<GrReferenceList> ARRAY_FACTORY = new ArrayFactory<GrReferenceList>() {
+    @NotNull
     @Override
     public GrReferenceList[] create(int count) {
       return new GrReferenceList[0];

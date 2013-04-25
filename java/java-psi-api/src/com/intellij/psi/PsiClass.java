@@ -29,7 +29,7 @@ import java.util.List;
 /**
  * Represents a Java class or interface.
  *
- * @see PsiJavaFile#getClasses() 
+ * @see PsiJavaFile#getClasses()
  */
 public interface PsiClass
   extends PsiNameIdentifierOwner, PsiModifierListOwner, PsiDocCommentOwner, PsiTypeParameterListOwner, PsiTarget, PomRenameableTarget<PsiElement> {
@@ -39,6 +39,7 @@ public interface PsiClass
   @NotNull PsiClass[] EMPTY_ARRAY = new PsiClass[0];
 
   ArrayFactory<PsiClass> ARRAY_FACTORY = new ArrayFactory<PsiClass>() {
+    @NotNull
     @Override
     public PsiClass[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiClass[count];
@@ -349,7 +350,7 @@ public interface PsiClass
    * its superclasses and superinterfaces.
    *
    * @return the collection of signatures.
-   * @since 5.1 
+   * @since 5.1
    */
   @NotNull
   Collection<HierarchicalMethodSignature> getVisibleSignatures();

@@ -39,6 +39,7 @@ public interface PsiMethod extends PsiMember, PsiNameIdentifierOwner, PsiModifie
   PsiMethod[] EMPTY_ARRAY = new PsiMethod[0];
 
   ArrayFactory<PsiMethod> ARRAY_FACTORY = new ArrayFactory<PsiMethod>() {
+    @NotNull
     @Override
     public PsiMethod[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiMethod[count];

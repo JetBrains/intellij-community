@@ -256,6 +256,7 @@ public final class DirectoryInfo {
   }
 
   private static final ArrayFactory<OrderEntry> ORDER_ENTRY_ARRAY_FACTORY = new ArrayFactory<OrderEntry>() {
+    @NotNull
     @Override
     public OrderEntry[] create(int count) {
       return count == 0 ? OrderEntry.EMPTY_ARRAY : new OrderEntry[count];

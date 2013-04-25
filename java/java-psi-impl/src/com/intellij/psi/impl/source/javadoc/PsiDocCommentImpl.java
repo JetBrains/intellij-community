@@ -42,6 +42,7 @@ public class PsiDocCommentImpl extends LazyParseablePsiElement implements PsiDoc
 
   private static final TokenSet TAG_BIT_SET = TokenSet.create(DOC_TAG);
   private static final ArrayFactory<PsiDocTag> ARRAY_FACTORY = new ArrayFactory<PsiDocTag>() {
+    @NotNull
     @Override
     public PsiDocTag[] create(final int count) {
       return count == 0 ? PsiDocTag.EMPTY_ARRAY : new PsiDocTag[count];

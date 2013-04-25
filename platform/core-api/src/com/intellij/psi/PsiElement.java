@@ -44,6 +44,7 @@ public interface PsiElement extends UserDataHolder, Iconable {
   PsiElement[] EMPTY_ARRAY = new PsiElement[0];
 
   ArrayFactory<PsiElement> ARRAY_FACTORY = new ArrayFactory<PsiElement>() {
+    @NotNull
     @Override
     public PsiElement[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiElement[count];

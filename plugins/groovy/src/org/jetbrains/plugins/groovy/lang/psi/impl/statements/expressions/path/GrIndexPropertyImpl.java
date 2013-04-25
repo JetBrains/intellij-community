@@ -221,6 +221,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       final GroovyResolveResult[] tupleCandidates = ResolveUtil.getMethodCandidates(thisType, name, invoked, tupleType);
       if (incompleteCode) {
         candidates = ArrayUtil.mergeArrays(candidates, tupleCandidates, new ArrayFactory<GroovyResolveResult>() {
+          @NotNull
           @Override
           public GroovyResolveResult[] create(int count) {
             return new GroovyResolveResult[count];
@@ -294,7 +295,7 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
   @Override
   public PsiType getNominalType() {
     if (getParent() instanceof GrThrowStatement) return super.getNominalType();
-    
+
     GroovyResolveResult[] candidates = multiResolve(true);
     if (candidates.length == 1) {
       return extractLastParameterType(candidates[0]);

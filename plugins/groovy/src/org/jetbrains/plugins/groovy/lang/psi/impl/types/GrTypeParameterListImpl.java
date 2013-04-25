@@ -35,6 +35,7 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GrStubElementBase;
  */
 public class GrTypeParameterListImpl extends GrStubElementBase<EmptyStub> implements GrTypeParameterList, StubBasedPsiElement<EmptyStub> {
   private static final ArrayFactory<GrTypeParameter> ARRAY_FACTORY = new ArrayFactory<GrTypeParameter>() {
+    @NotNull
     @Override
     public GrTypeParameter[] create(int count) {
       return new GrTypeParameter[count];
