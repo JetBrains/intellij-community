@@ -83,7 +83,9 @@ public class NewMappings {
 
     vcsManager.addInitializationRequest(VcsInitObject.MAPPINGS, new DumbAwareRunnable() {
       public void run() {
-        activateActiveVcses();
+        if (!myProject.isDisposed()) {
+          activateActiveVcses();
+        }
       }
     });
   }
