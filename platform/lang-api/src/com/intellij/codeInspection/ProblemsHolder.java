@@ -177,7 +177,6 @@ public class ProblemsHolder {
                               final TextRange rangeInElement,
                               @NotNull final String message,
                               final LocalQuickFix... fixes) {
-
     final ProblemDescriptor descriptor = myManager.createProblemDescriptor(psiElement, rangeInElement, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, myOnTheFly, fixes);
     registerProblem(descriptor);
   }
@@ -196,6 +195,7 @@ public class ProblemsHolder {
     return problems.toArray(new ProblemDescriptor[problems.size()]);
   }
 
+  @NotNull
   public final InspectionManager getManager() {
     return myManager;
   }
@@ -212,10 +212,12 @@ public class ProblemsHolder {
     return myOnTheFly;
   }
 
+  @NotNull
   public PsiFile getFile() {
     return myFile;
   }
 
+  @NotNull
   public final Project getProject() {
     return myManager.getProject();
   }
