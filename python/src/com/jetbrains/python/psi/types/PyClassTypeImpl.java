@@ -192,7 +192,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
           }
         }
         if (type != null) {
-          final List<? extends RatedResolveResult> results = type.resolveMember(name, location, direction, resolveContext);
+          final List<? extends RatedResolveResult> results = type.resolveMember(name, location, direction, resolveContext, false);
           if (results != null && !results.isEmpty()) {
             return results;
           }
