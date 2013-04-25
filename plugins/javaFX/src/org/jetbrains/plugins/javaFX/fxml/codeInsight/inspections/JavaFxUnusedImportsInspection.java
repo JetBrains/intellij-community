@@ -76,15 +76,12 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
       if (target.endsWith(".*")) {
         if (!usedNames.contains(StringUtil.trimEnd(target, ".*"))) {
           problems.add(inspectionManager
-                         .createProblemDescriptor(instruction, "Unused import", ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, isOnTheFly,
-                                                  new JavaFxOptimizeImportsFix()));
+                         .createProblemDescriptor(instruction, "Unused import", new JavaFxOptimizeImportsFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly));
         }
       }
       else if (!usedNames.contains(target) || targetProcessingInstructions.containsKey(StringUtil.getPackageName(target) + ".*")) {
         problems.add(inspectionManager
-                       .createProblemDescriptor(instruction, "Unused import", ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, 
-                                                isOnTheFly,
-                                                new JavaFxOptimizeImportsFix()));
+                       .createProblemDescriptor(instruction, "Unused import", new JavaFxOptimizeImportsFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly));
       }
     }
     return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
