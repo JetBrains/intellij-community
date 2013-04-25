@@ -258,4 +258,8 @@ public class PyExtractMethodTest extends LightMarkedTestCase {
   public void testDuplicateMultiLine() {
     doTest("foo");
   }
+
+  public void testDuplicateInClass() {
+    doTest("foo");
+  }
 }

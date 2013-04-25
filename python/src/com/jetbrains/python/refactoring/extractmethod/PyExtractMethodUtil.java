@@ -202,8 +202,11 @@ public class PyExtractMethodUtil {
                                         @NotNull final PyFunction generatedMethod,
                                         @NotNull final PyDuplicatesFinder finder,
                                         @NotNull final Editor editor) {
-    final ScopeOwner owner = ScopeUtil.getScopeOwner(callElement);
+    ScopeOwner owner = ScopeUtil.getScopeOwner(callElement);
     if (owner instanceof PsiFile) return;
+    if (owner instanceof PyFunction && ((PyFunction)owner).getContainingClass() != null) {
+      owner = ((PyFunction)owner).getContainingClass();
+    }
     final List<Pair<PsiElement, PsiElement>> duplicates = finder.findDuplicates(owner, generatedMethod);
 
     if (duplicates.size() > 0) {
