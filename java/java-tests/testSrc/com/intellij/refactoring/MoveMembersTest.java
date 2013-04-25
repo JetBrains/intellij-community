@@ -149,6 +149,10 @@ public class MoveMembersTest extends MultiFileTestCase {
     doTest("A", "B", true, VisibilityUtil.ESCALATE_VISIBILITY, 0, 1);
   }
 
+  public void testFromNestedToOuter() throws Exception {
+    doTest("Outer.Inner", "Outer", true, VisibilityUtil.ESCALATE_VISIBILITY, 0);
+  }
+
   @Override
   protected String getTestRoot() {
     return "/refactoring/moveMembers/";
