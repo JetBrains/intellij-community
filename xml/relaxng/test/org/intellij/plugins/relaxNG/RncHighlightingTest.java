@@ -89,6 +89,10 @@ public class RncHighlightingTest extends HighlightingTestBase {
     doHighlightingTest("unresolved-include.rnc");
   }
 
+  public void testUnresolvedExternal() throws Throwable {
+    doHighlightingTest("unresolved-external.rnc");
+  }
+
   public void testParentRef() throws Throwable {
     doHighlightingTest("parent-ref.rnc");
   }
