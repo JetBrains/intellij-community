@@ -274,8 +274,6 @@ public class Splitter extends JPanel {
         }
       }
 
-      myProportion = (float)(size1 / total);
-
       int iSize1 = (int)Math.round(Math.floor(size1));
       int iSize2 = (int)Math.round(total - size1 - d);
 
