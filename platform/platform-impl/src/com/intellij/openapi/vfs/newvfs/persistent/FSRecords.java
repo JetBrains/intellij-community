@@ -1271,7 +1271,7 @@ public class FSRecords implements Forceable {
   }
 
   public static void writeContent(int fileId, ByteSequence bytes, boolean readOnly) throws IOException {
-    new ContentOutputStream(fileId, readOnly).writeBytes(bytes, fileId);
+    new ContentOutputStream(fileId, readOnly).writeBytes(bytes);
   }
 
   public static int storeUnlinkedContent(byte[] bytes) {
@@ -1308,29 +1308,27 @@ public class FSRecords implements Forceable {
 
       try {
         final BufferExposingByteArrayOutputStream _out = (BufferExposingByteArrayOutputStream)out;
-        writeBytes(new ByteSequence(_out.getInternalBuffer(), 0, _out.size()), myFileId);
+        writeBytes(new ByteSequence(_out.getInternalBuffer(), 0, _out.size()));
       }
       catch (Throwable e) {
         throw DbConnection.handleError(e);
       }
     }
 
-    public void writeBytes(ByteSequence bytes, int fileId) throws IOException {
-      final int page;
+    public void writeBytes(ByteSequence bytes) throws IOException {
+      int page;
       RefCountingStorage contentStorage = getContentStorage();
       try {
         w.lock();
-        incModCount(fileId);
+        incModCount(myFileId);
 
         checkFileIsValid(myFileId);
 
-        int recordId = getContentRecordId(myFileId);
-        if (recordId == 0 || contentStorage.getRefCount(recordId) > 1) {
-          recordId = contentStorage.acquireNewRecord();
-          setContentRecordId(myFileId, recordId);
+        page = getContentRecordId(myFileId);
+        if (page == 0 || contentStorage.getRefCount(page) > 1) {
+          page = contentStorage.acquireNewRecord();
+          setContentRecordId(myFileId, page);
         }
-
-        page = recordId;
       }
       finally {
         w.unlock();
