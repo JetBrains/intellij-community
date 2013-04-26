@@ -4,6 +4,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
+import com.intellij.webcore.packaging.PackageManagerController;
+import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.*;
 import org.apache.xmlrpc.AsyncCallback;
 import org.jetbrains.annotations.NonNls;
@@ -26,6 +28,29 @@ public class PyPackagesController implements PackageManagerController {
   }
 
   @Override
+  public List<String> getAllRepositories() {
+    List<String> result = new ArrayList<String>();
+    result.add(PyPIPackageUtil.PYPI_URL);
+    result.addAll(PyPackageService.getInstance().additionalRepositories);
+    return result;
+  }
+
+  @Override
+  public boolean canModifyRepository(String repositoryUrl) {
+    return !PyPIPackageUtil.PYPI_URL.equals(repositoryUrl);
+  }
+
+  @Override
+  public void addRepository(String repositoryUrl) {
+    PyPackageService.getInstance().addRepository(repositoryUrl);
+  }
+
+  @Override
+  public void removeRepository(String repositoryUrl) {
+    PyPackageService.getInstance().removeRepository(repositoryUrl);
+  }
+
+  @Override
   public List<RepoPackage> getAllPackages() throws IOException {
     List<RepoPackage> packages = new ArrayList<RepoPackage>();
     final Collection<String> packageNames = PyPIPackageUtil.INSTANCE.getPackageNames();
@@ -39,10 +64,11 @@ public class PyPackagesController implements PackageManagerController {
   }
 
   @Override
-  public void reloadPackagesList() throws IOException {
+  public List<RepoPackage> reloadAllPackages() throws IOException {
     final PyPackageService service = PyPackageService.getInstance();
     PyPIPackageUtil.INSTANCE.updatePyPICache(service);
     service.LAST_TIME_CHECKED = System.currentTimeMillis();
+    return getAllPackages();
   }
 
   @Override

@@ -20,10 +20,12 @@ import com.intellij.util.Function;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
+import com.intellij.webcore.packaging.ManageRepoDialog;
+import com.intellij.webcore.packaging.PackageManagerController;
+import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.PyPIPackageUtil;
 import com.jetbrains.python.packaging.PyPackageManagerImpl;
 import com.jetbrains.python.packaging.PyPackageService;
-import com.jetbrains.python.packaging.RepoPackage;
 import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -53,6 +55,7 @@ import java.util.List;
 public class ManagePackagesDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(ManagePackagesDialog.class);
 
+  @NotNull private final Project myProject;
   private final PackageManagerController myController;
 
   private JPanel myFilter;
@@ -80,6 +83,7 @@ public class ManagePackagesDialog extends DialogWrapper {
   public ManagePackagesDialog(@NotNull Project project, @NotNull final Sdk sdk, @NotNull final PyPackagesPanel packageListPanel,
                               final PackageManagerController packageManagerController) {
     super(project, true);
+    myProject = project;
     myController = packageManagerController;
 
     myInstallToUser.setEnabled(!PythonSdkType.isVirtualEnv(sdk));
@@ -102,7 +106,7 @@ public class ManagePackagesDialog extends DialogWrapper {
           @Override
           public void run() {
             try {
-              myController.reloadPackagesList();
+              myController.reloadAllPackages();
               myPackages.setPaintBusy(false);
             }
             catch (IOException e) {
@@ -188,7 +192,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     myManageButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
-        ManageRepoDialog dialog = new ManageRepoDialog();
+        ManageRepoDialog dialog = new ManageRepoDialog(myProject, myController);
         dialog.show();
       }
     });
