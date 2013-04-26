@@ -35,7 +35,6 @@ import com.intellij.psi.PsiFile;
 import com.intellij.psi.impl.ElementBase;
 import com.intellij.psi.search.PsiElementProcessor;
 import com.intellij.ui.JBListWithHintProvider;
-import com.intellij.ui.components.JBList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -161,8 +160,7 @@ public final class NavigationUtil {
 
     final FileEditorManager fem = FileEditorManager.getInstance(elt.getProject());
     if (!fem.isFileOpen(vFile)) {
-      fem.openFile(vFile, true, searchForOpen);
-      return true;
+      return false;
     }
 
     final TextRange range = elt.getTextRange();
