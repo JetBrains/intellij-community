@@ -25,7 +25,7 @@
 package com.intellij.codeInspection.canBeFinal;
 
 import com.intellij.analysis.AnalysisScope;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.*;
@@ -72,6 +72,7 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
       myReportClassesCheckbox = new JCheckBox(InspectionsBundle.message("inspection.can.be.final.option"));
       myReportClassesCheckbox.setSelected(REPORT_CLASSES);
       myReportClassesCheckbox.getModel().addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           REPORT_CLASSES = myReportClassesCheckbox.isSelected();
         }
@@ -82,6 +83,7 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
       myReportMethodsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.can.be.final.option1"));
       myReportMethodsCheckbox.setSelected(REPORT_METHODS);
       myReportMethodsCheckbox.getModel().addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           REPORT_METHODS = myReportMethodsCheckbox.isSelected();
         }
@@ -92,6 +94,7 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
       myReportFieldsCheckbox = new JCheckBox(InspectionsBundle.message("inspection.can.be.final.option2"));
       myReportFieldsCheckbox.setSelected(REPORT_FIELDS);
       myReportFieldsCheckbox.getModel().addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           REPORT_FIELDS = myReportFieldsCheckbox.isSelected();
         }
@@ -115,16 +118,19 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
     return REPORT_FIELDS;
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
   }
 
+  @Override
   @Nullable
   public RefGraphAnnotator getAnnotator(final RefManager refManager) {
     return new CanBeFinalAnnotator(refManager);
   }
 
 
+  @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(final RefEntity refEntity,
                                                 final AnalysisScope scope,
@@ -170,6 +176,7 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
     return null;
   }
 
+  @Override
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
                                                 final ProblemDescriptionsProcessor problemsProcessor) {
     for (RefElement entryPoint : globalContext.getEntryPointsManager(manager).getEntryPoints()) {
@@ -184,6 +191,7 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
             if (!refMethod.isStatic() && !PsiModifier.PRIVATE.equals(refMethod.getAccessModifier()) &&
                 !(refMethod instanceof RefImplicitConstructor)) {
               globalContext.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
+                @Override
                 public boolean process(PsiMethod derivedMethod) {
                   ((RefElementImpl)refMethod).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
                   problemsProcessor.ignoreElement(refMethod);
@@ -196,6 +204,7 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
           @Override public void visitClass(@NotNull final RefClass refClass) {
             if (!refClass.isAnonymous()) {
               globalContext.enqueueDerivedClassesProcessor(refClass, new GlobalJavaInspectionContext.DerivedClassesProcessor() {
+                @Override
                 public boolean process(PsiClass inheritor) {
                   ((RefClassImpl)refClass).setFlag(false, CanBeFinalAnnotator.CAN_BE_FINAL_MASK);
                   problemsProcessor.ignoreElement(refClass);
@@ -207,6 +216,7 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
 
           @Override public void visitField(@NotNull final RefField refField) {
             globalContext.enqueueFieldUsagesProcessor(refField, new GlobalJavaInspectionContext.UsagesProcessor() {
+              @Override
               public boolean process(PsiReference psiReference) {
                 PsiElement expression = psiReference.getElement();
                 if (expression instanceof PsiReferenceExpression && PsiUtil.isAccessedForWriting((PsiExpression)expression)) {
@@ -227,21 +237,25 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
   }
 
 
+  @Override
   @Nullable
   public QuickFix getQuickFix(final String hint) {
     return new AcceptSuggested(null);
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
@@ -254,18 +268,21 @@ public class CanBeFinalInspection extends GlobalJavaInspectionTool {
       myManager = manager;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return QUICK_FIX_NAME;
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) return;
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
       final PsiElement element = descriptor.getPsiElement();
       final PsiModifierListOwner psiElement = PsiTreeUtil.getParentOfType(element, PsiModifierListOwner.class);
       if (psiElement != null) {

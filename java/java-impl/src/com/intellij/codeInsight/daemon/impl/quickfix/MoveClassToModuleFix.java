@@ -114,7 +114,7 @@ public class MoveClassToModuleFix implements IntentionAction {
       list.setCellRenderer(new PsiElementListCellRenderer<PsiClass>() {
         @Override
         public String getElementText(PsiClass psiClass) {
-          return psiClass.getQualifiedName(); 
+          return psiClass.getQualifiedName();
         }
 
         @Nullable
@@ -134,6 +134,7 @@ public class MoveClassToModuleFix implements IntentionAction {
         .setResizable(false)
         .setRequestFocus(true)
         .setItemChoosenCallback(new Runnable() {
+          @Override
           public void run() {
             final Object value = list.getSelectedValue();
             if (value instanceof PsiClass) {
@@ -153,7 +154,7 @@ public class MoveClassToModuleFix implements IntentionAction {
     PsiDirectory directory = PackageUtil
       .findOrCreateDirectoryForPackage(myCurrentModule, StringUtil.getPackageName(fqName), mySourceRoot, true);
     DataContext context = SimpleDataContext.getSimpleContext(LangDataKeys.TARGET_PSI_ELEMENT.getName(), directory, dataContext);
-    
+
     moveHandler.invoke(project, new PsiElement[]{aClass}, context);
     PsiReference reference = file.findReferenceAt(editor.getCaretModel().getOffset());
     PsiClass newClass = JavaPsiFacade.getInstance(project).findClass(fqName, GlobalSearchScope.moduleScope(myCurrentModule));

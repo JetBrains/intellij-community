@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.CustomSuppressableInspectionTool;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.SuppressIntentionAction;
@@ -112,7 +112,7 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
 
     public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
       final PsiFile file = element.getContainingFile();
-      if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
       final Property property = PsiTreeUtil.getParentOfType(element, Property.class);
       LOG.assertTrue(property != null);
@@ -151,7 +151,7 @@ public abstract class PropertySuppressableInspectionBase extends LocalInspection
 
     public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
       final PsiFile file = element.getContainingFile();
-      if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
       @NonNls final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
       LOG.assertTrue(doc != null, file);

@@ -19,7 +19,7 @@
  * User: max
  * Date: Dec 2, 2001
  * Time: 12:07:30 AM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.deadCode;
@@ -35,6 +35,7 @@ public class RefUnreachableFilter extends RefFilter {
     myTool = tool;
   }
 
+  @Override
   public int getElementProblemCount(RefJavaElement refElement) {
     if (refElement instanceof RefParameter) return 0;
     if (refElement.isSyntheticJSP()) return 0;

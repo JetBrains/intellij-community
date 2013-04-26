@@ -21,6 +21,7 @@ import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LanguageFormatting;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
@@ -95,7 +96,8 @@ public class CodeFormatterFacade {
     final Document document = file.getViewProvider().getDocument();
     final RangeMarker rangeMarker = document != null && endOffset < document.getTextLength()? document.createRangeMarker(startOffset, endOffset):null;
 
-    PsiElement elementToFormat = document instanceof DocumentWindow ? InjectedLanguageUtil.getTopLevelFile(file) : psiElement;
+    PsiElement elementToFormat = document instanceof DocumentWindow ? InjectedLanguageManager
+          .getInstance(file.getProject()).getTopLevelFile(file) : psiElement;
     final PsiFile fileToFormat = elementToFormat.getContainingFile();
 
     final FormattingModelBuilder builder = LanguageFormatting.INSTANCE.forContext(fileToFormat);
@@ -144,7 +146,7 @@ public class CodeFormatterFacade {
     Document document = PsiDocumentManager.getInstance(project).getDocument(file);
     final List<FormatTextRanges.FormatTextRange> textRanges = ranges.getRanges();
     if (document instanceof DocumentWindow) {
-      file = InjectedLanguageUtil.getTopLevelFile(file);
+      file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
       final DocumentWindow documentWindow = (DocumentWindow)document;
       for (FormatTextRanges.FormatTextRange range : textRanges) {
         range.setTextRange(documentWindow.injectedToHost(range.getTextRange()));
@@ -220,7 +222,7 @@ public class CodeFormatterFacade {
           if (indentOptions == null) {
             indentOptions  = mySettings.getIndentOptions(file.getFileType());
           }
-          
+
           formatter.format(model, mySettings, indentOptions, ranges);
           for (FormatTextRanges.FormatTextRange range : textRanges) {
             TextRange textRange = range.getTextRange();
@@ -347,7 +349,7 @@ public class CodeFormatterFacade {
     }
     return result == null ? Collections.<PsiLanguageInjectionHost>emptySet() : result;
   }
-  
+
 
   /**
    * Inspects all lines of the given document and wraps all of them that exceed {@link CodeStyleSettings#RIGHT_MARGIN right margin}.
@@ -465,7 +467,7 @@ public class CodeFormatterFacade {
           || CharArrayUtil.shiftBackward(text, startLineOffset, wrapOffset - 1, " \t") < startLineOffset) {
         continue;
       }
-      
+
       // Move caret to the target position and emulate pressing <enter>.
       editor.getCaretModel().moveToOffset(wrapOffset);
       int addedLinesNumber = emulateEnter(editor, project);
@@ -477,7 +479,7 @@ public class CodeFormatterFacade {
 
   /**
    * Emulates pressing <code>Enter</code> at current caret position.
-   * 
+   *
    * @param editor       target editor
    * @return             number of lines added during <code>Enter</code> processing
    */
@@ -533,7 +535,7 @@ public class CodeFormatterFacade {
 
   /**
    * Checks if it's worth to try to wrap target line (it's long enough) and tries to calculate preferred wrap position.
-   * 
+   *
    * @param editor                target editor
    * @param text                  text contained at the given editor
    * @param tabSize               tab space to use (number of visual columns occupied by a tab)

@@ -26,6 +26,7 @@ import com.intellij.psi.PsiExpression;
  */
 public class ValuableDataFlowRunner extends AnnotationsAwareDataFlowRunner {
 
+  @Override
   protected DfaMemoryState createMemoryState() {
     return new MyDfaMemoryState(getFactory());
   }
@@ -35,6 +36,7 @@ public class ValuableDataFlowRunner extends AnnotationsAwareDataFlowRunner {
       super(factory);
     }
 
+    @Override
     protected DfaMemoryStateImpl createNew() {
       return new MyDfaMemoryState(getFactory());
     }
@@ -59,14 +61,17 @@ public class ValuableDataFlowRunner extends AnnotationsAwareDataFlowRunner {
       myExpression = state.myExpression;
     }
 
+    @Override
     public void setValue(final DfaValue value) {
       myValue = value;
     }
 
+    @Override
     public DfaValue getValue() {
       return myValue;
     }
 
+    @Override
     protected ValuableDfaVariableState clone() {
       return new ValuableDfaVariableState(this);
     }

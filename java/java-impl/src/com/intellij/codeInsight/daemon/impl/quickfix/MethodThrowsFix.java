@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.command.undo.UndoUtil;
@@ -79,7 +79,7 @@ public class MethodThrowsFix extends LocalQuickFixAndIntentionActionOnPsiElement
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiMethod myMethod = (PsiMethod)startElement;
-    if (!CodeInsightUtilBase.prepareFileForWrite(myMethod.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(myMethod.getContainingFile())) return;
     PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
     try {
       boolean alreadyThrows = false;

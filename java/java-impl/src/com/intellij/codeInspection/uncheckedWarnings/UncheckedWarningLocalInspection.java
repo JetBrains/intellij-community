@@ -63,22 +63,26 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
   public boolean IGNORE_UNCHECKED_CAST = false;
   public boolean IGNORE_UNCHECKED_OVERRIDING = false;
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
     return SHORT_NAME;
   }
 
+  @Override
   @Pattern(VALID_ID_PATTERN)
   @NotNull
   @NonNls
@@ -86,6 +90,7 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
     return ID;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
@@ -426,14 +431,17 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
       for (final PsiParameter parameter : parameters) {
         final PsiType parameterType = parameter.getType();
         if (parameterType.accept(new PsiTypeVisitor<Boolean>() {
+          @Override
           public Boolean visitPrimitiveType(PsiPrimitiveType primitiveType) {
             return Boolean.FALSE;
           }
 
+          @Override
           public Boolean visitArrayType(PsiArrayType arrayType) {
             return arrayType.getComponentType().accept(this);
           }
 
+          @Override
           public Boolean visitClassType(PsiClassType classType) {
             PsiClass psiClass = classType.resolve();
             if (psiClass instanceof PsiTypeParameter) {
@@ -447,12 +455,14 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
             return Boolean.FALSE;
           }
 
+          @Override
           public Boolean visitWildcardType(PsiWildcardType wildcardType) {
             PsiType bound = wildcardType.getBound();
             if (bound != null) return bound.accept(this);
             return Boolean.TRUE;
           }
 
+          @Override
           public Boolean visitEllipsisType(PsiEllipsisType ellipsisType) {
             return ellipsisType.getComponentType().accept(this);
           }

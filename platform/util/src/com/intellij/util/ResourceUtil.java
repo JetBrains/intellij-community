@@ -77,7 +77,7 @@ public class ResourceUtil {
       return result;
     }
 
-    final StringBuffer temp = new StringBuffer(baseName);
+    final StringBuilder temp = new StringBuilder(baseName);
     temp.append('_');
     temp.append(language);
     if (languageLength > 0) {
@@ -108,10 +108,9 @@ public class ResourceUtil {
   public static String loadText(@NotNull URL url) throws IOException {
     InputStream inputStream = new BufferedInputStream(URLUtil.openStream(url));
 
-    InputStreamReader reader = null;
+    InputStreamReader reader = new InputStreamReader(inputStream, ENCODING_UTF_8);
     try {
-      reader = new InputStreamReader(inputStream, ENCODING_UTF_8);
-      StringBuffer text = new StringBuffer();
+      StringBuilder text = new StringBuilder();
       char[] buf = new char[5000];
       while (reader.ready()) {
         final int length = reader.read(buf);
@@ -121,9 +120,7 @@ public class ResourceUtil {
       return text.toString();
     }
     finally {
-      if (reader != null) {
-        reader.close();
-      }
+      reader.close();
     }
   }
 }

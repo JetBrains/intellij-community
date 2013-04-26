@@ -35,7 +35,7 @@ public abstract class BaseJavaLocalInspectionTool extends LocalInspectionTool  i
    * Override this to report problems at method level.
    *
    * @param method     to check.
-   * @param manager    InspectionManager to ask for ProblemDescriptor's from.
+   * @param manager    InspectionManager to ask for ProblemDescriptors from.
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
    * @return <code>null</code> if no problems found or not applicable at method level.
    */
@@ -48,7 +48,7 @@ public abstract class BaseJavaLocalInspectionTool extends LocalInspectionTool  i
    * Override this to report problems at class level.
    *
    * @param aClass     to check.
-   * @param manager    InspectionManager to ask for ProblemDescriptor's from.
+   * @param manager    InspectionManager to ask for ProblemDescriptors from.
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
    * @return <code>null</code> if no problems found or not applicable at class level.
    */
@@ -61,7 +61,7 @@ public abstract class BaseJavaLocalInspectionTool extends LocalInspectionTool  i
    * Override this to report problems at field level.
    *
    * @param field      to check.
-   * @param manager    InspectionManager to ask for ProblemDescriptor's from.
+   * @param manager    InspectionManager to ask for ProblemDescriptors from.
    * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
    * @return <code>null</code> if no problems found or not applicable at field level.
    */
@@ -74,7 +74,7 @@ public abstract class BaseJavaLocalInspectionTool extends LocalInspectionTool  i
      * Override this to report problems at file level.
      *
      * @param file       to check.
-     * @param manager    InspectionManager to ask for ProblemDescriptor's from.
+     * @param manager    InspectionManager to ask for ProblemDescriptors from.
      * @param isOnTheFly true if called during on the fly editor highlighting. Called from Inspect Code action otherwise.
      * @return <code>null</code> if no problems found or not applicable at file level.
      */

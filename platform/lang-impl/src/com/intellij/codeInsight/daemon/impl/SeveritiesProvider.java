@@ -23,23 +23,25 @@ package com.intellij.codeInsight.daemon.impl;
 import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.openapi.extensions.ExtensionPointName;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.List;
 
 public abstract class SeveritiesProvider {
   public static final ExtensionPointName<SeveritiesProvider> EP_NAME = ExtensionPointName.create("com.intellij.severitiesProvider");
-  
+
   /**
    * @see com.intellij.openapi.editor.colors.TextAttributesKey#createTextAttributesKey(String, com.intellij.openapi.editor.markup.TextAttributes)
    */
+  @NotNull
   public abstract List<HighlightInfoType> getSeveritiesHighlightInfoTypes();
 
   public boolean isGotoBySeverityEnabled(HighlightSeverity minSeverity) {
     return minSeverity != HighlightSeverity.INFORMATION;
   }
 
-  public Color getTrafficRendererColor(TextAttributes textAttributes) {
+  public Color getTrafficRendererColor(@NotNull TextAttributes textAttributes) {
     return textAttributes.getErrorStripeColor();
   }
 }

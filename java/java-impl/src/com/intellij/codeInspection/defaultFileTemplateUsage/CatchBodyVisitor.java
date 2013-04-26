@@ -98,6 +98,7 @@ class CatchBodyVisitor extends JavaRecursiveElementWalkingVisitor {
     }
     // should be equal except parameter names which should resolve to corresponding parameters
     if (!PsiEquivalenceUtil.areElementsEquivalent(catchBlock, templateCatchBlock, new Comparator<PsiElement>() {
+      @Override
       public int compare(final PsiElement o1, final PsiElement o2) {
         if (o1 == parameter && o2 == templateParameter) return 0;
         return -1;
@@ -115,6 +116,7 @@ class CatchBodyVisitor extends JavaRecursiveElementWalkingVisitor {
   private static LocalQuickFix[] createQuickFix() {
     FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(JavaTemplateUtil.TEMPLATE_CATCH_BODY);
     ReplaceWithFileTemplateFix replaceWithFileTemplateFix = new ReplaceWithFileTemplateFix() {
+      @Override
       public void applyFix(@NotNull Project project, @NotNull final ProblemDescriptor descriptor) {
         final PsiCatchSection section = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiCatchSection.class);
         if (section == null) return;

@@ -15,12 +15,12 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -61,7 +61,7 @@ public abstract class MethodArgumentFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     PsiExpression expression = myArgList.getExpressions()[myIndex];
 
     try {

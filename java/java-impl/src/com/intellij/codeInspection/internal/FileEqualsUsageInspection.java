@@ -25,6 +25,7 @@ public class FileEqualsUsageInspection extends InternalInspection {
     "Do not use File.equals/hashCode/compareTo as they don't honor case-sensitivity on MacOS. " +
     "Please use FileUtil.filesEquals/fileHashCode/compareFiles instead";
 
+  @Override
   @NotNull
   public PsiElementVisitor buildInternalVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {

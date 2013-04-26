@@ -20,6 +20,7 @@ import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.injected.editor.DocumentWindowImpl;
 import com.intellij.injected.editor.VirtualFileWindow;
 import com.intellij.lang.Language;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.project.Project;
@@ -93,7 +94,7 @@ public class InjectedFileViewProvider extends SingleRootFileViewProvider impleme
     PsiFile hostFile = documentManager.getPsiFile(hostDocument);
     Language language = getBaseLanguage();
     PsiFile file = getPsi(language);
-    final Language hostFileLanguage = InjectedLanguageUtil.getTopLevelFile(file).getLanguage();
+    final Language hostFileLanguage = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file).getLanguage();
     PsiFile hostPsiFileCopy = (PsiFile)hostFile.copy();
     Segment firstTextRange = oldDocumentWindow.getHostRanges()[0];
     PsiElement hostElementCopy = hostPsiFileCopy.getViewProvider().findElementAt(firstTextRange.getStartOffset(), hostFileLanguage);

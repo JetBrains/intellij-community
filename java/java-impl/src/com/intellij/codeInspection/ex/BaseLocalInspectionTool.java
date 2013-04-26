@@ -15,9 +15,7 @@
  */
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import org.jetbrains.annotations.NotNull;
 
 /**
  * User: anna
@@ -25,6 +23,7 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class BaseLocalInspectionTool extends BaseJavaLocalInspectionTool {
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

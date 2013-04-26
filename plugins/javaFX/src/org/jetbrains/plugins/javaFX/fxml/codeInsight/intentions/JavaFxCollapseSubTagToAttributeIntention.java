@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -40,7 +40,7 @@ import org.jetbrains.plugins.javaFX.fxml.descriptors.JavaFxPropertyElementDescri
 public class JavaFxCollapseSubTagToAttributeIntention extends PsiElementBaseIntentionAction{
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementsForWrite(element)) return;
+    if (!FileModificationService.getInstance().preparePsiElementsForWrite(element)) return;
     final XmlTag tag = (XmlTag)element.getParent();
     final String value;
     if (tag.getSubTags().length == 0) {

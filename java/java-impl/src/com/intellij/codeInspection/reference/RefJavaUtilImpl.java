@@ -31,6 +31,7 @@ import org.jetbrains.annotations.Nullable;
 
 public class RefJavaUtilImpl extends RefJavaUtil{
 
+  @Override
   public void addReferences(final PsiModifierListOwner psiFrom, final RefJavaElement ref, @Nullable PsiElement findIn) {
     final RefJavaElementImpl refFrom = (RefJavaElementImpl)ref;
     if (findIn != null) {
@@ -213,6 +214,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
 
 
+  @Override
   public RefClass getTopLevelClass(RefElement refElement) {
     RefEntity refParent = refElement.getOwner();
 
@@ -224,6 +226,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
     return (RefClass)refElement;
   }
 
+  @Override
   public boolean isInheritor(RefClass subClass, RefClass superClass) {
     if (subClass == superClass) return true;
 
@@ -234,6 +237,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
     return false;
   }
 
+  @Override
   @Nullable
   public String getPackageName(RefEntity refEntity) {
     if (refEntity instanceof RefProject) {
@@ -244,6 +248,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
     return refPackage == null ? InspectionsBundle.message("inspection.reference.default.package") : refPackage.getQualifiedName();
   }
 
+  @Override
   public String getAccessModifier(PsiModifierListOwner psiElement) {
      if (psiElement instanceof PsiParameter) return PsiModifier.PACKAGE_LOCAL;
 
@@ -271,6 +276,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
      return result;
    }
 
+   @Override
    @Nullable public RefClass getOwnerClass(RefManager refManager, PsiElement psiElement) {
      while (psiElement != null && !(psiElement instanceof PsiClass)) {
        psiElement = psiElement.getParent();
@@ -279,6 +285,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
      return psiElement != null ? (RefClass)refManager.getReference(psiElement) : null;
    }
 
+   @Override
    @Nullable public RefClass getOwnerClass(RefElement refElement) {
      RefEntity parent = refElement.getOwner();
 
@@ -293,6 +300,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
 
 
 
+   @Override
    public boolean isMethodOnlyCallsSuper(PsiMethod method) {
      boolean hasStatements = false;
      PsiCodeBlock body = method.getBody();
@@ -325,6 +333,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
      return hasStatements;
    }
 
+   @Override
    public boolean isCallToSuperMethod(PsiExpression expression, PsiMethod method) {
      if (expression instanceof PsiMethodCallExpression) {
        PsiMethodCallExpression methodCall = (PsiMethodCallExpression)expression;
@@ -347,6 +356,7 @@ public class RefJavaUtilImpl extends RefJavaUtil{
      return false;
    }
 
+   @Override
    public int compareAccess(String a1, String a2) {
      int i1 = getAccessNumber(a1);
      int i2 = getAccessNumber(a2);
@@ -372,18 +382,22 @@ public class RefJavaUtilImpl extends RefJavaUtil{
      return -1;
    }
 
+  @Override
   public void setAccessModifier(RefJavaElement refElement, String newAccess) {
     ((RefJavaElementImpl)refElement).setAccessModifier(newAccess);
   }
 
+  @Override
   public void setIsStatic(RefJavaElement refElement, boolean isStatic) {
     ((RefJavaElementImpl)refElement).setIsStatic(isStatic);
   }
 
+  @Override
   public void setIsFinal(RefJavaElement refElement, boolean isFinal) {
     ((RefJavaElementImpl)refElement).setIsFinal(isFinal);
   }
 
+  @Override
   public void addTypeReference(PsiElement psiElement, PsiType psiType, RefManager refManager) {
     RefClass ownerClass = getOwnerClass(refManager, psiElement);
 

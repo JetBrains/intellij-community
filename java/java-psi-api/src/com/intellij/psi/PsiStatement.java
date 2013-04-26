@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Represents a Java statement.
@@ -27,6 +28,7 @@ public interface PsiStatement extends PsiElement {
   PsiStatement[] EMPTY_ARRAY = new PsiStatement[0];
 
   ArrayFactory<PsiStatement> ARRAY_FACTORY = new ArrayFactory<PsiStatement>() {
+    @NotNull
     @Override
     public PsiStatement[] create(final int count) {
       return count == 0 ? PsiStatement.EMPTY_ARRAY : new PsiStatement[count];

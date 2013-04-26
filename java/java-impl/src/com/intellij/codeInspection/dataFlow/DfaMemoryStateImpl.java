@@ -19,7 +19,7 @@
  * User: max
  * Date: Jan 28, 2002
  * Time: 9:39:36 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.dataFlow;
@@ -65,6 +65,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return new DfaMemoryStateImpl(myFactory);
   }
 
+  @Override
   public DfaMemoryStateImpl createCopy() {
     DfaMemoryStateImpl newState = createNew();
 
@@ -224,30 +225,37 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return result.toString();
   }
 
+  @Override
   public DfaValue pop() {
     return myStack.pop();
   }
 
+  @Override
   public DfaValue peek() {
     return myStack.peek();
   }
 
+  @Override
   public void push(@NotNull DfaValue value) {
     myStack.push(value);
   }
 
+  @Override
   public int popOffset() {
     return myOffsetStack.pop();
   }
 
+  @Override
   public void pushOffset(int offset) {
     myOffsetStack.push(offset);
   }
 
+  @Override
   public void emptyStack() {
     myStack.clear();
   }
 
+  @Override
   public void setVarValue(DfaVariableValue var, DfaValue value) {
     if (var == value) return;
 
@@ -308,6 +316,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
     final List<DfaValue> result = new ArrayList<DfaValue>(set.size());
     set.forEach(new TIntProcedure() {
+      @Override
       public boolean execute(int c1) {
         DfaValue value = myFactory.getValue(c1);
         result.add(value);
@@ -486,6 +495,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     myDistinctClasses.add(createPair(c1Index, c2Index));
   }
 
+  @Override
   public boolean isNull(DfaValue dfaValue) {
     if (dfaValue instanceof DfaNotNullValue) return false;
 
@@ -500,6 +510,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return false;
   }
 
+  @Override
   public boolean isNotNull(DfaVariableValue dfaVar) {
     if (getVariableState(dfaVar).isNotNull()) {
       return true;
@@ -523,6 +534,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return false;
   }
 
+  @Override
   public boolean applyInstanceofOrNull(DfaRelationValue dfaCond) {
     DfaValue left = dfaCond.getLeftOperand();
     if (left instanceof DfaBoxedValue) {
@@ -541,6 +553,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return isNull(dfaVar) || varState.setInstanceofValue(dfaType);
   }
 
+  @Override
   public boolean applyCondition(DfaValue dfaCond) {
     if (dfaCond instanceof DfaUnknownValue) return true;
     if (dfaCond instanceof DfaUnboxedValue) {
@@ -719,6 +732,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
+  @Override
   public boolean checkNotNullable(DfaValue value) {
     if (value == myFactory.getConstFactory().getNull()) return false;
     if (value instanceof DfaTypeValue && ((DfaTypeValue)value).isNullable()) return false;
@@ -731,6 +745,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return true;
   }
 
+  @Override
   public boolean applyNotNull(DfaValue value) {
     if (value instanceof DfaVariableValue && ((DfaVariableValue)value).getVariableType() instanceof PsiPrimitiveType) {
       return true;
@@ -768,6 +783,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     return new DfaVariableState(var);
   }
 
+  @Override
   public void flushFields(DataFlowRunner runner) {
     for (DfaVariableValue field : runner.getFields()) {
       if (myVariableStates.containsKey(field) || getEqClassIndex(field) >= 0) {
@@ -779,6 +795,7 @@ public class DfaMemoryStateImpl implements DfaMemoryState {
     }
   }
 
+  @Override
   public void flushVariable(@NotNull DfaVariableValue variable) {
     doFlush(variable);
     flushDependencies(variable);

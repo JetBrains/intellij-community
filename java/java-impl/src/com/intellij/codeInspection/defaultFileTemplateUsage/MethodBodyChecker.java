@@ -105,6 +105,7 @@ public class MethodBodyChecker {
     if (templateBody == null) return;
 
     if (PsiEquivalenceUtil.areElementsEquivalent(body, templateBody, new Comparator<PsiElement>(){
+      @Override
       public int compare(final PsiElement element1, final PsiElement element2) {
         // templates may be different on super method name
         if (element1 == superMethod && (element2 == templateMethod || element2 == null)) return 0;
@@ -171,6 +172,7 @@ public class MethodBodyChecker {
     }
 
     final ReplaceWithFileTemplateFix replaceWithFileTemplateFix = new ReplaceWithFileTemplateFix() {
+      @Override
       public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
         PsiMethod method = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class);
         if (method == null) return;

@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
@@ -28,7 +28,6 @@ import com.intellij.lang.StdLanguages;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
@@ -46,7 +45,7 @@ import org.jetbrains.annotations.Nullable;
  * @author ven
  */
 public class SuppressFix extends SuppressIntentionAction {
-  private String myID;
+  private final String myID;
   private String myAlternativeID;
   private String myText;
 
@@ -109,7 +108,7 @@ public class SuppressFix extends SuppressIntentionAction {
   public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
     PsiDocCommentOwner container = getContainer(element);
     assert container != null;
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(container)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(container)) return;
     if (use15Suppressions(container)) {
       final PsiModifierList modifierList = container.getModifierList();
       if (modifierList != null) {

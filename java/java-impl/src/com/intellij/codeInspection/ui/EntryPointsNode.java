@@ -30,6 +30,7 @@ public class EntryPointsNode extends InspectionNode {
     getTool().updateContent();
   }
 
+  @Override
   public Icon getIcon(boolean expanded) {
     return AllIcons.Nodes.EntryPoints;
   }

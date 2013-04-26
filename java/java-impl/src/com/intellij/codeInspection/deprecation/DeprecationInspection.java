@@ -47,32 +47,38 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
   public boolean IGNORE_ABSTRACT_DEPRECATED_OVERRIDES = true;
   public boolean IGNORE_IMPORT_STATEMENTS = true;
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new DeprecationElementVisitor(holder, IGNORE_INSIDE_DEPRECATED, IGNORE_ABSTRACT_DEPRECATED_OVERRIDES, IGNORE_IMPORT_STATEMENTS);
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getID() {
     return ID;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
@@ -95,7 +101,7 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
 
     public DeprecationElementVisitor(final ProblemsHolder holder,
                                      boolean ignoreInsideDeprecated,
-                                     boolean ignoreAbstractDeprecatedOverrides, 
+                                     boolean ignoreAbstractDeprecatedOverrides,
                                      boolean ignoreImportStatements) {
       myHolder = holder;
       myIgnoreInsideDeprecated = ignoreInsideDeprecated;
@@ -244,7 +250,7 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
                                      PsiElement elementToHighlight,
                                      @Nullable TextRange rangeInElement,
                                      boolean ignoreInsideDeprecated,
-                                     boolean ignoreImportStatements, 
+                                     boolean ignoreImportStatements,
                                      ProblemsHolder holder) {
     if (!(refElement instanceof PsiDocCommentOwner)) return;
     if (!((PsiDocCommentOwner)refElement).isDeprecated()) return;
@@ -259,7 +265,7 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
     if (ignoreImportStatements && PsiTreeUtil.getParentOfType(elementToHighlight, PsiImportStatementBase.class) != null) {
       return;
     }
-    
+
     String description = JavaErrorMessages.message("deprecated.symbol",
                                                    HighlightMessageUtil.getSymbolName(refElement, PsiSubstitutor.EMPTY));
 

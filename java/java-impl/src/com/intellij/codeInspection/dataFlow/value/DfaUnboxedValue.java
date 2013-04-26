@@ -39,6 +39,7 @@ public class DfaUnboxedValue extends DfaValue {
     return myVariable.isNegated();
   }
 
+  @Override
   public DfaValue createNegated() {
     return myFactory.getBoxedFactory().createUnboxed(myVariable.createNegated());
   }

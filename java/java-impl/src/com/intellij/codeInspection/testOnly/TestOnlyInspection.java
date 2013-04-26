@@ -29,21 +29,25 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.test.only.problems.display.name");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "TestOnlyProblems";
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GENERAL_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder h, boolean isOnTheFly) {
     return new JavaElementVisitor() {

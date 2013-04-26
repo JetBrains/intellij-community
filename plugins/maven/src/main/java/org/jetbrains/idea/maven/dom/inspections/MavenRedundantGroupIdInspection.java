@@ -1,7 +1,7 @@
 package org.jetbrains.idea.maven.dom.inspections;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -65,7 +65,7 @@ public class MavenRedundantGroupIdInspection extends XmlSuppressableInspectionTo
               public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
                 PsiElement xmlTag = descriptor.getPsiElement();
 
-                if (xmlTag.isValid() && CodeInsightUtilBase.preparePsiElementForWrite(xmlTag)) {
+                if (xmlTag.isValid() && FileModificationService.getInstance().preparePsiElementForWrite(xmlTag)) {
                   xmlTag.delete();
                 }
               }

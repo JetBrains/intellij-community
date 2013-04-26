@@ -23,11 +23,12 @@ import org.jetbrains.annotations.Nullable;
 /**
  * Represents the list of import statements contained in a Java or JSP file.
  *
- * @see PsiJavaFile#getImportList() 
+ * @see PsiJavaFile#getImportList()
  */
 public interface PsiImportList extends PsiElement {
   PsiImportList[] EMPTY_ARRAY = new PsiImportList[0];
   ArrayFactory<PsiImportList> ARRAY_FACTORY = new ArrayFactory<PsiImportList>() {
+    @NotNull
     @Override
     public PsiImportList[] create(int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiImportList[count];

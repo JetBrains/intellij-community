@@ -15,7 +15,7 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ImportOptimizer;
@@ -76,15 +76,12 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
       if (target.endsWith(".*")) {
         if (!usedNames.contains(StringUtil.trimEnd(target, ".*"))) {
           problems.add(inspectionManager
-                         .createProblemDescriptor(instruction, "Unused import", ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, isOnTheFly,
-                                                  new JavaFxOptimizeImportsFix()));
+                         .createProblemDescriptor(instruction, "Unused import", new JavaFxOptimizeImportsFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly));
         }
       }
       else if (!usedNames.contains(target) || targetProcessingInstructions.containsKey(StringUtil.getPackageName(target) + ".*")) {
         problems.add(inspectionManager
-                       .createProblemDescriptor(instruction, "Unused import", ProblemHighlightType.LIKE_UNUSED_SYMBOL, null, 
-                                                isOnTheFly,
-                                                new JavaFxOptimizeImportsFix()));
+                       .createProblemDescriptor(instruction, "Unused import", new JavaFxOptimizeImportsFix(), ProblemHighlightType.LIKE_UNUSED_SYMBOL, isOnTheFly));
       }
     }
     return problems.isEmpty() ? null : problems.toArray(new ProblemDescriptor[problems.size()]);
@@ -109,7 +106,7 @@ public class JavaFxUnusedImportsInspection extends XmlSuppressableInspectionTool
       if (psiElement == null) return;
       final PsiFile file = psiElement.getContainingFile();
       if (file == null || !JavaFxFileTypeFactory.isFxml(file)) return;
-      if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
       ImportOptimizer optimizer = new JavaFxImportsOptimizer();
       final Runnable runnable = optimizer.processFile(file);
       new WriteCommandAction.Simple(project, getFamilyName(), file) {

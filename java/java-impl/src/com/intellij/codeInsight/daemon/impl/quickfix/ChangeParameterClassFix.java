@@ -24,7 +24,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
@@ -75,7 +75,7 @@ public class ChangeParameterClassFix extends ExtendsListFix {
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiClass myClass = (PsiClass)startElement;
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(
       new Runnable() {
         @Override

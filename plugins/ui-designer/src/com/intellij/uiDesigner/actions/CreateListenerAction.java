@@ -17,7 +17,7 @@
 package com.intellij.uiDesigner.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.ide.DataManager;
 import com.intellij.openapi.actionSystem.*;
@@ -148,7 +148,7 @@ public class CreateListenerAction extends AbstractGuiEditorAction {
       }
       final PsiClass myClass = boundFields[0].getContainingClass();
 
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(myClass)) return;
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(myClass)) return;
 
       try {
         PsiMethod constructor = findConstructorToInsert(myClass);

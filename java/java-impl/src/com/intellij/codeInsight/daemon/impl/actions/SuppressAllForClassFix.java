@@ -15,11 +15,10 @@
  */
 package com.intellij.codeInsight.daemon.impl.actions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressManager;
-import com.intellij.codeInspection.SuppressManagerImpl;
 import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -70,7 +69,7 @@ public class SuppressAllForClassFix extends SuppressFix {
   public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
     final PsiDocCommentOwner container = getContainer(element);
     LOG.assertTrue(container != null);
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(container)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(container)) return;
     if (use15Suppressions(container)) {
       final PsiModifierList modifierList = container.getModifierList();
       if (modifierList != null) {

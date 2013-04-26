@@ -16,7 +16,7 @@
 
 package com.intellij.codeInspection.ui;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
@@ -488,7 +488,7 @@ class Browser extends JPanel {
       if (element instanceof RefElement) {
         PsiElement psiElement = ((RefElement)element).getElement();
         if (psiElement != null && psiElement.isValid()) {
-          if (!CodeInsightUtilBase.preparePsiElementForWrite(psiElement)) return;
+          if (!FileModificationService.getInstance().preparePsiElementForWrite(psiElement)) return;
           performFix(element, descriptor, idx, fixes[idx]);
         }
       }

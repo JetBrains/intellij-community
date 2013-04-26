@@ -16,6 +16,7 @@
 
 package com.intellij.psi.impl.source.resolve.reference.impl.providers;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.module.Module;
@@ -314,7 +315,8 @@ public class FileReferenceSet {
 
   @Nullable
   protected PsiFile getContainingFile() {
-    final PsiFile file = InjectedLanguageUtil.getTopLevelFile(myElement.getContainingFile());
+    PsiFile cf = myElement.getContainingFile();
+    final PsiFile file = InjectedLanguageManager.getInstance(cf.getProject()).getTopLevelFile(cf);
     if (file == null) {
       LOG.error("Invalid element: " + myElement);
     }

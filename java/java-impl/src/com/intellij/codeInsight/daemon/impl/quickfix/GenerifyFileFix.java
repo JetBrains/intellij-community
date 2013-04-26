@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.application.Result;
@@ -81,7 +81,7 @@ public class GenerifyFileFix implements IntentionAction, LocalQuickFix {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     new TypeCookAction().getHandler().invoke(project, editor, file, null);
   }
 

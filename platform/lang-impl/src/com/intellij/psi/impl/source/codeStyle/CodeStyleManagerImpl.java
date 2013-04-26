@@ -55,7 +55,7 @@ import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 public class CodeStyleManagerImpl extends CodeStyleManager {
-  
+
   private static final Logger LOG = Logger.getInstance("#com.intellij.psi.impl.source.codeStyle.CodeStyleManagerImpl");
   private static final ThreadLocal<ProcessingUnderProgressInfo> SEQUENTIAL_PROCESSING_ALLOWED
     = new ThreadLocal<ProcessingUnderProgressInfo>()
@@ -65,7 +65,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       return new ProcessingUnderProgressInfo();
     }
   };
-  
+
   private final Project myProject;
   @NonNls private static final String DUMMY_IDENTIFIER = "xxx";
 
@@ -214,7 +214,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
         formatToEnd
       ));
     }
-    
+
     FormatTextRanges formatRanges = new FormatTextRanges();
     for (TextRange range : ranges) {
       formatRanges.add(range, true);
@@ -232,7 +232,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (editor == null) {
       return;
     }
-    
+
     if (visualColumnToRestore < 0) {
       editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
       return;
@@ -279,7 +279,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     TextRange textRange = addedElement.getTextRange();
     final Document document = fileViewProvider.getDocument();
     if (document instanceof DocumentWindow) {
-      containingFile = InjectedLanguageUtil.getTopLevelFile(containingFile);
+      containingFile = InjectedLanguageManager.getInstance(containingFile.getProject()).getTopLevelFile(containingFile);
       textRange = ((DocumentWindow)document).injectedToHost(textRange);
     }
 
@@ -436,7 +436,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     }
     return false;
   }
-  
+
   private static boolean isWhiteSpaceSymbol(char c) {
     return c == ' ' || c == '\t' || c == '\n';
   }
@@ -485,8 +485,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
    * @throws IncorrectOperationException  if given file is read-only
    */
   @Nullable
-  public static TextRange insertNewLineIndentMarker(@NotNull PsiFile file, @NotNull Document document, int offset) 
-    throws IncorrectOperationException 
+  public static TextRange insertNewLineIndentMarker(@NotNull PsiFile file, @NotNull Document document, int offset)
+    throws IncorrectOperationException
   {
     TextRange result = insertNewLineIndentMarker(file, offset);
     if (result == null) {
@@ -509,7 +509,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     ASTNode node = SourceTreeToPsiMap.psiElementToTree(element);
     if (node == null) {
       return null;
-    } 
+    }
     ASTNode parent = node.getTreeParent();
     int elementStart = element.getTextRange().getStartOffset();
     int rangeShift = 0;
@@ -521,8 +521,8 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
     if (elementStart > offset) {
       return null;
-    } 
-    
+    }
+
     // We don't want to insert a marker if target line is not blank (doesn't consist from white space symbols only).
     if (offset == elementStart) {
       for (ASTNode prev = TreeUtil.prevLeaf(node); ; prev = TreeUtil.prevLeaf(prev)) {
@@ -540,7 +540,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
 
     CharTable charTable = pair.second;
     ASTNode marker;
-    
+
     // The thing is that we have a sub-system that monitors tree changes and marks newly generated elements for postponed
     // formatting (PostprocessReformattingAspect). In case of injected context that results in marking whole injected region
     // in case its sub-range is changed.
@@ -548,7 +548,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     // We want to avoid that here, so, temporarily suppress that functionality.
     CodeEditUtil.setAllowSuspendNodesReformatting(false);
     try {
-      
+
       ASTNode space1 = splitSpaceElement((TreeElement)element, offset - elementStart, charTable);
       marker = Factory.createSingleLeafElement(TokenType.NEW_LINE_INDENT, DUMMY_IDENTIFIER, charTable, file.getManager());
       setSequentialProcessingAllowed(false);
@@ -567,7 +567,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     if (offset < 0 || offset >= text.length() || !isWhiteSpaceSymbol(text.charAt(offset))) {
       return null;
     }
-    
+
     int start = offset;
     for (int i = offset - 1; i >= 0; i--) {
       char c = text.charAt(i);
@@ -580,21 +580,21 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       }
       start = i;
     }
-    
+
     int end = offset;
     for (; end < text.length(); end++) {
       if (!isWhiteSpaceSymbol(text.charAt(end))) {
         break;
       }
     }
-    
+
     StringBuilder buffer = new StringBuilder();
     buffer.append(text.subSequence(start, end));
-    
+
     // Modify the document in order to expand range markers pointing to the given offset to the whole white space range.
     document.deleteString(start, end);
     document.insertString(start, buffer);
-    
+
     setSequentialProcessingAllowed(false);
     document.insertString(offset, DUMMY_IDENTIFIER);
     return new TextRange(offset, offset + DUMMY_IDENTIFIER.length());
@@ -603,7 +603,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
   /**
    * Allows to check if given offset points to white space element within the given PSI file and return that white space
    * element in the case of positive answer.
-   * 
+   *
    * @param file    target file
    * @param offset  offset that might point to white space element within the given PSI file
    * @return        target white space element for the given offset within the given file (if any); <code>null</code> otherwise
@@ -631,10 +631,10 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
     ASTNode node = elementAt.getNode();
     if (node == null || node.getElementType() != TokenType.WHITE_SPACE) {
       return new Pair<PsiElement, CharTable>(null, charTable);
-    } 
+    }
     return new Pair<PsiElement, CharTable>(elementAt, charTable);
   }
-  
+
   @Override
   public Indent getIndent(String text, FileType fileType) {
     int indent = IndentHelperImpl.getIndent(myProject, fileType, text, true);
@@ -701,7 +701,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
    * Current approach is not allow to stop sequential processing for more than predefine amount of time (couple of seconds).
    * That means that call to this method with <code>'true'</code> argument is not mandatory for successful processing even
    * if this method is called with <code>'false'</code> argument before.
-   * 
+   *
    * @param allowed     flag that defines if {@link #isSequentialProcessingAllowed() sequential processing} should be allowed
    */
   public static void setSequentialProcessingAllowed(boolean allowed) {
@@ -713,14 +713,14 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       info.increment();
     }
   }
-  
+
   private static class ProcessingUnderProgressInfo {
-    
+
     private static final long DURATION_TIME = TimeUnit.MILLISECONDS.convert(5, TimeUnit.SECONDS);
-    
+
     private int  myCount;
     private long myEndTime;
-    
+
     public void increment() {
       if (myCount > 0 && System.currentTimeMillis() > myEndTime) {
         myCount = 0;
@@ -728,14 +728,14 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       myCount++;
       myEndTime = System.currentTimeMillis() + DURATION_TIME;
     }
-    
+
     public void decrement() {
       if (myCount <= 0) {
         return;
       }
       myCount--;
     }
-    
+
     public boolean isAllowed() {
       return myCount <= 0 || System.currentTimeMillis() >= myEndTime;
     }
@@ -785,7 +785,7 @@ public class CodeStyleManagerImpl extends CodeStyleManager {
       }
     });
   }
-  
+
   private static class RangeFormatInfo{
 
     public final SmartPsiElementPointer startPointer;

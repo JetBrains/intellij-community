@@ -60,6 +60,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
   @NonNls private static final String QUICK_FIX_NAME = InspectionsBundle.message("inspection.empty.method.delete.quickfix");
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.emptyMethod.EmptyMethodInspection");
 
+  @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(RefEntity refEntity,
                                                 AnalysisScope scope,
@@ -134,6 +135,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
       final ArrayList<LocalQuickFix> fixes = new ArrayList<LocalQuickFix>();
       fixes.add(getFix(processor, needToDeleteHierarchy));
       SpecialAnnotationsUtil.createAddToSpecialAnnotationFixes(refMethod.getElement(), new Processor<String>() {
+        @Override
         public boolean process(final String qualifiedName) {
           fixes.add(SpecialAnnotationsUtil.createAddToSpecialAnnotationsListQuickFix(
             QuickFixBundle.message("fix.add.special.annotation.text", qualifiedName),
@@ -198,6 +200,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
     return false;
   }
 
+  @Override
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext context,
                                                 final ProblemDescriptionsProcessor descriptionsProcessor) {
      manager.iterate(new RefJavaVisitor() {
@@ -206,6 +209,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
           refEntity.accept(new RefJavaVisitor() {
             @Override public void visitMethod(@NotNull final RefMethod refMethod) {
               context.enqueueDerivedMethodsProcessor(refMethod, new GlobalJavaInspectionContext.DerivedMethodsProcessor() {
+                @Override
                 public boolean process(PsiMethod derivedMethod) {
                   PsiCodeBlock body = derivedMethod.getBody();
                   if (body == null) return true;
@@ -225,16 +229,19 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
   }
 
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
@@ -257,6 +264,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
     return (LocalQuickFix)fix;
   }
 
+  @Override
   public String getHint(final QuickFix fix) {
     final List<Boolean> list = myQuickFixes.getKeysByValue(fix);
     if (list != null) {
@@ -266,11 +274,13 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
     return null;
   }
 
+  @Override
   @Nullable
   public LocalQuickFix getQuickFix(final String hint) {
     return new DeleteMethodIntention(hint);
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     final JPanel listPanel = SpecialAnnotationsUtil
@@ -288,16 +298,19 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
       myHint = hint;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return QUICK_FIX_NAME;
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return QUICK_FIX_NAME;
     }
 
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiMethod psiMethod = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), PsiMethod.class, false);
       if (psiMethod != null) {
@@ -306,6 +319,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
         if (Boolean.valueOf(myHint).booleanValue()) {
           final Query<Pair<PsiMethod, PsiMethod>> query = AllOverridingMethodsSearch.search(psiMethod.getContainingClass());
           query.forEach(new Processor<Pair<PsiMethod, PsiMethod>>() {
+            @Override
             public boolean process(final Pair<PsiMethod, PsiMethod> pair) {
               if (pair.first == psiMethod) {
                 psiElements.add(pair.second);
@@ -316,6 +330,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
         }
 
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElements), false);
           }
@@ -334,15 +349,18 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
       myNeedToDeleteHierarchy = needToDeleteHierarchy;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return QUICK_FIX_NAME;
     }
 
+    @Override
     public void applyFix(final @NotNull Project project, @NotNull ProblemDescriptor descriptor) {
        applyFix(project, new ProblemDescriptor[]{descriptor}, new ArrayList<PsiElement>(), null);
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
@@ -381,6 +399,7 @@ public class EmptyMethodInspection extends GlobalJavaInspectionTool {
         }
       }
       ApplicationManager.getApplication().invokeLater(new Runnable() {
+        @Override
         public void run() {
           SafeDeleteHandler.invoke(project, PsiUtilCore.toPsiElementArray(psiElementsToIgnore), false, refreshViews);
         }

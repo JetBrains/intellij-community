@@ -41,7 +41,7 @@ import org.jetbrains.annotations.Nullable;
  * @see com.intellij.openapi.progress.ProgressManager#run(Task)
  */
 public abstract class Task implements TaskInfo, Progressive {
-  private final static Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.Task");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.progress.Task");
   protected final Project myProject;
   protected String myTitle;
   private final boolean myCanBeCancelled;
@@ -73,10 +73,12 @@ public abstract class Task implements TaskInfo, Progressive {
     ProgressManager.getInstance().run(this);
   }
 
+  @Override
   public String getProcessId() {
     return "<unknown>";
   }
 
+  @Override
   @NotNull
   public final String getTitle() {
     return myTitle;
@@ -87,6 +89,7 @@ public abstract class Task implements TaskInfo, Progressive {
     return this;
   }
 
+  @Override
   public final String getCancelText() {
     return myCancelText;
   }
@@ -115,10 +118,12 @@ public abstract class Task implements TaskInfo, Progressive {
     return this;
   }
 
+  @Override
   public final String getCancelTooltipText() {
     return myCancelTooltipText;
   }
 
+  @Override
   public final boolean isCancellable() {
     return myCanBeCancelled;
   }
@@ -160,16 +165,19 @@ public abstract class Task implements TaskInfo, Progressive {
       this(project, title, true);
     }
 
+    @Override
     public boolean shouldStartInBackground() {
       return myBackgroundOption == null || myBackgroundOption.shouldStartInBackground();
     }
 
+    @Override
     public void processSentToBackground() {
       if (myBackgroundOption != null) {
         myBackgroundOption.processSentToBackground();
       }
     }
 
+    @Override
     public final boolean isModal() {
       return false;
     }
@@ -189,6 +197,7 @@ public abstract class Task implements TaskInfo, Progressive {
     }
 
 
+    @Override
     public final boolean isModal() {
       return true;
     }
@@ -200,6 +209,7 @@ public abstract class Task implements TaskInfo, Progressive {
       super(project, title, canBeCancelled, backgroundOption);
     }
 
+    @Override
     public final boolean isConditionalModal() {
       return true;
     }

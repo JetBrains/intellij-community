@@ -32,6 +32,7 @@ public class SortedIntSet extends TIntArrayList implements Comparable<SortedIntS
     super(values);
   }
 
+  @Override
   public void add(int val) {
     for(int idx = 0; idx < size(); idx++) {
       int data = get(idx);
@@ -44,6 +45,7 @@ public class SortedIntSet extends TIntArrayList implements Comparable<SortedIntS
     super.add(val);
   }
 
+  @Override
   public void add(int[] vals) {
     for (int val : vals) {
       add(val);
@@ -57,6 +59,7 @@ public class SortedIntSet extends TIntArrayList implements Comparable<SortedIntS
     }
   }
 
+  @Override
   public int compareTo(SortedIntSet t) {
     if (t == this) return 0;
     if (t.size() != size()) return size() - t.size();

@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.actions.AddImportAction;
@@ -149,7 +149,7 @@ public class StaticImportMethodFix implements IntentionAction {
     }
     return null;
   }
-  
+
   @NotNull
   private List<PsiMethod> getMethodsToImport() {
     PsiShortNamesCache cache = PsiShortNamesCache.getInstance(myMethodCall.getProject());
@@ -246,7 +246,7 @@ public class StaticImportMethodFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     if (candidates.size() == 1) {
       final PsiMethod toImport = candidates.get(0);
       doImport(toImport);

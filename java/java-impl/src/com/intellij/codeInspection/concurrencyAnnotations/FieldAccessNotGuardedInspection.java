@@ -26,22 +26,26 @@ import org.jetbrains.annotations.Nullable;
 
 public class FieldAccessNotGuardedInspection extends BaseJavaLocalInspectionTool {
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.CONCURRENCY_ANNOTATION_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Unguarded field access";
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "FieldAccessNotGuarded";
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new Visitor(holder);
@@ -55,6 +59,7 @@ public class FieldAccessNotGuardedInspection extends BaseJavaLocalInspectionTool
       myHolder = holder;
     }
 
+    @Override
     public void visitReferenceExpression(PsiReferenceExpression expression) {
       final PsiElement referent = expression.resolve();
       if (referent == null || !(referent instanceof PsiField)) {
@@ -85,7 +90,7 @@ public class FieldAccessNotGuardedInspection extends BaseJavaLocalInspectionTool
           while (child != null) {
             if (isLockGuardStatement(guard, child, "lock")) return;
             final PsiElement childParent = child.getParent();
-            if (child instanceof PsiMethodCallExpression && 
+            if (child instanceof PsiMethodCallExpression &&
                 isCallOnGuard(guard, "tryLock", (PsiMethodCallExpression)child) &&
                 childParent instanceof PsiIfStatement &&
                 ((PsiIfStatement)childParent).getCondition() == child) {

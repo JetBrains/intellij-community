@@ -40,16 +40,19 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
 
   private final LocalQuickFix myQuickFixAction;
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.VERBOSE_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.redundant.type.display.name");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "RedundantTypeArguments";
@@ -57,6 +60,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
 
 
 
+  @Override
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod psiMethod, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiCodeBlock body = psiMethod.getBody();
     if (body != null) {
@@ -65,6 +69,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
     return null;
   }
 
+  @Override
   public ProblemDescriptor[] getDescriptions(PsiElement place, final InspectionManager inspectionManager, boolean isOnTheFly) {
     final List<ProblemDescriptor> problems = new ArrayList<ProblemDescriptor>();
     place.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -137,11 +142,13 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
   }
 
   private static class MyQuickFixAction implements LocalQuickFix {
+    @Override
     @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.redundant.type.remove.quickfix");
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       final PsiReferenceParameterList typeArgumentList = (PsiReferenceParameterList)descriptor.getPsiElement();
       try {
@@ -154,6 +161,7 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
       }
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();

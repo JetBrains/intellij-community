@@ -61,9 +61,10 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NOT_ANNOTATED_SETTER_PARAMETER = true;
   @Deprecated @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_ANNOTATION_NOT_PROPAGATED_TO_OVERRIDERS = true; // remains for test
   @SuppressWarnings({"WeakerAccess"}) public boolean REPORT_NULLS_PASSED_TO_NON_ANNOTATED_METHOD = true;
-  
-  private static final Logger LOG = Logger.getInstance("#" + NullableStuffInspection.class.getName()); 
 
+  private static final Logger LOG = Logger.getInstance("#" + NullableStuffInspection.class.getName());
+
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -251,16 +252,19 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(annotation, listOwner));
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.nullable.problems.display.name");
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "NullableProblems";
@@ -325,8 +329,8 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
             if (!AnnotationUtil.isAnnotated(parameter, nullableManager.getAllAnnotations(), false, false) &&
                 nullableManager.isNotNull(superParameter, false)) {
               reported_not_annotated_parameter_overrides_notnull[i] = true;
-              final LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(parameter, nullableManager.getDefaultNotNull()) 
-                                        ? new AddNotNullAnnotationFix(parameter) 
+              final LocalQuickFix fix = AnnotationUtil.isAnnotatingApplicable(parameter, nullableManager.getDefaultNotNull())
+                                        ? new AddNotNullAnnotationFix(parameter)
                                         : createChangeDefaultNotNullFix(nullableManager, superParameter);
               holder.registerProblem(parameter.getNameIdentifier(),
                                      InspectionsBundle.message("inspection.nullable.problems.parameter.overrides.NotNull"),
@@ -356,14 +360,14 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
         boolean methodQuickFixSuggested = false;
         for (PsiMethod overriding : overridings) {
           if (!manager.isInProject(overriding)) continue;
-          
+
           final boolean applicable = AnnotationUtil.isAnnotatingApplicable(overriding, defaultNotNull);
           if (!methodQuickFixSuggested
               && annotated.isDeclaredNotNull
-              && !nullableManager.isNotNull(overriding, false) 
+              && !nullableManager.isNotNull(overriding, false)
               && (nullableManager.isNullable(overriding, false) || !nullableManager.isNullable(overriding, true))) {
             method.getNameIdentifier(); //load tree
-            PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNotNulls());            
+            PsiAnnotation annotation = AnnotationUtil.findAnnotation(method, nullableManager.getNotNulls());
             final String[] annotationsToRemove = ArrayUtil.toStringArray(nullableManager.getNullables());
 
             final LocalQuickFix fix;
@@ -440,6 +444,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
                            ProblemHighlightType.GENERIC_ERROR_OR_WARNING, new RemoveAnnotationQuickFix(declaredNullable, listOwner));
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
   }
@@ -463,10 +468,12 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       super(defaultNotNull, annotationsToRemove);
     }
 
+    @Override
     protected boolean annotateOverriddenMethods() {
       return true;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionsBundle.message("annotate.overridden.methods.as.notnull", ClassUtil.extractClassName(myAnnotation));
@@ -485,6 +492,7 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
       add(myPanel, BorderLayout.CENTER);
 
       ActionListener actionListener = new ActionListener() {
+        @Override
         public void actionPerformed(ActionEvent e) {
           apply();
         }

@@ -16,9 +16,8 @@
 package com.intellij.codeInspection.actions;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.TargetElementUtilBase;
-import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.codeInsight.intention.impl.BaseIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.Result;
@@ -46,11 +45,13 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
   private static final Logger LOG = Logger.getInstance(ReplaceImplementsWithStaticImportAction.class);
   @NonNls private static final String FIND_CONSTANT_FIELD_USAGES = "Find constant field usages...";
 
+  @Override
   @NotNull
   public String getText() {
     return "Replace Implements with Static Import";
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getText();
@@ -105,7 +106,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
 
     final int offset = editor.getCaretModel().getOffset();
     final PsiReference psiReference = file.findReferenceAt(offset);
@@ -120,6 +121,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
 
       final PsiClass targetClass = (PsiClass)target;
       new WriteCommandAction(project, getText()) {
+        @Override
         protected void run(Result result) throws Throwable {
           for (PsiField constField : targetClass.getAllFields()) {
             final String fieldName = constField.getName();
@@ -155,6 +157,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
       final PsiClass targetClass = (PsiClass)element;
       final Map<PsiFile, Map<PsiField, Set<PsiReference>>> refs = new HashMap<PsiFile, Map<PsiField, Set<PsiReference>>>();
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        @Override
         public void run() {
           for (PsiField field : targetClass.getAllFields()) {
             final PsiClass containingClass = field.getContainingClass();
@@ -187,6 +190,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
 
       final Set<PsiJavaCodeReferenceElement> refs2Unimplement = new HashSet<PsiJavaCodeReferenceElement>();
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable() {
+        @Override
         public void run() {
           for (PsiClass psiClass : DirectClassInheritorsSearch.search(targetClass)) {
             PsiFile containingFile = psiClass.getContainingFile();
@@ -202,6 +206,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
       }
 
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
 
           for (PsiFile psiFile : refs.keySet()) {
@@ -220,11 +225,12 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
           }
         }
       });
-      
+
       final Set<SmartPsiElementPointer<PsiImportStatementBase>> redundant = new HashSet<SmartPsiElementPointer<PsiImportStatementBase>>();
       final JavaCodeStyleManager codeStyleManager = JavaCodeStyleManager.getInstance(project);
       final SmartPointerManager pointerManager = SmartPointerManager.getInstance(project);
       if (!ProgressManager.getInstance().runProcessWithProgressSynchronously(new Runnable(){
+        @Override
         public void run() {
           for (PsiFile psiFile : refs.keySet()) {
             final Collection<PsiImportStatementBase> red = codeStyleManager.findRedundantImports((PsiJavaFile)psiFile);
@@ -237,6 +243,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
         }
       }, "Collect redundant imports...", true, project)) return;
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           for (SmartPsiElementPointer<PsiImportStatementBase> pointer : redundant) {
             final PsiImportStatementBase statementBase = pointer.getElement();
@@ -302,6 +309,7 @@ public class ReplaceImplementsWithStaticImportAction extends BaseIntentionAction
     return false;
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

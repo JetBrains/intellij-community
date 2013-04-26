@@ -1,6 +1,6 @@
 package com.intellij.codeInsight.daemon;
 
-import com.intellij.codeInsight.daemon.impl.analysis.FileHighlighingSetting;
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightingSettingsPerFile;
 import com.intellij.codeInspection.LocalInspectionTool;
 import com.intellij.codeInspection.unusedImport.UnusedImportLocalInspection;
@@ -16,14 +16,14 @@ public class UnusedImportsTest extends DaemonAnalyzerTestCase {
 
   public void test1() throws Exception { doTest(); }
   public void test2() throws Exception { doTest(); }
-  
+
   public void testWithHighlightingOff() throws Exception {
     configureByFile(BASE_PATH + "/" + getTestName(false) + ".java");
     final PsiFile file = getFile();
     final HighlightingSettingsPerFile settingsPerFile = HighlightingSettingsPerFile.getInstance(myProject);
-    final FileHighlighingSetting oldSetting = settingsPerFile.getHighlightingSettingForRoot(file);
+    final FileHighlightingSetting oldSetting = settingsPerFile.getHighlightingSettingForRoot(file);
     try {
-      settingsPerFile.setHighlightingSettingForRoot(file, FileHighlighingSetting.NONE);
+      settingsPerFile.setHighlightingSettingForRoot(file, FileHighlightingSetting.NONE);
       doDoTest(true, false, false);
     }
     finally {

@@ -64,6 +64,7 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
   public static final TObjectIntHashMap<String> NAME_TO_MODIFIER_FLAG_MAP = new TObjectIntHashMap<String>();
   public static final Map<String, IElementType> NAME_TO_MODIFIER_ELEMENT_TYPE = ContainerUtil.newHashMap();
   private static final ArrayFactory<GrAnnotation> ARRAY_FACTORY = new ArrayFactory<GrAnnotation>() {
+    @NotNull
     @Override
     public GrAnnotation[] create(int count) {
       return new GrAnnotation[count];

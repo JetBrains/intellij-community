@@ -266,7 +266,7 @@ public class CodeInsightUtil {
   }
 
   public static boolean preparePsiElementsForWrite(@NotNull PsiElement... elements) {
-    return CodeInsightUtilBase.preparePsiElementsForWrite(Arrays.asList(elements));
+    return FileModificationService.getInstance().preparePsiElementsForWrite(Arrays.asList(elements));
   }
 
   public static void processSubTypes(PsiType psiType,

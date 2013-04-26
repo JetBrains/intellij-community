@@ -15,7 +15,7 @@
  */
 package org.intellij.lang.xpath.xslt.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.template.TemplateBuilderImpl;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -112,7 +112,7 @@ public abstract class AbstractFix implements IntentionAction {
         if (!isAvailable(project, editor, psiFile)) {
           return;
         }
-        if (!CodeInsightUtilBase.prepareFileForWrite(psiFile)) {
+        if (!FileModificationService.getInstance().prepareFileForWrite(psiFile)) {
           return;
         }
         try {

@@ -26,22 +26,26 @@ import org.jetbrains.annotations.NotNull;
 
 public class InstanceGuardedByStaticInspection extends BaseJavaLocalInspectionTool {
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.CONCURRENCY_ANNOTATION_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Instance member guarded by static field";
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "InstanceGuardedByStatic";
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly) {
     return new Visitor(holder);
@@ -55,6 +59,7 @@ public class InstanceGuardedByStaticInspection extends BaseJavaLocalInspectionTo
     }
 
 
+    @Override
     public void visitDocTag(PsiDocTag psiDocTag) {
       super.visitDocTag(psiDocTag);
       if (!JCiPUtil.isGuardedByTag(psiDocTag)) {
@@ -83,6 +88,7 @@ public class InstanceGuardedByStaticInspection extends BaseJavaLocalInspectionTo
       myHolder.registerProblem(psiDocTag, "Instance member guarded by static \"" + guardValue + "\" #loc");
     }
 
+    @Override
     public void visitAnnotation(PsiAnnotation annotation) {
       super.visitAnnotation(annotation);
       if (!JCiPUtil.isGuardedByAnnotation(annotation)) {

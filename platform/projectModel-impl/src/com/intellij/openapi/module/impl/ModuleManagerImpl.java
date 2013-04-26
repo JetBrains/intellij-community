@@ -40,12 +40,14 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.containers.HashMap;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.StringInterner;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
 import com.intellij.util.graph.GraphGenerator;
 import com.intellij.util.messages.MessageBus;
 import gnu.trove.THashMap;
+import gnu.trove.TObjectHashingStrategy;
 import org.jdom.Element;
 import org.jdom.JDOMException;
 import org.jetbrains.annotations.NonNls;
@@ -120,6 +122,34 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     return e;
   }
 
+  private static class ModuleGroupInterner {
+    private final StringInterner groups = new StringInterner();
+    private final Map<String[], String[]> paths = new THashMap<String[], String[]>(new TObjectHashingStrategy<String[]>() {
+      @Override
+      public int computeHashCode(String[] object) {
+        return Arrays.hashCode(object);
+      }
+
+      @Override
+      public boolean equals(String[] o1, String[] o2) {
+        return Arrays.equals(o1, o2);
+      }
+    });
+
+    private void setModuleGroupPath(ModifiableModuleModel model, Module module, String[] group) {
+      String[] cached = paths.get(group);
+      if (cached == null) {
+        cached = new String[group.length];
+        for (int i = 0; i < group.length; i++) {
+          String g = group[i];
+          cached[i] = groups.intern(g);
+        }
+        paths.put(cached, cached);
+      }
+      model.setModuleGroupPath(module, cached);
+    }
+  }
+
   @Override
   public void loadState(Element state) {
     List<ModulePath> prevPaths = myModulePaths;
@@ -129,7 +159,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
 
       Module[] existingModules = model.getModules();
 
-
+      ModuleGroupInterner groupInterner = new ModuleGroupInterner();
       for (Module existingModule : existingModules) {
         ModulePath correspondingPath = findCorrespondingPath(existingModule);
         if (correspondingPath == null) {
@@ -141,7 +171,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
           String groupStr = correspondingPath.getModuleGroup();
           String[] group = groupStr != null ? groupStr.split(MODULE_GROUP_SEPARATOR) : null;
           if (!Arrays.equals(group, model.getModuleGroupPath(existingModule))) {
-            model.setModuleGroupPath(existingModule,  group);
+            groupInterner.setModuleGroupPath(model, existingModule, group);
           }
         }
       }
@@ -178,6 +208,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     }
   }
 
+  @NotNull
   public static ModulePath[] getPathsToModuleFiles(Element element) {
     final List<ModulePath> paths = new ArrayList<ModulePath>();
     final Element modules = element.getChild(ELEMENT_MODULES);
@@ -205,47 +236,51 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
   }
 
   protected void loadModules(final ModuleModelImpl moduleModel) {
-    if (myModulePaths != null && !myModulePaths.isEmpty()) {
-      final ProgressIndicator progressIndicator = myProject.isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
-      if (progressIndicator != null) {
-        progressIndicator.setText("Loading modules...");
-        progressIndicator.setText2("");
-      }
-      myFailedModulePaths.clear();
-      myFailedModulePaths.addAll(myModulePaths);
-      final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
-      List<ModuleLoadingErrorDescription> errors = new ArrayList<ModuleLoadingErrorDescription>();
-
-      for (final ModulePath modulePath : myModulePaths) {
-        try {
-          final Module module = moduleModel.loadModuleInternal(modulePath.getPath(), progressIndicator);
-          if (isUnknownModuleType(module)) {
-            modulesWithUnknownTypes.add(module);
-          }
-          final String groupPathString = modulePath.getModuleGroup();
-          if (groupPathString != null) {
-            final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
-            moduleModel.setModuleGroupPath(module, groupPath); //model should be updated too
-          }
-          myFailedModulePaths.remove(modulePath);
-        }
-        catch (final IOException e) {
-          errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
-                                                       modulePath, this));
-        }
-        catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
-          errors.add(ModuleLoadingErrorDescription.create(moduleWithNameAlreadyExists.getMessage(), modulePath, this));
-        }
-        catch (StateStorageException e) {
-          errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
-                                                       modulePath, this));
-        }
-      }
-
-      fireErrors(errors);
-
-      showUnknownModuleTypeNotification(modulesWithUnknownTypes);
+    if (myModulePaths == null || myModulePaths.isEmpty()) {
+      return;
     }
+    ModuleGroupInterner groupInterner = new ModuleGroupInterner();
+
+    final ProgressIndicator progressIndicator = myProject.isDefault() ? null : ProgressIndicatorProvider.getGlobalProgressIndicator();
+    if (progressIndicator != null) {
+      progressIndicator.setText("Loading modules...");
+      progressIndicator.setText2("");
+    }
+    myFailedModulePaths.clear();
+    myFailedModulePaths.addAll(myModulePaths);
+    final List<Module> modulesWithUnknownTypes = new ArrayList<Module>();
+    List<ModuleLoadingErrorDescription> errors = new ArrayList<ModuleLoadingErrorDescription>();
+
+    for (final ModulePath modulePath : myModulePaths) {
+      try {
+        final Module module = moduleModel.loadModuleInternal(modulePath.getPath(), progressIndicator);
+        if (isUnknownModuleType(module)) {
+          modulesWithUnknownTypes.add(module);
+        }
+        final String groupPathString = modulePath.getModuleGroup();
+        if (groupPathString != null) {
+          final String[] groupPath = groupPathString.split(MODULE_GROUP_SEPARATOR);
+
+          groupInterner.setModuleGroupPath(moduleModel, module, groupPath); //model should be updated too
+        }
+        myFailedModulePaths.remove(modulePath);
+      }
+      catch (final IOException e) {
+        errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
+                                                     modulePath, this));
+      }
+      catch (final ModuleWithNameAlreadyExists moduleWithNameAlreadyExists) {
+        errors.add(ModuleLoadingErrorDescription.create(moduleWithNameAlreadyExists.getMessage(), modulePath, this));
+      }
+      catch (StateStorageException e) {
+        errors.add(ModuleLoadingErrorDescription.create(ProjectBundle.message("module.cannot.load.error", modulePath.getPath(), e.getMessage()),
+                                                     modulePath, this));
+      }
+    }
+
+    fireErrors(errors);
+
+    showUnknownModuleTypeNotification(modulesWithUnknownTypes);
   }
 
   protected boolean isUnknownModuleType(Module module) {
@@ -559,7 +594,7 @@ public abstract class ModuleManagerImpl extends ModuleManager implements Project
     private final Map<Module, String> myModuleToNewName = new HashMap<Module, String>();
     private final Map<String, Module> myNewNameToModule = new HashMap<String, Module>();
     private boolean myIsWritable;
-    private Map<Module, String []> myModuleGroupPath;
+    private Map<Module, String[]> myModuleGroupPath;
 
     ModuleModelImpl() {
       myIsWritable = false;

@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.impl.RunRefactoringAction;
 import com.intellij.codeInsight.navigation.NavigationUtil;
@@ -39,7 +39,7 @@ import java.util.LinkedHashSet;
 
 public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#" + PullAsAbstractUpFix.class.getName());
-  private String myName;
+  private final String myName;
 
   public PullAsAbstractUpFix(PsiMethod psiMethod, final String name) {
     super(psiMethod);
@@ -73,7 +73,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     final PsiMethod method = (PsiMethod)startElement;
-    if (!CodeInsightUtilBase.prepareFileForWrite(method.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(method.getContainingFile())) return;
 
     final PsiClass containingClass = method.getContainingClass();
     LOG.assertTrue(containingClass != null);
@@ -123,7 +123,7 @@ public class PullAsAbstractUpFix extends LocalQuickFixAndIntentionActionOnPsiEle
   }
 
   private static void pullUp(PsiMethod method, PsiClass containingClass, PsiClass baseClass) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(baseClass.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(baseClass.getContainingFile())) return;
     final MemberInfo memberInfo = new MemberInfo(method);
     memberInfo.setChecked(true);
     memberInfo.setToAbstract(true);

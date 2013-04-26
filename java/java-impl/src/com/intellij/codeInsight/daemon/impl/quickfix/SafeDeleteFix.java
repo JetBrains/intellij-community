@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
@@ -52,7 +52,7 @@ public class SafeDeleteFix extends LocalQuickFixAndIntentionActionOnPsiElement {
                      @Nullable("is null when called from inspection") Editor editor,
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     SafeDeleteHandler.invoke(project, new PsiElement[]{startElement}, false);
   }
 

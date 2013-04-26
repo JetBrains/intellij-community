@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.intentions;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -77,7 +77,7 @@ public class XmlChooseColorIntentionAction extends PsiElementBaseIntentionAction
     Color color = ColorChooser.chooseColor(editorComponent, caption, oldColor, true);
     if (color == null) return;
     if (!Comparing.equal(color, oldColor)) {
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
       final String newText = "#" + ColorUtil.toHex(color);
       final PsiManager manager = literal.getManager();
       final XmlAttribute newAttribute = XmlElementFactory.getInstance(manager.getProject()).createXmlAttribute("name", newText);

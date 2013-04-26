@@ -139,7 +139,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
   }
 
   @Override
-  public void updateProfile(Profile profile) {
+  public void updateProfile(@NotNull Profile profile) {
     super.updateProfile(profile);
     initProfileWrapper(profile);
   }
@@ -216,7 +216,7 @@ public class InspectionProjectProfileManager extends DefaultProjectProfileManage
     });
   }
 
-  public void initProfileWrapper(final Profile profile) {
+  public void initProfileWrapper(@NotNull Profile profile) {
     final InspectionProfileWrapper wrapper = new InspectionProfileWrapper((InspectionProfile)profile);
     wrapper.init(myProject);
     myName2Profile.put(profile.getName(), wrapper);

@@ -25,7 +25,7 @@
 package com.intellij.codeInspection.dataFlow;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.NullableNotNullDialog;
 import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
@@ -66,10 +66,12 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   public boolean SUGGEST_NULLABLE_ANNOTATIONS = false;
   public boolean DONT_REPORT_TRUE_ASSERT_STATEMENTS = false;
 
+  @Override
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -155,6 +157,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     allProblems.addAll(StandardDataFlowRunner.getRedundantInstanceofs(runner, visitor));
 
     Collections.sort(allProblems, new Comparator<Instruction>() {
+      @Override
       public int compare(Instruction i1, Instruction i2) {
         return i1.getIndex() - i2.getIndex();
       }
@@ -209,7 +212,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
           }
         }
       }
-      
+
     }
   }
 
@@ -418,11 +421,13 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
     if (fix == null) return null;
     final String text = fix.getText();
     return new LocalQuickFix() {
+      @Override
       @NotNull
       public String getName() {
         return text;
       }
 
+      @Override
       public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
         final PsiElement psiElement = descriptor.getPsiElement();
         if (psiElement == null) return;
@@ -437,6 +442,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         }
       }
 
+      @Override
       @NotNull
       public String getFamilyName() {
         return InspectionsBundle.message("inspection.data.flow.simplify.boolean.expression.quickfix");
@@ -494,13 +500,15 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   }
 
   private static class RedundantInstanceofFix implements LocalQuickFix {
+    @Override
     @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.data.flow.redundant.instanceof.quickfix");
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(descriptor.getPsiElement())) return;
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(descriptor.getPsiElement())) return;
       final PsiElement psiElement = descriptor.getPsiElement();
       if (psiElement instanceof PsiInstanceOfExpression) {
         try {
@@ -514,6 +522,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       }
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
@@ -521,16 +530,19 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
   }
 
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.data.flow.display.name");
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
@@ -553,6 +565,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         InspectionsBundle.message("inspection.data.flow.nullable.quickfix.option"));
       mySuggestNullables.setSelected(SUGGEST_NULLABLE_ANNOTATIONS);
       mySuggestNullables.getModel().addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           SUGGEST_NULLABLE_ANNOTATIONS = mySuggestNullables.isSelected();
         }
@@ -562,6 +575,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
         InspectionsBundle.message("inspection.data.flow.true.asserts.option"));
       myDontReportTrueAsserts.setSelected(DONT_REPORT_TRUE_ASSERT_STATEMENTS);
       myDontReportTrueAsserts.getModel().addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           DONT_REPORT_TRUE_ASSERT_STATEMENTS = myDontReportTrueAsserts.isSelected();
         }
@@ -620,18 +634,22 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       myRunner = runner;
     }
 
+    @Override
     protected void onAssigningToNotNullableVariable(AssignInstruction instruction) {
       myRunner.onAssigningToNotNullableVariable(instruction.getRExpression());
     }
 
+    @Override
     protected void onNullableReturn(CheckReturnValueInstruction instruction) {
       myRunner.onNullableReturn(instruction.getReturn());
     }
 
+    @Override
     protected void onInstructionProducesCCE(TypeCastInstruction instruction) {
       myRunner.onInstructionProducesCCE(instruction);
     }
 
+    @Override
     protected void onInstructionProducesNPE(Instruction instruction) {
       if (instruction instanceof MethodCallInstruction &&
           ((MethodCallInstruction)instruction).getMethodType() == MethodCallInstruction.MethodType.UNBOXING) {
@@ -642,6 +660,7 @@ public class DataFlowInspection extends BaseLocalInspectionTool {
       }
     }
 
+    @Override
     protected void onPassingNullParameter(PsiExpression arg) {
       myRunner.onPassingNullParameter(arg);
     }

@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.ImplicitUsageProvider;
 import com.intellij.codeInspection.*;
 import com.intellij.openapi.editor.Document;
@@ -99,7 +99,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
     if (references.length == 0) {
       return;
     }
-    
+
     XmlAttributeValue element = (XmlAttributeValue)references[0].getElement();
     XmlAttribute attribute = (XmlAttribute)element.getParent();
     if (element.getReferences().length == references.length) { // all refs to be removed
@@ -268,7 +268,7 @@ public class XmlUnusedNamespaceInspection extends XmlSuppressableInspectionTool 
       XmlAttribute attribute = (XmlAttribute)element;
       XmlTag parent = attribute.getParent();
 
-      if (!CodeInsightUtilBase.prepareFileForWrite(parent.getContainingFile())) return null;
+      if (!FileModificationService.getInstance().prepareFileForWrite(parent.getContainingFile())) return null;
 
       SmartPsiElementPointer<XmlTag> pointer = SmartPointerManager.getInstance(project).createSmartPsiElementPointer(parent);
 

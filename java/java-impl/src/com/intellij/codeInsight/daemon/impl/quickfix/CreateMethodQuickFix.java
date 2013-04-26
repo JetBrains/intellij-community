@@ -15,8 +15,8 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExpectedTypeInfo;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.openapi.editor.Editor;
@@ -72,7 +72,7 @@ public class CreateMethodQuickFix extends LocalQuickFixAndIntentionActionOnPsiEl
                      @NotNull PsiElement startElement,
                      @NotNull PsiElement endElement) {
     PsiClass myTargetClass = (PsiClass)startElement;
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(myTargetClass.getContainingFile())) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(myTargetClass.getContainingFile())) return;
 
     PsiMethod method = createMethod(myTargetClass);
     List<Pair<PsiExpression, PsiType>> arguments =

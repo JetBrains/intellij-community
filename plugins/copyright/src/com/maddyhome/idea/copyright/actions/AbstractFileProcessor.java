@@ -16,7 +16,7 @@
 
 package com.maddyhome.idea.copyright.actions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.openapi.application.Result;
 import com.intellij.openapi.command.WriteCommandAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -117,7 +117,7 @@ public abstract class AbstractFileProcessor {
   }
 
   private void process(final PsiFile file) {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
     final Runnable[] resultRunnable = new Runnable[1];
 
     execute(new Runnable() {

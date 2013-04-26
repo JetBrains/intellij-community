@@ -16,7 +16,7 @@
 
 package com.intellij.xml.util;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.xml.XMLLanguage;
@@ -106,7 +106,7 @@ public class CheckTagEmptyBodyInspection extends XmlSuppressableInspectionTool {
 
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final PsiElement tag = descriptor.getPsiElement();
-      if (!CodeInsightUtilBase.prepareFileForWrite(tag.getContainingFile())) {
+      if (!FileModificationService.getInstance().prepareFileForWrite(tag.getContainingFile())) {
         return;
       }
 

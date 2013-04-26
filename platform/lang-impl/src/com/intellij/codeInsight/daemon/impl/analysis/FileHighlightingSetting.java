@@ -14,22 +14,11 @@
  * limitations under the License.
  */
 
-package com.intellij.openapi.progress;
+package com.intellij.codeInsight.daemon.impl.analysis;
 
-/**
- * @author max
- */
-public interface PerformInBackgroundOption {
-  PerformInBackgroundOption DEAF = new PerformInBackgroundOption() {
-    public boolean shouldStartInBackground() { return false; }
-    public void processSentToBackground() {}
-  };
-
-  PerformInBackgroundOption ALWAYS_BACKGROUND = new PerformInBackgroundOption() {
-    public boolean shouldStartInBackground() { return true; }
-    public void processSentToBackground() {}
-  };
-
-  boolean shouldStartInBackground();
-  void processSentToBackground();
+public enum FileHighlightingSetting {
+  NONE,
+  SKIP_HIGHLIGHTING,
+  FORCE_HIGHLIGHTING,
+  SKIP_INSPECTION
 }

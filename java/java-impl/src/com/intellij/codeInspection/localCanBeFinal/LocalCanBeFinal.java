@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.localCanBeFinal;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
@@ -55,11 +55,13 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     myQuickFix = new AcceptSuggested();
   }
 
+  @Override
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     List<ProblemDescriptor> list = checkCodeBlock(method.getBody(), manager, isOnTheFly);
     return list == null ? null : list.toArray(new ProblemDescriptor[list.size()]);
   }
 
+  @Override
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     List<ProblemDescriptor> allProblems = null;
     final PsiClassInitializer[] initializers = aClass.getInitializers();
@@ -81,6 +83,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     final ControlFlow flow;
     try {
       ControlFlowPolicy policy = new ControlFlowPolicy() {
+        @Override
         public PsiVariable getUsedVariable(PsiReferenceExpression refExpr) {
           if (refExpr.isQualified()) return null;
 
@@ -93,10 +96,12 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
           return null;
         }
 
+        @Override
         public boolean isParameterAccepted(PsiParameter psiParameter) {
           return isVariableDeclaredInMethod(psiParameter);
         }
 
+        @Override
         public boolean isLocalVariableAccepted(PsiLocalVariable psiVariable) {
           return isVariableDeclaredInMethod(psiVariable);
         }
@@ -115,7 +120,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     int end = flow.getEndOffset(body);
 
     final List<PsiVariable> writtenVariables = new ArrayList<PsiVariable>(ControlFlowUtil.getWrittenVariables(flow, start, end, false));
-    
+
     final HashSet<PsiVariable> ssaVarsSet = new HashSet<PsiVariable>();
     body.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override public void visitCodeBlock(PsiCodeBlock block) {
@@ -230,29 +235,34 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     return problems;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.local.can.be.final.display.name");
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.STYLE_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return SHORT_NAME;
   }
 
   private static class AcceptSuggested implements LocalQuickFix {
+    @Override
     @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.can.be.final.accept.quickfix");
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor problem) {
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(problem.getPsiElement())) return;
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(problem.getPsiElement())) return;
       PsiElement nameIdentifier = problem.getPsiElement();
       if (nameIdentifier == null) return;
       PsiVariable psiVariable = PsiTreeUtil.getParentOfType(nameIdentifier, PsiVariable.class, false);
@@ -266,12 +276,14 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       }
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
     }
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     return new OptionsPanel();
   }
@@ -301,6 +313,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       myReportVariablesCheckbox = new JCheckBox(InspectionsBundle.message("inspection.local.can.be.final.option"));
       myReportVariablesCheckbox.setSelected(REPORT_VARIABLES);
       myReportVariablesCheckbox.getModel().addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           REPORT_VARIABLES = myReportVariablesCheckbox.isSelected();
         }
@@ -311,6 +324,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
       myReportParametersCheckbox = new JCheckBox(InspectionsBundle.message("inspection.local.can.be.final.option1"));
       myReportParametersCheckbox.setSelected(REPORT_PARAMETERS);
       myReportParametersCheckbox.getModel().addChangeListener(new ChangeListener() {
+        @Override
         public void stateChanged(ChangeEvent e) {
           REPORT_PARAMETERS = myReportParametersCheckbox.isSelected();
         }
@@ -322,6 +336,7 @@ public class LocalCanBeFinal extends BaseLocalInspectionTool {
     }
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return false;
   }

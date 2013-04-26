@@ -76,6 +76,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     setIsFinal(elem.hasModifierProperty(PsiModifier.FINAL));
   }
 
+  @Override
   @NotNull
   public Collection<RefClass> getOutTypeReferences() {
     if (myOutTypeReferences == null){
@@ -116,10 +117,12 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
    return name == null ? InspectionsBundle.message("inspection.reference.anonymous") : name;
  }
 
+  @Override
   public boolean isFinal() {
     return checkFlag(IS_FINAL_MASK);
   }
 
+  @Override
   public boolean isStatic() {
     return checkFlag(IS_STATIC_MASK);
   }
@@ -128,6 +131,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     setFlag(isStatic, IS_STATIC_MASK);
   }
 
+  @Override
   public boolean isUsesDeprecatedApi() {
     return checkFlag(IS_USES_DEPRECATION_MASK);
   }
@@ -144,6 +148,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     setFlag(reachable, IS_REACHABLE_MASK);
   }
 
+  @Override
   public boolean isSyntheticJSP() {
     return checkFlag(IS_SYNTHETIC_JSP_ELEMENT);
   }
@@ -152,6 +157,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     setFlag(b, IS_SYNTHETIC_JSP_ELEMENT);
   }
 
+  @Override
   @Nullable
   public String getAccessModifier() {
     long access_id = myFlags & ACCESS_MODIFIER_MASK;
@@ -257,6 +263,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     return getRefManager().getExtension(RefJavaManager.MANAGER);
   }
 
+  @Override
   public void referenceRemoved() {
     super.referenceRemoved();
     if (isEntry()) {
@@ -264,6 +271,7 @@ public abstract class RefJavaElementImpl extends RefElementImpl implements RefJa
     }
   }
 
+  @Override
   public Icon getIcon(final boolean expanded) {
     if (isSyntheticJSP()) {
       final PsiElement element = getElement();

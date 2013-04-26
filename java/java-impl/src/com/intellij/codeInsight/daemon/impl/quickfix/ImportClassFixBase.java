@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.CodeInsightUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.JavaCompletionUtil;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
@@ -258,7 +258,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
   protected abstract boolean isQualified(R reference);
 
   @Override
-  public boolean showHint(final Editor editor) {
+  public boolean showHint(@NotNull final Editor editor) {
     if (isQualified(myRef)) {
       return false;
     }
@@ -311,7 +311,7 @@ public abstract class ImportClassFixBase<T extends PsiElement, R extends PsiRefe
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     ApplicationManager.getApplication().runWriteAction(new Runnable() {
       @Override
       public void run() {

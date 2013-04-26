@@ -35,6 +35,7 @@ public class LanguageExtensionPoint<T> extends CustomLoadingExtensionPointBean i
   public String implementationClass;
 
   private final NotNullLazyValue<T> myHandler = new NotNullLazyValue<T>() {
+    @Override
     @NotNull
     protected T compute() {
       try {
@@ -46,10 +47,12 @@ public class LanguageExtensionPoint<T> extends CustomLoadingExtensionPointBean i
     }
   };
 
+  @Override
   public T getInstance() {
     return myHandler.getValue();
   }
 
+  @Override
   public String getKey() {
     return language;
   }

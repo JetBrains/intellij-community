@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.intention.impl;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.codeInsight.highlighting.HighlightManager;
@@ -70,7 +70,7 @@ public abstract class BaseMoveInitializerToMethodAction extends PsiElementBaseIn
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(element)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(element)) return;
 
     final PsiField field = PsiTreeUtil.getParentOfType(element, PsiField.class);
     assert field != null;

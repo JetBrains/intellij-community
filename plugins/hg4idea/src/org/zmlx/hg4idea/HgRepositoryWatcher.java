@@ -15,7 +15,6 @@
  */
 package org.zmlx.hg4idea;
 
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.AbstractProjectComponent;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
@@ -142,14 +141,8 @@ public class HgRepositoryWatcher extends AbstractProjectComponent implements Bul
 
   @Override
   public void directoryMappingChanged() {
-    ApplicationManager.getApplication().runReadAction(new Runnable() {
-      @Override
-      public void run() {
-        if (myProject.isDisposed()) return;
-        for (VirtualFile root : myVcsManager.getRootsUnderVcs(myVcs)) {
-          registerRoot(root);
-        }
-      }
-    });
+    for (VirtualFile root : myVcsManager.getRootsUnderVcs(myVcs)) {
+      registerRoot(root);
+    }
   }
 }

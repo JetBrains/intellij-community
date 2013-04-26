@@ -16,7 +16,7 @@
 package com.intellij.codeInspection.nullable;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -50,11 +50,13 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
     myAnnosToRemove = annosToRemove;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionsBundle.message("annotate.overridden.methods.parameters", ClassUtil.extractClassName(myAnnotation));
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement psiElement = descriptor.getPsiElement();
 
@@ -77,7 +79,7 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
       }
     }
 
-    CodeInsightUtilBase.preparePsiElementsForWrite(toAnnotate);
+    FileModificationService.getInstance().preparePsiElementsForWrite(toAnnotate);
     for (PsiParameter psiParam : toAnnotate) {
       try {
         assert psiParam != null : toAnnotate;
@@ -91,6 +93,7 @@ public class AnnotateOverriddenMethodParameterFix implements LocalQuickFix {
     }
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getName();

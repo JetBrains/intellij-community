@@ -38,6 +38,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
 
@@ -48,6 +49,7 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
         final JavaPsiFacade psiFacade = JavaPsiFacade.getInstance(project);
         final PsiClass psiObjectClass = ApplicationManager.getApplication().runReadAction(
             new Computable<PsiClass>() {
+              @Override
               @Nullable
               public PsiClass compute() {
                 return psiFacade.findClass(CommonClassNames.JAVA_LANG_OBJECT, GlobalSearchScope.allScope(project));
@@ -113,16 +115,19 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
     }
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.equals.hashcode.display.name");
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "EqualsAndHashcode";

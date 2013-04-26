@@ -15,18 +15,17 @@
  */
 package com.intellij.codeInsight.daemon.impl.actions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.SuppressManager;
 import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -35,7 +34,7 @@ import org.jetbrains.annotations.NotNull;
  * @author ven
  */
 public class SuppressParameterFix extends SuppressIntentionAction {
-  private String myID;
+  private final String myID;
   private String myAlternativeID;
 
   public SuppressParameterFix(HighlightDisplayKey key) {
@@ -69,7 +68,7 @@ public class SuppressParameterFix extends SuppressIntentionAction {
   public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
     PsiParameter container = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
     assert container != null;
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(container)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(container)) return;
     final PsiModifierList modifierList = container.getModifierList();
     if (modifierList != null) {
       final String id = SuppressFix.getID(container, myAlternativeID);

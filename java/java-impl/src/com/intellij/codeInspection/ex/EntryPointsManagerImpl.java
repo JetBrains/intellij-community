@@ -19,7 +19,7 @@
  * User: max
  * Date: May 27, 2002
  * Time: 2:57:13 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.ex;
@@ -127,6 +127,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     return ServiceManager.getService(project, EntryPointsManagerImpl.class);
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public void loadState(Element element) {
     Element entryPointsElement = element.getChild("entry_points");
@@ -153,6 +154,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     }
   }
 
+  @Override
   @SuppressWarnings({"HardCodedStringLiteral"})
   public Element getState()  {
     Element element = new Element("state");
@@ -181,6 +183,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     }
   }
 
+  @Override
   public void resolveEntryPoints(final RefManager manager) {
     if (!myResolved) {
       myResolved = true;
@@ -188,6 +191,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
       validateEntryPoints();
 
       ApplicationManager.getApplication().runReadAction(new Runnable() {
+        @Override
         public void run() {
           for (SmartRefElementPointer entryPoint : myPersistentEntryPoints.values()) {
             if (entryPoint.resolve(manager)) {
@@ -209,6 +213,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     myTemporaryEntryPoints.clear();
   }
 
+  @Override
   public void addEntryPoint(RefElement newEntryPoint, boolean isPersistent) {
     if (!newEntryPoint.isValid()) return;
     if (newEntryPoint instanceof RefClass) {
@@ -254,6 +259,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     }
   }
 
+  @Override
   public void removeEntryPoint(RefElement anEntryPoint) {
     if (anEntryPoint instanceof RefClass) {
       RefClass refClass = (RefClass)anEntryPoint;
@@ -290,6 +296,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     }
   }
 
+  @Override
   public RefElement[] getEntryPoints() {
     validateEntryPoints();
     List<RefElement> entries = new ArrayList<RefElement>();
@@ -305,6 +312,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     return entries.toArray(new RefElement[entries.size()]);
   }
 
+  @Override
   public void dispose() {
     cleanup();
   }
@@ -332,6 +340,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     }
   }
 
+  @Override
   public void cleanup() {
     purgeTemporaryEntryPoints();
     Collection<SmartRefElementPointer> entries = myPersistentEntryPoints.values();
@@ -340,6 +349,7 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
     }
   }
 
+  @Override
   public boolean isAddNonJavaEntries() {
     return myAddNonJavaEntries;
   }
@@ -433,9 +443,9 @@ public class EntryPointsManagerImpl implements PersistentStateComponent<Element>
   public void setAddNonJavaEntries(final boolean addNonJavaEntries) {
     myAddNonJavaEntries = addNonJavaEntries;
   }
-  
+
   public boolean isEntryPoint(@NotNull PsiModifierListOwner element) {
-    if (!ADDITIONAL_ANNOTATIONS.isEmpty() && ADDITIONAL_ANNOTATIONS.contains(Deprecated.class.getName()) && 
+    if (!ADDITIONAL_ANNOTATIONS.isEmpty() && ADDITIONAL_ANNOTATIONS.contains(Deprecated.class.getName()) &&
         element instanceof PsiDocCommentOwner && ((PsiDocCommentOwner)element).isDeprecated()) {
       return true;
     }

@@ -18,8 +18,8 @@ package com.intellij.codeInsight.intention;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExternalAnnotationsManager;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
 import com.intellij.lang.findUsages.FindUsagesProvider;
 import com.intellij.lang.findUsages.LanguageFindUsages;
@@ -128,7 +128,7 @@ public class AddAnnotationFix extends LocalQuickFixAndIntentionActionOnPsiElemen
     }
     else {
       final PsiFile containingFile = myModifierListOwner.getContainingFile();
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(containingFile)) return;
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(containingFile)) return;
       for (String fqn : myAnnotationsToRemove) {
         PsiAnnotation annotation = AnnotationUtil.findAnnotation(myModifierListOwner, fqn);
         if (annotation != null) {

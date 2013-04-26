@@ -17,12 +17,14 @@
 package com.intellij.codeInspection.actions;
 
 import com.intellij.CommonBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.*;
+import com.intellij.codeInspection.ex.InspectionToolWrapper;
+import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
+import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -66,7 +68,7 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(file)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(file)) return;
     final List<CommonProblemDescriptor> descriptions =
       ProgressManager.getInstance().runProcess(new Computable<List<CommonProblemDescriptor>>() {
         @Override

@@ -25,56 +25,71 @@ public class DelegatingInstructionVisitor extends InstructionVisitor {
 
   public DelegatingInstructionVisitor(InstructionVisitor delegate) {
     myDelegate = delegate;
-  }public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
+  }
+
+  @Override
+  public DfaInstructionState[] visitAssign(AssignInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return myDelegate.visitAssign(instruction, runner, memState);
   }
 
+  @Override
   public DfaInstructionState[] visitInstanceof(InstanceofInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return myDelegate.visitInstanceof(instruction, runner, memState);
   }
 
+  @Override
   public DfaInstructionState[] visitBinop(BinopInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return myDelegate.visitBinop(instruction, runner, memState);
   }
 
+  @Override
   public DfaInstructionState[] visitCheckReturnValue(CheckReturnValueInstruction instruction,
                                                      DataFlowRunner runner,
                                                      DfaMemoryState memState) {
     return myDelegate.visitCheckReturnValue(instruction, runner, memState);
   }
 
+  @Override
   public DfaInstructionState[] visitConditionalGoto(ConditionalGotoInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return myDelegate.visitConditionalGoto(instruction, runner, memState);
   }
 
+  @Override
   public DfaInstructionState[] visitEmptyStack(EmptyStackInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return myDelegate.visitEmptyStack(instruction, runner, memState);
   }
 
+  @Override
   public DfaInstructionState[] visitFieldReference(FieldReferenceInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return myDelegate.visitFieldReference(instruction, runner, memState);
   }
 
+  @Override
   public DfaInstructionState[] visitFlushVariable(FlushVariableInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return myDelegate.visitFlushVariable(instruction, runner, memState);
   }
 
+  @Override
   public DfaInstructionState[] visitMethodCall(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return myDelegate.visitMethodCall(instruction, runner, memState);
   }
 
+  @Override
   public DfaInstructionState[] visitCast(MethodCallInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return myDelegate.visitCast(instruction, runner, memState);
   }
 
+  @Override
   public DfaInstructionState[] visitNot(NotInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return myDelegate.visitNot(instruction, runner, memState);
   }
 
+  @Override
   public DfaInstructionState[] visitPush(PushInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return myDelegate.visitPush(instruction, runner, memState);
   }
 
+  @Override
   public DfaInstructionState[] visitTypeCast(TypeCastInstruction instruction, DataFlowRunner runner, DfaMemoryState memState) {
     return myDelegate.visitTypeCast(instruction, runner, memState);
   }

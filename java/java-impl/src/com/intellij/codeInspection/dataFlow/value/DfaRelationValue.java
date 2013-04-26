@@ -19,7 +19,7 @@
  * User: max
  * Date: Feb 6, 2002
  * Time: 10:01:02 PM
- * To change template for new class use 
+ * To change template for new class use
  * Code Style | Class Templates options (Tools | IDE Options).
  */
 package com.intellij.codeInspection.dataFlow.value;
@@ -148,6 +148,7 @@ public class DfaRelationValue extends DfaValue {
     return myIsNegated;
   }
 
+  @Override
   public DfaValue createNegated() {
     return myFactory.getRelationFactory().createRelation(myLeftOperand, myRightOperand, myRelation, !myIsNegated);
   }

@@ -15,7 +15,7 @@
  */
 package com.intellij.lang.properties;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
@@ -68,7 +68,7 @@ public class PropertiesAnnotator implements Annotator {
     Lexer lexer = highlighter.getHighlightingLexer();
     final String s = node.getText();
     lexer.start(s);
-    
+
     while (lexer.getTokenType() != null) {
       IElementType elementType = lexer.getTokenType();
       TextAttributesKey[] keys = highlighter.getTokenHighlights(elementType);
@@ -113,7 +113,7 @@ public class PropertiesAnnotator implements Annotator {
               }
 
               public void invoke(@NotNull Project project, Editor editor, PsiFile file) {
-                if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+                if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
                 int offset = annotation.getStartOffset();
                 if (property.getPropertiesFile().getContainingFile().getText().charAt(offset) == '\\') {
                   editor.getDocument().deleteString(offset, offset+1);

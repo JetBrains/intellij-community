@@ -17,7 +17,7 @@
 package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.impl.analysis.FileHighlighingSetting;
+import com.intellij.codeInsight.daemon.impl.analysis.FileHighlightingSetting;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.Disposable;
@@ -284,13 +284,13 @@ public class HectorComponent extends JPanel {
       assert root != null : "No root in " + viewProvider + " for " + language;
       int value = slider.getValue();
       if (value == 1) {
-        HighlightLevelUtil.forceRootHighlighting(root, FileHighlighingSetting.SKIP_HIGHLIGHTING);
+        HighlightLevelUtil.forceRootHighlighting(root, FileHighlightingSetting.SKIP_HIGHLIGHTING);
       }
       else if (value == 2) {
-        HighlightLevelUtil.forceRootHighlighting(root, FileHighlighingSetting.SKIP_INSPECTION);
+        HighlightLevelUtil.forceRootHighlighting(root, FileHighlightingSetting.SKIP_INSPECTION);
       }
       else {
-        HighlightLevelUtil.forceRootHighlighting(root, FileHighlighingSetting.FORCE_HIGHLIGHTING);
+        HighlightLevelUtil.forceRootHighlighting(root, FileHighlightingSetting.FORCE_HIGHLIGHTING);
       }
     }
     final DaemonCodeAnalyzer analyzer = DaemonCodeAnalyzer.getInstance(myFile.getProject());

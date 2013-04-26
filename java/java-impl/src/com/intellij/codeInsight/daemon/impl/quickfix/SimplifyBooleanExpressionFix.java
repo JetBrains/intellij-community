@@ -19,7 +19,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -77,7 +77,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
     if (!isAvailable(project, editor, file)) return;
     LOG.assertTrue(mySubExpression.isValid());
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(mySubExpression)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(mySubExpression)) return;
     simplifyExpression(project, mySubExpression, mySubExpressionValue);
   }
 
@@ -260,7 +260,7 @@ public class SimplifyBooleanExpressionFix implements IntentionAction {
       PsiExpression lExpr = operands[0];
       IElementType tokenType = expression.getOperationTokenType();
       if (JavaTokenType.XOR == tokenType) {
-       
+
         boolean negate = false;
         List<PsiExpression> expressions = new ArrayList<PsiExpression>();
         for (PsiExpression operand : operands) {

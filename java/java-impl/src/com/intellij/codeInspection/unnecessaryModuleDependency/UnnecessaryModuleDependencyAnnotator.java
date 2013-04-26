@@ -27,6 +27,7 @@ public class UnnecessaryModuleDependencyAnnotator extends RefGraphAnnotator {
 
 
 
+  @Override
   public void onMarkReferenced(RefElement refWhat, RefElement refFrom, boolean referencedFromClassInitializer) {
     final PsiElement onElement = refWhat.getElement();
     final PsiElement fromElement = refFrom.getElement();

@@ -47,7 +47,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Set;
 
-public class CodeInsightUtilBase {
+public class CodeInsightUtilBase extends FileModificationService {
   private CodeInsightUtilBase() {
   }
 
@@ -99,7 +99,8 @@ public class CodeInsightUtilBase {
     return elementInRange;
   }
 
-  public static boolean prepareFileForWrite(@Nullable final PsiFile psiFile) {
+  @Override
+  public boolean prepareFileForWrite(@Nullable final PsiFile psiFile) {
     if (psiFile == null) return false;
     final VirtualFile file = psiFile.getVirtualFile();
     final Project project = psiFile.getProject();
@@ -123,22 +124,26 @@ public class CodeInsightUtilBase {
     return true;
   }
 
-  public static boolean preparePsiElementForWrite(@Nullable PsiElement element) {
+  @Override
+  public boolean preparePsiElementForWrite(@Nullable PsiElement element) {
     PsiFile file = element == null ? null : element.getContainingFile();
     return prepareFileForWrite(file);
   }
 
-  public static boolean preparePsiElementsForWrite(@NotNull PsiElement... elements) {
+  @Override
+  public boolean preparePsiElementsForWrite(@NotNull PsiElement... elements) {
     return preparePsiElementsForWrite(Arrays.asList(elements));
   }
-  public static boolean preparePsiElementsForWrite(@NotNull Collection<? extends PsiElement> elements) {
+
+  @Override
+  public boolean preparePsiElementsForWrite(@NotNull Collection<? extends PsiElement> elements) {
     if (elements.isEmpty()) return true;
     Set<VirtualFile> files = new THashSet<VirtualFile>();
     Project project = null;
     for (PsiElement element : elements) {
-      project = element.getProject();
       PsiFile file = element.getContainingFile();
       if (file == null) continue;
+      project = file.getProject();
       VirtualFile virtualFile = file.getVirtualFile();
       if (virtualFile == null) continue;
       files.add(virtualFile);

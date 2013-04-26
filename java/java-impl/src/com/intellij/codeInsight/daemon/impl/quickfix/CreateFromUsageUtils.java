@@ -255,9 +255,9 @@ public class CreateFromUsageUtils {
         names = new String[]{"p" + i};
       }
 
-      if (argType == null || PsiType.NULL.equals(argType) || 
-          argType instanceof PsiLambdaExpressionType || 
-          argType instanceof PsiLambdaParameterType || 
+      if (argType == null || PsiType.NULL.equals(argType) ||
+          argType instanceof PsiLambdaExpressionType ||
+          argType instanceof PsiLambdaParameterType ||
           argType instanceof PsiMethodReferenceType) {
         argType = PsiType.getJavaLangObject(psiManager, resolveScope);
       } else if (argType instanceof PsiDisjunctionType) {
@@ -365,7 +365,7 @@ public class CreateFromUsageUtils {
                                                 String name,
                                                 PsiJavaCodeReferenceElement referenceElement) {
     try {
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(psiClass)) return null;
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(psiClass)) return null;
 
       PsiManager manager = psiClass.getManager();
       PsiElementFactory elementFactory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();

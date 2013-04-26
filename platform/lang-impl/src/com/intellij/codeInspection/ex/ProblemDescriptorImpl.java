@@ -17,7 +17,6 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -26,7 +25,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.pom.Navigatable;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -152,12 +150,13 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
       if (psiElement == null) return -1;
       if (!psiElement.isValid()) return -1;
       LOG.assertTrue(psiElement.isPhysical());
-      PsiFile containingFile = InjectedLanguageUtil.getTopLevelFile(psiElement);
+      InjectedLanguageManager manager = InjectedLanguageManager.getInstance(psiElement.getProject());
+      PsiFile containingFile = manager.getTopLevelFile(psiElement);
       Document document = PsiDocumentManager.getInstance(psiElement.getProject()).getDocument(containingFile);
       if (document == null) return -1;
       TextRange textRange = getTextRange();
       if (textRange == null) return -1;
-      textRange = InjectedLanguageManager.getInstance(containingFile.getProject()).injectedToHost(psiElement, textRange);
+      textRange = manager.injectedToHost(psiElement, textRange);
       myLineNumber =  document.getLineNumber(textRange.getStartOffset()) + 1;
     }
     return myLineNumber;
@@ -239,7 +238,6 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
   @Override
   public String toString() {
-    PsiElement element = getPsiElement();
-    return ProblemDescriptionNode.renderDescriptionMessage(this, element);
+    return getDescriptionTemplate();
   }
 }

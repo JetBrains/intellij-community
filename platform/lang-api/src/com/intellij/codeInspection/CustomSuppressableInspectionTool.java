@@ -23,10 +23,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * This interface needs to be implemented by implementers of {@link LocalInspectionTool} and {@link GlobalInspectionTool}
  * that support suppressing inspections.
- * 
+ *
  * @author max
  */
-public interface CustomSuppressableInspectionTool  {
+public interface CustomSuppressableInspectionTool {
 
   /**
    * Returns the list of suppression actions for the specified element.

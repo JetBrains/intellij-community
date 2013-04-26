@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -81,7 +81,7 @@ public class InsertRequiredAttributeFix implements IntentionAction, LocalQuickFi
   }
 
   public void invoke(@NotNull final Project project, final Editor editor, PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     ASTNode treeElement = SourceTreeToPsiMap.psiElementToTree(myTag);
 
     final XmlElementDescriptor descriptor = myTag.getDescriptor();

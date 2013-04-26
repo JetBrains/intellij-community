@@ -37,16 +37,19 @@ public class AccessStaticViaInstance extends BaseJavaLocalInspectionTool {
 
   public static final String ACCESS_STATIC_VIA_INSTANCE = "AccessStaticViaInstance";
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("access.static.via.instance");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
@@ -58,10 +61,12 @@ public class AccessStaticViaInstance extends BaseJavaLocalInspectionTool {
     return "static-access";
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {

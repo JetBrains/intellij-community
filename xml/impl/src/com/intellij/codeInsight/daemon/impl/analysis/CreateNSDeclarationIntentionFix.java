@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.application.options.XmlSettings;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.completion.ExtendedTagInsertHandler;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
@@ -145,7 +145,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     final PsiElement element = myElement.retrieve();
     if (element == null) return;
@@ -204,7 +204,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
   }
 
   @Override
-  public boolean showHint(final Editor editor) {
+  public boolean showHint(@NotNull final Editor editor) {
     if (myToken == null) return false;
     XmlToken token = (XmlToken)myToken.retrieve();
     if (token == null) return false;
@@ -223,7 +223,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
           HintManager.getInstance().showQuestionHint(editor, message,
                                                      token.getTextOffset(),
                                                      token.getTextOffset() + myNamespacePrefix.length(), action);
-          return true;        
+          return true;
         }
       } else {
         HintManager.getInstance().showQuestionHint(editor, message,
@@ -281,7 +281,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
                                                                                            String title,
                                                                                            final IntentionAction requestor,
                                                                                            final Editor editor) throws IncorrectOperationException {
-    
+
     if (namespacesToChooseFrom.length > 1 && !ApplicationManager.getApplication().isUnitTestMode()) {
       final JList list = new JBList(namespacesToChooseFrom);
       list.setCellRenderer(XmlNSRenderer.INSTANCE);
@@ -356,7 +356,7 @@ public class CreateNSDeclarationIntentionFix implements HintAction, LocalQuickFi
 
   public static class TagMetaHandler implements MetaHandler {
     private final String myName;
-    
+
 
     public TagMetaHandler(final String name) {
       myName = name;

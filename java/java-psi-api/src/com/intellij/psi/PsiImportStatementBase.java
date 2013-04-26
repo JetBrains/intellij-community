@@ -16,6 +16,7 @@
 package com.intellij.psi;
 
 import com.intellij.util.ArrayFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -30,6 +31,7 @@ public interface PsiImportStatementBase extends PsiElement {
   PsiImportStatementBase[] EMPTY_ARRAY = new PsiImportStatementBase[0];
 
   ArrayFactory<PsiImportStatementBase> ARRAY_FACTORY = new ArrayFactory<PsiImportStatementBase>() {
+    @NotNull
     @Override
     public PsiImportStatementBase[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new PsiImportStatementBase[count];

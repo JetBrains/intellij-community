@@ -23,7 +23,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -35,11 +35,10 @@ import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.util.IncorrectOperationException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-
-import org.jetbrains.annotations.NotNull;
 
 public class DeferFinalAssignmentFix implements IntentionAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.DeferFinalAssignmentFix");
@@ -66,7 +65,7 @@ public class DeferFinalAssignmentFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(variable.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(variable.getContainingFile())) return;
 
     if (variable instanceof PsiField) {
       deferField((PsiField)variable);

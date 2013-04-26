@@ -33,6 +33,7 @@ import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.URLUtil;
 import com.intellij.util.io.fs.FileSystem;
 import com.intellij.util.io.fs.IFile;
+import com.intellij.util.lang.UrlClassLoader;
 import gnu.trove.THashSet;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -387,10 +388,10 @@ public class VfsUtil extends VfsUtilCore {
 
     try {
       if (protocol.equals(StandardFileSystems.FILE_PROTOCOL)) {
-        return new URL(protocol, "", path);
+        return new URL(StandardFileSystems.FILE_PROTOCOL, "", path);
       }
       else {
-        return new URL(vfsUrl);
+        return UrlClassLoader.internProtocol(new URL(vfsUrl));
       }
     }
     catch (MalformedURLException e) {

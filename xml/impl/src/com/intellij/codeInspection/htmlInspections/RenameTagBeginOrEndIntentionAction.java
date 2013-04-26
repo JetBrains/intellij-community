@@ -16,12 +16,12 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.Document;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -69,7 +69,7 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
     PsiElement psiElement = file.findElementAt(offset);
 
     if (psiElement == null || !psiElement.isValid()) return;
-    if (!CodeInsightUtilBase.prepareFileForWrite(psiElement.getContainingFile())) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(psiElement.getContainingFile())) return;
 
     if (psiElement instanceof PsiWhiteSpace) psiElement = PsiTreeUtil.prevLeaf(psiElement);
     if (psiElement instanceof XmlToken) {

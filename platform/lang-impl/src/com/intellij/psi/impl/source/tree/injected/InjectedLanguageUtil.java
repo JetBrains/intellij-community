@@ -373,7 +373,7 @@ public class InjectedLanguageUtil {
     return editor;
   }
 
-  public static PsiFile getTopLevelFile(@NotNull PsiElement element) {
+  static PsiFile getTopLevelFile(@NotNull PsiElement element) {
     PsiFile containingFile = element.getContainingFile();
     if (containingFile == null) return null;
     Document document = PsiDocumentManager.getInstance(element.getProject()).getCachedDocument(containingFile);

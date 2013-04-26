@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
@@ -31,7 +31,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Danila Ponomarenko
  */
 public class ReplaceWithListAccessFix implements IntentionAction {
-  private PsiArrayAccessExpression myArrayAccessExpression;
+  private final PsiArrayAccessExpression myArrayAccessExpression;
 
   public ReplaceWithListAccessFix(PsiArrayAccessExpression arrayAccessExpression) {
     myArrayAccessExpression = arrayAccessExpression;
@@ -86,7 +86,7 @@ public class ReplaceWithListAccessFix implements IntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     final PsiExpression arrayExpression = myArrayAccessExpression.getArrayExpression();
     final PsiExpression indexExpression = myArrayAccessExpression.getIndexExpression();
 

@@ -31,22 +31,26 @@ public class UnusedImportLocalInspection extends BaseJavaLocalInspectionTool imp
   @NonNls public static final String SHORT_NAME = "UNUSED_IMPORT";
   public static final String DISPLAY_NAME = InspectionsBundle.message("unused.import");
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.IMPORTS_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return DISPLAY_NAME;
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
     return SHORT_NAME;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

@@ -16,7 +16,7 @@
 package com.intellij.uiDesigner.i18n;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.i18n.JavaI18nUtil;
 import com.intellij.codeInspection.i18n.JavaI18nizeQuickFixDialog;
 import com.intellij.lang.properties.psi.PropertiesFile;
@@ -74,7 +74,7 @@ public abstract class I18nizeFormQuickFix extends QuickFix {
     final Collection<PropertiesFile> propertiesFiles = dialog.getAllPropertiesFiles();
     PropertiesFile aPropertiesFile = null;
     for (PropertiesFile file : propertiesFiles) {
-      if (!CodeInsightUtilBase.prepareFileForWrite(file.getContainingFile())) return;
+      if (!FileModificationService.getInstance().prepareFileForWrite(file.getContainingFile())) return;
       if (aPropertiesFile == null) {
         aPropertiesFile = file;
       }

@@ -16,7 +16,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
@@ -50,11 +50,13 @@ public class AnnotateMethodFix implements LocalQuickFix {
     myAnnotationsToRemove = annotationsToRemove;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return InspectionsBundle.message("inspection.annotate.method.quickfix.name", ClassUtil.extractClassName(myAnnotation));
   }
 
+  @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final PsiElement psiElement = descriptor.getPsiElement();
 
@@ -82,7 +84,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
       }
     }
 
-    CodeInsightUtilBase.preparePsiElementsForWrite(toAnnotate);
+    FileModificationService.getInstance().preparePsiElementsForWrite(toAnnotate);
     for (PsiMethod psiMethod : toAnnotate) {
       annotateMethod(psiMethod);
     }
@@ -104,6 +106,7 @@ public class AnnotateMethodFix implements LocalQuickFix {
     return false;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getName();

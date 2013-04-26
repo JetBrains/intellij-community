@@ -81,7 +81,7 @@ public abstract class DefaultProjectProfileManager extends ProjectProfileManager
   }
 
   @Override
-  public synchronized void updateProfile(Profile profile) {
+  public synchronized void updateProfile(@NotNull Profile profile) {
     myProfiles.put(profile.getName(), profile);
     for (ProfileChangeAdapter profileChangeAdapter : myProfilesListener) {
       profileChangeAdapter.profileChanged(profile);

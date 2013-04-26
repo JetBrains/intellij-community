@@ -19,7 +19,7 @@
  */
 package com.intellij.lang.properties.refactoring;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.lang.properties.PropertiesBundle;
 import com.intellij.lang.properties.ResourceBundle;
 import com.intellij.lang.properties.editor.ResourceBundleAsVirtualFile;
@@ -103,7 +103,7 @@ public class ResourceBundleRenameHandler implements RenameHandler {
     private boolean doRename(final String inputString) {
       final List<PropertiesFile> propertiesFiles = myResourceBundle.getPropertiesFiles(myProject);
       for (PropertiesFile propertiesFile : propertiesFiles) {
-        if (!CodeInsightUtilBase.prepareFileForWrite(propertiesFile.getContainingFile())) return false;
+        if (!FileModificationService.getInstance().prepareFileForWrite(propertiesFile.getContainingFile())) return false;
       }
 
       RenameProcessor renameProcessor = null;

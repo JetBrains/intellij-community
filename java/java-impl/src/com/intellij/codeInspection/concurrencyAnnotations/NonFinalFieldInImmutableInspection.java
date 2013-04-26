@@ -24,26 +24,31 @@ import org.jetbrains.annotations.NotNull;
 
 public class NonFinalFieldInImmutableInspection extends BaseJavaLocalInspectionTool {
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.CONCURRENCY_ANNOTATION_ISSUES;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return "Non-final field in @Immutable class";
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "NonFinalFieldInImmutable";
   }
 
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {
+      @Override
       public void visitField(PsiField field) {
         super.visitField(field);
         if (field.hasModifierProperty(PsiModifier.FINAL)) {

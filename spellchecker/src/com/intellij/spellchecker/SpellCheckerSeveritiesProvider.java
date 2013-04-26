@@ -26,6 +26,7 @@ import com.intellij.lang.annotation.HighlightSeverity;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import com.intellij.openapi.editor.markup.EffectType;
 import com.intellij.openapi.editor.markup.TextAttributes;
+import org.jetbrains.annotations.NotNull;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -34,6 +35,8 @@ import java.util.List;
 public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
   public static final HighlightSeverity TYPO = new HighlightSeverity("TYPO", HighlightSeverity.INFORMATION.myVal + 5);
 
+  @Override
+  @NotNull
   public List<HighlightInfoType> getSeveritiesHighlightInfoTypes() {
     final List<HighlightInfoType> result = new ArrayList<HighlightInfoType>();
 
@@ -48,7 +51,7 @@ public class SpellCheckerSeveritiesProvider extends SeveritiesProvider {
   }
 
   @Override
-  public Color getTrafficRendererColor(TextAttributes textAttributes) {
+  public Color getTrafficRendererColor(@NotNull TextAttributes textAttributes) {
     return Color.GREEN;
   }
 

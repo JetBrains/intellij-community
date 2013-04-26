@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.codeInsight.generation.PsiMethodMember;
@@ -72,7 +72,7 @@ public class ImplementMethodsFix extends LocalQuickFixAndIntentionActionOnPsiEle
                      @NotNull PsiElement endElement) {
     final PsiElement myPsiElement = startElement;
 
-    if (editor == null || !CodeInsightUtilBase.prepareFileForWrite(myPsiElement.getContainingFile())) return;
+    if (editor == null || !FileModificationService.getInstance().prepareFileForWrite(myPsiElement.getContainingFile())) return;
     if (myPsiElement instanceof PsiEnumConstant) {
       final MemberChooser<PsiMethodMember> chooser = chooseMethodsToImplement(editor, startElement, ((PsiEnumConstant)myPsiElement).getContainingClass());
       if (chooser == null) return;

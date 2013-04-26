@@ -35,22 +35,26 @@ import java.util.Set;
  * @since 15-Nov-2005
  */
 public class RedundantThrowsDeclaration extends BaseJavaLocalInspectionTool {
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("redundant.throws.declaration");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
     return "RedundantThrowsDeclaration";
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull final InspectionManager manager, final boolean isOnTheFly) {
     final Set<ProblemDescriptor> problems = new HashSet<ProblemDescriptor>();

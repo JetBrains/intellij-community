@@ -145,13 +145,17 @@ public class InspectionManagerEx extends InspectionManager {
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                    final TextRange rangeInElement,
                                                    @NotNull final String descriptionTemplate,
-                                                   @NotNull final ProblemHighlightType highlightType, boolean onTheFly, final LocalQuickFix... fixes) {
+                                                   @NotNull final ProblemHighlightType highlightType,
+                                                   boolean onTheFly,
+                                                   final LocalQuickFix... fixes) {
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, rangeInElement, onTheFly);
   }
 
   @NotNull
   @Override
-  public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement, @NotNull final String descriptionTemplate, @NotNull final ProblemHighlightType highlightType,
+  public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
+                                                   @NotNull final String descriptionTemplate,
+                                                   @NotNull final ProblemHighlightType highlightType,
                                                    @Nullable final HintAction hintAction,
                                                    boolean onTheFly,
                                                    final LocalQuickFix... fixes) {
@@ -245,7 +249,7 @@ public class InspectionManagerEx extends InspectionManager {
                                                    LocalQuickFix fix,
                                                    @NotNull ProblemHighlightType highlightType) {
     LocalQuickFix[] quickFixes = fix != null ? new LocalQuickFix[]{fix} : null;
-    return createProblemDescriptor(psiElement, descriptionTemplate, quickFixes, highlightType);
+    return createProblemDescriptor(psiElement, descriptionTemplate, false, quickFixes, highlightType);
   }
 
   @Override
@@ -255,7 +259,7 @@ public class InspectionManagerEx extends InspectionManager {
                                                    @NotNull String descriptionTemplate,
                                                    LocalQuickFix[] fixes,
                                                    @NotNull ProblemHighlightType highlightType) {
-    return createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, false);
+    return createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, false, false);
   }
 
   @Override

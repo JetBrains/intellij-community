@@ -18,10 +18,11 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Dmitry Avdeev
  */
 public interface HintAction extends IntentionAction {
-  boolean showHint(final Editor editor);
+  boolean showHint(@NotNull Editor editor);
 }

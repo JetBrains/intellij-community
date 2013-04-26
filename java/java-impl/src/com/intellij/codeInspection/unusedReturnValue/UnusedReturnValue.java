@@ -46,6 +46,7 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
 
   public boolean IGNORE_BUILDER_PATTERN = false;
 
+  @Override
   @Nullable
   public CommonProblemDescriptor[] checkElement(RefEntity refEntity,
                                                 AnalysisScope scope,
@@ -88,6 +89,7 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
     return new SingleCheckboxOptionsPanel("Ignore simple setters", this, "IGNORE_BUILDER_PATTERN");
   }
 
+  @Override
   protected boolean queryExternalUsagesRequests(final RefManager manager, final GlobalJavaInspectionContext globalContext,
                                                 final ProblemDescriptionsProcessor processor) {
     manager.iterate(new RefJavaVisitor() {
@@ -96,6 +98,7 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
           refEntity.accept(new RefJavaVisitor() {
             @Override public void visitMethod(@NotNull final RefMethod refMethod) {
               globalContext.enqueueMethodUsagesProcessor(refMethod, new GlobalJavaInspectionContext.UsagesProcessor() {
+                @Override
                 public boolean process(PsiReference psiReference) {
                   processor.ignoreElement(refMethod);
                   return false;
@@ -110,16 +113,19 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
     return false;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.unused.return.value.display.name");
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "UnusedReturnValue";
@@ -132,6 +138,7 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
     return myQuickFix;
   }
 
+  @Override
   @Nullable
   public QuickFix getQuickFix(String hint) {
     return getFix(null);
@@ -145,11 +152,13 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
       myProcessor = processor;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionsBundle.message("inspection.unused.return.value.make.void.quickfix");
     }
 
+    @Override
     public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
       PsiMethod psiMethod = null;
       if (myProcessor != null) {
@@ -165,6 +174,7 @@ public class UnusedReturnValue extends GlobalJavaInspectionTool{
       makeMethodHierarchyVoid(project, psiMethod);
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();

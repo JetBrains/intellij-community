@@ -51,16 +51,19 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
 
   public boolean IGNORE_ALL = false;
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.DECLARATION_REDUNDANCY;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.redundant.suppression.name");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
@@ -79,6 +82,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
     }
   }
 
+  @Override
   public void runInspection(final AnalysisScope scope,
                             final InspectionManager manager,
                             final GlobalInspectionContext globalContext,
@@ -289,12 +293,14 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
   }
 
 
+  @Override
   @Nullable
   public QuickFix getQuickFix(final String hint) {
     return myQuickFixes != null ? myQuickFixes.get(hint) : new RemoveSuppressWarningAction(hint);
   }
 
 
+  @Override
   @Nullable
   public String getHint(final QuickFix fix) {
     if (myQuickFixes != null) {
@@ -307,6 +313,7 @@ public class RedundantSuppressInspection extends GlobalInspectionTool{
     return null;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return false;
   }

@@ -16,7 +16,7 @@
 
 package com.intellij.codeInspection.htmlInspections;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -53,7 +53,7 @@ public class RemoveAttributeIntentionAction implements LocalQuickFix {
     final XmlAttribute myAttribute = PsiTreeUtil.getParentOfType(e, XmlAttribute.class);
     if (myAttribute == null) return;
 
-    if (!CodeInsightUtilBase.prepareFileForWrite(myAttribute.getContainingFile())) {
+    if (!FileModificationService.getInstance().prepareFileForWrite(myAttribute.getContainingFile())) {
       return;
     }
 

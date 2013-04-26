@@ -16,7 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl.actions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.SuppressionUtil;
@@ -106,7 +106,7 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
     PsiElement container = getContainer(element);
     if (container == null) return;
 
-    if (!CodeInsightUtilBase.preparePsiElementForWrite(container)) return;
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(container)) return;
 
     final List<? extends PsiElement> comments = getCommentsFor(container);
     if (comments != null) {

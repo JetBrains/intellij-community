@@ -30,8 +30,10 @@ import java.util.List;
 public interface Tools {
   InspectionProfileEntry getInspectionTool(PsiElement element);
 
+  @NotNull
   String getShortName();
 
+  @NotNull
   InspectionProfileEntry getTool();
 
   @NotNull
@@ -42,8 +44,8 @@ public interface Tools {
 
   boolean isEnabled();
 
-  boolean isEnabled(PsiElement element);
+  boolean isEnabled(@Nullable PsiElement element);
 
   @Nullable
-  InspectionProfileEntry getEnabledTool(PsiElement element);
+  InspectionProfileEntry getEnabledTool(@Nullable PsiElement element);
 }

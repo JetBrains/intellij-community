@@ -27,6 +27,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.xmlb.annotations.Attribute;
 import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ResourceBundle;
@@ -39,7 +40,7 @@ import java.util.ResourceBundle;
 public class InspectionEP extends LanguageExtensionPoint implements InspectionProfileEntry.DefaultNameProvider {
 
   /** @see GlobalInspectionTool */
-  public final static ExtensionPointName<InspectionEP> GLOBAL_INSPECTION = ExtensionPointName.create("com.intellij.globalInspection");
+  public static final ExtensionPointName<InspectionEP> GLOBAL_INSPECTION = ExtensionPointName.create("com.intellij.globalInspection");
 
   /**
    * Short name is used in two cases: \inspectionDescriptions\&lt;short_name&gt;.html resource may contain short inspection
@@ -49,6 +50,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   @Attribute("shortName")
   public String shortName;
 
+  @NotNull
   public String getShortName() {
     return shortName == null ? InspectionProfileEntry.getShortName(StringUtil.getShortName(implementationClass)) : shortName;
   }
@@ -94,9 +96,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
     if (groupPath == null) {
       return new String[]{name.isEmpty() ? InspectionProfileEntry.GENERAL_GROUP_NAME : name};
     }
-    else {
-      return ArrayUtil.append(groupPath.split(","), name);
-    }
+    return ArrayUtil.append(groupPath.split(","), name);
   }
 
   @Attribute("enabledByDefault")
@@ -111,6 +111,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   @Attribute("level")
   public String level;
 
+  @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     if (level == null) return HighlightDisplayLevel.WARNING;
     HighlightDisplayLevel displayLevel = HighlightDisplayLevel.find(level);
@@ -125,7 +126,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
   public boolean hasStaticDescription;
 
   @Nullable
-  private String getLocalizedString(String bundleName, String key) {
+  private String getLocalizedString(String bundleName, @NotNull String key) {
     final String baseName = bundleName != null ? bundleName : bundle == null ? ((IdeaPluginDescriptor)myPluginDescriptor).getResourceBundleBaseName() : bundle;
     if (baseName == null) {
       return null;
@@ -136,6 +137,7 @@ public class InspectionEP extends LanguageExtensionPoint implements InspectionPr
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.InspectionEP");
 
+  @NotNull
   public InspectionProfileEntry instantiateTool() {
     try {
       final InspectionProfileEntry entry = instantiate(implementationClass, ApplicationManager.getApplication().getPicoContainer());

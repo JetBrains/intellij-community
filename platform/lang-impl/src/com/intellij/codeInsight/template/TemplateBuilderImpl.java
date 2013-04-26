@@ -32,7 +32,6 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiReference;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -60,7 +59,7 @@ public class TemplateBuilderImpl implements TemplateBuilder {
   private static final Logger LOG = Logger.getInstance("#" + TemplateBuilderImpl.class.getName());
 
   public TemplateBuilderImpl(@NotNull PsiElement element) {
-    myFile = InjectedLanguageUtil.getTopLevelFile(element);
+    myFile = InjectedLanguageManager.getInstance(element.getProject()).getTopLevelFile(element);
     myDocument = myFile.getViewProvider().getDocument();
     myContainerElement = wrapElement(element);
   }
@@ -196,8 +195,8 @@ public class TemplateBuilderImpl implements TemplateBuilder {
     for (final RangeMarker element : myElements) {
       int offset = element.getStartOffset() - containerStart;
       if (start > offset) {
-        LOG.error("file: " + myFile + 
-                  " container: " + myContainerElement + 
+        LOG.error("file: " + myFile +
+                  " container: " + myContainerElement +
                   " markers: " + StringUtil.join(myElements, new Function<RangeMarker, String>() {
                                     @Override
                                     public String fun(RangeMarker rangeMarker) {

@@ -38,6 +38,7 @@ import java.util.List;
 public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspectionTool {
   public boolean REPORT_CONVERTIBLE_METHOD_CALLS = true;
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new SingleCheckboxOptionsPanel(InspectionsBundle.message("report.suspicious.but.possibly.correct.method.calls"), this, "REPORT_CONVERTIBLE_METHOD_CALLS");
@@ -91,6 +92,7 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
     }
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     final List<PsiMethod> patternMethods = new ArrayList<PsiMethod>();
@@ -113,16 +115,19 @@ public class SuspiciousCollectionsMethodCallsInspection extends BaseLocalInspect
     };
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.suspicious.collections.method.calls.display.name");
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.BUGS_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "SuspiciousMethodCalls";

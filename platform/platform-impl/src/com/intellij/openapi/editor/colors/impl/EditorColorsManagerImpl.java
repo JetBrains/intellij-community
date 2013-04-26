@@ -63,7 +63,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   private final DefaultColorSchemesManager myDefaultColorSchemesManager;
   private final SchemesManager<EditorColorsScheme, EditorColorsSchemeImpl> mySchemesManager;
   @NonNls private static final String NAME_ATTR = "name";
-  private static final String FILE_SPEC = "$ROOT_CONFIG$/colors";  
+  private static final String FILE_SPEC = "$ROOT_CONFIG$/colors";
   private static final String FILE_EXT = ".icls";
 
   public EditorColorsManagerImpl(DefaultColorSchemesManager defaultColorSchemesManager, SchemesManagerFactory schemesManagerFactory) {
@@ -181,7 +181,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   // -------------------------------------------------------------------------
 
   @Override
-  public void addColorsScheme(EditorColorsScheme scheme) {
+  public void addColorsScheme(@NotNull EditorColorsScheme scheme) {
     if (!isDefaultScheme(scheme) && scheme.getName().trim().length() > 0) {
       mySchemesManager.addNewScheme(scheme, true);
     }
@@ -204,6 +204,7 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
   // Getters & Setters
   // -------------------------------------------------------------------------
 
+  @NotNull
   @Override
   public EditorColorsScheme[] getAllSchemes() {
     ArrayList<EditorColorsScheme> schemes = new ArrayList<EditorColorsScheme>(mySchemesManager.getAllSchemes());
@@ -273,17 +274,17 @@ public class EditorColorsManagerImpl extends EditorColorsManager implements Name
 
 
   @Override
-  public void addEditorColorsListener(EditorColorsListener listener) {
+  public void addEditorColorsListener(@NotNull EditorColorsListener listener) {
     myListeners.addListener(listener);
   }
 
   @Override
-  public void addEditorColorsListener(EditorColorsListener listener, Disposable disposable) {
+  public void addEditorColorsListener(@NotNull EditorColorsListener listener, @NotNull Disposable disposable) {
     myListeners.addListener(listener, disposable);
   }
 
   @Override
-  public void removeEditorColorsListener(EditorColorsListener listener) {
+  public void removeEditorColorsListener(@NotNull EditorColorsListener listener) {
     myListeners.removeListener(listener);
   }
 

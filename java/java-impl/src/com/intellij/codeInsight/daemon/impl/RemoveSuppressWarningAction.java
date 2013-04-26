@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -72,7 +72,7 @@ public class RemoveSuppressWarningAction implements LocalQuickFix {
     PsiElement element = descriptor.getPsiElement();
     try {
       if (element instanceof PsiIdentifier) {
-        if (!CodeInsightUtilBase.prepareFileForWrite(element.getContainingFile())) return;
+        if (!FileModificationService.getInstance().prepareFileForWrite(element.getContainingFile())) return;
         final PsiIdentifier identifier = (PsiIdentifier)element;
         final PsiDocCommentOwner commentOwner = PsiTreeUtil.getParentOfType(identifier, PsiDocCommentOwner.class);
         if (commentOwner != null) {

@@ -158,6 +158,7 @@ public class NullityInferrer {
         throw new RuntimeException(NOTHING_FOUND_TO_INFER);
       }
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           Messages.showInfoMessage(project, "No places found to infer @Nullable/@NotNull", "Infer Nullity Results");
         }

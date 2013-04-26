@@ -40,22 +40,26 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
   public boolean CHECK_TRY_CATCH_SECTION = true;
   public boolean CHECK_METHOD_BODY = true;
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GENERAL_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("default.file.template.display.name");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
     return "DefaultFileTemplate";
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
     Collection<ProblemDescriptor> descriptors = new ArrayList<ProblemDescriptor>();
@@ -92,6 +96,7 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
     return Pair.create(children[start], children[end]);
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!CHECK_TRY_CATCH_SECTION) return null;
@@ -104,6 +109,7 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
     return visitor.myProblemDescriptors.toArray(new ProblemDescriptor[visitor.myProblemDescriptors.size()]);
   }
 
+  @Override
   @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
     if (!CHECK_FILE_HEADER) return null;
@@ -111,10 +117,12 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
     return descriptor == null ? null : new ProblemDescriptor[]{descriptor};
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     return new InspectionOptions(this).getComponent();
@@ -133,19 +141,23 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
       myReplaceTemplateFix = replaceTemplateFix;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionsBundle.message("default.file.template.edit.template");
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
     }
 
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final FileTemplateConfigurable configurable = new FileTemplateConfigurable();
       SwingUtilities.invokeLater(new Runnable(){
+        @Override
         public void run() {
           configurable.setTemplate(myTemplateToEdit, null);
 

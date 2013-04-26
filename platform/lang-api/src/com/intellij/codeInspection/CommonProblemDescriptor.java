@@ -28,6 +28,7 @@ import org.jetbrains.annotations.NotNull;
 public interface CommonProblemDescriptor {
   CommonProblemDescriptor[] EMPTY_ARRAY = new CommonProblemDescriptor[0];
   ArrayFactory<CommonProblemDescriptor> ARRAY_FACTORY = new ArrayFactory<CommonProblemDescriptor>() {
+    @NotNull
     @Override
     public CommonProblemDescriptor[] create(final int count) {
       return count == 0 ? EMPTY_ARRAY : new CommonProblemDescriptor[count];
@@ -47,7 +48,7 @@ public interface CommonProblemDescriptor {
   /**
    * Returns the quickfixes for the problem.
    *
-   * @return the list of quickfixes registered for the problem. 
+   * @return the list of quickfixes registered for the problem.
    */
   QuickFix[] getFixes();
 }

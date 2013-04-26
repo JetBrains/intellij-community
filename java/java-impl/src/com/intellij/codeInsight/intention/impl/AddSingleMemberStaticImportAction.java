@@ -20,7 +20,7 @@
 package com.intellij.codeInsight.intention.impl;
 
 import com.intellij.codeInsight.CodeInsightBundle;
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.PsiElementBaseIntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -46,7 +46,7 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
 
   /**
    * Allows to check if it's possible to perform static import for the target element.
-   * 
+   *
    * @param element     target element that is static import candidate
    * @return            not-null qualified name of the class which method may be statically imported if any; <code>null</code> otherwise
    */
@@ -131,8 +131,8 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
   }
 
   public static void invoke(PsiFile file, final PsiElement element) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
-    
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
+
     final PsiJavaCodeReferenceElement refExpr = (PsiJavaCodeReferenceElement)element.getParent();
     final PsiElement resolved = refExpr.resolve();
     final String referenceName = refExpr.getReferenceName();
@@ -141,13 +141,13 @@ public class AddSingleMemberStaticImportAction extends PsiElementBaseIntentionAc
 
   public static void bindAllClassRefs(final PsiFile file,
                                       final PsiElement resolved,
-                                      final String referenceName, 
+                                      final String referenceName,
                                       final PsiClass resolvedClass) {
     file.accept(new JavaRecursiveElementWalkingVisitor() {
       @Override
       public void visitReferenceElement(PsiJavaCodeReferenceElement reference) {
         super.visitReferenceElement(reference);
-        
+
         if (referenceName != null && referenceName.equals(reference.getReferenceName())) {
           PsiElement resolved = reference.resolve();
           if (resolved != null) {

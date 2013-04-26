@@ -395,7 +395,7 @@ public abstract class LightPlatformTestCase extends UsefulTestCase implements Da
       }
 
       @Override
-      public InspectionProfileEntry getToolById(String id, @NotNull PsiElement element) {
+      public InspectionProfileEntry getToolById(@NotNull String id, @NotNull PsiElement element) {
         if (availableInspectionTools.containsKey(id)) {
           return availableInspectionTools.get(id);
         }

@@ -16,7 +16,7 @@
 
 package org.jetbrains.plugins.groovy.annotator.intentions;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateClassKind;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -184,7 +184,7 @@ public abstract class CreateClassFix {
 
         AccessToken lock = ApplicationManager.getApplication().acquireWriteActionLock(CreateClassFix.class);
         try {
-          CodeInsightUtilBase.preparePsiElementForWrite(resolved);
+          FileModificationService.getInstance().preparePsiElementForWrite(resolved);
 
           PsiClass added = (PsiClass)resolved.add(template);
           PsiModifierList modifierList = added.getModifierList();

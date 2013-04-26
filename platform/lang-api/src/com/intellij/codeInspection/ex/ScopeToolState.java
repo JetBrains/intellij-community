@@ -39,6 +39,7 @@ import javax.swing.*;
 
 public class ScopeToolState {
   private NamedScope myScope;
+  @NotNull
   private final String myScopeName;
   private InspectionProfileEntry myTool;
   private boolean myEnabled;
@@ -47,15 +48,12 @@ public class ScopeToolState {
   private JComponent myAdditionalConfigPanel;
   private static final Logger LOG = Logger.getInstance("#" + ScopeToolState.class.getName());
 
-  public ScopeToolState(NamedScope scope, @NotNull InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
+  public ScopeToolState(@NotNull NamedScope scope, @NotNull InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
+    this(scope.getName(), tool, enabled, level);
     myScope = scope;
-    myScopeName = myScope.getName();
-    myTool = tool;
-    myEnabled = enabled;
-    myLevel = level;
   }
 
-  public ScopeToolState(String scopeName, @NotNull InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
+  public ScopeToolState(@NotNull String scopeName, @NotNull InspectionProfileEntry tool, boolean enabled, HighlightDisplayLevel level) {
     myScopeName = scopeName;
     myTool = tool;
     myEnabled = enabled;
@@ -83,6 +81,7 @@ public class ScopeToolState {
     return myScope;
   }
 
+  @NotNull
   public String getScopeName() {
     return myScopeName;
   }

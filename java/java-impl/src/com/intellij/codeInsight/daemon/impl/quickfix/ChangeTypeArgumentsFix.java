@@ -23,7 +23,7 @@
  */
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.HighlightInfo;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -108,7 +108,7 @@ public class ChangeTypeArgumentsFix implements IntentionAction, HighPriorityActi
 
   @Override
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) {
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
 
     final PsiTypeParameter[] typeParameters = myPsiClass.getTypeParameters();
     final PsiSubstitutor psiSubstitutor = inferTypeArguments();

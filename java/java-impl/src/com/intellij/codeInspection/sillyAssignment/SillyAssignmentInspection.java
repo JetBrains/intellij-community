@@ -32,26 +32,31 @@ import org.jetbrains.annotations.Nullable;
  * Date: 15-Nov-2005
  */
 public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return "";
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.variable.assigned.to.itself.display.name");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
     return "SillyAssignment";
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
     return new JavaElementVisitor() {

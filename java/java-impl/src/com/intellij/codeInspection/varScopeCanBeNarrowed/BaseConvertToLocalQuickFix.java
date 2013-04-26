@@ -48,11 +48,13 @@ import java.util.Set;
 public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implements LocalQuickFix {
   private static final Logger LOG = Logger.getInstance(BaseConvertToLocalQuickFix.class);
 
+  @Override
   @NotNull
   public final String getName() {
     return InspectionsBundle.message("inspection.convert.to.local.quickfix");
   }
 
+  @Override
   public final void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     final V variable = getVariable(descriptor);
     final PsiFile myFile = variable.getContainingFile();
@@ -229,6 +231,7 @@ public abstract class BaseConvertToLocalQuickFix<V extends PsiVariable> implemen
     }
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getName();

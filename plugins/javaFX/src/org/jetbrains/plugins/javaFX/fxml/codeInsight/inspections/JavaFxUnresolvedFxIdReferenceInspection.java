@@ -15,9 +15,9 @@
  */
 package org.jetbrains.plugins.javaFX.fxml.codeInsight.inspections;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypeInfoImpl;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.TailType;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFieldFromUsageFix;
@@ -131,7 +131,7 @@ public class JavaFxUnresolvedFxIdReferenceInspection extends XmlSuppressableInsp
       assert reference != null;
 
       final PsiClass targetClass = reference.getAClass();
-      if (!CodeInsightUtilBase.prepareFileForWrite(targetClass.getContainingFile())) {
+      if (!FileModificationService.getInstance().prepareFileForWrite(targetClass.getContainingFile())) {
         return;
       }
       final PsiElementFactory factory = JavaPsiFacade.getElementFactory(project);

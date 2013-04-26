@@ -19,11 +19,9 @@ package com.intellij.execution.impl;
 import com.intellij.execution.*;
 import com.intellij.execution.configurations.*;
 import com.intellij.execution.runners.ProgramRunner;
+import com.intellij.ide.plugins.IdeaPluginDescriptorImpl;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.Factory;
-import com.intellij.openapi.util.InvalidDataException;
-import com.intellij.openapi.util.JDOMExternalizable;
-import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.openapi.util.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -202,18 +200,19 @@ public class RunnerAndConfigurationSettingsImpl implements JDOMExternalizable, C
     }
 
     myConfiguration.readExternal(element);
-    List runners = element.getChildren(RUNNER_ELEMENT);
+    List<Element> runners = element.getChildren(RUNNER_ELEMENT);
     myUnloadedRunnerSettings = null;
-    for (final Object runner1 : runners) {
-      Element runnerElement = (Element) runner1;
+    for (final Element runnerElement : runners) {
       String id = runnerElement.getAttributeValue(RUNNER_ID);
       ProgramRunner runner = RunnerRegistry.getInstance().findRunnerById(id);
       if (runner != null) {
         RunnerSettings settings = createRunnerSettings(runner);
         settings.readExternal(runnerElement);
         myRunnerSettings.put(runner, settings);
-      } else {
+      }
+      else {
         if (myUnloadedRunnerSettings == null) myUnloadedRunnerSettings = new ArrayList<Element>(1);
+        IdeaPluginDescriptorImpl.internJDOMElement(runnerElement);
         myUnloadedRunnerSettings.add(runnerElement);
       }
     }

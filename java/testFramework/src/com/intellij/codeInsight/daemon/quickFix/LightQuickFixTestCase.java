@@ -21,6 +21,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.ShowIntentionActionsHandler;
 import com.intellij.lang.Commenter;
 import com.intellij.lang.LanguageCommenters;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -29,7 +30,6 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.rt.execution.junit.FileComparisonFailure;
 import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 import com.intellij.testFramework.LightPlatformTestCase;
@@ -114,7 +114,7 @@ public abstract class LightQuickFixTestCase extends LightDaemonAnalyzerTestCase 
   }
 
   public static Pair<String, Boolean> parseActionHint(final PsiFile file, String contents, @NonNls @RegExp String actionPattern) {
-    PsiFile hostFile = InjectedLanguageUtil.getTopLevelFile(file);
+    PsiFile hostFile = InjectedLanguageManager.getInstance(getProject()).getTopLevelFile(file);
 
     final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(hostFile.getLanguage());
     String comment = commenter.getLineCommentPrefix();
