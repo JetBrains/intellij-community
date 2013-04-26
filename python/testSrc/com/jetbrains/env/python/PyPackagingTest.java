@@ -3,21 +3,15 @@ package com.jetbrains.env.python;
 import com.google.common.collect.Sets;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.projectRoots.Sdk;
-import com.intellij.openapi.projectRoots.impl.SdkConfigurationUtil;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.Processor;
 import com.jetbrains.env.python.debug.PyEnvTestCase;
 import com.jetbrains.env.python.debug.PyExecutionFixtureTestTask;
-import com.jetbrains.python.PythonTestUtil;
-import com.jetbrains.python.fixtures.PyTestCase;
+import com.jetbrains.env.python.debug.PyTestTask;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.PythonSdkType;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.VirtualEnvSdkFlavor;
-import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
@@ -35,10 +29,19 @@ public class PyPackagingTest extends PyEnvTestCase {
   public static final String PIP_VERSION = "1.1";
   public static final String DISTRIBUTE_VERSION = "0.6.27";
 
+  @Override
+  public void runPythonTest(PyTestTask testTask) {
+    if (PyEnvTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
+      return; //Don't run under Windows as after deleting from created virtualenvs original interpreter got spoiled
+    }
+
+    super.runPythonTest(testTask);
+  }
+
   public void testGetPackages() {
     runPythonTest(new PyPackagingTestTask() {
       @Override
-      public void runPackageTestOn(String sdkHome) throws Exception {
+      public void runTestOn(String sdkHome) throws Exception {
         final Sdk sdk = PythonSkeletonsTest.createTempSdk(sdkHome);
         List<PyPackage> packages = null;
         try {
@@ -63,7 +66,7 @@ public class PyPackagingTest extends PyEnvTestCase {
   public void testCreateVirtualEnv() {
     runPythonTest(new PyPackagingTestTask() {
       @Override
-      public void runPackageTestOn(String sdkHome) throws Exception {
+      public void runTestOn(String sdkHome) throws Exception {
         final Sdk sdk = PythonSkeletonsTest.createTempSdk(sdkHome);
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
@@ -98,7 +101,7 @@ public class PyPackagingTest extends PyEnvTestCase {
     runPythonTest(new PyPackagingTestTask() {
 
       @Override
-      public void runPackageTestOn(String sdkHome) throws Exception {
+      public void runTestOn(String sdkHome) throws Exception {
         final Sdk sdk = PythonSkeletonsTest.createTempSdk(sdkHome);
         try {
           final File tempDir = FileUtil.createTempDirectory(getTestName(false), null);
@@ -154,15 +157,5 @@ public class PyPackagingTest extends PyEnvTestCase {
     public Set<String> getTags() {
       return Sets.newHashSet("packaging");
     }
-
-    @Override
-    public void runTestOn(String sdkHome) throws Exception {
-      if (PyEnvTestCase.IS_UNDER_TEAMCITY && SystemInfo.isWindows) {
-        return; //Don't run under Windows as after deleting from created virtualenvs original interpreter got spoiled
-      }
-      runPackageTestOn(sdkHome);
-    }
-
-    protected abstract void runPackageTestOn(String sdkHome) throws Exception;
   }
 }
