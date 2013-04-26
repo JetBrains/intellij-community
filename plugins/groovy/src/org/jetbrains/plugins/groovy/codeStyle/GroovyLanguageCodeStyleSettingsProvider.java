@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -243,7 +243,11 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     "        y = [1, 2, 3] ?: 4\n" +
     "      }\n" +
     "    }\n" +
+    "    def cl = {Math.sin(it)}\n" +
+    "    print ckl(2) " +
     "  }\n" +
+    "  \n" +
+    "  def inject(x) {\"cos($x) = ${Math.cos(x)}\"} \n" +
     "\n" +
     "}";
   private static final String WRAPPING_CODE_SAMPLE =
