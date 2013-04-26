@@ -47,7 +47,7 @@ public class PyPIPackageUtil {
   private Map<String, Hashtable> packageToDetails = new HashMap<String, Hashtable>();
   private Map<String, List<String>> packageToReleases = new HashMap<String, List<String>>();
   private Pattern PYPI_PATTERN = Pattern.compile("/pypi/([^/]*)/(.*)");
-  private Set<ComparablePair> myAdditionalPackageNames;
+  private Set<RepoPackage> myAdditionalPackageNames;
   @Nullable private volatile Set<String> myPackageNames = null;
 
   public static Set<String> getPackageNames(final String url) throws IOException {
@@ -90,14 +90,14 @@ public class PyPIPackageUtil {
     return names;
   }
 
-  public Set<ComparablePair> getAdditionalPackageNames() {
+  public Set<RepoPackage> getAdditionalPackageNames() {
     if (myAdditionalPackageNames == null) {
-      myAdditionalPackageNames = new TreeSet<ComparablePair>();
+      myAdditionalPackageNames = new TreeSet<RepoPackage>();
       for (String url : PyPackageService.getInstance().additionalRepositories) {
         try {
           for (String pyPackage : getPackageNames(url)) {
             if (!pyPackage.contains(" "))
-              myAdditionalPackageNames.add(new ComparablePair(pyPackage, url));
+              myAdditionalPackageNames.add(new RepoPackage(pyPackage, url));
           }
         }
         catch (IOException e) {

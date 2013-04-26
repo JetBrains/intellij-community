@@ -11,19 +11,20 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
-import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.CatchingConsumer;
 import com.intellij.util.Function;
 import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
-import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.packaging.PyPIPackageUtil;
+import com.jetbrains.python.packaging.PyPackageManagerImpl;
+import com.jetbrains.python.packaging.PyPackageService;
+import com.jetbrains.python.packaging.RepoPackage;
 import com.jetbrains.python.sdk.PythonSdkType;
-import org.apache.xmlrpc.AsyncCallback;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -52,17 +53,7 @@ import java.util.List;
 public class ManagePackagesDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(ManagePackagesDialog.class);
 
-  @NonNls private static final String TEXT_PREFIX = "<html><head>" +
-                                                    "    <style type=\"text/css\">" +
-                                                    "        p {" +
-                                                    "            font-family: Arial,serif; font-size: 12pt; margin: 2px 2px" +
-                                                    "        }" +
-                                                    "    </style>" +
-                                                    "</head><body style=\"font-family: Arial,serif; font-size: 12pt; margin: 5px 5px;\">";
-  @NonNls private static final String TEXT_SUFFIX = "</body></html>";
-
-  @NonNls private static final String HTML_PREFIX = "<a href=\"";
-  @NonNls private static final String HTML_SUFFIX = "</a>";
+  private final PackageManagerController myController;
 
   private JPanel myFilter;
   private JPanel myMainPanel;
@@ -86,8 +77,10 @@ public class ManagePackagesDialog extends DialogWrapper {
   private Set<String> currentlyInstalling = new HashSet<String>();
   protected final ListSpeedSearch myListSpeedSearch;
 
-  public ManagePackagesDialog(@NotNull Project project, @NotNull final Sdk sdk, @NotNull final PyPackagesPanel packageListPanel) {
-    super(false);
+  public ManagePackagesDialog(@NotNull Project project, @NotNull final Sdk sdk, @NotNull final PyPackagesPanel packageListPanel,
+                              final PackageManagerController packageManagerController) {
+    super(project, true);
+    myController = packageManagerController;
 
     myInstallToUser.setEnabled(!PythonSdkType.isVirtualEnv(sdk));
     myInstallToUser.setSelected(false);
@@ -109,9 +102,7 @@ public class ManagePackagesDialog extends DialogWrapper {
           @Override
           public void run() {
             try {
-              final PyPackageService service = PyPackageService.getInstance();
-              PyPIPackageUtil.INSTANCE.updatePyPICache(service);
-              service.LAST_TIME_CHECKED = System.currentTimeMillis();
+              myController.reloadPackagesList();
               myPackages.setPaintBusy(false);
             }
             catch (IOException e) {
@@ -131,8 +122,8 @@ public class ManagePackagesDialog extends DialogWrapper {
     myListSpeedSearch = new ListSpeedSearch(this.myPackages, new Function<Object, String>() {
       @Override
       public String fun(Object o) {
-        if (o instanceof ComparablePair)
-          return ((ComparablePair)o).getFirst();
+        if (o instanceof RepoPackage)
+          return ((RepoPackage)o).getName();
         return "";
       }
     });
@@ -173,7 +164,7 @@ public class ManagePackagesDialog extends DialogWrapper {
     });
     myInstallButton.setEnabled(false);
     myDescriptionTextArea.addHyperlinkListener(new MyHyperlinkListener());
-    addInstallAction(sdk, project, table);
+    addInstallAction(sdk, table);
     myInstalledPackages = new HashSet<String>();
     updateInstalledNames(table);
     addManageAction();
@@ -184,7 +175,7 @@ public class ManagePackagesDialog extends DialogWrapper {
   }
 
   public void setSelected(String pyPackage) {
-    myPackages.setSelectedValue(new ComparablePair(pyPackage, PyPIPackageUtil.PYPI_URL), true);
+    myPackages.setSelectedValue(new RepoPackage(pyPackage, PyPIPackageUtil.PYPI_URL), true);
   }
 
   void updateInstalledNames(JBTable table) {
@@ -204,69 +195,55 @@ public class ManagePackagesDialog extends DialogWrapper {
     myPackages.setCellRenderer(new MyTableRenderer());
   }
 
-  private static String composeHref(String vendorUrl) {
-    return HTML_PREFIX + vendorUrl + "\">" + vendorUrl + HTML_SUFFIX;
-  }
-
   private void addInstallAction(@NotNull final Sdk sdk,
-                                @NotNull final Project project,
                                 @NotNull final JBTable table) {
     myInstallButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
         final Object pyPackage = myPackages.getSelectedValue();
-        if (pyPackage instanceof ComparablePair) {
-          final ComparablePair pair = (ComparablePair)pyPackage;
-          final String packageName = pair.getFirst();
-          final String repository = pair.getSecond().equals(PyPIPackageUtil.PYPI_URL) ? null : pair.getSecond();
-          final List<String> extraArgs = new ArrayList<String>();
-          if (myInstallToUser.isSelected()) {
-            extraArgs.add(PyPackageManagerImpl.USE_USER_SITE);
-          }
+        if (pyPackage instanceof RepoPackage) {
+          final RepoPackage repoPackage = (RepoPackage)pyPackage;
+          final String packageName = repoPackage.getName();
+
+          String extraOptions = null;
           if (myOptionsCheckBox.isEnabled() && myOptionsCheckBox.isSelected()) {
-            // TODO: Respect arguments quotation
-            Collections.addAll(extraArgs, myOptionsField.getText().split(" +"));
+            extraOptions = myOptionsField.getText();
           }
-          if (!StringUtil.isEmptyOrSpaces(repository)) {
-            extraArgs.add("--extra-index-url");
-            extraArgs.add(repository);
-          }
-          final PyRequirement req;
+
+          String version = null;
           if (myVersionCheckBox.isEnabled() && myVersionCheckBox.isSelected()) {
-            req = new PyRequirement(packageName, (String)myVersionComboBox.getSelectedItem());
+            version = (String) myVersionComboBox.getSelectedItem();
           }
-          else {
-            req = new PyRequirement(packageName);
-          }
-          final PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(project, sdk, new PyPackageManagerImpl.UI.Listener() {
+
+          final PackageManagerController.Listener listener = new PackageManagerController.Listener() {
             @Override
-            public void started() {
+            public void installationStarted() {
               setDownloadStatus(true);
               table.setPaintBusy(true);
               currentlyInstalling.add(packageName);
             }
 
             @Override
-            public void finished(@Nullable List<PyExternalProcessException> exceptions) {
+            public void installationFinished(@Nullable String errorDescription) {
               table.clearSelection();
               setDownloadStatus(false);
-              addNotifications(exceptions, packageName, myNotificationArea, myPackageListPanel.getNotificationsArea());
+              addNotifications(errorDescription, packageName, myNotificationArea, myPackageListPanel.getNotificationsArea());
               myPackageListPanel.updatePackages(sdk, myInstalledPackages);
               currentlyInstalling.remove(packageName);
             }
-          });
-          ui.install(Collections.singletonList(req), extraArgs);
+          };
+          myController.installPackage(packageName, repoPackage.getRepoUrl(), version, myInstallToUser.isSelected(), extraOptions, listener);
           myInstallButton.setEnabled(false);
         }
       }
     });
   }
 
-  private static void addNotifications(final List<PyExternalProcessException> exceptions,
+  private static void addNotifications(final String errorDescription,
                                        final String packageName,
                                        final PyPackagesNotificationPanel... areas) {
     for (PyPackagesNotificationPanel pane : areas) {
-      if (exceptions.isEmpty()) {
+      if (StringUtil.isEmpty(errorDescription)) {
         pane.showSuccess("Package successfully installed.");
       }
       else {
@@ -274,7 +251,7 @@ public class ManagePackagesDialog extends DialogWrapper {
         final String firstLine = title + ": Error occurred when installing package " + packageName + ". ";
         pane.showError(firstLine + "<a href=\"xxx\">Details...</a>",
                        title,
-                       PyPackageManagerImpl.UI.createDescription(exceptions, firstLine));
+                       firstLine + errorDescription);
       }
     }
   }
@@ -286,15 +263,7 @@ public class ManagePackagesDialog extends DialogWrapper {
       @Override
       public void run() {
         try {
-          List<Pair> packages = new ArrayList<Pair>();
-          final Collection<String> packageNames = PyPIPackageUtil.INSTANCE.getPackageNames();
-          final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
-          String url = customRepoConfigured? PyPIPackageUtil.PYPI_URL : "";
-          for (String name : packageNames) {
-            packages.add(new ComparablePair(name, url));
-          }
-          packages.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackageNames());
-          myPackagesModel = new PackagesModel(packages);
+          myPackagesModel = new PackagesModel(myController.getAllPackages());
 
           application.invokeLater(new Runnable() {
             @Override
@@ -343,62 +312,55 @@ public class ManagePackagesDialog extends DialogWrapper {
     }
   }
 
-  private class PackagesModel extends CollectionListModel<Pair> {
-    protected final List<Pair> myFilteredOut = new ArrayList<Pair>();
-    protected List<Pair> myView = new ArrayList<Pair>();
+  private class PackagesModel extends CollectionListModel<RepoPackage> {
+    protected final List<RepoPackage> myFilteredOut = new ArrayList<RepoPackage>();
+    protected List<RepoPackage> myView = new ArrayList<RepoPackage>();
 
-    public PackagesModel(List<Pair> packages) {
+    public PackagesModel(List<RepoPackage> packages) {
       super(packages);
       myView = packages;
     }
 
     public void add(String urlResource, String element) {
-      super.add(new ComparablePair(element, urlResource));
+      super.add(new RepoPackage(element, urlResource));
     }
 
     protected void filter(final String filter) {
-      final Collection<Pair> toProcess = toProcess();
+      final Collection<RepoPackage> toProcess = toProcess();
 
       toProcess.addAll(myFilteredOut);
       myFilteredOut.clear();
 
-      final ArrayList<Pair> filtered = new ArrayList<Pair>();
+      final ArrayList<RepoPackage> filtered = new ArrayList<RepoPackage>();
 
-      for (Pair pair : toProcess) {
-        if (StringUtil.containsIgnoreCase((String)pair.first, filter)) {
-          filtered.add(pair);
+      for (RepoPackage repoPackage : toProcess) {
+        if (StringUtil.containsIgnoreCase(repoPackage.getName(), filter)) {
+          filtered.add(repoPackage);
         }
         else {
-          myFilteredOut.add(pair);
+          myFilteredOut.add(repoPackage);
         }
       }
       filter(filtered);
     }
 
-    public void filter(List<Pair> filtered){
+    public void filter(List<RepoPackage> filtered){
       myView.clear();
       myPackages.clearSelection();
-      for (Pair pair : filtered) {
-        myView.add(pair);
+      for (RepoPackage repoPackage : filtered) {
+        myView.add(repoPackage);
       }
-      Collections.sort(myView, new Comparator<Pair>() {
-        @Override
-        public int compare(Pair pair, Pair pair1) {
-          if (pair instanceof ComparablePair)
-            return ((ComparablePair)pair).compareTo(pair1);
-          return 0;
-        }
-      });
+      Collections.sort(myView);
       fireContentsChanged(this, 0, myView.size());
     }
 
     @Override
-    public Pair getElementAt(int index) {
+    public RepoPackage getElementAt(int index) {
       return myView.get(index);
     }
 
-    protected ArrayList<Pair> toProcess() {
-      return new ArrayList<Pair>(myView);
+    protected ArrayList<RepoPackage> toProcess() {
+      return new ArrayList<RepoPackage>(myView);
     }
 
     @Override
@@ -444,48 +406,50 @@ public class ManagePackagesDialog extends DialogWrapper {
 
       setDownloadStatus(true);
       final Object pyPackage = myPackages.getSelectedValue();
-      if (pyPackage instanceof ComparablePair) {
-        final String packageName = ((ComparablePair)pyPackage).getFirst();
+      if (pyPackage instanceof RepoPackage) {
+        final String packageName = ((RepoPackage)pyPackage).getName();
         myVersionComboBox.removeAllItems();
         if (myVersionCheckBox.isEnabled()) {
-          PyPIPackageUtil.INSTANCE.usePackageReleases(packageName, new AsyncCallback() {
+          myController.fetchPackageVersions(packageName, new CatchingConsumer<List<String>, Exception>() {
             @Override
-            public void handleResult(Object result, URL url, String method) {
-              final List<String> releases = (List<String>)result;
-              PyPIPackageUtil.INSTANCE.addPackageReleases(packageName, releases);
-                ApplicationManager.getApplication().invokeLater(new Runnable() {
-                  @Override
-                  public void run() {
+            public void consume(final List<String> releases) {
+              ApplicationManager.getApplication().invokeLater(new Runnable() {
+                @Override
+                public void run() {
+                  if (myPackages.getSelectedValue() == pyPackage) {
                     myVersionComboBox.removeAllItems();
                     for (String release : releases) {
                       myVersionComboBox.addItem(release);
                     }
                   }
-                }, ModalityState.any());
+                }
+              }, ModalityState.any());
             }
+
             @Override
-            public void handleError(Exception exception, URL url, String method) {
-              LOG.info("Error retrieving releases from PyPI", exception);
+            public void consume(Exception e) {
+              LOG.info("Error retrieving releases", e);
             }
           });
         }
         myInstallButton.setEnabled(!currentlyInstalling.contains(packageName));
 
-        PyPIPackageUtil.INSTANCE.fillPackageDetails(packageName, new AsyncCallback() {
+        myController.fetchPackageDetails(packageName, new CatchingConsumer<String, Exception>() {
           @Override
-          public void handleResult(Object result, URL url, String method) {
-            final Hashtable details = (Hashtable)result;
-            PyPIPackageUtil.INSTANCE.addPackageDetails(packageName, details);
+          public void consume(final String details) {
             ApplicationManager.getApplication().invokeLater(new Runnable() {
               @Override
               public void run() {
-                addDetails(details);
+                if (myPackages.getSelectedValue() == pyPackage) {
+                  myDescriptionTextArea.setText(details);
+                }
               }
             }, ModalityState.any());
           }
+
           @Override
-          public void handleError(Exception exception, URL url, String method) {
-            LOG.info("Error retrieving package details from PyPI", exception);
+          public void consume(Exception exception) {
+            LOG.info("Error retrieving package details", exception);
           }
         });
       }
@@ -493,36 +457,6 @@ public class ManagePackagesDialog extends DialogWrapper {
         myInstallButton.setEnabled(false);
       }
       setDownloadStatus(false);
-    }
-
-    private void addDetails(Hashtable details) {
-      Object description = details.get("summary");
-      StringBuilder stringBuilder = new StringBuilder(TEXT_PREFIX);
-      if (description instanceof String) {
-        stringBuilder.append(description).append("<br/>");
-      }
-      Object version = details.get("version");
-      if (version instanceof String && !StringUtil.isEmpty((String)version)) {
-        stringBuilder.append("<h4>Version</h4>");
-        stringBuilder.append(version);
-      }
-      Object author = details.get("author");
-      if (author instanceof String && !StringUtil.isEmpty((String)author)) {
-        stringBuilder.append("<h4>Author</h4>");
-        stringBuilder.append(author).append("<br/><br/>");
-      }
-      Object authorEmail = details.get("author_email");
-      if (authorEmail instanceof String && !StringUtil.isEmpty((String)authorEmail)) {
-        stringBuilder.append("<br/>");
-        stringBuilder.append(composeHref("mailto:" + authorEmail));
-      }
-      Object homePage = details.get("home_page");
-      if (homePage instanceof String && !StringUtil.isEmpty((String)homePage)) {
-        stringBuilder.append("<br/>");
-        stringBuilder.append(composeHref((String)homePage));
-      }
-      stringBuilder.append(TEXT_SUFFIX);
-      myDescriptionTextArea.setText(stringBuilder.toString());
     }
   }
 
@@ -551,10 +485,11 @@ public class ManagePackagesDialog extends DialogWrapper {
                                                   int index,
                                                   boolean isSelected,
                                                   boolean cellHasFocus) {
-      if (value instanceof Pair) {
-        String name = (String)((Pair)value).getFirst();
+      if (value instanceof RepoPackage) {
+        RepoPackage repoPackage = (RepoPackage) value;
+        String name = repoPackage.getName();
         myNameLabel.setText(name);
-        myRepositoryLabel.setText((String)((Pair)value).getSecond());
+        myRepositoryLabel.setText(repoPackage.getRepoUrl());
         Component orig = super.getListCellRendererComponent(list, value, index, isSelected, cellHasFocus);
         final Color fg = orig.getForeground();
         myNameLabel.setForeground(myInstalledPackages.contains(name) ? PlatformColors.BLUE : fg);
