@@ -790,6 +790,7 @@
 
     <refactoring.moveDirectoryWithClassesHelper
         implementation="com.intellij.refactoring.move.moveClassesOrPackages.MoveDirectoryWithClassesHelper$Default" order="last"/>
+    <!--<codeHighlighting.iconCreator implementation="com.intellij.codeHighlighting.DefaultIconCreator"/>-->
 
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.ReformatCheckinHandlerFactory"/>
     <checkinHandlerFactory implementation="com.intellij.openapi.vcs.checkin.OptimizeOptionsCheckinHandlerFactory"/>
@@ -830,6 +831,8 @@
 
     <favoritesListProvider implementation="com.intellij.ide.bookmarks.BookmarksFavoriteListProvider"/>
     <favoritesListProvider implementation="com.intellij.xdebugger.impl.breakpoints.BreakpointsFavoriteListProvider"/>
+    <applicationService serviceInterface="com.intellij.codeInsight.FileModificationService"
+                        serviceImplementation="com.intellij.codeInsight.CodeInsightUtilBase"/>
   </extensions>
 </idea-plugin>
 
