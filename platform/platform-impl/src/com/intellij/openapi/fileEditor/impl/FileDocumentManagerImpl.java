@@ -581,7 +581,7 @@ public class FileDocumentManagerImpl extends FileDocumentManager implements Appl
     long documentStamp = document.getModificationStamp();
     long oldFileStamp = event.getOldModificationStamp();
     if (documentStamp != oldFileStamp) {
-      LOG.info("reload from disk?");
+      LOG.info("reload " + file.getName() + " from disk?");
       LOG.info("  documentStamp:" + documentStamp);
       LOG.info("  oldFileStamp:" + oldFileStamp);
 

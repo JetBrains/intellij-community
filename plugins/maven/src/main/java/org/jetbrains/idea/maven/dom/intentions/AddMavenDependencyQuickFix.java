@@ -27,6 +27,7 @@ import com.intellij.psi.PsiJavaCodeReferenceElement;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.xml.DomUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.dom.MavenDomBundle;
 import org.jetbrains.idea.maven.dom.MavenDomUtil;
 import org.jetbrains.idea.maven.dom.model.MavenDomProjectModel;
@@ -35,8 +36,12 @@ import org.jetbrains.idea.maven.model.MavenId;
 import org.jetbrains.idea.maven.project.MavenProject;
 
 import java.util.List;
+import java.util.regex.Pattern;
 
 public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityAction {
+
+  private static final Pattern CLASSNAME_PATTERN = Pattern.compile("(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*[A-Z]\\p{javaJavaIdentifierPart}+");
+
   private final PsiJavaCodeReferenceElement myRef;
 
   public AddMavenDependencyQuickFix(PsiJavaCodeReferenceElement ref) {
@@ -54,7 +59,13 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
   }
 
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return MavenDomUtil.findContainingProject(file) != null;
+    return MavenDomUtil.findContainingProject(file) != null && looksLikeClassName(getReferenceText());
+  }
+
+  private static boolean looksLikeClassName(@Nullable String text) {
+    if (text == null) return false;
+    //if (true) return true;
+    return CLASSNAME_PATTERN.matcher(text).matches();
   }
 
   public void invoke(@NotNull final Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
@@ -79,7 +90,7 @@ public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityA
     }.execute();
   }
 
-  private String getReferenceText() {
+  public String getReferenceText() {
     PsiJavaCodeReferenceElement result = myRef;
     while (true) {
       PsiElement parent = result.getParent();

@@ -276,7 +276,7 @@ public class MoveJavaMemberHandler implements MoveMemberHandler {
       final List<PsiField> beforeFields = new ArrayList<PsiField>();
       for (PsiReference psiReference : ReferencesSearch.search(member, new LocalSearchScope(targetClass))) {
         final PsiField fieldWithReference = PsiTreeUtil.getParentOfType(psiReference.getElement(), PsiField.class);
-        if (fieldWithReference != null && !afterFields.contains(fieldWithReference)) {
+        if (fieldWithReference != null && !afterFields.contains(fieldWithReference) && fieldWithReference.getContainingClass() == targetClass) {
           beforeFields.add(fieldWithReference);
         }
       }

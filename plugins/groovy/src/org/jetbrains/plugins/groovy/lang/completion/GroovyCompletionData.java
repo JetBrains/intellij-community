@@ -400,6 +400,21 @@ public class GroovyCompletionData {
         return true;
       }
     }
+
+    /*
+    @Anno
+    cl<caret>
+     */
+    if (parent instanceof GrVariable && context == ((GrVariable)parent).getNameIdentifierGroovy()) {
+      final PsiElement decl = parent.getParent();
+      if (decl instanceof GrVariableDeclaration &&
+          !((GrVariableDeclaration)decl).isTuple() &&
+          ((GrVariableDeclaration)decl).getTypeElementGroovy() == null &&
+          (decl.getParent() instanceof GrTypeDefinitionBody || decl.getParent() instanceof GroovyFile)) {
+        return true;
+      }
+    }
+
     final PsiElement leaf = getLeafByOffset(context.getTextRange().getStartOffset() - 1, context);
     if (leaf != null) {
       PsiElement prev = leaf;
@@ -589,7 +604,8 @@ public class GroovyCompletionData {
     }
     if (asSimpleVariable(context) ||
         asTypedMethod(context) ||
-        asVariableInBlock(context)) {
+        asVariableInBlock(context) ||
+        asVariableAfterModifiers(context)) {
       return true;
     }
     if ((parent instanceof GrParameter &&
@@ -615,6 +631,20 @@ public class GroovyCompletionData {
     return parent instanceof GrExpression &&
            parent.getParent() instanceof GroovyFile &&
            isNewStatement(context, false);
+  }
+
+  private static boolean asVariableAfterModifiers(PsiElement context) {
+    final PsiElement parent = context.getParent();
+    if (parent instanceof GrVariable && context == ((GrVariable)parent).getNameIdentifierGroovy()) {
+      final PsiElement decl = parent.getParent();
+      if (decl instanceof GrVariableDeclaration &&
+          !((GrVariableDeclaration)decl).isTuple() &&
+          ((GrVariableDeclaration)decl).getTypeElementGroovy() == null) {
+        return true;
+      }
+    }
+
+    return false;
   }
 
   private static boolean isInfixOperatorPosition(PsiElement context) {

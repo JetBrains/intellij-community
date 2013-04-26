@@ -40,7 +40,8 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
   }
 
   public void inlineElement(Project project, Editor editor, PsiElement element) {
-    final PsiField field = (PsiField) element;
+    final PsiElement navigationElement = element.getNavigationElement();
+    final PsiField field = (PsiField)(navigationElement instanceof PsiField ? navigationElement : element);
 
     if (!field.hasInitializer()) {
       String message = RefactoringBundle.message("no.initializer.present.for.the.field");
@@ -84,11 +85,14 @@ public class InlineConstantFieldHandler extends JavaInlineActionHandler {
     }
 
     PsiReference reference = editor != null ? TargetElementUtilBase.findReference(editor, editor.getCaretModel().getOffset()) : null;
-    if (reference != null && !field.equals(reference.resolve())) {
-      reference = null;
+    if (reference != null) {
+      final PsiElement resolve = reference.resolve();
+      if (resolve != null && !field.equals(resolve.getNavigationElement())) {
+        reference = null;
+      }
     }
 
-    if (!CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
+    if ((!(element instanceof PsiCompiledElement) || reference == null) && !CommonRefactoringUtil.checkReadOnlyStatus(project, field)) return;
     PsiReferenceExpression refExpression = reference instanceof PsiReferenceExpression ? (PsiReferenceExpression)reference : null;
     InlineFieldDialog dialog = new InlineFieldDialog(project, field, refExpression);
     dialog.show();

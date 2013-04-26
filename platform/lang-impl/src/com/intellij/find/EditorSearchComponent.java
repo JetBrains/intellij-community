@@ -19,10 +19,7 @@ package com.intellij.find;
 import com.intellij.featureStatistics.FeatureUsageTracker;
 import com.intellij.find.editorHeaderActions.*;
 import com.intellij.find.impl.FindManagerImpl;
-import com.intellij.find.impl.livePreview.LiveOccurrence;
-import com.intellij.find.impl.livePreview.LivePreview;
-import com.intellij.find.impl.livePreview.LivePreviewControllerBase;
-import com.intellij.find.impl.livePreview.SearchResults;
+import com.intellij.find.impl.livePreview.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.CustomComponentAction;
@@ -170,7 +167,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   }
 
   @Override
-  public void replacePerformed(LiveOccurrence occurrence, String replacement, Editor editor) {  }
+  public void replacePerformed(FindResult occurrence, String replacement, Editor editor) {  }
 
   @Override
   public void replaceAllPerformed(Editor e) {  }
@@ -681,7 +678,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
 
   private void updateExcludeStatus() {
     if (myExcludeButton != null && mySearchResults != null) {
-      LiveOccurrence cursor = mySearchResults.getCursor();
+      FindResult cursor = mySearchResults.getCursor();
       myExcludeButton.setText(cursor == null || !mySearchResults.isExcluded(cursor) ? "Exclude" : "Include");
       myReplaceAllButton.setEnabled(mySearchResults.hasMatches());
       myExcludeButton.setEnabled(cursor != null);
@@ -965,7 +962,7 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   }
 
   public boolean hasMatches() {
-    return myLivePreview != null && myLivePreview.hasMatches();
+    return mySearchResults != null && mySearchResults.hasMatches();
   }
 
   @Override

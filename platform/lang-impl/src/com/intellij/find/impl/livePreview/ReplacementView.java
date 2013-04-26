@@ -15,6 +15,7 @@
  */
 package com.intellij.find.impl.livePreview;
 
+import com.intellij.find.FindResult;
 import com.intellij.ui.JBColor;
 
 import javax.swing.*;
@@ -24,14 +25,11 @@ public class ReplacementView extends JPanel {
 
   private static final String MALFORMED_REPLACEMENT_STRING = "Malformed replacement string";
   private String myReplacement;
-  private LiveOccurrence myOccurrence;
+  private FindResult myOccurrence;
   private JButton myStatusButton;
 
   public interface Delegate {
-    void performReplacement(LiveOccurrence occurrence, String replacement);
-    void performReplaceAll();
-    boolean isExcluded(LiveOccurrence occurrence);
-    void exclude(LiveOccurrence occurrence);
+
   }
 
   private Delegate myDelegate;
@@ -49,7 +47,7 @@ public class ReplacementView extends JPanel {
 
   }
 
-  public ReplacementView(final String replacement, final LiveOccurrence occurrence) {
+  public ReplacementView(final String replacement, final FindResult occurrence) {
     myReplacement = replacement;
     String textToShow = myReplacement;
     if (myReplacement == null) {

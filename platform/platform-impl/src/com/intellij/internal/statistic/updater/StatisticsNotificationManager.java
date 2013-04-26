@@ -1,5 +1,6 @@
 package com.intellij.internal.statistic.updater;
 
+import com.intellij.internal.statistic.StatisticsBundle;
 import com.intellij.internal.statistic.configurable.StatisticsConfigurable;
 import com.intellij.internal.statistic.connect.RemotelyConfigurableStatisticsService;
 import com.intellij.internal.statistic.persistence.UsageStatisticsPersistenceComponent;
@@ -7,6 +8,7 @@ import com.intellij.notification.Notification;
 import com.intellij.notification.NotificationListener;
 import com.intellij.notification.NotificationType;
 import com.intellij.notification.Notifications;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -41,7 +43,9 @@ public class StatisticsNotificationManager {
   }
 
   private static String getTitle() {
-    return "Help improve "+ ApplicationNamesInfo.getInstance().getFullProductName() +" by sending anonymous usage statistics to JetBrains";
+    String product = ApplicationNamesInfo.getInstance().getFullProductName();
+    String company = ApplicationInfo.getInstance().getCompanyName();
+    return StatisticsBundle.message("stats.title", product, company);
   }
 
   private static class MyNotificationListener implements NotificationListener {

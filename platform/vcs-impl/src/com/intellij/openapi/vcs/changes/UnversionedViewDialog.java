@@ -21,6 +21,8 @@ import com.intellij.ide.TreeExpander;
 import com.intellij.ide.util.treeView.TreeState;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.actionSystem.impl.PresentationFactory;
+import com.intellij.openapi.actionSystem.impl.Utils;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.DumbAware;
@@ -42,6 +44,7 @@ import javax.swing.*;
 import javax.swing.tree.DefaultTreeModel;
 import javax.swing.tree.TreePath;
 import java.awt.*;
+import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.LinkedList;
 import java.util.List;
@@ -119,35 +122,16 @@ public class UnversionedViewDialog extends DialogWrapper {
     actions.add(collapseAction);
     actions.add(new ToggleShowFlattenAction());
 
-    AnAction addAction = ActionManager.getInstance().getAction("ChangesView.AddUnversioned.From.Dialog");
-    AnAction moveAction = ActionManager.getInstance().getAction(IdeActions.MOVE_TO_ANOTHER_CHANGE_LIST);
-    AnAction deleteAction = ActionManager.getInstance().getAction("ChangesView.DeleteUnversioned.From.Dialog");
-    AnAction ignoreAction = ActionManager.getInstance().getAction("ChangesView.Ignore");
+    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("UNVERSIONED_DIALOG", group, false);
 
-    final AnAction[] operatingActions = { addAction, moveAction, deleteAction, ignoreAction };
-
-    for (AnAction action : operatingActions) {
-      actions.add(action);
-      action.registerCustomShortcutSet(action.getShortcutSet(), myView);
-    }
-    deleteAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myView); // special shortcut for deleting file
-
-    ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
-      @Override
-      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-        for (AnAction anAction : operatingActions) {
-          if (anAction.equals(action)) {
-            refreshView();
-            return;
-          }
-        }
-      }
-    }, myDisposable);
+    final ActionGroup operatingActions = (ActionGroup)ActionManager.getInstance().getAction("Unversioned.Files.Dialog");
+    registerShortcuts(operatingActions, actionToolbar.getToolbarDataContext());
+    refreshViewAfterActionPerformed(operatingActions);
+    actions.add(operatingActions);
 
     for (AnAction action : actions) {
       group.add(action);
     }
-    final ActionToolbar actionToolbar = ActionManager.getInstance().createActionToolbar("UNVERSIONED_DIALOG", group, false);
     myPanel.add(actionToolbar.getComponent(), BorderLayout.WEST);
     myPanel.add(ScrollPaneFactory.createScrollPane(myView), BorderLayout.CENTER);
 
@@ -158,6 +142,32 @@ public class UnversionedViewDialog extends DialogWrapper {
 
     myView.setMenuActions(secondGroup);
     myView.setShowFlatten(false);
+  }
+
+  private void registerShortcuts(@NotNull ActionGroup opActionGroup, @NotNull DataContext dataContext) {
+    List<AnAction> opActions = new ArrayList<AnAction>();
+    Utils.expandActionGroup(opActionGroup, opActions, new PresentationFactory(), dataContext, "", ActionManager.getInstance());
+    for (AnAction action : opActions) {
+      action.registerCustomShortcutSet(action.getShortcutSet(), myView);
+    }
+
+    // special shortcut for deleting a file
+    AnAction deleteAction = ActionManager.getInstance().getAction("ChangesView.DeleteUnversioned.From.Dialog");
+    deleteAction.registerCustomShortcutSet(CommonShortcuts.DELETE, myView);
+  }
+
+  private void refreshViewAfterActionPerformed(@NotNull final ActionGroup opActionGroup) {
+    ActionManager.getInstance().addAnActionListener(new AnActionListener.Adapter() {
+      @Override
+      public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+        for (AnAction anAction : opActionGroup.getChildren(event)) {
+          if (anAction.equals(action)) {
+            refreshView();
+            return;
+          }
+        }
+      }
+    }, myDisposable);
   }
 
   @Override
