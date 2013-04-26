@@ -17,16 +17,22 @@ package com.intellij.idea;
 
 import com.intellij.ide.plugins.PluginManager;
 import com.intellij.ide.startupWizard.StartupWizard;
+import com.intellij.openapi.application.ApplicationInfo;
 import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.ApplicationInfoEx;
 import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.SystemInfoRt;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
 import com.intellij.util.SystemProperties;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.text.DateFormatUtilRt;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
 import org.xerial.snappy.Snappy;
@@ -36,6 +42,8 @@ import javax.swing.*;
 import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
+import java.lang.management.ManagementFactory;
+import java.lang.management.RuntimeMXBean;
 import java.lang.reflect.Field;
 import java.lang.reflect.Method;
 import java.util.*;
@@ -366,5 +374,30 @@ public class StartupUtil {
     Method loadNativeLibrary = SnappyLoader.class.getDeclaredMethod("loadNativeLibrary", Class.class);
     loadNativeLibrary.setAccessible(true);
     loadNativeLibrary.invoke(null, loaderClass);
+  }
+
+  public static void startLogging(final Logger log) {
+    Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook - logging") {
+      public void run() {
+        log.info(
+          "------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
+      }
+    });
+    log.info(
+      "------------------------------------------------------ IDE STARTED ------------------------------------------------------");
+
+    final ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
+    final ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
+    log.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild() + ", " +
+                   DateFormatUtilRt.formatBuildDate(appInfo.getBuildDate()) + ")");
+    log.info("OS: " + SystemInfoRt.OS_NAME + " (" + SystemInfoRt.OS_VERSION + ")");
+
+    log.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");
+    log.info("JVM: " + System.getProperty("java.vm.version", "-") + " (" + System.getProperty("java.vm.vendor", "-") + ")");
+
+    RuntimeMXBean RuntimemxBean = ManagementFactory.getRuntimeMXBean();
+    List<String> arguments = RuntimemxBean.getInputArguments();
+
+    if (arguments != null) log.info("JVM Args: " + StringUtil.join(arguments, " "));
   }
 }

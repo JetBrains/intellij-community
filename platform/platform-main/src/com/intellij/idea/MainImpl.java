@@ -63,20 +63,7 @@ public class MainImpl {
 
     final Logger LOG = Logger.getInstance(LOG_CATEGORY);
 
-    Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook - logging") {
-      public void run() {
-        LOG.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
-      }
-    });
-    LOG.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
-
-    final ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
-    final ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
-    LOG.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild() + ", " +
-             DateFormatUtilRt.formatBuildDate(appInfo.getBuildDate()) + ")");
-    LOG.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");
-    LOG.info("JVM: " + System.getProperty("java.vm.version", "-") + " (" + System.getProperty("java.vm.vendor", "-") + ")");
-    LOG.info("OS: " + SystemInfoRt.OS_NAME + " (" + SystemInfoRt.OS_VERSION + ")");
+    StartupUtil.startLogging(LOG);
 
     _main(args);
   }
