@@ -86,19 +86,13 @@ public abstract class XExecutionStack {
    */
   public abstract void computeStackFrames(int firstFrameIndex, XStackFrameContainer container);
 
-  public interface XStackFrameContainer extends Obsolescent {
+  public interface XStackFrameContainer extends Obsolescent, XValueCallback {
     /**
      * Add stack frames to the list
      * @param stackFrames stack frames to add
      * @param last <code>true</code> if all frames are added
      */
     void addStackFrames(@NotNull List<? extends XStackFrame> stackFrames, final boolean last);
-
-    /**
-     * Indicate that an error occurs
-     * @param errorMessage message describing the error
-     */
-    void errorOccurred(String errorMessage);
 
     /**
      * @deprecated use {@link #errorOccurred(String)} instead

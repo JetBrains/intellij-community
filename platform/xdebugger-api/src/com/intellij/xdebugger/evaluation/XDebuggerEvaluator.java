@@ -23,6 +23,7 @@ import com.intellij.xdebugger.XSourcePosition;
 import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.frame.XSuspendContext;
 import com.intellij.xdebugger.frame.XValue;
+import com.intellij.xdebugger.frame.XValueCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -139,10 +140,7 @@ public abstract class XDebuggerEvaluator {
     return 700;
   }
 
-  public interface XEvaluationCallback {
-
+  public interface XEvaluationCallback extends XValueCallback {
     void evaluated(@NotNull XValue result);
-
-    void errorOccurred(@NotNull String errorMessage);
   }
 }

@@ -53,11 +53,9 @@ public abstract class XFullValueEvaluator {
     return myLinkText;
   }
 
-  public interface XFullValueEvaluationCallback extends Obsolescent {
+  public interface XFullValueEvaluationCallback extends Obsolescent, XValueCallback {
     void evaluated(@NotNull String fullValue);
 
     void evaluated(@NotNull String fullValue, @Nullable Font font);
-
-    void errorOccurred(@NotNull String errorMessage);
   }
 }
