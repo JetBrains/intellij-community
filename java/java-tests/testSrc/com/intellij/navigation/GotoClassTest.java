@@ -41,6 +41,9 @@ public class GotoClassTest extends FileEditorManagerTestCase {
     NavigationUtil.activateFileWithPsiElement(psiClass);
     assertEquals(identifierOffset, getOffset(virtualFile));
 
+    myManager.closeAllFiles();
+    NavigationUtil.activateFileWithPsiElement(file); // GoTo file should keep offset
+    assertEquals(identifierOffset, getOffset(virtualFile));
   }
 
   private int getOffset(VirtualFile virtualFile) {
