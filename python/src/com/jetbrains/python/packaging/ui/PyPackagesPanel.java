@@ -117,7 +117,7 @@ public class PyPackagesPanel extends JPanel {
       public void actionPerformed(ActionEvent e) {
         if (mySelectedSdk != null) {
           ManagePackagesDialog dialog = new ManagePackagesDialog(myProject, mySelectedSdk, PyPackagesPanel.this,
-                                                                 new PyPackagesController(myProject, mySelectedSdk));
+                                                                 new PyPackageManagementService(myProject, mySelectedSdk));
           dialog.show();
         }
       }
@@ -128,7 +128,7 @@ public class PyPackagesPanel extends JPanel {
       protected boolean onDoubleClick(MouseEvent e) {
         if (mySelectedSdk != null && myInstallButton.isEnabled()) {
           ManagePackagesDialog dialog = new ManagePackagesDialog(myProject, mySelectedSdk, PyPackagesPanel.this,
-                                                                 new PyPackagesController(myProject, mySelectedSdk));
+                                                                 new PyPackageManagementService(myProject, mySelectedSdk));
           Point p = e.getPoint();
           int row = myPackagesTable.rowAtPoint(p);
           int column = myPackagesTable.columnAtPoint(p);

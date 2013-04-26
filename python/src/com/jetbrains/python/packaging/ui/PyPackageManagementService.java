@@ -4,7 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
-import com.intellij.webcore.packaging.PackageManagerController;
+import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -19,11 +19,11 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PyPackagesController extends PackageManagerController {
+public class PyPackageManagementService extends PackageManagementService {
   private final Project myProject;
   private final Sdk mySdk;
 
-  public PyPackagesController(Project project, Sdk sdk) {
+  public PyPackageManagementService(Project project, Sdk sdk) {
     myProject = project;
     mySdk = sdk;
   }

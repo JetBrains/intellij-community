@@ -21,7 +21,7 @@ import com.intellij.util.ui.PlatformColors;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.UiNotifyConnector;
 import com.intellij.webcore.packaging.ManageRepoDialog;
-import com.intellij.webcore.packaging.PackageManagerController;
+import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.PyPIPackageUtil;
 import org.jetbrains.annotations.NotNull;
@@ -53,7 +53,7 @@ public class ManagePackagesDialog extends DialogWrapper {
   private static final Logger LOG = Logger.getInstance(ManagePackagesDialog.class);
 
   @NotNull private final Project myProject;
-  private final PackageManagerController myController;
+  private final PackageManagementService myController;
 
   private JPanel myFilter;
   private JPanel myMainPanel;
@@ -78,10 +78,10 @@ public class ManagePackagesDialog extends DialogWrapper {
   protected final ListSpeedSearch myListSpeedSearch;
 
   public ManagePackagesDialog(@NotNull Project project, @NotNull final Sdk sdk, @NotNull final PyPackagesPanel packageListPanel,
-                              final PackageManagerController packageManagerController) {
+                              final PackageManagementService packageManagementService) {
     super(project, true);
     myProject = project;
-    myController = packageManagerController;
+    myController = packageManagementService;
 
     myPackageListPanel = packageListPanel;
     init();
@@ -216,7 +216,7 @@ public class ManagePackagesDialog extends DialogWrapper {
             version = (String) myVersionComboBox.getSelectedItem();
           }
 
-          final PackageManagerController.Listener listener = new PackageManagerController.Listener() {
+          final PackageManagementService.Listener listener = new PackageManagementService.Listener() {
             @Override
             public void installationStarted() {
               setDownloadStatus(true);
