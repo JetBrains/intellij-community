@@ -1,5 +1,6 @@
 package com.jetbrains.env.python.debug;
 
+import com.google.common.collect.Lists;
 import com.intellij.execution.process.ProcessHandler;
 import com.intellij.ide.util.projectWizard.EmptyModuleBuilder;
 import com.intellij.openapi.module.ModuleType;
@@ -16,6 +17,7 @@ import com.jetbrains.python.PythonTestUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.List;
 import java.util.concurrent.Semaphore;
 import java.util.concurrent.TimeUnit;
 
@@ -55,6 +57,10 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
           ModuleFixtureBuilder moduleFixtureBuilder = fixtureBuilder.addModule(MyModuleFixtureBuilder.class);
           moduleFixtureBuilder.addSourceContentRoot(myFixture.getTempDirPath());
           moduleFixtureBuilder.addSourceContentRoot(getTestDataPath());
+          final List<String> contentRoots = getContentRoots();
+          for (String contentRoot : contentRoots) {
+            moduleFixtureBuilder.addContentRoot(getTestDataPath() + contentRoot);
+          }
         }
       });
 
@@ -62,6 +68,8 @@ public abstract class PyExecutionFixtureTestTask extends PyTestTask {
     myFixture.setUp();
     myFixture.setTestDataPath(getTestDataPath());
   }
+
+  protected List<String> getContentRoots() { return Lists.newArrayList();}
 
   protected String getTestDataPath() {
     return PythonTestUtil.getTestDataPath();
