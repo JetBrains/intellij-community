@@ -17,7 +17,7 @@ package com.intellij.codeInspection.inheritance;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.intention.HighPriorityAction;
+import com.intellij.codeInsight.intention.LowPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
 import com.intellij.openapi.command.WriteCommandAction;
@@ -57,7 +57,7 @@ public class ChangeSuperClassFix implements LocalQuickFix {
   @NotNull
   @Override
   public String getName() {
-    return String.format("%s%% extends %s", myPercent, myNewSuperClass.getQualifiedName());
+    return String.format("Make extends '%s' - %s%%", myNewSuperClass.getQualifiedName(), myPercent);
   }
 
   @NotNull
@@ -120,38 +120,9 @@ public class ChangeSuperClassFix implements LocalQuickFix {
     }.execute();
   }
 
-  public static LocalQuickFix highPriority(final LocalQuickFix quickFix) {
-    return new HighPriorityQuickFixWrapper(quickFix);
-  }
-
-  public static class HighPriorityQuickFixWrapper implements LocalQuickFix, HighPriorityAction {
-
-    private final LocalQuickFix myUnderlying;
-
-    private HighPriorityQuickFixWrapper(final LocalQuickFix underlying) {
-      myUnderlying = underlying;
-    }
-
-    @TestOnly
-    public LocalQuickFix getUnderlying() {
-      return myUnderlying;
-    }
-
-    @NotNull
-    @Override
-    public String getName() {
-      return myUnderlying.getName();
-    }
-
-    @NotNull
-    @Override
-    public String getFamilyName() {
-      return myUnderlying.getFamilyName();
-    }
-
-    @Override
-    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      myUnderlying.applyFix(project, descriptor);
+  public static class LowPriority extends ChangeSuperClassFix implements LowPriorityAction {
+    public LowPriority(@NotNull final PsiClass newSuperClass, final int percent, @NotNull final PsiClass oldSuperClass) {
+      super(newSuperClass, percent, oldSuperClass);
     }
   }
 }

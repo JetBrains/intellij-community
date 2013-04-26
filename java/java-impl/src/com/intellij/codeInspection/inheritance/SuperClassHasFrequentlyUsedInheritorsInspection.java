@@ -65,10 +65,12 @@ public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaLoc
 
     boolean isFirst = true;
     for (final InheritorsStatisticsSearchResult searchResult : topInheritors) {
-      LocalQuickFix quickFix = new ChangeSuperClassFix(searchResult.getPsiClass(), searchResult.getPercent(), superClass);
+      final LocalQuickFix quickFix;
       if (isFirst) {
-        quickFix = ChangeSuperClassFix.highPriority(quickFix);
+        quickFix = new ChangeSuperClassFix(searchResult.getPsiClass(), searchResult.getPercent(), superClass);
         isFirst = false;
+      } else {
+        quickFix = new ChangeSuperClassFix.LowPriority(searchResult.getPsiClass(), searchResult.getPercent(), superClass);
       }
       topInheritorsQuickFix.add(quickFix);
       if (topInheritorsQuickFix.size() >= MAX_QUICK_FIX_COUNTS) {
