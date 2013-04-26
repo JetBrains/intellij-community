@@ -7,6 +7,7 @@ import com.intellij.util.CatchingConsumer;
 import com.intellij.webcore.packaging.PackageManagerController;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.*;
+import com.jetbrains.python.sdk.PythonSdkType;
 import org.apache.xmlrpc.AsyncCallback;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -18,7 +19,7 @@ import java.util.*;
 /**
  * @author yole
  */
-public class PyPackagesController implements PackageManagerController {
+public class PyPackagesController extends PackageManagerController {
   private final Project myProject;
   private final Sdk mySdk;
 
@@ -61,6 +62,29 @@ public class PyPackagesController implements PackageManagerController {
     }
     packages.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackageNames());
     return packages;
+  }
+
+  @Override
+  public boolean canInstallToUser() {
+    return !PythonSdkType.isVirtualEnv(mySdk);
+  }
+
+  @Override
+  public String getInstallToUserText() {
+    String userSiteText = "Install to user's site packages directory";
+    if (!PythonSdkType.isRemote(mySdk))
+      userSiteText += " (" + PyPackageManagerImpl.getUserSite() + ")";
+    return userSiteText;
+  }
+
+  @Override
+  public boolean isInstallToUserSelected() {
+    return PyPackageService.getInstance().useUserSite(mySdk.getHomePath());
+  }
+
+  @Override
+  public void installToUserChanged(boolean newValue) {
+    PyPackageService.getInstance().addSdkToUserSite(mySdk.getHomePath(), newValue);
   }
 
   @Override

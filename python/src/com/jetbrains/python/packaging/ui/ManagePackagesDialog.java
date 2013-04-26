@@ -24,9 +24,6 @@ import com.intellij.webcore.packaging.ManageRepoDialog;
 import com.intellij.webcore.packaging.PackageManagerController;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.PyPIPackageUtil;
-import com.jetbrains.python.packaging.PyPackageManagerImpl;
-import com.jetbrains.python.packaging.PyPackageService;
-import com.jetbrains.python.sdk.PythonSdkType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -86,9 +83,6 @@ public class ManagePackagesDialog extends DialogWrapper {
     myProject = project;
     myController = packageManagerController;
 
-    myInstallToUser.setEnabled(!PythonSdkType.isVirtualEnv(sdk));
-    myInstallToUser.setSelected(false);
-
     myPackageListPanel = packageListPanel;
     init();
     final JBTable table = myPackageListPanel.getPackagesTable();
@@ -137,12 +131,10 @@ public class ManagePackagesDialog extends DialogWrapper {
     mySplitPane.setLeftComponent(myPackagesPanel);
 
     myPackages.addListSelectionListener(new MyPackageSelectionListener());
-    if (myInstallToUser.isEnabled())
-      myInstallToUser.setSelected(PyPackageService.getInstance().useUserSite(sdk.getHomePath()));
     myInstallToUser.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
-        PyPackageService.getInstance().addSdkToUserSite(sdk.getHomePath(), myInstallToUser.isSelected());
+        myController.installToUserChanged(myInstallToUser.isSelected());
       }
     });
     myOptionsCheckBox.setEnabled(false);
@@ -172,10 +164,15 @@ public class ManagePackagesDialog extends DialogWrapper {
     myInstalledPackages = new HashSet<String>();
     updateInstalledNames(table);
     addManageAction();
-    String userSiteText = "Install to user's site packages directory";
-    if (!PythonSdkType.isRemote(sdk))
-      userSiteText += " (" + PyPackageManagerImpl.getUserSite() + ")";
-    myInstallToUser.setText(userSiteText);
+
+    if (myController.canInstallToUser()) {
+      myInstallToUser.setVisible(true);
+      myInstallToUser.setSelected(myController.isInstallToUserSelected());
+      myInstallToUser.setText(myController.getInstallToUserText());
+    }
+    else {
+      myInstallToUser.setVisible(false);
+    }
   }
 
   public void setSelected(String pyPackage) {
