@@ -181,6 +181,9 @@ public class IncProjectBuilder {
       reportRebuiltModules(context);
     }
     catch (ProjectBuildException e) {
+      if (LOG.isDebugEnabled()) {
+        LOG.debug(e);
+      }
       final Throwable cause = e.getCause();
       if (cause instanceof PersistentEnumerator.CorruptedException ||
           cause instanceof MappingFailedException ||

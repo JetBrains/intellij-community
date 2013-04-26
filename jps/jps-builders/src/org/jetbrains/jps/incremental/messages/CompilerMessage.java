@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.messages;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.ByteArrayOutputStream;
@@ -101,7 +102,7 @@ public class CompilerMessage extends BuildMessage {
     StringBuilder text = new StringBuilder();
     text.append("Error: ");
     final String msg = internalError.getMessage();
-    if (msg != null) {
+    if (!StringUtil.isEmptyOrSpaces(msg)) {
       text.append(msg);
     }
     else {
