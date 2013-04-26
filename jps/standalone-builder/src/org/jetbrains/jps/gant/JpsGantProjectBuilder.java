@@ -133,19 +133,19 @@ public class JpsGantProjectBuilder {
   }
 
   public void makeModule(JpsModule module) {
-    runBuild(getModuleDependencies(module, false), false);
+    runBuild(getModuleDependencies(module, false), false, false);
   }
 
   public void makeModuleTests(JpsModule module) {
-    runBuild(getModuleDependencies(module, true), true);
+    runBuild(getModuleDependencies(module, true), false, true);
   }
 
   public void buildAll() {
-    runBuild(Collections.<String>emptySet(), true);
+    runBuild(Collections.<String>emptySet(), true, true);
   }
 
   public void buildProduction() {
-    runBuild(Collections.<String>emptySet(), false);
+    runBuild(Collections.<String>emptySet(), true, false);
   }
 
   public void exportModuleOutputProperties() {
@@ -166,14 +166,14 @@ public class JpsGantProjectBuilder {
     return names;
   }
 
-  private void runBuild(final Set<String> modulesSet, boolean includeTests) {
+  private void runBuild(final Set<String> modulesSet, final boolean allModules, boolean includeTests) {
     if (!myDryRun) {
       final AntMessageHandler messageHandler = new AntMessageHandler();
       Logger.setFactory(new AntLoggerFactory(messageHandler));
       info("Starting build: modules = " + modulesSet + ", caches are saved to " + myDataStorageRoot.getAbsolutePath());
       try {
-        Standalone.runBuild(myModelLoader, myDataStorageRoot, true, modulesSet, Collections.<String>emptyList(),
-                            includeTests, messageHandler);
+        Standalone.runBuild(myModelLoader, myDataStorageRoot, true, modulesSet, allModules, Collections.<String>emptyList(), includeTests,
+                            messageHandler);
       }
       catch (Throwable e) {
         error(e);
