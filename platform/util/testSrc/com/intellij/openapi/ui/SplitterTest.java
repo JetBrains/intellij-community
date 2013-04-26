@@ -81,9 +81,7 @@ public class SplitterTest extends TestCase{
       splitter.setProportion(f);
       splitter.doLayout();
       float proportion = splitter.getProportion();
-      assertTrue (proportion>=.1 && proportion<=9);
-      if (f>=.1 && f<=.89)
-        assertEquals(f, proportion, 1e-4);
+      assertTrue (proportion==f);
     }
   }
 
