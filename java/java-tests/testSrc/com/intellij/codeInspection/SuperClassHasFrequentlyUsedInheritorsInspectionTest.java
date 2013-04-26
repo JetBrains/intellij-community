@@ -5,7 +5,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.ex.QuickFixWrapper;
 import com.intellij.codeInspection.inheritance.ChangeSuperClassFix;
 import com.intellij.codeInspection.inheritance.SuperClassHasFrequentlyUsedInheritorsInspection;
-import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.testFramework.fixtures.JavaCodeInsightFixtureTestCase;
 import com.intellij.util.containers.ContainerUtil;
@@ -107,9 +106,6 @@ public class SuperClassHasFrequentlyUsedInheritorsInspectionTest extends JavaCod
     final LocalQuickFix quickFix = quickFixWrapper.getFix();
     if (quickFix instanceof ChangeSuperClassFix) {
       return (ChangeSuperClassFix)quickFix;
-    }
-    if (quickFix instanceof ChangeSuperClassFix.HighPriorityQuickFixWrapper) {
-      return (ChangeSuperClassFix)((ChangeSuperClassFix.HighPriorityQuickFixWrapper)quickFix).getUnderlying();
     }
     return null;
   }
