@@ -5,7 +5,7 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.CollectionComboBoxModel;
-import com.jetbrains.python.packaging.ui.PyPackagesNotificationPanel;
+import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.ui.PyPackagesPanel;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
@@ -16,7 +16,7 @@ import javax.swing.*;
 import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.util.*;
+import java.util.Collections;
 import java.util.List;
 
 /**
@@ -34,7 +34,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
     final JComboBox sdkComboBox = new JComboBox(new CollectionComboBoxModel(sdks, sdk));
     sdkComboBox.setRenderer(new PySdkListCellRenderer());
 
-    PyPackagesNotificationPanel notificationPanel = new PyPackagesNotificationPanel(project);
+    PackagesNotificationPanel notificationPanel = new PackagesNotificationPanel(project);
     final PyPackagesPanel packagesPanel = new PyPackagesPanel(project, notificationPanel);
     packagesPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
     packagesPanel.updatePackages(sdk);

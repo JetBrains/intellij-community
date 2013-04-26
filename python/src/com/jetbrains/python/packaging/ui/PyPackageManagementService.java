@@ -4,6 +4,8 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.*;
@@ -96,7 +98,24 @@ public class PyPackageManagementService extends PackageManagementService {
   }
 
   @Override
-  public void installPackage(String packageName,
+  public Collection<String> getInstalledPackageNames() throws IOException {
+    List<PyPackage> packages;
+    try {
+      packages = ((PyPackageManagerImpl)PyPackageManager.getInstance(mySdk)).getPackages();
+    }
+    catch (PyExternalProcessException e) {
+      throw new IOException(e);
+    }
+    return ContainerUtil.map(packages, new Function<PyPackage, String>() {
+      @Override
+      public String fun(PyPackage aPackage) {
+        return aPackage.getName();
+      }
+    });
+  }
+
+  @Override
+  public void installPackage(final String packageName,
                              String repositoryUrl,
                              String version,
                              boolean installToUser,
@@ -126,12 +145,12 @@ public class PyPackageManagementService extends PackageManagementService {
     final PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(myProject, mySdk, new PyPackageManagerImpl.UI.Listener() {
       @Override
       public void started() {
-        listener.installationStarted();
+        listener.installationStarted(packageName);
       }
 
       @Override
       public void finished(@Nullable List<PyExternalProcessException> exceptions) {
-        listener.installationFinished(PyPackageManagerImpl.UI.createDescription(exceptions, ""));
+        listener.installationFinished(packageName, PyPackageManagerImpl.UI.createDescription(exceptions, ""));
       }
     });
     ui.install(Collections.singletonList(req), extraArgs);

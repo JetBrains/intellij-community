@@ -14,6 +14,9 @@ import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
+import com.intellij.webcore.packaging.ManagePackagesDialog;
+import com.intellij.webcore.packaging.PackageManagementService;
+import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.sdk.flavors.IronPythonSdkFlavor;
 import com.jetbrains.python.sdk.flavors.PythonSdkFlavor;
@@ -50,13 +53,13 @@ public class PyPackagesPanel extends JPanel {
   private DefaultTableModel myPackagesTableModel;
   private Sdk mySelectedSdk;
   private final Project myProject;
-  private final PyPackagesNotificationPanel myNotificationArea;
+  private final PackagesNotificationPanel myNotificationArea;
   private boolean myHasDistribute;
   private boolean myHasPip = true;
   private final List<Consumer<Sdk>> myPathChangedListeners = ContainerUtil.createLockFreeCopyOnWriteList();
   private Set<String> currentlyInstalling = new HashSet<String>();
 
-  public PyPackagesPanel(Project project, PyPackagesNotificationPanel area) {
+  public PyPackagesPanel(Project project, PackagesNotificationPanel area) {
     super(new GridBagLayout());
     myProject = project;
     myNotificationArea = area;
@@ -116,8 +119,7 @@ public class PyPackagesPanel extends JPanel {
       @Override
       public void actionPerformed(ActionEvent e) {
         if (mySelectedSdk != null) {
-          ManagePackagesDialog dialog = new ManagePackagesDialog(myProject, mySelectedSdk, PyPackagesPanel.this,
-                                                                 new PyPackageManagementService(myProject, mySelectedSdk));
+          ManagePackagesDialog dialog = createManagePackagesDialog();
           dialog.show();
         }
       }
@@ -127,8 +129,7 @@ public class PyPackagesPanel extends JPanel {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
         if (mySelectedSdk != null && myInstallButton.isEnabled()) {
-          ManagePackagesDialog dialog = new ManagePackagesDialog(myProject, mySelectedSdk, PyPackagesPanel.this,
-                                                                 new PyPackageManagementService(myProject, mySelectedSdk));
+          ManagePackagesDialog dialog = createManagePackagesDialog();
           Point p = e.getPoint();
           int row = myPackagesTable.rowAtPoint(p);
           int column = myPackagesTable.columnAtPoint(p);
@@ -165,6 +166,25 @@ public class PyPackagesPanel extends JPanel {
     });
   }
 
+  private ManagePackagesDialog createManagePackagesDialog() {
+    return new ManagePackagesDialog(myProject,
+                                    new PyPackageManagementService(myProject, mySelectedSdk),
+                                    new PackageManagementService.Listener() {
+                                      @Override
+                                      public void installationStarted(String packageName) {
+                                        myPackagesTable.setPaintBusy(true);
+                                      }
+
+                                      @Override
+                                      public void installationFinished(String packageName,
+                                                                       @Nullable String errorDescription) {
+                                        myNotificationArea.showResult(packageName, errorDescription);
+                                        myPackagesTable.clearSelection();
+                                        doUpdatePackages(mySelectedSdk);
+                                      }
+                                    });
+  }
+
   public void addPathChangedListener(Consumer<Sdk> consumer) {
     myPathChangedListeners.add(consumer);
   }
@@ -173,7 +193,7 @@ public class PyPackagesPanel extends JPanel {
     return myPackagesTable;
   }
 
-  public PyPackagesNotificationPanel getNotificationsArea() {
+  public PackagesNotificationPanel getNotificationsArea() {
     return myNotificationArea;
   }
 
@@ -341,10 +361,10 @@ public class PyPackagesPanel extends JPanel {
     mySelectedSdk = selectedSdk;
     myPackagesTable.clearSelection();
     myPackagesTableModel.getDataVector().clear();
-    updatePackages(selectedSdk, null);
+    doUpdatePackages(selectedSdk);
   }
 
-  public void updatePackages(final Sdk selectedSdk, @Nullable final Set<String> installed) {
+  public void doUpdatePackages(final Sdk selectedSdk) {
     myPackagesTable.setPaintBusy(true);
     final Application application = ApplicationManager.getApplication();
     application.executeOnPooledThread(new Runnable() {
@@ -371,9 +391,6 @@ public class PyPackagesPanel extends JPanel {
                 if (selectedSdk == mySelectedSdk) {
                   myPackagesTableModel.getDataVector().clear();
                   for (PyPackage pyPackage : finalPackages) {
-                    if (installed != null) {
-                      installed.add(pyPackage.getName());
-                    }
                     final String version = cache.get(pyPackage.getName());
                     myPackagesTableModel
                       .addRow(new Object[]{pyPackage, pyPackage.getVersion(), version == null ? "" : version});
