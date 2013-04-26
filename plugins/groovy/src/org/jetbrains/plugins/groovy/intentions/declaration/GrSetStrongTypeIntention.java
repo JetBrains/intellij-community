@@ -204,19 +204,23 @@ public class GrSetStrongTypeIntention extends Intention {
         }
 
         if (pparent instanceof GrVariableDeclaration) {
+          if (((GrVariableDeclaration)pparent).getTypeElementGroovy() != null) return false;
+
           GrVariable[] variables = ((GrVariableDeclaration)pparent).getVariables();
           for (GrVariable variable : variables) {
             if (isVarDeclaredWithInitializer(variable)) return true;
           }
         }
         else if (pparent instanceof GrForInClause) {
-          return PsiUtil.extractIteratedType((GrForInClause)pparent) != null;
+          final GrVariable variable = ((GrForInClause)pparent).getDeclaredVariable();
+          return variable != null && variable.getTypeElementGroovy() == null && PsiUtil.extractIteratedType((GrForInClause)pparent) != null;
         }
         else if (parent instanceof GrParameter && pparent instanceof GrParameterList) {
-          return getClosureParameterType((PsiParameter)parent) != null;
+          return ((GrParameter)parent).getTypeElementGroovy() == null && getClosureParameterType((PsiParameter)parent) != null;
         }
         else {
-          return isVarDeclaredWithInitializer((GrVariable)parent);
+          final GrVariable variable = (GrVariable)parent;
+          return variable.getTypeElementGroovy() == null && isVarDeclaredWithInitializer(variable);
         }
 
         return false;
