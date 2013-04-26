@@ -113,6 +113,10 @@ public class DjangoTestRunnerTest extends PyEnvTestCase {
     doTest("/DjangoRoot", "DjangoRoot/settings.py", "/DjangoRoot", null);
   }
 
+  public void testSameNamedDir() {
+    doTest("/web/SameNamedDir", "settings.py", null, null);
+  }
+
   public void testCustomSettings() {
     doTest(null, null, null, "/custom_settings.py");
   }
