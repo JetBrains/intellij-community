@@ -37,5 +37,5 @@ public abstract class DefaultHighlightingSettingProvider {
   public static final ExtensionPointName<DefaultHighlightingSettingProvider> EP_NAME = ExtensionPointName.create("com.intellij.defaultHighlightingSettingProvider");
 
   @Nullable
-  public abstract FileHighlighingSetting getDefaultSetting(@NotNull Project project, @NotNull VirtualFile file);
+  public abstract FileHighlightingSetting getDefaultSetting(@NotNull Project project, @NotNull VirtualFile file);
 }

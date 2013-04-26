@@ -43,8 +43,8 @@ public class HighlightLevelUtil {
     final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(psiRoot.getProject());
     if (component == null) return true;
 
-    final FileHighlighingSetting settingForRoot = component.getHighlightingSettingForRoot(psiRoot);
-    return settingForRoot != FileHighlighingSetting.SKIP_HIGHLIGHTING;
+    final FileHighlightingSetting settingForRoot = component.getHighlightingSettingForRoot(psiRoot);
+    return settingForRoot != FileHighlightingSetting.SKIP_HIGHLIGHTING;
   }
 
   public static boolean shouldInspect(@NotNull PsiElement psiRoot) {
@@ -65,11 +65,11 @@ public class HighlightLevelUtil {
     final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(project);
     if (component == null) return true;
 
-    final FileHighlighingSetting settingForRoot = component.getHighlightingSettingForRoot(psiRoot);
-    return settingForRoot != FileHighlighingSetting.SKIP_INSPECTION;
+    final FileHighlightingSetting settingForRoot = component.getHighlightingSettingForRoot(psiRoot);
+    return settingForRoot != FileHighlightingSetting.SKIP_INSPECTION;
   }
 
-  public static void forceRootHighlighting(@NotNull PsiElement root, @NotNull FileHighlighingSetting level) {
+  public static void forceRootHighlighting(@NotNull PsiElement root, @NotNull FileHighlightingSetting level) {
     final HighlightingSettingsPerFile component = HighlightingSettingsPerFile.getInstance(root.getProject());
     if (component == null) return;
 

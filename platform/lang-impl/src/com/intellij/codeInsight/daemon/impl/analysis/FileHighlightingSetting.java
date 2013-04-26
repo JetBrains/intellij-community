@@ -16,7 +16,7 @@
 
 package com.intellij.codeInsight.daemon.impl.analysis;
 
-public enum FileHighlighingSetting {
+public enum FileHighlightingSetting {
   NONE,
   SKIP_HIGHLIGHTING,
   FORCE_HIGHLIGHTING,
