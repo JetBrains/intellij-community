@@ -129,6 +129,8 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     CommonCodeStyleSettings defaultSettings = new CommonCodeStyleSettings(GroovyFileType.GROOVY_LANGUAGE);
     defaultSettings.initIndentOptions();
     defaultSettings.SPACE_WITHIN_BRACES = true;
+    defaultSettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
+    defaultSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
     return defaultSettings;
   }
 
@@ -268,11 +270,11 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     "    int x = (3 + 4 + 5 + 6) * (7 + 8 + 9 + 10) * (11 + 12 + 13 + 14 + 0xFFFFFFFF)\n" +
     "    String s1, s2, s3\n" +
     "    s1 = s2 = s3 = \"012345678901456\"\n" +
-    "    assert i + j + k + l + n+ m <= 2 : \"assert description\"" +
+    "    assert i + j + k + l + n+ m <= 2 : \"assert description\"\n" +
     "    int y = 2 > 3 ? 7 + 8 + 9 : 11 + 12 + 13\n" +
     "    super.getFoo().foo().getBar().bar()\n" +
     "\n" +
-    "    label: " +
+    "    label: \n" +
     "    if (2 < 3) return else if (2 > 3) return else return\n" +
     "    for (int i = 0; i < 0xFFFFFF; i += 2) System.out.println(i)\n" +
     "    print([\n" +
@@ -299,7 +301,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     "        throws Exception { \n" +
     "        foo.foo().bar(\"arg1\", \n" +
     "                      \"arg2\") \n" +
-    "        new Object() {}" +
+    "        new Object() {}\n" +
     "    } \n" +
     "    class TestInnerClass {}\n" +
     "    interface TestInnerInterface {}\n" +
@@ -314,7 +316,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     "    }\n" +
     "    @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") public static int myFoo\n" +
     "    public void method(@Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") final int param){\n" +
-    "        @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") final int localVariable" +
+    "        @Annotation1 @Annotation3(param1=\"value1\", param2=\"value2\") final int localVariable\n" +
     "    }\n" +
     "}";
 

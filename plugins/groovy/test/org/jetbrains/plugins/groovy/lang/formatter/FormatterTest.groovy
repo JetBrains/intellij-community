@@ -204,8 +204,8 @@ public class FormatterTest extends GroovyFormatterTestCase {
   }
 
   public void doTest() {
-    final List<String> data = TestUtils.readInput(testDataPath + getTestName(true) + ".test");
-    checkFormatting(data.get(0), StringUtil.trimEnd(data.get(1), "\n"));
+    def (String before, String after) = TestUtils.readInput(testDataPath + getTestName(true) + ".test");
+    checkFormatting(before, StringUtil.trimEnd(after, "\n"));
   }
 
   public void testJavadocLink() throws Throwable {
@@ -257,6 +257,58 @@ public class FormatterTest extends GroovyFormatterTestCase {
   void testAnnotationArgs2() { doTest() }
 
   void testImplementsList() { doTest() }
+
+  void testSimpleClassInOneLine() {
+    groovySettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = false
+    checkFormatting('''\
+class A {}
+class B {
+}
+''', '''\
+class A {
+}
+class B {
+}
+''')
+  }
+
+  void testSimpleMethodInOneLine() {
+    groovySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = false
+    checkFormatting('''\
+def foo() {2}
+''', '''\
+def foo() {
+  2
+}
+''')
+
+    groovySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true
+    checkFormatting('''\
+def foo() {2}
+''', '''\
+def foo() { 2 }
+''')
+
+  }
+
+  void testSimpleBlocksInOneLine() {
+    groovySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true
+    checkFormatting('''\
+if (abc) {return 2}
+''', '''\
+if (abc) { return 2 }
+''')
+
+    groovySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
+    checkFormatting('''\
+if (abc) {return 2}
+''', '''\
+if (abc) {
+  return 2
+}
+''')
+
+  }
 
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
