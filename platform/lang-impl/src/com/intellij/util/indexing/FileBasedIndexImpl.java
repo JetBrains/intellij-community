@@ -387,13 +387,19 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        storage = new MapIndexStorage<K, V>(
-          IndexInfrastructure.getStorageFile(name),
-          extension.getKeyDescriptor(),
-          extension.getValueExternalizer(),
-          extension.getCacheSize(),
-          extension.isKeyHighlySelective()
-        );
+        storage = ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<MapIndexStorage<K, V>, Exception>() {
+          @Override
+          public MapIndexStorage<K, V> compute() throws Exception {
+            return new MapIndexStorage<K, V>(
+              IndexInfrastructure.getStorageFile(name),
+              extension.getKeyDescriptor(),
+              extension.getValueExternalizer(),
+              extension.getCacheSize(),
+              extension.isKeyHighlySelective()
+            );
+          }
+        }, "Compacting Indices", false, null);
+
         final MemoryIndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
         final UpdatableIndex<K, V, FileContent> index = createIndex(name, extension, memStorage);
         final InputFilter inputFilter = extension.getInputFilter();
