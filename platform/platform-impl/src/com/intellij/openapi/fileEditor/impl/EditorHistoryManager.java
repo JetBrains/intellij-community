@@ -54,20 +54,17 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   private final ArrayList<HistoryEntry> myEntriesList;
 
   /** Invoked by reflection */
-  EditorHistoryManager(final Project project, FileEditorManager fileEditorManager, final UISettings uiSettings){
+  EditorHistoryManager(final Project project, final UISettings uiSettings){
     super(project);
     myEntriesList = new ArrayList<HistoryEntry>();
-    MyEditorManagerListener editorManagerListener = new MyEditorManagerListener();
 
     /**
      * Updates history length
      */
-    final MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
-
-    fileEditorManager.addFileEditorManagerListener(editorManagerListener, project);
+    project.getMessageBus().connect().subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyEditorManagerListener());
     project.getMessageBus().connect().subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new MyEditorManagerBeforeListener());
 
-    uiSettings.addUISettingsListener(myUISettingsListener, project);
+    uiSettings.addUISettingsListener(new MyUISettingsListener(), project);
   }
 
   public void projectOpened(){

@@ -18,6 +18,7 @@ package com.intellij.testFramework;
 import com.intellij.mock.MockApplicationEx;
 import com.intellij.mock.MockProjectEx;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.components.ComponentManager;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
@@ -105,8 +106,15 @@ public abstract class PlatformLiteFixture extends UsefulTestCase {
     container.registerComponentImplementation(key, implementation);
   }
 
-  protected <T> void registerComponentInstance(final MutablePicoContainer container, final Class<T> key, final T implementation) {
+  public static <T> T registerComponentInstance(final MutablePicoContainer container, final Class<T> key, final T implementation) {
+    Object old = container.getComponentInstance(key);
     container.unregisterComponent(key);
     container.registerComponentInstance(key, implementation);
+    return (T)old;
   }
+
+  public static <T> T registerComponentInstance(final ComponentManager container, final Class<T> key, final T implementation) {
+    return registerComponentInstance((MutablePicoContainer)container.getPicoContainer(), key, implementation);
+  }
+
 }

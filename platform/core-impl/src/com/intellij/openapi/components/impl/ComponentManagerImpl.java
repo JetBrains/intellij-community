@@ -41,8 +41,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 import org.picocontainer.*;
-import org.picocontainer.defaults.*;
 import org.picocontainer.defaults.CachingComponentAdapter;
+import org.picocontainer.defaults.ConstructorInjectionComponentAdapter;
 
 import java.lang.reflect.Array;
 import java.util.ArrayList;
@@ -262,6 +262,13 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
   public synchronized void registerComponentImplementation(Class componentKey, Class componentImplementation) {
     getPicoContainer().registerComponentImplementation(componentKey.getName(), componentImplementation);
     myInitializedComponents.remove(componentKey);
+  }
+
+  @TestOnly
+  public synchronized <T> T registerComponentInstance(Class<T> componentKey, T componentImplementation) {
+    getPicoContainer().unregisterComponent(componentKey.getName());
+    getPicoContainer().registerComponentInstance(componentKey.getName(), componentImplementation);
+    return (T)myInitializedComponents.remove(componentKey);
   }
 
   @Override
