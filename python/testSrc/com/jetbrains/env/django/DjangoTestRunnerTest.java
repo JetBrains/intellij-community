@@ -36,8 +36,9 @@ public class DjangoTestRunnerTest extends PyEnvTestCase {
     return FileUtil.toSystemIndependentName(testDataPath);
   }
 
-  private void doTest(final String name, @Nullable final String projectRoot, @Nullable final String settings,
-                      @Nullable final String markAsSource) {
+  private void doTest(@Nullable final String projectRoot, @Nullable final String settings,
+                      @Nullable final String markAsSource, @Nullable final String customSettings) {
+    final String name = getTestName(false);
     runPythonTest(new DjangoTestRunnerTestTask() {
       @Override
       public ConfigurationFactory getFactory() {
@@ -47,6 +48,9 @@ public class DjangoTestRunnerTest extends PyEnvTestCase {
       @Override
       protected void configure(AbstractPythonRunConfiguration config) {
         ((DjangoTestsRunConfiguration)config).setTarget("myapp.SimpleTest");
+        if (customSettings != null)
+          ((DjangoTestsRunConfiguration)config).setSettingsFile(getTestDataPath() + customSettings);
+          ((DjangoTestsRunConfiguration)config).useCustomSettings(true);
       }
 
       @Override
@@ -82,27 +86,35 @@ public class DjangoTestRunnerTest extends PyEnvTestCase {
   }
 
   public void testDjango13() {
-    doTest(getTestName(false), null, null, null);
+    doTest();
+  }
+
+  private void doTest() {
+    doTest(null, null, null, null);
   }
 
   public void testDjango14() {
-    doTest(getTestName(false), "", "Django14/settings.py", null);
+    doTest("", "Django14/settings.py", null, null);
   }
 
   public void testDjango15() {
-    doTest(getTestName(false), "", "Django15/settings.py", null);
+    doTest("", "Django15/settings.py", null, null);
   }
 
   public void testRoot13() {
-    doTest(getTestName(false), "/Django13", "settings.py", null);
+    doTest("/Django13", "settings.py", null, null);
   }
 
   public void testRoot() {
-    doTest(getTestName(false), "/DjangoRoot", "DjangoRoot/settings.py", null);
+    doTest("/DjangoRoot", "DjangoRoot/settings.py", null, null);
   }
 
   public void testRootMarked() {
-    doTest(getTestName(false), "/DjangoRoot", "DjangoRoot/settings.py", "/DjangoRoot");
+    doTest("/DjangoRoot", "DjangoRoot/settings.py", "/DjangoRoot", null);
+  }
+
+  public void testCustomSettings() {
+    doTest(null, null, null, "/custom_settings.py");
   }
 
 }
