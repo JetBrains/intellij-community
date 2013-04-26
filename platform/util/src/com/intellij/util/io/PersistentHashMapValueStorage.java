@@ -148,6 +148,10 @@ public class PersistentHashMapValueStorage {
     int allRecordsLength = 0;
     byte[] stuffFromPreviousRecord = null;
     int bytesRead = (int)(mySize - (mySize / fileBufferLength) * fileBufferLength);
+    long retained = 0;
+    final long softMaxRetainedLimit = 10 * 1024* 1024;
+    final int blockSizeToWriteWhenSoftMaxRetainedLimitIsHit = 1024;
+    final long maxRetainedLimit = 100 * 1024* 1024;
 
     while(lastReadOffset != 0) {
       final long readStartOffset = lastReadOffset - bytesRead;
@@ -197,6 +201,7 @@ public class PersistentHashMapValueStorage {
               b = recordBuffer;
             } else {
               b = new byte[defragmentedChunkSize];
+              retained += defragmentedChunkSize;
             }
             System.arraycopy(info.value, 0, b, chunkSize, info.value.length);
           } else {
@@ -205,6 +210,7 @@ public class PersistentHashMapValueStorage {
               b = recordBuffer;
             } else {
               b = new byte[chunkSize];
+              retained += chunkSize;
             }
           }
 
@@ -232,13 +238,21 @@ public class PersistentHashMapValueStorage {
           records.remove(info);
           if (info.value != null) {
             chunkSize += info.value.length;
+            retained -= info.value.length;
             info.value = null;
           }
 
           if (prevChunkAddress == 0) {
-            info.newValueAddress = storage.appendBytes(b, 0, chunkSize, 0);
+            info.newValueAddress = storage.appendBytes(b, 0, chunkSize, info.newValueAddress);
           } else {
-            info.value = b;
+            if (retained > softMaxRetainedLimit && b.length > blockSizeToWriteWhenSoftMaxRetainedLimitIsHit ||
+                retained > maxRetainedLimit) {
+              info.newValueAddress = storage.appendBytes(b, 0, chunkSize, info.newValueAddress);
+              info.value = null;
+              retained -= b.length;
+            } else {
+              info.value = b;
+            }
             info.valueAddress = prevChunkAddress;
             records.add(info);
           }
