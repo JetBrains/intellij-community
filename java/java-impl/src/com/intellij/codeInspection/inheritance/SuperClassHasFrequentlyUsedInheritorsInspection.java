@@ -4,7 +4,6 @@ import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.inheritance.search.InheritorsStatisticalDataSearch;
 import com.intellij.codeInspection.inheritance.search.InheritorsStatisticsSearchResult;
-import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NotNull;
@@ -32,7 +31,7 @@ public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaLoc
   @NotNull
   @Override
   public String getDisplayName() {
-    return "Direct inheritance on super class not frequently used";
+    return "Class may extend a commonly used base class instead of implementing interface or extending abstract class";
   }
 
   @Override
@@ -45,9 +44,12 @@ public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaLoc
   public ProblemDescriptor[] checkClass(@NotNull final PsiClass aClass,
                                         @NotNull final InspectionManager manager,
                                         final boolean isOnTheFly) {
-    if (aClass.isInterface() || aClass instanceof PsiTypeParameter || aClass.getMethods().length != 0) return null;
-
-    if (aClass.isInterface() || aClass.hasModifierProperty(PsiModifier.ABSTRACT)) return null;
+    if (aClass.isInterface() ||
+        aClass instanceof PsiTypeParameter ||
+        aClass.getMethods().length != 0 ||
+        aClass.hasModifierProperty(PsiModifier.ABSTRACT)) {
+      return null;
+    }
 
     final PsiClass superClass = getSuperIfUnique(aClass);
     if (superClass == null) return null;
@@ -63,8 +65,7 @@ public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaLoc
 
     boolean isFirst = true;
     for (final InheritorsStatisticsSearchResult searchResult : topInheritors) {
-      LocalQuickFix quickFix =
-        new ChangeSuperClassFix(searchResult.getPsiClass(), searchResult.getPercent(), superClass);
+      LocalQuickFix quickFix = new ChangeSuperClassFix(searchResult.getPsiClass(), searchResult.getPercent(), superClass);
       if (isFirst) {
         quickFix = ChangeSuperClassFix.highPriority(quickFix);
         isFirst = false;
@@ -75,7 +76,7 @@ public class SuperClassHasFrequentlyUsedInheritorsInspection extends BaseJavaLoc
       }
     }
     return new ProblemDescriptor[]{manager
-      .createProblemDescriptor(aClass, String.format("Most of inheritors of this %s are not direct", superClass.getQualifiedName()), false,
+      .createProblemDescriptor(aClass, "Class may extend a commonly used base class instead of implementing interface or extending abstract class", false,
                                topInheritorsQuickFix.toArray(new LocalQuickFix[topInheritorsQuickFix.size()]),
                                ProblemHighlightType.INFORMATION)};
   }
