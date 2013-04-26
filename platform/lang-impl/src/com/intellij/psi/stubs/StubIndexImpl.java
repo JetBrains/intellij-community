@@ -19,6 +19,7 @@
  */
 package com.intellij.psi.stubs;
 
+import com.intellij.lang.LangBundle;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.components.*;
@@ -26,7 +27,9 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
@@ -114,7 +117,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return (StubIndexImpl)getInstance();
   }
 
-  private <K> boolean registerIndexer(@NotNull StubIndexExtension<K, ?> extension, final boolean forceClean) throws IOException {
+  private <K> boolean registerIndexer(@NotNull final StubIndexExtension<K, ?> extension, final boolean forceClean) throws IOException {
     final StubIndexKey<K, ?> indexKey = extension.getKey();
     final int version = extension.getVersion();
     myIndexIdToVersionMap.put(indexKey, version);
@@ -135,12 +138,18 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        final MapIndexStorage<K, StubIdList> storage = new MapIndexStorage<K, StubIdList>(
-          IndexInfrastructure.getStorageFile(indexKey),
-          extension.getKeyDescriptor(),
-          new StubIdExternalizer(),
-          extension.getCacheSize()
-        );
+        final MapIndexStorage<K, StubIdList> storage = ProgressManager
+          .getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<MapIndexStorage<K, StubIdList>, IOException>() {
+            @Override
+            public MapIndexStorage<K, StubIdList> compute() throws IOException {
+              return new MapIndexStorage<K, StubIdList>(
+                IndexInfrastructure.getStorageFile(indexKey),
+                extension.getKeyDescriptor(),
+                new StubIdExternalizer(),
+                extension.getCacheSize()
+              );
+            }
+          }, LangBundle.message("compacting.indices.title"), false, null);
         final MemoryIndexStorage<K, StubIdList> memStorage = new MemoryIndexStorage<K, StubIdList>(storage);
         myIndices.put(indexKey, new MyIndex<K>(memStorage));
         break;
