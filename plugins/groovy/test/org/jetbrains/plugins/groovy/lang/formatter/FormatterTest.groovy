@@ -307,6 +307,46 @@ if (abc) {
   return 2
 }
 ''')
+  }
+
+  void testControlStatementsInOneLine() {
+    groovySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = true
+    checkFormatting('''\
+if (abc) return 2
+''', '''\
+if (abc) return 2
+''')
+    checkFormatting('''\
+while (abc) return 2
+''', '''\
+while (abc) return 2
+''')
+    checkFormatting('''\
+for (abc) return 2
+''', '''\
+for (abc) return 2
+''')
+
+    groovySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
+    checkFormatting('''\
+if (abc) return 2
+''', '''\
+if (abc)
+  return 2
+''')
+    checkFormatting('''\
+while (abc) return 2
+''', '''\
+while (abc)
+  return 2
+''')
+
+    checkFormatting('''\
+for (;abc;) return 2
+''', '''\
+for (; abc;)
+  return 2
+''')
 
   }
 

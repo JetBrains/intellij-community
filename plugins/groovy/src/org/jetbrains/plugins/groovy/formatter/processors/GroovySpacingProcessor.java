@@ -302,8 +302,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   public void visitOpenBlock(GrOpenBlock block) {
 
     final PsiElement parent = block.getParent();
-    boolean keepInOneLine = parent instanceof GrMethod ?
-                            mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE :
+    boolean keepInOneLine = parent instanceof GrMethod ? mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE :
                             mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE;
 
     if (myType1 == mLCURLY && myType2 == mRCURLY) {
@@ -716,6 +715,9 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       } else {
         myResult = Spacing.createSpacing(0, 0, 1, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
       }
+    }
+    else if (myType1 == mRPAREN) {
+      createSpacingBeforeElementInsideControlStatement();
     }
   }
 
