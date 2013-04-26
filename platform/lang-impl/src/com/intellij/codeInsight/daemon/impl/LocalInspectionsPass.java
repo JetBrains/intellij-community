@@ -145,7 +145,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   public void doInspectInBatch(@NotNull InspectionManagerEx iManager, @NotNull List<LocalInspectionToolWrapper> toolWrappers) {
-
     ProgressIndicator progress = ProgressManager.getInstance().getProgressIndicator();
     inspect(new ArrayList<LocalInspectionToolWrapper>(toolWrappers), iManager, false, false, false, progress);
     addDescriptorsFromInjectedResults(iManager);
@@ -159,7 +158,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     }
   }
 
-  private void addDescriptorsFromInjectedResults(InspectionManagerEx iManager) {
+  private void addDescriptorsFromInjectedResults(@NotNull InspectionManagerEx iManager) {
     InjectedLanguageManager ilManager = InjectedLanguageManager.getInstance(myProject);
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(myProject);
 
@@ -225,6 +224,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     addHighlightsFromResults(myInfos, indicator);
   }
 
+  @NotNull
   private static MultiMap<LocalInspectionToolWrapper, String> getToolsForElements(@NotNull List<LocalInspectionToolWrapper> toolWrappers,
                                                                                   boolean checkDumbAwareness,
                                                                                   @NotNull List<PsiElement> inside,
@@ -293,15 +293,14 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private List<InspectionContext> visitPriorityElementsAndInit(@NotNull MultiMap<LocalInspectionToolWrapper, String> tools,
-                                            @NotNull final InspectionManagerEx iManager,
-                                            final boolean isOnTheFly,
-                                            @NotNull final ProgressIndicator indicator,
-                                            @NotNull final List<PsiElement> elements,
-                                            @NotNull final LocalInspectionToolSession session,
-                                            @NotNull List<LocalInspectionToolWrapper> wrappers,
-                                            boolean checkDumbAwareness) {
-
-    final ArrayList<InspectionContext> init = new ArrayList<InspectionContext>();
+                                                               @NotNull final InspectionManagerEx iManager,
+                                                               final boolean isOnTheFly,
+                                                               @NotNull final ProgressIndicator indicator,
+                                                               @NotNull final List<PsiElement> elements,
+                                                               @NotNull final LocalInspectionToolSession session,
+                                                               @NotNull List<LocalInspectionToolWrapper> wrappers,
+                                                               boolean checkDumbAwareness) {
+    final List<InspectionContext> init = new ArrayList<InspectionContext>();
     List<Map.Entry<LocalInspectionToolWrapper, Collection<String>>> entries = new ArrayList<Map.Entry<LocalInspectionToolWrapper, Collection<String>>>(tools.entrySet());
     Processor<Map.Entry<LocalInspectionToolWrapper, Collection<String>>> processor =
       new Processor<Map.Entry<LocalInspectionToolWrapper, Collection<String>>>() {
@@ -785,7 +784,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       };
 
       LocalInspectionToolSession injSession = new LocalInspectionToolSession(injectedPsi, 0, injectedPsi.getTextLength());
-      createVisitorAndAcceptElements(tool, holder, isOnTheFly, injSession, elements, (Set<String>)pair.getValue());
+      Collection<String> languages = pair.getValue();
+      createVisitorAndAcceptElements(tool, holder, isOnTheFly, injSession, elements, languages);
       tool.inspectionFinished(injSession, holder);
       List<ProblemDescriptor> problems = holder.getResults();
       if (!problems.isEmpty()) {
@@ -811,7 +811,10 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
   }
 
   private static class InspectionContext {
-    private InspectionContext(@NotNull LocalInspectionToolWrapper tool, @NotNull ProblemsHolder holder, @NotNull PsiElementVisitor visitor, @Nullable Collection<String> languageIds) {
+    private InspectionContext(@NotNull LocalInspectionToolWrapper tool,
+                              @NotNull ProblemsHolder holder,
+                              @NotNull PsiElementVisitor visitor,
+                              @Nullable Collection<String> languageIds) {
       this.tool = tool;
       this.holder = holder;
       this.visitor = visitor;
