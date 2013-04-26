@@ -107,7 +107,7 @@ public class ApplyPatchDefaultExecutor implements ApplyPatchExecutor {
                                          TransparentlyFailedValueI<Map<String, Map<String, CharSequence>>, PatchSyntaxException> additionalInfo,
                                          CommitContext commitContext, final Consumer<InfoGroup> worker) {
     final PatchEP[] extensions = Extensions.getExtensions(PatchEP.EP_NAME, project);
-    if (extensions == null && extensions.length == 0) return;
+    if (extensions.length == 0) return;
     if (additionalInfo != null) {
       try {
         final Map<String, Map<String, CharSequence>> map = additionalInfo.get();
