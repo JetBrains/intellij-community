@@ -85,6 +85,14 @@ public class DjangoTestRunnerTest extends PyEnvTestCase {
     });
   }
 
+  public void testDjango11() {
+    doTest();
+  }
+
+  public void testDjango12() {
+    doTest("", "settings.py", "", null);
+  }
+
   public void testDjango13() {
     doTest();
   }
