@@ -149,7 +149,7 @@ public class PyInvertBooleanProcessor extends BaseRefactoringProcessor {
       final SmartPsiElementPointer pointerToInvert = myToInvert.get(usage);
       if (pointerToInvert != null) {
         PsiElement expression = pointerToInvert.getElement();
-        if (expression != null) {
+        if (expression != null && PsiTreeUtil.getParentOfType(expression, PyImportStatementBase.class, false) == null) {
           final PyExpression replacement = invertExpression(expression);
           expression.replace(replacement);
         }
