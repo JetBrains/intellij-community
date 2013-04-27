@@ -13,9 +13,11 @@ adjust_django_sys_path()
 
 from django.test.simple import build_suite, build_test, get_app, get_apps, setup_test_environment, teardown_test_environment
 from django.test.testcases import TestCase
-from django.utils import unittest
 from django import VERSION
-
+try:
+    from django.utils import unittest
+except ImportError:
+    import unittest
 
 def get_test_suite_runner():
   if hasattr(settings, "TEST_RUNNER"):
