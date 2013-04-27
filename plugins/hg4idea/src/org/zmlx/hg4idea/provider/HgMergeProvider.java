@@ -151,7 +151,7 @@ public class HgMergeProvider implements MergeProvider {
   }
 
   @Override
-  public boolean isBinary(VirtualFile file) {
+  public boolean isBinary(@NotNull VirtualFile file) {
     return file.getFileType().isBinary();
   }
 

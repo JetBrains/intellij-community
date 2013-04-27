@@ -150,7 +150,7 @@ public class SvnMergeProvider implements MergeProvider {
     }
   }
 
-  public boolean isBinary(final VirtualFile file) {
+  public boolean isBinary(@NotNull final VirtualFile file) {
     SvnVcs vcs = SvnVcs.getInstance(myProject);
     try {
       SVNWCClient client = vcs.createWCClient();
