@@ -98,6 +98,10 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public boolean HIDE_NAVIGATION_ON_FOCUS_LOSS = true;
   public boolean FILE_COLORS_IN_PROJECT_VIEW = false;
   public boolean DEFAULT_AUTOSCROLL_TO_SOURCE = false;
+  public boolean PRESENTATION_MODE = false;
+  public boolean PRESENTATION_MODE_ALLOW_LINE_NUMBER = false;
+  public boolean PRESENTATION_MODE_ALLOW_STATUS_BAR = false;
+  public boolean PRESENTATION_MODE_ALLOW_ANNOTATIONS = false;
 
   /**
    * Defines whether asterisk is shown on modified editor tab or not

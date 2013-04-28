@@ -92,7 +92,7 @@ public class EditorWindow {
     myTabbedPane = null;
 
     final int tabPlacement = UISettings.getInstance().EDITOR_TAB_PLACEMENT;
-    if (tabPlacement != UISettings.TABS_NONE) {
+    if (tabPlacement != UISettings.TABS_NONE && !UISettings.getInstance().PRESENTATION_MODE) {
       createTabs(tabPlacement);
     }
 
@@ -444,7 +444,7 @@ public class EditorWindow {
   }
 
   public void setTabsPlacement(final int tabPlacement) {
-    if (tabPlacement != UISettings.TABS_NONE) {
+    if (tabPlacement != UISettings.TABS_NONE && !UISettings.getInstance().PRESENTATION_MODE) {
       if (myTabbedPane == null) {
         final EditorWithProviderComposite editor = getSelectedEditor();
         myPanel.removeAll();

@@ -29,6 +29,7 @@ import com.intellij.codeInsight.hint.TooltipController;
 import com.intellij.codeInsight.hint.TooltipGroup;
 import com.intellij.codeInsight.hint.TooltipRenderer;
 import com.intellij.icons.AllIcons;
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
@@ -355,16 +356,25 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
       ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
 
       final Rectangle bounds = getBounds();
-
-      g.setColor(ButtonlessScrollBarUI.getTrackBackground());
-      g.fillRect(0, 0, bounds.width, bounds.height);
-
-      g.setColor(ButtonlessScrollBarUI.getTrackBorderColor());
-      g.drawLine(0, 0, 0, bounds.height);
-
       try {
-        if (myErrorStripeRenderer != null) {
-          myErrorStripeRenderer.paint(this, g, new Rectangle(5, 2, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT));
+        if (UISettings.getInstance().PRESENTATION_MODE) {
+          g.setColor(getEditor().getColorsScheme().getDefaultBackground());
+          g.fillRect(0, 0, bounds.width, bounds.height);
+
+          if (myErrorStripeRenderer != null) {
+            myErrorStripeRenderer.paint(this, g, new Rectangle(2, 0, 10, 7));
+          }
+        } else {
+
+          g.setColor(ButtonlessScrollBarUI.getTrackBackground());
+          g.fillRect(0, 0, bounds.width, bounds.height);
+
+          g.setColor(ButtonlessScrollBarUI.getTrackBorderColor());
+          g.drawLine(0, 0, 0, bounds.height);
+
+          if (myErrorStripeRenderer != null) {
+            myErrorStripeRenderer.paint(this, g, new Rectangle(5, 2, ERROR_ICON_WIDTH, ERROR_ICON_HEIGHT));
+          }
         }
       }
       finally {
@@ -374,7 +384,7 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     public Dimension getPreferredSize() {
-      return STRIPE_BUTTON_PREFERRED_SIZE;
+      return UISettings.getInstance().PRESENTATION_MODE ? new Dimension(10,7) : STRIPE_BUTTON_PREFERRED_SIZE;
     }
   }
 
@@ -409,6 +419,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected void paintThumb(Graphics g, JComponent c, Rectangle thumbBounds) {
+      if (UISettings.getInstance().PRESENTATION_MODE) {
+        super.paintThumb(g, c, thumbBounds);
+        return;
+      }
       int shift = isMirrored() ? -9 : 9;
       g.translate(shift, 0);
       super.paintThumb(g, c, thumbBounds);
@@ -417,16 +431,23 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
 
     @Override
     protected int adjustThumbWidth(int width) {
+      if (UISettings.getInstance().PRESENTATION_MODE) return super.adjustThumbWidth(width);
       return width - 2;
     }
 
     @Override
     protected int getThickness() {
+      if (UISettings.getInstance().PRESENTATION_MODE) return super.getThickness();
       return super.getThickness() + 7;
     }
 
     @Override
     protected void paintTrack(Graphics g, JComponent c, Rectangle bounds) {
+      if (UISettings.getInstance().PRESENTATION_MODE) {
+        g.setColor(getEditor().getColorsScheme().getDefaultBackground());
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+        return;
+      }
       Rectangle clip = g.getClipBounds().intersection(bounds);
       if (clip.height == 0) return;
 
@@ -460,6 +481,10 @@ public class EditorMarkupModelImpl extends MarkupModelImpl implements EditorMark
     }
 
     private void paintTrackBasement(Graphics g, Rectangle bounds) {
+      if (UISettings.getInstance().PRESENTATION_MODE) {
+        return;
+      }
+
       g.setColor(ButtonlessScrollBarUI.getTrackBackground());
       g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height + 1);
 

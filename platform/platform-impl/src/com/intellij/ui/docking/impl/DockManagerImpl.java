@@ -491,8 +491,9 @@ public class DockManagerImpl extends DockManager implements PersistentStateCompo
     }
 
     private void updateNorthPanel() {
-      myNorthPanel.setVisible(UISettings.getInstance().SHOW_NAVIGATION_BAR &&
-                              !(myContainer instanceof DockContainer.Dialog));
+      myNorthPanel.setVisible(UISettings.getInstance().SHOW_NAVIGATION_BAR
+                              && !(myContainer instanceof DockContainer.Dialog)
+                              && !UISettings.getInstance().PRESENTATION_MODE);
 
       IdeRootPaneNorthExtension[] extensions =
         Extensions.getArea(myProject).getExtensionPoint(IdeRootPaneNorthExtension.EP_NAME).getExtensions();

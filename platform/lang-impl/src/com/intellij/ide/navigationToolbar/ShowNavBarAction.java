@@ -34,7 +34,8 @@ public class ShowNavBarAction extends AnAction implements DumbAware, PopupAction
     final DataContext context = e.getDataContext();
     final Project project = PlatformDataKeys.PROJECT.getData(context);
     if (project != null) {
-      if (UISettings.getInstance().SHOW_NAVIGATION_BAR){
+      UISettings uiSettings = UISettings.getInstance();
+      if (uiSettings.SHOW_NAVIGATION_BAR && !uiSettings.PRESENTATION_MODE){
         new SelectInNavBarTarget(project).select(null, false);
       } else {
         final Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(context);

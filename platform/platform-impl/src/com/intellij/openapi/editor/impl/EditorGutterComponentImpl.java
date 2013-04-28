@@ -146,6 +146,9 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public Dimension getPreferredSize() {
+    if (UISettings.getInstance().PRESENTATION_MODE) {
+      return new Dimension(5, myEditor.getPreferredHeight());
+    }
     int w = getLineNumberAreaWidth() + getLineMarkerAreaWidth() + getFoldingAreaWidth() + getAnnotationsAreaWidth();
     myLastPreferredHeight = myEditor.getPreferredHeight();
     return new Dimension(w, myLastPreferredHeight);
@@ -171,8 +174,17 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
 
   @Override
   public void paint(Graphics g) {
-    ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
+    if (UISettings.getInstance().PRESENTATION_MODE) {
+      g.setColor(myEditor.getColorsScheme().getDefaultBackground());
+      Dimension size = getPreferredSize();
+      Rectangle bounds = g.getClipBounds();
+      if (bounds.height >= 0) {
+        g.fillRect(bounds.x, bounds.y, bounds.width, bounds.height);
+      }
+      return;
+    }
 
+    ((ApplicationImpl)ApplicationManager.getApplication()).editorPaintStart();
     try {
       Rectangle clip = g.getClipBounds();
       if (clip.height < 0) return;

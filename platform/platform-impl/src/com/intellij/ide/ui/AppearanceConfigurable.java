@@ -171,6 +171,15 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     update |= settings.SHOW_ICONS_IN_QUICK_NAVIGATION != myComponent.myHideIconsInQuickNavigation.isSelected();
     settings.SHOW_ICONS_IN_QUICK_NAVIGATION = myComponent.myHideIconsInQuickNavigation.isSelected();
 
+    update |= settings.PRESENTATION_MODE_ALLOW_STATUS_BAR != myComponent.myAllowStatusBar.isSelected();
+    settings.PRESENTATION_MODE_ALLOW_STATUS_BAR = myComponent.myAllowStatusBar.isSelected();
+
+    update |= settings.PRESENTATION_MODE_ALLOW_LINE_NUMBER != myComponent.myAllowLineNumbers.isSelected();
+    settings.PRESENTATION_MODE_ALLOW_LINE_NUMBER = myComponent.myAllowLineNumbers.isSelected();
+
+    update |= settings.PRESENTATION_MODE_ALLOW_ANNOTATIONS != myComponent.myAllowAnnotations.isSelected();
+    settings.PRESENTATION_MODE_ALLOW_ANNOTATIONS = myComponent.myAllowAnnotations.isSelected();
+
     if (!Comparing.equal(myComponent.myLafComboBox.getSelectedItem(), lafManager.getCurrentLookAndFeel())) {
       final UIManager.LookAndFeelInfo lafInfo = (UIManager.LookAndFeelInfo)myComponent.myLafComboBox.getSelectedItem();
       if (lafManager.checkLookAndFeel(lafInfo)) {
@@ -237,6 +246,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     myComponent.myAllowMergeButtons.setSelected(settings.ALLOW_MERGE_BUTTONS);
     myComponent.myCycleScrollingCheckBox.setSelected(settings.CYCLE_SCROLLING);
 
+    myComponent.myAllowStatusBar.setSelected(settings.PRESENTATION_MODE_ALLOW_STATUS_BAR);
+    myComponent.myAllowLineNumbers.setSelected(settings.PRESENTATION_MODE_ALLOW_LINE_NUMBER);
+    myComponent.myAllowAnnotations.setSelected(settings.PRESENTATION_MODE_ALLOW_ANNOTATIONS);
+
     myComponent.myHideIconsInQuickNavigation.setSelected(settings.SHOW_ICONS_IN_QUICK_NAVIGATION);
     myComponent.myMoveMouseOnDefaultButtonCheckBox.setSelected(settings.MOVE_MOUSE_ON_DEFAULT_BUTTON);
     myComponent.myHideNavigationPopupsCheckBox.setSelected(settings.HIDE_NAVIGATION_ON_FOCUS_LOSS);
@@ -287,6 +300,10 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     isModified |= myComponent.myUseSmallLabelsOnTabs.isSelected() != settings.USE_SMALL_LABELS_ON_TABS;
 
     isModified |= myComponent.myHideIconsInQuickNavigation.isSelected() != settings.SHOW_ICONS_IN_QUICK_NAVIGATION;
+
+    isModified |= settings.PRESENTATION_MODE_ALLOW_STATUS_BAR != myComponent.myAllowStatusBar.isSelected();
+    isModified |= settings.PRESENTATION_MODE_ALLOW_LINE_NUMBER != myComponent.myAllowLineNumbers.isSelected();
+    isModified |= settings.PRESENTATION_MODE_ALLOW_ANNOTATIONS != myComponent.myAllowAnnotations.isSelected();
 
     isModified |= myComponent.myMoveMouseOnDefaultButtonCheckBox.isSelected() != settings.MOVE_MOUSE_ON_DEFAULT_BUTTON;
     isModified |= myComponent.myHideNavigationPopupsCheckBox.isSelected() != settings.HIDE_NAVIGATION_ON_FOCUS_LOSS;
@@ -348,6 +365,9 @@ public class AppearanceConfigurable extends BaseConfigurable implements Searchab
     private JCheckBox myAllowMergeButtons;
     private JBCheckBox myUseSmallLabelsOnTabs;
     private JSlider myInitialTooltipDelaySlider;
+    private JCheckBox myAllowStatusBar;
+    private JCheckBox myAllowLineNumbers;
+    private JCheckBox myAllowAnnotations;
 
     public MyComponent() {
       myOverrideLAFFonts.addActionListener( new ActionListener() {

@@ -116,7 +116,7 @@ public class IdeNotificationArea extends JLabel implements CustomStatusBarWidget
   }
 
   private void applyIconToStatusAndToolWindow(Project project, LayeredIcon icon) {
-    if (UISettings.getInstance().HIDE_TOOL_STRIPES) {
+    if (UISettings.getInstance().HIDE_TOOL_STRIPES || UISettings.getInstance().PRESENTATION_MODE) {
       setIcon(icon);
     }
     else {
