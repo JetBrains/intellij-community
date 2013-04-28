@@ -660,6 +660,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
       final DefaultListCleaner defaultListCleaner = new DefaultListCleaner();
       runBeforeCommitHandlers(new Runnable() {
         public void run() {
+          boolean success = false;
           try {
             final boolean completed = ProgressManager.getInstance().runProcessWithProgressSynchronously(
               new Runnable() {
@@ -673,6 +674,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
                 handler.checkinSuccessful();
               }
 
+              success = true;
               defaultListCleaner.clean();
               close(OK_EXIT_CODE);
             }
@@ -686,6 +688,16 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
             for (CheckinHandler handler : myHandlers) {
               handler.checkinFailed(Arrays.asList(new VcsException(e)));
+            }
+          }
+          finally {
+            if (myResultHandler != null) {
+              if (success) {
+                myResultHandler.onSuccess(getCommitMessage());
+              }
+              else {
+                myResultHandler.onFailure();
+              }
             }
           }
         }
