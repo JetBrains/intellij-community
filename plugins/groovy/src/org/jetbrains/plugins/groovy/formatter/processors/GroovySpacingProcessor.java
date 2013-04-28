@@ -397,7 +397,12 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       createSpaceInCode(mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
     }
     else if (myType1 == mRPAREN && myType2 == THROW_CLAUSE) {
-      createSpaceInCode(true);
+      if (mySettings.THROWS_KEYWORD_WRAP == CommonCodeStyleSettings.WRAP_ALWAYS) {
+        createLF();
+      }
+      else {
+        createSpaceInCode(true);
+      }
     }
     else if (isOpenBlock(myType2)) {
       PsiElement methodName = method.getNameIdentifier();
@@ -713,7 +718,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       } else if (mySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE) {
         myResult = Spacing.createDependentLFSpacing(1, 1, myParent.getTextRange(), false, mySettings.KEEP_BLANK_LINES_IN_CODE);
       } else {
-        myResult = Spacing.createSpacing(0, 0, 1, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
+        createLF();
       }
     }
     else if (myType1 == mRPAREN) {
@@ -837,8 +842,12 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
                                                   mySettings.KEEP_BLANK_LINES_IN_CODE);
     }
     else {
-      myResult = Spacing.createSpacing(0, 0, 1, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
+      createLF();
     }
+  }
+
+  private void createLF() {
+    myResult = Spacing.createSpacing(0, 0, 1, false, mySettings.KEEP_BLANK_LINES_IN_CODE);
   }
 
   private Spacing createNonLFSpace(int spaces, @Nullable final TextRange dependantRange, final boolean keepLineBreaks) {

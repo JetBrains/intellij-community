@@ -43,7 +43,11 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testArg2() throws Throwable { doTest(); }
   public void testBin1() throws Throwable { doTest(); }
   public void testBin2() throws Throwable { doTest(); }
-  public void testBlockExpr1() throws Throwable { doTest(); }
+  public void testBlockExpr1() throws Throwable {
+    //groovySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE = false
+    groovySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
+    doTest();
+  }
   public void testClass1() throws Throwable { doTest(); }
   public void testClo1() throws Throwable { doTest(); }
   public void testClo2() throws Throwable { doTest(); }
@@ -109,7 +113,10 @@ public class FormatterTest extends GroovyFormatterTestCase {
   public void testWhileCStyle() throws Throwable { doTest(); }
   public void testFields() throws Throwable { doTest(); }
 
-  public void testClosureAfterLineComment() throws Throwable { doTest(); }
+  public void testClosureAfterLineComment() throws Throwable {
+    groovySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = false
+    doTest();
+  }
   public void testAnnotationOnSeparateLine() throws Throwable { doTest(); }
   public void testAlignMultipleVariables() throws Throwable { doTest(); }
 
@@ -348,6 +355,17 @@ for (; abc;)
   return 2
 ''')
 
+  }
+
+  void testWrapThrows() {
+    groovySettings.THROWS_KEYWORD_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
+
+    checkFormatting('''\
+def foo() throws X {}
+''', '''\
+def foo()
+    throws X {}
+''')
   }
 
   private void doGeeseTest() {

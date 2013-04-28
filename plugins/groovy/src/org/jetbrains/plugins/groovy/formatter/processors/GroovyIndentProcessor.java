@@ -272,6 +272,9 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
     if (myChildType == PARAMETERS_LIST) {
       myResult = Indent.getContinuationIndent();
     }
+    else if (myChildType == THROW_CLAUSE) {
+      myResult = getGroovySettings(method).ALIGN_THROWS_KEYWORD ? Indent.getNoneIndent() : Indent.getContinuationIndent();
+    }
   }
 
   @Override
