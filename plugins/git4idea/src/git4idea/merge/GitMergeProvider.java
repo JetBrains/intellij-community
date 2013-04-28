@@ -21,10 +21,12 @@ import com.intellij.openapi.vcs.FilePath;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.openapi.vcs.history.VcsRevisionNumber;
 import com.intellij.openapi.vcs.merge.MergeData;
+import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vcs.merge.MergeProvider2;
 import com.intellij.openapi.vcs.merge.MergeSession;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.vcsUtil.VcsFileUtil;
 import com.intellij.vcsUtil.VcsRunnable;
@@ -33,10 +35,11 @@ import git4idea.GitFileRevision;
 import git4idea.GitRevisionNumber;
 import git4idea.GitUtil;
 import git4idea.commands.GitCommand;
-import git4idea.util.GitFileUtils;
 import git4idea.commands.GitSimpleHandler;
-import git4idea.util.StringScanner;
 import git4idea.i18n.GitBundle;
+import git4idea.repo.GitRepository;
+import git4idea.util.GitFileUtils;
+import git4idea.util.StringScanner;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -55,21 +58,35 @@ public class GitMergeProvider implements MergeProvider2 {
 
   private static final Logger LOG = Logger.getInstance(GitMergeProvider.class);
 
-  private final Project myProject;
-
+  @NotNull private final Project myProject;
   /**
    * If true the merge provider has a reverse meaning, i. e. yours and theirs are swapped.
    * It should be used when conflict is resolved after rebase or unstash.
    */
-  private final boolean myReverse;
+  @NotNull private final Map<VirtualFile, Boolean> myReverseMap;
 
-  public GitMergeProvider(Project project) {
-    this(project, false);
+  private GitMergeProvider(@NotNull Project project, @NotNull Map<VirtualFile, Boolean> reverseMap) {
+    myProject = project;
+    myReverseMap = reverseMap;
   }
 
-  public GitMergeProvider(Project project, boolean reverse) {
-    myProject = project;
-    myReverse = reverse;
+  public GitMergeProvider(@NotNull Project project, boolean reverse) {
+    this(project, buildReverseMap(project, reverse));
+  }
+
+  @NotNull
+  public static MergeProvider detect(@NotNull Project project) {
+    return new GitMergeProvider(project, buildReverseMap(project, null));
+  }
+
+  @NotNull
+  private static Map<VirtualFile, Boolean> buildReverseMap(@NotNull Project project, @Nullable Boolean reverseOrDetect) {
+    Map<VirtualFile, Boolean> reverseMap = ContainerUtil.newHashMap();
+    for (GitRepository repository : GitUtil.getRepositoryManager(project).getRepositories()) {
+      boolean reverse = reverseOrDetect == null ? repository.getState().equals(GitRepository.State.REBASING) : reverseOrDetect;
+      reverseMap.put(repository.getRoot(), reverse);
+    }
+    return reverseMap;
   }
 
   @NotNull
@@ -83,8 +100,8 @@ public class GitMergeProvider implements MergeProvider2 {
       @SuppressWarnings({"ConstantConditions"})
       public void run() throws VcsException {
         GitFileRevision original = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + ORIGINAL_REVISION_NUM));
-        GitFileRevision current = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + yoursRevision()));
-        GitFileRevision last = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + theirsRevision()));
+        GitFileRevision current = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + yoursRevision(root)));
+        GitFileRevision last = new GitFileRevision(myProject, path, new GitRevisionNumber(":" + theirsRevision(root)));
         try {
           try {
             mergeData.ORIGINAL = original.getContent();
@@ -109,7 +126,7 @@ public class GitMergeProvider implements MergeProvider2 {
 
   @Nullable
   private VcsRevisionNumber findLastRevisionNumber(@NotNull VirtualFile root) {
-    if (myReverse) {
+    if (myReverseMap.get(root)) {
       return resolveHead(root);
     }
     else {
@@ -159,16 +176,18 @@ public class GitMergeProvider implements MergeProvider2 {
 
   /**
    * @return number for "yours" revision  (taking {@code reverse} flag in account)
+   * @param root
    */
-  private int yoursRevision() {
-    return myReverse ? THEIRS_REVISION_NUM : YOURS_REVISION_NUM;
+  private int yoursRevision(@NotNull VirtualFile root) {
+    return myReverseMap.get(root) ? THEIRS_REVISION_NUM : YOURS_REVISION_NUM;
   }
 
   /**
    * @return number for "theirs" revision (taking {@code reverse} flag in account)
+   * @param root
    */
-  private int theirsRevision() {
-    return myReverse ? YOURS_REVISION_NUM : THEIRS_REVISION_NUM;
+  private int theirsRevision(@NotNull VirtualFile root) {
+    return myReverseMap.get(root) ? YOURS_REVISION_NUM : THEIRS_REVISION_NUM;
   }
 
   public void conflictResolvedForFile(VirtualFile file) {
@@ -189,7 +208,6 @@ public class GitMergeProvider implements MergeProvider2 {
   public MergeSession createMergeSession(List<VirtualFile> files) {
     return new MyMergeSession(files);
   }
-
 
   /**
    * The conflict descriptor
@@ -242,10 +260,10 @@ public class GitMergeProvider implements MergeProvider2 {
               c.myRoot = root;
               cs.put(file, c);
             }
-            if (source == theirsRevision()) {
+            if (source == theirsRevision(root)) {
               c.myStatusTheirs = Conflict.Status.MODIFIED;
             }
-            else if (source == yoursRevision()) {
+            else if (source == yoursRevision(root)) {
               c.myStatusYours = Conflict.Status.MODIFIED;
             }
             else if (source != ORIGINAL_REVISION_NUM) {
