@@ -1,6 +1,4 @@
 class A {
-
-
 }
 
 class B {
