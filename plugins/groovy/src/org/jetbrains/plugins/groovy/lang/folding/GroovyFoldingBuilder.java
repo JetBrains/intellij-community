@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -17,7 +17,7 @@
 package org.jetbrains.plugins.groovy.lang.folding;
 
 import com.intellij.codeInsight.folding.JavaCodeFoldingSettings;
-import com.intellij.codeInsight.folding.impl.JavaFoldingBuilder;
+import com.intellij.codeInsight.folding.impl.JavaFoldingBuilderBase;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.folding.CustomFoldingBuilder;
 import com.intellij.lang.folding.FoldingDescriptor;
@@ -33,7 +33,6 @@ import com.intellij.util.containers.hash.HashSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
-import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
@@ -46,6 +45,8 @@ import org.jetbrains.plugins.groovy.lang.psi.util.GrStringUtil;
 
 import java.util.List;
 import java.util.Set;
+
+import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.*;
 
 /**
  * @author ilyas
@@ -87,7 +88,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
           usedComments.add(current);
           continue;
         }
-        if (TokenSets.WHITE_SPACES_SET.contains(elementType)) {
+        if (WHITE_SPACES_SET.contains(elementType)) {
           continue;
         }
         break;
@@ -120,8 +121,8 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
         if (lbrace != null && rbrace != null) {
           final PsiElement next = lbrace.getNextSibling();
           final PsiElement prev = rbrace.getPrevSibling();
-          if (next != null && TokenSets.WHITE_SPACES_SET.contains(next.getNode().getElementType()) &&
-              prev != null && TokenSets.WHITE_SPACES_SET.contains(prev.getNode().getElementType())) {
+          if (next != null && WHITE_SPACES_SET.contains(next.getNode().getElementType()) &&
+              prev != null && WHITE_SPACES_SET.contains(prev.getNode().getElementType())) {
             final FoldingGroup group = FoldingGroup.newGroup("block_group");
             descriptors.add(new NamedFoldingDescriptor(psi.getNode(), lbrace.getTextRange().getStartOffset(), next.getTextRange().getEndOffset(), group, "{"));
             descriptors.add(new NamedFoldingDescriptor(psi.getNode(), prev.getTextRange().getStartOffset(), rbrace.getTextRange().getEndOffset(), group, "}"));
@@ -223,7 +224,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
         int start = first.getTextRange().getStartOffset();
         int end = marker.getTextRange().getEndOffset();
         int tail = "import ".length();
-        if (start + tail < end && !JavaFoldingBuilder.hasErrorElementsNearby(first.getContainingFile(), start, end)) {
+        if (start + tail < end && !JavaFoldingBuilderBase.hasErrorElementsNearby(first.getContainingFile(), start, end)) {
           descriptors.add(new FoldingDescriptor(first.getNode(), new TextRange(start + tail, end)));
         }
       }
@@ -317,7 +318,7 @@ public class GroovyFoldingBuilder extends CustomFoldingBuilder implements Groovy
   }
 
   private static boolean isMultiLineStringLiteral(ASTNode node) {
-    return (TokenSets.STRING_LITERAL_SET.contains(node.getElementType()) ||
+    return (STRING_LITERAL_SET.contains(node.getElementType()) ||
             node.getElementType().equals(GSTRING) ||
             node.getElementType().equals(REGEX)) &&
            isMultiline(node.getPsi()) &&

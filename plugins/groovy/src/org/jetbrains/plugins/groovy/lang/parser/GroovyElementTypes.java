@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -433,13 +433,6 @@ public interface GroovyElementTypes extends GroovyTokenTypes, GroovyDocElementTy
 
   //types
   GroovyElementType CLASS_TYPE_ELEMENT = new GroovyElementType("class type element"); //node
-
-  TokenSet BLOCK_SET = TokenSet.create(CLOSABLE_BLOCK,
-          BLOCK_STATEMENT,
-          CONSTRUCTOR_BODY,
-          OPEN_BLOCK,
-          ENUM_BODY,
-          CLASS_BODY);
 
   TokenSet METHOD_DEFS = TokenSet.create(METHOD_DEFINITION, CONSTRUCTOR_DEFINITION, ANNOTATION_METHOD);
   TokenSet VARIABLES = TokenSet.create(VARIABLE, FIELD);

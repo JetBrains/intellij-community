@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -32,6 +32,7 @@ import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessor;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovySpacingProcessorBasic;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocTag;
+import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
@@ -200,7 +201,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
       }
     }
 
-    if (BLOCK_SET.contains(astNode.getElementType()) || SWITCH_STATEMENT.equals(astNode.getElementType())) {
+    if (TokenSets.BLOCK_SET.contains(astNode.getElementType()) || SWITCH_STATEMENT.equals(astNode.getElementType())) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     if (CASE_SECTION.equals(astNode.getElementType())) {

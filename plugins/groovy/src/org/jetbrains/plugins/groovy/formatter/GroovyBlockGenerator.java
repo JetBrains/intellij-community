@@ -145,7 +145,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       ASTNode[] children = getGroovyChildren(myNode);
       for (ASTNode childNode : children) {
         if (childNode.getTextRange().getLength() > 0) {
-          final Indent indent = GroovyIndentProcessor.getChildIndent(myBlock, childNode);
+          final Indent indent = new GroovyIndentProcessor().getChildIndent(myBlock, childNode);
           subBlocks.add(new GroovyBlock(childNode, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
         }
       }
@@ -186,7 +186,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
         }
       }
       for (ASTNode childNode : astNodes) {
-        final Indent indent = GroovyIndentProcessor.getChildIndent(myBlock, childNode);
+        final Indent indent = new GroovyIndentProcessor().getChildIndent(myBlock, childNode);
         subBlocks.add(new GroovyBlock(childNode, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
       }
       return subBlocks;
@@ -204,7 +204,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       PsiElement lbrace = closableBlock.getLBrace();
       if (lbrace != null) {
         ASTNode node = lbrace.getNode();
-        Indent indent = GroovyIndentProcessor.getChildIndent(myBlock, node);
+        Indent indent = new GroovyIndentProcessor().getChildIndent(myBlock, node);
         blocks.add(new GroovyBlock(node, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
       }
 
@@ -232,7 +232,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       PsiElement rbrace = closableBlock.getRBrace();
       if (rbrace != null) {
         ASTNode node = rbrace.getNode();
-        Indent indent = GroovyIndentProcessor.getChildIndent(myBlock, node);
+        Indent indent = new GroovyIndentProcessor().getChildIndent(myBlock, node);
         blocks.add(new GroovyBlock(node, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
       }
 
@@ -246,7 +246,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     // For other cases
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     for (ASTNode childNode : visibleChildren(myNode)) {
-      final Indent indent = GroovyIndentProcessor.getChildIndent(myBlock, childNode);
+      final Indent indent = new GroovyIndentProcessor().getChildIndent(myBlock, childNode);
       subBlocks.add(new GroovyBlock(childNode, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
     }
     return subBlocks;
@@ -264,7 +264,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       }
     }
     for (ASTNode childNode : children) {
-      final Indent indent = GroovyIndentProcessor.getChildIndent(myBlock, childNode);
+      final Indent indent = new GroovyIndentProcessor().getChildIndent(myBlock, childNode);
       subBlocks.add(new GroovyBlock(childNode, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
     }
     return subBlocks;

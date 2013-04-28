@@ -131,6 +131,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     defaultSettings.SPACE_WITHIN_BRACES = true;
     defaultSettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
     defaultSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
+    defaultSettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     return defaultSettings;
   }
 
