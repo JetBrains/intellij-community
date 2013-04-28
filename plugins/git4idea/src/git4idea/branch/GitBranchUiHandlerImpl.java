@@ -150,7 +150,7 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
   @Override
   public boolean showUntrackedFilesDialogWithRollback(@NotNull String operationName, @NotNull String rollbackProposal,
                                                       @NotNull Collection<VirtualFile> untrackedFiles) {
-    String title = "Couldn't " + operationName;
+    String title = "Could not " + StringUtil.capitalize(operationName);
     String description = UntrackedFilesNotifier.createUntrackedFilesOverwrittenDescription(operationName, false);
 
     final SelectFilesDialog dialog = new UntrackedFilesDialog(myProject, untrackedFiles, StringUtil.stripHtml(description, true), rollbackProposal);
@@ -210,6 +210,7 @@ class GitBranchUiHandlerImpl implements GitBranchUiHandler {
       myRollbackProposal = rollbackProposal;
       setOKButtonText("Rollback");
       setCancelButtonText("Don't rollback");
+      init();
     }
 
     @Override
