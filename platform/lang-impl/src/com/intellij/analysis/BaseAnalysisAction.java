@@ -80,7 +80,7 @@ public abstract class BaseAnalysisAction extends AnAction {
                                                                 AnalysisScopeBundle.message("analysis.scope.title", myAnalysisNoon),
                                                                 project,
                                                                 scope,
-                                                                module != null && scope.getScopeType() != AnalysisScope.MODULE ? ModuleUtilCore
+                                                                module != null ? ModuleUtilCore
                                                                   .getModuleNameInReadAction(module) : null,
                                                                 rememberScope, AnalysisUIOptions.getInstance(project), element){
       @Override
@@ -149,15 +149,6 @@ public abstract class BaseAnalysisAction extends AnAction {
       return analysisScope;
     }
 
-    Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
-    if (moduleContext != null) {
-      return new AnalysisScope(moduleContext);
-    }
-
-    Module [] modulesArray = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
-    if (modulesArray != null) {
-      return new AnalysisScope(modulesArray);
-    }
     final PsiFile psiFile = LangDataKeys.PSI_FILE.getData(dataContext);
     if (psiFile != null && psiFile.getManager().isInProject(psiFile)) {
       final VirtualFile file = psiFile.getVirtualFile();
@@ -194,6 +185,16 @@ public abstract class BaseAnalysisAction extends AnAction {
         }
       }
       return new AnalysisScope(project, files);
+    }
+
+    Module moduleContext = LangDataKeys.MODULE_CONTEXT.getData(dataContext);
+    if (moduleContext != null) {
+      return new AnalysisScope(moduleContext);
+    }
+
+    Module[] modulesArray = LangDataKeys.MODULE_CONTEXT_ARRAY.getData(dataContext);
+    if (modulesArray != null) {
+      return new AnalysisScope(modulesArray);
     }
     return project == null ? null : new AnalysisScope(project);
   }
