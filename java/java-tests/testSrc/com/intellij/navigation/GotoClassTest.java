@@ -34,6 +34,7 @@ public class GotoClassTest extends FileEditorManagerTestCase {
 
     getEditor(virtualFile).getCaretModel().moveToOffset(identifierOffset + 3); // it's still inside the class, so keep it
 
+    myManager.closeAllFiles();
     NavigationUtil.activateFileWithPsiElement(psiClass);
     assertEquals(identifierOffset + 3, getOffset(virtualFile));
 
