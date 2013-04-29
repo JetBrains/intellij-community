@@ -297,9 +297,9 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
           myNext = treeNode.getFilePointer();
           myStatus = FileStatus.MODIFIED;
 
-          final TreeNode parent = treeNode.getParent();
-          if (parent instanceof GroupTreeNode) {
-            final String id = ((GroupTreeNode)parent).getFileGroupId();
+          final GroupTreeNode parent = findParentGroupTreeNode(treeNode.getParent());
+          if (parent != null) {
+            final String id = parent.getFileGroupId();
             if (FileGroup.CREATED_ID.equals(id)) {
               myStatus = FileStatus.ADDED;
             } else if (FileGroup.REMOVED_FROM_REPOSITORY_ID.equals(id)) {
@@ -309,6 +309,15 @@ public class UpdateInfoTree extends PanelWithActionsAndCloseButton implements Di
           break;
         }
       }
+    }
+
+    @Nullable
+    private GroupTreeNode findParentGroupTreeNode(@NotNull TreeNode treeNode) {
+      TreeNode currentNode = treeNode;
+      while (currentNode != null && !(currentNode instanceof GroupTreeNode)) {
+        currentNode = currentNode.getParent();
+      }
+      return (GroupTreeNode)currentNode;
     }
 
     public void remove() {
