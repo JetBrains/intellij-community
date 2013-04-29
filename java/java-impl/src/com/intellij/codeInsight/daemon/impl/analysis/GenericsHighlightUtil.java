@@ -1267,7 +1267,7 @@ public class GenericsHighlightUtil {
         holder.add(highlightInfo);
         return;
       }
-      highlightInfo = HighlightClassUtil.checkClassWithAbstractMethods(enumConstant.getContainingClass(), enumConstant.getNameIdentifier().getTextRange());
+      highlightInfo = HighlightClassUtil.checkClassWithAbstractMethods(enumConstant.getContainingClass(), enumConstant, enumConstant.getNameIdentifier().getTextRange());
       if (highlightInfo != null) {
         holder.add(highlightInfo);
         return;

@@ -86,6 +86,11 @@ public class HighlightClassUtil {
 
   @Nullable
   static HighlightInfo checkClassWithAbstractMethods(PsiClass aClass, TextRange range) {
+    return checkClassWithAbstractMethods(aClass, aClass, range);
+  }
+
+  @Nullable
+  static HighlightInfo checkClassWithAbstractMethods(PsiClass aClass, PsiElement implementsFixElement, TextRange range) {
     PsiMethod abstractMethod = ClassUtil.getAnyAbstractMethod(aClass);
 
     if (abstractMethod == null || abstractMethod.getContainingClass() == null) {
@@ -93,14 +98,14 @@ public class HighlightClassUtil {
     }
     String baseClassName = HighlightUtil.formatClass(aClass, false);
     String methodName = HighlightUtil.formatMethod(abstractMethod);
-    String message = JavaErrorMessages.message(aClass instanceof PsiEnumConstantInitializer ? "enum.constant.should.implement.method" : "class.must.be.abstract",
+    String message = JavaErrorMessages.message(aClass instanceof PsiEnumConstantInitializer || implementsFixElement instanceof PsiEnumConstant ? "enum.constant.should.implement.method" : "class.must.be.abstract",
                                                baseClassName,
                                                methodName,
                                                HighlightUtil.formatClass(abstractMethod.getContainingClass(), false));
 
     HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(range).descriptionAndTooltip(message).create();
     if (ClassUtil.getAnyMethodToImplement(aClass) != null) {
-      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createImplementMethodsFix(aClass));
+      QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createImplementMethodsFix(implementsFixElement));
     }
     if (!(aClass instanceof PsiAnonymousClass)
         && HighlightUtil.getIncompatibleModifier(PsiModifier.ABSTRACT, aClass.getModifierList()) == null) {

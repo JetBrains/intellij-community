@@ -126,7 +126,7 @@ interface Barz {
 }
 
 enum Fooz implements Barz {
-    <error descr="Class 'Fooz' must either be declared abstract or implement abstract method 'baz()' in 'Barz'">FOO</error>;
+    <error descr="Class 'Fooz' must implement abstract method 'baz()' in 'Barz'">FOO</error>;
 }
 
 ///////////////////////
