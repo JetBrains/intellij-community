@@ -32,6 +32,7 @@ import com.intellij.util.config.*;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
 import java.util.ArrayList;
@@ -201,6 +202,7 @@ public class DiffManagerImpl extends DiffManager implements JDOMExternalizable {
     myComparisonPolicy = p;
   }
 
+  @Nullable
   public ComparisonPolicy getComparisonPolicy() {
     return myComparisonPolicy;
   }
