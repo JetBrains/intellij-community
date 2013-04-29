@@ -306,4 +306,40 @@ public class ReflectionUtil {
       LOG.info(e);
     }
   }
+
+  /**
+   * Returns the class this method was called 'framesToSkip' frames up the caller hierarchy.
+   *
+   * NOTE:
+   * <b>Extremely expensive!
+   * Please consider not using it.
+   * These aren't the droids you're looking for!</b>
+   */
+  @Nullable
+  public static Class getCallerClass(int framesToSkip) {
+    int adjustedFramesForThisCall = framesToSkip+1; // take into account this method frame
+    StackTraceElement[] stackTrace = new Throwable().getStackTrace();
+    for (int i = 0; i<=adjustedFramesForThisCall; i++) {
+      if (i >= stackTrace.length) {
+        break;
+      }
+      StackTraceElement element = stackTrace[i];
+      String className = element.getClassName();
+      if (className.equals("java.lang.reflect.Method") ||
+          className.equals("sun.reflect.NativeMethodAccessorImpl") ||
+          className.equals("sun.reflect.DelegatingMethodAccessorImpl")) {
+        adjustedFramesForThisCall++;
+        continue;
+      }
+      if (i == adjustedFramesForThisCall) {
+        try {
+          return Class.forName(className);
+        }
+        catch (ClassNotFoundException ignored) {
+          return null;
+        }
+      }
+    }
+    return null;
+  }
 }

@@ -45,10 +45,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
-import com.intellij.util.PlatformUtils;
+import com.intellij.util.*;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
@@ -60,7 +57,6 @@ import org.jdom.Document;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.reflect.Reflection;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -224,7 +220,7 @@ public class PluginManager {
 
     final IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(progress);
 
-    final Class callerClass = Reflection.getCallerClass(1);
+    final Class callerClass = ReflectionUtil.getCallerClass(1);
     final ClassLoader parentLoader = callerClass.getClassLoader();
 
     final List<IdeaPluginDescriptorImpl> result = new ArrayList<IdeaPluginDescriptorImpl>();
