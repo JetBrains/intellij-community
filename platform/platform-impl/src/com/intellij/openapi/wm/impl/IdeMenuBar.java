@@ -44,18 +44,14 @@ import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
 import java.util.ArrayList;
+import java.util.List;
 
 /**
- * Made non-final public for Fabrique.
- *
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
 public class IdeMenuBar extends JMenuBar {
-
   private static final int COLLAPSED_HEIGHT = 2;
-  private final ClockPanel myClockPanel;
-  private IdeMenuBar.MyBorderDelegator myBorderDelegator;
 
   private enum State {
     EXPANDED, COLLAPSING, COLLAPSED, EXPANDING, TEMPORARY_EXPANDED;
@@ -66,19 +62,19 @@ public class IdeMenuBar extends JMenuBar {
   }
 
   private final MyTimerListener myTimerListener;
-  private ArrayList<AnAction> myVisibleActions;
-  private ArrayList<AnAction> myNewVisibleActions;
+  private List<AnAction> myVisibleActions;
+  private List<AnAction> myNewVisibleActions;
   private final MenuItemPresentationFactory myPresentationFactory;
   private final DataManager myDataManager;
   private final ActionManagerEx myActionManager;
   private final Disposable myDisposable = Disposer.newDisposable();
-  private boolean DISABLED = false;
+  private boolean myDisabled = false;
 
+  private final ClockPanel myClockPanel;
   @Nullable private final Animator myAnimator;
   @Nullable private final Timer myActivationWatcher;
   @NotNull private State myState = State.EXPANDED;
   private double myProgress = 0;
-  private boolean myMouseInside = false;
   private boolean myActivated = false;
 
   public IdeMenuBar(ActionManagerEx actionManager, DataManager dataManager) {
@@ -88,85 +84,12 @@ public class IdeMenuBar extends JMenuBar {
     myNewVisibleActions = new ArrayList<AnAction>();
     myPresentationFactory = new MenuItemPresentationFactory();
     myDataManager = dataManager;
+
     if (SystemInfo.isWindows) {
-      addMouseListener(new MouseAdapter() {});//event catcher for "floating" fulscreen menu
-      myAnimator = new Animator("MenuBarAnimator", 16, 300, false) {
-        @Override
-        public void paintNow(int frame, int totalFrames, int cycle) {
-          myProgress = (1 - Math.cos(Math.PI * ((float)frame / totalFrames))) / 2;
-          revalidate();
-          repaint();
-        }
-
-        @Override
-        protected void paintCycleEnd() {
-          myProgress = 1;
-          switch (myState) {
-            case COLLAPSING:
-              setState(State.COLLAPSED);
-              break;
-            case EXPANDING:
-              setState(State.TEMPORARY_EXPANDED);
-              break;
-            default:
-          }
-          revalidate();
-          repaint();
-        }
-      };
-      Toolkit.getDefaultToolkit().addAWTEventListener(new AWTEventListener() {
-        @Override
-        public void eventDispatched(AWTEvent event) {
-          MouseEvent mouseEvent = (MouseEvent)event;
-          Component component = findActualComponent(mouseEvent);
-
-          if (myState != State.EXPANDED && !myState.isInProgress()) {
-            myMouseInside = myActivated || isDescendingFrom(component, IdeMenuBar.this);
-            if (myMouseInside && myState == State.COLLAPSED) {
-              setState(State.EXPANDING);
-              restartAnimator();
-            }
-            else if (!myMouseInside && myState != State.COLLAPSING && myState != State.COLLAPSED) {
-              setState(State.COLLAPSING);
-              restartAnimator();
-            }
-          }
-        }
-
-        private Component findActualComponent(MouseEvent mouseEvent) {
-          Component component = mouseEvent.getComponent();
-          Component deepestComponent;
-          if (myState != State.EXPANDED &&
-              !myState.isInProgress() &&
-              contains(SwingUtilities.convertPoint(component, mouseEvent.getPoint(), IdeMenuBar.this))) {
-            deepestComponent = IdeMenuBar.this;
-          }
-          else {
-            deepestComponent = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
-          }
-          if (deepestComponent != null) {
-            component = deepestComponent;
-          }
-          return component;
-        }
-      }, AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
-      myActivationWatcher = new Timer(100, new ActionListener() {
-        @Override
-        public void actionPerformed(ActionEvent e) {
-          if (myState == State.EXPANDED || myState == State.EXPANDING) {
-            return;
-          }
-          boolean activated = isActivated();
-          if (myActivated && !activated && myState == State.TEMPORARY_EXPANDED) {
-            myActivated = false;
-            setState(State.COLLAPSING);
-            restartAnimator();
-          }
-          if (activated) {
-            myActivated = true;
-          }
-        }
-      });
+      addMouseListener(new MouseAdapter() {});  // event catcher for "floating" full screen menu
+      myAnimator = new MyAnimator();
+      Toolkit.getDefaultToolkit().addAWTEventListener(new MyAWTEventListener(), AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
+      myActivationWatcher = new Timer(100, new MyActionListener());
       myClockPanel = new ClockPanel();
       add(myClockPanel);
     }
@@ -200,6 +123,7 @@ public class IdeMenuBar extends JMenuBar {
       setState(State.TEMPORARY_EXPANDED);
       revalidate();
       repaint();
+      //noinspection SSBasedInspection
       SwingUtilities.invokeLater(new Runnable() {
         @Override
         public void run() {
@@ -216,20 +140,10 @@ public class IdeMenuBar extends JMenuBar {
 
   @Override
   public void setBorder(Border border) {
-    if (border == null || !SystemInfo.isWindows) {
-      super.setBorder(border);
-      myBorderDelegator = null;
-      return;
+    if (border != null && SystemInfo.isWindows) {
+      border = new MyBorderDelegator(border);
     }
-
-    if (myBorderDelegator == null) {
-      myBorderDelegator = new MyBorderDelegator(border);
-    }
-    else {
-      myBorderDelegator.setSource(border);
-    }
-
-    super.setBorder(myBorderDelegator);
+    super.setBorder(border);
   }
 
   private static boolean isDescendingFrom(@Nullable Component a, @NotNull Component b) {
@@ -336,9 +250,9 @@ public class IdeMenuBar extends JMenuBar {
 
   void updateMenuActions() {
     myNewVisibleActions.clear();
-    final DataContext dataContext = ((DataManagerImpl)myDataManager).getDataContextTest(this);
 
-    if (!DISABLED) {
+    if (!myDisabled) {
+      DataContext dataContext = ((DataManagerImpl)myDataManager).getDataContextTest(this);
       expandActionGroup(dataContext, myNewVisibleActions, myActionManager);
     }
 
@@ -346,7 +260,7 @@ public class IdeMenuBar extends JMenuBar {
       // should rebuild UI
       final boolean changeBarVisibility = myNewVisibleActions.isEmpty() || myVisibleActions.isEmpty();
 
-      final ArrayList<AnAction> temp = myVisibleActions;
+      final List<AnAction> temp = myVisibleActions;
       myVisibleActions = myNewVisibleActions;
       myNewVisibleActions = temp;
 
@@ -420,7 +334,7 @@ public class IdeMenuBar extends JMenuBar {
     }
   }
 
-  private void expandActionGroup(final DataContext context, final ArrayList<AnAction> newVisibleActions, ActionManager actionManager) {
+  private void expandActionGroup(final DataContext context, final List<AnAction> newVisibleActions, ActionManager actionManager) {
     final ActionGroup mainActionGroup = (ActionGroup)CustomActionsSchema.getInstance().getCorrectedAction(IdeActions.GROUP_MAIN_MENU);
     if (mainActionGroup == null) return;
     final AnAction[] children = mainActionGroup.getChildren(null);
@@ -452,12 +366,12 @@ public class IdeMenuBar extends JMenuBar {
   }
 
   public void disableUpdates() {
-    DISABLED = true;
+    myDisabled = true;
     updateMenuActions();
   }
 
   public void enableUpdates() {
-    DISABLED = false;
+    myDisabled = false;
     updateMenuActions();
   }
 
@@ -499,13 +413,9 @@ public class IdeMenuBar extends JMenuBar {
   }
 
   private class MyBorderDelegator implements Border {
-    @NotNull private Border mySource;
+    @NotNull private final Border mySource;
 
     private MyBorderDelegator(@NotNull Border source) {
-      setSource(source);
-    }
-
-    void setSource(@NotNull Border source) {
       mySource = source;
     }
 
@@ -518,7 +428,7 @@ public class IdeMenuBar extends JMenuBar {
     public Insets getBorderInsets(Component c) {
       Insets insets = mySource.getBorderInsets(c);
       if (myState != State.EXPANDED) {
-        insets.top = 0;//get rid of "passive top pixel" in fullscreen mode
+        insets.top = 0;  // get rid of "passive top pixel" in full screen mode
       }
       return insets;
     }
@@ -526,6 +436,90 @@ public class IdeMenuBar extends JMenuBar {
     @Override
     public boolean isBorderOpaque() {
       return mySource.isBorderOpaque();
+    }
+  }
+
+  private class MyAnimator extends Animator {
+    public MyAnimator() {
+      super("MenuBarAnimator", 16, 300, false);
+    }
+
+    @Override
+    public void paintNow(int frame, int totalFrames, int cycle) {
+      myProgress = (1 - Math.cos(Math.PI * ((float)frame / totalFrames))) / 2;
+      revalidate();
+      repaint();
+    }
+
+    @Override
+    protected void paintCycleEnd() {
+      myProgress = 1;
+      switch (myState) {
+        case COLLAPSING:
+          setState(State.COLLAPSED);
+          break;
+        case EXPANDING:
+          setState(State.TEMPORARY_EXPANDED);
+          break;
+        default:
+      }
+      revalidate();
+      repaint();
+    }
+  }
+
+  private class MyAWTEventListener implements AWTEventListener {
+    @Override
+    public void eventDispatched(AWTEvent event) {
+      MouseEvent mouseEvent = (MouseEvent)event;
+      Component component = findActualComponent(mouseEvent);
+
+      if (myState != State.EXPANDED && !myState.isInProgress()) {
+        boolean mouseInside = myActivated || isDescendingFrom(component, IdeMenuBar.this);
+        if (mouseInside && myState == State.COLLAPSED) {
+          setState(State.EXPANDING);
+          restartAnimator();
+        }
+        else if (!mouseInside && myState != State.COLLAPSING && myState != State.COLLAPSED) {
+          setState(State.COLLAPSING);
+          restartAnimator();
+        }
+      }
+    }
+
+    private Component findActualComponent(MouseEvent mouseEvent) {
+      Component component = mouseEvent.getComponent();
+      Component deepestComponent;
+      if (myState != State.EXPANDED &&
+          !myState.isInProgress() &&
+          contains(SwingUtilities.convertPoint(component, mouseEvent.getPoint(), IdeMenuBar.this))) {
+        deepestComponent = IdeMenuBar.this;
+      }
+      else {
+        deepestComponent = SwingUtilities.getDeepestComponentAt(mouseEvent.getComponent(), mouseEvent.getX(), mouseEvent.getY());
+      }
+      if (deepestComponent != null) {
+        component = deepestComponent;
+      }
+      return component;
+    }
+  }
+
+  private class MyActionListener implements ActionListener {
+    @Override
+    public void actionPerformed(ActionEvent e) {
+      if (myState == State.EXPANDED || myState == State.EXPANDING) {
+        return;
+      }
+      boolean activated = isActivated();
+      if (myActivated && !activated && myState == State.TEMPORARY_EXPANDED) {
+        myActivated = false;
+        setState(State.COLLAPSING);
+        restartAnimator();
+      }
+      if (activated) {
+        myActivated = true;
+      }
     }
   }
 }

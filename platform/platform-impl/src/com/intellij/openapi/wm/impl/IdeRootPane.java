@@ -59,9 +59,8 @@ import java.util.List;
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-
-// Made public and non-final for Fabrique
 public class IdeRootPane extends JRootPane implements UISettingsListener {
+  private static final Icon BG = IconLoader.getIcon("/frame_background.png");
 
   /**
    * Toolbar and status bar.
@@ -87,13 +86,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   private final Application myApplication;
   private MemoryUsagePanel myMemoryWidget;
   private final StatusBarCustomComponentFactory[] myStatusBarCustomComponentFactories;
-  private final Disposable myDisposable= Disposer.newDisposable();
+  private final Disposable myDisposable = Disposer.newDisposable();
 
-  private static final Icon BG = IconLoader.getIcon("/frame_background.png");
   private boolean myFullScreen;
 
-  public IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager,
-              final Application application, final IdeFrame frame){
+  public IdeRootPane(ActionManagerEx actionManager, UISettings uiSettings, DataManager dataManager, Application application, final IdeFrame frame) {
     myActionManager = actionManager;
     myUISettings = uiSettings;
 
@@ -109,7 +106,8 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
 
-    myUISettingsListener=new MyUISettingsListenerImpl();
+    myUISettingsListener = new MyUISettingsListenerImpl();
+
     if (SystemInfo.isWindows) {
       menuBar = new IdeMenuBar(actionManager, dataManager);
       getLayeredPane().add(menuBar, new Integer(JLayeredPane.DEFAULT_LAYER - 1));
@@ -142,7 +140,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     return SystemInfo.isWindows ? new MyRootLayout() : super.createRootLayout();
   }
 
-
+  @Override
   public void setGlassPane(final Component glass) {
     if (myGlassPaneInitialized) throw new IllegalStateException("Setting of glass pane for IdeFrame is prohibited");
     super.setGlassPane(glass);
