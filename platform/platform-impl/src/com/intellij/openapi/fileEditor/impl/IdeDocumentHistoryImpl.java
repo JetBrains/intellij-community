@@ -56,7 +56,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
   private final EditorFactory myEditorFactory;
   private FileDocumentManager myFileDocumentManager;
-  private final FileEditorManagerEx myEditorManager;
+  private FileEditorManagerEx myEditorManager;
   private final VirtualFileManager myVfManager;
   private final CommandProcessor myCmdProcessor;
   private final ToolWindowManager myToolWindowManager;
@@ -109,6 +109,7 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
 
   @Override
   public final void projectOpened() {
+    myEditorManager = (FileEditorManagerEx)FileEditorManager.getInstance(myProject);
     EditorEventMulticaster eventMulticaster = myEditorFactory.getEventMulticaster();
 
     DocumentListener documentListener = new DocumentAdapter() {
@@ -453,6 +454,8 @@ public class IdeDocumentHistoryImpl extends IdeDocumentHistory implements Projec
     } else {
       editorsWithProviders = myEditorManager.openFileWithProviders(info.getFile(), wasActive, false);
     }
+
+    myEditorManager.setSelectedEditor(info.getFile(), info.getEditorTypeId());
 
     final FileEditor        [] editors   = editorsWithProviders.getFirst();
     final FileEditorProvider[] providers = editorsWithProviders.getSecond();

@@ -19,12 +19,15 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.IdeActions;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
+import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.command.CommandProcessor;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
+import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -182,11 +185,23 @@ public abstract class EditorComposite implements Disposable {
         final VirtualFile oldFile = event.getOldFile();
         final VirtualFile newFile = event.getNewFile();
         if (Comparing.equal(oldFile, newFile) && Comparing.equal(getFile(), newFile)) {
-          final FileEditor oldEditor = event.getOldEditor();
-          if (oldEditor != null) oldEditor.deselectNotify();
-          final FileEditor newEditor = event.getNewEditor();
-          if (newEditor != null) newEditor.selectNotify();
-          ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).providerSelected(EditorComposite.this);
+          Runnable runnable = new Runnable() {
+            @Override
+            public void run() {
+              final FileEditor oldEditor = event.getOldEditor();
+              if (oldEditor != null) oldEditor.deselectNotify();
+              final FileEditor newEditor = event.getNewEditor();
+              if (newEditor != null) newEditor.selectNotify();
+              ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).providerSelected(EditorComposite.this);
+              ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(myFileEditorManager.getProject())).onSelectionChanged();
+            }
+          };
+          if (ApplicationManager.getApplication().isDispatchThread()) {
+            CommandProcessor.getInstance().executeCommand(myFileEditorManager.getProject(), runnable, "Switch Active Editor", null);
+          }
+          else {
+            runnable.run(); // not invoked by user
+          }
         }
       }
     }, this);

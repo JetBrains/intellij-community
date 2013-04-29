@@ -180,7 +180,7 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     return PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/fileEditorManager";
   }
 
-  private static class MyFileEditorProvider implements FileEditorProvider {
+  static class MyFileEditorProvider implements FileEditorProvider {
     @NotNull
     @Override
     public String getEditorTypeId() {
