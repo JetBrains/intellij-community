@@ -57,15 +57,23 @@ public class JavaFxReferencesContributor extends PsiReferenceContributor {
       methodCallExpression = PsiTreeUtil.getParentOfType(addArgumentsList, PsiMethodCallExpression.class);
     }
     if (methodCallExpression != null) {
-      final PsiMethod psiMethod = methodCallExpression.resolveMethod();
-      if (psiMethod != null && "add".equals(psiMethod.getName())) {
-        final PsiClass containingClass = psiMethod.getContainingClass();
-        if (containingClass != null ) {
-          final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
-          if (qualifierExpression instanceof PsiMethodCallExpression) {
-            final PsiReferenceExpression getStylesheetsMethodExpression = ((PsiMethodCallExpression)qualifierExpression).getMethodExpression();
-            if ("getStylesheets".equals(getStylesheetsMethodExpression.getReferenceName())) {
-              return getStylesheetsMethodExpression.getQualifierExpression();
+      PsiMethod psiMethod = methodCallExpression.resolveMethod();
+      if (psiMethod != null) {
+        if ("getResource".equals(psiMethod.getName())) {
+          final PsiExpressionList addArgumentsList = PsiTreeUtil.getParentOfType(methodCallExpression, PsiExpressionList.class);
+          methodCallExpression = PsiTreeUtil.getParentOfType(addArgumentsList, PsiMethodCallExpression.class);
+          psiMethod = methodCallExpression != null ? methodCallExpression.resolveMethod() : null;
+          if (psiMethod == null) return null;
+        }
+        if ("add".equals(psiMethod.getName())) {
+          final PsiClass containingClass = psiMethod.getContainingClass();
+          if (containingClass != null ) {
+            final PsiExpression qualifierExpression = methodCallExpression.getMethodExpression().getQualifierExpression();
+            if (qualifierExpression instanceof PsiMethodCallExpression) {
+              final PsiReferenceExpression getStylesheetsMethodExpression = ((PsiMethodCallExpression)qualifierExpression).getMethodExpression();
+              if ("getStylesheets".equals(getStylesheetsMethodExpression.getReferenceName())) {
+                return getStylesheetsMethodExpression.getQualifierExpression();
+              }
             }
           }
         }
