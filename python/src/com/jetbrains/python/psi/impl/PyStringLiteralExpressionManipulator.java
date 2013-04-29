@@ -1,6 +1,5 @@
 package com.jetbrains.python.psi.impl;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.AbstractElementManipulator;
@@ -11,7 +10,6 @@ import com.jetbrains.python.psi.PyElementGenerator;
  * @author traff
  */
 public class PyStringLiteralExpressionManipulator extends AbstractElementManipulator<PyStringLiteralExpressionImpl> {
-  private static final Logger LOG = Logger.getInstance(PyStringLiteralExpressionManipulator.class);
 
   public PyStringLiteralExpressionImpl handleContentChange(PyStringLiteralExpressionImpl element, TextRange range, String newContent) {
     Pair<String, String> quotes = PythonStringUtil.getQuotes(range.substring(element.getText()));
@@ -24,5 +22,14 @@ public class PyStringLiteralExpressionManipulator extends AbstractElementManipul
 
     return (PyStringLiteralExpressionImpl)element
       .replace(PyElementGenerator.getInstance(element.getProject()).createStringLiteralAlreadyEscaped(newName));
+  }
+
+  @Override
+  public TextRange getRangeInElement(PyStringLiteralExpressionImpl element) {
+    Pair<String, String> pair = PythonStringUtil.getQuotes(element.getText());
+    if (pair != null) {
+      return TextRange.from(pair.first.length(), element.getTextLength() - pair.first.length() - pair.second.length());
+    }
+    return super.getRangeInElement(element);
   }
 }
