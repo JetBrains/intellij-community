@@ -7,7 +7,7 @@ import java.util.List;
 /**
  * @author traff
  */
-public interface RemoteSdkData extends RemoteCredentials {
+public interface RemoteSdkData extends MutableRemoteCredentials {
   String getInterpreterPath();
 
   void setInterpreterPath(String interpreterPath);
@@ -19,28 +19,6 @@ public interface RemoteSdkData extends RemoteCredentials {
   void setHelpersPath(String tempFilesPath);
 
   String getDefaultHelpersName();
-
-  void setHost(String host);
-
-  void setPort(int port);
-
-  void setUserName(String userName);
-
-  void setPassword(@Nullable String password);
-
-  void setStorePassword(boolean storePassword);
-
-  void setStorePassphrase(boolean storePassphrase);
-
-  void setAnonymous(boolean anonymous);
-
-  void setPrivateKeyFile(String privateKeyFile);
-
-  void setKnownHostsFile(String knownHostsFile);
-
-  void setPassphrase(@Nullable String passphrase);
-
-  void setUseKeyPair(boolean useKeyPair);
 
   void addRemoteRoot(String remoteRoot);
 

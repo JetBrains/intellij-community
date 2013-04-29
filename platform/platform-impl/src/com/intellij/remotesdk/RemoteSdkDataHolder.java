@@ -10,8 +10,8 @@ import java.util.LinkedList;
 import java.util.List;
 
 /**
-* @author traff
-*/
+ * @author traff
+ */
 public class RemoteSdkDataHolder extends RemoteCredentialsHolder implements RemoteSdkData {
 
   public static final String SSH_PREFIX = "ssh://";
