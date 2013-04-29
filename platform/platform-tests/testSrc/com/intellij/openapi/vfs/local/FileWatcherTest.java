@@ -27,10 +27,7 @@ import com.intellij.openapi.vfs.impl.local.FileWatcher;
 import com.intellij.openapi.vfs.impl.local.LocalFileSystemImpl;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.VFileContentChangeEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.events.*;
 import com.intellij.openapi.vfs.newvfs.impl.VirtualDirectoryImpl;
 import com.intellij.testFramework.PlatformLangTestCase;
 import com.intellij.util.Alarm;
@@ -613,6 +610,27 @@ public class FileWatcherTest extends PlatformLangTestCase {
     }
   }
 
+  public void testHiddenFiles() throws Exception {
+    if (!SystemInfo.isWindows) {
+      System.err.println("Ignored: Windows required");
+      return;
+    }
+
+    File topDir = createTestDir("topDir");
+    File testDir = createTestDir(topDir, "dir");
+    File testFile = createTestFile(testDir, "file", "123");
+    refresh(topDir);
+
+    LocalFileSystem.WatchRequest request = watch(topDir);
+    try {
+      myAccept = true;
+      IoTestUtil.setHidden(testFile.getPath(), true);
+      assertEvent(VFilePropertyChangeEvent.class, testFile.getPath());
+    }
+    finally {
+      unwatch(request);
+    }
+  }
 
   @NotNull
   private LocalFileSystem.WatchRequest watch(File watchFile) {

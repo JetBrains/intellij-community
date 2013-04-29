@@ -18,6 +18,7 @@ package com.intellij.openapi.vfs.newvfs.persistent;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VfsUtil;
@@ -188,9 +189,16 @@ public class RefreshWorker {
       if (checkFurther) {
         boolean currentWritable = persistence.isWritable(file);
         boolean upToDateWritable = attributes.isWritable();
-
         if (currentWritable != upToDateWritable) {
-          scheduleWritableAttributeChange(file, currentWritable, upToDateWritable);
+          scheduleAttributeChange(file, VirtualFile.PROP_WRITABLE, currentWritable, upToDateWritable);
+        }
+
+        if (SystemInfo.isWindows) {
+          boolean currentHidden = persistence.isHidden(file);
+          boolean upToDateHidden = attributes.isHidden();
+          if (currentHidden != upToDateHidden) {
+            scheduleAttributeChange(file, VirtualFile.PROP_HIDDEN, currentHidden, upToDateHidden);
+          }
         }
       }
 
@@ -247,9 +255,9 @@ public class RefreshWorker {
     return false;
   }
 
-  private void scheduleWritableAttributeChange(@NotNull VirtualFile file, boolean currentWritable, boolean upToDateWritable) {
-    debug(LOG, "update r/w file=%s", file);
-    myEvents.add(new VFilePropertyChangeEvent(null, file, VirtualFile.PROP_WRITABLE, currentWritable, upToDateWritable, true));
+  private void scheduleAttributeChange(@NotNull VirtualFile file, String property, boolean current, boolean upToDate) {
+    debug(LOG, "update '%s' file=%s", property, file);
+    myEvents.add(new VFilePropertyChangeEvent(null, file, property, current, upToDate, true));
   }
 
   private void scheduleUpdateContent(@NotNull VirtualFile file) {

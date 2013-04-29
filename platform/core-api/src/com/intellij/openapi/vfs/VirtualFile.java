@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -135,6 +135,15 @@ public abstract class VirtualFile extends UserDataHolderBase implements Modifica
    * @see VirtualFilePropertyEvent#getPropertyName
    */
   @NonNls public static final String PROP_WRITABLE = "writable";
+
+  /**
+   * Used as a property name in the {@link VirtualFilePropertyEvent} fired when a visibility of a
+   * {@link VirtualFile} changes.
+   *
+   * @see VirtualFileListener#propertyChanged
+   * @see VirtualFilePropertyEvent#getPropertyName
+   */
+  @NonNls public static final String PROP_HIDDEN = "hidden";
 
   /**
    * Gets the extension of this file. If file name contains '.' extension is the substring from the last '.'

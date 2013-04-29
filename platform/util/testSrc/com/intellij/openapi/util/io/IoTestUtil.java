@@ -262,4 +262,12 @@ public class IoTestUtil {
       }
     }
   }
+
+  public static void setHidden(@NotNull String path, boolean hidden) throws IOException, InterruptedException {
+    assertTrue(SystemInfo.isWindows);
+
+    ProcessBuilder command = new ProcessBuilder("attrib", hidden ? "+H" : "-H", path);
+    int res = runCommand(command);
+    assertEquals(command.command().toString(), 0, res);
+  }
 }

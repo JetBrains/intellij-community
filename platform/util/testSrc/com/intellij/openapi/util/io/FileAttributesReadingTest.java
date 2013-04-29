@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -114,7 +114,8 @@ public class FileAttributesReadingTest {
     assertFileAttributes(new File(file.getPath() + StringUtil.repeat(File.separator, 3)));
     assertFileAttributes(new File(file.getPath().replace(File.separator, StringUtil.repeat(File.separator, 3))));
     assertFileAttributes(new File(file.getPath().replace(File.separator, File.separator + "." + File.separator)));
-    assertFileAttributes(new File(myTempDirectory, File.separator + ".." + File.separator + myTempDirectory.getName() + File.separator + file.getName()));
+    assertFileAttributes(
+      new File(myTempDirectory, File.separator + ".." + File.separator + myTempDirectory.getName() + File.separator + file.getName()));
 
     if (SystemInfo.isUnix) {
       final File backSlashFile = FileUtil.createTempFile(myTempDirectory, "test\\", "\\txt");
@@ -258,6 +259,28 @@ public class FileAttributesReadingTest {
 
     final String resolved2 = FileSystemUtil.resolveSymLink(junction);
     assertEquals(SystemInfo.isWinVistaOrNewer ? null : junction.getPath(), resolved2);
+  }
+
+  @Test
+  public void hiddenDir() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+    File dir = IoTestUtil.createTestDir(myTempDirectory, "dir");
+    FileAttributes attributes = getAttributes(dir);
+    assertFalse(attributes.isHidden());
+    IoTestUtil.setHidden(dir.getPath(), true);
+    attributes = getAttributes(dir);
+    assertTrue(attributes.isHidden());
+  }
+
+  @Test
+  public void hiddenFile() throws Exception {
+    assumeTrue(SystemInfo.isWindows);
+    File file = IoTestUtil.createTestFile(myTempDirectory, "file");
+    FileAttributes attributes = getAttributes(file);
+    assertFalse(attributes.isHidden());
+    IoTestUtil.setHidden(file.getPath(), true);
+    attributes = getAttributes(file);
+    assertTrue(attributes.isHidden());
   }
 
   @Test

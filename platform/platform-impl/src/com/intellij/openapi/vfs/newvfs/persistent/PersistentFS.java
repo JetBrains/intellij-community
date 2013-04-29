@@ -39,12 +39,13 @@ public abstract class PersistentFS extends ManagingFS {
   static final int MUST_RELOAD_CONTENT = 0x08;
   static final int IS_SYMLINK = 0x10;
   static final int IS_SPECIAL = 0x20;
+  static final int IS_HIDDEN = 0x40;
 
-  @MagicConstant(flags = {CHILDREN_CACHED_FLAG, IS_DIRECTORY_FLAG, IS_READ_ONLY, MUST_RELOAD_CONTENT, IS_SYMLINK, IS_SPECIAL})
+  @MagicConstant(flags = {CHILDREN_CACHED_FLAG, IS_DIRECTORY_FLAG, IS_READ_ONLY, MUST_RELOAD_CONTENT, IS_SYMLINK, IS_SPECIAL, IS_HIDDEN})
   public @interface Attributes { }
 
   static final int ALL_VALID_FLAGS =
-    CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT | IS_SYMLINK | IS_SPECIAL;
+    CHILDREN_CACHED_FLAG | IS_DIRECTORY_FLAG | IS_READ_ONLY | MUST_RELOAD_CONTENT | IS_SYMLINK | IS_SPECIAL | IS_HIDDEN;
 
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static PersistentFS getInstance() {
@@ -62,6 +63,10 @@ public abstract class PersistentFS extends ManagingFS {
   public abstract int getId(@NotNull VirtualFile parent, @NotNull String childName, @NotNull NewVirtualFileSystem delegate);
 
   public abstract String getName(int id);
+
+  public abstract boolean isSpecialFile(@NotNull VirtualFile file);
+
+  public abstract boolean isHidden(@NotNull VirtualFile file);
 
   @Attributes
   public abstract int getFileAttributes(int id);
