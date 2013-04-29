@@ -29,7 +29,6 @@ import com.intellij.openapi.actionSystem.impl.WeakTimerListener;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.ClockPanel;
 import com.intellij.ui.ScreenUtil;
@@ -43,6 +42,8 @@ import javax.swing.border.Border;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
+import java.beans.PropertyChangeEvent;
+import java.beans.PropertyChangeListener;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -70,7 +71,7 @@ public class IdeMenuBar extends JMenuBar {
   private final Disposable myDisposable = Disposer.newDisposable();
   private boolean myDisabled = false;
 
-  private final ClockPanel myClockPanel;
+  @Nullable private final ClockPanel myClockPanel;
   @Nullable private final Animator myAnimator;
   @Nullable private final Timer myActivationWatcher;
   @NotNull private State myState = State.EXPANDED;
@@ -85,13 +86,18 @@ public class IdeMenuBar extends JMenuBar {
     myPresentationFactory = new MenuItemPresentationFactory();
     myDataManager = dataManager;
 
-    if (SystemInfo.isWindows) {
+    if (WindowManagerImpl.isFloatingMenuBarSupported()) {
       addMouseListener(new MouseAdapter() {});  // event catcher for "floating" full screen menu
       myAnimator = new MyAnimator();
       Toolkit.getDefaultToolkit().addAWTEventListener(new MyAWTEventListener(), AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
       myActivationWatcher = new Timer(100, new MyActionListener());
       myClockPanel = new ClockPanel();
       add(myClockPanel);
+      addPropertyChangeListener(WindowManagerImpl.FULL_SCREEN, new PropertyChangeListener() {
+        @Override public void propertyChange(PropertyChangeEvent evt) {
+          updateState();
+        }
+      });
     }
     else {
       myAnimator = null;
@@ -140,7 +146,7 @@ public class IdeMenuBar extends JMenuBar {
 
   @Override
   public void setBorder(Border border) {
-    if (border != null && SystemInfo.isWindows) {
+    if (border != null && myAnimator != null) {
       border = new MyBorderDelegator(border);
     }
     super.setBorder(border);
@@ -170,6 +176,25 @@ public class IdeMenuBar extends JMenuBar {
     return getMenu(index).isPopupMenuVisible();
   }
 
+  private void updateState() {
+    if (myAnimator != null) {
+      Window window = SwingUtilities.getWindowAncestor(this);
+      if (window instanceof IdeFrameEx) {
+        boolean fullScreen = ((IdeFrameEx)window).isInFullScreen();
+        if (fullScreen) {
+          setState(State.COLLAPSING);
+          restartAnimator();
+        }
+        else {
+          myAnimator.suspend();
+          setState(State.EXPANDED);
+          if (myClockPanel != null) {
+            myClockPanel.setVisible(false);
+          }
+        }
+      }
+    }
+  }
 
   private void setState(@NotNull State state) {
     myState = state;
@@ -195,27 +220,12 @@ public class IdeMenuBar extends JMenuBar {
     }
   }
 
-  /**
-   * Invoked when enclosed frame is being shown.
-   */
   @Override
   public void addNotify() {
     super.addNotify();
+
     updateMenuActions();
-    Window window = SwingUtilities.getWindowAncestor(this);
-    if (SystemInfo.isWindows && window instanceof IdeFrameEx) {
-      boolean fullScreen = ((IdeFrameEx)window).isInFullScreen();
-      if (fullScreen) {
-        setState(State.COLLAPSING);
-        restartAnimator();
-      }
-      else {
-        if (myAnimator != null) {
-          myAnimator.suspend();
-        }
-        setState(State.EXPANDED);
-      }
-    }
+
     // Add updater for menus
     myActionManager.addTimerListener(1000, new WeakTimerListener(myActionManager, myTimerListener));
     UISettingsListener UISettingsListener = new UISettingsListener() {
@@ -226,14 +236,12 @@ public class IdeMenuBar extends JMenuBar {
     };
     UISettings.getInstance().addUISettingsListener(UISettingsListener, myDisposable);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
+
     if (myActivationWatcher != null) {
       myActivationWatcher.start();
     }
   }
 
-  /**
-   * Invoked when enclosed frame is being disposed.
-   */
   @Override
   public void removeNotify() {
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
@@ -272,7 +280,7 @@ public class IdeMenuBar extends JMenuBar {
 
       fixMenuBackground();
       updateMnemonicsVisibility();
-      if (SystemInfo.isWindows) {
+      if (myClockPanel != null) {
         add(myClockPanel);
       }
       validate();
@@ -304,10 +312,7 @@ public class IdeMenuBar extends JMenuBar {
 
   @Override
   protected void paintChildren(Graphics g) {
-    if (SystemInfo.isWindows && myState == State.COLLAPSED) {
-      return;
-    }
-    if (SystemInfo.isWindows && myState.isInProgress()) {
+    if (myState.isInProgress()) {
       Graphics2D g2 = (Graphics2D)g;
       AffineTransform oldTransform = g2.getTransform();
       AffineTransform newTransform = oldTransform != null ? new AffineTransform(oldTransform) : new AffineTransform();
@@ -316,7 +321,7 @@ public class IdeMenuBar extends JMenuBar {
       super.paintChildren(g2);
       g2.setTransform(oldTransform);
     }
-    else {
+    else if (myState != State.COLLAPSED) {
       super.paintChildren(g);
     }
   }

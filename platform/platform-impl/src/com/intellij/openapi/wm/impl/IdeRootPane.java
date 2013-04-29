@@ -40,7 +40,6 @@ import com.intellij.openapi.wm.impl.status.IdeStatusBarImpl;
 import com.intellij.openapi.wm.impl.status.MemoryUsagePanel;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.PopupHandler;
-import com.intellij.ui.ScreenUtil;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBPanel;
 import com.intellij.util.containers.ContainerUtil;
@@ -108,19 +107,15 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
     myUISettingsListener = new MyUISettingsListenerImpl();
 
-    if (SystemInfo.isWindows) {
+    if (WindowManagerImpl.isFloatingMenuBarSupported()) {
       menuBar = new IdeMenuBar(actionManager, dataManager);
       getLayeredPane().add(menuBar, new Integer(JLayeredPane.DEFAULT_LAYER - 1));
       if (frame instanceof IdeFrameEx) {
-        PropertyChangeListener propertyChangeListener = new PropertyChangeListener() {
-          @Override
-          public void propertyChange(PropertyChangeEvent evt) {
-            if (evt.getNewValue() == null) { // full-screen state has been just changed
-              myFullScreen = ((IdeFrameEx)frame).isInFullScreen();
-            }
+        addPropertyChangeListener(WindowManagerImpl.FULL_SCREEN, new PropertyChangeListener() {
+          @Override public void propertyChange(PropertyChangeEvent evt) {
+            myFullScreen = ((IdeFrameEx)frame).isInFullScreen();
           }
-        };
-        addPropertyChangeListener(ScreenUtil.DISPOSE_TEMPORARY, propertyChangeListener);
+        });
       }
     }
     else {
@@ -137,7 +132,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
 
   @Override
   protected LayoutManager createRootLayout() {
-    return SystemInfo.isWindows ? new MyRootLayout() : super.createRootLayout();
+    return WindowManagerImpl.isFloatingMenuBarSupported() ? new MyRootLayout() : super.createRootLayout();
   }
 
   @Override
