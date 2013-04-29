@@ -317,14 +317,16 @@ public class ReflectionUtil {
    */
   @Nullable
   public static Class getCallerClass(int framesToSkip) {
-    int adjustedFramesForThisCall = framesToSkip+1; // take into account this method frame
+    int adjustedFramesForThisCall = framesToSkip/*+1*/; // take into account this method frame
+
     StackTraceElement[] stackTrace = new Throwable().getStackTrace();
-    for (int i = 0; i<=adjustedFramesForThisCall; i++) {
+    String className = null;
+    for (int i = 1; i<=adjustedFramesForThisCall; i++) {
       if (i >= stackTrace.length) {
         break;
       }
       StackTraceElement element = stackTrace[i];
-      String className = element.getClassName();
+      className = element.getClassName();
       if (className.equals("java.lang.reflect.Method") ||
           className.equals("sun.reflect.NativeMethodAccessorImpl") ||
           className.equals("sun.reflect.DelegatingMethodAccessorImpl")) {
@@ -332,13 +334,24 @@ public class ReflectionUtil {
         continue;
       }
       if (i == adjustedFramesForThisCall) {
-        try {
-          return Class.forName(className);
-        }
-        catch (ClassNotFoundException ignored) {
-          return null;
-        }
+        break;
       }
+    }
+
+    if (className == null) {
+      // some plugins incorrectly expect not-null class too far up the caller chain,
+      // so provide some not-null class for them
+      className = ReflectionUtil.class.getName();
+    }
+
+    //Class realClass = Reflection.getCallerClass(adjustedFramesForThisCall+1);
+    //if (!realClass.getName().equals(className)) {
+    //  int i = 0;
+    //}
+    try {
+      return Class.forName(className);
+    }
+    catch (ClassNotFoundException ignored) {
     }
     return null;
   }

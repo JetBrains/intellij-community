@@ -20,7 +20,6 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ImageLoader;
-import com.intellij.util.ReflectionUtil;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.WeakHashMap;
@@ -28,6 +27,7 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import sun.reflect.Reflection;
 
 import javax.swing.*;
 import java.awt.*;
@@ -113,12 +113,12 @@ public final class IconLoader {
   @NotNull
   public static Icon getIcon(@NonNls @NotNull final String path) {
     int stackFrameCount = 2;
-    Class callerClass = ReflectionUtil.getCallerClass(stackFrameCount);
+    Class callerClass = Reflection.getCallerClass(stackFrameCount);
     while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
-      callerClass = ReflectionUtil.getCallerClass(++stackFrameCount);
+      callerClass = Reflection.getCallerClass(++stackFrameCount);
     }
     if (callerClass == null) {
-      callerClass = ReflectionUtil.getCallerClass(1);
+      callerClass = Reflection.getCallerClass(1);
     }
     return getIcon(path, callerClass);
   }
@@ -144,12 +144,12 @@ public final class IconLoader {
    */
   public static Icon findIcon(@NonNls @NotNull String path) {
     int stackFrameCount = 2;
-    Class callerClass = ReflectionUtil.getCallerClass(stackFrameCount);
+    Class callerClass = Reflection.getCallerClass(stackFrameCount);
     while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
-      callerClass = ReflectionUtil.getCallerClass(++stackFrameCount);
+      callerClass = Reflection.getCallerClass(++stackFrameCount);
     }
     if (callerClass == null) {
-      callerClass = ReflectionUtil.getCallerClass(1);
+      callerClass = Reflection.getCallerClass(1);
     }
     return findIcon(path, callerClass);
   }
