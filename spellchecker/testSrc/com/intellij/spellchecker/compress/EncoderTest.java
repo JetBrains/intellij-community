@@ -18,107 +18,88 @@ package com.intellij.spellchecker.compress;
 import junit.framework.TestCase;
 
 public class EncoderTest extends TestCase {
+  public void testSimple() {
+    Encoder encoder = new Encoder();
+    final String wordToTest = "abc";
+    final UnitBitSet bitSet = encoder.encode(wordToTest, true);
+    assertNotNull(bitSet);
+    assertIndices(bitSet, 1, 2, 3);
+    byte[] compressed = bitSet.pack();
+    assertEquals(1, compressed.length);
+    assertEquals(wordToTest, encoder.decode(compressed));
+  }
 
-
-    public void testSimple() {
-        Encoder encoder = new Encoder();
-        final String wordToTest = "abc";
-        final UnitBitSet bitSet = encoder.encode(wordToTest, true);
-        assertNotNull(bitSet);
-        assertEquals(3, encoder.getAlphabet().getLastIndexUsed());
-        assertEquals(3, bitSet.getUnitValue(0));
-        assertEquals(1, bitSet.getUnitValue(1));
-        assertEquals(1, bitSet.getUnitValue(2));
-        assertEquals(2, bitSet.getUnitValue(3));
-        assertEquals(3, bitSet.getUnitValue(4));
-
-        assertEquals(wordToTest, encoder.decode(bitSet));
+  private static void assertIndices(UnitBitSet bitSet, int... indices) {
+    assertEquals(indices.length, bitSet.b.length);
+    for (int i = 0; i < indices.length; i++) {
+      int index = indices[i];
+      assertEquals(index, bitSet.getUnitValue(i));
     }
+  }
 
 
-    public void testDouble() {
-        Encoder encoder = new Encoder();
-        final String wordToTest = "aaa";
-        final UnitBitSet bitSet = encoder.encode(wordToTest, true);
-        assertNotNull(bitSet);
-        assertEquals(1, encoder.getAlphabet().getLastIndexUsed());
-        assertEquals(3, bitSet.getUnitValue(0));
-        assertEquals(1, bitSet.getUnitValue(1));
-        assertEquals(1, bitSet.getUnitValue(2));
-        assertEquals(1, bitSet.getUnitValue(3));
-        assertEquals(1, bitSet.getUnitValue(4));
+  public void testDouble() {
+    Encoder encoder = new Encoder();
+    final String wordToTest = "aaa";
+    final UnitBitSet bitSet = encoder.encode(wordToTest, true);
+    assertNotNull(bitSet);
+    assertEquals(1, encoder.getAlphabet().getLastIndexUsed());
+    assertIndices(bitSet, 1, 1, 1);
 
-        assertEquals(wordToTest, encoder.decode(bitSet));
-    }
+    assertEquals(wordToTest, encoder.decode(bitSet.pack()));
+  }
 
-    public void testLetterRepetition() {
-        Encoder encoder = new Encoder();
-        final String wordToTest = "aba";
-        final UnitBitSet bitSet = encoder.encode(wordToTest, true);
-        assertNotNull(bitSet);
-        assertEquals(2, encoder.getAlphabet().getLastIndexUsed());
-        assertEquals(3, bitSet.getUnitValue(0));
-        assertEquals(1, bitSet.getUnitValue(1));
-        assertEquals(1, bitSet.getUnitValue(2));
-        assertEquals(2, bitSet.getUnitValue(3));
-        assertEquals(1, bitSet.getUnitValue(4));
+  public void testLetterRepetition() {
+    Encoder encoder = new Encoder();
+    final String wordToTest = "aba";
+    final UnitBitSet bitSet = encoder.encode(wordToTest, true);
+    assertNotNull(bitSet);
+    assertEquals(2, encoder.getAlphabet().getLastIndexUsed());
+    assertIndices(bitSet, 1, 2, 1);
 
-        assertEquals(wordToTest, encoder.decode(bitSet));
-    }
+    assertEquals(wordToTest, encoder.decode(bitSet.pack()));
+  }
 
-    public void testReverse() {
-        Encoder encoder = new Encoder();
-        final String wordToTest1 = "abc";
-        final UnitBitSet bitSet = encoder.encode(wordToTest1, true);
-        assertNotNull(bitSet);
-        assertEquals(3, encoder.getAlphabet().getLastIndexUsed());
-        assertEquals(3, bitSet.getUnitValue(0));
-        assertEquals(1, bitSet.getUnitValue(1));
-        assertEquals(1, bitSet.getUnitValue(2));
-        assertEquals(2, bitSet.getUnitValue(3));
-        assertEquals(3, bitSet.getUnitValue(4));
+  public void testReverse() {
+    Encoder encoder = new Encoder();
+    final String wordToTest1 = "abc";
+    final UnitBitSet bitSet = encoder.encode(wordToTest1, true);
+    assertNotNull(bitSet);
+    assertEquals(3, encoder.getAlphabet().getLastIndexUsed());
+    assertIndices(bitSet, 1, 2, 3);
 
-        assertEquals(wordToTest1, encoder.decode(bitSet));
+    byte[] pack = bitSet.pack();
+    assertEquals(1, pack.length);
+    assertEquals(wordToTest1, encoder.decode(pack));
 
-        final String wordToTest2 = "cba";
-        final UnitBitSet bitSet2 = encoder.encode(wordToTest2, true);
-        assertEquals(3, encoder.getAlphabet().getLastIndexUsed());
-        assertNotNull(bitSet);
-        assertEquals(3, bitSet2.getUnitValue(0));
-        assertEquals(3, bitSet2.getUnitValue(1));
-        assertEquals(3, bitSet2.getUnitValue(2));
-        assertEquals(2, bitSet2.getUnitValue(3));
-        assertEquals(1, bitSet2.getUnitValue(4));
+    final String wordToTest2 = "cba";
+    final UnitBitSet bitSet2 = encoder.encode(wordToTest2, true);
+    assertEquals(3, encoder.getAlphabet().getLastIndexUsed());
+    assertNotNull(bitSet2);
+    assertIndices(bitSet2, 3, 2, 1);
 
-        assertEquals(wordToTest2, encoder.decode(bitSet2));
-    }
+    byte[] pack2 = bitSet2.pack();
+    assertEquals(1, pack2.length);
+    assertEquals(wordToTest2, encoder.decode(pack2));
+  }
 
 
-    public void testWithPredefinedAlphabet() {
-        Encoder encoder = new Encoder(new Alphabet("abcdefghijklmnopqrst"));
-        final String wordToTest1 = "asia";
-        //letter 'a' will be added at the end
-        final UnitBitSet bitSet = encoder.encode(wordToTest1, true);
-        assertNotNull(bitSet);
-        assertEquals(20, encoder.getAlphabet().getLastIndexUsed());
-        assertEquals(4, bitSet.getUnitValue(0));
-        assertEquals(1, bitSet.getUnitValue(1));
-        assertEquals(1, bitSet.getUnitValue(2));
-        assertEquals(19, bitSet.getUnitValue(3));
-        assertEquals(9, bitSet.getUnitValue(4));
-        assertEquals(1, bitSet.getUnitValue(5));
+  public void testWithPredefinedAlphabet() {
+    Encoder encoder = new Encoder(new Alphabet("abcdefghijklmnopqrst"));
+    final String wordToTest1 = "asia";
+    //letter 'a' will be added at the end
+    final UnitBitSet bitSet = encoder.encode(wordToTest1, true);
+    assertNotNull(bitSet);
+    assertEquals(20, encoder.getAlphabet().getLastIndexUsed());
+    assertIndices(bitSet, 1, 19, 9,1);
 
-        assertEquals(wordToTest1, encoder.decode(bitSet));
+    assertEquals(wordToTest1, encoder.decode(bitSet.pack()));
+  }
 
-
-    }
-
-    public void testUnknown() {
-        Encoder encoder = new Encoder(new Alphabet("abc"));
-        final String wordToTest1 = "def";
-        final UnitBitSet bitSet = encoder.encode(wordToTest1, true);
-        assertEquals(bitSet, Encoder.WORD_OF_ENTIRELY_UNKNOWN_LETTERS);
-    }
-
-
+  public void testUnknown() {
+    Encoder encoder = new Encoder(new Alphabet("abc"));
+    final String wordToTest1 = "def";
+    final UnitBitSet bitSet = encoder.encode(wordToTest1, true);
+    assertEquals(bitSet, Encoder.WORD_OF_ENTIRELY_UNKNOWN_LETTERS);
+  }
 }
