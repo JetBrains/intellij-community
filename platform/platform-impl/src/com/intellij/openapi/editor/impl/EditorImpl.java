@@ -4633,7 +4633,7 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
 
     @Override
     public void paint(Graphics g) {
-      super.paint(new Graphics2DLog(g));
+      super.paint(g);
       if (myRepaintCallback != null) {
         myRepaintCallback.call(g);
       }
