@@ -103,7 +103,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     return ((GlobalInspectionContextImpl)context).LOCAL_ANALYSIS_ARRAY;
   }
 
-  public void addProblemDescriptors(List<ProblemDescriptor> descriptors, final boolean filterSuppressed) {
+  public void addProblemDescriptors(@NotNull List<ProblemDescriptor> descriptors, final boolean filterSuppressed) {
     final GlobalInspectionContextImpl context = getContext();
     if (context != null) { //can be already closed
       addProblemDescriptors(descriptors, filterSuppressed, context, getTool(), CONVERT, this);
@@ -161,13 +161,13 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     }
   }
 
-  public static void addProblemDescriptors(List<ProblemDescriptor> descriptors,
+  public static void addProblemDescriptors(@NotNull List<ProblemDescriptor> descriptors,
                                            boolean filterSuppressed,
                                            @NotNull GlobalInspectionContextImpl context,
-                                           LocalInspectionTool tool,
+                                           @Nullable LocalInspectionTool tool,
                                            @NotNull TripleFunction<LocalInspectionTool, PsiElement, GlobalInspectionContext, RefElement> getProblemElementFunction,
                                            @NotNull DescriptorProviderInspection dpi) {
-    if (descriptors == null || descriptors.isEmpty()) return;
+    if (descriptors.isEmpty()) return;
 
     Map<RefElement, List<ProblemDescriptor>> problems = new HashMap<RefElement, List<ProblemDescriptor>>();
     final RefManagerImpl refManager = (RefManagerImpl)context.getRefManager();
@@ -233,7 +233,7 @@ public class LocalInspectionToolWrapper extends InspectionToolWrapper<LocalInspe
     return myEP == null ? getTool().runForWholeFile() : myEP.runForWholeFile;
   }
 
-  private final static NotNullLazyValue<Map<String, LocalInspectionEP>> ourEPMap = new NotNullLazyValue<Map<String, LocalInspectionEP>>() {
+  private static final NotNullLazyValue<Map<String, LocalInspectionEP>> ourEPMap = new NotNullLazyValue<Map<String, LocalInspectionEP>>() {
     @NotNull
     @Override
     protected Map<String, LocalInspectionEP> compute() {
