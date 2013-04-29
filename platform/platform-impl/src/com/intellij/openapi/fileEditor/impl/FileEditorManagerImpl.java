@@ -745,7 +745,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       providers = newSelectedComposite.getProviders();
     }
     else {
-      if (UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE) {
+      if (UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE || UISettings.getInstance().PRESENTATION_MODE) {
         for (EditorWithProviderComposite composite : window.getEditors()) {
           Disposer.dispose(composite);
         }
@@ -1768,7 +1768,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   private final class MyUISettingsListener implements UISettingsListener {
     public void uiSettingsChanged(final UISettings source) {
       assertDispatchThread();
-      setTabsMode(source.EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE);
+      setTabsMode(source.EDITOR_TAB_PLACEMENT != UISettings.TABS_NONE && !UISettings.getInstance().PRESENTATION_MODE);
 
       for (EditorsSplitters each : getAllSplitters()) {
         each.setTabsPlacement(source.EDITOR_TAB_PLACEMENT);

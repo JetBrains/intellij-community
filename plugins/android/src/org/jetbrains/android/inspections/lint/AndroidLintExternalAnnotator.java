@@ -275,7 +275,7 @@ public class AndroidLintExternalAnnotator extends ExternalAnnotator<State, State
 
     @Override
     public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-      CodeInsightUtilBase.prepareFileForWrite(file);
+      CodeInsightUtilBase.getInstance().prepareFileForWrite(file);
       myQuickFix.apply(myStartElement, myEndElement, AndroidQuickfixContexts.EditorContext.getInstance(editor));
     }
 

@@ -18,14 +18,12 @@ package org.jetbrains.jps.cmdline;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.io.FileUtil;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.api.BuildType;
 import org.jetbrains.jps.api.CanceledStatus;
 import org.jetbrains.jps.api.GlobalOptions;
-import org.jetbrains.jps.builders.BuildRootDescriptor;
-import org.jetbrains.jps.builders.BuildTarget;
-import org.jetbrains.jps.builders.BuildTargetLoader;
-import org.jetbrains.jps.builders.BuildTargetType;
+import org.jetbrains.jps.builders.*;
 import org.jetbrains.jps.builders.impl.BuildDataPathsImpl;
 import org.jetbrains.jps.builders.impl.BuildRootIndexImpl;
 import org.jetbrains.jps.builders.impl.BuildTargetIndexImpl;
@@ -59,14 +57,12 @@ public class BuildRunner {
   public static final boolean PARALLEL_BUILD_ENABLED = Boolean.parseBoolean(System.getProperty(GlobalOptions.COMPILE_PARALLEL_OPTION, "false"));
   private static final boolean STORE_TEMP_CACHES_IN_MEMORY = PARALLEL_BUILD_ENABLED || System.getProperty(GlobalOptions.USE_MEMORY_TEMP_CACHE_OPTION) != null;
   private final JpsModelLoader myModelLoader;
-  private final List<TargetTypeBuildScope> myScopes;
   private final List<String> myFilePaths;
   private final Map<String, String> myBuilderParams;
   private boolean myForceCleanCaches;
 
-  public BuildRunner(JpsModelLoader modelLoader, List<TargetTypeBuildScope> scopes, List<String> filePaths, Map<String, String> builderParams) {
+  public BuildRunner(JpsModelLoader modelLoader, List<String> filePaths, Map<String, String> builderParams) {
     myModelLoader = modelLoader;
-    myScopes = scopes;
     myFilePaths = filePaths;
     myBuilderParams = builderParams;
   }
@@ -116,11 +112,15 @@ public class BuildRunner {
     myForceCleanCaches = forceCleanCaches;
   }
 
-  public void runBuild(ProjectDescriptor pd, CanceledStatus cs, @Nullable Callbacks.ConstantAffectionResolver constantSearch,
-                       MessageHandler msgHandler, BuildType buildType) throws Exception {
+  public void runBuild(ProjectDescriptor pd,
+                       CanceledStatus cs,
+                       @Nullable Callbacks.ConstantAffectionResolver constantSearch,
+                       MessageHandler msgHandler,
+                       BuildType buildType,
+                       List<TargetTypeBuildScope> scopes, final boolean includeDependenciesToScope) throws Exception {
     for (int attempt = 0; attempt < 2; attempt++) {
       final boolean forceClean = myForceCleanCaches && myFilePaths.isEmpty();
-      final CompileScope compileScope = createCompilationScope(pd, myScopes, myFilePaths, forceClean);
+      final CompileScope compileScope = createCompilationScope(pd, scopes, myFilePaths, forceClean, includeDependenciesToScope);
       final IncProjectBuilder builder = new IncProjectBuilder(pd, BuilderRegistry.getInstance(), myBuilderParams, cs, constantSearch);
       builder.addMessageHandler(msgHandler);
       try {
@@ -151,8 +151,8 @@ public class BuildRunner {
     }
   }
 
-  private static CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes,
-                                                     Collection<String> paths, final boolean forceClean) throws Exception {
+  private static CompileScope createCompilationScope(ProjectDescriptor pd, List<TargetTypeBuildScope> scopes, Collection<String> paths,
+                                                     final boolean forceClean, final boolean includeDependenciesToScope) throws Exception {
     Set<BuildTargetType<?>> targetTypes = new HashSet<BuildTargetType<?>>();
     Set<BuildTargetType<?>> targetTypesToForceBuild = new HashSet<BuildTargetType<?>>();
     Set<BuildTarget<?>> targets = new HashSet<BuildTarget<?>>();
@@ -184,6 +184,9 @@ public class BuildRunner {
         }
       }
     }
+    if (includeDependenciesToScope) {
+      includeDependenciesToScope(targetTypes, targets, pd);
+    }
 
     final Timestamps timestamps = pd.timestamps.getStorage();
     if (!paths.isEmpty()) {
@@ -211,7 +214,28 @@ public class BuildRunner {
     return new CompileScopeImpl(targetTypes, targetTypesToForceBuild, targets, files);
   }
 
-  public List<TargetTypeBuildScope> getScopes() {
-    return myScopes;
+  private static void includeDependenciesToScope(Set<BuildTargetType<?>> targetTypes, Set<BuildTarget<?>> targets,
+                                                 ProjectDescriptor descriptor) {
+    //todo[nik] get rid of CompileContext parameter for BuildTargetIndex.getDependencies() and use it here
+    TargetOutputIndex dummyIndex = new TargetOutputIndex() {
+      @Override
+      public Collection<BuildTarget<?>> getTargetsByOutputFile(@NotNull File file) {
+        return Collections.emptyList();
+      }
+    };
+
+    List<BuildTarget<?>> current = new ArrayList<BuildTarget<?>>(targets);
+    while (!current.isEmpty()) {
+      List<BuildTarget<?>> next = new ArrayList<BuildTarget<?>>();
+      for (BuildTarget<?> target : current) {
+        for (BuildTarget<?> depTarget : target.computeDependencies(descriptor.getBuildTargetIndex(), dummyIndex)) {
+          if (!targets.contains(depTarget) && !targetTypes.contains(depTarget.getTargetType())) {
+            next.add(depTarget);
+          }
+        }
+      }
+      targets.addAll(next);
+      current = next;
+    }
   }
 }

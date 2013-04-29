@@ -27,6 +27,7 @@ import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.ide.*;
 import com.intellij.ide.dnd.DnDManager;
 import com.intellij.ide.ui.UISettings;
+import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.ActionManager;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -71,10 +72,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.IdeGlassPane;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.ui.GuiUtils;
-import com.intellij.ui.JBColor;
-import com.intellij.ui.LightweightHint;
-import com.intellij.ui.SideBorder;
+import com.intellij.ui.*;
 import com.intellij.ui.components.JBLayeredPane;
 import com.intellij.ui.components.JBScrollBar;
 import com.intellij.ui.components.JBScrollPane;
@@ -514,6 +512,13 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
         }
       });
     }
+  }
+
+  public static boolean isPresentationMode(Project project) {
+    if (project != null && !project.isDefault()) {
+      return PropertiesComponent.getInstance(project).isTrueValue("editor.presentation.mode");
+    }
+    return false;
   }
 
   @NotNull
@@ -4634,6 +4639,11 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
       }
     }
 
+    @Override
+    public boolean isOpaque() {
+      return true;
+    }
+
     /**
      * This is helper method. It returns height of the top (decrease) scroll bar
      * button. Please note, that it's possible to return real height only if scroll bar
@@ -6600,6 +6610,10 @@ public final class EditorImpl extends UserDataHolderBase implements EditorEx, Hi
                 LOWER_LEFT_CORNER, new JPanel() {
         @Override
         public void paint(@NotNull Graphics g) {
+          if (UISettings.getInstance().PRESENTATION_MODE) {
+            return;
+          }
+
           final Rectangle bounds = getBounds();
           int width = bounds.width;
           int height = bounds.height;

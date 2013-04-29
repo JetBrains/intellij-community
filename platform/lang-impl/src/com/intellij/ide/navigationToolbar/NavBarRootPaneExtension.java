@@ -59,7 +59,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
     UISettings.getInstance().addUISettingsListener(new UISettingsListener() {
       @Override
       public void uiSettingsChanged(UISettings source) {
-        toggleRunPanel(!source.SHOW_MAIN_TOOLBAR && source.SHOW_NAVIGATION_BAR);
+        toggleRunPanel(!source.SHOW_MAIN_TOOLBAR && source.SHOW_NAVIGATION_BAR && !UISettings.getInstance().PRESENTATION_MODE);
       }
     }, this);
 
@@ -71,7 +71,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   @Override
   public void revalidate() {
     final UISettings settings = UISettings.getInstance();
-    if (!settings.SHOW_MAIN_TOOLBAR && settings.SHOW_NAVIGATION_BAR) {
+    if (!settings.SHOW_MAIN_TOOLBAR && settings.SHOW_NAVIGATION_BAR && !UISettings.getInstance().PRESENTATION_MODE) {
       toggleRunPanel(false);
       toggleRunPanel(true);
     }
@@ -83,7 +83,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   }
 
   public boolean isMainToolbarVisible() {
-    return UISettings.getInstance().SHOW_MAIN_TOOLBAR || !myNavToolbarGroupExist;
+    return !UISettings.getInstance().PRESENTATION_MODE && (UISettings.getInstance().SHOW_MAIN_TOOLBAR || !myNavToolbarGroupExist);
   }
 
   public static boolean runToolbarExists() {
@@ -108,7 +108,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
         }
       };
       myWrapperPanel.add(buildNavBarPanel(), BorderLayout.CENTER);
-      toggleRunPanel(!UISettings.getInstance().SHOW_MAIN_TOOLBAR);
+      toggleRunPanel(!UISettings.getInstance().SHOW_MAIN_TOOLBAR && !UISettings.getInstance().PRESENTATION_MODE);
     }
 
     return myWrapperPanel;
@@ -160,7 +160,9 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
 
   private boolean isUndocked() {
     final Window ancestor = SwingUtilities.getWindowAncestor(myWrapperPanel);
-    return (ancestor != null && !(ancestor instanceof IdeFrameImpl)) || !UISettings.getInstance().SHOW_MAIN_TOOLBAR;
+    return (ancestor != null && !(ancestor instanceof IdeFrameImpl))
+           || !UISettings.getInstance().SHOW_MAIN_TOOLBAR
+           || !UISettings.getInstance().PRESENTATION_MODE;
   }
 
   private static boolean isNeedGap(final AnAction group) {
@@ -230,7 +232,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
       @Override
       public void updateUI() {
         super.updateUI();
-        if (UISettings.getInstance().SHOW_NAVIGATION_BAR) {
+        if (UISettings.getInstance().SHOW_NAVIGATION_BAR && !UISettings.getInstance().PRESENTATION_MODE) {
           SwingUtilities.invokeLater(updater);
         }
       }
@@ -279,7 +281,7 @@ public class NavBarRootPaneExtension extends IdeRootPaneNorthExtension {
   public void uiSettingsChanged(final UISettings settings) {
     if (myNavigationBar != null) {
       myNavigationBar.updateState(settings.SHOW_NAVIGATION_BAR);
-      myWrapperPanel.setVisible(settings.SHOW_NAVIGATION_BAR);
+      myWrapperPanel.setVisible(settings.SHOW_NAVIGATION_BAR && !UISettings.getInstance().PRESENTATION_MODE);
 
       myWrapperPanel.revalidate();
       myNavigationBar.revalidate();

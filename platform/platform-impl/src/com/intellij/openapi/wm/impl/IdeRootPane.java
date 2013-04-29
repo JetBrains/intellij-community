@@ -97,7 +97,6 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     myActionManager = actionManager;
     myUISettings = uiSettings;
 
-    updateToolbar();
     myContentPane.add(myNorthPanel, BorderLayout.NORTH);
 
     myStatusBarCustomComponentFactories = application.getExtensions(StatusBarCustomComponentFactory.EP_NAME);
@@ -106,6 +105,7 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
     createStatusBar(frame);
 
     updateStatusBarVisibility();
+    updateToolbar();
 
     myContentPane.add(myStatusBar, BorderLayout.SOUTH);
 
@@ -319,11 +319,11 @@ public class IdeRootPane extends JRootPane implements UISettingsListener {
   }
 
   private void updateToolbarVisibility(){
-    myToolbar.setVisible(myUISettings.SHOW_MAIN_TOOLBAR);
+    myToolbar.setVisible(myUISettings.SHOW_MAIN_TOOLBAR && !UISettings.getInstance().PRESENTATION_MODE);
   }
 
   private void updateStatusBarVisibility(){
-    myStatusBar.setVisible(myUISettings.SHOW_STATUS_BAR);
+    myStatusBar.setVisible(myUISettings.SHOW_STATUS_BAR && (!myUISettings.PRESENTATION_MODE || myUISettings.PRESENTATION_MODE_ALLOW_STATUS_BAR));
   }
 
   public void installNorthComponents(final Project project) {

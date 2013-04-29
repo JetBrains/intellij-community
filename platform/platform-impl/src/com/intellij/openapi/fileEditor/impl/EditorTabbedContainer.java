@@ -184,7 +184,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     List<String> rightIds = mgr.getIdsOn(ToolWindowAnchor.RIGHT);
     List<String> leftIds = mgr.getIdsOn(ToolWindowAnchor.LEFT);
 
-    if (!uiSettings.HIDE_TOOL_STRIPES) {
+    if (!uiSettings.HIDE_TOOL_STRIPES && !uiSettings.PRESENTATION_MODE) {
       border.top = topIds.size() > 0 ? 1 : 0;
       border.bottom = bottom.size() > 0 ? 1 : 0;
       border.left = leftIds.size() > 0 ? 1 : 0;
