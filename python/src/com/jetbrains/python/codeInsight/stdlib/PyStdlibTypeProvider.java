@@ -57,7 +57,7 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
           final PyCallExpression.PyMarkedCallee callee = call.resolveCallee(PyResolveContext.noImplicits());
           if (callee != null) {
             final Callable callable = callee.getCallable();
-            if (PyNames.COLLECTIONS_PY.equals(callable.getContainingFile().getName())) {
+            if (PyNames.COLLECTIONS_NAMEDTUPLE.equals(callable.getQualifiedName())) {
               return PyNamedTupleType.fromCall(call, 1);
             }
           }
@@ -65,8 +65,8 @@ public class PyStdlibTypeProvider extends PyTypeProviderBase {
       }
     }
     else if (referenceTarget instanceof PyFunction && anchor instanceof PyCallExpression) {
-      if (PyNames.NAMEDTUPLE.equals(((PyFunction)referenceTarget).getName()) &&
-          PyNames.COLLECTIONS_PY.equals(referenceTarget.getContainingFile().getName())) {
+      final PyFunction function = (PyFunction)referenceTarget;
+      if (PyNames.NAMEDTUPLE.equals(function.getName()) && PyNames.COLLECTIONS_NAMEDTUPLE.equals(function.getQualifiedName())) {
         return PyNamedTupleType.fromCall((PyCallExpression)anchor, 2);
       }
     }

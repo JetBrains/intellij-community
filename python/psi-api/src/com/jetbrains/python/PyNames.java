@@ -110,8 +110,8 @@ public class PyNames {
 
   public static final String CALLABLE_BUILTIN = "callable";
   public static final String NAMEDTUPLE = "namedtuple";
-  public static final String COLLECTIONS_PY = "collections.py";
   public static final String COLLECTIONS = "collections";
+  public static final String COLLECTIONS_NAMEDTUPLE = COLLECTIONS + "." + NAMEDTUPLE;
 
   public static final String ABSTRACTMETHOD = "abstractmethod";
 
