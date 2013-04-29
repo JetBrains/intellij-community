@@ -15,15 +15,11 @@
  */
 package com.intellij.idea;
 
-import com.intellij.openapi.application.ApplicationInfo;
-import com.intellij.openapi.application.ApplicationNamesInfo;
 import com.intellij.openapi.application.ConfigImportHelper;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.ui.AppUIUtil;
 import com.intellij.util.PlatformUtils;
-import com.intellij.util.text.DateFormatUtilRt;
 import com.intellij.util.ui.UIUtil;
 
 import javax.swing.*;
@@ -62,19 +58,7 @@ public class MainImpl {
 
     final Logger LOG = Logger.getInstance(LOG_CATEGORY);
 
-    Runtime.getRuntime().addShutdownHook(new Thread("Shutdown hook - logging") {
-      public void run() {
-        LOG.info("------------------------------------------------------ IDE SHUTDOWN ------------------------------------------------------");
-      }
-    });
-    LOG.info("------------------------------------------------------ IDE STARTED ------------------------------------------------------");
-
-    final ApplicationInfo appInfo = ApplicationInfoImpl.getShadowInstance();
-    final ApplicationNamesInfo namesInfo = ApplicationNamesInfo.getInstance();
-    LOG.info("IDE: " + namesInfo.getFullProductName() + " (build #" + appInfo.getBuild() + ", " +
-             DateFormatUtilRt.formatBuildDate(appInfo.getBuildDate()) + ")");
-    LOG.info("JRE: " + System.getProperty("java.runtime.version", "-") + " (" + System.getProperty("java.vendor", "-") + ")");
-    LOG.info("JVM: " + System.getProperty("java.vm.version", "-") + " (" + System.getProperty("java.vm.vendor", "-") + ")");
+    StartupUtil.startLogging(LOG);
 
     _main(args);
   }
