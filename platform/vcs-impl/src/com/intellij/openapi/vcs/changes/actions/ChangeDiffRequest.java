@@ -83,7 +83,6 @@ public class ChangeDiffRequest implements ChangeRequestChain {
     }
   }
 
-  @Nullable
   public void quickCheckHaveStuff() throws VcsException {
     if (mySteps.isEmpty()) {
       throw new VcsException("Nothing selected to show diff");

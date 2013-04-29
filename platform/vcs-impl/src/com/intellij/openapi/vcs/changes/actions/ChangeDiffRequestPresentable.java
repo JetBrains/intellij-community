@@ -80,7 +80,7 @@ public class ChangeDiffRequestPresentable implements DiffRequestPresentable {
     return ChangesUtil.getFilePath(myChange).getPath();
   }
 
-  @Nullable
+  @Override
   public void haveStuff() throws VcsException {
     final List<String> errSb = new ArrayList<String>();
     final boolean canShow = checkContentsAvailable(myChange.getBeforeRevision(), myChange.getAfterRevision(), errSb);
