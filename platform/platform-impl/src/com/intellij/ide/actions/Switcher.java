@@ -633,8 +633,14 @@ public class Switcher extends AnAction implements DumbAware {
         case VK_ESCAPE:
           cancel();
           break;
+        case VK_END:
+          ListScrollingUtil.moveEnd(getSelectedList());
+          break;
         case VK_PAGE_DOWN:
           ListScrollingUtil.movePageDown(getSelectedList());
+          break;
+        case VK_HOME:
+          ListScrollingUtil.moveHome(getSelectedList());
           break;
         case VK_PAGE_UP:
           ListScrollingUtil.movePageUp(getSelectedList());
