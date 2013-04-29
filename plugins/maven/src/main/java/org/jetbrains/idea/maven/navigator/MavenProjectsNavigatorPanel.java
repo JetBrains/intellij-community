@@ -133,7 +133,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     if (Location.DATA_KEY.is(dataId)) return extractLocation();
     if (PlatformDataKeys.NAVIGATABLE_ARRAY.is(dataId)) return extractNavigatables();
 
-    if (MavenDataKeys.MAVEN_GOALS.is(dataId)) return extractGoals();
+    if (MavenDataKeys.MAVEN_GOALS.is(dataId)) return extractGoals(true);
     if (MavenDataKeys.MAVEN_PROFILES.is(dataId)) return extractProfiles();
 
     if (MavenDataKeys.MAVEN_DEPENDENCIES.is(dataId)) {
@@ -181,14 +181,14 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
     VirtualFile file = extractVirtualFile();
     if (file == null) return null;
 
-    List<String> goals = extractGoals();
+    List<String> goals = extractGoals(false);
     if (goals == null) return null;
 
     PsiFile psiFile = PsiManager.getInstance(myProject).findFile(file);
-    return psiFile == null ? null : new MavenGoalLocation(myProject, psiFile, extractGoals());
+    return psiFile == null ? null : new MavenGoalLocation(myProject, psiFile, goals);
   }
 
-  private List<String> extractGoals() {
+  private List<String> extractGoals(boolean qualifiedGoals) {
     final MavenProjectsStructure.ProjectNode projectNode = getSelectedProjectNode();
     if (projectNode != null) {
       MavenProject project = projectNode.getMavenProject();
@@ -205,7 +205,7 @@ public class MavenProjectsNavigatorPanel extends SimpleToolWindowPanel implement
       }
       final List<String> goals = new ArrayList<String>();
       for (MavenProjectsStructure.GoalNode node : nodes) {
-        goals.add(node.getGoal());
+        goals.add(qualifiedGoals ? node.getGoal() : node.getName());
       }
       Collections.sort(goals, myGoalOrderComparator);
       return goals;
