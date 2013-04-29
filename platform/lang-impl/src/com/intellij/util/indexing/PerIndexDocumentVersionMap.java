@@ -43,43 +43,27 @@ public class PerIndexDocumentVersionMap {
   }
 
   private static final Key<List<IdVersionInfo>> KEY = Key.create("UnsavedDocIdVersionInfo");
-  public long get(@NotNull Document document, @NotNull ID<?, ?> indexId) {
-    List<IdVersionInfo> list = getIndexList(document);
-
-    synchronized (list) {
-      for (IdVersionInfo info : list) {
-        if (info.id == indexId) {
-          return info.mapVersion == mapVersion ? info.docVersion : 0;
-        }
-      }
-
-      return 0;
-    }
-  }
-
-  public void set(@NotNull Document document, @NotNull ID<?, ?> indexId, long value) {
-    List<IdVersionInfo> list = getIndexList(document);
-
-    synchronized (list) {
-      for (IdVersionInfo info : list) {
-        if (info.id == indexId) {
-          if (info.mapVersion != mapVersion) {
-            info.mapVersion = mapVersion;
-          }
-          info.docVersion = value;
-          return;
-        }
-      }
-      list.add(new IdVersionInfo(indexId, value, mapVersion));
-    }
-  }
-
-  private static List<IdVersionInfo> getIndexList(Document document) {
+  public long getAndSet(@NotNull Document document, @NotNull ID<?, ?> indexId, long value) {
     List<IdVersionInfo> list = document.getUserData(KEY);
     if (list == null) {
       list = ((UserDataHolderEx)document).putUserDataIfAbsent(KEY, new ArrayList<IdVersionInfo>());
     }
-    return list;
+
+    synchronized (list) {
+      for (IdVersionInfo info : list) {
+        if (info.id == indexId) {
+          long old = info.docVersion;
+          if (info.mapVersion != mapVersion) {
+            old = 0;
+            info.mapVersion = mapVersion;
+          }
+          info.docVersion = value;
+          return old;
+        }
+      }
+      list.add(new IdVersionInfo(indexId, value, mapVersion));
+      return 0;
+    }
   }
 
   public void clear() {

@@ -1376,17 +1376,21 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         try {
           for (Document document : documents) {
             allDocsProcessed &= indexUnsavedDocument(document, indexId, project, filter, restrictedFile);
+            ProgressManager.checkCanceled();
           }
         }
         finally {
           semaphore.up();
 
           while (!semaphore.waitFor(500)) { // may need to wait until another thread is done with indexing
+            ProgressManager.checkCanceled();
             if (Thread.holdsLock(PsiLock.LOCK)) {
               break; // hack. Most probably that other indexing threads is waiting for PsiLock, which we're are holding.
             }
           }
           if (allDocsProcessed && !hasActiveTransactions()) {
+            ProgressManager.checkCanceled();
+            // assume all tasks were finished or cancelled in the same time
             myUpToDateIndices.add(indexId); // safe to set the flag here, because it will be cleared under the WriteAction
           }
         }
@@ -1482,7 +1486,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     final long currentDocStamp = content.getModificationStamp();
-    if (currentDocStamp != myLastIndexedDocStamps.get(document, requestedIndexId)) {
+    long currentIndexedStamp;
+    if (currentDocStamp != (currentIndexedStamp = myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp))) {
       final String contentText = content.getText();
       if (!isTooLarge(vFile, contentText.length()) && getInputFilter(requestedIndexId).acceptInput(vFile)) {
         // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
@@ -1506,11 +1511,14 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         final int inputId = Math.abs(getFileId(vFile));
         try {
           getIndex(requestedIndexId).update(inputId, newFc);
-        } finally {
+        } catch (ProcessCanceledException pce) {
+          myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentIndexedStamp);
+          throw pce;
+        }
+        finally {
           cleanFileContent(newFc, dominantContentFile);
         }
       }
-      myLastIndexedDocStamps.set(document, requestedIndexId, currentDocStamp);
     }
     return true;
   }
