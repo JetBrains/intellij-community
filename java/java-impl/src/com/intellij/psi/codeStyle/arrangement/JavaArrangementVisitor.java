@@ -17,6 +17,7 @@ package com.intellij.psi.codeStyle.arrangement;
 
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.arrangement.std.ArrangementSettingsToken;
 import com.intellij.psi.codeStyle.arrangement.std.StdArrangementTokens;
@@ -153,7 +154,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
           if (c instanceof PsiErrorElement // Incomplete field without trailing semicolon
               || (c instanceof PsiJavaToken && ((PsiJavaToken)c).getTokenType() == JavaTokenType.SEMICOLON))
           {
-            range = TextRange.create(range.getStartOffset(), c.getTextRange().getEndOffset());
+            range = TextRange.create(range.getStartOffset(), expandToCommentIfPossible(c));
           }
           else {
             continue;
@@ -178,6 +179,39 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
       return e;
     }
     return null;
+  }
+
+  private int expandToCommentIfPossible(@NotNull PsiElement element) {
+    if (myDocument == null) {
+      return element.getTextRange().getEndOffset();
+    }
+
+    CharSequence text = myDocument.getCharsSequence();
+    for (PsiElement e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
+      if (e instanceof PsiWhiteSpace) {
+        if (hasLineBreak(text, e.getTextRange())) {
+          return element.getTextRange().getEndOffset();
+        }
+      }
+      else if (e instanceof PsiComment) {
+        if (!hasLineBreak(text, e.getTextRange())) {
+          return e.getTextRange().getEndOffset();
+        }
+      }
+      else {
+        return element.getTextRange().getEndOffset();
+      }
+    }
+    return element.getTextRange().getEndOffset();
+  }
+
+  private static boolean hasLineBreak(@NotNull CharSequence text, @NotNull TextRange range) {
+    for (int i = range.getStartOffset(), end = range.getEndOffset(); i < end; i++) {
+      if (text.charAt(i) == '\n') {
+        return true;
+      }
+    }
+    return false;
   }
   
   private static boolean isSemicolon(@Nullable PsiElement e) {

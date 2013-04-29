@@ -138,7 +138,7 @@ public class ArrangementUtil {
     
     int startLine = document.getLineNumber(initialRange.getStartOffset());
     int lineStartOffset = document.getLineStartOffset(startLine);
-    int i = CharArrayUtil.shiftBackward(text, lineStartOffset, initialRange.getStartOffset(), ws);
+    int i = CharArrayUtil.shiftBackward(text, lineStartOffset + 1, initialRange.getStartOffset() - 1, ws);
     if (i != lineStartOffset) {
       return initialRange;
     }
