@@ -23,6 +23,7 @@ import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.Util;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
@@ -32,9 +33,9 @@ public interface DiffCorrection {
   class TrueLineBlocks implements DiffCorrection, FragmentProcessor<FragmentsCollector> {
     private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.DiffCorrection.TrueLineBlocks");
     private final DiffPolicy myDiffPolicy;
-    private final ComparisonPolicy myComparisonPolicy;
+    @NotNull private final ComparisonPolicy myComparisonPolicy;
 
-    public TrueLineBlocks(ComparisonPolicy comparisonPolicy) {
+    public TrueLineBlocks(@NotNull ComparisonPolicy comparisonPolicy) {
       myDiffPolicy = new DiffPolicy.LineBlocks(comparisonPolicy);
       myComparisonPolicy = comparisonPolicy;
     }

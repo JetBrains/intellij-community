@@ -24,15 +24,16 @@ import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.highlighting.LineBlockDivider;
 import com.intellij.openapi.diff.impl.highlighting.Util;
 import com.intellij.util.diff.FilesTooBigForDiffException;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 
 public class TextCompareProcessor {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.diff.impl.processing.Processor");
   private final DiffPolicy myDiffPolicy;
-  private final ComparisonPolicy myComparisonPolicy;
+  @NotNull private final ComparisonPolicy myComparisonPolicy;
 
-  public TextCompareProcessor(ComparisonPolicy comparisonPolicy, final DiffPolicy diffPolicy) {
+  public TextCompareProcessor(@NotNull ComparisonPolicy comparisonPolicy, final DiffPolicy diffPolicy) {
     myComparisonPolicy = comparisonPolicy;
     myDiffPolicy = diffPolicy;
   }
