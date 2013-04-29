@@ -211,6 +211,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   }
 
   public void dispose() {
+    cleanUp();
     mySearchResults.removeListener(this);
   }
 

@@ -7,6 +7,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.event.DocumentAdapter;
 import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.SelectionEvent;
+import com.intellij.openapi.editor.event.SelectionListener;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -19,7 +21,8 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.livePreview.LivePreviewController");
 
-  private static final int USER_ACTIVITY_TRIGGERING_DELAY = 30;
+  public static final int USER_ACTIVITY_TRIGGERING_DELAY = 30;
+  public static final int MATCHES_LIMIT = 10000;
   protected EditorSearchComponent myComponent;
 
   private int myUserActivityDelay = USER_ACTIVITY_TRIGGERING_DELAY;
@@ -30,25 +33,52 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   private boolean myReplaceDenied = false;
   private boolean mySuppressUpdate = false;
 
-  private boolean myAdded;
+  private boolean myTrackingDocument;
   private boolean myChanged;
+
+  private boolean myListeningSelection = false;
+
+  private SelectionListener mySelectionListener = new SelectionListener() {
+    @Override
+    public void selectionChanged(SelectionEvent e) {
+      smartUpdate();
+    }
+  };
+  private boolean myDisposed;
+
+  public void setTrackingSelection(boolean b) {
+    if (b) {
+      if (!myListeningSelection) {
+        getEditor().getSelectionModel().addSelectionListener(mySelectionListener);
+      }
+    } else {
+      if (myListeningSelection) {
+        getEditor().getSelectionModel().removeSelectionListener(mySelectionListener);
+      }
+    }
+    myListeningSelection = b;
+  }
 
 
   private DocumentAdapter myDocumentListener = new DocumentAdapter() {
     @Override
     public void documentChanged(final DocumentEvent e) {
-      if (!myAdded) {
+      if (!myTrackingDocument) {
         myChanged = true;
         return;
       }
       if (!mySuppressUpdate) {
-        myLivePreview.inSmartUpdate();
-        updateInBackground(mySearchResults.getFindModel(), false);
+        smartUpdate();
       } else {
         mySuppressUpdate = false;
       }
     }
   };
+
+  private void smartUpdate() {
+    myLivePreview.inSmartUpdate();
+    updateInBackground(mySearchResults.getFindModel(), false);
+  }
 
   private void updateSelection() {
     Editor editor = mySearchResults.getEditor();
@@ -82,6 +112,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
 
   @Override
   public void searchResultsUpdated(SearchResults sr) {
+
   }
 
   @Override
@@ -238,7 +269,6 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     if (textRange == null) {
       mySuppressUpdate = false;
     }
-    //getFocusBack();
     myComponent.addTextToRecent(myComponent.getReplaceField());
     myComponent.clearUndoInTextFields();
   }
@@ -251,19 +281,13 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     performReplaceAll(getEditor());
   }
 
-  public void clearIfhanged() {
-    if (myChanged) {
-      mySearchResults.clear();
-      myChanged = false;
-    }
-  }
-
-  public void setAdded(boolean added) {
-    myAdded = added;
+  public void setTrackingDocument(boolean trackingDocument) {
+    myTrackingDocument = trackingDocument;
   }
 
   public void setLivePreview(LivePreview livePreview) {
     if (myLivePreview != null) {
+      myLivePreview.dispose();
       myLivePreview.setDelegate(null);
     }
     myLivePreview = livePreview;
@@ -273,6 +297,32 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   }
 
   public void dispose() {
+    if (myDisposed) return;
+
+    mySearchResults.dispose();
+    myLivePreview.cleanUp();
     getEditor().getDocument().removeDocumentListener(myDocumentListener);
+    myDisposed = true;
+  }
+
+  public void on() {
+    if (myDisposed) return;
+
+    mySearchResults.setMatchesLimit(MATCHES_LIMIT);
+    setTrackingDocument(true);
+
+    if (myChanged) {
+      mySearchResults.clear();
+      myChanged = false;
+    }
+
+    setLivePreview(new LivePreview(mySearchResults));
+  }
+
+  public void off() {
+    if (myDisposed) return;
+
+    setLivePreview(null);
+    setTrackingSelection(false);
   }
 }
