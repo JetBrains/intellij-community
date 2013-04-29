@@ -142,7 +142,7 @@ public class FSRecords implements Forceable {
       int count = filelength / RECORD_SIZE;
       for (int n = 2; n < count; n++) {
         if ((getFlags(n) & FREE_RECORD_FLAG) != 0) {
-          addFreeRecord(n);
+          myFreeRecords.add(n);
         }
       }
     }
@@ -460,10 +460,6 @@ public class FSRecords implements Forceable {
       return new RuntimeException(e);
     }
 
-    private static void addFreeRecord(final int id) {
-      myFreeRecords.add(id);
-    }
-
     private static class AttrPageAwareCapacityAllocationPolicy extends CapacityAllocationPolicy {
       boolean myAttrPageRequested;
 
@@ -593,7 +589,7 @@ public class FSRecords implements Forceable {
   }
 
   private static void addToFreeRecordsList(int id) {
-    DbConnection.addFreeRecord(id);
+    // DbConnection.addFreeRecord(id); // do not add fileId to free list until restart
     setFlags(id, FREE_RECORD_FLAG, false);
   }
 
