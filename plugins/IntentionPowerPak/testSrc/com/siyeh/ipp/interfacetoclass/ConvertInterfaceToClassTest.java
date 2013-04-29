@@ -21,6 +21,7 @@ import com.siyeh.ipp.IPPTestCase;
 public class ConvertInterfaceToClassTest extends IPPTestCase {
   public void testBasic() { doTest(); }
   public void testExtensionMethods() { doTest(); }
+  public void testInnerInterface() { doTest(); }
 
   @Override
   protected String getRelativePath() {

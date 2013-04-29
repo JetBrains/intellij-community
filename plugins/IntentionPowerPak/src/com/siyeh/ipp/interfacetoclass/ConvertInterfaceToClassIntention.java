@@ -90,7 +90,9 @@ public class ConvertInterfaceToClassIntention extends Intention {
       final PsiModifierList modifierList = innerClass.getModifierList();
       if (modifierList != null) {
         modifierList.setModifierProperty(PsiModifier.PUBLIC, true);
-        modifierList.setModifierProperty(PsiModifier.STATIC, true);
+        if (!innerClass.isInterface()) {
+          modifierList.setModifierProperty(PsiModifier.STATIC, true);
+        }
       }
     }
   }
