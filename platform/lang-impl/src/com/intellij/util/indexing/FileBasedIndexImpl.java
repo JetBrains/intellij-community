@@ -21,6 +21,7 @@ import com.intellij.history.LocalHistory;
 import com.intellij.ide.caches.CacheUpdater;
 import com.intellij.ide.util.DelegatingProgressIndicator;
 import com.intellij.lang.ASTNode;
+import com.intellij.lang.LangBundle;
 import com.intellij.notification.NotificationDisplayType;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.notification.NotificationType;
@@ -387,13 +388,19 @@ public class FileBasedIndexImpl extends FileBasedIndex {
 
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        storage = new MapIndexStorage<K, V>(
-          IndexInfrastructure.getStorageFile(name),
-          extension.getKeyDescriptor(),
-          extension.getValueExternalizer(),
-          extension.getCacheSize(),
-          extension.isKeyHighlySelective()
-        );
+        storage = ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<MapIndexStorage<K, V>, IOException>() {
+          @Override
+          public MapIndexStorage<K, V> compute() throws IOException {
+            return new MapIndexStorage<K, V>(
+              IndexInfrastructure.getStorageFile(name),
+              extension.getKeyDescriptor(),
+              extension.getValueExternalizer(),
+              extension.getCacheSize(),
+              extension.isKeyHighlySelective()
+            );
+          }
+        }, LangBundle.message("compacting.indices.title"), false, null);
+
         final MemoryIndexStorage<K, V> memStorage = new MemoryIndexStorage<K, V>(storage);
         final UpdatableIndex<K, V, FileContent> index = createIndex(name, extension, memStorage);
         final InputFilter inputFilter = extension.getInputFilter();
@@ -495,7 +502,12 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       @Override
       public PersistentHashMap<Integer, Collection<K>> create() {
         try {
-          return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
+          return ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException>() {
+            @Override
+            public PersistentHashMap<Integer, Collection<K>> compute() throws IOException {
+              return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
+            }
+          }, LangBundle.message("compacting.indices.title"), false, null);
         }
         catch (IOException e) {
           throw new RuntimeException(e);
