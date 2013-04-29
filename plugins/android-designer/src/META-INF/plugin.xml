@@ -16,8 +16,6 @@
 
     <fileEditorProvider implementation="com.intellij.android.designer.AndroidDesignerEditorProvider"/>
 
-    <selectedFileEditorProvider implementation="com.intellij.android.designer.AndroidSelectedFileEditorProvider"/>
-
     <projectService serviceInterface="com.intellij.android.designer.profile.ProfileList"
                     serviceImplementation="com.intellij.android.designer.profile.ProfileList"/>
 
@@ -26,9 +24,6 @@
   </extensions>
 
   <project-components>
-    <component>
-      <implementation-class>com.intellij.android.designer.AndroidSelectedFileEditorProvider$MyEditorListener</implementation-class>
-    </component>
     <component>
       <implementation-class>com.intellij.android.designer.designSurface.BuildProjectListener</implementation-class>
     </component>
