@@ -7,10 +7,10 @@ import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.testFramework.PlatformTestCase;
+import com.intellij.testFramework.PlatformLangTestCase;
 import org.jetbrains.annotations.NotNull;
 
-public class IdeDocumentHistoryTest extends PlatformTestCase {
+public class IdeDocumentHistoryTest extends PlatformLangTestCase {
   private IdeDocumentHistoryImpl myHistory;
 
   private Mock.MyFileEditor  mySelectedEditor;

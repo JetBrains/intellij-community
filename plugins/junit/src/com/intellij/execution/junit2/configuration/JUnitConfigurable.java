@@ -489,7 +489,11 @@ public class JUnitConfigurable extends SettingsEditor<JUnitConfiguration> implem
   }
 
   private void onScopeChanged() {
-    myModule.setEnabled(((Integer)myTypeChooser.getSelectedItem()) != JUnitConfigurationModel.ALL_IN_PACKAGE || !myWholeProjectScope.isSelected());
+    final boolean allInPackageAllInProject = ((Integer)myTypeChooser.getSelectedItem()) == JUnitConfigurationModel.ALL_IN_PACKAGE && myWholeProjectScope.isSelected();
+    myModule.setEnabled(!allInPackageAllInProject);
+    if (allInPackageAllInProject) {
+      myModule.getComponent().setSelectedItem(null);
+    }
   }
 
   private class TestClassBrowser extends ClassBrowser {

@@ -86,13 +86,6 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     @Nullable
     String getStringToReplace(Editor editor, FindResult findResult);
 
-    @Nullable
-    TextRange performReplace(FindResult occurrence, String replacement, Editor editor);
-
-    void performReplaceAll(Editor e);
-
-    void getFocusBack();
-
   }
 
   private final Set<RangeHighlighter> myHighlighters = new HashSet<RangeHighlighter>();
@@ -106,8 +99,6 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     textAttributes.setEffectType(EffectType.STRIKEOUT);
     return textAttributes;
   }
-
-  private static final TextAttributes OTHER_TARGETS_ATTRIBUTES = new TextAttributes(Color.BLACK, JBColor.GREEN, null, null, 0);
 
   private Delegate myDelegate;
 
@@ -287,10 +278,6 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     final HashSet<RangeHighlighter> toRemove = new HashSet<RangeHighlighter>();
     Set<RangeHighlighter> toAdd = new HashSet<RangeHighlighter>();
     for (RangeHighlighter highlighter : myHighlighters) {
-      if (myCursorHighlighter != null && highlighter.getStartOffset() == myCursorHighlighter.getStartOffset() &&
-        highlighter.getEndOffset() == myCursorHighlighter.getEndOffset()) continue;
-
-
       boolean intersectsWithSelection = false;
       for (int i = 0; i < starts.length; ++i) {
         TextRange selectionRange = new TextRange(starts[i], ends[i]);
@@ -311,8 +298,11 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
           }
         }
       } else if (intersectsWithSelection) {
+        TextRange cursor = mySearchResults.getCursor();
+        if (cursor != null && highlighter.getStartOffset() == cursor.getStartOffset() &&
+            highlighter.getEndOffset() == cursor.getEndOffset()) continue;
         final RangeHighlighter toAnnotate = highlightRange(new TextRange(highlighter.getStartOffset(), highlighter.getEndOffset()),
-                                                                 new TextAttributes(null, null, Color.WHITE, EffectType.BOXED, 0), toAdd);
+                                                                 new TextAttributes(null, null, Color.WHITE, EffectType.ROUNDED_BOX, 0), toAdd);
         highlighter.putUserData(IN_SELECTION_KEY, IN_SELECTION1);
         toAnnotate.putUserData(IN_SELECTION_KEY, IN_SELECTION2);
       }

@@ -53,25 +53,28 @@ public class ConflictsDialog extends DialogWrapper{
   private MultiMap<PsiElement, String> myElementConflictDescription;
   private final Project myProject;
   private Runnable myDoRefactoringRunnable;
+  private final boolean myCanShowConflictsInView;
   private String myCommandName;
 
   public ConflictsDialog(@NotNull Project project, @NotNull MultiMap<PsiElement, String> conflictDescriptions) {
-    this(project, conflictDescriptions, null, true);
+    this(project, conflictDescriptions, null, true, true);
   }
 
   public ConflictsDialog(@NotNull Project project,
                          @NotNull MultiMap<PsiElement, String> conflictDescriptions,
                          @Nullable Runnable doRefactoringRunnable) {
-    this(project, conflictDescriptions, doRefactoringRunnable, true);
+    this(project, conflictDescriptions, doRefactoringRunnable, true, true);
   }
 
   public ConflictsDialog(@NotNull Project project,
                          @NotNull MultiMap<PsiElement, String> conflictDescriptions,
                          @Nullable Runnable doRefactoringRunnable,
-                         boolean alwaysShowOkButton) {
+                         boolean alwaysShowOkButton,
+                         boolean canShowConflictsInView) {
     super(project, true);
     myProject = project;
     myDoRefactoringRunnable = doRefactoringRunnable;
+    myCanShowConflictsInView = canShowConflictsInView;
     final LinkedHashSet<String> conflicts = new LinkedHashSet<String>();
 
     for (String conflict : conflictDescriptions.values()) {
@@ -96,6 +99,7 @@ public class ConflictsDialog extends DialogWrapper{
     super(project, true);
     myProject = project;
     myConflictDescriptions = conflictDescriptions;
+    myCanShowConflictsInView = true;
     setTitle(RefactoringBundle.message("problems.detected.title"));
     setOKButtonText(RefactoringBundle.message("continue.button"));
     init();
@@ -105,10 +109,15 @@ public class ConflictsDialog extends DialogWrapper{
   @NotNull
   protected Action[] createActions(){
     final Action okAction = getOKAction();
-    if (myElementConflictDescription == null) {
+    boolean showUsagesButton = myElementConflictDescription != null && myCanShowConflictsInView;
+
+    if (showUsagesButton || !okAction.isEnabled()) {
+      okAction.putValue(DEFAULT_ACTION, null);
+    }
+
+    if (!showUsagesButton) {
       return new Action[]{okAction,new CancelAction()};
     }
-    okAction.putValue(DEFAULT_ACTION, null);
     return new Action[]{okAction, new MyShowConflictsInUsageViewAction(), new CancelAction()};
   }
 
@@ -135,7 +144,9 @@ public class ConflictsDialog extends DialogWrapper{
     scrollPane.setPreferredSize(new Dimension(500, 400));
     panel.add(scrollPane, BorderLayout.CENTER);
 
-    panel.add(new JLabel(RefactoringBundle.message("do.you.wish.to.ignore.them.and.continue")), BorderLayout.SOUTH);
+    if (getOKAction().isEnabled()) {
+      panel.add(new JLabel(RefactoringBundle.message("do.you.wish.to.ignore.them.and.continue")), BorderLayout.SOUTH);
+    }
 
     return panel;
   }

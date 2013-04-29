@@ -29,6 +29,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiManager;
+import com.intellij.psi.impl.file.DirectoryIconProvider;
 import com.intellij.psi.search.scope.packageSet.FilePatternPackageSet;
 import com.intellij.util.PlatformIcons;
 import org.jetbrains.annotations.Nullable;
@@ -202,6 +203,9 @@ public class DirectoryNode extends PackageDependenciesNode {
 
   @Override
   public Icon getIcon() {
+    if (myDirectory != null) {
+      return new DirectoryIconProvider().getIcon(myDirectory, 0);
+    }
     return PlatformIcons.PACKAGE_ICON;
   }
 
