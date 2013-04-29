@@ -1,13 +1,12 @@
 package com.intellij.find.impl.livePreview;
 
-import com.intellij.find.FindManager;
-import com.intellij.find.FindModel;
-import com.intellij.find.FindResult;
-import com.intellij.find.FindUtil;
+import com.intellij.find.*;
 import com.intellij.find.impl.FindResultImpl;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
+import com.intellij.openapi.editor.event.DocumentAdapter;
+import com.intellij.openapi.editor.event.DocumentEvent;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.ReadonlyStatusHandler;
@@ -16,11 +15,12 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
 
-public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil.ReplaceDelegate, SearchResults.SearchResultsListener {
+public class LivePreviewController implements LivePreview.Delegate, FindUtil.ReplaceDelegate, SearchResults.SearchResultsListener {
 
-  private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.livePreview.LivePreviewControllerBase");
+  private static final Logger LOG = Logger.getInstance("#com.intellij.find.impl.livePreview.LivePreviewController");
 
   private static final int USER_ACTIVITY_TRIGGERING_DELAY = 30;
+  protected EditorSearchComponent myComponent;
 
   private int myUserActivityDelay = USER_ACTIVITY_TRIGGERING_DELAY;
 
@@ -28,6 +28,27 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
   protected SearchResults mySearchResults;
   private LivePreview myLivePreview;
   private boolean myReplaceDenied = false;
+  private boolean mySuppressUpdate = false;
+
+  private boolean myAdded;
+  private boolean myChanged;
+
+
+  private DocumentAdapter myDocumentListener = new DocumentAdapter() {
+    @Override
+    public void documentChanged(final DocumentEvent e) {
+      if (!myAdded) {
+        myChanged = true;
+        return;
+      }
+      if (!mySuppressUpdate) {
+        myLivePreview.inSmartUpdate();
+        updateInBackground(mySearchResults.getFindModel(), false);
+      } else {
+        mySuppressUpdate = false;
+      }
+    }
+  };
 
   private void updateSelection() {
     Editor editor = mySearchResults.getEditor();
@@ -85,11 +106,11 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     return myReplaceDenied;
   }
 
-  public LivePreviewControllerBase(SearchResults searchResults, LivePreview livePreview) {
+  public LivePreviewController(SearchResults searchResults, EditorSearchComponent component) {
     mySearchResults = searchResults;
     mySearchResults.addListener(this);
-    myLivePreview = livePreview;
-    myLivePreview.setDelegate(this);
+    this.myComponent = component;
+    getEditor().getDocument().addDocumentListener(myDocumentListener);
   }
 
   public int getUserActivityDelay() {
@@ -151,12 +172,12 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
     if (myReplaceDenied || !ReadonlyStatusHandler.ensureDocumentWritable(editor.getProject(), editor.getDocument())) return null;
     FindModel findModel = mySearchResults.getFindModel();
     TextRange result = FindUtil.doReplace(editor.getProject(),
-                                editor.getDocument(),
-                                findModel,
-                                new FindResultImpl(occurrence.getStartOffset(), occurrence.getEndOffset()),
-                                replacement,
-                                true,
-                                new ArrayList<Pair<TextRange, String>>());
+                                          editor.getDocument(),
+                                          findModel,
+                                          new FindResultImpl(occurrence.getStartOffset(), occurrence.getEndOffset()),
+                                          replacement,
+                                          true,
+                                          new ArrayList<Pair<TextRange, String>>());
     myLivePreview.inSmartUpdate();
     mySearchResults.updateThreadSafe(findModel, true, result, mySearchResults.getStamp());
     return result;
@@ -189,5 +210,69 @@ public class LivePreviewControllerBase implements LivePreview.Delegate, FindUtil
       }
     }
     return true;
+  }
+
+  public boolean canReplace() {
+    if (mySearchResults != null && mySearchResults.getCursor() != null &&
+        !isReplaceDenied() && (mySearchResults.getFindModel().isGlobal() ||
+                                                       !mySearchResults.getEditor().getSelectionModel()
+                                                         .hasBlockSelection()) ) {
+
+      final String replacement = getStringToReplace(getEditor(), mySearchResults.getCursor());
+      return replacement != null;
+    }
+    return false;
+  }
+
+  private Editor getEditor() {
+    return mySearchResults.getEditor();
+  }
+
+  public void performReplace() {
+    mySuppressUpdate = true;
+    String replacement = getStringToReplace(getEditor(), mySearchResults.getCursor());
+    if (replacement == null) {
+      return;
+    }
+    final TextRange textRange = performReplace(mySearchResults.getCursor(), replacement, getEditor());
+    if (textRange == null) {
+      mySuppressUpdate = false;
+    }
+    //getFocusBack();
+    myComponent.addTextToRecent(myComponent.getReplaceField());
+    myComponent.clearUndoInTextFields();
+  }
+
+  public void exclude() {
+    mySearchResults.exclude(mySearchResults.getCursor());
+  }
+
+  public void performReplaceAll() {
+    performReplaceAll(getEditor());
+  }
+
+  public void clearIfhanged() {
+    if (myChanged) {
+      mySearchResults.clear();
+      myChanged = false;
+    }
+  }
+
+  public void setAdded(boolean added) {
+    myAdded = added;
+  }
+
+  public void setLivePreview(LivePreview livePreview) {
+    if (myLivePreview != null) {
+      myLivePreview.setDelegate(null);
+    }
+    myLivePreview = livePreview;
+    if (myLivePreview != null) {
+      myLivePreview.setDelegate(this);
+    }
+  }
+
+  public void dispose() {
+    getEditor().getDocument().removeDocumentListener(myDocumentListener);
   }
 }
