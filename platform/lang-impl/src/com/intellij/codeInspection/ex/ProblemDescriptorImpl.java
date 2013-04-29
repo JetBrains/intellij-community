@@ -17,6 +17,7 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeInspection.*;
+import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
@@ -238,6 +239,7 @@ public class ProblemDescriptorImpl extends CommonProblemDescriptorImpl implement
 
   @Override
   public String toString() {
-    return getDescriptionTemplate();
+    PsiElement element = getPsiElement();
+    return ProblemDescriptionNode.renderDescriptionMessage(this, element);
   }
 }
