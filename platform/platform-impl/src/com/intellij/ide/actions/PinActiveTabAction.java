@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.execution.ui.layout.ViewContext;
 import com.intellij.ide.IdeBundle;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
@@ -46,6 +47,9 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
    */
   @Nullable
   private static Content getContent(final DataContext context){
+    Content[] contents = ViewContext.CONTENT_KEY.getData(context);
+    if (contents != null && contents.length == 1) return contents[0];
+    
     ContentManager contentManager = ContentManagerUtil.getContentManagerFromContext(context, true);
     if (contentManager == null){
       return null;
@@ -113,7 +117,8 @@ public class PinActiveTabAction extends ToggleAction implements DumbAware {
     Presentation presentation = e.getPresentation();
     DataContext context = e.getDataContext();
     presentation.setEnabled(getFile(context) != null || getContent(context) != null);
-    if (ActionPlaces.EDITOR_TAB_POPUP.equals(e.getPlace())) {
+    if (ActionPlaces.EDITOR_TAB_POPUP.equals(e.getPlace()) ||
+        ViewContext.CELL_POPUP_PLACE.equals(e.getPlace())) {
       presentation.setText(isSelected(e) ? IdeBundle.message("action.unpin.tab") : IdeBundle.message("action.pin.tab"));
     } else {
       presentation.setText(isSelected(e) ? IdeBundle.message("action.unpin.active.tab") : IdeBundle.message("action.pin.active.tab"));

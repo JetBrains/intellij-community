@@ -125,6 +125,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
   private final Map<String, LayoutAttractionPolicy> myAttractions = new HashMap<String, LayoutAttractionPolicy>();
   private final Map<String, LayoutAttractionPolicy> myConditionAttractions = new HashMap<String, LayoutAttractionPolicy>();
 
+  private ActionGroup myTabPopupActions;
   private ActionGroup myAdditonalFocusActions;
 
   private final ActionCallback myInitialized = new ActionCallback();
@@ -173,6 +174,11 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
     myActionsPlace = place;
 
     rebuildCommonActions();
+  }
+
+  public void setTabPopupActions(ActionGroup tabPopupActions) {
+    myTabPopupActions = tabPopupActions;
+    rebuildTabPopup();
   }
 
   public void setAdditionalFocusActions(final ActionGroup group) {
@@ -295,7 +301,7 @@ public class RunnerContentUi implements ContentUI, Disposable, CellTransform.Fac
 
   @Override
   public ActionGroup getCellPopupGroup(final String place) {
-    final ActionGroup original = (ActionGroup)myActionManager.getAction(VIEW_POPUP);
+    final ActionGroup original = myTabPopupActions != null? myTabPopupActions : (ActionGroup)myActionManager.getAction(VIEW_POPUP);
     final ActionGroup focusPlaceholder = (ActionGroup)myActionManager.getAction("Runner.Focus");
 
     DefaultActionGroup group = new DefaultActionGroup(VIEW_POPUP, original.isPopup());

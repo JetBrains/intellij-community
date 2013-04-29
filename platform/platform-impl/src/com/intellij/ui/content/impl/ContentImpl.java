@@ -242,6 +242,11 @@ public class ContentImpl extends UserDataHolderBase implements Content {
   }
 
   @Override
+  public void setPinnable(boolean pinnable) {
+    myPinnable = pinnable;
+  }
+
+  @Override
   public boolean isCloseable() {
     return myCloseable;
   }
