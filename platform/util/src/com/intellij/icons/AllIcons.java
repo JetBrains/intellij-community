@@ -875,6 +875,7 @@ public class AllIcons {
     public static final Icon ShowModules = IconLoader.getIcon("/objectBrowser/showModules.png"); // 16x16
     public static final Icon SortByType = IconLoader.getIcon("/objectBrowser/sortByType.png"); // 16x16
     public static final Icon Sorted = IconLoader.getIcon("/objectBrowser/sorted.png"); // 16x16
+    public static final Icon SortedByUsage = IconLoader.getIcon("/objectBrowser/sortedByUsage.png"); // 16x16
     public static final Icon VisibilitySort = IconLoader.getIcon("/objectBrowser/visibilitySort.png"); // 16x16
 
   }
