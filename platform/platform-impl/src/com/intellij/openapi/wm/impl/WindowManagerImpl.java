@@ -70,6 +70,8 @@ import java.util.Set;
 public final class WindowManagerImpl extends WindowManagerEx implements ApplicationComponent, NamedJDOMExternalizable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.WindowManagerImpl");
 
+  @NonNls public static final String FULL_SCREEN = "ide.frame.full.screen";
+
   @NonNls private static final String FOCUSED_WINDOW_PROPERTY_NAME = "focusedWindow";
   @NonNls private static final String X_ATTR = "x";
   @NonNls private static final String FRAME_ELEMENT = "frame";
@@ -813,5 +815,9 @@ public final class WindowManagerImpl extends WindowManagerEx implements Applicat
 
   public boolean isFullScreenSupportedInCurrentOS() {
     return SystemInfo.isMacOSLion || SystemInfo.isWindows || SystemInfo.isXWindow && X11UiUtil.isFullScreenSupported();
+  }
+
+  public static boolean isFloatingMenuBarSupported() {
+    return !SystemInfo.isMac && getInstance().isFullScreenSupportedInCurrentOS();
   }
 }

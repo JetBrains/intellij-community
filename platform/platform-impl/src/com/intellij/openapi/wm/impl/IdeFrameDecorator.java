@@ -24,6 +24,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.awt.event.ComponentAdapter;
+import java.awt.event.ComponentEvent;
 
 public abstract class IdeFrameDecorator implements Disposable {
   protected IdeFrameImpl myFrame;
@@ -56,6 +58,13 @@ public abstract class IdeFrameDecorator implements Disposable {
     }
 
     return null;
+  }
+
+  protected void notifyFrameComponents(boolean state) {
+    if (myFrame != null) {
+      myFrame.getRootPane().putClientProperty(WindowManagerImpl.FULL_SCREEN, state);
+      myFrame.getJMenuBar().putClientProperty(WindowManagerImpl.FULL_SCREEN, state);
+    }
   }
 
   // AWT-based decorator
@@ -100,14 +109,27 @@ public abstract class IdeFrameDecorator implements Disposable {
         }
         myFrame.setVisible(true);
         myFrame.getRootPane().putClientProperty(ScreenUtil.DISPOSE_TEMPORARY, null);
+
+        notifyFrameComponents(state);
       }
     }
   }
 
   // Extended WM Hints-based decorator
   private static class EWMHFrameDecorator extends IdeFrameDecorator {
+    private Boolean myRequestedState = null;
+
     private EWMHFrameDecorator(IdeFrameImpl frame) {
       super(frame);
+      frame.addComponentListener(new ComponentAdapter() {
+        @Override
+        public void componentResized(ComponentEvent e) {
+          if (myRequestedState != null) {
+            notifyFrameComponents(myRequestedState);
+            myRequestedState = null;
+          }
+        }
+      });
     }
 
     @Override
@@ -118,6 +140,7 @@ public abstract class IdeFrameDecorator implements Disposable {
     @Override
     public void toggleFullScreen(boolean state) {
       if (myFrame != null) {
+        myRequestedState = state;
         X11UiUtil.toggleFullScreenMode(myFrame);
       }
     }
