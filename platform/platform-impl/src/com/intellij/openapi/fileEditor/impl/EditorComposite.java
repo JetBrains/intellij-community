@@ -24,6 +24,7 @@ import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
+import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Disposer;
@@ -185,6 +186,7 @@ public abstract class EditorComposite implements Disposable {
           if (oldEditor != null) oldEditor.deselectNotify();
           final FileEditor newEditor = event.getNewEditor();
           if (newEditor != null) newEditor.selectNotify();
+          ((FileEditorProviderManagerImpl)FileEditorProviderManager.getInstance()).providerSelected(EditorComposite.this);
         }
       }
     }, this);

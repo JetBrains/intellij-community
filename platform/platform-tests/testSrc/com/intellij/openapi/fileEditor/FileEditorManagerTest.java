@@ -94,6 +94,21 @@ public class FileEditorManagerTest extends FileEditorManagerTestCase {
     assertEquals("mockEditor", selectedEditors[0].getName());
   }
 
+  public void testTrackSelectedEditor() throws Exception {
+    PlatformTestUtil.registerExtension(FileEditorProvider.EP_FILE_EDITOR_PROVIDER, new MyFileEditorProvider(), getTestRootDisposable());
+    VirtualFile file = getFile("/src/1.txt");
+    assertNotNull(file);
+    FileEditor[] editors = myManager.openFile(file, true);
+    assertEquals(2, editors.length);
+    assertEquals("Text", myManager.getSelectedEditor(file).getName());
+    myManager.setSelectedEditor(file, "mock");
+    assertEquals("mockEditor", myManager.getSelectedEditor(file).getName());
+
+    VirtualFile file1 = getFile("/src/2.txt");
+    myManager.openFile(file1, true);
+    assertEquals("mockEditor", myManager.getSelectedEditor(file).getName());
+  }
+
   private static final String STRING = "<component name=\"FileEditorManager\">\n" +
       "    <leaf>\n" +
       "      <file leaf-file-name=\"1.txt\" pinned=\"false\" current=\"false\" current-in-tab=\"false\">\n" +

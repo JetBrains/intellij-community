@@ -15,6 +15,10 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.openapi.components.PersistentStateComponent;
+import com.intellij.openapi.components.State;
+import com.intellij.openapi.components.Storage;
+import com.intellij.openapi.components.StoragePathMacros;
 import com.intellij.openapi.extensions.ExtensionPointListener;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.extensions.PluginDescriptor;
@@ -25,41 +29,47 @@ import com.intellij.openapi.fileEditor.ex.FileEditorProviderManager;
 import com.intellij.openapi.fileEditor.impl.text.TextEditorProvider;
 import com.intellij.openapi.project.DumbService;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.xmlb.annotations.MapAnnotation;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.TestOnly;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.Comparator;
+import java.util.*;
 
 /**
  * @author Anton Katilin
  * @author Vladimir Kondratyev
  */
-public final class FileEditorProviderManagerImpl extends FileEditorProviderManager {
+@State(name = "FileEditorProviderManager", storages = {@Storage( file = StoragePathMacros.APP_CONFIG + "/other.xml")})
+public final class FileEditorProviderManagerImpl extends FileEditorProviderManager implements PersistentStateComponent<FileEditorProviderManagerImpl> {
   private static final FileEditorProvider[] EMPTY_ARRAY=new FileEditorProvider[]{};
+  private static final String SEPARATOR = ",";
 
-  private final ArrayList<FileEditorProvider> myProviders;
-  private final ArrayList<FileEditorProvider> mySharedProviderList;
+  private final ArrayList<FileEditorProvider> myProviders = new ArrayList<FileEditorProvider>();
+  private final ArrayList<FileEditorProvider> mySharedProviderList = new ArrayList<FileEditorProvider>();
 
   public FileEditorProviderManagerImpl(FileEditorProvider[] providers) {
-    myProviders = new ArrayList<FileEditorProvider>();
-    mySharedProviderList = new ArrayList<FileEditorProvider>();
+    Extensions.getRootArea().getExtensionPoint(FileEditorProvider.EP_FILE_EDITOR_PROVIDER).addExtensionPointListener(
+      new ExtensionPointListener<FileEditorProvider>() {
+        public void extensionAdded(@NotNull final FileEditorProvider extension, @Nullable final PluginDescriptor pluginDescriptor) {
+          registerProvider(extension);
+        }
 
-    Extensions.getRootArea().getExtensionPoint(FileEditorProvider.EP_FILE_EDITOR_PROVIDER).addExtensionPointListener(new ExtensionPointListener<FileEditorProvider>() {
-      public void extensionAdded(@NotNull final FileEditorProvider extension, @Nullable final PluginDescriptor pluginDescriptor) {
-        registerProvider(extension);
-      }
-
-      public void extensionRemoved(@NotNull final FileEditorProvider extension, @Nullable final PluginDescriptor pluginDescriptor) {
-        unregisterProvider(extension);
-      }
-    });
+        public void extensionRemoved(@NotNull final FileEditorProvider extension, @Nullable final PluginDescriptor pluginDescriptor) {
+          unregisterProvider(extension);
+        }
+      });
 
     for (FileEditorProvider provider : providers) {
       registerProvider(provider);
     }
+  }
+
+  public FileEditorProviderManagerImpl() {
   }
 
   @NotNull
@@ -123,6 +133,66 @@ public final class FileEditorProviderManagerImpl extends FileEditorProviderManag
   private void unregisterProvider(FileEditorProvider provider) {
     final boolean b = myProviders.remove(provider);
     assert b;
+  }
+
+  @Nullable
+  @Override
+  public FileEditorProviderManagerImpl getState() {
+    return this;
+  }
+
+  @Override
+  public void loadState(FileEditorProviderManagerImpl state) {
+    mySelectedProviders.clear();
+    mySelectedProviders.putAll(state.mySelectedProviders);
+  }
+
+  private static final Function<FileEditorProvider,String> EDITOR_PROVIDER_STRING_FUNCTION = new Function<FileEditorProvider, String>() {
+    @Override
+    public String fun(FileEditorProvider provider) {
+      return provider.getEditorTypeId();
+    }
+  };
+
+  private final Map<String, String> mySelectedProviders = new HashMap<String, String>();
+
+  void providerSelected(EditorComposite composite) {
+    if (!(composite instanceof EditorWithProviderComposite)) return;
+    FileEditorProvider[] providers = ((EditorWithProviderComposite)composite).getProviders();
+    if (providers.length < 2) return;
+    mySelectedProviders.put(computeKey(providers),
+                            composite.getSelectedEditorWithProvider().getSecond().getEditorTypeId());
+  }
+
+  private static String computeKey(FileEditorProvider[] providers) {
+    return StringUtil.join(ContainerUtil.map(providers, EDITOR_PROVIDER_STRING_FUNCTION), SEPARATOR);
+  }
+
+  @Nullable
+  FileEditorProvider getSelectedFileEditorProvider(EditorHistoryManager editorHistoryManager,
+                                                   VirtualFile file,
+                                                   FileEditorProvider[] providers) {
+    FileEditorProvider provider = editorHistoryManager.getSelectedProvider(file);
+    if (provider != null || providers.length < 2) {
+      return provider;
+    }
+    String id = mySelectedProviders.get(computeKey(providers));
+    return id == null ? null : getProvider(id);
+  }
+
+  @MapAnnotation(surroundKeyWithTag = false, surroundValueWithTag = false)
+  public Map<String, String> getSelectedProviders() {
+    return mySelectedProviders;
+  }
+
+  public void setSelectedProviders(Map<String, String> selectedProviders) {
+    mySelectedProviders.clear();
+    mySelectedProviders.putAll(selectedProviders);
+  }
+
+  @TestOnly
+  public void clearSelectedProviders() {
+    mySelectedProviders.clear();
   }
 
   private static final class MyComparator implements Comparator<FileEditorProvider>{

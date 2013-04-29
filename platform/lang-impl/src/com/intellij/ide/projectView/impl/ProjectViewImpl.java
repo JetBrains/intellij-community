@@ -1249,7 +1249,7 @@ public class ProjectViewImpl extends ProjectView implements PersistentStateCompo
       if (element != null) {
         final boolean isDirectory = element instanceof PsiDirectory;
         if (!isDirectory) {
-          Editor editor = EditorHelper.openInEditor(element);
+          FileEditor editor = EditorHelper.openInEditor(element, false);
           if (editor != null) {
             ToolWindowManager.getInstance(myProject).activateEditorComponent();
             requestFocus = false;
