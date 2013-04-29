@@ -520,10 +520,6 @@ public class ArtifactUtil {
     return true;
   }
 
-  public static boolean isArchiveName(String name) {
-    return name.length() >= 4 && name.charAt(name.length() - 4) == '.' && StringUtil.endsWithIgnoreCase(name, "ar");
-  }
-
   public static void removeChildrenRecursively(@NotNull CompositePackagingElement<?> element, @NotNull Condition<PackagingElement<?>> condition) {
     List<PackagingElement<?>> toRemove = new ArrayList<PackagingElement<?>>();
     for (PackagingElement<?> child : element.getChildren()) {

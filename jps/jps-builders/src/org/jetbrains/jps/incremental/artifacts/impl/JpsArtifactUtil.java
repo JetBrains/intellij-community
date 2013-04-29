@@ -15,6 +15,7 @@
  */
 package org.jetbrains.jps.incremental.artifacts.impl;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
 import org.jetbrains.annotations.NotNull;
@@ -54,5 +55,9 @@ public class JpsArtifactUtil {
       }
     }
     return true;
+  }
+
+  public static boolean isArchiveName(String name) {
+    return name.length() >= 4 && name.charAt(name.length() - 4) == '.' && StringUtil.endsWithIgnoreCase(name, "ar");
   }
 }
