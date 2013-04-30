@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="utf-8"?>
 
 <resources>
-    <declare-styleable name="<error>Unknown</error>">
+    <declare-styleable name="Unknown">
     </declare-styleable>
     <declare-styleable name="LabelView">
     </declare-styleable>
