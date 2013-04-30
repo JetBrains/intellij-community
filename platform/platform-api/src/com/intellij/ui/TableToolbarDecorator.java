@@ -18,6 +18,7 @@ package com.intellij.ui;
 import com.intellij.util.ui.EditableModel;
 import com.intellij.util.ui.ElementProducer;
 import com.intellij.util.ui.ListTableModel;
+import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -114,12 +115,16 @@ class TableToolbarDecorator extends ToolbarDecorator {
         table.editCellAt(index, 0);
         table.setRowSelectionInterval(index, index);
         table.setColumnSelectionInterval(0, 0);
-        table.getParent().repaint();
         final Component editorComponent = table.getEditorComponent();
         if (editorComponent != null) {
           final Rectangle bounds = editorComponent.getBounds();
           table.scrollRectToVisible(bounds);
           editorComponent.requestFocus();
+        }
+        JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, table);
+        if (scrollPane != null) {
+          scrollPane.revalidate();
+          scrollPane.repaint();
         }
       }
     };
