@@ -106,6 +106,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
       embeddedLexer.start(buffer,startOffset,skipToTheEndOfTheEmbeddment(),state);
     } else {
       embeddedLexer = null;
+      scriptLexer = null;
     }
   }
 
