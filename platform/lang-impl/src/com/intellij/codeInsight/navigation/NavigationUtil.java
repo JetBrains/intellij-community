@@ -171,7 +171,10 @@ public final class NavigationUtil {
       if (editor instanceof TextEditor) {
         final Editor text = ((TextEditor)editor).getEditor();
         final int offset = text.getCaretModel().getOffset();
-        if (range.contains(offset)) {
+
+        if (range.containsOffset(offset)) {
+          // select the file
+          fem.openFile(vFile, true, searchForOpen);
           return true;
         }
       }
