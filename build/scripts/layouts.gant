@@ -647,6 +647,7 @@ def layoutCommunityJps(String home, String target) {
         moduleTests("jps-model-serialization")
       }
     }
+    jar("ant-jps-plugin.jar") { module("ant-jps-plugin") }
   }
 }
 
