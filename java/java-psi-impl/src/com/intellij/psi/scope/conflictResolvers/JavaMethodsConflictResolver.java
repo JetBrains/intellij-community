@@ -32,7 +32,10 @@ import gnu.trove.TIntArrayList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.*;
+import java.util.HashMap;
+import java.util.Iterator;
+import java.util.List;
+import java.util.Map;
 
 /**
  * Created by IntelliJ IDEA.
@@ -630,19 +633,19 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                            PsiType type2,
                                            PsiTypeParameter p1,
                                            PsiTypeParameter p2) {
-    final Set<PsiClass> resolved1 = new HashSet<PsiClass>();
+    final Map<PsiClass, PsiClassType> resolved1 = new HashMap<PsiClass, PsiClassType>();
     for (PsiClassType referenceElement : p1.getExtendsList().getReferencedTypes()) {
-      final PsiClass resolve = referenceElement.resolve();
-      if (resolve != null) {
-        resolved1.add(resolve);
+      final PsiClass aClass = referenceElement.resolve();
+      if (aClass != null) {
+        resolved1.put(aClass, referenceElement);
       }
     }
 
-    final Set<PsiClass> resolved2 = new HashSet<PsiClass>();
+    final Map<PsiClass, PsiClassType> resolved2 = new HashMap<PsiClass, PsiClassType>();
     for (PsiClassType referenceElement : p2.getExtendsList().getReferencedTypes()) {
-      final PsiClass resolve = referenceElement.resolve();
-      if (resolve != null) {
-        resolved2.add(resolve);
+      final PsiClass aClass = referenceElement.resolve();
+      if (aClass != null) {
+        resolved2.put(aClass, referenceElement);
       }
     }
 
@@ -664,15 +667,16 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     }
   }
 
-  private static Specifics checkExtendsList(Set<PsiClass> resolved1,
-                                            Set<PsiClass> resolved2,
+  private static Specifics checkExtendsList(Map<PsiClass, PsiClassType> resolved1,
+                                            Map<PsiClass, PsiClassType> resolved2,
                                             Specifics preferred) {
-    if (resolved1.containsAll(resolved2)){
-      resolved1.removeAll(resolved2);
-      for (Iterator<PsiClass> iterator = resolved1.iterator(); iterator.hasNext(); ) {
+    if (resolved1.keySet().containsAll(resolved2.keySet())){
+      resolved1.keySet().removeAll(resolved2.keySet());
+      for (Iterator<PsiClass> iterator = resolved1.keySet().iterator(); iterator.hasNext(); ) {
         PsiClass psiClass = iterator.next();
-        for (PsiClass aClass : resolved2) {
-          if (InheritanceUtil.isInheritorOrSelf(aClass, psiClass, true)) {
+        final PsiClassType baseType = resolved1.get(psiClass);
+        for (PsiClassType childType : resolved2.values()) {
+          if (TypeConversionUtil.isAssignable(baseType, childType, false)) {
             iterator.remove();
             break;
           }
