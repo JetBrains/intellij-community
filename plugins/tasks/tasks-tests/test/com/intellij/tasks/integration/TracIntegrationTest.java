@@ -17,6 +17,7 @@ package com.intellij.tasks.integration;
 
 import com.intellij.tasks.Task;
 import com.intellij.tasks.TaskManagerTestCase;
+import com.intellij.tasks.TaskType;
 import com.intellij.tasks.trac.TracRepository;
 
 /**
@@ -37,7 +38,7 @@ public class TracIntegrationTest extends TaskManagerTestCase {
   public void testGetUnknownType() throws Exception {
     Task task = myRepository.findTask("5");
     assertNotNull(task);
-    assertEquals(null, task.getType());
+    assertEquals(TaskType.BUG, task.getType());
   }
 
   @Override
