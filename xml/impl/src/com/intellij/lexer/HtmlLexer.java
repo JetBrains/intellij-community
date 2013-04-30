@@ -75,10 +75,10 @@ public class HtmlLexer extends BaseHtmlLexer {
         tokenType = ourInlineStyleElementType;
       }
     } else if (hasSeenScript()) {
-      IElementType currentScriptElementType = getCurrentScriptElementType();
-      if (hasSeenTag() && currentScriptElementType != null && isStartOfEmbeddmentTagContent(tokenType)) {
+      if (hasSeenTag() && isStartOfEmbeddmentTagContent(tokenType)) {
         myTokenEnd = skipToTheEndOfTheEmbeddment();
-        tokenType = currentScriptElementType;
+        IElementType currentScriptElementType = getCurrentScriptElementType();
+        tokenType = currentScriptElementType == null ? XmlTokenType.XML_DATA_CHARACTERS : currentScriptElementType;
       } else if (hasSeenAttribute() && isStartOfEmbeddmentAttributeValue(tokenType) && ourInlineScriptElementType!=null) {
         myTokenEnd = skipToTheEndOfTheEmbeddment();
         tokenType = ourInlineScriptElementType;

@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -66,10 +67,11 @@ import java.nio.charset.Charset;
 public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
   private final TextPanel myComponent;
   private boolean actionEnabled;
+  private final Alarm update;
 
   public EncodingPanel(@NotNull final Project project) {
     super(project);
-
+    update = new Alarm(this);
     myComponent = new TextPanel() {
       @Override
       protected void paintComponent(@NotNull final Graphics g) {
@@ -150,20 +152,14 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
         }
       }
     }));
-    final Alarm update = new Alarm();
+
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
         Document document = e.getDocument();
         Editor selectedEditor = getEditor();
         if (selectedEditor == null || selectedEditor.getDocument() != document) return;
-        update.cancelAllRequests();
-        update.addRequest(new Runnable() {
-                              @Override
-                              public void run() {
-                                if (!isDisposed()) update();
-                              }
-                            }, 200);
+        update();
       }
     }, this);
   }
@@ -194,20 +190,24 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   }
 
   private void update() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
+    if (update.isDisposed()) return;
+
+    update.cancelAllRequests();
+    update.addRequest(new Runnable() {
       @Override
       public void run() {
+        if (isDisposed()) return;
+
         VirtualFile file = getSelectedFile();
         actionEnabled = false;
         String charsetName = null;
-        Pair<Charset,String> check = null;
+        Pair<Charset, String> check = null;
 
         if (file != null) {
           check = EncodingUtil.checkSomeActionEnabled(file);
           Charset charset = null;
 
-          if (LoadTextUtil.wasCharsetDetectedFromBytes(file) != null)
-          {
+          if (LoadTextUtil.wasCharsetDetectedFromBytes(file) != null) {
             charset = cachedCharsetFromContent(file);
           }
 
@@ -238,7 +238,8 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
 
           myComponent.setForeground(UIUtil.getActiveTextColor());
           myComponent.setTextAlignment(Component.LEFT_ALIGNMENT);
-        } else {
+        }
+        else {
           String failReason = (check == null) ? "" : check.second;
           toolTipText = String.format("File encoding is disabled%n%s",
                                       failReason);
@@ -254,8 +255,7 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
           myStatusBar.updateWidget(ID());
         }
       }
-    });
-
+    }, 200, ModalityState.any());
   }
 
   @Override

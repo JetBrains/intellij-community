@@ -539,7 +539,8 @@ public class FindUtil {
       String foundString = document.getCharsSequence().subSequence(startOffset, endOffset).toString();
       String toReplace;
       try {
-        toReplace = findManager.getStringToReplace(foundString, model, startOffset, document.getText());
+        CharSequence textToMatch = document.getCharsSequence().subSequence(offset, endOffset < document.getTextLength() ? endOffset+1 : endOffset);
+        toReplace = findManager.getStringToReplace(foundString, model, startOffset - offset, textToMatch);
       }
       catch (FindManager.MalformedReplacementStringException e) {
         if (!ApplicationManager.getApplication().isUnitTestMode()) {

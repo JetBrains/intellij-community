@@ -15,10 +15,7 @@
  */
 package com.intellij.lexer;
 
-import com.intellij.lang.HtmlInlineScriptTokenTypesProvider;
-import com.intellij.lang.HtmlScriptContentProvider;
-import com.intellij.lang.Language;
-import com.intellij.lang.LanguageHtmlInlineScriptTokenTypesProvider;
+import com.intellij.lang.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
@@ -109,6 +106,7 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
       embeddedLexer.start(buffer,startOffset,skipToTheEndOfTheEmbeddment(),state);
     } else {
       embeddedLexer = null;
+      scriptLexer = null;
     }
   }
 
@@ -124,7 +122,11 @@ public class HtmlHighlightingLexer extends BaseHtmlLexer {
       if (scriptLexer == null) {
         if (hasSeenTag()) {
           HtmlScriptContentProvider provider = findScriptContentProvider(scriptType);
-          scriptLexer = provider != null ? provider.getHighlightingLexer() : null;
+          if (provider != null) {
+            scriptLexer = provider.getHighlightingLexer();
+          } else {
+            scriptLexer = SyntaxHighlighterFactory.getSyntaxHighlighter(StdLanguages.TEXT, null, null).getHighlightingLexer();
+          }
         }
         else if (hasSeenAttribute()) {
           SyntaxHighlighter syntaxHighlighter =

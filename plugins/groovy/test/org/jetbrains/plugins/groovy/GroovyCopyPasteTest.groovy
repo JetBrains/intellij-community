@@ -62,8 +62,11 @@ class GroovyCopyPasteTest extends LightCodeInsightFixtureTestCase {
   }
 
   public void testEscapeDollarInGString() {
-    doTest '''def x = '<selection>$a</selection>b/''', 'def x = "smth<caret>h"', 'def x = "smth\\$a<caret>h"'
+    doTest '''def x = '<selection>$a</selection>b/''', 'def x = "smth<caret>h"', 'def x = "smth$a<caret>h"'
+  }
 
+  public void testEscapeDollarInGString2() {
+    doTest '''def x = '<selection>${a}</selection>b/''', 'def x = "smth<caret>h"', 'def x = "smth${a}<caret>h"'
   }
 
   public void testRestoreImports() {

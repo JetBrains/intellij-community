@@ -194,6 +194,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     mySearchResults = searchResults;
     searchResultsUpdated(searchResults);
     searchResults.addListener(this);
+    myListeningSelection = true;
     mySearchResults.getEditor().getSelectionModel().addSelectionListener(this);
   }
 
@@ -211,6 +212,7 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   }
 
   public void dispose() {
+    cleanUp();
     mySearchResults.removeListener(this);
   }
 
