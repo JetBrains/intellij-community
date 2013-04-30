@@ -901,7 +901,7 @@ public class OptionsEditor extends JPanel implements DataProvider, Place.Navigat
         shouldMoveSelection = false;
       }
 
-      Configurable toSelect = null;
+      Configurable toSelect = adjustSelection ? current : null;
       if (shouldMoveSelection && myHits != null) {
         if (!myHits.getNameHits().isEmpty()) {
           toSelect = suggestToSelect(myHits.getNameHits(), myHits.getNameFullHits());
