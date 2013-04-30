@@ -16,35 +16,47 @@
 package com.intellij.openapi.diff;
 
 import com.intellij.util.ArrayUtil;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.List;
 
 public class LineTokenizer {
   private final char[] myChars;
   private final String myText;
-  private int myIndex = 0;
-  private String myLineSeparator = null;
 
-  public LineTokenizer(String text) {
+  private int myIndex = 0;
+  @Nullable private String myLineSeparator = null;
+
+  public LineTokenizer(@NotNull String text) {
     myChars = text.toCharArray();
     myText = text;
   }
 
+  @NotNull
   public String[] execute() {
-    ArrayList<String> lines = new ArrayList<String>();
+    List<String> lines = new ArrayList<String>();
     while (notAtEnd()) {
       int begin = myIndex;
       skipToEOL();
       int endIndex = myIndex;
-      String line;
       boolean appendNewLine = false;
+
       if (notAtEnd() && isAtEOL()) {
-        if (myChars[endIndex] == '\n') endIndex++;
-        else appendNewLine = true;
+        if (myChars[endIndex] == '\n') {
+          endIndex++;
+        }
+        else {
+          appendNewLine = true;
+        }
         skipEOL();
       }
-      line = myText.substring(begin, endIndex);
-      if (appendNewLine) line += "\n";
+
+      String line = myText.substring(begin, endIndex);
+      if (appendNewLine) {
+        line += "\n";
+      }
       lines.add(line);
     }
     return ArrayUtil.toStringArray(lines);
@@ -57,20 +69,30 @@ public class LineTokenizer {
     while (notAtEnd()) {
       boolean n = myChars[myIndex] == '\n';
       boolean r = myChars[myIndex] == '\r';
-      if (!n && !r) break;
-      if ((nFound && n) || (rFound && r)) break;
+      if (!n && !r) {
+        break;
+      }
+      if ((nFound && n) || (rFound && r)) {
+        break;
+      }
       nFound |= n;
       rFound |= r;
       myIndex++;
     }
-    if (myLineSeparator == null) myLineSeparator = new String(myChars, eolStart, myIndex - eolStart);
+    if (myLineSeparator == null) {
+      myLineSeparator = new String(myChars, eolStart, myIndex - eolStart);
+    }
   }
 
-  public String getLineSeparator() { return myLineSeparator; }
+  @Nullable
+  public String getLineSeparator() {
+    return myLineSeparator;
+  }
 
   private void skipToEOL() {
-    while (myIndex < myChars.length &&
-           !(myChars[myIndex] == '\r' || myChars[myIndex] == '\n')) myIndex++;
+    while (notAtEnd() && !isAtEOL()) {
+      myIndex++;
+    }
   }
 
   private boolean notAtEnd() {
@@ -81,16 +103,18 @@ public class LineTokenizer {
     return myChars[myIndex] == '\r' || myChars[myIndex] == '\n';
   }
 
-  public static String concatLines(String[] lines) {
-    StringBuffer buffer = new StringBuffer();
-    for (int i = 0; i < lines.length; i++) {
-      String line = lines[i];
+  @NotNull
+  public static String concatLines(@NotNull String[] lines) {
+    StringBuilder buffer = new StringBuilder();
+    for (String line : lines) {
       buffer.append(line);
     }
     return buffer.substring(0, buffer.length());
   }
 
-  public static String correctLineSeparators(String text) {
+  @NotNull
+  public static String correctLineSeparators(@NotNull String text) {
     return concatLines(new LineTokenizer(text).execute());
   }
+
 }
