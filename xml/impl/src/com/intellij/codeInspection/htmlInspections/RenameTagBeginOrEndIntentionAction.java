@@ -50,20 +50,24 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
     myStart = start;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return getName();
   }
 
+  @Override
   @NotNull
   public String getText() {
     return getName();
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final int offset = editor.getCaretModel().getOffset();
     PsiElement psiElement = file.findElementAt(offset);
@@ -118,6 +122,7 @@ public class RenameTagBeginOrEndIntentionAction implements IntentionAction {
     }
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }

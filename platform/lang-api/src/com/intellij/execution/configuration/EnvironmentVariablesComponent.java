@@ -49,7 +49,7 @@ import java.util.List;
 
 public class EnvironmentVariablesComponent extends LabeledComponent<TextFieldWithBrowseButton> implements UserActivityProviderComponent {
   private boolean myPassParentEnvs;
-  private Map<String, String> myEnvs = new THashMap<String, String>();
+  private final Map<String, String> myEnvs = new THashMap<String, String>();
   @NonNls private static final String ENVS = "envs";
   @NonNls public static final String ENV = "env";
   @NonNls public static final String NAME = "name";

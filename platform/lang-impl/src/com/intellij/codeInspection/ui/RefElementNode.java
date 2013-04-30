@@ -37,7 +37,7 @@ public class RefElementNode extends InspectionTreeNode {
   private boolean myHasDescriptorsUnder = false;
   private CommonProblemDescriptor mySingleDescriptor = null;
   protected InspectionTool myTool;
-  private ComputableIcon myIcon = new ComputableIcon(new Computable<Icon>() {
+  private final ComputableIcon myIcon = new ComputableIcon(new Computable<Icon>() {
     @Override
     public Icon compute() {
       final RefEntity refEntity = getElement();

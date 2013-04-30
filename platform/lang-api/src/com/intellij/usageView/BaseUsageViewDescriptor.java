@@ -25,7 +25,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class BaseUsageViewDescriptor implements UsageViewDescriptor {
 
-  private PsiElement[] myElements;
+  private final PsiElement[] myElements;
 
   public BaseUsageViewDescriptor(PsiElement... elements) {
     myElements = elements;

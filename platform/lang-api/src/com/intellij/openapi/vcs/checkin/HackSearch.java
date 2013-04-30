@@ -35,7 +35,7 @@ public class HackSearch<T,S,Z> {
   private final Comparator<Z> myZComparator;
   private S myFake;
   private Z myFakeConverted;
-  private Comparator<S> myComparator;
+  private final Comparator<S> myComparator;
 
   public HackSearch(Convertor<T, Z> TZConvertor, Convertor<S, Z> SZConvertor, Comparator<Z> zComparator) {
     myTZConvertor = TZConvertor;

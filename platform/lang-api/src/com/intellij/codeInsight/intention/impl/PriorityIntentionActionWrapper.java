@@ -28,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Danila Ponomarenko
  */
 public abstract class PriorityIntentionActionWrapper implements IntentionAction {
-  private IntentionAction action;
+  private final IntentionAction action;
 
   private PriorityIntentionActionWrapper(@NotNull IntentionAction action) {
     this.action = action;

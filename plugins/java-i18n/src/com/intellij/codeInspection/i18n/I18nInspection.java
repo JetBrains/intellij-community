@@ -117,6 +117,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     }
   }
 
+  @Override
   public void readSettings(@NotNull Element node) throws InvalidDataException {
     super.readSettings(node);
     for (Object o : node.getChildren()) {
@@ -131,26 +132,31 @@ public class I18nInspection extends BaseLocalInspectionTool {
     cacheNonNlsCommentPattern();
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return CodeInsightBundle.message("inspection.i18n.display.name");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "HardCodedStringLiteral";
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     final GridBagLayout layout = new GridBagLayout();
     final JPanel panel = new JPanel(layout);
     final JCheckBox assertStatementsCheckbox = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.assert"), ignoreForAssertStatements);
     assertStatementsCheckbox.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         ignoreForAssertStatements = assertStatementsCheckbox.isSelected();
       }
@@ -159,6 +165,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
       new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.for.exception.constructor.arguments"),
                     ignoreForExceptionConstructors);
     exceptionConstructorCheck.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         ignoreForExceptionConstructors = exceptionConstructorCheck.isSelected();
       }
@@ -166,6 +173,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
     final JTextField specifiedExceptions = new JTextField(ignoreForSpecifiedExceptionConstructors);
     specifiedExceptions.getDocument().addDocumentListener(new DocumentAdapter(){
+      @Override
       protected void textChanged(DocumentEvent e) {
         ignoreForSpecifiedExceptionConstructors = specifiedExceptions.getText();
       }
@@ -174,36 +182,42 @@ public class I18nInspection extends BaseLocalInspectionTool {
     final JCheckBox junitAssertCheckbox = new JCheckBox(
       CodeInsightBundle.message("inspection.i18n.option.ignore.for.junit.assert.arguments"), ignoreForJUnitAsserts);
     junitAssertCheckbox.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         ignoreForJUnitAsserts = junitAssertCheckbox.isSelected();
       }
     });
     final JCheckBox classRef = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.qualified.class.names"), ignoreForClassReferences);
     classRef.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         ignoreForClassReferences = classRef.isSelected();
       }
     });
     final JCheckBox propertyRef = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.property.keys"), ignoreForPropertyKeyReferences);
     propertyRef.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         ignoreForPropertyKeyReferences = propertyRef.isSelected();
       }
     });
     final JCheckBox nonAlpha = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.nonalphanumerics"), ignoreForNonAlpha);
     nonAlpha.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         ignoreForNonAlpha = nonAlpha.isSelected();
       }
     });
     final JCheckBox assignedToConstants = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.assigned.to.constants"), ignoreAssignedToConstants);
     assignedToConstants.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         ignoreAssignedToConstants = assignedToConstants.isSelected();
       }
     });
     final JCheckBox chkToString = new JCheckBox(CodeInsightBundle.message("inspection.i18n.option.ignore.tostring"), ignoreToString);
     chkToString.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         ignoreToString = chkToString.isSelected();
       }
@@ -211,6 +225,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
     final JCheckBox ignoreEnumConstants = new JCheckBox("Ignore enum constants", ignoreForEnumConstants);
     ignoreEnumConstants.addChangeListener(new ChangeListener() {
+      @Override
       public void stateChanged(ChangeEvent e) {
         ignoreForEnumConstants = ignoreEnumConstants.isSelected();
       }
@@ -239,6 +254,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
                              CodeInsightBundle.message("inspection.i18n.option.ignore.for.specified.exception.constructor.arguments"),
                              openProjects.length == 0 ? null :
                              new ActionListener() {
+                               @Override
                                public void actionPerformed(ActionEvent e) {
                                  createIgnoreExceptionsConfigurationDialog(openProjects[0], specifiedExceptions).show();
                                }
@@ -270,6 +286,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     final FieldPanel nonNlsCommentPatternComponent =
       new FieldPanel(text, CodeInsightBundle.message("inspection.i18n.option.ignore.comment.pattern"),
                      CodeInsightBundle.message("inspection.i18n.option.ignore.comment.title"), null, new Runnable() {
+        @Override
         public void run() {
           nonNlsCommentPattern = text.getText();
           cacheNonNlsCommentPattern();
@@ -297,6 +314,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
         init();
       }
 
+      @Override
       protected JComponent createCenterPanel() {
         final String[] ignored = ignoreForSpecifiedExceptionConstructors.split(",");
         final List<String> initialList = new ArrayList<String>();
@@ -306,6 +324,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
           }
         }
         myPanel = new AddDeleteListPanel<String>(null, initialList) {
+          @Override
           protected String findItemToAdd() {
             final GlobalSearchScope scope = GlobalSearchScope.allScope(project);
             TreeClassChooser chooser = TreeClassChooserFactory.getInstance(project).
@@ -320,6 +339,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
         return myPanel;
       }
 
+      @Override
       protected void doOKAction() {
         StringBuilder buf = new StringBuilder();
         final Object[] exceptions = myPanel.getListItems();
@@ -407,14 +427,17 @@ public class I18nInspection extends BaseLocalInspectionTool {
 
   private static LocalQuickFix createIntroduceConstantFix() {
     return new LocalQuickFix() {
+      @Override
       @NotNull
       public String getName() {
         return IntroduceConstantHandler.REFACTORING_NAME;
       }
 
+      @Override
       public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
         //do it later because it is invoked from write action
         ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
           public void run() {
             PsiElement element = descriptor.getPsiElement();
             if (!(element instanceof PsiExpression)) return;
@@ -425,6 +448,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
         }, project.getDisposed());
       }
 
+      @Override
       @NotNull
       public String getFamilyName() {
         return getName();
@@ -618,6 +642,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     return JavaPsiFacade.getInstance(expression.getProject()).findClass(value, GlobalSearchScope.allScope(expression.getProject())) != null;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return false;
   }

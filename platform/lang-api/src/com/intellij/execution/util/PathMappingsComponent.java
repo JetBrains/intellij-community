@@ -94,7 +94,7 @@ public final class PathMappingsComponent extends LabeledComponent<TextFieldWithB
     private final PathMappingTable myPathMappingTable;
 
     private final JPanel myWholePanel = new JPanel(new BorderLayout());
-    private PathMappingsComponent myMappingsComponent;
+    private final PathMappingsComponent myMappingsComponent;
 
     protected MyPathMappingsDialog(PathMappingsComponent mappingsComponent) {
       super(mappingsComponent, true);

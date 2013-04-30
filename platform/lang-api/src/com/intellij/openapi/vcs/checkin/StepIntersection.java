@@ -42,9 +42,9 @@ public class StepIntersection<Data, Area> {
   private int myAreaIndex;
   private Area myCurArea;
   private final List<Area> myAreas;
-  private HackSearch<Data,Area,TextRange> myHackSearch;
+  private final HackSearch<Data,Area,TextRange> myHackSearch;
   // EA-28497, EA-26379
-  private Getter<String> myDebugDocumentTextGetter;
+  private final Getter<String> myDebugDocumentTextGetter;
 
   public StepIntersection(Convertor<Data, TextRange> dataConvertor,
                           Convertor<Area, TextRange> areasConvertor,

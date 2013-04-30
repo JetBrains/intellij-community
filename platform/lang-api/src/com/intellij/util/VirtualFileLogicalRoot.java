@@ -24,8 +24,8 @@ import org.jetbrains.annotations.Nullable;
  * @author spleaner
  */
 public class VirtualFileLogicalRoot extends LogicalRoot {
-  private VirtualFile myVirtualFile;
-  private LogicalRootType myType;
+  private final VirtualFile myVirtualFile;
+  private final LogicalRootType myType;
 
   public VirtualFileLogicalRoot(final VirtualFile virtualFile, final LogicalRootType type) {
     myVirtualFile = virtualFile;

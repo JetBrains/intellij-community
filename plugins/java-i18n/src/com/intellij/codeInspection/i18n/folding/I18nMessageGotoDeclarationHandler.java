@@ -33,6 +33,7 @@ import org.jetbrains.annotations.Nullable;
 public class I18nMessageGotoDeclarationHandler extends GotoDeclarationHandlerBase {
   private static final Key<FoldingBuilder> KEY = CompositeFoldingBuilder.FOLDING_BUILDER;
 
+  @Override
   public PsiElement getGotoDeclarationTarget(PsiElement element, Editor editor) {
     if (!(element instanceof PsiJavaToken)) return null;
 
