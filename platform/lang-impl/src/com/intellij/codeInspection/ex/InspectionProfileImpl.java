@@ -921,4 +921,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   public String toString() {
     return mySource == null ? getName() : getName() + " (copy)";
   }
+
+  @Override
+  public boolean equals(Object o) {
+    if (super.equals(o)) {
+      return ((InspectionProfileImpl) o).getProfileManager() == myProfileManager;
+    }
+    return false;
+  }
 }
