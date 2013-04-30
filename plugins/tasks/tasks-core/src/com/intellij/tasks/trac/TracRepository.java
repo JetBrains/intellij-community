@@ -162,8 +162,9 @@ public class TracRepository extends BaseRepositoryImpl {
       public TaskType getType() {
         TaskType taskType = TaskType.OTHER;
         String type = map.get("type");
-        if ("Feature".equals(type) || type.equals("enhancement")) taskType = TaskType.FEATURE;
-        else if ("Bug".equals(type) || type.equals("defect") || type.equals("error")) taskType = TaskType.BUG;
+        if (type == null) return taskType;
+        if ("Feature".equals(type) || "enhancement".equals(type)) taskType = TaskType.FEATURE;
+        else if ("Bug".equals(type) || "defect".equals(type) || "error".equals(type)) taskType = TaskType.BUG;
         else if ("Exception".equals(type)) taskType = TaskType.EXCEPTION;
         return taskType;
       }
