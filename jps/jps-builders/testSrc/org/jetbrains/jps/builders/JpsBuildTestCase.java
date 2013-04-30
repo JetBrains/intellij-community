@@ -17,7 +17,6 @@ package org.jetbrains.jps.builders;
 
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.application.ex.PathManagerEx;
-import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -67,7 +66,6 @@ import static org.jetbrains.jps.builders.CompileScopeTestBuilder.make;
  * @author nik
  */
 public abstract class JpsBuildTestCase extends UsefulTestCase {
-  protected static final long TIMESTAMP_ACCURACY = SystemInfo.isMac ? 1000 : 1;
   private File myProjectDir;
   protected JpsProject myProject;
   protected JpsModel myModel;
@@ -118,23 +116,32 @@ public abstract class JpsBuildTestCase extends UsefulTestCase {
       long time = System.currentTimeMillis();
       setLastModified(file, time);
       if (FileSystemUtil.lastModified(file) <= oldTimestamp) {
-        setLastModified(file, time + TIMESTAMP_ACCURACY);
+        setLastModified(file, time + 1);
         long newTimeStamp = FileSystemUtil.lastModified(file);
-        assertTrue("Failed to change timestamp for " + file.getAbsolutePath(), newTimeStamp > oldTimestamp);
-        long delta;
-        while ((delta = newTimeStamp - System.currentTimeMillis()) > 0) {
-          try {
-            //we need this to ensure that the file won't be treated as changed by user during compilation and marked for recompilation
-            //noinspection BusyWait
-            Thread.sleep(delta);
-          }
-          catch (InterruptedException ignored) {
-          }
+        if (newTimeStamp <= oldTimestamp) {
+          //Mac OS and some versions of Linux truncates timestamp to nearest second
+          setLastModified(file, time + 1000);
+          newTimeStamp = FileSystemUtil.lastModified(file);
+          assertTrue("Failed to change timestamp for " + file.getAbsolutePath(), newTimeStamp > oldTimestamp);
         }
+        sleepUntil(newTimeStamp);
       }
     }
     catch (IOException e) {
       throw new RuntimeException(e);
+    }
+  }
+
+  protected static void sleepUntil(long time) {
+    //we need this to ensure that the file won't be treated as changed by user during compilation and therefore marked for recompilation
+    long delta;
+    while ((delta = time - System.currentTimeMillis()) > 0) {
+      try {
+        //noinspection BusyWait
+        Thread.sleep(delta);
+      }
+      catch (InterruptedException ignored) {
+      }
     }
   }
 

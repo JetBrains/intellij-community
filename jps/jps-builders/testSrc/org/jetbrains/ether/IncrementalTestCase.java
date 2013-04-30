@@ -16,6 +16,7 @@
 package org.jetbrains.ether;
 
 import com.intellij.openapi.application.ex.PathManagerEx;
+import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Processor;
@@ -110,12 +111,15 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
         return true;
       }
     });
+    final long[] timestamp = {0};
     FileUtil.processFilesRecursively(baseDir, new Processor<File>() {
       @Override
       public boolean process(File file) {
         try {
           if (file.getName().endsWith(newSuffix)) {
-            FileUtil.copyContent(file, getTargetFile(file, newSuffix));
+            File targetFile = getTargetFile(file, newSuffix);
+            FileUtil.copyContent(file, targetFile);
+            timestamp[0] = Math.max(timestamp[0], FileSystemUtil.lastModified(targetFile));
           }
         }
         catch (IOException e) {
@@ -124,13 +128,7 @@ public abstract class IncrementalTestCase extends JpsBuildTestCase {
         return true;
       }
     });
-    if (TIMESTAMP_ACCURACY > 1) {
-      try {
-        Thread.sleep(TIMESTAMP_ACCURACY);
-      }
-      catch (InterruptedException ignored) {
-      }
-    }
+    sleepUntil(timestamp[0]);
   }
 
   private File getTargetFile(File sourceFile, final String suffix) {
