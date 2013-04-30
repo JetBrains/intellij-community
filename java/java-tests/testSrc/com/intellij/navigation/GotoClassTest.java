@@ -1,6 +1,7 @@
 package com.intellij.navigation;
 
 import com.intellij.codeInsight.navigation.NavigationUtil;
+import com.intellij.idea.Bombed;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManagerTestCase;
@@ -9,12 +10,15 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiJavaFile;
 
+import java.util.Calendar;
+
 /**
  * @author Dmitry Avdeev
  *         Date: 4/25/13
  */
 public class GotoClassTest extends FileEditorManagerTestCase {
 
+  @Bombed(month = Calendar.MAY, day = 20)
   public void testGotoClass() throws Exception {
     PsiJavaFile file = (PsiJavaFile)myFixture.configureByText("Foo.java", "public class Foo {\n" +
                                                          "}\n" +
