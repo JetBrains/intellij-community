@@ -630,28 +630,31 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
                                            PsiType type2,
                                            PsiTypeParameter p1,
                                            PsiTypeParameter p2) {
-    Specifics specifics = checkSubtyping(TypeConversionUtil.erasure(PsiSubstitutor.EMPTY.substitute(p1)),
-                                         TypeConversionUtil.erasure(PsiSubstitutor.EMPTY.substitute(p2)), method1, method2);
-    if (specifics == Specifics.NEITHER) {
-      final Set<PsiElement> resolved1 = new HashSet<PsiElement>();
-      for (PsiJavaCodeReferenceElement referenceElement : p1.getExtendsList().getReferenceElements()) {
-        final PsiElement resolve = referenceElement.resolve();
-        if (resolve != null) {
-          resolved1.add(resolve);
-        }
+    final Set<PsiClass> resolved1 = new HashSet<PsiClass>();
+    for (PsiClassType referenceElement : p1.getExtendsList().getReferencedTypes()) {
+      final PsiClass resolve = referenceElement.resolve();
+      if (resolve != null) {
+        resolved1.add(resolve);
       }
-
-      final Set<PsiElement> resolved2 = new HashSet<PsiElement>();
-      for (PsiJavaCodeReferenceElement referenceElement : p2.getExtendsList().getReferenceElements()) {
-        final PsiElement resolve = referenceElement.resolve();
-        if (resolve != null) {
-          resolved2.add(resolve);
-        }
-      }
-
-      if (resolved1.size() > resolved2.size() && resolved1.containsAll(resolved2)) return Specifics.FIRST;
-      if (resolved2.size() > resolved1.size() && resolved2.containsAll(resolved1)) return Specifics.SECOND;
     }
+
+    final Set<PsiClass> resolved2 = new HashSet<PsiClass>();
+    for (PsiClassType referenceElement : p2.getExtendsList().getReferencedTypes()) {
+      final PsiClass resolve = referenceElement.resolve();
+      if (resolve != null) {
+        resolved2.add(resolve);
+      }
+    }
+
+    Specifics specifics = null;
+    if (resolved1.size() > resolved2.size()){
+      specifics = checkExtendsList(resolved1, resolved2, Specifics.FIRST);
+    } else if (resolved2.size() > resolved1.size()) {
+      specifics = checkExtendsList(resolved2, resolved1, Specifics.SECOND);
+    }
+    if (specifics != null) return specifics;
+    specifics = checkSubtyping(TypeConversionUtil.erasure(PsiSubstitutor.EMPTY.substitute(p1)),
+                               TypeConversionUtil.erasure(PsiSubstitutor.EMPTY.substitute(p2)), method1, method2);
     if (specifics != null) {
       return specifics;
     } else {               
@@ -659,6 +662,26 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       final PsiType ctype2 = classSubstitutor2.substitute(type2);
       return checkSubtyping(ctype1, ctype2, method1, method2);
     }
+  }
+
+  private static Specifics checkExtendsList(Set<PsiClass> resolved1,
+                                            Set<PsiClass> resolved2,
+                                            Specifics preferred) {
+    if (resolved1.containsAll(resolved2)){
+      resolved1.removeAll(resolved2);
+      for (Iterator<PsiClass> iterator = resolved1.iterator(); iterator.hasNext(); ) {
+        PsiClass psiClass = iterator.next();
+        for (PsiClass aClass : resolved2) {
+          if (InheritanceUtil.isInheritorOrSelf(aClass, psiClass, true)) {
+            iterator.remove();
+            break;
+          }
+        }
+      }
+      if (!resolved1.isEmpty()) return preferred;
+      return Specifics.NEITHER;
+    }
+    return null;
   }
 
   private PsiSubstitutor calculateMethodSubstitutor(final PsiTypeParameter[] typeParameters,
