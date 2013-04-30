@@ -37,6 +37,7 @@ import java.util.Collections;
  * @author nik
  */
 public class JpsAntExtensionService {
+  public static final String BUNDLED_ANT_PATH_PROPERTY = "jps.bundled.ant.path";
   private static final Logger LOG = Logger.getInstance(JpsAntExtensionService.class);
 
   @Nullable
@@ -69,17 +70,24 @@ public class JpsAntExtensionService {
 
   @Nullable
   private static JpsAntInstallation getBundledAntInstallation() {
-    final String appHome = PathManager.getHomePath();
-    if (appHome == null) {
-      LOG.debug("IDEA home path is null, bundled Ant won't be configured");
-      return null;
+    String antPath = System.getProperty(BUNDLED_ANT_PATH_PROPERTY);
+    File antHome;
+    if (antPath != null) {
+      antHome = new File(antPath);
     }
+    else {
+      final String appHome = PathManager.getHomePath();
+      if (appHome == null) {
+        LOG.debug("idea.home.path and " + BUNDLED_ANT_PATH_PROPERTY + " aren't specified, bundled Ant won't be configured");
+        return null;
+      }
 
-    File antHome = new File(appHome, "lib" + File.separator + "ant");
-    if (!antHome.exists()) {
-      File communityAntHome = new File(appHome, "community" + File.separator + "lib" + File.separator + "ant");
-      if (communityAntHome.exists()) {
-        antHome = communityAntHome;
+      antHome = new File(appHome, "lib" + File.separator + "ant");
+      if (!antHome.exists()) {
+        File communityAntHome = new File(appHome, "community" + File.separator + "lib" + File.separator + "ant");
+        if (communityAntHome.exists()) {
+          antHome = communityAntHome;
+        }
       }
     }
     if (!antHome.exists()) {
