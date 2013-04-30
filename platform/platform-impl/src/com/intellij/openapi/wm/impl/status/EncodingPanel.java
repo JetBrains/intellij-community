@@ -21,6 +21,7 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.actionSystem.impl.SimpleDataContext;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.EditorFactory;
@@ -67,10 +68,12 @@ import java.nio.charset.Charset;
 public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.Multiframe, CustomStatusBarWidget {
   private final TextPanel myComponent;
   private boolean actionEnabled;
+  private final Alarm update;
 
   public EncodingPanel(@NotNull final Project project) {
     super(project);
 
+    update = new Alarm(this);
     myComponent = new TextPanel(getMaxValue()) {
       @Override
       protected void paintComponent(@NotNull final Graphics g) {
@@ -157,20 +160,14 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
         }
       }
     }));
-    final Alarm update = new Alarm();
+
     EditorFactory.getInstance().getEventMulticaster().addDocumentListener(new DocumentAdapter() {
       @Override
       public void documentChanged(DocumentEvent e) {
         Document document = e.getDocument();
         Editor selectedEditor = getEditor();
         if (selectedEditor == null || selectedEditor.getDocument() != document) return;
-        update.cancelAllRequests();
-        update.addRequest(new Runnable() {
-                              @Override
-                              public void run() {
-                                if (!isDisposed()) update();
-                              }
-                            }, 200);
+        update();
       }
     }, this);
   }
@@ -201,39 +198,46 @@ public class EncodingPanel extends EditorBasedWidget implements StatusBarWidget.
   }
 
   private void update() {
-    UIUtil.invokeLaterIfNeeded(new Runnable() {
-      @Override
-      public void run() {
-        VirtualFile file = getSelectedFile();
-        String fromBytes = file == null ? null : LoadTextUtil.wasCharsetDetectedFromBytes(file);
-        Charset charset = fromBytes == null ? cachedCharsetFromContent(file) : null;
-        if (charset == null && file != null) charset = file.getCharset();
+    if (update.isDisposed()) return;
+    update.cancelAllRequests();
+    update.addRequest(
+      new Runnable() {
+        @Override
+        public void run() {
+          if (isDisposed()) return;
 
-        String text = charset == null ? "" : charset.displayName();
-        Pair<Charset,String> check = file == null ? null : EncodingUtil.checkSomeActionEnabled(file);
-        String failReason = check == null ? null : check.second;
-        Charset currentCharset = check == null ? null : check.first;
-        actionEnabled = failReason == null;
+          VirtualFile file = getSelectedFile();
+          String fromBytes = file == null ? null : LoadTextUtil.wasCharsetDetectedFromBytes(file);
+          Charset charset = fromBytes == null ? cachedCharsetFromContent(file) : null;
+          if (charset == null && file != null) charset = file.getCharset();
 
-        String toolTip = "File Encoding" +
-                         (currentCharset == null ? "" : ": "+currentCharset.displayName()) +
-                         (actionEnabled ? "" : " (change disabled: " + failReason + ")");
-        myComponent.setToolTipText(toolTip);
-        myComponent.setText(text);
+          String text = charset == null ? "" : charset.displayName();
+          Pair<Charset, String> check = file == null ? null : EncodingUtil.checkSomeActionEnabled(file);
+          String failReason = check == null ? null : check.second;
+          Charset currentCharset = check == null ? null : check.first;
+          actionEnabled = failReason == null;
 
-        if (actionEnabled) {
-          myComponent.setForeground(UIUtil.getActiveTextColor());
+          String toolTip = "File Encoding" +
+                           (currentCharset == null ? "" : ": " + currentCharset.displayName()) +
+                           (actionEnabled ? "" : " (change disabled: " + failReason + ")");
+          myComponent.setToolTipText(toolTip);
+          myComponent.setText(text);
+
+          if (actionEnabled) {
+            myComponent.setForeground(UIUtil.getActiveTextColor());
+          }
+          else {
+            myComponent.setForeground(UIUtil.getInactiveTextColor());
+          }
+
+          if (myStatusBar != null) {
+            myStatusBar.updateWidget(ID());
+          }
         }
-        else {
-          myComponent.setForeground(UIUtil.getInactiveTextColor());
-        }
-
-        if (myStatusBar != null) {
-          myStatusBar.updateWidget(ID());
-        }
-      }
-    });
-    
+      },
+      200,
+      ModalityState.any()
+    );
   }
 
   @Override
