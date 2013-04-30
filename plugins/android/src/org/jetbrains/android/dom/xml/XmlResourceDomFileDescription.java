@@ -18,10 +18,14 @@ package org.jetbrains.android.dom.xml;
 
 import com.android.resources.ResourceType;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Computable;
+import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
 import org.jetbrains.android.dom.AndroidResourceDomFileDescription;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Created by IntelliJ IDEA.
@@ -46,5 +50,23 @@ public class XmlResourceDomFileDescription extends AndroidResourceDomFileDescrip
         return new XmlResourceDomFileDescription().isMyFile(file, null);
       }
     });
+  }
+
+  @Override
+  public boolean isMyFile(@NotNull XmlFile file, @Nullable Module module) {
+    if (!super.isMyFile(file, module)) {
+      return false;
+    }
+    final XmlTag rootTag = file.getRootTag();
+
+    if (rootTag == null || rootTag.getNamespace().length() > 0) {
+      return false;
+    }
+    for (XmlAttribute attribute : rootTag.getAttributes()) {
+      if (attribute.getName().equals("xmlns")) {
+        return false;
+      }
+    }
+    return true;
   }
 }

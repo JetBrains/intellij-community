@@ -1,23 +1,15 @@
 package org.jetbrains.android.inspections;
 
-import com.android.resources.ResourceType;
-import com.android.SdkConstants;
 import com.intellij.codeInsight.daemon.XmlErrorMessages;
 import com.intellij.codeInspection.*;
-import com.intellij.lang.ASTNode;
-import com.intellij.openapi.util.Key;
-import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.XmlRecursiveElementVisitor;
-import com.intellij.psi.xml.*;
-import com.intellij.util.xml.DomElement;
-import com.intellij.util.xml.DomManager;
-import com.intellij.xml.XmlAttributeDescriptor;
+import com.intellij.psi.xml.XmlFile;
+import com.intellij.psi.xml.XmlTag;
+import com.intellij.psi.xml.XmlToken;
 import com.intellij.xml.XmlElementDescriptor;
 import com.intellij.xml.util.XmlTagUtil;
-import org.jetbrains.android.dom.AndroidAnyAttributeDescriptor;
 import org.jetbrains.android.dom.AndroidAnyTagDescriptor;
-import org.jetbrains.android.dom.xml.AndroidXmlResourcesUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.Nls;
@@ -25,7 +17,6 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.ArrayList;
 import java.util.List;
-import java.util.Set;
 
 /**
  * @author Eugene.Kudelevsky
@@ -61,17 +52,7 @@ public class AndroidElementNotAllowedInspection extends LocalInspectionTool {
     if (facet == null) {
       return ProblemDescriptor.EMPTY_ARRAY;
     }
-    if (AndroidUnknownAttributeInspection.isMyFile(facet, file)) {
-      final String resourceType = facet.getLocalResourceManager().getFileResourceType(file);
-
-      if (ResourceType.XML.getName().equals(resourceType)) {
-        final XmlTag rootTag = ((XmlFile)file).getRootTag();
-
-        if (rootTag == null || !AndroidXmlResourcesUtil.isSupportedRootTag(facet, rootTag.getName())) {
-          return ProblemDescriptor.EMPTY_ARRAY;
-        }
-      }
-
+    if (AndroidUnknownAttributeInspection.isMyFile(facet, (XmlFile)file)) {
       MyVisitor visitor = new MyVisitor(manager, isOnTheFly);
       file.accept(visitor);
       return visitor.myResult.toArray(new ProblemDescriptor[visitor.myResult.size()]);

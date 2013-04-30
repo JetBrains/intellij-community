@@ -18,6 +18,7 @@ package org.jetbrains.android.dom;
 
 import com.android.SdkConstants;
 import com.intellij.codeInsight.completion.CompletionType;
+import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.openapi.vfs.VirtualFile;
 
 import java.util.List;
@@ -184,5 +185,32 @@ public class AndroidXmlResourcesDomTest extends AndroidDomTest {
 
   public void testAndroidPrefixCompletion() throws Throwable {
     doTestAndroidPrefixCompletion("android:");
+  }
+
+  public void testHtmlAsXmlResource() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testCustomXmlFileHighlighting() throws Throwable {
+    doTestHighlighting();
+  }
+
+  public void testCustomXmlFileCompletion1() throws Throwable {
+    doTestCompletionVariants(getTestName(true) + ".xml");
+  }
+
+  public void testCustomXmlFileCompletion2() throws Throwable {
+    VirtualFile file = copyFileToProject(getTestName(true) + ".xml");
+    myFixture.configureFromExistingVirtualFile(file);
+    myFixture.complete(CompletionType.BASIC);
+    final LookupElement[] lookupElements = myFixture.getLookupElements();
+    assertNotNull(lookupElements);
+
+    for (LookupElement element : lookupElements) {
+      if ("http://www.w3.org/1999/xhtml".equals(element.getLookupString())) {
+        return;
+      }
+    }
+    fail();
   }
 }
