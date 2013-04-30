@@ -161,7 +161,6 @@ public final class NavigationUtil {
     final FileEditorManager fem = FileEditorManager.getInstance(elt.getProject());
     if (!fem.isFileOpen(vFile)) {
       fem.openFile(vFile, true, searchForOpen);
-      return true;
     }
 
     final TextRange range = elt.getTextRange();
@@ -173,7 +172,8 @@ public final class NavigationUtil {
         final Editor text = ((TextEditor)editor).getEditor();
         final int offset = text.getCaretModel().getOffset();
 
-        if (range.contains(offset)) {
+        if (range.containsOffset(offset)) {
+          // select the file
           fem.openFile(vFile, true, searchForOpen);
           return true;
         }
