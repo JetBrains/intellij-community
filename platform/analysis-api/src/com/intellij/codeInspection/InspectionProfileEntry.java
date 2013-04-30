@@ -28,7 +28,10 @@ import com.intellij.util.xmlb.SkipDefaultValuesSerializationFilters;
 import com.intellij.util.xmlb.XmlSerializationException;
 import com.intellij.util.xmlb.XmlSerializer;
 import org.jdom.Element;
-import org.jetbrains.annotations.*;
+import org.jetbrains.annotations.Nls;
+import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import java.io.BufferedReader;
@@ -61,9 +64,9 @@ public abstract class InspectionProfileEntry {
   protected volatile DefaultNameProvider myNameProvider = null;
 
   /**
-   * @see InspectionEP#groupDisplayName
-   * @see InspectionEP#groupKey
-   * @see InspectionEP#groupBundle
+   * @see com.intellij.codeInspection.InspectionEP#groupDisplayName
+   * @see com.intellij.codeInspection.InspectionEP#groupKey
+   * @see com.intellij.codeInspection.InspectionEP#groupBundle
    */
   @Nls
   @NotNull
@@ -79,7 +82,7 @@ public abstract class InspectionProfileEntry {
   }
 
   /**
-   * @see InspectionEP#groupPath
+   * @see com.intellij.codeInspection.InspectionEP#groupPath
    */
   @NotNull
   public String[] getGroupPath() {
@@ -91,9 +94,9 @@ public abstract class InspectionProfileEntry {
   }
 
   /**
-   * @see InspectionEP#displayName
-   * @see InspectionEP#key
-   * @see InspectionEP#bundle
+   * @see com.intellij.codeInspection.InspectionEP#displayName
+   * @see com.intellij.codeInspection.InspectionEP#key
+   * @see com.intellij.codeInspection.InspectionEP#bundle
    */
   @Nls
   @NotNull
@@ -111,7 +114,7 @@ public abstract class InspectionProfileEntry {
   /**
    * DO NOT OVERRIDE this method.
    *
-   * @see InspectionEP#shortName
+   * @see com.intellij.codeInspection.InspectionEP#shortName
    */
   @NonNls
   @NotNull
@@ -133,7 +136,7 @@ public abstract class InspectionProfileEntry {
   /**
    * DO NOT OVERRIDE this method.
    *
-   * @see InspectionEP#level
+   * @see com.intellij.codeInspection.InspectionEP#level
    */
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
@@ -143,7 +146,7 @@ public abstract class InspectionProfileEntry {
   /**
    * DO NOT OVERRIDE this method.
    *
-   * @see InspectionEP#enabledByDefault
+   * @see com.intellij.codeInspection.InspectionEP#enabledByDefault
    */
   public boolean isEnabledByDefault() {
     return false;
@@ -260,7 +263,7 @@ public abstract class InspectionProfileEntry {
    * Initialize inspection with project. Is called on project opened for all profiles as well as on profile creation.
    *
    * @param project to be associated with this entry
-   * @deprecated this won't work for inspections configured via {@link InspectionEP}
+   * @deprecated this won't work for inspections configured via {@link com.intellij.codeInspection.InspectionEP}
    */
   public void projectOpened(Project project) {
   }
@@ -269,7 +272,7 @@ public abstract class InspectionProfileEntry {
    * Cleanup inspection settings corresponding to the project. Is called on project closed for all profiles as well as on profile deletion.
    *
    * @param project to be disassociated from this entry
-   * @deprecated this won't work for inspections configured via {@link InspectionEP}
+   * @deprecated this won't work for inspections configured via {@link com.intellij.codeInspection.InspectionEP}
    */
   public void projectClosed(Project project) {
   }

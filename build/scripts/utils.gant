@@ -181,7 +181,7 @@ def debugPort = System.getProperty("debug.port") ?: 5555
 if (suspendUntilDebuggerConnect == 'y') {
   println """\
 ------------->----------- This process is suspended until remote debugger connects to the port $debugPort ----<----
--------------------------------------------^------^------^------^------^------^------^-----------------------  
+-------------------------------------------^------^------^------^------^------^------^-----------------------
 """
 }
 
@@ -250,6 +250,7 @@ binding.setVariable("platformApiModules", [
         "platform-api",
         "lvcs-api",
         "lang-api",
+        "analysis-api",
         "vcs-api",
         "usageView",
         "xdebugger-api",
@@ -267,6 +268,7 @@ binding.setVariable("platformImplementationModules", [
         "platform-impl",
         "vcs-impl",
         "lang-impl",
+        "analysis-impl",
         "testRunner",
         "smRunner",
         "xdebugger-impl",

@@ -35,8 +35,11 @@ public abstract class LocalInspectionTool extends InspectionProfileEntry {
   private static final Logger LOG = Logger.getInstance("#" + LocalInspectionTool.class.getName());
 
   interface LocalDefaultNameProvider extends DefaultNameProvider {
-    @Nullable String getDefaultID();
-    @Nullable String getDefaultAlternativeID();
+    @Nullable
+    String getDefaultID();
+
+    @Nullable
+    String getDefaultAlternativeID();
   }
 
   /**

@@ -87,14 +87,6 @@ public abstract class InspectionManager {
   @NotNull
   public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                             @NotNull final String descriptionTemplate,
-                                                            @NotNull ProblemHighlightType highlightType,
-                                                            @Nullable final HintAction hintAction,
-                                                            boolean onTheFly,
-                                                            LocalQuickFix... fixes);
-
-  @NotNull
-  public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
-                                                            @NotNull final String descriptionTemplate,
                                                             final boolean showTooltip,
                                                             @NotNull ProblemHighlightType highlightType,
                                                             boolean onTheFly,
@@ -151,17 +143,6 @@ public abstract class InspectionManager {
                                                             final TextRange rangeInElement,
                                                             @NotNull final String descriptionTemplate,
                                                             @NotNull ProblemHighlightType highlightType,
-                                                            final LocalQuickFix... fixes);
-
-  @Deprecated
-  @NotNull
-  /**
-   * use {@link #createProblemDescriptor(PsiElement, String, ProblemHighlightType, HintAction, boolean, LocalQuickFix...)} instead
-   */
-  public abstract ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
-                                                            @NotNull final String descriptionTemplate,
-                                                            @NotNull ProblemHighlightType highlightType,
-                                                            @Nullable final HintAction hintAction,
                                                             final LocalQuickFix... fixes);
 
   @Deprecated

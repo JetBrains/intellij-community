@@ -16,13 +16,9 @@
 
 package com.intellij.codeInspection.ex;
 
-import com.intellij.codeInspection.CommonProblemDescriptor;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.QuickFix;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.codeInspection.reference.RefEntity;
-import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
@@ -151,7 +147,7 @@ public class DescriptorComposer extends HTMLComposerImpl {
       }
 
       anchor.append("\">");
-      anchor.append(ProblemDescriptionNode.extractHighlightedText(description, expression).replaceAll("\\$", "\\\\\\$"));
+      anchor.append(ProblemDescriptorUtil.extractHighlightedText(description, expression).replaceAll("\\$", "\\\\\\$"));
       //noinspection HardCodedStringLiteral
       anchor.append("</a>");
     }

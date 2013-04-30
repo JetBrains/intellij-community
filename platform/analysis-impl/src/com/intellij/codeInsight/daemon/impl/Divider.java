@@ -15,7 +15,6 @@
  */
 package com.intellij.codeInsight.daemon.impl;
 
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightLevelUtil;
 import com.intellij.lang.Language;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.progress.ProgressManager;
@@ -43,12 +42,12 @@ public class Divider {
                                             @NotNull TextRange range,
                                             @NotNull List<PsiElement> inside,
                                             @NotNull List<PsiElement> outside,
-                                            @NotNull HighlightLevelUtil.AnalysisLevel level,
-                                            boolean includeParents) {
+                                            boolean includeParents,
+                                            @NotNull Condition<PsiFile> filter) {
     final FileViewProvider viewProvider = file.getViewProvider();
     for (Language language : viewProvider.getLanguages()) {
       final PsiFile psiRoot = viewProvider.getPsi(language);
-      if (HighlightLevelUtil.shouldAnalyse(psiRoot, level)) {
+      if (filter.value(psiRoot)) {
         divideInsideAndOutside(psiRoot, startOffset, endOffset, range, inside, outside, includeParents);
       }
     }

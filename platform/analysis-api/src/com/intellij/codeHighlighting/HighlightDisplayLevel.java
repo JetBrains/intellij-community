@@ -16,7 +16,10 @@
 package com.intellij.codeHighlighting;
 
 import com.intellij.lang.annotation.HighlightSeverity;
-import com.intellij.openapi.editor.colors.*;
+import com.intellij.openapi.editor.colors.CodeInsightColors;
+import com.intellij.openapi.editor.colors.TextAttributesKey;
+import com.intellij.openapi.extensions.ExtensionPointName;
+import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.ImageLoader;
 import com.intellij.util.containers.HashMap;
@@ -106,17 +109,27 @@ public class HighlightDisplayLevel {
 
   @NotNull
   private static Icon createIconByMask(@NotNull TextAttributesKey key) {
-    final EditorColorsManager manager = EditorColorsManager.getInstance();
-    if (manager != null) {
-      final EditorColorsScheme globalScheme = manager.getGlobalScheme();
-      return createIconByMask(globalScheme.getAttributes(key).getErrorStripeColor());
-    }
-
+    Icon icon = createIconByMaskFromExtensions(key);
+    if (icon != null) return icon;
     return createIconByMask(key.getDefaultAttributes().getErrorStripeColor());
   }
 
+  public interface IconCreator {
+    ExtensionPointName<IconCreator> EXTENSION_POINT_NAME = ExtensionPointName.create("com.intellij.codeHighlighting.iconCreator");
+
+    Icon createIcon(@NotNull TextAttributesKey key);
+  }
+
+  public static Icon createIconByMaskFromExtensions(@NotNull TextAttributesKey key) {
+    for (IconCreator creator : Extensions.getExtensions(IconCreator.EXTENSION_POINT_NAME)) {
+      Icon icon = creator.createIcon(key);
+      if (icon != null) return icon;
+    }
+    return null;
+  }
+
   @NotNull
-  public static Icon createIconByMask(@NotNull final Color renderColor) {
+  public static Icon createIconByMask(final Color renderColor) {
     return new Icon() {
       @Override
       public void paintIcon(Component c, Graphics g, int x, int y) {

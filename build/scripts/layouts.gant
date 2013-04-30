@@ -289,7 +289,7 @@ public def layoutCommunityPlugins(String home) {
       }
       fileset(dir: "$home/plugins/gradle/lib") { include(name: "*.jar") }
     }
-    
+
     layoutPlugin("git4idea") {
       jar("git4idea-rt.jar") {
         module("git4idea-rt")
@@ -701,6 +701,8 @@ def layout_core_upsource(String home, String target) {
       module("java-indexing-impl")
       module("platform-resources")
       module("platform-resources-en")
+      module("analysis-api")
+      module("analysis-impl")
     }
 
     jar("annotations.jar") {

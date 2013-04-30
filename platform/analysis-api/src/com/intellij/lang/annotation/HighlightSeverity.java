@@ -21,6 +21,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.WriteExternalException;
 import org.jdom.Element;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * Defines a highlighting severity level for an annotation.
@@ -93,7 +94,7 @@ public class HighlightSeverity implements Comparable<HighlightSeverity>, JDOMExt
   }
 
   @Override
-  public int compareTo(final HighlightSeverity highlightSeverity) {
+  public int compareTo(@NotNull final HighlightSeverity highlightSeverity) {
     return myVal - highlightSeverity.myVal;
   }
 
