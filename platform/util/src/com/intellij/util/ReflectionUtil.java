@@ -39,7 +39,7 @@ public class ReflectionUtil {
   @Nullable
   public static Type resolveVariable(TypeVariable variable, final Class classType, boolean resolveInInterfacesOnly) {
     final Class aClass = getRawType(classType);
-    int index = ArrayUtil.find(ReflectionCache.getTypeParameters(aClass), variable);
+    int index = ArrayUtilRt.find(ReflectionCache.getTypeParameters(aClass), variable);
     if (index >= 0) {
       return variable;
     }
@@ -63,7 +63,7 @@ public class ReflectionUtil {
       }
       if (resolved instanceof TypeVariable) {
         final TypeVariable typeVariable = (TypeVariable)resolved;
-        index = ArrayUtil.find(ReflectionCache.getTypeParameters(anInterface), typeVariable);
+        index = ArrayUtilRt.find(ReflectionCache.getTypeParameters(anInterface), typeVariable);
         if (index < 0) {
           LOG.error("Cannot resolve type variable:\n" + "typeVariable = " + typeVariable + "\n" + "genericDeclaration = " +
                     declarationToString(typeVariable.getGenericDeclaration()) + "\n" + "searching in " + declarationToString(anInterface));
@@ -73,7 +73,7 @@ public class ReflectionUtil {
           return Object.class;
         }
         if (type instanceof ParameterizedType) {
-          return getActualTypeArguments(((ParameterizedType)type))[index];
+          return getActualTypeArguments((ParameterizedType)type)[index];
         }
         throw new AssertionError("Invalid type: " + type);
       }
@@ -81,7 +81,7 @@ public class ReflectionUtil {
     return null;
   }
 
-  public static String declarationToString(final GenericDeclaration anInterface) {
+  public static String declarationToString(@NotNull GenericDeclaration anInterface) {
     return anInterface.toString()
            + Arrays.asList(anInterface.getTypeParameters())
            + " loaded by " + ((Class)anInterface).getClassLoader();
@@ -118,9 +118,9 @@ public class ReflectionUtil {
         return (Class<?>)((ParameterizedType)type).getRawType();
       }
       if (type instanceof TypeVariable && classType instanceof ParameterizedType) {
-        final int index = ArrayUtil.find(ReflectionCache.getTypeParameters(aClass), type);
+        final int index = ArrayUtilRt.find(ReflectionCache.getTypeParameters(aClass), type);
         if (index >= 0) {
-          return getRawType(getActualTypeArguments(((ParameterizedType)classType))[index]);
+          return getRawType(getActualTypeArguments((ParameterizedType)classType)[index]);
         }
       }
     } else {
@@ -308,20 +308,29 @@ public class ReflectionUtil {
   }
 
   /**
+   * @see com.intellij.ide.plugins.PluginManager#initPlugins(com.intellij.ide.StartupProgress)
+   */
+  @SuppressWarnings("JavadocReference")
+  static volatile Function<String, ClassLoader> PLUGIN_CLASS_LOADER_DETECTOR = FunctionUtil.nullConstant();
+
+  /**
    * Returns the class this method was called 'framesToSkip' frames up the caller hierarchy.
+   * JDK used to have {@link sun.reflect.Reflection#getCallerClass(int)} until jdk 1.8 build 87.
+   * So we have to resort to slow stack unwinding.
    *
    * NOTE:
    * <b>Extremely expensive!
    * Please consider not using it.
    * These aren't the droids you're looking for!</b>
    */
+  @SuppressWarnings("JavadocReference")
   @Nullable
   public static Class getCallerClass(int framesToSkip) {
-    int adjustedFramesForThisCall = framesToSkip/*+1*/; // take into account this method frame
+    int frames = framesToSkip;
 
     StackTraceElement[] stackTrace = new Throwable().getStackTrace();
     String className = null;
-    for (int i = 1; i<=adjustedFramesForThisCall; i++) {
+    for (int i = 1; i<=frames; i++) {
       if (i >= stackTrace.length) {
         break;
       }
@@ -330,10 +339,10 @@ public class ReflectionUtil {
       if (className.equals("java.lang.reflect.Method") ||
           className.equals("sun.reflect.NativeMethodAccessorImpl") ||
           className.equals("sun.reflect.DelegatingMethodAccessorImpl")) {
-        adjustedFramesForThisCall++;
+        frames++;
         continue;
       }
-      if (i == adjustedFramesForThisCall) {
+      if (i == frames) {
         break;
       }
     }
@@ -344,15 +353,21 @@ public class ReflectionUtil {
       className = ReflectionUtil.class.getName();
     }
 
-    //Class realClass = Reflection.getCallerClass(adjustedFramesForThisCall+1);
-    //if (!realClass.getName().equals(className)) {
-    //  int i = 0;
-    //}
     try {
       return Class.forName(className);
     }
     catch (ClassNotFoundException ignored) {
     }
+    ClassLoader pluginClassLoader = PLUGIN_CLASS_LOADER_DETECTOR.fun(className);
+    if (pluginClassLoader != null) {
+      try {
+        return Class.forName(className, false, pluginClassLoader);
+      }
+      catch (ClassNotFoundException ignored) {
+      }
+    }
+    LOG.error("Could not load class '" + className + "' using classLoader " + ReflectionUtil.class.getClassLoader() + "." +
+              (stackTrace[1].getClassName().equals("com.intellij.openapi.util.IconLoader") ? " Use getIcon(String, Class) instead." : ""));
     return null;
   }
 }

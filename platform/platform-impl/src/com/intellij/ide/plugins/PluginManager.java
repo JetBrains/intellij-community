@@ -45,10 +45,7 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.ex.WindowManagerEx;
-import com.intellij.util.ArrayUtil;
-import com.intellij.util.ExceptionUtil;
-import com.intellij.util.Function;
-import com.intellij.util.PlatformUtils;
+import com.intellij.util.*;
 import com.intellij.util.graph.CachingSemiGraph;
 import com.intellij.util.graph.DFSTBuilder;
 import com.intellij.util.graph.Graph;
@@ -60,7 +57,6 @@ import org.jdom.Document;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.reflect.Reflection;
 
 import javax.swing.*;
 import javax.swing.event.HyperlinkEvent;
@@ -77,7 +73,6 @@ import java.util.zip.ZipInputStream;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"}) // No logger is loaded at this time so we have to use these.
 public class PluginManager {
-
   @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
   @NonNls public static final String INSTALLED_TXT = "installed.txt";
   @NonNls private static final String SPECIAL_IDEA_PLUGIN = "IDEA CORE";
@@ -119,6 +114,7 @@ public class PluginManager {
   }
 
   public static void initPlugins(@Nullable StartupProgress progress) {
+    PluginClassLoaderDetector.install();
     long start = System.currentTimeMillis();
     try {
       initializePlugins(progress);
@@ -224,7 +220,7 @@ public class PluginManager {
 
     final IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(progress);
 
-    final Class callerClass = Reflection.getCallerClass(1);
+    final Class callerClass = ReflectionUtil.getCallerClass(1);
     final ClassLoader parentLoader = callerClass.getClassLoader();
 
     final List<IdeaPluginDescriptorImpl> result = new ArrayList<IdeaPluginDescriptorImpl>();
@@ -296,7 +292,7 @@ public class PluginManager {
     ourPlugins = pluginDescriptors;
   }
 
-  public static void initClassLoader(final ClassLoader parentLoader, final IdeaPluginDescriptorImpl descriptor) {
+  public static void initClassLoader(@NotNull ClassLoader parentLoader, @NotNull IdeaPluginDescriptorImpl descriptor) {
     final List<File> classPath = descriptor.getClassPath();
     final ClassLoader loader =
         createPluginClassLoader(classPath.toArray(new File[classPath.size()]), new ClassLoader[]{parentLoader}, descriptor);

@@ -20,6 +20,7 @@ import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.reference.SoftReference;
 import com.intellij.util.ImageLoader;
+import com.intellij.util.ReflectionUtil;
 import com.intellij.util.RetinaImage;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.WeakHashMap;
@@ -27,7 +28,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.reflect.Reflection;
 
 import javax.swing.*;
 import java.awt.*;
@@ -113,18 +113,18 @@ public final class IconLoader {
   @NotNull
   public static Icon getIcon(@NonNls @NotNull final String path) {
     int stackFrameCount = 2;
-    Class callerClass = Reflection.getCallerClass(stackFrameCount);
+    Class callerClass = ReflectionUtil.getCallerClass(stackFrameCount);
     while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
-      callerClass = Reflection.getCallerClass(++stackFrameCount);
+      callerClass = ReflectionUtil.getCallerClass(++stackFrameCount);
     }
     if (callerClass == null) {
-      callerClass = Reflection.getCallerClass(1);
+      callerClass = ReflectionUtil.getCallerClass(1);
     }
     return getIcon(path, callerClass);
   }
 
   @Nullable
-  private static Icon getReflectiveIcon(String path, ClassLoader classLoader) {
+  private static Icon getReflectiveIcon(@NotNull String path, ClassLoader classLoader) {
     try {
       String pckg = path.startsWith("AllIcons.") ? "com.intellij.icons." : "icons.";
       Class cur = Class.forName(pckg + path.substring(0, path.lastIndexOf('.')).replace('.', '$'), true, classLoader);
@@ -144,12 +144,12 @@ public final class IconLoader {
    */
   public static Icon findIcon(@NonNls @NotNull String path) {
     int stackFrameCount = 2;
-    Class callerClass = Reflection.getCallerClass(stackFrameCount);
+    Class callerClass = ReflectionUtil.getCallerClass(stackFrameCount);
     while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
-      callerClass = Reflection.getCallerClass(++stackFrameCount);
+      callerClass = ReflectionUtil.getCallerClass(++stackFrameCount);
     }
     if (callerClass == null) {
-      callerClass = Reflection.getCallerClass(1);
+      callerClass = ReflectionUtil.getCallerClass(1);
     }
     return findIcon(path, callerClass);
   }
@@ -196,10 +196,10 @@ public final class IconLoader {
 
   private static String undeprecate(String path) {
     String replacement = ourDeprecatedIconsReplacements.get(path);
-    return replacement != null ? replacement : path;
+    return replacement == null ? path : replacement;
   }
 
-  private static boolean isReflectivePath(String path) {
+  private static boolean isReflectivePath(@NotNull String path) {
     List<String> paths = StringUtil.split(path, ".");
     return paths.size() > 1 && paths.get(0).endsWith("Icons");
   }
@@ -218,7 +218,7 @@ public final class IconLoader {
   }
 
   @Nullable
-  public static Icon findIcon(String path, final ClassLoader classLoader) {
+  public static Icon findIcon(@NotNull String path, final ClassLoader classLoader) {
     path = undeprecate(path);
     if (isReflectivePath(path)) return getReflectiveIcon(path, classLoader);
     if (!path.startsWith("/")) return null;
@@ -295,14 +295,17 @@ public final class IconLoader {
 
   public static Icon getTransparentIcon(@NotNull final Icon icon, final float alpha) {
     return new Icon() {
+      @Override
       public int getIconHeight() {
         return icon.getIconHeight();
       }
 
+      @Override
       public int getIconWidth() {
         return icon.getIconWidth();
       }
 
+      @Override
       public void paintIcon(final Component c, final Graphics g, final int x, final int y) {
         final Graphics2D g2 = (Graphics2D)g;
         final Composite saveComposite = g2.getComposite();
@@ -346,14 +349,17 @@ public final class IconLoader {
       return icon != null ? icon : EMPTY_ICON;
     }
 
+    @Override
     public void paintIcon(Component c, Graphics g, int x, int y) {
       getRealIcon().paintIcon(c, g, x, y);
     }
 
+    @Override
     public int getIconWidth() {
       return getRealIcon().getIconWidth();
     }
 
+    @Override
     public int getIconHeight() {
       return getRealIcon().getIconHeight();
     }
@@ -369,6 +375,7 @@ public final class IconLoader {
       super(image);
     }
 
+    @Override
     public final synchronized void paintIcon(final Component c, final Graphics g, final int x, final int y) {
       super.paintIcon(null, g, x, y);
     }
@@ -399,7 +406,7 @@ public final class IconLoader {
       return icon != null ? icon.getIconHeight() : 0;
     }
 
-    protected synchronized final Icon getOrComputeIcon() {
+    protected final synchronized Icon getOrComputeIcon() {
       if (!myWasComputed || isDarkVariant != USE_DARK_ICONS) {
         isDarkVariant = USE_DARK_ICONS;
         myWasComputed = true;
@@ -420,7 +427,7 @@ public final class IconLoader {
     private final Class myCallerClass;
     private final String myPath;
 
-    public ByClass(Class aClass, String path) {
+    public ByClass(@NotNull Class aClass, @NotNull String path) {
       myCallerClass = aClass;
       myPath = path;
     }
