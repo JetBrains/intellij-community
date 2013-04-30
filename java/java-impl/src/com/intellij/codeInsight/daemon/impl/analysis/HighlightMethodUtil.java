@@ -146,6 +146,14 @@ public class HighlightMethodUtil {
                                                          String detailMessage,
                                                          PsiMethod methodToHighlight) {
     if (superReturnType == null) return null;
+    if ("clone".equals(method.getName())) {
+      final PsiClass containingClass = method.getContainingClass();
+      final PsiClass superContainingClass = superMethod.getContainingClass();
+      if (containingClass != null && superContainingClass != null && containingClass.isInterface() && !superContainingClass.isInterface()) {
+        return null;
+      }
+    }
+
     PsiType substitutedSuperReturnType;
     final boolean isJdk15 = PsiUtil.isLanguageLevel5OrHigher(method);
     if (isJdk15 && !superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5

@@ -1094,6 +1094,12 @@ public class GenericsHighlightUtil {
     }
     try {
       MethodSignatureBackedByPsiMethod superMethod = SuperMethodsSearch.search(method, null, true, false).findFirst();
+      if (superMethod != null && method.getContainingClass().isInterface() && "clone".equals(superMethod.getName())) {
+        final PsiClass containingClass = superMethod.getMethod().getContainingClass();
+        if (containingClass != null && CommonClassNames.JAVA_LANG_OBJECT.equals(containingClass.getQualifiedName())) {
+          superMethod = null;
+        }
+      }
       if (superMethod == null) {
         String description = JavaErrorMessages.message("method.does.not.override.super");
         HighlightInfo highlightInfo =

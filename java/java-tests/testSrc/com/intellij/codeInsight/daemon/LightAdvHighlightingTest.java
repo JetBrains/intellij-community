@@ -185,7 +185,6 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testCatchUnknownMethod() throws Exception { doTest(false, false); }
   public void testIDEADEV8822() throws Exception { doTest(false, false); }
   public void testIDEADEV9201() throws Exception { doTest(false, false); }
-  public void testIDEADEV11877() throws Exception { doTest(false, false); }
   public void testIDEADEV25784() throws Exception { doTest(false, false); }
   public void testIDEADEV13249() throws Exception { doTest(false, false); }
   public void testIDEADEV11919() throws Exception { doTest(false, false); }
