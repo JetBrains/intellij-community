@@ -150,7 +150,7 @@ public class GenericsUtil {
         if (type2 instanceof PsiWildcardType) {
           PsiWildcardType wild2 = (PsiWildcardType)type2;
           final PsiType bound2 = wild2.getBound();
-          if (bound2 == null) return wild1;
+          if (bound2 == null) return type2;
           if (wild1.isExtends() == wild2.isExtends()) {
             return wild1.isExtends() ?
                    PsiWildcardType.createExtends(manager, getLeastUpperBound(bound1, bound2, compared, manager)) :
