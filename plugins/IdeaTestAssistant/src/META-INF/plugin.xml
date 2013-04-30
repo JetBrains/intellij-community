@@ -15,6 +15,7 @@
   <extensions defaultExtensionNs="com.intellij">
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <codeInsight.lineMarkerProvider language="JAVA" implementationClass="com.intellij.testAssistant.TestDataLineMarkerProvider"/>
+    <codeInsight.lineMarkerProvider language="Groovy" implementationClass="com.intellij.testAssistant.TestDataLineMarkerProvider"/>
     <fileEditorProvider implementation="com.intellij.testAssistant.TestDataGroupEditorProvider"/>
     <gotoRelatedProvider implementation="com.intellij.testAssistant.TestDataAsRelatedFileProvider"/>
   </extensions>
