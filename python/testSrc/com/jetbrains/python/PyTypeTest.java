@@ -536,6 +536,23 @@ public class PyTypeTest extends PyTestCase {
 
   }
 
+  // PY-7063
+  public void testDefaultParameterValue() {
+    doTest("int",
+           "def f(x, y=0):\n" +
+           "    return y\n" +
+           "expr = f(a, b)\n");
+  }
+
+  // PY-7063
+  public void testDefaultParameterIgnoreNone() {
+    final PyExpression expr = parseExpr("def f(x=None):\n" +
+                                        "    expr = x\n");
+    final TypeEvalContext context = TypeEvalContext.slow().withTracing();
+    final PyType type = context.getType(expr);
+    assertNull(type);
+  }
+
   private PyExpression parseExpr(String text) {
     myFixture.configureByText(PythonFileType.INSTANCE, text);
     return myFixture.findElementByText("expr", PyExpression.class);
