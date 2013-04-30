@@ -137,10 +137,10 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     return myReplaceDenied;
   }
 
-  public LivePreviewController(SearchResults searchResults, EditorSearchComponent component) {
+  public LivePreviewController(SearchResults searchResults, @Nullable EditorSearchComponent component) {
     mySearchResults = searchResults;
     mySearchResults.addListener(this);
-    this.myComponent = component;
+    myComponent = component;
     getEditor().getDocument().addDocumentListener(myDocumentListener);
   }
 
@@ -269,8 +269,10 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     if (textRange == null) {
       mySuppressUpdate = false;
     }
-    myComponent.addTextToRecent(myComponent.getReplaceField());
-    myComponent.clearUndoInTextFields();
+    if (myComponent != null) {
+      myComponent.addTextToRecent(myComponent.getReplaceField());
+      myComponent.clearUndoInTextFields();
+    }
   }
 
   public void exclude() {
@@ -297,6 +299,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   }
 
   public void dispose() {
+    off();
     if (myDisposed) return;
 
     mySearchResults.dispose();

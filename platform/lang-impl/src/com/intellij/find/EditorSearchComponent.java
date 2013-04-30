@@ -135,7 +135,6 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   private JComponent myToolbarComponent;
 
   private LivePreviewController myLivePreviewController;
-  private LivePreview myLivePreview;
   private SearchResults mySearchResults;
 
   private final FindModel myFindModel;
