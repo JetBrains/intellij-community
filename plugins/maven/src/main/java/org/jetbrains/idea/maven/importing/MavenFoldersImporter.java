@@ -21,12 +21,12 @@ import com.intellij.openapi.application.AccessToken;
 import com.intellij.openapi.application.WriteAction;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
-import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ModifiableRootModel;
+import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
-import gnu.trove.THashMap;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.model.MavenResource;
@@ -39,7 +39,6 @@ import java.io.File;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 public class MavenFoldersImporter {
   private final MavenProject myMavenProject;
@@ -180,9 +179,9 @@ public class MavenFoldersImporter {
 
   private void configGeneratedAndExcludedFolders() {
     File targetDir = new File(myMavenProject.getBuildDirectory());
-    Map<File, Boolean> generatedDirs = new THashMap<File, Boolean>();
-    generatedDirs.put(new File(myMavenProject.getGeneratedSourcesDirectory(true)), true);
-    generatedDirs.put(new File(myMavenProject.getGeneratedSourcesDirectory(false)), false);
+
+    String generatedDir = myMavenProject.getGeneratedSourcesDirectory(false);
+    String generatedDirTest = myMavenProject.getGeneratedSourcesDirectory(true);
 
     myModel.unregisterAll(targetDir.getPath(), true, false);
 
@@ -194,12 +193,14 @@ public class MavenFoldersImporter {
     File[] targetChildren = targetDir.listFiles();
 
     if (targetChildren != null) {
-      for (File f : getChildren(targetDir)) {
+      for (File f : targetChildren) {
         if (!f.isDirectory()) continue;
 
-        Boolean isGeneratedTestSources = generatedDirs.get(f);
-        if (isGeneratedTestSources != null) {
-          configGeneratedSourceFolder(f, isGeneratedTestSources);
+        if (FileUtil.pathsEqual(generatedDir, f.getPath())) {
+          configGeneratedSourceFolder(f, false);
+        }
+        else if (FileUtil.pathsEqual(generatedDirTest, f.getPath())) {
+          configGeneratedSourceFolder(f, true);
         }
         else {
           if (myImportingSettings.isExcludeTargetFolder()) {
