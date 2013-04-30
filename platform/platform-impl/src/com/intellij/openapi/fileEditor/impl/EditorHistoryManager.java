@@ -32,7 +32,7 @@ import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
-import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
@@ -62,12 +62,15 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
 
   public void projectOpened(){
 
-    connectToManager();
-    StartupManager.getInstance(myProject).registerPostStartupActivity(
-      new DumbAwareRunnable(){
-        public void run(){
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new MyEditorManagerBeforeListener());
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyEditorManagerListener());
+
+    StartupManager.getInstance(myProject).runWhenProjectIsInitialized(
+      new DumbAwareRunnable() {
+        public void run() {
           // myElement may be null if node that corresponds to this manager does not exist
-          if (myElement != null){
+          if (myElement != null) {
             final List children = myElement.getChildren(HistoryEntry.TAG);
             myElement = null;
             //noinspection unchecked
@@ -91,13 +94,6 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
       }
     );
   }
-
-  public void connectToManager() {
-    MessageBusConnection connection = myProject.getMessageBus().connect();
-    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new MyEditorManagerBeforeListener());
-    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyEditorManagerListener());
-  }
-
 
   @NotNull
   public String getComponentName(){
@@ -138,7 +134,7 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
       selectedEditor = fallbackEditor;
     }
     LOG.assertTrue(selectedEditor != null);
-    final int selectedProviderIndex = ArrayUtil.find(editors, selectedEditor);
+    final int selectedProviderIndex = ArrayUtilRt.find(editors, selectedEditor);
     LOG.assertTrue(selectedProviderIndex != -1);
 
     final HistoryEntry entry = getEntry(file);

@@ -58,6 +58,6 @@ public class NewDocumentHistoryTest extends PlatformLangTestCase {
     myManager = new FileEditorManagerImpl(getProject(), DockManager.getInstance(getProject()));
     ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myManager);
     ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(getProject())).projectOpened();
-    EditorHistoryManager.getInstance(getProject()).connectToManager();
+    EditorHistoryManager.getInstance(getProject()).projectOpened();
   }
 }
