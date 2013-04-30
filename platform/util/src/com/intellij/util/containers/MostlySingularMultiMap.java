@@ -97,6 +97,10 @@ public class MostlySingularMultiMap<K, V> implements Serializable {
     return myMap.size();
   }
 
+  public boolean containsKey(@NotNull K key) {
+    return myMap.containsKey(key);
+  }
+
   public int valuesForKey(@NotNull K key) {
     Object current = myMap.get(key);
     if (current == null) return 0;
