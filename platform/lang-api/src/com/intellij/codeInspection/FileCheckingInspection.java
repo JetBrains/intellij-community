@@ -17,6 +17,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.psi.PsiFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -24,5 +25,5 @@ import org.jetbrains.annotations.Nullable;
  */
 public interface FileCheckingInspection {
   @Nullable
-  ProblemDescriptor[] checkFile(PsiFile file, InspectionManager manager, boolean isOnTheFly);
+  ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly);
 }
