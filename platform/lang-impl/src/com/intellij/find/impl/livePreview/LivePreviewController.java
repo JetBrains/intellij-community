@@ -299,11 +299,12 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   }
 
   public void dispose() {
-    off();
     if (myDisposed) return;
 
-    mySearchResults.dispose();
     myLivePreview.cleanUp();
+    off();
+
+    mySearchResults.dispose();
     getEditor().getDocument().removeDocumentListener(myDocumentListener);
     myDisposed = true;
   }
@@ -325,6 +326,7 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
   public void off() {
     if (myDisposed) return;
 
+    setTrackingDocument(false);
     setLivePreview(null);
     setTrackingSelection(false);
   }
