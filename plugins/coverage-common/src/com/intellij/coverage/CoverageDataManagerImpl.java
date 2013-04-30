@@ -58,7 +58,6 @@ import java.io.DataInputStream;
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.IOException;
-import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
@@ -317,14 +316,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
             chooseSuitesBundle(new CoverageSuitesBundle(suite));
           }
           else if (answer == 1) {
-            CoverageSuite[] suites = myCurrentSuitesBundle.getSuites();
-            final int suiteIdx = ArrayUtil.find(myCurrentSuitesBundle.getSuites(), suite);
-            if (suiteIdx != -1) {
-              suites[suiteIdx] = suite;
-            } else {
-              suites = ArrayUtil.append(suites, suite);
-            }
-            chooseSuitesBundle(new CoverageSuitesBundle(suites));
+            chooseSuitesBundle(new CoverageSuitesBundle(ArrayUtil.append(myCurrentSuitesBundle.getSuites(), suite)));
           }
         }
         else {
