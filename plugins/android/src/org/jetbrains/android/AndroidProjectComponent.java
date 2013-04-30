@@ -15,6 +15,10 @@
  */
 package org.jetbrains.android;
 
+import com.intellij.facet.Facet;
+import com.intellij.facet.FacetManager;
+import com.intellij.facet.FacetManagerAdapter;
+import com.intellij.facet.ProjectFacetManager;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
@@ -26,10 +30,12 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.HashMap;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.android.compiler.AndroidAutogeneratorMode;
 import org.jetbrains.android.compiler.AndroidCompileUtil;
 import org.jetbrains.android.compiler.AndroidPrecompileTask;
 import org.jetbrains.android.facet.AndroidFacet;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.EnumSet;
@@ -56,7 +62,27 @@ public class AndroidProjectComponent extends AbstractProjectComponent {
       public void dispose() {
       }
     };
-    createAlarmForAutogeneration();
+
+    if (!ApplicationManager.getApplication().isUnitTestMode() &&
+        !ApplicationManager.getApplication().isHeadlessEnvironment()) {
+
+      if (ProjectFacetManager.getInstance(myProject).hasFacets(AndroidFacet.ID)) {
+        createAlarmForAutogeneration();
+      }
+      else {
+        final MessageBusConnection connection = myProject.getMessageBus().connect(myDisposable);
+
+        connection.subscribe(FacetManager.FACETS_TOPIC, new FacetManagerAdapter() {
+          @Override
+          public void facetAdded(@NotNull Facet facet) {
+            if (facet instanceof AndroidFacet) {
+              createAlarmForAutogeneration();
+              connection.disconnect();
+            }
+          }
+        });
+      }
+    }
   }
 
   @Override
@@ -69,29 +95,29 @@ public class AndroidProjectComponent extends AbstractProjectComponent {
     alarm.addRequest(new Runnable() {
       @Override
       public void run() {
-        final Map<AndroidFacet, Collection<AndroidAutogeneratorMode>> facetsToProcess =
-          new HashMap<AndroidFacet, Collection<AndroidAutogeneratorMode>>();
+          final Map<AndroidFacet, Collection<AndroidAutogeneratorMode>> facetsToProcess =
+            new HashMap<AndroidFacet, Collection<AndroidAutogeneratorMode>>();
 
-        for (Module module : ModuleManager.getInstance(myProject).getModules()) {
-          final AndroidFacet facet = AndroidFacet.getInstance(module);
+          for (Module module : ModuleManager.getInstance(myProject).getModules()) {
+            final AndroidFacet facet = AndroidFacet.getInstance(module);
 
-          if (facet != null && facet.isAutogenerationEnabled()) {
-            final Set<AndroidAutogeneratorMode> modes = EnumSet.noneOf(AndroidAutogeneratorMode.class);
+            if (facet != null && facet.isAutogenerationEnabled()) {
+              final Set<AndroidAutogeneratorMode> modes = EnumSet.noneOf(AndroidAutogeneratorMode.class);
 
-            for (AndroidAutogeneratorMode mode : AndroidAutogeneratorMode.values()) {
-              if (facet.cleanRegeneratingState(mode) || facet.isGeneratedFileRemoved(mode)) {
-                modes.add(mode);
+              for (AndroidAutogeneratorMode mode : AndroidAutogeneratorMode.values()) {
+                if (facet.cleanRegeneratingState(mode) || facet.isGeneratedFileRemoved(mode)) {
+                  modes.add(mode);
+                }
+              }
+
+              if (modes.size() > 0) {
+                facetsToProcess.put(facet, modes);
               }
             }
-
-            if (modes.size() > 0) {
-              facetsToProcess.put(facet, modes);
-            }
           }
-        }
 
-        if (facetsToProcess.size() > 0) {
-          generate(facetsToProcess);
+          if (facetsToProcess.size() > 0) {
+            generate(facetsToProcess);
         }
         if (!alarm.isDisposed()) {
           alarm.addRequest(this, 2000);
