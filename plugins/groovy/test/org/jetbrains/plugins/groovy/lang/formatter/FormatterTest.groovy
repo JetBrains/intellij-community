@@ -368,6 +368,116 @@ def foo()
 ''')
   }
 
+  void testSpacesWithinClosure0() {
+    groovySettings.SPACE_WITHIN_BRACES = true
+    checkFormatting('''def cl = {print 2}''', '''def cl = { print 2 }''')
+  }
+
+  void testSpacesWithinClosure1() {
+    groovySettings.SPACE_WITHIN_BRACES = true
+    checkFormatting('''\
+def cl = {
+print 2}
+''', '''\
+def cl = {
+  print 2
+}
+''')
+  }
+
+  void testSpacesWithinClosure2() {
+    groovySettings.SPACE_WITHIN_BRACES = true
+    checkFormatting('''\
+def cl = {->
+print 2}
+''', '''\
+def cl = { ->
+  print 2
+}
+''')
+  }
+
+  void testSpacesWithinClosure3() {
+    groovySettings.SPACE_WITHIN_BRACES = true
+    checkFormatting('''\
+def cl = {def a->
+print 2}
+''', '''\
+def cl = { def a ->
+  print 2
+}
+''')
+  }
+
+  void testSpacesWithinClosure4() {
+    groovySettings.SPACE_WITHIN_BRACES = true
+    checkFormatting('''\
+def cl = {
+def a->
+print 2}
+''', '''\
+def cl = {
+  def a ->
+    print 2
+}
+''')
+  }
+
+  void testSpacesWithinClosure5() {
+    groovySettings.SPACE_WITHIN_BRACES = false
+    checkFormatting('''def cl = { print 2 }''', '''def cl = {print 2}''')
+  }
+
+  void testSpacesWithinClosure6() {
+    groovySettings.SPACE_WITHIN_BRACES = false
+    checkFormatting('''\
+def cl = {
+print 2}
+''', '''\
+def cl = {
+  print 2
+}
+''')
+  }
+
+  void testSpacesWithinClosure7() {
+    groovySettings.SPACE_WITHIN_BRACES = false
+    checkFormatting('''\
+def cl = { ->
+print 2}
+''', '''\
+def cl = {->
+  print 2
+}
+''')
+  }
+
+  void testSpacesWithinClosure8() {
+    groovySettings.SPACE_WITHIN_BRACES = false
+    checkFormatting('''\
+def cl = { def a->
+print 2}
+''', '''\
+def cl = {def a ->
+  print 2
+}
+''')
+  }
+
+  void testSpacesWithinClosure9() {
+    groovySettings.SPACE_WITHIN_BRACES = false
+    checkFormatting('''\
+def cl = {
+def a->
+print 2}
+''', '''\
+def cl = {
+  def a ->
+    print 2
+}
+''')
+  }
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES;

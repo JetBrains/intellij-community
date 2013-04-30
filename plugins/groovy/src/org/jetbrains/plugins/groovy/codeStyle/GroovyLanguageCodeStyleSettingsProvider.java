@@ -115,10 +115,12 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
                                    "SPACE_BEFORE_ANOTATION_PARAMETER_LIST",
                                    "SPACE_WITHIN_ANNOTATION_PARENTHESES"
       );
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_IN_NAMED_ARGUMENT", "In named argument after ':'", CodeStyleSettingsCustomizable.SPACES_OTHER);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_IN_NAMED_ARGUMENT", "In named argument after ':'",
+                                CodeStyleSettingsCustomizable.SPACES_OTHER);
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_LIST_OR_MAP", "List and maps literals", CodeStyleSettingsCustomizable.SPACES_WITHIN);
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_BEFORE_CLOSURE_LBRACE", "Closure left brace in method calls", CodeStyleSettingsCustomizable.SPACES_BEFORE_LEFT_BRACE);
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_GSTRING_INJECTION_BRACES", "GString injection braces", CodeStyleSettingsCustomizable.SPACES_WITHIN);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_TUPLE_EXPRESSION", "Tuple assignment expression", CodeStyleSettingsCustomizable.SPACES_WITHIN);
       return;
     }
     consumer.showAllStandardOptions();
@@ -131,7 +133,7 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
     defaultSettings.SPACE_WITHIN_BRACES = true;
     defaultSettings.KEEP_SIMPLE_CLASSES_IN_ONE_LINE = true;
     defaultSettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE = true;
-    defaultSettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
+    //defaultSettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE = true;
     return defaultSettings;
   }
 
