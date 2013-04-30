@@ -895,13 +895,42 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Nullable
-  private static String checkSuperMethodSignature(PsiMethod superMethod,
-                                                  MethodSignatureBackedByPsiMethod superMethodSignature,
-                                                  PsiType superReturnType,
-                                                  PsiMethod method,
-                                                  MethodSignatureBackedByPsiMethod methodSignature,
-                                                  PsiType returnType) {
-    if (superReturnType == null) return null;
+  private static String checkSuperMethodSignature(@NotNull PsiMethod superMethod,
+                                                  @NotNull MethodSignatureBackedByPsiMethod superMethodSignature,
+                                                  @NotNull PsiType superReturnType,
+                                                  @NotNull PsiMethod method,
+                                                  @NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                                  @NotNull PsiType returnType) {
+    PsiType substitutedSuperReturnType = substituteSuperReturnType(superMethodSignature, methodSignature, superReturnType);
+
+    if (returnType.equals(substitutedSuperReturnType)) return null;
+
+    final PsiType rawReturnType = TypeConversionUtil.erasure(returnType);
+    final PsiType rawSuperReturnType = TypeConversionUtil.erasure(substitutedSuperReturnType);
+
+    if (returnType instanceof PsiClassType && substitutedSuperReturnType instanceof PsiClassType) {
+      if (TypeConversionUtil.isAssignable(rawSuperReturnType, rawReturnType)) {
+        return null;
+      }
+    }
+    else if (returnType instanceof PsiArrayType && superReturnType instanceof PsiArrayType) {
+      if (rawReturnType.equals(rawSuperReturnType)) {
+        return null;
+      }
+    }
+
+    String qName = getQNameOfMember(method);
+    String baseQName = getQNameOfMember(superMethod);
+    final String presentation = returnType.getCanonicalText() + " " + GroovyPresentationUtil.getSignaturePresentation(methodSignature);
+    final String basePresentation =
+      superReturnType.getCanonicalText() + " " + GroovyPresentationUtil.getSignaturePresentation(superMethodSignature);
+    return GroovyBundle.message("return.type.is.incompatible", presentation, qName, basePresentation, baseQName);
+  }
+
+  @NotNull
+  private static PsiType substituteSuperReturnType(@NotNull MethodSignatureBackedByPsiMethod superMethodSignature,
+                                                   @NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                                   @NotNull PsiType superReturnType) {
     PsiType substitutedSuperReturnType;
     if (!superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
       PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature,
@@ -913,20 +942,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     else {
       substitutedSuperReturnType = TypeConversionUtil.erasure(superReturnType);
     }
-
-    if (returnType.equals(substitutedSuperReturnType)) return null;
-    if (!(returnType instanceof PsiPrimitiveType) &&
-        substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType &&
-        TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType)) {
-      return null;
-    }
-
-    String qName = getQNameOfMember(method);
-    String baseQName = getQNameOfMember(superMethod);
-    final String presentation = returnType.getCanonicalText() + " " + GroovyPresentationUtil.getSignaturePresentation(methodSignature);
-    final String basePresentation =
-      superReturnType.getCanonicalText() + " " + GroovyPresentationUtil.getSignaturePresentation(superMethodSignature);
-    return GroovyBundle.message("return.type.is.incompatible", presentation, qName, basePresentation, baseQName);
+    return substitutedSuperReturnType;
   }
 
   @NotNull

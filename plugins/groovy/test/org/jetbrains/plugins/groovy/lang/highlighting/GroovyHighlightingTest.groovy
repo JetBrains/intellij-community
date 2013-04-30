@@ -1262,4 +1262,75 @@ class D<T, E> {
   def foo(E t) {}
 }''')
   }
+
+  void testOverriddenReturnType0() {
+    myFixture.addClass('class Base{}')
+    myFixture.addClass('class Inh extends Base{}')
+    testHighlighting('''\
+class A {
+  List<Base> foo() {}
+}
+
+class B extends A {
+  List<Inh> foo() {} //correct
+}
+''')
+  }
+
+  void testOverriddenReturnType1() {
+    myFixture.addClass('class Base extends SuperBase {}')
+    myFixture.addClass('class Inh extends Base{}')
+    testHighlighting('''\
+class A {
+  List<Base> foo() {}
+}
+
+class B extends A {
+  <error>Collection<Base></error> foo() {}
+}
+''')
+  }
+
+  void testOverriddenReturnType2() {
+    myFixture.addClass('class Base extends SuperBase {}')
+    myFixture.addClass('class Inh extends Base{}')
+    testHighlighting('''\
+class A {
+  List<Base> foo() {}
+}
+
+class B extends A {
+  <error>int</error> foo() {}
+}
+''')
+  }
+
+  void testOverriddenReturnType3() {
+    myFixture.addClass('class Base extends SuperBase {}')
+    myFixture.addClass('class Inh extends Base{}')
+    testHighlighting('''\
+class A {
+  Base[] foo() {}
+}
+
+class B extends A {
+  <error>Inh[]</error> foo() {}
+}
+''')
+  }
+
+  void testOverriddenReturnType4() {
+    myFixture.addClass('class Base extends SuperBase {}')
+    myFixture.addClass('class Inh extends Base{}')
+    testHighlighting('''\
+class A {
+  Base[] foo() {}
+}
+
+class B extends A {
+  Base[] foo() {}
+}
+''')
+  }
+
 }
