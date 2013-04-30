@@ -66,25 +66,37 @@ public class GitMergeProvider implements MergeProvider2 {
    */
   @NotNull private final Set<VirtualFile> myReverseRoots;
 
+  private enum ReverseRequest {
+    REVERSE,
+    FORWARD,
+    DETECT
+  }
+
   private GitMergeProvider(@NotNull Project project, @NotNull Set<VirtualFile> reverseRoots) {
     myProject = project;
     myReverseRoots = reverseRoots;
   }
 
   public GitMergeProvider(@NotNull Project project, boolean reverse) {
-    this(project, findReverseRoots(project, reverse));
+    this(project, findReverseRoots(project, reverse ? ReverseRequest.REVERSE : ReverseRequest.FORWARD));
   }
 
   @NotNull
   public static MergeProvider detect(@NotNull Project project) {
-    return new GitMergeProvider(project, findReverseRoots(project, null));
+    return new GitMergeProvider(project, findReverseRoots(project, ReverseRequest.DETECT));
   }
 
   @NotNull
-  private static Set<VirtualFile> findReverseRoots(@NotNull Project project, @Nullable Boolean reverseOrDetect) {
+  private static Set<VirtualFile> findReverseRoots(@NotNull Project project, @NotNull ReverseRequest reverseOrDetect) {
     Set<VirtualFile> reverseMap = ContainerUtil.newHashSet();
     for (GitRepository repository : GitUtil.getRepositoryManager(project).getRepositories()) {
-      boolean reverse = reverseOrDetect == null ? repository.getState().equals(GitRepository.State.REBASING) : reverseOrDetect;
+      boolean reverse;
+      if (reverseOrDetect == ReverseRequest.DETECT) {
+        reverse = repository.getState().equals(GitRepository.State.REBASING);
+      }
+      else {
+        reverse = reverseOrDetect == ReverseRequest.REVERSE;
+      }
       if (reverse) {
         reverseMap.add(repository.getRoot());
       }
