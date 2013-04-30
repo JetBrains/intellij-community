@@ -1183,9 +1183,9 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static <T> String join(@NotNull Collection<T> items, @NotNull Function<T, String> f, @NotNull @NonNls String separator) {
+  public static <T> String join(@NotNull Collection<? extends T> items, @NotNull Function<? super T, String> f, @NotNull @NonNls String separator) {
     if (items.isEmpty()) return "";
-    return join((Iterable<T>)items, f, separator);
+    return join((Iterable<? extends T>)items, f, separator);
   }
 
   public static String join(@NotNull Iterable<?> items, @NotNull @NonNls String separator) {
@@ -1200,7 +1200,7 @@ public class StringUtil extends StringUtilRt {
   }
 
   @NotNull
-  public static <T> String join(@NotNull Iterable<T> items, @NotNull Function<T, String> f, @NotNull @NonNls String separator) {
+  public static <T> String join(@NotNull Iterable<? extends T> items, @NotNull Function<? super T, String> f, @NotNull @NonNls String separator) {
     final StringBuilder result = new StringBuilder();
     for (T item : items) {
       String string = f.fun(item);
