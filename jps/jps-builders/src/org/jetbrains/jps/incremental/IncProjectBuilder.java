@@ -998,7 +998,6 @@ public class IncProjectBuilder {
 
   // return true if changed something, false otherwise
   private boolean runModuleLevelBuilders(final CompileContext context, final ModuleChunk chunk) throws ProjectBuildException, IOException {
-    sendBuildingTargetMessages(chunk.getTargets(), BuildingTargetProgressMessage.Event.STARTED);
     for (BuilderCategory category : BuilderCategory.values()) {
       for (ModuleLevelBuilder builder : myBuilderRegistry.getBuilders(category)) {
         builder.chunkBuildStarted(context, chunk);
@@ -1112,7 +1111,6 @@ public class IncProjectBuilder {
           builder.chunkBuildFinished(context, chunk);
         }
       }
-      sendBuildingTargetMessages(chunk.getTargets(), BuildingTargetProgressMessage.Event.FINISHED);
     }
 
     return doneSomething;
