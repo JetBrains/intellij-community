@@ -23,15 +23,30 @@ import com.intellij.tasks.trac.TracRepository;
  * @author Dmitry Avdeev
  *         Date: 1/25/12
  */
-public abstract class TracIntegrationTest extends TaskManagerTestCase {
+public class TracIntegrationTest extends TaskManagerTestCase {
+
+  private TracRepository myRepository;
 
   public void testTracEncoding() throws Exception {
 
-    TracRepository repository = new TracRepository();
-    repository.setUseHttpAuthentication(true);
-
-    Task task = repository.findTask("5358");
+    Task task = myRepository.findTask("5");
     assertNotNull(task);
     assertEquals("Artikel k\u00f6nnen nicht in den Warenkorb gelegt werden", task.getSummary());
+  }
+
+  public void testGetUnknownType() throws Exception {
+    Task task = myRepository.findTask("5");
+    assertNotNull(task);
+    assertEquals(null, task.getType());
+  }
+
+  @Override
+  public void setUp() throws Exception {
+    super.setUp();
+    myRepository = new TracRepository();
+    myRepository.setUrl("http://trackers-tests.labs.intellij.net:8012/trac-12-p-1/rpc");
+    myRepository.setPassword("buildtest");
+    myRepository.setUsername("buildtest");
+    myRepository.setUseHttpAuthentication(true);
   }
 }
