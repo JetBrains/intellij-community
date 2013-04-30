@@ -883,7 +883,7 @@
     <!-- Cython -->
     <dialectsTokenSetContributor implementation="com.jetbrains.cython.CythonTokenSetContributor"/>
     <typeProvider implementation="com.jetbrains.cython.types.CythonTypeProvider"/>
-    <importResolver implementation="com.jetbrains.cython.PyCythonImportResolver"/>
+    <importResolver implementation="com.jetbrains.cython.CythonImportResolver"/>
     <visitorFilter language="Cython" implementationClass="com.jetbrains.cython.CythonVisitorFilter"/>
     <pyModuleMembersProvider implementation="com.jetbrains.cython.CythonModuleMembersProvider"/>
 
