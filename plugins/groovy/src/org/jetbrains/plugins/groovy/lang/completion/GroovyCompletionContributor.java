@@ -653,6 +653,13 @@ public class GroovyCompletionContributor extends CompletionContributor {
   private static final String DUMMY_IDENTIFIER_DECAPITALIZED = StringUtil.decapitalize(CompletionUtil.DUMMY_IDENTIFIER);
 
   public void beforeCompletion(@NotNull final CompletionInitializationContext context) {
+    final String identifier = getIdentifier(context);
+    if (identifier != null) {
+      context.setDummyIdentifier(identifier);
+    }
+  }
+
+  private String getIdentifier(CompletionInitializationContext context) {
     if (context.getCompletionType() == CompletionType.BASIC && context.getFile() instanceof GroovyFile) {
       PsiElement position = context.getFile().findElementAt(context.getStartOffset());
       if (position != null &&
@@ -663,18 +670,38 @@ public class GroovyCompletionContributor extends CompletionContributor {
           position.getParent() instanceof GrAnnotationNameValuePair &&
           position == ((GrAnnotationNameValuePair)position.getParent()).getNameIdentifierGroovy()) {
 
-        context.setDummyIdentifier(CompletionUtil.DUMMY_IDENTIFIER_TRIMMED);
+        return CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
       }
       else if (isIdentifierBeforeLParenth(context)) {
-        context.setDummyIdentifier(setCorrectCase(context) + ";");
+        return setCorrectCase(context) + ";";
       }
       else if (isInPossibleClosureParameter(position)) {
-        context.setDummyIdentifier(setCorrectCase(context) + "->");
+        return setCorrectCase(context) + "->";
+      }
+      else if (isBeforeAssign(context)) {
+        return CompletionUtil.DUMMY_IDENTIFIER_TRIMMED;
       }
       else {
-        context.setDummyIdentifier(setCorrectCase(context));
+        return setCorrectCase(context);
       }
     }
+    return null;
+  }
+
+  private static boolean isBeforeAssign(CompletionInitializationContext context) {
+    //<caret>String name=
+    HighlighterIterator iterator = ((EditorEx)context.getEditor()).getHighlighter().createIterator(context.getStartOffset());
+    if (iterator.atEnd()) return false;
+
+    if (iterator.getTokenType() == mIDENT) {
+      iterator.advance();
+    }
+
+    while (!iterator.atEnd() && WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
+      iterator.advance();
+    }
+
+    return !iterator.atEnd() && iterator.getTokenType() == mASSIGN;
   }
 
   private static String setCorrectCase(CompletionInitializationContext context) {
@@ -684,9 +711,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
     final String text = element.getText();
     if (text.length() == 0) return DUMMY_IDENTIFIER_DECAPITALIZED;
 
-    if (Character.isUpperCase(text.charAt(0))) return CompletionInitializationContext.DUMMY_IDENTIFIER;
-
-    return DUMMY_IDENTIFIER_DECAPITALIZED;
+    return Character.isUpperCase(text.charAt(0)) ? CompletionInitializationContext.DUMMY_IDENTIFIER : DUMMY_IDENTIFIER_DECAPITALIZED;
   }
 
   public static boolean isInPossibleClosureParameter(PsiElement position) { //Closure cl={String x, <caret>...
@@ -745,15 +770,7 @@ public class GroovyCompletionContributor extends CompletionContributor {
       iterator.advance();
     }
 
-    if (!iterator.atEnd() && iterator.getTokenType() == mLPAREN) {
-      return true;
-    }
-
-    while (!iterator.atEnd() && WHITE_SPACES_OR_COMMENTS.contains(iterator.getTokenType())) {
-      iterator.advance();
-    }
-
-    return false;
+    return !iterator.atEnd() && iterator.getTokenType() == mLPAREN;
   }
 
   public static void suggestVariableNames(PsiElement context, CompletionResultSet result) {
