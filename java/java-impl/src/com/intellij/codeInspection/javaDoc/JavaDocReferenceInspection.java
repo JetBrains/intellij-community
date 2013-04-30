@@ -24,7 +24,6 @@ import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.util.FQNameCellRenderer;
 import com.intellij.openapi.actionSystem.DataContext;
@@ -307,7 +306,7 @@ public class JavaDocReferenceInspection extends BaseLocalInspectionTool {
         public void run(DataContext dataContext) {
           final Editor editor = PlatformDataKeys.EDITOR.getData(dataContext);
           assert editor != null;
-          final TextRange textRange = ((ProblemDescriptorImpl)descriptor).getTextRange();
+          final TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
           editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
 
           final String word = editor.getSelectionModel().getSelectedText();

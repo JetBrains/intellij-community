@@ -662,7 +662,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
       }
     }
-    HintAction hintAction = ((ProblemDescriptorImpl)descriptor).getHintAction();
+    HintAction hintAction = descriptor instanceof ProblemDescriptorImpl ? ((ProblemDescriptorImpl)descriptor).getHintAction() : null;
     if (hintAction != null) {
       QuickFixAction.registerQuickFixAction(highlightInfo, hintAction, key);
       needEmptyAction = false;

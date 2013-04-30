@@ -20,7 +20,6 @@ import com.intellij.codeInsight.ExceptionUtil;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.codeInspection.reference.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
@@ -106,7 +105,7 @@ public class RedundantThrows extends GlobalJavaInspectionTool {
       }
 
       if (problems != null) {
-        return problems.toArray(new ProblemDescriptorImpl[problems.size()]);
+        return problems.toArray(new ProblemDescriptorBase[problems.size()]);
       }
     }
 
