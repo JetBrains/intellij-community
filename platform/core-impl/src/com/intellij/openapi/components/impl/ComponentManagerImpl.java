@@ -310,7 +310,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     else {
       result = new IdeaPicoContainer();
     }
-    
+
     return result;
   }
 
@@ -409,6 +409,7 @@ public abstract class ComponentManagerImpl extends UserDataHolderBase implements
     return myDisposedCondition;
   }
 
+  @NotNull
   public static String getComponentName(@NotNull final Object component) {
     if (component instanceof NamedComponent) {
       return ((NamedComponent)component).getComponentName();

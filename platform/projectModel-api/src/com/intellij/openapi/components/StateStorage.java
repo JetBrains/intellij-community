@@ -44,20 +44,23 @@ public interface StateStorage {
   void reload(final Set<String> changedComponents) throws StateStorageException;
 
   interface ExternalizationSession {
-    void setState(Object component, final String componentName, Object state, @Nullable final Storage storageSpec) throws StateStorageException;
+    void setState(@NotNull Object component, final String componentName, @NotNull Object state, @Nullable final Storage storageSpec) throws StateStorageException;
   }
 
   interface SaveSession {
     void save() throws StateStorageException;
 
     @Nullable
-    Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles);
+    Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile,StateStorage>> changedFiles);
 
+    @NotNull
     Collection<IFile> getStorageFilesToSave() throws StateStorageException;
+
+    @NotNull
     List<IFile> getAllStorageFiles();
   }
 
-    interface Listener {
-    void storageFileChanged(final VirtualFileEvent event, final StateStorage storage);
+  interface Listener {
+    void storageFileChanged(@NotNull VirtualFileEvent event, @NotNull StateStorage storage);
   }
 }

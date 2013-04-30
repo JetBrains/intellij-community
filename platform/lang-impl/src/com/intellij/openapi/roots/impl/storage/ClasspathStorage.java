@@ -151,13 +151,13 @@ public class ClasspathStorage implements StateStorage {
     return true;
   }
 
-  public void setState(Object component, final String componentName, Object state) throws StateStorageException {
+  public void setState(@NotNull Object component, @NotNull String componentName, @NotNull Object state) throws StateStorageException {
     assert component instanceof ModuleRootManager;
     assert componentName.equals("NewModuleRootManager");
     assert state.getClass() == ModuleRootManagerImpl.ModuleRootManagerState.class;
 
     try {
-      myConverter.setClasspath(((ModuleRootManagerImpl)component));
+      myConverter.setClasspath((ModuleRootManagerImpl)component);
     }
     catch (WriteExternalException e) {
       throw new StateStorageException(e.getMessage());
@@ -172,7 +172,7 @@ public class ClasspathStorage implements StateStorage {
   public ExternalizationSession startExternalization() {
     final ExternalizationSession session = new ExternalizationSession() {
       @Override
-      public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec)
+      public void setState(@NotNull final Object component, final String componentName, @NotNull final Object state, final Storage storageSpec)
         throws StateStorageException {
         assert mySession == this;
         ClasspathStorage.this.setState(component, componentName, state);
@@ -425,10 +425,11 @@ public class ClasspathStorage implements StateStorage {
 
     @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
       return null;
     }
 
+    @NotNull
     @Override
     public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
       if (needsSave()) {
@@ -443,6 +444,7 @@ public class ClasspathStorage implements StateStorage {
       }
     }
 
+    @NotNull
     @Override
     public List<IFile> getAllStorageFiles() {
       final List<IFile> list = new ArrayList<IFile>();

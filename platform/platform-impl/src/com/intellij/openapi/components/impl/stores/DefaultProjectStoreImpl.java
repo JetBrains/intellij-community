@@ -54,6 +54,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   }
 
 
+  @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
     Document _d = null;
@@ -98,11 +99,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
           myProjectManager.setDefaultProjectRootElement(getDocumentToSave().getRootElement());
         }
 
+        @NotNull
         @Override
         public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
           return Collections.emptyList();
         }
 
+        @NotNull
         @Override
         public List<IFile> getAllStorageFiles() {
           return Collections.emptyList();
@@ -186,7 +189,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       @Override
       public void reset() {
-        
+
       }
     };
   }
@@ -210,13 +213,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     }
 
     @Override
-    public void setState(@NotNull final Storage[] storageSpecs, final Object component, final String componentName, final Object state)
+    public void setState(@NotNull final Storage[] storageSpecs, @NotNull final Object component, final String componentName, @NotNull final Object state)
     throws StateStorageException {
       externalizationSession.setState(component, componentName, state, null);
     }
 
     @Override
-    public void setStateInOldStorage(final Object component, final String componentName, final Object state) throws StateStorageException {
+    public void setStateInOldStorage(@NotNull final Object component, @NotNull final String componentName, @NotNull final Object state) throws StateStorageException {
       externalizationSession.setState(component, componentName, state, null);
     }
   }
@@ -231,15 +234,17 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
     //returns set of component which were changed, null if changes are much more than just component state.
     @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(Set<Pair<VirtualFile, StateStorage>> files) {
+    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> files) {
       throw new UnsupportedOperationException("Method analyzeExternalChanges not implemented in " + getClass());
     }
 
+    @NotNull
     @Override
     public List<IFile> getAllStorageFilesToSave() throws StateStorageException {
       return Collections.emptyList();
     }
 
+    @NotNull
     @Override
     public List<IFile> getAllStorageFiles() {
       return Collections.emptyList();

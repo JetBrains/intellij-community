@@ -174,6 +174,7 @@ public class FileBasedStorage extends XmlElementStorage {
       myCachedVirtualFile = StorageUtil.save(myFile, getDocumentToSave(), this);
     }
 
+    @NotNull
     @Override
     public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
       boolean needsSave = needsSave();
@@ -189,6 +190,7 @@ public class FileBasedStorage extends XmlElementStorage {
       }
     }
 
+    @NotNull
     @Override
     public List<IFile> getAllStorageFiles() {
       return Collections.singletonList(myFile);
@@ -249,16 +251,14 @@ public class FileBasedStorage extends XmlElementStorage {
     myBlockSavingTheContent = false;
     try {
       VirtualFile file = getVirtualFile();
-      if (file == null || file.isDirectory()) {
-        LOG.info("Document was not loaded for " + myFileSpec + " file is " + (file == null ? "null" : "directory"));        
+      if (file == null || file.isDirectory() || !file.isValid()) {
+        LOG.info("Document was not loaded for " + myFileSpec + " file is " + (file == null ? "null" : "directory"));
         return null;
       }
-      else if (file.getLength() == 0) {
+      if (file.getLength() == 0) {
         return processReadException(null);
       }
-      else {
-        return loadDocumentImpl(file);
-      }
+      return loadDocumentImpl(file);
     }
     catch (final JDOMException e) {
       return processReadException(e);

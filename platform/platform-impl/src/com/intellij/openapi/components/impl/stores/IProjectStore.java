@@ -59,7 +59,7 @@ public interface IProjectStore extends IComponentStore {
   @Nullable
   String getPresentableUrl();
 
-  boolean reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles) throws StateStorageException, IOException;
+  boolean reload(@NotNull Set<Pair<VirtualFile,StateStorage>> changedFiles) throws StateStorageException, IOException;
 
   //------ This methods should be got rid of
   void loadProject() throws IOException, JDOMException, InvalidDataException, StateStorageException;
@@ -70,7 +70,7 @@ public interface IProjectStore extends IComponentStore {
   @Nullable
   VirtualFile getWorkspaceFile();
 
-  void loadProjectFromTemplate(ProjectImpl project);
+  void loadProjectFromTemplate(@NotNull ProjectImpl project);
 
   /** @deprecated please use {@linkplain #getProjectFile()} (to remove in IDEA 13) */
   @NotNull

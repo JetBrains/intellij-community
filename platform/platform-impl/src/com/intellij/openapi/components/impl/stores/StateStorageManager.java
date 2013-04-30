@@ -66,17 +66,21 @@ public interface StateStorageManager {
 
 
   interface ExternalizationSession {
-    void setState(@NotNull Storage[] storageSpecs, Object component, String componentName, Object state) throws StateStorageException;
-    void setStateInOldStorage(Object component, String componentName, Object state) throws StateStorageException;
+    void setState(@NotNull Storage[] storageSpecs, @NotNull Object component, String componentName, @NotNull Object state) throws StateStorageException;
+    void setStateInOldStorage(@NotNull Object component, @NotNull String componentName, @NotNull Object state) throws StateStorageException;
   }
 
   interface SaveSession {
     //returns set of component which were changed, null if changes are much more than just component state.
     @Nullable
-    Set<String> analyzeExternalChanges(Set<Pair<VirtualFile, StateStorage>> files);
+    Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> files);
 
+    @NotNull
     List<IFile> getAllStorageFilesToSave() throws StateStorageException;
+
+    @NotNull
     List<IFile> getAllStorageFiles();
+
     void save() throws StateStorageException;
   }
 }

@@ -46,12 +46,12 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  public void reinitComponents(Set<String> componentNames, boolean reloadData) {
+  public void reinitComponents(@NotNull Set<String> componentNames, boolean reloadData) {
     throw new UnsupportedOperationException("Method reinitComponents is not yet implemented in " + getClass().getName());
   }
 
   @Override
-  public boolean isReloadPossible(Set<String> componentNames) {
+  public boolean isReloadPossible(@NotNull Set<String> componentNames) {
     throw new UnsupportedOperationException("Method isReloadPossible is not yet implemented in " + getClass().getName());
   }
 
@@ -105,7 +105,7 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  public void loadProjectFromTemplate(ProjectImpl project) {
+  public void loadProjectFromTemplate(@NotNull ProjectImpl project) {
     throw new UnsupportedOperationException("Method loadProjectFromTemplate is not yet implemented in " + getClass().getName());
   }
 
@@ -122,7 +122,7 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  public void initComponent(Object component, final boolean service) {
+  public void initComponent(@NotNull Object component, final boolean service) {
     throw new UnsupportedOperationException("Method initComponent is not yet implemented in " + getClass().getName());
   }
 
@@ -152,10 +152,11 @@ public class MockProjectStore implements IProjectStore {
   }
 
   @Override
-  public boolean reload(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
+  public boolean reload(@NotNull final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
     throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
   }
 
+  @NotNull
   @Override
   public StateStorageManager getStateStorageManager() {
     throw new UnsupportedOperationException("Method getStateStorageManager not implemented in " + getClass());

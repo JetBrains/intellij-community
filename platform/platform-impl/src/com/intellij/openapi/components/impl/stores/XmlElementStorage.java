@@ -68,7 +68,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       myLocalVersionProvider.changeVersion(componentName,  System.currentTimeMillis());
     }
   };
-  
+
   private boolean myDisposed;
 
 
@@ -113,7 +113,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected boolean isDisposed() {
     return myDisposed;
   }
-  
+
   @Nullable
   protected abstract Document loadDocument() throws StateStorageException;
 
@@ -252,15 +252,17 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
       }
 
       @Override
-      public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+      public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
         return Collections.emptySet();
       }
 
+      @NotNull
       @Override
       public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
         return Collections.emptySet();
       }
 
+      @NotNull
       @Override
       public List<IFile> getAllStorageFiles() {
         return Collections.emptyList();
@@ -295,7 +297,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
     }
 
     @Override
-    public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec) throws StateStorageException {
+    public void setState(@NotNull final Object component, final String componentName, @NotNull final Object state, final Storage storageSpec) throws StateStorageException {
       assert mySession == this;
 
       try {
@@ -487,21 +489,17 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
     @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
+    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
       try {
         Document document = loadDocument();
 
         StorageData storageData = createStorageData();
 
-        if (document != null) {
-          loadState(storageData, document.getRootElement());
-          return storageData.getDifference(myStorageData, myPathMacroSubstitutor);
-        }
-        else {
+        if (document == null) {
           return Collections.emptySet();
         }
-
-
+        loadState(storageData, document.getRootElement());
+        return storageData.getDifference(myStorageData, myPathMacroSubstitutor);
       }
       catch (StateStorageException e) {
         LOG.info(e);
@@ -566,7 +564,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
       storageData.myComponentStates.keySet().retainAll(componentsToRetain);
     }
-    
+
     myLoadedData = storageData;
   }
 
