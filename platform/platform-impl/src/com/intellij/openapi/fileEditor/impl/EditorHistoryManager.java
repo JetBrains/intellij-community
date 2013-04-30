@@ -33,6 +33,7 @@ import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.messages.MessageBusConnection;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -51,30 +52,21 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
   /**
    * State corresponding to the most recent file is the last
    */
-  private final ArrayList<HistoryEntry> myEntriesList;
+  private final ArrayList<HistoryEntry> myEntriesList = new ArrayList<HistoryEntry>();
 
   /** Invoked by reflection */
-  EditorHistoryManager(final Project project, FileEditorManager fileEditorManager, final UISettings uiSettings){
+  EditorHistoryManager(final Project project, final UISettings uiSettings){
     super(project);
-    myEntriesList = new ArrayList<HistoryEntry>();
-    MyEditorManagerListener editorManagerListener = new MyEditorManagerListener();
-
-    /**
-     * Updates history length
-     */
-    final MyUISettingsListener myUISettingsListener = new MyUISettingsListener();
-
-    fileEditorManager.addFileEditorManagerListener(editorManagerListener, project);
-    project.getMessageBus().connect().subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new MyEditorManagerBeforeListener());
-
-    uiSettings.addUISettingsListener(myUISettingsListener, project);
+    uiSettings.addUISettingsListener(new MyUISettingsListener(), project);
   }
 
   public void projectOpened(){
+
+    connectToManager();
     StartupManager.getInstance(myProject).registerPostStartupActivity(
       new DumbAwareRunnable(){
         public void run(){
-          // myElement may be null if node that correspondes to this manager does not exist
+          // myElement may be null if node that corresponds to this manager does not exist
           if (myElement != null){
             final List children = myElement.getChildren(HistoryEntry.TAG);
             myElement = null;
@@ -98,6 +90,12 @@ public final class EditorHistoryManager extends AbstractProjectComponent impleme
         }
       }
     );
+  }
+
+  public void connectToManager() {
+    MessageBusConnection connection = myProject.getMessageBus().connect();
+    connection.subscribe(FileEditorManagerListener.Before.FILE_EDITOR_MANAGER, new MyEditorManagerBeforeListener());
+    connection.subscribe(FileEditorManagerListener.FILE_EDITOR_MANAGER, new MyEditorManagerListener());
   }
 
 

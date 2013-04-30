@@ -1,7 +1,9 @@
 package com.intellij.openapi.fileEditor;
 
+import com.intellij.codeInsight.navigation.NavigationUtil;
 import com.intellij.openapi.components.impl.ComponentManagerImpl;
 import com.intellij.openapi.fileEditor.ex.IdeDocumentHistory;
+import com.intellij.openapi.fileEditor.impl.EditorHistoryManager;
 import com.intellij.openapi.fileEditor.impl.FileEditorManagerImpl;
 import com.intellij.openapi.fileEditor.impl.IdeDocumentHistoryImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
@@ -35,6 +37,17 @@ public class NewDocumentHistoryTest extends PlatformLangTestCase {
     assertEquals("mockEditor", myManager.getSelectedEditor(file).getName());
   }
 
+  public void testSelectFileOnNavigation() throws Exception {
+    VirtualFile file1 = getFile("/src/1.txt");
+    myManager.openFile(file1, true);
+    VirtualFile file2 = getFile("/src/2.txt");
+    myManager.openFile(file2, true);
+    NavigationUtil.activateFileWithPsiElement(getPsiManager().findFile(file1));
+    VirtualFile[] files = myManager.getSelectedFiles();
+    assertEquals(1, files.length);
+    assertEquals("1.txt", files[0].getName());
+  }
+
   protected VirtualFile getFile(String path) {
     return LocalFileSystem.getInstance().refreshAndFindFileByPath(
       PlatformTestUtil.getCommunityPath().replace(File.separatorChar, '/') + "/platform/platform-tests/testData/fileEditorManager" + path);
@@ -45,5 +58,6 @@ public class NewDocumentHistoryTest extends PlatformLangTestCase {
     myManager = new FileEditorManagerImpl(getProject(), DockManager.getInstance(getProject()));
     ((ComponentManagerImpl)getProject()).registerComponentInstance(FileEditorManager.class, myManager);
     ((IdeDocumentHistoryImpl)IdeDocumentHistory.getInstance(getProject())).projectOpened();
+    EditorHistoryManager.getInstance(getProject()).connectToManager();
   }
 }
