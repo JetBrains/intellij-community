@@ -40,7 +40,7 @@ import java.util.regex.Pattern;
 
 public class AddMavenDependencyQuickFix implements IntentionAction, LowPriorityAction {
 
-  private static final Pattern CLASSNAME_PATTERN = Pattern.compile("(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*[A-Z]\\p{javaJavaIdentifierPart}+");
+  private static final Pattern CLASSNAME_PATTERN = Pattern.compile("(\\p{javaJavaIdentifierStart}\\p{javaJavaIdentifierPart}*\\.)*\\p{Lu}\\p{javaJavaIdentifierPart}+");
 
   private final PsiJavaCodeReferenceElement myRef;
 
