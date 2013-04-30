@@ -65,6 +65,9 @@ public class PyPrefixExpressionImpl extends PyElementImpl implements PyPrefixExp
 
   @Override
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    if (getOperator() == PyTokenTypes.NOT_KEYWORD) {
+      return PyBuiltinCache.getInstance(this).getBoolType();
+    }
     final PsiReference ref = getReference(PyResolveContext.noImplicits().withTypeEvalContext(context));
     if (ref != null) {
       final PsiElement resolved = ref.resolve();

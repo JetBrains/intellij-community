@@ -37,6 +37,7 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
   private final @NotNull PyQualifiedName myQualifiedName;
   final Set<PsiElement> mySourceResults = Sets.newLinkedHashSet();
   final Set<PsiElement> myLibResults = Sets.newLinkedHashSet();
+  final Set<PsiElement> myForeignResults = Sets.newLinkedHashSet();
   private boolean myVisitAllModules = false;
   private int myRelativeLevel = -1;
   private boolean myWithoutRoots;
@@ -201,6 +202,16 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
       }
     }
 
+    final PythonPathCache cache = findMyCache();
+    final boolean mayCache = cache != null && !myWithoutRoots && !myWithoutForeign;
+    if (mayCache) {
+      final List<PsiElement> cachedResults = cache.get(myQualifiedName);
+      if (cachedResults != null) {
+        mySourceResults.addAll(cachedResults);
+        return Lists.newArrayList(mySourceResults);
+      }
+    }
+
     if (!myWithoutRoots) {
       addResultsFromRoots();
     }
@@ -212,24 +223,21 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
       for (PyImportResolver resolver : Extensions.getExtensions(PyImportResolver.EP_NAME)) {
         PsiElement foreign = resolver.resolveImportReference(myQualifiedName, myContext);
         if (foreign != null) {
-          mySourceResults.add(foreign);
+          myForeignResults.add(foreign);
         }
       }
+      mySourceResults.addAll(myForeignResults);
+      myForeignResults.clear();
     }
 
-    return Lists.newArrayList(mySourceResults);
+    final ArrayList<PsiElement> results = Lists.newArrayList(mySourceResults);
+    if (mayCache) {
+      cache.put(myQualifiedName, results);
+    }
+    return results;
   }
 
   private void addResultsFromRoots() {
-    PythonPathCache cache = findMyCache();
-    if (cache != null) {
-      final List<PsiElement> cachedResults = cache.get(myQualifiedName);
-      if (cachedResults != null) {
-        mySourceResults.addAll(cachedResults);
-        return;
-      }
-    }
-
     if (myVisitAllModules) {
       for (Module mod : ModuleManager.getInstance(myContext.getProject()).getModules()) {
         RootVisitorHost.visitRoots(mod, true, this);
@@ -257,16 +265,6 @@ public class QualifiedNameResolverImpl implements RootVisitor, QualifiedNameReso
     }
     else {
       throw new IllegalStateException();
-    }
-
-    cacheResults(cache);
-  }
-
-  private void cacheResults(@Nullable PythonPathCache cache) {
-    if (cache != null) {
-      final ArrayList<PsiElement> resultList = Lists.newArrayList(mySourceResults);
-      resultList.addAll(myLibResults);
-      cache.put(myQualifiedName, resultList);
     }
   }
 
