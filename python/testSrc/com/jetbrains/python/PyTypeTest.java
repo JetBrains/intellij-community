@@ -544,6 +544,16 @@ public class PyTypeTest extends PyTestCase {
            "expr = f(a, b)\n");
   }
 
+  public void testLogicalAndExpression() {
+    doTest("str or int",
+           "expr = 'foo' and 2");
+  }
+
+  public void testLogicalNotExpression() {
+    doTest("bool",
+           "expr = not 'hello'");
+  }
+
   // PY-7063
   public void testDefaultParameterIgnoreNone() {
     final PyExpression expr = parseExpr("def f(x=None):\n" +

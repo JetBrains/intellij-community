@@ -11,10 +11,7 @@ import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.references.PyOperatorReference;
 import com.jetbrains.python.psi.resolve.PyResolveContext;
-import com.jetbrains.python.psi.types.PyNoneType;
-import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.PyTypeChecker;
-import com.jetbrains.python.psi.types.TypeEvalContext;
+import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -109,6 +106,16 @@ public class PyBinaryExpressionImpl extends PyElementImpl implements PyBinaryExp
   }
 
   public PyType getType(@NotNull TypeEvalContext context, @NotNull TypeEvalContext.Key key) {
+    if (isOperator("and") || isOperator("or")) {
+      final PyExpression left = getLeftExpression();
+      final PyType leftType = left != null ? context.getType(left) : null;
+      final PyExpression right = getRightExpression();
+      final PyType rightType = right != null ? context.getType(right) : null;
+      if (leftType == null && rightType == null) {
+        return null;
+      }
+      return PyUnionType.union(leftType, rightType);
+    }
     final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCall(this, context);
     if (results != null) {
       final PyType type = results.getCallable().getReturnType(context, this);
