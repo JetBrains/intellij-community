@@ -293,6 +293,9 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitOpenBlock(GrOpenBlock block) {
+    final IElementType type = block.getNode().getElementType();
+    if (type != OPEN_BLOCK && type != CONSTRUCTOR_BODY) return;
+
     if (myChildType != mLCURLY && myChildType != mRCURLY) {
       myResult = Indent.getNormalIndent();
     }
