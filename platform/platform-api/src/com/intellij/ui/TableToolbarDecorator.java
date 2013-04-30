@@ -121,11 +121,8 @@ class TableToolbarDecorator extends ToolbarDecorator {
           table.scrollRectToVisible(bounds);
           editorComponent.requestFocus();
         }
-        JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, table);
-        if (scrollPane != null) {
-          scrollPane.revalidate();
-          scrollPane.repaint();
-        }
+
+        updateScroller(table);
       }
     };
 
@@ -147,8 +144,9 @@ class TableToolbarDecorator extends ToolbarDecorator {
           updateButtons();
         }
 
-        table.getParent().repaint();
         table.requestFocus();
+
+        updateScroller(table);
       }
     };
 
@@ -192,6 +190,14 @@ class TableToolbarDecorator extends ToolbarDecorator {
         }
       }
     };
+  }
+
+  private static void updateScroller(JTable table) {
+    JScrollPane scrollPane = UIUtil.getParentOfType(JScrollPane.class, table);
+    if (scrollPane != null) {
+      scrollPane.revalidate();
+      scrollPane.repaint();
+    }
   }
 
   @Override
