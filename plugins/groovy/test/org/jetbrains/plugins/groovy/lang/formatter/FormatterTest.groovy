@@ -613,6 +613,74 @@ for (int i = 3;
 ''')
   }
 
+  void testBinaryOperationSingOnNewLine() {
+    groovySettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE = true
+
+    checkFormatting('''\
+(1 +
+ 2) + 3
+''', '''\
+(1
+    +
+    2)
+    + 3
+''')
+  }
+
+  void testParenthesized0() {
+    groovySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP = true
+    checkFormatting('''\
+(2+
+3)
+''', '''\
+(
+    2 +
+        3)
+''')
+  }
+
+  void testParenthesized1() {
+    groovySettings.PARENTHESES_EXPRESSION_RPAREN_WRAP = true
+    checkFormatting('''\
+(2+
+3)
+''', '''\
+(2 +
+    3
+)
+''')
+  }
+
+  void testParenthesized2() {
+    groovySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP = true
+    groovySettings.PARENTHESES_EXPRESSION_RPAREN_WRAP = true
+    checkFormatting('''\
+(2+
+3)
+''', '''\
+(
+    2 +
+        3
+)
+''')
+  }
+
+  void testParenthesized3() {
+    groovySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP = true
+    groovySettings.PARENTHESES_EXPRESSION_RPAREN_WRAP = true
+    groovySettings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    checkFormatting('''\
+(2+
+3)
+''', '''\
+(
+    2 +
+    3
+)
+''')
+  }
+
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES;

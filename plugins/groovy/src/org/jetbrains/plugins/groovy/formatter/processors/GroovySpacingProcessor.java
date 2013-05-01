@@ -670,26 +670,19 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitBinaryExpression(GrBinaryExpression expression) {
-    if (isLeftOrRight(LOGICAL_OPERATORS)) {
-      createSpaceInCode(mySettings.SPACE_AROUND_LOGICAL_OPERATORS);
+    boolean spaceAround = isLeftOrRight(LOGICAL_OPERATORS)        ? mySettings.SPACE_AROUND_LOGICAL_OPERATORS :
+                          isLeftOrRight(EQUALITY_OPERATORS)       ? mySettings.SPACE_AROUND_EQUALITY_OPERATORS :
+                          isLeftOrRight(RELATIONAL_OPERATORS)     ? mySettings.SPACE_AROUND_RELATIONAL_OPERATORS :
+                          isLeftOrRight(BITWISE_OPERATORS)        ? mySettings.SPACE_AROUND_BITWISE_OPERATORS :
+                          isLeftOrRight(ADDITIVE_OPERATORS)       ? mySettings.SPACE_AROUND_ADDITIVE_OPERATORS :
+                          isLeftOrRight(MULTIPLICATIVE_OPERATORS) ? mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS :
+                          isLeftOrRight(SHIFT_OPERATORS)          ? mySettings.SPACE_AROUND_SHIFT_OPERATORS :
+                          false;
+    if (TokenSets.BINARY_OP_SET.contains(myType2)) {
+      createDependentLFSpacing(mySettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE, spaceAround, expression.getTextRange());
     }
-    else if (isLeftOrRight(EQUALITY_OPERATORS)) {
-      createSpaceInCode(mySettings.SPACE_AROUND_EQUALITY_OPERATORS);
-    }
-    else if (isLeftOrRight(RELATIONAL_OPERATORS)) {
-      createSpaceInCode(mySettings.SPACE_AROUND_RELATIONAL_OPERATORS);
-    }
-    else if (isLeftOrRight(BITWISE_OPERATORS)) {
-      createSpaceInCode(mySettings.SPACE_AROUND_BITWISE_OPERATORS);
-    }
-    else if (isLeftOrRight(ADDITIVE_OPERATORS)) {
-      createSpaceInCode(mySettings.SPACE_AROUND_ADDITIVE_OPERATORS);
-    }
-    else if (isLeftOrRight(MULTIPLICATIVE_OPERATORS)) {
-      createSpaceInCode(mySettings.SPACE_AROUND_MULTIPLICATIVE_OPERATORS);
-    }
-    else if (isLeftOrRight(SHIFT_OPERATORS)) {
-      createSpaceInCode(mySettings.SPACE_AROUND_SHIFT_OPERATORS);
+    else {
+      createSpaceInCode(spaceAround);
     }
   }
 
@@ -772,9 +765,8 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
-    if (myType1 == mLPAREN || myType2 == mRPAREN) {
-      createSpaceInCode(mySettings.SPACE_WITHIN_PARENTHESES);
-    }
+    processParentheses(mLPAREN, mRPAREN, mySettings.SPACE_WITHIN_PARENTHESES, null, mySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP,
+                       mySettings.PARENTHESES_EXPRESSION_RPAREN_WRAP);
   }
 
   @Override

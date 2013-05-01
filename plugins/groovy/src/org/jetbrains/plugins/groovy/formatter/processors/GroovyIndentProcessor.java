@@ -49,6 +49,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrElvisExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
@@ -330,6 +331,16 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   private static CommonCodeStyleSettings getGroovySettings(PsiElement parent) {
     return CodeStyleSettingsManager.getSettings(parent.getProject()).getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
+  }
+
+  @Override
+  public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
+    if (myChildType == mLPAREN || myChildType == mRPAREN) {
+      myResult = Indent.getNoneIndent();
+    }
+    else {
+      myResult = Indent.getContinuationIndent();
+    }
   }
 
   public static Indent getSwitchCaseIndent(PsiElement psiParent) {
