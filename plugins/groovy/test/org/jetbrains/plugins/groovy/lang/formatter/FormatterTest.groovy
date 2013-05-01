@@ -527,7 +527,65 @@ def foo( String s, int x ) {}
 ''')
   }
 
+  void testLineFeedsInMethodCall0() {
+    groovySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+foo(s,
+    x)
+''', '''\
+foo(
+    s,
+    x)
+''')
+  }
 
+  void testLineFeedsInMethodCall1() {
+    groovySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+foo(s,
+x)
+''', '''\
+foo(s,
+    x
+)
+''')
+  }
+
+  void testLineFeedsInMethodCall2() {
+    groovySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    groovySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+foo(s,
+ x)
+''', '''\
+foo(
+    s,
+    x
+)
+''')
+  }
+
+  void testLineFeedsInMethodCall3() {
+    groovySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    groovySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    groovySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
+    checkFormatting('''\
+foo(s, x)
+''', '''\
+foo( s, x )
+''')
+  }
+
+  void testLineFeedsInMethodCall4() {
+    groovySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    groovySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    groovySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = true
+    checkFormatting('''\
+foo()
+''', '''\
+foo( )
+''')
+  }
 
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
