@@ -261,6 +261,16 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       parenthesesAligner.append(clause.getUpdate());
     }
 
+    if (blockPsi instanceof GrBinaryExpression && mySettings.ALIGN_MULTILINE_BINARY_OPERATION) {
+      final GrBinaryExpression binary = (GrBinaryExpression)blockPsi;
+
+      final GrExpression left = binary.getLeftOperand();
+      final GrExpression right = binary.getRightOperand();
+      if (left != null && right != null) {
+        myAlignmentProvider.addPair(left, right, false);
+      }
+    }
+
 
     // For other cases
     final ArrayList<Block> subBlocks = new ArrayList<Block>();

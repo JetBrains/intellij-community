@@ -680,6 +680,19 @@ for (int i = 3;
 ''')
   }
 
+  void testAlignBinaryOperands() {
+    groovySettings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    checkFormatting('''\
+(2+
+3 +
+4)
+''', '''\
+(2 +
+ 3 +
+ 4)
+''')
+  }
+
 
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
