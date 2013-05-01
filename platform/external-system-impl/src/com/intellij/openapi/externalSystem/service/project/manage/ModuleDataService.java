@@ -27,6 +27,7 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
+import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -75,7 +76,11 @@ public class ModuleDataService implements ProjectDataService<ModuleData> {
     Runnable task = new Runnable() {
       @Override
       public void run() {
-        removeExistingModulesConfigs(toImport, project);
+        final Collection<DataNode<ModuleData>> toCreate = filterExistingModules(toImport, project);
+        if (toCreate.isEmpty()) {
+          return;
+        }
+        removeExistingModulesConfigs(toCreate, project);
         Application application = ApplicationManager.getApplication();
         final Map<DataNode<ModuleData>, Module> moduleMappings = ContainerUtilRt.newHashMap();
         application.runWriteAction(new Runnable() {
@@ -84,7 +89,7 @@ public class ModuleDataService implements ProjectDataService<ModuleData> {
             final ModuleManager moduleManager = ModuleManager.getInstance(project);
             final ProjectEntityChangeListener publisher
               = project.getMessageBus().syncPublisher(ProjectEntityChangeListener.TOPIC);
-            for (DataNode<ModuleData> module : toImport) {
+            for (DataNode<ModuleData> module : toCreate) {
               publisher.onChangeStart(module, module.getData().getOwner());
               try {
                 importModule(moduleManager, module);
@@ -141,6 +146,19 @@ public class ModuleDataService implements ProjectDataService<ModuleData> {
     else {
       UIUtil.invokeLaterIfNeeded(task);
     }
+  }
+
+  @NotNull
+  private Collection<DataNode<ModuleData>> filterExistingModules(@NotNull Collection<DataNode<ModuleData>> modules,
+                                                                 @NotNull Project project)
+  {
+    Collection<DataNode<ModuleData>> result = ContainerUtilRt.newArrayList();
+    for (DataNode<ModuleData> node : modules) {
+      if (myProjectStructureHelper.findIdeModule(node.getData(), project) == null) {
+        result.add(node);
+      }
+    }
+    return result;
   }
 
   private void removeExistingModulesConfigs(@NotNull final Collection<DataNode<ModuleData>> nodes, @NotNull Project project) {

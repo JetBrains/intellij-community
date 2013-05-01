@@ -57,6 +57,25 @@ public interface ProjectDataService<T> {
   @NotNull
   Key<T> getTargetDataKey();
 
+  /**
+   * It's assumed that given data nodes present at the ide when this method returns. I.e. the method should behave as below for
+   * every of the given data nodes:
+   * <pre>
+   * <ul>
+   *   <li>there is an existing project entity for the given data node and it has the same state. Do nothing for it then;</li>
+   *   <li>
+   *     there is an existing project entity for the given data node but it has different state (e.g. a module dependency
+   *     is configured as 'exported' at the ide but not at external system). Reset the state to the external system's one then;
+   *   </li>
+   *   <li> there is no corresponding project entity at the ide side. Create it then; </li>
+   * </ul>
+   * </pre>
+   * are created, updated or left as-is if they have the
+   * 
+   * @param toImport
+   * @param project
+   * @param synchronous
+   */
   void importData(@NotNull Collection<DataNode<T>> toImport, @NotNull Project project, boolean synchronous);
 
   void removeData(@NotNull Collection<DataNode<T>> toRemove, @NotNull Project project, boolean synchronous);
