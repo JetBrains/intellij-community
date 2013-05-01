@@ -211,14 +211,13 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     if (myType1 == mLBRACK || myType2 == mRBRACK) {
       createSpaceInCode(mySettings.SPACE_WITHIN_BRACKETS);
     }
-    else if (myType1 == mLPAREN && myType2 == mRPAREN) {
-      createSpaceInCode(mySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES);
-    }
-    else if (myType1 == mLPAREN) {
-      createDependentLFSpacing(mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES, list.getTextRange());
-    }
-    else if (myType2 == mRPAREN) {
-      createDependentLFSpacing(mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES, list.getTextRange());
+    else {
+      processParentheses(mLPAREN,
+                         mRPAREN,
+                         mySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES,
+                         mySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES,
+                         mySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE,
+                         mySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE);
     }
   }
 
@@ -488,17 +487,6 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     if (myType2 == mLPAREN) {
       createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
     }
-    else if (myType1 == mLPAREN && myType2 == mRPAREN) {
-      createSpaceInCode(mySettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES);
-    }
-    else if (myType1 == mLPAREN) {
-      createDependentLFSpacing(mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_PARENTHESES,
-                               method.getParameterList().getTextRange());
-    }
-    else if (myType2 == mRPAREN) {
-      createDependentLFSpacing(mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_METHOD_PARENTHESES,
-                               method.getParameterList().getTextRange());
-    }
     else if (myType1 == mRPAREN && myType2 == THROW_CLAUSE) {
       if (mySettings.THROWS_KEYWORD_WRAP == CommonCodeStyleSettings.WRAP_ALWAYS) {
         createLF();
@@ -523,7 +511,53 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     else if (myType2 == TYPE_PARAMETER_LIST) {
       manageSpaceBeforeTypeParameters();
     }
+    else {
+      processParentheses(mLPAREN,
+                         mRPAREN,
+                         mySettings.SPACE_WITHIN_METHOD_PARENTHESES,
+                         mySettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES,
+                         mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE,
+                         mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE);
+    }
   }
+
+  private boolean processParentheses(@NotNull IElementType left,
+                                     @NotNull IElementType right,
+                                     @NotNull Boolean spaceWithin,
+                                     @Nullable Boolean spaceWithinEmpty,
+                                     @Nullable Boolean leftLF,
+                                     @Nullable Boolean rightLF) {
+    if (myType1 == left && myType2 == right && spaceWithinEmpty != null) {
+      createSpaceInCode(spaceWithinEmpty);
+      return true;
+    }
+    else if (myType1 == left) {
+      final ASTNode rparenth = findFrom(myChild1, right, true);
+      if (rparenth == null || leftLF == null) {
+        createSpaceInCode(spaceWithin);
+      }
+      else {
+        final TextRange range = new TextRange(myChild1.getStartOffset(), rparenth.getTextRange().getEndOffset());
+        createDependentLFSpacing(leftLF, spaceWithin, range);
+      }
+      return true;
+    }
+    else if (myType2 == right) {
+      final ASTNode lparenth = findFrom(myChild1, left, false);
+      if (lparenth == null || rightLF == null) {
+        createSpaceInCode(spaceWithin);
+      }
+      else {
+        final TextRange range = new TextRange(lparenth.getStartOffset(), myChild2.getTextRange().getEndOffset());
+        createDependentLFSpacing(rightLF, spaceWithin, range);
+      }
+      return true;
+    }
+    else {
+      return false;
+    }
+  }
+
 
   private void manageSpaceBeforeTypeParameters() {
     createSpaceInCode(false);
@@ -807,53 +841,36 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   public void visitForStatement(GrForStatement forStatement) {
     if (myType2 == mLPAREN) {
       createSpaceInCode(mySettings.SPACE_BEFORE_FOR_PARENTHESES);
-    } else if (myType1 == mLPAREN) {
-      ASTNode rparenth = findFrom(myChild2, mRPAREN, true);
-      if (rparenth == null) {
-        createSpaceInCode(mySettings.SPACE_WITHIN_FOR_PARENTHESES);
-      } else {
-        createParenthSpace(mySettings.FOR_STATEMENT_LPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_FOR_PARENTHESES,
-                           new TextRange(myChild1.getTextRange().getStartOffset(), rparenth.getTextRange().getEndOffset()));
-      }
-    } else if (myType2 == mRPAREN) {
-      ASTNode lparenth = findFrom(myChild2, mLPAREN, false);
-      if (lparenth == null) {
-        createSpaceInCode(mySettings.SPACE_WITHIN_FOR_PARENTHESES);
-      } else {
-        createParenthSpace(mySettings.FOR_STATEMENT_RPAREN_ON_NEXT_LINE, mySettings.SPACE_WITHIN_FOR_PARENTHESES,
-                           new TextRange(lparenth.getTextRange().getStartOffset(), myChild2.getTextRange().getEndOffset()));
-      }
-
-    } else if (myType2 == BLOCK_STATEMENT || isOpenBlock(myType2)) {
+    }
+    else if (myType2 == BLOCK_STATEMENT || isOpenBlock(myType2)) {
       if (myType2 == BLOCK_STATEMENT) {
         createSpaceBeforeLBrace(mySettings.SPACE_BEFORE_FOR_LBRACE, mySettings.BRACE_STYLE,
                                 new TextRange(myParent.getTextRange().getStartOffset(), myChild1.getTextRange().getEndOffset()),
                                 mySettings.KEEP_SIMPLE_BLOCKS_IN_ONE_LINE);
-      } else if (mySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE) {
+      }
+      else if (mySettings.KEEP_CONTROL_STATEMENT_IN_ONE_LINE) {
         myResult = Spacing.createDependentLFSpacing(1, 1, myParent.getTextRange(), false, mySettings.KEEP_BLANK_LINES_IN_CODE);
-      } else {
+      }
+      else {
         createLF();
       }
     }
     else if (myType1 == mRPAREN) {
       createSpacingBeforeElementInsideControlStatement();
     }
+    else {
+      processParentheses(mLPAREN,
+                         mRPAREN,
+                         mySettings.SPACE_WITHIN_FOR_PARENTHESES,
+                         null,
+                         mySettings.FOR_STATEMENT_LPAREN_ON_NEXT_LINE,
+                         mySettings.FOR_STATEMENT_RPAREN_ON_NEXT_LINE);
+    }
   }
 
   private static boolean isOpenBlock(IElementType type) {
     return type == OPEN_BLOCK || type == CONSTRUCTOR_BODY;
   }
-
-  private void createParenthSpace(final boolean onNewLine, final boolean space, final TextRange dependence) {
-    if (onNewLine) {
-      final int spaces = space ? 1 : 0;
-      myResult = Spacing
-        .createDependentLFSpacing(spaces, spaces, dependence, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
-    } else {
-      createSpaceInCode(space);
-    }
-  }
-
 
   @Nullable
   private static ASTNode findFrom(ASTNode current, final IElementType expected, boolean forward) {
