@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,11 +36,11 @@ class AlignmentProvider {
   private final Map<Set<PsiElement>, Boolean> myAllowBackwardShift = new HashMap<Set<PsiElement>, Boolean>();
   private final Map<Set<PsiElement>, Alignment.Anchor> myAnchor = new HashMap<Set<PsiElement>, Alignment.Anchor>();
 
-  public void addPair(PsiElement e1, PsiElement e2, Boolean allowBackwardShift) {
+  public void addPair(@NotNull PsiElement e1, @NotNull PsiElement e2, @Nullable Boolean allowBackwardShift) {
     addPair(e1, e2, allowBackwardShift, null);
   }
 
-  public void addPair(PsiElement e1, PsiElement e2, @Nullable Boolean allowBackwardShift, @Nullable Alignment.Anchor anchor) {
+  public void addPair(@NotNull PsiElement e1, @NotNull PsiElement e2, @Nullable Boolean allowBackwardShift, @Nullable Alignment.Anchor anchor) {
     assert e1 != e2;
 
     final Set<PsiElement> set1 = myTree.get(e1);
@@ -102,11 +102,12 @@ class AlignmentProvider {
     }
   }
 
-  private void addInternal(Set<PsiElement> set, PsiElement element) {
+  private void addInternal(@NotNull Set<PsiElement> set, @NotNull PsiElement element) {
     myTree.put(element, set);
     set.add(element);
   }
 
+  @NotNull
   private static HashSet<PsiElement> createHashSet() {
     return new HashSet<PsiElement>() {
       private final int myhash = new Object().hashCode();
@@ -118,15 +119,15 @@ class AlignmentProvider {
     };
   }
 
-  public void addPair(ASTNode node1, ASTNode node2, boolean allowBackwardShift) {
+  public void addPair(@NotNull ASTNode node1, @NotNull ASTNode node2, boolean allowBackwardShift) {
     addPair(node1.getPsi(), node2.getPsi(), allowBackwardShift);
   }
 
-  private void add(PsiElement element, boolean allowBackwardShift) {
+  private void add(@NotNull PsiElement element, boolean allowBackwardShift) {
     add(element, allowBackwardShift, Alignment.Anchor.LEFT);
   }
 
-  private void add(PsiElement element, boolean allowBackwardShift, @NotNull Alignment.Anchor anchor) {
+  private void add(@NotNull PsiElement element, boolean allowBackwardShift, @NotNull Alignment.Anchor anchor) {
     if (myTree.get(element) != null) return;
 
     final HashSet<PsiElement> set = createHashSet();
@@ -137,7 +138,7 @@ class AlignmentProvider {
   }
 
   @Nullable
-  public Alignment getAlignment(PsiElement e) {
+  public Alignment getAlignment(@NotNull PsiElement e) {
     final Set<PsiElement> set = myTree.get(e);
     if (set == null) {
       return null;
@@ -156,10 +157,12 @@ class AlignmentProvider {
     return alignment;
   }
 
+  @NotNull
   public Aligner createAligner(boolean allowBackwardShift) {
     return new Aligner(allowBackwardShift, Alignment.Anchor.LEFT);
   }
 
+  @NotNull
   public Aligner createAligner(PsiElement element, boolean allowBackwardShift, Alignment.Anchor anchor) {
     final Aligner aligner = new Aligner(allowBackwardShift, anchor);
     aligner.append(element);
