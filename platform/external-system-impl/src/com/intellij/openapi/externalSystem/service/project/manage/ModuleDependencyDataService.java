@@ -25,6 +25,8 @@ import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExportableOrderEntry;
@@ -46,6 +48,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
  * @author Denis Zhdanov
  * @since 4/15/13 8:37 AM
  */
+@Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class ModuleDependencyDataService extends AbstractDependencyDataService<ModuleDependencyData> {
 
   private static final Logger LOG = Logger.getInstance("#" + ModuleDependencyDataService.class.getName());

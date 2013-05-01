@@ -8,8 +8,11 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -33,6 +36,7 @@ import java.util.concurrent.TimeUnit;
  * @author Denis Zhdanov
  * @since 2/7/12 2:49 PM
  */
+@Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class ModuleDataService implements ProjectDataService<ModuleData> {
 
   private static final Logger LOG = Logger.getInstance("#" + ModuleDataService.class.getName());
@@ -99,6 +103,12 @@ public class ModuleDataService implements ProjectDataService<ModuleData> {
             ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(created);
             final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
             moduleRootModel.inheritSdk();
+            created.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, data.getOwner().toString());
+            ProjectData projectData = module.getData(ProjectKeys.PROJECT);
+            if (projectData != null) {
+              created.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY, projectData.getLinkedExternalProjectPath());
+            }
+            
             RootPolicy<Object> visitor = new RootPolicy<Object>() {
               @Override
               public Object visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Object value) {

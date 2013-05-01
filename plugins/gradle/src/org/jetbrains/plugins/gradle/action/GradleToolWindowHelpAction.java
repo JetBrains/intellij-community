@@ -23,10 +23,11 @@ public class GradleToolWindowHelpAction extends ContextHelpAction {
       return;
     }
 
-    if (StringUtil.isEmpty(GradleSettings.getInstance(project).getLinkedExternalProjectPath())) {
-      event.getPresentation().setVisible(false);
-      return;
-    }
+    // TODO den implement
+//    if (StringUtil.isEmpty(GradleSettings.getInstance(project).getLinkedExternalProjectPath())) {
+//      event.getPresentation().setVisible(false);
+//      return;
+//    }
     event.getPresentation().setVisible(true);
     super.update(event);
   }

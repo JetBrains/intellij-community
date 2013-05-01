@@ -56,12 +56,12 @@ public class ExternalSystemApiUtil {
 
   @NotNull private static final Pattern ARTIFACT_PATTERN = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^\\.]+?)?");
 
-  @NotNull private static final NotNullLazyValue<Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?>>> MANAGERS =
-    new AtomicNotNullLazyValue<Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?>>>() {
+  @NotNull private static final NotNullLazyValue<Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>>> MANAGERS =
+    new AtomicNotNullLazyValue<Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>>>() {
       @NotNull
       @Override
-      protected Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?>> compute() {
-        Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?>> result = ContainerUtilRt.newHashMap();
+      protected Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>> compute() {
+        Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>> result = ContainerUtilRt.newHashMap();
         for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
           result.put(manager.getSystemId(), manager);
         }
@@ -178,7 +178,7 @@ public class ExternalSystemApiUtil {
   }
 
   @Nullable
-  public static ExternalSystemManager<?, ?, ?, ?> getManager(@NotNull ProjectSystemId externalSystemId) {
+  public static ExternalSystemManager<?, ?, ?, ?, ?> getManager(@NotNull ProjectSystemId externalSystemId) {
     return MANAGERS.getValue().get(externalSystemId);
   }
 
@@ -349,5 +349,10 @@ public class ExternalSystemApiUtil {
       pathToUse = '/' + pathToUse;
     }
     classPath.add(PathManager.getResourceRoot(contextClass, pathToUse));
+  }
+
+  @Nullable
+  public static String normalizePath(@Nullable String s) {
+    return StringUtil.isEmpty(s) ? null : s;
   }
 }

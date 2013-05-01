@@ -15,7 +15,9 @@
  */
 package com.intellij.openapi.externalSystem.settings;
 
-import org.jetbrains.annotations.Nullable;
+import org.jetbrains.annotations.NotNull;
+
+import java.util.Collection;
 
 /**
  * Defines callback for external system settings change.
@@ -25,19 +27,13 @@ import org.jetbrains.annotations.Nullable;
  * @author Denis Zhdanov
  * @since 4/3/13 4:13 PM
  */
-public interface ExternalSystemSettingsListener {
+public interface ExternalSystemSettingsListener<S extends ExternalProjectSettings> {
+  
+  void onProjectsLinked(@NotNull Collection<S> settings);
 
-  /**
-   * Is expected to be invoked when linked external project path is changed.
-   * <p/>
-   * <b>Note:</b> this callback is executed <b>after</b> the actual config change.
-   *
-   * @param oldPath  old path (if any)
-   * @param newPath  new path (if any)
-   */
-  void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath);
-
-  void onUseAutoImportChange(boolean currentValue);
+  void onProjectsUnlinked(@NotNull Collection<String> linkedProjectPaths);
+  
+  void onUseAutoImportChange(boolean currentValue, @NotNull String linkedProjectPath);
 
   /**
    * External system settings changes might affect project structure, e.g. switching from one external system version to another

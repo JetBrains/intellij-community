@@ -43,10 +43,11 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 4/15/13 2:29 PM
  */
-public class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder<GradleConfigurable> {
+public class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder<ImportFromGradleControl> {
 
   public GradleProjectImportBuilder(@NotNull ExternalSystemSettingsManager settingsManager, @NotNull ProjectDataManager dataManager) {
-    super(settingsManager, dataManager, new GradleConfigurable(null), GradleConstants.SYSTEM_ID);
+    // TODO den implement
+    super(settingsManager, dataManager, new ImportFromGradleControl(), GradleConstants.SYSTEM_ID);
   }
 
   @NotNull
@@ -66,7 +67,7 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
     if (!pathToUse.endsWith(GradleConstants.DEFAULT_SCRIPT_NAME)) {
       pathToUse = new File(pathToUse, GradleConstants.DEFAULT_SCRIPT_NAME).getAbsolutePath();
     }
-    getConfigurable().setLinkedExternalProjectPath(pathToUse);
+    getControl().setLinkedProjectPath(pathToUse);
   }
 
   @Override
@@ -123,12 +124,14 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
   @Override
   protected void onProjectInit(@NotNull Project project) {
     GradleSettings settings = (GradleSettings)getSettingsManager().getSettings(project, GradleConstants.SYSTEM_ID);
-    settings.setPreferLocalInstallationToWrapper(getConfigurable().isPreferLocalInstallationToWrapper());
-    settings.setGradleHome(getConfigurable().getGradleHomePath());
+    // TODO den implement
+//    settings.setPreferLocalInstallationToWrapper(getConfigurable().isPreferLocalInstallationToWrapper());
+//    settings.setGradleHome(getConfigurable().getGradleHomePath());
 
     // Reset linked gradle home for default project (legacy bug).
     Project defaultProject = ProjectManager.getInstance().getDefaultProject();
-    getSettingsManager().getSettings(defaultProject, GradleConstants.SYSTEM_ID).setLinkedExternalProjectPath(null);
+    // TODO den implement
+//    getSettingsManager().getSettings(defaultProject, GradleConstants.SYSTEM_ID).setLinkedExternalProjectPath(null);
   }
 
   @Override

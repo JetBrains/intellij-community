@@ -28,7 +28,6 @@ import java.util.regex.Pattern;
  */
 public class GradleUtil {
 
-  public static final  String  SYSTEM_DIRECTORY_PATH_KEY    = "GRADLE_USER_HOME";
   private static final String  WRAPPER_VERSION_PROPERTY_KEY = "distributionUrl";
   private static final Pattern WRAPPER_VERSION_PATTERN      = Pattern.compile(".*gradle-(.+)-bin.zip");
 
@@ -157,16 +156,6 @@ public class GradleUtil {
 //    final String gradle = ExternalSystemBundle.message("gradle.name");
 //    final String intellij = ExternalSystemBundle.message("gradle.ide");
     return new MatrixControlBuilder(gradle, intellij);
-  }
-
-  public static boolean isGradleAvailable(@Nullable Project project) {
-    if (project != null) {
-      GradleSettings settings = GradleSettings.getInstance(project);
-      if (!settings.isPreferLocalInstallationToWrapper() && isGradleWrapperDefined(settings.getLinkedExternalProjectPath())) {
-        return true;
-      }
-    }
-    return INSTALLATION_MANAGER.getValue().getGradleHome(project) != null;
   }
 
   /**

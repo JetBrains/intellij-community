@@ -34,7 +34,7 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
                                           @NotNull String projectPath,
                                           boolean resolveLibraries)
   {
-    super(externalSystemId, ExternalSystemTaskType.RESOLVE_PROJECT, project);
+    super(externalSystemId, ExternalSystemTaskType.RESOLVE_PROJECT, project, projectPath);
     myProjectPath = projectPath;
     myResolveLibraries = resolveLibraries;
   }
@@ -43,11 +43,11 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
   protected void doExecute() throws Exception {
     final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     Project ideProject = getIdeProject();
-    RemoteExternalSystemProjectResolver resolver = manager.getFacade(ideProject, getExternalSystemId()).getResolver();
+    RemoteExternalSystemProjectResolver resolver = manager.getFacade(ideProject, myProjectPath, getExternalSystemId()).getResolver();
     setState(ExternalSystemTaskState.IN_PROGRESS);
 
     ExternalSystemSettingsManager settingsManager = ServiceManager.getService(ExternalSystemSettingsManager.class);
-    ExternalSystemExecutionSettings settings = settingsManager.getExecutionSettings(ideProject, getExternalSystemId());
+    ExternalSystemExecutionSettings settings = settingsManager.getExecutionSettings(ideProject, myProjectPath, getExternalSystemId());
     DataNode<ProjectData> project = resolver.resolveProjectInfo(getId(), myProjectPath, myResolveLibraries, settings);
     
     if (project == null) {

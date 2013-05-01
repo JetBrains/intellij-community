@@ -31,6 +31,7 @@ import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.util.Function;
@@ -44,10 +45,7 @@ import org.jetbrains.plugins.gradle.remote.impl.GradleBuildManager;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
-import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
-import org.jetbrains.plugins.gradle.settings.GradleLocalSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSettings;
-import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
+import org.jetbrains.plugins.gradle.settings.*;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
@@ -61,8 +59,12 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 4/10/13 1:19 PM
  */
-public class GradleManager
-  implements ExternalSystemManager<GradleSettingsListener, GradleSettings, GradleLocalSettings, GradleExecutionSettings>
+public class GradleManager implements ExternalSystemManager<
+  GradleProjectSettings,
+  GradleSettingsListener,
+  GradleSettings,
+  GradleLocalSettings,
+  GradleExecutionSettings>
 {
 
   private static final Logger LOG = Logger.getInstance("#" + GradleManager.class.getName());
@@ -91,11 +93,6 @@ public class GradleManager
     return GradleConstants.SYSTEM_ID;
   }
 
-  @Override
-  public boolean isReady(@NotNull Project project) {
-    return myInstallationManager.getGradleHome(project) != null;
-  }
-
   @NotNull
   @Override
   public Function<Project, GradleSettings> getSettingsProvider() {
@@ -120,15 +117,15 @@ public class GradleManager
 
   @NotNull
   @Override
-  public Function<Project, GradleExecutionSettings> getExecutionSettingsProvider() {
-    return new Function<Project, GradleExecutionSettings>() {
+  public Function<Pair<Project, String>, GradleExecutionSettings> getExecutionSettingsProvider() {
+    return new Function<Pair<Project, String>, GradleExecutionSettings>() {
 
       private final GradleJavaHelper myJavaHelper = new GradleJavaHelper();
 
       @Override
-      public GradleExecutionSettings fun(Project project) {
-        GradleSettings settings = GradleSettings.getInstance(project);
-        File gradleHome = myInstallationManager.getGradleHome(project);
+      public GradleExecutionSettings fun(Pair<Project, String> pair) {
+        GradleSettings settings = GradleSettings.getInstance(pair.first);
+        File gradleHome = myInstallationManager.getGradleHome(pair.first, pair.second);
         String localGradlePath = null;
         if (gradleHome != null) {
           try {
@@ -141,11 +138,13 @@ public class GradleManager
         }
         GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
                                                                      settings.getServiceDirectoryPath(),
-                                                                     settings.isPreferLocalInstallationToWrapper());
+                                                                     false);
+        // TODO den implement
+//                                                                     settings.isPreferLocalInstallationToWrapper());
         for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
           result.addResolverExtensionClass(extension.getClass().getName());
         }
-        String javaHome = myJavaHelper.getJdkHome(project);
+        String javaHome = myJavaHelper.getJdkHome(pair.first);
         if (!StringUtil.isEmpty(javaHome)) {
           LOG.info("Instructing gradle to use java from " + javaHome);
         }

@@ -15,29 +15,29 @@
  */
 package org.jetbrains.plugins.gradle.service.settings;
 
-import com.intellij.openapi.externalSystem.service.settings.AbstractExternalSystemConfigurable;
+import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
 import com.intellij.openapi.externalSystem.service.settings.ExternalSettingsControl;
-import com.intellij.openapi.project.Project;
-import org.jetbrains.annotations.NonNls;
+import com.intellij.openapi.fileChooser.FileChooserDescriptor;
+import com.intellij.openapi.project.ProjectManager;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettingsListener;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 /**
  * @author Denis Zhdanov
- * @since 4/30/13 11:42 PM
+ * @since 4/30/13 4:58 PM
  */
-public class GradleConfigurable extends AbstractExternalSystemConfigurable<GradleProjectSettings, GradleSettingsListener, GradleSettings> {
-
-  @NonNls public static final String HELP_TOPIC = "reference.settingsdialog.project.gradle";
-
-  public GradleConfigurable(@NotNull Project project) {
-    super(project, GradleConstants.SYSTEM_ID);
+public class ImportFromGradleControl
+  extends AbstractImportFromExternalSystemControl<GradleProjectSettings, GradleSettingsListener, GradleSettings>
+{
+  public ImportFromGradleControl() {
+    super(GradleConstants.SYSTEM_ID, new GradleSettings(ProjectManager.getInstance().getDefaultProject()), new GradleProjectSettings());
   }
-
+  
   @NotNull
   @Override
   protected ExternalSettingsControl<GradleProjectSettings> createProjectSettingsControl(@NotNull GradleProjectSettings settings) {
@@ -52,19 +52,12 @@ public class GradleConfigurable extends AbstractExternalSystemConfigurable<Gradl
 
   @NotNull
   @Override
-  protected GradleProjectSettings newProjectSettings() {
-    return new GradleProjectSettings();
+  protected FileChooserDescriptor getLinkedProjectChooserDescriptor() {
+    return GradleUtil.getGradleProjectFileChooserDescriptor();
   }
 
-  @NotNull
   @Override
-  public String getId() {
-    return getHelpTopic();
-  }
-
-  @NotNull
-  @Override
-  public String getHelpTopic() {
-    return HELP_TOPIC;
+  protected void onLinkedProjectPathChange(@NotNull String path) {
+    ((GradleProjectSettingsControl)getProjectSettingsControl()).updateWrapperControls(path);
   }
 }

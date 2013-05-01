@@ -21,6 +21,7 @@ import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutio
 import com.intellij.openapi.externalSystem.service.DisposableExternalSystemService;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,7 +40,7 @@ public class ExternalSystemSettingsManager implements DisposableExternalSystemSe
     @Override
     protected Holder compute() {
       Holder result = new Holder();
-      for (ExternalSystemManager<?, ?, ?, ?> manager : ExternalSystemManager.EP_NAME.getExtensions()) {
+      for (ExternalSystemManager<?, ?, ?, ?, ?> manager : ExternalSystemManager.EP_NAME.getExtensions()) {
         result.register(manager);
       }
       return result;
@@ -81,18 +82,20 @@ public class ExternalSystemSettingsManager implements DisposableExternalSystemSe
   
   @SuppressWarnings("unchecked")
   public <S extends ExternalSystemExecutionSettings> S getExecutionSettings(@NotNull Project project,
+                                                                            @NotNull String linkedProjectPath,
                                                                             @NotNull ProjectSystemId externalSystemId)
     throws IllegalArgumentException
   {
     Holder holder = myHolder.getValue();
-    Function<Project, ? extends ExternalSystemExecutionSettings> provider = holder.executionSettingsProviders.get(externalSystemId);
+    Function<Pair<Project, String>, ? extends ExternalSystemExecutionSettings> provider
+      = holder.executionSettingsProviders.get(externalSystemId);
     if (provider == null) {
       throw new IllegalArgumentException(String.format(
         "Can't retrieve execution settings for external system with id '%s'. Reason: no such system is registered. Known systems: %s",
         externalSystemId, holder.executionSettingsProviders.keySet()
       ));
     }
-    return (S)provider.fun(project);
+    return (S)provider.fun(Pair.create(project, linkedProjectPath));
   }
   
   @Override
@@ -110,15 +113,16 @@ public class ExternalSystemSettingsManager implements DisposableExternalSystemSe
       = ContainerUtil.newConcurrentMap();
 
     @NotNull
-    public final ConcurrentMap<ProjectSystemId, Function<Project, ? extends ExternalSystemExecutionSettings>> executionSettingsProviders
+    public final ConcurrentMap<ProjectSystemId, Function<Pair<Project, String>, ? extends ExternalSystemExecutionSettings>>
+      executionSettingsProviders
       = ContainerUtil.newConcurrentMap();
-    
-    public void register(@NotNull ExternalSystemManager<?, ?, ?, ?> manager) {
+
+    public void register(@NotNull ExternalSystemManager<?, ?, ?, ?, ?> manager) {
       settingsProviders.put(manager.getSystemId(), manager.getSettingsProvider());
       localSettingsProviders.put(manager.getSystemId(), manager.getLocalSettingsProvider());
       executionSettingsProviders.put(manager.getSystemId(), manager.getExecutionSettingsProvider());
     }
-    
+
     public void clear(@NotNull ProjectSystemId externalSystemId) {
       settingsProviders.remove(externalSystemId);
       localSettingsProviders.remove(externalSystemId);

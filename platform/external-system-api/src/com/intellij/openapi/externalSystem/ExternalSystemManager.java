@@ -8,8 +8,10 @@ import com.intellij.openapi.externalSystem.service.ParametersEnhancer;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 
@@ -25,8 +27,9 @@ import org.jetbrains.annotations.NotNull;
  * @since 4/4/13 4:05 PM
  */
 public interface ExternalSystemManager<
-  SettingsListener extends ExternalSystemSettingsListener,
-  Settings extends AbstractExternalSystemSettings<SettingsListener, Settings>,
+  ProjectSettings extends ExternalProjectSettings,
+  SettingsListener extends ExternalSystemSettingsListener<ProjectSettings>,
+  Settings extends AbstractExternalSystemSettings<ProjectSettings, SettingsListener>,
   LocalSettings extends AbstractExternalSystemLocalSettings<LocalSettings>,
   ExecutionSettings extends ExternalSystemExecutionSettings>
   extends ParametersEnhancer
@@ -40,17 +43,6 @@ public interface ExternalSystemManager<
   @NotNull
   ProjectSystemId getSystemId();
 
-  /**
-   * Allows to answer if target external system is ready to use for the given project.
-   * <p/>
-   * A negative answer might be returned if, say, target external system config path is not defined at the given ide project.
-   * 
-   * @param project  target ide project
-   * @return         <code>true</code> if target external system is configured for the given ide project;
-   *                 <code>false</code> otherwise
-   */
-  boolean isReady(@NotNull Project project);
-  
   /**
    * @return    a strategy which can be queried for external system settings to use with the given project
    */
@@ -67,7 +59,7 @@ public interface ExternalSystemManager<
    * @return    a strategy which can be queried for external system execution settings to use with the given project
    */
   @NotNull
-  Function<Project, ExecutionSettings> getExecutionSettingsProvider();
+  Function<Pair<Project, String/*linked project path*/>, ExecutionSettings> getExecutionSettingsProvider();
 
   /**
    * Allows to retrieve information about {@link ExternalSystemProjectResolver project resolver} to use for the target external

@@ -20,7 +20,6 @@ import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.DataKey;
 import com.intellij.openapi.actionSystem.DataProvider;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
-import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
@@ -47,7 +46,6 @@ import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.util.Consumer;
-import com.intellij.util.PathsList;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -92,26 +90,6 @@ public class ExternalSystemUtil {
     else if (entity instanceof Library) {
       visitor.visit(((Library)entity));
     }
-  }
-
-  @NotNull
-  public static ProjectSystemId detectOwner(@Nullable ProjectEntityData externalEntity, @Nullable Object ideEntity) {
-    if (ideEntity != null) {
-      return ProjectSystemId.IDE;
-    }
-    else if (externalEntity != null) {
-      return externalEntity.getOwner();
-    }
-    else {
-      throw new RuntimeException(String.format(
-        "Can't detect owner system for the given arguments: external=%s, ide=%s", externalEntity, ideEntity
-      ));
-    }
-  }
-
-  @NotNull
-  public static String getOutdatedEntityName(@NotNull String entityName, @NotNull String gradleVersion, @NotNull String ideVersion) {
-    return String.format("%s (%s -> %s)", entityName, ideVersion, gradleVersion);
   }
 
   @Nullable
@@ -224,21 +202,18 @@ public class ExternalSystemUtil {
   {
     ExternalSystemSettingsManager settingsManager = ServiceManager.getService(ExternalSystemSettingsManager.class);
     AbstractExternalSystemSettings settings = settingsManager.getSettings(project, externalSystemId);
-    final String linkedProjectPath = settings.getLinkedExternalProjectPath();
-    if (StringUtil.isEmpty(linkedProjectPath)) {
-      return;
-    }
-    assert linkedProjectPath != null;
-    Ref<String> errorDetailsHolder = new Ref<String>() {
-      @Override
-      public void set(@Nullable String error) {
-        if (!StringUtil.isEmpty(error)) {
-          assert error != null;
-          LOG.warn(error);
+    for (Object path : settings.getLinkedProjectsSettings()) {
+      Ref<String> errorDetailsHolder = new Ref<String>() {
+        @Override
+        public void set(@Nullable String error) {
+          if (!StringUtil.isEmpty(error)) {
+            assert error != null;
+            LOG.warn(error);
+          }
         }
-      }
-    };
-    refreshProject(project, externalSystemId, linkedProjectPath, errorMessageHolder, errorDetailsHolder, true, false);
+      };
+      refreshProject(project, externalSystemId, path.toString(), errorMessageHolder, errorDetailsHolder, true, false);
+    }
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")

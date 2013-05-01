@@ -31,7 +31,7 @@ import java.util.Map;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
- * Holds local project-level gradle-related settings (should be kept at the '*.iws' or 'workspace.xml').
+ * Holds local project-level external system-related settings (should be kept at the '*.iws' or 'workspace.xml').
  * <p/>
  * For example, we don't want to store recent tasks list at common external system settings, hence, that data
  * is kept at user-local settings (workspace settings).

@@ -231,7 +231,9 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
       return null;
     }
 
-    String gradleProjectPath = GradleSettings.getInstance(getProject()).getLinkedExternalProjectPath();
+    // TODO den implement
+    String gradleProjectPath = null;
+//    String gradleProjectPath = GradleSettings.getInstance(getProject()).getLinkedExternalProjectPath();
     if (StringUtil.isEmpty(gradleProjectPath)) {
       return null;
     }

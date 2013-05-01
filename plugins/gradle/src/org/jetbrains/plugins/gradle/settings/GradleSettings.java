@@ -19,8 +19,12 @@ import com.intellij.openapi.components.*;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.xmlb.annotations.AbstractCollection;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+
+import java.util.Set;
 
 /**
  * Holds shared project-level gradle-related settings (should be kept at the '*.ipr' or under '.idea').
@@ -34,14 +38,12 @@ import org.jetbrains.annotations.Nullable;
       @Storage(file = StoragePathMacros.PROJECT_CONFIG_DIR + "/gradle.xml", scheme = StorageScheme.DIRECTORY_BASED)
     }
 )
-public class GradleSettings extends AbstractExternalSystemSettings<GradleSettingsListener, GradleSettings>
+public class GradleSettings extends AbstractExternalSystemSettings<GradleProjectSettings, GradleSettingsListener>
   implements PersistentStateComponent<GradleSettings.MyState>
 {
 
-  private String  myGradleHome;
   private String  myServiceDirectoryPath;
-  private boolean myPreferLocalInstallationToWrapper;
-  
+
   public GradleSettings(@NotNull Project project) {
     super(GradleSettingsListener.TOPIC, project);
   }
@@ -57,43 +59,14 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
   public GradleSettings.MyState getState() {
     MyState state = new MyState();
     fillState(state);
-    state.gradleHome = myGradleHome;
     state.serviceDirectoryPath = myServiceDirectoryPath;
-    state.preferLocalInstallationToWrapper = myPreferLocalInstallationToWrapper;
     return state;
   }
 
   @Override
   public void loadState(MyState state) {
     super.loadState(state);
-    myGradleHome = state.gradleHome;
     myServiceDirectoryPath = state.serviceDirectoryPath;
-    myPreferLocalInstallationToWrapper = state.preferLocalInstallationToWrapper;
-  }
-  
-  @Nullable
-  public String getGradleHome() {
-    return myGradleHome;
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  public void setGradleHome(@Nullable String gradleHome) {
-    if (!Comparing.equal(myGradleHome, gradleHome)) {
-      final String oldHome = myGradleHome;
-      myGradleHome = gradleHome;
-      getPublisher().onGradleHomeChange(oldHome, myGradleHome);
-    }
-  }
-
-  public boolean isPreferLocalInstallationToWrapper() {
-    return myPreferLocalInstallationToWrapper;
-  }
-
-  public void setPreferLocalInstallationToWrapper(boolean preferLocalInstallationToWrapper) {
-    if (myPreferLocalInstallationToWrapper != preferLocalInstallationToWrapper) {
-      myPreferLocalInstallationToWrapper = preferLocalInstallationToWrapper;
-      getPublisher().onPreferLocalGradleDistributionToWrapperChange(preferLocalInstallationToWrapper);
-    }
   }
 
   /**
@@ -114,35 +87,31 @@ public class GradleSettings extends AbstractExternalSystemSettings<GradleSetting
     } 
   }
 
-  public void applySettings(@Nullable String linkedProjectPath,
-                            @Nullable String gradleHomePath,
-                            boolean preferLocalInstallationToWrapper,
-                            boolean useAutoImport,
-                            @Nullable String serviceDirectoryPath)
-  {
-    
-    GradleSettingsListener publisher = getPublisher();
-    publisher.onBulkChangeStart();
-    try {
-      setLinkedExternalProjectPath(linkedProjectPath);
-      setGradleHome(gradleHomePath);
-      setPreferLocalInstallationToWrapper(preferLocalInstallationToWrapper);
-      setUseAutoImport(useAutoImport);
-      setServiceDirectoryPath(serviceDirectoryPath);
+  @Override
+  protected void checkSettings(@NotNull GradleProjectSettings old, @NotNull GradleProjectSettings current) {
+    if (!Comparing.equal(old.getGradleHome(), current.getGradleHome())) {
+      getPublisher().onGradleHomeChange(old.getGradleHome(), current.getGradleHome(), current.getExternalProjectPath());
     }
-    finally {
-      publisher.onBulkChangeEnd();
+    if (old.isPreferLocalInstallationToWrapper() != current.isPreferLocalInstallationToWrapper()) {
+      getPublisher().onPreferLocalGradleDistributionToWrapperChange(current.isPreferLocalInstallationToWrapper(),
+                                                                    current.getExternalProjectPath());
     }
   }
 
-  @Override
-  public String toString() {
-    return "home: " + myGradleHome + ", path: " + getLinkedExternalProjectPath();
-  }
-  
-  public static class MyState extends State {
-    public String gradleHome;
+  public static class MyState implements State<GradleProjectSettings> {
+
+    private Set<GradleProjectSettings> myProjectSettings = ContainerUtilRt.newTreeSet();
     public String serviceDirectoryPath;
-    public boolean preferLocalInstallationToWrapper;
+
+    @AbstractCollection(surroundWithTag = false, elementTypes = {GradleProjectSettings.class})
+    public Set<GradleProjectSettings> getLinkedExternalProjectsSettings() {
+      return myProjectSettings;
+    }
+
+    public void setLinkedExternalProjectsSettings(Set<GradleProjectSettings> settings) {
+      if (settings != null) {
+        myProjectSettings.addAll(settings);
+      }
+    }
   }
 }

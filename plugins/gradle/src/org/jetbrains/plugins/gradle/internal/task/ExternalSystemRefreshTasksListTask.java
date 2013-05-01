@@ -36,7 +36,7 @@ public class ExternalSystemRefreshTasksListTask extends AbstractExternalSystemTa
                                             @NotNull Project project,
                                             @NotNull String projectPath)
   {
-    super(externalSystemId, ExternalSystemTaskType.REFRESH_TASKS_LIST, project);
+    super(externalSystemId, ExternalSystemTaskType.REFRESH_TASKS_LIST, project, projectPath);
     myProjectPath = projectPath;
   }
 

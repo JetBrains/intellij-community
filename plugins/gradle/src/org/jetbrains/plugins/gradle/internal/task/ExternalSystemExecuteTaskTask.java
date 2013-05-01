@@ -40,7 +40,7 @@ public class ExternalSystemExecuteTaskTask extends AbstractExternalSystemTask {
                                        @NotNull String gradleProjectPath,
                                        @NotNull List<String> tasksToExecute)
   {
-    super(externalSystemId, ExternalSystemTaskType.EXECUTE_TASK, project);
+    super(externalSystemId, ExternalSystemTaskType.EXECUTE_TASK, project, gradleProjectPath);
     myGradleProjectPath = gradleProjectPath;
     myTasksToExecute = tasksToExecute;
   }

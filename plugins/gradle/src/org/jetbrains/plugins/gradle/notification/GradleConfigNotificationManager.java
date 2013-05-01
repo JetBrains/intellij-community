@@ -40,7 +40,6 @@ public class GradleConfigNotificationManager {
     myProject = project;
     myLibraryManager = manager;
     final GradleSettingsListenerAdapter handler = new GradleSettingsListenerAdapter() {
-      @Override
       public void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath) {
         processGradleHomeChange();
       }
@@ -51,15 +50,16 @@ public class GradleConfigNotificationManager {
 
   private void processGradleHomeChange() {
     EditorNotifications.getInstance(myProject).updateAllNotifications();
-
-    if (!GradleUtil.isGradleAvailable(myProject)) {
-      return;
-    }
-
-    final Notification notification = myNotification.get();
-    if (notification != null && myNotification.compareAndSet(notification, null)) {
-      notification.expire();
-    }
+    
+    // TODO den implement
+    //if (!GradleUtil.isGradleAvailable(myProject)) {
+    //  return;
+    //}
+    //
+    //final Notification notification = myNotification.get();
+    //if (notification != null && myNotification.compareAndSet(notification, null)) {
+    //  notification.expire();
+    //}
   }
 
   public void processRefreshError(@NotNull String message) {

@@ -18,6 +18,8 @@ package com.intellij.openapi.externalSystem.service.project.manage;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
@@ -30,6 +32,7 @@ import java.util.Collection;
  * @author Denis Zhdanov
  * @since 4/14/13 11:21 PM
  */
+@Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public abstract class AbstractDependencyDataService<T extends AbstractDependencyData<?>> implements ProjectDataService<T> {
 
   public void removeData(@NotNull Collection<ExportableOrderEntry> toRemove, @NotNull final Module module, boolean synchronous) {

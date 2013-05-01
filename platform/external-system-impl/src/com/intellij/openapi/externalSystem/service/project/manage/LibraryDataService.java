@@ -11,7 +11,9 @@ import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTy
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
+import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -34,6 +36,7 @@ import java.util.Set;
  * @author Denis Zhdanov
  * @since 2/15/12 11:32 AM
  */
+@Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class LibraryDataService implements ProjectDataService<LibraryData> {
 
   private static final Logger LOG = Logger.getInstance("#" + LibraryDataService.class.getName());

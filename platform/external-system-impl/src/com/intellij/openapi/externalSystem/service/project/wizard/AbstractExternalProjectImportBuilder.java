@@ -10,8 +10,9 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
-import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectConfigurable;
+import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
+import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
@@ -50,7 +51,7 @@ import java.util.*;
  * @since 8/1/11 1:29 PM
  */
 @SuppressWarnings("MethodMayBeStatic")
-public abstract class AbstractExternalProjectImportBuilder<C extends AbstractExternalProjectConfigurable>
+public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImportFromExternalSystemControl>
   extends ProjectImportBuilder<DataNode<ProjectData>>
 {
 
@@ -58,20 +59,19 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractExt
 
   @NotNull private final ExternalSystemSettingsManager mySettingsManager;
   @NotNull private final ProjectDataManager            myProjectDataManager;
-  @NotNull private final C                             myConfigurable;
+  @NotNull private final C                             myControl;
   @NotNull private final ProjectSystemId               myExternalSystemId;
 
   private DataNode<ProjectData> myExternalProjectNode;
 
   public AbstractExternalProjectImportBuilder(@NotNull ExternalSystemSettingsManager settingsManager,
                                               @NotNull ProjectDataManager projectDataManager,
-                                              @NotNull C configurable,
+                                              @NotNull C control,
                                               @NotNull ProjectSystemId externalSystemId)
   {
     mySettingsManager = settingsManager;
     myProjectDataManager = projectDataManager;
-    myConfigurable = configurable;
-    myConfigurable.setAlwaysShowLinkedProjectControls(true);
+    myControl = control;
     myExternalSystemId = externalSystemId;
   }
 
@@ -94,13 +94,8 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractExt
   }
 
   @NotNull
-  public C getConfigurable() {
-    return myConfigurable;
-  }
-
-  @NotNull
-  public ProjectSystemId getExternalSystemId() {
-    return myExternalSystemId;
+  public C getControl() {
+    return myControl;
   }
 
   @NotNull
@@ -109,9 +104,9 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractExt
   }
 
   public void prepare(@NotNull WizardContext context) {
-    myConfigurable.reset();
+    myControl.reset();
     String pathToUse = context.getProjectFileDirectory();
-    myConfigurable.setLinkedExternalProjectPath(pathToUse);
+    myControl.setLinkedProjectPath(pathToUse);
     doPrepare(context);
   }
 
@@ -129,13 +124,15 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractExt
       beforeCommit(externalProjectNode, project);
     }
     StartupManager.getInstance(project).runWhenProjectIsInitialized(new Runnable() {
+      @SuppressWarnings("unchecked")
       @Override
       public void run() {
         AbstractExternalSystemSettings settings = mySettingsManager.getSettings(project, myExternalSystemId);
-        final String linkedProjectPath = myConfigurable.getLinkedExternalProjectPath();
+        final String linkedProjectPath = myControl.getProjectSettings().getExternalProjectPath();
         assert linkedProjectPath != null;
-        settings.setLinkedExternalProjectPath(linkedProjectPath);
-        settings.setUseAutoImport(myConfigurable.isUseAutoImport());
+        List<ExternalProjectSettings> projects = ContainerUtilRt.newArrayList(settings.getLinkedProjectsSettings());
+        projects.add(myControl.getProjectSettings());
+        settings.setLinkedProjectsSettings(projects);
         onProjectInit(project);
 
         if (externalProjectNode != null) {
@@ -236,30 +233,16 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractExt
             Set<DataNode<?>> toImport = ContainerUtilRt.newHashSet();
             toImport.add(projectWithResolvedLibraries);
             myProjectDataManager.importData(toImport, project, false);
-            // TODO den uncomment
-            //ProjectStructureChangesModel changesModel = ServiceManager.getService(project, ProjectStructureChangesModel.class);
-            //changesModel.update(projectWithResolvedLibraries);
           }
         });
-        // TODO den uncomment
-        //ServiceManager.getService(project, UserProjectChangesCalculator.class).updateCurrentProjectState();
       }
     });
   }
 
   @Nullable
   private File getProjectFile() {
-    String path = myConfigurable.getLinkedExternalProjectPath();
+    String path = myControl.getProjectSettings().getExternalProjectPath();
     return path == null ? null : new File(path);
-  }
-
-  /**
-   * Is called to indicate that user changed path to the gradle project to import.
-   * 
-   * @param path      new directory path
-   */
-  public void setCurrentProjectPath(@NotNull String path) {
-    myConfigurable.setLinkedExternalProjectPath(path);
   }
 
   /**
@@ -324,7 +307,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractExt
       return;
     }
     context.setProjectName(myExternalProjectNode.getData().getName());
-    context.setProjectFileDirectory(myExternalProjectNode.getData().getProjectFileDirectoryPath());
+    context.setProjectFileDirectory(myExternalProjectNode.getData().getIdeProjectFileDirectoryPath());
     applyExtraSettings(context);
   }
 

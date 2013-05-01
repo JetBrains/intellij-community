@@ -17,6 +17,8 @@ public class GradleConstants {
   @NonNls public static final String EXTENSION           = "gradle";
   @NonNls public static final String DEFAULT_SCRIPT_NAME = "build.gradle";
 
+  public static final  String  SYSTEM_DIRECTORY_PATH_KEY    = "GRADLE_USER_HOME";
+
   @NonNls public static final String TOOL_WINDOW_ID = "JetGradle";
 
   @NonNls public static final String TOOL_WINDOW_TOOLBAR_PLACE    = "GRADLE_SYNC_CHANGES_TOOLBAR";

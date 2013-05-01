@@ -27,11 +27,12 @@ public class GradleStartupActivity implements StartupActivity {
     Runnable task = new Runnable() {
       @Override
       public void run() {
-        new GradlePatcher().patch(project);
-        
-        if (!Boolean.getBoolean(ExternalSystemConstants.NEWLY_IMPORTED_PROJECT)) {
-          ExternalSystemUtil.refreshProject(project, GradleConstants.SYSTEM_ID);
-        }
+        // TODO den implement
+//        new GradlePatcher().patch(project);
+//        
+//        if (!Boolean.getBoolean(ExternalSystemConstants.NEWLY_IMPORTED_PROJECT)) {
+//          ExternalSystemUtil.refreshProject(project, GradleConstants.SYSTEM_ID);
+//        }
       }
     };
     

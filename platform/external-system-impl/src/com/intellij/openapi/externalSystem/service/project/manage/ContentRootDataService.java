@@ -11,6 +11,8 @@ import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.service.project.ModuleAwareContentRoot;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ContentEntry;
@@ -30,6 +32,7 @@ import java.util.Map;
  * @author Denis Zhdanov
  * @since 2/7/12 3:20 PM
  */
+@Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
 public class ContentRootDataService implements ProjectDataService<ContentRootData> {
 
   private static final Logger LOG = Logger.getInstance("#" + ContentRootDataService.class.getName());
