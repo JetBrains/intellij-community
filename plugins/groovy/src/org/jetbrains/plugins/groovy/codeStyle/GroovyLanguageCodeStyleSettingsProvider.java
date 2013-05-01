@@ -42,10 +42,108 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
   public void customizeSettings(@NotNull CodeStyleSettingsCustomizable consumer,
                                 @NotNull SettingsType settingsType) {
     if (settingsType == SettingsType.WRAPPING_AND_BRACES_SETTINGS) {
-      consumer.showAllStandardOptions();
+      consumer.showStandardOptions(
+        "KEEP_LINE_BREAKS",
+        "KEEP_FIRST_COLUMN_COMMENT",
+        "KEEP_CONTROL_STATEMENT_IN_ONE_LINE",
+        "KEEP_MULTIPLE_EXPRESSIONS_IN_ONE_LINE",
+        "KEEP_SIMPLE_BLOCKS_IN_ONE_LINE",
+        "KEEP_SIMPLE_METHODS_IN_ONE_LINE",
+        "KEEP_SIMPLE_CLASSES_IN_ONE_LINE",
+
+        "WRAP_LONG_LINES",
+
+        "CLASS_BRACE_STYLE",
+        "METHOD_BRACE_STYLE",
+        "BRACE_STYLE",
+
+        "EXTENDS_LIST_WRAP",
+        "ALIGN_MULTILINE_EXTENDS_LIST",
+
+        "EXTENDS_KEYWORD_WRAP",
+
+        "THROWS_LIST_WRAP",
+        "ALIGN_MULTILINE_THROWS_LIST",
+        "ALIGN_THROWS_KEYWORD",
+        "THROWS_KEYWORD_WRAP",
+
+        "METHOD_PARAMETERS_WRAP",
+        "ALIGN_MULTILINE_PARAMETERS",
+        "METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE",
+        "METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE",
+
+        "CALL_PARAMETERS_WRAP",
+        "ALIGN_MULTILINE_PARAMETERS_IN_CALLS",
+        "PREFER_PARAMETERS_WRAP",
+        "CALL_PARAMETERS_LPAREN_ON_NEXT_LINE",
+        "CALL_PARAMETERS_RPAREN_ON_NEXT_LINE",
+
+        "ALIGN_MULTILINE_METHOD_BRACKETS",
+
+        "METHOD_CALL_CHAIN_WRAP",
+        "ALIGN_MULTILINE_CHAINED_METHODS",
+
+        "ALIGN_GROUP_FIELD_DECLARATIONS",
+
+        "IF_BRACE_FORCE",
+        "ELSE_ON_NEW_LINE",
+        "SPECIAL_ELSE_IF_TREATMENT",
+
+        "FOR_STATEMENT_WRAP",
+        "ALIGN_MULTILINE_FOR",
+        "FOR_STATEMENT_LPAREN_ON_NEXT_LINE",
+        "FOR_STATEMENT_RPAREN_ON_NEXT_LINE",
+        "FOR_BRACE_FORCE",
+
+        "WHILE_BRACE_FORCE",
+        //"DOWHILE_BRACE_FORCE",
+        //"WHILE_ON_NEW_LINE",
+
+        "INDENT_CASE_FROM_SWITCH",
+
+        //"RESOURCE_LIST_WRAP",
+        //"ALIGN_MULTILINE_RESOURCES",
+        //"RESOURCE_LIST_LPAREN_ON_NEXT_LINE",
+        //"RESOURCE_LIST_RPAREN_ON_NEXT_LINE",
+
+        "CATCH_ON_NEW_LINE",
+        "FINALLY_ON_NEW_LINE",
+
+        "BINARY_OPERATION_WRAP",
+        "ALIGN_MULTILINE_BINARY_OPERATION",
+        //"BINARY_OPERATION_SIGN_ON_NEXT_LINE",
+        //"ALIGN_MULTILINE_PARENTHESIZED_EXPRESSION",
+        "PARENTHESES_EXPRESSION_LPAREN_WRAP",
+        "PARENTHESES_EXPRESSION_RPAREN_WRAP",
+
+        "ASSIGNMENT_WRAP",
+        "ALIGN_MULTILINE_ASSIGNMENT",
+        //"PLACE_ASSIGNMENT_SIGN_ON_NEXT_LINE",
+
+        "TERNARY_OPERATION_WRAP",
+        "ALIGN_MULTILINE_TERNARY_OPERATION",
+        //"TERNARY_OPERATION_SIGNS_ON_NEXT_LINE",
+
+        //"ARRAY_INITIALIZER_WRAP",
+        //"ALIGN_MULTILINE_ARRAY_INITIALIZER_EXPRESSION",
+        //"ARRAY_INITIALIZER_LBRACE_ON_NEXT_LINE",
+        //"ARRAY_INITIALIZER_RBRACE_ON_NEXT_LINE",
+
+        "MODIFIER_LIST_WRAP",
+
+        "ASSERT_STATEMENT_WRAP",
+        //"ASSERT_STATEMENT_COLON_ON_NEXT_LINE",
+
+        "CLASS_ANNOTATION_WRAP",
+        "METHOD_ANNOTATION_WRAP",
+        "FIELD_ANNOTATION_WRAP",
+        "PARAMETER_ANNOTATION_WRAP",
+        "VARIABLE_ANNOTATION_WRAP",
+        "ENUM_CONSTANTS_WRAP"
+      );
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "USE_FLYING_GEESE_BRACES",     "Use flying geese braces", CodeStyleSettingsCustomizable.WRAPPING_BRACES);
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_MULTILINE_LIST_OR_MAP", "Align when multiple",     "List and map literals");
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_NAMED_ARGS_IN_MAP",     "Align named arguments",   "List and map literals");
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_NAMED_ARGS_IN_MAP",     "Align multiline named arguments",   "List and map literals");
       return;
     }
     if (settingsType == SettingsType.SPACING_SETTINGS) {
