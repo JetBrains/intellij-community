@@ -694,6 +694,30 @@ for (int i = 3;
   }
 
 
+  void testConditional0() {
+    groovySettings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    checkFormatting '''\
+print abc ?
+cde:
+xyz
+''', '''\
+print abc ?
+      cde :
+      xyz
+'''
+  }
+
+  void testConditional1() {
+    groovySettings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    checkFormatting '''\
+print abc ?:
+xyz
+''', '''\
+print abc ?:
+      xyz
+'''
+  }
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES;

@@ -289,6 +289,18 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       }
     }
 
+    else if (blockPsi instanceof GrConditionalExpression) {
+      if (mySettings.ALIGN_MULTILINE_TERNARY_OPERATION) {
+        final GrConditionalExpression conditional = (GrConditionalExpression)blockPsi;
+
+        final AlignmentProvider.Aligner aligner = myAlignmentProvider.createAligner(false);
+        aligner.append(conditional.getCondition());
+        if (!(conditional instanceof GrElvisExpression)) {
+          aligner.append(conditional.getThenBranch());
+        }
+        aligner.append(conditional.getElseBranch());
+      }
+    }
 
     // For other cases
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
