@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.gradle.config;
 
-import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
@@ -32,10 +31,6 @@ public abstract class GradleSettingsListenerAdapter implements GradleSettingsLis
 
   @Override
   public void onProjectsUnlinked(@NotNull Collection<String> linkedProjectPaths) {
-  }
-
-  @Override
-  public void onLinkedProjectConfigChange(@NotNull Collection<ExternalProjectSettings> linkedProjectsSettings) {
   }
 
   @Override
