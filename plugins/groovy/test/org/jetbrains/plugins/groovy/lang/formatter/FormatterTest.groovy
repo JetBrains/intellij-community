@@ -600,6 +600,19 @@ def foooo(
 ''')
   }
 
+  void testAlignFor() {
+    groovySettings.ALIGN_MULTILINE_FOR = true
+    checkFormatting('''\
+for (int i = 3;
+i<2;
+i++) print 2
+''', '''\
+for (int i = 3;
+     i < 2;
+     i++) print 2
+''')
+  }
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES;

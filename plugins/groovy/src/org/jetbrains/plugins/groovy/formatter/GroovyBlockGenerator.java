@@ -57,6 +57,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrArgument
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.arguments.GrNamedArgument;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
@@ -244,18 +245,22 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       return generateSubBlockForCodeBlocks(classLevel, visibleChildren(myNode));
     }
 
-    if (blockPsi instanceof GrMethod) {
-      final AlignmentProvider.Aligner parenthesesAligner = mySettings.ALIGN_MULTILINE_METHOD_BRACKETS ? myAlignmentProvider.createAligner(false) : null;
-
-      final ArrayList<Block> subBlocks = new ArrayList<Block>();
-      for (ASTNode childNode : visibleChildren(myNode)) {
-        final Indent indent = new GroovyIndentProcessor().getChildIndent(myBlock, childNode);
-        if (childNode.getElementType() == mLPAREN && parenthesesAligner != null) parenthesesAligner.append(childNode.getPsi());
-        if (childNode.getElementType() == mRPAREN && parenthesesAligner != null) parenthesesAligner.append(childNode.getPsi());
-        subBlocks.add(new GroovyBlock(childNode, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
+    if (blockPsi instanceof GrMethod && mySettings.ALIGN_MULTILINE_METHOD_BRACKETS) {
+      final ASTNode lparenth = myNode.findChildByType(mLPAREN);
+      final ASTNode rparenth = myNode.findChildByType(mRPAREN);
+      if (lparenth != null && rparenth != null) {
+        myAlignmentProvider.addPair(lparenth, rparenth, false);
       }
-      return subBlocks;
     }
+
+    if (blockPsi instanceof GrTraditionalForClause && mySettings.ALIGN_MULTILINE_FOR) {
+      final GrTraditionalForClause clause = (GrTraditionalForClause)blockPsi;
+      final AlignmentProvider.Aligner parenthesesAligner = myAlignmentProvider.createAligner(false);
+      parenthesesAligner.append(clause.getInitialization());
+      parenthesesAligner.append(clause.getCondition());
+      parenthesesAligner.append(clause.getUpdate());
+    }
+
 
     // For other cases
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
