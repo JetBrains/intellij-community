@@ -245,29 +245,47 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       return generateSubBlockForCodeBlocks(classLevel, visibleChildren(myNode));
     }
 
-    if (blockPsi instanceof GrMethod && mySettings.ALIGN_MULTILINE_METHOD_BRACKETS) {
-      final ASTNode lparenth = myNode.findChildByType(mLPAREN);
-      final ASTNode rparenth = myNode.findChildByType(mRPAREN);
-      if (lparenth != null && rparenth != null) {
-        myAlignmentProvider.addPair(lparenth, rparenth, false);
+    if (blockPsi instanceof GrMethod) {
+      if (mySettings.ALIGN_MULTILINE_METHOD_BRACKETS) {
+        final ASTNode lparenth = myNode.findChildByType(mLPAREN);
+        final ASTNode rparenth = myNode.findChildByType(mRPAREN);
+        if (lparenth != null && rparenth != null) {
+          myAlignmentProvider.addPair(lparenth, rparenth, false);
+        }
       }
     }
 
-    if (blockPsi instanceof GrTraditionalForClause && mySettings.ALIGN_MULTILINE_FOR) {
-      final GrTraditionalForClause clause = (GrTraditionalForClause)blockPsi;
-      final AlignmentProvider.Aligner parenthesesAligner = myAlignmentProvider.createAligner(false);
-      parenthesesAligner.append(clause.getInitialization());
-      parenthesesAligner.append(clause.getCondition());
-      parenthesesAligner.append(clause.getUpdate());
+    else if (blockPsi instanceof GrTraditionalForClause) {
+      if (mySettings.ALIGN_MULTILINE_FOR) {
+        final GrTraditionalForClause clause = (GrTraditionalForClause)blockPsi;
+        final AlignmentProvider.Aligner parenthesesAligner = myAlignmentProvider.createAligner(false);
+        parenthesesAligner.append(clause.getInitialization());
+        parenthesesAligner.append(clause.getCondition());
+        parenthesesAligner.append(clause.getUpdate());
+      }
     }
 
-    if (blockPsi instanceof GrBinaryExpression && mySettings.ALIGN_MULTILINE_BINARY_OPERATION) {
-      final GrBinaryExpression binary = (GrBinaryExpression)blockPsi;
+    else if (blockPsi instanceof GrBinaryExpression) {
+      if (mySettings.ALIGN_MULTILINE_BINARY_OPERATION) {
+        final GrBinaryExpression binary = (GrBinaryExpression)blockPsi;
 
-      final GrExpression left = binary.getLeftOperand();
-      final GrExpression right = binary.getRightOperand();
-      if (left != null && right != null) {
-        myAlignmentProvider.addPair(left, right, false);
+        final GrExpression left = binary.getLeftOperand();
+        final GrExpression right = binary.getRightOperand();
+        if (left != null && right != null) {
+          myAlignmentProvider.addPair(left, right, false);
+        }
+      }
+    }
+
+    else if (blockPsi instanceof GrAssignmentExpression) {
+      if (mySettings.ALIGN_MULTILINE_ASSIGNMENT) {
+        final GrAssignmentExpression assignment = (GrAssignmentExpression)blockPsi;
+
+        final GrExpression lValue = assignment.getLValue();
+        final GrExpression rValue = assignment.getRValue();
+        if (lValue != null && rValue != null) {
+          myAlignmentProvider.addPair(lValue, rValue, false);
+        }
       }
     }
 
