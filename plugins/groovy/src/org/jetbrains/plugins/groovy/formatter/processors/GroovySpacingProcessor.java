@@ -480,8 +480,24 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     if (myType2 == mLPAREN) {
       createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
     }
-    else if (myType1 == mLPAREN || myType2 == mRPAREN) {
-      createSpaceInCode(mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
+    else if (myType1 == mLPAREN && myType2 == mRPAREN) {
+      createSpaceInCode(mySettings.SPACE_WITHIN_EMPTY_METHOD_PARENTHESES);
+    }
+    else if (myType1 == mLPAREN) {
+      if (mySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE) {
+        createDependentLFSpacing(mySettings.SPACE_WITHIN_METHOD_PARENTHESES, method.getParameterList().getTextRange());
+      }
+      else {
+        createSpaceInCode(mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
+      }
+    }
+    else if (myType2 == mRPAREN) {
+      if (mySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE) {
+        createDependentLFSpacing(mySettings.SPACE_WITHIN_METHOD_PARENTHESES, method.getParameterList().getTextRange());
+      }
+      else {
+        createSpaceInCode(mySettings.SPACE_WITHIN_METHOD_PARENTHESES);
+      }
     }
     else if (myType1 == mRPAREN && myType2 == THROW_CLAUSE) {
       if (mySettings.THROWS_KEYWORD_WRAP == CommonCodeStyleSettings.WRAP_ALWAYS) {
@@ -507,6 +523,11 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     else if (myType2 == TYPE_PARAMETER_LIST) {
       manageSpaceBeforeTypeParameters();
     }
+  }
+
+  private void createDependentLFSpacing(boolean space, @NotNull TextRange range) {
+    myResult = Spacing
+      .createDependentLFSpacing(space ? 1 : 0, space ? 1 : 0, range, mySettings.KEEP_LINE_BREAKS, mySettings.KEEP_BLANK_LINES_IN_CODE);
   }
 
   private void manageSpaceBeforeTypeParameters() {

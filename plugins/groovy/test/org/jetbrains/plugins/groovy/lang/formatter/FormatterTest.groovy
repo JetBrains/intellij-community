@@ -478,6 +478,57 @@ def cl = {
 ''')
   }
 
+  void testLineFeedsInMethodParams0() {
+    groovySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+def foo(String s,
+int x) {}
+''', '''\
+def foo(
+    String s,
+    int x) {}
+''')
+  }
+
+  void testLineFeedsInMethodParams1() {
+    groovySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+def foo(String s,
+int x) {}
+''', '''\
+def foo(String s,
+        int x
+) {}
+''')
+  }
+
+  void testLineFeedsInMethodParams2() {
+    groovySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    groovySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+def foo(String s,
+int x) {}
+''', '''\
+def foo(
+    String s,
+    int x
+) {}
+''')
+  }
+
+  void testLineFeedsInMethodParams3() {
+    groovySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    groovySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    groovySettings.SPACE_WITHIN_METHOD_PARENTHESES = true
+    checkFormatting('''\
+def foo(String s, int x) {}
+''', '''\
+def foo( String s, int x ) {}
+''')
+  }
+
+
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES;
