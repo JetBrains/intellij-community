@@ -62,6 +62,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrM
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
@@ -241,6 +242,19 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
 
     if (blockPsi instanceof GrCodeBlock || blockPsi instanceof GroovyFile || classLevel) {
       return generateSubBlockForCodeBlocks(classLevel, visibleChildren(myNode));
+    }
+
+    if (blockPsi instanceof GrMethod) {
+      final AlignmentProvider.Aligner parenthesesAligner = mySettings.ALIGN_MULTILINE_METHOD_BRACKETS ? myAlignmentProvider.createAligner(false) : null;
+
+      final ArrayList<Block> subBlocks = new ArrayList<Block>();
+      for (ASTNode childNode : visibleChildren(myNode)) {
+        final Indent indent = new GroovyIndentProcessor().getChildIndent(myBlock, childNode);
+        if (childNode.getElementType() == mLPAREN && parenthesesAligner != null) parenthesesAligner.append(childNode.getPsi());
+        if (childNode.getElementType() == mRPAREN && parenthesesAligner != null) parenthesesAligner.append(childNode.getPsi());
+        subBlocks.add(new GroovyBlock(childNode, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
+      }
+      return subBlocks;
     }
 
     // For other cases

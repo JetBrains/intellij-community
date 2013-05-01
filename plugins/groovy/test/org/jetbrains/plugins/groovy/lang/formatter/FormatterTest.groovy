@@ -587,6 +587,19 @@ foo( )
 ''')
   }
 
+  void testAlignMethodParentheses() {
+    groovySettings.ALIGN_MULTILINE_METHOD_BRACKETS = true
+    checkFormatting('''\
+def foooo(
+String s
+) {}
+''', '''\
+def foooo(
+    String s
+         ) {}
+''')
+  }
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES;
