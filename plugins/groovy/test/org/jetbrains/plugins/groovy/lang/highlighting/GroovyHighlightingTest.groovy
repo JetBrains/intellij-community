@@ -1333,4 +1333,33 @@ class B extends A {
 ''')
   }
 
+  void testEnumConstantAsAnnotationAttribute() {
+    testHighlighting('''\
+enum A {CONST}
+
+@interface I {
+    A foo()
+}
+
+@I(foo = A.CONST) //no error
+def bar
+''')
+  }
+
+  void testUnassignedFieldAsAnnotationAttribute() {
+    testHighlighting('''\
+interface A {
+  String CONST
+}
+
+@interface I {
+    String foo()
+}
+
+@I(foo = <error descr="Expected 'A.CONST' to be an inline constant">A.CONST</error>)
+def bar
+''')
+  }
+
+
 }

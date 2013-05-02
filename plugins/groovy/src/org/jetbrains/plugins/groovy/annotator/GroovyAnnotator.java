@@ -1374,14 +1374,21 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (value instanceof GrReferenceExpression) {
       PsiElement resolved = ((GrReferenceExpression)value).resolve();
       if (resolved instanceof PsiClass) return false;
+      if (resolved instanceof PsiEnumConstant) return false;
 
       if (resolved instanceof GrAccessorMethod) resolved = ((GrAccessorMethod)resolved).getProperty();
       if (resolved instanceof PsiField) {
         GrExpression initializer;
         try {
-          initializer = resolved instanceof GrField
-                        ? ((GrField)resolved).getInitializerGroovy()
-                        : (GrExpression)ExpressionConverter.getExpression(((PsiField)resolved).getInitializer(), GroovyFileType.GROOVY_LANGUAGE, value.getProject());
+          if (resolved instanceof GrField) {
+            initializer = ((GrField)resolved).getInitializerGroovy();
+          }
+          else {
+            final PsiExpression _initializer = ((PsiField)resolved).getInitializer();
+            initializer = _initializer != null
+                          ? (GrExpression)ExpressionConverter.getExpression(_initializer, GroovyFileType.GROOVY_LANGUAGE, value.getProject())
+                          : null;
+          }
         }
         catch (IncorrectOperationException e) {
           initializer = null;
