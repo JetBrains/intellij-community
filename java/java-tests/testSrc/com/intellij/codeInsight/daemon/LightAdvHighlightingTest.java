@@ -188,6 +188,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEADEV25784() throws Exception { doTest(false, false); }
   public void testIDEADEV13249() throws Exception { doTest(false, false); }
   public void testIDEADEV11919() throws Exception { doTest(false, false); }
+  public void testIDEA67829() throws Exception { doTest(false, false); }
   public void testMethodCannotBeApplied() throws Exception { doTest(false, false); }
   public void testDefaultPackageClassInStaticImport() throws Exception { doTest(false, false); }
 
