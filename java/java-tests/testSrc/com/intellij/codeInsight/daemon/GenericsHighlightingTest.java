@@ -211,6 +211,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA57446(){ doTest5(false); }
   public void testIDEA67677(){ doTest5(false); }
   public void testIDEA67798(){ doTest5(false); }
+  public void testIDEA57534(){ doTest5(false); }
 
   public void testWildcardsOnRawTypes() { doTest5(false); }
   public void testDisableWithinBoundsCheckForSuperWildcards() {
