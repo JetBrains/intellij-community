@@ -433,34 +433,46 @@ abstract class PersistentEnumeratorBase<Data> implements Forceable, Closeable {
     try {
       markDirty(true);
 
-      final int dataOff = myKeyStorage != null ? myKeyStoreBufferPosition + myKeyStoreFileLength : ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(value);
-
-      if (myKeyStorage != null) {
-        final BufferExposingByteArrayOutputStream bos = new BufferExposingByteArrayOutputStream();
-        DataOutput out = new DataOutputStream(bos);
-        myDataDescriptor.save(out, value);
-        final int size = bos.size();
-        final byte[] buffer = bos.getInternalBuffer();
-
-        if (size > myKeyStoreFileBuffer.length) {
-          flushKeyStoreBuffer();
-          myKeyStorage.put(dataOff, buffer, 0, size);
-          myKeyStoreFileLength += size;
-        } else {
-          if (size > myKeyStoreFileBuffer.length - myKeyStoreBufferPosition) {
-            flushKeyStoreBuffer();
-          }
-          // myKeyStoreFileBuffer will contain complete records
-          System.arraycopy(buffer, 0, myKeyStoreFileBuffer, myKeyStoreBufferPosition, size);
-          myKeyStoreBufferPosition += size;
-        }
-      }
+      final int dataOff = doWriteData(value);
 
       return setupValueId(hashCode, dataOff);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
     }
+  }
+
+  public int getLargestId() {
+    assert myKeyStorage != null;
+    return myKeyStoreBufferPosition + myKeyStoreFileLength;
+  }
+
+  protected int doWriteData(Data value) throws IOException {
+    final int dataOff = myKeyStorage != null ?
+                        myKeyStoreBufferPosition + myKeyStoreFileLength :
+                        ((InlineKeyDescriptor<Data>)myDataDescriptor).toInt(value);
+
+    if (myKeyStorage != null) {
+      final BufferExposingByteArrayOutputStream bos = new BufferExposingByteArrayOutputStream();
+      DataOutput out = new DataOutputStream(bos);
+      myDataDescriptor.save(out, value);
+      final int size = bos.size();
+      final byte[] buffer = bos.getInternalBuffer();
+
+      if (size > myKeyStoreFileBuffer.length) {
+        flushKeyStoreBuffer();
+        myKeyStorage.put(dataOff, buffer, 0, size);
+        myKeyStoreFileLength += size;
+      } else {
+        if (size > myKeyStoreFileBuffer.length - myKeyStoreBufferPosition) {
+          flushKeyStoreBuffer();
+        }
+        // myKeyStoreFileBuffer will contain complete records
+        System.arraycopy(buffer, 0, myKeyStoreFileBuffer, myKeyStoreBufferPosition, size);
+        myKeyStoreBufferPosition += size;
+      }
+    }
+    return dataOff;
   }
 
   private void flushKeyStoreBuffer() throws IOException {

@@ -226,6 +226,11 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
     }
   }
 
+  protected int addrToIndex(int addr) {
+    assert myExternalKeysNoMapping;
+    return addr + KEY_SHIFT;
+  }
+
   @Override
   protected int indexToAddr(int idx) {
     if (myExternalKeysNoMapping) {
@@ -242,7 +247,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
 
   @Override
   protected int setupValueId(int hashCode, int dataOff) {
-    if (myExternalKeysNoMapping) return dataOff + KEY_SHIFT;
+    if (myExternalKeysNoMapping) return addrToIndex(dataOff);
     final PersistentEnumeratorBase.RecordBufferHandler<PersistentEnumeratorBase> recordHandler = getRecordHandler();
     final byte[] buf = recordHandler.getRecordBuffer(this);
 

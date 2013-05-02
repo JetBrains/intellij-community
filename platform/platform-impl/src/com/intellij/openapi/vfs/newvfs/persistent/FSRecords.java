@@ -41,6 +41,10 @@ import org.jetbrains.annotations.Nullable;
 import javax.swing.*;
 import java.awt.*;
 import java.io.*;
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
+import java.util.Arrays;
 import java.util.concurrent.ScheduledFuture;
 import java.util.concurrent.locks.ReentrantReadWriteLock;
 
@@ -50,7 +54,8 @@ import static com.intellij.util.io.IOUtil.deleteAllFilesStartingWith;
 public class FSRecords implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  private static final int VERSION = 19;
+  public static final boolean weHaveContentHashes = Boolean.parseBoolean(System.getProperty("idea.share.contents", "false"));
+  private static final int VERSION = 19 + (weHaveContentHashes ? 1:0);
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -105,6 +110,7 @@ public class FSRecords implements Forceable {
   }
 
   static class DbConnection {
+    private static final int SIGNATURE_LENGTH = 20;
     private static boolean ourInitialized;
     private static final ConcurrentHashMap<String, Integer> myAttributeIds = new ConcurrentHashMap<String, Integer>();
 
@@ -112,6 +118,7 @@ public class FSRecords implements Forceable {
     private static Storage myAttributes;
     private static RefCountingStorage myContents;
     private static ResizeableMappedFile myRecords;
+    private static PersistentBTreeEnumerator<byte[]> myContentHashesEnumerator;
     private static final TIntArrayList myFreeRecords = new TIntArrayList();
 
     private static boolean myDirty = false;
@@ -194,6 +201,7 @@ public class FSRecords implements Forceable {
       final File namesFile = new File(basePath, "names.dat");
       final File attributesFile = new File(basePath, "attrib.dat");
       final File contentsFile = new File(basePath, "content.dat");
+      final File contentsHashesFile = new File(basePath, "contentHashes.dat");
       final File recordsFile = new File(basePath, "records.dat");
 
       if (!namesFile.exists()) {
@@ -210,6 +218,72 @@ public class FSRecords implements Forceable {
         myNames = new PersistentStringEnumerator(namesFile, storageLockContext);
         myAttributes = new Storage(attributesFile.getCanonicalPath(), REASONABLY_SMALL);
         myContents = new RefCountingStorage(contentsFile.getCanonicalPath(), CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH); // sources usually zipped with 4x ratio
+        myContentHashesEnumerator = weHaveContentHashes ? new PersistentBTreeEnumerator<byte[]>(contentsHashesFile, new KeyDescriptor<byte[]>() {
+          @Override
+          public void save(DataOutput out, byte[] value) throws IOException {
+            out.write(value);
+          }
+
+          @Override
+          public byte[] read(DataInput in) throws IOException {
+            byte[] b = new byte[SIGNATURE_LENGTH];
+            in.readFully(b);
+            return b;
+          }
+
+          @Override
+          public int getHashCode(byte[] value) {
+            int hash = 0; // TODO: better
+            for(int i = 0; i < 4; ++i) {
+              hash = (hash << 4) + (value[i] & 0xFF);
+            }
+            return hash;
+          }
+
+          @Override
+          public boolean isEqual(byte[] val1, byte[] val2) {
+            if (val1.length != val2.length) return false;
+            for(int i = 0; i < val1.length; ++i) {
+              if (val1[i] != val2[i]) return false;
+            }
+            return true;
+          }
+
+
+        }, 4096, storageLockContext) {
+          @Override
+          protected int doWriteData(byte[] value) throws IOException {
+            int record = getContentStorage().createNewRecord();
+            int idx = (super.doWriteData(value)) / SIGNATURE_LENGTH;
+            if (idx + 1 != record) {
+              assert false;
+            }
+            return idx;
+          }
+
+          @Override
+          public int getLargestId() {
+            return super.getLargestId() / SIGNATURE_LENGTH;
+          }
+
+          private boolean myProcessingKeyAtIndex;
+
+          @Override
+          protected boolean isKeyAtIndex(byte[] value, int idx) throws IOException {
+            myProcessingKeyAtIndex = true;
+            try {
+              return super.isKeyAtIndex(value, addrToIndex(indexToAddr(idx)* SIGNATURE_LENGTH));
+            } finally {
+              myProcessingKeyAtIndex = false;
+            }
+          }
+
+          @Override
+          public byte[] valueOf(int idx) throws IOException {
+            if (myProcessingKeyAtIndex) return super.valueOf(idx);
+            return super.valueOf(addrToIndex(indexToAddr(idx)* SIGNATURE_LENGTH));
+          }
+        }: null;
         boolean aligned = PagedFileStorage.BUFFER_SIZE % RECORD_SIZE == 0;
         assert aligned; // for performance
         myRecords = new ResizeableMappedFile(recordsFile, 20 * 1024, storageLockContext,
@@ -240,6 +314,7 @@ public class FSRecords implements Forceable {
           deleted &= deleteAllFilesStartingWith(namesFile);
           deleted &= AbstractStorage.deleteFiles(attributesFile.getCanonicalPath());
           deleted &= AbstractStorage.deleteFiles(contentsFile.getCanonicalPath());
+          deleted &= deleteAllFilesStartingWith(contentsHashesFile);
           deleted &= deleteAllFilesStartingWith(recordsFile);
 
           if (!deleted) {
@@ -337,6 +412,7 @@ public class FSRecords implements Forceable {
           myNames.force();
           myAttributes.force();
           myContents.force();
+          if (myContentHashesEnumerator != null) myContentHashesEnumerator.force();
           myRecords.force();
         }
       }
@@ -357,6 +433,7 @@ public class FSRecords implements Forceable {
 
         final boolean attribsFlushed = myAttributes.flushSome();
         final boolean contentsFlushed = myContents.flushSome();
+        if (myContentHashesEnumerator != null) myContentHashesEnumerator.force();
         if (attribsFlushed && contentsFlushed) {
           markClean();
           myRecords.force();
@@ -368,7 +445,8 @@ public class FSRecords implements Forceable {
     }
 
     public static boolean isDirty() {
-      return myDirty || myNames.isDirty() || myAttributes.isDirty() || myContents.isDirty() || myRecords.isDirty();
+      return myDirty || myNames.isDirty() || myAttributes.isDirty() || myContents.isDirty() || myRecords.isDirty() ||
+             (myContentHashesEnumerator != null ? myContentHashesEnumerator.isDirty() : false);
     }
 
 
@@ -422,6 +500,11 @@ public class FSRecords implements Forceable {
       if (myContents != null) {
         Disposer.dispose(myContents);
         myContents = null;
+      }
+
+      if (myContentHashesEnumerator != null) {
+        myContentHashesEnumerator.close();
+        myContentHashesEnumerator = null;
       }
 
       if (myRecords != null) {
@@ -489,6 +572,10 @@ public class FSRecords implements Forceable {
 
   private static ResizeableMappedFile getRecords() {
     return DbConnection.getRecords();
+  }
+
+  private static PersistentBTreeEnumerator<byte[]> getContentHashesEnumerator() {
+    return DbConnection.myContentHashesEnumerator;
   }
 
   private static RefCountingStorage getContentStorage() {
@@ -572,7 +659,11 @@ public class FSRecords implements Forceable {
   private static void deleteContentAndAttributes(int id) throws IOException {
     int content_page = getContentRecordId(id);
     if (content_page != 0) {
-      getContentStorage().releaseRecord(content_page);
+      if (weHaveContentHashes) {
+        getContentStorage().releaseRecord(content_page, false);
+      } else {
+        getContentStorage().releaseRecord(content_page);
+      }
     }
 
     int att_page = getAttributeRecordId(id);
@@ -1239,10 +1330,18 @@ public class FSRecords implements Forceable {
 
   public static void releaseContent(int contentId) {
     try {
-      getContentStorage().releaseRecord(contentId);
+      w.lock();
+      RefCountingStorage contentStorage = getContentStorage();
+      if (weHaveContentHashes) {
+        contentStorage.releaseRecord(contentId, false);
+      } else {
+        contentStorage.releaseRecord(contentId);
+      }
     }
     catch (Throwable e) {
       throw DbConnection.handleError(e);
+    } finally {
+      w.unlock();
     }
   }
 
@@ -1266,13 +1365,33 @@ public class FSRecords implements Forceable {
     return new ContentOutputStream(fileId, readOnly);
   }
 
+  private static final MessageDigest myDigest;
+
+  static {
+    MessageDigest digest;
+    try {
+      digest = weHaveContentHashes ? MessageDigest.getInstance("SHA1") : null;
+    } catch (NoSuchAlgorithmException ex) {
+      digest = null;
+    }
+    myDigest = digest;
+  }
+
   public static void writeContent(int fileId, ByteSequence bytes, boolean readOnly) throws IOException {
     new ContentOutputStream(fileId, readOnly).writeBytes(bytes);
   }
 
   public static int storeUnlinkedContent(byte[] bytes) {
     try {
-      int recordId = getContentStorage().acquireNewRecord();
+      w.lock();
+      int recordId;
+
+      if (weHaveContentHashes) {
+        recordId = findOrCreateContentRecord(bytes, 0, bytes.length);
+        if (recordId < 0) return -recordId;
+      } else {
+        recordId = getContentStorage().acquireNewRecord();
+      }
       AbstractStorage.StorageDataOutput output = getContentStorage().writeStream(recordId, true);
       output.write(bytes);
       output.close();
@@ -1280,6 +1399,8 @@ public class FSRecords implements Forceable {
     }
     catch (IOException e) {
       throw DbConnection.handleError(e);
+    } finally {
+      w.unlock();
     }
   }
 
@@ -1314,24 +1435,102 @@ public class FSRecords implements Forceable {
     public void writeBytes(ByteSequence bytes) throws IOException {
       int page;
       RefCountingStorage contentStorage = getContentStorage();
+      final boolean fixedSize;
       try {
         w.lock();
         incModCount(myFileId);
 
         checkFileIsValid(myFileId);
 
-        page = getContentRecordId(myFileId);
-        if (page == 0 || contentStorage.getRefCount(page) > 1) {
-          page = contentStorage.acquireNewRecord();
-          setContentRecordId(myFileId, page);
+        if (weHaveContentHashes) {
+          page = findOrCreateContentRecord(bytes.getBytes(), bytes.getOffset(), bytes.getLength());
+
+          incModCount(myFileId);
+          checkFileIsValid(myFileId);
+
+          setContentRecordId(myFileId, page > 0 ? page : -page);
+
+          if (page < 0) return;
+          fixedSize = true;
+        } else {
+          page = getContentRecordId(myFileId);
+          if (page == 0 || contentStorage.getRefCount(page) > 1) {
+            page = contentStorage.acquireNewRecord();
+            setContentRecordId(myFileId, page);
+          }
+          fixedSize = myFixedSize;
         }
       }
       finally {
         w.unlock();
       }
 
-      contentStorage.writeBytes(page, bytes, myFixedSize);
+      contentStorage.writeBytes(page, bytes, fixedSize);
     }
+  }
+
+  private static final boolean DO_HARD_CONSISTENCY_CHECK = false;
+  private static long totalContents, totalReuses, time;
+  private static int contents, reuses;
+
+  private static int findOrCreateContentRecord(byte[] bytes, int offset, int length) throws IOException {
+    assert weHaveContentHashes;
+    byte[] digest;
+
+    long started = System.nanoTime();
+    myDigest.reset();
+    myDigest.update(String.valueOf(length - offset).getBytes(Charset.defaultCharset()));
+    myDigest.update("\0".getBytes(Charset.defaultCharset()));
+    myDigest.update(bytes, offset, length);
+    digest = myDigest.digest();
+    long done = System.nanoTime() - started;
+    time += done;
+
+    ++contents;
+    totalContents += length;
+
+    if ((contents & 0xFFF) == 0) {
+      System.out.println("Contents:"+contents + " of " + totalContents + ", reuses:"+reuses + " of " + totalReuses + " for " + (time / 1000000));
+    }
+    PersistentBTreeEnumerator<byte[]> hashesEnumerator = getContentHashesEnumerator();
+    final int largestId = hashesEnumerator.getLargestId();
+    int page = hashesEnumerator.enumerate(digest);
+    getContentStorage().acquireRecord(page);
+
+    if (page < largestId) {
+      ++reuses;
+      totalReuses += length;
+
+      if (DO_HARD_CONSISTENCY_CHECK) {
+        DataInputStream stream = getContentStorage().readStream(page);
+        int i = offset;
+        for(int c = 0; c < length; ++c) {
+          if (stream.available() == 0) {
+            assert false;
+          }
+          if (bytes[i++] != stream.readByte()) {
+            assert false;
+          }
+        }
+        if (stream.available() > 0) {
+          assert false;
+        }
+      }
+      return -page;
+    }
+
+    if (DO_HARD_CONSISTENCY_CHECK) {
+      if (hashesEnumerator.enumerate(digest) != page) {
+        assert false;
+      }
+
+      byte[] bytes1 = hashesEnumerator.valueOf(page);
+      if (!Arrays.equals(digest, bytes1)) {
+        assert false;
+      }
+    }
+
+    return page;
   }
 
   private static class AttributeOutputStream extends DataOutputStream {
