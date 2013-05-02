@@ -221,6 +221,28 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "SPACE_WITHIN_TUPLE_EXPRESSION", "Tuple assignment expression", CodeStyleSettingsCustomizable.SPACES_WITHIN);
       return;
     }
+    if (settingsType == SettingsType.BLANK_LINES_SETTINGS) {
+
+      consumer.showStandardOptions(
+        "KEEP_BLANK_LINES_IN_DECLARATIONS",
+        "KEEP_BLANK_LINES_IN_CODE",
+        "KEEP_BLANK_LINES_BEFORE_RBRACE",
+
+        "BLANK_LINES_BEFORE_PACKAGE",
+        "BLANK_LINES_AFTER_PACKAGE",
+        "BLANK_LINES_BEFORE_IMPORTS",
+        "BLANK_LINES_AFTER_IMPORTS",
+        "BLANK_LINES_AROUND_CLASS",
+        "BLANK_LINES_AFTER_CLASS_HEADER",
+        //"BLANK_LINES_AFTER_ANONYMOUS_CLASS_HEADER",
+        "BLANK_LINES_AROUND_FIELD_IN_INTERFACE",
+        "BLANK_LINES_AROUND_FIELD",
+        "BLANK_LINES_AROUND_METHOD_IN_INTERFACE",
+        "BLANK_LINES_AROUND_METHOD",
+        "BLANK_LINES_BEFORE_METHOD_BODY"
+      );
+      return;
+    }
     consumer.showAllStandardOptions();
   }
 
