@@ -6,9 +6,9 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
-import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemResolveProjectTask;
+import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
@@ -130,7 +130,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         AbstractExternalSystemSettings settings = mySettingsManager.getSettings(project, myExternalSystemId);
         final String linkedProjectPath = myControl.getProjectSettings().getExternalProjectPath();
         assert linkedProjectPath != null;
-        List<ExternalProjectSettings> projects = ContainerUtilRt.newArrayList(settings.getLinkedProjectsSettings());
+        Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(settings.getLinkedProjectsSettings());
         projects.add(myControl.getProjectSettings());
         settings.setLinkedProjectsSettings(projects);
         onProjectInit(project);
@@ -142,8 +142,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
               ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
                 @Override
                 public void run() {
-                  Collection<DataNode<ModuleData>> modules = ExternalSystemApiUtil.findAll(externalProjectNode, ProjectKeys.MODULE);
-                  myProjectDataManager.importData(ProjectKeys.MODULE, modules, project, true);
+                  myProjectDataManager.importData(externalProjectNode.getKey(), Collections.singleton(externalProjectNode), project, true);
                 }
               });
             }
@@ -210,23 +209,25 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
           @Override
           public void run() {
-            // Clean existing libraries (if any).
-            LibraryTable projectLibraryTable = ProjectLibraryTable.getInstance(project);
-            if (projectLibraryTable == null) {
-              LOG.warn(
-                "Can't resolve external dependencies of the target gradle project (" + project + "). Reason: project "
-                + "library table is undefined"
-              );
-              return;
-            }
-            LibraryTable.ModifiableModel model = projectLibraryTable.getModifiableModel();
-            try {
-              for (Library library : model.getLibraries()) {
-                model.removeLibrary(library);
+            if (ExternalSystemApiUtil.isNewProjectConstruction()) {
+              // Clean existing libraries (if any).
+              LibraryTable projectLibraryTable = ProjectLibraryTable.getInstance(project);
+              if (projectLibraryTable == null) {
+                LOG.warn(
+                  "Can't resolve external dependencies of the target gradle project (" + project + "). Reason: project "
+                  + "library table is undefined"
+                );
+                return;
               }
-            }
-            finally {
-              model.commit();
+              LibraryTable.ModifiableModel model = projectLibraryTable.getModifiableModel();
+              try {
+                for (Library library : model.getLibraries()) {
+                  model.removeLibrary(library);
+                }
+              }
+              finally {
+                model.commit();
+              }
             }
 
             // Register libraries.
@@ -258,30 +259,41 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       throw new ConfigurationException(ExternalSystemBundle.message("error.project.undefined"));
     }
     projectFile = getExternalProjectConfigToUse(projectFile);
-    final Ref<String> errorReason = new Ref<String>();
-    final Ref<String> errorDetails = new Ref<String>();
+    final Ref<ConfigurationException> error = new Ref<ConfigurationException>();
+    ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
+      @Override
+      public void onSuccess(@Nullable DataNode<ProjectData> externalProject) {
+        myExternalProjectNode = externalProject;
+      }
+
+      @Override
+      public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+        if (!StringUtil.isEmpty(errorDetails)) {
+          LOG.warn(errorDetails);
+        }
+        error.set(new ConfigurationException(ExternalSystemBundle.message("error.resolve.with.reason", errorMessage),
+                                             ExternalSystemBundle.message("error.resolve.generic")));
+      }
+    };
     try {
       final Project project = getProject(wizardContext);
-      myExternalProjectNode = ExternalSystemUtil.refreshProject(project, myExternalSystemId, projectFile.getAbsolutePath(), errorReason,
-                                                                errorDetails, false, true);
+      ExternalSystemUtil.refreshProject(
+        project,
+        myExternalSystemId,
+        projectFile.getAbsolutePath(),
+        callback,
+        false,
+        true
+      );
     }
     catch (IllegalArgumentException e) {
       throw new ConfigurationException(e.getMessage(), ExternalSystemBundle.message("error.cannot.parse.project", externalSystemName));
     }
     if (myExternalProjectNode == null) {
-      final String details = errorDetails.get();
-      if (!StringUtil.isEmpty(details)) {
-        LOG.warn(details);
+      ConfigurationException exception = error.get();
+      if (exception != null) {
+        throw exception;
       }
-      String errorMessage;
-      String reason = errorReason.get();
-      if (reason == null) {
-        errorMessage = ExternalSystemBundle.message("error.resolve.generic.without.reason", externalSystemName, projectFile.getPath());
-      }
-      else {
-        errorMessage = ExternalSystemBundle.message("error.resolve.with.reason", reason);
-      }
-      throw new ConfigurationException(errorMessage, ExternalSystemBundle.message("error.resolve.generic"));
     }
     else {
       applyProjectSettings(wizardContext);
@@ -302,6 +314,9 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
    * @param context  storage for the project/module settings.
    */
   public void applyProjectSettings(@NotNull WizardContext context) {
+    if (!ExternalSystemApiUtil.isNewProjectConstruction()) {
+      return;
+    }
     if (myExternalProjectNode == null) {
       assert false;
       return;

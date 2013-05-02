@@ -48,11 +48,14 @@ public class JavaProjectDataService implements ProjectDataService<JavaProjectDat
 
   @Override
   public void importData(@NotNull Collection<DataNode<JavaProjectData>> toImport, @NotNull Project project, boolean synchronous) {
+    if (!ExternalSystemApiUtil.isNewProjectConstruction()) {
+      return;
+    }
     if (toImport.size() != 1) {
       throw new IllegalArgumentException(String.format("Expected to get a single project but got %d: %s", toImport.size(), toImport));
     }
     JavaProjectData projectData = toImport.iterator().next().getData();
-    
+
     // JDK.
     JavaSdkVersion version = projectData.getJdkVersion();
     JavaSdk javaSdk = JavaSdk.getInstance();

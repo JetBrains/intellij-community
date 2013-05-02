@@ -68,7 +68,7 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
     //  return;
     //}
 
-    myErrorMessage.set(null);
-    ExternalSystemUtil.refreshProject(project, GradleConstants.SYSTEM_ID, myErrorMessage);
+    //myErrorMessage.set(null);
+    //ExternalSystemUtil.refreshProject(project, GradleConstants.SYSTEM_ID, myErrorMessage);
   }
 }

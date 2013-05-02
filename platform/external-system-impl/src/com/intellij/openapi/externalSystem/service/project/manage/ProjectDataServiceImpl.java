@@ -44,6 +44,9 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData> {
 
   @Override
   public void importData(@NotNull Collection<DataNode<ProjectData>> toImport, @NotNull Project project, boolean synchronous) {
+    if (!ExternalSystemApiUtil.isNewProjectConstruction()) {
+      return;
+    }
     if (toImport.size() != 1) {
       throw new IllegalArgumentException(String.format("Expected to get a single project but got %d: %s", toImport.size(), toImport));
     }

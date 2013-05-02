@@ -138,7 +138,6 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         }
 
         for (DataNode<LibraryDependencyData> dependencyNode : nodesToImport) {
-          ProjectStructureHelper helper = ServiceManager.getService(module.getProject(), ProjectStructureHelper.class);
           ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
           final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
           try {
@@ -149,7 +148,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
               assert false;
               continue;
             }
-            LibraryOrderEntry orderEntry = helper.findIdeLibraryDependency(dependencyData.getName(), moduleRootModel);
+            LibraryOrderEntry orderEntry = myProjectStructureHelper.findIdeLibraryDependency(dependencyData.getName(), moduleRootModel);
             if (orderEntry == null) {
               // We need to get the most up-to-date Library object due to our project model restrictions.
               orderEntry = moduleRootModel.addLibraryEntry(library);

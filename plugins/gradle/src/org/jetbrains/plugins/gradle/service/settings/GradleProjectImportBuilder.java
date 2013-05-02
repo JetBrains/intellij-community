@@ -46,7 +46,6 @@ import java.util.List;
 public class GradleProjectImportBuilder extends AbstractExternalProjectImportBuilder<ImportFromGradleControl> {
 
   public GradleProjectImportBuilder(@NotNull ExternalSystemSettingsManager settingsManager, @NotNull ProjectDataManager dataManager) {
-    // TODO den implement
     super(settingsManager, dataManager, new ImportFromGradleControl(), GradleConstants.SYSTEM_ID);
   }
 
@@ -72,6 +71,9 @@ public class GradleProjectImportBuilder extends AbstractExternalProjectImportBui
 
   @Override
   protected void beforeCommit(@NotNull DataNode<ProjectData> dataNode, @NotNull Project project) {
+    if (!ExternalSystemApiUtil.isNewProjectConstruction()) {
+      return;
+    }
     DataNode<JavaProjectData> javaProjectNode = ExternalSystemApiUtil.find(dataNode, JavaProjectData.KEY);
     if (javaProjectNode == null) {
       return;

@@ -39,7 +39,6 @@
     <projectOpenProcessor implementation="org.jetbrains.plugins.gradle.service.settings.GradleProjectOpenProcessor"/>
 
     <externalSystemManager implementation="org.jetbrains.plugins.gradle.GradleManager"/>
-    <postStartupActivity implementation="org.jetbrains.plugins.gradle.sync.GradleStartupActivity"/>
 
     <applicationService serviceImplementation="org.jetbrains.plugins.gradle.service.GradleInstallationManager"/>
 
