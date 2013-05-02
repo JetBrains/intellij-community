@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -41,7 +41,7 @@ import java.util.*;
 
 /**
  * @author cdr
- * Date: Aug 8, 2002
+ * @since Aug 8, 2002
  */
 public class HighlightControlFlowUtil {
   private static final QuickFixFactory QUICK_FIX_FACTORY = QuickFixFactory.getInstance();
@@ -50,48 +50,42 @@ public class HighlightControlFlowUtil {
 
   @Nullable
   public static HighlightInfo checkMissingReturnStatement(PsiCodeBlock body, PsiType returnType) {
-    
-    if (body == null
-        || returnType == null
-        || PsiType.VOID.equals(returnType)) {
+    if (body == null || returnType == null || PsiType.VOID.equals(returnType.getDeepComponentType())) {
       return null;
     }
+
     // do not compute constant expressions for if() statement condition
     // see JLS 14.20 Unreachable Statements
     try {
-      final ControlFlow controlFlow = getControlFlowNoConstantEvaluate(body);
+      ControlFlow controlFlow = getControlFlowNoConstantEvaluate(body);
       if (!ControlFlowUtil.returnPresent(controlFlow)) {
-        final PsiJavaToken rBrace = body.getRBrace();
-        final PsiElement context = rBrace == null
-                                   ? body.getLastChild()
-                                   : rBrace;
-        String description = JavaErrorMessages.message("missing.return.statement");
-        final HighlightInfo highlightInfo =
-          HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(description).create();
-        final PsiElement parent = body.getParent();
+        PsiJavaToken rBrace = body.getRBrace();
+        PsiElement context = rBrace == null ? body.getLastChild() : rBrace;
+        String message = JavaErrorMessages.message("missing.return.statement");
+        HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(context).descriptionAndTooltip(message).create();
+        PsiElement parent = body.getParent();
         if (parent instanceof PsiMethod) {
-          final PsiMethod method = (PsiMethod)parent;
-          QuickFixAction.registerQuickFixAction(highlightInfo, new AddReturnFix(method));
+          PsiMethod method = (PsiMethod)parent;
+          QuickFixAction.registerQuickFixAction(info, new AddReturnFix(method));
           IntentionAction fix = QUICK_FIX_FACTORY.createMethodReturnFix(method, PsiType.VOID, true);
-          QuickFixAction.registerQuickFixAction(highlightInfo, fix);
+          QuickFixAction.registerQuickFixAction(info, fix);
         }
-        return highlightInfo;
+        return info;
       }
     }
-    catch (AnalysisCanceledException e) {
-      // incomplete code
-    }
+    catch (AnalysisCanceledException ignored) { }
+
     return null;
-
   }
 
-  public static ControlFlow getControlFlowNoConstantEvaluate(final PsiElement body) throws AnalysisCanceledException {
-    return ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body,
-                                                                      LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance(),
-                                                                      false);
+  public static ControlFlow getControlFlowNoConstantEvaluate(PsiElement body) throws AnalysisCanceledException {
+    LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
+    return ControlFlowFactory.getInstance(body.getProject()).getControlFlow(body, policy, false);
   }
-  private static ControlFlow getControlFlow(final PsiElement context) throws AnalysisCanceledException {
-    return ControlFlowFactory.getInstance(context.getProject()).getControlFlow(context, LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance());
+
+  private static ControlFlow getControlFlow(PsiElement context) throws AnalysisCanceledException {
+    LocalsOrMyInstanceFieldsControlFlowPolicy policy = LocalsOrMyInstanceFieldsControlFlowPolicy.getInstance();
+    return ControlFlowFactory.getInstance(context.getProject()).getControlFlow(context, policy);
   }
 
   public static HighlightInfo checkUnreachableStatement(PsiCodeBlock codeBlock) {
@@ -683,12 +677,12 @@ public class HighlightControlFlowUtil {
     if (innerClass != null) {
       if (variable instanceof PsiParameter) {
         final PsiElement parent = variable.getParent();
-        if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression && 
+        if (parent instanceof PsiParameterList && parent.getParent() instanceof PsiLambdaExpression &&
             notAccessedForWriting(variable, new LocalSearchScope(((PsiParameter)variable).getDeclarationScope()))) {
           return null;
         }
       }
-      if (PsiUtil.getLanguageLevel(variable).isAtLeast(LanguageLevel.JDK_1_8) && 
+      if (PsiUtil.getLanguageLevel(variable).isAtLeast(LanguageLevel.JDK_1_8) &&
           isEffectivelyFinal(variable, innerClass, context)) {
         return null;
       }
@@ -738,7 +732,7 @@ public class HighlightControlFlowUtil {
     }
     return effectivelyFinal;
   }
-  
+
   private static boolean notAccessedForWriting(PsiVariable variable, final LocalSearchScope searchScope) {
     for (PsiReference reference : ReferencesSearch.search(variable, searchScope)) {
       final PsiElement element = reference.getElement();

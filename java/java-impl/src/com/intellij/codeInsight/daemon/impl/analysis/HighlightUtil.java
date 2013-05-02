@@ -1807,9 +1807,9 @@ public class HighlightUtil extends HighlightUtilBase {
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
       }
     }
+
     return null;
   }
-
 
   @Nullable
   public static HighlightInfo checkIllegalVoidType(@NotNull PsiKeyword type) {
@@ -1818,15 +1818,17 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiElement parent = type.getParent();
     if (parent instanceof PsiTypeElement) {
       PsiElement typeOwner = parent.getParent();
-      if (typeOwner instanceof PsiMethod) {
-        if (((PsiMethod)typeOwner).getReturnTypeElement() == parent) return null;
-      }
-      else if (// like in Class c = void.class;
-        typeOwner instanceof PsiClassObjectAccessExpression &&
-        TypeConversionUtil.isVoidType(((PsiClassObjectAccessExpression)typeOwner).getOperand().getType()) ||
+      if (typeOwner != null) {
         // do not highlight incomplete declarations
-        typeOwner != null && PsiUtilCore.hasErrorElementChild(typeOwner)) {
-        return null;
+        if (PsiUtilCore.hasErrorElementChild(typeOwner)) return null;
+      }
+
+      if (typeOwner instanceof PsiMethod) {
+        PsiMethod method = (PsiMethod)typeOwner;
+        if (method.getReturnTypeElement() == parent && PsiType.VOID.equals(method.getReturnType())) return null;
+      }
+      else if (typeOwner instanceof PsiClassObjectAccessExpression) {
+        if (TypeConversionUtil.isVoidType(((PsiClassObjectAccessExpression)typeOwner).getOperand().getType())) return null;
       }
       else if (typeOwner instanceof JavaCodeFragment) {
         if (typeOwner.getUserData(PsiUtil.VALID_VOID_TYPE_IN_CODE_FRAGMENT) != null) return null;
