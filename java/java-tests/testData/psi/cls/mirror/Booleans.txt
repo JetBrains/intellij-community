@@ -5,11 +5,14 @@
 package pkg;
 
 class Booleans {
-    public static final boolean RELEASE = true;
-    public static final boolean DEBUG = false;
-    public static final boolean PROFILE = false;
-    public static final boolean LOGV = false;
-    public static final boolean LOGD = true;
+    public static final boolean TRUE = true;
+    public static final boolean FALSE = false;
 
     Booleans() { /* compiled code */ }
+
+    @pkg.BooleanAnno(true)
+    public static boolean TRUE() { /* compiled code */ }
+
+    @pkg.BooleanAnno(false)
+    public static boolean FALSE() { /* compiled code */ }
 }
