@@ -222,11 +222,13 @@ public class CodeCompletionHandlerBase {
     Document document = editor.getDocument();
     int docLength = document.getTextLength();
     int psiLength = psiFile.getTextLength();
-    if (docLength == psiLength) {
+    boolean committed = !PsiDocumentManager.getInstance(psiFile.getProject()).isUncommited(document);
+    if (docLength == psiLength && committed) {
       return;
     }
 
     String message = "unsuccessful commit: (injected=" +(editor instanceof EditorWindow) +")";
+    message += "\ncommitted=" + committed;
     message += "\nfile=" + psiFile.getName();
     message += "\nfile class=" + psiFile.getClass();
     message += "\nlanguage=" + psiFile.getLanguage();
