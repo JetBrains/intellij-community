@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -137,7 +137,7 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
           }
         }
         else if (instruction instanceof ThrowingInstruction) {
-          sometimesHaveReturn.set(true);
+          //skip throwing instructions
         }
         else if (element instanceof GrAssertStatement) {
           sometimesHaveReturn.set(true);
