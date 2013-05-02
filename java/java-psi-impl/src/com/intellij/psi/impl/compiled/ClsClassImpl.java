@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -406,9 +406,17 @@ public class ClsClassImpl extends ClsMemberImpl<PsiClassStub<?>> implements PsiE
     setMirror(getExtendsList(), mirror.getExtendsList());
     setMirror(getImplementsList(), mirror.getImplementsList());
 
-    setMirrors(getOwnFields(), mirror.getFields());
-    setMirrors(getOwnMethods(), mirror.getMethods());
-    setMirrors(getOwnInnerClasses(), mirror.getInnerClasses());
+    if (mirror instanceof PsiExtensibleClass) {
+      PsiExtensibleClass extMirror = (PsiExtensibleClass)mirror;
+      setMirrors(getOwnFields(), extMirror.getOwnFields());
+      setMirrors(getOwnMethods(), extMirror.getOwnMethods());
+      setMirrors(getOwnInnerClasses(), extMirror.getOwnInnerClasses());
+    }
+    else {
+      setMirrors(getOwnFields(), mirror.getFields());
+      setMirrors(getOwnMethods(), mirror.getMethods());
+      setMirrors(getOwnInnerClasses(), mirror.getInnerClasses());
+    }
   }
 
   @Override
