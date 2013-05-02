@@ -44,17 +44,9 @@ public final class ActionMenu extends JMenu {
   private final ActionRef<ActionGroup> myGroup;
   private final PresentationFactory myPresentationFactory;
   private final Presentation myPresentation;
-  /**
-   * Defines whether menu shows its mnemonic or not.
-   */
   private boolean myMnemonicEnabled;
   private MenuItemSynchronizer myMenuItemSynchronizer;
-  /**
-   * This is PATCH!!!
-   * Do not remove this STUPID code. Otherwise you will lose all keyboard navigation
-   * at JMenuBar.
-   */
-  private StubItem myStubItem;
+  private StubItem myStubItem;  // A PATCH!!! Do not remove this code, otherwise you will lose all keyboard navigation in JMenuBar.
   private final boolean myTopLevel;
 
   public ActionMenu(final DataContext context,
@@ -262,21 +254,23 @@ public final class ActionMenu extends JMenu {
   }
 
   private void fillMenu() {
-    boolean mayContextBeInvalid;
     DataContext context;
+    boolean mayContextBeInvalid;
 
     if (myContext != null) {
       context = myContext;
       mayContextBeInvalid = false;
     }
     else {
-      context = DataManager.getInstance().getDataContext();
+      @SuppressWarnings("deprecation") DataContext contextFromFocus = DataManager.getInstance().getDataContext();
+      context = contextFromFocus;
       if (PlatformDataKeys.CONTEXT_COMPONENT.getData(context) == null) {
-        context = DataManager.getInstance()
-          .getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor(UIUtil.getParentOfType(IdeFrame.class, this)));
+        IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, this);
+        context = DataManager.getInstance().getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor(frame));
       }
       mayContextBeInvalid = true;
     }
+
     Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, mayContextBeInvalid);
   }
 
