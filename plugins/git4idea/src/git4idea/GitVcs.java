@@ -144,8 +144,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   private final GitVcsApplicationSettings myAppSettings;
   private final Configurable myConfigurable;
   private final RevisionSelector myRevSelector;
-  private final GitMergeProvider myMergeProvider;
-  private final GitMergeProvider myReverseMergeProvider;
   private final GitCommittedChangeListProvider myCommittedChangeListProvider;
   private final @NotNull GitPlatformFacade myPlatformFacade;
 
@@ -190,8 +188,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
     myRevSelector = new GitRevisionSelector();
     myConfigurable = new GitVcsConfigurable(gitProjectSettings, myProject);
     myUpdateEnvironment = new GitUpdateEnvironment(myProject, this, gitProjectSettings);
-    myMergeProvider = new GitMergeProvider(myProject);
-    myReverseMergeProvider = new GitMergeProvider(myProject, true);
     myCommittedChangeListProvider = new GitCommittedChangeListProvider(myProject);
     myOutgoingChangesProvider = new GitOutgoingChangesProvider(myProject);
     myTreeDiffProvider = new GitTreeDiffProvider(myProject);
@@ -211,14 +207,6 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
    */
   public static void runInBackground(Task.Backgroundable task) {
     task.queue();
-  }
-
-  /**
-   * @return a reverse merge provider for git (with reversed meaning of "theirs" and "yours", needed for the rebase and unstash)
-   */
-  @NotNull
-  public MergeProvider getReverseMergeProvider() {
-    return myReverseMergeProvider;
   }
 
   @Override
@@ -241,7 +229,7 @@ public class GitVcs extends AbstractVcs<CommittedChangeList> {
   @NotNull
   @Override
   public MergeProvider getMergeProvider() {
-    return myMergeProvider;
+    return GitMergeProvider.detect(myProject);
   }
 
   @Override

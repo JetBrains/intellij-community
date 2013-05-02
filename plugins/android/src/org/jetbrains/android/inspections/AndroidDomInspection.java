@@ -22,6 +22,7 @@ import com.intellij.util.xml.highlighting.BasicDomElementsInspection;
 import org.jetbrains.android.dom.AndroidDomElement;
 import org.jetbrains.android.dom.converters.AndroidPackageConverter;
 import org.jetbrains.android.dom.converters.OnClickConverter;
+import org.jetbrains.android.dom.resources.DeclareStyleableNameConverter;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.Nls;
 import org.jetbrains.annotations.NonNls;
@@ -57,6 +58,7 @@ public class AndroidDomInspection extends BasicDomElementsInspection<AndroidDomE
   protected boolean shouldCheckResolveProblems(GenericDomValue value) {
     final Converter realConverter = WrappingConverter.getDeepestConverter(value.getConverter(), value);
     return !(realConverter instanceof AndroidPackageConverter) &&
-           !(realConverter instanceof OnClickConverter);
+           !(realConverter instanceof OnClickConverter) &&
+           !(realConverter instanceof DeclareStyleableNameConverter);
   }
 }

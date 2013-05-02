@@ -28,5 +28,5 @@ public interface MergeProvider extends VcsProviderMarker {
    * called for text conflict
    */
   void conflictResolvedForFile(VirtualFile file);
-  boolean isBinary(VirtualFile file);
+  boolean isBinary(@NotNull VirtualFile file);
 }

@@ -18,6 +18,7 @@ package com.intellij.openapi.vcs.changes;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.diff.impl.ComparisonPolicy;
+import com.intellij.openapi.diff.impl.external.DiffManagerImpl;
 import com.intellij.openapi.diff.impl.fragments.LineFragment;
 import com.intellij.openapi.diff.impl.highlighting.FragmentSide;
 import com.intellij.openapi.diff.impl.processing.TextCompareProcessor;
@@ -140,7 +141,11 @@ public class FragmentedDiffRequestFromChange {
               }
             }
 
-            final TextCompareProcessor processor = new TextCompareProcessor(ComparisonPolicy.DEFAULT);
+            ComparisonPolicy comparisonPolicy = DiffManagerImpl.getInstanceEx().getComparisonPolicy();
+            if (comparisonPolicy == null) {
+              comparisonPolicy = ComparisonPolicy.DEFAULT;
+            }
+            final TextCompareProcessor processor = new TextCompareProcessor(comparisonPolicy);
             final ArrayList<LineFragment> lineFragments = processor.process(myOldDocument.getText(), myDocument.getText());
             myRanges = new ArrayList<BeforeAfter<TextRange>>(lineFragments.size());
             for (LineFragment lineFragment : lineFragments) {

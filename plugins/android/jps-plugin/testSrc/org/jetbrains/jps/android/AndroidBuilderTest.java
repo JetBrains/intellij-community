@@ -20,6 +20,7 @@ import org.jetbrains.jps.builders.JpsBuildTestCase;
 import org.jetbrains.jps.cmdline.BuildMain;
 import org.jetbrains.jps.incremental.java.JavaBuilder;
 import org.jetbrains.jps.incremental.messages.BuildMessage;
+import org.jetbrains.jps.maven.model.JpsMavenExtensionService;
 import org.jetbrains.jps.model.JpsElement;
 import org.jetbrains.jps.model.JpsSimpleElement;
 import org.jetbrains.jps.model.impl.JpsSimpleElementImpl;
@@ -774,7 +775,7 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
     assertTrue(containsForciblyExcludedRootWarn);
   }
 
-  /*public void testMaven() throws Exception {
+  public void testMaven() throws Exception {
     final MyExecutor executor = new MyExecutor("com.example.simple");
     final JpsSdk<JpsSimpleElement<JpsAndroidSdkProperties>> androidSdk = addJdkAndAndroidSdk();
     addPathPatterns(executor, androidSdk);
@@ -814,7 +815,7 @@ public class AndroidBuilderTest extends JpsBuildTestCase {
       .file("res_apk_entry", "res_apk_entry_content")
       .file("classes.dex", "classes_dex_content"));
     checkMakeUpToDate(executor);
-  }*/
+  }
 
   private void checkMakeUpToDate(MyExecutor executor) {
     executor.clear();

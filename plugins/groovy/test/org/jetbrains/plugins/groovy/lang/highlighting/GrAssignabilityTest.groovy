@@ -570,7 +570,7 @@ print i<warning descr="'getAt' in 'X' cannot be applied to '(java.lang.String, j
 
   void testArrayAccess5() {
     testHighlighting('''\
-print a<warning descr="Cannot resolve index access with arguments (java.lang.Integer)">[1]</warning>
+print a<warning descr="'getAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.Integer, java.lang.Integer)'">[1, 2]</warning>
 ''')
   }
 
@@ -632,7 +632,7 @@ i<warning descr="'putAt' in 'X' cannot be applied to '(java.lang.String, java.la
 
   void testArrayAccess10() {
     testHighlighting('''\
-a<warning descr="Cannot resolve index access with arguments (java.lang.Integer, java.lang.Integer)">[1]</warning> = 2
+a<warning descr="'putAt' in 'org.codehaus.groovy.runtime.DefaultGroovyMethods' cannot be applied to '(java.lang.Integer, java.lang.Integer, java.lang.Integer)'">[1, 3]</warning> = 2
 ''')
   }
 

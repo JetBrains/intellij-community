@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,28 +13,22 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.jps.incremental.artifacts.instructions;
+package org.jetbrains.jps.incremental.artifacts.builders;
 
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.jps.builders.storage.BuildDataPaths;
-import org.jetbrains.jps.model.JpsModel;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.artifact.JpsArtifact;
+import org.jetbrains.jps.model.artifact.elements.JpsPackagingElement;
 
-import java.util.Set;
+import java.util.Collection;
+import java.util.List;
 
 /**
  * @author nik
  */
-public interface ArtifactInstructionsBuilderContext {
+public abstract class ArtifactLayoutCustomizationService {
+  @Nullable
+  public abstract List<JpsPackagingElement> getCustomizedLayout(@NotNull JpsArtifact artifact,
+                                                                @NotNull Collection<JpsArtifact> parentArtifacts);
 
-  boolean enterArtifact(JpsArtifact artifact);
-
-  void leaveArtifact(JpsArtifact artifact);
-
-  BuildDataPaths getDataPaths();
-
-  JpsModel getModel();
-
-  @NotNull
-  Set<JpsArtifact> getParentArtifacts();
 }

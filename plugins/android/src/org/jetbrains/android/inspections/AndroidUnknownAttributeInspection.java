@@ -16,6 +16,7 @@
 package org.jetbrains.android.inspections;
 
 import com.android.SdkConstants;
+import com.android.resources.ResourceType;
 import com.intellij.codeInspection.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
@@ -27,11 +28,11 @@ import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.util.containers.HashSet;
 import com.intellij.util.xml.DomFileDescription;
-import com.intellij.xml.XmlAttributeDescriptor;
 import org.jetbrains.android.dom.AndroidAnyAttributeDescriptor;
 import org.jetbrains.android.dom.AndroidResourceDomFileDescription;
 import org.jetbrains.android.dom.AndroidXmlTagDescriptor;
 import org.jetbrains.android.dom.manifest.ManifestDomFileDescription;
+import org.jetbrains.android.dom.xml.AndroidXmlResourcesUtil;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidBundle;
 import org.jetbrains.annotations.Nls;
@@ -77,7 +78,7 @@ public class AndroidUnknownAttributeInspection extends LocalInspectionTool {
     if (facet == null) {
       return ProblemDescriptor.EMPTY_ARRAY;
     }
-    if (isMyFile(facet, file)) {
+    if (isMyFile(facet, (XmlFile)file)) {
       MyVisitor visitor = new MyVisitor(manager, isOnTheFly);
       file.accept(visitor);
       return visitor.myResult.toArray(new ProblemDescriptor[visitor.myResult.size()]);
@@ -85,7 +86,7 @@ public class AndroidUnknownAttributeInspection extends LocalInspectionTool {
     return ProblemDescriptor.EMPTY_ARRAY;
   }
 
-  static boolean isMyFile(AndroidFacet facet, PsiFile file) {
+  static boolean isMyFile(AndroidFacet facet, XmlFile file) {
     String resourceType = facet.getLocalResourceManager().getFileResourceType(file);
     if (resourceType != null) {
       if (ourSupportedResourceTypes == null) {
@@ -97,9 +98,16 @@ public class AndroidUnknownAttributeInspection extends LocalInspectionTool {
           }
         }
       }
-      return ourSupportedResourceTypes.contains(resourceType);
+      if (!ourSupportedResourceTypes.contains(resourceType)) {
+        return false;
+      }
+      if (ResourceType.XML.getName().equals(resourceType)) {
+        final XmlTag rootTag = file.getRootTag();
+        return rootTag != null && AndroidXmlResourcesUtil.isSupportedRootTag(facet, rootTag.getName());
+      }
+      return true;
     }
-    return ManifestDomFileDescription.isManifestFile((XmlFile)file);
+    return ManifestDomFileDescription.isManifestFile(file);
   }
 
   private static class MyVisitor extends XmlRecursiveElementVisitor {

@@ -59,7 +59,9 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
       GrExpression selected = index.getInvokedExpression();
       PsiType thisType = selected.getType();
 
-      if (thisType == null) return null;
+      if (thisType == null) {
+        thisType = TypesUtil.getJavaLangObject(index);
+      }
 
       GrArgumentList argList = index.getArgumentList();
 
@@ -140,7 +142,9 @@ public class GrIndexPropertyImpl extends GrExpressionImpl implements GrIndexProp
     GrExpression invoked = getInvokedExpression();
     PsiType thisType = invoked.getType();
 
-    if (thisType == null) return GroovyResolveResult.EMPTY_ARRAY;
+    if (thisType == null) {
+      thisType = TypesUtil.getJavaLangObject(this);
+    }
 
     GrArgumentList argList = getArgumentList();
 

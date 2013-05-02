@@ -78,6 +78,11 @@ public class AndroidJpsUtil {
   private AndroidJpsUtil() {
   }
 
+  /**
+   * In a module imported from Maven dependencies are transitive, so we don't need to traverse all dependency tree
+   * and compute all jars referred by library modules. Moreover it would be incorrect,
+   * because Maven has dependency resolving algorithm based on versioning
+   */
   private static boolean shouldProcessDependenciesRecursively(JpsModule module) {
     return JpsJavaDependenciesEnumerationHandler.shouldProcessDependenciesRecursively(
       JpsJavaDependenciesEnumerationHandler.createHandlers(
@@ -241,9 +246,6 @@ public class AndroidJpsUtil {
                                       @NotNull JpsModule module,
                                       @NotNull AndroidDependencyProcessor processor,
                                       boolean resolveJars) {
-    // In a module imported from Maven dependencies are transitive, so we don't need to traverse all dependency tree
-    // and compute all jars referred by library modules. Moreover it would be incorrect,
-    // because Maven has dependency resolving algorithm based on versioning
     final boolean recursive = shouldProcessDependenciesRecursively(module);
     processClasspath(paths, module, processor, new HashSet<String>(), false, recursive, resolveJars);
   }
@@ -528,14 +530,16 @@ public class AndroidJpsUtil {
   @NotNull
   public static List<JpsAndroidModuleExtension> getAllAndroidDependencies(@NotNull JpsModule module, boolean librariesOnly) {
     final List<JpsAndroidModuleExtension> result = new ArrayList<JpsAndroidModuleExtension>();
-    collectDependentAndroidLibraries(module, result, new HashSet<String>(), librariesOnly);
+    final boolean recursively = shouldProcessDependenciesRecursively(module);
+    collectDependentAndroidLibraries(module, result, new HashSet<String>(), librariesOnly, recursively);
     return result;
   }
 
   private static void collectDependentAndroidLibraries(@NotNull JpsModule module,
                                                        @NotNull List<JpsAndroidModuleExtension> result,
                                                        @NotNull Set<String> visitedSet,
-                                                       boolean librariesOnly) {
+                                                       boolean librariesOnly,
+                                                       boolean recursively) {
     final List<JpsDependencyElement> dependencies =
       new ArrayList<JpsDependencyElement>(JpsJavaExtensionService.getInstance().getDependencies(
         module, JpsJavaClasspathKind.PRODUCTION_RUNTIME, false));
@@ -548,7 +552,9 @@ public class AndroidJpsUtil {
         if (depModule != null) {
           final JpsAndroidModuleExtension depExtension = getExtension(depModule);
           if (depExtension != null && (!librariesOnly || depExtension.isLibrary()) && visitedSet.add(depModule.getName())) {
-            collectDependentAndroidLibraries(depModule, result, visitedSet, librariesOnly);
+            if (recursively) {
+              collectDependentAndroidLibraries(depModule, result, visitedSet, librariesOnly, recursively);
+            }
             result.add(0, depExtension);
           }
         }
@@ -602,7 +608,10 @@ public class AndroidJpsUtil {
     return new File(new File(androidStorage, RESOURCE_CACHE_STORAGE), module.getName());
   }
 
-  private static void fillSourceRoots(@NotNull JpsModule module, @NotNull Set<JpsModule> visited, @NotNull Set<File> result) {
+  private static void fillSourceRoots(@NotNull JpsModule module,
+                                      @NotNull Set<JpsModule> visited,
+                                      @NotNull Set<File> result,
+                                      boolean recursively) {
     visited.add(module);
     final JpsAndroidModuleExtension extension = getExtension(module);
     File resDir = null;
@@ -622,14 +631,17 @@ public class AndroidJpsUtil {
         result.add(rootDir);
       }
     }
-
+    if (!recursively) {
+      return;
+    }
+    final boolean newRecursively = shouldProcessDependenciesRecursively(module);
 
     for (JpsDependencyElement classpathItem : JpsJavaExtensionService.getInstance().getDependencies(module, JpsJavaClasspathKind.PRODUCTION_RUNTIME, false)) {
       if (classpathItem instanceof JpsModuleDependency) {
         final JpsModule depModule = ((JpsModuleDependency)classpathItem).getModule();
 
         if (depModule != null && !visited.contains(depModule)) {
-          fillSourceRoots(depModule, visited, result);
+          fillSourceRoots(depModule, visited, result, newRecursively);
         }
       }
     }
@@ -638,7 +650,7 @@ public class AndroidJpsUtil {
   @NotNull
   public static File[] getSourceRootsForModuleAndDependencies(@NotNull JpsModule module) {
     Set<File> result = new HashSet<File>();
-    fillSourceRoots(module, new HashSet<JpsModule>(), result);
+    fillSourceRoots(module, new HashSet<JpsModule>(), result, true);
     return result.toArray(new File[result.size()]);
   }
 

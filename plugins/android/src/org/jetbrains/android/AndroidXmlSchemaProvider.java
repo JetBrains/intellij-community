@@ -17,6 +17,7 @@
 package org.jetbrains.android;
 
 import com.android.SdkConstants;
+import com.android.resources.ResourceType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.util.Computable;
@@ -35,6 +36,7 @@ import com.intellij.xml.XmlSchemaProvider;
 import gnu.trove.THashMap;
 import org.jetbrains.android.dom.manifest.Manifest;
 import org.jetbrains.android.dom.manifest.ManifestDomFileDescription;
+import org.jetbrains.android.dom.xml.XmlResourceDomFileDescription;
 import org.jetbrains.android.facet.AndroidFacet;
 import org.jetbrains.android.util.AndroidCommonUtils;
 import org.jetbrains.android.util.AndroidResourceUtil;
@@ -120,7 +122,9 @@ public class AndroidXmlSchemaProvider extends XmlSchemaProvider {
     if (resType == null) {
       return false;
     }
-
+    if (resType.equals(ResourceType.XML.getName())) {
+      return XmlResourceDomFileDescription.isXmlResourceFile(file);
+    }
     return !resType.equals("raw");
   }
 
