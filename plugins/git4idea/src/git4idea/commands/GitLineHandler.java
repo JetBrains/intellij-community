@@ -158,6 +158,9 @@ public class GitLineHandler extends GitTextHandler {
         myVcs.showErrorMessages(trimmed);
         LOG.info(line.trim());
       }
+      else {
+        LOG.debug(line.trim());
+      }
     }
     myLineListeners.getMulticaster().onLineAvailable(trimmed, outputType);
   }
