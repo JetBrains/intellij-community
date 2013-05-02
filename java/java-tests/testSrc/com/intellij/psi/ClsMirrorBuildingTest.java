@@ -41,6 +41,7 @@ public class ClsMirrorBuildingTest extends LightIdeaTestCase {
   public void testPackageInfo() { doTest("package-info"); }
   public void testEA40568() { doTest(); }
   public void testBooleans() { doTest(); }
+  public void testClassRefs() { doTest(); }
 
   private void doTest() {
     doTest(getTestName(false));

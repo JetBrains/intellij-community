@@ -341,7 +341,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
 
     byte flags = PsiFieldStubImpl.packFlags((access & Opcodes.ACC_ENUM) != 0, (access & Opcodes.ACC_DEPRECATED) != 0, false);
     TypeInfo type = fieldType(desc, signature);
-    String initializer = constToString(value, "boolean".equals(type.text.getString()));
+    String initializer = constToString(value, "boolean".equals(type.text.getString()), false);
     PsiFieldStub stub = new PsiFieldStubImpl(myResult, name, type, initializer, flags);
     PsiModifierListStub modList = new PsiModifierListStubImpl(stub, packFieldFlags(access));
     return new AnnotationCollectingVisitor(modList);
@@ -535,7 +535,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
     @Override
     public void visit(final String name, final Object value) {
       valuePairPrefix(name);
-      myBuilder.append(constToString(value, false));
+      myBuilder.append(constToString(value, false, true));
     }
 
     @Override
@@ -695,7 +695,7 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
   }
 
   @Nullable
-  private static String constToString(@Nullable Object value, boolean isBoolean) {
+  private static String constToString(@Nullable Object value, boolean isBoolean, boolean anno) {
     if (value == null) return null;
 
     if (value instanceof String) return "\"" + StringUtil.escapeStringCharacters((String)value) + "\"";
@@ -749,6 +749,10 @@ public class StubBuildingVisitor<T> extends ClassVisitor {
       finally {
         StringBuilderSpinAllocator.dispose(buffer);
       }
+    }
+
+    if (anno && value instanceof Type) {
+      return getTypeText((Type)value) + ".class";
     }
 
     return null;
