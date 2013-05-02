@@ -24,7 +24,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 4/24/13 11:41 AM
  */
-public class ExternalProjectSettings implements Comparable<ExternalProjectSettings> {
+public abstract class ExternalProjectSettings implements Comparable<ExternalProjectSettings>, Cloneable {
 
   private String  myExternalProjectPath;
   private boolean myUseAutoImport;
@@ -68,5 +68,13 @@ public class ExternalProjectSettings implements Comparable<ExternalProjectSettin
   @Override
   public String toString() {
     return myExternalProjectPath;
+  }
+
+  @NotNull
+  public abstract ExternalProjectSettings clone();
+
+  protected void copyTo(@NotNull ExternalProjectSettings receiver) {
+    receiver.myExternalProjectPath = myExternalProjectPath;
+    receiver.myUseAutoImport = myUseAutoImport;
   }
 }

@@ -127,12 +127,13 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
       @SuppressWarnings("unchecked")
       @Override
       public void run() {
-        AbstractExternalSystemSettings settings = mySettingsManager.getSettings(project, myExternalSystemId);
-        final String linkedProjectPath = myControl.getProjectSettings().getExternalProjectPath();
+        AbstractExternalSystemSettings systemSettings = mySettingsManager.getSettings(project, myExternalSystemId);
+        ExternalProjectSettings projectSettings = myControl.getProjectSettings().clone();
+        final String linkedProjectPath = projectSettings.getExternalProjectPath();
         assert linkedProjectPath != null;
-        Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(settings.getLinkedProjectsSettings());
-        projects.add(myControl.getProjectSettings());
-        settings.setLinkedProjectsSettings(projects);
+        Set<ExternalProjectSettings> projects = ContainerUtilRt.newHashSet(systemSettings.getLinkedProjectsSettings());
+        projects.add(projectSettings);
+        systemSettings.setLinkedProjectsSettings(projects);
         onProjectInit(project);
 
         if (externalProjectNode != null) {

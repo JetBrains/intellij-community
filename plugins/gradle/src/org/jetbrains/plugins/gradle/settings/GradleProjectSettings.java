@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -42,5 +43,15 @@ public class GradleProjectSettings extends ExternalProjectSettings {
 
   public void setPreferLocalInstallationToWrapper(boolean preferLocalInstallationToWrapper) {
     myPreferLocalInstallationToWrapper = preferLocalInstallationToWrapper;
+  }
+
+  @NotNull
+  @Override
+  public ExternalProjectSettings clone() {
+    GradleProjectSettings result = new GradleProjectSettings();
+    copyTo(result);
+    result.myGradleHome = myGradleHome;
+    result.myPreferLocalInstallationToWrapper = myPreferLocalInstallationToWrapper;
+    return result;
   }
 }
