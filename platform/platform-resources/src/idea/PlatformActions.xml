@@ -616,5 +616,7 @@
     <action id="DecrementWindowHeight" class="com.intellij.ide.actions.WindowAction$DecrementHeight" use-shortcut-of="ResizeToolWindowUp"/>
 
     <action id="ExportTestResults" class="com.intellij.execution.testframework.export.ExportTestResultsAction" icon="AllIcons.Actions.Export"/>
+
+    <action id="SaveDocument" class="com.intellij.ide.actions.SaveDocumentAction"/>
   </actions>
 </component>
