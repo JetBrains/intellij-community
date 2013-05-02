@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -121,10 +121,6 @@ public final class ActionMenu extends JMenu {
 
     if (UIUtil.isStandardMenuLAF()) {
       super.updateUI();
-
-      if (myTopLevel && isAmbiance) {
-        setForeground(UIUtil.GTK_AMBIANCE_TEXT_COLOR);
-      }
     }
     else {
       setUI(IdeaMenuUI.createUI(this));
@@ -133,6 +129,24 @@ public final class ActionMenu extends JMenu {
       JPopupMenu popupMenu = getPopupMenu();
       if (popupMenu != null) {
         popupMenu.updateUI();
+      }
+    }
+
+    if (myTopLevel && isAmbiance) {
+      setForeground(UIUtil.GTK_AMBIANCE_TEXT_COLOR);
+    }
+
+    if (myTopLevel && UIUtil.isUnderGTKLookAndFeel()) {
+      Insets insets = getInsets();
+      Insets newInsets = new Insets(insets.top, insets.left, insets.bottom, insets.right);
+      if (insets.top + insets.bottom < 6) {
+        newInsets.top = newInsets.bottom = 3;
+      }
+      if (insets.left + insets.right < 12) {
+        newInsets.left = newInsets.right = 6;
+      }
+      if (!newInsets.equals(insets)) {
+        setBorder(BorderFactory.createEmptyBorder(newInsets.top, newInsets.left, newInsets.bottom, newInsets.right));
       }
     }
   }
