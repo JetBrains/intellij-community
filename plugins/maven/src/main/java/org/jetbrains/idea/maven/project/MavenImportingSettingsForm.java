@@ -15,6 +15,7 @@
  */
 package org.jetbrains.idea.maven.project;
 
+import com.intellij.openapi.updateSettings.impl.LabelTextReplacingUtil;
 import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.fileChooser.FileChooserDescriptorFactory;
@@ -80,6 +81,8 @@ public class MavenImportingSettingsForm {
         }
       }
     });
+
+    LabelTextReplacingUtil.replaceText(myPanel);
   }
 
   private void createUIComponents() {

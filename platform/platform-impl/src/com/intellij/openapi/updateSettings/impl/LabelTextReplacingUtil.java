@@ -41,12 +41,23 @@ public class LabelTextReplacingUtil {
       if (child instanceof JLabel) {
         final JLabel label = (JLabel)child;
         String oldText = label.getText();
-        if (oldText == null) continue;
-        String newText = StringUtil.replace(oldText, "$PRODUCT$", ApplicationNamesInfo.getInstance().getProductName());
-        newText = StringUtil.replace(newText, "$FULLNAME$", ApplicationNamesInfo.getInstance().getFullProductName());
-        label.setText(newText);
+        if (oldText != null) {
+          label.setText(doReplace(oldText));
+        }
+      }
+      else if (child instanceof AbstractButton) {
+        AbstractButton button = (AbstractButton)child;
+        String oldText = button.getText();
+        if (oldText != null) {
+          button.setText(doReplace(oldText));
+        }
       }
     }
   }
 
+  private static String doReplace(String oldText) {
+    String newText = StringUtil.replace(oldText, "$PRODUCT$", ApplicationNamesInfo.getInstance().getProductName());
+    newText = StringUtil.replace(newText, "$FULLNAME$", ApplicationNamesInfo.getInstance().getFullProductName());
+    return newText;
+  }
 }
