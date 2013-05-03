@@ -19,6 +19,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.components.ApplicationComponent;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.ShutDownTracker;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.*;
@@ -68,6 +69,13 @@ public class PersistentFSImpl extends PersistentFS implements ApplicationCompone
   // the root of all roots. All roots in myRoots and myRootsById maps are children of this super root. guarded by myRootsLock
   @Nullable private volatile VirtualFileSystemEntry mySuperRoot;
   private boolean myShutDown = false;
+  @SuppressWarnings("UnusedDeclaration")
+  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
+    @Override
+    public void run() {
+      clearIdCache();
+    }
+  });
 
   public PersistentFSImpl(@NotNull final MessageBus bus) {
     myEventsBus = bus;
