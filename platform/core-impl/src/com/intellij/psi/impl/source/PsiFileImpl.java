@@ -57,7 +57,6 @@ import com.intellij.psi.tree.ILazyParseableElementType;
 import com.intellij.psi.tree.IStubFileElementType;
 import com.intellij.psi.tree.TokenSet;
 import com.intellij.reference.SoftReference;
-import com.intellij.testFramework.LightVirtualFile;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.PatchedWeakReference;
 import com.intellij.util.containers.ContainerUtil;
@@ -406,9 +405,9 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
 
     synchronized (PsiLock.LOCK) {
       clearStub();
-      if (tree != null) {
-        tree.putUserData(STUB_TREE_IN_PARSED_TREE, null);
-      }
+    }
+    if (tree != null) {
+      tree.putUserData(STUB_TREE_IN_PARSED_TREE, null);
     }
 
     clearCaches();
@@ -946,13 +945,15 @@ public abstract class PsiFileImpl extends ElementBase implements PsiFileEx, PsiF
   }
 
   private static final Key<StubTree> STUB_TREE_IN_PARSED_TREE = new Key<StubTree>("STUB_TREE_IN_PARSED_TREE");
+  private final Object myStubFromTreeLock = new Object();
 
   public StubTree calcStubTree() {
     FileElement fileElement = calcTreeElement();
-    synchronized (PsiLock.LOCK) {
+    synchronized (myStubFromTreeLock) {
       StubTree tree = fileElement.getUserData(STUB_TREE_IN_PARSED_TREE);
 
       if (tree == null) {
+        ApplicationManager.getApplication().assertReadAccessAllowed();
         IElementType contentElementType = getContentElementType();
         if (!(contentElementType instanceof IStubFileElementType)) {
           VirtualFile vFile = getVirtualFile();
