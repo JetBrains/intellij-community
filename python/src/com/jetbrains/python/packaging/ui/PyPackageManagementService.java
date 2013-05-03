@@ -115,13 +115,10 @@ public class PyPackageManagementService extends PackageManagementService {
   }
 
   @Override
-  public void installPackage(final String packageName,
-                             String repositoryUrl,
-                             String version,
-                             boolean installToUser,
-                             String extraOptions,
-                             final Listener listener) {
-    final String repository = repositoryUrl.equals(PyPIPackageUtil.PYPI_URL) ? null : repositoryUrl;
+  public void installPackage(final RepoPackage repoPackage,String version, boolean forceUpgrade, String extraOptions,
+                             final Listener listener, boolean installToUser) {
+    final String packageName = repoPackage.getName();
+    final String repository = PyPIPackageUtil.PYPI_URL.equals(repoPackage.getRepoUrl()) ? null : repoPackage.getRepoUrl();
     final List<String> extraArgs = new ArrayList<String>();
     if (installToUser) {
       extraArgs.add(PyPackageManagerImpl.USE_USER_SITE);
@@ -133,6 +130,9 @@ public class PyPackageManagementService extends PackageManagementService {
     if (!StringUtil.isEmptyOrSpaces(repository)) {
       extraArgs.add("--extra-index-url");
       extraArgs.add(repository);
+    }
+    if (forceUpgrade) {
+      extraArgs.add("-U");
     }
     final PyRequirement req;
     if (version != null) {
@@ -150,7 +150,11 @@ public class PyPackageManagementService extends PackageManagementService {
 
       @Override
       public void finished(@Nullable List<PyExternalProcessException> exceptions) {
-        listener.installationFinished(packageName, PyPackageManagerImpl.UI.createDescription(exceptions, ""));
+        String errorDescription = null;
+        if (exceptions != null && exceptions.size() > 0) {
+          errorDescription = PyPackageManagerImpl.UI.createDescription(exceptions, "");
+        }
+        listener.installationFinished(packageName, errorDescription);
       }
     });
     ui.install(Collections.singletonList(req), extraArgs);
@@ -165,6 +169,7 @@ public class PyPackageManagementService extends PackageManagementService {
         PyPIPackageUtil.INSTANCE.addPackageReleases(packageName, releases);
         consumer.consume(releases);
       }
+
       @Override
       public void handleError(Exception exception, URL url, String method) {
         consumer.consume(exception);

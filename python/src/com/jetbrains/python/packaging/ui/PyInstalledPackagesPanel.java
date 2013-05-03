@@ -6,6 +6,7 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.Consumer;
+import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackage;
@@ -149,22 +150,22 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   }
 
   @Override
-  protected boolean canUninstallPackage(PyPackage pyPackage) {
+  protected boolean canUninstallPackage(InstalledPackage pkg) {
     if (!myHasPip) return false;
-    if (PythonSdkType.isVirtualEnv(mySelectedSdk)) {
-      final String location = pyPackage.getLocation();
+    if (PythonSdkType.isVirtualEnv(mySelectedSdk) && pkg instanceof PyPackage) {
+      final String location = ((PyPackage) pkg).getLocation();
       if (location != null && location.startsWith(PyPackageManagerImpl.getUserSite())) {
         return false;
       }
     }
-    if ("pip".equals(pyPackage.getName()) || "distribute".equals(pyPackage.getName())) {
+    if ("pip".equals(pkg.getName()) || "distribute".equals(pkg.getName())) {
       return false;
     }
     return true;
   }
 
   @Override
-  protected boolean canUpgradePackage(PyPackage pyPackage) {
+  protected boolean canUpgradePackage(InstalledPackage pyPackage) {
     return myHasPip;
   }
 }

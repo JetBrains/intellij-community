@@ -12,13 +12,11 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.ui.DoubleClickListener;
 import com.intellij.ui.ScrollPaneFactory;
 import com.intellij.ui.table.JBTable;
+import com.intellij.util.CatchingConsumer;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.webcore.packaging.ManagePackagesDialog;
-import com.intellij.webcore.packaging.PackageManagementService;
-import com.intellij.webcore.packaging.PackagesNotificationPanel;
+import com.intellij.webcore.packaging.*;
 import com.jetbrains.python.packaging.*;
-import org.apache.xmlrpc.AsyncCallback;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -33,7 +31,6 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.MouseEvent;
 import java.io.IOException;
-import java.net.URL;
 import java.util.*;
 import java.util.List;
 
@@ -167,72 +164,72 @@ public class InstalledPackagesPanel extends JPanel {
       @Override
       public void actionPerformed(ActionEvent e) {
         final int[] rows = myPackagesTable.getSelectedRows();
-        final Sdk selectedSdk = mySelectedSdk;
-        final PackageManagementService selPackageManagementService = myPackageManagementService;
-        if (selectedSdk != null) {
+        if (myPackageManagementService != null) {
           for (int row : rows) {
             final Object pyPackage = myPackagesTableModel.getValueAt(row, 0);
-            if (pyPackage instanceof PyPackage) {
-              final String packageName = ((PyPackage)pyPackage).getName();
-              final Object currentVersion = myPackagesTableModel.getValueAt(row, 1);
+            if (pyPackage instanceof InstalledPackage) {
+              final String packageName = ((InstalledPackage)pyPackage).getName();
+              final String currentVersion = (String)myPackagesTableModel.getValueAt(row, 1);
 
-              PyPIPackageUtil.INSTANCE.usePackageReleases(packageName, new AsyncCallback() {
-                @Override
-                public void handleResult(Object result, URL url, String method) {
-                  final List<String> releases = (List<String>)result;
-                  PyPIPackageUtil.INSTANCE.addPackageReleases(packageName, releases);
-                  if (!releases.isEmpty() &&
-                      PyRequirement.VERSION_COMPARATOR.compare((String)currentVersion, releases.get(0)) >= 0)
-                    return;
-
-                  ApplicationManager.getApplication().invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                      PyPackageManagerImpl.UI ui =
-                        new PyPackageManagerImpl.UI(myProject, selectedSdk, new PyPackageManagerImpl.UI.Listener() {
-                          @Override
-                          public void started() {
-                            myPackagesTable.setPaintBusy(true);
-                            currentlyInstalling.add(packageName);
-                          }
-
-                          @Override
-                          public void finished(final List<PyExternalProcessException> exceptions) {
-                            myPackagesTable.clearSelection();
-                            updatePackages(selectedSdk, selPackageManagementService);
-                            myPackagesTable.setPaintBusy(false);
-                            currentlyInstalling.remove(packageName);
-                            if (exceptions.isEmpty()) {
-                              myNotificationArea.showSuccess("Package successfully upgraded");
-                            }
-                            else {
-                              myNotificationArea.showError("Upgrade packages failed. <a href=\"xxx\">Details...</a>",
-                                                           "Upgrade Packages Failed",
-                                                           PyPackageManagerImpl.UI
-                                                             .createDescription(exceptions, "Upgrade packages failed."));
-                            }
-                          }
-                        });
-                      ui.install(Collections.singletonList(new PyRequirement(packageName)), Collections.singletonList("-U"));
-                      myUpgradeButton.setEnabled(false);
-                    }
-                  }, ModalityState.any());
-                }
-
-                @Override
-                public void handleError(Exception exception, URL url, String method) {
-                  ApplicationManager.getApplication().invokeLater(new Runnable() {
-                    @Override
-                    public void run() {
-                      Messages.showErrorDialog("Error occurred. Please, check your internet connection.",
-                                               "Upgrade Package Failed.");
-                    }
-                  }, ModalityState.any());
-                }
-              });
+              upgradePackage(packageName, currentVersion);
             }
           }
         }
+      }
+    });
+  }
+
+  private void upgradePackage(final String packageName, final String currentVersion) {
+    final Sdk selectedSdk = mySelectedSdk;
+    final PackageManagementService selPackageManagementService = myPackageManagementService;
+    myPackageManagementService.fetchPackageVersions(packageName, new CatchingConsumer<List<String>, Exception>() {
+      @Override
+      public void consume(List<String> releases) {
+        if (!releases.isEmpty() &&
+            PyRequirement.VERSION_COMPARATOR.compare(currentVersion, releases.get(0)) >= 0)
+          return;
+
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            final PackageManagementService.Listener listener = new PackageManagementService.Listener() {
+              @Override
+              public void installationStarted(String packageName) {
+                myPackagesTable.setPaintBusy(true);
+                currentlyInstalling.add(packageName);
+              }
+
+              @Override
+              public void installationFinished(String packageName, @Nullable String errorDescription) {
+                myPackagesTable.clearSelection();
+                updatePackages(selectedSdk, selPackageManagementService);
+                myPackagesTable.setPaintBusy(false);
+                currentlyInstalling.remove(packageName);
+                if (errorDescription == null) {
+                  myNotificationArea.showSuccess("Package " + packageName + " successfully upgraded");
+                }
+                else {
+                  myNotificationArea.showError("Upgrade packages failed. <a href=\"xxx\">Details...</a>",
+                                               "Upgrade Packages Failed",
+                                               "Upgrade packages failed.\n" + errorDescription);
+                }
+              }
+            };
+            myPackageManagementService.installPackage(new RepoPackage(packageName, null /* TODO? */), null, true, null, listener, false);
+            myUpgradeButton.setEnabled(false);
+          }
+        }, ModalityState.any());
+      }
+
+      @Override
+      public void consume(Exception e) {
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            Messages.showErrorDialog("Error occurred. Please, check your internet connection.",
+                                     "Upgrade Package Failed.");
+          }
+        }, ModalityState.any());
       }
     });
   }
@@ -250,18 +247,18 @@ public class InstalledPackagesPanel extends JPanel {
             final int index = selected[i];
             if (index >= myPackagesTable.getRowCount()) continue;
             final Object value = myPackagesTable.getValueAt(index, 0);
-            if (value instanceof PyPackage) {
-              final PyPackage pyPackage = (PyPackage)value;
-              if (!canUninstallPackage(pyPackage)) {
+            if (value instanceof InstalledPackage) {
+              final InstalledPackage pkg = (InstalledPackage)value;
+              if (!canUninstallPackage(pkg)) {
                 canUninstall = false;
               }
-              if (!canUpgradePackage(pyPackage)) {
+              if (!canUpgradePackage(pkg)) {
                 canUpgrade = false;
               }
-              final String pyPackageName = pyPackage.getName();
+              final String pyPackageName = pkg.getName();
               final String availableVersion = (String)myPackagesTable.getValueAt(index, 2);
               if (!upgradeAvailable) {
-                upgradeAvailable = PyRequirement.VERSION_COMPARATOR.compare(pyPackage.getVersion(), availableVersion) < 0 &&
+                upgradeAvailable = PyRequirement.VERSION_COMPARATOR.compare(pkg.getVersion(), availableVersion) < 0 &&
                                    !currentlyInstalling.contains(pyPackageName);
               }
               if (!canUninstall && !canUpgrade) break;
@@ -274,11 +271,11 @@ public class InstalledPackagesPanel extends JPanel {
     }, ModalityState.any());
   }
 
-  protected boolean canUninstallPackage(PyPackage pyPackage) {
+  protected boolean canUninstallPackage(InstalledPackage pyPackage) {
     return true;
   }
 
-  protected boolean canUpgradePackage(PyPackage pyPackage) {
+  protected boolean canUpgradePackage(InstalledPackage pyPackage) {
     return true;
   }
 
