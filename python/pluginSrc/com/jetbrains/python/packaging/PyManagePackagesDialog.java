@@ -6,7 +6,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
-import com.jetbrains.python.packaging.ui.PyPackagesPanel;
+import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -35,7 +35,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
     sdkComboBox.setRenderer(new PySdkListCellRenderer());
 
     PackagesNotificationPanel notificationPanel = new PackagesNotificationPanel(project);
-    final PyPackagesPanel packagesPanel = new PyPackagesPanel(project, notificationPanel);
+    final PyInstalledPackagesPanel packagesPanel = new PyInstalledPackagesPanel(project, notificationPanel);
     packagesPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
     packagesPanel.updatePackages(sdk);
     packagesPanel.updateNotifications(sdk);
