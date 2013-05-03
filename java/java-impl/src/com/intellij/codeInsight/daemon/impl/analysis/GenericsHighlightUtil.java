@@ -893,6 +893,7 @@ public class GenericsHighlightUtil {
     return typeParameters[0];
   }
 
+  //http://docs.oracle.com/javase/specs/jls/se7/html/jls-8.html#jls-8.9.2
   @Nullable
   public static HighlightInfo checkAccessStaticFieldFromEnumConstructor(PsiReferenceExpression expr, JavaResolveResult result) {
     final PsiElement resolved = result.getElement();
@@ -903,14 +904,17 @@ public class GenericsHighlightUtil {
     if (constructorOrInitializer == null) return null;
     if (constructorOrInitializer.hasModifierProperty(PsiModifier.STATIC)) return null;
     final PsiClass aClass = constructorOrInitializer.getContainingClass();
-    if (aClass == null) return null;
-    if (!aClass.isEnum()) return null;
+    if (aClass == null || !(aClass.isEnum() || aClass instanceof PsiEnumConstantInitializer)) return null;
     final PsiField field = (PsiField)resolved;
-    if (field.getContainingClass() != aClass) return null;
-    final PsiType type = field.getType();
+    if (aClass instanceof PsiEnumConstantInitializer) {
+      if (field.getContainingClass() != aClass.getSuperClass()) return null;
+    } else if (field.getContainingClass() != aClass) return null;
 
-    //TODO is access to enum constant is allowed ?
-    if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == aClass) return null;
+
+    if (!JavaVersionService.getInstance().isAtLeast(field, JavaSdkVersion.JDK_1_6)) {
+      final PsiType type = field.getType();
+      if (type instanceof PsiClassType && ((PsiClassType)type).resolve() == aClass) return null;
+    }
 
     if (PsiUtil.isCompileTimeConstant(field)) return null;
 

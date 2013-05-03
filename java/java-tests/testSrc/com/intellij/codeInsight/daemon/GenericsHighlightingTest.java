@@ -73,7 +73,10 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testAutoboxingMethods() { doTest5(false); }
   public void testAutoboxingConstructors() { doTest5(false); }
   public void testEnumWithAbstractMethods() { doTest5(false); }
-  public void testEnum() { doTest5(false); }
+  public void testEnum() {
+    doTest(LanguageLevel.JDK_1_5, JavaSdkVersion.JDK_1_5, false);
+  }
+  public void testEnum56239() { doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_6, false); }
   public void testSameErasure() { doTest5(false); }
   public void testMethods() { doTest5(false); }
   public void testFields() { doTest5(false); }
