@@ -778,7 +778,7 @@ public class HighlightClassUtil {
           if (!PsiUtil.isInnerClass(base)) return;
 
           if (resolve == resolved && baseClass != null && (!PsiTreeUtil.isAncestor(baseClass, extendRef, true) || aClass.hasModifierProperty(PsiModifier.STATIC)) &&
-              !hasEnclosingInstanceInScope(baseClass, extendRef, true, true) && !qualifiedNewCalledInConstructors(aClass, baseClass)) {
+              !hasEnclosingInstanceInScope(baseClass, extendRef, !aClass.hasModifierProperty(PsiModifier.STATIC), true) && !qualifiedNewCalledInConstructors(aClass, baseClass)) {
             String description = JavaErrorMessages.message("no.enclosing.instance.in.scope", HighlightUtil.formatClass(baseClass));
             infos[0] = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(extendRef).descriptionAndTooltip(description).create();
           }

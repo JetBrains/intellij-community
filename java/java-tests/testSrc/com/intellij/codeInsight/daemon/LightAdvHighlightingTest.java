@@ -365,6 +365,10 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA60875() { doTest(false, false); }
   public void testIDEA71645() { doTest(false, false); }
 
+  public void testNoEnclosingInstanceWhenStaticNestedInheritsFromContainingClass() throws Exception {
+    doTest(false, false);
+  }
+
   public void testStaticMethodCalls() {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
   }
