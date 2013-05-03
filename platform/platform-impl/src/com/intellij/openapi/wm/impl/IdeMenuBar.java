@@ -31,13 +31,17 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.ClockPanel;
+import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
@@ -103,6 +107,35 @@ public class IdeMenuBar extends JMenuBar {
       myActivationWatcher = null;
       myClockPanel = null;
     }
+  }
+
+  @Override
+  public Border getBorder() {
+    //avoid moving lines
+    if (myState == State.EXPANDING || myState == State.COLLAPSING) {
+      return new EmptyBorder(0,0,0,0);
+    }
+
+    //fix for Darcula double border
+    if (myState == State.TEMPORARY_EXPANDED && UIUtil.isUnderDarcula()) {
+      return new CustomLineBorder(Gray._75, 0, 0, 1, 0);
+    }
+
+    //save 1px for mouse handler
+    if (myState == State.COLLAPSED) {
+      return new EmptyBorder(0, 0, 1, 0);
+    }
+
+    return super.getBorder();
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    //otherwise, there will be 1px line on top
+    if (myState == State.COLLAPSED) {
+      return;
+    }
+    super.paint(g);
   }
 
   @Override
@@ -433,7 +466,12 @@ public class IdeMenuBar extends JMenuBar {
         default:
       }
       revalidate();
-      repaint();
+      if (myState == State.COLLAPSED) {
+        //we should repaint parent, to clear 1px on top when menu is collapsed
+        getParent().repaint();
+      } else {
+        repaint();
+      }
     }
   }
 
