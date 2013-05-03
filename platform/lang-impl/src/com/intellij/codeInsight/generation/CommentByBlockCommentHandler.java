@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -202,7 +202,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
         }
       }
       else {
-        if (!isWhiteSpaceOrComment(element)) {
+        if (!isWhiteSpaceOrComment(element, range)) {
           return false;
         }
       }
@@ -235,7 +235,7 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
            intersection.substring(element.getText()).trim().length() == 0;
   }
 
-  private boolean isWhiteSpaceOrComment(PsiElement element) {
+  private static boolean isWhiteSpaceOrComment(PsiElement element) {
     return element instanceof PsiWhiteSpace ||
            PsiTreeUtil.getParentOfType(element, PsiComment.class, false) != null;
   }
