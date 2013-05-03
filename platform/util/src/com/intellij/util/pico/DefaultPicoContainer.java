@@ -170,9 +170,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   }
 
   private void addOrderedComponentAdapter(ComponentAdapter componentAdapter) {
-    if (!orderedComponentAdapters.contains(componentAdapter)) {
-      orderedComponentAdapters.add(componentAdapter);
-    }
+    orderedComponentAdapters.add(componentAdapter);
   }
 
   @Override
@@ -225,10 +223,8 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   }
 
   @Nullable
-  private Object getInstance(ComponentAdapter componentAdapter) {
-    final boolean isLocal = componentAdapters.contains(componentAdapter);
-
-    if (isLocal) {
+  private Object getInstance(@NotNull ComponentAdapter componentAdapter) {
+    if (componentAdapters.getImmutableSet().contains(componentAdapter)) {
       return getLocalInstance(componentAdapter);
     }
     if (parent != null) {
@@ -360,33 +356,35 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
   public PicoContainer getParent() {
     return parent;
   }
-  
+
+  /**
+   * A linked hash set that's copied on write operations.
+   * @param <T>
+   */
   private static class LinkedHashSetWrapper<T> {
-    
+    private final Object lock = new Object();
     private volatile Set<T> immutableSet;
-    
-    private final LinkedHashSet<T> synchronizedSet = new LinkedHashSet<T>();
-    
-    private final ConcurrentHashMap<T, T> concurrentSet = new ConcurrentHashMap<T, T>();
-    
-    public boolean contains(@Nullable T element) {
-      return element != null && concurrentSet.containsKey(element);
-    }
-    
-    public void add(@NotNull T element) {
-      synchronized (synchronizedSet) {
-        immutableSet = null;
-        synchronizedSet.add(element);
-        concurrentSet.put(element, element);
+    private LinkedHashSet<T> synchronizedSet = new LinkedHashSet<T>();
+
+    public synchronized void add(@NotNull T element) {
+      synchronized (lock) {
+        if (!synchronizedSet.contains(element)) {
+          copySyncSetIfExposedAsImmutable().add(element);
+        }
       }
     }
-    
-    public void remove(@Nullable T element) {
-      if (element == null) return;
-      synchronized (synchronizedSet) {
+
+    private LinkedHashSet<T> copySyncSetIfExposedAsImmutable() {
+      if (immutableSet != null) {
         immutableSet = null;
-        synchronizedSet.remove(element);
-        concurrentSet.remove(element);
+        synchronizedSet = new LinkedHashSet<T>(synchronizedSet);
+      }
+      return synchronizedSet;
+    }
+
+    public void remove(@Nullable T element) {
+      synchronized (lock) {
+        copySyncSetIfExposedAsImmutable().remove(element);
       }
     }
 
@@ -394,11 +392,11 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     public Set<T> getImmutableSet() {
       Set<T> res = immutableSet;
       if (res == null) {
-        synchronized (synchronizedSet) {
+        synchronized (lock) {
           res = immutableSet;
           if (res == null) {
-            res = Collections.unmodifiableSet((Set<T>)synchronizedSet.clone());
-            immutableSet = res;
+            // Expose the same set as immutable. It should be never modified again. Next add/remove operations will copy synchronizedSet
+            immutableSet = res = Collections.unmodifiableSet(synchronizedSet);
           }
         }
       }
