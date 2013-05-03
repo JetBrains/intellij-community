@@ -12,6 +12,7 @@
     <orderEntry type="module" module-name="lang-api" />
     <orderEntry type="module" module-name="lang-impl" />
     <orderEntry type="library" name="Guava" level="project" />
+    <orderEntry type="module" module-name="webide-api" exported="" />
   </component>
 </module>
 

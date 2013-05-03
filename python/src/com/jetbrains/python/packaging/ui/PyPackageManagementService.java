@@ -4,8 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.*;
@@ -104,7 +103,7 @@ public class PyPackageManagementService extends PackageManagementService {
   }
 
   @Override
-  public Collection<String> getInstalledPackageNames() throws IOException {
+  public Collection<InstalledPackage> getInstalledPackages() throws IOException {
     List<PyPackage> packages;
     try {
       packages = ((PyPackageManagerImpl)PyPackageManager.getInstance(mySdk)).getPackages();
@@ -112,12 +111,7 @@ public class PyPackageManagementService extends PackageManagementService {
     catch (PyExternalProcessException e) {
       throw new IOException(e);
     }
-    return ContainerUtil.map(packages, new Function<PyPackage, String>() {
-      @Override
-      public String fun(PyPackage aPackage) {
-        return aPackage.getName();
-      }
-    });
+    return new ArrayList<InstalledPackage>(packages);
   }
 
   @Override
