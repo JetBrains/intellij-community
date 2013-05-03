@@ -141,13 +141,13 @@ public class InstalledPackagesPanel extends JPanel {
                                     myPackageManagementService,
                                     new PackageManagementService.Listener() {
                                       @Override
-                                      public void installationStarted(String packageName) {
+                                      public void operationStarted(String packageName) {
                                         myPackagesTable.setPaintBusy(true);
                                       }
 
                                       @Override
-                                      public void installationFinished(String packageName,
-                                                                       @Nullable String errorDescription) {
+                                      public void operationFinished(String packageName,
+                                                                    @Nullable String errorDescription) {
                                         myNotificationArea.showResult(packageName, errorDescription);
                                         myPackagesTable.clearSelection();
                                         doUpdatePackages(mySelectedSdk);
@@ -194,13 +194,13 @@ public class InstalledPackagesPanel extends JPanel {
           public void run() {
             final PackageManagementService.Listener listener = new PackageManagementService.Listener() {
               @Override
-              public void installationStarted(String packageName) {
+              public void operationStarted(String packageName) {
                 myPackagesTable.setPaintBusy(true);
                 currentlyInstalling.add(packageName);
               }
 
               @Override
-              public void installationFinished(String packageName, @Nullable String errorDescription) {
+              public void operationFinished(String packageName, @Nullable String errorDescription) {
                 myPackagesTable.clearSelection();
                 updatePackages(selectedSdk, selPackageManagementService);
                 myPackagesTable.setPaintBusy(false);
@@ -283,45 +283,50 @@ public class InstalledPackagesPanel extends JPanel {
     myUninstallButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(final ActionEvent e) {
-        final List<PyPackage> packages = getSelectedPackages();
+        final List<InstalledPackage> packages = getSelectedPackages();
         final Sdk sdk = mySelectedSdk;
         final PackageManagementService selPackageManagementService = myPackageManagementService;
         if (sdk != null) {
-          PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(myProject, sdk, new PyPackageManagerImpl.UI.Listener() {
+          PackageManagementService.Listener listener = new PackageManagementService.Listener() {
             @Override
-            public void started() {
+            public void operationStarted(String packageName) {
               myPackagesTable.setPaintBusy(true);
             }
 
             @Override
-            public void finished(final List<PyExternalProcessException> exceptions) {
+            public void operationFinished(String packageName, @Nullable String errorDescription) {
               myPackagesTable.clearSelection();
               updatePackages(sdk, selPackageManagementService);
               myPackagesTable.setPaintBusy(false);
-              if (exceptions.isEmpty()) {
-                myNotificationArea.showSuccess("Packages successfully uninstalled");
+              if (errorDescription == null) {
+                if (packageName != null) {
+                  myNotificationArea.showSuccess("Package '" + packageName + "' successfully uninstalled");
+                }
+                else {
+                  myNotificationArea.showSuccess("Packages successfully uninstalled");
+                }
               }
               else {
                 myNotificationArea.showError("Uninstall packages failed. <a href=\"xxx\">Details...</a>",
                                              "Uninstall Packages Failed",
-                                             PyPackageManagerImpl.UI.createDescription(exceptions, "Uninstall packages failed."));
+                                             "Uninstall packages failed.\n" + errorDescription);
               }
             }
-          });
-          ui.uninstall(packages);
+          };
+          myPackageManagementService.uninstallPackages(packages, listener);
         }
       }
     });
   }
 
   @NotNull
-  private List<PyPackage> getSelectedPackages() {
-    final List<PyPackage> results = new ArrayList<PyPackage>();
+  private List<InstalledPackage> getSelectedPackages() {
+    final List<InstalledPackage> results = new ArrayList<InstalledPackage>();
     final int[] rows = myPackagesTable.getSelectedRows();
     for (int row : rows) {
       final Object packageName = myPackagesTableModel.getValueAt(row, 0);
-      if (packageName instanceof PyPackage) {
-        results.add((PyPackage)packageName);
+      if (packageName instanceof InstalledPackage) {
+        results.add((InstalledPackage)packageName);
       }
     }
     return results;

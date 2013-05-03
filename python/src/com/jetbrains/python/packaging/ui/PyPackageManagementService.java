@@ -145,19 +145,47 @@ public class PyPackageManagementService extends PackageManagementService {
     final PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(myProject, mySdk, new PyPackageManagerImpl.UI.Listener() {
       @Override
       public void started() {
-        listener.installationStarted(packageName);
+        listener.operationStarted(packageName);
       }
 
       @Override
       public void finished(@Nullable List<PyExternalProcessException> exceptions) {
-        String errorDescription = null;
-        if (exceptions != null && exceptions.size() > 0) {
-          errorDescription = PyPackageManagerImpl.UI.createDescription(exceptions, "");
-        }
-        listener.installationFinished(packageName, errorDescription);
+        listener.operationFinished(packageName, toErrorDescription(exceptions));
       }
     });
     ui.install(Collections.singletonList(req), extraArgs);
+  }
+
+  private String toErrorDescription(List<PyExternalProcessException> exceptions) {
+    String errorDescription = null;
+    if (exceptions != null && exceptions.size() > 0) {
+      errorDescription = PyPackageManagerImpl.UI.createDescription(exceptions, "");
+    }
+    return errorDescription;
+  }
+
+  @Override
+  public void uninstallPackages(List<InstalledPackage> installedPackages, final Listener listener) {
+    final String packageName = installedPackages.size() == 1 ? installedPackages.get(0).getName() : null;
+    PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(myProject, mySdk, new PyPackageManagerImpl.UI.Listener() {
+      @Override
+      public void started() {
+        listener.operationStarted(packageName);
+      }
+
+      @Override
+      public void finished(final List<PyExternalProcessException> exceptions) {
+        listener.operationFinished(packageName, toErrorDescription(exceptions));
+      }
+    });
+
+    List<PyPackage> pyPackages = new ArrayList<PyPackage>();
+    for (InstalledPackage aPackage : installedPackages) {
+      if (aPackage instanceof PyPackage) {
+       pyPackages.add((PyPackage) aPackage);
+      }
+    }
+    ui.uninstall(pyPackages);
   }
 
   @Override
