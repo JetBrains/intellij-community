@@ -262,7 +262,14 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
         return;
       }
 
-      ChangeTrackingValueContainer<Value> cached = myCache.getIfCached(key);
+      ChangeTrackingValueContainer<Value> cached;
+      try {
+        l.lock();
+        cached = myCache.getIfCached(key);
+      } finally {
+        l.unlock();
+      }
+
       if (cached != null) {
         cached.addValue(inputId, value);
         return;
