@@ -1,5 +1,6 @@
 package com.jetbrains.python.packaging;
 
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.webcore.packaging.InstalledPackage;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,6 +37,6 @@ public class PyPackage extends InstalledPackage {
   @Nullable
   @Override
   public String getTooltipText() {
-    return myLocation;
+    return FileUtil.getLocationRelativeToUserHome(myLocation);
   }
 }

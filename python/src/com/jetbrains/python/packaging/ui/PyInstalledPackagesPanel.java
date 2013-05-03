@@ -7,6 +7,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.util.Consumer;
 import com.intellij.webcore.packaging.InstalledPackage;
+import com.intellij.webcore.packaging.InstalledPackagesPanel;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.packaging.PyExternalProcessException;
 import com.jetbrains.python.packaging.PyPackage;
