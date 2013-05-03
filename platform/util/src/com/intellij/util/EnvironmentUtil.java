@@ -18,7 +18,6 @@ package com.intellij.util;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
-import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -26,23 +25,21 @@ import java.util.Collections;
 import java.util.Map;
 
 public class EnvironmentUtil {
-  private static final Map<String, String> ourEnvironmentProperties = Collections.unmodifiableMap(new ProcessBuilder().environment());
+  private static final Map<String, String> ourEnvironmentProperties;
   private static final Map<String, String> ourEnvironmentVariablesOsSpecific;
 
   static {
-    Map<String, String> envVars = ourEnvironmentProperties;
+    ourEnvironmentProperties = Collections.unmodifiableMap(new ProcessBuilder().environment());
     if (SystemInfo.isWindows) {
-      THashMap<String, String> map = new THashMap<String, String>(CaseInsensitiveStringHashingStrategy.INSTANCE);
-      map.putAll(envVars);
-      ourEnvironmentVariablesOsSpecific = map;
+      ourEnvironmentVariablesOsSpecific = Collections.unmodifiableMap(
+        new THashMap<String, String>(ourEnvironmentProperties, CaseInsensitiveStringHashingStrategy.INSTANCE));
     }
     else {
-      ourEnvironmentVariablesOsSpecific = envVars;
+      ourEnvironmentVariablesOsSpecific = ourEnvironmentProperties;
     }
   }
 
-  private EnvironmentUtil() {
-  }
+  private EnvironmentUtil() { }
 
   /** @deprecated use {@link #getEnvironmentProperties()} (to remove in IDEA 14) */
   @SuppressWarnings({"UnusedDeclaration", "SpellCheckingInspection"})
@@ -50,7 +47,7 @@ public class EnvironmentUtil {
     return getEnvironmentProperties();
   }
 
-  @NonNls
+  @NotNull
   public static Map<String, String> getEnvironmentProperties() {
     return ourEnvironmentProperties;
   }
