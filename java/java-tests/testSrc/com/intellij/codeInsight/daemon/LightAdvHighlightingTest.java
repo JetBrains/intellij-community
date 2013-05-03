@@ -362,6 +362,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testExplicitConstructorInvocation() { doTest(false, false); }
   public void testThisInInterface() { doTest(false, false); }
   public void testInnerClassConstantReference() { doTest(false, false); }
+  public void testIDEA60875() { doTest(false, false); }
 
   public void testStaticMethodCalls() {
     doTestFile(BASE_PATH + "/" + getTestName(false) + ".java").checkSymbolNames().test();
