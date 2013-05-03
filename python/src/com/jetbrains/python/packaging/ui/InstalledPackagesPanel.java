@@ -38,10 +38,6 @@ import java.util.*;
 import java.util.List;
 
 public class InstalledPackagesPanel extends JPanel {
-  public static final String INSTALL_DISTRIBUTE = "installDistribute";
-  public static final String INSTALL_PIP = "installPip";
-  public static final String CREATE_VENV = "createVEnv";
-
   protected final JButton myInstallButton;
   private final JButton myUninstallButton;
   private final JButton myUpgradeButton;

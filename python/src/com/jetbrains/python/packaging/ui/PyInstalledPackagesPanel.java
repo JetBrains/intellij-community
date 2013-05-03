@@ -22,6 +22,9 @@ import java.util.List;
  * @author yole
  */
 public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
+  public static final String INSTALL_DISTRIBUTE = "installDistribute";
+  public static final String INSTALL_PIP = "installPip";
+  public static final String CREATE_VENV = "createVEnv";
   private boolean myHasDistribute;
   private boolean myHasPip = true;
 
