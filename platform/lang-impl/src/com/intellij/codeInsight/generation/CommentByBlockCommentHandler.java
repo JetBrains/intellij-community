@@ -225,12 +225,13 @@ public class CommentByBlockCommentHandler implements CodeInsightActionHandler {
   }
 
   private boolean isWhiteSpaceOrComment(@NotNull PsiElement element, @NotNull TextRange range) {
-    TextRange intersection = range.intersection(element.getTextRange());
+    final TextRange textRange = element.getTextRange();
+    TextRange intersection = range.intersection(textRange);
     if (intersection == null) {
       return false;
     }
-    intersection = TextRange.from(Math.max(intersection.getStartOffset() - element.getTextRange().getStartOffset(), 0),
-                                  Math.min(intersection.getEndOffset() - element.getTextRange().getStartOffset(), element.getTextRange().getLength()));
+    intersection = TextRange.create(Math.max(intersection.getStartOffset() - textRange.getStartOffset(), 0),
+                                    Math.min(intersection.getEndOffset() - textRange.getStartOffset(), textRange.getLength()));
     return isWhiteSpaceOrComment(element) ||
            intersection.substring(element.getText()).trim().length() == 0;
   }
