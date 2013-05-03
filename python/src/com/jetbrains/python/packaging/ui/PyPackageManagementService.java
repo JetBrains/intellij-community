@@ -29,6 +29,10 @@ public class PyPackageManagementService extends PackageManagementService {
     mySdk = sdk;
   }
 
+  public Sdk getSdk() {
+    return mySdk;
+  }
+
   @Override
   public List<String> getAllRepositories() {
     List<String> result = new ArrayList<String>();

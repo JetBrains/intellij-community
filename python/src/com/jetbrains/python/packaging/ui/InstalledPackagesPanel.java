@@ -41,7 +41,6 @@ public class InstalledPackagesPanel extends JPanel {
 
   protected final JBTable myPackagesTable;
   private DefaultTableModel myPackagesTableModel;
-  protected Sdk mySelectedSdk;
   protected PackageManagementService myPackageManagementService;
   protected final Project myProject;
   protected final PackagesNotificationPanel myNotificationArea;
@@ -107,7 +106,7 @@ public class InstalledPackagesPanel extends JPanel {
     myInstallButton.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent e) {
-        if (mySelectedSdk != null) {
+        if (myPackageManagementService != null) {
           ManagePackagesDialog dialog = createManagePackagesDialog();
           dialog.show();
         }
@@ -117,7 +116,7 @@ public class InstalledPackagesPanel extends JPanel {
     new DoubleClickListener() {
       @Override
       protected boolean onDoubleClick(MouseEvent e) {
-        if (mySelectedSdk != null && myInstallButton.isEnabled()) {
+        if (myPackageManagementService != null && myInstallButton.isEnabled()) {
           ManagePackagesDialog dialog = createManagePackagesDialog();
           Point p = e.getPoint();
           int row = myPackagesTable.rowAtPoint(p);
@@ -180,7 +179,6 @@ public class InstalledPackagesPanel extends JPanel {
   }
 
   private void upgradePackage(final String packageName, final String currentVersion) {
-    final Sdk selectedSdk = mySelectedSdk;
     final PackageManagementService selPackageManagementService = myPackageManagementService;
     myPackageManagementService.fetchPackageVersions(packageName, new CatchingConsumer<List<String>, Exception>() {
       @Override
@@ -202,7 +200,7 @@ public class InstalledPackagesPanel extends JPanel {
               @Override
               public void operationFinished(String packageName, @Nullable String errorDescription) {
                 myPackagesTable.clearSelection();
-                updatePackages(selectedSdk, selPackageManagementService);
+                updatePackages(selPackageManagementService);
                 myPackagesTable.setPaintBusy(false);
                 currentlyInstalling.remove(packageName);
                 if (errorDescription == null) {
@@ -242,7 +240,7 @@ public class InstalledPackagesPanel extends JPanel {
         boolean upgradeAvailable = false;
         boolean canUninstall = true;
         boolean canUpgrade = true;
-        if (mySelectedSdk != null && selected.length != 0) {
+        if (myPackageManagementService != null && selected.length != 0) {
           for (int i = 0; i != selected.length; ++i) {
             final int index = selected[i];
             if (index >= myPackagesTable.getRowCount()) continue;
@@ -284,9 +282,8 @@ public class InstalledPackagesPanel extends JPanel {
       @Override
       public void actionPerformed(final ActionEvent e) {
         final List<InstalledPackage> packages = getSelectedPackages();
-        final Sdk sdk = mySelectedSdk;
         final PackageManagementService selPackageManagementService = myPackageManagementService;
-        if (sdk != null) {
+        if (selPackageManagementService != null) {
           PackageManagementService.Listener listener = new PackageManagementService.Listener() {
             @Override
             public void operationStarted(String packageName) {
@@ -296,7 +293,7 @@ public class InstalledPackagesPanel extends JPanel {
             @Override
             public void operationFinished(String packageName, @Nullable String errorDescription) {
               myPackagesTable.clearSelection();
-              updatePackages(sdk, selPackageManagementService);
+              updatePackages(selPackageManagementService);
               myPackagesTable.setPaintBusy(false);
               if (errorDescription == null) {
                 if (packageName != null) {
@@ -332,8 +329,7 @@ public class InstalledPackagesPanel extends JPanel {
     return results;
   }
 
-  public void updatePackages(Sdk selectedSdk, PackageManagementService packageManagementService) {
-    mySelectedSdk = selectedSdk;
+  public void updatePackages(@Nullable PackageManagementService packageManagementService) {
     myPackageManagementService = packageManagementService;
     myPackagesTable.clearSelection();
     myPackagesTableModel.getDataVector().clear();

@@ -26,6 +26,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   public static final String INSTALL_DISTRIBUTE = "installDistribute";
   public static final String INSTALL_PIP = "installPip";
   public static final String CREATE_VENV = "createVEnv";
+
   private boolean myHasDistribute;
   private boolean myHasPip = true;
 
@@ -35,7 +36,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     myNotificationArea.addLinkHandler(INSTALL_DISTRIBUTE, new Runnable() {
       @Override
       public void run() {
-        final Sdk sdk = mySelectedSdk;
+        final Sdk sdk = getSelectedSdk();
         if (sdk != null) {
           installManagementTool(sdk, PyPackageManagerImpl.DISTRIBUTE);
         }
@@ -44,12 +45,16 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
     myNotificationArea.addLinkHandler(INSTALL_PIP, new Runnable() {
       @Override
       public void run() {
-        final Sdk sdk = mySelectedSdk;
+        final Sdk sdk = getSelectedSdk();
         if (sdk != null) {
           installManagementTool(sdk, PyPackageManagerImpl.PIP);
         }
       }
     });
+  }
+
+  private Sdk getSelectedSdk() {
+    return ((PyPackageManagementService) myPackageManagementService).getSdk();
   }
 
   public void updateNotifications(@NotNull final Sdk selectedSdk) {
@@ -73,7 +78,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
         application.invokeLater(new Runnable() {
           @Override
           public void run() {
-            if (selectedSdk == mySelectedSdk) {
+            if (selectedSdk == getSelectedSdk()) {
               final PythonSdkFlavor flavor = PythonSdkFlavor.getFlavor(selectedSdk);
               final boolean invalid = PythonSdkType.isInvalid(selectedSdk);
               boolean allowCreateVirtualEnv =
@@ -139,7 +144,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
           packageManager.showInstallationError(myProject, "Failed to install " + name, description);
         }
         packageManager.refresh();
-        updatePackages(sdk, new PyPackageManagementService(myProject, sdk));
+        updatePackages(new PyPackageManagementService(myProject, sdk));
         for (Consumer<Sdk> listener : myPathChangedListeners) {
           listener.consume(sdk);
         }
@@ -152,7 +157,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
   @Override
   protected boolean canUninstallPackage(InstalledPackage pkg) {
     if (!myHasPip) return false;
-    if (PythonSdkType.isVirtualEnv(mySelectedSdk) && pkg instanceof PyPackage) {
+    if (PythonSdkType.isVirtualEnv(getSelectedSdk()) && pkg instanceof PyPackage) {
       final String location = ((PyPackage) pkg).getLocation();
       if (location != null && location.startsWith(PyPackageManagerImpl.getUserSite())) {
         return false;

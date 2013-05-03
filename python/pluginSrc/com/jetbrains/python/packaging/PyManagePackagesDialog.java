@@ -26,7 +26,7 @@ import java.util.List;
 public class PyManagePackagesDialog extends DialogWrapper {
   private JPanel myMainPanel;
 
-  public PyManagePackagesDialog(@NotNull final Project project, Sdk sdk) {
+  public PyManagePackagesDialog(@NotNull final Project project, @NotNull Sdk sdk) {
     super(project, true);
     setTitle("Manage Python Packages");
 
@@ -38,7 +38,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
     PackagesNotificationPanel notificationPanel = new PackagesNotificationPanel(project);
     final PyInstalledPackagesPanel packagesPanel = new PyInstalledPackagesPanel(project, notificationPanel);
     packagesPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
-    packagesPanel.updatePackages(sdk, new PyPackageManagementService(project, sdk));
+    packagesPanel.updatePackages(new PyPackageManagementService(project, sdk));
     packagesPanel.updateNotifications(sdk);
 
     myMainPanel = new JPanel(new BorderLayout());
@@ -52,7 +52,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         Sdk sdk = (Sdk) sdkComboBox.getSelectedItem();
-        packagesPanel.updatePackages(sdk, new PyPackageManagementService(project, sdk));
+        packagesPanel.updatePackages(new PyPackageManagementService(project, sdk));
         packagesPanel.updateNotifications(sdk);
       }
     });
