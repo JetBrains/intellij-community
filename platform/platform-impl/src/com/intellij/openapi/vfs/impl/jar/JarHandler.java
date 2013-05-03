@@ -19,6 +19,8 @@
  */
 package com.intellij.openapi.vfs.impl.jar;
 
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
@@ -45,6 +47,7 @@ public class JarHandler extends JarHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.jar.JarHandler");
 
   @NonNls private static final String JARS_FOLDER = "jars";
+  private static final int FS_TIME_RESOLUTION = 2000;
 
   private final JarFileSystemImpl myFileSystem;
 
@@ -89,7 +92,7 @@ public class JarHandler extends JarHandlerBase {
 
     if (mirrorAttributes == null ||
         originalAttributes.length != mirrorAttributes.length ||
-        Math.abs(originalAttributes.lastModified - mirrorAttributes.lastModified) > 2000) {
+        Math.abs(originalAttributes.lastModified - mirrorAttributes.lastModified) > FS_TIME_RESOLUTION) {
       return copyToMirror(originalFile, mirrorFile);
     }
 
@@ -115,17 +118,7 @@ public class JarHandler extends JarHandlerBase {
       FileUtil.copy(original, mirror);
     }
     catch (final IOException e) {
-      LOG.warn(e);
-      final String path = original.getPath();
-      final String message = VfsBundle.message("jar.copy.error.message", path, mirror.getPath(), e.getMessage());
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(message, VfsBundle.message("jar.copy.error.title"));
-        }
-      }, ModalityState.NON_MODAL);
-
-      myFileSystem.setNoCopyJarForPath(path);
+      reportIOErrorWithJars(original, mirror, e);
       return original;
     }
 
@@ -134,5 +127,17 @@ public class JarHandler extends JarHandlerBase {
     }
 
     return mirror;
+  }
+
+  private static final NotificationGroup ERROR_COPY_NOTIFICATION = NotificationGroup.balloonGroup(VfsBundle.message("jar.copy.error.title"));
+
+  private void reportIOErrorWithJars(File original, File mirror, IOException e) {
+    LOG.warn(e);
+    final String path = original.getPath();
+    final String message = VfsBundle.message("jar.copy.error.message", path, mirror.getPath(), e.getMessage());
+
+    ERROR_COPY_NOTIFICATION.createNotification(message, NotificationType.ERROR).notify(null);
+
+    myFileSystem.setNoCopyJarForPath(path);
   }
 }
