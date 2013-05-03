@@ -56,7 +56,13 @@ public class PyPackageManagementService extends PackageManagementService {
   @Override
   public List<RepoPackage> getAllPackages() throws IOException {
     List<RepoPackage> packages = new ArrayList<RepoPackage>();
-    final Collection<String> packageNames = PyPIPackageUtil.INSTANCE.getPackageNames();
+    final Collection<String> packageNames;
+    try {
+      packageNames = PyPIPackageUtil.INSTANCE.getPackageNames();
+    }
+    catch (IOException e) {
+      throw new IOException("Could not reach URL " + e.getMessage() + ". Please, check your internet connection.");
+    }
     final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
     String url = customRepoConfigured? PyPIPackageUtil.PYPI_URL : "";
     for (String name : packageNames) {
