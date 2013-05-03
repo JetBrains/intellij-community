@@ -29,6 +29,7 @@ import com.intellij.openapi.util.io.BufferExposingByteArrayOutputStream;
 import com.intellij.openapi.util.io.ByteSequence;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ConcurrentHashMap;
 import com.intellij.util.containers.IntArrayList;
 import com.intellij.util.io.*;
@@ -54,8 +55,8 @@ import static com.intellij.util.io.IOUtil.deleteAllFilesStartingWith;
 public class FSRecords implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  public static final boolean weHaveContentHashes = Boolean.parseBoolean(System.getProperty("idea.share.contents", "false"));
-  private static final int VERSION = 19 + (weHaveContentHashes ? 1:0);
+  public static final boolean weHaveContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", false);
+  private static final int VERSION = 19 + (weHaveContentHashes ? 2:0);
 
   private static final int PARENT_OFFSET = 0;
   private static final int PARENT_SIZE = 4;
@@ -233,30 +234,24 @@ public class FSRecords implements Forceable {
 
           @Override
           public int getHashCode(byte[] value) {
-            int hash = 0; // TODO: better
+            int hash = 0; // take first 4 bytes, this should be good enough hash given we reference git revisions with 7-8 hex digits
             for(int i = 0; i < 4; ++i) {
-              hash = (hash << 4) + (value[i] & 0xFF);
+              hash = (hash << 8) + (value[i] & 0xFF);
             }
             return hash;
           }
 
           @Override
           public boolean isEqual(byte[] val1, byte[] val2) {
-            if (val1.length != val2.length) return false;
-            for(int i = 0; i < val1.length; ++i) {
-              if (val1[i] != val2[i]) return false;
-            }
-            return true;
+            return Arrays.equals(val1, val2);
           }
-
-
         }, 4096, storageLockContext) {
           @Override
           protected int doWriteData(byte[] value) throws IOException {
             int record = getContentStorage().createNewRecord();
             int idx = (super.doWriteData(value)) / SIGNATURE_LENGTH;
             if (idx + 1 != record) {
-              assert false;
+              assert false:"Unexpected content storage modification";
             }
             return idx;
           }
@@ -266,7 +261,7 @@ public class FSRecords implements Forceable {
             return super.getLargestId() / SIGNATURE_LENGTH;
           }
 
-          private boolean myProcessingKeyAtIndex;
+          private boolean myProcessingKeyAtIndex;   // currently protected by w.lock of FSRecords
 
           @Override
           protected boolean isKeyAtIndex(byte[] value, int idx) throws IOException {
@@ -1372,6 +1367,7 @@ public class FSRecords implements Forceable {
     try {
       digest = weHaveContentHashes ? MessageDigest.getInstance("SHA1") : null;
     } catch (NoSuchAlgorithmException ex) {
+      assert false:"Every Java implementation should have SHA-1 support"; // http://docs.oracle.com/javase/7/docs/api/java/security/MessageDigest.html
       digest = null;
     }
     myDigest = digest;
@@ -1388,7 +1384,8 @@ public class FSRecords implements Forceable {
 
       if (weHaveContentHashes) {
         recordId = findOrCreateContentRecord(bytes, 0, bytes.length);
-        if (recordId < 0) return -recordId;
+        if (recordId > 0) return recordId;
+        recordId = -recordId;
       } else {
         recordId = getContentStorage().acquireNewRecord();
       }
@@ -1450,7 +1447,8 @@ public class FSRecords implements Forceable {
 
           setContentRecordId(myFileId, page > 0 ? page : -page);
 
-          if (page < 0) return;
+          if (page > 0) return;
+          page = -page;
           fixedSize = true;
         } else {
           page = getContentRecordId(myFileId);
@@ -1470,6 +1468,7 @@ public class FSRecords implements Forceable {
   }
 
   private static final boolean DO_HARD_CONSISTENCY_CHECK = false;
+  private static final boolean DUMP_STATISTICS = weHaveContentHashes;  // TODO: remove once not needed
   private static long totalContents, totalReuses, time;
   private static int contents, reuses;
 
@@ -1477,20 +1476,20 @@ public class FSRecords implements Forceable {
     assert weHaveContentHashes;
     byte[] digest;
 
-    long started = System.nanoTime();
+    long started = DUMP_STATISTICS ? System.nanoTime():0;
     myDigest.reset();
     myDigest.update(String.valueOf(length - offset).getBytes(Charset.defaultCharset()));
     myDigest.update("\0".getBytes(Charset.defaultCharset()));
     myDigest.update(bytes, offset, length);
     digest = myDigest.digest();
-    long done = System.nanoTime() - started;
+    long done = DUMP_STATISTICS ? System.nanoTime() - started : 0;
     time += done;
 
     ++contents;
     totalContents += length;
 
-    if ((contents & 0xFFF) == 0) {
-      System.out.println("Contents:"+contents + " of " + totalContents + ", reuses:"+reuses + " of " + totalReuses + " for " + (time / 1000000));
+    if (DUMP_STATISTICS && (contents & 0x3FFF) == 0) {
+      LOG.info("Contents:"+contents + " of " + totalContents + ", reuses:"+reuses + " of " + totalReuses + " for " + (time / 1000000));
     }
     PersistentBTreeEnumerator<byte[]> hashesEnumerator = getContentHashesEnumerator();
     final int largestId = hashesEnumerator.getLargestId();
@@ -1516,7 +1515,7 @@ public class FSRecords implements Forceable {
           assert false;
         }
       }
-      return -page;
+      return page;
     }
 
     if (DO_HARD_CONSISTENCY_CHECK) {
@@ -1530,7 +1529,7 @@ public class FSRecords implements Forceable {
       }
     }
 
-    return page;
+    return -page;
   }
 
   private static class AttributeOutputStream extends DataOutputStream {
