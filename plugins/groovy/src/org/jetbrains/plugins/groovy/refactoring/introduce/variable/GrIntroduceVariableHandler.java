@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -120,10 +120,11 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     // Generating variable declaration
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
-    final GrVariableDeclaration varDecl = factory
-      .createVariableDeclaration(settings.isDeclareFinal() ? new String[]{PsiModifier.FINAL} : null,
-                                 (GrExpression)PsiUtil.skipParentheses(context.getExpression(), false), settings.getSelectedType(),
-                                 settings.getName());
+    final String[] modifiers = settings.isDeclareFinal() ? new String[]{PsiModifier.FINAL} : null;
+    final GrVariableDeclaration varDecl = factory.createVariableDeclaration(modifiers, null, settings.getSelectedType(), settings.getName());
+
+    final GrExpression initializer = (GrExpression)PsiUtil.skipParentheses(context.getExpression(), false);
+    varDecl.getVariables()[0].setInitializerGroovy(initializer);
 
     // Marker for caret position
     try {
