@@ -491,7 +491,7 @@ public class PsiImplUtil {
       toplevel = (PsiExpression)toplevel.getParent();
     }
 
-    if (toplevel instanceof PsiArrayAccessExpression) {
+    if (toplevel instanceof PsiArrayAccessExpression && !PsiUtil.isAccessedForWriting(toplevel)) {
       return type;
     }
 
