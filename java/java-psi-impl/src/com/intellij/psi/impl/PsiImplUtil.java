@@ -492,7 +492,7 @@ public class PsiImplUtil {
     }
 
     if (toplevel instanceof PsiArrayAccessExpression && !PsiUtil.isAccessedForWriting(toplevel)) {
-      return type;
+      return PsiUtil.captureToplevelWildcards(type, expression);
     }
 
     final PsiType normalized = doNormalizeWildcardByPosition(type, expression, toplevel);
