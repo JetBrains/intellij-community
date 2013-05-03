@@ -138,7 +138,7 @@ public class PyInstalledPackagesPanel extends InstalledPackagesPanel {
           packageManager.showInstallationError(myProject, "Failed to install " + name, description);
         }
         packageManager.refresh();
-        updatePackages(sdk);
+        updatePackages(sdk, new PyPackageManagementService(myProject, sdk));
         for (Consumer<Sdk> listener : myPathChangedListeners) {
           listener.consume(sdk);
         }

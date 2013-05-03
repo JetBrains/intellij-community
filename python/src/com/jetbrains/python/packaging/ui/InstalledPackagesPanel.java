@@ -45,6 +45,7 @@ public class InstalledPackagesPanel extends JPanel {
   protected final JBTable myPackagesTable;
   private DefaultTableModel myPackagesTableModel;
   protected Sdk mySelectedSdk;
+  protected PackageManagementService myPackageManagementService;
   protected final Project myProject;
   protected final PackagesNotificationPanel myNotificationArea;
   protected final List<Consumer<Sdk>> myPathChangedListeners = ContainerUtil.createLockFreeCopyOnWriteList();
@@ -140,7 +141,7 @@ public class InstalledPackagesPanel extends JPanel {
 
   private ManagePackagesDialog createManagePackagesDialog() {
     return new ManagePackagesDialog(myProject,
-                                    new PyPackageManagementService(myProject, mySelectedSdk),
+                                    myPackageManagementService,
                                     new PackageManagementService.Listener() {
                                       @Override
                                       public void installationStarted(String packageName) {
@@ -167,6 +168,7 @@ public class InstalledPackagesPanel extends JPanel {
       public void actionPerformed(ActionEvent e) {
         final int[] rows = myPackagesTable.getSelectedRows();
         final Sdk selectedSdk = mySelectedSdk;
+        final PackageManagementService selPackageManagementService = myPackageManagementService;
         if (selectedSdk != null) {
           for (int row : rows) {
             final Object pyPackage = myPackagesTableModel.getValueAt(row, 0);
@@ -197,7 +199,7 @@ public class InstalledPackagesPanel extends JPanel {
                           @Override
                           public void finished(final List<PyExternalProcessException> exceptions) {
                             myPackagesTable.clearSelection();
-                            updatePackages(selectedSdk);
+                            updatePackages(selectedSdk, selPackageManagementService);
                             myPackagesTable.setPaintBusy(false);
                             currentlyInstalling.remove(packageName);
                             if (exceptions.isEmpty()) {
@@ -286,6 +288,7 @@ public class InstalledPackagesPanel extends JPanel {
       public void actionPerformed(final ActionEvent e) {
         final List<PyPackage> packages = getSelectedPackages();
         final Sdk sdk = mySelectedSdk;
+        final PackageManagementService selPackageManagementService = myPackageManagementService;
         if (sdk != null) {
           PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(myProject, sdk, new PyPackageManagerImpl.UI.Listener() {
             @Override
@@ -296,7 +299,7 @@ public class InstalledPackagesPanel extends JPanel {
             @Override
             public void finished(final List<PyExternalProcessException> exceptions) {
               myPackagesTable.clearSelection();
-              updatePackages(sdk);
+              updatePackages(sdk, selPackageManagementService);
               myPackagesTable.setPaintBusy(false);
               if (exceptions.isEmpty()) {
                 myNotificationArea.showSuccess("Packages successfully uninstalled");
@@ -327,8 +330,9 @@ public class InstalledPackagesPanel extends JPanel {
     return results;
   }
 
-  public void updatePackages(Sdk selectedSdk) {
+  public void updatePackages(Sdk selectedSdk, PackageManagementService packageManagementService) {
     mySelectedSdk = selectedSdk;
+    myPackageManagementService = packageManagementService;
     myPackagesTable.clearSelection();
     myPackagesTableModel.getDataVector().clear();
     doUpdatePackages(selectedSdk);
