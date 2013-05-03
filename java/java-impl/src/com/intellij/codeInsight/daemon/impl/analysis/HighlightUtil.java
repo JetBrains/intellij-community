@@ -32,6 +32,8 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.roots.ProjectFileIndex;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
@@ -52,7 +54,10 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
-import com.intellij.util.*;
+import com.intellij.util.ArrayUtil;
+import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Function;
+import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -2004,6 +2009,7 @@ public class HighlightUtil extends HighlightUtilBase {
 
   @Nullable
   public static HighlightInfo checkImplicitThisReferenceBeforeSuper(@NotNull PsiClass aClass) {
+    if (JavaVersionService.getInstance().isAtLeast(aClass, JavaSdkVersion.JDK_1_7)) return null;
     if (aClass instanceof PsiAnonymousClass) return null;
     PsiClass superClass = aClass.getSuperClass();
     if (superClass == null || !PsiUtil.isInnerClass(superClass)) return null;
