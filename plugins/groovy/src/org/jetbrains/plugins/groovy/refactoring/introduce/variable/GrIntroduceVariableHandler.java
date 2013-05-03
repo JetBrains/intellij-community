@@ -121,10 +121,8 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
     final String[] modifiers = settings.isDeclareFinal() ? new String[]{PsiModifier.FINAL} : null;
-    final GrVariableDeclaration varDecl = factory.createVariableDeclaration(modifiers, null, settings.getSelectedType(), settings.getName());
-
-    final GrExpression initializer = (GrExpression)PsiUtil.skipParentheses(context.getExpression(), false);
-    varDecl.getVariables()[0].setInitializerGroovy(initializer);
+    final GrVariableDeclaration varDecl = factory.createVariableDeclaration(modifiers, "foo", settings.getSelectedType(), settings.getName());
+    varDecl.getVariables()[0].getInitializerGroovy().replaceWithExpression(context.getExpression(), true);
 
     // Marker for caret position
     try {
@@ -261,16 +259,13 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     if (realContainer instanceof GrLoopStatement || realContainer instanceof GrIfStatement) {
       boolean isThenBranch = realContainer instanceof GrIfStatement && anchorElement.equals(((GrIfStatement)realContainer).getThenBranch());
 
-      // To replace branch body correctly
-      String refId = varDecl.getVariables()[0].getName();
-
       GrBlockStatement newBody;
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
       if (context.getExpression().equals(PsiUtil.skipParentheses(anchorElement, false))) {
         newBody = factory.createBlockStatement(varDecl);
       }
       else {
-        replaceExpressionOccurrencesInStatement(anchorElement, context.getExpression(), refId, settings.replaceAllOccurrences());
+        replaceExpressionOccurrencesInStatement(anchorElement, context.getExpression(), settings.getName(), settings.replaceAllOccurrences());
         newBody = factory.createBlockStatement(varDecl, anchorElement);
       }
 

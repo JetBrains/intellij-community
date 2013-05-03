@@ -316,7 +316,7 @@ public class ExpressionGenerator extends Generator {
     StringBuilder builder = new StringBuilder();
     final PsiMethod setter = GroovyPropertyUtils.findPropertySetter(resolved, fieldName, false, true);
     if (setter != null) {
-      final GrVariableDeclaration var = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, null, type, varName);
+      final GrVariableDeclaration var = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, "", type, varName);
       final GrReferenceExpression caller = factory.createReferenceExpressionFromText(varName, var);
       invokeMethodOn(setter, caller, new GrExpression[]{expression}, GrNamedArgument.EMPTY_ARRAY, EMPTY_ARRAY, substitutor,
                      expression);

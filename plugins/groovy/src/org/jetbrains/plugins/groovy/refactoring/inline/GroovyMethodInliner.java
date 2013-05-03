@@ -255,7 +255,7 @@ public class GroovyMethodInliner implements InlineHandler.Inliner {
       // Process method return statements
       if (returnCount > 1 && PsiType.VOID != methodType && !isTailMethodCall) {
         PsiType type = methodType != null && methodType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT) ? null : methodType;
-        GrVariableDeclaration resultDecl = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, null, type, resultName);
+        GrVariableDeclaration resultDecl = factory.createVariableDeclaration(ArrayUtil.EMPTY_STRING_ARRAY, "", type, resultName);
         GrStatement statement = ((GrStatementOwner) owner).addStatementBefore(resultDecl, anchor);
         GrReferenceAdjuster.shortenReferences(statement);
 
