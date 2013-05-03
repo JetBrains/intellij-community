@@ -216,6 +216,9 @@ public class InlineUtil {
         PsiElement lastInitializerSibling = initializers[initializers.length - 1];
         while (lastInitializerSibling != null) {
           final PsiElement nextSibling = lastInitializerSibling.getNextSibling();
+          if (nextSibling == null) {
+            break;
+          }
           if (nextSibling.getNode().getElementType() == JavaTokenType.RBRACE) break;
           lastInitializerSibling = nextSibling;
         }
