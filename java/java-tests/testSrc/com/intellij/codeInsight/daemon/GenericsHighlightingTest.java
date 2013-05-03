@@ -228,6 +228,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA21602_7(){ doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
 
   public void testIDEA21597() throws Exception { doTest5(false);}
+  public void testIDEA20573() throws Exception { doTest5(false);}
 
   public void testIDEA27185(){ doTest(LanguageLevel.JDK_1_6, JavaSdkVersion.JDK_1_6, false); }
   public void testIDEA67571(){ doTest(LanguageLevel.JDK_1_7, JavaSdkVersion.JDK_1_7, false); }
