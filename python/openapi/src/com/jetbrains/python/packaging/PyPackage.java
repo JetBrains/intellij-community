@@ -19,11 +19,6 @@ public class PyPackage extends InstalledPackage {
     myRequirements = requirements;
   }
 
-  @Override
-  public String toString() {
-    return getName();
-  }
-
   @NotNull
   public List<PyRequirement> getRequirements() {
     return myRequirements;
@@ -36,5 +31,11 @@ public class PyPackage extends InstalledPackage {
 
   public boolean isInstalled() {
     return myLocation != null;
+  }
+
+  @Nullable
+  @Override
+  public String getTooltipText() {
+    return myLocation;
   }
 }

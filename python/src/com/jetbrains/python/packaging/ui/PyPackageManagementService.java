@@ -54,21 +54,39 @@ public class PyPackageManagementService extends PackageManagementService {
 
   @Override
   public List<RepoPackage> getAllPackages() throws IOException {
-    List<RepoPackage> packages = new ArrayList<RepoPackage>();
-    final Collection<String> packageNames;
+    final Map<String, String> packageToVersionMap;
     try {
-      packageNames = PyPIPackageUtil.INSTANCE.getPackageNames();
+      packageToVersionMap = PyPIPackageUtil.INSTANCE.loadAndGetPackages();
     }
     catch (IOException e) {
       throw new IOException("Could not reach URL " + e.getMessage() + ". Please, check your internet connection.");
     }
-    final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
-    String url = customRepoConfigured? PyPIPackageUtil.PYPI_URL : "";
-    for (String name : packageNames) {
-      packages.add(new RepoPackage(name, url));
-    }
+    List<RepoPackage> packages = versionMapToPackageList(packageToVersionMap);
     packages.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackageNames());
     return packages;
+  }
+
+  private static List<RepoPackage> versionMapToPackageList(Map<String, String> packageToVersionMap) {
+    final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
+    String url = customRepoConfigured? PyPIPackageUtil.PYPI_URL : "";
+    List<RepoPackage> packages = new ArrayList<RepoPackage>();
+    for (Map.Entry<String, String> entry : packageToVersionMap.entrySet()) {
+      packages.add(new RepoPackage(entry.getKey(), url, entry.getValue()));
+    }
+    return packages;
+  }
+
+  @Override
+  public List<RepoPackage> reloadAllPackages() throws IOException {
+    final PyPackageService service = PyPackageService.getInstance();
+    PyPIPackageUtil.INSTANCE.updatePyPICache(service);
+    service.LAST_TIME_CHECKED = System.currentTimeMillis();
+    return getAllPackages();
+  }
+
+  @Override
+  public List<RepoPackage> getAllPackagesCached() {
+    return versionMapToPackageList(PyPIPackageUtil.getPyPIPackages());
   }
 
   @Override
@@ -92,14 +110,6 @@ public class PyPackageManagementService extends PackageManagementService {
   @Override
   public void installToUserChanged(boolean newValue) {
     PyPackageService.getInstance().addSdkToUserSite(mySdk.getHomePath(), newValue);
-  }
-
-  @Override
-  public List<RepoPackage> reloadAllPackages() throws IOException {
-    final PyPackageService service = PyPackageService.getInstance();
-    PyPIPackageUtil.INSTANCE.updatePyPICache(service);
-    service.LAST_TIME_CHECKED = System.currentTimeMillis();
-    return getAllPackages();
   }
 
   @Override

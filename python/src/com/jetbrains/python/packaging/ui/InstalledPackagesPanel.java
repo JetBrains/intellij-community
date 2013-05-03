@@ -150,7 +150,7 @@ public class InstalledPackagesPanel extends JPanel {
                                                                     @Nullable String errorDescription) {
                                         myNotificationArea.showResult(packageName, errorDescription);
                                         myPackagesTable.clearSelection();
-                                        doUpdatePackages(mySelectedSdk);
+                                        doUpdatePackages(myPackageManagementService);
                                       }
                                     });
   }
@@ -337,39 +337,40 @@ public class InstalledPackagesPanel extends JPanel {
     myPackageManagementService = packageManagementService;
     myPackagesTable.clearSelection();
     myPackagesTableModel.getDataVector().clear();
-    doUpdatePackages(selectedSdk);
+    doUpdatePackages(packageManagementService);
   }
 
-  public void doUpdatePackages(final Sdk selectedSdk) {
+  public void doUpdatePackages(final PackageManagementService packageManagementService) {
     myPackagesTable.setPaintBusy(true);
     final Application application = ApplicationManager.getApplication();
     application.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
-        List<PyPackage> packages = Lists.newArrayList();
-        if (selectedSdk != null) {
+        Collection<InstalledPackage> packages = Lists.newArrayList();
+        if (packageManagementService != null) {
           try {
-            packages = ((PyPackageManagerImpl)PyPackageManager.getInstance(selectedSdk)).getPackages();
+            packages = packageManagementService.getInstalledPackages();
           }
-          catch (PyExternalProcessException e) {
+          catch (IOException e) {
             // do nothing, we already have an empty list
           }
           finally {
-            final List<PyPackage> finalPackages = packages;
-            final Map<String, String> cache = PyPIPackageUtil.getPyPIPackages();
+            final Collection<InstalledPackage> finalPackages = packages;
+
+            final Map<String, RepoPackage> cache = buildNameToPackageMap(packageManagementService.getAllPackagesCached());
             if (cache.isEmpty()) {
-              updateCache(application);
+              refreshLatestVersions();
             }
             application.invokeLater(new Runnable() {
               @Override
               public void run() {
-
-                if (selectedSdk == mySelectedSdk) {
+                if (packageManagementService == myPackageManagementService) {
                   myPackagesTableModel.getDataVector().clear();
-                  for (PyPackage pyPackage : finalPackages) {
-                    final String version = cache.get(pyPackage.getName());
+                  for (InstalledPackage pkg : finalPackages) {
+                    RepoPackage repoPackage = cache.get(pkg.getName());
+                    final String version = repoPackage != null ? repoPackage.getLatestVersion() : null;
                     myPackagesTableModel
-                      .addRow(new Object[]{pyPackage, pyPackage.getVersion(), version == null ? "" : version});
+                      .addRow(new Object[]{pkg, pkg.getVersion(), version == null ? "" : version});
                   }
                   if (!cache.isEmpty()) {
                     myPackagesTable.setPaintBusy(false);
@@ -383,20 +384,21 @@ public class InstalledPackagesPanel extends JPanel {
     });
   }
 
-  private void updateCache(final Application application) {
+  private void refreshLatestVersions() {
+    final Application application = ApplicationManager.getApplication();
     application.executeOnPooledThread(new Runnable() {
       @Override
       public void run() {
         try {
-          PyPIPackageUtil.INSTANCE.updatePyPICache(PyPackageService.getInstance());
+          List<RepoPackage> packages = myPackageManagementService.reloadAllPackages();
+          final Map<String, RepoPackage> packageMap = buildNameToPackageMap(packages);
           application.invokeLater(new Runnable() {
             @Override
             public void run() {
-              final Map<String, String> cache = PyPIPackageUtil.getPyPIPackages();
               for (int i = 0; i != myPackagesTableModel.getRowCount(); ++i) {
-                final PyPackage pyPackage = (PyPackage)myPackagesTableModel.getValueAt(i, 0);
-                final String version = cache.get(pyPackage.getName());
-                myPackagesTableModel.setValueAt(version, i, 2);
+                final InstalledPackage pyPackage = (PyPackage)myPackagesTableModel.getValueAt(i, 0);
+                final RepoPackage repoPackage = packageMap.get(pyPackage.getName());
+                myPackagesTableModel.setValueAt(repoPackage == null ? null : repoPackage.getLatestVersion(), i, 2);
               }
               myPackagesTable.setPaintBusy(false);
             }
@@ -407,6 +409,14 @@ public class InstalledPackagesPanel extends JPanel {
         }
       }
     });
+  }
+
+  private static Map<String, RepoPackage> buildNameToPackageMap(List<RepoPackage> packages) {
+    final Map<String, RepoPackage> packageMap = new HashMap<String, RepoPackage>();
+    for (RepoPackage aPackage : packages) {
+      packageMap.put(aPackage.getName(), aPackage);
+    }
+    return packageMap;
   }
 
   private static class MyTableCellRenderer extends DefaultTableCellRenderer {
