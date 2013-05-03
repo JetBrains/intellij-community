@@ -469,6 +469,11 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
   }
 
   @Override
+  public void visitForStatement(PsiForStatement statement) {
+    myHolder.add(HighlightUtil.checkForStatement(statement));
+  }
+
+  @Override
   public void visitForeachStatement(final PsiForeachStatement statement) {
     myHolder.add(HighlightUtil.checkForEachFeature(statement));
   }

@@ -2644,6 +2644,19 @@ public class HighlightUtil extends HighlightUtilBase {
     return null;
   }
 
+  @Nullable
+  static HighlightInfo checkForStatement(@NotNull PsiForStatement statement) {
+    PsiStatement init = statement.getInitialization();
+    if (!(init == null || init instanceof PsiEmptyStatement ||
+          init instanceof PsiDeclarationStatement ||
+          init instanceof PsiExpressionStatement || init instanceof PsiExpressionListStatement)) {
+      String message = JavaErrorMessages.message("invalid.statement");
+      return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(init).descriptionAndTooltip(message).create();
+    }
+
+    return null;
+  }
+
   private enum Feature {
     GENERICS(LanguageLevel.JDK_1_5, "feature.generics"),
     ANNOTATIONS(LanguageLevel.JDK_1_5, "feature.annotations"),
