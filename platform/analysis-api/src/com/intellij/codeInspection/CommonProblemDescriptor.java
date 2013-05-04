@@ -17,6 +17,7 @@ package com.intellij.codeInspection;
 
 import com.intellij.util.ArrayFactory;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * Base class for problems returned by local and global inspection tools.
@@ -43,12 +44,14 @@ public interface CommonProblemDescriptor {
    *
    * @return the template for the problem description.
    */
-  @NotNull String getDescriptionTemplate();
+  @NotNull
+  String getDescriptionTemplate();
 
   /**
    * Returns the quickfixes for the problem.
    *
    * @return the list of quickfixes registered for the problem.
    */
+  @Nullable
   QuickFix[] getFixes();
 }

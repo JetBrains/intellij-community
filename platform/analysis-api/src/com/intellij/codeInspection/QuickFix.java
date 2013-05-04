@@ -40,7 +40,8 @@ public interface QuickFix<D extends CommonProblemDescriptor> {
    * if the name of the quickfix is "Create template &lt;filename&gt", the return value of getFamilyName() should be "Create template".
    * If the name of the quickfix does not depend on a specific element, simply return getName().
    */
-  @NotNull String getFamilyName();
+  @NotNull
+  String getFamilyName();
 
   /**
    * Called to apply the fix.
