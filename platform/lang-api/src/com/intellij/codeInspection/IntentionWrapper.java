@@ -36,7 +36,7 @@ public class IntentionWrapper implements LocalQuickFix, IntentionAction {
   private final IntentionAction myAction;
   private final PsiFile myFile;
 
-  public IntentionWrapper(IntentionAction action, PsiFile file) {
+  public IntentionWrapper(@NotNull IntentionAction action, @NotNull PsiFile file) {
     myAction = action;
     myFile = file;
   }

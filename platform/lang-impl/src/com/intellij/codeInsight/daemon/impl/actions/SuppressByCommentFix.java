@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
 public class SuppressByCommentFix extends AbstractSuppressByNoInspectionCommentFix {
   protected Class<? extends PsiElement> mySuppressionHolderClass;
 
-  public SuppressByCommentFix(HighlightDisplayKey key, Class<? extends PsiElement> suppressionHolderClass) {
+  public SuppressByCommentFix(@NotNull HighlightDisplayKey key, @NotNull Class<? extends PsiElement> suppressionHolderClass) {
     this(key.getID());
     mySuppressionHolderClass = suppressionHolderClass;
   }

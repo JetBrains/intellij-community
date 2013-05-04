@@ -161,7 +161,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
         }
 
         @Override
-        protected boolean use15Suppressions(final PsiDocCommentOwner container) {
+        protected boolean use15Suppressions(@NotNull final PsiDocCommentOwner container) {
           return true;
         }
       };
@@ -173,7 +173,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
     protected SuppressFix getSuppressAction(final String id) {
       return new SuppressForClassFix(id){
         @Override
-        protected boolean use15Suppressions(final PsiDocCommentOwner container) {
+        protected boolean use15Suppressions(@NotNull final PsiDocCommentOwner container) {
           return true;
         }
       };
