@@ -429,7 +429,7 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     l.log = "";
   }
 
-  public void _testUpdatingModelWithNewProfiles() throws Exception {
+  public void testUpdatingModelWithNewProfiles() throws Exception {
     createProjectPom("<groupId>test</groupId>" +
                      "<artifactId>project</artifactId>" +
                      "<version>1</version>" +
@@ -466,9 +466,17 @@ public class MavenProjectsTreeReadingTest extends MavenProjectsTreeTestCase {
     assertEquals(1, roots.size());
     assertEquals(myProjectPom, roots.get(0).getFile());
 
-    assertEquals(2, myTree.getModules(roots.get(0)).size());
+    assertEquals(1, myTree.getModules(roots.get(0)).size());
     assertEquals(m1, myTree.getModules(roots.get(0)).get(0).getFile());
-    assertEquals(m2, myTree.getModules(roots.get(0)).get(1).getFile());
+
+    updateAll(Collections.singletonList("two"), myProjectPom);
+
+    roots = myTree.getRootProjects();
+    assertEquals(1, roots.size());
+    assertEquals(myProjectPom, roots.get(0).getFile());
+
+    assertEquals(1, myTree.getModules(roots.get(0)).size());
+    assertEquals(m2, myTree.getModules(roots.get(0)).get(0).getFile());
   }
 
   public void testUpdatingParticularProject() throws Exception {
