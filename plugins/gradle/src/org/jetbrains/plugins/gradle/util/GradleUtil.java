@@ -4,20 +4,17 @@ import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
-import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.ui.MatrixControlBuilder;
 
 import java.io.*;
 import java.util.Arrays;
 import java.util.Properties;
-import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 /**
@@ -29,7 +26,6 @@ import java.util.regex.Pattern;
 public class GradleUtil {
 
   private static final String  WRAPPER_VERSION_PROPERTY_KEY = "distributionUrl";
-  private static final Pattern WRAPPER_VERSION_PATTERN      = Pattern.compile(".*gradle-(.+)-bin.zip");
 
   private static final NotNullLazyValue<GradleInstallationManager> INSTALLATION_MANAGER =
     new NotNullLazyValue<GradleInstallationManager>() {
@@ -63,7 +59,7 @@ public class GradleUtil {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static boolean isGradleWrapperDefined(@Nullable String gradleProjectPath) {
-    return !StringUtil.isEmpty(getWrapperVersion(gradleProjectPath));
+    return !StringUtil.isEmpty(getWrapperDistribution(gradleProjectPath));
   }
 
   /**
@@ -74,7 +70,7 @@ public class GradleUtil {
    *                           if any; <code>null</code> otherwise
    */
   @Nullable
-  public static String getWrapperVersion(@Nullable String gradleProjectPath) {
+  public static String getWrapperDistribution(@Nullable String gradleProjectPath) {
     if (gradleProjectPath == null) {
       return null;
     }
@@ -117,14 +113,12 @@ public class GradleUtil {
       //noinspection IOResourceOpenedButNotSafelyClosed
       reader = new BufferedReader(new FileReader(candidates[0]));
       props.load(reader);
-      String value = props.getProperty(WRAPPER_VERSION_PROPERTY_KEY);
-      if (StringUtil.isEmpty(value)) {
+      String distribution = props.getProperty(WRAPPER_VERSION_PROPERTY_KEY);
+      if (StringUtil.isEmpty(distribution)) {
         return null;
       }
-      Matcher matcher = WRAPPER_VERSION_PATTERN.matcher(value);
-      if (matcher.matches()) {
-        return matcher.group(1);
-      }
+      String shortName = StringUtil.getShortName(distribution, '/');
+      return StringUtil.trimEnd(shortName, ".zip");
     }
     catch (IOException e) {
       GradleLog.LOG.warn(

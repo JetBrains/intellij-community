@@ -175,8 +175,8 @@ public class GradleInstallationManager {
       return null;
     }
 
-    String version = GradleUtil.getWrapperVersion(linkedProjectPath);
-    if (version == null) {
+    String distribution = GradleUtil.getWrapperDistribution(linkedProjectPath);
+    if (distribution == null) {
       return null;
     }
     File gradleSystemDir = new File(System.getProperty("user.home"), ".gradle");
@@ -189,7 +189,7 @@ public class GradleInstallationManager {
       return null;
     }
 
-    File targetDistributionHome = new File(gradleWrapperDistributionsHome, String.format("gradle-%s-bin", version));
+    File targetDistributionHome = new File(gradleWrapperDistributionsHome, distribution);
     if (!targetDistributionHome.isDirectory()) {
       return null;
     }
@@ -200,9 +200,14 @@ public class GradleInstallationManager {
       return null;
     }
 
-    File result = new File(files[0], String.format("gradle-%s", version));
-    if (result.isDirectory()) {
-      return result;
+    File[] distFiles = files[0].listFiles();
+    if (distFiles == null || distFiles.length != 1) {
+      // There should exist only the gradle directory in the distribution directory
+      return null;
+    }
+
+    if (distFiles[0].isDirectory()) {
+      return distFiles[0];
     }
     else {
       return null;
