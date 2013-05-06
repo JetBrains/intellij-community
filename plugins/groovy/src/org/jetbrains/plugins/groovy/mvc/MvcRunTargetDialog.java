@@ -26,7 +26,6 @@ import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.*;
-import com.intellij.util.ArrayUtil;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.TextFieldCompletionProviderDumbAware;
 import org.jetbrains.annotations.NotNull;
@@ -82,7 +81,7 @@ public class MvcRunTargetDialog extends DialogWrapper {
     }
 
     if (hasOneSupportedModule) {
-      myInteractiveRunAction = new DialogWrapperAction("&Run Interactive Console") {
+      myInteractiveRunAction = new DialogWrapperAction("&Start Grails Console in Interactive Mode") {
         @Override
         protected void doAction(ActionEvent e) {
           myFramework.runInteractiveConsole(getSelectedModule());
