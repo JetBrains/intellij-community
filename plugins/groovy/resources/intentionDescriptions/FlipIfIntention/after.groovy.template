@@ -1,4 +1,6 @@
-public class X {
-  void f(a,  b) {
-    if (b &&a) return;
+if (cond2) {
+  <spot>doSomething2()</spot>
+}
+else if (cond1) {
+  <spot>doSomething1()</spot>
 }
