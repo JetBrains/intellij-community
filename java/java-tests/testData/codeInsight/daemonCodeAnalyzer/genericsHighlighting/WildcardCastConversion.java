@@ -530,3 +530,19 @@ class IndexedElementInvocationHandler extends DomInvocationHandler<FixedChildDes
 
 class FixedChildDescriptionImpl extends AbstractDomChildDescriptionImpl {
 }
+
+class CaptureSymmetry {
+  interface Collection<A> {}
+  interface List<A> extends Collection<A>{}
+  class ArrayList<A> implements List<A> {}
+
+  public static <T> Collection<T> unmodifiableCollection(Collection<? extends T> c) {
+    return null;
+  }
+
+  public <B extends List<?>> Collection<? extends B> getBreakpoints (List<B> b) {
+    Collection<? extends ArrayList<?>> breakpoints = null;
+    Collection<? extends B> regular = breakpoints != null ? unmodifiableCollection((Collection<? extends B>)breakpoints) : b;
+    return null;
+  }
+}
