@@ -25,9 +25,14 @@ import static org.junit.Assert.assertNotNull;
  * @since Sep 19, 2002
  */
 public class EnvironmentUtilTest {
+  @Test(timeout = 60000)
+  public void map() throws Exception {
+    System.setProperty("idea.fix.mac.env", "true");
+    assertNotNull(EnvironmentUtil.getEnvironmentMap());
+  }
+
   @Test
-  public void basic() {
-    assertNotNull(EnvironmentUtil.getEnvironmentProperties());
+  public void path() {
     assertNotNull(EnvironmentUtil.getValue("PATH"));
     if (SystemInfo.isWindows) {
       assertNotNull(EnvironmentUtil.getValue("Path"));

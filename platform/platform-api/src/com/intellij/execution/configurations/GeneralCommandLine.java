@@ -25,6 +25,7 @@ import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.UserDataHolder;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -252,8 +253,10 @@ public class GeneralCommandLine implements UserDataHolder {
   }
 
   private void setupEnvironment(final Map<String, String> environment) {
-    if (!myPassParentEnvironment) {
-      environment.clear();
+    environment.clear();
+
+    if (myPassParentEnvironment) {
+      environment.putAll(EnvironmentUtil.getEnvironmentMap());
     }
 
     if (!myEnvParams.isEmpty()) {

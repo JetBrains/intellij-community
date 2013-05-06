@@ -21,7 +21,6 @@ import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.vfs.encoding.EncodingManager;
-import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.concurrency.Semaphore;
 import org.netbeans.lib.cvsclient.connection.AuthenticationException;
 import org.netbeans.lib.cvsclient.connection.IConnection;
@@ -142,8 +141,7 @@ public abstract class ConnectionOnProcess implements IConnection {
 
   protected synchronized void execute(GeneralCommandLine commandLine) throws AuthenticationException {
     try {
-      commandLine.getEnvironment().clear();
-      commandLine.getEnvironment().putAll(EnvironmentUtil.getEnvironmentProperties());
+      commandLine.setPassParentEnvironment(true);
       myProcess = commandLine.createProcess();
 
       myErrThread = new ReadProcessThread(

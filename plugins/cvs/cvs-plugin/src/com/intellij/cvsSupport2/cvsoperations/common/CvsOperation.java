@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -19,6 +19,8 @@ import com.intellij.cvsSupport2.config.CvsApplicationLevelConfiguration;
 import com.intellij.cvsSupport2.connections.CvsEnvironment;
 import com.intellij.cvsSupport2.cvshandlers.CvsHandler;
 import com.intellij.cvsSupport2.errorHandling.CannotFindCvsRootException;
+import com.intellij.openapi.util.AtomicNotNullLazyValue;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.vcs.VcsException;
 import com.intellij.util.EnvironmentUtil;
 import org.jetbrains.annotations.NotNull;
@@ -32,54 +34,30 @@ import java.util.HashMap;
 import java.util.Map;
 
 public abstract class CvsOperation {
-  private final static String[] ourKnownToCvs = {"CVSIGNORE",
-                                                 "CVSWRAPPERS",
-                                                 "CVSREAD",
-                                                 "CVSREADONLYFS",
-                                                 "CVSUMASK",
+  private static final NotNullLazyValue<Map<String, String>> ourCvsEnvironment = new AtomicNotNullLazyValue<Map<String, String>>() {
+    @NotNull
+    @Override
+    protected Map<String, String> compute() {
+      Map<String, String> cvsEnv = new HashMap<String, String>();
 
-                                                 "CVSROOT",
-                                                 "CVSEDITOR",
-                                                 "EDITOR",
-                                                 "VISUAL",
-                                                 "PATH",
-                                                 //10
-                                                 "HOME",
-                                                 "HOMEPATH",
-                                                 "HOMEDRIVE",
-                                                 "CVS_RSH",
-                                                 "CVS_SERVER",
-
-                                                 "CVS_PASSFILE",
-                                                 "CVS_CLIENT_PORT",
-                                                 "CVS_PROXY_PORT",
-                                                 "CVS_RCMD_PORT",
-                                                 "CVS_CLIENT_LOG",
-
-                                                 "CVS_SERVER_SLEEP",
-                                                 "CVS_IGNORE_REMOTE_ROOT",
-                                                 "CVS_LOCAL_BRANCH_NUM",
-                                                 "COMSPEC",
-                                                 "TMPDIR",
-
-                                                 "CVS_PID",
-                                                 "COMSPEC",
-                                                 "CVS_VERIFY_TEMPLATE",
-                                                 "CVS_NOBASES",
-                                                 "CVS_SIGN_COMMITS",
-    
-                                                 "CVS_VERIFY_CHECKOUTS"
-                                                };
-  private final static Map<String, String> ourEnvironmentVariablesMap = new HashMap<String, String>();
-  static {
-    final Map<String, String> environmentProperties = EnvironmentUtil.getEnvironmentProperties();
-    for (String name : ourKnownToCvs) {
-      final String value = environmentProperties.get(name);
-      if (value != null) {
-        ourEnvironmentVariablesMap.put(name, value);
+      Map<String, String> knownToCvs = EnvironmentUtil.getEnvironmentMap();
+      @SuppressWarnings("SpellCheckingInspection") String[] toCvs = {
+        "CVSIGNORE", "CVSWRAPPERS", "CVSREAD", "CVSREADONLYFS", "CVSUMASK",
+        "CVSROOT", "CVSEDITOR", "EDITOR", "VISUAL", "PATH", "HOME", "HOMEPATH", "HOMEDRIVE", "CVS_RSH", "CVS_SERVER",
+        "CVS_PASSFILE", "CVS_CLIENT_PORT", "CVS_PROXY_PORT", "CVS_RCMD_PORT", "CVS_CLIENT_LOG",
+        "CVS_SERVER_SLEEP", "CVS_IGNORE_REMOTE_ROOT", "CVS_LOCAL_BRANCH_NUM", "COMSPEC", "TMPDIR",
+        "CVS_PID", "COMSPEC", "CVS_VERIFY_TEMPLATE", "CVS_NOBASES", "CVS_SIGN_COMMITS", "CVS_VERIFY_CHECKOUTS"
+      };
+      for (String name : toCvs) {
+        String value = knownToCvs.get(name);
+        if (value != null) {
+          cvsEnv.put(name, value);
+        }
       }
+
+      return cvsEnv;
     }
-  }
+  };
 
   private final Collection<Runnable> myFinishActions = new ArrayList<Runnable>();
 
@@ -100,7 +78,7 @@ public abstract class CvsOperation {
   protected void modifyOptions(GlobalOptions options) {
     options.setUseGzip(CvsApplicationLevelConfiguration.getInstance().USE_GZIP);
     if (CvsApplicationLevelConfiguration.getInstance().SEND_ENVIRONMENT_VARIABLES_TO_SERVER) {
-      options.setEnvVariables(ourEnvironmentVariablesMap);
+      options.setEnvVariables(ourCvsEnvironment.getValue());
     }
   }
 
