@@ -19,13 +19,13 @@
  */
 package com.intellij.openapi.vfs.impl.jar;
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.application.ModalityState;
+import com.intellij.notification.NotificationGroup;
+import com.intellij.notification.NotificationType;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -34,17 +34,25 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsBundle;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
+import com.intellij.openapi.vfs.newvfs.persistent.FSRecords;
+import com.intellij.util.io.DataExternalizer;
+import com.intellij.util.io.EnumeratorStringDescriptor;
+import com.intellij.util.io.IOUtil;
+import com.intellij.util.io.PersistentHashMap;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.File;
-import java.io.IOException;
+import java.io.*;
+import java.nio.charset.Charset;
+import java.security.MessageDigest;
+import java.security.NoSuchAlgorithmException;
 
 public class JarHandler extends JarHandlerBase {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.impl.jar.JarHandler");
 
   @NonNls private static final String JARS_FOLDER = "jars";
+  private static final int FS_TIME_RESOLUTION = 2000;
 
   private final JarFileSystemImpl myFileSystem;
 
@@ -89,7 +97,7 @@ public class JarHandler extends JarHandlerBase {
 
     if (mirrorAttributes == null ||
         originalAttributes.length != mirrorAttributes.length ||
-        Math.abs(originalAttributes.lastModified - mirrorAttributes.lastModified) > 2000) {
+        Math.abs(originalAttributes.lastModified - mirrorAttributes.lastModified) > FS_TIME_RESOLUTION) {
       return copyToMirror(originalFile, mirrorFile);
     }
 
@@ -115,17 +123,7 @@ public class JarHandler extends JarHandlerBase {
       FileUtil.copy(original, mirror);
     }
     catch (final IOException e) {
-      LOG.warn(e);
-      final String path = original.getPath();
-      final String message = VfsBundle.message("jar.copy.error.message", path, mirror.getPath(), e.getMessage());
-      ApplicationManager.getApplication().invokeLater(new Runnable() {
-        @Override
-        public void run() {
-          Messages.showErrorDialog(message, VfsBundle.message("jar.copy.error.title"));
-        }
-      }, ModalityState.NON_MODAL);
-
-      myFileSystem.setNoCopyJarForPath(path);
+      reportIOErrorWithJars(original, mirror, e);
       return original;
     }
 
@@ -134,5 +132,23 @@ public class JarHandler extends JarHandlerBase {
     }
 
     return mirror;
+  }
+
+  private static final NotNullLazyValue<NotificationGroup> ERROR_COPY_NOTIFICATION = new NotNullLazyValue<NotificationGroup>() {
+    @NotNull
+    @Override
+    protected NotificationGroup compute() {
+      return NotificationGroup.balloonGroup(VfsBundle.message("jar.copy.error.title"));
+    }
+  };
+
+  private void reportIOErrorWithJars(File original, File mirror, IOException e) {
+    LOG.warn(e);
+    final String path = original.getPath();
+    final String message = VfsBundle.message("jar.copy.error.message", path, mirror.getPath(), e.getMessage());
+
+    ERROR_COPY_NOTIFICATION.getValue().createNotification(message, NotificationType.ERROR).notify(null);
+
+    myFileSystem.setNoCopyJarForPath(path);
   }
 }
