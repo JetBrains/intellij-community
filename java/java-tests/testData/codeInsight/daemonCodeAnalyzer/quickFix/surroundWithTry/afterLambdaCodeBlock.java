@@ -9,7 +9,7 @@ public class ExTest {
             try {
                 return ExTest.maybeThrow(t);
             } catch (Ex ex) {
-                <selection>ex.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.</selection>
+                <selection>ex.printStackTrace();</selection>
             }
         };
     }

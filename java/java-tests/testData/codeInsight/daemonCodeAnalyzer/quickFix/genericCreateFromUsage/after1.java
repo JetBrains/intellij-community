@@ -1,7 +1,7 @@
 // "Create Method 'get'" "true"
 class W<T> {
     public T get(T s) {
-        <selection>return null;  //To change body of created methods use File | Settings | File Templates.</selection>
+        <selection>return null;</selection>
     }
 }
 

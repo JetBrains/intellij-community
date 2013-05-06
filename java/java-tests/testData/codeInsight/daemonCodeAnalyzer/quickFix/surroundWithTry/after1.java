@@ -11,7 +11,7 @@ class C {
             try (MyResource r = new MyResource()) {
             }
         } catch (E1 e1) {
-            <selection>e1.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.</selection>
+            <selection>e1.printStackTrace();</selection>
         }
     }
 }

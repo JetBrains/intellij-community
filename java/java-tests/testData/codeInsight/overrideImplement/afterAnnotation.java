@@ -3,10 +3,10 @@
 }
 class d implements ff {
     public String f() {
-        <caret><selection>return null;  //To change body of implemented methods use File | Settings | File Templates.</selection>
+        <caret><selection>return null;</selection>
     }
 
     public Class<? extends Annotation> annotationType() {
-        return null;  //To change body of implemented methods use File | Settings | File Templates.
+        return null;
     }
 }

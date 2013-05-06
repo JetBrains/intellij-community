@@ -5,7 +5,6 @@ class a implements b<String> {
     }
 
     public void g(b<String> t) {
-        <caret><selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
     }
 }
 interface b<T> {

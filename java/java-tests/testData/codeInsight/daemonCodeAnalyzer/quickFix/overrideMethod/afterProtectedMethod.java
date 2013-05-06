@@ -6,6 +6,6 @@ class Test {
 class TImple extends Test {
     @Override
     protected void foo() {
-        <selection>super.foo();    //To change body of overridden methods use File | Settings | File Templates.</selection>
+        <selection>super.foo();</selection>
     }
 }

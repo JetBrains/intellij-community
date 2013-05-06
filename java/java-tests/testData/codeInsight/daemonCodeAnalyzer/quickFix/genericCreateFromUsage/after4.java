@@ -8,7 +8,7 @@ class R implements Comparable<R> {
 
 class A1<T> {
     public T foo() {
-        <caret><selection>return null;  //To change body of created methods use File | Settings | File Templates.</selection>
+        <caret><selection>return null;</selection>
     }
 }
 

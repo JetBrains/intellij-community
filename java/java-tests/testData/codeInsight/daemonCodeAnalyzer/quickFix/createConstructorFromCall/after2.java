@@ -7,6 +7,6 @@ public class Test {
 
 class MyCollection {
     public MyCollection(Test test) {
-        <selection>//To change body of created methods use File | Settings | File Templates.</selection>
+        
     }
 }

@@ -12,9 +12,9 @@ class CatchExceptions {
 		try {
 		foo();
 		} catch (FileNotFoundException e) {
-            <selection>e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.</selection>
+            <selection>e.printStackTrace();</selection>
         } catch (IOException e) {
-            e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+            e.printStackTrace();
         }
     }
 }

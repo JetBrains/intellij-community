@@ -24,7 +24,7 @@ public class X implements Runnable{
     }
 
     private void g() throws EOFException, FileNotFoundException {
-        //To change body of created methods use File | Settings | File Templates.
+        
     }
 
     public int hashCode() {
@@ -36,7 +36,7 @@ public class X implements Runnable{
     }
 
     public void run() {
-        //To change body of implemented methods use File | Settings | File Templates.
+      
     }
 
     private void method() {
