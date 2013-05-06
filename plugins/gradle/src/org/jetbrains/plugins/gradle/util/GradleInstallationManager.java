@@ -29,6 +29,8 @@ import org.jetbrains.plugins.gradle.config.GradleSettings;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
+import java.io.FileFilter;
+import java.io.FilenameFilter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -174,8 +176,8 @@ public class GradleInstallationManager {
       return null;
     }
 
-    String version = GradleUtil.getWrapperVersion(gradleProjectPath);
-    if (version == null) {
+    String distribution = GradleUtil.getWrapperDistribution(gradleProjectPath);
+    if (distribution == null) {
       return null;
     }
     File gradleSystemDir = new File(System.getProperty("user.home"), ".gradle");
@@ -187,8 +189,8 @@ public class GradleInstallationManager {
     if (!gradleWrapperDistributionsHome.isDirectory()) {
       return null;
     }
-    
-    File targetDistributionHome = new File(gradleWrapperDistributionsHome, String.format("gradle-%s-bin", version));
+
+    File targetDistributionHome = new File(gradleWrapperDistributionsHome, distribution);
     if (!targetDistributionHome.isDirectory()) {
       return null;
     }
@@ -198,14 +200,19 @@ public class GradleInstallationManager {
       // Gradle keeps wrapper at a directory which name is a hash value like '35oej0jnbfh6of4dd05531edaj'
       return null;
     }
-    
-    File result = new File(files[0], String.format("gradle-%s", version));
-    if (result.isDirectory()) {
-      return result;
-    }
-    else {
+
+    File[] distFiles = files[0].listFiles(new FileFilter() {
+      @Override
+      public boolean accept(File f) {
+        return f.isDirectory();
+      }
+    });
+    if (distFiles == null || distFiles.length != 1) {
+      // There should exist only the gradle directory in the distribution directory
       return null;
     }
+
+    return distFiles[0].isDirectory() ? distFiles[0] : null;
   }
   
   /**

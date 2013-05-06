@@ -53,7 +53,6 @@ import org.jetbrains.plugins.gradle.model.intellij.IdeEntityVisitor;
 import org.jetbrains.plugins.gradle.model.intellij.ModuleAwareContentRoot;
 import org.jetbrains.plugins.gradle.remote.GradleApiException;
 import org.jetbrains.plugins.gradle.sync.GradleProjectStructureTreeModel;
-import org.jetbrains.plugins.gradle.tasks.GradleTasksModel;
 import org.jetbrains.plugins.gradle.ui.GradleDataKeys;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNode;
 import org.jetbrains.plugins.gradle.ui.GradleProjectStructureNodeDescriptor;
@@ -81,7 +80,6 @@ public class GradleUtil {
   public static final  String  PATH_SEPARATOR               = "/";
   public static final  String  SYSTEM_DIRECTORY_PATH_KEY    = "GRADLE_USER_HOME";
   private static final String  WRAPPER_VERSION_PROPERTY_KEY = "distributionUrl";
-  private static final Pattern WRAPPER_VERSION_PATTERN      = Pattern.compile(".*gradle-(.+)-bin.zip");
   private static final Pattern ARTIFACT_PATTERN             = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^\\.]+?)?");
 
   private static final NotNullLazyValue<GradleInstallationManager> INSTALLATION_MANAGER =
@@ -125,18 +123,18 @@ public class GradleUtil {
 
   @SuppressWarnings("IOResourceOpenedButNotSafelyClosed")
   public static boolean isGradleWrapperDefined(@Nullable String gradleProjectPath) {
-    return !StringUtil.isEmpty(getWrapperVersion(gradleProjectPath));
+    return !StringUtil.isEmpty(getWrapperDistribution(gradleProjectPath));
   }
 
   /**
-   * Tries to parse what gradle version should be used with gradle wrapper for the gradle project located at the given path. 
+   * Tries to parse what gradle distribution should be used with gradle wrapper for the gradle project located at the given path.
    *
    * @param gradleProjectPath  target gradle project path
-   * @return gradle version should be used with gradle wrapper for the gradle project located at the given path
+   * @return                   gradle distribution should be used with gradle wrapper for the gradle project located at the given path
    *                           if any; <code>null</code> otherwise
    */
   @Nullable
-  public static String getWrapperVersion(@Nullable String gradleProjectPath) {
+  public static String getWrapperDistribution(@Nullable String gradleProjectPath) {
     if (gradleProjectPath == null) {
       return null;
     }
@@ -179,14 +177,12 @@ public class GradleUtil {
       //noinspection IOResourceOpenedButNotSafelyClosed
       reader = new BufferedReader(new FileReader(candidates[0]));
       props.load(reader);
-      String value = props.getProperty(WRAPPER_VERSION_PROPERTY_KEY);
-      if (StringUtil.isEmpty(value)) {
+      String distribution = props.getProperty(WRAPPER_VERSION_PROPERTY_KEY);
+      if (StringUtil.isEmpty(distribution)) {
         return null;
       }
-      Matcher matcher = WRAPPER_VERSION_PATTERN.matcher(value);
-      if (matcher.matches()) {
-        return matcher.group(1);
-      }
+      String shortName = StringUtil.getShortName(distribution, '/');
+      return StringUtil.trimEnd(shortName, ".zip");
     }
     catch (IOException e) {
       GradleLog.LOG.warn(
