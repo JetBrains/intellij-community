@@ -117,6 +117,7 @@ public class StubIndexImpl extends StubIndex implements ApplicationComponent, Pe
     return (StubIndexImpl)getInstance();
   }
 
+  // todo this seems to be copy-pasted from FileBasedIndex
   private <K> boolean registerIndexer(@NotNull final StubIndexExtension<K, ?> extension, final boolean forceClean) throws IOException {
     final StubIndexKey<K, ?> indexKey = extension.getKey();
     final int version = extension.getVersion();
