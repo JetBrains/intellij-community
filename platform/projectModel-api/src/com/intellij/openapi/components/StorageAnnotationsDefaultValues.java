@@ -62,7 +62,7 @@ public interface StorageAnnotationsDefaultValues {
       throw new UnsupportedOperationException("Method finishSave not implemented in " + getClass());
     }
 
-    public void reload(final Set<String> changedComponents) throws StateStorageException {
+    public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
       throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
     }
 

@@ -345,6 +345,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @NotNull
   @Override
   public StreamProvider[] getStreamProviders(RoamingType type) {
     synchronized (myStreamProviders) {
@@ -353,6 +354,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @NotNull
   public Collection<StreamProvider> getStreamProviders() {
     synchronized (myStreamProviders) {
       return Collections.unmodifiableCollection(myStreamProviders.values());
@@ -424,6 +426,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return actualFile;
   }
 
+  @NotNull
   @Override
   public ExternalizationSession startExternalization() {
     if (mySession != null) {
@@ -434,20 +437,22 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return session;
   }
 
+  @NotNull
   @Override
-  public SaveSession startSave(final ExternalizationSession externalizationSession) {
+  public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
     SaveSession session = createSaveSession(externalizationSession);
     mySession = session;
     return session;
   }
 
+  @NotNull
   protected MySaveSession createSaveSession(final ExternalizationSession externalizationSession) {
     return new MySaveSession((MyExternalizationSession)externalizationSession);
   }
 
   @Override
-  public void finishSave(final SaveSession saveSession) {
+  public void finishSave(@NotNull final SaveSession saveSession) {
     try {
       assert mySession == saveSession : "mySession=" + mySession + " saveSession=" + saveSession;
       ((MySaveSession)saveSession).finishSave();

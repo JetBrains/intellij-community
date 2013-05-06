@@ -141,18 +141,20 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       public void clearStateStorage(@NotNull String file) {
       }
 
+      @NotNull
       @Override
       public ExternalizationSession startExternalization() {
         return new MyExternalizationSession(storage);
       }
 
+      @NotNull
       @Override
-      public SaveSession startSave(final ExternalizationSession externalizationSession) {
+      public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
         return new MySaveSession(storage, externalizationSession);
       }
 
       @Override
-      public void finishSave(SaveSession saveSession) {
+      public void finishSave(@NotNull SaveSession saveSession) {
         storage.finishSave(((MySaveSession)saveSession).saveSession);
       }
 
@@ -177,6 +179,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       public void unregisterStreamProvider(final StreamProvider streamProvider, final RoamingType roamingType) {
         throw new UnsupportedOperationException("Method unregisterStreamProvider not implemented in " + getClass());
       }
+      @NotNull
       @Override
       public StreamProvider[] getStreamProviders(final RoamingType roamingType) {
         throw new UnsupportedOperationException("Method getStreamProviders not implemented in " + getClass());
@@ -225,9 +228,9 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   }
 
   private static class MySaveSession implements StateStorageManager.SaveSession {
-    StateStorage.SaveSession saveSession;
+    @NotNull private final StateStorage.SaveSession saveSession;
 
-    public MySaveSession(final XmlElementStorage storage, final StateStorageManager.ExternalizationSession externalizationSession) {
+    public MySaveSession(@NotNull XmlElementStorage storage, @NotNull StateStorageManager.ExternalizationSession externalizationSession) {
       saveSession = storage.startSave(((MyExternalizationSession)externalizationSession).externalizationSession);
     }
 

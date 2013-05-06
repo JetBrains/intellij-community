@@ -46,9 +46,11 @@ public interface StateStorageManager {
 
   void clearStateStorage(@NotNull String file);
 
+  @NotNull
   ExternalizationSession startExternalization();
-  SaveSession startSave(ExternalizationSession externalizationSession) ;
-  void finishSave(SaveSession saveSession);
+  @NotNull
+  SaveSession startSave(@NotNull ExternalizationSession externalizationSession) ;
+  void finishSave(@NotNull SaveSession saveSession);
 
   @Nullable
   StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException;
@@ -60,6 +62,7 @@ public interface StateStorageManager {
 
   void unregisterStreamProvider(StreamProvider streamProvider, final RoamingType roamingType);
 
+  @NotNull
   StreamProvider[] getStreamProviders(final RoamingType roamingType);
 
   void reset();

@@ -81,12 +81,13 @@ public final class QuickFixAction {
     info.quickFixActionRanges.add(Pair.create(desc, fixRange));
     info.fixStartOffset = Math.min (info.fixStartOffset, fixRange.getStartOffset());
     info.fixEndOffset = Math.max (info.fixEndOffset, fixRange.getEndOffset());
-    if (action instanceof HintAction) {
-      info.setHint(true);
-    }
+    info.setHint(action instanceof HintAction);
   }
 
-  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable TextRange fixRange, @Nullable IntentionAction action, @Nullable final HighlightDisplayKey key) {
+  public static void registerQuickFixAction(@Nullable HighlightInfo info,
+                                            @Nullable TextRange fixRange,
+                                            @Nullable IntentionAction action,
+                                            @Nullable final HighlightDisplayKey key) {
     doRegister(info, action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
   }
 

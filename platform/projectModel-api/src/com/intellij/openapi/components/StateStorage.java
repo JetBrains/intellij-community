@@ -41,7 +41,7 @@ public interface StateStorage {
   SaveSession startSave(ExternalizationSession externalizationSession);
   void finishSave(SaveSession saveSession);
 
-  void reload(final Set<String> changedComponents) throws StateStorageException;
+  void reload(@NotNull Set<String> changedComponents) throws StateStorageException;
 
   interface ExternalizationSession {
     void setState(@NotNull Object component, final String componentName, @NotNull Object state, @Nullable final Storage storageSpec) throws StateStorageException;

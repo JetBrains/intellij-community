@@ -167,7 +167,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   }
 
   @Override
-  public void reload(final Set<String> changedComponents) throws StateStorageException {
+  public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
     myStorageData = loadState();
   }
 
