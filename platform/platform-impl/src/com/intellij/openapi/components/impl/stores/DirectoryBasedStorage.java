@@ -148,7 +148,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
   @Override
   @NotNull
-  public SaveSession startSave(final ExternalizationSession externalizationSession) {
+  public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
 
     final MySaveSession session =
@@ -158,7 +158,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   }
 
   @Override
-  public void finishSave(final SaveSession saveSession) {
+  public void finishSave(@NotNull final SaveSession saveSession) {
     try {
       LOG.assertTrue(mySession == saveSession);
     } finally {

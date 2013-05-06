@@ -236,7 +236,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
 
   @Override
   @NotNull
-  public SaveSession startSave(final ExternalizationSession externalizationSession) {
+  public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
 
     final SaveSession saveSession = mySavingDisabled ? createNullSession() : createSaveSession((MyExternalizationSession)externalizationSession);
@@ -273,7 +273,7 @@ public abstract class XmlElementStorage implements StateStorage, Disposable {
   protected abstract MySaveSession createSaveSession(final MyExternalizationSession externalizationSession);
 
   @Override
-  public void finishSave(final SaveSession saveSession) {
+  public void finishSave(@NotNull final SaveSession saveSession) {
     try {
       if (mySession != saveSession) {
         LOG.error("mySession=" + mySession + " saveSession=" + saveSession);

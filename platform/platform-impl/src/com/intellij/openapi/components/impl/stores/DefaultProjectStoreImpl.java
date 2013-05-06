@@ -209,9 +209,9 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   }
 
   private static class MyExternalizationSession implements StateStorageManager.ExternalizationSession {
-    StateStorage.ExternalizationSession externalizationSession;
+    @NotNull final StateStorage.ExternalizationSession externalizationSession;
 
-    public MyExternalizationSession(final XmlElementStorage storage) {
+    public MyExternalizationSession(@NotNull XmlElementStorage storage) {
       externalizationSession = storage.startExternalization();
     }
 

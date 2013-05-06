@@ -38,8 +38,8 @@ public interface StateStorage {
   @NotNull
   ExternalizationSession startExternalization();
   @NotNull
-  SaveSession startSave(ExternalizationSession externalizationSession);
-  void finishSave(SaveSession saveSession);
+  SaveSession startSave(@NotNull ExternalizationSession externalizationSession);
+  void finishSave(@NotNull SaveSession saveSession);
 
   void reload(@NotNull Set<String> changedComponents) throws StateStorageException;
 
