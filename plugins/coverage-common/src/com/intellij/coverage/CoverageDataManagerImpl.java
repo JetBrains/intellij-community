@@ -557,7 +557,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
       }
       final Set<Integer> lineNumbers = executionTrace.get(className);
       final ClassData oldData = data.getClassData(className);
-      LOG.assertTrue(oldData != null);
+      LOG.assertTrue(oldData != null, "missed className: \"" + className + "\"");
       final Object[] oldLines = oldData.getLines();
       LOG.assertTrue(oldLines != null);
       int maxNumber = oldLines.length;
