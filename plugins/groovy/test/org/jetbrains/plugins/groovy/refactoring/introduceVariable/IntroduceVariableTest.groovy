@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -14,30 +14,27 @@
  * limitations under the License.
  */
 
-package org.jetbrains.plugins.groovy.refactoring.introduceVariable;
+package org.jetbrains.plugins.groovy.refactoring.introduceVariable
 
-import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiType;
-import com.intellij.psi.impl.source.PostprocessReformattingAspect;
-import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase;
-import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.GroovyFileType;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
-import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
-import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
-import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl;
-import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase;
-import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler;
-import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableSettings;
-import org.jetbrains.plugins.groovy.util.TestUtils;
-
-import java.util.List;
-
+import com.intellij.openapi.application.ApplicationManager
+import com.intellij.openapi.editor.Editor
+import com.intellij.psi.PsiElement
+import com.intellij.psi.PsiType
+import com.intellij.psi.impl.source.PostprocessReformattingAspect
+import com.intellij.testFramework.fixtures.LightCodeInsightFixtureTestCase
+import org.jetbrains.annotations.Nullable
+import org.jetbrains.plugins.groovy.GroovyFileType
+import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil
+import org.jetbrains.plugins.groovy.refactoring.GroovyRefactoringUtil
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContext
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceContextImpl
+import org.jetbrains.plugins.groovy.refactoring.introduce.GrIntroduceHandlerBase
+import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GrIntroduceVariableHandler
+import org.jetbrains.plugins.groovy.refactoring.introduce.variable.GroovyIntroduceVariableSettings
+import org.jetbrains.plugins.groovy.util.TestUtils
 /**
  * @author ilyas
  */
@@ -45,7 +42,7 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
 
   @Override
   protected String getBasePath() {
-    return TestUtils.getTestDataPath() + "groovy/refactoring/introduceVariable/";
+    return TestUtils.testDataPath + "groovy/refactoring/introduceVariable/";
   }
 
   public void testAbs() throws Throwable { doTest(); }
@@ -79,6 +76,18 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
   public void testCharArray() {doTest(true);}
   
   public void testCallableProperty() {doTest();}
+
+  void testFqn() {
+    myFixture.addClass('''\
+package p;
+public class Foo {
+    public static int foo() {
+        return 1;
+    }
+}
+''')
+    doTest()
+  }
 
   protected static final String ALL_MARKER = "<all>";
 
@@ -146,7 +155,7 @@ public class IntroduceVariableTest extends LightCodeInsightFixtureTestCase {
 
           @Override
           public boolean replaceAllOccurrences() {
-            return replaceAllOccurences;
+            return IntroduceVariableTest.this.replaceAllOccurences;
           }
         });
         PostprocessReformattingAspect.getInstance(getProject()).doPostponedFormatting();

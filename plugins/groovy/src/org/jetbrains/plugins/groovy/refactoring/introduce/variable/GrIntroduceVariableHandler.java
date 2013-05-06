@@ -25,6 +25,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -150,6 +151,8 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
         // Insert before first occurrence
         insertedVar = insertVariableDefinition(context, settings, varDecl);
       }
+
+      GrReferenceAdjuster.shortenReferences(insertedVar);
 
       insertedVar.setType(settings.getSelectedType());
 
