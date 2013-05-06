@@ -177,7 +177,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testSCR40281() throws Exception {
-    doTest(new MockIntroduceVariableHandler("temp", false, false, false, "Set<? extends Map<?,String>.Entry<?,String>>"));
+    doTest(new MockIntroduceVariableHandler("temp", false, false, false, "Set<? extends Map<?,java.lang.String>.Entry<?,java.lang.String>>"));
   }
 
   public void testWithIfBranches() throws Exception {
@@ -189,7 +189,7 @@ public class IntroduceVariableTest extends LightCodeInsightTestCase {
   }
 
   public void testDuplicateGenericExpressions() throws Exception {
-    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "Foo2<? extends Runnable>"));
+    doTest(new MockIntroduceVariableHandler("temp", true, false, false, "Foo2<? extends java.lang.Runnable>"));
   }
 
   public void testStaticImport() throws Exception {

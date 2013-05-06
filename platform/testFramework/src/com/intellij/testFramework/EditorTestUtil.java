@@ -37,6 +37,8 @@ import java.util.List;
  */
 public class EditorTestUtil {
   public static final String CARET_TAG = "<caret>";
+  public static final String CARET_TAG_PREFIX = CARET_TAG.substring(0, CARET_TAG.length() - 1);
+
   public static final String SELECTION_START_TAG = "<selection>";
   public static final String SELECTION_END_TAG = "</selection>";
 
@@ -94,14 +96,23 @@ public class EditorTestUtil {
   }
 
   public static int[] getCaretAndSelectionPosition(@NotNull final String content) {
-    int caretPosInSourceFile = content.indexOf(CARET_TAG);
+    int caretPosInSourceFile = content.indexOf(CARET_TAG_PREFIX);
+    int caretEndInSourceFile = content.indexOf(">", caretPosInSourceFile);
+    int caretLength = caretEndInSourceFile - caretPosInSourceFile;
+    int visualColumnOffset = 0;
+    if (caretPosInSourceFile >= 0) {
+      String visualOffsetString = content.substring(caretPosInSourceFile + CARET_TAG_PREFIX.length(), caretEndInSourceFile);
+      if (visualOffsetString.length() > 1) {
+        visualColumnOffset = Integer.parseInt(visualOffsetString.substring(1));
+      }
+    }
     int selectionStartInSourceFile = content.indexOf(SELECTION_START_TAG);
     int selectionEndInSourceFile = content.indexOf(SELECTION_END_TAG);
     if (selectionStartInSourceFile >= 0) {
       if (caretPosInSourceFile >= 0) {
         if (caretPosInSourceFile < selectionStartInSourceFile) {
-          selectionStartInSourceFile -= CARET_TAG.length();
-          selectionEndInSourceFile -= CARET_TAG.length();
+          selectionStartInSourceFile -= caretLength;
+          selectionEndInSourceFile -= caretLength;
         }
         else {
           if (caretPosInSourceFile < selectionEndInSourceFile) {
@@ -115,6 +126,6 @@ public class EditorTestUtil {
       selectionEndInSourceFile -= SELECTION_START_TAG.length();
     }
 
-    return new int[]{caretPosInSourceFile, selectionStartInSourceFile, selectionEndInSourceFile};
+    return new int[]{caretPosInSourceFile, visualColumnOffset, selectionStartInSourceFile, selectionEndInSourceFile};
   }
 }

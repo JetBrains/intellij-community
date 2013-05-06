@@ -25,6 +25,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -121,7 +122,11 @@ public class JarHandler extends JarHandlerBase {
            ) {
           mirrorFile = new File(new File(getJarsDir()), info.mySnapshotPath);
           mirrorFileAttributes = FileSystemUtil.getAttributes(mirrorFile);
-          if (mirrorFileAttributes != null && mirrorFileAttributes.length == originalAttributes.length) {
+          if (mirrorFileAttributes != null &&
+              mirrorFileAttributes.length == originalAttributes.length &&
+              // no abs, reuse if cached file is older, mirrors can be from different projects with different modification times
+              (mirrorFileAttributes.lastModified - originalAttributes.lastModified) <= FS_TIME_RESOLUTION
+            ) {
             return mirrorFile;
           }
         }
@@ -165,15 +170,21 @@ public class JarHandler extends JarHandlerBase {
       mirrorFile = new File(new File(getJarsDir()), getSnapshotName(originalFile.getName(), digest));
       mirrorFileAttributes = FileSystemUtil.getAttributes(mirrorFile);
 
-      if (mirrorFileAttributes == null) {
+      if (mirrorFileAttributes == null ||
+          originalAttributes.length != mirrorFileAttributes.length ||
+          mirrorFileAttributes.lastModified - originalAttributes.lastModified > FS_TIME_RESOLUTION // no abs, avoid leaving lately modified mirrors
+        ) {
         try {
+          if (mirrorFileAttributes != null) {
+            FileUtil.delete(mirrorFile);
+          }
           FileUtil.rename(tempJarFile, mirrorFile);
+          mirrorFile.setLastModified(originalAttributes.lastModified);
         } catch (IOException ex) {
           reportIOErrorWithJars(originalFile, mirrorFile, ex);
           return originalFile;
         }
       } else {
-        assert originalAttributes.length == mirrorFileAttributes.length;
         FileUtil.delete(tempJarFile);
       }
 
@@ -295,14 +306,20 @@ public class JarHandler extends JarHandlerBase {
     }
   }
 
-  private static final NotificationGroup ERROR_COPY_NOTIFICATION = NotificationGroup.balloonGroup(VfsBundle.message("jar.copy.error.title"));
+  private static final NotNullLazyValue<NotificationGroup> ERROR_COPY_NOTIFICATION = new NotNullLazyValue<NotificationGroup>() {
+    @NotNull
+    @Override
+    protected NotificationGroup compute() {
+      return NotificationGroup.balloonGroup(VfsBundle.message("jar.copy.error.title"));
+    }
+  };
 
   private void reportIOErrorWithJars(File original, File mirror, IOException e) {
     LOG.warn(e);
     final String path = original.getPath();
     final String message = VfsBundle.message("jar.copy.error.message", path, mirror.getPath(), e.getMessage());
 
-    ERROR_COPY_NOTIFICATION.createNotification(message, NotificationType.ERROR).notify(null);
+    ERROR_COPY_NOTIFICATION.getValue().createNotification(message, NotificationType.ERROR).notify(null);
 
     myFileSystem.setNoCopyJarForPath(path);
   }

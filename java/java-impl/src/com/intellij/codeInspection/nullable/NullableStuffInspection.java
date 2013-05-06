@@ -425,7 +425,10 @@ public class NullableStuffInspection extends BaseLocalInspectionTool {
   private static LocalQuickFix createChangeDefaultNotNullFix(NullableNotNullManager nullableManager, PsiModifierListOwner modifierListOwner) {
     final PsiAnnotation annotation = AnnotationUtil.findAnnotation(modifierListOwner, nullableManager.getNotNulls());
     if (annotation != null) {
-      return new ChangeNullableDefaultsFix(annotation.getQualifiedName(), null, nullableManager);
+      final PsiJavaCodeReferenceElement referenceElement = annotation.getNameReferenceElement();
+      if (referenceElement != null && referenceElement.resolve() != null) {
+        return new ChangeNullableDefaultsFix(annotation.getQualifiedName(), null, nullableManager);
+      }
     }
     return null;
   }

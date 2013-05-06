@@ -366,7 +366,7 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     private volatile Set<T> immutableSet;
     private LinkedHashSet<T> synchronizedSet = new LinkedHashSet<T>();
 
-    public synchronized void add(@NotNull T element) {
+    public void add(@NotNull T element) {
       synchronized (lock) {
         if (!synchronizedSet.contains(element)) {
           copySyncSetIfExposedAsImmutable().add(element);

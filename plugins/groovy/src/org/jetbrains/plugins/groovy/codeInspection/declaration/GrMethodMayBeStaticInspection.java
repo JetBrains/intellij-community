@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -112,6 +112,7 @@ public class GrMethodMayBeStaticInspection extends BaseInspection {
     final GrParameter[] parameters = method.getParameters();
     if (method.getName().equals("propertyMissing") && (parameters.length == 2 || parameters.length == 1)) return true;
     if (method.getName().equals("methodMissing") && (parameters.length == 2 || parameters.length == 1)) return true;
+    if (method.getContainingClass() instanceof PsiAnonymousClass) return true;
 
     for (GrMethodMayBeStaticInspectionFilter filter : GrMethodMayBeStaticInspectionFilter.EP_NAME.getExtensions()) {
       if (filter.isIgnored(method)) {

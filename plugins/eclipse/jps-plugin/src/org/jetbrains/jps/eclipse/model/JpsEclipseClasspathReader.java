@@ -31,7 +31,6 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.module.*;
 import org.jetbrains.jps.model.serialization.JpsMacroExpander;
 import org.jetbrains.jps.model.serialization.library.JpsLibraryTableSerializer;
-import org.jetbrains.jps.model.serialization.library.JpsSdkTableSerializer;
 
 import java.io.File;
 import java.io.FilenameFilter;
@@ -97,14 +96,6 @@ class JpsEclipseClasspathReader extends AbstractEclipseClasspathReader<JpsModule
                                 Collection<String> unknownJdks,
                                 EclipseModuleManager eclipseModuleManager,
                                 String jdkName) {
-    if (LOG.isDebugEnabled()) {
-      LOG.debug("loading " + rootModel.getName() + ": set module jdk " + jdkName);
-    }
-    final JpsDependenciesList dependenciesList = rootModel.getDependenciesList();
-    dependenciesList.addSdkDependency(JpsJavaSdkType.INSTANCE);
-    if (jdkName != null) {
-      JpsSdkTableSerializer.setSdkReference(rootModel.getSdkReferencesTable(), jdkName, JpsJavaSdkType.INSTANCE);
-    }
   }
 
   @Override

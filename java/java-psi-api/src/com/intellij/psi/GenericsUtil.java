@@ -234,8 +234,16 @@ public class GenericsUtil {
   }
 
   @Nullable
-  public static PsiType getVariableTypeByExpressionType(@Nullable final PsiType type) {
+  public static PsiType getVariableTypeByExpressionType(@Nullable PsiType type) {
+    return getVariableTypeByExpressionType(type, true);
+  }
+
+  @Nullable
+  public static PsiType getVariableTypeByExpressionType(@Nullable PsiType type, final boolean openCaptured) {
     if (type == null) return null;
+    if (type instanceof PsiCapturedWildcardType) {
+      type = ((PsiCapturedWildcardType)type).getWildcard();
+    }
     PsiType transformed = type.accept(new PsiTypeVisitor<PsiType>() {
       @Override
       public PsiType visitArrayType(PsiArrayType arrayType) {
@@ -271,7 +279,7 @@ public class GenericsUtil {
 
       @Override
       public PsiType visitCapturedWildcardType(PsiCapturedWildcardType capturedWildcardType) {
-        return capturedWildcardType.getWildcard().accept(this);
+        return openCaptured ? capturedWildcardType.getWildcard().accept(this) : capturedWildcardType;
       }
 
       @Override

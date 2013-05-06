@@ -30,6 +30,11 @@ public abstract class FrameworkTypeEx extends FrameworkType {
     super(id);
   }
 
+  @Nullable
+  public FrameworkGroup getParentGroup() {
+    return null;
+  }
+
   @NotNull
   public abstract FrameworkSupportInModuleProvider createProvider();
 

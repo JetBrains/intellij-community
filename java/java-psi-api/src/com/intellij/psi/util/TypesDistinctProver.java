@@ -45,8 +45,7 @@ public class TypesDistinctProver {
 
       if (level > 1) return true;
       if (type2 instanceof PsiCapturedWildcardType) {
-        return ((PsiWildcardType)type1).isExtends() && level > 0 ||
-               provablyDistinct((PsiWildcardType)type1, ((PsiCapturedWildcardType)type2).getWildcard());
+        return provablyDistinct((PsiWildcardType)type1, ((PsiCapturedWildcardType)type2).getWildcard());
       }
 
       if (type2 instanceof PsiClassType) {

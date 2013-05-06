@@ -262,7 +262,7 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
     }
 
     if (!StringUtil.isEmptyOrSpaces(initializer)) {
-      text.append('=').append(initializer);
+      text.append(" = ").append(initializer);
     }
 
     GrTopStatement[] topStatements = createGroovyFileChecked(text).getTopStatements();

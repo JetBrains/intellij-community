@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -23,6 +23,7 @@ import com.intellij.util.ui.UIUtil;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
+import javax.swing.plaf.DimensionUIResource;
 import javax.swing.plaf.InsetsUIResource;
 import javax.swing.plaf.basic.BasicArrowButton;
 import javax.swing.plaf.basic.BasicComboBoxRenderer;
@@ -36,6 +37,12 @@ import java.awt.geom.Path2D;
 @SuppressWarnings("GtkPreferredJComboBoxRenderer")
 public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   private final JComboBox myComboBox;
+  // Flag for calculating the display size
+  private boolean myDisplaySizeDirty = true;
+
+  // Cached the size that the display needs to render the largest item
+  private Dimension myDisplaySizeCache = new Dimension(0, 0);
+  private Insets myPadding;
 
   public DarculaComboBoxUI(JComboBox comboBox) {
     super();
@@ -46,6 +53,12 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   @SuppressWarnings("MethodOverridesStaticMethodOfSuperclass")
   public static ComponentUI createUI(final JComponent c) {
     return new DarculaComboBoxUI(((JComboBox)c));
+  }
+
+  @Override
+  protected void installDefaults() {
+    super.installDefaults();
+    myPadding = UIManager.getInsets("ComboBox.padding");
   }
 
   @Override
@@ -89,17 +102,24 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
         final int xU = w / 4;
         final int yU = h / 4;
         final Path2D.Double path = new Path2D.Double();
-        g.translate(1, 1);
+        g.translate(2, 0);
         path.moveTo(xU + 1, yU + 2);
         path.lineTo(3 * xU + 1, yU + 2);
         path.lineTo(2 * xU + 1, 3 * yU);
         path.lineTo(xU + 1, yU + 2);
         path.closePath();
         g.fill(path);
-        g.translate(-1, -1);
+        g.translate(-2, 0);
         g.setColor(getBorderColor());
         g.drawLine(0, -1, 0, h);
         config.restore();
+      }
+
+      @Override
+      public Dimension getPreferredSize() {
+        int size = getFont().getSize() + 4;
+        if (size%2==1) size++;
+        return new DimensionUIResource(size, size);
       }
     };
     button.setBorder(BorderFactory.createEmptyBorder());
@@ -111,6 +131,78 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
   protected Insets getInsets() {
     return new InsetsUIResource(4, 7, 4, 5);
   }
+
+  protected Dimension getDisplaySize() {
+    if (!myDisplaySizeDirty) {
+      return new Dimension(myDisplaySizeCache);
+    }
+
+    Dimension display = new Dimension();
+
+    ListCellRenderer renderer = comboBox.getRenderer();
+    if (renderer == null) {
+      renderer = new DefaultListCellRenderer();
+    }
+
+    boolean sameBaseline = true;
+
+    Object prototypeValue = comboBox.getPrototypeDisplayValue();
+    if (prototypeValue != null) {
+      display = getSizeForComponent(renderer.getListCellRendererComponent(listBox, prototypeValue, -1, false, false));
+    } else {
+      final ComboBoxModel model = comboBox.getModel();
+
+      int baseline = -1;
+      Dimension d;
+
+      if (model.getSize() > 0) {
+        for (int i = 0; i < model.getSize(); i++) {
+          Object value = model.getElementAt(i);
+          Component rendererComponent = renderer.getListCellRendererComponent(listBox, value, -1, false, false);
+          d = getSizeForComponent(rendererComponent);
+          if (sameBaseline && value != null && (!(value instanceof String) || !"".equals(value))) {
+            int newBaseline = rendererComponent.getBaseline(d.width, d.height);
+            if (newBaseline == -1) {
+              sameBaseline = false;
+            }
+            else if (baseline == -1) {
+              baseline = newBaseline;
+            }
+            else if (baseline != newBaseline) {
+              sameBaseline = false;
+            }
+          }
+          display.width = Math.max(display.width, d.width);
+          display.height = Math.max(display.height, d.height);
+        }
+      }
+      else {
+        display = getDefaultSize();
+        if (comboBox.isEditable()) {
+          display.width = 100;
+        }
+      }
+    }
+
+    if (myPadding != null) {
+      display.width += myPadding.left + myPadding.right;
+      display.height += myPadding.top + myPadding.bottom;
+    }
+
+    myDisplaySizeCache.setSize(display.width, display.height);
+    myDisplaySizeDirty = false;
+
+    return display;
+  }
+
+  protected Dimension getSizeForComponent(Component comp) {
+    currentValuePane.add(comp);
+    comp.setFont(comboBox.getFont());
+    Dimension d = comp.getPreferredSize();
+    currentValuePane.remove(comp);
+    return d;
+  }
+
 
   @Override
   public void paint(Graphics g, JComponent c) {
@@ -164,8 +256,8 @@ public class DarculaComboBoxUI extends BasicComboBoxUI implements Border {
     g.drawLine(xxx + 5, y + 1 + off, xxx + 5, height - 3);
 
     Rectangle r = rectangleForCurrentValue();
-    paintCurrentValueBackground(g,r,hasFocus);
-    paintCurrentValue(g,r,hasFocus);
+    paintCurrentValueBackground(g, r, hasFocus);
+    paintCurrentValue(g, r, hasFocus);
 
     if (hasFocus) {
       DarculaUIUtil.paintFocusRing(g, 2, 2, width - 4, height - 4);
