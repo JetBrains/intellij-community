@@ -149,7 +149,7 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
           if (c instanceof PsiErrorElement // Incomplete field without trailing semicolon
               || (c instanceof PsiJavaToken && ((PsiJavaToken)c).getTokenType() == JavaTokenType.SEMICOLON))
           {
-            range = TextRange.create(range.getStartOffset(), c.getTextRange().getEndOffset());
+            range = TextRange.create(range.getStartOffset(), expandToCommentIfPossible(c));
           }
           else {
             continue;
@@ -160,6 +160,39 @@ public class JavaArrangementVisitor extends JavaElementVisitor {
     }
     JavaElementArrangementEntry entry = createNewEntry(field, range, ArrangementEntryType.FIELD, field.getName(), true);
     processEntry(entry, field, field.getInitializer());
+  }
+
+  private int expandToCommentIfPossible(@NotNull PsiElement element) {
+    if (myDocument == null) {
+      return element.getTextRange().getEndOffset();
+    }
+
+    CharSequence text = myDocument.getCharsSequence();
+    for (PsiElement e = element.getNextSibling(); e != null; e = e.getNextSibling()) {
+      if (e instanceof PsiWhiteSpace) {
+        if (hasLineBreak(text, e.getTextRange())) {
+          return element.getTextRange().getEndOffset();
+        }
+      }
+      else if (e instanceof PsiComment) {
+        if (!hasLineBreak(text, e.getTextRange())) {
+          return e.getTextRange().getEndOffset();
+        }
+      }
+      else {
+        return element.getTextRange().getEndOffset();
+      }
+    }
+    return element.getTextRange().getEndOffset();
+  }
+
+  private static boolean hasLineBreak(@NotNull CharSequence text, @NotNull TextRange range) {
+    for (int i = range.getStartOffset(), end = range.getEndOffset(); i < end; i++) {
+      if (text.charAt(i) == '\n') {
+        return true;
+      }
+    }
+    return false;
   }
 
   @Nullable

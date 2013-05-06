@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.arrangement.match.ArrangementEntryType;
 import com.intellij.psi.codeStyle.arrangement.match.ArrangementModifier;
 import com.intellij.psi.codeStyle.arrangement.model.*;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.text.CharArrayUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -125,13 +126,21 @@ public class ArrangementUtil {
    */
   @NotNull
   public static TextRange expandToLine(@NotNull TextRange initialRange, @NotNull Document document) {
+    CharSequence text = document.getCharsSequence();
+    String ws = " \t";
+
     int startLine = document.getLineNumber(initialRange.getStartOffset());
-    int startOffsetToUse = document.getLineStartOffset(startLine);
+    int lineStartOffset = document.getLineStartOffset(startLine);
+    int i = CharArrayUtil.shiftBackward(text, lineStartOffset + 1, initialRange.getStartOffset() - 1, ws);
+    if (i != lineStartOffset) {
+      return initialRange;
+    }
 
     int endLine = document.getLineNumber(initialRange.getEndOffset());
-    int endOffsetToUse = document.getLineEndOffset(endLine);
+    int lineEndOffset = document.getLineEndOffset(endLine);
+    i = CharArrayUtil.shiftForward(text, initialRange.getEndOffset(), lineEndOffset, ws);
 
-    return TextRange.create(startOffsetToUse, endOffsetToUse);
+    return i == lineEndOffset ? TextRange.create(lineStartOffset, lineEndOffset) : initialRange;
   }
   //endregion
   
