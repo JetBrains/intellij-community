@@ -152,6 +152,7 @@ public class SearchResults implements DocumentListener {
     void editorChanged(SearchResults sr, Editor oldEditor);
     void cursorMoved(boolean toChangeSelection);
 
+    void updateFinished();
   }
   public void addListener(SearchResultsListener srl) {
     myListeners.add(srl);
@@ -355,6 +356,13 @@ public class SearchResults implements DocumentListener {
     notifyChanged();
     if (oldCursorRange == null || myCursor == null || !myCursor.equals(oldCursorRange)) {
       notifyCursorMoved(toChangeSelection);
+    }
+    dumpIfNeeded();
+  }
+
+  private void dumpIfNeeded() {
+    for (SearchResultsListener listener : myListeners) {
+      listener.updateFinished();
     }
   }
 

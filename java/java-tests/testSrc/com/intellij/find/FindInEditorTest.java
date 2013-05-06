@@ -15,19 +15,21 @@
  */
 package com.intellij.find;
 
-import com.intellij.find.impl.FindResultImpl;
+import com.intellij.find.impl.livePreview.LivePreview;
 import com.intellij.find.impl.livePreview.LivePreviewController;
 import com.intellij.find.impl.livePreview.SearchResults;
 import com.intellij.testFramework.LightCodeInsightTestCase;
-import com.intellij.testFramework.LightPlatformCodeInsightTestCase;
 
-import java.util.List;
+import java.io.ByteArrayOutputStream;
+import java.io.PrintStream;
 
 public class FindInEditorTest extends LightCodeInsightTestCase {
 
   private LivePreviewController myLivePreviewController;
   private SearchResults mySearchResults;
   private FindModel myFindModel;
+
+  private ByteArrayOutputStream myOutputStream;
 
   @Override
   protected void setUp() throws Exception {
@@ -40,6 +42,9 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
         myLivePreviewController.updateInBackground(myFindModel, true);
       }
     });
+
+    myOutputStream = new ByteArrayOutputStream();
+    LivePreview.ourTestOutput = new PrintStream(myOutputStream);
   }
 
   private void initFind() {
@@ -48,12 +53,24 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     myLivePreviewController.on();
   }
 
-  public void test1() throws Exception {
-    configureFromFileText("file.txt", "abc");
+  public void testBasicFind() throws Exception {
+    configureFromFileText("file.txt", "ab");
     initFind();
     myFindModel.setStringToFind("a");
-    type("a");
-    List<FindResult> occurrences = mySearchResults.getOccurrences();
-    assertContainsElements(occurrences, new FindResultImpl(0, 1));
+    checkResults();
+  }
+
+  public void testEmacsLikeFallback() throws Exception {
+    configureFromFileText("file.txt", "a\nab");
+    initFind();
+    myFindModel.setStringToFind("a");
+    myFindModel.setStringToFind("ab");
+    myFindModel.setStringToFind("a");
+    checkResults();
+  }
+
+  private void checkResults() {
+    String name = getTestName(false);
+    assertSameLinesWithFile(getTestDataPath() + "/find/findInEditor/" + name + ".gold", myOutputStream.toString());
   }
 }

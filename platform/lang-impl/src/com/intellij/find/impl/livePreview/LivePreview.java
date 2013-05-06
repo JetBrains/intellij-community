@@ -21,6 +21,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.editor.SelectionModel;
@@ -37,20 +38,21 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.JBColor;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Processor;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.ui.PositionTracker;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
-import java.util.ArrayList;
-import java.util.HashSet;
+import java.io.*;
+import java.util.*;
 import java.util.List;
-import java.util.Set;
 
 public class LivePreview extends DocumentAdapter implements ReplacementView.Delegate, SearchResults.SearchResultsListener,
                                                             SelectionListener {
@@ -67,6 +69,8 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   private static final Key<Object> MARKER_USED = Key.create("LivePreview.MARKER_USED");
   private static final Object YES = new Object();
   private static final Key<Object> SEARCH_MARKER = Key.create("LivePreview.SEARCH_MARKER");
+
+  public static PrintStream ourTestOutput;
 
   @Override
   public void selectionChanged(SelectionEvent e) {
@@ -126,6 +130,65 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
     }
   }
 
+  private void dumpState() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      dumpEditorMarkupAndSelection(ourTestOutput);
+    }
+  }
+
+  private void dumpEditorMarkupAndSelection(PrintStream dumpStream) {
+    dumpStream.println(mySearchResults.getFindModel());
+    dumpStream.println("--");
+
+    Editor editor = mySearchResults.getEditor();
+
+    RangeHighlighter[] highlighters = editor.getMarkupModel().getAllHighlighters();
+    List<Pair<Integer, Character>> ranges = new ArrayList<Pair<Integer, Character>>();
+    for (RangeHighlighter highlighter : highlighters) {
+      ranges.add(new Pair<Integer, Character>(highlighter.getStartOffset(), '['));
+      ranges.add(new Pair<Integer, Character>(highlighter.getEndOffset(), ']'));
+    }
+
+    SelectionModel selectionModel = editor.getSelectionModel();
+
+    ranges.add(new Pair<Integer, Character>(selectionModel.getSelectionStart(), '<'));
+    ranges.add(new Pair<Integer, Character>(selectionModel.getSelectionEnd(), '>'));
+
+    ranges.add(new Pair<Integer, Character>(-1, '\n'));
+    ranges.add(new Pair<Integer, Character>(editor.getDocument().getTextLength()+1, '\n'));
+    ContainerUtil.sort(ranges, new Comparator<Pair<Integer, Character>>() {
+      @Override
+      public int compare(Pair<Integer, Character> pair, Pair<Integer, Character> pair2) {
+        int res = pair.first - pair2.first;
+        if (res == 0) {
+
+          Character c1 = pair.second;
+          Character c2 = pair2.second;
+          if (c1 == '<' && c2 == '[') {
+            return 1;
+          } else if (c1 == '[' && c2 == '<') {
+            return -1;
+          }
+          return c1.compareTo(c2);
+        }
+        return res;
+      }
+    });
+
+    Document document = editor.getDocument();
+    for (int i = 0; i < ranges.size()-1; ++i) {
+      Pair<Integer, Character> pair = ranges.get(i);
+      Pair<Integer, Character> pair1 = ranges.get(i + 1);
+      dumpStream.print(pair.second + document.getText(TextRange.create(Math.max(pair.first, 0), Math.min(pair1.first, document.getTextLength() ))));
+    }
+    dumpStream.println("\n--");
+
+    for (RangeHighlighter highlighter : highlighters) {
+      dumpStream.println(highlighter + " : " + highlighter.getTextAttributes());
+    }
+    dumpStream.println("------------");
+  }
+
   private void clearUnusedHightlighters() {
     Set<RangeHighlighter> unused = new com.intellij.util.containers.HashSet<RangeHighlighter>();
     for (RangeHighlighter highlighter : myHighlighters) {
@@ -148,6 +211,11 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   public void cursorMoved(boolean toChangeSelection) {
     updateInSelectionHighlighters();
     updateCursorHighlighting(toChangeSelection);
+  }
+
+  @Override
+  public void updateFinished() {
+    dumpState();
   }
 
   @Override

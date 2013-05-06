@@ -227,6 +227,10 @@ public class EditorSearchComponent extends EditorHeaderComponent implements Data
   }
 
   @Override
+  public void updateFinished() {
+  }
+
+  @Override
   public void editorChanged(SearchResults sr, Editor oldEditor) {  }
 
   public EditorSearchComponent(final Editor editor, final Project project, FindModel findModel) {

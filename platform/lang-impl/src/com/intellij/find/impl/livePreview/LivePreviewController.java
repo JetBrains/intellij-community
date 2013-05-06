@@ -125,6 +125,11 @@ public class LivePreviewController implements LivePreview.Delegate, FindUtil.Rep
     }
   }
 
+  @Override
+  public void updateFinished() {
+
+  }
+
   public void moveCursor(SearchResults.Direction direction) {
     if (direction == SearchResults.Direction.UP) {
       mySearchResults.prevOccurrence();
