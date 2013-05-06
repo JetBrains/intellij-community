@@ -81,7 +81,9 @@ public final class QuickFixAction {
     info.quickFixActionRanges.add(Pair.create(desc, fixRange));
     info.fixStartOffset = Math.min (info.fixStartOffset, fixRange.getStartOffset());
     info.fixEndOffset = Math.max (info.fixEndOffset, fixRange.getEndOffset());
-    info.setHint(action instanceof HintAction);
+    if (action instanceof HintAction) {
+      info.setHint(true);
+    }
   }
 
   public static void registerQuickFixAction(@Nullable HighlightInfo info,
