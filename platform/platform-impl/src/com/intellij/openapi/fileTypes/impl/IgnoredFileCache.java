@@ -48,6 +48,9 @@ class IgnoredFileCache {
       @Override
       public void before(@NotNull List<? extends VFileEvent> events) {
         // during VFS event processing the system may be in inconsistent state, don't cache it
+        if (!myEnableCache) {
+          LOG.error("VFS before event received without a matching after: " + events);
+        }
         myEnableCache = false;
         clearCacheForChangedFiles(events);
       }
