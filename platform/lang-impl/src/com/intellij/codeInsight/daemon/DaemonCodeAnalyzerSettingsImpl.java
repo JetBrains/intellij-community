@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ import java.io.File;
       file = StoragePathMacros.APP_CONFIG + "/editor.codeinsight.xml"
     )}
 )
-public class DaemonCodeAnalyzerSettings implements PersistentStateComponent<Element>, Cloneable, ExportableComponent {
+public class DaemonCodeAnalyzerSettingsImpl extends DaemonCodeAnalyzerSettings implements PersistentStateComponent<Element>, Cloneable, ExportableComponent {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings");
   @NonNls private static final String ROOT_TAG = "root";
   @NonNls private static final String PROFILE_ATT = "profile";
@@ -45,13 +45,8 @@ public class DaemonCodeAnalyzerSettings implements PersistentStateComponent<Elem
   @NonNls public static final String PROFILE_COPY_NAME = "copy";
   private final InspectionProfileManager myManager;
 
-
-  public DaemonCodeAnalyzerSettings(InspectionProfileManager manager) {
+  public DaemonCodeAnalyzerSettingsImpl(InspectionProfileManager manager) {
     myManager = manager;
-  }
-
-  public static DaemonCodeAnalyzerSettings getInstance() {
-    return ServiceManager.getService(DaemonCodeAnalyzerSettings.class);
   }
 
   @Override
@@ -66,21 +61,13 @@ public class DaemonCodeAnalyzerSettings implements PersistentStateComponent<Elem
     return DaemonBundle.message("error.highlighting.settings");
   }
 
-  public boolean NEXT_ERROR_ACTION_GOES_TO_ERRORS_FIRST = false;
-  public int AUTOREPARSE_DELAY = 300;
-  public boolean SHOW_ADD_IMPORT_HINTS = true;
-  @NonNls public String NO_AUTO_IMPORT_PATTERN = "[a-z].?";
-  public boolean SUPPRESS_WARNINGS = true;
-  public boolean SHOW_METHOD_SEPARATORS = false;
-  public int ERROR_STRIPE_MARK_MIN_HEIGHT = 3;
-  public boolean SHOW_SMALL_ICONS_IN_GUTTER = true;
-
+  @Override
   public boolean isCodeHighlightingChanged(DaemonCodeAnalyzerSettings oldSettings) {
     try {
       Element rootNew = new Element(ROOT_TAG);
       writeExternal(rootNew);
       Element rootOld = new Element(ROOT_TAG);
-      oldSettings.writeExternal(rootOld);
+      ((DaemonCodeAnalyzerSettingsImpl)oldSettings).writeExternal(rootOld);
 
       return !JDOMUtil.areElementsEqual(rootOld, rootNew);
     }
@@ -92,8 +79,8 @@ public class DaemonCodeAnalyzerSettings implements PersistentStateComponent<Elem
   }
 
   @Override
-  public Object clone() {
-    DaemonCodeAnalyzerSettings settings = new DaemonCodeAnalyzerSettings(myManager);
+  public DaemonCodeAnalyzerSettingsImpl clone() {
+    DaemonCodeAnalyzerSettingsImpl settings = new DaemonCodeAnalyzerSettingsImpl(myManager);
     settings.AUTOREPARSE_DELAY = AUTOREPARSE_DELAY;
     settings.SHOW_ADD_IMPORT_HINTS = SHOW_ADD_IMPORT_HINTS;
     settings.SHOW_METHOD_SEPARATORS = SHOW_METHOD_SEPARATORS;
@@ -133,13 +120,5 @@ public class DaemonCodeAnalyzerSettings implements PersistentStateComponent<Elem
   public void writeExternal(Element element) throws WriteExternalException {
     DefaultJDOMExternalizer.writeExternal(this, element);
     element.setAttribute(PROFILE_ATT, myManager.getRootProfile().getName());
-  }
-
-  public boolean isImportHintEnabled() {
-    return SHOW_ADD_IMPORT_HINTS;
-  }
-
-  public void setImportHintEnabled(boolean isImportHintEnabled) {
-    SHOW_ADD_IMPORT_HINTS = isImportHintEnabled;
   }
 }
