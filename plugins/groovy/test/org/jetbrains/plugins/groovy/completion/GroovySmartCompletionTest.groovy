@@ -155,8 +155,8 @@ Runnable r = new Run<caret>
 ''', '''\
 Runnable r = new Runnable() {
     @Override
-    void run() {
-        <caret><selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+    void run() {<caret><selection></selection>
+
     }
 }
 ''')

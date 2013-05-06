@@ -1,16 +1,16 @@
 class Foo implements Comparable<Foo> {
 
     def Foo next() {
-        return null  //To change body of implemented methods use File | Settings | File Templates.
+        return null
     }
 
     def Foo previous() {
-        return null  //To change body of implemented methods use File | Settings | File Templates.
+        return null
     }
 
     @Override
     int compareTo(Foo o) {
-        <selection>return 0  //To change body of implemented methods use File | Settings | File Templates.</selection>
+        <selection>return 0</selection>
     }
 }
 
