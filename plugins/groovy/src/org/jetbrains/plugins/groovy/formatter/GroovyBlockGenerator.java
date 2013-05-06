@@ -16,10 +16,7 @@
 
 package org.jetbrains.plugins.groovy.formatter;
 
-import com.intellij.formatting.Alignment;
-import com.intellij.formatting.Block;
-import com.intellij.formatting.Indent;
-import com.intellij.formatting.Wrap;
+import com.intellij.formatting.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.TextRange;
@@ -40,6 +37,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.processors.GroovyIndentProcessor;
+import org.jetbrains.plugins.groovy.formatter.processors.GroovyWrappingProcessor;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
@@ -93,6 +91,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   private final CommonCodeStyleSettings mySettings;
   private final AlignmentProvider myAlignmentProvider;
   private final GroovyCodeStyleSettings myGroovySettings;
+  private final GroovyWrappingProcessor myWrappingProcessor;
 
   public GroovyBlockGenerator(GroovyBlock block) {
     myBlock = block;
@@ -102,6 +101,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     mySettings = myBlock.getSettings();
     myAlignmentProvider = myBlock.getAlignmentProvider();
     myGroovySettings = myBlock.getGroovySettings();
+    myWrappingProcessor = new GroovyWrappingProcessor(myBlock);
   }
 
   static List<ASTNode> getClosureBodyVisibleChildren(final ASTNode node) {
@@ -147,8 +147,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       ASTNode[] children = getGroovyChildren(myNode);
       for (ASTNode childNode : children) {
         if (childNode.getTextRange().getLength() > 0) {
-          final Indent indent = new GroovyIndentProcessor().getChildIndent(myBlock, childNode);
-          subBlocks.add(new GroovyBlock(childNode, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
+          subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), Wrap.createWrap(WrapType.NONE, false), mySettings, myGroovySettings, myAlignmentProvider));
         }
       }
       return subBlocks;
@@ -188,8 +187,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
         }
       }
       for (ASTNode childNode : astNodes) {
-        final Indent indent = new GroovyIndentProcessor().getChildIndent(myBlock, childNode);
-        subBlocks.add(new GroovyBlock(childNode, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
+        subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), myWrappingProcessor.getChildWrap(childNode), mySettings, myGroovySettings, myAlignmentProvider));
       }
       return subBlocks;
     }
@@ -206,8 +204,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       PsiElement lbrace = closableBlock.getLBrace();
       if (lbrace != null) {
         ASTNode node = lbrace.getNode();
-        Indent indent = new GroovyIndentProcessor().getChildIndent(myBlock, node);
-        blocks.add(new GroovyBlock(node, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
+        blocks.add(new GroovyBlock(node, getIndent(node), Wrap.createWrap(WrapType.NONE, false), mySettings, myGroovySettings, myAlignmentProvider));
       }
 
      /* {
@@ -227,15 +224,14 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       {
         Indent indent = Indent.getNormalIndent();
         ASTNode parameterListNode = closableBlock.getParameterList().getNode();
-        ClosureBodyBlock bodyBlock = new ClosureBodyBlock(parameterListNode, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider);
+        ClosureBodyBlock bodyBlock = new ClosureBodyBlock(parameterListNode, indent, Wrap.createWrap(WrapType.NONE, false), mySettings, myGroovySettings, myAlignmentProvider);
         blocks.add(bodyBlock);
       }
 
       PsiElement rbrace = closableBlock.getRBrace();
       if (rbrace != null) {
         ASTNode node = rbrace.getNode();
-        Indent indent = new GroovyIndentProcessor().getChildIndent(myBlock, node);
-        blocks.add(new GroovyBlock(node, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
+        blocks.add(new GroovyBlock(node, getIndent(node), Wrap.createWrap(WrapType.NONE, false), mySettings, myGroovySettings, myAlignmentProvider));
       }
 
       return blocks;
@@ -305,8 +301,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     // For other cases
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     for (ASTNode childNode : visibleChildren(myNode)) {
-      final Indent indent = new GroovyIndentProcessor().getChildIndent(myBlock, childNode);
-      subBlocks.add(new GroovyBlock(childNode, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
+      subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), myWrappingProcessor.getChildWrap(childNode), mySettings, myGroovySettings, myAlignmentProvider));
     }
     return subBlocks;
   }
@@ -323,10 +318,13 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
       }
     }
     for (ASTNode childNode : children) {
-      final Indent indent = new GroovyIndentProcessor().getChildIndent(myBlock, childNode);
-      subBlocks.add(new GroovyBlock(childNode, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
+      subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), myWrappingProcessor.getChildWrap(childNode), mySettings, myGroovySettings, myAlignmentProvider));
     }
     return subBlocks;
+  }
+
+  private Indent getIndent(ASTNode childNode) {
+    return new GroovyIndentProcessor().getChildIndent(myBlock, childNode);
   }
 
 
@@ -507,19 +505,19 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     final int start = myNode.getTextRange().getStartOffset();
     final int end = myNode.getTextRange().getEndOffset();
 
-    subBlocks.add(new GroovyBlock(myNode, Indent.getNoneIndent(), myWrap, mySettings, myGroovySettings, myAlignmentProvider) {
+    subBlocks.add(new GroovyBlock(myNode, Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, false), mySettings, myGroovySettings, myAlignmentProvider) {
       @NotNull
       public TextRange getTextRange() {
         return new TextRange(start, start + 3);
       }
     });
-    subBlocks.add(new GroovyBlock(myNode, Indent.getAbsoluteNoneIndent(), myWrap, mySettings, myGroovySettings, myAlignmentProvider) {
+    subBlocks.add(new GroovyBlock(myNode, Indent.getAbsoluteNoneIndent(), Wrap.createWrap(WrapType.NONE, false), mySettings, myGroovySettings, myAlignmentProvider) {
       @NotNull
       public TextRange getTextRange() {
         return new TextRange(start + 3, end - 3);
       }
     });
-    subBlocks.add(new GroovyBlock(myNode, Indent.getAbsoluteNoneIndent(), myWrap, mySettings, myGroovySettings, myAlignmentProvider) {
+    subBlocks.add(new GroovyBlock(myNode, Indent.getAbsoluteNoneIndent(), Wrap.createWrap(WrapType.NONE, false), mySettings, myGroovySettings, myAlignmentProvider) {
       @NotNull
       public TextRange getTextRange() {
         return new TextRange(end - 3, end);
@@ -602,7 +600,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
           if (op != psi && aligner != null) {
             aligner.append(psi);
           }
-          list.add(new GroovyBlock(childNode, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
+          list.add(new GroovyBlock(childNode, indent, myWrappingProcessor.getChildWrap(childNode), mySettings, myGroovySettings, myAlignmentProvider));
         }
       }
       if (myExpr.getRightOperand() instanceof GrBinaryExpression) {
@@ -662,7 +660,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     }
     else {
       Indent indent = Indent.getContinuationWithoutFirstIndent();
-      list.add(new GroovyBlock(fst, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
+      list.add(new GroovyBlock(fst, indent, myWrappingProcessor.getChildWrap(fst), mySettings, myGroovySettings, myAlignmentProvider));
     }
     addNestedChildrenSuffix(list, aligner, topLevel, children, limit);
   }
@@ -682,7 +680,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
           aligner.append(childNode.getPsi());
         }
 
-        list.add(new GroovyBlock(childNode, indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
+        list.add(new GroovyBlock(childNode, indent, myWrappingProcessor.getChildWrap(childNode), mySettings, myGroovySettings, myAlignmentProvider));
       }
     }
   }
