@@ -36,9 +36,9 @@ public class ID<K, V> {
   private final short myUniqueId;
 
   static {
-    final File indicies = getEnumFile();
+    final File indices = getEnumFile();
     try {
-      final BufferedReader reader = new BufferedReader(new FileReader(indicies));
+      final BufferedReader reader = new BufferedReader(new FileReader(indices));
       try {
         int cnt = 0;
         do {
