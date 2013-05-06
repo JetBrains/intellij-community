@@ -1564,4 +1564,15 @@ new A().f<caret>oo = 2
     assertInstanceOf(method, GrMethodImpl)
   }
 
+  void testResoleAnonymousMethod() {
+    resolveByText('''\
+def anon = new Object() {
+  def foo() {
+    print 2
+  }
+}
+
+anon.fo<caret>o()
+''', GrMethod)
+  }
 }

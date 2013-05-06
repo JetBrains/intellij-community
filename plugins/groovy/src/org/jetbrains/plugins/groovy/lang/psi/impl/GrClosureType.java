@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -42,9 +42,9 @@ public class GrClosureType extends GrLiteralClassType {
   private final @NotNull GrSignature mySignature;
   private PsiType[] myTypeArgs = null;
 
-  private GrClosureType(LanguageLevel languageLevel,
-                        GlobalSearchScope scope,
-                        JavaPsiFacade facade,
+  private GrClosureType(@NotNull LanguageLevel languageLevel,
+                        @NotNull GlobalSearchScope scope,
+                        @NotNull JavaPsiFacade facade,
                         @NotNull GrSignature closureSignature,
                         boolean shouldInferTypeParameters) {
     super(languageLevel, scope, facade);
@@ -116,39 +116,8 @@ public class GrClosureType extends GrLiteralClassType {
     return super.equals(obj);
   }
 
-  /*public boolean isAssignableFrom(@NotNull PsiType type) {
-    if (type instanceof GrClosureType) {
-      GrClosureType other = (GrClosureType)type;
-      GrClosureSignature otherSignature = other.mySignature;
-
-      final PsiType myReturnType = mySignature.getReturnType();
-      final PsiType otherReturnType = otherSignature.getReturnType();
-      if (myReturnType == null || otherReturnType == null) {
-        return myReturnType == null && otherReturnType == null;
-      }
-
-      if (!myReturnType.isAssignableFrom(otherReturnType)) return false;
-
-      final GrClosureParameter[] myParameters = mySignature.getParameters();
-      final GrClosureParameter[] otherParameters = otherSignature.getParameters();
-
-      if (myParameters.length != otherParameters.length) return false;
-      for (int i = 0; i < myParameters.length; i++) {
-        if (myParameters[i].isOptional() != otherParameters[i].isOptional()) return false;
-        final PsiType otherParamType = otherParameters[i].getType();
-        final PsiType myParamType = myParameters[i].getType();
-        if (myParamType == null || otherParamType == null) {
-          if (myParamType != null || otherParamType != null) return false;
-        }
-        else if (!otherParamType.isAssignableFrom(myParamType)) return false;
-      }
-      return true;
-    }
-    return super.isAssignableFrom(type);
-  }*/
-
   public boolean equalsToText(@NonNls String text) {
-    return text.equals(GroovyCommonClassNames.GROOVY_LANG_CLOSURE);
+    return text != null && text.equals(GroovyCommonClassNames.GROOVY_LANG_CLOSURE);
   }
 
   @NotNull
@@ -208,7 +177,7 @@ public class GrClosureType extends GrLiteralClassType {
   }
 
   @Nullable
-  public PsiType curry(PsiType[] args, int position, GroovyPsiElement context) {
+  public PsiType curry(@NotNull PsiType[] args, int position, @NotNull GroovyPsiElement context) {
     final GrSignature newSignature = mySignature.curry(args, position, context);
     if (newSignature == null) return null;
     final GrClosureType result = create(newSignature, myScope, myFacade, myLanguageLevel, true);
@@ -220,13 +189,4 @@ public class GrClosureType extends GrLiteralClassType {
   public GrSignature getSignature() {
     return mySignature;
   }
-
-  /*public PsiType[] getClosureParameterTypes() {
-    final GrClosureParameter[] parameters = mySignature.getParameters();
-    final PsiType[] types = new PsiType[parameters.length];
-    for (int i = 0; i < types.length; i++) {
-      types[i] = parameters[i].getType();
-    }
-    return types;
-  }*/
 }
