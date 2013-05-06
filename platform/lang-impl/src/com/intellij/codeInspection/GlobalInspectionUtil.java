@@ -22,6 +22,7 @@ import com.intellij.codeInspection.reference.RefElement;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import org.jetbrains.annotations.NotNull;
@@ -70,7 +71,7 @@ public class GlobalInspectionUtil {
         }
       }
     }
-    ProblemDescriptor descriptor = manager.createProblemDescriptor(elt, range, createInspectionMessage(info.getDescription()),
+    ProblemDescriptor descriptor = manager.createProblemDescriptor(elt, range, createInspectionMessage(StringUtil.notNullize(info.getDescription())),
                                                                    HighlightInfo.convertType(info.type), false,
                                                                    fixes.isEmpty() ? null : fixes.toArray(new LocalQuickFix[fixes.size()]));
     descriptor.setProblemGroup(problemGroup);
