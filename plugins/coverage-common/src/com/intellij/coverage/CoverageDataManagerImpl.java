@@ -392,11 +392,14 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
       for (FileEditor editor : editors) {
         if (editor instanceof TextEditor) {
           final Editor textEditor = ((TextEditor)editor).getEditor();
-          final SrcFileAnnotator annotator = getAnnotator(textEditor);
+          SrcFileAnnotator annotator;
+          synchronized (ANNOTATORS_LOCK) {
+            annotator = myAnnotators.remove(textEditor);
+          }
           if (annotator != null) {
             Disposer.dispose(annotator);
-            break;
           }
+          break;
         }
       }
 
@@ -565,7 +568,7 @@ public class CoverageDataManagerImpl extends CoverageDataManager {
       }
       final LineData[] lines = new LineData[maxNumber];
       for (Integer line : lineNumbers) {
-        final int lineIdx = line.intValue();
+        final int lineIdx = line.intValue() - 1;
         String methodSig = null;
         if (lineIdx < oldData.getLines().length) {
           final LineData oldLineData = oldData.getLineData(lineIdx);
