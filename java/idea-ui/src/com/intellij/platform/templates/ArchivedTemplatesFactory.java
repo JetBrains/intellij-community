@@ -51,6 +51,7 @@ public class ArchivedTemplatesFactory extends ProjectTemplatesFactory {
       IdeaPluginDescriptor[] plugins = PluginManager.getPlugins();
       Map<URL, ClassLoader> urls = new HashMap<URL, ClassLoader>();
       for (IdeaPluginDescriptor plugin : plugins) {
+        if (!plugin.isEnabled()) continue;
         try {
           ClassLoader loader = plugin.getPluginClassLoader();
           Enumeration<URL> resources = loader.getResources("resources/projectTemplates");
