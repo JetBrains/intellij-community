@@ -13,20 +13,21 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.lang.psi.impl
+package org.jetbrains.plugins.groovy.lang.psi.impl;
 
-import com.intellij.openapi.util.text.StringUtil
-import com.intellij.pom.java.LanguageLevel
-import com.intellij.psi.*
-import com.intellij.psi.search.GlobalSearchScope
-import org.jetbrains.annotations.NotNull
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition
-import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.pom.java.LanguageLevel;
+import com.intellij.psi.*;
+import com.intellij.psi.search.GlobalSearchScope;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrAnonymousClassDefinition;
+import org.jetbrains.plugins.groovy.lang.psi.api.types.GrCodeReferenceElement;
+
 /**
  * @author Max Medvedev
  */
 public class GrAnonymousClassType extends GrLiteralClassType {
-  @NotNull private final GrAnonymousClassDefinition myAnonymous;
+  private final GrAnonymousClassDefinition myAnonymous;
 
   public GrAnonymousClassType(@NotNull LanguageLevel languageLevel,
                               @NotNull GlobalSearchScope scope,
@@ -39,50 +40,56 @@ public class GrAnonymousClassType extends GrLiteralClassType {
   @NotNull
   @Override
   protected String getJavaClassName() {
-    final GrCodeReferenceElement ref = myAnonymous.baseClassReferenceGroovy;
+    final GrCodeReferenceElement ref = myAnonymous.getBaseClassReferenceGroovy();
     final PsiElement resolved = ref.resolve();
     if (resolved instanceof PsiClass) {
-      return resolved.qualifiedName;
+      return ((PsiClass)resolved).getQualifiedName();
     }
     else {
-      return ref.classNameText
+      return ref.getClassNameText();
     }
   }
 
   @NotNull
   @Override
   public String getClassName() {
-    StringUtil.getShortName(javaClassName);
+    return StringUtil.getShortName(getJavaClassName());
   }
 
   @Override
-  GrAnonymousClassDefinition resolve() {
-    myAnonymous
+  public GrAnonymousClassDefinition resolve() {
+    return myAnonymous;
   }
 
   @NotNull
   @Override
   public PsiType[] getParameters() {
-    myAnonymous.baseClassReferenceGroovy.typeArguments
+    return myAnonymous.getBaseClassReferenceGroovy().getTypeArguments();
   }
 
   @NotNull
   @Override
   public PsiClassType setLanguageLevel(@NotNull LanguageLevel languageLevel) {
-    new GrAnonymousClassType(languageLevel, myScope, myFacade, myAnonymous)
+    return new GrAnonymousClassType(languageLevel, myScope, myFacade, myAnonymous);
   }
 
   @Override
-  public String getInternalCanonicalText() { canonicalText }
+  public String getInternalCanonicalText() {
+    return getCanonicalText();
+  }
 
   @Override
-  public boolean isValid() { myAnonymous.valid }
+  public boolean isValid() {
+    return myAnonymous.isValid();
+  }
 
   @Override
-  String toString() { "AnonymousType:$presentableText" }
+  public String toString() {
+    return "AnonymousType:" + getPresentableText();
+  }
 
   @NotNull
-  PsiClassType getSimpleClassType() {
-    new GrClassReferenceType(myAnonymous.baseClassReferenceGroovy, myLanguageLevel)
+  public PsiClassType getSimpleClassType() {
+    return new GrClassReferenceType(myAnonymous.getBaseClassReferenceGroovy(), myLanguageLevel);
   }
 }
