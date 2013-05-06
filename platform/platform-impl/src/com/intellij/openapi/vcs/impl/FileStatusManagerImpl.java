@@ -29,6 +29,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.project.DumbAwareRunnable;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -89,9 +90,28 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
     }
   }
 
-  public FileStatusManagerImpl(Project project, StartupManager startupManager) {
+  public FileStatusManagerImpl(Project project, StartupManager startupManager,
+                               @SuppressWarnings("UnusedParameters") DirectoryIndex makeSureIndexIsInitializedFirst) {
     myProject = project;
 
+    startupManager.registerPreStartupActivity(new Runnable() {
+      @Override
+      public void run() {
+        DocumentAdapter documentListener = new DocumentAdapter() {
+          public void documentChanged(DocumentEvent event) {
+            VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
+            if (file != null) {
+              refreshFileStatusFromDocument(file, event.getDocument());
+            }
+          }
+        };
+
+        final EditorFactory factory = EditorFactory.getInstance();
+        if (factory != null) {
+          factory.getEventMulticaster().addDocumentListener(documentListener, myProject);
+        }
+      }
+    });
     startupManager.registerPostStartupActivity(new DumbAwareRunnable() {
       public void run() {
         fileStatusesChanged();
@@ -126,19 +146,6 @@ public class FileStatusManagerImpl extends FileStatusManager implements ProjectC
   }
 
   public void projectOpened() {
-    DocumentAdapter documentListener = new DocumentAdapter() {
-      public void documentChanged(DocumentEvent event) {
-        VirtualFile file = FileDocumentManager.getInstance().getFile(event.getDocument());
-        if (file != null) {
-          refreshFileStatusFromDocument(file, event.getDocument());
-        }
-      }
-    };
-
-    final EditorFactory factory = EditorFactory.getInstance();
-    if (factory != null) {
-      factory.getEventMulticaster().addDocumentListener(documentListener, myProject);
-    }
   }
 
   public void disposeComponent() {

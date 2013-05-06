@@ -42,6 +42,8 @@ import com.intellij.openapi.editor.ex.DocumentBulkUpdateListener;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.impl.DirectoryIndex;
+import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.text.StringUtil;
@@ -90,7 +92,8 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   private long myLoadCounter;
 
   public LineStatusTrackerManager(final Project project, final ProjectLevelVcsManager vcsManager, final VcsBaseContentProvider statusProvider,
-                                  final Application application, final FileEditorManager fileEditorManager) {
+                                  final Application application, final FileEditorManager fileEditorManager,
+                                  @SuppressWarnings("UnusedParameters") DirectoryIndex makeSureIndexIsInitializedFirst) {
     myLoadCounter = 0;
     myProject = project;
     myVcsManager = vcsManager;
@@ -137,32 +140,37 @@ public class LineStatusTrackerManager implements ProjectComponent, LineStatusTra
   }
 
   public void projectOpened() {
-    final MyFileStatusListener fileStatusListener = new MyFileStatusListener();
-    final EditorFactoryListener editorFactoryListener = new MyEditorFactoryListener();
-    final MyVirtualFileListener virtualFileListener = new MyVirtualFileListener();
-    final EditorColorsListener editorColorsListener = new EditorColorsListener() {
-      public void globalSchemeChange(EditorColorsScheme scheme) {
-        resetTrackersForOpenFiles();
-      }
-    };
+    StartupManager.getInstance(myProject).registerPreStartupActivity(new Runnable() {
+      @Override
+      public void run() {
+        final MyFileStatusListener fileStatusListener = new MyFileStatusListener();
+        final EditorFactoryListener editorFactoryListener = new MyEditorFactoryListener();
+        final MyVirtualFileListener virtualFileListener = new MyVirtualFileListener();
+        final EditorColorsListener editorColorsListener = new EditorColorsListener() {
+          public void globalSchemeChange(EditorColorsScheme scheme) {
+            resetTrackersForOpenFiles();
+          }
+        };
 
-    final FileStatusManager fsManager = FileStatusManager.getInstance(myProject);
-    fsManager.addFileStatusListener(fileStatusListener, myProject);
+        final FileStatusManager fsManager = FileStatusManager.getInstance(myProject);
+        fsManager.addFileStatusListener(fileStatusListener, myProject);
 
-    final EditorFactory editorFactory = EditorFactory.getInstance();
-    editorFactory.addEditorFactoryListener(editorFactoryListener,myProject);
+        final EditorFactory editorFactory = EditorFactory.getInstance();
+        editorFactory.addEditorFactoryListener(editorFactoryListener,myProject);
 
-    final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
-    virtualFileManager.addVirtualFileListener(virtualFileListener,myProject);
+        final VirtualFileManager virtualFileManager = VirtualFileManager.getInstance();
+        virtualFileManager.addVirtualFileListener(virtualFileListener,myProject);
 
-    final EditorColorsManager editorColorsManager = EditorColorsManager.getInstance();
-    editorColorsManager.addEditorColorsListener(editorColorsListener);
+        final EditorColorsManager editorColorsManager = EditorColorsManager.getInstance();
+        editorColorsManager.addEditorColorsListener(editorColorsListener);
 
-    Disposer.register(myDisposable, new Disposable() {
-      public void dispose() {
-        fsManager.removeFileStatusListener(fileStatusListener);
-        virtualFileManager.removeVirtualFileListener(virtualFileListener);
-        editorColorsManager.removeEditorColorsListener(editorColorsListener);
+        Disposer.register(myDisposable, new Disposable() {
+          public void dispose() {
+            fsManager.removeFileStatusListener(fileStatusListener);
+            virtualFileManager.removeVirtualFileListener(virtualFileListener);
+            editorColorsManager.removeEditorColorsListener(editorColorsListener);
+          }
+        });
       }
     });
   }
