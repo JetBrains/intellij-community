@@ -22,6 +22,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -200,7 +201,12 @@ public class GradleInstallationManager {
       return null;
     }
 
-    File[] distFiles = files[0].listFiles();
+    File[] distFiles = files[0].listFiles(new FileFilter() {
+      @Override
+      public boolean accept(File f) {
+        return f.isDirectory();
+      }
+    });
     if (distFiles == null || distFiles.length != 1) {
       // There should exist only the gradle directory in the distribution directory
       return null;
