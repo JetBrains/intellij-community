@@ -1,6 +1,5 @@
 package com.jetbrains.python.packaging;
 
-import com.google.common.collect.ImmutableMap;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.util.io.FileUtil;
@@ -8,6 +7,7 @@ import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Function;
+import com.intellij.webcore.packaging.PackageVersionComparator;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -123,73 +123,6 @@ public class PyRequirement {
   @Nullable private final String myURL;
   private final boolean myEditable;
 
-  public static final Comparator<String> VERSION_COMPARATOR = new Comparator<String>() {
-    @Override
-    public int compare(String version1, String version2) {
-      final List<String> vs1 = parse(version1);
-      final List<String> vs2 = parse(version2);
-      int result = 0;
-      for (int i = 0; i < vs1.size() && i < vs2.size(); i++) {
-        result = vs1.get(i).compareTo(vs2.get(i));
-        if (result != 0) {
-          break;
-        }
-      }
-      if (result == 0) {
-        return vs1.size() - vs2.size();
-      }
-      return result;
-    }
-
-    @Nullable
-    private String replace(@NotNull String s) {
-      final Map<String, String> sub = ImmutableMap.of("pre", "c",
-                                                      "preview", "c",
-                                                      "rc", "c",
-                                                      "dev", "@");
-      final String tmp = sub.get(s);
-      if (tmp != null) {
-        s = tmp;
-      }
-      if (s.equals(".") || s.equals("-")) {
-        return null;
-      }
-      if (s.matches("[0-9]+")) {
-        final long value = Long.parseLong(s);
-        return String.format("%08d", value);
-      }
-      return "*" + s;
-    }
-
-    @NotNull
-    private List<String> parse(@Nullable String s) {
-      // Version parsing from pkg_resources ensures that all the "pre", "alpha", "rc", etc. are sorted correctly
-      if (s == null) {
-        return Collections.emptyList();
-      }
-      final Pattern COMPONENT_RE = Pattern.compile("\\d+|[a-z]+|\\.|-|.+");
-      final List<String> results = new ArrayList<String>();
-      final Matcher matcher = COMPONENT_RE.matcher(s);
-      while (matcher.find()) {
-        final String component = replace(matcher.group());
-        if (component == null) {
-          continue;
-        }
-        results.add(component);
-      }
-      for (int i = results.size() - 1; i > 0; i--) {
-        if ("00000000".equals(results.get(i))) {
-          results.remove(i);
-        }
-        else {
-          break;
-        }
-      }
-      results.add("*final");
-      return results;
-    }
-  };
-
   public PyRequirement(@NotNull String name) {
     this(name, Collections.<VersionSpec>emptyList());
   }
@@ -285,7 +218,7 @@ public class PyRequirement {
     for (PyPackage pkg : packages) {
       if (normalizeName(myName).equalsIgnoreCase(pkg.getName())) {
         for (VersionSpec spec : myVersionSpecs) {
-          final int cmp = VERSION_COMPARATOR.compare(pkg.getVersion(), spec.getVersion());
+          final int cmp = PackageVersionComparator.VERSION_COMPARATOR.compare(pkg.getVersion(), spec.getVersion());
           final Relation relation = spec.getRelation();
           if (!relation.isSuccessful(cmp)) {
             return null;

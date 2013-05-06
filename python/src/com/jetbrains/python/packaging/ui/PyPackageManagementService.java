@@ -4,8 +4,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.CatchingConsumer;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
+import com.intellij.webcore.packaging.InstalledPackage;
 import com.intellij.webcore.packaging.PackageManagementService;
 import com.intellij.webcore.packaging.RepoPackage;
 import com.jetbrains.python.packaging.*;
@@ -28,6 +27,10 @@ public class PyPackageManagementService extends PackageManagementService {
   public PyPackageManagementService(Project project, Sdk sdk) {
     myProject = project;
     mySdk = sdk;
+  }
+
+  public Sdk getSdk() {
+    return mySdk;
   }
 
   @Override
@@ -55,15 +58,39 @@ public class PyPackageManagementService extends PackageManagementService {
 
   @Override
   public List<RepoPackage> getAllPackages() throws IOException {
-    List<RepoPackage> packages = new ArrayList<RepoPackage>();
-    final Collection<String> packageNames = PyPIPackageUtil.INSTANCE.getPackageNames();
-    final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
-    String url = customRepoConfigured? PyPIPackageUtil.PYPI_URL : "";
-    for (String name : packageNames) {
-      packages.add(new RepoPackage(name, url));
+    final Map<String, String> packageToVersionMap;
+    try {
+      packageToVersionMap = PyPIPackageUtil.INSTANCE.loadAndGetPackages();
     }
+    catch (IOException e) {
+      throw new IOException("Could not reach URL " + e.getMessage() + ". Please, check your internet connection.");
+    }
+    List<RepoPackage> packages = versionMapToPackageList(packageToVersionMap);
     packages.addAll(PyPIPackageUtil.INSTANCE.getAdditionalPackageNames());
     return packages;
+  }
+
+  private static List<RepoPackage> versionMapToPackageList(Map<String, String> packageToVersionMap) {
+    final boolean customRepoConfigured = !PyPackageService.getInstance().additionalRepositories.isEmpty();
+    String url = customRepoConfigured? PyPIPackageUtil.PYPI_URL : "";
+    List<RepoPackage> packages = new ArrayList<RepoPackage>();
+    for (Map.Entry<String, String> entry : packageToVersionMap.entrySet()) {
+      packages.add(new RepoPackage(entry.getKey(), url, entry.getValue()));
+    }
+    return packages;
+  }
+
+  @Override
+  public List<RepoPackage> reloadAllPackages() throws IOException {
+    final PyPackageService service = PyPackageService.getInstance();
+    PyPIPackageUtil.INSTANCE.updatePyPICache(service);
+    service.LAST_TIME_CHECKED = System.currentTimeMillis();
+    return getAllPackages();
+  }
+
+  @Override
+  public List<RepoPackage> getAllPackagesCached() {
+    return versionMapToPackageList(PyPIPackageUtil.getPyPIPackages());
   }
 
   @Override
@@ -90,15 +117,7 @@ public class PyPackageManagementService extends PackageManagementService {
   }
 
   @Override
-  public List<RepoPackage> reloadAllPackages() throws IOException {
-    final PyPackageService service = PyPackageService.getInstance();
-    PyPIPackageUtil.INSTANCE.updatePyPICache(service);
-    service.LAST_TIME_CHECKED = System.currentTimeMillis();
-    return getAllPackages();
-  }
-
-  @Override
-  public Collection<String> getInstalledPackageNames() throws IOException {
+  public Collection<InstalledPackage> getInstalledPackages() throws IOException {
     List<PyPackage> packages;
     try {
       packages = ((PyPackageManagerImpl)PyPackageManager.getInstance(mySdk)).getPackages();
@@ -106,22 +125,14 @@ public class PyPackageManagementService extends PackageManagementService {
     catch (PyExternalProcessException e) {
       throw new IOException(e);
     }
-    return ContainerUtil.map(packages, new Function<PyPackage, String>() {
-      @Override
-      public String fun(PyPackage aPackage) {
-        return aPackage.getName();
-      }
-    });
+    return new ArrayList<InstalledPackage>(packages);
   }
 
   @Override
-  public void installPackage(final String packageName,
-                             String repositoryUrl,
-                             String version,
-                             boolean installToUser,
-                             String extraOptions,
-                             final Listener listener) {
-    final String repository = repositoryUrl.equals(PyPIPackageUtil.PYPI_URL) ? null : repositoryUrl;
+  public void installPackage(final RepoPackage repoPackage,String version, boolean forceUpgrade, String extraOptions,
+                             final Listener listener, boolean installToUser) {
+    final String packageName = repoPackage.getName();
+    final String repository = PyPIPackageUtil.PYPI_URL.equals(repoPackage.getRepoUrl()) ? null : repoPackage.getRepoUrl();
     final List<String> extraArgs = new ArrayList<String>();
     if (installToUser) {
       extraArgs.add(PyPackageManagerImpl.USE_USER_SITE);
@@ -134,6 +145,9 @@ public class PyPackageManagementService extends PackageManagementService {
       extraArgs.add("--extra-index-url");
       extraArgs.add(repository);
     }
+    if (forceUpgrade) {
+      extraArgs.add("-U");
+    }
     final PyRequirement req;
     if (version != null) {
       req = new PyRequirement(packageName, version);
@@ -145,15 +159,47 @@ public class PyPackageManagementService extends PackageManagementService {
     final PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(myProject, mySdk, new PyPackageManagerImpl.UI.Listener() {
       @Override
       public void started() {
-        listener.installationStarted(packageName);
+        listener.operationStarted(packageName);
       }
 
       @Override
       public void finished(@Nullable List<PyExternalProcessException> exceptions) {
-        listener.installationFinished(packageName, PyPackageManagerImpl.UI.createDescription(exceptions, ""));
+        listener.operationFinished(packageName, toErrorDescription(exceptions));
       }
     });
     ui.install(Collections.singletonList(req), extraArgs);
+  }
+
+  private String toErrorDescription(List<PyExternalProcessException> exceptions) {
+    String errorDescription = null;
+    if (exceptions != null && exceptions.size() > 0) {
+      errorDescription = PyPackageManagerImpl.UI.createDescription(exceptions, "");
+    }
+    return errorDescription;
+  }
+
+  @Override
+  public void uninstallPackages(List<InstalledPackage> installedPackages, final Listener listener) {
+    final String packageName = installedPackages.size() == 1 ? installedPackages.get(0).getName() : null;
+    PyPackageManagerImpl.UI ui = new PyPackageManagerImpl.UI(myProject, mySdk, new PyPackageManagerImpl.UI.Listener() {
+      @Override
+      public void started() {
+        listener.operationStarted(packageName);
+      }
+
+      @Override
+      public void finished(final List<PyExternalProcessException> exceptions) {
+        listener.operationFinished(packageName, toErrorDescription(exceptions));
+      }
+    });
+
+    List<PyPackage> pyPackages = new ArrayList<PyPackage>();
+    for (InstalledPackage aPackage : installedPackages) {
+      if (aPackage instanceof PyPackage) {
+       pyPackages.add((PyPackage) aPackage);
+      }
+    }
+    ui.uninstall(pyPackages);
   }
 
   @Override
@@ -165,6 +211,7 @@ public class PyPackageManagementService extends PackageManagementService {
         PyPIPackageUtil.INSTANCE.addPackageReleases(packageName, releases);
         consumer.consume(releases);
       }
+
       @Override
       public void handleError(Exception exception, URL url, String method) {
         consumer.consume(exception);

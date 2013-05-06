@@ -17,6 +17,7 @@ import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFileSystemItem;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.webcore.packaging.PackageVersionComparator;
 import com.jetbrains.python.packaging.*;
 import com.jetbrains.python.psi.PyClass;
 import com.jetbrains.python.psi.PyFile;
@@ -75,7 +76,7 @@ public class PyTestConfigurationProducer extends RuntimeConfigurationProducer {
         final PyPackageManagerImpl packageManager = (PyPackageManagerImpl)PyPackageManager.getInstance(sdk);
         try {
           final PyPackage pytestPackage = packageManager.findPackage("pytest");
-          if (pytestPackage != null && PyRequirement.VERSION_COMPARATOR.compare(pytestPackage.getVersion(), "2.3.3") >= 0) {
+          if (pytestPackage != null && PackageVersionComparator.VERSION_COMPARATOR.compare(pytestPackage.getVersion(), "2.3.3") >= 0) {
             name = pyClass.getName() + " and " + name;
           }
           else {

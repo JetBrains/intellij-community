@@ -6,7 +6,8 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.ui.CollectionComboBoxModel;
 import com.intellij.webcore.packaging.PackagesNotificationPanel;
-import com.jetbrains.python.packaging.ui.PyPackagesPanel;
+import com.jetbrains.python.packaging.ui.PyInstalledPackagesPanel;
+import com.jetbrains.python.packaging.ui.PyPackageManagementService;
 import com.jetbrains.python.sdk.PreferredSdkComparator;
 import com.jetbrains.python.sdk.PySdkListCellRenderer;
 import com.jetbrains.python.sdk.PythonSdkType;
@@ -25,7 +26,7 @@ import java.util.List;
 public class PyManagePackagesDialog extends DialogWrapper {
   private JPanel myMainPanel;
 
-  public PyManagePackagesDialog(@NotNull Project project, Sdk sdk) {
+  public PyManagePackagesDialog(@NotNull final Project project, @NotNull Sdk sdk) {
     super(project, true);
     setTitle("Manage Python Packages");
 
@@ -35,9 +36,9 @@ public class PyManagePackagesDialog extends DialogWrapper {
     sdkComboBox.setRenderer(new PySdkListCellRenderer());
 
     PackagesNotificationPanel notificationPanel = new PackagesNotificationPanel(project);
-    final PyPackagesPanel packagesPanel = new PyPackagesPanel(project, notificationPanel);
+    final PyInstalledPackagesPanel packagesPanel = new PyInstalledPackagesPanel(project, notificationPanel);
     packagesPanel.setBorder(BorderFactory.createEmptyBorder(4, 0, 0, 0));
-    packagesPanel.updatePackages(sdk);
+    packagesPanel.updatePackages(new PyPackageManagementService(project, sdk));
     packagesPanel.updateNotifications(sdk);
 
     myMainPanel = new JPanel(new BorderLayout());
@@ -51,7 +52,7 @@ public class PyManagePackagesDialog extends DialogWrapper {
       @Override
       public void actionPerformed(ActionEvent e) {
         Sdk sdk = (Sdk) sdkComboBox.getSelectedItem();
-        packagesPanel.updatePackages(sdk);
+        packagesPanel.updatePackages(new PyPackageManagementService(project, sdk));
         packagesPanel.updateNotifications(sdk);
       }
     });

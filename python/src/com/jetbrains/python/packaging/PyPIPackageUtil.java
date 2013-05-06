@@ -243,14 +243,19 @@ public class PyPIPackageUtil {
   }
 
   public Collection<String> getPackageNames() throws IOException {
+    Map<String, String> pyPIPackages = loadAndGetPackages();
+    ArrayList<String> list = Lists.newArrayList(pyPIPackages.keySet());
+    Collections.sort(list);
+    return list;
+  }
+
+  public Map<String, String> loadAndGetPackages() throws IOException {
     Map<String, String> pyPIPackages = getPyPIPackages();
     if (pyPIPackages.isEmpty()) {
       updatePyPICache(PyPackageService.getInstance());
       pyPIPackages = getPyPIPackages();
     }
-    ArrayList<String> list = Lists.newArrayList(pyPIPackages.keySet());
-    Collections.sort(list);
-    return list;
+    return pyPIPackages;
   }
 
   public static Map<String, String> getPyPIPackages() {
