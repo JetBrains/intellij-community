@@ -18,6 +18,8 @@
                     interface="com.intellij.xml.XmlSchemaProvider"/>
     <extensionPoint name="xml.xmlExtension"
                     interface="com.intellij.xml.XmlExtension"/>
+    <extensionPoint name="xml.tagNameProvider"
+                    interface="com.intellij.xml.XmlTagNameProvider"/>
     <extensionPoint name="xml.fileNSInfoProvider"
                     interface="com.intellij.psi.xml.XmlFileNSInfoProvider"/>
     <extensionPoint name="xml.attributeDescriptorsProvider"

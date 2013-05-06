@@ -42,10 +42,7 @@ import com.intellij.util.Function;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.NullableFunction;
 import com.intellij.util.containers.ContainerUtil;
-import com.intellij.xml.XmlElementDescriptor;
-import com.intellij.xml.XmlElementDescriptorAwareAboutChildren;
-import com.intellij.xml.XmlExtension;
-import com.intellij.xml.XmlNSDescriptor;
+import com.intellij.xml.*;
 import com.intellij.xml.impl.schema.AnyXmlElementDescriptor;
 import com.intellij.xml.impl.schema.XmlElementDescriptorImpl;
 import com.intellij.xml.util.HtmlUtil;
@@ -231,6 +228,9 @@ public class TagNameReference implements PsiReference {
         lookupElement = lookupElement.withTypeText(ns, true);
       }
       elements.add(lookupElement.withInsertHandler(XmlTagInsertHandler.INSTANCE));
+    }
+    for (XmlTagNameProvider tagNameProvider : XmlTagNameProvider.EP_NAME.getExtensions()) {
+      tagNameProvider.addTagNameVariants(elements, tag, prefix);
     }
     return elements.toArray(new LookupElement[elements.size()]);
   }
