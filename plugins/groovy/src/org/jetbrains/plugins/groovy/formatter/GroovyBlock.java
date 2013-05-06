@@ -190,7 +190,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
                   statement instanceof GrContinueStatement ||
                   statement instanceof GrReturnStatement ||
                   statement instanceof GrThrowStatement) {
-                return new ChildAttributes(GroovyIndentProcessor.getSwitchCaseIndent(anchorPsi), null);
+                return new ChildAttributes(GroovyIndentProcessor.getSwitchCaseIndent(mySettings), null);
               }
             }
             @SuppressWarnings("ConstantConditions")
