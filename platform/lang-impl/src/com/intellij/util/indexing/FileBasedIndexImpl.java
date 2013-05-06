@@ -384,11 +384,18 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       IndexInfrastructure.rewriteVersion(versionFile, version);
     }
 
-    MapIndexStorage<K, V> storage = null;
+    compactIndex(extension, version, versionFile);
+    return versionChanged;
+  }
 
+  private <K, V> void compactIndex(final FileBasedIndexExtension<K, V> extension, int version, File versionFile)
+    throws IOException {
+    MapIndexStorage<K, V> storage = null;
+    final ID<K, V> name = extension.getName();
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        storage = ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<MapIndexStorage<K, V>, IOException>() {
+        storage = ProgressManager
+          .getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<MapIndexStorage<K, V>, IOException>() {
           @Override
           public MapIndexStorage<K, V> compute() throws IOException {
             return new MapIndexStorage<K, V>(
@@ -432,7 +439,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         IndexInfrastructure.rewriteVersion(versionFile, version);
       }
     }
-    return versionChanged;
   }
 
   private static void saveRegisteredIndices(@NotNull Collection<ID<?, ?>> ids) {
