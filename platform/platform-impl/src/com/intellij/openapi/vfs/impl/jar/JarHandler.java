@@ -25,6 +25,7 @@ import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
+import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileSystemUtil;
 import com.intellij.openapi.util.io.FileUtil;
@@ -295,14 +296,20 @@ public class JarHandler extends JarHandlerBase {
     }
   }
 
-  private static final NotificationGroup ERROR_COPY_NOTIFICATION = NotificationGroup.balloonGroup(VfsBundle.message("jar.copy.error.title"));
+  private static final NotNullLazyValue<NotificationGroup> ERROR_COPY_NOTIFICATION = new NotNullLazyValue<NotificationGroup>() {
+    @NotNull
+    @Override
+    protected NotificationGroup compute() {
+      return NotificationGroup.balloonGroup(VfsBundle.message("jar.copy.error.title"));
+    }
+  };
 
   private void reportIOErrorWithJars(File original, File mirror, IOException e) {
     LOG.warn(e);
     final String path = original.getPath();
     final String message = VfsBundle.message("jar.copy.error.message", path, mirror.getPath(), e.getMessage());
 
-    ERROR_COPY_NOTIFICATION.createNotification(message, NotificationType.ERROR).notify(null);
+    ERROR_COPY_NOTIFICATION.getValue().createNotification(message, NotificationType.ERROR).notify(null);
 
     myFileSystem.setNoCopyJarForPath(path);
   }
