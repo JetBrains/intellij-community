@@ -38,6 +38,7 @@ public class Notification {
   private final NotificationListener myListener;
   private final String myTitle;
   private boolean myExpired;
+  private Runnable myWhenExpired;
   private Boolean myImportant;
   private WeakReference<Balloon> myBalloonRef;
 
@@ -102,6 +103,14 @@ public class Notification {
     NotificationsManager.getNotificationsManager().expire(this);
     hideBalloon();
     myExpired = true;
+
+    Runnable whenExpired = myWhenExpired;
+    if (whenExpired != null) whenExpired.run();
+  }
+
+  public Notification whenExpired(@Nullable Runnable whenExpired) {
+    myWhenExpired = whenExpired;
+    return this;
   }
 
   public void hideBalloon() {
