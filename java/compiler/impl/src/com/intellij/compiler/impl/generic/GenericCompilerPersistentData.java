@@ -16,6 +16,7 @@
 package com.intellij.compiler.impl.generic;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.util.io.IOUtil;
 import gnu.trove.TIntHashSet;
 import org.jetbrains.annotations.NotNull;
@@ -46,32 +47,38 @@ public class GenericCompilerPersistentData {
       return;
     }
 
-    DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myFile)));
     try {
-      final int dataVersion = input.readInt();
-      if (dataVersion != VERSION) {
-        LOG.info("Version of compiler info file (" + myFile.getAbsolutePath() + ") changed: " + dataVersion + " -> " + VERSION);
-        myVersionChanged = true;
-        return;
-      }
+      DataInputStream input = new DataInputStream(new BufferedInputStream(new FileInputStream(myFile)));
+      try {
+        final int dataVersion = input.readInt();
+        if (dataVersion != VERSION) {
+          LOG.info("Version of compiler info file (" + myFile.getAbsolutePath() + ") changed: " + dataVersion + " -> " + VERSION);
+          myVersionChanged = true;
+          return;
+        }
 
-      final int savedCompilerVersion = input.readInt();
-      if (savedCompilerVersion != compilerVersion) {
-        LOG.info("Compiler caches version changed (" + myFile.getAbsolutePath() + "): " + savedCompilerVersion + " -> " + compilerVersion);
-        myVersionChanged = true;
-        return;
-      }
+        final int savedCompilerVersion = input.readInt();
+        if (savedCompilerVersion != compilerVersion) {
+          LOG.info("Compiler caches version changed (" + myFile.getAbsolutePath() + "): " + savedCompilerVersion + " -> " + compilerVersion);
+          myVersionChanged = true;
+          return;
+        }
 
-      int size = input.readInt();
-      while (size-- > 0) {
-        final String target = IOUtil.readString(input);
-        final int id = input.readInt();
-        myTarget2Id.put(target, id);
-        myUsedIds.add(id);
+        int size = input.readInt();
+        while (size-- > 0) {
+          final String target = IOUtil.readString(input);
+          final int id = input.readInt();
+          myTarget2Id.put(target, id);
+          myUsedIds.add(id);
+        }
+      }
+      finally {
+        input.close();
       }
     }
-    finally {
-      input.close();
+    catch (IOException e) {
+      FileUtil.delete(myFile);
+      throw e;
     }
   }
 
