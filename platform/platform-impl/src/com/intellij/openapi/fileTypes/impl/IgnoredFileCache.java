@@ -17,11 +17,10 @@ package com.intellij.openapi.fileTypes.impl;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.vfs.*;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
-import com.intellij.openapi.vfs.newvfs.events.VFileCreateEvent;
-import com.intellij.openapi.vfs.newvfs.events.VFileDeleteEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
 import com.intellij.openapi.vfs.newvfs.events.VFilePropertyChangeEvent;
 import com.intellij.util.containers.IntArrayList;
@@ -50,17 +49,17 @@ class IgnoredFileCache {
       public void before(@NotNull List<? extends VFileEvent> events) {
         // during VFS event processing the system may be in inconsistent state, don't cache it
         myEnableCache = false;
-        clearCacheForChangedFiles(events, true);
+        clearCacheForChangedFiles(events);
       }
 
       @Override
       public void after(@NotNull List<? extends VFileEvent> events) {
-        clearCacheForChangedFiles(events, false);
+        clearCacheForChangedFiles(events);
         myEnableCache = true;
       }
 
-      private void clearCacheForChangedFiles(List<? extends VFileEvent> events, boolean before) {
-        final IntArrayList ids = collectChangedIds(events, before);
+      private void clearCacheForChangedFiles(List<? extends VFileEvent> events) {
+        final IntArrayList ids = collectChangedIds(events);
         synchronized (myCheckedIds) {
           for (int i : ids.toArray()) {
             myCheckedIds.clear(i);
@@ -68,7 +67,7 @@ class IgnoredFileCache {
         }
       }
 
-      private IntArrayList collectChangedIds(List<? extends VFileEvent> events, boolean before) {
+      private IntArrayList collectChangedIds(List<? extends VFileEvent> events) {
         final IntArrayList ids = new IntArrayList();
         for (final VFileEvent event : events) {
           VirtualFile file = event.getFile();
@@ -77,30 +76,13 @@ class IgnoredFileCache {
           }
 
           if (event instanceof VFilePropertyChangeEvent) {
-            addId(ids, event, file);
-          } else if (event instanceof VFileDeleteEvent && before || event instanceof VFileCreateEvent && !before) {
-            VfsUtilCore.visitChildrenRecursively(file, new VirtualFileVisitor() {
-              @Override
-              public boolean visitFile(@NotNull VirtualFile file) {
-                addId(ids, event, file);
-                return true;
-              }
-
-              @Override
-              public Iterable<VirtualFile> getChildrenIterable(@NotNull VirtualFile file) {
-                return file instanceof NewVirtualFile ? ((NewVirtualFile)file).iterInDbChildren() : null;
-              }
-            });
+            int id = ((NewVirtualFile)file).getId();
+            if (id >= 0) {
+              ids.add(id);
+            }
           }
         }
         return ids;
-      }
-
-      private void addId(IntArrayList ids, VFileEvent event, VirtualFile file) {
-        int id = ((NewVirtualFile)file).getId();
-        if (id >= 0) {
-          ids.add(id);
-        }
       }
     });
   }
