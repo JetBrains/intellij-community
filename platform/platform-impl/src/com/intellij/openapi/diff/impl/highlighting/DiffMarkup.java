@@ -93,7 +93,7 @@ public abstract class DiffMarkup implements EditorSource, Disposable {
         @Override
         public void paint(@NotNull Editor ed, @NotNull RangeHighlighter highlighter, @NotNull Graphics g) {
           g.setColor(attributes.getBackgroundColor());
-          Point point = ed.logicalPositionToXY(ed.offsetToLogicalPosition(offset));
+          Point point = ed.logicalPositionToXY(ed.offsetToLogicalPosition(highlighter.getStartOffset()));
           int endy = point.y + ed.getLineHeight() - 1;
           g.drawLine(point.x, point.y, point.x, endy);
           g.drawLine(point.x - 1, point.y, point.x - 1, endy);
