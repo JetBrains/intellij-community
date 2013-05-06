@@ -127,6 +127,14 @@ public class SelectionTool extends InputTool {
         myArea.setDescription(null);
       }
       else {
+        if (myInputEvent instanceof MouseEvent) {
+          try {
+            tracker.mouseMove((MouseEvent)myInputEvent, myArea);
+          }
+          catch (Exception e) {
+            // pass
+          }
+        }
         myArea.setCursor(tracker.getDefaultCursor());
         myArea.setDescription(tracker.getDescription());
       }
