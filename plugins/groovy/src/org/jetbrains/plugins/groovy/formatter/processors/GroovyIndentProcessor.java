@@ -50,6 +50,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrElvisE
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
@@ -276,7 +277,14 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
     }
   }
 
-    @Override
+  @Override
+  public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+    if (myChildType == EXTENDS_CLAUSE || myChildType == IMPLEMENTS_CLAUSE) {
+      myResult = Indent.getContinuationIndent();
+    }
+  }
+
+  @Override
   public void visitTypeDefinitionBody(GrTypeDefinitionBody typeDefinitionBody) {
     if (myChildType != mLCURLY && myChildType != mRCURLY) {
       myResult = Indent.getNormalIndent();
