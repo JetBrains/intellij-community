@@ -108,11 +108,11 @@ public class PyTypeModelBuilder {
   }
 
   static class ParamType extends TypeModel {
-    private final String name;
-    private final TypeModel type;
+    @Nullable private final String name;
+    @Nullable private final TypeModel type;
 
 
-    private ParamType(String name, @Nullable TypeModel type) {
+    private ParamType(@Nullable String name, @Nullable TypeModel type) {
       this.name = name;
       this.type = type;
     }
@@ -330,9 +330,13 @@ public class PyTypeModelBuilder {
         add("...");
         return;
       }
-      add(param.name);
+      if (param.name != null) {
+        add(param.name);
+      }
       if (param.type != null) {
-        add(": ");
+        if (param.name != null) {
+          add(": ");
+        }
         param.type.accept(this);
       }
       myDepth--;
