@@ -36,12 +36,6 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     super.setUp();
 
     myFindModel = new FindModel();
-    myFindModel.addObserver(new FindModel.FindModelObserver() {
-      @Override
-      public void findModelChanged(FindModel findModel) {
-        myLivePreviewController.updateInBackground(myFindModel, true);
-      }
-    });
 
     myOutputStream = new ByteArrayOutputStream();
     LivePreview.ourTestOutput = new PrintStream(myOutputStream);
@@ -50,6 +44,12 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
   private void initFind() {
     mySearchResults = new SearchResults(getEditor(), getProject());
     myLivePreviewController = new LivePreviewController(mySearchResults, null);
+    myFindModel.addObserver(new FindModel.FindModelObserver() {
+      @Override
+      public void findModelChanged(FindModel findModel) {
+        myLivePreviewController.updateInBackground(myFindModel, true);
+      }
+    });
     myLivePreviewController.on();
   }
 
@@ -66,6 +66,19 @@ public class FindInEditorTest extends LightCodeInsightTestCase {
     myFindModel.setStringToFind("a");
     myFindModel.setStringToFind("ab");
     myFindModel.setStringToFind("a");
+    checkResults();
+  }
+
+  public void testReplacementWithEmptyString() throws Exception {
+    configureFromFileText("file.txt", "a");
+    initFind();
+
+    myFindModel.setRegularExpressions(true);
+    myFindModel.setStringToFind("a");
+    myFindModel.setStringToReplace("");
+    myFindModel.setReplaceState(true);
+
+    myLivePreviewController.performReplace();
     checkResults();
   }
 

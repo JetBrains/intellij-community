@@ -40,7 +40,6 @@ import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.ui.awt.RelativePoint;
 import com.intellij.util.Processor;
@@ -54,7 +53,7 @@ import java.io.*;
 import java.util.*;
 import java.util.List;
 
-public class LivePreview extends DocumentAdapter implements ReplacementView.Delegate, SearchResults.SearchResultsListener,
+public class LivePreview extends DocumentAdapter implements SearchResults.SearchResultsListener,
                                                             SelectionListener {
 
   private static final Key<Object> IN_SELECTION_KEY = Key.create("LivePreview.IN_SELECTION_KEY");
@@ -71,6 +70,8 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   private static final Key<Object> SEARCH_MARKER = Key.create("LivePreview.SEARCH_MARKER");
 
   public static PrintStream ourTestOutput;
+  private String myReplacementPreviewText;
+  private static boolean NotFound;
 
   @Override
   public void selectionChanged(SelectionEvent e) {
@@ -83,6 +84,10 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
 
   public void inSmartUpdate() {
     myInSmartUpdate = true;
+  }
+
+  public static void processNotFound() {
+    NotFound = true;
   }
 
   public interface Delegate {
@@ -131,13 +136,17 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
   }
 
   private void dumpState() {
-    if (ApplicationManager.getApplication().isUnitTestMode()) {
+    if (ApplicationManager.getApplication().isUnitTestMode() && ourTestOutput != null) {
       dumpEditorMarkupAndSelection(ourTestOutput);
     }
   }
 
   private void dumpEditorMarkupAndSelection(PrintStream dumpStream) {
     dumpStream.println(mySearchResults.getFindModel());
+    if (myReplacementPreviewText != null) {
+      dumpStream.println("--");
+      dumpStream.println("Replacement Preview: " + myReplacementPreviewText);
+    }
     dumpStream.println("--");
 
     Editor editor = mySearchResults.getEditor();
@@ -151,9 +160,10 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
 
     SelectionModel selectionModel = editor.getSelectionModel();
 
-    ranges.add(new Pair<Integer, Character>(selectionModel.getSelectionStart(), '<'));
-    ranges.add(new Pair<Integer, Character>(selectionModel.getSelectionEnd(), '>'));
-
+    if (selectionModel.getSelectionStart() != selectionModel.getSelectionEnd()) {
+      ranges.add(new Pair<Integer, Character>(selectionModel.getSelectionStart(), '<'));
+      ranges.add(new Pair<Integer, Character>(selectionModel.getSelectionEnd(), '>'));
+    }
     ranges.add(new Pair<Integer, Character>(-1, '\n'));
     ranges.add(new Pair<Integer, Character>(editor.getDocument().getTextLength()+1, '\n'));
     ContainerUtil.sort(ranges, new Comparator<Pair<Integer, Character>>() {
@@ -166,7 +176,8 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
           Character c2 = pair2.second;
           if (c1 == '<' && c2 == '[') {
             return 1;
-          } else if (c1 == '[' && c2 == '<') {
+          }
+          else if (c1 == '[' && c2 == '<') {
             return -1;
           }
           return c1.compareTo(c2);
@@ -182,6 +193,12 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
       dumpStream.print(pair.second + document.getText(TextRange.create(Math.max(pair.first, 0), Math.min(pair1.first, document.getTextLength() ))));
     }
     dumpStream.println("\n--");
+
+    if (NotFound) {
+      dumpStream.println("Not Found");
+      dumpStream.println("--");
+      NotFound = false;
+    }
 
     for (RangeHighlighter highlighter : highlighters) {
       dumpStream.println(highlighter + " : " + highlighter.getTextAttributes());
@@ -393,25 +410,38 @@ public class LivePreview extends DocumentAdapter implements ReplacementView.Dele
       final FindModel findModel = mySearchResults.getFindModel();
       if (findModel.isRegularExpressions() && findModel.isReplaceState()) {
 
-        ReplacementView replacementView = new ReplacementView(replacementPreviewText, cursor);
-        replacementView.setDelegate(this);
-
-        BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(replacementView);
-        balloonBuilder.setFadeoutTime(0);
-        balloonBuilder.setFillColor(IdeTooltipManager.GRAPHITE_COLOR);
-        balloonBuilder.setAnimationCycle(0);
-        balloonBuilder.setHideOnClickOutside(false);
-        balloonBuilder.setHideOnKeyOutside(false);
-        balloonBuilder.setHideOnAction(false);
-        balloonBuilder.setCloseButtonEnabled(true);
-        myReplacementBalloon = balloonBuilder.createBalloon();
-
-        myReplacementBalloon.show(new ReplacementBalloonPositionTracker(editor), Balloon.Position.above);
+        showBalloon(cursor, editor, replacementPreviewText);
       }
     }
   }
 
+  private void showBalloon(FindResult cursor, Editor editor, String replacementPreviewText) {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      myReplacementPreviewText = replacementPreviewText;
+      return;
+    }
+
+    ReplacementView replacementView = new ReplacementView(replacementPreviewText, cursor);
+
+    BalloonBuilder balloonBuilder = JBPopupFactory.getInstance().createBalloonBuilder(replacementView);
+    balloonBuilder.setFadeoutTime(0);
+    balloonBuilder.setFillColor(IdeTooltipManager.GRAPHITE_COLOR);
+    balloonBuilder.setAnimationCycle(0);
+    balloonBuilder.setHideOnClickOutside(false);
+    balloonBuilder.setHideOnKeyOutside(false);
+    balloonBuilder.setHideOnAction(false);
+    balloonBuilder.setCloseButtonEnabled(true);
+    myReplacementBalloon = balloonBuilder.createBalloon();
+
+    myReplacementBalloon.show(new ReplacementBalloonPositionTracker(editor), Balloon.Position.above);
+  }
+
   private void hideBalloon() {
+    if (ApplicationManager.getApplication().isUnitTestMode()) {
+      myReplacementPreviewText = null;
+      return;
+    }
+
     if (myReplacementBalloon != null) {
       myReplacementBalloon.hide();
       myReplacementBalloon = null;
