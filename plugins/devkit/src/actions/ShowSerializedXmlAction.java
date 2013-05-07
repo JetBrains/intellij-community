@@ -124,7 +124,8 @@ public class ShowSerializedXmlAction extends DumbAwareAction {
 
     final Element element = XmlSerializer.serialize(o);
     final String text = JDOMUtil.writeElement(element, "\n");
-    Messages.showInfoMessage(project, text, "Serialized XML for '" + className + "'");
+    Messages.showIdeaMessageDialog(project, text, "Serialized XML for '" + className + "'",
+                                   new String[]{CommonBundle.getOkButtonText()}, 0, Messages.getInformationIcon(), null);
   }
 
   @Nullable
