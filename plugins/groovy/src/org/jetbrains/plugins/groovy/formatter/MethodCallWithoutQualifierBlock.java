@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,9 +21,7 @@ import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -39,13 +37,10 @@ public class MethodCallWithoutQualifierBlock extends GroovyBlock {
 
   public MethodCallWithoutQualifierBlock(PsiElement nameElement,
                                          Wrap wrap,
-                                         CommonCodeStyleSettings settings,
-                                         GroovyCodeStyleSettings groovySettings,
                                          boolean topLevel,
                                          List<ASTNode> children,
-                                         PsiElement elem,
-                                         AlignmentProvider alignmentProvider) {
-    super(nameElement.getNode(), Indent.getContinuationWithoutFirstIndent(), wrap, settings, groovySettings, alignmentProvider);
+                                         PsiElement elem, FormattingContext context) {
+    super(nameElement.getNode(), Indent.getContinuationWithoutFirstIndent(), wrap, context);
     myNameElement = nameElement;
     myTopLevel = topLevel;
     myChildren = children;
@@ -58,7 +53,7 @@ public class MethodCallWithoutQualifierBlock extends GroovyBlock {
     if (mySubBlocks == null) {
       mySubBlocks = new ArrayList<Block>();
       final Indent indent = Indent.getContinuationWithoutFirstIndent();
-      mySubBlocks.add(new GroovyBlock(myNameElement.getNode(), indent, myWrap, mySettings, myGroovySettings, myAlignmentProvider));
+      mySubBlocks.add(new GroovyBlock(myNameElement.getNode(), indent, myWrap, myContext));
       new GroovyBlockGenerator(this).addNestedChildrenSuffix(mySubBlocks, null, myTopLevel, myChildren, myChildren.size());
     }
     return mySubBlocks;

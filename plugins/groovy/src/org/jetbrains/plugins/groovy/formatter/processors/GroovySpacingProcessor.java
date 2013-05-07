@@ -32,6 +32,7 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
+import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
@@ -102,6 +103,8 @@ import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.COMMENT_SET;
  */
 public class GroovySpacingProcessor extends GroovyElementVisitor {
   private PsiElement myParent;
+
+  private final GroovyCodeStyleSettings myGroovySettings;
   private final CommonCodeStyleSettings mySettings;
 
   private Spacing myResult;
@@ -109,11 +112,10 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   private ASTNode myChild2;
   private IElementType myType1;
   private IElementType myType2;
-  private GroovyCodeStyleSettings myGroovySettings;
 
-  public GroovySpacingProcessor(ASTNode node, CommonCodeStyleSettings settings, GroovyCodeStyleSettings groovySettings) {
-    mySettings = settings;
-    myGroovySettings = groovySettings;
+  public GroovySpacingProcessor(ASTNode node, FormattingContext context) {
+    mySettings = context.getSettings();
+    myGroovySettings = context.getGroovySettings();
 
     if (init(node)) return;
     if (manageComments()) return;

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,10 +20,8 @@ import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 
 import java.util.List;
 
@@ -36,10 +34,8 @@ public class ClosureBodyBlock extends GroovyBlock {
   public ClosureBodyBlock(@NotNull ASTNode node,
                           @NotNull Indent indent,
                           @Nullable Wrap wrap,
-                          CommonCodeStyleSettings settings,
-                          GroovyCodeStyleSettings groovySettings,
-                          @NotNull AlignmentProvider alignmentProvider) {
-    super(node, indent, wrap, settings, groovySettings, alignmentProvider);
+                          FormattingContext context) {
+    super(node, indent, wrap, context);
   }
 
   @NotNull

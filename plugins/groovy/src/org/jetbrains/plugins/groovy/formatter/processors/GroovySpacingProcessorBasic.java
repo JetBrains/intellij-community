@@ -27,6 +27,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.ClosureBodyBlock;
+import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.MethodCallWithoutQualifierBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -60,8 +61,7 @@ public abstract class GroovySpacingProcessorBasic {
 
   public static Spacing getSpacing(GroovyBlock child1,
                                    GroovyBlock child2,
-                                   CommonCodeStyleSettings settings,
-                                   GroovyCodeStyleSettings groovySettings) {
+                                   FormattingContext context) {
 
     ASTNode leftNode = child1.getNode();
     ASTNode rightNode = child2.getNode();
@@ -70,6 +70,9 @@ public abstract class GroovySpacingProcessorBasic {
 
     IElementType leftType = leftNode.getElementType();
     IElementType rightType = rightNode.getElementType();
+
+    final CommonCodeStyleSettings settings = context.getSettings();
+    final GroovyCodeStyleSettings groovySettings = context.getGroovySettings();
 
     if (!(mirrorsAst(child1) && mirrorsAst(child2))) {
       return NO_SPACING;

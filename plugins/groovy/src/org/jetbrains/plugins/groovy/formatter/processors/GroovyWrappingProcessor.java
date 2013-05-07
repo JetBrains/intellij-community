@@ -37,7 +37,7 @@ public class GroovyWrappingProcessor {
   private final Wrap myCommonWrap;
 
   public GroovyWrappingProcessor(GroovyBlock block) {
-    mySettings = block.getSettings();
+    mySettings = block.getContext().getSettings();
     myNode = block.getNode();
     myParentType = myNode.getElementType();
 
@@ -68,7 +68,9 @@ public class GroovyWrappingProcessor {
 
     mLT, mGT, mLE, mGE, kIN,
 
-    kIN, mCOLON
+    kIN, mCOLON,
+
+    mGSTRING_CONTENT, mGSTRING_END, GSTRING_INJECTION, mREGEX_CONTENT, mREGEX_END, mDOLLAR_SLASH_REGEX_CONTENT, mDOLLAR_SLASH_REGEX_END
   );
 
   public Wrap getChildWrap(ASTNode childNode) {
@@ -89,6 +91,9 @@ public class GroovyWrappingProcessor {
       return Wrap.createWrap(mySettings.THROWS_KEYWORD_WRAP, true);
     }
 
+    if (myParentType == CLOSABLE_BLOCK) {
+      return Wrap.createWrap(WrapType.NONE, false);
+    }
 
     if (myParentType == PARAMETERS_LIST) {
       if (childType == ANNOTATION) {
@@ -157,6 +162,9 @@ public class GroovyWrappingProcessor {
       return Wrap.createWrap(mySettings.ASSERT_STATEMENT_WRAP, true);
     }
 
+    if (myParentType == GSTRING_INJECTION) {
+      return Wrap.createWrap(WrapType.NONE, false);
+    }
 
     if (myParentType == PARAMETERS_LIST) {
       final IElementType pparentType = myNode.getTreeParent().getElementType();
@@ -189,4 +197,5 @@ public class GroovyWrappingProcessor {
 
     return null;
   }
+
 }
