@@ -84,8 +84,6 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
 
   private final GroovyBlock myBlock;
   private final ASTNode myNode;
-  private final Alignment myAlignment;
-  private final Wrap myWrap;
 
   private final AlignmentProvider myAlignmentProvider;
   private final GroovyWrappingProcessor myWrappingProcessor;
@@ -95,8 +93,6 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   public GroovyBlockGenerator(GroovyBlock block) {
     myBlock = block;
     myNode = myBlock.getNode();
-    myAlignment = myBlock.getAlignment();
-    myWrap = myBlock.getWrap();
 
     myContext = block.getContext();
     myAlignmentProvider = myContext.getAlignmentProvider();
@@ -156,8 +152,10 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     // chained properties, calls, indexing, etc
     if (NESTED.contains(elementType) && blockPsi.getParent() != null && !NESTED.contains(blockPsi.getParent().getNode().getElementType())) {
       final List<Block> subBlocks = new ArrayList<Block>();
-      AlignmentProvider.Aligner dotsAligner = myContext.getSettings().ALIGN_MULTILINE_CHAINED_METHODS ? myAlignmentProvider.createAligner(true) : null;
-      addNestedChildren(myNode.getPsi(), subBlocks, dotsAligner, true);
+      AlignmentProvider.Aligner dotsAligner = myContext.getSettings().ALIGN_MULTILINE_CHAINED_METHODS ? myAlignmentProvider.createAligner(false) : null;
+
+      final Wrap wrap = myWrappingProcessor.getChainedMethodCallWrap();
+      addNestedChildren(myNode.getPsi(), subBlocks, dotsAligner, true, wrap);
       return subBlocks;
     }
 
@@ -311,12 +309,6 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     calculateAlignments(children, classLevel);
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
 
-    if (classLevel && myAlignment != null) {
-      final AlignmentProvider.Aligner aligner = myAlignmentProvider.createAligner(true);
-      for (ASTNode child : children) {
-        aligner.append(child.getPsi());
-      }
-    }
     for (ASTNode childNode : children) {
       subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), myWrappingProcessor.getChildWrap(childNode), myContext));
     }
@@ -611,7 +603,11 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   }
 
 
-  private void addNestedChildren(final PsiElement elem, List<Block> list, @Nullable AlignmentProvider.Aligner aligner, final boolean topLevel) {
+  private void addNestedChildren(final PsiElement elem,
+                                 List<Block> list,
+                                 @Nullable AlignmentProvider.Aligner aligner,
+                                 final boolean topLevel,
+                                 Wrap wrap) {
     final List<ASTNode> children = visibleChildren(elem.getNode());
     if (elem instanceof GrMethodCallExpression) {
       GrExpression invokedExpression = ((GrMethodCallExpression)elem).getInvokedExpression();
@@ -622,11 +618,11 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
           int i = 0;
           while (i < grandChildren.size() && nameElement != grandChildren.get(i).getPsi()) i++;
           if (i > 0) {
-            processNestedChildrenPrefix(list, aligner, false, grandChildren, i);
+            processNestedChildrenPrefix(list, aligner, false, grandChildren, i, wrap);
           }
           if (i < grandChildren.size()) {
             LOG.assertTrue(nameElement == grandChildren.get(i).getPsi());
-            list.add(new MethodCallWithoutQualifierBlock(nameElement, myWrap, topLevel, children, elem, myContext));
+            list.add(new MethodCallWithoutQualifierBlock(nameElement, wrap, topLevel, children, elem, myContext));
           }
           return;
         }
@@ -634,7 +630,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     }
 
 
-    processNestedChildrenPrefix(list, aligner, topLevel, children, children.size());
+    processNestedChildrenPrefix(list, aligner, topLevel, children, children.size(), wrap);
   }
 
   private static boolean isAfterMultiLineClosure(ASTNode dot) {
@@ -652,11 +648,16 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     return false;
   }
 
-  private void processNestedChildrenPrefix(List<Block> list, @Nullable AlignmentProvider.Aligner aligner, boolean topLevel, List<ASTNode> children, int limit) {
+  private void processNestedChildrenPrefix(List<Block> list,
+                                           @Nullable AlignmentProvider.Aligner aligner,
+                                           boolean topLevel,
+                                           List<ASTNode> children,
+                                           int limit,
+                                           Wrap wrap) {
     ASTNode fst = children.get(0);
     LOG.assertTrue(limit > 0);
     if (NESTED.contains(fst.getElementType())) {
-      addNestedChildren(fst.getPsi(), list, aligner, false);
+      addNestedChildren(fst.getPsi(), list, aligner, false, wrap);
     }
     else {
       Indent indent = Indent.getContinuationWithoutFirstIndent();
@@ -665,7 +666,11 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     addNestedChildrenSuffix(list, aligner, topLevel, children, limit);
   }
 
-  void addNestedChildrenSuffix(List<Block> list, @Nullable AlignmentProvider.Aligner aligner, boolean topLevel, List<ASTNode> children, int limit) {
+  void addNestedChildrenSuffix(List<Block> list,
+                               @Nullable AlignmentProvider.Aligner aligner,
+                               boolean topLevel,
+                               List<ASTNode> children,
+                               int limit) {
     for (int i = 1; i < limit; i++) {
       ASTNode childNode = children.get(i);
       if (canBeCorrectBlock(childNode)) {

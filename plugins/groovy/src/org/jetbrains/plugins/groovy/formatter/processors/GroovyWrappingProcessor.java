@@ -198,4 +198,7 @@ public class GroovyWrappingProcessor {
     return null;
   }
 
+  public Wrap getChainedMethodCallWrap() {
+    return Wrap.createWrap(mySettings.METHOD_CALL_CHAIN_WRAP, true);
+  }
 }

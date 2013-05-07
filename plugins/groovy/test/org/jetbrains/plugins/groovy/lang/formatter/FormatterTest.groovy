@@ -719,6 +719,18 @@ print abc ?:
 '''
   }
 
+  void testWrapChainedMethodCalls() {
+    groovySettings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
+
+    checkFormatting('''\
+foo().barbar().abcd()
+''', '''\
+foo().
+    barbar().
+    abcd()
+''')
+  }
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES;
