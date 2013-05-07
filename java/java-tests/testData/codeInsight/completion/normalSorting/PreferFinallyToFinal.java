@@ -1,6 +1,6 @@
 class A {
   {
-    try {}
+    try {} catch (Exception e) {}
     fin<caret>x
   }
 }
