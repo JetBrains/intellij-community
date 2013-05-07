@@ -24,6 +24,7 @@ import com.intellij.openapi.Disposable;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.JDOMExternalizable;
 import com.intellij.openapi.vfs.VirtualFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 public abstract class ModuleExtension<T extends ModuleExtension> implements JDOMExternalizable, Disposable, Comparable<ModuleExtension> {
@@ -47,7 +48,8 @@ public abstract class ModuleExtension<T extends ModuleExtension> implements JDOM
     return null;
   }
 
-  public int compareTo(final ModuleExtension o) {
+  @Override
+  public int compareTo(@NotNull final ModuleExtension o) {
     return getClass().getName().compareTo(o.getClass().getName());
   }
 }

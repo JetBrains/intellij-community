@@ -17,7 +17,6 @@ package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
@@ -29,7 +28,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User: cdr
  */
-public class NumericOverflowInspection extends BaseLocalInspectionTool {
+public class NumericOverflowInspection extends BaseJavaBatchLocalInspectionTool {
   private static final Key<String> HAS_OVERFLOW_IN_CHILD = Key.create("HAS_OVERFLOW_IN_CHILD");
 
   @Nls

@@ -18,7 +18,6 @@ package com.intellij.codeInspection.localCanBeFinal;
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
@@ -42,7 +41,7 @@ import java.util.List;
 /**
  * @author max
  */
-public class LocalCanBeFinal extends BaseLocalInspectionTool {
+public class LocalCanBeFinal extends BaseJavaBatchLocalInspectionTool {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.localCanBeFinal.LocalCanBeFinal");
 
   public boolean REPORT_VARIABLES = true;
