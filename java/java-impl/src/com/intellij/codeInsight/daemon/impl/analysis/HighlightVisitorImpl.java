@@ -951,6 +951,10 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
       highlightReferencedMethodOrClassName(ref, resolved);
     }
 
+    if (parent instanceof PsiNewExpression && !(resolved instanceof PsiClass) && resolved instanceof PsiNamedElement && ((PsiNewExpression)parent).getClassOrAnonymousClassReference() == ref) {
+       myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(ref)
+                      .descriptionAndTooltip("Cannot find symbol " + ((PsiNamedElement)resolved).getName()).create());
+    }
     if (!myHolder.hasErrorResults() && resolved instanceof PsiClass) {
       final PsiClass aClass = ((PsiClass)resolved).getContainingClass();
       if (aClass != null) {

@@ -375,6 +375,7 @@ public class LightAdvHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testInnerClassConstantReference() { doTest(false, false); }
   public void testIDEA60875() { doTest(false, false); }
   public void testIDEA71645() { doTest(false, false); }
+  public void testNewExpressionClass() { doTest(false, false); }
 
   public void testNoEnclosingInstanceWhenStaticNestedInheritsFromContainingClass() throws Exception {
     doTest(false, false);
