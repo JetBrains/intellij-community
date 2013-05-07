@@ -219,7 +219,11 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
   //reorder(targetDirectory)
 }
 
-public def layoutCommunityPlugins(String home) {
+public def layoutCommunityPlugins(String home, String androidHome=null) {
+  if (androidHome == null) {
+    androidHome = "$home/plugins/android"
+  }
+
   dir("plugins") {
     def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "hg4idea", "github", "ui-designer-core", "tasks-time-tracking"]
 
@@ -449,9 +453,10 @@ public def layoutCommunityPlugins(String home) {
     }
 
     layoutPlugin("android") {
-      fileset(dir: "${home}/plugins/android/lib") {
+      fileset(dir: "${androidHome}/lib") {
         include(name: "**/*.jar")
         exclude(name: "**/ddmlib_1.jar")
+        exclude(name: "src/*.jar")
       }
 
       jar("android-common.jar") {
