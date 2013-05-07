@@ -237,6 +237,7 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testIDEA22005() throws Exception { doTest5(false);}
 
   public void testIDEA57877() throws Exception { doTest5(false);}
+  public void testTypeParamsCyclicInference() throws Exception { doTest5(false);}
   public void testCaptureTopLevelWildcardsForConditionalExpression() throws Exception { doTest5(false);}
   public void testGenericsOverrideMethodInRawInheritor() throws Exception { doTest5(false);}
 

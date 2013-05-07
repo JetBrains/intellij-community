@@ -998,6 +998,8 @@ public class GenericsHighlightUtil {
 
     for (int i = 0; i < typeParameters.length; i++) {
       final PsiTypeParameter typeParameter1 = typeParameters[i];
+      final HighlightInfo cyclicInheritance = HighlightClassUtil.checkCyclicInheritance(typeParameter1);
+      if (cyclicInheritance != null) return cyclicInheritance;
       String name1 = typeParameter1.getName();
       for (int j = i + 1; j < typeParameters.length; j++) {
         final PsiTypeParameter typeParameter2 = typeParameters[j];
