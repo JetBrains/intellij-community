@@ -548,6 +548,17 @@ public class GenericsHighlightUtil {
     for (HierarchicalMethodSignature superSignature : supers) {
       info = checkSameErasureNotSubSignatureInner(superSignature, manager, aClass, sameErasureMethods);
       if (info != null) return info;
+
+      if (superSignature.isRaw() && !signature.isRaw()) {
+        final PsiType[] parameterTypes = signature.getParameterTypes();
+        PsiType[] types = superSignature.getParameterTypes();
+        for (int i = 0; i < types.length; i++) {
+          if (!Comparing.equal(parameterTypes[i], TypeConversionUtil.erasure(types[i]))) {
+            return getSameErasureMessage(false, method, superSignature.getMethod(), HighlightNamesUtil.getClassDeclarationTextRange(aClass));
+          }
+        }
+      }
+
     }
     return null;
   }
