@@ -21,6 +21,7 @@ import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.text.CaseInsensitiveStringHashingStrategy;
 import gnu.trove.THashMap;
@@ -41,8 +42,7 @@ public class EnvironmentUtil {
 
   private static final Future<Map<String, String>> ourEnvGetter;
   static {
-    boolean readShellEnv = SystemInfo.isMac && SystemProperties.getBooleanProperty("idea.fix.mac.env", true);
-    if (readShellEnv) {
+    if (SystemInfo.isMac && Registry.is("idea.fix.mac.env")) {
       ExecutorService executor = Executors.newSingleThreadExecutor();
       ourEnvGetter = executor.submit(new Callable<Map<String, String>>() {
         @Override
