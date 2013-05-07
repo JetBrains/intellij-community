@@ -113,7 +113,7 @@ public class GroovyMoveScriptTest extends LightCodeInsightFixtureTestCase {
 
     VirtualFileManager.getInstance().syncRefresh();
     try {
-      PlatformTestUtil.assertDirectoriesEqual(expectedRoot, actualRoot, VirtualFileFilter.ALL);
+      PlatformTestUtil.assertDirectoriesEqual(expectedRoot, actualRoot);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

@@ -64,7 +64,6 @@ import javax.swing.tree.TreePath;
 import java.awt.*;
 import java.awt.event.InvocationEvent;
 import java.io.File;
-import java.io.FilenameFilter;
 import java.io.IOException;
 import java.io.StringWriter;
 import java.text.DecimalFormat;
@@ -83,7 +82,6 @@ import static org.junit.Assert.assertNotNull;
 @SuppressWarnings("UseOfSystemOutOrSystemErr")
 public class PlatformTestUtil {
   public static final boolean COVERAGE_ENABLED_BUILD = "true".equals(System.getProperty("idea.coverage.enabled.build"));
-  public static final CvsVirtualFileFilter CVS_FILE_FILTER = new CvsVirtualFileFilter();
 
   public static <T> void registerExtension(final ExtensionPointName<T> name, final T t, final Disposable parentDisposable) {
     registerExtension(Extensions.getRootArea(), name, t, parentDisposable);
@@ -598,6 +596,10 @@ public class PlatformTestUtil {
     return map;
   }
 
+  public static void assertDirectoriesEqual(VirtualFile dirAfter, VirtualFile dirBefore) throws IOException {
+    assertDirectoriesEqual(dirAfter, dirBefore, null);
+  }
+
   @SuppressWarnings("UnsafeVfsRecursion")
   public static void assertDirectoriesEqual(VirtualFile dirAfter, VirtualFile dirBefore, @Nullable VirtualFileFilter fileFilter) throws IOException {
     FileDocumentManager.getInstance().saveAllDocuments();
@@ -701,8 +703,8 @@ public class PlatformTestUtil {
       try {
         tempDirectory1 = PlatformTestCase.createTempDir("tmp1");
         tempDirectory2 = PlatformTestCase.createTempDir("tmp2");
-        ZipUtil.extract(jarFile1, tempDirectory1, CVS_FILE_FILTER);
-        ZipUtil.extract(jarFile2, tempDirectory2, CVS_FILE_FILTER);
+        ZipUtil.extract(jarFile1, tempDirectory1, null);
+        ZipUtil.extract(jarFile2, tempDirectory2, null);
       }
       finally {
         jarFile2.close();
@@ -723,7 +725,7 @@ public class PlatformTestUtil {
         dirBefore.refresh(false, true);
       }
     });
-    assertDirectoriesEqual(dirAfter, dirBefore, CVS_FILE_FILTER);
+    assertDirectoriesEqual(dirAfter, dirBefore);
   }
 
   public static void assertElementsEqual(final Element expected, final Element actual) throws IOException {
@@ -736,18 +738,6 @@ public class PlatformTestUtil {
     final StringWriter writer = new StringWriter();
     JDOMUtil.writeElement(element, writer, "\n");
     return writer.getBuffer().toString();
-  }
-
-  public static class CvsVirtualFileFilter implements VirtualFileFilter, FilenameFilter {
-    @Override
-    public boolean accept(VirtualFile file) {
-      return !file.isDirectory() || !"CVS".equals(file.getName());
-    }
-
-    @Override
-    public boolean accept(File dir, String name) {
-      return !name.contains("CVS");
-    }
   }
 
   public static String getCommunityPath() {

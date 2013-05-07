@@ -203,6 +203,6 @@ public class ExtractSuperClassTest extends RefactoringTestCase {
     String rootAfter = getRoot() + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-    IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir, IdeaTestUtil.CVS_FILE_FILTER);
+    IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
   }
 }

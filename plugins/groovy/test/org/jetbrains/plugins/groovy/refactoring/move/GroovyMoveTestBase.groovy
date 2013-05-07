@@ -43,7 +43,7 @@ public abstract class GroovyMoveTestBase extends JavaCodeInsightFixtureTestCase 
     VirtualFile rootDir2 = localFileSystem.findFileByPath(rootAfter.replace(File.separatorChar, '/' as char));
     PostprocessReformattingAspect.getInstance(myFixture.project).doPostponedFormatting();
     localFileSystem.refresh(false)
-    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir, PlatformTestUtil.CVS_FILE_FILTER);
+    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
   }
 
   abstract boolean perform(VirtualFile root, String moveTo, String... names)

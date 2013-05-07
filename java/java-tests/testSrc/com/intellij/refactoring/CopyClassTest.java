@@ -18,7 +18,6 @@ package com.intellij.refactoring;
 import com.intellij.JavaTestUtil;
 import com.intellij.codeInsight.CodeInsightTestCase;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
-import com.intellij.openapi.projectRoots.impl.JavaSdkImpl;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -101,7 +100,7 @@ public class CopyClassTest extends CodeInsightTestCase {
     String rootAfter = root + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir, PlatformTestUtil.CVS_FILE_FILTER);
+    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
   }
 
   public void testPackageHierarchy() throws Exception {
@@ -126,6 +125,6 @@ public class CopyClassTest extends CodeInsightTestCase {
     String rootAfter = root + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir, PlatformTestUtil.CVS_FILE_FILTER);
+    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
   }
 }

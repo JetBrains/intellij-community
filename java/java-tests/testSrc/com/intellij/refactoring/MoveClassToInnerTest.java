@@ -27,6 +27,7 @@ import com.intellij.psi.impl.source.PostprocessReformattingAspect;
 import com.intellij.psi.search.ProjectScope;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassToInnerProcessor;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.util.containers.MultiMap;
@@ -132,7 +133,7 @@ public class MoveClassToInnerTest extends RefactoringTestCase {
     String rootAfter = getRoot() + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-    IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir, IdeaTestUtil.CVS_FILE_FILTER);
+    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
   }
 
   private VirtualFile prepareTest() throws Exception {

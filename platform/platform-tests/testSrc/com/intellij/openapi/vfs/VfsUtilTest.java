@@ -95,7 +95,7 @@ public class VfsUtilTest extends PlatformLangTestCase {
     final VirtualFileFilter fileFilter = new VirtualFileFilter() {
       @Override
       public boolean accept(VirtualFile file) {
-        return PlatformTestUtil.CVS_FILE_FILTER.accept(file) && !file.getName().endsWith(".new");
+        return !file.getName().endsWith(".new");
       }
     };
     for (VirtualFile child : children) {
