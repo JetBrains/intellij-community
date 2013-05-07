@@ -118,6 +118,7 @@ public class SingleRowLayout extends TabLayout {
       for (TabInfo each : data.myVisibleInfos) {
         final TabLabel eachLabel = myTabs.myInfo2Label.get(each);
         if (!eachLabel.isValid()) {
+          layoutLabels = true;
           break;
         }
         if (myTabs.getSelectedInfo() == each) {
