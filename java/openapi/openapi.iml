@@ -26,6 +26,7 @@
     <orderEntry type="module" module-name="resources-en" exported="" />
     <orderEntry type="module" module-name="java-psi-api" exported="" />
     <orderEntry type="module" module-name="java-indexing-api" exported="" />
+    <orderEntry type="module" module-name="java-analysis-api" exported="" />
   </component>
   <component name="copyright">
     <option name="body" value="/*&#10; * Copyright (c) $today.year Your Corporation. All Rights Reserved.&#10; */" />

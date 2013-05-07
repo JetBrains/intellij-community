@@ -26,6 +26,7 @@
     <orderEntry type="library" name="Netty" level="project" />
     <orderEntry type="module" module-name="testFramework-java" scope="TEST" />
     <orderEntry type="module" module-name="jps-model-impl" />
+    <orderEntry type="module" module-name="java-analysis-impl" />
   </component>
   <component name="copyright">
     <Base>
