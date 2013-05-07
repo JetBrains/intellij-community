@@ -55,7 +55,7 @@ import static com.intellij.util.io.IOUtil.deleteAllFilesStartingWith;
 public class FSRecords implements Forceable {
   private static final Logger LOG = Logger.getInstance("#com.intellij.vfs.persistent.FSRecords");
 
-  public static final boolean weHaveContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", false);
+  public static final boolean weHaveContentHashes = SystemProperties.getBooleanProperty("idea.share.contents", true);
   private static final int VERSION = 19 + (weHaveContentHashes ? 2:0);
 
   private static final int PARENT_OFFSET = 0;
