@@ -388,11 +388,11 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   protected abstract boolean shouldShowExplicitLambdaType(PsiAnonymousClass anonymousClass, PsiNewExpression expression);
 
   private static boolean seemsLikeLambda(@Nullable final PsiClass baseClass) {
-    if (baseClass == null) return false;
+    return baseClass != null && PsiUtil.hasDefaultConstructor(baseClass, true);
+  }
 
+  private static boolean isImplementingLambdaMethod(PsiClass baseClass) {
     if (!baseClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
-
-    if (!PsiUtil.hasDefaultConstructor(baseClass, true)) return false;
 
     for (final PsiMethod method : baseClass.getMethods()) {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -672,7 +672,8 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         final PsiExpressionList argumentList = expression.getArgumentList();
         if (argumentList != null && argumentList.getExpressions().length == 0) {
           final PsiMethod[] methods = anonymousClass.getMethods();
-          if (hasOnlyOneLambdaMethod(anonymousClass, !quick) && (quick || seemsLikeLambda(anonymousClass.getBaseClassType().resolve()))) {
+          PsiClass baseClass = anonymousClass.getBaseClassType().resolve();
+          if (hasOnlyOneLambdaMethod(anonymousClass, !quick) && seemsLikeLambda(baseClass)) {
             final PsiMethod method = methods[0];
             final PsiCodeBlock body = method.getBody();
             if (body != null) {
@@ -704,6 +705,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
               if (lastLineEnd < firstLineStart) return false;
 
               String type = quick ? "" : getOptionalLambdaType(anonymousClass, expression);
+              String methodName = quick || !isImplementingLambdaMethod(baseClass) ? method.getName() : "";
 
               final String params = StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
                 @Override
@@ -711,7 +713,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                   return psiParameter.getName();
                 }
               }, ", ");
-              @NonNls final String lambdas = type + "(" + params + ") -> {";
+              @NonNls final String lambdas = type + methodName + "(" + params + ") -> {";
 
               final int closureStart = expression.getTextRange().getStartOffset();
               final int closureEnd = expression.getTextRange().getEndOffset();
