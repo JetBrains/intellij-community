@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -29,6 +29,7 @@ import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrEnumDefinitionBody;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrEnumConstantList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMembersDeclaration;
@@ -190,5 +191,22 @@ public abstract class GrTypeDefinitionBodyBase extends GrStubElementBase<EmptySt
     public void accept(GroovyElementVisitor visitor) {
       visitor.visitEnumDefinitionBody(this);
     }
+  }
+
+  @Override
+  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+    ASTNode afterLast = last.getTreeNext();
+    ASTNode next;
+    for (ASTNode child = first; child != afterLast; child = next) {
+      next = child.getTreeNext();
+      if (child.getElementType() == GroovyElementTypes.CONSTRUCTOR_DEFINITION) {
+        ASTNode oldIdentifier = child.findChildByType(GroovyTokenTypes.mIDENT);
+        ASTNode newIdentifier = ((GrTypeDefinition)getParent()).getNameIdentifierGroovy().getNode().copyElement();
+        child.replaceChild(oldIdentifier, newIdentifier);
+      }
+    }
+
+
+    return super.addInternal(first, last, anchor, before);
   }
 }
