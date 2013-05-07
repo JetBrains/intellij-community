@@ -1284,7 +1284,9 @@ public class DirectoryIndexImpl extends DirectoryIndex {
 
       copy.multiDirPackages.clear();
       for (int[] dirs : multiDirPackages) {
-        if (dirs == null) continue;
+        if (dirs == null) {
+          dirs = ArrayUtil.EMPTY_INT_ARRAY;
+        }
         int[] filtered = ContainerUtil.filter(dirs, new TIntProcedure() {
           @Override
           public boolean execute(int id) {
