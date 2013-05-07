@@ -30,7 +30,11 @@ public class RedundantTypeArgsInspectionTest extends JavaCodeInsightFixtureTestC
     doTest();
   }
 
-  public void testConditionalExpression() throws Throwable { // javac non-boxing: IDEA-53984
+  public void testConditionalExpression() throws Throwable {
+    doTest();
+  }
+
+  public void testBoundInference() throws Throwable {
     doTest();
   }
 }

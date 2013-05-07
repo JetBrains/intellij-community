@@ -106,12 +106,11 @@ public class RedundantTypeArgsInspection extends GenericsInspectionToolBase {
           if (typeParameters.length == typeArguments.length) {
             final PsiParameter[] parameters = method.getParameterList().getParameters();
             PsiResolveHelper resolveHelper = JavaPsiFacade.getInstance(expression.getProject()).getResolveHelper();
-            for (int i = 0; i < typeParameters.length; i++) {
+            final PsiSubstitutor psiSubstitutor = resolveHelper
+              .inferTypeArguments(typeParameters, parameters, argumentList.getExpressions(), PsiSubstitutor.EMPTY, expression, DefaultParameterTypeInferencePolicy.INSTANCE);
+            for (int i = 0, length = typeParameters.length; i < length; i++) {
               PsiTypeParameter typeParameter = typeParameters[i];
-              final PsiType inferredType = resolveHelper.inferTypeForMethodTypeParameter(typeParameter, parameters,
-                                                                                        argumentList.getExpressions(),
-                                                                                        resolveResult.getSubstitutor(), expression,
-                                                                                        DefaultParameterTypeInferencePolicy.INSTANCE);
+              final PsiType inferredType = psiSubstitutor.getSubstitutionMap().get(typeParameter);
               if (!typeArguments[i].equals(inferredType)) return;
               if (PsiUtil.resolveClassInType(method.getReturnType()) == typeParameter && PsiPrimitiveType.getUnboxedType(inferredType) != null) return;
             }
