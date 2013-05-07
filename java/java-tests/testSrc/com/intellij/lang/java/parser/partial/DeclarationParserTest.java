@@ -73,6 +73,8 @@ public class DeclarationParserTest extends JavaParsingTestCase {
   public void testUnclosedSemicolon() { doParserTest("{ int field }", false, false); }
   public void testMissingInitializerExpression() { doParserTest("{ int field=; }", false, false); }
   public void testMultiLineUnclosed() { doParserTest("{ int \n Object o; }", false, false); }
+  public void testUnclosedField1() { doParserTest("{ String f1\n\n @Anno String f2; }", false, false); }
+  public void testUnclosedField2() { doParserTest("{ String f1\n\n @Anno\n String f2; }", false, false); }
 
   public void testMethodNormal0() { doParserTest("{ void f() {} }", false, false); }
   public void testMethodNormal1() { doParserTest("{ void f(); }", false, false); }
