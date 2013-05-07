@@ -165,7 +165,7 @@ public class Range {
     return myOffset1 <= line && myOffset2 >= line;
   }
 
-  public boolean isMoreThen(int line) {
+  public boolean isAfter(int line) {
     if (myType == DELETED)
       return (getOffset1() - 1) > line;
     else
