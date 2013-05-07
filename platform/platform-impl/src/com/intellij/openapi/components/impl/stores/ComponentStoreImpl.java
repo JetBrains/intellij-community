@@ -65,8 +65,8 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     throw new UnsupportedOperationException("Method getDefaultsStorage is not supported in " + getClass());
   }
 
+  @Override
   public void initComponent(@NotNull final Object component, final boolean service) {
-
     if (component instanceof SettingsSavingComponent) {
       SettingsSavingComponent settingsSavingComponent = (SettingsSavingComponent)component;
       mySettingsSavingComponents.add(settingsSavingComponent);
@@ -79,6 +79,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
 
     try {
       ApplicationManagerEx.getApplicationEx().runReadAction(new Runnable() {
+        @Override
         public void run() {
           if (component instanceof PersistentStateComponent) {
             initPersistentComponent((PersistentStateComponent<?>)component, false);
@@ -97,11 +98,13 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     }
   }
 
+  @Override
   public boolean isSaving() {
     return mySession != null;
   }
 
 
+  @Override
   @NotNull
   public SaveSession startSave() throws IOException {
     try {
@@ -411,6 +414,8 @@ public abstract class ComponentStoreImpl implements IComponentStore {
       ShutDownTracker.getInstance().registerStopperThread(Thread.currentThread());
     }
 
+    @NotNull
+    @Override
     public List<IFile> getAllStorageFilesToSave(final boolean includingSubStructures) throws IOException {
       try {
         return myStorageManagerSaveSession.getAllStorageFilesToSave();
@@ -420,6 +425,8 @@ public abstract class ComponentStoreImpl implements IComponentStore {
       }
     }
 
+    @NotNull
+    @Override
     public SaveSession save() throws IOException {
       try {
         final SettingsSavingComponent[] settingsComponents =
@@ -448,6 +455,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
       return this;
     }
 
+    @Override
     public void finishSave() {
       try {
         getStateStorageManager().finishSave(myStorageManagerSaveSession);
@@ -459,6 +467,7 @@ public abstract class ComponentStoreImpl implements IComponentStore {
       }
     }
 
+    @Override
     public void reset() {
       try {
         getStateStorageManager().reset();
@@ -490,18 +499,22 @@ public abstract class ComponentStoreImpl implements IComponentStore {
       myStorageManagerSaveSession = storageManager.startSave(session);
     }
 
+    @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
       return myStorageManagerSaveSession.analyzeExternalChanges(changedFiles);
     }
 
+    @NotNull
+    @Override
     public List<IFile> getAllStorageFiles(final boolean includingSubStructures) {
       return myStorageManagerSaveSession.getAllStorageFiles();
     }
 
   }
 
-  public boolean isReloadPossible(final Set<String> componentNames) {
+  @Override
+  public boolean isReloadPossible(@NotNull final Set<String> componentNames) {
     for (String componentName : componentNames) {
       final Object component = myComponents.get(componentName);
 
@@ -516,7 +529,8 @@ public abstract class ComponentStoreImpl implements IComponentStore {
     return true;
   }
 
-  public void reinitComponents(final Set<String> componentNames, final boolean reloadData) {
+  @Override
+  public void reinitComponents(@NotNull final Set<String> componentNames, final boolean reloadData) {
     for (String componentName : componentNames) {
       final PersistentStateComponent component = (PersistentStateComponent)myComponents.get(componentName);
       if (component != null) {

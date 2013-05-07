@@ -51,35 +51,42 @@ public class HtmlUnknownAttributeInspection extends HtmlUnknownTagInspection {
     super("");
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return XmlBundle.message("html.inspections.unknown.attribute");
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return ATTRIBUTE_SHORT_NAME;
   }
 
+  @Override
   protected String getCheckboxTitle() {
     return XmlBundle.message("html.inspections.unknown.tag.attribute.checkbox.title");
   }
 
+  @Override
   protected String getPanelTitle() {
     return XmlBundle.message("html.inspections.unknown.tag.attribute.title");
   }
 
+  @Override
   @NotNull
   protected Logger getLogger() {
     return LOG;
   }
 
+  @Override
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     // does nothing! this method should be overridden empty!
   }
 
+  @Override
   protected void checkAttribute(@NotNull final XmlAttribute attribute, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     final XmlTag tag = attribute.getParent();
 

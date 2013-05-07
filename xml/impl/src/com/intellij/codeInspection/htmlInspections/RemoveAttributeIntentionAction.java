@@ -38,16 +38,19 @@ public class RemoveAttributeIntentionAction implements LocalQuickFix {
     myLocalName = localName;
   }
 
+  @Override
   @NotNull
   public String getName() {
     return XmlErrorMessages.message("remove.attribute.quickfix.text", myLocalName);
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return XmlErrorMessages.message("remove.attribute.quickfix.family");
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     PsiElement e = descriptor.getPsiElement();
     final XmlAttribute myAttribute = PsiTreeUtil.getParentOfType(e, XmlAttribute.class);
@@ -58,6 +61,7 @@ public class RemoveAttributeIntentionAction implements LocalQuickFix {
     }
 
     new WriteCommandAction(project) {
+      @Override
       protected void run(final Result result) throws Throwable {
         myAttribute.delete();
       }

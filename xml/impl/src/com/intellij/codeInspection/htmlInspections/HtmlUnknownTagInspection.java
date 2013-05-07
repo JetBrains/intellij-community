@@ -73,18 +73,21 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
     myValues = reparseProperties(defaultValues);
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return XmlBundle.message("html.inspections.unknown.tag");
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return TAG_SHORT_NAME;
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     final JPanel result = new JPanel(new BorderLayout());
@@ -94,6 +97,7 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
 
     final FieldPanel additionalAttributesPanel = new FieldPanel(null, getPanelTitle(), null, null);
     additionalAttributesPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         final Document document = e.getDocument();
         try {
@@ -111,6 +115,7 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
     final JCheckBox checkBox = new JCheckBox(getCheckboxTitle());
     checkBox.setSelected(myCustomValuesEnabled);
     checkBox.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(ActionEvent e) {
         final boolean b = checkBox.isSelected();
         if (b != myCustomValuesEnabled) {
@@ -207,6 +212,7 @@ public class HtmlUnknownTagInspection extends HtmlLocalInspectionTool {
     return HtmlUtil.SVG_NAMESPACE.equals(ns) || HtmlUtil.MATH_ML_NAMESPACE.endsWith(ns);
   }
 
+  @Override
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     if (!(tag instanceof HtmlTag) || !XmlHighlightVisitor.shouldBeValidated(tag) || isInSpecialHtml5Namespace(tag)) {
       return;

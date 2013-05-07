@@ -28,6 +28,7 @@ import com.intellij.testFramework.LightPlatformLangTestCase;
 import com.intellij.util.io.fs.IFile;
 import org.jdom.Document;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
@@ -102,11 +103,13 @@ public class XmlElementStorageTest extends LightPlatformLangTestCase {
           mySavedDocument = (Document)getDocumentToSave().clone();
         }
 
+        @NotNull
         @Override
         public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
           return needsSave() ? getAllStorageFiles() : Collections.<IFile>emptyList();
         }
 
+        @NotNull
         @Override
         public List<IFile> getAllStorageFiles() {
           throw new UnsupportedOperationException("Method getAllStorageFiles not implemented in " + getClass());

@@ -20,10 +20,7 @@ import com.intellij.codeHighlighting.BackgroundEditorHighlighter;
 import com.intellij.codeHighlighting.HighlightingPass;
 import com.intellij.codeHighlighting.Pass;
 import com.intellij.codeHighlighting.TextEditorHighlightingPass;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzerSettings;
-import com.intellij.codeInsight.daemon.LineMarkerInfo;
-import com.intellij.codeInsight.daemon.ReferenceImporter;
+import com.intellij.codeInsight.daemon.*;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.impl.IntentionHintComponent;
 import com.intellij.concurrency.Job;
@@ -122,7 +119,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
 
     mySettings = daemonCodeAnalyzerSettings;
     myEditorTracker = editorTracker;
-    myLastSettings = (DaemonCodeAnalyzerSettings)daemonCodeAnalyzerSettings.clone();
+    myLastSettings = ((DaemonCodeAnalyzerSettingsImpl)daemonCodeAnalyzerSettings).clone();
 
     myFileStatusMap = new FileStatusMap(myProject);
     myPassExecutorService = new PassExecutorService(myProject) {
@@ -368,7 +365,7 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
     if (settings.isCodeHighlightingChanged(myLastSettings)) {
       restart();
     }
-    myLastSettings = (DaemonCodeAnalyzerSettings)settings.clone();
+    myLastSettings = ((DaemonCodeAnalyzerSettingsImpl)settings).clone();
   }
 
   @Override

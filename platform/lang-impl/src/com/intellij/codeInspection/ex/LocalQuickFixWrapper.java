@@ -26,6 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiManager;
 import com.intellij.psi.util.PsiModificationTracker;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
@@ -38,7 +39,7 @@ public class LocalQuickFixWrapper extends QuickFixAction {
   private final QuickFix myFix;
   private String myText;
 
-  public LocalQuickFixWrapper(QuickFix fix, DescriptorProviderInspection tool) {
+  public LocalQuickFixWrapper(@NotNull QuickFix fix, @NotNull DescriptorProviderInspection tool) {
     super(fix.getName(), tool);
     myTool = tool;
     myFix = fix;

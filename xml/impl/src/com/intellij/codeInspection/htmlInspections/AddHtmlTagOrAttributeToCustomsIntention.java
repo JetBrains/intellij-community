@@ -43,6 +43,7 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
     myType = type;
   }
 
+  @Override
   @NotNull
   public String getText() {
     if (myType == XmlEntitiesInspection.UNKNOWN_TAG) {
@@ -60,15 +61,18 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
     return getFamilyName();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return XmlBundle.message("fix.html.family");
   }
 
+  @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull Project project, Editor editor, final PsiFile file) throws IncorrectOperationException {
     InspectionProfile profile = InspectionProjectProfileManager.getInstance(project).getInspectionProfile();
     profile.modifyToolSettings(myInspectionKey, file, new Consumer<InspectionProfileEntry>() {
@@ -80,6 +84,7 @@ public class AddHtmlTagOrAttributeToCustomsIntention implements IntentionAction 
     });
   }
 
+  @Override
   public boolean startInWriteAction() {
     return false;
   }

@@ -49,6 +49,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   private static final Key<IProperty> CACHE = Key.create("i18n.property.cache");
   public static final IProperty NULL = new PropertyImpl(new PropertyStubImpl(null, null), PropertiesElementTypes.PROPERTY);
 
+  @Override
   @NotNull
   public FoldingDescriptor[] buildFoldRegions(@NotNull PsiElement element, @NotNull Document document, boolean quick) {
     if (!(element instanceof PsiJavaFile) || quick || !isFoldingsOn()) {
@@ -115,6 +116,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
   }
 
 
+  @Override
   public String getPlaceholderText(@NotNull ASTNode node) {
     final PsiElement element = SourceTreeToPsiMap.treeElementToPsi(node);
     if (element instanceof PsiLiteralExpression) {
@@ -197,7 +199,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
 
   private static boolean isValid(Property property, PsiLiteralExpression literal) {
     if (literal == null || property == null || !property.isValid()) return false;
-    return StringUtil.unquoteString(literal.getText()).equals(property.getKey());    
+    return StringUtil.unquoteString(literal.getText()).equals(property.getKey());
   }
 
   private static String formatI18nProperty(PsiLiteralExpression literal, IProperty property) {
@@ -205,6 +207,7 @@ public class PropertyFoldingBuilder extends FoldingBuilderEx {
            literal.getText() : "\"" + property.getValue() + "\"";
   }
 
+  @Override
   public boolean isCollapsedByDefault(@NotNull ASTNode node) {
     return isFoldingsOn();
   }

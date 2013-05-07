@@ -33,10 +33,10 @@ import org.jetbrains.annotations.NotNull;
  * Time: 9:27 PM
  */
 public class IntentionWrapper implements LocalQuickFix, IntentionAction {
-  private IntentionAction myAction;
-  private PsiFile myFile;
+  private final IntentionAction myAction;
+  private final PsiFile myFile;
 
-  public IntentionWrapper(IntentionAction action, PsiFile file) {
+  public IntentionWrapper(@NotNull IntentionAction action, @NotNull PsiFile file) {
     myAction = action;
     myFile = file;
   }

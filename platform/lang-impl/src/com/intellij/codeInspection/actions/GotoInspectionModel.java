@@ -35,7 +35,7 @@ public class GotoInspectionModel extends SimpleChooseByNameModel {
   private final Map<String, InspectionProfileEntry> myToolNames = new HashMap<String, InspectionProfileEntry>();
   private final Map<String, Set<InspectionProfileEntry>> myGroupNames = new HashMap<String, Set<InspectionProfileEntry>>();
   private final Map<String, InspectionProfileEntry> myToolShortNames = new HashMap<String, InspectionProfileEntry>();
-  private String[] myNames;
+  private final String[] myNames;
   private final ListCellRenderer myListCellRenderer = new InspectionListCellRenderer();
 
 

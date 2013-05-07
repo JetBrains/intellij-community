@@ -38,6 +38,7 @@ import java.util.Collection;
 public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
 
   private static final I18nQuickFixHandler HADLER = new I18nQuickFixHandler() {
+    @Override
     public void checkApplicability(final PsiFile psiFile, final Editor editor) throws IncorrectOperationException {
       final JspFile jspFile = (JspFile)psiFile;
 
@@ -63,6 +64,7 @@ public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
       });
     }
 
+    @Override
     public void performI18nization(final PsiFile psiFile,
                                    final Editor editor,
                                    PsiLiteralExpression literalExpression,
@@ -77,6 +79,7 @@ public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
       editor.getDocument().replaceString(selectedText.getStartOffset(), selectedText.getEndOffset(), i18nizedText);
     }
 
+    @Override
     public JavaI18nizeQuickFixDialog createDialog(final Project project, final Editor editor, final PsiFile psiFile) {
       JspFile jspFile = (JspFile)psiFile;
 
@@ -84,6 +87,7 @@ public class I18nizeJspHandlerProvider extends I18nizeHandlerProvider {
       if (selectedRange == null) return null;
       String text = editor.getDocument().getText(selectedRange);
       return new JavaI18nizeQuickFixDialog(project, jspFile, null, text, null, false, true){
+        @Override
         protected String getTemplateName() {
           return JavaTemplateUtil.TEMPLATE_I18NIZED_JSP_EXPRESSION;
         }

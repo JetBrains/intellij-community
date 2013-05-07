@@ -88,6 +88,7 @@ class SuppressByCommentOutAction extends SuppressIntentionAction {
     return null;
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return InspectionsBundle.message("suppress.inspection.family");

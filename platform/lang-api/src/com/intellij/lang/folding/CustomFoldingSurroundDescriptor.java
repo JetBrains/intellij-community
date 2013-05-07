@@ -46,7 +46,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
 
   public final static CustomFoldingSurroundDescriptor INSTANCE = new CustomFoldingSurroundDescriptor();
   public final static CustomFoldingRegionSurrounder[] SURROUNDERS;
-  
+
   private final static String DEFAULT_DESC_TEXT = "Description";
 
   static {
@@ -83,7 +83,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     }
     return PsiElement.EMPTY_ARRAY;
   }
-  
+
   @Nullable
   private static PsiElement findClosestParentAfterLineBreak(PsiElement element) {
     PsiElement parent = element;
@@ -97,7 +97,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     }
     return null;
   }
-  
+
   @Nullable
   private static PsiElement findClosestParentBeforeLineBreak(PsiElement element) {
     PsiElement parent = element;
@@ -131,7 +131,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
     }
     return lineFeedFound;
   }
-  
+
   @NotNull
   @Override
   public Surrounder[] getSurrounders() {
@@ -145,7 +145,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
 
   private static class CustomFoldingRegionSurrounder implements Surrounder {
 
-    private CustomFoldingProvider myProvider;
+    private final CustomFoldingProvider myProvider;
 
     public CustomFoldingRegionSurrounder(@NotNull CustomFoldingProvider provider) {
       myProvider = provider;
@@ -189,7 +189,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
         rangeToSelect = new TextRange(startOffset + descPos, startOffset + descPos + DEFAULT_DESC_TEXT.length());
       }
       String startString = linePrefix + startText + "\n";
-      String endString = "\n" + linePrefix + myProvider.getEndString(); 
+      String endString = "\n" + linePrefix + myProvider.getEndString();
       editor.getDocument().insertString(endOffset, endString);
       delta += endString.length();
       editor.getDocument().insertString(startOffset, startString);
@@ -203,7 +203,7 @@ public class CustomFoldingSurroundDescriptor implements SurroundDescriptor {
                        new TextRange(startOffset, startOffset + startString.length()));
       return rangeToSelect;
     }
-    
+
     private static void adjustLineIndent(@NotNull Project project, PsiFile file, Language language, TextRange range) {
       CommonCodeStyleSettings formatSettings = CodeStyleSettingsManager.getSettings(project).getCommonSettings(language);
       boolean keepAtFirstCol = formatSettings.KEEP_FIRST_COLUMN_COMMENT;

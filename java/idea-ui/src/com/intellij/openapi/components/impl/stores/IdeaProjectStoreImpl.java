@@ -23,6 +23,7 @@ import com.intellij.openapi.project.impl.convertors.Convertor12;
 import com.intellij.openapi.project.impl.convertors.Convertor23;
 import com.intellij.openapi.project.impl.convertors.Convertor34;
 import org.jdom.Element;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author mike
@@ -32,6 +33,7 @@ public class IdeaProjectStoreImpl extends ProjectWithModulesStoreImpl {
     super(project);
   }
 
+  @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
     return new ProjectStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myProject) {

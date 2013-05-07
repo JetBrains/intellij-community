@@ -36,7 +36,7 @@ import java.util.Map;
  * @author Roman.Chernyatchik
  */
 public class XSLTReportConverter implements InspectionsReportConverter {
-  private String myXSLTSchemePath;
+  private final String myXSLTSchemePath;
 
   public XSLTReportConverter(@NotNull final String xsltSchemePath) {
     myXSLTSchemePath = xsltSchemePath;

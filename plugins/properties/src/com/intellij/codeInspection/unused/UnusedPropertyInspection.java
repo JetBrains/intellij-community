@@ -43,11 +43,13 @@ import org.jetbrains.annotations.NotNull;
  * @author cdr
  */
 public class UnusedPropertyInspection extends PropertySuppressableInspectionBase {
+  @Override
   @NotNull
   public String getDisplayName() {
     return PropertiesBundle.message("unused.property.inspection.display.name");
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "UnusedProperty";

@@ -27,7 +27,6 @@ import org.jetbrains.annotations.Nullable;
  * @author max
  */
 public interface CustomSuppressableInspectionTool {
-
   /**
    * Returns the list of suppression actions for the specified element.
    *

@@ -19,12 +19,11 @@ import com.intellij.ExtensionPoints;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
-import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.openapi.extensions.ExtensionPoint;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
-import com.intellij.openapi.module.ModuleUtil;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
@@ -35,6 +34,7 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
+import com.intellij.ui.ListCellRendererWrapper;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -259,7 +259,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
       final PsiElement resolved = reference.resolve();
 
       if (resolved instanceof PsiCompiledElement && resolved instanceof PsiMember) {
-        final Module module = ModuleUtil.findModuleForPsiElement(reference.getElement());
+        final Module module = ModuleUtilCore.findModuleForPsiElement(reference.getElement());
         if (module != null) {
           final LanguageLevel languageLevel = getEffectiveLanguageLevel(module);
           if (isForbiddenApiUsage((PsiMember)resolved, languageLevel)) {
@@ -293,7 +293,7 @@ public class Java15APIUsageInspection extends BaseJavaLocalInspectionTool {
     @Override public void visitNewExpression(final PsiNewExpression expression) {
       super.visitNewExpression(expression);
       final PsiMethod constructor = expression.resolveConstructor();
-      final Module module = ModuleUtil.findModuleForPsiElement(expression);
+      final Module module = ModuleUtilCore.findModuleForPsiElement(expression);
       if (module != null) {
         final LanguageLevel languageLevel = getEffectiveLanguageLevel(module);
         if (constructor instanceof PsiCompiledElement) {

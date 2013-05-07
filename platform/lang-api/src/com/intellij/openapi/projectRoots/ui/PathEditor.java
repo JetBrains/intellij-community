@@ -58,7 +58,7 @@ public class PathEditor {
 
   protected JPanel myPanel;
   private JBList myList;
-  private DefaultListModel myModel;
+  private final DefaultListModel myModel;
   private final Set<VirtualFile> myAllFiles = new HashSet<VirtualFile>();
   private boolean myModified = false;
   protected boolean myEnabled = false;

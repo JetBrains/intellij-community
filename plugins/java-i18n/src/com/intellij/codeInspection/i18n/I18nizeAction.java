@@ -40,6 +40,7 @@ import java.util.Collection;
 public class I18nizeAction extends AnAction {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.i18n.I18nizeAction");
 
+  @Override
   public void update(AnActionEvent e) {
     boolean active = getHandler(e) != null;
     if (ActionPlaces.isPopupPlace(e.getPlace())) {
@@ -119,8 +120,10 @@ public class I18nizeAction extends AnAction {
     }
 
     ApplicationManager.getApplication().runWriteAction(new Runnable(){
+      @Override
       public void run() {
         CommandProcessor.getInstance().executeCommand(project, new Runnable(){
+          @Override
           public void run() {
             try {
               handler.performI18nization(psiFile, editor, dialog.getLiteralExpression(), propertiesFiles, dialog.getKey(), StringUtil.unescapeStringCharacters(dialog.getValue()),
@@ -136,6 +139,7 @@ public class I18nizeAction extends AnAction {
     });
   }
 
+  @Override
   public void actionPerformed(AnActionEvent e) {
     final Editor editor = getEditor(e);
     final Project project = editor.getProject();

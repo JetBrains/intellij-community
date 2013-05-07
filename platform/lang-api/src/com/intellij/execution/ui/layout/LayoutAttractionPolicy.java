@@ -40,7 +40,7 @@ public abstract class LayoutAttractionPolicy {
   public static class FocusOnce extends LayoutAttractionPolicy {
 
     private boolean myWasAttracted;
-    private boolean myRequestFocus;
+    private final boolean myRequestFocus;
 
     public FocusOnce() {
       this(true);

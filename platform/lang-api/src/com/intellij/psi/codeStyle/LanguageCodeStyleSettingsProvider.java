@@ -56,7 +56,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
 
   /**
    * Override this method if file extension to be used with samples is different from the one returned by associated file type.
-   * 
+   *
    * @return The file extension for samples (null by default).
    */
   @Nullable
@@ -66,7 +66,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
 
   /**
    * Override this method if language name shown in preview tab must be different from the name returned by Language class itself.
-   * 
+   *
    * @return The language name to show in preview tab (null by default).
    */
   @Nullable
@@ -170,7 +170,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
     final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
     return provider != null ? provider.getDefaultCommonSettings() : null;
   }
-  
+
   @Nullable
   public static String getFileExt(Language lang) {
     final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
@@ -187,7 +187,7 @@ public abstract class LanguageCodeStyleSettingsProvider {
    */
   @Nullable
   public static String getLanguageName(Language lang) {
-    final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);    
+    final LanguageCodeStyleSettingsProvider provider = forLanguage(lang);
     String providerLangName = provider != null ? provider.getLanguageName() : null;
     return providerLangName != null ? providerLangName : lang.getDisplayName();
   }
@@ -218,17 +218,17 @@ public abstract class LanguageCodeStyleSettingsProvider {
   public IndentOptionsEditor getIndentOptionsEditor() {
     return null;
   }
-  
+
   public Set<String> getSupportedFields() {
     SupportedFieldCollector fieldCollector = new SupportedFieldCollector();
     fieldCollector.collectFields();
     return fieldCollector.getCollectedFields();
   }
-  
+
   private final class SupportedFieldCollector implements CodeStyleSettingsCustomizable {
-    private Set<String> myCollectedFields = new HashSet<String>();
+    private final Set<String> myCollectedFields = new HashSet<String>();
     private SettingsType myCurrSettingsType;
-    
+
     public void collectFields() {
       for (SettingsType settingsType : SettingsType.values()) {
         myCurrSettingsType = settingsType;
@@ -288,10 +288,10 @@ public abstract class LanguageCodeStyleSettingsProvider {
     public void renameStandardOption(String fieldName, String newTitle) {
       // Ignore
     }
-    
+
     public Set<String> getCollectedFields() {
       return myCollectedFields;
     }
-  } 
+  }
 
 }

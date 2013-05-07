@@ -19,8 +19,8 @@ import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 
 public class FilterLexer extends DelegateLexer {
-  private Filter myFilter;
-  private boolean[] myStateFilter;
+  private final Filter myFilter;
+  private final boolean[] myStateFilter;
   private int myPrevTokenEnd;
 
   public interface Filter {

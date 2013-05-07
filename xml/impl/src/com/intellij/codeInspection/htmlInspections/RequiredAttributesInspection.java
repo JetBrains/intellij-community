@@ -47,22 +47,26 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
   @NonNls public static final String SHORT_NAME = "RequiredAttributes";
   @NonNls public static final Key<InspectionProfileEntry> SHORT_NAME_KEY = Key.create(SHORT_NAME);
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return XmlInspectionGroupNames.HTML_INSPECTIONS;
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.required.attributes.display.name");
   }
 
+  @Override
   @NotNull
   @NonNls
   public String getShortName() {
     return SHORT_NAME;
   }
 
+  @Override
   @Nullable
   public JComponent createOptionsPanel() {
     JPanel panel = new JPanel(new BorderLayout());
@@ -72,6 +76,7 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
 
     panel.add(additionalAttributesPanel, BorderLayout.NORTH);
     additionalAttributesPanel.getTextField().getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(DocumentEvent e) {
         final Document document = e.getDocument();
         try {
@@ -89,18 +94,22 @@ public class RequiredAttributesInspection extends XmlSuppressableInspectionTool 
     return panel;
   }
 
+  @Override
   public IntentionAction getIntentionAction(String name, int type) {
     return new AddHtmlTagOrAttributeToCustomsIntention(SHORT_NAME_KEY, name, type);
   }
 
+  @Override
   public String getAdditionalEntries(int type) {
     return myAdditionalRequiredHtmlAttributes;
   }
 
+  @Override
   public void setAdditionalEntries(int type, String additionalEntries) {
     myAdditionalRequiredHtmlAttributes = additionalEntries;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }

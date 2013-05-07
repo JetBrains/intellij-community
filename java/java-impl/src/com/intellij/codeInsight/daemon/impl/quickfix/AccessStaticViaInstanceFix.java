@@ -47,7 +47,7 @@ public class AccessStaticViaInstanceFix extends LocalQuickFixAndIntentionActionO
   private final boolean myOnTheFly;
   private final String myText;
 
-  public AccessStaticViaInstanceFix(PsiReferenceExpression expression, JavaResolveResult result, boolean onTheFly) {
+  public AccessStaticViaInstanceFix(@NotNull PsiReferenceExpression expression, @NotNull JavaResolveResult result, boolean onTheFly) {
     super(expression);
     myOnTheFly = onTheFly;
     PsiMember member = (PsiMember)result.getElement();

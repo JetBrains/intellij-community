@@ -170,15 +170,18 @@ public class PathManager {
     return false;
   }
 
+  @NotNull
   public static String getConfigPath(boolean createIfNotExists) {
     ensureConfigFolderExists(createIfNotExists);
     return ourConfigPath;
   }
 
+  @NotNull
   public static String getConfigPath() {
     return getConfigPath(true);
   }
 
+  @NotNull
   private static String getConfigPathWithoutDialog() {
     if (ourConfigPath != null) return ourConfigPath;
 
@@ -197,6 +200,7 @@ public class PathManager {
     return ourConfigPath;
   }
 
+  @NotNull
   public static String getDefaultConfigPathFor(String selector) {
     return SystemProperties.getUserHome() + (SystemInfo.isMac ? "/Library/Preferences/" + selector
                                                               : File.separator + "." + selector + File.separator + "config");
@@ -279,6 +283,7 @@ public class PathManager {
     return ourLogPath;
   }
 
+  @NotNull
   private static String getAbsolutePath(String path) {
     if (path.startsWith("~/") || path.startsWith("~\\")) {
       path = SystemProperties.getUserHome() + path.substring(1);

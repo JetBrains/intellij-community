@@ -86,7 +86,10 @@ public final class QuickFixAction {
     }
   }
 
-  public static void registerQuickFixAction(@Nullable HighlightInfo info, @Nullable TextRange fixRange, @Nullable IntentionAction action, @Nullable final HighlightDisplayKey key) {
+  public static void registerQuickFixAction(@Nullable HighlightInfo info,
+                                            @Nullable TextRange fixRange,
+                                            @Nullable IntentionAction action,
+                                            @Nullable final HighlightDisplayKey key) {
     doRegister(info, action, null, HighlightDisplayKey.getDisplayNameByKey(key), fixRange, key);
   }
 

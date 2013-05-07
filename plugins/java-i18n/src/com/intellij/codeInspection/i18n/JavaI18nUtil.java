@@ -46,6 +46,7 @@ import java.util.*;
  */
 public class JavaI18nUtil extends I18nUtil {
   public static final PropertyCreationHandler DEFAULT_PROPERTY_CREATION_HANDLER = new PropertyCreationHandler() {
+    @Override
     public void createProperty(final Project project, final Collection<PropertiesFile> propertiesFiles, final String key, final String value,
                                final PsiExpression[] parameters) throws IncorrectOperationException {
       JavaI18nUtil.createProperty(project, propertiesFiles, key, value);
@@ -74,7 +75,7 @@ public class JavaI18nUtil extends I18nUtil {
     if (parent instanceof PsiVariable) {
       final PsiAnnotation annotation = AnnotationUtil.findAnnotation((PsiVariable)parent, AnnotationUtil.PROPERTY_KEY);
       if (annotation != null) {
-        return processAnnotationAttributes(annotationAttributeValues, annotation); 
+        return processAnnotationAttributes(annotationAttributeValues, annotation);
       }
     }
     return isPassedToAnnotatedParam(project, expression, AnnotationUtil.PROPERTY_KEY, annotationAttributeValues, null);
@@ -285,6 +286,7 @@ public class JavaI18nUtil extends I18nUtil {
 
   private static void addAvailableMethodsOfType(final PsiClassType type, final PsiLiteralExpression context, final Collection<String> result) {
     PsiScopesUtil.treeWalkUp(new PsiScopeProcessor() {
+      @Override
       public boolean execute(@NotNull PsiElement element, ResolveState state) {
         if (element instanceof PsiMethod) {
           PsiMethod method = (PsiMethod)element;
@@ -297,10 +299,12 @@ public class JavaI18nUtil extends I18nUtil {
         return true;
       }
 
+      @Override
       public <T> T getHint(@NotNull Key<T> hintKey) {
         return null;
       }
 
+      @Override
       public void handleEvent(Event event, Object associated) {
 
       }

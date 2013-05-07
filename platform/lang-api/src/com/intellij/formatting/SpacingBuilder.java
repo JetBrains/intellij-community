@@ -13,14 +13,14 @@ import java.util.List;
  */
 public class SpacingBuilder {
   private static class SpacingRule {
-    private TokenSet myParentType;
-    private TokenSet myChild1Type;
-    private TokenSet myChild2Type;
-    private int myMinSpaces;
-    private int myMaxSpaces;
-    private int myMinLF;
-    private boolean myKeepLineBreaks;
-    private int myKeepBlankLines;
+    private final TokenSet myParentType;
+    private final TokenSet myChild1Type;
+    private final TokenSet myChild2Type;
+    private final int myMinSpaces;
+    private final int myMaxSpaces;
+    private final int myMinLF;
+    private final boolean myKeepLineBreaks;
+    private final int myKeepBlankLines;
 
     private SpacingRule(RuleCondition condition, int minSpaces, int maxSpaces, int minLF, boolean keepLineBreaks, int keepBlankLines) {
       myParentType = condition.myParentType;
@@ -43,7 +43,7 @@ public class SpacingBuilder {
       return Spacing.createSpacing(myMinSpaces, myMaxSpaces, myMinLF, myKeepLineBreaks, myKeepBlankLines);
     }
   }
-  
+
   private static class RuleCondition {
     private final TokenSet myParentType;
     private final TokenSet myChild1Type;
@@ -55,7 +55,7 @@ public class SpacingBuilder {
       myChild2Type = child2Type;
     }
   }
-  
+
   public class RuleBuilder {
     RuleCondition[] myConditions;
 
@@ -66,7 +66,7 @@ public class SpacingBuilder {
     public SpacingBuilder none() {
       return spaces(0);
     }
-    
+
     public SpacingBuilder spaceIf(boolean option) {
       return spaces(option ? 1 : 0);
     }
@@ -108,7 +108,7 @@ public class SpacingBuilder {
       return SpacingBuilder.this;
     }
   }
-  
+
   private final CodeStyleSettings myCodeStyleSettings;
   private final List<SpacingRule> myRules = new ArrayList<SpacingRule>();
 
@@ -190,7 +190,7 @@ public class SpacingBuilder {
     RuleCondition after = new RuleCondition(null, tokenSet, null);
     return new RuleBuilder(before, after);
   }
-  
+
   public RuleBuilder aroundInside(TokenSet tokenSet, TokenSet parent) {
     RuleCondition before = new RuleCondition(parent, null, tokenSet);
     RuleCondition after = new RuleCondition(parent, tokenSet, null);
