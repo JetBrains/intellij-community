@@ -15,6 +15,7 @@
  */
 package com.intellij.refactoring.util;
 
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
 
@@ -27,7 +28,7 @@ public class JavaNonCodeSearchElementDescriptionProvider implements ElementDescr
     if (!(location instanceof NonCodeSearchDescriptionLocation)) return null;
     NonCodeSearchDescriptionLocation ncdLocation = (NonCodeSearchDescriptionLocation) location;
     if (element instanceof PsiPackage) {
-      return ncdLocation.isNonJava() ? ((PsiPackage)element).getQualifiedName() : ((PsiPackage)element).getName();
+      return ncdLocation.isNonJava() ? ((PsiPackage)element).getQualifiedName() : StringUtil.notNullize(((PsiPackage)element).getName());
     }
     if (element instanceof PsiClass) {
       return ncdLocation.isNonJava() ? ((PsiClass)element).getQualifiedName() : ((PsiClass)element).getName();
