@@ -439,7 +439,7 @@ public class LineStatusTracker {
           if (prev.getHighlighter() != null) {
             prev.getHighlighter().dispose();
           }
-          prev = prev.mergeWith(range, LineStatusTracker.this);
+          prev = prev.mergeWith(range);
         }
         else {
           result.add(prev);
