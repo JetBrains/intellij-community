@@ -26,7 +26,7 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author ven
  */
-public class SuppressByCommentFix extends AbstractSuppressByNoInspectionCommentFix {
+public class SuppressByCommentFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   protected Class<? extends PsiElement> mySuppressionHolderClass;
 
   public SuppressByCommentFix(@NotNull HighlightDisplayKey key, @NotNull Class<? extends PsiElement> suppressionHolderClass) {
@@ -46,7 +46,7 @@ public class SuppressByCommentFix extends AbstractSuppressByNoInspectionCommentF
 
   @Override
   @Nullable
-  protected PsiElement getContainer(PsiElement context) {
+  public PsiElement getContainer(PsiElement context) {
     return PsiTreeUtil.getParentOfType(context, mySuppressionHolderClass);
   }
 }

@@ -15,35 +15,31 @@
  */
 package com.intellij.codeInsight.daemon.impl.actions;
 
-import com.intellij.codeInsight.FileModificationService;
-import com.intellij.codeInsight.daemon.DaemonCodeAnalyzer;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.SuppressIntentionAction;
-import com.intellij.codeInspection.SuppressManager;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierList;
+import com.intellij.psi.PsiModifierListOwner;
 import com.intellij.psi.PsiParameter;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 /**
  * @author ven
  */
-public class SuppressParameterFix extends SuppressIntentionAction {
-  private final String myID;
+public class SuppressParameterFix extends AbstractBatchSuppressByNoInspectionCommentFix {
   private String myAlternativeID;
 
-  public SuppressParameterFix(HighlightDisplayKey key) {
+  public SuppressParameterFix(@NotNull HighlightDisplayKey key) {
     this(key.getID());
     myAlternativeID = HighlightDisplayKey.getAlternativeID(key);
   }
 
   public SuppressParameterFix(String ID) {
-    myID = ID;
+    super(ID, false);
   }
 
   @Override
@@ -52,28 +48,26 @@ public class SuppressParameterFix extends SuppressIntentionAction {
     return "Suppress for parameter";
   }
 
+  @Nullable
   @Override
-  @NotNull
-  public String getFamilyName() {
-    return InspectionsBundle.message("suppress.inspection.family");
-  }
-
-  @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
+  public PsiElement getContainer(PsiElement context) {
     PsiParameter psiParameter = PsiTreeUtil.getParentOfType(context, PsiParameter.class, false);
-    return psiParameter != null && SuppressManager.getInstance().canHave15Suppressions(psiParameter);
+    return psiParameter != null && JavaSuppressionUtil.canHave15Suppressions(psiParameter) ? psiParameter : null;
   }
 
   @Override
-  public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
-    PsiParameter container = PsiTreeUtil.getParentOfType(element, PsiParameter.class, false);
-    assert container != null;
-    if (!FileModificationService.getInstance().preparePsiElementForWrite(container)) return;
+  protected boolean replaceSuppressionComments(PsiElement container) {
+    return false;
+  }
+
+  @Override
+  protected void createSuppression(@NotNull Project project, @NotNull PsiElement element, @NotNull PsiElement cont)
+    throws IncorrectOperationException {
+    PsiModifierListOwner container = (PsiModifierListOwner)cont;
     final PsiModifierList modifierList = container.getModifierList();
     if (modifierList != null) {
       final String id = SuppressFix.getID(container, myAlternativeID);
-      SuppressFix.addSuppressAnnotation(project, editor, container, container, id != null ? id : myID);
+      JavaSuppressionUtil.addSuppressAnnotation(project, container, container, id != null ? id : myID);
     }
-    DaemonCodeAnalyzer.getInstance(project).restart();
   }
 }

@@ -22,13 +22,16 @@
 
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -40,6 +43,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -80,6 +84,53 @@ public class InspectionManagerEx extends InspectionManagerBase {
         }
       };
     }
+  }
+
+  @NotNull
+  public static SuppressIntentionAction convertBatchToSuppressIntentionAction(@NotNull final SuppressQuickFix fix) {
+    return new SuppressIntentionAction() {
+      @Override
+      public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+        PsiElement container = fix instanceof AbstractBatchSuppressByNoInspectionCommentFix
+                               ? ((AbstractBatchSuppressByNoInspectionCommentFix )fix).getContainer(element) : null;
+        boolean caretWasBeforeStatement = editor != null && container != null && editor.getCaretModel().getOffset() == container.getTextRange().getStartOffset();
+        try {
+          ProblemDescriptor descriptor =
+            new ProblemDescriptorImpl(element, element, "", null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, null, false);
+          fix.applyFix(project, descriptor);
+        }
+        catch (IncorrectOperationException e) {
+          if (!ApplicationManager.getApplication().isUnitTestMode() && editor != null) {
+            Messages.showErrorDialog(editor.getComponent(),
+                                     InspectionsBundle.message("suppress.inspection.annotation.syntax.error", e.getMessage()));
+          }
+          else {
+            throw e;
+          }
+        }
+
+        if (caretWasBeforeStatement) {
+          editor.getCaretModel().moveToOffset(container.getTextRange().getStartOffset());
+        }
+      }
+
+      @Override
+      public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+        return fix.isAvailable(project, element);
+      }
+
+      @NotNull
+      @Override
+      public String getText() {
+        return fix.getName();
+      }
+
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return fix.getFamilyName();
+      }
+    };
   }
 
 
@@ -132,6 +183,9 @@ public class InspectionManagerEx extends InspectionManagerBase {
   public static boolean inspectionResultSuppressed(@NotNull PsiElement place, LocalInspectionTool tool) {
     if (tool instanceof CustomSuppressableInspectionTool) {
       return ((CustomSuppressableInspectionTool)tool).isSuppressedFor(place);
+    }
+    if (tool instanceof BatchSuppressableTool) {
+      return ((BatchSuppressableTool)tool).isSuppressedFor(place);
     }
     String alternativeId;
     String id;

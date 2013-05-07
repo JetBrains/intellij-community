@@ -56,20 +56,7 @@ public class JavaSdkImpl extends JavaSdk {
   @NonNls private final Pattern myVersionStringPattern = Pattern.compile("^(.*)java version \"([1234567890_.]*)\"(.*)$");
   @NonNls private static final String JAVA_VERSION_PREFIX = "java version ";
   @NonNls private static final String OPENJDK_VERSION_PREFIX = "openjdk version ";
-  private static final Map<JavaSdkVersion, String[]> VERSION_STRINGS = new EnumMap<JavaSdkVersion, String[]>(JavaSdkVersion.class);
   public static final DataKey<Boolean> KEY = DataKey.create("JavaSdk");
-
-  static {
-    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_0, new String[]{"1.0"});
-    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_1, new String[]{"1.1"});
-    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_2, new String[]{"1.2"});
-    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_3, new String[]{"1.3"});
-    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_4, new String[]{"1.4"});
-    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_5, new String[]{"1.5", "5.0"});
-    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_6, new String[]{"1.6", "6.0"});
-    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_7, new String[]{"1.7", "7.0"});
-    VERSION_STRINGS.put(JavaSdkVersion.JDK_1_8, new String[]{"1.8", "8.0"});
-  }
 
   public JavaSdkImpl() {
     super("JavaSDK");
@@ -264,11 +251,11 @@ public class JavaSdkImpl extends JavaSdk {
     if (SystemInfo.isMac) {
       File home = new File(homePath, MAC_HOME_PATH);
       if (home.exists()) return home.getPath();
-      
+
       home = new File(new File(homePath, "Contents"), "Home");
       if (home.exists()) return home.getPath();
     }
-    
+
     return homePath;
   }
 
@@ -302,7 +289,7 @@ public class JavaSdkImpl extends JavaSdk {
   @NotNull
   private static String getVersionNumber(@NotNull String versionString) {
     if (versionString.startsWith(JAVA_VERSION_PREFIX) || versionString.startsWith(OPENJDK_VERSION_PREFIX)) {
-      boolean openJdk = versionString.startsWith(OPENJDK_VERSION_PREFIX); 
+      boolean openJdk = versionString.startsWith(OPENJDK_VERSION_PREFIX);
       versionString = versionString.substring(openJdk ? OPENJDK_VERSION_PREFIX.length() : JAVA_VERSION_PREFIX.length());
       if (versionString.startsWith("\"") && versionString.endsWith("\"")) {
         versionString = versionString.substring(1, versionString.length() - 1);
@@ -440,22 +427,19 @@ public class JavaSdkImpl extends JavaSdk {
 
   @Override
   public JavaSdkVersion getVersion(@NotNull Sdk sdk) {
+    return getVersion1(sdk);
+  }
+
+  private static JavaSdkVersion getVersion1(Sdk sdk) {
     String version = sdk.getVersionString();
     if (version == null) return null;
-    return getVersion(version);
+    return JdkVersionUtil.getVersion(version);
   }
 
   @Override
   @Nullable
   public JavaSdkVersion getVersion(@NotNull String versionString) {
-    for (Map.Entry<JavaSdkVersion, String[]> entry : VERSION_STRINGS.entrySet()) {
-      for (String s : entry.getValue()) {
-        if (versionString.contains(s)) {
-          return entry.getKey();
-        }
-      }
-    }
-    return null;
+    return JdkVersionUtil.getVersion(versionString);
   }
 
   @Override

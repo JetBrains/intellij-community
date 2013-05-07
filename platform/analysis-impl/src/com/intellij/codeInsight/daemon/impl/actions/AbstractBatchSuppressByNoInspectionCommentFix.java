@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -18,21 +18,23 @@ package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.ProblemDescriptor;
+import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.codeInspection.SuppressionUtil;
-import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.command.undo.UndoUtil;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiManager;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collections;
 import java.util.List;
 
@@ -40,21 +42,58 @@ import java.util.List;
  * @author Roman.Chernyatchik
  * @date Aug 13, 2009
  */
-public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressIntentionAction {
+public abstract class AbstractBatchSuppressByNoInspectionCommentFix implements SuppressQuickFix, Iconable {
   @NotNull protected final String myID;
   private final boolean myReplaceOtherSuppressionIds;
 
   @Nullable
-  protected abstract PsiElement getContainer(final PsiElement context);
+  public abstract PsiElement getContainer(final PsiElement context);
 
   /**
    * @param ID                         Inspection ID
    * @param replaceOtherSuppressionIds Merge suppression policy. If false new tool id will be append to the end
    *                                   otherwise replace other ids
    */
-  public AbstractSuppressByNoInspectionCommentFix(@NotNull String ID, final boolean replaceOtherSuppressionIds) {
+  public AbstractBatchSuppressByNoInspectionCommentFix(@NotNull String ID, final boolean replaceOtherSuppressionIds) {
     myID = ID;
     myReplaceOtherSuppressionIds = replaceOtherSuppressionIds;
+  }
+
+  @NotNull
+  @Override
+  public String getName() {
+    return getText();
+  }
+
+  @Override
+  public Icon getIcon(int flags) {
+    return AllIcons.General.InspectionsOff;
+  }
+
+  private String myText = "";
+  @NotNull
+  public String getText() {
+    return myText;
+  }
+
+  protected void setText(@NotNull String text) {
+    myText = text;
+  }
+
+  public boolean startInWriteAction() {
+    return true;
+  }
+
+  @Override
+  public String toString() {
+    return getText();
+  }
+
+  @Override
+  public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+    PsiElement element = descriptor.getStartElement();
+    if (element == null) return;
+    invoke(project, element);
   }
 
   protected final void replaceSuppressionComment(@NotNull final PsiElement comment) {
@@ -68,42 +107,34 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
   }
 
   @Override
-  public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
-    return context.isValid() && context.getManager().isInProject(context) && getContainer(context) != null;
+  public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement context) {
+    return context.isValid() && PsiManager.getInstance(project).isInProject(context) && getContainer(context) != null;
   }
 
-  @Override
-  public void invoke(@NotNull final Project project, @Nullable Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
+  public void invoke(@NotNull final Project project, @NotNull final PsiElement element) throws IncorrectOperationException {
+    if (!isAvailable(project, element)) return;
     PsiElement container = getContainer(element);
     if (container == null) return;
 
     if (!FileModificationService.getInstance().preparePsiElementForWrite(container)) return;
 
+    if (replaceSuppressionComments(container)) return;
+
+    createSuppression(project, element, container);
+    UndoUtil.markPsiFileForUndo(element.getContainingFile());
+  }
+
+  protected boolean replaceSuppressionComments(PsiElement container) {
     final List<? extends PsiElement> comments = getCommentsFor(container);
     if (comments != null) {
       for (PsiElement comment : comments) {
         if (comment instanceof PsiComment && SuppressionUtil.isSuppressionComment(comment)) {
           replaceSuppressionComment(comment);
-          return;
+          return true;
         }
       }
     }
-
-    boolean caretWasBeforeStatement = editor != null && editor.getCaretModel().getOffset() == container.getTextRange().getStartOffset();
-    try {
-      createSuppression(project, element, container);
-    }
-    catch (IncorrectOperationException e) {
-      if (!ApplicationManager.getApplication().isUnitTestMode() && editor != null) {
-        Messages.showErrorDialog(editor.getComponent(),
-                                 InspectionsBundle.message("suppress.inspection.annotation.syntax.error", e.getMessage()));
-      }
-    }
-
-    if (caretWasBeforeStatement) {
-      editor.getCaretModel().moveToOffset(container.getTextRange().getStartOffset());
-    }
-    UndoUtil.markPsiFileForUndo(element.getContainingFile());
+    return false;
   }
 
   @Nullable

@@ -4,7 +4,7 @@
  */
 package com.intellij.codeInsight;
 
-import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.impl.DeannotateIntentionAction;
 import com.intellij.openapi.application.ApplicationManager;
@@ -110,7 +110,7 @@ public class AddAnnotationFixTest extends UsefulTestCase {
     int position = caretModel.getOffset();
     PsiElement element = myFixture.getFile().findElementAt(position);
     assert element != null;
-    PsiModifierListOwner container = AddAnnotationFix.getContainer(element);
+    PsiModifierListOwner container = AddAnnotationPsiFix.getContainer(element);
     assert container != null;
     return container;
   }

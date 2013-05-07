@@ -39,7 +39,8 @@ public class SuppressForClassFix extends SuppressFix {
   }
 
   @Override
-  @Nullable protected PsiDocCommentOwner getContainer(final PsiElement element) {
+  @Nullable
+  public PsiDocCommentOwner getContainer(final PsiElement element) {
     PsiDocCommentOwner container = super.getContainer(element);
     if (container == null || container instanceof PsiClass){
       return null;

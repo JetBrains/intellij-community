@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,41 +13,31 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
-/*
- * User: anna
- * Date: 24-Dec-2007
- */
 package com.intellij.codeInspection;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.ex.InspectionManagerEx;
+import com.intellij.codeInsight.daemon.impl.actions.*;
 import com.intellij.psi.PsiDocCommentOwner;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.util.Function;
-import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 
-public class SuppressManagerImpl extends SuppressManager {
+public class BatchSuppressManagerImpl implements BatchSuppressManager {
+  @NotNull
   @Override
-  @NotNull
-  public SuppressIntentionAction[] createSuppressActions(@NotNull final HighlightDisplayKey displayKey) {
-    SuppressQuickFix[] batchSuppressActions = createBatchSuppressActions(displayKey);
-    return convertBatchToSuppressIntentionActions(batchSuppressActions);
-  }
+  public SuppressQuickFix[] createBatchSuppressActions(@NotNull HighlightDisplayKey displayKey) {
+    return new SuppressQuickFix[] {
+        new SuppressByJavaCommentFix(displayKey),
+        new SuppressLocalWithCommentFix(displayKey),
+        new SuppressParameterFix(displayKey),
+        new SuppressFix(displayKey),
+        new SuppressForClassFix(displayKey),
+        new SuppressAllForClassFix()
+      };
 
-  @NotNull
-  private static SuppressIntentionAction[] convertBatchToSuppressIntentionActions(@NotNull SuppressQuickFix[] actions) {
-    return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, new Function<SuppressQuickFix, SuppressIntentionAction>() {
-      @Override
-      public SuppressIntentionAction fun(SuppressQuickFix fix) {
-        return InspectionManagerEx.convertBatchToSuppressIntentionAction(fix);
-      }
-    });
   }
 
   @Override

@@ -17,8 +17,7 @@ package com.intellij.lang.annotation;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.LocalQuickFix;
-import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.CodeInsightColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
@@ -75,7 +74,7 @@ public final class Annotation implements Segment {
       this.options = options;
     }
 
-    public QuickFixInfo(final IntentionAction fix, final TextRange range, @Nullable final HighlightDisplayKey key) {
+    public QuickFixInfo(@NotNull IntentionAction fix, final TextRange range, @Nullable final HighlightDisplayKey key) {
       this.key = key;
       quickFix = fix;
       textRange = range;
@@ -123,6 +122,16 @@ public final class Annotation implements Segment {
     registerFix(fix,range, null);
   }
 
+  public void registerFix(@NotNull LocalQuickFix fix, TextRange range, HighlightDisplayKey key, @NotNull ProblemDescriptor problemDescriptor) {
+    if (range == null) {
+      range = new TextRange(myStartOffset, myEndOffset);
+    }
+    if (myQuickFixes == null) {
+      myQuickFixes = new ArrayList<QuickFixInfo>();
+    }
+    myQuickFixes.add(new QuickFixInfo(new LocalQuickFixAsIntentionAdapter(fix, problemDescriptor), range, key));
+  }
+
   /**
    * Registers a quick fix for the annotation which is only available on a particular range of text
    * within the annotation.
@@ -159,8 +168,8 @@ public final class Annotation implements Segment {
   }
 
   /**
-   * Registers a quickfix which would be available during batch mode only, 
-   * in particular during com.intellij.codeInspection.DefaultHighlightVisitorBasedInspection run 
+   * Registers a quickfix which would be available during batch mode only,
+   * in particular during com.intellij.codeInspection.DefaultHighlightVisitorBasedInspection run
    */
   public <T extends IntentionAction & LocalQuickFix> void registerBatchFix(@NotNull T fix, @Nullable TextRange range, @Nullable final HighlightDisplayKey key) {
     if (range == null) {
@@ -302,7 +311,7 @@ public final class Annotation implements Segment {
   public List<QuickFixInfo> getQuickFixes() {
     return myQuickFixes;
   }
-  
+
   @Nullable
   public List<QuickFixInfo> getBatchFixes() {
     return myBatchFixes;

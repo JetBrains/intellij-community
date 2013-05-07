@@ -40,8 +40,7 @@ import java.awt.*;
 import java.util.Set;
 
 
-public class SpellCheckingInspection extends LocalInspectionTool implements CustomSuppressableInspectionTool {
-
+public class SpellCheckingInspection extends LocalInspectionTool implements BatchSuppressableTool {
   public static final String SPELL_CHECKING_INSPECTION_TOOL_NAME = "SpellCheckingInspection";
 
   @Override
@@ -58,15 +57,16 @@ public class SpellCheckingInspection extends LocalInspectionTool implements Cust
     return SpellCheckerBundle.message("spellchecking.inspection.name");
   }
 
+  @NotNull
   @Override
-  public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement element) {
+  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
     if (element != null) {
       SpellcheckingStrategy strategy = LanguageSpellchecking.INSTANCE.forLanguage(element.getLanguage());
       if(strategy instanceof SuppressibleSpellcheckingStrategy) {
         return ((SuppressibleSpellcheckingStrategy)strategy).getSuppressActions(element, getShortName());
       }
     }
-    return SuppressIntentionAction.EMPTY_ARRAY;
+    return SuppressQuickFix.EMPTY_ARRAY;
   }
 
   @Override

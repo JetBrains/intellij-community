@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,40 +13,44 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
+package com.intellij.codeInspection;
 
-package com.intellij.codeInsight.intention;
-
+import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.PsiModifierListOwner;
-import com.intellij.psi.PsiNameValuePair;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
-/**
- * @author ven
- */
-public class AddAnnotationFix extends AddAnnotationPsiFix implements IntentionAction {
-  public AddAnnotationFix(@NotNull String fqn, @NotNull PsiModifierListOwner modifierListOwner, @NotNull String... annotationsToRemove) {
-    this(fqn, modifierListOwner, PsiNameValuePair.EMPTY_ARRAY, annotationsToRemove);
+public class LocalQuickFixAsIntentionAdapter implements IntentionAction {
+  private final LocalQuickFix myFix;
+  @NotNull private final ProblemDescriptor myProblemDescriptor;
+
+  public LocalQuickFixAsIntentionAdapter(@NotNull LocalQuickFix fix, @NotNull ProblemDescriptor problemDescriptor) {
+    myFix = fix;
+    myProblemDescriptor = problemDescriptor;
   }
 
-  public AddAnnotationFix(@NotNull String fqn,
-                          @NotNull PsiModifierListOwner modifierListOwner,
-                          @NotNull PsiNameValuePair[] values,
-                          @NotNull String... annotationsToRemove) {
-    super(fqn, modifierListOwner, values, annotationsToRemove);
+  @NotNull
+  @Override
+  public String getText() {
+    return myFix.getName();
+  }
+
+  @NotNull
+  @Override
+  public String getFamilyName() {
+    return myFix.getFamilyName();
   }
 
   @Override
   public boolean isAvailable(@NotNull Project project, Editor editor, PsiFile file) {
-    return isAvailable();
+    return myProblemDescriptor.getStartElement() != null;
   }
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, PsiFile file) throws IncorrectOperationException {
-    applyFix();
+    myFix.applyFix(project, myProblemDescriptor);
   }
 
   @Override
@@ -54,3 +58,4 @@ public class AddAnnotationFix extends AddAnnotationPsiFix implements IntentionAc
     return true;
   }
 }
+

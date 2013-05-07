@@ -16,8 +16,9 @@
 package com.intellij.spellchecker;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.BatchSuppressManager;
 import com.intellij.codeInspection.SuppressManager;
+import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLiteralExpression;
 import com.intellij.psi.PsiMethod;
@@ -64,7 +65,7 @@ public class JavaSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy
   }
 
   @Override
-  public SuppressIntentionAction[] getSuppressActions(@NotNull PsiElement element, @NotNull String name) {
-    return SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(name));
+  public SuppressQuickFix[] getSuppressActions(@NotNull PsiElement element, @NotNull String name) {
+    return BatchSuppressManager.SERVICE.getInstance().createBatchSuppressActions(HighlightDisplayKey.find(name));
   }
 }

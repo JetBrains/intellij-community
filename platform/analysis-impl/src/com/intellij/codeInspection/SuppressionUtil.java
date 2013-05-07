@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -16,11 +16,16 @@
 
 package com.intellij.codeInspection;
 
+import com.intellij.lang.Commenter;
+import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NullableComputable;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.PsiComment;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiParserFacade;
 import com.intellij.psi.PsiWhiteSpace;
 import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NonNls;
@@ -99,5 +104,81 @@ public class SuppressionUtil {
         return getStatementToolSuppressedIn(place, toolId, statementClass);
       }
     }) != null;
+  }
+
+  @NotNull
+  public static PsiComment createComment(@NotNull Project project, @NotNull PsiElement element, @NotNull String commentText) {
+    final PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(project);
+    return parserFacade.createLineOrBlockCommentFromText(element.getLanguage(), commentText);
+  }
+
+  @Nullable
+  public static Pair<String, String> getBlockPrefixSuffixPair(PsiElement comment) {
+    final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(comment.getLanguage());
+    if (commenter != null) {
+      final String prefix = commenter.getBlockCommentPrefix();
+      final String suffix = commenter.getBlockCommentSuffix();
+      if (prefix != null || suffix != null) {
+        return Pair.create(StringUtil.notNullize(prefix), StringUtil.notNullize(suffix));
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  public static String getLineCommentPrefix(@NotNull final PsiElement comment) {
+    final Commenter commenter = LanguageCommenters.INSTANCE.forLanguage(comment.getLanguage());
+    return commenter == null ? null : commenter.getLineCommentPrefix();
+  }
+
+  public static boolean isSuppressionComment(@NotNull PsiElement comment) {
+    final String prefix = getLineCommentPrefix(comment);
+    final String commentText = comment.getText();
+    if (prefix != null) {
+      return commentText.startsWith(prefix + SUPPRESS_INSPECTIONS_TAG_NAME);
+    }
+    final Pair<String, String> prefixSuffixPair = getBlockPrefixSuffixPair(comment);
+    return prefixSuffixPair != null
+           && commentText.startsWith(prefixSuffixPair.first + SUPPRESS_INSPECTIONS_TAG_NAME)
+           && commentText.endsWith(prefixSuffixPair.second);
+  }
+
+  public static void replaceSuppressionComment(@NotNull PsiElement comment, @NotNull String id, boolean replaceOtherSuppressionIds) {
+    final String oldSuppressionCommentText = comment.getText();
+    final String lineCommentPrefix = getLineCommentPrefix(comment);
+    Pair<String, String> blockPrefixSuffix = null;
+    if (lineCommentPrefix == null) {
+      blockPrefixSuffix = getBlockPrefixSuffixPair(comment);
+    }
+    assert blockPrefixSuffix != null
+           && oldSuppressionCommentText.startsWith(blockPrefixSuffix.first)
+           && oldSuppressionCommentText.endsWith(blockPrefixSuffix.second)
+           || lineCommentPrefix != null && oldSuppressionCommentText.startsWith(lineCommentPrefix)
+      : "Unexpected suppression comment " + oldSuppressionCommentText;
+
+    // append new suppression tool id or replace
+    final String newText;
+    if(replaceOtherSuppressionIds) {
+      newText = SUPPRESS_INSPECTIONS_TAG_NAME + " " + id;
+    }
+    else if (lineCommentPrefix == null) {
+      newText = oldSuppressionCommentText.substring(blockPrefixSuffix.first.length(),
+                                                    oldSuppressionCommentText.length() - blockPrefixSuffix.second.length()) + "," + id;
+    }
+    else {
+      newText = oldSuppressionCommentText.substring(lineCommentPrefix.length()) + "," + id;
+    }
+
+    PsiElement parent = comment.getParent();
+    comment.replace(createComment(comment.getProject(), parent != null ? parent : comment, newText));
+  }
+
+  public static void createSuppression(@NotNull Project project,
+                                       @NotNull PsiElement element,
+                                       @NotNull PsiElement container,
+                                       @NotNull String id) {
+    final String text = SUPPRESS_INSPECTIONS_TAG_NAME + " " + id;
+    PsiComment comment = createComment(project, element, text);
+    container.getParent().addBefore(comment, container);
   }
 }

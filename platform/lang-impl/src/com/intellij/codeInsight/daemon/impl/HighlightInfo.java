@@ -22,9 +22,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.IntentionManager;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.actions.CleanupInspectionIntention;
-import com.intellij.codeInspection.ex.GlobalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.QuickFixWrapper;
+import com.intellij.codeInspection.ex.*;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.annotation.Annotation;
 import com.intellij.lang.annotation.HighlightSeverity;
@@ -48,6 +46,7 @@ import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.util.ArrayUtilRt;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.xml.util.XmlStringUtil;
 import org.intellij.lang.annotations.MagicConstant;
@@ -727,11 +726,18 @@ public class HighlightInfo implements Segment {
       this(action, null, null, icon);
     }
 
-    public IntentionActionDescriptor(@NotNull IntentionAction action, @Nullable final List<IntentionAction> options, @Nullable final String displayName, @Nullable Icon icon) {
+    public IntentionActionDescriptor(@NotNull IntentionAction action,
+                                     @Nullable final List<IntentionAction> options,
+                                     @Nullable final String displayName,
+                                     @Nullable Icon icon) {
       this(action, options, displayName, icon, null);
     }
 
-    public IntentionActionDescriptor(@NotNull IntentionAction action, @Nullable final List<IntentionAction> options, @Nullable final String displayName, @Nullable Icon icon, @Nullable HighlightDisplayKey key) {
+    public IntentionActionDescriptor(@NotNull IntentionAction action,
+                                     @Nullable final List<IntentionAction> options,
+                                     @Nullable final String displayName,
+                                     @Nullable Icon icon,
+                                     @Nullable HighlightDisplayKey key) {
       myAction = action;
       myOptions = options;
       myDisplayName = displayName;
@@ -787,6 +793,15 @@ public class HighlightInfo implements Segment {
         if (suppressActions != null) {
           ContainerUtil.addAll(newOptions, suppressActions);
         }
+      }
+      if (wrappedTool instanceof BatchSuppressableTool) {
+        final SuppressQuickFix[] suppressActions = ((BatchSuppressableTool)wrappedTool).getBatchSuppressActions(element);
+        ContainerUtil.addAll(newOptions, ContainerUtil.map(suppressActions, new Function<SuppressQuickFix, IntentionAction>() {
+          @Override
+          public IntentionAction fun(SuppressQuickFix fix) {
+            return InspectionManagerEx.convertBatchToSuppressIntentionAction(fix);
+          }
+        }));
       }
 
       synchronized (this) {

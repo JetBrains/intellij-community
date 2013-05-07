@@ -16,7 +16,7 @@
 package com.intellij.codeInsight.daemon.impl.actions;
 
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
-import com.intellij.openapi.editor.Editor;
+import com.intellij.codeInspection.JavaSuppressionUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.util.IncorrectOperationException;
@@ -27,25 +27,25 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  */
 public class SuppressLocalWithCommentFix extends SuppressByJavaCommentFix {
-  public SuppressLocalWithCommentFix(HighlightDisplayKey key) {
+  public SuppressLocalWithCommentFix(@NotNull HighlightDisplayKey key) {
     super(key);
   }
 
   @Nullable
   @Override
-  protected PsiElement getContainer(PsiElement context) {
+  public PsiElement getContainer(PsiElement context) {
     final PsiElement container = super.getContainer(context);
     if (container != null) {
-      final PsiElement elementToAnnotate = getElementToAnnotate(context, container);
+      final PsiElement elementToAnnotate = JavaSuppressionUtil.getElementToAnnotate(context, container);
       if (elementToAnnotate == null) return null;
     }
     return container;
   }
 
   @Override
-  protected void createSuppression(Project project, Editor editor, PsiElement element, PsiElement container)
+  protected void createSuppression(@NotNull Project project, @NotNull PsiElement element, @NotNull PsiElement container)
     throws IncorrectOperationException {
-    suppressWithComment(project, editor, element, container);
+    suppressWithComment(project, element, container);
   }
 
   @NotNull

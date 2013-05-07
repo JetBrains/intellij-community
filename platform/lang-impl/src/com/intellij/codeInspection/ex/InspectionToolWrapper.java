@@ -16,15 +16,14 @@
 package com.intellij.codeInspection.ex;
 
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
-import com.intellij.codeInspection.CustomSuppressableInspectionTool;
-import com.intellij.codeInspection.InspectionEP;
-import com.intellij.codeInspection.InspectionProfileEntry;
-import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.application.Application;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.InvalidDataException;
 import com.intellij.openapi.util.WriteExternalException;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -185,14 +184,23 @@ public abstract class InspectionToolWrapper<T extends InspectionProfileEntry, E 
       return super.getDescriptionUrl();
     }
     String fileName = getDescriptionFileName();
-    if (fileName == null) return null;
     return myEP.getLoaderForClass().getResource("/inspectionDescriptions/" + fileName);
   }
 
   @Override
   public SuppressIntentionAction[] getSuppressActions() {
-    if (getTool() instanceof CustomSuppressableInspectionTool) {
-      return ((CustomSuppressableInspectionTool)getTool()).getSuppressActions(null);
+    T tool = getTool();
+    if (tool instanceof CustomSuppressableInspectionTool) {
+      return ((CustomSuppressableInspectionTool)tool).getSuppressActions(null);
+    }
+    if (tool instanceof BatchSuppressableTool) {
+      LocalQuickFix[] actions = ((BatchSuppressableTool)tool).getBatchSuppressActions(null);
+      return ContainerUtil.map2Array(actions, SuppressIntentionAction.class, new Function<LocalQuickFix, SuppressIntentionAction>() {
+        @Override
+        public SuppressIntentionAction fun(final LocalQuickFix fix) {
+          return InspectionManagerEx.convertBatchToSuppressIntentionAction((SuppressQuickFix)fix);
+        }
+      });
     }
     return super.getSuppressActions();
   }

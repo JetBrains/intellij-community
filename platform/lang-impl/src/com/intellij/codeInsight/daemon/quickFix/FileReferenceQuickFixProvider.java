@@ -105,7 +105,7 @@ public class FileReferenceQuickFixProvider {
 
     final VirtualFile virtualFile = context.getVirtualFile();
     if (virtualFile == null) return Collections.emptyList();
-    
+
     final PsiDirectory directory = context.getManager().findDirectory(virtualFile);
     if (directory == null) return Collections.emptyList();
 
@@ -147,25 +147,7 @@ public class FileReferenceQuickFixProvider {
       isdirectory = false;
     }
 
-    final CreateFileFix action = new CreateFileFix(isdirectory, newFileName, directory) {
-      @Override
-      protected String getFileText() {
-        if (!isdirectory) {
-          String templateName = reference.getNewFileTemplateName();
-          if (templateName != null) {
-            FileTemplate template = FileTemplateManager.getInstance().getTemplate(templateName);
-            if (template != null) {
-              try {
-                return template.getText(FileTemplateManager.getInstance().getDefaultProperties(directory.getProject()));
-              } catch (IOException ex) {
-                throw new RuntimeException(ex);
-              }
-            }
-          }
-        }
-        return super.getFileText();
-      }
-    };
+    final CreateFileFix action = new MyCreateFileFix(isdirectory, newFileName, directory, reference);
     QuickFixAction.registerQuickFixAction(info, action);
     return Arrays.asList(action);
   }
@@ -175,5 +157,36 @@ public class FileReferenceQuickFixProvider {
   private static Module getModuleForContext(@NotNull PsiFileSystemItem context) {
     VirtualFile file = context.getVirtualFile();
     return file != null ? ModuleUtil.findModuleForFile(file, context.getProject()) : null;
+  }
+
+  private static class MyCreateFileFix extends CreateFileFix {
+    private final boolean isDirectory;
+    private final PsiDirectory myDirectory;
+    private final FileReference myReference;
+
+    public MyCreateFileFix(boolean isdirectory, String newFileName, PsiDirectory directory, FileReference reference) {
+      super(isdirectory, newFileName, directory);
+      isDirectory = isdirectory;
+      myDirectory = directory;
+      myReference = reference;
+    }
+
+    @Override
+    protected String getFileText() {
+      if (!isDirectory) {
+        String templateName = myReference.getNewFileTemplateName();
+        if (templateName != null) {
+          FileTemplate template = FileTemplateManager.getInstance().getTemplate(templateName);
+          if (template != null) {
+            try {
+              return template.getText(FileTemplateManager.getInstance().getDefaultProperties(myDirectory.getProject()));
+            } catch (IOException ex) {
+              throw new RuntimeException(ex);
+            }
+          }
+        }
+      }
+      return super.getFileText();
+    }
   }
 }

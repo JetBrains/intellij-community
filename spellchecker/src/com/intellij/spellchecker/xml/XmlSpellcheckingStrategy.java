@@ -1,6 +1,6 @@
 package com.intellij.spellchecker.xml;
 
-import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.psi.PsiElement;
 import com.intellij.spellchecker.tokenizer.SuppressibleSpellcheckingStrategy;
 import com.intellij.util.xml.DomElement;
@@ -25,7 +25,7 @@ public class XmlSpellcheckingStrategy extends SuppressibleSpellcheckingStrategy 
   }
 
   @Override
-  public SuppressIntentionAction[] getSuppressActions(@NotNull PsiElement element, @NotNull String name) {
-    return SuppressIntentionAction.EMPTY_ARRAY;
+  public SuppressQuickFix[] getSuppressActions(@NotNull PsiElement element, @NotNull String name) {
+    return SuppressQuickFix.EMPTY_ARRAY;
   }
 }
