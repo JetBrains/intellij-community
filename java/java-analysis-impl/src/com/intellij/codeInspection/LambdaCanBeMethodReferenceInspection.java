@@ -32,8 +32,8 @@ import org.jetbrains.annotations.Nullable;
 /**
  * User: anna
  */
-public class LambdaCanBeMethReferenceInspection extends BaseJavaLocalInspectionTool {
-  public static final Logger LOG = Logger.getInstance("#" + LambdaCanBeMethReferenceInspection.class.getName());
+public class LambdaCanBeMethodReferenceInspection extends BaseJavaBatchLocalInspectionTool {
+  public static final Logger LOG = Logger.getInstance("#" + LambdaCanBeMethodReferenceInspection.class.getName());
 
   @Nls
   @NotNull
