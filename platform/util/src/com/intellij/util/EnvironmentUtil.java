@@ -15,6 +15,7 @@
  */
 package com.intellij.util;
 
+import com.intellij.execution.process.UnixProcessManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
 import com.intellij.openapi.util.NotNullLazyValue;
@@ -40,7 +41,7 @@ public class EnvironmentUtil {
 
   private static final Future<Map<String, String>> ourEnvGetter;
   static {
-    boolean readShellEnv = SystemInfo.isMac && SystemProperties.getBooleanProperty("idea.fix.mac.env", false);  // todo: UI setting?
+    boolean readShellEnv = SystemInfo.isMac && SystemProperties.getBooleanProperty("idea.fix.mac.env", true);
     if (readShellEnv) {
       ExecutorService executor = Executors.newSingleThreadExecutor();
       ourEnvGetter = executor.submit(new Callable<Map<String, String>>() {
@@ -84,9 +85,13 @@ public class EnvironmentUtil {
 
   private EnvironmentUtil() { }
 
+  public static boolean isEnvironmentReady() {
+    return ourEnvGetter.isDone();
+  }
+
   /**
-   * Returns the process environment. On Mac OS X, a shell environment is returned if
-   * todo: some property is set.
+   * Returns the process environment.
+   * On Mac OS X a shell (Terminal.app) environment is returned (unless disabled by a system property).
    *
    * @return unmodifiable map of the process environment.
    */
@@ -135,7 +140,7 @@ public class EnvironmentUtil {
       processKiller.killAfter(SHELL_ENV_READING_TIMEOUT);
       List<String> lines = FileUtil.loadLines(process.getInputStream());
       processKiller.stopWaiting();
-      int rv = process.exitValue();
+      int rv = process.waitFor();
       if (rv != 0 || lines.isEmpty()) {
         throw new Exception("rv:" + rv + " lines:" + lines.size());
       }
@@ -161,6 +166,7 @@ public class EnvironmentUtil {
         throw new Exception("env:" + newEnv.size() + " lines:" + lines.size());
       }
 
+      LOG.info("shell environment loaded (" + newEnv.size() + " vars)");
       return Collections.unmodifiableMap(newEnv);
     }
     catch (Throwable t) {
@@ -201,7 +207,7 @@ public class EnvironmentUtil {
             myProcess.exitValue();
           }
           catch (IllegalThreadStateException e) {
-            myProcess.destroy();
+            UnixProcessManager.sendSigIntToProcessTree(myProcess);
             LOG.warn("timed out");
           }
         }

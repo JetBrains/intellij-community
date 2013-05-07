@@ -178,7 +178,10 @@ public class StartupUtil {
 
 
   static void fixProcessEnvironment(Logger log) {
-    log.info("initializing " + EnvironmentUtil.class.getName());
+    boolean envReady = EnvironmentUtil.isEnvironmentReady();  // trigger environment loading
+    if (!envReady) {
+      log.info("initializing environment");
+    }
   }
 
 
