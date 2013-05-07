@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.externalSystem.model;
 
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
+import java.io.*;
 import java.util.*;
 
 /**
@@ -42,7 +43,8 @@ public class DataNode<T> implements Serializable {
   @NotNull private final List<DataNode<?>> myChildren = ContainerUtilRt.newArrayList();
 
   @NotNull private final Key<T> myKey;
-  @NotNull private final T      myData;
+  private transient T myData;
+  private byte[] myRawData;
 
   @Nullable private final DataNode<?> myParent;
 
@@ -64,8 +66,26 @@ public class DataNode<T> implements Serializable {
     return myKey;
   }
 
+  @SuppressWarnings({"unchecked", "IOResourceOpenedButNotSafelyClosed"})
   @NotNull
   public T getData() {
+    if (myData == null) {
+      assert myRawData != null;
+      ObjectInputStream oIn = null;
+      try {
+        oIn = new ObjectInputStream(new ByteArrayInputStream(myRawData));
+        myData = (T)oIn.readObject();
+      }
+      catch (IOException e) {
+        throw new IllegalStateException("Can't deserialize target data of key " + myKey);
+      }
+      catch (ClassNotFoundException e) {
+        throw new IllegalStateException("Can't deserialize target data of key " + myKey);
+      }
+      finally {
+        StreamUtil.closeStream(oIn);
+      }
+    }
     return myData;
   }
 
@@ -113,11 +133,24 @@ public class DataNode<T> implements Serializable {
     return myChildren;
   }
 
+  private void writeObject(ObjectOutputStream out) throws IOException {
+    ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+    ObjectOutputStream oOut = new ObjectOutputStream(bOut);
+    try {
+      oOut.writeObject(myData);
+    }
+    finally {
+      oOut.close();
+    }
+    myRawData = bOut.toByteArray();
+    out.defaultWriteObject();
+  }
+  
   @Override
   public int hashCode() {
     int result = myChildren.hashCode();
     result = 31 * result + myKey.hashCode();
-    result = 31 * result + myData.hashCode();
+    result = 31 * result + getData().hashCode();
     return result;
   }
 
@@ -129,7 +162,7 @@ public class DataNode<T> implements Serializable {
     DataNode node = (DataNode)o;
 
     if (!myChildren.equals(node.myChildren)) return false;
-    if (!myData.equals(node.myData)) return false;
+    if (!getData().equals(node.getData())) return false;
     if (!myKey.equals(node.myKey)) return false;
 
     return true;
@@ -137,6 +170,6 @@ public class DataNode<T> implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("%s: %s", myKey, myData);
+    return String.format("%s: %s", myKey, getData());
   }
 }
