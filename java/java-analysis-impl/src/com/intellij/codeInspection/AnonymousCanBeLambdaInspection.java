@@ -35,7 +35,7 @@ import java.util.Set;
 /**
  * User: anna
  */
-public class AnonymousCanBeLambdaInspection extends BaseJavaLocalInspectionTool {
+public class AnonymousCanBeLambdaInspection extends BaseJavaBatchLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance("#" + AnonymousCanBeLambdaInspection.class.getName());
 
   @Nls
