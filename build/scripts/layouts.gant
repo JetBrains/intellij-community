@@ -709,6 +709,8 @@ def layout_core_upsource(String home, String target) {
       module("platform-resources-en")
       module("analysis-api")
       module("analysis-impl")
+      module("java-analysis-api")
+      module("java-analysis-impl")
     }
 
     jar("annotations.jar") {
