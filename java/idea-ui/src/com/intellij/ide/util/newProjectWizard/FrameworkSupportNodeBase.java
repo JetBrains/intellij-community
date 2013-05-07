@@ -27,15 +27,17 @@ public abstract class FrameworkSupportNodeBase extends CheckedTreeNode {
   }
 
   public static void sortByName(List<FrameworkSupportNodeBase> nodes) {
-    if (nodes.isEmpty()) return;
-
     Collections.sort(nodes, new Comparator<FrameworkSupportNodeBase>() {
       public int compare(final FrameworkSupportNodeBase o1, final FrameworkSupportNodeBase o2) {
+        if (o1 instanceof FrameworkGroupNode && !(o2 instanceof FrameworkGroupNode)) return -1;
+        if (o2 instanceof FrameworkGroupNode && !(o1 instanceof FrameworkGroupNode)) return 1;
+        if (o1.myChildren.size() < o2.myChildren.size()) return 1;
+        if (o2.myChildren.size() < o1.myChildren.size()) return -1;
         return o1.getTitle().compareToIgnoreCase(o2.getTitle());
       }
     });
     for (FrameworkSupportNodeBase node : nodes) {
-      node.sortChildren();
+      sortByName(node.myChildren);
     }
   }
 
@@ -51,9 +53,5 @@ public abstract class FrameworkSupportNodeBase extends CheckedTreeNode {
 
   public FrameworkSupportNodeBase getParentNode() {
     return myParentNode;
-  }
-
-  private void sortChildren() {
-    sortByName(myChildren);
   }
 }

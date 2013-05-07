@@ -17,6 +17,7 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -92,7 +93,8 @@ public class FrameworksTree extends CheckboxTree {
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
       if (value instanceof FrameworkSupportNodeBase) {
         final FrameworkSupportNodeBase node = (FrameworkSupportNodeBase)value;
-        getTextRenderer().append(node.getTitle());
+        SimpleTextAttributes attributes = node instanceof FrameworkGroupNode ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        getTextRenderer().append(node.getTitle(), attributes);
         getTextRenderer().setIcon(node.getIcon());
         getCheckbox().setVisible(value instanceof FrameworkSupportNode);
       }
