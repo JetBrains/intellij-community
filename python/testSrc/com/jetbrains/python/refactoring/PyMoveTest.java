@@ -145,7 +145,7 @@ public class PyMoveTest extends PyTestCase {
 
     VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + rootAfter);
     try {
-      PlatformTestUtil.assertDirectoriesEqual(dir2, dir1, null);
+      PlatformTestUtil.assertDirectoriesEqual(dir2, dir1);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
@@ -171,7 +171,7 @@ public class PyMoveTest extends PyTestCase {
 
     VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + rootAfter);
     try {
-      PlatformTestUtil.assertDirectoriesEqual(dir2, dir1, null);
+      PlatformTestUtil.assertDirectoriesEqual(dir2, dir1);
     }
     catch (IOException e) {
       throw new RuntimeException(e);

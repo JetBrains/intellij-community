@@ -199,7 +199,7 @@ public class PyRenameTest extends PyTestCase {
     myFixture.renameElementAtCaret(newName);
     VirtualFile dir2 = getVirtualFileByName(PythonTestUtil.getTestDataPath() + "/" + RENAME_DATA_PATH + testName + "/after");
     try {
-      PlatformTestUtil.assertDirectoriesEqual(dir2, dir1, null);
+      PlatformTestUtil.assertDirectoriesEqual(dir2, dir1);
     }
     catch (IOException e) {
       throw new RuntimeException(e);
