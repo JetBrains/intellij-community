@@ -281,11 +281,9 @@ public class CodeCompletionHandlerBase {
 
     for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
       final ThreeState result = confidence.shouldSkipAutopopup(elementAt, psiFile, offset);
-      if (result == ThreeState.YES) {
-        return true;
-      }
-      if (result == ThreeState.NO) {
-        return false;
+      if (result != ThreeState.UNSURE) {
+        LOG.debug(confidence + " has returned shouldSkipAutopopup=" + result);
+        return result == ThreeState.YES;
       }
     }
     return false;
