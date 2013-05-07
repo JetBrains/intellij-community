@@ -352,7 +352,8 @@ GParsExecutorsPool oi
     doOptimizeImports()
 
     myFixture.checkResult('''\
-@Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12') @Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12')
+@Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12')
+@Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12')
 import groovyx.gpars.GParsExecutorsPool
 
 GParsExecutorsPool oi
