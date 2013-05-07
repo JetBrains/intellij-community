@@ -54,6 +54,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.templateLanguages.OuterLanguageElement;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.Function;
@@ -1859,7 +1860,7 @@ public class HighlightUtil extends HighlightUtilBase {
       type = qualifier instanceof PsiExpression ? ((PsiExpression)qualifier).getType() : null;
       referencedClass = PsiUtil.resolveClassInType(type);
 
-      boolean isSuperCall = isSuperMethodCall(expression.getParent());
+      boolean isSuperCall = RefactoringChangeUtil.isSuperMethodCall(expression.getParent());
       if (resolved == null && isSuperCall) {
         if (qualifier instanceof PsiReferenceExpression) {
           resolved = ((PsiReferenceExpression)qualifier).resolve();
@@ -1953,7 +1954,7 @@ public class HighlightUtil extends HighlightUtilBase {
     PsiElement element = expression.getParent();
     while (element != null) {
       // check if expression inside super()/this() call
-      if (isSuperOrThisMethodCall(element)) {
+      if (RefactoringChangeUtil.isSuperOrThisMethodCall(element)) {
         PsiElement parentClass = new PsiMatcherImpl(element)
           .parent(PsiMatchers.hasClass(PsiExpressionStatement.class))
           .parent(PsiMatchers.hasClass(PsiCodeBlock.class))
@@ -2045,23 +2046,6 @@ public class HighlightUtil extends HighlightUtilBase {
       .dot(PsiMatchers.hasText(PsiKeyword.SUPER))
       .getElement();
     return element != null;
-  }
-
-  @Nullable
-  private static String getMethodExpressionName(@Nullable PsiElement element) {
-    if (!(element instanceof PsiMethodCallExpression)) return null;
-    PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)element).getMethodExpression();
-    return methodExpression.getReferenceName();
-  }
-
-  public static boolean isSuperOrThisMethodCall(@Nullable PsiElement element) {
-    String name = getMethodExpressionName(element);
-    return PsiKeyword.SUPER.equals(name) || PsiKeyword.THIS.equals(name);
-  }
-
-  public static boolean isSuperMethodCall(@Nullable PsiElement element) {
-    String name = getMethodExpressionName(element);
-    return PsiKeyword.SUPER.equals(name);
   }
 
   private static boolean thisOrSuperReference(@Nullable PsiExpression qualifierExpression, PsiClass aClass) {

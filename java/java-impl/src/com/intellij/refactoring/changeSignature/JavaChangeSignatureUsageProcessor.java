@@ -538,8 +538,9 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
             containingClass = PsiTreeUtil.getParentOfType(containingClass, PsiClass.class);
           }
           if (containingClasses.size() == 1) {
-            return RefactoringUtil.createThisExpression(parentClass.getManager(), containingClasses.contains(parentClass) ? null
-                                                                                                                          : containingClasses.iterator().next());
+            return RefactoringChangeUtil.createThisExpression(parentClass.getManager(), containingClasses.contains(parentClass) ? null
+                                                                                                                                : containingClasses
+                                                                                          .iterator().next());
           }
         }
       }
@@ -761,8 +762,8 @@ public class JavaChangeSignatureUsageProcessor implements ChangeSignatureUsagePr
         baseMethod == null ? PsiSubstitutor.EMPTY : ChangeSignatureProcessor.calculateSubstitutor(caller, baseMethod);
       final PsiClass aClass = changeInfo.getMethod().getContainingClass();
       final PsiClass callerContainingClass = caller.getContainingClass();
-      final PsiSubstitutor psiSubstitutor = aClass != null && callerContainingClass != null && callerContainingClass.isInheritor(aClass, true) 
-                                            ? TypeConversionUtil.getSuperClassSubstitutor(aClass, callerContainingClass, substitutor) 
+      final PsiSubstitutor psiSubstitutor = aClass != null && callerContainingClass != null && callerContainingClass.isInheritor(aClass, true)
+                                            ? TypeConversionUtil.getSuperClassSubstitutor(aClass, callerContainingClass, substitutor)
                                             : PsiSubstitutor.EMPTY;
       for (JavaParameterInfo info : primaryNewParms) {
         if (info.getOldIndex() < 0) newParameters.add(createNewParameter(changeInfo, info, psiSubstitutor, substitutor));

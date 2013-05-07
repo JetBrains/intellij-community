@@ -17,7 +17,6 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.generation.surroundWith.JavaWithTryCatchSurrounder;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
@@ -28,6 +27,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -67,7 +67,7 @@ public class SurroundWithTryCatchFix implements IntentionAction {
     return myStatement != null &&
            myStatement.isValid() &&
            (!(myStatement instanceof PsiExpressionStatement) ||
-            !HighlightUtil.isSuperOrThisMethodCall(((PsiExpressionStatement)myStatement).getExpression()));
+            !RefactoringChangeUtil.isSuperOrThisMethodCall(((PsiExpressionStatement)myStatement).getExpression()));
   }
 
   @Override

@@ -24,7 +24,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.HashMap;
 import com.siyeh.ipp.base.Intention;
@@ -68,7 +68,8 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
     final PsiClass thisClass = PsiTreeUtil.getParentOfType(lambdaExpression, PsiClass.class, true);
     final String thisClassName = thisClass.getName();
     if (thisClassName != null) {
-      final PsiThisExpression thisAccessExpr = thisClass instanceof PsiAnonymousClass ? null : RefactoringUtil.createThisExpression(lambdaExpression.getManager(), thisClass);
+      final PsiThisExpression thisAccessExpr = thisClass instanceof PsiAnonymousClass ? null : RefactoringChangeUtil
+        .createThisExpression(lambdaExpression.getManager(), thisClass);
       ChangeContextUtil.decodeContextInfo(blockFromText, thisClass, thisAccessExpr);
       final Map<PsiElement, PsiElement> replacements = new HashMap<PsiElement, PsiElement>();
       blockFromText.accept(new JavaRecursiveElementWalkingVisitor() {
@@ -79,7 +80,7 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
             replacements.put(expression, psiElementFactory.createExpressionFromText(thisClassName + "." + expression.getText(), expression));
           }
         }
-  
+
       });
       for (PsiElement psiElement : replacements.keySet()) {
         psiElement.replace(replacements.get(psiElement));
@@ -148,9 +149,9 @@ public class ReplaceLambdaWithAnonymousIntention extends Intention {
           if (disabled[0]) return false;
         }
         final PsiType functionalInterfaceType = lambdaExpression.getFunctionalInterfaceType();
-        return functionalInterfaceType != null && 
-               LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) != null && 
-               LambdaUtil.isLambdaFullyInferred(lambdaExpression, functionalInterfaceType) && 
+        return functionalInterfaceType != null &&
+               LambdaUtil.getFunctionalInterfaceMethod(functionalInterfaceType) != null &&
+               LambdaUtil.isLambdaFullyInferred(lambdaExpression, functionalInterfaceType) &&
                LambdaHighlightingUtil.checkInterfaceFunctional(functionalInterfaceType) == null;
       }
       return false;

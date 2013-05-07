@@ -47,8 +47,8 @@ public class InlineUtil {
     throws IncorrectOperationException {
     PsiManager manager = initializer.getManager();
 
-    PsiClass thisClass = RefactoringUtil.getThisClass(initializer);
-    PsiClass refParent = RefactoringUtil.getThisClass(ref);
+    PsiClass thisClass = RefactoringChangeUtil.getThisClass(initializer);
+    PsiClass refParent = RefactoringChangeUtil.getThisClass(ref);
     boolean insertCastWhenUnchecked = ref.getParent() instanceof PsiForeachStatement;
     final PsiType varType = variable.getType();
     initializer = RefactoringUtil.convertInitializerToNormalExpression(initializer, varType);
@@ -57,7 +57,7 @@ public class InlineUtil {
     PsiExpression expr = (PsiExpression)replaceDiamondWithInferredTypesIfNeeded(initializer, ref);
     PsiType exprType = expr.getType();
     if (exprType != null && (!varType.equals(exprType) && (varType instanceof PsiPrimitiveType || exprType instanceof PsiPrimitiveType)
-                             || !TypeConversionUtil.isAssignable(varType, exprType) 
+                             || !TypeConversionUtil.isAssignable(varType, exprType)
                              || insertCastWhenUnchecked && GenericsHighlightUtil.isRawToGeneric(varType, exprType))) {
       boolean matchedTypes = false;
       //try explicit type arguments
@@ -174,14 +174,14 @@ public class InlineUtil {
     if (Comparing.equal(thisClass, refParent))
 
     {
-      thisAccessExpr = RefactoringUtil.createThisExpression(manager, null);
+      thisAccessExpr = RefactoringChangeUtil.createThisExpression(manager, null);
     }
 
     else
 
     {
       if (!(thisClass instanceof PsiAnonymousClass)) {
-        thisAccessExpr = RefactoringUtil.createThisExpression(manager, thisClass);
+        thisAccessExpr = RefactoringChangeUtil.createThisExpression(manager, thisClass);
       }
     }
     return thisAccessExpr;

@@ -36,7 +36,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.FieldConflictsResolver;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.Processor;
 import com.intellij.util.containers.ContainerUtil;
@@ -120,7 +120,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
     PsiMethodCallExpression call = getMethodCall();
     if (call == null) return Collections.emptyList();
     for (PsiClass target : targets) {
-      if (target.isInterface() && shouldCreateStaticMember(call.getMethodExpression(), target)) continue; 
+      if (target.isInterface() && shouldCreateStaticMember(call.getMethodExpression(), target)) continue;
       if (!isMethodSignatureExists(call, target)) {
         result.add(target);
       }
@@ -170,7 +170,7 @@ public class CreateMethodFromUsageFix extends CreateFromUsageBaseFix {
 
     if (enclosingContext instanceof PsiMethod && methodName.equals(enclosingContext.getName()) &&
         PsiTreeUtil.isAncestor(targetClass, parentClass, true) && !ref.isQualified()) {
-      FieldConflictsResolver.qualifyReference(ref, method, null);
+      RefactoringChangeUtil.qualifyReference(ref, method, null);
     }
 
     PsiCodeBlock body = method.getBody();

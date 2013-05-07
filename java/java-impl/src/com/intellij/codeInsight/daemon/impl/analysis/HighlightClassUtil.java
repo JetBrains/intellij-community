@@ -50,6 +50,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.source.jsp.jspJava.JspClass;
 import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -800,7 +801,7 @@ public class HighlightClassUtil {
       PsiStatement firstStatement = statements[0];
       if (!(firstStatement instanceof PsiExpressionStatement)) return false;
       PsiExpression expression = ((PsiExpressionStatement)firstStatement).getExpression();
-      if (!HighlightUtil.isSuperOrThisMethodCall(expression)) return false;
+      if (!RefactoringChangeUtil.isSuperOrThisMethodCall(expression)) return false;
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expression;
       if (PsiKeyword.THIS.equals(methodCallExpression.getMethodExpression().getReferenceName())) continue;
       PsiReferenceExpression referenceExpression = methodCallExpression.getMethodExpression();
@@ -887,7 +888,7 @@ public class HighlightClassUtil {
 
   @Nullable
   public static HighlightInfo checkSuperQualifierType(@NotNull Project project, @NotNull PsiMethodCallExpression superCall) {
-    if (!HighlightUtil.isSuperMethodCall(superCall)) return null;
+    if (!RefactoringChangeUtil.isSuperMethodCall(superCall)) return null;
     PsiMethod ctr = PsiTreeUtil.getParentOfType(superCall, PsiMethod.class, true, PsiMember.class);
     if (ctr == null) return null;
     final PsiClass aClass = ctr.getContainingClass();

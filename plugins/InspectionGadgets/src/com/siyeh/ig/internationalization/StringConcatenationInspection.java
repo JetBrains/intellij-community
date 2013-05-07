@@ -16,13 +16,13 @@
 package com.siyeh.ig.internationalization;
 
 import com.intellij.codeInsight.AnnotationUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.siyeh.InspectionGadgetsBundle;
 import com.siyeh.ig.BaseInspection;
 import com.siyeh.ig.BaseInspectionVisitor;
@@ -209,7 +209,7 @@ public class StringConcatenationInspection extends BaseInspection {
         } else {
           final PsiMethodCallExpression methodCallExpression =
             PsiTreeUtil.getParentOfType(expression, PsiMethodCallExpression.class, true, PsiCodeBlock.class, PsiClass.class);
-          if (HighlightUtil.isSuperOrThisMethodCall(methodCallExpression)) {
+          if (RefactoringChangeUtil.isSuperOrThisMethodCall(methodCallExpression)) {
             return;
           }
         }

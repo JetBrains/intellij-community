@@ -48,10 +48,7 @@ import com.intellij.refactoring.BaseRefactoringProcessor;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.listeners.JavaRefactoringListenerManager;
 import com.intellij.refactoring.listeners.impl.JavaRefactoringListenerManagerImpl;
-import com.intellij.refactoring.util.DocCommentPolicy;
-import com.intellij.refactoring.util.RefactoringHierarchyUtil;
-import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classMembers.MemberInfo;
 import com.intellij.refactoring.util.duplicates.MethodDuplicatesHandler;
@@ -485,7 +482,7 @@ public class PullUpHelper extends BaseRefactoringProcessor{
       PsiStatement assignmentStatement = (PsiStatement)constructor.getBody().add(initializer.initializer);
 
       ChangeContextUtil.decodeContextInfo(assignmentStatement,
-                                          myTargetSuperClass, RefactoringUtil.createThisExpression(myManager, null));
+                                          myTargetSuperClass, RefactoringChangeUtil.createThisExpression(myManager, null));
       for (PsiElement psiElement : initializer.statementsToRemove) {
         psiElement.delete();
       }

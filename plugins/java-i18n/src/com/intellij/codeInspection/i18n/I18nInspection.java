@@ -23,7 +23,6 @@ import com.intellij.ExtensionPoints;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
@@ -47,6 +46,7 @@ import com.intellij.psi.util.MethodSignatureUtil;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.introduceField.IntroduceConstantHandler;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.AddDeleteListPanel;
 import com.intellij.ui.DocumentAdapter;
 import com.intellij.ui.FieldPanel;
@@ -891,7 +891,7 @@ public class I18nInspection extends BaseLocalInspectionTool {
     }
     final PsiElement grandparent = parent.getParent();
     final PsiClass aClass;
-    if (HighlightUtil.isSuperOrThisMethodCall(grandparent)) {
+    if (RefactoringChangeUtil.isSuperOrThisMethodCall(grandparent)) {
       final PsiMethod method = ((PsiMethodCallExpression)grandparent).resolveMethod();
       if (method != null) {
         aClass = method.getContainingClass();

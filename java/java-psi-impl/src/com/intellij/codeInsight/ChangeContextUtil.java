@@ -20,8 +20,7 @@ import com.intellij.openapi.util.Key;
 import com.intellij.psi.*;
 import com.intellij.psi.util.InheritanceUtil;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.FieldConflictsResolver;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -57,7 +56,7 @@ public class ChangeContextUtil {
       PsiThisExpression thisExpr = (PsiThisExpression)scope;
       final PsiJavaCodeReferenceElement qualifier = thisExpr.getQualifier();
       if (qualifier == null){
-        PsiClass thisClass = RefactoringUtil.getThisClass(thisExpr);
+        PsiClass thisClass = RefactoringChangeUtil.getThisClass(thisExpr);
         if (thisClass != null && !(thisClass instanceof PsiAnonymousClass)){
           thisExpr.putCopyableUserData(THIS_QUALIFIER_CLASS_KEY, thisClass);
         }
@@ -187,7 +186,7 @@ public class ChangeContextUtil {
     return thisExpr;
   }
 
-  private static PsiReferenceExpression decodeReferenceExpression(PsiReferenceExpression refExpr,
+  private static PsiReferenceExpression decodeReferenceExpression(@NotNull PsiReferenceExpression refExpr,
                                                                   PsiExpression thisAccessExpr,
                                                                   PsiClass thisClass) throws IncorrectOperationException {
     PsiManager manager = refExpr.getManager();
@@ -225,7 +224,7 @@ public class ChangeContextUtil {
                   PsiJavaCodeReferenceElement thisQualifier = ((PsiThisExpression)thisAccessExpr).getQualifier();
                   PsiClass thisExprClass = thisQualifier != null
                                            ? (PsiClass)thisQualifier.resolve()
-                                           : RefactoringUtil.getThisClass(refExpr);
+                                           : RefactoringChangeUtil.getThisClass(refExpr);
                   if (currentClass.equals(thisExprClass) || thisExprClass.isInheritor(realParentClass, true)){ // qualifier is not necessary
                     needQualifier = false;
                   }
@@ -240,7 +239,7 @@ public class ChangeContextUtil {
           else if (thisClass != null && realParentClass != null && PsiTreeUtil.isAncestor(realParentClass, thisClass, true)) {
             PsiElement refElement = refExpr.resolve();
             if (refElement != null && !manager.areElementsEquivalent(refMember, refElement)) {
-              refExpr = FieldConflictsResolver.qualifyReference(refExpr, refMember, null);
+              refExpr = RefactoringChangeUtil.qualifyReference(refExpr, refMember, null);
             }
           }
         }
@@ -302,7 +301,7 @@ public class ChangeContextUtil {
         return refElement.equals(newRefElement);
       }
       else if (refExpr instanceof PsiMethodReferenceExpression) {
-        return false;        
+        return false;
       }
       else {
         PsiReferenceExpression newRefExpr = (PsiReferenceExpression)factory.createExpressionFromText(
@@ -322,7 +321,7 @@ public class ChangeContextUtil {
       PsiThisExpression thisExpr = (PsiThisExpression)scope;
       if (thisExpr.getQualifier() == null){
         if (thisClass instanceof PsiAnonymousClass) return null;
-        PsiThisExpression qualifiedThis = RefactoringUtil.createThisExpression(thisClass.getManager(), thisClass);
+        PsiThisExpression qualifiedThis = RefactoringChangeUtil.createThisExpression(thisClass.getManager(), thisClass);
         if (thisExpr.getParent() != null) {
           return thisExpr.replace(qualifiedThis);
         } else {
