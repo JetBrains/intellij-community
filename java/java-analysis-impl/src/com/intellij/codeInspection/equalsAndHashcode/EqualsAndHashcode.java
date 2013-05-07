@@ -15,7 +15,7 @@
  */
 package com.intellij.codeInspection.equalsAndHashcode;
 
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -36,12 +36,10 @@ import org.jetbrains.annotations.Nullable;
 /**
  * @author max
  */
-public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
-
+public class EqualsAndHashcode extends BaseJavaBatchLocalInspectionTool {
   @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, boolean isOnTheFly) {
-
     final Project project = holder.getProject();
     Pair<PsiMethod, PsiMethod> pair = CachedValuesManager.getManager(project).getCachedValue(project, new CachedValueProvider<Pair<PsiMethod, PsiMethod>>() {
       @Override
@@ -85,8 +83,8 @@ public class EqualsAndHashcode extends BaseJavaLocalInspectionTool {
     return new JavaElementVisitor() {
       @Override public void visitClass(PsiClass aClass) {
         super.visitClass(aClass);
-        boolean [] hasEquals = new boolean[] {false};
-        boolean [] hasHashCode = new boolean[] {false};
+        boolean [] hasEquals = {false};
+        boolean [] hasHashCode = {false};
         processClass(aClass, hasEquals, hasHashCode, myEquals, myHashCode);
         if (hasEquals[0] != hasHashCode[0]) {
           PsiIdentifier identifier = aClass.getNameIdentifier();
