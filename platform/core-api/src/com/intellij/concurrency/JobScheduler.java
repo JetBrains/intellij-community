@@ -104,7 +104,6 @@ public abstract class JobScheduler {
         if (executionTime > limit) {
           String msg = limit + " ms execution limit failed for:" + traceRunnableOrCallable + "," + executionTime;
           LOG.info(msg);
-          System.err.println(msg);
         }
       }
     }
