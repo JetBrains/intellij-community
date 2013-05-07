@@ -312,10 +312,10 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
 
     Set<VirtualFile> added = new HashSet<VirtualFile>(newMap.keySet());
     added.removeAll(oldMap.keySet());
-    
+
     Set<VirtualFile> removed = new HashSet<VirtualFile>(oldMap.keySet());
     removed.removeAll(newMap.keySet());
-    
+
     changed.addAll(added);
     changed.addAll(removed);
 
@@ -463,7 +463,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
   public void setNative2AsciiForPropertiesFiles(final VirtualFile virtualFile, final boolean native2Ascii) {
     if (myNative2AsciiForPropertiesFiles != native2Ascii) {
       myNative2AsciiForPropertiesFiles = native2Ascii;
-      ((EncodingManagerImpl)EncodingManager.getInstance()).firePropertyChange(PROP_NATIVE2ASCII_SWITCH, !native2Ascii, native2Ascii);
+      ((EncodingManagerImpl)EncodingManager.getInstance()).firePropertyChange(null, PROP_NATIVE2ASCII_SWITCH, !native2Ascii, native2Ascii);
     }
   }
 
@@ -478,7 +478,7 @@ public class EncodingProjectManagerImpl extends EncodingProjectManager {
     Charset old = myDefaultCharsetForPropertiesFiles;
     if (!Comparing.equal(old, charset)) {
       myDefaultCharsetForPropertiesFiles = charset;
-      ((EncodingManagerImpl)EncodingManager.getInstance()).firePropertyChange(PROP_PROPERTIES_FILES_ENCODING, old, charset);
+      ((EncodingManagerImpl)EncodingManager.getInstance()).firePropertyChange(null, PROP_PROPERTIES_FILES_ENCODING, old, charset);
     }
   }
 
