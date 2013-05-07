@@ -20,9 +20,8 @@ import com.intellij.codeInsight.NullableNotNullManager;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.miscGenerics.GenericsInspectionToolBase;
-import com.intellij.codeInspection.miscGenerics.SuspiciousCollectionsMethodCallsInspection;
+import com.intellij.codeInspection.miscGenerics.SuspiciousMethodCallUtil;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.psi.*;
@@ -43,7 +42,6 @@ import java.util.List;
  * Date: Dec 24, 2001
  */
 public class RedundantCastInspection extends GenericsInspectionToolBase {
-  private static final Logger LOG = Logger.getInstance("#com.intellij.codeInspection.redundantCast.RedundantCastInspection");
   private final LocalQuickFix myQuickFixAction;
   private static final String DISPLAY_NAME = InspectionsBundle.message("inspection.redundant.cast.display.name");
   @NonNls private static final String SHORT_NAME = "RedundantCast";
@@ -117,8 +115,9 @@ public class RedundantCastInspection extends GenericsInspectionToolBase {
     } else if (parent instanceof PsiExpressionList)  {
       final PsiElement gParent = parent.getParent();
       if (gParent instanceof PsiMethodCallExpression && IGNORE_SUSPICIOUS_METHOD_CALLS) {
-        final String message = SuspiciousCollectionsMethodCallsInspection
-          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand.getType(), true, new ArrayList<PsiMethod>(), new IntArrayList());
+        final String message = SuspiciousMethodCallUtil
+          .getSuspiciousMethodCallMessage((PsiMethodCallExpression)gParent, operand.getType(), true, new ArrayList<PsiMethod>(),
+                                          new IntArrayList());
         if (message != null) {
           return null;
         }

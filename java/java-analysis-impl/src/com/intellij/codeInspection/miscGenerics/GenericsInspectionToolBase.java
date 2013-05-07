@@ -15,9 +15,9 @@
  */
 package com.intellij.codeInspection.miscGenerics;
 
+import com.intellij.codeInspection.BaseJavaBatchLocalInspectionTool;
 import com.intellij.codeInspection.InspectionManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
 import com.intellij.psi.*;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
@@ -29,7 +29,11 @@ import java.util.List;
 /**
  * @author ven
  */
-public abstract class GenericsInspectionToolBase extends BaseLocalInspectionTool {
+public abstract class GenericsInspectionToolBase extends BaseJavaBatchLocalInspectionTool {
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
+  }
   @Override
   public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
     final PsiClassInitializer[] initializers = aClass.getInitializers();
