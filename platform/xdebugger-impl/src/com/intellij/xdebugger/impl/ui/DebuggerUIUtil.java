@@ -199,11 +199,7 @@ public class DebuggerUIUtil {
       public void run() {
         propertiesPanel.saveProperties();
         //showXBreakpointEditorBalloon(project, point, component, true, breakpoint);
-        final JBPopup popup = BreakpointsMasterDetailPopupFactory.
-          getInstance(project).createPopup(breakpoint);
-        if (popup != null) {
-          popup.showCenteredInCurrentWindow(project);
-        }
+        BreakpointsMasterDetailPopupFactory.getInstance(project).createAndShowPopup(breakpoint);
       }
     };
 

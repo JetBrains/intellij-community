@@ -93,11 +93,8 @@ public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            final JBPopup popup = BreakpointsMasterDetailPopupFactory.
-              getInstance(project).createPopup(javaBreakpoint);
-            if (popup != null) {
-              popup.showCenteredInCurrentWindow(project);
-            }
+            BreakpointsMasterDetailPopupFactory.getInstance(project).createAndShowPopup(javaBreakpoint);
+
           }
         });
       }

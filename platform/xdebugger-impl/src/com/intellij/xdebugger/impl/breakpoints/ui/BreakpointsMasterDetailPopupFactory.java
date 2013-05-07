@@ -51,9 +51,9 @@ public class BreakpointsMasterDetailPopupFactory {
   }
 
   @Nullable
-  public JBPopup createPopup(@Nullable Object initialBreakpoint) {
+  public void createAndShowPopup(@Nullable Object initialBreakpoint) {
     if (myPopupShowing != null) {
-      return null;
+      return;
     }
     BreakpointMasterDetailPopupBuilder builder = new BreakpointMasterDetailPopupBuilder(myProject);
     builder.setInitialBreakpoint(initialBreakpoint != null ? initialBreakpoint : myBreakpoint);
@@ -89,6 +89,6 @@ public class BreakpointsMasterDetailPopupFactory {
         myPopupShowing = null;
       }
     });
-    return popup;
+    popup.showCenteredInCurrentWindow(myProject);
   }
 }

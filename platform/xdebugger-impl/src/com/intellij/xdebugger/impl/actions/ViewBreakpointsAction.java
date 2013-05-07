@@ -53,11 +53,7 @@ public class ViewBreakpointsAction extends AnAction implements AnAction.Transpar
       }
     }
 
-    final JBPopup popup = BreakpointsMasterDetailPopupFactory.
-      getInstance(project).createPopup(myInitialBreakpoint);
-    if (popup != null) {
-      popup.showCenteredInCurrentWindow(project);
-    }
+    BreakpointsMasterDetailPopupFactory.getInstance(project).createAndShowPopup(myInitialBreakpoint);
     myInitialBreakpoint = null;
   }
 
