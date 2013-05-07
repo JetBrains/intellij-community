@@ -19,7 +19,7 @@ import com.intellij.compiler.server.CompileServerPathProvider;
 import com.intellij.compiler.server.CompileServerPlugin;
 import com.intellij.ide.plugins.IdeaPluginDescriptor;
 import com.intellij.ide.plugins.PluginManager;
-import com.intellij.openapi.application.PathManager;
+import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.extensions.PluginId;
 import com.intellij.openapi.project.Project;
@@ -30,7 +30,6 @@ import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.Arrays;
 import java.util.List;
 
 /**
@@ -128,15 +127,7 @@ public class CompileServerClasspathManager {
         return extraDirFile;
       }
     }
-    List<String> roots = Arrays.asList(new File(PathManager.getHomePath(), "plugins").getPath(),
-                                       new File(PathManager.getHomePath(), "community/plugins").getPath());
-    for (String root : roots) {
-      File pluginDir = new File(root, pluginDirName);
-      if (pluginDir.isDirectory()) {
-        return pluginDir;
-      }
-    }
-    return null;
+    return PluginPathManager.getPluginHome(pluginDirName);
   }
 
   private static List<String> getDynamicClasspath(Project project) {

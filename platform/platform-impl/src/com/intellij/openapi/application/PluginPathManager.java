@@ -24,13 +24,17 @@ public class PluginPathManager {
   private PluginPathManager() {
   }
 
-  public static String getPluginHomePath(String pluginName) {
+  public static File getPluginHome(String pluginName) {
     String homePath = PathManager.getHomePath();
     File candidate = new File(homePath, "community/plugins/" + pluginName);
     if (candidate.isDirectory()) {
-      return candidate.getPath();
+      return candidate;
     }
-    return new File(homePath, "plugins/" + pluginName).getPath();
+    return new File(homePath, "plugins/" + pluginName);
+  }
+
+  public static String getPluginHomePath(String pluginName) {
+    return getPluginHome(pluginName).getPath();
   }
 
   public static String getPluginHomePathRelative(String pluginName) {
