@@ -325,12 +325,13 @@ public class ReflectionUtil {
    */
   @SuppressWarnings("JavadocReference")
   @Nullable
-  public static Class getCallerClass(int framesToSkip) {
+  public static Class findCallerClass(int framesToSkip) {
+    assert framesToSkip > 0 : framesToSkip;
     int frames = framesToSkip;
 
     StackTraceElement[] stackTrace = new Throwable().getStackTrace();
     String className = null;
-    for (int i = 1; i<=frames; i++) {
+    for (int i = 1; i <= frames; i++) {
       if (i >= stackTrace.length) {
         break;
       }
