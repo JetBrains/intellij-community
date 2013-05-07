@@ -177,7 +177,8 @@ public class GenericsHighlightingTest extends LightDaemonAnalyzerTestCase {
   public void testContinueInferenceAfterFirstRawResult() { doTest5(false); }
   public void testDoNotAcceptLowerBoundIfRaw() { doTest5(false); }
   public void testStaticOverride() { doTest5(false); }
-  public void testTypeArgumentsGivenOnRawType() { doTest5(false); }
+  public void testTypeArgumentsGivenOnRawType() { doTest7Incompatibility(false); }
+  public void testSelectFromTypeParameter() { doTest5(false); }
   public void testTypeArgumentsGivenOnAnonymousClassCreation() { doTest5(false); }
   //public void testIDEA94011() { doTest5(false); }
   public void testDifferentTypeParamsInOverloadedMethods() { doTest5(true); }

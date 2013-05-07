@@ -29,6 +29,8 @@ import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.projectRoots.JavaSdkVersion;
+import com.intellij.openapi.projectRoots.JavaVersionService;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -906,6 +908,21 @@ public class HighlightVisitorImpl extends JavaElementVisitor implements Highligh
         myRefCountHolder.registerReference(ref, result);
       }
       myHolder.add(HighlightUtil.checkReference(ref, result));
+      if (!myHolder.hasErrorResults() && resolved instanceof PsiTypeParameter) {
+        boolean cannotSelectFromTypeParameter = !JavaVersionService.getInstance().isAtLeast(ref, JavaSdkVersion.JDK_1_7);
+        if (!cannotSelectFromTypeParameter) {
+          final PsiClass containingClass = PsiTreeUtil.getParentOfType(ref, PsiClass.class);
+          if (containingClass != null) {
+            if (PsiTreeUtil.isAncestor(containingClass.getExtendsList(), ref, false) ||
+                PsiTreeUtil.isAncestor(containingClass.getImplementsList(), ref, false)) {
+              cannotSelectFromTypeParameter = true;
+            }
+          }
+        }
+        if (cannotSelectFromTypeParameter) {
+          myHolder.add(HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).descriptionAndTooltip("Cannot select from a type parameter").range(ref).create());
+        }
+      }
     }
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkAbstractInstantiation(ref, resolved));
     if (!myHolder.hasErrorResults()) myHolder.add(HighlightClassUtil.checkExtendsDuplicate(ref, resolved));
