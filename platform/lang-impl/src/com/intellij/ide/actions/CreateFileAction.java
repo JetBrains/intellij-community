@@ -42,7 +42,7 @@ import java.util.List;
 public class CreateFileAction extends CreateElementActionBase implements DumbAware {
 
   public CreateFileAction() {
-    super(IdeBundle.message("action.create.new.file"), IdeBundle.message("action.create.new.file"), AllIcons.FileTypes.Text);
+    super(IdeBundle.message("action.create.new.file"), IdeBundle.message("action.create.new.file.description"), AllIcons.FileTypes.Text);
   }
 
   public CreateFileAction(final String text, final String description, final Icon icon) {
