@@ -29,4 +29,8 @@ public class RedundantTypeArgsInspectionTest extends JavaCodeInsightFixtureTestC
   public void testReturnPrimitiveTypes() throws Throwable { // javac non-boxing: IDEA-53984
     doTest();
   }
+
+  public void testConditionalExpression() throws Throwable { // javac non-boxing: IDEA-53984
+    doTest();
+  }
 }
