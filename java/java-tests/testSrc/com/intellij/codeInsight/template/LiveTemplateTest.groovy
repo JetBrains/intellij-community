@@ -43,6 +43,7 @@ public class LiveTemplateTest extends LightCodeInsightFixtureTestCase {
   @Override
   protected void tearDown() throws Exception {
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
     if (state != null) {
       state.gotoEnd();
     }
@@ -243,6 +244,17 @@ class Foo {
     configure();
     startTemplate("soutv", "output")
     myFixture.type('File')
+    assert myFixture.lookupElementStrings == ['file']
+    myFixture.type('.')
+    checkResult()
+    assert !state.finished
+  }
+
+  public void testFinishTemplateVariantWithDot() {
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = true
+    configure();
+    startTemplate("soutv", "output")
+    myFixture.type('fil')
     assert myFixture.lookupElementStrings == ['file']
     myFixture.type('.')
     checkResult()

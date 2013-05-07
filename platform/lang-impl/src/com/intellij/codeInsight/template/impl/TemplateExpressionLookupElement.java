@@ -50,9 +50,9 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
   private static InsertionContext createInsertionContext(LookupElement item,
                                                          PsiFile psiFile,
                                                          List<? extends LookupElement> elements,
-                                                         Editor editor) {
+                                                         Editor editor, final char completionChar) {
     final OffsetMap offsetMap = new OffsetMap(editor.getDocument());
-    final InsertionContext context = new InsertionContext(offsetMap, (char)0, elements.toArray(new LookupElement[elements.size()]), psiFile, editor, false);
+    final InsertionContext context = new InsertionContext(offsetMap, completionChar, elements.toArray(new LookupElement[elements.size()]), psiFile, editor, false);
     context.setTailOffset(editor.getCaretModel().getOffset());
     offsetMap.addOffset(CompletionInitializationContext.START_OFFSET, context.getTailOffset() - item.getLookupString().length());
     offsetMap.addOffset(CompletionInitializationContext.SELECTION_END_OFFSET, context.getTailOffset());
@@ -60,8 +60,8 @@ class TemplateExpressionLookupElement extends LookupElementDecorator<LookupEleme
     return context;
   }
 
-  void handleTemplateInsert(List<? extends LookupElement> elements) {
-    final InsertionContext context = createInsertionContext(this, myState.getPsiFile(), elements, myState.getEditor());
+  void handleTemplateInsert(List<? extends LookupElement> elements, final char completionChar) {
+    final InsertionContext context = createInsertionContext(this, myState.getPsiFile(), elements, myState.getEditor(), completionChar);
     new WriteCommandAction(context.getProject()) {
       @Override
       protected void run(Result result) throws Throwable {

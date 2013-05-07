@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInsight.template.impl;
 
+import com.intellij.codeInsight.CodeInsightSettings;
 import com.intellij.codeInsight.lookup.CharFilter;
 import com.intellij.codeInsight.lookup.Lookup;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -36,6 +37,9 @@ public class LiveTemplateCharFilter extends CharFilter {
     }
     if (item instanceof TemplateExpressionLookupElement) {
       if (Character.isJavaIdentifierPart(c)) return Result.ADD_TO_PREFIX;
+      if (CodeInsightSettings.getInstance().SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS) {
+        return null;
+      }
       return Result.HIDE_LOOKUP;
     }
 
