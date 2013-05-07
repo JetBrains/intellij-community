@@ -55,6 +55,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlo
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrTraditionalForClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.*;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.literals.GrString;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.path.GrMethodCallExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
@@ -139,11 +140,14 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
 
     //for gstrings
     if (elementType == GSTRING || elementType == REGEX || elementType == mREGEX_LITERAL || elementType == mDOLLAR_SLASH_REGEX_LITERAL) {
+      final FormattingContext context =
+        myNode.getPsi() instanceof GrString && ((GrString)myNode.getPsi()).isPlainString() ? myContext.createContext(true) : myContext;
+
       final ArrayList<Block> subBlocks = new ArrayList<Block>();
       ASTNode[] children = getGroovyChildren(myNode);
       for (ASTNode childNode : children) {
         if (childNode.getTextRange().getLength() > 0) {
-          subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), Wrap.createWrap(WrapType.NONE, false), myContext));
+          subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), Wrap.createWrap(WrapType.NONE, false), context));
         }
       }
       return subBlocks;
@@ -523,7 +527,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
    * @return true, if the current node can be myBlock node, else otherwise
    */
   private static boolean canBeCorrectBlock(final ASTNode node) {
-    return (node.getText().trim().length() > 0);
+    return node.getText().trim().length() > 0;
   }
 
 

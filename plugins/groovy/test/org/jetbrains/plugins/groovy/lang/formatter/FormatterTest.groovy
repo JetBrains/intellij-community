@@ -731,6 +731,26 @@ foo().
 ''')
   }
 
+  void testWrappingInsideGString0() {
+    myTempSettings.RIGHT_MARGIN = 10
+    checkFormatting('''\
+"abcdefghij${a+b}"
+''', '''\
+"abcdefghij${a + b}"
+''')
+  }
+
+  void testWrappingInsideGString1() {
+    myTempSettings.RIGHT_MARGIN = 10
+    checkFormatting('''\
+"""abcdefghij${a+b}"""
+''', '''\
+"""abcdefghij${
+  a + b
+}"""
+''')
+  }
+
   private void doGeeseTest() {
     GroovyCodeStyleSettings customSettings = myTempSettings.getCustomSettings(GroovyCodeStyleSettings.class);
     boolean oldvalue = customSettings.USE_FLYING_GEESE_BRACES;

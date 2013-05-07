@@ -27,12 +27,15 @@ public class FormattingContext {
   private final GroovyCodeStyleSettings myGroovySettings;
   private final AlignmentProvider myAlignmentProvider;
 
+  private final boolean myInsidePlainGString;
+
   public FormattingContext(@NotNull CommonCodeStyleSettings settings,
                            @NotNull AlignmentProvider provider,
-                           @NotNull GroovyCodeStyleSettings groovySettings) {
+                           @NotNull GroovyCodeStyleSettings groovySettings, boolean insidePlainGString) {
     mySettings = settings;
     myAlignmentProvider = provider;
     myGroovySettings = groovySettings;
+    myInsidePlainGString = insidePlainGString;
   }
 
   public CommonCodeStyleSettings getSettings() {
@@ -45,5 +48,13 @@ public class FormattingContext {
 
   public GroovyCodeStyleSettings getGroovySettings() {
     return myGroovySettings;
+  }
+
+  public FormattingContext createContext(boolean insidePlainGString) {
+    return new FormattingContext(mySettings, myAlignmentProvider, myGroovySettings, insidePlainGString);
+  }
+
+  public boolean isInsidePlainGString() {
+    return myInsidePlainGString;
   }
 }

@@ -22,6 +22,7 @@ import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 
@@ -35,9 +36,11 @@ public class GroovyWrappingProcessor {
   private final CommonCodeStyleSettings mySettings;
   private final IElementType myParentType;
   private final Wrap myCommonWrap;
+  private final FormattingContext myContext;
 
   public GroovyWrappingProcessor(GroovyBlock block) {
-    mySettings = block.getContext().getSettings();
+    myContext = block.getContext();
+    mySettings = myContext.getSettings();
     myNode = block.getNode();
     myParentType = myNode.getElementType();
 
@@ -74,8 +77,10 @@ public class GroovyWrappingProcessor {
   );
 
   public Wrap getChildWrap(ASTNode childNode) {
+    if (myContext.isInsidePlainGString()) return Wrap.createWrap(WrapType.NONE, false);
+
     final IElementType childType = childNode.getElementType();
-    
+
     if (SKIP.contains(childType)) {
       return Wrap.createWrap(WrapType.NONE, false);
     }
