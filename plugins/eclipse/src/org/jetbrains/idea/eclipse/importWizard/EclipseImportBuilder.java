@@ -36,6 +36,7 @@ import com.intellij.openapi.project.impl.ProjectMacrosUtil;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.openapi.roots.impl.ModifiableModelCommitter;
+import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.roots.libraries.LibraryTable;
@@ -173,7 +174,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
   public boolean validate(final Project currentProject, final Project dstProject) {
     final Ref<Exception> refEx = new Ref<Exception>();
     final HashSet<String> variables = new HashSet<String>();
-    final Map<String, String> naturesNames = new HashMap<String, String>();  
+    final Map<String, String> naturesNames = new HashMap<String, String>();
     final List<String> projectsToConvert = getParameters().projectsToConvert;
     final boolean oneProjectToConvert = projectsToConvert.size() == 1;
     final String separator = oneProjectToConvert ? "<br>" : ", ";
@@ -333,7 +334,7 @@ public class EclipseImportBuilder extends ProjectImportBuilder<String> implement
           EclipseClasspathReader.setOutputUrl(rootModel, path + "/bin");
         }
         ClasspathStorage.setStorageType(rootModel,
-                                      getParameters().linkConverted ? JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID : ClasspathStorage.DEFAULT_STORAGE);
+                                      getParameters().linkConverted ? JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID : ClassPathStorageUtil.DEFAULT_STORAGE);
         if (model != null) {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
