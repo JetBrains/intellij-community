@@ -48,10 +48,15 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
   public void readExternal(Element element) throws InvalidDataException {
     clear();
 
+    Class callerClass = null;
     for (final Object o : element.getChildren()) {
       Element listElement = (Element)o;
       if (ATTR_LIST.equals(listElement.getName())) {
-        final ClassLoader classLoader = ReflectionUtil.getCallerClass(2).getClassLoader();
+        if (callerClass == null) {
+          callerClass = ReflectionUtil.getCallerClass(2);
+          assert callerClass != null;
+        }
+        final ClassLoader classLoader = callerClass.getClassLoader();
         for (final Object o1 : listElement.getChildren()) {
           Element listItemElement = (Element)o1;
           if (!ATTR_ITEM.equals(listItemElement.getName())) {

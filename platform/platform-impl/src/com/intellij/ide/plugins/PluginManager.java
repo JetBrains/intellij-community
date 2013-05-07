@@ -221,6 +221,7 @@ public class PluginManager {
     final IdeaPluginDescriptorImpl[] pluginDescriptors = loadDescriptors(progress);
 
     final Class callerClass = ReflectionUtil.getCallerClass(1);
+    assert callerClass != null;
     final ClassLoader parentLoader = callerClass.getClassLoader();
 
     final List<IdeaPluginDescriptorImpl> result = new ArrayList<IdeaPluginDescriptorImpl>();
