@@ -30,7 +30,7 @@ import org.jetbrains.annotations.NotNull;
 /**
  * User: anna
  */
-public class AnonymousCanBeMethodReferenceInspection extends BaseJavaLocalInspectionTool {
+public class AnonymousCanBeMethodReferenceInspection extends BaseJavaBatchLocalInspectionTool {
   public static final Logger LOG = Logger.getInstance("#" + AnonymousCanBeMethodReferenceInspection.class.getName());
 
   @Nls
