@@ -18,7 +18,7 @@ package com.intellij.ide.util.newProjectWizard.modes;
 import com.intellij.ide.util.newProjectWizard.SelectTemplateStep;
 import com.intellij.ide.util.newProjectWizard.StepSequence;
 import com.intellij.ide.util.newProjectWizard.TemplatesGroup;
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.AbstractModuleBuilder;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.project.ProjectBundle;
 import com.intellij.openapi.roots.ui.configuration.ModulesProvider;
@@ -125,7 +125,7 @@ public class CreateFromTemplateMode extends WizardMode {
 
   @Nullable
   @Override
-  public ModuleBuilder getModuleBuilder() {
+  public AbstractModuleBuilder getModuleBuilder() {
     final ProjectTemplate template = mySelectTemplateStep.getSelectedTemplate();
     if (template == null) {
       return null;

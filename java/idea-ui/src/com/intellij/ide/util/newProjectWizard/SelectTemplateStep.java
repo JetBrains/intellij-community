@@ -97,7 +97,7 @@ public class SelectTemplateStep extends ModuleWizardStep implements SettingsStep
   private final ProjectTypesList myList;
 
   @Nullable
-  private ModuleBuilder myModuleBuilder;
+  private AbstractModuleBuilder myModuleBuilder;
 
   public SelectTemplateStep(WizardContext context, StepSequence sequence, final MultiMap<TemplatesGroup, ProjectTemplate> map) {
 

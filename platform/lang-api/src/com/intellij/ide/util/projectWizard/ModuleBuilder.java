@@ -47,7 +47,7 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
-public abstract class ModuleBuilder extends ProjectBuilder{
+public abstract class ModuleBuilder extends AbstractModuleBuilder {
   private static final ExtensionPointName<ModuleBuilderFactory> EP_NAME = ExtensionPointName.create("com.intellij.moduleBuilder");
 
   private static final Logger LOG = Logger.getInstance("#com.intellij.ide.util.projectWizard.ModuleBuilder");
@@ -79,12 +79,14 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return myName;
   }
 
+  @Override
   @Nullable
   public String getBuilderId() {
     ModuleType moduleType = getModuleType();
     return moduleType == null ? null : moduleType.getId();
   }
 
+  @Override
   public ModuleWizardStep[] createWizardSteps(WizardContext wizardContext, ModulesProvider modulesProvider) {
     ModuleType moduleType = getModuleType();
     return moduleType == null ? ModuleWizardStep.EMPTY_ARRAY : moduleType.createWizardSteps(wizardContext, this, modulesProvider);
@@ -98,6 +100,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
    *         and {@link com.intellij.ide.util.projectWizard.ModuleWizardStep#updateDataModel()}
    *         will be invoked)
    */
+  @Override
   @Nullable
   public ModuleWizardStep modifySettingsStep(SettingsStep settingsStep) {
     ModuleType type = getModuleType();
@@ -140,6 +143,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return Collections.emptyList();
   }
 
+  @Override
   public void setName(String name) {
     myName = acceptParameter(name);
   }
@@ -152,6 +156,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     myUpdaters.add(updater);
   }
 
+  @Override
   public void setModuleFilePath(@NonNls String path) {
     myModuleFilePath = acceptParameter(path);
   }
@@ -169,6 +174,7 @@ public abstract class ModuleBuilder extends ProjectBuilder{
     return myContentEntryPath;
   }
 
+  @Override
   public void setContentEntryPath(String moduleRootPath) {
     final String path = acceptParameter(moduleRootPath);
     if (path != null) {

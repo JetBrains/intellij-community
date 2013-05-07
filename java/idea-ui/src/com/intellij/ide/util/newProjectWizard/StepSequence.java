@@ -20,7 +20,7 @@
  */
 package com.intellij.ide.util.newProjectWizard;
 
-import com.intellij.ide.util.projectWizard.ModuleBuilder;
+import com.intellij.ide.util.projectWizard.AbstractModuleBuilder;
 import com.intellij.ide.util.projectWizard.ModuleWizardStep;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.module.ModuleType;
@@ -53,7 +53,7 @@ public class StepSequence {
     myCommonFinishingSteps.add(Pair.create(step, suitableTypes));
   }
 
-  public void addStepsForBuilder(ModuleBuilder builder, WizardContext wizardContext, ModulesProvider modulesProvider) {
+  public void addStepsForBuilder(AbstractModuleBuilder builder, WizardContext wizardContext, ModulesProvider modulesProvider) {
     String id = builder.getBuilderId();
     if (!mySpecificSteps.containsKey(id)) {
       mySpecificSteps.put(id, Arrays.asList(builder.createWizardSteps(wizardContext, modulesProvider)));
