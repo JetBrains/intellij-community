@@ -26,7 +26,6 @@ import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.reflect.Reflection;
 
 import javax.swing.*;
 import java.awt.*;
@@ -84,7 +83,7 @@ public class ImageLoader implements Serializable {
   }
 
   @Nullable
-  public static Image loadFromResource(@NonNls String s) {
+  public static Image loadFromResource(@NonNls @NotNull String s) {
     int stackFrameCount = 2;
     Class callerClass = ReflectionUtil.getCallerClass(stackFrameCount);
     while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
@@ -93,11 +92,12 @@ public class ImageLoader implements Serializable {
     if (callerClass == null) {
       callerClass = ReflectionUtil.getCallerClass(1);
     }
+    if (callerClass == null) return null;
     return loadFromResource(s, callerClass);
   }
 
   @Nullable
-  public static Image loadFromResource(String path, Class aClass) {
+  public static Image loadFromResource(@NonNls @NotNull String path, @NotNull Class aClass) {
     for (Pair<String, Integer> each : getFileNames(path)) {
       InputStream stream = aClass.getResourceAsStream(each.first);
       if (stream == null) continue;
