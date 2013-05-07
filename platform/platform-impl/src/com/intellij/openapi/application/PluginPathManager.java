@@ -15,7 +15,11 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.util.io.FileUtil;
+
 import java.io.File;
+import java.util.ArrayList;
+import java.util.List;
 
 /**
  * @author yole
@@ -24,11 +28,35 @@ public class PluginPathManager {
   private PluginPathManager() {
   }
 
+  private static class SubrepoHolder {
+    public static List<File> subrepos = findSubrepos();
+
+    private static List<File> findSubrepos() {
+      List<File> result = new ArrayList<File>();
+      File[] subdirs = new File(PathManager.getHomePath()).listFiles();
+      if (subdirs == null) return result;
+      for (File subdir : subdirs) {
+        if (new File(subdir, ".git").exists()) {
+          File pluginsDir = new File(subdir, "plugins");
+          if (pluginsDir.exists()) {
+            result.add(pluginsDir);
+          }
+          else {
+            result.add(subdir);
+          }
+        }
+      }
+      return result;
+    }
+  }
+
   public static File getPluginHome(String pluginName) {
     String homePath = PathManager.getHomePath();
-    File candidate = new File(homePath, "community/plugins/" + pluginName);
-    if (candidate.isDirectory()) {
-      return candidate;
+    for (File subrepo : SubrepoHolder.subrepos) {
+      File candidate = new File(subrepo, pluginName);
+      if (candidate.isDirectory()) {
+        return candidate;
+      }
     }
     return new File(homePath, "plugins/" + pluginName);
   }
@@ -39,10 +67,11 @@ public class PluginPathManager {
 
   public static String getPluginHomePathRelative(String pluginName) {
     String homePath = PathManager.getHomePath();
-    final String relativePath = "/community/plugins/" + pluginName;
-    File candidate = new File(homePath, relativePath);
-    if (candidate.isDirectory()) {
-      return relativePath;
+    for (File subrepo : SubrepoHolder.subrepos) {
+      File candidate = new File(subrepo, pluginName);
+      if (candidate.isDirectory()) {
+        return "/" + FileUtil.getRelativePath(homePath, candidate.getPath(), '/');
+      }
     }
     return "/plugins/" + pluginName;
   }
