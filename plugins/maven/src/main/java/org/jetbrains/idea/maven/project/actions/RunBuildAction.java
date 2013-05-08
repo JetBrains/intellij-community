@@ -38,11 +38,11 @@ public class RunBuildAction extends MavenAction {
   }
 
   private static boolean checkOrPerform(DataContext context, boolean perform) {
-    final MavenProject project = MavenActionUtil.getMavenProject(context);
-    if (project == null) return false;
-
     final List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(context);
     if (goals == null || goals.isEmpty()) return false;
+
+    final MavenProject project = MavenActionUtil.getMavenProject(context);
+    if (project == null) return false;
 
     if (!perform) return true;
 
