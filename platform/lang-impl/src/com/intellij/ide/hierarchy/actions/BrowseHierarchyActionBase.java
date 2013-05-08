@@ -120,8 +120,9 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
 
   @Nullable
   public static HierarchyProvider findBestHierarchyProvider(final LanguageExtension<HierarchyProvider> extension,
-                                                            PsiElement element,
+                                                            @Nullable PsiElement element,
                                                             DataContext dataContext) {
+    if (element == null) return null;
     List<HierarchyProvider> providers = extension.allForLanguage(element.getLanguage());
     for (HierarchyProvider provider : providers) {
       PsiElement target = provider.getTarget(dataContext);
