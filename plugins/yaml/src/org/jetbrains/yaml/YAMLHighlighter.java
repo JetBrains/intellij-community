@@ -5,8 +5,6 @@ import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.TextAttributesKey;
 import org.jetbrains.annotations.NonNls;
 
-import java.awt.*;
-
 /**
  * @author oleg
  */
