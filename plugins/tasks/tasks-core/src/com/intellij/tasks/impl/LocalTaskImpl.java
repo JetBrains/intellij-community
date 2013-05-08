@@ -199,6 +199,10 @@ public class LocalTaskImpl extends LocalTask {
     return myChangeLists;
   }
 
+  public void setChangeLists(List<ChangeListInfo> changeLists) {
+    myChangeLists = changeLists;
+  }
+
   @Override
   public void addChangelist(final ChangeListInfo info) {
     if (!myChangeLists.contains(info)) {
