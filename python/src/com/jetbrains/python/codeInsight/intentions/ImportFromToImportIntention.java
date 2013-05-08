@@ -145,7 +145,7 @@ public class ImportFromToImportIntention implements IntentionAction {
           PyReferenceExpression ref = import_element.getImportReferenceExpression();
           if (ref != null && ref.isValid()) {
             PsiElement target = ref.getReference().resolve();
-            final TypeEvalContext context = TypeEvalContext.fastStubOnly(file);
+            final TypeEvalContext context = TypeEvalContext.codeAnalysis(file);
             if (target instanceof PyExpression && context.getType((PyExpression)target) instanceof PyModuleType) {
               return false;
             }

@@ -82,7 +82,7 @@ class PyDocumentationBuilder {
         if (outer instanceof PyQualifiedExpression) {
           PyExpression qual = ((PyQualifiedExpression)outer).getQualifier();
           if (qual != null) {
-            PyType type = TypeEvalContext.slow().getType(qual);
+            PyType type = TypeEvalContext.userInitiated().getType(qual);
             if (type instanceof PyClassType) {
               cls = ((PyClassType)type).getPyClass();
               Property property = cls.findProperty(elementName);
@@ -190,7 +190,7 @@ class PyDocumentationBuilder {
       myBody.addItem(combUp("Parameter " + PyUtil.getReadableRepr(followed, false)));
       boolean typeFromDocstringAdded = addTypeAndDescriptionFromDocstring((PyNamedParameter)followed);
       if (outer instanceof PyExpression) {
-        TypeEvalContext context = TypeEvalContext.slow();
+        TypeEvalContext context = TypeEvalContext.userInitiated();
         PyType type = context.getType((PyExpression)outer);
         if (type != null) {
           String s = null;
@@ -216,14 +216,14 @@ class PyDocumentationBuilder {
           if (s != null) {
             myBody
               .addItem(combUp(s));
-            PythonDocumentationProvider.describeTypeWithLinks(myBody, followed, type, TypeEvalContext.slow());
+            PythonDocumentationProvider.describeTypeWithLinks(myBody, followed, type, TypeEvalContext.userInitiated());
           }
         }
       }
     }
     else if (followed != null && outer instanceof PyReferenceExpression) {
       myBody.addItem(combUp("\nInferred type: "));
-      PythonDocumentationProvider.describeExpressionTypeWithLinks(myBody, (PyReferenceExpression)outer, TypeEvalContext.slow());
+      PythonDocumentationProvider.describeExpressionTypeWithLinks(myBody, (PyReferenceExpression)outer, TypeEvalContext.userInitiated());
     }
     if (myBody.isEmpty() && myEpilog.isEmpty()) {
       return null; // got nothing substantial to say!

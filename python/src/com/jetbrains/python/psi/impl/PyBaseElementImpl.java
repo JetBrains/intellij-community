@@ -133,7 +133,7 @@ public class PyBaseElementImpl<T extends StubElement> extends StubBasedPsiElemen
     List<PsiReference> referencesList = new ArrayList<PsiReference>();
     final PsiFile file = element.getContainingFile();
     final PyResolveContext resolveContext = file != null ?
-                                     PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.fastStubOnly(file)) :
+                                     PyResolveContext.defaultContext().withTypeEvalContext(TypeEvalContext.codeAnalysis(file)) :
                                      PyResolveContext.defaultContext();
     while (element != null) {
       addReferences(offset, element, referencesList, resolveContext);

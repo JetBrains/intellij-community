@@ -81,7 +81,7 @@ public class PyImportReference extends PyReferenceImpl {
     }
 
     PyExpression qualifier = myElement.getQualifier();
-    final TypeEvalContext context = TypeEvalContext.slow();
+    final TypeEvalContext context = TypeEvalContext.userInitiated();
     if (qualifier != null) {
       // qualifier's type must be module, it should know how to complete
       PyType type = context.getType(qualifier);

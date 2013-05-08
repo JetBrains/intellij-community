@@ -58,7 +58,7 @@ public class TypeEvalContext {
    *
    * Should be used for code completion, go to definition, find usages, refactorings, documentation.
    */
-  public static TypeEvalContext slow() {
+  public static TypeEvalContext userInitiated() {
     return new TypeEvalContext(true, true, null);
   }
 
@@ -67,7 +67,7 @@ public class TypeEvalContext {
    *
    * Should be used only when normal analysis context is not enough for getting good results.
    */
-  public static TypeEvalContext fast() {
+  public static TypeEvalContext deepCodeAnalysis() {
     return new TypeEvalContext(false, true, null);
   }
 
@@ -75,7 +75,7 @@ public class TypeEvalContext {
    * Create a type evaluation context for performing analysis operations on the specified file which is currently open in the editor,
    * without accessing stubs. For such a file, additional slow operations are allowed.
    */
-  public static TypeEvalContext fastStubOnly(@Nullable PsiFile origin) {
+  public static TypeEvalContext codeAnalysis(@Nullable PsiFile origin) {
     return new TypeEvalContext(false, false, origin);
   }
 

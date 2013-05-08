@@ -348,7 +348,7 @@ public class PyClassTypeImpl extends UserDataHolderBase implements PyClassType {
     boolean suppressParentheses = context.get(CTX_SUPPRESS_PARENTHESES) != null;
     addOwnClassMembers(location, namesAlready, suppressParentheses, ret);
 
-    final TypeEvalContext typeEvalContext = TypeEvalContext.slow();
+    final TypeEvalContext typeEvalContext = TypeEvalContext.userInitiated();
     addInheritedMembers(prefix, location, namesAlready, context, ret, typeEvalContext);
 
     // from providers
