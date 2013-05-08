@@ -15,6 +15,7 @@
  */
 package com.intellij.xdebugger.impl.breakpoints.ui.grouping;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.xdebugger.XDebuggerBundle;
 import com.intellij.xdebugger.XSourcePosition;
@@ -22,7 +23,9 @@ import com.intellij.xdebugger.breakpoints.XLineBreakpoint;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointGroupingRule;
 import com.intellij.xdebugger.breakpoints.ui.XBreakpointsGroupingPriorities;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
+import javax.swing.*;
 import java.util.Collection;
 
 /**
@@ -54,5 +57,11 @@ public class XBreakpointFileGroupingRule<B> extends XBreakpointGroupingRule<B, X
     }
 
     return new XBreakpointFileGroup(file);
+  }
+
+  @Nullable
+  @Override
+  public Icon getIcon() {
+    return AllIcons.FileTypes.Text;
   }
 }

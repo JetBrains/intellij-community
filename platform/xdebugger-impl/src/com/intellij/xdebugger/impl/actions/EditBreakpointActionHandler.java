@@ -26,7 +26,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Pair;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
 import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointItem;
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsMasterDetailPopupFactory;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -52,7 +52,7 @@ public abstract class EditBreakpointActionHandler extends DebuggerActionHandler 
   }
 
   public void editBreakpoint(@NotNull Project project, @NotNull Editor editor, @NotNull Object breakpoint, @NotNull GutterIconRenderer breakpointGutterRenderer) {
-    if (BreakpointsMasterDetailPopupFactory.getInstance(project).isBreakpointPopupShowing()) return;
+    if (BreakpointsDialogFactory.getInstance(project).isBreakpointPopupShowing()) return;
     EditorGutterComponentEx gutterComponent = ((EditorEx)editor).getGutterComponentEx();
     Point point = gutterComponent.getPoint(breakpointGutterRenderer);
     if (point == null) return;
