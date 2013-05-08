@@ -32,6 +32,7 @@ import org.jetbrains.jps.model.artifact.JpsArtifact;
 
 import java.io.File;
 import java.util.Collections;
+import java.util.HashMap;
 
 /**
  * @author nik
@@ -66,6 +67,16 @@ public class JpsAntExtensionService {
   @Nullable
   private static JpsAntConfiguration getAntConfiguration(JpsProject project) {
     return project.getContainer().getChild(JpsAntConfigurationImpl.ROLE);
+  }
+
+  @NotNull
+  public static JpsAntConfiguration getOrCreateAntConfiguration(@NotNull JpsProject project) {
+    JpsAntConfiguration configuration = getAntConfiguration(project);
+    if (configuration != null) {
+      return configuration;
+    }
+    JpsAntConfigurationImpl antConfiguration = new JpsAntConfigurationImpl(new HashMap<String, JpsAntBuildFileOptions>(), null);
+    return project.getContainer().setChild(JpsAntConfigurationImpl.ROLE, antConfiguration);
   }
 
   @Nullable

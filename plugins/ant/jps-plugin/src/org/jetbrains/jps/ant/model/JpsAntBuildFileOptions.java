@@ -38,7 +38,13 @@ public interface JpsAntBuildFileOptions {
 
   boolean isUseProjectDefaultAnt();
 
+  void setUseProjectDefaultAnt(boolean useProjectDefaultAnt);
+
   List<String> getAdditionalClasspath();
+
+  void addJarPath(@NotNull String path);
+
+  void addJarDirectory(@NotNull String directoryPath);
 
   @NotNull
   List<BuildFileProperty> getProperties();

@@ -24,6 +24,7 @@ import org.jetbrains.jps.model.JpsElementChildRole;
 import org.jetbrains.jps.model.ex.JpsElementBase;
 import org.jetbrains.jps.model.ex.JpsElementChildRoleBase;
 
+import java.util.Collection;
 import java.util.Map;
 
 /**
@@ -31,8 +32,8 @@ import java.util.Map;
  */
 public class JpsAntConfigurationImpl extends JpsElementBase<JpsAntConfigurationImpl> implements JpsAntConfiguration {
   public static final JpsElementChildRole<JpsAntConfiguration> ROLE = JpsElementChildRoleBase.create("ant configuration");
-  private final String myProjectDefaultAntName;
-  private Map<String, JpsAntBuildFileOptions> myOptionsMap = new HashMap<String, JpsAntBuildFileOptions>();
+  private String myProjectDefaultAntName;
+  private final Map<String, JpsAntBuildFileOptions> myOptionsMap = new HashMap<String, JpsAntBuildFileOptions>();
 
   public JpsAntConfigurationImpl(Map<String, JpsAntBuildFileOptions> options, String projectDefaultAntName) {
     myProjectDefaultAntName = projectDefaultAntName;
@@ -46,6 +47,11 @@ public class JpsAntConfigurationImpl extends JpsElementBase<JpsAntConfigurationI
   }
 
   @Override
+  public void setProjectDefaultAntName(@Nullable String projectDefaultAntName) {
+    myProjectDefaultAntName = projectDefaultAntName;
+  }
+
+  @Override
   @Nullable
   public String getProjectDefaultAntName() {
     return myProjectDefaultAntName;
@@ -53,6 +59,12 @@ public class JpsAntConfigurationImpl extends JpsElementBase<JpsAntConfigurationI
 
   @Override
   public void applyChanges(@NotNull JpsAntConfigurationImpl modified) {
+  }
+
+  @Override
+  @NotNull
+  public Collection<JpsAntBuildFileOptions> getOptionsForAllBuildFiles() {
+    return myOptionsMap.values();
   }
 
   @NotNull

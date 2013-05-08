@@ -45,6 +45,7 @@ public class JpsAntBuildFileOptionsImpl implements JpsAntBuildFileOptions {
     myAntCommandLineParameters = antCommandLineParameters;
   }
 
+  @Override
   public void setUseProjectDefaultAnt(boolean useProjectDefaultAnt) {
     myUseProjectDefaultAnt = useProjectDefaultAnt;
   }
@@ -58,11 +59,13 @@ public class JpsAntBuildFileOptionsImpl implements JpsAntBuildFileOptions {
     myAntInstallationName = antInstallationName;
   }
 
-  public void addJarPath(String path) {
+  @Override
+  public void addJarPath(@NotNull String path) {
     myClasspath.add(path);
   }
 
-  public void addJarDirectory(String directoryPath) {
+  @Override
+  public void addJarDirectory(@NotNull String directoryPath) {
     myJarDirectories.add(directoryPath);
   }
 
