@@ -317,6 +317,7 @@ public class SvnVcs extends AbstractVcs<CommittedChangeList> {
   private void cleanup17copies() {
     final Runnable callCleanupWorker = new Runnable() {
       public void run() {
+        if (myProject.isDisposed()) return;
         new CleanupWorker(new VirtualFile[]{}, myProject, "action.Subversion.cleanup.progress.title") {
           @Override
           protected void chanceToFillRoots() {
