@@ -116,4 +116,12 @@ public class Patches {
    * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=9000030.
    */
   public static final boolean SUN_BUG_ID_9000030 = SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7");
+
+  /**
+   * On some WMs modal dialogs may show behind full screen window.
+   * See http://bugs.sun.com/view_bug.do?bug_id=8013359.
+   */
+  public static final boolean SUN_BUG_ID_8013359 =
+    SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isJavaVersionAtLeast("1.7.0.40");
+
 }
