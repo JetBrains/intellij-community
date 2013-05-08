@@ -7,9 +7,7 @@ import com.intellij.openapi.roots.LanguageLevelProjectExtension;
 import com.intellij.pom.java.LanguageLevel;
 import org.jetbrains.annotations.NotNull;
 
-
 public class SuppressLocalInspectionTest extends LightQuickFixTestCase {
-
   @Override
   protected void setUp() throws Exception {
     super.setUp();
@@ -20,11 +18,6 @@ public class SuppressLocalInspectionTest extends LightQuickFixTestCase {
   @Override
   protected LocalInspectionTool[] configureLocalInspectionTools() {
     return new LocalInspectionTool[]{new LocalCanBeFinal()};
-  }
-
-  @Override
-  protected void tearDown() throws Exception {
-    super.tearDown();
   }
 
   public void test() throws Exception { doAllTests(); }

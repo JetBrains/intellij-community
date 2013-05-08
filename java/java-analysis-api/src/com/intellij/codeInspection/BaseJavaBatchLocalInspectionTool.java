@@ -15,6 +15,7 @@
  */
 package com.intellij.codeInspection;
 
+import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.psi.PsiElement;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -23,7 +24,7 @@ public abstract class BaseJavaBatchLocalInspectionTool extends AbstractBaseJavaL
   @NotNull
   @Override
   public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
-    return SuppressQuickFix.EMPTY_ARRAY;
+    return BatchSuppressManager.SERVICE.getInstance().createBatchSuppressActions(HighlightDisplayKey.find(getShortName()));
   }
 
   @Override
