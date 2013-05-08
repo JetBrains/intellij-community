@@ -20,6 +20,7 @@ import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInspection.InspectionsBundle;
 import com.intellij.codeInspection.SuppressIntentionAction;
 import com.intellij.codeInspection.SuppressionUtil;
+import com.intellij.lang.Language;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.editor.Editor;
@@ -58,13 +59,23 @@ public abstract class AbstractSuppressByNoInspectionCommentFix extends SuppressI
   }
 
   protected final void replaceSuppressionComment(@NotNull final PsiElement comment) {
-    SuppressionUtil.replaceSuppressionComment(comment, myID, myReplaceOtherSuppressionIds);
+    SuppressionUtil.replaceSuppressionComment(comment, myID, myReplaceOtherSuppressionIds, getCommentLanguage(comment));
   }
 
   protected void createSuppression(@NotNull Project project,
                                    @NotNull PsiElement element,
                                    @NotNull PsiElement container) throws IncorrectOperationException {
-    SuppressionUtil.createSuppression(project, element, container, myID);
+    SuppressionUtil.createSuppression(project, container, myID, getCommentLanguage(element));
+  }
+
+  /**
+   * @param element quickfix target or existing comment element
+   * @return language that will be used for comment creating.
+   * In common case language will be the same as language of quickfix target
+   */
+  @NotNull
+  protected Language getCommentLanguage(@NotNull PsiElement element) {
+    return element.getLanguage();
   }
 
   @Override

@@ -17,6 +17,7 @@
 package com.intellij.codeInspection;
 
 import com.intellij.lang.Commenter;
+import com.intellij.lang.Language;
 import com.intellij.lang.LanguageCommenters;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.Project;
@@ -107,9 +108,11 @@ public class SuppressionUtil {
   }
 
   @NotNull
-  public static PsiComment createComment(@NotNull Project project, @NotNull PsiElement element, @NotNull String commentText) {
+  public static PsiComment createComment(@NotNull Project project,
+                                         @NotNull String commentText,
+                                         @NotNull Language language) {
     final PsiParserFacade parserFacade = PsiParserFacade.SERVICE.getInstance(project);
-    return parserFacade.createLineOrBlockCommentFromText(element.getLanguage(), commentText);
+    return parserFacade.createLineOrBlockCommentFromText(language, commentText);
   }
 
   @Nullable
@@ -143,7 +146,8 @@ public class SuppressionUtil {
            && commentText.endsWith(prefixSuffixPair.second);
   }
 
-  public static void replaceSuppressionComment(@NotNull PsiElement comment, @NotNull String id, boolean replaceOtherSuppressionIds) {
+  public static void replaceSuppressionComment(@NotNull PsiElement comment, @NotNull String id,
+                                               boolean replaceOtherSuppressionIds, @NotNull Language commentLanguage) {
     final String oldSuppressionCommentText = comment.getText();
     final String lineCommentPrefix = getLineCommentPrefix(comment);
     Pair<String, String> blockPrefixSuffix = null;
@@ -168,17 +172,14 @@ public class SuppressionUtil {
     else {
       newText = oldSuppressionCommentText.substring(lineCommentPrefix.length()) + "," + id;
     }
-
-    PsiElement parent = comment.getParent();
-    comment.replace(createComment(comment.getProject(), parent != null ? parent : comment, newText));
+    comment.replace(createComment(comment.getProject(), newText, commentLanguage));
   }
 
   public static void createSuppression(@NotNull Project project,
-                                       @NotNull PsiElement element,
                                        @NotNull PsiElement container,
-                                       @NotNull String id) {
+                                       @NotNull String id, @NotNull Language commentLanguage) {
     final String text = SUPPRESS_INSPECTIONS_TAG_NAME + " " + id;
-    PsiComment comment = createComment(project, element, text);
+    PsiComment comment = createComment(project, text, commentLanguage);
     container.getParent().addBefore(comment, container);
   }
 }
