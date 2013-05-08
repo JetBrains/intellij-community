@@ -163,6 +163,7 @@ public class EnvironmentUtil {
         }
       }
       if (newEnv.size() < lines.size() - toIgnore.size()) {
+        // some lines weren't parsed - we're better to fall back to original environment than use possibly incomplete one
         throw new Exception("env:" + newEnv.size() + " lines:" + lines.size());
       }
 
