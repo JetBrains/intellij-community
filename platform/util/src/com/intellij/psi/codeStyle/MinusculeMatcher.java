@@ -248,8 +248,12 @@ public class MinusculeMatcher implements Matcher {
 
     if (patternIndex == myPattern.length) {
       boolean space = isPatternChar(patternIndex - 1, ' ');
-      // the trailing space should match if the pattern ends with the last name part, or only its first hump character
+      // the trailing space should match if the pattern ends with the last word part, or only its first hump character
       if (space && nameIndex != name.length() && (patternIndex < 2 || !NameUtil.isWordStart(myPattern[patternIndex - 2]))) {
+        int spaceIndex = name.indexOf(' ', nameIndex);
+        if (spaceIndex >= 0) {
+          return FList.<TextRange>emptyList().prepend(TextRange.from(spaceIndex, 1));
+        }
         return null;
       }
       return FList.emptyList();

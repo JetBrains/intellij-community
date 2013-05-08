@@ -368,6 +368,9 @@ public class NameUtilMatchingTest extends UsefulTestCase {
   }
 
   public void testFinalSpace() {
+    assertMatches("a ", "alpha + beta");
+    assertMatches("a ", "a ");
+    assertMatches("a ", "a");
     assertMatches("GrDebT ", "GroovyDebuggerTest");
     assertDoesntMatch("grdebT ", "GroovyDebuggerTest");
     assertDoesntMatch("grdebt ", "GroovyDebuggerTest");
@@ -376,7 +379,6 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertDoesntMatch("Foo ", "Foox");
     assertDoesntMatch("Collections ", "CollectionSplitter");
     assertMatches("CollectionS ", "CollectionSplitter");
-    //assertMatches("a ", "alpha + beta");
   }
 
   public void testDigits() {
