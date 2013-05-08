@@ -31,6 +31,7 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
+import com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
@@ -39,17 +40,23 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.Task;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.CheckBoxList;
+import com.intellij.ui.components.JBScrollPane;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.Function;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.*;
+import java.io.File;
 import java.io.PrintWriter;
 import java.io.StringWriter;
 import java.util.Collection;
@@ -159,20 +166,25 @@ public class ExternalSystemUtil {
    * @param project           target ide project
    * @param externalSystemId  target external system which projects should be refreshed
    */
-  public static void refreshProjects(@NotNull final Project project, @NotNull ProjectSystemId externalSystemId) {
+  public static void refreshProjects(@NotNull final Project project, @NotNull final ProjectSystemId externalSystemId) {
     ExternalSystemManager<?,?,?,?,?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
     if (manager == null) {
       return;
     }
     AbstractExternalSystemSettings<?, ?> settings = manager.getSettingsProvider().fun(project);
-    Collection<? extends ExternalProjectSettings> projectsSettings = settings.getLinkedProjectsSettings();
+    final Collection<? extends ExternalProjectSettings> projectsSettings = settings.getLinkedProjectsSettings();
     if (projectsSettings.isEmpty()) {
       return;
     }
 
     final ProjectDataManager projectDataManager = ServiceManager.getService(ProjectDataManager.class);
-    final Set<String> externalModuleNames = ContainerUtilRt.newHashSet();
+    
     ExternalProjectRefreshCallback callback = new ExternalProjectRefreshCallback() {
+
+      @NotNull
+      private final Set<String> myExternalModuleNames = ContainerUtilRt.newHashSet();
+      private int myCounter = projectsSettings.size();
+      
       @Override
       public void onSuccess(@Nullable DataNode<ProjectData> externalProject) {
         if (externalProject == null) {
@@ -180,29 +192,103 @@ public class ExternalSystemUtil {
         }
         Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(externalProject, ProjectKeys.MODULE);
         for (DataNode<ModuleData> node : moduleNodes) {
-          externalModuleNames.add(node.getData().getName());
+          myExternalModuleNames.add(node.getData().getName());
         }
         projectDataManager.importData(externalProject.getKey(), Collections.singleton(externalProject), project, false);
+        if (--myCounter <= 0) {
+          processOrphanModules();
+        }
       }
 
       @Override
       public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
+        if (--myCounter <= 0) {
+          processOrphanModules();
+        }
+      }
+
+      private void processOrphanModules() {
+        PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
+        List<Module> orphanIdeModules = ContainerUtilRt.newArrayList();
+        String externalSystemIdAsString = externalSystemId.toString();
+
+        for (Module module : platformFacade.getModules(project)) {
+          String s = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+          if (externalSystemIdAsString.equals(s) && !myExternalModuleNames.contains(module.getName())) {
+            orphanIdeModules.add(module);
+          }
+        }
+        
+        if (!orphanIdeModules.isEmpty()) {
+          ruleOrphanModules(orphanIdeModules, project, externalSystemId);
+        }
       }
     };
     for (ExternalProjectSettings setting : projectsSettings) {
       refreshProject(project, externalSystemId, setting.getExternalProjectPath(), callback, true, false);
     }
-    PlatformFacade platformFacade = ServiceManager.getService(PlatformFacade.class);
-    List<Module> orphanIdeModules = ContainerUtilRt.newArrayList();
-    String externalSystemIdAsString = externalSystemId.toString();
-    for (Module module : platformFacade.getModules(project)) {
-      String s = module.getOptionValue(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
-      if (externalSystemIdAsString.equals(s) && !externalModuleNames.contains(module.getName())) {
-        orphanIdeModules.add(module);
+  }
+
+  private static void ruleOrphanModules(@NotNull final List<Module> orphanModules,
+                                        @NotNull final Project project,
+                                        @NotNull final ProjectSystemId externalSystemId)
+  {
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        final String externalSystem = ExternalSystemApiUtil.toReadableName(externalSystemId);
+        
+        final JPanel content = new JPanel(new GridBagLayout());
+        content.add(new JLabel(ExternalSystemBundle.message("orphan.modules.text", externalSystem)),
+                    ExternalSystemUiUtil.getFillLineConstraints(0));
+        
+        final CheckBoxList<Module> orphanModulesList = new CheckBoxList<Module>();
+        orphanModulesList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+        orphanModulesList.setItems(orphanModules, new Function<Module, String>() {
+          @Override
+          public String fun(Module module) {
+            return module.getName();
+          }
+        });
+        for (Module module : orphanModules) {
+          orphanModulesList.setItemSelected(module, true);
+        }
+        content.add(orphanModulesList, ExternalSystemUiUtil.getFillLineConstraints(0));
+        
+        DialogWrapper dialog = new DialogWrapper(project) {
+
+          {
+            setTitle(ExternalSystemBundle.message("import.title", externalSystem));
+            init();
+          }
+          
+          @Nullable
+          @Override
+          protected JComponent createCenterPanel() {
+            return new JBScrollPane(content);
+          }
+        };
+        boolean ok = dialog.showAndGet();
+        if (!ok) {
+          return;
+        }
+        
+        List<Module> toRemove = ContainerUtilRt.newArrayList();
+        for (int i = 0; i < orphanModules.size(); i++) {
+          Module module = orphanModules.get(i);
+          if (orphanModulesList.isItemSelected(i)) {
+            toRemove.add(module);
+          }
+          else {
+            ModuleDataService.unlinkModuleFromExternalSystem(module);
+          }
+        }
+
+        if (!toRemove.isEmpty()) {
+          ServiceManager.getService(ProjectDataManager.class).removeData(ProjectKeys.MODULE, toRemove, project, true);
+        }
       }
-    }
-    
-    // TODO den offer to remove orphan modules here
+    });
   }
 
   @SuppressWarnings("ThrowableResultOfMethodCallIgnored")
@@ -267,8 +353,11 @@ public class ExternalSystemUtil {
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
+        final String projectName = new File(externalProjectPath).getParentFile().getName();
         if (modal) {
-          String title = ExternalSystemBundle.message("progress.import.text", ExternalSystemApiUtil.toReadableName(externalSystemId));
+          String title = ExternalSystemBundle.message("progress.import.text",
+                                                      projectName,
+                                                      ExternalSystemApiUtil.toReadableName(externalSystemId));
           ProgressManager.getInstance().run(new Task.Modal(project, title, false) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
@@ -280,7 +369,8 @@ public class ExternalSystemUtil {
           });
         }
         else {
-          String title = ExternalSystemBundle.message("progress.refresh.text", ExternalSystemApiUtil.toReadableName(externalSystemId));
+          String title = ExternalSystemBundle.message("progress.refresh.text",
+                                                      projectName, ExternalSystemApiUtil.toReadableName(externalSystemId));
           ProgressManager.getInstance().run(new Task.Backgroundable(project, title) {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {

@@ -38,7 +38,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 4/15/13 12:09 PM
  */
-public class JavaProjectDataService implements ProjectDataService<JavaProjectData> {
+public class JavaProjectDataService implements ProjectDataService<JavaProjectData, Project> {
 
   @NotNull
   @Override
@@ -95,9 +95,9 @@ public class JavaProjectDataService implements ProjectDataService<JavaProjectDat
     }
     return candidate;
   }
-  
+
   @Override
-  public void removeData(@NotNull Collection<DataNode<JavaProjectData>> toRemove, @NotNull Project project, boolean synchronous) {
+  public void removeData(@NotNull Collection<? extends Project> toRemove, @NotNull Project project, boolean synchronous) {
   }
 
   @SuppressWarnings("MethodMayBeStatic")

@@ -24,45 +24,20 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.*;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.Map;
 
 /**
  * @author Denis Zhdanov
  * @since 4/14/13 11:21 PM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public abstract class AbstractDependencyDataService<T extends AbstractDependencyData<?>> implements ProjectDataService<T> {
-
-  public void removeData(@NotNull Collection<ExportableOrderEntry> toRemove, @NotNull final Module module, boolean synchronous) {
-    if (toRemove.isEmpty()) {
-      return;
-    }
-    for (final ExportableOrderEntry dependency : toRemove) {
-      ExternalSystemApiUtil.executeProjectChangeAction(module.getProject(), ProjectSystemId.IDE, toRemove, synchronous, new Runnable() {
-        @Override
-        public void run() {
-          ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
-          final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
-          try {
-            // The thing is that intellij created order entry objects every time new modifiable model is created,
-            // that's why we can't use target dependency object as is but need to get a reference to the current
-            // entry object from the model instead.
-            for (OrderEntry entry : moduleRootModel.getOrderEntries()) {
-              if (entry.getPresentableName().equals(dependency.getPresentableName())) {
-                moduleRootModel.removeOrderEntry(entry);
-                break;
-              }
-            }
-          }
-          finally {
-            moduleRootModel.commit();
-          }
-        }
-      });
-    }
-  }
+public abstract class AbstractDependencyDataService<E extends AbstractDependencyData<?>, I extends ExportableOrderEntry>
+  implements ProjectDataService<E, I>
+{
 
   public void setScope(@NotNull final DependencyScope scope, @NotNull final ExportableOrderEntry dependency, boolean synchronous) {
     Project project = dependency.getOwnerModule().getProject();
@@ -111,6 +86,60 @@ public abstract class AbstractDependencyDataService<T extends AbstractDependency
     }
     finally {
       moduleRootModel.commit();
+    }
+  }
+
+  @Override
+  public void removeData(@NotNull Collection<? extends I> toRemove, @NotNull Project project, boolean synchronous) {
+    if (toRemove.isEmpty()) {
+      return;
+    }
+
+    Map<Module, Collection<ExportableOrderEntry>> byModule = groupByModule(toRemove);
+    for (Map.Entry<Module, Collection<ExportableOrderEntry>> entry : byModule.entrySet()) {
+      removeData(entry.getValue(), entry.getKey(), synchronous);
+    }
+  }
+
+  @NotNull
+  private static Map<Module, Collection<ExportableOrderEntry>> groupByModule(@NotNull Collection<? extends ExportableOrderEntry> data) {
+    Map<Module, Collection<ExportableOrderEntry>> result = ContainerUtilRt.newHashMap();
+    for (ExportableOrderEntry entry : data) {
+      Collection<ExportableOrderEntry> entries = result.get(entry.getOwnerModule());
+      if (entries == null) {
+        result.put(entry.getOwnerModule(), entries = ContainerUtilRt.newArrayList());
+      }
+      entries.add(entry);
+    }
+    return result;
+  }
+  
+  public void removeData(@NotNull Collection<? extends ExportableOrderEntry> toRemove, @NotNull final Module module, boolean synchronous) {
+    if (toRemove.isEmpty()) {
+      return;
+    }
+    for (final ExportableOrderEntry dependency : toRemove) {
+      ExternalSystemApiUtil.executeProjectChangeAction(module.getProject(), ProjectSystemId.IDE, toRemove, synchronous, new Runnable() {
+        @Override
+        public void run() {
+          ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
+          final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
+          try {
+            // The thing is that intellij created order entry objects every time new modifiable model is created,
+            // that's why we can't use target dependency object as is but need to get a reference to the current
+            // entry object from the model instead.
+            for (OrderEntry entry : moduleRootModel.getOrderEntries()) {
+              if (entry.getPresentableName().equals(dependency.getPresentableName())) {
+                moduleRootModel.removeOrderEntry(entry);
+                break;
+              }
+            }
+          }
+          finally {
+            moduleRootModel.commit();
+          }
+        }
+      });
     }
   }
 }

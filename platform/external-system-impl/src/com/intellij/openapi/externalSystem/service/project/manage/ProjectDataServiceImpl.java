@@ -34,7 +34,7 @@ import java.util.Collection;
  * @since 2/21/13 2:40 PM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class ProjectDataServiceImpl implements ProjectDataService<ProjectData> {
+public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, Project> {
 
   @NotNull
   @Override
@@ -57,7 +57,7 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData> {
   }
 
   @Override
-  public void removeData(@NotNull Collection<DataNode<ProjectData>> toRemove, @NotNull Project project, boolean synchronous) {
+  public void removeData(@NotNull Collection<? extends Project> toRemove, @NotNull Project project, boolean synchronous) {
   }
 
   @SuppressWarnings("MethodMayBeStatic")

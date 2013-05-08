@@ -22,7 +22,6 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
-import java.util.List;
 import java.util.Map;
 
 /**
@@ -32,7 +31,7 @@ import java.util.Map;
  * @since 2/7/12 3:20 PM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class ContentRootDataService implements ProjectDataService<ContentRootData> {
+public class ContentRootDataService implements ProjectDataService<ContentRootData, ModuleAwareContentRoot> {
 
   private static final Logger LOG = Logger.getInstance("#" + ContentRootDataService.class.getName());
 
@@ -192,29 +191,17 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
   }
 
   @Override
-  public void removeData(@NotNull Collection<DataNode<ContentRootData>> toRemove, @NotNull Project project, boolean synchronous) {
-    if (toRemove.isEmpty()) {
-      return;
+  public void removeData(@NotNull Collection<? extends ModuleAwareContentRoot> toRemove, @NotNull Project project, boolean synchronous) {
+    Map<Module, Collection<ModuleAwareContentRoot>> byModule = ContainerUtilRt.newHashMap();
+    for (ModuleAwareContentRoot root : toRemove) {
+      Collection<ModuleAwareContentRoot> roots = byModule.get(root.getModule());
+      if (roots == null) {
+        byModule.put(root.getModule(), roots = ContainerUtilRt.newArrayList());
+      }
+      roots.add(root);
     }
-    Map<DataNode<ModuleData>,Collection<DataNode<ContentRootData>>> byModule
-      = ExternalSystemApiUtil.groupBy(toRemove, ProjectKeys.MODULE);
-    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
-      final Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
-      if (module == null) {
-        LOG.warn(String.format(
-          "Can't import content roots. Reason: target module (%s) is not found at the ide. Content roots: %s",
-          entry.getKey(), entry.getValue()
-        ));
-        continue;
-      }
-      List<ModuleAwareContentRoot> contentRoots = ContainerUtilRt.newArrayList();
-      for (DataNode<ContentRootData> holder : entry.getValue()) {
-        ModuleAwareContentRoot contentRoot = myProjectStructureHelper.findIdeContentRoot(holder, project);
-        if (contentRoot != null) {
-          contentRoots.add(contentRoot);
-        }
-      }
-      doRemoveData(contentRoots, project, synchronous);
+    for (Map.Entry<Module, Collection<ModuleAwareContentRoot>> entry : byModule.entrySet()) {
+      doRemoveData(entry.getValue(), project, synchronous);
     }
   }
 

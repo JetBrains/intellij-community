@@ -12,7 +12,6 @@ import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUtil;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderRootType;
@@ -27,14 +26,16 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.File;
-import java.util.*;
+import java.util.Collection;
+import java.util.Map;
+import java.util.Set;
 
 /**
  * @author Denis Zhdanov
  * @since 2/15/12 11:32 AM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class LibraryDataService implements ProjectDataService<LibraryData> {
+public class LibraryDataService implements ProjectDataService<LibraryData, Library> {
 
   private static final Logger LOG = Logger.getInstance("#" + LibraryDataService.class.getName());
   @NotNull public static final NotNullFunction<String, File> PATH_TO_FILE = new NotNullFunction<String, File>() {
@@ -151,19 +152,7 @@ public class LibraryDataService implements ProjectDataService<LibraryData> {
     }
   }
 
-  @Override
-  public void removeData(@NotNull Collection<DataNode<LibraryData>> toRemove, @NotNull Project project, boolean synchronous) {
-    Collection<Library> libraries = ContainerUtilRt.newArrayList();
-    for (DataNode<LibraryData> node : toRemove) {
-      Library library = myProjectStructureHelper.findIdeLibrary(node.getData(), project);
-      if (library != null) {
-        libraries.add(library);
-      }
-    }
-    removeLibraries(libraries, project, synchronous);
-  }
-
-  public void removeLibraries(@NotNull final Collection<Library> libraries, @NotNull final Project project, boolean synchronous) {
+  public void removeData(@NotNull final Collection<? extends Library> libraries, @NotNull final Project project, boolean synchronous) {
     if (libraries.isEmpty()) {
       return;
     }

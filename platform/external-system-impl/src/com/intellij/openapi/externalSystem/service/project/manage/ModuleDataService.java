@@ -27,7 +27,6 @@ import org.jetbrains.annotations.NotNull;
 import java.io.File;
 import java.io.IOException;
 import java.util.Collection;
-import java.util.Iterator;
 import java.util.Map;
 import java.util.concurrent.TimeUnit;
 
@@ -38,7 +37,7 @@ import java.util.concurrent.TimeUnit;
  * @since 2/7/12 2:49 PM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class ModuleDataService implements ProjectDataService<ModuleData> {
+public class ModuleDataService implements ProjectDataService<ModuleData, Module> {
 
   private static final Logger LOG = Logger.getInstance("#" + ModuleDataService.class.getName());
 
@@ -147,7 +146,7 @@ public class ModuleDataService implements ProjectDataService<ModuleData> {
       UIUtil.invokeLaterIfNeeded(task);
     }
   }
-
+  
   @NotNull
   private Collection<DataNode<ModuleData>> filterExistingModules(@NotNull Collection<DataNode<ModuleData>> modules,
                                                                  @NotNull Project project)
@@ -187,23 +186,10 @@ public class ModuleDataService implements ProjectDataService<ModuleData> {
   }
 
   @Override
-  public void removeData(@NotNull Collection<DataNode<ModuleData>> toRemove, @NotNull Project project, boolean synchronous) {
-     Collection<Module> modules = ContainerUtilRt.newArrayList();
-    for (DataNode<ModuleData> node : toRemove) {
-      Module module = myProjectStructureHelper.findIdeModule(node.getData(), project);
-      if (module != null) {
-        modules.add(module);
-      }
-    }
-    removeData(modules, synchronous);
-  }
-
-  @SuppressWarnings("MethodMayBeStatic")
-  public void removeData(@NotNull final Collection<? extends Module> modules, boolean synchronous) {
+  public void removeData(@NotNull final Collection<? extends Module> modules, @NotNull Project project, boolean synchronous) {
     if (modules.isEmpty()) {
       return;
     }
-    Project project = modules.iterator().next().getProject();
     ExternalSystemApiUtil.executeProjectChangeAction(project, ProjectSystemId.IDE, modules, synchronous, new Runnable() {
       @Override
       public void run() {
@@ -221,6 +207,11 @@ public class ModuleDataService implements ProjectDataService<ModuleData> {
         }
       }
     });
+  }
+
+  public static void unlinkModuleFromExternalSystem(@NotNull Module module) {
+    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
   }
   
   private class ImportModulesTask implements Runnable {

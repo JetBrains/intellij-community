@@ -38,21 +38,21 @@ public class ProjectDataManager {
 
   private static final Logger LOG = Logger.getInstance("#" + ProjectDataManager.class.getName());
 
-  @NotNull private final NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?>>>> myServices =
-    new NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?>>>>() {
+  @NotNull private final NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>> myServices =
+    new NotNullLazyValue<Map<Key<?>, List<ProjectDataService<?, ?>>>>() {
       @NotNull
       @Override
-      protected Map<Key<?>, List<ProjectDataService<?>>> compute() {
-        Map<Key<?>, List<ProjectDataService<?>>> result = ContainerUtilRt.newHashMap();
-        for (ProjectDataService<?> service : ProjectDataService.EP_NAME.getExtensions()) {
-          List<ProjectDataService<?>> services = result.get(service.getTargetDataKey());
+      protected Map<Key<?>, List<ProjectDataService<?, ?>>> compute() {
+        Map<Key<?>, List<ProjectDataService<?, ?>>> result = ContainerUtilRt.newHashMap();
+        for (ProjectDataService<?, ?> service : ProjectDataService.EP_NAME.getExtensions()) {
+          List<ProjectDataService<?, ?>> services = result.get(service.getTargetDataKey());
           if (services == null) {
             result.put(service.getTargetDataKey(), services = ContainerUtilRt.newArrayList());
           }
           services.add(service);
         }
 
-        for (List<ProjectDataService<?>> services : result.values()) {
+        for (List<ProjectDataService<?, ?>> services : result.values()) {
           ExternalSystemApiUtil.orderAwareSort(services);
         }
 
@@ -75,7 +75,7 @@ public class ProjectDataManager {
 
   @SuppressWarnings("unchecked")
   public <T> void importData(@NotNull Key<T> key, @NotNull Collection<DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {
-    List<ProjectDataService<?>> services = myServices.getValue().get(key);
+    List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
     if (services == null) {
       LOG.warn(String.format(
         "Can't import data nodes '%s'. Reason: no service is registered for key %s. Available services for %s",
@@ -83,8 +83,8 @@ public class ProjectDataManager {
       ));
     }
     else {
-      for (ProjectDataService<?> service : services) {
-        ((ProjectDataService<T>)service).importData(nodes, project, synchronous);
+      for (ProjectDataService<?, ?> service : services) {
+        ((ProjectDataService<T, ?>)service).importData(nodes, project, synchronous);
       }
     }
 
@@ -93,5 +93,13 @@ public class ProjectDataManager {
       children.addAll(node.getChildren());
     }
     importData(children, project, synchronous);
+  }
+
+  @SuppressWarnings("unchecked")
+  public <T> void removeData(@NotNull Key<?> key, @NotNull Collection<T> toRemove, @NotNull Project project, boolean synchronous) {
+    List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
+    for (ProjectDataService<?, ?> service : services) {
+      ((ProjectDataService<?, T>)service).removeData(toRemove, project, synchronous);
+    }
   }
 }

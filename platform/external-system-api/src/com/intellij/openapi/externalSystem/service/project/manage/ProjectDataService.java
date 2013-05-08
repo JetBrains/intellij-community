@@ -45,17 +45,18 @@ import java.util.Collection;
  * 
  * @author Denis Zhdanov
  * @since 4/12/13 3:59 PM
- * @param <T>  target project data type
+ * @param <E>  target external project data type
+ * @param <I>  target ide project data type
  */
-public interface ProjectDataService<T> {
+public interface ProjectDataService<E, I> {
 
-  ExtensionPointName<ProjectDataService<?>> EP_NAME = ExtensionPointName.create("com.intellij.externalProjectDataService");
+  ExtensionPointName<ProjectDataService<?, ?>> EP_NAME = ExtensionPointName.create("com.intellij.externalProjectDataService");
 
   /**
    * @return key of project data supported by the current manager
    */
   @NotNull
-  Key<T> getTargetDataKey();
+  Key<E> getTargetDataKey();
 
   /**
    * It's assumed that given data nodes present at the ide when this method returns. I.e. the method should behave as below for
@@ -76,7 +77,18 @@ public interface ProjectDataService<T> {
    * @param project
    * @param synchronous
    */
-  void importData(@NotNull Collection<DataNode<T>> toImport, @NotNull Project project, boolean synchronous);
+  void importData(@NotNull Collection<DataNode<E>> toImport, @NotNull Project project, boolean synchronous);
 
-  void removeData(@NotNull Collection<DataNode<T>> toRemove, @NotNull Project project, boolean synchronous);
+  /**
+   * Asks to remove all given ide project entities.
+   * <p/>
+   * <b>Note:</b> as more than one {@link ProjectDataService} might be configured for a target entity type, there is a possible case
+   * that the entities have already been removed when this method is called. Then it's necessary to cleanup auxiliary data (if any)
+   * or just return otherwise.
+   * 
+   * @param toRemove     project entities to remove
+   * @param project      target project
+   * @param synchronous  flag which defines if entities removal should be synchronous
+   */
+  void removeData(@NotNull Collection<? extends I> toRemove, @NotNull Project project, boolean synchronous);
 }

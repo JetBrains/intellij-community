@@ -54,7 +54,7 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
  * @since 4/12/13 6:19 PM
  */
 @Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
-public class LibraryDependencyDataService extends AbstractDependencyDataService<LibraryDependencyData> {
+public class LibraryDependencyDataService extends AbstractDependencyDataService<LibraryDependencyData, LibraryOrderEntry> {
 
   private static final Logger LOG = Logger.getInstance("#" + LibraryDependencyDataService.class.getName());
 
@@ -167,28 +167,5 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         }
       }
     });
-  }
-
-  @Override
-  public void removeData(@NotNull Collection<DataNode<LibraryDependencyData>> toRemove, @NotNull Project project, boolean synchronous) {
-    if (toRemove.isEmpty()) {
-      return;
-    }
-    Map<DataNode<ModuleData>, Collection<DataNode<LibraryDependencyData>>> byModule = ExternalSystemApiUtil.groupBy(toRemove, MODULE);
-    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<LibraryDependencyData>>> entry : byModule.entrySet()) {
-      Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
-      if (module == null) {
-        continue;
-      }
-      List<ExportableOrderEntry> dependencies = ContainerUtilRt.newArrayList();
-      for (DataNode<LibraryDependencyData> node : entry.getValue()) {
-        LibraryOrderEntry dependency
-          = myProjectStructureHelper.findIdeLibraryDependency(module.getName(), node.getData().getName(), project);
-        if (dependency != null) {
-          dependencies.add(dependency);
-        }
-      }
-      removeData(dependencies, module, synchronous);
-    }
   }
 }
