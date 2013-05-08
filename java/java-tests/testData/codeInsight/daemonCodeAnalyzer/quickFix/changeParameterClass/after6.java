@@ -5,6 +5,7 @@ class a implements b<String> {
     }
 
     public void g(b<String> t) {
+        <caret>
     }
 }
 interface b<T> {

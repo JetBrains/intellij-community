@@ -5,6 +5,7 @@ class a implements Runnable {
     }
 
     public void run() {
+        <caret>
     }
 }
 

@@ -8,5 +8,6 @@ abstract class Test {
 class TImple extends Test {
     @Override
     public void foo(@Nullable String a) {
+        <caret>
     }
 }

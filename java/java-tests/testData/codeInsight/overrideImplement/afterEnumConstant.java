@@ -17,6 +17,7 @@ enum E{
   E1 {
       @Override
       public void foo() {
+          <caret>
       }
   };
   public abstract void foo();

@@ -6,5 +6,6 @@ abstract class Test {
 class TImple extends Test {
     @Override
     void foo() {
+        <caret>
     }
 }

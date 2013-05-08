@@ -10,5 +10,6 @@ interface B<T> extends A<T> {
 class MyClass<T> implements B<T> {
     @Override
     public void m2() {
+        <caret>
     }
 }

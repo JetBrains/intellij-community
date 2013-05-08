@@ -4,5 +4,6 @@ interface Function<S> {
 
 class Bar extends Function<String>{
     public void fun(Function<String> function) {
+        <caret>
     }
 }

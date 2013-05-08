@@ -10,5 +10,6 @@ abstract class B implements A{
                     String p5,
                     String p6,
                     String p7) {
+        <caret>
     }
 }

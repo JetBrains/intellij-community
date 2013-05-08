@@ -21,5 +21,6 @@ abstract class A<T> {
 
         @Override
         <S extends Throwable> void foo(S s) {
+            <caret>
         }
     }

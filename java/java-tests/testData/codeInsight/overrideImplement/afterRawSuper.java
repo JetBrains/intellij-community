@@ -20,5 +20,6 @@ interface A<T> {
     class B implements A
     {
         public void foo() {
+            <caret>
         }
     }
