@@ -376,6 +376,12 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
       return new ToggleBreakpointGutterIconAction(XBreakpointBase.this);
     }
 
+    @Nullable
+    @Override
+    public AnAction getRightButtonClickAction() {
+      return new EditBreakpointAction.ContextAction(this, XBreakpointBase.this, DebuggerSupport.getDebuggerSupport(XDebuggerSupport.class));
+    }
+
     @Override
     public Alignment getAlignment() {
       return Alignment.RIGHT;
@@ -383,25 +389,7 @@ public class XBreakpointBase<Self extends XBreakpoint<P>, P extends XBreakpointP
 
     @Nullable
     public ActionGroup getPopupMenuActions() {
-      DefaultActionGroup group = new DefaultActionGroup();
-      final XDebuggerManager debuggerManager = XDebuggerManager.getInstance(getProject());
-
-
-      group.add(new EditBreakpointAction.ContextAction(this, XBreakpointBase.this, DebuggerSupport.getDebuggerSupport(XDebuggerSupport.class)));
-
-      group.add(new Separator());
-
-      if (!debuggerManager.getBreakpointManager().isDefaultBreakpoint(XBreakpointBase.this)) {
-        group.add(new RemoveBreakpointGutterIconAction(XBreakpointBase.this));
-      }
-      group.add(new ToggleBreakpointGutterIconAction(XBreakpointBase.this));
-      for (AnAction action : getAdditionalPopupMenuActions(debuggerManager.getCurrentSession())) {
-        group.add(action);
-      }
-      group.add(new Separator());
-
-      group.add(new ViewBreakpointsAction(ActionsBundle.actionText(XDebuggerActions.VIEW_BREAKPOINTS), XBreakpointBase.this));
-      return group;
+      return null;
     }
 
     @Nullable

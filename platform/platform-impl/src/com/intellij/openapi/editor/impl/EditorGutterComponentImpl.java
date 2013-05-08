@@ -1414,6 +1414,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                                                                         actionGroup);
           popupMenu.getComponent().show(this, e.getX(), e.getY());
           e.consume();
+        } else {
+          AnAction rightButtonAction = renderer.getRightButtonClickAction();
+          if (rightButtonAction != null) {
+            rightButtonAction.actionPerformed(new AnActionEvent(e, myEditor.getDataContext(), "ICON_NAVIGATION_SECONDARY_BUTTON", rightButtonAction.getTemplatePresentation(),
+                                                                ActionManager.getInstance(),
+                                                                e.getModifiers()));
+            e.consume();
+          }
         }
       }
       else {

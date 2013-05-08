@@ -82,6 +82,11 @@ public abstract class GutterIconRenderer {
     return null;
   }
 
+  @Nullable
+  public AnAction getRightButtonClickAction() {
+    return null;
+  }
+
   /**
    * Returns the value indicating whether the hand cursor should be displayed when the mouse
    * is hovering over the icon.
