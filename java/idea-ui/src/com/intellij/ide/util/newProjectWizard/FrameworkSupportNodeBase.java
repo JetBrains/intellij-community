@@ -47,8 +47,9 @@ public abstract class FrameworkSupportNodeBase extends CheckedTreeNode {
   @NotNull
   public abstract Icon getIcon();
 
+  @NotNull
   public List<FrameworkSupportNodeBase> getChildren() {
-    return children;
+    return children != null ? children : Collections.<FrameworkSupportNodeBase>emptyList();
   }
 
   public FrameworkSupportNodeBase getParentNode() {
