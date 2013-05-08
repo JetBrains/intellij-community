@@ -77,6 +77,7 @@ public class SettingsImpl implements EditorSettings {
   private Integer myCustomSoftWrapIndent                  = null;
   private Boolean myRenamePreselect                       = null;
   private Boolean myWrapWhenTypingReachesRightMargin      = null;
+  private Boolean myShowIntentionBulb                     = null;
 
   public SettingsImpl(@Nullable EditorEx editor) {
     myEditor = editor;
@@ -530,5 +531,15 @@ public class SettingsImpl implements EditorSettings {
   @Override
   public void setPreselectRename(boolean val) {
     myRenamePreselect = val;
+  }
+
+  @Override
+  public boolean isShowIntentionBulb() {
+    return myShowIntentionBulb == null ? EditorSettingsExternalizable.getInstance().isShowIntentionBulb() : myShowIntentionBulb;
+  }
+
+  @Override
+  public void setShowIntentionBulb(boolean show) {
+    myShowIntentionBulb = show; 
   }
 }

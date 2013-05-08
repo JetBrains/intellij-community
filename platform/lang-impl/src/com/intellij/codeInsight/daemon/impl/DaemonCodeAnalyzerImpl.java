@@ -667,6 +667,9 @@ public class DaemonCodeAnalyzerImpl extends DaemonCodeAnalyzer implements JDOMEx
                             @NotNull Editor editor,
                             @NotNull ShowIntentionsPass.IntentionsInfo intentions,
                             boolean hasToRecreate) {
+    if (!editor.getSettings().isShowIntentionBulb()) {
+      return;
+    }
     ApplicationManager.getApplication().assertIsDispatchThread();
     hideLastIntentionHint();
     IntentionHintComponent hintComponent = IntentionHintComponent.showIntentionHint(project, file, editor, intentions, false);

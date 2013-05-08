@@ -91,6 +91,7 @@ public class EditorOptionsPanel {
   private JBCheckBox   myCbShowQuickDocOnMouseMove;
   private JBLabel      myQuickDocDelayLabel;
   private JTextField   myQuickDocDelayTextField;
+  private JBCheckBox   myCbShowIntentionBulb;
 
   private final ErrorHighlightingPanel myErrorHighlightingPanel = new ErrorHighlightingPanel();
   private final MyConfigurable myConfigurable;
@@ -169,6 +170,7 @@ public class EditorOptionsPanel {
     myQuickDocDelayTextField.setText(Long.toString(editorSettings.getQuickDocOnMouseOverElementDelayMillis()));
     myQuickDocDelayTextField.setEnabled(editorSettings.isShowQuickDocOnMouseOverElement());
     myQuickDocDelayLabel.setEnabled(editorSettings.isShowQuickDocOnMouseOverElement());
+    myCbShowIntentionBulb.setSelected(editorSettings.isShowIntentionBulb());
 
     // Advanced mouse
     myCbEnableDnD.setSelected(editorSettings.isDndEnabled());
@@ -258,6 +260,8 @@ public class EditorOptionsPanel {
     if (quickDocDelay != null) {
       editorSettings.setQuickDocOnMouseOverElementDelayMillis(quickDocDelay);
     }
+    
+    editorSettings.setShowIntentionBulb(myCbShowIntentionBulb.isSelected());
 
     editorSettings.setDndEnabled(myCbEnableDnD.isSelected());
 
@@ -388,6 +392,8 @@ public class EditorOptionsPanel {
     if (quickDocDelay != null && !quickDocDelay.equals(Long.valueOf(editorSettings.getQuickDocOnMouseOverElementDelayMillis()))) {
       return true;
     }
+
+    isModified |= isModified(myCbShowIntentionBulb, editorSettings.isShowIntentionBulb());
 
     // advanced mouse
     isModified |= isModified(myCbEnableDnD, editorSettings.isDndEnabled());
