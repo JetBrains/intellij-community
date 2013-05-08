@@ -683,6 +683,39 @@ public class Tree extends JTree implements ComponentWithEmptyText, ComponentWith
         }
       }
     }
+
+    @Override
+    public void mouseReleased(MouseEvent e) {
+      if (e.getButton() == MouseEvent.BUTTON1 && e.getClickCount() == 2 && isLocationInExpandControl(getClosestPathForLocation(e.getX(), e.getY()), e.getX())) {
+        e.consume();
+      }
+    }
+    /**
+     * Returns true if <code>mouseX</code> falls
+     * in the area of row that is used to expand/collapse the node and
+     * the node at <code>row</code> does not represent a leaf.
+     */
+  }
+
+  protected boolean isLocationInExpandControl(@Nullable TreePath path, int mouseX) {
+    if (path == null) return false;
+    TreeUI ui = getUI();
+    if (!(ui instanceof BasicTreeUI)) return false;
+    BasicTreeUI treeUI = (BasicTreeUI)ui;
+    if (!treeModel.isLeaf(path.getLastPathComponent())) {
+      Insets insets = Tree.this.getInsets();
+      int boxWidth = treeUI.getExpandedIcon() != null ? treeUI.getExpandedIcon().getIconWidth() : 8;
+      int boxLeftX = treeUI.getLeftChildIndent() + treeUI.getRightChildIndent() * (path.getPathCount() - 1);
+      if (getComponentOrientation().isLeftToRight()) {
+        boxLeftX = boxLeftX + insets.left - treeUI.getRightChildIndent() + 1;
+      }
+      else {
+        boxLeftX = getWidth() - boxLeftX - insets.right + treeUI.getRightChildIndent() - 1;
+      }
+      boxLeftX -= (getComponentOrientation().isLeftToRight() ? (int)Math.ceil(boxWidth / 2.0) : (int)Math.floor(boxWidth / 2.0));
+      return (mouseX >= boxLeftX && mouseX < (boxLeftX + boxWidth));
+    }
+    return false;
   }
 
   /**
