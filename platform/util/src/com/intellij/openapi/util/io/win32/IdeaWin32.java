@@ -40,16 +40,19 @@ public class IdeaWin32 {
   static {
     boolean available = false;
     if (SystemInfo.isWin2kOrNewer) {
-      String libName = SystemInfo.is64Bit ? "IdeaWin64" : "IdeaWin32";
+      String libName = SystemInfo.is64Bit ? "IdeaWin64.dll" : "IdeaWin32.dll";
       try {
-        String path = PathManager.getBinPath() + "/" + libName + ".dll";
+        String path = PathManager.getBinPath() + "/" + libName;
         if (!new File(path).exists()) {
-          path = PathManager.getHomePath() + "/community/bin/win/" + libName + ".dll";
+          path = PathManager.getHomePath() + "/community/bin/win/" + libName;
           if (!new File(path).exists()) {
-            path = PathManager.getHomePath() + "/bin/win/" + libName + ".dll";
+            path = PathManager.getHomePath() + "/bin/win/" + libName;
             if (!new File(path).exists()) {
-              throw new FileNotFoundException("Native filesystem .dll is missing (path=" + PathManager.getBinPath() +
-                                              " content=" + Arrays.toString(new File(PathManager.getBinPath()).list()) + ")");
+              path = PathManager.getHomePathFor(IdeaWin32.class) + "/bin/" + libName;
+              if (!new File(path).exists()) {
+                throw new FileNotFoundException("Native filesystem .dll is missing (path=" + PathManager.getBinPath() +
+                                                " content=" + Arrays.toString(new File(PathManager.getBinPath()).list()) + ")");
+              }
             }
           }
         }
