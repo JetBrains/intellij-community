@@ -53,7 +53,7 @@ public class PyClassMROTest extends PyTestCase {
   }
 
   public void assertMRO(@NotNull PyClass cls, @NotNull String... mro) {
-    final List<PyClassLikeType> types = cls.getAncestorTypes(TypeEvalContext.fastStubOnly(null));
+    final List<PyClassLikeType> types = cls.getAncestorTypes(TypeEvalContext.codeInsightFallback());
     final List<String> classNames = new ArrayList<String>();
     for (PyClassLikeType type : types) {
       if (type != null) {

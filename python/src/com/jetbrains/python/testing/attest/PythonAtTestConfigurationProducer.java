@@ -29,7 +29,7 @@ public class PythonAtTestConfigurationProducer extends
 
   protected boolean isTestClass(PyClass pyClass) {
     if (pyClass == null) return false;
-    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+    for (PyClassLikeType type : pyClass.getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
       if (type != null && "TestBase".equals(type.getName()) && hasTestFunction(pyClass)) {
         return true;
       }

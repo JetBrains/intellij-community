@@ -271,7 +271,7 @@ public class ResolveImportUtil {
       dir = (PsiDirectory)parent;
     }
     else if (parent != null) {
-      PyType refType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(parent, TypeEvalContext.fastStubOnly(null), null);
+      PyType refType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(parent, TypeEvalContext.codeInsightFallback(), null);
       if (refType != null) {
         final List<? extends RatedResolveResult> result = refType.resolveMember(referencedName, null, AccessDirection.READ,
                                                                                 PyResolveContext.defaultContext());

@@ -451,7 +451,7 @@ public class PyTargetExpressionImpl extends PyPresentableElementImpl<PyTargetExp
             return ((PyFile)parent).getElementNamed(name);
           }
           else if (parent instanceof PyClass) {
-            final PyType type = TypeEvalContext.fastStubOnly(null).getType((PyClass)parent);
+            final PyType type = TypeEvalContext.codeInsightFallback().getType((PyClass)parent);
             if (type != null) {
               final List<? extends RatedResolveResult> results = type.resolveMember(name, null, AccessDirection.READ,
                                                                                     PyResolveContext.noImplicits());

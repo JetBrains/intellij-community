@@ -54,7 +54,7 @@ public class TypeEvalContext {
   }
 
   /**
-   * The most detailed type evaluation context for user-initiated actions.
+   * Create the most detailed type evaluation context for user-initiated actions.
    *
    * Should be used for code completion, go to definition, find usages, refactorings, documentation.
    */
@@ -62,19 +62,30 @@ public class TypeEvalContext {
     return new TypeEvalContext(true, true, null);
   }
 
+  /**
+   * Create a type evaluation context for deeper and slower code analysis.
+   *
+   * Should be used only when normal analysis context is not enough for getting good results.
+   */
   public static TypeEvalContext fast() {
     return new TypeEvalContext(false, true, null);
   }
 
   /**
-   * Creates a TypeEvalContext for performing analysis operations on the specified file which is currently open in the editor,
+   * Create a type evaluation context for performing analysis operations on the specified file which is currently open in the editor,
    * without accessing stubs. For such a file, additional slow operations are allowed.
-   *
-   * @param origin the file open in the editor
-   * @return the type eval context for the file.
    */
   public static TypeEvalContext fastStubOnly(@Nullable PsiFile origin) {
     return new TypeEvalContext(false, false, origin);
+  }
+
+  /**
+   * Create the most shallow type evaluation context for code insight purposes when other more detailed contexts are not available.
+   *
+   * It's use should be minimized.
+   */
+  public static TypeEvalContext codeInsightFallback() {
+    return new TypeEvalContext(false, false, null);
   }
   
   public TypeEvalContext withTracing() {

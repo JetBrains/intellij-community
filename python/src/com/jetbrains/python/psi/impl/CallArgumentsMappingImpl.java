@@ -54,7 +54,7 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     @Nullable TypeEvalContext type_context
   ) {
     PyExpression[] arguments = myArgumentList.getArguments();
-    if (type_context == null) type_context = TypeEvalContext.fastStubOnly(null);
+    if (type_context == null) type_context = TypeEvalContext.codeInsightFallback();
     myMarkedCallee = resolved_callee;
     List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
     Collections.addAll(unmatched_args, arguments);

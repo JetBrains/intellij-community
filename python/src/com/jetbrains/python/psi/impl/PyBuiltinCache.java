@@ -329,7 +329,7 @@ public class PyBuiltinCache {
 
   private static boolean isValid(@Nullable PyType type) {
     if (type instanceof PyCollectionType) {
-      final PyType elementType = ((PyCollectionType)type).getElementType(TypeEvalContext.fastStubOnly(null));
+      final PyType elementType = ((PyCollectionType)type).getElementType(TypeEvalContext.codeInsightFallback());
       if (!isValid(elementType)) {
         return false;
       }
