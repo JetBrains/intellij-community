@@ -33,12 +33,11 @@ public abstract class BaseJavaBatchLocalInspectionTool extends AbstractBaseJavaL
   }
 
   public static boolean isSuppressedFor(@NotNull PsiElement element, @NotNull LocalInspectionTool tool) {
-    final BatchSuppressManager manager = BatchSuppressManager.SERVICE.getInstance();
+    BatchSuppressManager manager = BatchSuppressManager.SERVICE.getInstance();
     String alternativeId;
-    String id;
-    return manager.isSuppressedFor(element, id = tool.getID()) ||
+    String toolId = tool.getID();
+    return manager.isSuppressedFor(element, toolId) ||
            (alternativeId = tool.getAlternativeID()) != null &&
-             !alternativeId.equals(id) &&
-             manager.isSuppressedFor(element, alternativeId);
+           !alternativeId.equals(toolId) && manager.isSuppressedFor(element, alternativeId);
   }
 }
