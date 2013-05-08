@@ -464,7 +464,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       }
     }
     else if (myType2 == TYPE_PARAMETER_LIST) {
-      manageSpaceBeforeTypeParameters();
+      createSpaceInCode(false);
     }
     else if (myType2 == ARGUMENTS) {
       manageSpaceBeforeCallLParenth();
@@ -581,7 +581,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
                               mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
     }
     else if (myType2 == TYPE_PARAMETER_LIST) {
-      manageSpaceBeforeTypeParameters();
+      createSpaceInCode(true);
     }
     else {
       processParentheses(mLPAREN,
@@ -630,10 +630,6 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
   }
 
-
-  private void manageSpaceBeforeTypeParameters() {
-    createSpaceInCode(false);
-  }
 
   @Override
   public void visitAnnotationMethod(GrAnnotationMethod annotationMethod) {
