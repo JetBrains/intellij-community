@@ -382,18 +382,8 @@ public class PyQualifiedReference extends PyReferenceImpl {
       return false;
     }
     final String referencedName = myElement.getReferencedName();
-    if (element instanceof PyFunction && Comparing.equal(referencedName, ((PyFunction)element).getName()) &&
-        ((PyFunction)element).getContainingClass() != null && !PyNames.INIT.equals(referencedName)) {
-      final PyExpression qualifier = myElement.getQualifier();
-      if (qualifier != null) {
-        final TypeEvalContext context = TypeEvalContext.fast();
-        PyType qualifierType = context.getType(qualifier);
-        if (qualifierType == null || qualifierType instanceof PyTypeReference) {
-          return true;
-        }
-      }
-    }
     PyResolveContext resolveContext = myContext.withoutImplicits();
+    // Guess type eval context origin for switching to local dataflow and return type analysis
     if (resolveContext.getTypeEvalContext().getOrigin() == null) {
       final PsiFile containingFile = myElement.getContainingFile();
       if (containingFile instanceof StubBasedPsiElement) {
@@ -401,6 +391,16 @@ public class PyQualifiedReference extends PyReferenceImpl {
       }
       final TypeEvalContext context = TypeEvalContext.fastStubOnly(containingFile);
       resolveContext = resolveContext.withTypeEvalContext(context);
+    }
+    if (element instanceof PyFunction && Comparing.equal(referencedName, ((PyFunction)element).getName()) &&
+        ((PyFunction)element).getContainingClass() != null && !PyNames.INIT.equals(referencedName)) {
+      final PyExpression qualifier = myElement.getQualifier();
+      if (qualifier != null) {
+        final PyType qualifierType = resolveContext.getTypeEvalContext().getType(qualifier);
+        if (qualifierType == null || qualifierType instanceof PyTypeReference) {
+          return true;
+        }
+      }
     }
     for (ResolveResult result : copyWithResolveContext(resolveContext).multiResolve(false)) {
       LOG.assertTrue(!(result instanceof ImplicitResolveResult));
