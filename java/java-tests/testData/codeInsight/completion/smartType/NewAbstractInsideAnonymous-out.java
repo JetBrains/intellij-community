@@ -6,6 +6,7 @@ public class Foo {
         Goo<String> g = new Goo<String>() {
             @Override
             void foo() {
+                <caret>
             }
         };
       }

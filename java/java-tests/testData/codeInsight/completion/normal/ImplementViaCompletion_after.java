@@ -5,5 +5,6 @@ interface Foo<T> {
 public class A implements Foo<String> {
     @Override
     public void run(String s, int myInt) {
+        <caret>
     }
 }

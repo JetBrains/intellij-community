@@ -3,6 +3,7 @@ class C {
         Runnable r = new Runnable() {
             @Override
             public void run() {
+                <caret>
             }
         };
     }

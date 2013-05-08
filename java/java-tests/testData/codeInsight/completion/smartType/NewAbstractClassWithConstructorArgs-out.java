@@ -4,6 +4,7 @@ public class Main {
     Bar b = new Bar() {
         @Override
         void update() {
+            <caret>
         }
     };
   }
