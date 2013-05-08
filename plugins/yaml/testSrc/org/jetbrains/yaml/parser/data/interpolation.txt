@@ -7,4 +7,5 @@ YAML file
       YAML compound value
         YAML key value
           PsiElement(scalar key)('foo:')
+          PsiWhiteSpace(' ')
           PsiElement(text)('bar %{baz}')

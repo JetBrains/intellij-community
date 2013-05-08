@@ -6,16 +6,19 @@ YAML file
       PsiElement(indent)('  ')
       YAML key value
         PsiElement(scalar key)('name:')
+        PsiWhiteSpace(' ')
         PsiElement(text)('Mark McGwire')
       PsiElement(Eol)('\n')
       PsiElement(indent)('  ')
       YAML key value
         PsiElement(scalar key)('hr:')
+        PsiWhiteSpace('   ')
         PsiElement(text)('65')
       PsiElement(Eol)('\n')
       PsiElement(indent)('  ')
       YAML key value
         PsiElement(scalar key)('avg:')
+        PsiWhiteSpace('  ')
         PsiElement(text)('0.278')
     PsiElement(Eol)('\n')
     YAML sequence
@@ -24,14 +27,17 @@ YAML file
       PsiElement(indent)('  ')
       YAML key value
         PsiElement(scalar key)('name:')
+        PsiWhiteSpace(' ')
         PsiElement(text)('Sammy Sosa')
       PsiElement(Eol)('\n')
       PsiElement(indent)('  ')
       YAML key value
         PsiElement(scalar key)('hr:')
+        PsiWhiteSpace('   ')
         PsiElement(text)('63')
       PsiElement(Eol)('\n')
       PsiElement(indent)('  ')
       YAML key value
         PsiElement(scalar key)('avg:')
+        PsiWhiteSpace('  ')
         PsiElement(text)('0.288')

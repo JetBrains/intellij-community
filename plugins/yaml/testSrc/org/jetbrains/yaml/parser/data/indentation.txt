@@ -2,10 +2,12 @@ YAML file
   YAML document
     YAML key value
       PsiElement(scalar key)('name:')
+      PsiWhiteSpace(' ')
       PsiElement(text)('Mark McGwire')
     PsiElement(Eol)('\n')
     YAML key value
       PsiElement(scalar key)('accomplishment:')
+      PsiWhiteSpace(' ')
       YAML scalar text
         PsiElement(scalar text)('>')
         PsiElement(Eol)('\n')
@@ -17,6 +19,7 @@ YAML file
     PsiElement(Eol)('\n')
     YAML key value
       PsiElement(scalar key)('stats:')
+      PsiWhiteSpace(' ')
       YAML scalar list
         PsiElement(scalar list)('|')
         PsiElement(Eol)('\n')

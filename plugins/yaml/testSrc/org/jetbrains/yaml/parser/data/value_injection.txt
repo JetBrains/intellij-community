@@ -7,9 +7,11 @@ YAML file
       YAML compound value
         YAML key value
           PsiElement(scalar key)('one:')
+          PsiWhiteSpace(' ')
           PsiElement(text)('1 text')
         PsiElement(Eol)('\n')
         PsiElement(indent)('    ')
         YAML key value
           PsiElement(scalar key)('other:')
+          PsiWhiteSpace(' ')
           PsiElement(text)('some {{count}} text')
