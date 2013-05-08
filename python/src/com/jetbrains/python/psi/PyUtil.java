@@ -617,8 +617,8 @@ public class PyUtil {
            : psiNamedElement.getName();
   }
 
-  public static boolean hasUnresolvedAncestors(@NotNull PyClass cls) {
-    for (PyClassLikeType type : cls.getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
+  public static boolean hasUnresolvedAncestors(@NotNull PyClass cls, @NotNull TypeEvalContext context) {
+    for (PyClassLikeType type : cls.getAncestorTypes(context)) {
       if (type == null) {
         return true;
       }

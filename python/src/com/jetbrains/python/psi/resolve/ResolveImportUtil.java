@@ -6,14 +6,16 @@ import com.intellij.openapi.projectRoots.Sdk;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.psi.*;
+import com.intellij.psi.PsiDirectory;
+import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiInvalidElementAccessException;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.HashSet;
 import com.jetbrains.python.PyNames;
 import com.jetbrains.python.psi.*;
 import com.jetbrains.python.psi.impl.*;
 import com.jetbrains.python.psi.types.PyType;
-import com.jetbrains.python.psi.types.TypeEvalContext;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -271,10 +273,10 @@ public class ResolveImportUtil {
       dir = (PsiDirectory)parent;
     }
     else if (parent != null) {
-      PyType refType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(parent, TypeEvalContext.codeInsightFallback(), null);
+      final PyResolveContext resolveContext = PyResolveContext.defaultContext();
+      PyType refType = PyReferenceExpressionImpl.getReferenceTypeFromProviders(parent, resolveContext.getTypeEvalContext(), null);
       if (refType != null) {
-        final List<? extends RatedResolveResult> result = refType.resolveMember(referencedName, null, AccessDirection.READ,
-                                                                                PyResolveContext.defaultContext());
+        final List<? extends RatedResolveResult> result = refType.resolveMember(referencedName, null, AccessDirection.READ, resolveContext);
         if (result != null && !result.isEmpty()) {
           return result.get(0).getElement();
         }

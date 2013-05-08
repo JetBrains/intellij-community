@@ -138,12 +138,13 @@ public class PyReferenceExpressionImpl extends PyElementImpl implements PyRefere
         if (elt instanceof PyTargetExpression) {
           PsiElement assigned_from = null;
           final PyTargetExpression expr = (PyTargetExpression)elt;
-          if (resolveContext.getTypeEvalContext().maySwitchToAST(expr) || expr.getStub() == null) {
+          final TypeEvalContext context = resolveContext.getTypeEvalContext();
+          if (context.maySwitchToAST(expr) || expr.getStub() == null) {
             assigned_from = expr.findAssignedValue();
           }
           // TODO: Maybe findAssignedValueByStub() should become a part of the PyTargetExpression interface
           else if (elt instanceof PyTargetExpressionImpl) {
-            assigned_from = ((PyTargetExpressionImpl)elt).findAssignedValueByStub();
+            assigned_from = ((PyTargetExpressionImpl)elt).findAssignedValueByStub(context);
           }
           if (assigned_from instanceof PyReferenceExpression) {
             if (visited.contains(assigned_from)) {
