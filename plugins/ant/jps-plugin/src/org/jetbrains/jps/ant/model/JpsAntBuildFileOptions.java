@@ -15,6 +15,8 @@
  */
 package org.jetbrains.jps.ant.model;
 
+import com.intellij.lang.ant.config.impl.BuildFileProperty;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.List;
@@ -37,4 +39,9 @@ public interface JpsAntBuildFileOptions {
   boolean isUseProjectDefaultAnt();
 
   List<String> getAdditionalClasspath();
+
+  @NotNull
+  List<BuildFileProperty> getProperties();
+
+  void addProperty(@NotNull String name, @NotNull String value);
 }

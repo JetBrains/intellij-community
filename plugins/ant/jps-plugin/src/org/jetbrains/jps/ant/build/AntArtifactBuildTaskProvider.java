@@ -51,6 +51,7 @@ import org.jetbrains.jps.util.JpsPathUtil;
 import java.io.File;
 import java.io.IOException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collections;
 import java.util.List;
 import java.util.concurrent.atomic.AtomicBoolean;
@@ -150,9 +151,10 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         }
       }
 
-
-      for (BuildFileProperty property : myExtension.getAntProperties()) {
-        programParams.add("-D" + property.getPropertyName() + "=" + property.getPropertyValue());
+      for (List<BuildFileProperty> properties : Arrays.asList(myExtension.getAntProperties(), options.getProperties())) {
+        for (BuildFileProperty property : properties) {
+          programParams.add("-D" + property.getPropertyName() + "=" + property.getPropertyValue());
+        }
       }
       programParams.add("-buildfile");
       final String buildFilePath = JpsPathUtil.urlToPath(myExtension.getFileUrl());
