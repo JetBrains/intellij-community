@@ -20,12 +20,8 @@ import com.intellij.ide.ReopenProjectAction;
 import com.intellij.ide.impl.ProjectUtil;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.application.impl.LaterInvocator;
-import com.intellij.openapi.util.io.UniqueNameBuilder;
 import com.intellij.ui.mac.foundation.ID;
-import com.intellij.util.SystemProperties;
 import com.sun.jna.Callback;
-
-import java.io.File;
 
 import static com.intellij.ui.mac.foundation.Foundation.*;
 
@@ -82,8 +78,6 @@ public class MacDockImpl {
 
         invoke(recentProjectsMenuWrapperItem, "setSubmenu:", recentProjectsMenu);
 
-        final UniqueNameBuilder<ReopenProjectAction> myPathShortener =
-          new UniqueNameBuilder<ReopenProjectAction>(SystemProperties.getUserHome(), File.separator, 40);
         for (AnAction action : recentProjectActions) {
           addItemToDockRecentProjectsMenu(recentProjectsMenu, (ReopenProjectAction)action);
         }

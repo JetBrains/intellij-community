@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.ui.mac.MacDockImpl;
 
@@ -22,9 +23,17 @@ import com.intellij.ui.mac.MacDockImpl;
  * @author Denis Fokin
  */
 public class SystemDock {
+
+  private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.wm.impl.SystemDock");
+
   synchronized public static void initialize() {
     if (SystemInfo.isMac) {
-      MacDockImpl.initialize();
+      try {
+        MacDockImpl.initialize();
+      }
+      catch (Exception e) {
+        LOG.error(e);
+      }
     }
   }
 }
