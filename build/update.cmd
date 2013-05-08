@@ -31,7 +31,7 @@ CD %DEV_IDEA_HOME%
 SET ANT_HOME=%DEV_IDEA_HOME%\lib\ant
 SET EXEC_ANT="%JAVA_HOME%\bin\java.exe" -Dant.home=%ANT_HOME% -classpath "%ANT_HOME%\lib\ant-launcher.jar" org.apache.tools.ant.launch.Launcher
 CALL %EXEC_ANT% -f build/update.xml %*
-IF errorlevel 1 GOTO failed
+IF NOT ERRORLEVEL 0 GOTO failed
 
 DEL /Q /S %WORK_IDEA_HOME%\lib
 DEL /Q /S %WORK_IDEA_HOME%\plugins
