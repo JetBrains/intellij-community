@@ -370,6 +370,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertDoesntMatch("Foo ", "Foox");
     assertDoesntMatch("Collections ", "CollectionSplitter");
     assertMatches("CollectionS ", "CollectionSplitter");
+    //assertMatches("a ", "alpha + beta");
   }
 
   public void testDigits() {
@@ -446,10 +447,24 @@ public class NameUtilMatchingTest extends UsefulTestCase {
                         TextRange.from(0, 4), TextRange.from(10, 1));
   }
 
-  public void "test plus in the pattern should allow to be space-surrounded"() {
+  public void "test plus/minus in the pattern should allow to be space-surrounded"() {
     assertMatches("a+b", "alpha+beta")
     assertMatches("a+b", "alpha_gamma+beta")
     assertMatches("a+b", "alpha + beta")
+    assertMatches("Foo+", "Foo+Bar.txt")
+    assertMatches("Foo+", "Foo + Bar.txt")
+    assertMatches("a", "alpha+beta");
+    assertMatches("*b", "alpha+beta");
+    assertMatches("a + b", "alpha+beta");
+    assertMatches("a+", "alpha+beta");
+    assertDoesntMatch("a ", "alpha+beta");
+    assertMatches("", "alpha+beta");
+    assertMatches("*+ b", "alpha+beta");
+    assertDoesntMatch("d+g", "alphaDelta+betaGamma");
+    assertMatches("*d+g", "alphaDelta+betaGamma");
+
+    assertMatches("a-b", "alpha-beta")
+    assertMatches("a-b", "alpha - beta")
   }
 
   public void testMatchingDegree() {
