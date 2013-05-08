@@ -112,10 +112,16 @@ public class DataNode<T> implements Serializable {
       myRawData = null;
     }
     catch (IOException e) {
-      throw new IllegalStateException("Can't deserialize target data of key " + myKey);
+      throw new IllegalStateException(
+        String.format("Can't deserialize target data of key '%s'. Given class loaders: %s", myKey, Arrays.toString(loaders)),
+        e
+      );
     }
     catch (ClassNotFoundException e) {
-      throw new IllegalStateException("Can't deserialize target data of key " + myKey);
+      throw new IllegalStateException(
+        String.format("Can't deserialize target data of key '%s'. Given class loaders: %s", myKey, Arrays.toString(loaders)),
+        e
+      );
     }
     finally {
       StreamUtil.closeStream(oIn);

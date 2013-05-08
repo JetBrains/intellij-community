@@ -21,7 +21,9 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
+import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.Stack;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -75,6 +77,7 @@ public class ProjectDataManager {
 
   @SuppressWarnings("unchecked")
   public <T> void importData(@NotNull Key<T> key, @NotNull Collection<DataNode<T>> nodes, @NotNull Project project, boolean synchronous) {
+    ensureTheDataIsReadyToUse(nodes);
     List<ProjectDataService<?, ?>> services = myServices.getValue().get(key);
     if (services == null) {
       LOG.warn(String.format(
@@ -84,9 +87,6 @@ public class ProjectDataManager {
     }
     else {
       for (ProjectDataService<?, ?> service : services) {
-        for (DataNode<T> node : nodes) {
-          node.prepareData(service.getClass().getClassLoader());
-        }
         ((ProjectDataService<T, ?>)service).importData(nodes, project, synchronous);
       }
     }
@@ -96,6 +96,25 @@ public class ProjectDataManager {
       children.addAll(node.getChildren());
     }
     importData(children, project, synchronous);
+  }
+
+  @SuppressWarnings("unchecked")
+  private <T> void ensureTheDataIsReadyToUse(@NotNull Collection<DataNode<T>> nodes) {
+    Map<Key<?>, List<ProjectDataService<?, ?>>> servicesByKey = myServices.getValue();
+    Stack<DataNode<T>> toProcess = ContainerUtil.newStack(nodes);
+    while (!toProcess.isEmpty()) {
+      DataNode<T> node = toProcess.pop();
+      List<ProjectDataService<?, ?>> services = servicesByKey.get(node.getKey());
+      if (services != null) {
+        for (ProjectDataService<?, ?> service : services) {
+          node.prepareData(service.getClass().getClassLoader());
+        }
+      }
+
+      for (DataNode<?> dataNode : node.getChildren()) {
+        toProcess.push((DataNode<T>)dataNode);
+      }
+    }
   }
 
   @SuppressWarnings("unchecked")
