@@ -2,7 +2,6 @@ public abstract class X {
     abstract void f();
 }
 abstract class Y extends X {
-    void f() {
-        //To change body of implemented methods use File | Settings | File Templates.
-    }
+    <spot>void f() {
+    }</spot>
 }
