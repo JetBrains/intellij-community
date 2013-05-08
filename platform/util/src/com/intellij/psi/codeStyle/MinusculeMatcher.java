@@ -73,7 +73,7 @@ public class MinusculeMatcher implements Matcher {
     }
     int i = 0;
     while (isWildcard(i)) i++;
-    myHasHumps = hasFlag(i + 1, isUpperCase) && hasFlag(i, isLowerCase) || pattern.contains("+");
+    myHasHumps = hasFlag(i + 1, isUpperCase) && hasFlag(i, isLowerCase);
     myHasSeparators = hasFlag(i, isWordSeparator);
     myHasDots = hasDots(i);
     myHasWildCards = hasWildCards();
@@ -81,6 +81,24 @@ public class MinusculeMatcher implements Matcher {
 
   private static boolean isWordSeparator(char c) {
     return Character.isWhitespace(c) || c == '_' || c == '-' || c == ':' || c == '+';
+  }
+
+  private static boolean isWordStart(String text, int i) {
+    char c = text.charAt(i);
+    if (Character.isUpperCase(c)) {
+      if (i > 0 && Character.isUpperCase(text.charAt(i - 1))) {
+        // check that we're not in the middle of an all-caps word
+        return i + 1 < text.length() && Character.isLowerCase(text.charAt(i + 1));
+      }
+      return true;
+    }
+    if (Character.isDigit(c)) {
+      return true;
+    }
+    if (!Character.isLetter(c)) {
+      return false;
+    }
+    return i == 0 || !Character.isLetterOrDigit(text.charAt(i - 1));
   }
 
   private boolean hasWildCards() {
@@ -163,7 +181,7 @@ public class MinusculeMatcher implements Matcher {
 
     int startIndex = first.getStartOffset();
     boolean afterSeparator = StringUtil.indexOfAny(name, HARD_SEPARATORS, 0, startIndex) >= 0;
-    boolean wordStart = startIndex == 0 || NameUtil.isWordStart(name, startIndex) && !NameUtil.isWordStart(name, startIndex - 1);
+    boolean wordStart = startIndex == 0 || isWordStart(name, startIndex) && !isWordStart(name, startIndex - 1);
 
     return (wordStart ? 1000 : 0) - integral * 10 + matchingCase + (afterSeparator ? 0 : 1);
   }
@@ -275,7 +293,7 @@ public class MinusculeMatcher implements Matcher {
       // uppercase should match either uppercase or a word start
       if (!isUpperCase[patternIndex] ||
           star && Character.isUpperCase(name.charAt(nextOccurrence)) ||
-          NameUtil.isWordStart(name, nextOccurrence)) {
+          isWordStart(name, nextOccurrence)) {
         FList<TextRange> ranges = matchFragment(name, patternIndex, nextOccurrence, matchingState);
         if (ranges != null) {
           return ranges;
@@ -320,7 +338,7 @@ public class MinusculeMatcher implements Matcher {
 
     // middle matches have to be at least of length 3, to prevent too many irrelevant matches
     int minFragment = isPatternChar(patternIndex - 1, '*') && !isWildcard(patternIndex + 1) &&
-                      Character.isLetterOrDigit(name.charAt(nameIndex)) && !NameUtil.isWordStart(name, nameIndex)
+                      Character.isLetterOrDigit(name.charAt(nameIndex)) && !isWordStart(name, nameIndex)
                       ? 3 : 1;
     int i = 1;
     boolean ignoreCase = myOptions != NameUtil.MatchingCaseSensitivity.ALL;
