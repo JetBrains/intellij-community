@@ -82,7 +82,7 @@ class PyDocumentationBuilder {
         if (outer instanceof PyQualifiedExpression) {
           PyExpression qual = ((PyQualifiedExpression)outer).getQualifier();
           if (qual != null) {
-            PyType type = TypeEvalContext.fast().getType(qual);
+            PyType type = TypeEvalContext.slow().getType(qual);
             if (type instanceof PyClassType) {
               cls = ((PyClassType)type).getPyClass();
               Property property = cls.findProperty(elementName);

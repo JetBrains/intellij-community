@@ -39,7 +39,7 @@ public class PyUsageTypeProvider implements UsageTypeProviderEx {
       if (element instanceof PyQualifiedExpression) {
         final PyExpression qualifier = ((PyQualifiedExpression)element).getQualifier();
         if (qualifier != null) {
-          final PyType type = TypeEvalContext.fast().getType(qualifier);
+          final PyType type = TypeEvalContext.slow().getType(qualifier);
           if (type == null || type instanceof PyTypeReference) {
             final PyCallExpression call = PsiTreeUtil.getParentOfType(element, PyCallExpression.class);
             if (call != null && element == call.getCallee()) {

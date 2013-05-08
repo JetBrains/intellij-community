@@ -53,6 +53,11 @@ public class TypeEvalContext {
     return myAllowDataFlow || element.getContainingFile() == myOrigin;
   }
 
+  /**
+   * The most detailed type evaluation context for user-initiated actions.
+   *
+   * Should be used for code completion, go to definition, find usages, refactorings, documentation.
+   */
   public static TypeEvalContext slow() {
     return new TypeEvalContext(true, true, null);
   }

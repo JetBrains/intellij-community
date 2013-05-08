@@ -481,7 +481,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @Nullable
   private static PyClass inferClassOfParameter(PsiElement context) {
     if (context instanceof PyNamedParameter) {
-      final PyType type = TypeEvalContext.fast().getType((PyNamedParameter)context);
+      final PyType type = TypeEvalContext.slow().getType((PyNamedParameter)context);
       if (type instanceof PyClassType) {
         return ((PyClassType)type).getPyClass();
       }
