@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.formatter.processors;
 import com.intellij.formatting.Wrap;
 import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
+import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
@@ -25,6 +27,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
+import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 
 import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.*;
 
@@ -102,16 +106,45 @@ public class GroovyWrappingProcessor {
       return Wrap.createWrap(mySettings.THROWS_KEYWORD_WRAP, true);
     }
 
-    if (myParentType == PARAMETERS_LIST) {
-      if (childType == ANNOTATION) {
-        return myCommonWrap;
+    if (myParentType == MODIFIERS) {
+      if (getLeftSiblingType(childNode) == ANNOTATION) {
+        return getCommonWrap();
       }
       else {
         return createNormalWrap();
       }
     }
 
+    if (ANNOTATION_CONTAINERS.contains(myParentType)) {
+      final ASTNode leftSibling = getLeftSibling(childNode);
+      if (leftSibling != null && leftSibling.getElementType() == MODIFIERS && endsWithAnnotation(leftSibling)) {
+        final int wrapType = getAnnotationsWrapType(childNode);
+        if (wrapType != -1) {
+          return Wrap.createWrap(wrapType, true);
+        }
+      }
+    }
+
     return getCommonWrap();
+  }
+
+  @Nullable
+  private static IElementType getLeftSiblingType(ASTNode node) {
+    ASTNode prev = getLeftSibling(node);
+    return prev != null ? prev.getElementType() : null;
+  }
+
+  private static ASTNode getLeftSibling(ASTNode node) {
+    ASTNode prev = node.getTreePrev();
+    while (prev != null && StringUtil.isEmptyOrSpaces(prev.getText())) {
+      prev = prev.getTreePrev();
+    }
+    return prev;
+  }
+
+  private static boolean endsWithAnnotation(ASTNode modifierListNode) {
+    final PsiElement psi = modifierListNode.getPsi();
+    return psi instanceof GrModifierList && psi.getLastChild() instanceof GrAnnotation;
   }
 
   private Wrap getCommonWrap() {
@@ -192,32 +225,11 @@ public class GroovyWrappingProcessor {
       return createNormalWrap();
     }
 
-    if (myParentType == PARAMETERS_LIST) {
-      final IElementType pparentType = myNode.getTreeParent().getElementType();
-      if (TYPE_DEFINITION_TYPES.contains(pparentType)) {
-        return Wrap.createWrap(mySettings.CLASS_ANNOTATION_WRAP, false);
-      }
-
-      if (METHOD_DEFS.contains(pparentType)) {
-        return Wrap.createWrap(mySettings.METHOD_ANNOTATION_WRAP, false);
-      }
-
-      if (VARIABLE_DEFINITION == pparentType) {
-        final IElementType ppparentType = myNode.getTreeParent().getTreeParent().getElementType();
-        if (ppparentType == CLASS_BODY || ppparentType == ENUM_BODY) {
-          return Wrap.createWrap(mySettings.FIELD_ANNOTATION_WRAP, false);
-        }
-        else {
-          return Wrap.createWrap(mySettings.VARIABLE_ANNOTATION_WRAP, false);
-        }
-      }
-
-      if (PARAMETER == pparentType) {
-        return Wrap.createWrap(mySettings.PARAMETER_ANNOTATION_WRAP, false);
-      }
-
-      if (ENUM_CONSTANT == pparentType) {
-        return Wrap.createWrap(mySettings.ENUM_CONSTANTS_WRAP, false);
+    if (myParentType == MODIFIERS) {
+      final int wrapType = getAnnotationsWrapType(myNode);
+      if (wrapType != -1) {
+        myUsedDefaultWrap = true;
+        return Wrap.createWrap(wrapType, true);
       }
     }
 
@@ -227,4 +239,49 @@ public class GroovyWrappingProcessor {
   public Wrap getChainedMethodCallWrap() {
     return Wrap.createWrap(mySettings.METHOD_CALL_CHAIN_WRAP, false);
   }
+
+  private TokenSet ANNOTATION_CONTAINERS = TokenSet.create(
+    CLASS_DEFINITION, INTERFACE_DEFINITION, ENUM_DEFINITION, ANNOTATION_DEFINITION,
+    METHOD_DEFINITION, CONSTRUCTOR_DEFINITION,
+    VARIABLE_DEFINITION,
+    PARAMETER,
+    ENUM_CONSTANT,
+    IMPORT_STATEMENT
+  );
+
+  private int getAnnotationsWrapType(ASTNode modifierList) {
+    final IElementType containerType = modifierList.getTreeParent().getElementType();
+    if (TYPE_DEFINITION_TYPES.contains(containerType)) {
+      return mySettings.CLASS_ANNOTATION_WRAP;
+    }
+
+    if (METHOD_DEFS.contains(containerType)) {
+      return mySettings.METHOD_ANNOTATION_WRAP;
+    }
+
+    if (VARIABLE_DEFINITION == containerType) {
+      final IElementType pparentType = modifierList.getTreeParent().getTreeParent().getElementType();
+      if (pparentType == CLASS_BODY || pparentType == ENUM_BODY) {
+        return mySettings.FIELD_ANNOTATION_WRAP;
+      }
+      else {
+        return mySettings.VARIABLE_ANNOTATION_WRAP;
+      }
+    }
+
+    if (PARAMETER == containerType) {
+      return mySettings.PARAMETER_ANNOTATION_WRAP;
+    }
+
+    if (ENUM_CONSTANT == containerType) {
+      return mySettings.ENUM_CONSTANTS_WRAP;
+    }
+
+    if (IMPORT_STATEMENT == containerType) {
+      return myContext.getGroovySettings().IMPORT_ANNOTATION_WRAP;
+    }
+
+    return -1;
+  }
+
 }

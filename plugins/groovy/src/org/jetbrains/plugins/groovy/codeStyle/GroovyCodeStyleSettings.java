@@ -15,10 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.codeStyle;
 
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CustomCodeStyleSettings;
-import com.intellij.psi.codeStyle.PackageEntry;
-import com.intellij.psi.codeStyle.PackageEntryTable;
+import com.intellij.psi.codeStyle.*;
 
 /**
  * @author Max Medvedev
@@ -61,6 +58,8 @@ public class GroovyCodeStyleSettings extends CustomCodeStyleSettings {
   public final PackageEntryTable PACKAGES_TO_USE_IMPORT_ON_DEMAND = new PackageEntryTable();
   public final PackageEntryTable IMPORT_LAYOUT_TABLE = new PackageEntryTable();
   public boolean LAYOUT_STATIC_IMPORTS_SEPARATELY = true;
+
+  public int IMPORT_ANNOTATION_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS;
 
   private void initImportsByDefault() {
     PACKAGES_TO_USE_IMPORT_ON_DEMAND.addEntry(new PackageEntry(false, "java.awt", false));

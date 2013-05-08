@@ -141,9 +141,13 @@ public class GroovyLanguageCodeStyleSettingsProvider extends LanguageCodeStyleSe
         "VARIABLE_ANNOTATION_WRAP",
         "ENUM_CONSTANTS_WRAP"
       );
-      consumer.showCustomOption(GroovyCodeStyleSettings.class, "USE_FLYING_GEESE_BRACES",     "Use flying geese braces", CodeStyleSettingsCustomizable.WRAPPING_BRACES);
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "USE_FLYING_GEESE_BRACES", "Use flying geese braces",
+                                CodeStyleSettingsCustomizable.WRAPPING_BRACES);
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_MULTILINE_LIST_OR_MAP", "Align when multiple",     "List and map literals");
       consumer.showCustomOption(GroovyCodeStyleSettings.class, "ALIGN_NAMED_ARGS_IN_MAP",     "Align multiline named arguments",   "List and map literals");
+      consumer.showCustomOption(GroovyCodeStyleSettings.class, "IMPORT_ANNOTATION_WRAP", "Import annotations", null,
+                                CodeStyleSettingsCustomizable.OptionAnchor.AFTER, "VARIABLE_ANNOTATION_WRAP",
+                                CodeStyleSettingsCustomizable.WRAP_OPTIONS, CodeStyleSettingsCustomizable.WRAP_VALUES);
       return;
     }
     if (settingsType == SettingsType.SPACING_SETTINGS) {

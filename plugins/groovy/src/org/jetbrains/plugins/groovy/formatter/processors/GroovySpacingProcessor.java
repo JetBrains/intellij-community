@@ -19,10 +19,7 @@ package org.jetbrains.plugins.groovy.formatter.processors;
 import com.intellij.formatting.Spacing;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiParameter;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.formatter.FormatterUtil;
 import com.intellij.psi.impl.source.SourceTreeToPsiMap;
@@ -40,7 +37,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.GrListOrMap;
-import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotation;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArgumentList;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.annotation.GrAnnotationArrayInitializer;
@@ -584,9 +580,6 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
                               new TextRange(dependencyStart, myChild1.getTextRange().getEndOffset()),
                               mySettings.KEEP_SIMPLE_METHODS_IN_ONE_LINE);
     }
-    else if (myType1 == MODIFIERS) {
-      processModifierList(myChild1);
-    }
     else if (myType2 == TYPE_PARAMETER_LIST) {
       manageSpaceBeforeTypeParameters();
     }
@@ -640,18 +633,6 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   private void manageSpaceBeforeTypeParameters() {
     createSpaceInCode(false);
-  }
-
-  @Override
-  public void visitModifierList(GrModifierList modifierList) {
-    int annotationWrap = getAnnotationWrap(myParent.getParent());
-    if (myChild1.getElementType() == ANNOTATION && annotationWrap == CommonCodeStyleSettings.WRAP_ALWAYS) {
-      createLF(true);
-    }
-    else {
-      createSpaceProperty(true, false, 0);
-    }
-
   }
 
   @Override
@@ -966,39 +947,6 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
     }
     else {
       createLF(true);
-    }
-  }
-
-
-  private void processModifierList(ASTNode modifierList) {
-    int annotationWrap = getAnnotationWrap(myParent);
-    if (modifierList.getLastChildNode().getElementType() == ANNOTATION && annotationWrap == CommonCodeStyleSettings.WRAP_ALWAYS ||
-        mySettings.MODIFIER_LIST_WRAP) {
-      createLF(true);
-    }
-    else {
-      createSpaceProperty(true, false, 0);
-    }
-  }
-
-  private int getAnnotationWrap(final PsiElement parent) {
-    if (parent instanceof PsiMethod) {
-      return mySettings.METHOD_ANNOTATION_WRAP;
-    }
-    else if (parent instanceof PsiClass) {
-      return mySettings.CLASS_ANNOTATION_WRAP;
-    }
-    else if (parent instanceof GrVariableDeclaration && parent.getParent() instanceof GrTypeDefinitionBody) {
-      return mySettings.FIELD_ANNOTATION_WRAP;
-    }
-    else if (parent instanceof GrVariableDeclaration) {
-      return mySettings.VARIABLE_ANNOTATION_WRAP;
-    }
-    else if (parent instanceof PsiParameter) {
-      return mySettings.PARAMETER_ANNOTATION_WRAP;
-    }
-    else {
-      return CommonCodeStyleSettings.DO_NOT_WRAP;
     }
   }
 
