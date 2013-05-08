@@ -115,7 +115,7 @@ public class MavenActionUtil {
         mavenProject = projectsManager.findProject(file);
       }
 
-      if (mavenProject == null || projectsManager.isIgnored(mavenProject)) return Collections.emptyList();
+      if (mavenProject == null) return Collections.emptyList();
 
       res.add(mavenProject);
     }
