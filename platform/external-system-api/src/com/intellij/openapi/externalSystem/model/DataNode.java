@@ -66,27 +66,60 @@ public class DataNode<T> implements Serializable {
     return myKey;
   }
 
-  @SuppressWarnings({"unchecked", "IOResourceOpenedButNotSafelyClosed"})
   @NotNull
   public T getData() {
     if (myData == null) {
-      assert myRawData != null;
-      ObjectInputStream oIn = null;
-      try {
-        oIn = new ObjectInputStream(new ByteArrayInputStream(myRawData));
-        myData = (T)oIn.readObject();
-      }
-      catch (IOException e) {
-        throw new IllegalStateException("Can't deserialize target data of key " + myKey);
-      }
-      catch (ClassNotFoundException e) {
-        throw new IllegalStateException("Can't deserialize target data of key " + myKey);
-      }
-      finally {
-        StreamUtil.closeStream(oIn);
-      }
+      prepareData(getClass().getClassLoader(), Thread.currentThread().getContextClassLoader());
     }
     return myData;
+  }
+
+  /**
+   * This class is a generic holder for any kind of project data. That project data might originate from different locations, e.g.
+   * core ide plugins, non-core ide plugins, third-party plugins etc. That means that when a service from a core plugin needs to
+   * unmarshall {@link DataNode} object, its content should not be unmarshalled as well because its class might be unavailable here.
+   * <p/>
+   * That's why the content is delivered as a raw byte array and this method allows to build actual java object from it using
+   * the right class loader.
+   * <p/>
+   * This method is a no-op if the content is already built.
+   *  
+   * @param loaders  class loaders which are assumed to be able to build object of the target content class
+   */
+  @SuppressWarnings({"unchecked", "IOResourceOpenedButNotSafelyClosed"})
+  public void prepareData(@NotNull final ClassLoader ... loaders) {
+    if (myData != null) {
+      return;
+    }
+    ObjectInputStream oIn = null;
+    try {
+      oIn = new ObjectInputStream(new ByteArrayInputStream(myRawData)) {
+        @Override
+        protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+          String name = desc.getName();
+          for (ClassLoader loader : loaders) {
+            try {
+              return loader.loadClass(name);
+            }
+            catch (ClassNotFoundException e) {
+              // Ignore
+            }
+          }
+          return super.resolveClass(desc);
+        }
+      };
+      myData = (T)oIn.readObject();
+      myRawData = null;
+    }
+    catch (IOException e) {
+      throw new IllegalStateException("Can't deserialize target data of key " + myKey);
+    }
+    catch (ClassNotFoundException e) {
+      throw new IllegalStateException("Can't deserialize target data of key " + myKey);
+    }
+    finally {
+      StreamUtil.closeStream(oIn);
+    }
   }
 
   /**

@@ -84,6 +84,9 @@ public class ProjectDataManager {
     }
     else {
       for (ProjectDataService<?, ?> service : services) {
+        for (DataNode<T> node : nodes) {
+          node.prepareData(service.getClass().getClassLoader());
+        }
         ((ProjectDataService<T, ?>)service).importData(nodes, project, synchronous);
       }
     }
