@@ -43,7 +43,6 @@ import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.Splash;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -107,7 +106,7 @@ public class IdeaApplication {
       RepaintManager.setCurrentManager(new IdeRepaintManager());
     }
 
-    if (SystemInfo.isXWindow && !SystemProperties.getBooleanProperty("idea.skip.wm.patching", false)) {
+    if (SystemInfo.isXWindow) {
       String wmName = X11UiUtil.getWmName();
       LOG.info("WM detected: " + wmName);
       if (wmName != null) {
