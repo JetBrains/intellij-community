@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -99,9 +99,7 @@ public class UISettings implements PersistentStateComponent<UISettings>, Exporta
   public boolean FILE_COLORS_IN_PROJECT_VIEW = false;
   public boolean DEFAULT_AUTOSCROLL_TO_SOURCE = false;
   public boolean PRESENTATION_MODE = false;
-  public boolean PRESENTATION_MODE_ALLOW_LINE_NUMBER = false;
-  public boolean PRESENTATION_MODE_ALLOW_STATUS_BAR = false;
-  public boolean PRESENTATION_MODE_ALLOW_ANNOTATIONS = false;
+  public int PRESENTATION_MODE_FONT_SIZE = 24;
 
   /**
    * Defines whether asterisk is shown on modified editor tab or not
