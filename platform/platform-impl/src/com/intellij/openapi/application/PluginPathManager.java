@@ -18,8 +18,7 @@ package com.intellij.openapi.application;
 import com.intellij.openapi.util.io.FileUtil;
 
 import java.io.File;
-import java.util.ArrayList;
-import java.util.List;
+import java.util.*;
 
 /**
  * @author yole
@@ -35,6 +34,12 @@ public class PluginPathManager {
       List<File> result = new ArrayList<File>();
       File[] subdirs = new File(PathManager.getHomePath()).listFiles();
       if (subdirs == null) return result;
+      Arrays.sort(subdirs, new Comparator<File>() {
+        @Override
+        public int compare(File file, File file2) {
+          return FileUtil.compareFiles(file, file2);
+        }
+      });
       for (File subdir : subdirs) {
         if (new File(subdir, ".git").exists()) {
           File pluginsDir = new File(subdir, "plugins");
@@ -51,14 +56,21 @@ public class PluginPathManager {
   }
 
   public static File getPluginHome(String pluginName) {
-    String homePath = PathManager.getHomePath();
+    File subrepo = findSubrepo(pluginName);
+    if (subrepo != null) {
+      return subrepo;
+    }
+    return new File(PathManager.getHomePath(), "plugins/" + pluginName);
+  }
+
+  private static File findSubrepo(String pluginName) {
     for (File subrepo : SubrepoHolder.subrepos) {
       File candidate = new File(subrepo, pluginName);
       if (candidate.isDirectory()) {
         return candidate;
       }
     }
-    return new File(homePath, "plugins/" + pluginName);
+    return null;
   }
 
   public static String getPluginHomePath(String pluginName) {
@@ -66,12 +78,9 @@ public class PluginPathManager {
   }
 
   public static String getPluginHomePathRelative(String pluginName) {
-    String homePath = PathManager.getHomePath();
-    for (File subrepo : SubrepoHolder.subrepos) {
-      File candidate = new File(subrepo, pluginName);
-      if (candidate.isDirectory()) {
-        return "/" + FileUtil.getRelativePath(homePath, candidate.getPath(), '/');
-      }
+    File subrepo = findSubrepo(pluginName);
+    if (subrepo != null) {
+      return "/" + FileUtil.getRelativePath(PathManager.getHomePath(), subrepo.getPath(), '/');
     }
     return "/plugins/" + pluginName;
   }
