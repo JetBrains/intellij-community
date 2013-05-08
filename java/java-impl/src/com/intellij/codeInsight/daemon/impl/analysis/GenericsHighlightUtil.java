@@ -1400,6 +1400,27 @@ public class GenericsHighlightUtil {
         if ((parent instanceof PsiCallExpression || parent instanceof PsiMethodReferenceExpression) && PsiUtil.isLanguageLevel7OrHigher(parent)) {
           return null;
         }
+        
+        if (element instanceof PsiMethod) {
+          if (((PsiMethod)element).findSuperMethods().length > 0) return null;
+          if (qualifier instanceof PsiReferenceExpression){
+            final PsiClass typeParameter = PsiUtil.resolveClassInType(((PsiReferenceExpression)qualifier).getType());
+            if (typeParameter instanceof PsiTypeParameter) {
+              if (JavaVersionService.getInstance().isAtLeast(element, JavaSdkVersion.JDK_1_7)) return null;
+              for (PsiClassType classType : typeParameter.getExtendsListTypes()) {
+                final PsiClass resolve = classType.resolve();
+                if (resolve != null) {
+                  final PsiMethod[] superMethods = resolve.findMethodsBySignature((PsiMethod)element, true);
+                  for (PsiMethod superMethod : superMethods) {
+                    if (!PsiUtil.isRawSubstitutor(superMethod, resolveResult.getSubstitutor())) {
+                      return null;
+                    }
+                  }
+                }
+              }
+            }
+          }
+        }
         final String message = element instanceof PsiClass
                                ? JavaErrorMessages.message("generics.type.arguments.on.raw.type")
                                : JavaErrorMessages.message("generics.type.arguments.on.raw.method");
