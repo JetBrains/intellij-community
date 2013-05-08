@@ -37,6 +37,7 @@ public class GroovyWrappingProcessor {
   private final IElementType myParentType;
   private final Wrap myCommonWrap;
   private final FormattingContext myContext;
+  private boolean myUsedDefaultWrap = false;
 
   public GroovyWrappingProcessor(GroovyBlock block) {
     myContext = block.getContext();
@@ -77,12 +78,12 @@ public class GroovyWrappingProcessor {
   );
 
   public Wrap getChildWrap(ASTNode childNode) {
-    if (myContext.isInsidePlainGString()) return Wrap.createWrap(WrapType.NONE, false);
+    if (myContext.isInsidePlainGString()) return createNoneWrap();
 
     final IElementType childType = childNode.getElementType();
 
     if (SKIP.contains(childType)) {
-      return Wrap.createWrap(WrapType.NONE, false);
+      return createNoneWrap();
     }
 
     if (myParentType == EXTENDS_CLAUSE || myParentType == IMPLEMENTS_CLAUSE) {
@@ -91,13 +92,14 @@ public class GroovyWrappingProcessor {
       }
     }
 
+    if (myParentType == ARGUMENTS) {
+      if (childType == mLPAREN  || childType == mRPAREN) {
+        return createNoneWrap();
+      }
+    }
 
     if (myParentType == THROW_CLAUSE && childType == kTHROWS) {
       return Wrap.createWrap(mySettings.THROWS_KEYWORD_WRAP, true);
-    }
-
-    if (myParentType == CLOSABLE_BLOCK) {
-      return Wrap.createWrap(WrapType.NONE, false);
     }
 
     if (myParentType == PARAMETERS_LIST) {
@@ -109,11 +111,22 @@ public class GroovyWrappingProcessor {
       }
     }
 
-    if (myCommonWrap != null) {
+    return getCommonWrap();
+  }
+
+  private Wrap getCommonWrap() {
+    if (myCommonWrap == null) {
+      return createNoneWrap();
+      //return null;
+    }
+
+    if (myUsedDefaultWrap) {
       return myCommonWrap;
     }
     else {
-      return createNormalWrap();
+      myUsedDefaultWrap = true;
+      return createNoneWrap();
+      //return null;
     }
   }
 
@@ -121,82 +134,90 @@ public class GroovyWrappingProcessor {
     return Wrap.createWrap(WrapType.NORMAL, true);
   }
 
+  private static Wrap createNoneWrap() {
+    return Wrap.createWrap(WrapType.NONE, false);
+  }
+
   @Nullable
   private Wrap createCommonWrap() {
     if (myParentType == EXTENDS_CLAUSE || myParentType == IMPLEMENTS_CLAUSE) {
+      myUsedDefaultWrap = true;
       return Wrap.createWrap(mySettings.EXTENDS_LIST_WRAP, true);
     }
 
 
     if (myParentType == THROW_CLAUSE) {
+      myUsedDefaultWrap = true;
       return Wrap.createWrap(mySettings.THROWS_LIST_WRAP, true);
     }
 
 
     if (myParentType == PARAMETERS_LIST) {
+      myUsedDefaultWrap = true;
       return Wrap.createWrap(mySettings.METHOD_PARAMETERS_WRAP, true);
     }
 
 
-    if (myParentType == ARGUMENTS) {
-      return Wrap.createWrap(mySettings.CALL_PARAMETERS_WRAP, true);
+    if (myParentType == ARGUMENTS || myParentType == COMMAND_ARGUMENTS) {
+      myUsedDefaultWrap = myParentType == ARGUMENTS;
+      return Wrap.createWrap(mySettings.CALL_PARAMETERS_WRAP, myUsedDefaultWrap);
     }
 
 
     if (myParentType == FOR_TRADITIONAL_CLAUSE || myParentType == FOR_IN_CLAUSE) {
+      myUsedDefaultWrap = true;
       return Wrap.createWrap(mySettings.FOR_STATEMENT_WRAP, true);
     }
 
 
     if (TokenSets.BINARY_EXPRESSIONS.contains(myParentType)) {
-      return Wrap.createWrap(mySettings.BINARY_OPERATION_WRAP, true);
+      return Wrap.createWrap(mySettings.BINARY_OPERATION_WRAP, false);
     }
 
 
     if (myParentType == ASSIGNMENT_EXPRESSION) {
-      return Wrap.createWrap(mySettings.ASSIGNMENT_WRAP, true);
+      return Wrap.createWrap(mySettings.ASSIGNMENT_WRAP, false);
     }
 
 
     if (myParentType == CONDITIONAL_EXPRESSION || myParentType == ELVIS_EXPRESSION) {
-      return Wrap.createWrap(mySettings.TERNARY_OPERATION_WRAP, true);
+      return Wrap.createWrap(mySettings.TERNARY_OPERATION_WRAP, false);
     }
-
 
     if (myParentType == ASSERT_STATEMENT) {
-      return Wrap.createWrap(mySettings.ASSERT_STATEMENT_WRAP, true);
+      return Wrap.createWrap(mySettings.ASSERT_STATEMENT_WRAP, false);
     }
 
-    if (myParentType == GSTRING_INJECTION) {
-      return Wrap.createWrap(WrapType.NONE, false);
+    if (TokenSets.BLOCK_SET.contains(myParentType)) {
+      return createNormalWrap();
     }
 
     if (myParentType == PARAMETERS_LIST) {
       final IElementType pparentType = myNode.getTreeParent().getElementType();
       if (TYPE_DEFINITION_TYPES.contains(pparentType)) {
-        return Wrap.createWrap(mySettings.CLASS_ANNOTATION_WRAP, true);
+        return Wrap.createWrap(mySettings.CLASS_ANNOTATION_WRAP, false);
       }
 
       if (METHOD_DEFS.contains(pparentType)) {
-        return Wrap.createWrap(mySettings.METHOD_ANNOTATION_WRAP, true);
+        return Wrap.createWrap(mySettings.METHOD_ANNOTATION_WRAP, false);
       }
 
       if (VARIABLE_DEFINITION == pparentType) {
         final IElementType ppparentType = myNode.getTreeParent().getTreeParent().getElementType();
         if (ppparentType == CLASS_BODY || ppparentType == ENUM_BODY) {
-          return Wrap.createWrap(mySettings.FIELD_ANNOTATION_WRAP, true);
+          return Wrap.createWrap(mySettings.FIELD_ANNOTATION_WRAP, false);
         }
         else {
-          return Wrap.createWrap(mySettings.VARIABLE_ANNOTATION_WRAP, true);
+          return Wrap.createWrap(mySettings.VARIABLE_ANNOTATION_WRAP, false);
         }
       }
 
       if (PARAMETER == pparentType) {
-        return Wrap.createWrap(mySettings.PARAMETER_ANNOTATION_WRAP, true);
+        return Wrap.createWrap(mySettings.PARAMETER_ANNOTATION_WRAP, false);
       }
 
       if (ENUM_CONSTANT == pparentType) {
-        return Wrap.createWrap(mySettings.ENUM_CONSTANTS_WRAP, true);
+        return Wrap.createWrap(mySettings.ENUM_CONSTANTS_WRAP, false);
       }
     }
 
@@ -204,6 +225,6 @@ public class GroovyWrappingProcessor {
   }
 
   public Wrap getChainedMethodCallWrap() {
-    return Wrap.createWrap(mySettings.METHOD_CALL_CHAIN_WRAP, true);
+    return Wrap.createWrap(mySettings.METHOD_CALL_CHAIN_WRAP, false);
   }
 }

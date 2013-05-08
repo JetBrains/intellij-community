@@ -30,14 +30,6 @@ public class FormatterTest extends GroovyFormatterTestCase {
 
   final String basePath = TestUtils.testDataPath + "groovy/formatter/"
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    groovySettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    groovySettings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    groovySettings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-  }
-
   public void testAddign1() throws Throwable { doTest(); }
   public void testArg1() throws Throwable { doTest(); }
   public void testArg2() throws Throwable { doTest(); }
@@ -717,38 +709,6 @@ xyz
 print abc ?:
       xyz
 '''
-  }
-
-  void testWrapChainedMethodCalls() {
-    groovySettings.METHOD_CALL_CHAIN_WRAP = CommonCodeStyleSettings.WRAP_ALWAYS
-
-    checkFormatting('''\
-foo().barbar().abcd()
-''', '''\
-foo().
-    barbar().
-    abcd()
-''')
-  }
-
-  void testWrappingInsideGString0() {
-    myTempSettings.RIGHT_MARGIN = 10
-    checkFormatting('''\
-"abcdefghij${a+b}"
-''', '''\
-"abcdefghij${a + b}"
-''')
-  }
-
-  void testWrappingInsideGString1() {
-    myTempSettings.RIGHT_MARGIN = 10
-    checkFormatting('''\
-"""abcdefghij${a+b}"""
-''', '''\
-"""abcdefghij${
-  a + b
-}"""
-''')
   }
 
   private void doGeeseTest() {

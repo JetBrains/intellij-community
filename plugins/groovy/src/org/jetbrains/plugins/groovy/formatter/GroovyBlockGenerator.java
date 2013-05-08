@@ -189,7 +189,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
         }
       }
       for (ASTNode childNode : astNodes) {
-        subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), myWrappingProcessor.getChildWrap(childNode), myContext));
+        subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
       }
       return subBlocks;
     }
@@ -303,9 +303,14 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     // For other cases
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     for (ASTNode childNode : visibleChildren(myNode)) {
-      subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), myWrappingProcessor.getChildWrap(childNode), myContext));
+      subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
     }
     return subBlocks;
+  }
+
+  private Wrap getChildWrap(ASTNode childNode) {
+    final Wrap wrap = myWrappingProcessor.getChildWrap(childNode);
+    return wrap;
   }
 
   public List<Block> generateSubBlockForCodeBlocks(boolean classLevel, final List<ASTNode> children) {
@@ -314,7 +319,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
 
     for (ASTNode childNode : children) {
-      subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), myWrappingProcessor.getChildWrap(childNode), myContext));
+      subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
     }
     return subBlocks;
   }
@@ -565,7 +570,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
   private List<Block> generateForBinaryExpr() {
     final ArrayList<Block> subBlocks = new ArrayList<Block>();
     AlignmentProvider.Aligner
-      alignment = myContext.getSettings().ALIGN_MULTILINE_BINARY_OPERATION ? myAlignmentProvider.createAligner(true) : null;
+      alignment = myContext.getSettings().ALIGN_MULTILINE_BINARY_OPERATION ? myAlignmentProvider.createAligner(false) : null;
 
     GrBinaryExpression binary = (GrBinaryExpression)myNode.getPsi();
     LOG.assertTrue(binary != null);
@@ -596,7 +601,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
           if (op != psi && aligner != null) {
             aligner.append(psi);
           }
-          list.add(new GroovyBlock(childNode, indent, myWrappingProcessor.getChildWrap(childNode), myContext));
+          list.add(new GroovyBlock(childNode, indent, getChildWrap(childNode), myContext));
         }
       }
       if (myExpr.getRightOperand() instanceof GrBinaryExpression) {
@@ -665,7 +670,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     }
     else {
       Indent indent = Indent.getContinuationWithoutFirstIndent();
-      list.add(new GroovyBlock(fst, indent, myWrappingProcessor.getChildWrap(fst), myContext));
+      list.add(new GroovyBlock(fst, indent, getChildWrap(fst), myContext));
     }
     addNestedChildrenSuffix(list, aligner, topLevel, children, limit);
   }
@@ -689,7 +694,7 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
           aligner.append(childNode.getPsi());
         }
 
-        list.add(new GroovyBlock(childNode, indent, myWrappingProcessor.getChildWrap(childNode), myContext));
+        list.add(new GroovyBlock(childNode, indent, getChildWrap(childNode), myContext));
       }
     }
   }

@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.formatter;
 import com.intellij.formatting.Block;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
+import com.intellij.formatting.WrapType;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -53,7 +54,7 @@ public class MethodCallWithoutQualifierBlock extends GroovyBlock {
     if (mySubBlocks == null) {
       mySubBlocks = new ArrayList<Block>();
       final Indent indent = Indent.getContinuationWithoutFirstIndent();
-      mySubBlocks.add(new GroovyBlock(myNameElement.getNode(), indent, myWrap, myContext));
+      mySubBlocks.add(new GroovyBlock(myNameElement.getNode(), indent, Wrap.createWrap(WrapType.NONE, false), myContext));
       new GroovyBlockGenerator(this).addNestedChildrenSuffix(mySubBlocks, null, myTopLevel, myChildren, myChildren.size());
     }
     return mySubBlocks;
