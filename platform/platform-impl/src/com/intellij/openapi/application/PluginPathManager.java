@@ -80,7 +80,8 @@ public class PluginPathManager {
   public static String getPluginHomePathRelative(String pluginName) {
     File subrepo = findSubrepo(pluginName);
     if (subrepo != null) {
-      return "/" + FileUtil.getRelativePath(PathManager.getHomePath(), subrepo.getPath(), '/');
+      String homePath = FileUtil.toSystemIndependentName(PathManager.getHomePath());
+      return "/" + FileUtil.getRelativePath(homePath, FileUtil.toSystemIndependentName(subrepo.getPath()), '/');
     }
     return "/plugins/" + pluginName;
   }
