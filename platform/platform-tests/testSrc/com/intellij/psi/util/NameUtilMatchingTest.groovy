@@ -255,6 +255,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertDoesntMatch("*foc", "reformatCode");
     assertMatches("*forc", "reformatCode");
     assertDoesntMatch("*sTC", "LazyClassTypeConstructor");
+
     assertDoesntMatch("*Icon", "LEADING_CONSTRUCTOR");
     assertMatches("*I", "LEADING_CONSTRUCTOR");
     assertMatches("*i", "LEADING_CONSTRUCTOR");
@@ -262,6 +263,11 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("*ing", "LEADING_CONSTRUCTOR");
     assertDoesntMatch("*inc", "LEADING_CONSTRUCTOR");
     assertDoesntMatch("*ico", "drawLinePickedOut");
+
+    assertMatches("*l", "AppDelegate");
+    assertMatches("*le", "AppDelegate");
+    assertMatches("*leg", "AppDelegate");
+
   }
 
   public void testMiddleMatchingUnderscore() {
@@ -571,6 +577,11 @@ public class NameUtilMatchingTest extends UsefulTestCase {
 
   public void testUsingCapsMeansTheyShouldMatchCaps() {
     assertDoesntMatch("URLCl", "UrlClassLoader");
+  }
+
+  public void "test a capital after another capital may match a lowercase letter because shift was accidentally help too long"() {
+    assertMatches("USerDefa", "UserDefaults")
+    assertMatches("NSUSerDefa", "NSUserDefaults")
   }
 
   public void testPerformance() {
