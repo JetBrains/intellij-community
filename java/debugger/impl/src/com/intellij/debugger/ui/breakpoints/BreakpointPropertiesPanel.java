@@ -66,11 +66,8 @@ public abstract class BreakpointPropertiesPanel {
   private BreakpointChooser myMasterBreakpointChooser;
 
   public void setDetailView(DetailView detailView) {
-    myDetailView = detailView;
     myMasterBreakpointChooser.setDetailView(detailView);
   }
-
-  private DetailView myDetailView;
 
   protected final Project myProject;
   private final Key<? extends Breakpoint> myBreakpointCategory;
@@ -102,7 +99,7 @@ public abstract class BreakpointPropertiesPanel {
 
   private JRadioButton myRbSuspendThread;
   private JRadioButton myRbSuspendAll;
-  private JBCheckBox myCbSuspend;
+  private JCheckBox myCbSuspend;
   private JButton myMakeDefaultButton;
 
   private JRadioButton myDisableAgainRadio;
@@ -115,8 +112,9 @@ public abstract class BreakpointPropertiesPanel {
   private JPanel myPassCountPanel;
   private JPanel myConditionsPanel;
   private JPanel myActionsPanel;
-  private JBCheckBox myConditionCheckbox;
+  private JCheckBox myConditionCheckbox;
   private JCheckBox myTemporaryCheckBox;
+  private JCheckBox myEnabledCheckbox;
 
   ButtonGroup mySuspendPolicyGroup;
   public static final String CONTROL_LOG_MESSAGE = "logMessage";
@@ -403,6 +401,7 @@ public abstract class BreakpointPropertiesPanel {
     IJSwingUtilities.adjustComponentsOnMac(myLogExpressionCheckBox);
     IJSwingUtilities.adjustComponentsOnMac(myLogMessageCheckBox);
     IJSwingUtilities.adjustComponentsOnMac(myTemporaryCheckBox);
+    IJSwingUtilities.adjustComponentsOnMac(myEnabledCheckbox);
   }
 
   private List<BreakpointItem> getBreakpointItemsExceptMy() {
@@ -533,6 +532,17 @@ public abstract class BreakpointPropertiesPanel {
     });
     myLogMessageCheckBox.setSelected(breakpoint.LOG_ENABLED);
     myTemporaryCheckBox.setSelected(breakpoint.REMOVE_AFTER_HIT);
+    myEnabledCheckbox.setSelected(breakpoint.ENABLED);
+    myEnabledCheckbox.setText(breakpoint.getDisplayName());
+    myEnabledCheckbox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        if (myBreakpoint.ENABLED != myEnabledCheckbox.isSelected()) {
+          myBreakpoint.ENABLED = myEnabledCheckbox.isSelected();
+          getBreakpointManager(myProject).fireBreakpointChanged(myBreakpoint);
+        }
+      }
+    });
     myTemporaryCheckBox.setVisible(breakpoint instanceof LineBreakpoint);
     myLogExpressionCheckBox.setSelected(breakpoint.LOG_EXPRESSION_ENABLED);
     if (breakpoint.LOG_ENABLED || breakpoint.LOG_EXPRESSION_ENABLED || (breakpoint instanceof LineBreakpoint && breakpoint.REMOVE_AFTER_HIT)) {
@@ -649,6 +659,7 @@ public abstract class BreakpointPropertiesPanel {
     breakpoint.setLogMessage(myLogExpressionCombo.getText());
     breakpoint.LOG_EXPRESSION_ENABLED = !breakpoint.getLogMessage().isEmpty() && myLogExpressionCheckBox.isSelected();
     breakpoint.LOG_ENABLED = myLogMessageCheckBox.isSelected();
+    breakpoint.ENABLED = myEnabledCheckbox.isSelected();
     breakpoint.REMOVE_AFTER_HIT = myTemporaryCheckBox.isSelected();
     breakpoint.SUSPEND = myCbSuspend.isSelected();
     breakpoint.SUSPEND_POLICY = getSelectedSuspendPolicy();

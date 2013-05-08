@@ -30,21 +30,14 @@ import com.intellij.xdebugger.impl.ui.XDebuggerExpressionComboBox;
 
 import javax.swing.*;
 import java.awt.*;
+import java.awt.event.ActionEvent;
+import java.awt.event.ActionListener;
 import java.awt.event.FocusAdapter;
 import java.awt.event.FocusEvent;
 import java.util.ArrayList;
 import java.util.List;
 
-/**
- * Created by IntelliJ IDEA.
- * User: zajac
- * Date: 16.06.11
- * Time: 15:46
- * To change this template use File | Settings | File Templates.
- */
 public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implements XSuspendPolicyPanel.Delegate {
-
-  private DetailView myDetailView;
 
   public boolean showMoreOptions() {
     return myShowMoreOptions;
@@ -94,6 +87,7 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
   private XMasterBreakpointPanel<B> myMasterBreakpointPanel;
   private JPanel myCustomPropertiesPanelWrapper;
   private JPanel myCustomConditionsPanelWrapper;
+  private JCheckBox myEnabledCheckbox;
   private final List<XBreakpointCustomPropertiesPanel<B>> myCustomPanels;
 
   private List<XBreakpointPropertiesSubPanel<B>> mySubPanels = new ArrayList<XBreakpointPropertiesSubPanel<B>>();
@@ -103,7 +97,6 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
   private B myBreakpoint;
 
   public void setDetailView(DetailView detailView) {
-    myDetailView = detailView;
     myMasterBreakpointPanel.setDetailView(detailView);
   }
 
@@ -158,7 +151,12 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
         }
       }
     });
-
+    myEnabledCheckbox.addActionListener(new ActionListener() {
+      @Override
+      public void actionPerformed(ActionEvent event) {
+        myBreakpoint.setEnabled(myEnabledCheckbox.isSelected());
+      }
+    });
   }
 
   public void saveProperties() {
@@ -181,6 +179,7 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
     if (!myCustomPanels.isEmpty()) {
       ((XBreakpointBase)myBreakpoint).fireBreakpointChanged();
     }
+    myBreakpoint.setEnabled(myEnabledCheckbox.isSelected());
   }
 
   public void loadProperties() {
@@ -196,6 +195,8 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
     for (XBreakpointCustomPropertiesPanel<B> customPanel : myCustomPanels) {
       customPanel.loadFrom(myBreakpoint);
     }
+    myEnabledCheckbox.setSelected(myBreakpoint.isEnabled());
+    myEnabledCheckbox.setText(XBreakpointUtil.getShortText(myBreakpoint));
   }
 
   public JPanel getMainPanel() {
