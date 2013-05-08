@@ -36,6 +36,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.controlFlow.*;
 import com.intellij.psi.util.PsiTreeUtil;
+import com.intellij.util.ArrayUtilRt;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -304,8 +305,21 @@ public class InvertIfConditionAction extends PsiElementBaseIntentionAction {
     codeStyle.reformat(statement);
   }
 
-  private static void setElseBranch(PsiIfStatement ifStatement, PsiStatement thenBranch, ControlFlow flow) throws IncorrectOperationException {
+  private static void setElseBranch(PsiIfStatement ifStatement, PsiStatement thenBranch, ControlFlow flow)
+    throws IncorrectOperationException {
     if (flow.getEndOffset(ifStatement) == flow.getEndOffset(thenBranch)) {
+      final PsiLoopStatement loopStmt = PsiTreeUtil.getParentOfType(ifStatement, PsiLoopStatement.class);
+      if (loopStmt != null) {
+        final PsiStatement body = loopStmt.getBody();
+        if (body instanceof PsiBlockStatement) {
+          final PsiStatement[] statements = ((PsiBlockStatement)body).getCodeBlock().getStatements();
+          if (statements.length > 0 && !PsiTreeUtil.isAncestor(statements[statements.length - 1], ifStatement, false) &&
+              ArrayUtilRt.find(statements, ifStatement) < 0) {
+            ifStatement.setElseBranch(thenBranch);
+            return;
+          }
+        }
+      }
       if (thenBranch instanceof PsiContinueStatement) {
         PsiStatement elseBranch = ifStatement.getElseBranch();
         if (elseBranch != null) {
