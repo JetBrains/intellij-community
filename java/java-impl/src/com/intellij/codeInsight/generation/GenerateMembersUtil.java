@@ -29,6 +29,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.light.LightTypeElement;
 import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -150,10 +151,9 @@ public class GenerateMembersUtil {
         // body is whitespace
         if (start > end &&
             firstBodyElement == lastBodyElement &&
-            firstBodyElement instanceof PsiWhiteSpace &&
-            firstBodyElement instanceof LeafElement
+            firstBodyElement instanceof PsiWhiteSpaceImpl
           ) {
-          CharSequence chars = ((LeafElement)firstBodyElement).getChars();
+          CharSequence chars = ((PsiWhiteSpaceImpl)firstBodyElement).getChars();
           if (chars.length() > 1 && chars.charAt(0) == '\n' && chars.charAt(1) == '\n') {
             start = end = firstBodyElement.getTextRange().getStartOffset() + 1;
             adjustLineIndent = true;
@@ -169,7 +169,9 @@ public class GenerateMembersUtil {
           Document document = editor.getDocument();
           RangeMarker marker = document.createRangeMarker(start, start);
           PsiDocumentManager.getInstance(body.getProject()).doPostponedOperationsAndUnblockDocument(document);
-          CodeStyleManager.getInstance(body.getProject()).adjustLineIndent(document, marker.getStartOffset());
+          if (marker.isValid()) {
+            CodeStyleManager.getInstance(body.getProject()).adjustLineIndent(document, marker.getStartOffset());
+          }
         }
         return;
       }

@@ -396,13 +396,8 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     @NonNls String methodText;
 
     try {
-      String bodyText = template.getText(properties);
-      if (!StringUtil.isEmpty(bodyText)) bodyText += "\n";
-      methodText = "void foo () {\n" + bodyText + "}";
+      methodText = "void foo () {\n" + template.getText(properties) + "\n}";
       methodText = FileTemplateUtil.indent(methodText, result.getProject(), fileType);
-      if (bodyText != null && bodyText.length() == 0) {
-        methodText = methodText.substring(0, methodText.length() - 1) + "\n" + methodText.charAt(methodText.length() - 1);
-      }
     } catch (Exception e) {
       throw new IncorrectOperationException("Failed to parse file template",e);
     }
