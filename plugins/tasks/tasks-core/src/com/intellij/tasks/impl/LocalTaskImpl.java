@@ -211,10 +211,6 @@ public class LocalTaskImpl extends LocalTask {
     myChangeLists.remove(info);
   }
 
-  public void setChangeLists(List<ChangeListInfo> changeLists) {
-    myChangeLists = changeLists;
-  }
-
   public boolean isClosed() {
     return myClosed;
   }
