@@ -27,6 +27,7 @@ import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContaine
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainerFactory;
 import com.intellij.openapi.util.Computable;
 import com.intellij.openapi.util.Condition;
+import com.intellij.openapi.util.Key;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -39,6 +40,7 @@ import java.util.Map;
  *         Date: Oct 6, 2004
  */
 public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
+  private static final Key<ProjectJdkStep> PROJECT_JDK_STEP_KEY = Key.create("ProjectJdkStep");
 
   public ModuleWizardStep createNameAndLocationStep(WizardContext wizardContext, JavaModuleBuilder builder, ModulesProvider modulesProvider, Icon icon, String helpId) {
     return new NameLocationStep(wizardContext, builder, modulesProvider, icon, helpId);
@@ -106,8 +108,8 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
   }
 
   public ModuleWizardStep createProjectJdkStep(final WizardContext wizardContext) {
-    ModuleWizardStep projectSdkStep = wizardContext.getProjectSdkStep();
-    if (projectSdkStep instanceof ProjectJdkStep) {
+    ProjectJdkStep projectSdkStep = wizardContext.getUserData(PROJECT_JDK_STEP_KEY);
+    if (projectSdkStep != null) {
       return projectSdkStep;
     }
     projectSdkStep = new ProjectJdkStep(wizardContext) {
@@ -118,7 +120,7 @@ public class ProjectWizardStepFactoryImpl extends ProjectWizardStepFactory {
         return projectBuilder != null && !projectBuilder.isSuitableSdk(newProjectJdk);
       }
     };
-    wizardContext.setProjectSdkStep(projectSdkStep);
+    wizardContext.putUserData(PROJECT_JDK_STEP_KEY, projectSdkStep);
     return projectSdkStep;
   }
 
