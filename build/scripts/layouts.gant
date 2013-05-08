@@ -61,6 +61,8 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
           "java-psi-impl",
           "java-indexing-impl",
           "java-impl",
+          "java-analysis-impl",
+          "analysis-impl",
           "compiler-impl",
           "debugger-impl",
           "dom-impl",
