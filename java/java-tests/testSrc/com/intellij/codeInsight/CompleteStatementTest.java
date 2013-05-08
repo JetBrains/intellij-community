@@ -140,7 +140,7 @@ public class CompleteStatementTest extends EditorActionTestCase {
   public void testFieldWithInitializer() throws Exception { doTest(); }
 
   public void testFieldBeforeAnnotation() throws Exception { doTest(); }
-  public void _testMethodBeforeAnnotation() throws Exception { doTest(); }
+  public void testMethodBeforeAnnotation() throws Exception { doTest(); }
 
   public void testParenthesized() throws Exception { doTest(); }
 
