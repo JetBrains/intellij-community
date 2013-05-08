@@ -47,6 +47,11 @@ import org.jetbrains.yaml.YAMLTokenTypes;
     final char prev = previousChar();
     return prev == (char)-1 || prev == '\n';
   }
+
+  private boolean isAfterSpace() {
+    final char prev = previousChar();
+    return prev == (char)-1 || prev == '\t' || prev == ' ';
+  }
 %}
 ////////////////////////////////////////////////////////////////////////////////////////////////////////////////////////
 //////////////////////// REGEXPS DECLARATIONS //////////////////////////////////////////////////////////////////////////
@@ -81,11 +86,10 @@ STRING=                         '([^']|(''))*?'?
 
 <YYINITIAL, BRACES, VALUE, VALUE_OR_KEY> {
 
-{COMMENT}                       { char prev = previousChar();
+{COMMENT}                       {
                                   // YAML spec: when a comment follows another syntax element,
                                   //  it must be separated from it by space characters.
-                                  return (prev == '\n' || prev == '\t' || prev == ' ' || prev == Character.MAX_VALUE) ?
-                                         COMMENT : TEXT;
+                                  return (isAfterEol() || isAfterSpace()) ? COMMENT : TEXT;
                                 }
 
 {EOL}                           {   if (braceCount == 0) {
