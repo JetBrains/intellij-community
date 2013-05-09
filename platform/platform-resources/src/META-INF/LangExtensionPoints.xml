@@ -392,6 +392,9 @@
     <extensionPoint name="runConfigurationExtension"
                     interface="com.intellij.execution.RunConfigurationExtension"/>
 
+    <extensionPoint name="jreProvider"
+                    interface="com.intellij.execution.ui.JreProvider"/>
+
     <extensionPoint name="stepsBeforeRunProvider"
                     interface="com.intellij.execution.BeforeRunTaskProvider"
                     area="IDEA_PROJECT"/>
