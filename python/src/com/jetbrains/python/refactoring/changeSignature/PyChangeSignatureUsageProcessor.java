@@ -249,9 +249,10 @@ public class PyChangeSignatureUsageProcessor implements ChangeSignatureUsageProc
     if (argument instanceof PyKeywordArgument) {
       final PyExpression valueExpression = ((PyKeywordArgument)argument).getValueExpression();
 
-      if (!paramName.equals(argument.getName()) && !StringUtil.isEmptyOrSpaces(info.getDefaultValue())
-          && !info.getDefaultInSignature())
-        params.add(useKeywords ? info.getName() + " = " + info.getDefaultValue() : info.getDefaultValue());
+      if (!paramName.equals(argument.getName()) && !StringUtil.isEmptyOrSpaces(info.getDefaultValue())) {
+        if (!info.getDefaultInSignature())
+          params.add(useKeywords ? info.getName() + " = " + info.getDefaultValue() : info.getDefaultValue());
+      }
       else {
         params.add(valueExpression == null ? paramName : paramName + " = " + valueExpression.getText());
         useKeywords = true;
