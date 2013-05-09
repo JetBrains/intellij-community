@@ -129,6 +129,8 @@ public class PyNames {
 
   public static final String PYCACHE =  "__pycache__";
 
+  public static final String NOT_IMPLEMENTED_ERROR = "NotImplementedError";
+
 
   /**
    * Contains all known predefined names of "__foo__" form.
