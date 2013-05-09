@@ -911,6 +911,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return myTools.get(toolId);
   }
 
+  public void enableAllTools() {
+    for (InspectionProfileEntry entry : getInspectionTools(null)) {
+      enableTool(entry.getShortName());
+    }
+  }
+
   public void disableAllTools() {
     for (InspectionProfileEntry entry : getInspectionTools(null)) {
       disableTool(entry.getShortName());
