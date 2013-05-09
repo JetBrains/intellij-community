@@ -709,11 +709,23 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
     }
 
     private void addAddSelfFix(PyElement node, PyReferenceExpression refex, List<LocalQuickFix> actions) {
-      PyClass containedClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
-      if (containedClass != null) {
+      final PyClass containedClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
+      final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
+      if (containedClass != null && function != null) {
+        final PyParameter[] parameters = function.getParameterList().getParameters();
+        final String qualifier = parameters[0].getText();
+        if (parameters.length == 0) return;
+        final PyDecoratorList decoratorList = function.getDecoratorList();
+        boolean isClassmethod = false;
+        if (decoratorList != null) {
+          for (PyDecorator decorator : decoratorList.getDecorators()) {
+            if (PyNames.CLASSMETHOD.equals(decorator.getCallee().getText()))
+              isClassmethod = true;
+          }
+        }
         for (PyTargetExpression target : containedClass.getInstanceAttributes()) {
-          if (Comparing.strEqual(node.getName(), target.getName())) {
-            actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
+          if (!isClassmethod && Comparing.strEqual(node.getName(), target.getName())) {
+            actions.add(new UnresolvedReferenceAddSelfQuickFix(refex, qualifier));
           }
         }
         for (PyStatement statement : containedClass.getStatementList().getStatements()) {
@@ -725,7 +737,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
                 PyType type = myTypeEvalContext.getType(callexpr);
                 if (type != null && type instanceof PyClassTypeImpl) {
                   if (((PyCallExpression)callexpr).isCalleeText(PyNames.PROPERTY)) {
-                    actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
+                    actions.add(new UnresolvedReferenceAddSelfQuickFix(refex, qualifier));
                   }
                 }
               }
@@ -734,7 +746,7 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
         }
         for (PyFunction method : containedClass.getMethods()) {
           if (refex.getText().equals(method.getName())) {
-            actions.add(new UnresolvedReferenceAddSelfQuickFix(refex));
+            actions.add(new UnresolvedReferenceAddSelfQuickFix(refex, qualifier));
           }
         }
       }

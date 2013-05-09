@@ -19,25 +19,28 @@ import org.jetbrains.annotations.NotNull;
  */
 public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix, HighPriorityAction {
   private PyReferenceExpression myElement;
+  private String myQualifier;
 
-  public UnresolvedReferenceAddSelfQuickFix(PyReferenceExpression element) {
+  public UnresolvedReferenceAddSelfQuickFix(@NotNull final PyReferenceExpression element, @NotNull final String qualifier) {
     myElement = element;
+    myQualifier = qualifier;
   }
 
   @NotNull
   public String getName() {
-    return PyBundle.message("QFIX.unresolved.reference", myElement.getText());
+    return PyBundle.message("QFIX.unresolved.reference", myElement.getText(), myQualifier);
   }
 
   @NotNull
   public String getFamilyName() {
-    return "Add 'self'";
+    return "Add qualifier";
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!FileModificationService.getInstance().preparePsiElementForWrite(myElement)) return;
-      PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
-      PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(myElement), "self." + myElement.getText());
-      myElement.replace(expression);
+    if (!FileModificationService.getInstance().preparePsiElementForWrite(myElement)) return;
+    PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
+    PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(myElement),
+                                                                        myQualifier + "." + myElement.getText());
+    myElement.replace(expression);
   }
 }
