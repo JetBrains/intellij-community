@@ -21,6 +21,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
 import java.util.*;
 
 /**
@@ -99,13 +101,55 @@ public class DataNode<T> implements Serializable {
           String name = desc.getName();
           for (ClassLoader loader : loaders) {
             try {
-              return loader.loadClass(name);
+              return Class.forName(name, false, loader);
             }
             catch (ClassNotFoundException e) {
               // Ignore
             }
           }
           return super.resolveClass(desc);
+        }
+
+        @Override
+        protected Class<?> resolveProxyClass(String[] interfaces) throws IOException, ClassNotFoundException {
+          for (ClassLoader loader : loaders) {
+            try {
+              return doResolveProxyClass(interfaces, loader);
+            }
+            catch (ClassNotFoundException e) {
+              // Ignore
+            }
+          }
+          return super.resolveProxyClass(interfaces);
+        }
+        
+        private Class<?> doResolveProxyClass(@NotNull String[] interfaces, @NotNull ClassLoader loader) throws ClassNotFoundException {
+          ClassLoader nonPublicLoader = null;
+          boolean hasNonPublicInterface = false;
+
+          // define proxy in class loader of non-public interface(s), if any
+          Class[] classObjs = new Class[interfaces.length];
+          for (int i = 0; i < interfaces.length; i++) {
+            Class cl = Class.forName(interfaces[i], false, loader);
+            if ((cl.getModifiers() & Modifier.PUBLIC) == 0) {
+              if (hasNonPublicInterface) {
+                if (nonPublicLoader != cl.getClassLoader()) {
+                  throw new IllegalAccessError(
+                    "conflicting non-public interface class loaders");
+                }
+              } else {
+                nonPublicLoader = cl.getClassLoader();
+                hasNonPublicInterface = true;
+              }
+            }
+            classObjs[i] = cl;
+          }
+          try {
+            return Proxy.getProxyClass(hasNonPublicInterface ? nonPublicLoader : loader, classObjs);
+          }
+          catch (IllegalArgumentException e) {
+            throw new ClassNotFoundException(null, e);
+          }
         }
       };
       myData = (T)oIn.readObject();
