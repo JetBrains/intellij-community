@@ -48,7 +48,7 @@ public class PyProtectedMemberInspection extends PyInspection {
       final PyExpression qualifier = node.getQualifier();
       if (qualifier == null) return;
       final String name = node.getName();
-      if (name != null && name.startsWith("_")) {
+      if (name != null && name.startsWith("_") && !name.startsWith("__") && !name.endsWith("__")) {
         final PyClass parentClass = PsiTreeUtil.getParentOfType(node, PyClass.class);
         if (parentClass != null) {
           final PsiReference reference = node.getReference();
