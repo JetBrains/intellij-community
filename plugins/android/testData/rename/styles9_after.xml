@@ -10,4 +10,7 @@
 
   <style name="st" parent="myStyle.st">
   </style>
+
+  <style name="st1" parent="@style/myStyle.st">
+  </style>
 </resources>

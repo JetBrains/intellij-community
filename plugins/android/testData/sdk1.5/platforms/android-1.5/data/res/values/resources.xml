@@ -10,4 +10,10 @@
 
   <style name="Theme">
   </style>
+
+  <style name="Theme.Holo.Light" parent="Theme">
+  </style>
+
+  <style name="Theme.Holo1.Light">
+  </style>
 </resources>

@@ -7,4 +7,7 @@
 
   <style name="s1" parent="newStyle.st">
   </style>
+
+  <style name="s2" parent="@style/newStyle.st">
+  </style>
 </resources>

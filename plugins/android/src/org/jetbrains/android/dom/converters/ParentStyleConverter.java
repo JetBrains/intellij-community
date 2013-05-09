@@ -43,6 +43,12 @@ public class ParentStyleConverter extends ResourceReferenceConverter {
   @Override
   public PsiReference[] createReferences(GenericDomValue<ResourceValue> value, PsiElement element, ConvertContext context) {
     final PsiReference[] refsFromSuper = super.createReferences(value, element, context);
+
+    final ResourceValue resValue = value.getValue();
+
+    if (resValue == null || resValue.getPackage() != null) {
+      return refsFromSuper;
+    }
     final AndroidFacet facet = AndroidFacet.getInstance(context);
 
     if (facet != null) {
@@ -57,10 +63,17 @@ public class ParentStyleConverter extends ResourceReferenceConverter {
 
   @NotNull
   private static PsiReference[] getReferencesInStyleName(@NotNull GenericDomValue<?> value, @NotNull AndroidFacet facet) {
-    final String s = value.getStringValue();
+    String s = value.getStringValue();
 
     if (s == null) {
       return PsiReference.EMPTY_ARRAY;
+    }
+    int start = 0;
+    final int idx = s.indexOf('/');
+
+    if (idx >= 0) {
+      start = idx + 1;
+      s = s.substring(start);
     }
     final String[] ids = s.split("\\.");
     if (ids.length < 2) {
@@ -74,7 +87,7 @@ public class ParentStyleConverter extends ResourceReferenceConverter {
 
       if (i < ids.length - 1) {
         final ResourceValue val = ResourceValue.referenceTo((char)0, null, ResourceType.STYLE.getName(), styleName);
-        result.add(new ResourceNameConverter.MyParentStyleReference(value, new TextRange(1, 1 + offset), val, facet));
+        result.add(new ResourceNameConverter.MyParentStyleReference(value, new TextRange(1 + start, 1 + start + offset), val, facet));
       }
       if (ResourceNameConverter.hasExplicitParent(facet, styleName)) {
         break;
