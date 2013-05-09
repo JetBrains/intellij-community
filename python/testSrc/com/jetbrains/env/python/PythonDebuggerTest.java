@@ -347,7 +347,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-pypy", "-iron"); //TODO: fix it for Pypy and ironpython
+        return ImmutableSet.of("-pypy"); //TODO: fix it for Pypy
       }
     });
   }
@@ -394,7 +394,7 @@ public class PythonDebuggerTest extends PyEnvTestCase {
 
       @Override
       public Set<String> getTags() {
-        return ImmutableSet.of("-pypy", "-iron"); //TODO: fix that for PyPy and IronPython
+        return ImmutableSet.of("-pypy"); //TODO: fix that for PyPy
       }
     });
   }
