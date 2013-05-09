@@ -248,7 +248,7 @@ public class AndroidPropertyFilesUpdater extends AbstractProjectComponent {
 
           for (int i = 0; i < newDepValues.size(); i++) {
             final String value = newDepValues.get(i);
-            projectProperties.addProperty(AndroidUtils.ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX + i, value);
+            projectProperties.addProperty(AndroidUtils.ANDROID_LIBRARY_REFERENCE_PROPERTY_PREFIX + Integer.toString(i + 1), value);
           }
         }
       });
