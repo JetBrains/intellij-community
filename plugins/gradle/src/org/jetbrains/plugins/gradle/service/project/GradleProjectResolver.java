@@ -200,6 +200,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         continue;
       }
       ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, rootDirectory.getAbsolutePath());
+      ideModule.getData().setModuleFileDirectoryPath(ideContentRoot.getRootPath());
       populateContentRoot(ideContentRoot, ExternalSystemSourceType.SOURCE, gradleContentRoot.getSourceDirectories());
       populateContentRoot(ideContentRoot, ExternalSystemSourceType.TEST, gradleContentRoot.getTestDirectories());
       Set<File> excluded = gradleContentRoot.getExcludeDirectories();
