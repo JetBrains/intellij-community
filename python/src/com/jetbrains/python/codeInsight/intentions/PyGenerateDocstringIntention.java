@@ -15,6 +15,7 @@ import com.jetbrains.python.documentation.PyDocstringGenerator;
 import com.jetbrains.python.documentation.doctest.PyDocstringFile;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.psi.PyFunction;
+import com.jetbrains.python.psi.PyStatementList;
 import com.jetbrains.python.psi.PyUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +45,8 @@ public class PyGenerateDocstringIntention extends BaseIntentionAction {
       return false;
     }
     PyFunction function = PsiTreeUtil.getParentOfType(elementAt, PyFunction.class);
-    if (function == null) {
+    final PyStatementList statementList = PsiTreeUtil.getParentOfType(elementAt, PyStatementList.class, false, PyFunction.class);
+    if (function == null || statementList != null) {
       return false;
     }
     return isAvailableForFunction(project, function);
