@@ -2,12 +2,8 @@ package com.jetbrains.python.packaging;
 
 import com.google.common.collect.Lists;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.DialogBuilder;
-import com.intellij.openapi.ui.Messages;
-import com.intellij.ui.ScrollPaneFactory;
-import com.intellij.ui.components.JBLabel;
 import com.intellij.util.net.HttpConfigurable;
+import com.intellij.webcore.packaging.RepoPackage;
 import org.apache.xmlrpc.*;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -17,20 +13,20 @@ import javax.net.ssl.HttpsURLConnection;
 import javax.net.ssl.SSLContext;
 import javax.net.ssl.TrustManager;
 import javax.net.ssl.X509TrustManager;
-import javax.swing.*;
 import javax.swing.text.MutableAttributeSet;
 import javax.swing.text.html.HTML;
 import javax.swing.text.html.HTMLEditorKit;
 import javax.swing.text.html.parser.ParserDelegator;
-import java.awt.*;
 import java.io.*;
-import java.net.*;
+import java.net.MalformedURLException;
+import java.net.URL;
+import java.net.URLConnection;
+import java.net.URLDecoder;
 import java.security.KeyManagementException;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.security.cert.X509Certificate;
 import java.util.*;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -47,7 +43,7 @@ public class PyPIPackageUtil {
   private Map<String, Hashtable> packageToDetails = new HashMap<String, Hashtable>();
   private Map<String, List<String>> packageToReleases = new HashMap<String, List<String>>();
   private Pattern PYPI_PATTERN = Pattern.compile("/pypi/([^/]*)/(.*)");
-  private Set<ComparablePair> myAdditionalPackageNames;
+  private Set<RepoPackage> myAdditionalPackageNames;
   @Nullable private volatile Set<String> myPackageNames = null;
 
   public static Set<String> getPackageNames(final String url) throws IOException {
@@ -90,14 +86,14 @@ public class PyPIPackageUtil {
     return names;
   }
 
-  public Set<ComparablePair> getAdditionalPackageNames() {
+  public Set<RepoPackage> getAdditionalPackageNames() {
     if (myAdditionalPackageNames == null) {
-      myAdditionalPackageNames = new TreeSet<ComparablePair>();
+      myAdditionalPackageNames = new TreeSet<RepoPackage>();
       for (String url : PyPackageService.getInstance().additionalRepositories) {
         try {
           for (String pyPackage : getPackageNames(url)) {
             if (!pyPackage.contains(" "))
-              myAdditionalPackageNames.add(new ComparablePair(pyPackage, url));
+              myAdditionalPackageNames.add(new RepoPackage(pyPackage, url));
           }
         }
         catch (IOException e) {
@@ -247,14 +243,19 @@ public class PyPIPackageUtil {
   }
 
   public Collection<String> getPackageNames() throws IOException {
+    Map<String, String> pyPIPackages = loadAndGetPackages();
+    ArrayList<String> list = Lists.newArrayList(pyPIPackages.keySet());
+    Collections.sort(list);
+    return list;
+  }
+
+  public Map<String, String> loadAndGetPackages() throws IOException {
     Map<String, String> pyPIPackages = getPyPIPackages();
     if (pyPIPackages.isEmpty()) {
       updatePyPICache(PyPackageService.getInstance());
       pyPIPackages = getPyPIPackages();
     }
-    ArrayList<String> list = Lists.newArrayList(pyPIPackages.keySet());
-    Collections.sort(list);
-    return list;
+    return pyPIPackages;
   }
 
   public static Map<String, String> getPyPIPackages() {
@@ -270,26 +271,6 @@ public class PyPIPackageUtil {
       myPackageNames = names;
     }
     return myPackageNames != null && myPackageNames.contains(packageName.toLowerCase());
-  }
-
-  public static void showError(@NotNull Project project, @NotNull String title, @NotNull String description) {
-    final DialogBuilder builder = new DialogBuilder(project);
-    builder.setTitle(title);
-    final JTextArea textArea = new JTextArea();
-    textArea.setEditable(false);
-    textArea.setText(description);
-    textArea.setWrapStyleWord(false);
-    textArea.setLineWrap(true);
-    final JScrollPane scrollPane = ScrollPaneFactory.createScrollPane(textArea);
-    scrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
-    final JPanel panel = new JPanel(new BorderLayout(10, 0));
-    panel.setPreferredSize(new Dimension(600, 400));
-    panel.add(scrollPane, BorderLayout.CENTER);
-    panel.add(new JBLabel("Details:", Messages.getErrorIcon(), SwingConstants.LEFT), BorderLayout.NORTH);
-    builder.setCenterPanel(panel);
-    builder.setButtonsAlignment(SwingConstants.CENTER);
-    builder.addOkAction();
-    builder.show();
   }
 
   private static class PyPIXmlRpcTransport extends DefaultXmlRpcTransport {

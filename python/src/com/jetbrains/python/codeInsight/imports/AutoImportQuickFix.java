@@ -1,6 +1,6 @@
 package com.jetbrains.python.codeInsight.imports;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.impl.ShowAutoImportPass;
 import com.intellij.codeInsight.hint.HintManager;
 import com.intellij.codeInsight.intention.HighPriorityAction;
@@ -143,7 +143,7 @@ public class AutoImportQuickFix implements LocalQuickFix, HighPriorityAction {
   public void invoke(PsiFile file) throws IncorrectOperationException {
     // make sure file is committed, writable, etc
     if (!myReference.getElement().isValid()) return;
-    if (!CodeInsightUtilBase.prepareFileForWrite(file)) return;
+    if (!FileModificationService.getInstance().prepareFileForWrite(file)) return;
     if (ImportFromExistingAction.isResolved(myReference)) return;
     // act
     ImportFromExistingAction action = new ImportFromExistingAction(myNode, myImports, getNameToImport(), myUseQualifiedImport);

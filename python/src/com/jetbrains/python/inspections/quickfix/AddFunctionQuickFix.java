@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -53,7 +54,7 @@ public class AddFunctionQuickFix  implements LocalQuickFix {
       PsiElement problem_elt = descriptor.getPsiElement().getParent(); // id -> ref expr
       String item_name = myIdentifier;
       sure(myPyFile); sure(item_name);
-      sure(CodeInsightUtilBase.preparePsiElementForWrite(myPyFile));
+      sure(FileModificationService.getInstance().preparePsiElementForWrite(myPyFile));
       // try to at least match parameter count
       // TODO: get parameter style from code style
       PyFunctionBuilder builder = new PyFunctionBuilder(item_name);

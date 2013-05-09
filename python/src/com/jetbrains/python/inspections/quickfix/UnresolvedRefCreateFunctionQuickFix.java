@@ -1,6 +1,7 @@
 package com.jetbrains.python.inspections.quickfix;
 
 import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.template.TemplateBuilder;
 import com.intellij.codeInsight.template.TemplateBuilderFactory;
 import com.intellij.codeInspection.LocalQuickFix;
@@ -40,7 +41,7 @@ public class UnresolvedRefCreateFunctionQuickFix implements LocalQuickFix {
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-    if (!myElement.isValid() || !CodeInsightUtilBase.preparePsiElementForWrite(myElement)) return;
+    if (!myElement.isValid() || !FileModificationService.getInstance().preparePsiElementForWrite(myElement)) return;
 
     PyFunctionBuilder functionBuilder = new PyFunctionBuilder(myReference.getText());
 

@@ -53,7 +53,7 @@ public class PyDeprecationInspection extends PyInspection {
       }
       if (deprecationMessage != null) {
         ASTNode nameElement = node.getNameElement();
-        registerProblem(nameElement == null ? node : nameElement.getPsi(), deprecationMessage, ProblemHighlightType.LIKE_DEPRECATED, null);
+        registerProblem(nameElement == null ? node : nameElement.getPsi(), deprecationMessage, ProblemHighlightType.LIKE_DEPRECATED);
       }
     }
   }

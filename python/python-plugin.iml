@@ -15,6 +15,7 @@
     <orderEntry type="module" module-name="platform-ultimate" />
     <orderEntry type="module" module-name="ultimate-verifier" />
     <orderEntry type="module" module-name="xml" />
+    <orderEntry type="module" module-name="webide-api" />
   </component>
 </module>
 

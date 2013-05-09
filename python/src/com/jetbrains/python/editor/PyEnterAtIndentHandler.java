@@ -3,6 +3,7 @@ package com.jetbrains.python.editor;
 import com.intellij.codeInsight.editorActions.BackspaceHandler;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.actionSystem.EditorActionHandler;
@@ -25,7 +26,7 @@ public class PyEnterAtIndentHandler extends EnterHandlerDelegateAdapter {
                                 EditorActionHandler originalHandler) {
     int offset = caretOffset.get();
     if (editor instanceof EditorWindow) {
-      file = InjectedLanguageUtil.getTopLevelFile(file);
+      file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
       editor = InjectedLanguageUtil.getTopLevelEditor(editor);
       offset = editor.getCaretModel().getOffset();
     }

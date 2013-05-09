@@ -39,6 +39,7 @@ import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.net.HttpConfigurable;
 import com.jetbrains.python.PythonHelpersLocator;
+import com.intellij.webcore.packaging.PackagesNotificationPanel;
 import com.jetbrains.python.psi.LanguageLevel;
 import com.jetbrains.python.psi.PyExpression;
 import com.jetbrains.python.psi.PyListLiteralExpression;
@@ -234,7 +235,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
                                                    @Override
                                                    public void hyperlinkUpdate(@NotNull Notification notification,
                                                                                @NotNull HyperlinkEvent event) {
-                                                     PyPIPackageUtil.showError(myProject, failureTitle, description);
+                                                     PackagesNotificationPanel.showError(myProject, failureTitle, description);
                                                    }
                                                  }));
           }
@@ -777,7 +778,7 @@ public class PyPackageManagerImpl extends PyPackageManager {
 
   @Override
   public void showInstallationError(Project project, String title, String description) {
-    PyPIPackageUtil.showError(project, title, description);
+    PackagesNotificationPanel.showError(project, title, description);
   }
 
   private class MySdkRootWatcher extends BulkFileListener.Adapter {

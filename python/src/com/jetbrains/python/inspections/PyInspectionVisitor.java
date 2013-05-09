@@ -74,13 +74,12 @@ public abstract class PyInspectionVisitor extends PyElementVisitor {
 
   protected final void registerProblem(final PsiElement element,
                                        final String message,
-                                       final ProblemHighlightType type,
-                                       @Nullable final HintAction action) {
+                                       final ProblemHighlightType type) {
     if (element == null || element.getTextLength() == 0) {
       return;
     }
     if (myHolder != null) {
-      myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(element, message, type, action, myHolder.isOnTheFly()));
+      myHolder.registerProblem(myHolder.getManager().createProblemDescriptor(element, message, (LocalQuickFix)null, type, myHolder.isOnTheFly()));
     }
   }
 

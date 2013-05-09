@@ -21,7 +21,7 @@ public class AutoImportHintAction implements LocalQuickFix, HintAction, HighPrio
   }
 
   @Override
-  public boolean showHint(Editor editor) {
+  public boolean showHint(@NotNull Editor editor) {
     return myDelegate.showHint(editor);
   }
 

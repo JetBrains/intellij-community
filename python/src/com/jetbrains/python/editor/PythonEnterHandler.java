@@ -5,6 +5,7 @@ import com.intellij.codeInsight.editorActions.AutoHardWrapHandler;
 import com.intellij.codeInsight.editorActions.enter.EnterHandlerDelegateAdapter;
 import com.intellij.ide.DataManager;
 import com.intellij.injected.editor.EditorWindow;
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -62,7 +63,7 @@ public class PythonEnterHandler extends EnterHandlerDelegateAdapter {
                                 EditorActionHandler originalHandler) {
     int offset = caretOffset.get();
     if (editor instanceof EditorWindow) {
-      file = InjectedLanguageUtil.getTopLevelFile(file);
+      file = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
       editor = InjectedLanguageUtil.getTopLevelEditor(editor);
       offset = editor.getCaretModel().getOffset();
     }

@@ -1,6 +1,6 @@
 package com.jetbrains.python.inspections.quickfix;
 
-import com.intellij.codeInsight.CodeInsightUtilBase;
+import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.intention.HighPriorityAction;
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemDescriptor;
@@ -35,7 +35,7 @@ public class UnresolvedReferenceAddSelfQuickFix implements LocalQuickFix, HighPr
   }
 
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
-      if (!CodeInsightUtilBase.preparePsiElementForWrite(myElement)) return;
+      if (!FileModificationService.getInstance().preparePsiElementForWrite(myElement)) return;
       PyElementGenerator elementGenerator = PyElementGenerator.getInstance(project);
       PyExpression expression = elementGenerator.createExpressionFromText(LanguageLevel.forElement(myElement), "self." + myElement.getText());
       myElement.replace(expression);

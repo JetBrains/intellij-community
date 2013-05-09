@@ -100,7 +100,7 @@ public class PyTypeCheckerInspection extends PyInspection {
                                            PythonDocumentationProvider.getTypeName(subType, context));
           final ProblemHighlightType highlightType = hasGenerics ? ProblemHighlightType.WEAK_WARNING :
                                                                    ProblemHighlightType.GENERIC_ERROR_OR_WARNING;
-          registerProblem(node, msg, highlightType, null);
+          registerProblem(node, msg, highlightType);
           return msg;
         }
       }

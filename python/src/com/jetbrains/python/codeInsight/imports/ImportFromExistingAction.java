@@ -15,7 +15,6 @@ import com.intellij.openapi.util.AsyncResult;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.ui.SimpleColoredComponent;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.components.JBList;
@@ -126,8 +125,9 @@ public class ImportFromExistingAction implements QuestionAction {
     final PyElementGenerator gen = PyElementGenerator.getInstance(project);
     AddImportHelper.ImportPriority priority = AddImportHelper.getImportPriority(myTarget, item.getFile());
     PsiFile file = myTarget.getContainingFile();
-    if (InjectedLanguageManager.getInstance(project).isInjectedFragment(file)) {
-      file = InjectedLanguageUtil.getTopLevelFile(myTarget);
+    InjectedLanguageManager manager = InjectedLanguageManager.getInstance(project);
+    if (manager.isInjectedFragment(file)) {
+      file = manager.getTopLevelFile(myTarget);
     }
     if (isRoot(item.getFile())) {
       AddImportHelper.addImportStatement(file, myName, null, priority);

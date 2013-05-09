@@ -1,7 +1,7 @@
 package com.jetbrains.python.documentation.doctest;
 
+import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.psi.PsiFile;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.jetbrains.python.inspections.*;
 import com.jetbrains.python.psi.PyFile;
 import com.jetbrains.python.validation.DocStringAnnotator;
@@ -34,7 +34,7 @@ public class PyDocstringVisitorFilter implements PythonVisitorFilter {
     if (visitorClass == DocStringAnnotator.class || visitorClass == ParameterListAnnotator.class || visitorClass == ReturnAnnotator.class || visitorClass == HighlightingAnnotator.class)
       return false;
     // doctest in separate file
-    final PsiFile topLevelFile = InjectedLanguageUtil.getTopLevelFile(file);
+    final PsiFile topLevelFile = InjectedLanguageManager.getInstance(file.getProject()).getTopLevelFile(file);
     if (visitorClass == PyUnresolvedReferencesInspection.class && !(topLevelFile instanceof PyFile)) {
       return false;
     }
