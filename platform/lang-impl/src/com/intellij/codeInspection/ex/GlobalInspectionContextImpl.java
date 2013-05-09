@@ -71,7 +71,9 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.annotations.TestOnly;
 
 import java.io.File;
+import java.io.FileOutputStream;
 import java.io.IOException;
+import java.io.OutputStreamWriter;
 import java.util.*;
 
 public class GlobalInspectionContextImpl extends UserDataHolderBase implements GlobalInspectionContext {
@@ -385,7 +387,14 @@ public class GlobalInspectionContextImpl extends UserDataHolderBase implements G
               new File(outputPath).mkdirs();
               final File file = new File(outputPath, toolName + ext);
               inspectionsResults.add(file);
-              JDOMUtil.writeDocument(doc, file, "\n");
+
+              OutputStreamWriter writer = new OutputStreamWriter(new FileOutputStream(file), "UTF-8");
+              try {
+                JDOMUtil.writeDocument(doc, writer, "\n");
+              }
+              finally {
+                writer.close();
+              }
             }
             catch (IOException e) {
               LOG.error(e);
