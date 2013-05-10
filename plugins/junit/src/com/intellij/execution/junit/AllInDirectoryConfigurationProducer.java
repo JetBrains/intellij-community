@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,38 +21,57 @@ import com.intellij.execution.Location;
 import com.intellij.execution.RunnerAndConfigurationSettings;
 import com.intellij.execution.actions.ConfigurationContext;
 import com.intellij.execution.junit2.info.LocationUtil;
+import com.intellij.openapi.module.Module;
+import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.roots.ContentEntry;
+import com.intellij.openapi.roots.ModuleRootManager;
+import com.intellij.openapi.roots.SourceFolder;
+import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.psi.PsiDirectory;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiPackage;
 
 
-public class AllInPackageConfigurationProducer extends JUnitConfigurationProducer {
-  private PsiPackage myPackage = null;
+public class AllInDirectoryConfigurationProducer extends JUnitConfigurationProducer {
+  private PsiDirectory myDir = null;
 
   protected RunnerAndConfigurationSettings createConfigurationByElement(final Location location, final ConfigurationContext context) {
     final Project project = location.getProject();
     final PsiElement element = location.getPsiElement();
-    myPackage = checkPackage(element);
-    if (myPackage == null) return null;
-    if (!LocationUtil.isJarAttached(location, myPackage, JUnitUtil.TESTCASE_CLASS)) return null;
+    if (!(element instanceof PsiDirectory)) return null;
+    final PsiPackage aPackage = checkPackage(element);
+    if (aPackage == null) return null;
+    final VirtualFile virtualFile = ((PsiDirectory)element).getVirtualFile();
+    final Module module = ModuleUtilCore.findModuleForFile(virtualFile, project);
+    if (module == null) return null;
+    final ContentEntry[] entries = ModuleRootManager.getInstance(module).getContentEntries();
+    int testRootCount = 0;
+    for (ContentEntry entry : entries) {
+      for (SourceFolder sourceFolder : entry.getSourceFolders()) {
+        if (sourceFolder.isTestSource()) {
+          testRootCount++;
+          if (testRootCount > 1) {
+            break;
+          }
+        }
+      }
+    }
+    if (testRootCount < 2) return null;
+    myDir = (PsiDirectory)element;
+    if (!LocationUtil.isJarAttached(location, aPackage, JUnitUtil.TESTCASE_CLASS)) return null;
     RunnerAndConfigurationSettings settings = cloneTemplateConfiguration(project, context);
     final JUnitConfiguration configuration = (JUnitConfiguration)settings.getConfiguration();
+    setupConfigurationModule(context, configuration);
     final JUnitConfiguration.Data data = configuration.getPersistentData();
-    data.PACKAGE_NAME = myPackage.getQualifiedName();
-    data.TEST_OBJECT = JUnitConfiguration.TEST_PACKAGE;
-    data.setScope(setupPackageConfiguration(context, project, configuration, data.getScope()));
+    data.setDirName(virtualFile.getPath());
+    data.TEST_OBJECT = JUnitConfiguration.TEST_DIRECTORY;
     configuration.setGeneratedName();
     JavaRunConfigurationExtensionManager.getInstance().extendCreatedConfiguration(configuration, location);
     return settings;
   }
 
   public PsiElement getSourceElement() {
-    return myPackage;
-  }
-
-  @Override
-  public int compareTo(Object o) {
-    if (o instanceof AllInDirectoryConfigurationProducer) return -PREFERED;
-    return PREFERED;
+    return myDir;
   }
 }
