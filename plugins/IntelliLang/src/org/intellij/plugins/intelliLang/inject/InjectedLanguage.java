@@ -15,9 +15,11 @@
  */
 package org.intellij.plugins.intelliLang.inject;
 
-import com.intellij.lang.*;
+import com.intellij.lang.DependentLanguage;
+import com.intellij.lang.InjectableLanguage;
+import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.psi.templateLanguages.TemplateLanguage;
-import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -118,7 +120,7 @@ public final class InjectedLanguage {
     ourLanguageCount = registeredLanguages.size();
   }
 
-  public static boolean isInjectableLanguage(@NotNull Language language) {
+  private static boolean isInjectableLanguage(Language language) {
     if (language == Language.ANY) {
       return false;
     }

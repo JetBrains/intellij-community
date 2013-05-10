@@ -17,7 +17,6 @@
     <orderEntry type="module" module-name="platform-resources" />
     <orderEntry type="module" module-name="vcs-api" />
     <orderEntry type="library" name="Guava" level="project" />
-    <orderEntry type="module" module-name="IntelliLang" />
   </component>
   <component name="copyright">
     <Base>
