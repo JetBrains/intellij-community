@@ -118,7 +118,7 @@ public final class InjectedLanguage {
     ourLanguageCount = registeredLanguages.size();
   }
 
-  private static boolean isInjectableLanguage(Language language) {
+  public static boolean isInjectableLanguage(@NotNull Language language) {
     if (language == Language.ANY) {
       return false;
     }

@@ -23,6 +23,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
+import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
@@ -41,9 +42,10 @@ public class HtmlScriptLanguageInjector implements MultiHostInjector {
     }
     String mimeType = scriptTag.getAttributeValue("type");
     Collection<Language> languages = Language.findInstancesByMimeType(mimeType);
-    if (!languages.isEmpty()) {
+    Language language = languages.isEmpty() ? null : languages.iterator().next();
+    if (language != null && InjectedLanguage.isInjectableLanguage(language)) {
       registrar
-        .startInjecting(languages.iterator().next())
+        .startInjecting(language)
         .addPlace(null, null, (PsiLanguageInjectionHost)host, TextRange.create(0, host.getTextLength()))
         .doneInjecting();
     }
