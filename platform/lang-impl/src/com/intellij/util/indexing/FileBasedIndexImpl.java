@@ -119,7 +119,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private final ConcurrentHashSet<ID<?, ?>> myUpToDateIndices = new ConcurrentHashSet<ID<?, ?>>();
   private final Map<Document, PsiFile> myTransactionMap = new THashMap<Document, PsiFile>();
 
-  private static final int ALREADY_PROCESSED = 0x04;
+  private static final int ALREADY_PROCESSED = 0x04000000;
 
   @Nullable private final String myConfigPath;
   @Nullable private final String myLogPath;

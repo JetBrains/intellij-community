@@ -20,7 +20,6 @@ import com.intellij.openapi.util.ThrowableComputable;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileWithId;
 import com.intellij.openapi.vfs.encoding.EncodingRegistry;
-import com.intellij.util.LocalTimeCounter;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -32,7 +31,6 @@ import java.util.Collection;
  * @author max
  */
 public abstract class NewVirtualFile extends VirtualFile implements VirtualFileWithId {
-  private volatile long myModificationStamp = LocalTimeCounter.currentTime();
 
   @Override
   public boolean isValid() {
@@ -82,15 +80,6 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   @Override
   public void refresh(final boolean asynchronous, final boolean recursive, final Runnable postRunnable) {
     RefreshQueue.getInstance().refresh(asynchronous, recursive, postRunnable, this);
-  }
-
-  @Override
-  public long getModificationStamp() {
-    return myModificationStamp;
-  }
-
-  public void setModificationStamp(long modificationStamp) {
-    myModificationStamp = modificationStamp;
   }
 
   public abstract void setWritable(boolean writable) throws IOException;
