@@ -22,6 +22,7 @@ import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.TokenType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
+import org.intellij.plugins.intelliLang.inject.InjectedLanguage;
 
 /**
  * @author Maxim.Mossienko
@@ -75,7 +76,9 @@ public class HtmlLexer extends BaseHtmlLexer {
         tokenType = ourInlineStyleElementType;
       }
     } else if (hasSeenScript()) {
-      if (hasSeenTag() && isStartOfEmbeddmentTagContent(tokenType)) {
+      Language scriptLanguage = getScriptLanguage();
+      boolean canInject = scriptLanguage == null || InjectedLanguage.isInjectableLanguage(scriptLanguage);
+      if (hasSeenTag() && isStartOfEmbeddmentTagContent(tokenType) && canInject) {
         myTokenEnd = skipToTheEndOfTheEmbeddment();
         IElementType currentScriptElementType = getCurrentScriptElementType();
         tokenType = currentScriptElementType == null ? XmlTokenType.XML_DATA_CHARACTERS : currentScriptElementType;
