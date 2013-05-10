@@ -21,6 +21,7 @@ import com.intellij.lang.injection.MultiHostRegistrar;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiLanguageInjectionHost;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.xml.XmlTag;
 import com.intellij.psi.xml.XmlText;
 import org.jetbrains.annotations.NotNull;
@@ -41,9 +42,10 @@ public class HtmlScriptLanguageInjector implements MultiHostInjector {
     }
     String mimeType = scriptTag.getAttributeValue("type");
     Collection<Language> languages = Language.findInstancesByMimeType(mimeType);
-    if (!languages.isEmpty()) {
+    Language language = languages.isEmpty() ? null : languages.iterator().next();
+    if (language != null && InjectedLanguageUtil.isInjectableLanguage(language)) {
       registrar
-        .startInjecting(languages.iterator().next())
+        .startInjecting(language)
         .addPlace(null, null, (PsiLanguageInjectionHost)host, TextRange.create(0, host.getTextLength()))
         .doneInjecting();
     }
