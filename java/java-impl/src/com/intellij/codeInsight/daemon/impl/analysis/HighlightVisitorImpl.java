@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsScheme;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
-import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
@@ -54,7 +53,7 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
-public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor, DumbAware {
+public class HighlightVisitorImpl extends JavaElementVisitor implements HighlightVisitor {
   private final PsiResolveHelper myResolveHelper;
 
   private HighlightInfoHolder myHolder;
