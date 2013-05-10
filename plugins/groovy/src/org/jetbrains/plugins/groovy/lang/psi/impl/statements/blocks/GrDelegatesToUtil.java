@@ -100,6 +100,9 @@ public class GrDelegatesToUtil {
     if (value instanceof GrReferenceExpression) {
       return extractTypeFromClassType(((GrReferenceExpression)value).getType());
     }
+    else if (value instanceof PsiClassObjectAccessExpression) {
+      return extractTypeFromClassType(((PsiClassObjectAccessExpression)value).getType());
+    }
     else if (value == null ||
              value instanceof PsiLiteralExpression && ((PsiLiteralExpression)value).getType() == PsiType.NULL ||
              value instanceof GrLiteral && ((GrLiteral)value).getType() == PsiType.NULL) {
