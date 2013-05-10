@@ -599,15 +599,11 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
       if (!raw1 && raw2) return Specifics.FIRST;
       if (raw1 && !raw2) return Specifics.SECOND;
 
-      final Specifics substArraySpecifics = chooseHigherDimension(t1, t2);
-      if (substArraySpecifics != null) {
-        return substArraySpecifics;
-      }
-      else {
-        final PsiTypeParameter p1 = map1.keySet().iterator().next();
-        final PsiTypeParameter p2 = map2.keySet().iterator().next();
-        return checkTypeParams(method1, method2, classSubstitutor1, classSubstitutor2, type1, type2, p1, p2);
-      }
+      final PsiTypeParameter p1 = map1.keySet().iterator().next();
+      final PsiTypeParameter p2 = map2.keySet().iterator().next();
+      final Specifics specifics = checkTypeParams(method1, method2, classSubstitutor1, classSubstitutor2, type1, type2, p1, p2);
+      if (specifics != null) return specifics;
+      return chooseHigherDimension(t1, t2);
     }
     return null;
   }
