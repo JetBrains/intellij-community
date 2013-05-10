@@ -17,7 +17,10 @@
 package com.intellij.psi.impl.source.tree.injected;
 
 import com.intellij.injected.editor.*;
+import com.intellij.lang.DependentLanguage;
+import com.intellij.lang.InjectableLanguage;
 import com.intellij.lang.Language;
+import com.intellij.lang.LanguageParserDefinitions;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
@@ -33,6 +36,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiManagerEx;
 import com.intellij.psi.impl.PsiParameterizedCachedValue;
 import com.intellij.psi.impl.source.DummyHolder;
+import com.intellij.psi.templateLanguages.TemplateLanguage;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.util.containers.ContainerUtil;
@@ -482,5 +486,24 @@ public class InjectedLanguageUtil {
     VirtualFile virtualFile = file.getVirtualFile();
     if (virtualFile instanceof VirtualFileWindow) return ((VirtualFileWindow)virtualFile).getDocumentWindow();
     return null;
+  }
+
+  public static boolean isInjectableLanguage(Language language) {
+    if (language == Language.ANY) {
+      return false;
+    }
+    if (language.getID().startsWith("$")) {
+      return false;
+    }
+    if (language instanceof InjectableLanguage) {
+      return true;
+    }
+    if (language instanceof TemplateLanguage || language instanceof DependentLanguage) {
+      return false;
+    }
+    if (LanguageParserDefinitions.INSTANCE.forLanguage(language) == null) {
+      return false;
+    }
+    return true;
   }
 }
