@@ -625,11 +625,12 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   }
 
   private void addCodeBlockFolds(PsiElement scope, final List<FoldingDescriptor> foldElements,
-                                 final @NotNull Set<PsiElement> processedComments, final Document document, final boolean quick)
-  {
+                                 final @NotNull Set<PsiElement> processedComments, final Document document, final boolean quick) {
+    final boolean dumb = DumbService.isDumb(scope.getProject());
     scope.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitClass(PsiClass aClass) {
-        if (!addClosureFolding(aClass, document, foldElements, processedComments, quick)) {
+      @Override
+      public void visitClass(PsiClass aClass) {
+        if (dumb || !addClosureFolding(aClass, document, foldElements, processedComments, quick)) {
           addToFold(foldElements, aClass, document, true);
           addElementsToFold(foldElements, aClass, document, false, quick);
         }
@@ -637,14 +638,18 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        addMethodGenericParametersFolding(expression, foldElements, document, quick);
+        if (!dumb) {
+          addMethodGenericParametersFolding(expression, foldElements, document, quick);
+        }
 
         super.visitMethodCallExpression(expression);
       }
 
       @Override
       public void visitNewExpression(PsiNewExpression expression) {
-        addGenericParametersFolding(expression, foldElements, document, quick);
+        if (!dumb) {
+          addGenericParametersFolding(expression, foldElements, document, quick);
+        }
 
         super.visitNewExpression(expression);
       }
@@ -659,7 +664,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
   private boolean addClosureFolding(final PsiClass aClass, final Document document, final List<FoldingDescriptor> foldElements,
                                     @NotNull Set<PsiElement> processedComments, final boolean quick) {
-    if (!JavaCodeFoldingSettings.getInstance().isCollapseLambdas() || DumbService.isDumb(aClass.getProject())) {
+    if (!JavaCodeFoldingSettings.getInstance().isCollapseLambdas()) {
       return false;
     }
 
