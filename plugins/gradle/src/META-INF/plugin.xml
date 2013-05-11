@@ -28,8 +28,6 @@
   </extensionPoints>
 
   <extensions defaultExtensionNs="com.intellij">
-    <postStartupActivity implementation="com.intellij.openapi.externalSystem.service.ExternalSystemStartupActivity"/>
-
     <errorHandler implementation="com.intellij.diagnostic.ITNReporter"/>
     <projectImportProvider implementation="org.jetbrains.plugins.gradle.service.settings.GradleProjectImportProvider"/>
     <projectImportBuilder implementation="org.jetbrains.plugins.gradle.service.settings.GradleProjectImportBuilder"/>
