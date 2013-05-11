@@ -1236,6 +1236,13 @@ def e
 
 @A(values=<error descr="Expected ''ABC' + 'CDE'' to be an inline constant">[C.CONST1, C.CONST2]</error>)
 def f
+
+@interface X {
+  Class value()
+}
+
+@X(String.class)
+def g
 ''')
   }
 

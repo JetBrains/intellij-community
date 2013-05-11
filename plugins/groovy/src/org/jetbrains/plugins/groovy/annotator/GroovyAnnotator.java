@@ -1375,6 +1375,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       PsiElement resolved = ((GrReferenceExpression)value).resolve();
       if (resolved instanceof PsiClass) return false;
       if (resolved instanceof PsiEnumConstant) return false;
+      if (resolved == null && isClassReference(value)) return false;
 
       if (resolved instanceof GrAccessorMethod) resolved = ((GrAccessorMethod)resolved).getProperty();
       if (resolved instanceof PsiField) {
@@ -1408,6 +1409,23 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
     myHolder.createErrorAnnotation(toHighlight, GroovyBundle.message("expected.0.to.be.inline.constant", value.getText()));
     return true;
+  }
+
+  private static boolean isClassReference(GrAnnotationMemberValue value) {
+    if (value instanceof GrReferenceExpression) {
+      final String referenceName = ((GrReferenceExpression)value).getReferenceName();
+      if ("class".equals(referenceName)) {
+        final GrExpression qualifier = ((GrReferenceExpression)value).getQualifier();
+        if (qualifier instanceof GrReferenceExpression) {
+          final PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
+          if (resolved instanceof PsiClass) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
   }
 
   @Override
