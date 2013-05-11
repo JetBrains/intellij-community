@@ -240,14 +240,14 @@ def c = { a ->
   public void testEnterAfterAssignmentInDeclaration() {
     doTest """def greeting = <caret>
 """, """def greeting =
-  <caret>
+    <caret>
 """
   }
 
   public void testEnterInAssignment() {
     doTest """greeting = <caret>
 """, """greeting =
-  <caret>
+    <caret>
 """
 
   }

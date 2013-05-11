@@ -3,5 +3,5 @@ expr1 :
 expr2
 -----
 cond ?
-  expr1 :
-  expr2
+    expr1 :
+    expr2
