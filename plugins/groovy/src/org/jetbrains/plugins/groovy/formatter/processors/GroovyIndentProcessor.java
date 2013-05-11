@@ -46,8 +46,8 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertState
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrElvisExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
@@ -202,7 +202,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   @Override
   public void visitVariable(GrVariable variable) {
     if (myChild == variable.getInitializerGroovy()) {
-      myResult = Indent.getNormalIndent();
+      myResult = Indent.getContinuationIndent();
     }
   }
 
@@ -229,17 +229,12 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitConditionalExpression(GrConditionalExpression expression) {
-    if ((myChild == expression.getThenBranch() && !(expression instanceof GrElvisExpression) ||
-         myChild == expression.getElseBranch())) {
-      myResult = Indent.getNormalIndent();
-    }
+      myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
   public void visitAssignmentExpression(GrAssignmentExpression expression) {
-    if (myChild == expression.getRValue()) {
-      myResult = Indent.getNormalIndent();
-    }
+    myResult = Indent.getContinuationWithoutFirstIndent();
   }
 
   @Override
@@ -275,6 +270,12 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
     else if (myChildType == THROW_CLAUSE) {
       myResult = getGroovySettings().ALIGN_THROWS_KEYWORD ? Indent.getNoneIndent() : Indent.getContinuationIndent();
     }
+  }
+
+  private static boolean isParameterListUnfinished(GrMethod method) {
+    final GrParameterList list = method.getParameterList();
+    final PsiElement last = list.getLastChild();
+    return last != null && last.getNode().getElementType() != mCOMMA;
   }
 
   @Override
@@ -357,5 +358,11 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
       return Indent.getNoneIndent();
     }
   }
+
+  @Override
+  public void visitParameterList(GrParameterList parameterList) {
+    myResult = Indent.getContinuationWithoutFirstIndent();
+  }
+
 }
 
