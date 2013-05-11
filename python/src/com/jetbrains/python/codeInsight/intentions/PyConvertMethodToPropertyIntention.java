@@ -49,8 +49,10 @@ public class PyConvertMethodToPropertyIntention extends BaseIntentionAction {
     function.accept(new PyRecursiveElementVisitor() {
       @Override
       public void visitPyReturnStatement(PyReturnStatement node) {
-        available[0] = true;
+        if (node.getExpression() != null)
+          available[0] = true;
       }
+
     });
 
     return available[0];
