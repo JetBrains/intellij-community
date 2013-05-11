@@ -176,6 +176,7 @@ public class ExternalSystemFacadeManager {
         if (externalSystemId != null) {
           ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
           if (manager != null) {
+            params.getClassPath().add(PathUtil.getJarPathForClass(manager.getProjectResolverClass().getClass()));
             params.getProgramParametersList().add(manager.getProjectResolverClass().getName());
             params.getProgramParametersList().add(manager.getBuildManagerClass().getName());
             manager.enhanceParameters(params);
