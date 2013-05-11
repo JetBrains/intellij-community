@@ -112,7 +112,7 @@ public abstract class DescriptorProviderInspection extends InspectionTool implem
         pathMacroManager.collapsePaths(element);
         JDOMUtil.writeElement(element, writer, "\n");
       }
-      printWriter = new PrintWriter(new BufferedWriter(new FileWriter(file, true)));
+      printWriter = new PrintWriter(new BufferedWriter(new OutputStreamWriter(new FileOutputStream(fileName, true), "UTF-8")));
       printWriter.append("\n");
       printWriter.append(writer.toString());
     }
