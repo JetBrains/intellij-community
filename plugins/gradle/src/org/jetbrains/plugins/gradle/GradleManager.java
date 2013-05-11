@@ -136,11 +136,13 @@ public class GradleManager implements ExternalSystemManager<
             localGradlePath = gradleHome.getAbsolutePath();
           }
         }
+
+        GradleProjectSettings projectLevelSettings = settings.getLinkedProjectSettings(pair.second);
+        boolean useWrapper = projectLevelSettings != null && !projectLevelSettings.isPreferLocalInstallationToWrapper();
         GradleExecutionSettings result = new GradleExecutionSettings(localGradlePath,
                                                                      settings.getServiceDirectoryPath(),
-                                                                     false);
-        // TODO den implement
-//                                                                     settings.isPreferLocalInstallationToWrapper());
+                                                                     useWrapper);
+        
         for (GradleProjectResolverExtension extension : RESOLVER_EXTENSIONS.getValue()) {
           result.addResolverExtensionClass(extension.getClass().getName());
         }
