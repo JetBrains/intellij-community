@@ -53,6 +53,10 @@ public class PyConvertMethodToPropertyIntention extends BaseIntentionAction {
           available[0] = true;
       }
 
+      @Override
+      public void visitPyYieldExpression(PyYieldExpression node) {
+        available[0] = true;
+      }
     });
 
     return available[0];

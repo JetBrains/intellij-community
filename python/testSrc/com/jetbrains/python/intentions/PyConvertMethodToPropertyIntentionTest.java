@@ -27,6 +27,10 @@ public class PyConvertMethodToPropertyIntentionTest extends PyIntentionTestCase 
     doNegateIntentionTest(PyBundle.message("INTN.convert.method.to.property"));
   }
 
+  public void testYield() throws Exception {
+    doIntentionTest(PyBundle.message("INTN.convert.method.to.property"));
+  }
+
   public void testNoReturn() throws Exception {
     doNegateIntentionTest(PyBundle.message("INTN.convert.method.to.property"));
   }
