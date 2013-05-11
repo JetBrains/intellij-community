@@ -65,12 +65,12 @@ public class ExternalSystemSettingsManager implements DisposableExternalSystemSe
   }
 
   @SuppressWarnings("unchecked")
-  public <S extends AbstractExternalSystemLocalSettings<S>> S getLocalSettings(@NotNull Project project,
-                                                                               @NotNull ProjectSystemId externalSystemId)
+  public <S extends AbstractExternalSystemLocalSettings> S getLocalSettings(@NotNull Project project,
+                                                                            @NotNull ProjectSystemId externalSystemId)
     throws IllegalArgumentException
   {
     Holder holder = myHolder.getValue();
-    Function<Project, ? extends AbstractExternalSystemLocalSettings<?>> provider = holder.localSettingsProviders.get(externalSystemId);
+    Function<Project, ? extends AbstractExternalSystemLocalSettings> provider = holder.localSettingsProviders.get(externalSystemId);
     if (provider == null) {
       throw new IllegalArgumentException(String.format(
         "Can't retrieve local settings for external system with id '%s'. Reason: no such system is registered. Known systems: %s",
@@ -109,7 +109,7 @@ public class ExternalSystemSettingsManager implements DisposableExternalSystemSe
       = ContainerUtil.newConcurrentMap();
 
     @NotNull
-    public final ConcurrentMap<ProjectSystemId, Function<Project, ? extends AbstractExternalSystemLocalSettings<?>>> localSettingsProviders
+    public final ConcurrentMap<ProjectSystemId, Function<Project, ? extends AbstractExternalSystemLocalSettings>> localSettingsProviders
       = ContainerUtil.newConcurrentMap();
 
     @NotNull

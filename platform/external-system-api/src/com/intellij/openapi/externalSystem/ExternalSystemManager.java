@@ -30,7 +30,7 @@ public interface ExternalSystemManager<
   ProjectSettings extends ExternalProjectSettings,
   SettingsListener extends ExternalSystemSettingsListener<ProjectSettings>,
   Settings extends AbstractExternalSystemSettings<ProjectSettings, SettingsListener>,
-  LocalSettings extends AbstractExternalSystemLocalSettings<LocalSettings>,
+  LocalSettings extends AbstractExternalSystemLocalSettings,
   ExecutionSettings extends ExternalSystemExecutionSettings>
   extends ParametersEnhancer
 {

@@ -47,32 +47,6 @@
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>
 
-    <!--Structure diff calculators-->
-    <!--<applicationService serviceInterface="com.intellij.openapi.externalSystem.model.project.change.ExternalProjectStructureChangesCalculator"-->
-    <!--serviceImplementation="org.jetbrains.plugins.gradle.diff.project.GradleProjectStructureChangesCalculator"/>-->
-    <!--<applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.module.GradleModuleStructureChangesCalculator"/>-->
-    <!--<applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.contentroot.GradleContentRootStructureChangesCalculator"/>-->
-    <!--<applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.dependency.GradleModuleDependencyStructureChangesCalculator"/>-->
-    <!--<applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.library.GradleLibraryStructureChangesCalculator"/>-->
-    <!--<applicationService serviceImplementation="org.jetbrains.plugins.gradle.diff.dependency.GradleLibraryDependencyStructureChangesCalculator"/>-->
-
-    <!--Project structure management services-->
-    <!--<applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManagerImpl"/>-->
-    <!--<applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ModuleDataManager"/>-->
-    <!--<applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.LibraryDataManager"/>-->
-    <!--<applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.JarDataManager"/>-->
-    <!--<applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ContentRootDataManager"/>-->
-    <!--<applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.ExternalDependencyManager"/>-->
-
-    <!--Auto-import stuff-->
-    <!--<applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.GradleDuplicateLibrariesPreProcessor"/>-->
-    <!--<applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.change.MovedJarsPostProcessor"/>-->
-    <!--<applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.change.OutdatedLibraryVersionPostProcessor"/>-->
-    <!--<applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.project.change.AutoImporter"/>-->
-
-    <!--Generic application services-->
-    <!--<applicationService serviceImplementation="com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager"/>-->
-
     <!--<applicationService serviceInterface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager"-->
     <!--serviceImplementation="com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl"/>-->
     <!--<applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.PlatformFacade"-->
@@ -97,8 +71,9 @@
     <!--<projectService serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager"/>-->
     <!--<projectService serviceImplementation="com.intellij.openapi.externalSystem.service.task.ExternalSystemTaskManager"/>-->
 
-    <!--<toolWindow id="JetGradle" anchor="right" icon="GradleIcons.ToolWindowGradle"-->
-    <!--factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"/>-->
+    <toolWindow id="Gradle" anchor="right" icon="GradleIcons.ToolWindowGradle"
+                factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"
+                conditionClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactoryCondition"/>
   </extensions>
 
   <extensions defaultExtensionNs="org.intellij.groovy">
