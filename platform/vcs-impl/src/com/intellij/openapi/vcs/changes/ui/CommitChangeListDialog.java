@@ -978,10 +978,6 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     rootPane.add(mySplitter, BorderLayout.CENTER);
 
-    JComponent browserHeader = myBrowser.getHeaderPanel();
-    myBrowser.remove(browserHeader);
-    rootPane.add(browserHeader, BorderLayout.NORTH);
-
     JPanel infoPanel = new JPanel(new BorderLayout());
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
