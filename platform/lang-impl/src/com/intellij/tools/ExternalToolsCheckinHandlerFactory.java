@@ -44,6 +44,9 @@ import java.util.List;
  *         Date: 06.08.12
  */
 public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
+
+  public static final Object NONE_TOOL = new Object();
+
   @NotNull
   @Override
   public CheckinHandler createHandler(final CheckinProjectPanel panel, CommitContext commitContext) {
@@ -96,6 +99,10 @@ public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
         panel.add(label, BorderLayout.NORTH);
         panel.add(listComponent, BorderLayout.CENTER);
         listComponent.setBorder(BorderFactory.createEmptyBorder(0, 0, 3, 0));
+
+        if (comboBox.getItemCount() == 0 || (comboBox.getItemCount() == 1 && comboBox.getItemAt(0) == NONE_TOOL)) {
+          return null;
+        }
 
         return new RefreshableOnComponent() {
           @Override
@@ -158,7 +165,7 @@ public class ExternalToolsCheckinHandlerFactory extends CheckinHandlerFactory {
   private static List<Object> getComboBoxElements() {
     List<Object> result = new ArrayList<Object>();
     ToolManager manager = ToolManager.getInstance();
-    result.add(new Object());//for empty selection
+    result.add(NONE_TOOL);//for empty selection
     for (ToolsGroup group : manager.getGroups()) {
       result.add(group);
       Collections.addAll(result, manager.getTools(group.getName()));
