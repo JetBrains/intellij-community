@@ -533,7 +533,7 @@ public abstract class BreakpointPropertiesPanel {
     myLogMessageCheckBox.setSelected(breakpoint.LOG_ENABLED);
     myTemporaryCheckBox.setSelected(breakpoint.REMOVE_AFTER_HIT);
     myEnabledCheckbox.setSelected(breakpoint.ENABLED);
-    myEnabledCheckbox.setText(breakpoint.getDisplayName());
+    myEnabledCheckbox.setText(breakpoint.getShortName());
     myEnabledCheckbox.addActionListener(new ActionListener() {
       @Override
       public void actionPerformed(ActionEvent event) {
