@@ -328,7 +328,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
    * updates the state of breakpoint and all the related UI widgets etc
    */
   @Override
-  public final void updateUI(@NotNull final Runnable afterUpdate) {
+  public final void updateUI(@Nullable final Runnable afterUpdate) {
     if (ApplicationManager.getApplication().isUnitTestMode()) {
       return;
     }
@@ -346,7 +346,10 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
         if (debugProcess == null || !debugProcess.isAttached()) {
           updateCaches(null);
           updateGutter();
-          afterUpdate.run();
+
+          if (afterUpdate != null) {
+            afterUpdate.run();
+          }
         }
         else {
           debugProcess.getManagerThread().invoke(new DebuggerCommandImpl() {
@@ -362,7 +365,9 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
                 @Override
                 public void run() {
                   updateGutter();
-                  afterUpdate.run();
+                  if (afterUpdate != null) {
+                    afterUpdate.run();
+                  }
                 }
               });
             }

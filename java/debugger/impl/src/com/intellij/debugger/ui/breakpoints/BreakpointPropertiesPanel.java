@@ -540,6 +540,7 @@ public abstract class BreakpointPropertiesPanel {
         if (myBreakpoint.ENABLED != myEnabledCheckbox.isSelected()) {
           myBreakpoint.ENABLED = myEnabledCheckbox.isSelected();
           getBreakpointManager(myProject).fireBreakpointChanged(myBreakpoint);
+          myBreakpoint.updateUI(null);
         }
       }
     });
