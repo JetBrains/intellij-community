@@ -978,10 +978,13 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
 
     rootPane.add(mySplitter, BorderLayout.CENTER);
 
-    JPanel infoPanel = new JPanel(new BorderLayout());
     myChangesInfoCalculator = new ChangeInfoCalculator();
     myLegend = new CommitLegendPanel(myChangesInfoCalculator);
-    infoPanel.add(myLegend.getComponent(), BorderLayout.NORTH);
+    JPanel legendPanel = new JPanel(new BorderLayout());
+    legendPanel.add(myLegend.getComponent(), BorderLayout.EAST);
+    myBrowser.getBottomPanel().add(legendPanel, BorderLayout.SOUTH);
+
+    JPanel infoPanel = new JPanel(new BorderLayout());
     infoPanel.add(myAdditionalOptionsPanel, BorderLayout.CENTER);
     rootPane.add(infoPanel, BorderLayout.EAST);
     infoPanel.setBorder(IdeBorderFactory.createEmptyBorder(0, 10, 0, 0));
@@ -1054,7 +1057,7 @@ public class CommitChangeListDialog extends DialogWrapper implements CheckinProj
         //
       }
     } else {
-      mySplitter.setProportion(0.8f);
+      mySplitter.setProportion(0.5f);
     }
   }
 
