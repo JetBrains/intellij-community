@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -35,7 +35,7 @@ public class JavaCopyPasteReferenceProcessor extends CopyPasteReferenceProcessor
       if (!((PsiJavaCodeReferenceElement)element).isQualified()) {
         final JavaResolveResult resolveResult = ((PsiJavaCodeReferenceElement)element).advancedResolve(false);
         final PsiElement refElement = resolveResult.getElement();
-        if (refElement != null && refElement.getContainingFile() != file) {
+        if (refElement != null) {
 
           if (refElement instanceof PsiClass) {
             if (refElement.getContainingFile() != element.getContainingFile()) {
