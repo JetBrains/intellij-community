@@ -624,8 +624,7 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
         e.getPresentation().setVisible(!myShowFlatten);
       }
     };
-    final SelectAllAction selectAllAction = new SelectAllAction();
-    final AnAction[] actions = new AnAction[]{directoriesAction, expandAllAction, collapseAllAction, selectAllAction};
+    final AnAction[] actions = new AnAction[]{directoriesAction, expandAllAction, collapseAllAction};
     directoriesAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_P, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
       this);
@@ -635,9 +634,6 @@ public abstract class ChangesTreeList<T> extends JPanel implements TypeSafeDataP
     collapseAllAction.registerCustomShortcutSet(
       new CustomShortcutSet(KeymapManager.getInstance().getActiveKeymap().getShortcuts(IdeActions.ACTION_COLLAPSE_ALL)),
       myTree);
-    selectAllAction.registerCustomShortcutSet(
-      new CustomShortcutSet(KeyStroke.getKeyStroke(KeyEvent.VK_A, SystemInfo.isMac ? KeyEvent.META_DOWN_MASK : KeyEvent.CTRL_DOWN_MASK)),
-      this);
     return actions;
   }
 
