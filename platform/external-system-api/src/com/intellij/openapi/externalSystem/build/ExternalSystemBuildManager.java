@@ -24,6 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * Abstraction layer for executing gradle tasks.
@@ -33,7 +34,18 @@ import java.util.List;
  */
 public interface ExternalSystemBuildManager<S extends ExternalSystemExecutionSettings> {
 
-  Collection<ExternalSystemTaskDescriptor> listTasks(@NotNull ExternalSystemTaskId id, @NotNull String projectPath, @Nullable S settings)
+  /**
+   * Refreshes available tasks for the target external project.
+   *  
+   * @param id                          request task id
+   * @param projectPath                 target external project path
+   * @param settings                    settings to use during the refresh
+   * @return                            mappings like 'module name -&gt; module tasks'
+   * @throws ExternalSystemException    in case when unexpected exception occurs during project info construction
+   */
+  Map<String, Collection<ExternalSystemTaskDescriptor>> listTasks(@NotNull ExternalSystemTaskId id,
+                                                                  @NotNull String projectPath,
+                                                                  @Nullable S settings)
     throws ExternalSystemException;
   
   void executeTasks(@NotNull ExternalSystemTaskId id, @NotNull List<String> taskNames, @NotNull String projectPath, @Nullable S settings)

@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Denis Zhdanov
@@ -46,11 +47,12 @@ public class ExternalSystemBuildManagerWrapper<S extends ExternalSystemExecution
     myProgressManager = progressManager;
   }
 
+  @Nullable
   @Override
-  public Collection<ExternalSystemTaskDescriptor> listTasks(@NotNull ExternalSystemTaskId id,
-                                                            @NotNull String projectPath,
-                                                            @Nullable S settings)
-    throws ExternalSystemException, RemoteException
+  public Map<String, Collection<ExternalSystemTaskDescriptor>> listTasks(@NotNull ExternalSystemTaskId id,
+                                                                         @NotNull String projectPath,
+                                                                         @Nullable S settings)
+    throws RemoteException, ExternalSystemException
   {
     myProgressManager.onQueued(id);
     try {
