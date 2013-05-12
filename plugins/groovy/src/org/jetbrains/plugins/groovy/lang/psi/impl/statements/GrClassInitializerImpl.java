@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,9 +20,9 @@ import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiCodeBlock;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiModifier;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifier;
 import org.jetbrains.plugins.groovy.lang.psi.api.auxiliary.modifiers.GrModifierList;
@@ -56,12 +56,12 @@ public class GrClassInitializerImpl extends GroovyPsiElementImpl implements GrCl
   }
 
   public boolean isStatic() {
-    return findChildByType(GroovyTokenTypes.kSTATIC) != null;
+    return getModifierList().hasExplicitModifier(PsiModifier.STATIC);
   }
 
 
   public PsiClass getContainingClass() {
-    PsiElement parent = getParent().getParent();
+    PsiElement parent = getParent();
     if (parent instanceof GrTypeDefinitionBody) {
       final PsiElement pparent = parent.getParent();
       if (pparent instanceof PsiClass) {

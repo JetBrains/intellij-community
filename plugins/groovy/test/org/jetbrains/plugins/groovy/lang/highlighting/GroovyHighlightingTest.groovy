@@ -1368,5 +1368,48 @@ def bar
 ''')
   }
 
+ void testFinalFieldRewrite() {
+   testHighlighting('''\
+class A {
+  final foo = 1
+
+  def A() {
+    foo = 2 //no error
+  }
+
+  def foo() {
+    <error descr="Cannot assign a value to final field 'foo'">foo</error> = 2
+  }
+}
+
+new A().foo = 2 //no error
+''')
+ }
+
+  void testStaticFinalFieldRewrite() {
+    testHighlighting('''\
+class A {
+  static final foo = 1
+
+  def A() {
+    <error descr="Cannot assign a value to final field 'foo'">foo</error> = 2
+  }
+
+  static {
+    foo = 2 //no error
+  }
+
+  def foo() {
+    <error descr="Cannot assign a value to final field 'foo'">foo</error> = 2
+  }
+
+  static def bar() {
+    <error descr="Cannot assign a value to final field 'foo'">foo</error> = 2
+  }
+}
+
+A.foo = 3 //no error
+''')
+  }
 
 }

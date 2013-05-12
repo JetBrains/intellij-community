@@ -286,6 +286,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public void visitReferenceExpression(final GrReferenceExpression referenceExpression) {
     checkStringNameIdentifier(referenceExpression);
     checkThisOrSuperReferenceExpression(referenceExpression, myHolder);
+    checkFinalFieldAccess(referenceExpression);
     if (ResolveUtil.isKeyOfMap(referenceExpression)) {
       PsiElement nameElement = referenceExpression.getReferenceNameElement();
       LOG.assertTrue(nameElement != null);
@@ -296,6 +297,40 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       LOG.assertTrue(nameElement != null);
       myHolder.createInfoAnnotation(nameElement, null).setTextAttributes(KEYWORD);
     }
+  }
+
+  private void checkFinalFieldAccess(@NotNull GrReferenceExpression ref) {
+    final PsiElement resolved = ref.resolve();
+
+    if (resolved instanceof GrField && resolved.isPhysical() && ((GrField)resolved).hasModifierProperty(FINAL) && PsiUtil.isLValue(ref)) {
+      final GrField field = (GrField)resolved;
+
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass != null && PsiTreeUtil.isAncestor(containingClass, ref, true)) {
+        GrMember container = findClassMemberContainer(ref, containingClass);
+
+        if (field.hasModifierProperty(STATIC)) {
+          if (container instanceof GrClassInitializer && ((GrClassInitializer)container).isStatic()) {
+            return;
+          }
+        }
+        else {
+          if (container instanceof GrMethod && ((GrMethod)container).isConstructor()) {
+            return;
+          }
+        }
+
+        myHolder.createErrorAnnotation(ref, GroovyBundle.message("cannot.assign.a.value.to.final.field.0", field.getName()));
+      }
+    }
+  }
+
+  @Nullable
+  private static GrMember findClassMemberContainer(@NotNull GrReferenceExpression ref, @NotNull PsiClass aClass) {
+    for (PsiElement parent = ref.getParent(); parent != null && parent != aClass; parent = parent.getParent()) {
+      if (parent instanceof GrMember && ((GrMember)parent).getContainingClass() == aClass) return (GrMember)parent;
+    }
+    return null;
   }
 
   private void checkStringNameIdentifier(GrReferenceExpression ref) {
