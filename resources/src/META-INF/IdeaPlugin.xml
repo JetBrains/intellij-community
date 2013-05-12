@@ -611,7 +611,7 @@
                      implementationClass="com.intellij.codeInspection.AnonymousCanBeMethodReferenceInspection" />
     <localInspection language="JAVA" shortName="Convert2MethodRef" displayName="Lambda can be replaced with method reference"
                      groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
-                     implementationClass="com.intellij.codeInspection.LambdaCanBeMethReferenceInspection" />
+                     implementationClass="com.intellij.codeInspection.LambdaCanBeMethodReferenceInspection" />
     <localInspection language="JAVA" shortName="CodeBlock2Expr" displayName="Lambda code block can be replaced with expression"
                      groupName="Java language level migration aids" enabledByDefault="true" level="WARNING"
                      implementationClass="com.intellij.codeInspection.RedundantLambdaCodeBlockInspection" />
@@ -1079,6 +1079,8 @@
 
     <applicationService serviceInterface="com.intellij.codeInspection.SuppressManager"
                         serviceImplementation="com.intellij.codeInspection.SuppressManagerImpl"/>
+    <applicationService serviceInterface="com.intellij.codeInspection.BatchSuppressManager"
+                        serviceImplementation="com.intellij.codeInspection.BatchSuppressManagerImpl"/>
 
     <declarationRangeHandler key="com.intellij.psi.PsiMethod"
                              implementationClass="com.intellij.codeInsight.hint.MethodDeclarationRangeHandler"/>
