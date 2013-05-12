@@ -5,7 +5,6 @@
   <xi:include href="/idea/RichPlatformPlugin.xml" xpointer="xpointer(/idea-plugin/*)"/>
   <module value="com.intellij.modules.java"/>
   <module value="com.intellij.modules.all"/>
-  
   <xi:include href="/idea/JavaActions.xml" xpointer="xpointer(/component/*)"/>
   <xi:include href="/META-INF/ExternalSystemExtensions.xml" xpointer="xpointer(/idea-plugin/extensions/*)"/>
   <xi:include href="/componentSets/Debugger.xml" xpointer="xpointer(/components/*)"/>
