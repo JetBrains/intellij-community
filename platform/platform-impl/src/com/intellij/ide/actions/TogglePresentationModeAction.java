@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -24,6 +25,7 @@ import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -61,6 +63,17 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
         }
       }
     }
+    Font tooltipFont = UIManager.getFont("ToolTip.font");
+    if (settings.PRESENTATION_MODE) {
+      Font font = new Font(tooltipFont.getName(), tooltipFont.getStyle(), settings.PRESENTATION_MODE_FONT_SIZE);
+      UIManager.put("old.tooltip.font", tooltipFont);
+      UIManager.put("ToolTip.font", font);
+    } else {
+      UIManager.put("ToolTip.font", UIManager.getFont("old.tooltip.font"));
+    }
+
+
+    LafManager.getInstance().updateUI();
 
     EditorUtil.reinitSettings();
   }
