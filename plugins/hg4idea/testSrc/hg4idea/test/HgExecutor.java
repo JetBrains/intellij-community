@@ -71,6 +71,12 @@ public class HgExecutor extends Executor {
     return run(split);
   }
 
+  public static void updateProject() {
+    hg("pull");
+    hg("update");
+    hg("merge");
+  }
+
   @NotNull
   public static String getHgExecutable() {
     return HG_EXECUTABLE;
