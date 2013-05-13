@@ -33,7 +33,7 @@ public class PyTypeParserTest extends PyTestCase {
     myFixture.configureByFile("typeParser/typeParser.py");
     final PyCollectionType type = (PyCollectionType) PyTypeParser.getTypeByName(myFixture.getFile(), "list of MyObject");
     assertClassType(type, "list");
-    assertClassType(type.getElementType(TypeEvalContext.userInitiated(null)), "MyObject");
+    assertClassType(type.getElementType(getTypeEvalContext()), "MyObject");
   }
 
   public void testDictType() {
@@ -41,12 +41,16 @@ public class PyTypeParserTest extends PyTestCase {
     final PyCollectionType type = (PyCollectionType) PyTypeParser.getTypeByName(myFixture.getFile(), "dict from str to MyObject");
     assertNotNull(type);
     assertClassType(type, "dict");
-    final PyType elementType = type.getElementType(TypeEvalContext.userInitiated(null));
+    final PyType elementType = type.getElementType(getTypeEvalContext());
     assertInstanceOf(elementType, PyTupleType.class);
     final PyTupleType tupleType = (PyTupleType)elementType;
     assertEquals(2, tupleType.getElementCount());
     assertClassType(tupleType.getElementType(0), "str");
     assertClassType(tupleType.getElementType(1), "MyObject");
+  }
+
+  private TypeEvalContext getTypeEvalContext() {
+    return TypeEvalContext.userInitiated(myFixture.getFile());
   }
 
   public void testUnionType() {
