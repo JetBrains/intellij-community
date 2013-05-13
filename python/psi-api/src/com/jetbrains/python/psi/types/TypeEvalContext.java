@@ -63,17 +63,10 @@ public class TypeEvalContext {
   }
 
   /**
-   * Create a type evaluation context for deeper and slower code analysis.
-   *
-   * Should be used only when normal analysis context is not enough for getting good results.
-   */
-  public static TypeEvalContext deepCodeAnalysis() {
-    return new TypeEvalContext(false, true, null);
-  }
-
-  /**
    * Create a type evaluation context for performing analysis operations on the specified file which is currently open in the editor,
    * without accessing stubs. For such a file, additional slow operations are allowed.
+   *
+   * Inspections should not create a new type evaluation context. They should re-use the context of the inspection session.
    */
   public static TypeEvalContext codeAnalysis(@Nullable PsiFile origin) {
     return new TypeEvalContext(false, false, origin);
@@ -87,7 +80,16 @@ public class TypeEvalContext {
   public static TypeEvalContext codeInsightFallback() {
     return new TypeEvalContext(false, false, null);
   }
-  
+
+  /**
+   * Create a type evaluation context for deeper and slower code insight.
+   *
+   * Should be used only when normal code insight context is not enough for getting good results.
+   */
+  public static TypeEvalContext deepCodeInsight() {
+    return new TypeEvalContext(false, true, null);
+  }
+
   public TypeEvalContext withTracing() {
     if (myTrace == null) {
       myTrace = new ArrayList<String>();
