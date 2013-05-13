@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsCla
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrAccessorMethod;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMember;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.impl.synthetic.GroovyScriptClass;
 import org.jetbrains.plugins.groovy.lang.psi.util.GroovyPropertyUtils;
@@ -292,5 +293,15 @@ public class GrHighlightUtil {
 
     return new TextRange(startOffset, endOffset);
 
+  }
+
+  @Nullable
+  public static GrMember findClassMemberContainer(@NotNull GrReferenceExpression ref, @NotNull PsiClass aClass) {
+    for (PsiElement parent = ref.getParent(); parent != null && parent != aClass; parent = parent.getParent()) {
+      if (parent instanceof GrMember && ((GrMember)parent).getContainingClass() == aClass) {
+        return (GrMember)parent;
+      }
+    }
+    return null;
   }
 }
