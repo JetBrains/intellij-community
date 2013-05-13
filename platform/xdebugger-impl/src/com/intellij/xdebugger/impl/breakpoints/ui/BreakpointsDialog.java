@@ -106,6 +106,7 @@ public class BreakpointsDialog extends DialogWrapper {
     setTitle("Breakpoints");
     setModal(false);
     init();
+    setOKButtonText("Done");
   }
 
   private String getSplitterProportionKey() {
@@ -170,11 +171,6 @@ public class BreakpointsDialog extends DialogWrapper {
   protected Action[] createActions() {
     return new Action[]{getOKAction()};
   }
-
-  private static Font smaller(Font f) {
-    return f.deriveFont(f.getStyle(), f.getSize() - 2);
-  }
-
 
   private class ToggleBreakpointGroupingRuleEnabledAction extends ToggleActionButton {
     private XBreakpointGroupingRule myRule;
