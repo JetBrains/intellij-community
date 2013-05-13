@@ -648,7 +648,7 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
           if (mapClass != null && mapClass.getTypeParameters().length == 2) {
             PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(mapClass, clazz, qResult.getSubstitutor());
             if (substitutor != null) {
-              return TypeConversionUtil.erasure(substitutor.substitute(mapClass.getTypeParameters()[1]));
+              return substitutor.substitute(mapClass.getTypeParameters()[1]);
             }
           }
         }
@@ -679,6 +679,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
       PsiType result = GrReassignedLocalVarsChecker.checkReassignedVar(refExpr, true);
       if (result != null) return result;
+
+      if (refExpr.isDefinitelyKeyOfMap()) {
+        final PsiType type = getTypeFromMapAccess(refExpr);
+        if (type != null) {
+          return type;
+        }
+      }
 
       if (GrUnresolvedAccessInspection.isClassReference(refExpr)) {
         GrExpression qualifier = refExpr.getQualifier();
@@ -721,17 +728,9 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       //map access
       PsiType qType = qualifier.getType();
       if (qType instanceof PsiClassType && !(qType instanceof GrMapType)) {
-        PsiClassType.ClassResolveResult qResult = ((PsiClassType)qType).resolveGenerics();
-        PsiClass clazz = qResult.getElement();
-        if (clazz != null) {
-          PsiClass mapClass =
-            JavaPsiFacade.getInstance(refExpr.getProject()).findClass(CommonClassNames.JAVA_UTIL_MAP, refExpr.getResolveScope());
-          if (mapClass != null && mapClass.getTypeParameters().length == 2) {
-            PsiSubstitutor substitutor = TypeConversionUtil.getClassSubstitutor(mapClass, clazz, qResult.getSubstitutor());
-            if (substitutor != null) {
-              return TypeConversionUtil.erasure(substitutor.substitute(mapClass.getTypeParameters()[1]));
-            }
-          }
+        final PsiType mapValueType = getTypeFromMapAccess(refExpr);
+        if (mapValueType != null) {
+          return mapValueType;
         }
       }
     }
