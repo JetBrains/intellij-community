@@ -53,7 +53,7 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
       Element listElement = (Element)o;
       if (ATTR_LIST.equals(listElement.getName())) {
         if (callerClass == null) {
-          callerClass = ReflectionUtil.getCallerClass(2);
+          callerClass = ReflectionUtil.findCallerClass(2);
           assert callerClass != null;
         }
         final ClassLoader classLoader = callerClass.getClassLoader();

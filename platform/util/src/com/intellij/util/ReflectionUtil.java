@@ -325,7 +325,7 @@ public class ReflectionUtil {
    */
   @SuppressWarnings("JavadocReference")
   @Nullable
-  public static Class getCallerClass(int framesToSkip) {
+  public static Class findCallerClass(int framesToSkip) {
     return null;
   }
 }
