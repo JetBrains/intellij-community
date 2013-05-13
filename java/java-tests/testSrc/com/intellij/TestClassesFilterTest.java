@@ -77,17 +77,18 @@ public class TestClassesFilterTest {
     assertTrue(classesFilter.matches("com.intellij.package7.package5.package8"));
     assertFalse(classesFilter.matches("com.intellij.package7"));
 
-    checkForNullGroup(getReader(filterText), null);
+    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), null);
+    checkForNullGroup(classesFilter);
 
-    checkForNullGroup(getReader(filterText), GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED);
+    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED);
+    checkForNullGroup(classesFilter);
   }
 
   private static InputStreamReader getReader(String filterText) throws UnsupportedEncodingException {
     return new InputStreamReader(new ByteArrayInputStream(filterText.getBytes("UTF-8")));
   }
 
-  private static void checkForNullGroup(InputStreamReader reader, String groupName) {
-    TestClassesFilter classesFilter = GroupBasedTestClassFilter.createOn(reader, groupName);
+  private static void checkForNullGroup(TestClassesFilter classesFilter) {
     assertFalse(classesFilter.matches("com.intellij.package1.Test"));
     assertFalse(classesFilter.matches("com.intellij.package1.Test2"));
     assertTrue(classesFilter.matches("com.intellij.package2.Test"));
