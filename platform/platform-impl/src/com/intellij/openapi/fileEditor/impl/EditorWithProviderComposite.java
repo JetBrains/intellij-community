@@ -23,6 +23,7 @@ import com.intellij.openapi.fileEditor.FileEditorStateLevel;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -32,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 public class EditorWithProviderComposite extends EditorComposite {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite");
   private final FileEditorProvider[] myProviders;
+  private boolean myIsNavigation = false;
 
   EditorWithProviderComposite (
     final VirtualFile file,
@@ -87,5 +89,20 @@ public class EditorWithProviderComposite extends EditorComposite {
     LOG.assertTrue(selectedProviderIndex != -1);
     final FileEditorProvider[] providers = getProviders();
     return new HistoryEntry(getFile(), providers, states, providers[selectedProviderIndex]);
+  }
+
+  public boolean isForNavigation() {
+    return myIsNavigation;
+  }
+
+  public void setForNavigation(boolean navigation) {
+    myIsNavigation = navigation;
+    EditorWindow window = ((FileEditorManagerEx)getFileEditorManager()).getSplitters().getNavigationEditorWindow();
+    if (window != null) {
+      int index = window.findEditorIndex(this);
+      if (index > 0) {
+        window.setForegroundAt(index, JBColor.cyan);
+      }
+    }
   }
 }

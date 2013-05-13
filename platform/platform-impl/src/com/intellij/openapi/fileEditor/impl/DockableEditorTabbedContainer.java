@@ -149,7 +149,7 @@ public class DockableEditorTabbedContainer implements DockContainer.Persistent {
       file.putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
     }
 
-    ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(window, file, true);
+    ((FileEditorManagerImpl)FileEditorManagerEx.getInstanceEx(myProject)).openFileImpl2(window, file, true, true);
     window.setFilePinned(file, dockableEditor.isPinned());
   }
 

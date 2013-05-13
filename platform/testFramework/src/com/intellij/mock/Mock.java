@@ -318,7 +318,7 @@ public class Mock {
     @NotNull
     public Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                          boolean focusEditor,
-                                                                         boolean searchForSplitter) {
+                                                                         boolean searchForSplitter, boolean useNavigationTab) {
       return Pair.create (new FileEditor[0], new FileEditorProvider [0]);
     }
 
@@ -429,6 +429,16 @@ public class Mock {
 
     @Override
     public void setSelectedEditor(@NotNull VirtualFile file, String fileEditorProviderId) {
+    }
+
+    @Override
+    public void materializeNavigationTab(FileEditor fileEditor) {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
+
+    @Override
+    public void createNavigationTab(FileEditor fileEditor) {
+      //To change body of implemented methods use File | Settings | File Templates.
     }
   }
 

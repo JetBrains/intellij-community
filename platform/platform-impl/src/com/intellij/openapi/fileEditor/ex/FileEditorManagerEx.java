@@ -140,9 +140,16 @@ public abstract class FileEditorManagerEx extends FileEditorManager implements B
   }
 
   @NotNull
+  public Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
+                                                                       boolean focusEditor,
+                                                                       boolean searchForSplitter) {
+    return openFileWithProviders(file, focusEditor, searchForSplitter, true);
+  }
+
+  @NotNull
   public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                                 boolean focusEditor,
-                                                                                boolean searchForSplitter);
+                                                                                boolean searchForSplitter, boolean useNavigationTab);
 
   @NotNull
   public abstract Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,

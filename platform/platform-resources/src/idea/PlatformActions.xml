@@ -339,6 +339,8 @@
         </group>
 
         <group id="EditorTabsGroup" popup="true">
+          <action id="MaterializeTab" class="com.intellij.ide.actions.MaterializeTab"/>
+          <action id="CreateNavigationTab" class="com.intellij.ide.actions.CreateNavigationTab"/>
           <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
           <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
           <action id="PinActiveTab" class="com.intellij.ide.actions.PinActiveTabAction"/>

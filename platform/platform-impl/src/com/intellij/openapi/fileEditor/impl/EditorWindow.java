@@ -39,6 +39,7 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileManager;
 import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.JBColor;
 import com.intellij.ui.LayeredIcon;
 import com.intellij.util.IconUtil;
 import com.intellij.util.containers.Stack;
@@ -283,7 +284,7 @@ public class EditorWindow {
     final VirtualFile file = VirtualFileManager.getInstance().findFileByUrl(info.getFirst());
     final Integer second = info.getSecond();
     if (file != null) {
-      getManager().openFileImpl4(this, file, true, null, true, second == null ? -1 : second.intValue());
+      getManager().openFileImpl4(this, file, true, null, true, second == null ? -1 : second.intValue(), true);
     }
   }
 
@@ -469,7 +470,7 @@ public class EditorWindow {
       disposeTabs();
       if (currentFile != null) {
         currentFile.putUserData(FileEditorManagerImpl.CLOSING_TO_REOPEN, null);
-        getManager().openFileImpl2(this, currentFile, focusEditor && myOwner.getCurrentWindow() == this);
+        getManager().openFileImpl2(this, currentFile, focusEditor && myOwner.getCurrentWindow() == this, true);
       }
       else {
         myPanel.repaint();
@@ -675,7 +676,11 @@ public class EditorWindow {
         trimToSize(UISettings.getInstance().EDITOR_TAB_LIMIT, file, false);
         setSelectedEditor(editor, focusEditor);
         myOwner.updateFileIcon(file);
-        myOwner.updateFileColor(file);
+        if (editor.isForNavigation()) {
+          setForegroundAt(indexToInsert, JBColor.cyan);
+        } else {
+          myOwner.updateFileColor(file);
+        }
       }
       myOwner.setCurrentWindow(this, false);
     }
@@ -695,7 +700,7 @@ public class EditorWindow {
         final EditorWindow[] siblings = findSiblings();
         final EditorWindow target = siblings[0];
         if (virtualFile != null) {
-          final FileEditor[] editors = fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null, true).first;
+          final FileEditor[] editors = fileEditorManager.openFileImpl3(target, virtualFile, focusNew, null, true, true).first;
           syncCaretIfPossible(editors);
         }
         return target;
@@ -742,7 +747,7 @@ public class EditorWindow {
           }
 
           final VirtualFile nextFile = virtualFile == null ? file : virtualFile;
-          final FileEditor[] editors = fileEditorManager.openFileImpl3(res, nextFile, focusNew, null, true).first;
+          final FileEditor[] editors = fileEditorManager.openFileImpl3(res, nextFile, focusNew, null, true, true).first;
           syncCaretIfPossible(editors);
           res.setFilePinned (nextFile, isFilePinned (file));
           if (!focusNew) {
@@ -759,9 +764,9 @@ public class EditorWindow {
           panel.revalidate();
           final VirtualFile firstFile = firstEC.getFile();
           final VirtualFile nextFile = virtualFile == null ? firstFile : virtualFile;
-          final FileEditor[] firstEditors = fileEditorManager.openFileImpl3(this, firstFile, !focusNew, null, true).first;
+          final FileEditor[] firstEditors = fileEditorManager.openFileImpl3(this, firstFile, !focusNew, null, true, true).first;
           syncCaretIfPossible(firstEditors);
-          final FileEditor[] secondEditors = fileEditorManager.openFileImpl3(res, nextFile, focusNew, null, true).first;
+          final FileEditor[] secondEditors = fileEditorManager.openFileImpl3(res, nextFile, focusNew, null, true, true).first;
           syncCaretIfPossible(secondEditors);
         }
         return res;

@@ -177,7 +177,7 @@ public class IdeDocumentHistoryTest extends PlatformLangTestCase {
     @NotNull
     public Pair<FileEditor[],FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                          boolean focusEditor,
-                                                                         boolean searchForSplitter) {
+                                                                         boolean searchForSplitter, boolean useNavigationTab) {
       return Pair.create (new FileEditor[] {mySelectedEditor}, new FileEditorProvider[] {myProvider});
     }
 

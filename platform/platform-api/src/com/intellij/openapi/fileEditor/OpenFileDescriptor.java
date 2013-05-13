@@ -43,6 +43,7 @@ public class OpenFileDescriptor implements Navigatable {
    */
   public static final DataKey<Editor> NAVIGATE_IN_EDITOR = DataKey.create("NAVIGATE_IN_EDITOR");
 
+  private final boolean myOpenInNavigationTab;
   @NotNull
   private final VirtualFile myFile;
   private final int myOffset;
@@ -55,26 +56,30 @@ public class OpenFileDescriptor implements Navigatable {
   private boolean myUseCurrentWindow = false;
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int offset) {
-    this(project, file, -1, -1, offset, false);
+    this(project, file, offset, true);
+  }
+
+  public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int offset, boolean inNavigationTab) {
+    this(project, file, -1, -1, offset, false, inNavigationTab);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file, int logicalLine, int logicalColumn) {
-    this(project, file, logicalLine, logicalColumn, -1, false);
+    this(project, file, logicalLine, logicalColumn, -1, false, false);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file,
                             int logicalLine, int logicalColumn, boolean persistent) {
-    this(project, file, logicalLine, logicalColumn, -1, persistent);
+    this(project, file, logicalLine, logicalColumn, -1, persistent, false);
   }
 
   public OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file) {
-    this(project, file, -1, -1, -1, false);
+    this(project, file, -1, -1, -1, false, false);
   }
 
   private OpenFileDescriptor(@NotNull Project project, @NotNull VirtualFile file,
-                             int logicalLine, int logicalColumn, int offset, boolean persistent) {
+                             int logicalLine, int logicalColumn, int offset, boolean persistent, boolean inNavigationTab) {
     myProject = project;
-
+    myOpenInNavigationTab = inNavigationTab;
     myFile = file;
     myLogicalLine = logicalLine;
     myLogicalColumn = logicalColumn;
@@ -261,5 +266,9 @@ public class OpenFileDescriptor implements Navigatable {
 
   public boolean isUseCurrentWindow() {
     return myUseCurrentWindow;
+  }
+
+  public boolean isInNavigationTab() {
+    return myOpenInNavigationTab;
   }
 }

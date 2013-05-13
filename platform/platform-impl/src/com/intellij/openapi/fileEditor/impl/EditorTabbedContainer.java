@@ -305,7 +305,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
   public void insertTab(final VirtualFile file, final Icon icon, final JComponent comp, final String tooltip, final int indexToInsert) {
 
     TabInfo tab = myTabs.findInfo(file);
-    if (tab != null) return;
+    //if (tab != null) return;
 
     tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file)
       .setTabColor(calcTabColor(myProject, file)).setDragOutDelegate(myDragOutDelegate);

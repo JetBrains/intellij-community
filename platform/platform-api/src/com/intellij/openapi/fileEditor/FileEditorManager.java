@@ -191,4 +191,8 @@ public abstract class FileEditorManager {
    * {@link com.intellij.openapi.fileEditor.FileEditorProvider#getEditorTypeId()}
    */
   public abstract void setSelectedEditor(@NotNull VirtualFile file, String fileEditorProviderId);
+
+  public abstract void materializeNavigationTab(FileEditor fileEditor);
+
+  public abstract void createNavigationTab(FileEditor fileEditor);
 }
