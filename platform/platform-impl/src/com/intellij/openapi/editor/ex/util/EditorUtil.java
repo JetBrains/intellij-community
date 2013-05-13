@@ -29,6 +29,7 @@ import com.intellij.openapi.editor.impl.FontInfo;
 import com.intellij.openapi.editor.impl.IterationState;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
 import org.intellij.lang.annotations.JdkConstants;
 import org.jetbrains.annotations.NotNull;
@@ -767,6 +768,16 @@ public class EditorUtil {
         ((EditorEx)editor).reinitSettings();
       }
     }
+  }
+
+  @NotNull
+  public static TextRange getSelectionInAnyMode(Editor editor) {
+    SelectionModel selection = editor.getSelectionModel();
+    int[] starts = selection.getBlockSelectionStarts();
+    int[] ends = selection.getBlockSelectionEnds();
+    int start = starts.length > 0 ? starts[0] : selection.getSelectionStart();
+    int end = ends.length > 0 ? ends[ends.length - 1] : selection.getSelectionEnd();
+    return TextRange.create(start, end);
   }
 }
 
