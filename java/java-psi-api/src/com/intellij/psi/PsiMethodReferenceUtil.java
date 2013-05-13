@@ -19,6 +19,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.util.*;
+import com.intellij.util.Function;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -165,7 +166,12 @@ public class PsiMethodReferenceUtil {
           if (interfaceReturnType == PsiType.VOID) return true;
           final PsiParameter[] parameters = method.getParameterList().getParameters();
           if (resolve == JavaPsiFacade.getElementFactory(resolve.getProject()).getArrayClass(PsiUtil.getLanguageLevel(resolve))) {
-            if (parameters.length != 1 || parameters[0].getType() != PsiType.INT) return false;
+            if (!arrayCompatibleSignature(parameters, new Function<PsiParameter[], PsiType>() {
+              @Override
+              public PsiType fun(PsiParameter[] parameters) {
+                return resolveResult.getSubstitutor().substitute(parameters[0].getType());
+              }
+            })) return false;
             final PsiTypeParameter[] typeParameters = ((PsiClass)resolve).getTypeParameters();
             if (typeParameters.length == 1) {
               final PsiType arrayComponentType = result.getSubstitutor().substitute(typeParameters[0]);
@@ -281,12 +287,25 @@ public class PsiMethodReferenceUtil {
 
 
   public static boolean onArrayType(PsiClass containingClass, MethodSignature signature) {
-    if (signature.getParameterTypes().length == 1 && signature.getParameterTypes()[0] == PsiType.INT) {
+    if (arrayCompatibleSignature(signature.getParameterTypes(), new Function<PsiType[], PsiType>() {
+      @Override
+      public PsiType fun(PsiType[] types) {
+        return types[0];
+      }
+    })) {
       if (containingClass != null) {
         final Project project = containingClass.getProject();
         final LanguageLevel level = PsiUtil.getLanguageLevel(containingClass);
         return containingClass == JavaPsiFacade.getElementFactory(project).getArrayClass(level);
       }
+    }
+    return false;
+  }
+
+  private static <T> boolean arrayCompatibleSignature(T[] paramTypes, Function<T[], PsiType> fun) {
+    if (paramTypes.length == 1) {
+      final PsiType paramType = fun.fun(paramTypes);
+      if (paramType != null && TypeConversionUtil.isAssignable(PsiType.INT, paramType)) return true;
     }
     return false;
   }

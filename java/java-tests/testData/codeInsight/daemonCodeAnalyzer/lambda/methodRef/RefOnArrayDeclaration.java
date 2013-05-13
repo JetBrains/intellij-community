@@ -45,3 +45,16 @@ class OnArrayTest {
         ObjectArrayReturnType a5 = Foo<? extends String>[]::new;
     }
 }
+
+
+class IDEA106973 {
+  interface Function<T, R> {
+    R apply(T t);
+  }
+  
+  {
+    Function<Integer, String[]> a  = String[] :: new;
+    <error descr="Incompatible types. Found: '<method reference>', required: 'IDEA106973.Function<java.lang.String,java.lang.String[]>'">Function<String, String[]> a1  = String[] :: new;</error>
+    Function<Short, String[]> a2  = String[] :: new;
+  }
+}
