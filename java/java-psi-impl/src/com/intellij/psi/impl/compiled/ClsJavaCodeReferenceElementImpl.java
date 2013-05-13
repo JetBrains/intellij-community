@@ -20,6 +20,7 @@ import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiSubstitutorImpl;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.resolve.ResolveCache;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -45,8 +46,10 @@ public class ClsJavaCodeReferenceElementImpl extends ClsElementImpl implements P
   public ClsJavaCodeReferenceElementImpl(PsiElement parent, String canonicalText) {
     myParent = parent;
 
-    myCanonicalText = canonicalText;
-    myQualifiedName = PsiNameHelper.getQualifiedClassName(myCanonicalText, false);
+    String canonical = TypeInfo.internFrequentType(canonicalText);
+    myCanonicalText = canonical;
+    String qName = TypeInfo.internFrequentType(PsiNameHelper.getQualifiedClassName(myCanonicalText, false));
+    myQualifiedName = qName.equals(canonical) ? canonical : qName;
 
     String[] classParameters = PsiNameHelper.getClassParametersText(canonicalText);
     myRefParameterList = classParameters.length == 0 ? null : new ClsReferenceParameterListImpl(this, classParameters);

@@ -17,6 +17,7 @@ package com.intellij.psi.impl.compiled;
 
 import com.intellij.psi.*;
 import com.intellij.psi.impl.PsiImplUtil;
+import com.intellij.psi.impl.cache.TypeInfo;
 import com.intellij.psi.impl.source.PsiClassReferenceType;
 import com.intellij.psi.impl.source.tree.JavaElementType;
 import com.intellij.psi.impl.source.tree.TreeElement;
@@ -40,7 +41,7 @@ public class ClsTypeElementImpl extends ClsElementImpl implements PsiTypeElement
 
   public ClsTypeElementImpl(@NotNull PsiElement parent, @NotNull String typeText, char variance) {
     myParent = parent;
-    myTypeText = typeText;
+    myTypeText = TypeInfo.internFrequentType(typeText);
     myVariance = variance;
   }
 
