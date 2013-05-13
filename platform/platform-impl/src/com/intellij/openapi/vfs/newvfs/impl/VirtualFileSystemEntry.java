@@ -49,12 +49,14 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
 
   private static final Key<String> SYMLINK_TARGET = Key.create("local.vfs.symlink.target");
 
-  private static final int DIRTY_FLAG = 0x10000000;
-  private static final int IS_SYMLINK_FLAG = 0x20000000;
+  private static final int DIRTY_FLAG =       0x10000000;
+  private static final int IS_SYMLINK_FLAG =  0x20000000;
   private static final int HAS_SYMLINK_FLAG = 0x40000000;
-  private static final int IS_SPECIAL_FLAG = 0x80000000;
-  private static final int RESERVED_FLAGS_MASK = 0xf0000000;
-  private static final int ALL_FLAGS_MASK = 0xff000000;
+  private static final int IS_SPECIAL_FLAG =  0x80000000;
+  private static final int INDEXED_FLAG =     0x04000000;
+  static final int CHILDREN_CACHED =          0x08000000;
+  private static final int ALL_FLAGS_MASK =
+    DIRTY_FLAG | IS_SYMLINK_FLAG | HAS_SYMLINK_FLAG | IS_SPECIAL_FLAG | INDEXED_FLAG | CHILDREN_CACHED;
 
   private volatile int myNameId;
   private volatile VirtualDirectoryImpl myParent;
@@ -133,34 +135,27 @@ public abstract class VirtualFileSystemEntry extends NewVirtualFile {
     myFlags = (myFlags & ALL_FLAGS_MASK) | ((int)modificationStamp & ~ALL_FLAGS_MASK);
   }
 
-  @Override
-  public boolean getFlag(int mask) {
-    checkCustomFlagRange(mask);
-    return getFlagInt(mask);
-  }
-
-  private static void checkCustomFlagRange(int mask) {
-    assert (mask & RESERVED_FLAGS_MASK) == 0 : "Mask '" + Integer.toBinaryString(mask) + "' is in reserved range.";
-    assert (mask & ~ALL_FLAGS_MASK) == 0 : "Mask '" + Integer.toBinaryString(mask) + "' is outside flag range.";
-  }
-
-  private boolean getFlagInt(int mask) {
+  boolean getFlagInt(int mask) {
+    assert (mask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
     return (myFlags & mask) != 0;
   }
 
-  @Override
-  public void setFlag(int mask, boolean value) {
-    checkCustomFlagRange(mask);
-    setFlagInt(mask, value);
-  }
-
-  private synchronized void setFlagInt(int mask, boolean value) {
+  synchronized void setFlagInt(int mask, boolean value) {
+    assert (mask & ~ALL_FLAGS_MASK) == 0 : "Unexpected flag";
     if (value) {
       myFlags |= mask;
     }
     else {
       myFlags &= ~mask;
     }
+  }
+
+  public boolean isFileIndexed() {
+    return getFlagInt(INDEXED_FLAG);
+  }
+
+  public void setFileIndexed(boolean indexed) {
+    setFlagInt(INDEXED_FLAG, indexed);
   }
 
   @Override
