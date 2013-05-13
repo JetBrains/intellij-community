@@ -128,6 +128,12 @@ public class JavaResolveUtil {
         PsiClass topMemberClass = getTopLevelClass(memberClass, accessObjectClass);
         PsiClass topAccessClass = getTopLevelClass(accessObjectClass, memberClass);
         if (!manager.areElementsEquivalent(topMemberClass, topAccessClass)) return false;
+        if (accessObjectClass instanceof PsiAnonymousClass && accessObjectClass.isInheritor(memberClass, true)) {
+          if (place instanceof PsiMethodCallExpression && 
+              ((PsiMethodCallExpression)place).getMethodExpression().getQualifierExpression() instanceof PsiThisExpression) {
+            return false;
+          }
+        }
       }
 
       if (fileResolveScope == null) {
@@ -183,7 +189,7 @@ public class JavaResolveUtil {
     PsiClass lastClass = null;
     Boolean isAtLeast17 = null;
     for (PsiElement placeParent = place; placeParent != null; placeParent = placeParent.getContext()) {
-      if (placeParent instanceof PsiClass) {
+      if (placeParent instanceof PsiClass && !(placeParent instanceof PsiAnonymousClass)) {
         final boolean isTypeParameter = placeParent instanceof PsiTypeParameter;
         if (isTypeParameter && isAtLeast17 == null) {
           isAtLeast17 = JavaVersionService.getInstance().isAtLeast(place, JavaSdkVersion.JDK_1_7);
