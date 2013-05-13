@@ -244,13 +244,22 @@ public class GroovyBlockGenerator implements GroovyElementTypes {
     }
 
     if (blockPsi instanceof GrMethod) {
-      if (myContext.getSettings().ALIGN_MULTILINE_METHOD_BRACKETS) {
-        final ASTNode lparenth = myNode.findChildByType(mLPAREN);
-        final ASTNode rparenth = myNode.findChildByType(mRPAREN);
-        if (lparenth != null && rparenth != null) {
-          myAlignmentProvider.addPair(lparenth, rparenth, false);
+
+      final ArrayList<Block> subBlocks = new ArrayList<Block>();
+
+      for (ASTNode childNode : getGroovyChildren(myNode)) {
+        if (childNode.getElementType() == mLPAREN) continue;
+        if (childNode.getElementType() == mRPAREN) continue;
+
+        if (childNode.getElementType() == PARAMETERS_LIST) {
+          subBlocks.add(new ParameterListBlock(((GrMethod)blockPsi), Indent.getNoneIndent(), Wrap.createWrap(WrapType.NONE, false), myContext));
+        }
+        else if (canBeCorrectBlock(childNode)) {
+          subBlocks.add(new GroovyBlock(childNode, getIndent(childNode), getChildWrap(childNode), myContext));
         }
       }
+      return subBlocks;
+
     }
 
     else if (blockPsi instanceof GrTraditionalForClause) {

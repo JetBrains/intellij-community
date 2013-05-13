@@ -272,12 +272,6 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
     }
   }
 
-  private static boolean isParameterListUnfinished(GrMethod method) {
-    final GrParameterList list = method.getParameterList();
-    final PsiElement last = list.getLastChild();
-    return last != null && last.getNode().getElementType() != mCOMMA;
-  }
-
   @Override
   public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
     if (myChildType == EXTENDS_CLAUSE || myChildType == IMPLEMENTS_CLAUSE) {
