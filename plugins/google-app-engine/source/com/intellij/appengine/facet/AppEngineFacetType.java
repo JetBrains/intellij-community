@@ -30,8 +30,10 @@ import javax.swing.*;
  * @author nik
  */
 public class AppEngineFacetType extends FacetType<AppEngineFacet,  AppEngineFacetConfiguration> {
+  public static final String STRING_ID = "google-app-engine";
+
   public AppEngineFacetType() {
-    super(AppEngineFacet.ID, "google-app-engine", "Google App Engine");
+    super(AppEngineFacet.ID, STRING_ID, "Google App Engine");
   }
 
   public AppEngineFacetConfiguration createDefaultConfiguration() {
