@@ -848,15 +848,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         newSelectedComposite.getFile().putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
       }
     }
-
-    window.setEditor(newSelectedComposite, focusEditor);
-
     if (compositeForNavigation != null) {
       FileEditor selectedEditor = compositeForNavigation.getSelectedEditor();
       if (compositeForNavigation.isToMaterialize() && selectedEditor instanceof TextEditor) {
         TextEditor selectedTextEditor = (TextEditor)selectedEditor;
         doMaterializeComposite(selectedTextEditor, compositeForNavigation);
       }
+    }
+
+    window.setEditor(newSelectedComposite, focusEditor, useNavigationTab);
+
+    if (compositeForNavigation != null) {
       if (index >= 0) {
         int indexToRemove = window.findEditorIndex(compositeForNavigation);
         window.getTabbedPane().removeTabAt(indexToRemove, -1);

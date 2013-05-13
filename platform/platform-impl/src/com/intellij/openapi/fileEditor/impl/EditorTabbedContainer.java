@@ -313,7 +313,7 @@ public final class EditorTabbedContainer implements Disposable, CloseAction.Clos
     if (tab != null) return;
 
     tab = new TabInfo(comp).setText(calcTabTitle(myProject, file)).setIcon(icon).setTooltipText(tooltip).setObject(file)
-      .setTabColor(calcTabColor(myProject, file)).setDragOutDelegate(myDragOutDelegate);
+      .setTabColor(calcTabColor(myProject, file)).setDragOutDelegate(myDragOutDelegate).setForNavigation(isForNavigation);
     tab.setTestableUi(new MyQueryable(tab));
 
     final DefaultActionGroup tabActions = new DefaultActionGroup();

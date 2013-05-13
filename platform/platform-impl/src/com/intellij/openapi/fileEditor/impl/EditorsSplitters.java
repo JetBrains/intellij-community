@@ -633,7 +633,7 @@ public class EditorsSplitters extends JBPanel {
         window.closeFile(file, false, moveFocus);
         if (window.getTabCount() == 0 && nextFile != null) {
           EditorWithProviderComposite newComposite = myManager.newEditorComposite(nextFile);
-          window.setEditor(newComposite, moveFocus); // newComposite can be null
+          window.setEditor(newComposite, moveFocus, false); // newComposite can be null
         }
       }
       // cleanup windows with no tabs

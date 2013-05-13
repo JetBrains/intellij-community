@@ -450,7 +450,7 @@ public class EditorWindow {
         final EditorWithProviderComposite editor = getSelectedEditor();
         myPanel.removeAll();
         createTabs(tabPlacement);
-        setEditor (editor, true);
+        setEditor (editor, true, false);
       }
       else {
         myTabbedPane.setTabPlacement(tabPlacement);
@@ -645,7 +645,7 @@ public class EditorWindow {
     }
   }
 
-  public void setEditor(@Nullable final EditorWithProviderComposite editor, final boolean focusEditor) {
+  public void setEditor(@Nullable final EditorWithProviderComposite editor, final boolean focusEditor, boolean forNavigation) {
     if (editor != null) {
       if (myTabbedPane == null) {
         myPanel.removeAll ();
@@ -672,7 +672,8 @@ public class EditorWindow {
         
         final VirtualFile file = editor.getFile();
         final Icon template = AllIcons.FileTypes.Text;
-        myTabbedPane.insertTab(file, new EmptyIcon(template.getIconWidth(), template.getIconHeight()), new TComp(this, editor), null, indexToInsert, false);
+        myTabbedPane.insertTab(file, new EmptyIcon(template.getIconWidth(), template.getIconHeight()), new TComp(this, editor), null, indexToInsert,
+                               forNavigation);
         trimToSize(UISettings.getInstance().EDITOR_TAB_LIMIT, file, false);
         setSelectedEditor(editor, focusEditor);
         myOwner.updateFileIcon(file);
@@ -955,10 +956,10 @@ public class EditorWindow {
 
   private void processSiblingEditor(final EditorWithProviderComposite siblingEditor) {
     if (myTabbedPane != null && getTabCount() < UISettings.getInstance().EDITOR_TAB_LIMIT && findFileComposite(siblingEditor.getFile()) == null) {
-      setEditor(siblingEditor, true);
+      setEditor(siblingEditor, true, false);
     }
     else if (myTabbedPane == null && getTabCount() == 0) { // tabless mode and no file opened
-      setEditor(siblingEditor, true);
+      setEditor(siblingEditor, true, false);
     }
     else {
       getManager().disposeComposite(siblingEditor);
