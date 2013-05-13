@@ -3,6 +3,8 @@ package com.jetbrains.python.psi.impl;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.PsiElement;
+import com.intellij.psi.PsiFile;
+import com.intellij.psi.PsiReference;
 import com.intellij.psi.search.LocalSearchScope;
 import com.intellij.psi.search.SearchScope;
 import com.intellij.psi.stubs.IStubElementType;
@@ -17,12 +19,14 @@ import com.jetbrains.python.PythonDialectsTokenSetProvider;
 import com.jetbrains.python.codeInsight.stdlib.PyStdlibTypeProvider;
 import com.jetbrains.python.documentation.StructuredDocString;
 import com.jetbrains.python.psi.*;
+import com.jetbrains.python.psi.resolve.PyResolveContext;
 import com.jetbrains.python.psi.stubs.PyNamedParameterStub;
 import com.jetbrains.python.psi.types.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.util.Map;
 
 /**
  * @author yole
@@ -224,10 +228,45 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
             }
           }
         }
-
         for(PyTypeProvider provider: Extensions.getExtensions(PyTypeProvider.EP_NAME)) {
           PyType result = provider.getParameterType(this, func, context);
           if (result != null) return result;
+        }
+        // Guess the type from file-local usages
+        if (context.allowLocalUsages(this)) {
+          final PyCallExpression call = findFirstLocalCall(func);
+          if (call != null) {
+            final PyResolveContext resolveContext = PyResolveContext.noImplicits().withTypeEvalContext(context);
+            final CallArgumentsMapping mapping = call.getArgumentList().analyzeCall(resolveContext);
+            for (Map.Entry<PyExpression, PyNamedParameter> entry : mapping.getPlainMappedParams().entrySet()) {
+              if (entry.getValue() == this) {
+                final PyExpression argument = entry.getKey();
+                if (argument != null) {
+                  final PyType type = context.getType(argument);
+                  if (type != null) {
+                    return PyUnionType.createWeakType(type);
+                  }
+                }
+              }
+            }
+          }
+        }
+      }
+    }
+    return null;
+  }
+
+  @Nullable
+  private static PyCallExpression findFirstLocalCall(@NotNull PyFunction function) {
+    final PsiFile file = function.getContainingFile();
+    final String name = function.getName();
+    if (file != null && name != null) {
+      // Text search is faster than ReferencesSearch in LocalSearchScope
+      final String text = file.getText();
+      for (int pos = text.indexOf(name); pos != -1; pos = text.indexOf(name, pos + 1)) {
+        final PsiReference ref = file.findReferenceAt(pos);
+        if (ref != null && ref.isReferenceTo(function)) {
+          return PsiTreeUtil.getParentOfType(ref.getElement(), PyCallExpression.class);
         }
       }
     }

@@ -53,6 +53,10 @@ public class TypeEvalContext {
     return myAllowDataFlow || element.getContainingFile() == myOrigin;
   }
 
+  public boolean allowLocalUsages(@NotNull PsiElement element) {
+    return myAllowStubToAST && myAllowDataFlow && element.getContainingFile() == myOrigin;
+  }
+
   /**
    * Create the most detailed type evaluation context for user-initiated actions.
    *
