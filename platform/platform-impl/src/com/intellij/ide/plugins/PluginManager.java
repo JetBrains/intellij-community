@@ -73,7 +73,6 @@ import java.util.zip.ZipInputStream;
  */
 @SuppressWarnings({"UseOfSystemOutOrSystemErr", "CallToPrintStackTrace"}) // No logger is loaded at this time so we have to use these.
 public class PluginManager {
-
   @NonNls private static final String PROPERTY_PLUGIN_PATH = "plugin.path";
   private static final Object PLUGIN_CLASSES_LOCK = new Object();
   @NonNls public static final String INSTALLED_TXT = "installed.txt";
@@ -116,6 +115,7 @@ public class PluginManager {
   }
 
   public static void initPlugins(@Nullable StartupProgress progress) {
+    PluginClassLoaderDetector.install();
     long start = System.currentTimeMillis();
     try {
       initializePlugins(progress);
@@ -284,7 +284,7 @@ public class PluginManager {
     ourPlugins = pluginDescriptors;
   }
 
-  public static void initClassLoader(final ClassLoader parentLoader, final IdeaPluginDescriptorImpl descriptor) {
+  public static void initClassLoader(@NotNull ClassLoader parentLoader, @NotNull IdeaPluginDescriptorImpl descriptor) {
     final List<File> classPath = descriptor.getClassPath();
     final ClassLoader loader =
         createPluginClassLoader(classPath.toArray(new File[classPath.size()]), new ClassLoader[]{parentLoader}, descriptor);
