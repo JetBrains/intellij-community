@@ -349,7 +349,7 @@ public class EditorsSplitters extends JBPanel {
       try {
         final HistoryEntry entry = new HistoryEntry(getManager().getProject(), file.getChild(HistoryEntry.TAG), true);
         boolean isCurrent = Boolean.valueOf(file.getAttributeValue("current")).booleanValue();
-        getManager().openFileImpl4(window, entry.myFile, false, entry, isCurrent, i);
+        getManager().openFileImpl4(window, entry.myFile, false, entry, isCurrent, i, true);
         if (getManager().isFileOpen(entry.myFile)) {
           window.setFilePinned(entry.myFile, Boolean.valueOf(file.getAttributeValue(PINNED)).booleanValue());
           if (Boolean.valueOf(file.getAttributeValue("current-in-tab")).booleanValue()) {
@@ -490,7 +490,11 @@ public class EditorsSplitters extends JBPanel {
     for (final EditorWindow window : windows) {
       final int index = window.findEditorIndex(window.findFileComposite(file));
       LOG.assertTrue(index != -1);
-      window.setForegroundAt(index, getManager().getFileColor(file));
+      if (window.getEditors()[index].isForNavigation()) {
+        window.setForegroundAt(index, JBColor.cyan);
+      } else {
+        window.setForegroundAt(index, getManager().getFileColor(file));
+      }
       window.setWaveColor(index, getManager().isProblem(file) ? JBColor.red : null);
     }
   }
@@ -643,6 +647,18 @@ public class EditorsSplitters extends JBPanel {
         }
       }
     }
+  }
+
+  @Nullable
+  public EditorWindow getNavigationEditorWindow() {
+    for (EditorWindow window : myWindows) {
+      for (EditorWithProviderComposite composite : window.getEditors()) {
+        if (composite.isForNavigation()) {
+          return window;
+        }
+      }
+    }
+    return null;
   }
 
   private final class MyFocusTraversalPolicy extends IdeFocusTraversalPolicy {

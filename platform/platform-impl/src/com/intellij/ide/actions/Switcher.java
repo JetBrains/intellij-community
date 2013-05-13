@@ -840,7 +840,7 @@ public class Switcher extends AnAction implements DumbAware {
                 if (info.second != null) {
                   EditorWindow wnd = findAppropriateWindow(info);
                   if (wnd != null) {
-                    manager.openFileImpl2(wnd, info.first, true);
+                    manager.openFileImpl2(wnd, info.first, true, false);
                     manager.addSelectionRecord(info.first, wnd);
                   }
                 } else {

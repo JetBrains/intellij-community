@@ -71,7 +71,7 @@ import java.util.Map;
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull VirtualFile file,
                                                                         boolean focusEditor,
-                                                                        boolean searchForSplitter) {
+                                                                        boolean searchForSplitter, boolean useNavigationTab) {
     // for non-text editors. uml, etc
     final FileEditorProvider provider = file.getUserData(FileEditorProvider.KEY);
     if (provider != null && provider.accept(getProject(), file)) {
@@ -488,5 +488,15 @@ import java.util.Map;
 
   @Override
   public void setSelectedEditor(@NotNull VirtualFile file, String fileEditorProviderId) {
+  }
+
+  @Override
+  public void materializeNavigationTab(FileEditor fileEditor) {
+    //To change body of implemented methods use File | Settings | File Templates.
+  }
+
+  @Override
+  public void createNavigationTab(FileEditor fileEditor) {
+    //To change body of implemented methods use File | Settings | File Templates.
   }
 }

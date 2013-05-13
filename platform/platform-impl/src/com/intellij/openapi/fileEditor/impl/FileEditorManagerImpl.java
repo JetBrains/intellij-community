@@ -594,6 +594,13 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
                                                                         final boolean focusEditor,
                                                                         boolean searchForSplitter) {
+    return openFileWithProviders(file, focusEditor, searchForSplitter, true);
+  }
+
+  @NotNull
+  public Pair<FileEditor[], FileEditorProvider[]> openFileWithProviders(@NotNull final VirtualFile file,
+                                                                        final boolean focusEditor,
+                                                                        boolean searchForSplitter, boolean useNavigationTab) {
     if (!file.isValid()) {
       throw new IllegalArgumentException("file is not valid: " + file);
     }
@@ -605,13 +612,25 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
 
     EditorWindow wndToOpenIn = null;
+    Set<EditorsSplitters> allSplitters = getAllSplitters();
     if (searchForSplitter) {
-      Set<EditorsSplitters> all = getAllSplitters();
       EditorsSplitters active = getActiveSplitters(true).getResult();
-      if (active.getCurrentWindow() != null && active.getCurrentWindow().isFileOpen(file)) {
-        wndToOpenIn = active.getCurrentWindow();
+      EditorWithProviderComposite fileComposite = active.getCurrentWindow().findFileComposite(file);
+      if (active.getCurrentWindow() != null && fileComposite != null) {
+        if (fileComposite.isForNavigation() && !useNavigationTab) {
+          EditorWindow[] windows = active.getWindows();
+          if (windows.length == 2) {
+            int windowWithNavigationTabIndex = windows[0] == active.getNavigationEditorWindow() ? 0 : 1;
+            if (windows[windowWithNavigationTabIndex].getEditors().length == 1) { // todo: add setting to do this
+              wndToOpenIn = windows[1-windowWithNavigationTabIndex];
+            }
+          }
+        }
+        if (wndToOpenIn == null) {
+          wndToOpenIn = active.getCurrentWindow();
+        }
       } else {
-        for (EditorsSplitters splitters : all) {
+        for (EditorsSplitters splitters : allSplitters) {
           final EditorWindow window = splitters.getCurrentWindow();
           if (window == null) continue;
 
@@ -626,14 +645,24 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       wndToOpenIn = getSplitters().getCurrentWindow();
     }
 
-    EditorsSplitters splitters = getSplitters();
+    EditorsSplitters activeOrMainSplitters = getSplitters();
 
     if (wndToOpenIn == null) {
-      wndToOpenIn = splitters.getOrCreateCurrentWindow(file);
+      for (EditorsSplitters splitters : allSplitters) {
+        EditorWindow navigationWindow = splitters.getNavigationEditorWindow();
+        if (navigationWindow != null) {
+          wndToOpenIn = navigationWindow;
+          break;
+        }
+      }
     }
 
-    openAssociatedFile(file, wndToOpenIn, splitters);
-    return openFileImpl2(wndToOpenIn, file, focusEditor);
+    if (wndToOpenIn == null) {
+      wndToOpenIn = activeOrMainSplitters.getOrCreateCurrentWindow(file);
+    }
+
+    openAssociatedFile(file, wndToOpenIn, activeOrMainSplitters);
+    return openFileImpl2(wndToOpenIn, file, focusEditor, useNavigationTab);
   }
 
   public Pair<FileEditor[], FileEditorProvider[]> openFileInNewWindow(VirtualFile file) {
@@ -666,7 +695,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
         if (associatedFile != null) {
           EditorWindow currentWindow = splitters.getCurrentWindow();
           int idx = windows[0] == wndToOpenIn ? 1 : 0;
-          openFileImpl2(windows[idx], associatedFile, false);
+          openFileImpl2(windows[idx], associatedFile, false, false);
 
           if (currentWindow != null) {
             splitters.setCurrentWindow(currentWindow, false);
@@ -688,17 +717,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
     assertDispatchThread();
 
-    return openFileImpl2(window, file, focusEditor);
+    return openFileImpl2(window, file, focusEditor, true);
   }
 
   @NotNull
   public Pair<FileEditor[], FileEditorProvider[]> openFileImpl2(@NotNull final EditorWindow window,
                                                                 @NotNull final VirtualFile file,
-                                                                final boolean focusEditor) {
+                                                                final boolean focusEditor, final boolean useNavigationTab) {
     final Ref<Pair<FileEditor[], FileEditorProvider[]>> result = new Ref<Pair<FileEditor[], FileEditorProvider[]>>();
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
-        result.set(openFileImpl3(window, file, focusEditor, null, true));
+        result.set(openFileImpl3(window, file, focusEditor, null, true, useNavigationTab));
       }
     }, "", null);
     return result.get();
@@ -712,14 +741,15 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
    *                passed file is valid.
    * @param entry   map between FileEditorProvider and FileEditorState. If this parameter
    * @param current
+   * @param useNavigationTab
    */
   @NotNull
   Pair<FileEditor[], FileEditorProvider[]> openFileImpl3(@NotNull final EditorWindow window,
                                                          @NotNull final VirtualFile file,
                                                          final boolean focusEditor,
                                                          @Nullable final HistoryEntry entry,
-                                                         boolean current) {
-    return openFileImpl4(window, file, focusEditor, entry, current, -1);
+                                                         boolean current, boolean useNavigationTab) {
+    return openFileImpl4(window, file, focusEditor, entry, current, -1, useNavigationTab);
   }
 
   @NotNull
@@ -728,7 +758,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
                                                          final boolean focusEditor,
                                                          @Nullable final HistoryEntry entry,
                                                          boolean current,
-                                                         int index) {
+                                                         int index, boolean useNavigationTab) {
     // Open file
     FileEditor[] editors;
     FileEditorProvider[] providers;
@@ -736,7 +766,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     boolean newEditorCreated = false;
 
     final boolean open = window.isFileOpen(file);
-    if (open) {
+    if (open && useNavigationTab) {
       // File is already opened. In this case we have to just select existing EditorComposite
       newSelectedComposite = window.findFileComposite(file);
       LOG.assertTrue(newSelectedComposite != null);
@@ -748,6 +778,18 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       if (UISettings.getInstance().EDITOR_TAB_PLACEMENT == UISettings.TABS_NONE || UISettings.getInstance().PRESENTATION_MODE) {
         for (EditorWithProviderComposite composite : window.getEditors()) {
           Disposer.dispose(composite);
+        }
+      }
+
+
+      EditorWithProviderComposite compositeForNavigation = null;
+      if (useNavigationTab) {
+        final EditorWithProviderComposite[] tabs = window.getEditors();
+        for (int i = 0; i < tabs.length; i++) {
+          if (tabs[i].isForNavigation()) {
+            compositeForNavigation = tabs[i];
+            index = i;
+          }
         }
       }
 
@@ -800,9 +842,17 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       // Now we have to create EditorComposite and insert it into the TabbedEditorComponent.
       // After that we have to select opened editor.
       newSelectedComposite = new EditorWithProviderComposite(file, editors, providers, this);
+      newSelectedComposite.setForNavigation(compositeForNavigation != null);
 
       if (index >= 0) {
         newSelectedComposite.getFile().putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
+      }
+
+      if (compositeForNavigation != null) {
+        if (index >= 0) {
+          window.getTabbedPane().removeTabAt(index, -1);
+        }
+        disposeComposite(compositeForNavigation);
       }
     }
 
@@ -967,6 +1017,22 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     }
   }
 
+  @Override
+  public void materializeNavigationTab(@NotNull FileEditor fileEditor) {
+    EditorWithProviderComposite composite = getEditorComposite(fileEditor);
+    if (composite != null) {
+      openFileWithProviders(composite.getFile(), true, true, false);
+    }
+  }
+
+  @Override
+  public void createNavigationTab(FileEditor fileEditor) {
+    EditorWithProviderComposite composite = getEditorComposite(fileEditor);
+    Pair<FileEditor[], FileEditorProvider[]> pair = openFileWithProviders(composite.getFile(), false, false, false);
+    EditorWithProviderComposite newComposite = getEditorComposite(pair.first[0]);
+    newComposite.setForNavigation(true);
+  }
+
 
   @Nullable
   EditorWithProviderComposite newEditorComposite(final VirtualFile file) {
@@ -1023,7 +1089,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     CommandProcessor.getInstance().executeCommand(myProject, new Runnable() {
       public void run() {
         VirtualFile file = descriptor.getFile();
-        final FileEditor[] editors = openFile(file, focusEditor, !descriptor.isUseCurrentWindow());
+        final FileEditor[] editors = openFileWithProviders(file, focusEditor, !descriptor.isUseCurrentWindow(), descriptor.isInNavigationTab()).getFirst();
         ContainerUtil.addAll(result, editors);
 
         boolean navigated = false;
@@ -1738,7 +1804,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
 
           try {
             newFile.putUserData(EditorWindow.INITIAL_INDEX_KEY, i);
-            Pair<FileEditor[], FileEditorProvider[]> pair = openFileImpl2(eachWindow, newFile, editor == selected);
+            Pair<FileEditor[], FileEditorProvider[]> pair = openFileImpl2(eachWindow, newFile, editor == selected, true);
 
             if (newFilePair.second != null) {
               TextEditorImpl openedEditor = EditorFileSwapper.findSinglePsiAwareEditor(pair.first);
