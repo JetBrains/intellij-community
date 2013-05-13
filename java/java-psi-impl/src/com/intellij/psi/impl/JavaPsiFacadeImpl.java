@@ -23,6 +23,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.FileIndexFacade;
 import com.intellij.openapi.roots.PackageIndex;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.VirtualFileFilter;
@@ -62,6 +63,13 @@ public class JavaPsiFacadeImpl extends JavaPsiFacadeEx {
   private final Project myProject;
   private final JavaFileManager myFileManager;
 
+  @SuppressWarnings("UnusedDeclaration")
+  private final LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
+    @Override
+    public void run() {
+      myPackageCache.clear();
+    }
+  });
 
   public JavaPsiFacadeImpl(Project project,
                            PsiManagerImpl psiManager,
