@@ -24,7 +24,6 @@ import com.intellij.util.ui.JBInsets;
 import javax.swing.*;
 import javax.swing.border.Border;
 import javax.swing.plaf.ComponentUI;
-import javax.swing.plaf.DimensionUIResource;
 import javax.swing.plaf.basic.BasicTextFieldUI;
 import javax.swing.text.JTextComponent;
 import java.awt.*;
@@ -115,11 +114,6 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
     return cPoint.distance(ePoint) <= 8 ? SearchAction.CLEAR : sPoint.distance(ePoint) <= 8 ? SearchAction.POPUP : null;
   }
 
-  @Override
-  protected void paintSafely(Graphics g) {
-    super.paintSafely(g);
-  }
-
   protected Rectangle getDrawingRect() {
     final JTextComponent c = getComponent();
     final JBInsets i = JBInsets.create(c.getInsets());
@@ -189,24 +183,6 @@ public class DarculaTextFieldUI extends BasicTextFieldUI {
       super.paintBackground(g);
     }
     config.restore();
-  }
-
-  @Override
-  public Dimension getMinimumSize(JComponent c) {
-    final Dimension size = super.getMinimumSize(c);
-    return new DimensionUIResource(size.width, 24);
-  }
-
-  @Override
-  public Dimension getPreferredSize(JComponent c) {
-    final Dimension size = super.getPreferredSize(c);
-    return new DimensionUIResource(size.width, 24);
-  }
-
-  @Override
-  public Dimension getMaximumSize(JComponent c) {
-    final Dimension size = super.getMaximumSize(c);
-    return new DimensionUIResource(size.width, 24);
   }
 
   public static boolean isSearchField(Component c) {

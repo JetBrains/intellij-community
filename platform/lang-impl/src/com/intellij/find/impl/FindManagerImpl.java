@@ -624,7 +624,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
 
   @Override
   public String getStringToReplace(@NotNull String foundString, @NotNull FindModel model,
-                                   int startOffset, @NotNull String documentText) throws MalformedReplacementStringException{
+                                   int startOffset, @NotNull CharSequence documentText) throws MalformedReplacementStringException{
     String toReplace = model.getStringToReplace();
     if (model.isRegularExpressions()) {
       return getStringToReplaceByRegexp(model, documentText, startOffset);
@@ -635,7 +635,26 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
     return toReplace;
   }
 
-  private static String getStringToReplaceByRegexp(@NotNull final FindModel model, @NotNull String text, int startOffset) throws MalformedReplacementStringException{
+  private static String getStringToReplaceByRegexp(@NotNull final FindModel model, @NotNull CharSequence text, int startOffset) throws MalformedReplacementStringException {
+    Matcher matcher = compileRegexAndFindFirst(model, text, startOffset);
+    return getStringToReplaceByRegexp(model, matcher);
+  }
+
+  private static String getStringToReplaceByRegexp(@NotNull final FindModel model, Matcher matcher) throws MalformedReplacementStringException{
+    StringBuffer replaced = new StringBuffer();
+    if (matcher == null) return null;
+    try {
+      String toReplace = StringUtil.unescapeStringCharacters(model.getStringToReplace());
+      matcher.appendReplacement(replaced, toReplace);
+
+      return replaced.substring(matcher.start());
+    }
+    catch (Exception e) {
+      throw createMalformedReplacementException(model, e);
+    }
+  }
+
+  private static Matcher compileRegexAndFindFirst(FindModel model, CharSequence text, int startOffset) {
     Matcher matcher = compileRegExp(model, text);
 
     if (model.isForward()){
@@ -655,16 +674,7 @@ public class FindManagerImpl extends FindManager implements PersistentStateCompo
         return null;
       }
     }
-    try {
-      StringBuffer replaced = new StringBuffer();
-      String toReplace = StringUtil.unescapeStringCharacters(model.getStringToReplace());
-      matcher.appendReplacement(replaced, toReplace);
-
-      return replaced.substring(matcher.start());
-    }
-    catch (Exception e) {
-      throw createMalformedReplacementException(model, e);
-    }
+    return matcher;
   }
 
   private static MalformedReplacementStringException createMalformedReplacementException(FindModel model, Exception e) {

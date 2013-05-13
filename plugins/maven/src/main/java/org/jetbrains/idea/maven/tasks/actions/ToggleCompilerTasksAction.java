@@ -53,11 +53,11 @@ public abstract class ToggleCompilerTasksAction extends MavenToggleAction {
   }
 
   protected static List<MavenCompilerTask> getTasks(DataContext context) {
-    MavenProject project = MavenActionUtil.getMavenProject(context);
-    if (project == null) return Collections.emptyList();
-
     final List<String> goals = MavenDataKeys.MAVEN_GOALS.getData(context);
     if (goals == null || goals.isEmpty()) return Collections.emptyList();
+
+    MavenProject project = MavenActionUtil.getMavenProject(context);
+    if (project == null) return Collections.emptyList();
 
     List<MavenCompilerTask> result = new ArrayList<MavenCompilerTask>();
     for (String each : goals) {

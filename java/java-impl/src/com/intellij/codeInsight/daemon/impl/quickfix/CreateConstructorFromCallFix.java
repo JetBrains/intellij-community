@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,8 @@ public class CreateConstructorFromCallFix extends CreateFromUsageBaseFix {
   @Override
   protected void invokeImpl(final PsiClass targetClass) {
     final Project project = myConstructorCall.getProject();
-    PsiElementFactory elementFactory = JavaPsiFacade.getInstance(project).getElementFactory();
+    JVMElementFactory elementFactory = JVMElementFactories.getFactory(targetClass.getLanguage(), project);
+    if (elementFactory == null) elementFactory = JavaPsiFacade.getElementFactory(project);
 
     try {
       PsiMethod constructor = (PsiMethod)targetClass.add(elementFactory.createConstructor());

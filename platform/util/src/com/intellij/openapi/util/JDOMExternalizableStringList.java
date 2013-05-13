@@ -16,9 +16,9 @@
 package com.intellij.openapi.util;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.util.ReflectionUtil;
 import org.jdom.Element;
 import org.jetbrains.annotations.NotNull;
-import sun.reflect.Reflection;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -48,10 +48,15 @@ public class JDOMExternalizableStringList extends ArrayList<String> implements J
   public void readExternal(Element element) throws InvalidDataException {
     clear();
 
+    Class callerClass = null;
     for (final Object o : element.getChildren()) {
       Element listElement = (Element)o;
       if (ATTR_LIST.equals(listElement.getName())) {
-        final ClassLoader classLoader = Reflection.getCallerClass(2).getClassLoader();
+        if (callerClass == null) {
+          callerClass = ReflectionUtil.findCallerClass(2);
+          assert callerClass != null;
+        }
+        final ClassLoader classLoader = callerClass.getClassLoader();
         for (final Object o1 : listElement.getChildren()) {
           Element listItemElement = (Element)o1;
           if (!ATTR_ITEM.equals(listItemElement.getName())) {

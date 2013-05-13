@@ -70,14 +70,15 @@ public class PlainModuleTemplatesFactory extends ProjectTemplatesFactory {
         }
       })};
     }
-    ModuleBuilder[] builders = context.getAllBuilders();
-    return ContainerUtil.mapNotNull(builders, new NullableFunction<ModuleBuilder, ProjectTemplate>() {
+    List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
+    List<ProjectTemplate> templates = ContainerUtil.mapNotNull(builders, new NullableFunction<ModuleBuilder, ProjectTemplate>() {
       @Nullable
       @Override
       public ProjectTemplate fun(ModuleBuilder builder) {
         return builder.getGroupName().equals(group) ? new BuilderBasedTemplate(builder) : null;
       }
-    }, ProjectTemplate.EMPTY_ARRAY);
+    });
+    return templates.toArray(new ProjectTemplate[templates.size()]);
   }
 
   @Override

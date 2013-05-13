@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -53,7 +53,8 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
   public void serialize(@NotNull GrMethodStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
-    GrStubUtils.writeStringArray(dataStream, stub.getNamedParameters());
+    final String[] namedParameters = stub.getNamedParameters();
+    GrStubUtils.writeStringArray(dataStream, namedParameters.length <= Byte.MAX_VALUE ? namedParameters : ArrayUtil.EMPTY_STRING_ARRAY);
     GrStubUtils.writeNullableString(dataStream, stub.getTypeText());
     dataStream.writeByte(stub.getFlags());
   }

@@ -137,7 +137,7 @@ public class LocalFileSystemTest extends PlatformLangTestCase {
     final String newName = "dir";
     final VirtualFile dirCopy = dirToCopy.copy(this, toVDir, newName);
     assertEquals(newName, dirCopy.getName());
-    PlatformTestUtil.assertDirectoriesEqual(toVDir, fromVDir, null);
+    PlatformTestUtil.assertDirectoriesEqual(toVDir, fromVDir);
   }
 
   public void testUnicodeNames() throws Exception {

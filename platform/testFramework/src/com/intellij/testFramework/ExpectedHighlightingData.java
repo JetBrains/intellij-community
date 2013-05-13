@@ -423,7 +423,7 @@ public class ExpectedHighlightingData {
     String fileName = myFile == null ? "" : myFile.getName() + ": ";
     String failMessage = "";
 
-    for (HighlightInfo info : infos) {
+    for (HighlightInfo info : reverseCollection(infos)) {
       if (!expectedInfosContainsInfo(info)) {
         final int startOffset = info.startOffset;
         final int endOffset = info.endOffset;
@@ -447,7 +447,7 @@ public class ExpectedHighlightingData {
     }
 
     final Collection<ExpectedHighlightingSet> expectedHighlights = highlightingTypes.values();
-    for (ExpectedHighlightingSet highlightingSet : expectedHighlights) {
+    for (ExpectedHighlightingSet highlightingSet : reverseCollection(expectedHighlights)) {
       final Set<HighlightInfo> expInfos = highlightingSet.infos;
       for (HighlightInfo expectedInfo : expInfos) {
         if (!infosContainsExpectedInfo(infos, expectedInfo) && highlightingSet.enabled) {
@@ -475,6 +475,10 @@ public class ExpectedHighlightingData {
     if (!failMessage.isEmpty()) {
       compareTexts(infos, text, failMessage + "\n", filePath);
     }
+  }
+
+  private static <T> List<T> reverseCollection(Collection<T> infos) {
+    return ContainerUtil.reverse(infos instanceof List ? (List<T>)infos : new ArrayList<T>(infos));
   }
 
   private void compareTexts(Collection<HighlightInfo> infos, String text, String failMessage, @Nullable String filePath) {

@@ -251,7 +251,14 @@ public abstract class AbstractJavaFxPackager {
       if (!StringUtil.isEmptyOrSpaces(message)) {
         registerJavaFxPackagerError(message);
       }
-      return process.waitFor();
+      final int result = process.waitFor();
+      if (result != 0) {
+        final String explanationMessage = new String(FileUtil.loadBytes(process.getInputStream()));
+        if (!StringUtil.isEmptyOrSpaces(explanationMessage)) {
+          registerJavaFxPackagerError(explanationMessage);
+        }
+      }
+      return result;
     }
     catch (Exception e) {
       registerJavaFxPackagerError(e);

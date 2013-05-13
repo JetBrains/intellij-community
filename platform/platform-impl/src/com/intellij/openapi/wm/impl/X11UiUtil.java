@@ -15,11 +15,12 @@
  */
 package com.intellij.openapi.wm.impl;
 
+import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.wm.IdeFrame;
 import com.intellij.openapi.wm.WindowManager;
-import com.intellij.util.SystemProperties;
 import org.jetbrains.annotations.Nullable;
 import sun.misc.Unsafe;
 
@@ -243,7 +244,7 @@ public class X11UiUtil {
 
   @SuppressWarnings("SpellCheckingInspection")
   public static void patchDetectedWm(String wmName) {
-    if (X11 == null || SystemProperties.getBooleanProperty("idea.skip.wm.patching", false)) return;
+    if (X11 == null || Registry.is("idea.x11.skip.wm.patching")) return;
 
     try {
       if (wmName.startsWith("Mutter") || "Muffin".equals(wmName) || "GNOME Shell".equals(wmName)) {
@@ -293,7 +294,7 @@ public class X11UiUtil {
   public static boolean isFullScreenSupported() {
     if (X11 == null) return false;
 
-    if (SystemInfo.isJavaVersionAtLeast("1.7")) {
+    if (Patches.SUN_BUG_ID_8013359) {
       String wmName = getWmName();
       if (wmName != null &&
           (wmName.startsWith("Mutter") || newHashSet("Metacity", "GNOME Shell", "Muffin", "Marco").contains(wmName))) {

@@ -5,6 +5,6 @@ abstract class  IX  {
 class XXC extends IX {
     @Override
     void foo() {
-        <caret><selection>super.foo();    //To change body of overridden methods use File | Settings | File Templates.</selection>
+        <caret><selection>super.foo();</selection>
     }
 }

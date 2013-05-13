@@ -15,11 +15,14 @@
  */
 package com.intellij.openapi.externalSystem.model;
 
+import com.intellij.openapi.util.io.StreamUtil;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.io.Serializable;
+import java.io.*;
+import java.lang.reflect.Modifier;
+import java.lang.reflect.Proxy;
 import java.util.*;
 
 /**
@@ -42,7 +45,8 @@ public class DataNode<T> implements Serializable {
   @NotNull private final List<DataNode<?>> myChildren = ContainerUtilRt.newArrayList();
 
   @NotNull private final Key<T> myKey;
-  @NotNull private final T      myData;
+  private transient T myData;
+  private byte[] myRawData;
 
   @Nullable private final DataNode<?> myParent;
 
@@ -66,7 +70,106 @@ public class DataNode<T> implements Serializable {
 
   @NotNull
   public T getData() {
+    if (myData == null) {
+      prepareData(getClass().getClassLoader(), Thread.currentThread().getContextClassLoader());
+    }
     return myData;
+  }
+
+  /**
+   * This class is a generic holder for any kind of project data. That project data might originate from different locations, e.g.
+   * core ide plugins, non-core ide plugins, third-party plugins etc. That means that when a service from a core plugin needs to
+   * unmarshall {@link DataNode} object, its content should not be unmarshalled as well because its class might be unavailable here.
+   * <p/>
+   * That's why the content is delivered as a raw byte array and this method allows to build actual java object from it using
+   * the right class loader.
+   * <p/>
+   * This method is a no-op if the content is already built.
+   *  
+   * @param loaders  class loaders which are assumed to be able to build object of the target content class
+   */
+  @SuppressWarnings({"unchecked", "IOResourceOpenedButNotSafelyClosed"})
+  public void prepareData(@NotNull final ClassLoader ... loaders) {
+    if (myData != null) {
+      return;
+    }
+    ObjectInputStream oIn = null;
+    try {
+      oIn = new ObjectInputStream(new ByteArrayInputStream(myRawData)) {
+        @Override
+        protected Class<?> resolveClass(ObjectStreamClass desc) throws IOException, ClassNotFoundException {
+          String name = desc.getName();
+          for (ClassLoader loader : loaders) {
+            try {
+              return Class.forName(name, false, loader);
+            }
+            catch (ClassNotFoundException e) {
+              // Ignore
+            }
+          }
+          return super.resolveClass(desc);
+        }
+
+        @Override
+        protected Class<?> resolveProxyClass(String[] interfaces) throws IOException, ClassNotFoundException {
+          for (ClassLoader loader : loaders) {
+            try {
+              return doResolveProxyClass(interfaces, loader);
+            }
+            catch (ClassNotFoundException e) {
+              // Ignore
+            }
+          }
+          return super.resolveProxyClass(interfaces);
+        }
+        
+        private Class<?> doResolveProxyClass(@NotNull String[] interfaces, @NotNull ClassLoader loader) throws ClassNotFoundException {
+          ClassLoader nonPublicLoader = null;
+          boolean hasNonPublicInterface = false;
+
+          // define proxy in class loader of non-public interface(s), if any
+          Class[] classObjs = new Class[interfaces.length];
+          for (int i = 0; i < interfaces.length; i++) {
+            Class cl = Class.forName(interfaces[i], false, loader);
+            if ((cl.getModifiers() & Modifier.PUBLIC) == 0) {
+              if (hasNonPublicInterface) {
+                if (nonPublicLoader != cl.getClassLoader()) {
+                  throw new IllegalAccessError(
+                    "conflicting non-public interface class loaders");
+                }
+              } else {
+                nonPublicLoader = cl.getClassLoader();
+                hasNonPublicInterface = true;
+              }
+            }
+            classObjs[i] = cl;
+          }
+          try {
+            return Proxy.getProxyClass(hasNonPublicInterface ? nonPublicLoader : loader, classObjs);
+          }
+          catch (IllegalArgumentException e) {
+            throw new ClassNotFoundException(null, e);
+          }
+        }
+      };
+      myData = (T)oIn.readObject();
+      myRawData = null;
+    }
+    catch (IOException e) {
+      throw new IllegalStateException(
+        String.format("Can't deserialize target data of key '%s'. Given class loaders: %s", myKey, Arrays.toString(loaders)),
+        e
+      );
+    }
+    catch (ClassNotFoundException e) {
+      throw new IllegalStateException(
+        String.format("Can't deserialize target data of key '%s'. Given class loaders: %s", myKey, Arrays.toString(loaders)),
+        e
+      );
+    }
+    finally {
+      StreamUtil.closeStream(oIn);
+    }
   }
 
   /**
@@ -113,11 +216,24 @@ public class DataNode<T> implements Serializable {
     return myChildren;
   }
 
+  private void writeObject(ObjectOutputStream out) throws IOException {
+    ByteArrayOutputStream bOut = new ByteArrayOutputStream();
+    ObjectOutputStream oOut = new ObjectOutputStream(bOut);
+    try {
+      oOut.writeObject(myData);
+    }
+    finally {
+      oOut.close();
+    }
+    myRawData = bOut.toByteArray();
+    out.defaultWriteObject();
+  }
+  
   @Override
   public int hashCode() {
     int result = myChildren.hashCode();
     result = 31 * result + myKey.hashCode();
-    result = 31 * result + myData.hashCode();
+    result = 31 * result + getData().hashCode();
     return result;
   }
 
@@ -129,7 +245,7 @@ public class DataNode<T> implements Serializable {
     DataNode node = (DataNode)o;
 
     if (!myChildren.equals(node.myChildren)) return false;
-    if (!myData.equals(node.myData)) return false;
+    if (!getData().equals(node.getData())) return false;
     if (!myKey.equals(node.myKey)) return false;
 
     return true;
@@ -137,6 +253,6 @@ public class DataNode<T> implements Serializable {
 
   @Override
   public String toString() {
-    return String.format("%s: %s", myKey, myData);
+    return String.format("%s: %s", myKey, getData());
   }
 }

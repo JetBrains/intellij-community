@@ -16,22 +16,22 @@
 
 package com.intellij.codeInspection;
 
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.xml.XmlFile;
 import com.intellij.psi.xml.XmlTag;
-import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
-public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool implements CustomSuppressableInspectionTool {
+public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool implements BatchSuppressableTool {
   @NonNls static final String ALL = "ALL";
 
+  @NotNull
   @Override
-  public SuppressIntentionAction[] getSuppressActions(final PsiElement element) {
-    return new SuppressIntentionAction[]{new SuppressTag(), new SuppressForFile(getID()), new SuppressAllForFile()};
+  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+    return new SuppressQuickFix[]{new SuppressTag(), new SuppressForFile(getID()), new SuppressAllForFile()};
   }
 
   @Override
@@ -40,81 +40,83 @@ public abstract class XmlSuppressableInspectionTool extends LocalInspectionTool 
   }
 
   public class SuppressTag extends SuppressTagStatic {
-
     public SuppressTag() {
       super(getID());
     }
   }
 
-  public static class SuppressTagStatic extends SuppressIntentionAction {
+  public static class SuppressTagStatic implements SuppressQuickFix {
     private final String id;
 
     public SuppressTagStatic(@NotNull String id) {
       this.id = id;
     }
 
-    @Override
     @NotNull
-    public String getText() {
+    @Override
+    public String getName() {
       return InspectionsBundle.message("xml.suppressable.for.tag.title");
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, @NotNull PsiElement context) {
+      return context.isValid();
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      if (PsiTreeUtil.getParentOfType(element, XmlTag.class) == null) return;
+      XmlSuppressionProvider.getProvider(element.getContainingFile()).suppressForTag(element, id);
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return getText();
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-      return PsiTreeUtil.getParentOfType(element, XmlTag.class) != null;
-    }
-
-    @Override
-    public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
-      XmlSuppressionProvider.getProvider(element.getContainingFile()).suppressForTag(element, id);
+      return getName();
     }
   }
 
-  public static class SuppressForFile extends SuppressIntentionAction {
+  public static class SuppressForFile implements SuppressQuickFix {
     private final String myInspectionId;
 
     public SuppressForFile(@NotNull String inspectionId) {
       myInspectionId = inspectionId;
     }
 
-    @Override
     @NotNull
-    public String getText() {
+    @Override
+    public String getName() {
       return InspectionsBundle.message("xml.suppressable.for.file.title");
+    }
+
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      if (element == null || !element.isValid() || !(element.getContainingFile() instanceof XmlFile)) return;
+      XmlSuppressionProvider.getProvider(element.getContainingFile()).suppressForFile(element, myInspectionId);
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull Project project, @NotNull PsiElement context) {
+      return context.isValid();
     }
 
     @Override
     @NotNull
     public String getFamilyName() {
-      return getText();
-    }
-
-    @Override
-    public void invoke(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) throws IncorrectOperationException {
-      XmlSuppressionProvider.getProvider(element.getContainingFile()).suppressForFile(element, myInspectionId);
-    }
-
-    @Override
-    public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement element) {
-      return  element.isValid() && element.getContainingFile() instanceof XmlFile;
+      return getName();
     }
   }
 
   public static class SuppressAllForFile extends SuppressForFile {
-
     public SuppressAllForFile() {
       super(ALL);
     }
 
-    @Override
     @NotNull
-    public String getText() {
+    @Override
+    public String getName() {
       return InspectionsBundle.message("xml.suppressable.all.for.file.title");
     }
   }

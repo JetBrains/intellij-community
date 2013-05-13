@@ -15,12 +15,9 @@
  * limitations under the License.
  */
 package com.intellij.ide.highlighter.custom
-
 import com.intellij.lexer.Lexer
 import com.intellij.openapi.fileTypes.PlainTextSyntaxHighlighterFactory
 import com.intellij.openapi.util.text.StringUtil
-import com.intellij.openapi.vcs.impl.CancellableRunnable
-import com.intellij.psi.impl.DebugUtil
 import com.intellij.testFramework.LexerTestCase
 import com.intellij.testFramework.PlatformTestUtil
 import com.intellij.util.ThrowableRunnable
@@ -331,6 +328,16 @@ WHITESPACE (' ')
 KEYWORD_2 ('e')
 WHITESPACE (' ')
 KEYWORD_2 ('foo{}')
+'''
+  }
+
+  public void "test quote block comment"() {
+    SyntaxTable table = new SyntaxTable()
+    table.startComment = '"'
+    table.endComment = 'x'
+    doTest table, '"axa', '''\
+MULTI_LINE_COMMENT ('"ax')
+IDENTIFIER ('a')
 '''
   }
 

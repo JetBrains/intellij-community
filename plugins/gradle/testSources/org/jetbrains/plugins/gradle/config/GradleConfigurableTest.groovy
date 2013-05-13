@@ -1,6 +1,5 @@
 package org.jetbrains.plugins.gradle.config
 
-import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectConfigurable
 import com.intellij.openapi.project.Project
 import org.jetbrains.plugins.gradle.settings.GradleSettings
 import org.junit.Before
@@ -16,7 +15,6 @@ public class GradleConfigurableTest {
   static def INVALID_GRADLE_HOME = "invalid"
   static def VALID_LINKED_PATH_WITH_WRAPPER = "linked path with wrapper"
   
-  def AbstractExternalProjectConfigurable configurable
   def projectImpl
   Project defaultProject = {} as Project
   Project project

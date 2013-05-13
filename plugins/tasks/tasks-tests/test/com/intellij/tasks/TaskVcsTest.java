@@ -125,15 +125,18 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
     myTaskManager.activateTask(task, false, true);
+    myChangeListManager.waitUntilRefreshed();
 
     LocalTask defaultTask = myTaskManager.findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     assertNotNull(defaultTask);
     myTaskManager.activateTask(defaultTask, false, true);
+    myChangeListManager.waitUntilRefreshed();
     assertEquals(defaultTask, myTaskManager.getActiveTask());
 
     LocalTask anotherTask = myTaskManager.findTask("TEST-001");
     assertNotNull(anotherTask);
     myTaskManager.createChangeList(defaultTask, "Default (1)");
+    myChangeListManager.waitUntilRefreshed();
 
     assertEquals(1, anotherTask.getChangeLists().size());
     assertEquals(2, defaultTask.getChangeLists().size());
@@ -161,10 +164,12 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
     myTaskManager.activateTask(task, false, true);
+    myChangeListManager.waitUntilRefreshed();
 
     LocalTask defaultTask = myTaskManager.findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     assertNotNull(defaultTask);
     myTaskManager.activateTask(defaultTask, false, true);
+    myChangeListManager.waitUntilRefreshed();
     assertEquals(defaultTask, myTaskManager.getActiveTask());
 
     LocalTask anotherTask = myTaskManager.findTask("TEST-001");
@@ -188,10 +193,12 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
     myTaskManager.activateTask(task, false, true);
+    myChangeListManager.waitUntilRefreshed();
 
     LocalTask defaultTask = myTaskManager.findTask(LocalTaskImpl.DEFAULT_TASK_ID);
     assertNotNull(defaultTask);
     myTaskManager.activateTask(defaultTask, false, true);
+    myChangeListManager.waitUntilRefreshed();
     assertEquals(defaultTask, myTaskManager.getActiveTask());
 
     LocalTask anotherTask = myTaskManager.findTask("TEST-001");
@@ -241,6 +248,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
     myTaskManager.activateTask(task, false, true);
+    myChangeListManager.waitUntilRefreshed();
     LocalTask localTask = myTaskManager.getActiveTask();
     assertNotNull(localTask);
     assertEquals("TEST-001 Summary 001 TEST", localTask.getChangeLists().get(0).comment);
@@ -254,6 +262,7 @@ public class TaskVcsTest extends CodeInsightFixtureTestCase {
     Task task = myRepository.findTask("TEST-001");
     assertNotNull(task);
     myTaskManager.activateTask(task, false, true);
+    myChangeListManager.waitUntilRefreshed();
 
     assertEquals(2, myTaskManager.getLocalTasks().size());
     assertEquals(2, myChangeListManager.getChangeListsCopy().size());

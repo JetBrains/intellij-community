@@ -36,10 +36,6 @@ import java.util.Collection;
  * @author cdr
  */
 public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionTool {
-  public boolean CHECK_FILE_HEADER = true;
-  public boolean CHECK_TRY_CATCH_SECTION = true;
-  public boolean CHECK_METHOD_BODY = true;
-
   @Override
   @NotNull
   public String getGroupDisplayName() {
@@ -57,23 +53,6 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
   @NonNls
   public String getShortName() {
     return "DefaultFileTemplate";
-  }
-
-  @Override
-  @Nullable
-  public ProblemDescriptor[] checkMethod(@NotNull PsiMethod method, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    Collection<ProblemDescriptor> descriptors = new ArrayList<ProblemDescriptor>();
-    if (CHECK_METHOD_BODY) {
-      MethodBodyChecker.checkMethodBody(method, manager, descriptors, isOnTheFly);
-    }
-    if (CHECK_TRY_CATCH_SECTION) {
-      CatchBodyVisitor visitor = new CatchBodyVisitor(manager, descriptors, isOnTheFly);
-      PsiCodeBlock body = method.getBody();
-      if (body != null) {
-        body.accept(visitor);
-      }
-    }
-    return descriptors.toArray(new ProblemDescriptor[descriptors.size()]);
   }
 
   static Pair<? extends PsiElement, ? extends PsiElement> getInteriorRange(PsiCodeBlock codeBlock) {
@@ -98,21 +77,7 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
 
   @Override
   @Nullable
-  public ProblemDescriptor[] checkClass(@NotNull PsiClass aClass, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (!CHECK_TRY_CATCH_SECTION) return null;
-    CatchBodyVisitor visitor = new CatchBodyVisitor(manager, new ArrayList<ProblemDescriptor>(), isOnTheFly);
-    PsiClassInitializer[] initializers = aClass.getInitializers();
-    for (PsiClassInitializer initializer : initializers) {
-      initializer.accept(visitor);
-    }
-
-    return visitor.myProblemDescriptors.toArray(new ProblemDescriptor[visitor.myProblemDescriptors.size()]);
-  }
-
-  @Override
-  @Nullable
   public ProblemDescriptor[] checkFile(@NotNull PsiFile file, @NotNull InspectionManager manager, boolean isOnTheFly) {
-    if (!CHECK_FILE_HEADER) return null;
     ProblemDescriptor descriptor = FileHeaderChecker.checkFileHeader(file, manager, isOnTheFly);
     return descriptor == null ? null : new ProblemDescriptor[]{descriptor};
   }
@@ -120,12 +85,6 @@ public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionT
   @Override
   public boolean isEnabledByDefault() {
     return true;
-  }
-
-  @Override
-  @Nullable
-  public JComponent createOptionsPanel() {
-    return new InspectionOptions(this).getComponent();
   }
 
   public static LocalQuickFix createEditFileTemplateFix(final FileTemplate templateToEdit, final ReplaceWithFileTemplateFix replaceTemplateFix) {

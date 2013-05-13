@@ -150,19 +150,15 @@ abstract class BaseHtmlLexer extends DelegateLexer {
 
         @NonNls String mimeType = TreeUtil.getTokenText(lexer);
         if (caseInsensitive) mimeType = mimeType.toLowerCase();
-        if (supportMimeType(mimeType)) {
-          scriptType = mimeType;
-        }
-        else {
-          seenScript = false;
-          seenTag = true;    // will be switched of on tag name in end
-        }
+        scriptType = mimeType;
       }
     }
   }
 
-  private boolean supportMimeType(String mimeType) {
-    return findScriptContentProvider(mimeType) != null;
+  @Nullable
+  protected Language getScriptLanguage() {
+    Collection<Language> instancesByMimeType = Language.findInstancesByMimeType(scriptType != null ? scriptType.trim() : null);
+    return instancesByMimeType.isEmpty() ? null : instancesByMimeType.iterator().next();
   }
 
   @Nullable

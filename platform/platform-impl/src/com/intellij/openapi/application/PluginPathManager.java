@@ -15,7 +15,10 @@
  */
 package com.intellij.openapi.application;
 
+import com.intellij.openapi.util.io.FileUtil;
+
 import java.io.File;
+import java.util.*;
 
 /**
  * @author yole
@@ -24,21 +27,61 @@ public class PluginPathManager {
   private PluginPathManager() {
   }
 
-  public static String getPluginHomePath(String pluginName) {
-    String homePath = PathManager.getHomePath();
-    File candidate = new File(homePath, "community/plugins/" + pluginName);
-    if (candidate.isDirectory()) {
-      return candidate.getPath();
+  private static class SubrepoHolder {
+    public static List<File> subrepos = findSubrepos();
+
+    private static List<File> findSubrepos() {
+      List<File> result = new ArrayList<File>();
+      File[] subdirs = new File(PathManager.getHomePath()).listFiles();
+      if (subdirs == null) return result;
+      Arrays.sort(subdirs, new Comparator<File>() {
+        @Override
+        public int compare(File file, File file2) {
+          return FileUtil.compareFiles(file, file2);
+        }
+      });
+      for (File subdir : subdirs) {
+        if (new File(subdir, ".git").exists()) {
+          File pluginsDir = new File(subdir, "plugins");
+          if (pluginsDir.exists()) {
+            result.add(pluginsDir);
+          }
+          else {
+            result.add(subdir);
+          }
+        }
+      }
+      return result;
     }
-    return new File(homePath, "plugins/" + pluginName).getPath();
+  }
+
+  public static File getPluginHome(String pluginName) {
+    File subrepo = findSubrepo(pluginName);
+    if (subrepo != null) {
+      return subrepo;
+    }
+    return new File(PathManager.getHomePath(), "plugins/" + pluginName);
+  }
+
+  private static File findSubrepo(String pluginName) {
+    for (File subrepo : SubrepoHolder.subrepos) {
+      File candidate = new File(subrepo, pluginName);
+      if (candidate.isDirectory()) {
+        return candidate;
+      }
+    }
+    return null;
+  }
+
+  public static String getPluginHomePath(String pluginName) {
+    return getPluginHome(pluginName).getPath();
   }
 
   public static String getPluginHomePathRelative(String pluginName) {
-    String homePath = PathManager.getHomePath();
-    final String relativePath = "/community/plugins/" + pluginName;
-    File candidate = new File(homePath, relativePath);
-    if (candidate.isDirectory()) {
-      return relativePath;
+    File subrepo = findSubrepo(pluginName);
+    if (subrepo != null) {
+      String homePath = FileUtil.toSystemIndependentName(PathManager.getHomePath());
+      return "/" + FileUtil.getRelativePath(homePath, FileUtil.toSystemIndependentName(subrepo.getPath()), '/');
     }
     return "/plugins/" + pluginName;
   }

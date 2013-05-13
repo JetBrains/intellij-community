@@ -22,15 +22,17 @@
 
 package com.intellij.codeInspection.ex;
 
+import com.intellij.codeInsight.daemon.impl.actions.AbstractBatchSuppressByNoInspectionCommentFix;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.lang.InspectionExtensionsFactory;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.impl.ContentManagerWatcher;
 import com.intellij.openapi.application.ApplicationManager;
+import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.NotNullLazyValue;
-import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.wm.ToolWindow;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowId;
@@ -41,6 +43,7 @@ import com.intellij.psi.PsiElement;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
 import com.intellij.ui.content.TabbedPaneContentUI;
+import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -49,22 +52,20 @@ import org.jetbrains.annotations.TestOnly;
 import java.util.HashSet;
 import java.util.Set;
 
-public class InspectionManagerEx extends InspectionManager {
+public class InspectionManagerEx extends InspectionManagerBase {
   private GlobalInspectionContextImpl myGlobalInspectionContext = null;
-  private final Project myProject;
   @NonNls private String myCurrentProfileName;
   private final NotNullLazyValue<ContentManager> myContentManager;
-
   private final Set<GlobalInspectionContextImpl> myRunningContexts = new HashSet<GlobalInspectionContextImpl>();
 
-  public InspectionManagerEx(Project project) {
-    myProject = project;
+  public InspectionManagerEx(final Project project) {
+    super(project);
     if (ApplicationManager.getApplication().isHeadlessEnvironment()) {
       myContentManager = new NotNullLazyValue<ContentManager>() {
         @NotNull
         @Override
         protected ContentManager compute() {
-          return ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, myProject);
+          return ContentFactory.SERVICE.getInstance().createContentManager(new TabbedPaneContentUI(), true, project);
         }
       };
     }
@@ -73,9 +74,9 @@ public class InspectionManagerEx extends InspectionManager {
         @NotNull
         @Override
         protected ContentManager compute() {
-          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(myProject);
+          ToolWindowManager toolWindowManager = ToolWindowManager.getInstance(project);
           ToolWindow toolWindow =
-            toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, myProject);
+            toolWindowManager.registerToolWindow(ToolWindowId.INSPECTION, true, ToolWindowAnchor.BOTTOM, project);
           ContentManager contentManager = toolWindow.getContentManager();
           toolWindow.setIcon(AllIcons.Toolwindows.ToolWindowInspection);
           new ContentManagerWatcher(toolWindow, contentManager);
@@ -85,103 +86,73 @@ public class InspectionManagerEx extends InspectionManager {
     }
   }
 
-  @Override
   @NotNull
-  public Project getProject() {
-    return myProject;
+  public static SuppressIntentionAction convertBatchToSuppressIntentionAction(@NotNull final SuppressQuickFix fix) {
+    return new SuppressIntentionAction() {
+      @Override
+      public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
+        PsiElement container = fix instanceof AbstractBatchSuppressByNoInspectionCommentFix
+                               ? ((AbstractBatchSuppressByNoInspectionCommentFix )fix).getContainer(element) : null;
+        boolean caretWasBeforeStatement = editor != null && container != null && editor.getCaretModel().getOffset() == container.getTextRange().getStartOffset();
+        try {
+          ProblemDescriptor descriptor =
+            new ProblemDescriptorImpl(element, element, "", null, ProblemHighlightType.GENERIC_ERROR_OR_WARNING, false, null, false);
+          fix.applyFix(project, descriptor);
+        }
+        catch (IncorrectOperationException e) {
+          if (!ApplicationManager.getApplication().isUnitTestMode() && editor != null) {
+            Messages.showErrorDialog(editor.getComponent(),
+                                     InspectionsBundle.message("suppress.inspection.annotation.syntax.error", e.getMessage()));
+          }
+          else {
+            throw e;
+          }
+        }
+
+        if (caretWasBeforeStatement) {
+          editor.getCaretModel().moveToOffset(container.getTextRange().getStartOffset());
+        }
+      }
+
+      @Override
+      public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
+        return fix.isAvailable(project, element);
+      }
+
+      @NotNull
+      @Override
+      public String getText() {
+        return fix.getName();
+      }
+
+      @NotNull
+      @Override
+      public String getFamilyName() {
+        return fix.getFamilyName();
+      }
+    };
   }
 
-  @Override
-  @NotNull
-  public CommonProblemDescriptor createProblemDescriptor(@NotNull String descriptionTemplate, QuickFix... fixes) {
-    return new CommonProblemDescriptorImpl(fixes, descriptionTemplate);
-  }
-
-  @Override
-  @NotNull
-  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                   @NotNull String descriptionTemplate,
-                                                   LocalQuickFix fix,
-                                                   @NotNull ProblemHighlightType highlightType,
-                                                   boolean onTheFly) {
-    LocalQuickFix[] quickFixes = fix != null ? new LocalQuickFix[]{fix} : null;
-    return createProblemDescriptor(psiElement, descriptionTemplate, onTheFly, quickFixes, highlightType);
-  }
-
-  @Override
-  @NotNull
-  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                   @NotNull String descriptionTemplate,
-                                                   boolean onTheFly,
-                                                   LocalQuickFix[] fixes,
-                                                   @NotNull ProblemHighlightType highlightType) {
-    return createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, onTheFly, false);
-  }
-
-  @Override
-  @NotNull
-  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                   @NotNull String descriptionTemplate,
-                                                   LocalQuickFix[] fixes,
-                                                   @NotNull ProblemHighlightType highlightType,
-                                                   boolean onTheFly,
-                                                   boolean isAfterEndOfLine) {
-    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, null, onTheFly);
-  }
-
-  @Override
-  @NotNull
-  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
-                                                   @NotNull PsiElement endElement,
-                                                   @NotNull String descriptionTemplate,
-                                                   @NotNull ProblemHighlightType highlightType,
-                                                   boolean onTheFly,
-                                                   LocalQuickFix... fixes) {
-    return new ProblemDescriptorImpl(startElement, endElement, descriptionTemplate, fixes, highlightType, false, null, onTheFly);
-  }
 
   @NotNull
-  @Override
-  public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
-                                                   final TextRange rangeInElement,
-                                                   @NotNull final String descriptionTemplate,
-                                                   @NotNull final ProblemHighlightType highlightType,
-                                                   boolean onTheFly,
-                                                   final LocalQuickFix... fixes) {
-    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, rangeInElement, onTheFly);
-  }
-
-  @NotNull
-  @Override
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                    @NotNull final String descriptionTemplate,
                                                    @NotNull final ProblemHighlightType highlightType,
                                                    @Nullable final HintAction hintAction,
                                                    boolean onTheFly,
                                                    final LocalQuickFix... fixes) {
-
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction, onTheFly);
-  }
-
-  @NotNull
-  @Override
-  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                   @NotNull String descriptionTemplate,
-                                                   boolean showTooltip,
-                                                   @NotNull ProblemHighlightType highlightType, boolean onTheFly, LocalQuickFix... fixes) {
-    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, showTooltip, null,
-                                     onTheFly);
   }
 
   public GlobalInspectionContextImpl createNewGlobalContext(boolean reuse) {
     if (reuse) {
       if (myGlobalInspectionContext == null) {
-        myGlobalInspectionContext = new GlobalInspectionContextImpl(myProject, myContentManager);
+        myGlobalInspectionContext = new GlobalInspectionContextImpl(getProject(), myContentManager);
       }
       myRunningContexts.add(myGlobalInspectionContext);
       return myGlobalInspectionContext;
     }
-    final GlobalInspectionContextImpl inspectionContext = new GlobalInspectionContextImpl(myProject, myContentManager);
+    final GlobalInspectionContextImpl inspectionContext = new GlobalInspectionContextImpl(getProject(), myContentManager);
     myRunningContexts.add(inspectionContext);
     return inspectionContext;
   }
@@ -192,7 +163,7 @@ public class InspectionManagerEx extends InspectionManager {
 
   public String getCurrentProfile() {
     if (myCurrentProfileName == null) {
-      final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(myProject);
+      final InspectionProjectProfileManager profileManager = InspectionProjectProfileManager.getInstance(getProject());
       myCurrentProfileName = profileManager.getProjectProfile();
       if (myCurrentProfileName == null) {
         myCurrentProfileName = InspectionProfileManager.getInstance().getRootProfile().getName();
@@ -212,6 +183,9 @@ public class InspectionManagerEx extends InspectionManager {
   public static boolean inspectionResultSuppressed(@NotNull PsiElement place, LocalInspectionTool tool) {
     if (tool instanceof CustomSuppressableInspectionTool) {
       return ((CustomSuppressableInspectionTool)tool).isSuppressedFor(place);
+    }
+    if (tool instanceof BatchSuppressableTool) {
+      return ((BatchSuppressableTool)tool).isSuppressedFor(place);
     }
     String alternativeId;
     String id;
@@ -241,62 +215,7 @@ public class InspectionManagerEx extends InspectionManager {
     return false;
   }
 
-  @Override
-  @Deprecated
   @NotNull
-  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                   @NotNull String descriptionTemplate,
-                                                   LocalQuickFix fix,
-                                                   @NotNull ProblemHighlightType highlightType) {
-    LocalQuickFix[] quickFixes = fix != null ? new LocalQuickFix[]{fix} : null;
-    return createProblemDescriptor(psiElement, descriptionTemplate, false, quickFixes, highlightType);
-  }
-
-  @Override
-  @Deprecated
-  @NotNull
-  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                   @NotNull String descriptionTemplate,
-                                                   LocalQuickFix[] fixes,
-                                                   @NotNull ProblemHighlightType highlightType) {
-    return createProblemDescriptor(psiElement, descriptionTemplate, fixes, highlightType, false, false);
-  }
-
-  @Override
-  @Deprecated
-  @NotNull
-  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                   @NotNull String descriptionTemplate,
-                                                   LocalQuickFix[] fixes,
-                                                   @NotNull ProblemHighlightType highlightType,
-                                                   boolean isAfterEndOfLine) {
-    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, isAfterEndOfLine, null, true);
-  }
-
-  @Override
-  @Deprecated
-  @NotNull
-  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement startElement,
-                                                   @NotNull PsiElement endElement,
-                                                   @NotNull String descriptionTemplate,
-                                                   @NotNull ProblemHighlightType highlightType,
-                                                   LocalQuickFix... fixes) {
-    return new ProblemDescriptorImpl(startElement, endElement, descriptionTemplate, fixes, highlightType, false, null, true);
-  }
-
-  @NotNull
-  @Override
-  @Deprecated
-  public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
-                                                   final TextRange rangeInElement,
-                                                   @NotNull final String descriptionTemplate,
-                                                   @NotNull final ProblemHighlightType highlightType,
-                                                   final LocalQuickFix... fixes) {
-    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, rangeInElement, true);
-  }
-
-  @NotNull
-  @Override
   @Deprecated
   public ProblemDescriptor createProblemDescriptor(@NotNull final PsiElement psiElement,
                                                    @NotNull final String descriptionTemplate,
@@ -305,18 +224,6 @@ public class InspectionManagerEx extends InspectionManager {
                                                    final LocalQuickFix... fixes) {
 
     return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, hintAction, true);
-  }
-
-  @NotNull
-  @Deprecated
-  @Override
-  public ProblemDescriptor createProblemDescriptor(@NotNull PsiElement psiElement,
-                                                   @NotNull String descriptionTemplate,
-                                                   boolean showTooltip,
-                                                   @NotNull ProblemHighlightType highlightType,
-                                                   LocalQuickFix... fixes) {
-    return new ProblemDescriptorImpl(psiElement, psiElement, descriptionTemplate, fixes, highlightType, false, null, showTooltip, null,
-                                     true);
   }
 
   @TestOnly

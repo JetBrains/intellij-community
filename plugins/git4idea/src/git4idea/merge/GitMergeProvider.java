@@ -47,6 +47,7 @@ import java.io.IOException;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import java.util.Set;
 
 /**
  * Merge-changes provider for Git, used by IDEA internal 3-way merge tool
@@ -63,28 +64,42 @@ public class GitMergeProvider implements MergeProvider2 {
    * If true the merge provider has a reverse meaning, i. e. yours and theirs are swapped.
    * It should be used when conflict is resolved after rebase or unstash.
    */
-  @NotNull private final Map<VirtualFile, Boolean> myReverseMap;
+  @NotNull private final Set<VirtualFile> myReverseRoots;
 
-  private GitMergeProvider(@NotNull Project project, @NotNull Map<VirtualFile, Boolean> reverseMap) {
+  private enum ReverseRequest {
+    REVERSE,
+    FORWARD,
+    DETECT
+  }
+
+  private GitMergeProvider(@NotNull Project project, @NotNull Set<VirtualFile> reverseRoots) {
     myProject = project;
-    myReverseMap = reverseMap;
+    myReverseRoots = reverseRoots;
   }
 
   public GitMergeProvider(@NotNull Project project, boolean reverse) {
-    this(project, buildReverseMap(project, reverse));
+    this(project, findReverseRoots(project, reverse ? ReverseRequest.REVERSE : ReverseRequest.FORWARD));
   }
 
   @NotNull
   public static MergeProvider detect(@NotNull Project project) {
-    return new GitMergeProvider(project, buildReverseMap(project, null));
+    return new GitMergeProvider(project, findReverseRoots(project, ReverseRequest.DETECT));
   }
 
   @NotNull
-  private static Map<VirtualFile, Boolean> buildReverseMap(@NotNull Project project, @Nullable Boolean reverseOrDetect) {
-    Map<VirtualFile, Boolean> reverseMap = ContainerUtil.newHashMap();
+  private static Set<VirtualFile> findReverseRoots(@NotNull Project project, @NotNull ReverseRequest reverseOrDetect) {
+    Set<VirtualFile> reverseMap = ContainerUtil.newHashSet();
     for (GitRepository repository : GitUtil.getRepositoryManager(project).getRepositories()) {
-      boolean reverse = reverseOrDetect == null ? repository.getState().equals(GitRepository.State.REBASING) : reverseOrDetect;
-      reverseMap.put(repository.getRoot(), reverse);
+      boolean reverse;
+      if (reverseOrDetect == ReverseRequest.DETECT) {
+        reverse = repository.getState().equals(GitRepository.State.REBASING);
+      }
+      else {
+        reverse = reverseOrDetect == ReverseRequest.REVERSE;
+      }
+      if (reverse) {
+        reverseMap.add(repository.getRoot());
+      }
     }
     return reverseMap;
   }
@@ -126,7 +141,7 @@ public class GitMergeProvider implements MergeProvider2 {
 
   @Nullable
   private VcsRevisionNumber findLastRevisionNumber(@NotNull VirtualFile root) {
-    if (myReverseMap.get(root)) {
+    if (myReverseRoots.contains(root)) {
       return resolveHead(root);
     }
     else {
@@ -134,7 +149,7 @@ public class GitMergeProvider implements MergeProvider2 {
         return GitRevisionNumber.resolve(myProject, root, "MERGE_HEAD");
       }
       catch (VcsException e) {
-        LOG.info("Couldn't resolved the MERGE_HEAD in " + root, e); // this may be not a bug, just cherry-pick
+        LOG.info("Couldn't resolve the MERGE_HEAD in " + root, e); // this may be not a bug, just cherry-pick
         try {
           return GitRevisionNumber.resolve(myProject, root, "CHERRY_PICK_HEAD");
         }
@@ -179,7 +194,7 @@ public class GitMergeProvider implements MergeProvider2 {
    * @param root
    */
   private int yoursRevision(@NotNull VirtualFile root) {
-    return myReverseMap.get(root) ? THEIRS_REVISION_NUM : YOURS_REVISION_NUM;
+    return myReverseRoots.contains(root) ? THEIRS_REVISION_NUM : YOURS_REVISION_NUM;
   }
 
   /**
@@ -187,7 +202,7 @@ public class GitMergeProvider implements MergeProvider2 {
    * @param root
    */
   private int theirsRevision(@NotNull VirtualFile root) {
-    return myReverseMap.get(root) ? YOURS_REVISION_NUM : THEIRS_REVISION_NUM;
+    return myReverseRoots.contains(root) ? YOURS_REVISION_NUM : THEIRS_REVISION_NUM;
   }
 
   public void conflictResolvedForFile(VirtualFile file) {

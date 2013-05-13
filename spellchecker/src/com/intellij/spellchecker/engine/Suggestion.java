@@ -15,6 +15,8 @@
  */
 package com.intellij.spellchecker.engine;
 
+import com.intellij.openapi.util.text.StringUtil;
+
 public class Suggestion implements Comparable{
   private final String word;
   private final int metrics;
@@ -54,10 +56,18 @@ public class Suggestion implements Comparable{
   }
 
 
+  @Override
   public int compareTo(Object o) {
     if (!(o instanceof Suggestion)) throw new IllegalArgumentException();
     Suggestion r = (Suggestion)o;
-    return new Integer(getMetrics()).compareTo(r.getMetrics());
+    int c = new Integer(getMetrics()).compareTo(r.getMetrics());
+    if (c !=0) return c;
+    return StringUtil.compare(word, r.word, true);
+  }
+
+  @Override
+  public String toString() {
+    return word + " : " + metrics;
   }
 }
 

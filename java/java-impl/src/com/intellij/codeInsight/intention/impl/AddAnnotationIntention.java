@@ -25,6 +25,7 @@ package com.intellij.codeInsight.intention.impl;
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.CodeInsightBundle;
 import com.intellij.codeInsight.intention.AddAnnotationFix;
+import com.intellij.codeInsight.intention.AddAnnotationPsiFix;
 import com.intellij.openapi.editor.CaretModel;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -59,7 +60,7 @@ public abstract class AddAnnotationIntention extends BaseIntentionAction {
     if (!PsiUtil.isLanguageLevel5OrHigher(element)) return false;
     final PsiModifierListOwner owner;
     if (!element.getManager().isInProject(element) || CodeStyleSettingsManager.getSettings(project).USE_EXTERNAL_ANNOTATIONS) {
-      owner = AddAnnotationFix.getContainer(element);
+      owner = AddAnnotationPsiFix.getContainer(element);
     }
     else {
       return false;
@@ -69,7 +70,7 @@ public abstract class AddAnnotationIntention extends BaseIntentionAction {
     String toAdd = annotations.first;
     String[] toRemove = annotations.second;
     if (toRemove.length > 0 && AnnotationUtil.isAnnotated(owner, toRemove[0], false, false)) return false;
-    setText(AddAnnotationFix.calcText(owner, toAdd));
+    setText(AddAnnotationPsiFix.calcText(owner, toAdd));
     if (AnnotationUtil.isAnnotated(owner, toAdd, false, false)) return false;
 
     if (owner instanceof PsiMethod) {
@@ -86,7 +87,7 @@ public abstract class AddAnnotationIntention extends BaseIntentionAction {
     int position = caretModel.getOffset();
     PsiElement element = file.findElementAt(position);
 
-    PsiModifierListOwner owner = AddAnnotationFix.getContainer(element);
+    PsiModifierListOwner owner = AddAnnotationPsiFix.getContainer(element);
     if (owner == null || !owner.isValid()) return;
     Pair<String, String[]> annotations = getAnnotations(project);
     String toAdd = annotations.first;

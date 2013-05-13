@@ -78,16 +78,19 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
       final Listener listener = messageBus.syncPublisher(STORAGE_TOPIC);
       virtualFileTracker.addTracker(fileUrl, new VirtualFileAdapter() {
+        @Override
         public void contentsChanged(final VirtualFileEvent event) {
           if (!StringUtil.endsWithIgnoreCase(event.getFile().getName(), ".xml")) return;
           listener.storageFileChanged(event, DirectoryBasedStorage.this);
         }
 
+        @Override
         public void fileDeleted(final VirtualFileEvent event) {
           if (!StringUtil.endsWithIgnoreCase(event.getFile().getName(), ".xml")) return;
           listener.storageFileChanged(event, DirectoryBasedStorage.this);
         }
 
+        @Override
         public void fileCreated(final VirtualFileEvent event) {
           if (!StringUtil.endsWithIgnoreCase(event.getFile().getName(), ".xml")) return;
           listener.storageFileChanged(event, DirectoryBasedStorage.this);
@@ -98,6 +101,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     myFileTypeManager = FileTypeManager.getInstance();
   }
 
+  @Override
   @Nullable
   public <T> T getState(final Object component, final String componentName, Class<T> stateClass, @Nullable T mergeInto)
     throws StateStorageException {
@@ -118,12 +122,14 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
   }
 
 
+  @Override
   public boolean hasState(final Object component, final String componentName, final Class<?> aClass, final boolean reloadData) throws StateStorageException {
     if (!myDir.exists()) return false;
     if (reloadData) myStorageData = null;
     return true;
   }
 
+  @Override
   @NotNull
   public ExternalizationSession startExternalization() {
     if (myStorageData == null) {
@@ -140,8 +146,9 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     return session;
   }
 
+  @Override
   @NotNull
-  public SaveSession startSave(final ExternalizationSession externalizationSession) {
+  public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
 
     final MySaveSession session =
@@ -150,7 +157,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     return session;
   }
 
-  public void finishSave(final SaveSession saveSession) {
+  @Override
+  public void finishSave(@NotNull final SaveSession saveSession) {
     try {
       LOG.assertTrue(mySession == saveSession);
     } finally {
@@ -158,10 +166,12 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
     }
   }
 
-  public void reload(final Set<String> changedComponents) throws StateStorageException {
+  @Override
+  public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
     myStorageData = loadState();
   }
 
+  @Override
   public void dispose() {
   }
 
@@ -174,6 +184,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       myPathMacroSubstitutor = pathMacroSubstitutor;
     }
 
+    @Override
     public void save() throws StateStorageException {
       assert mySession == this;
       final Set<String> currentNames = new HashSet<String>();
@@ -187,6 +198,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       }
 
       myStorageData.process(new DirectoryStorageData.StorageDataProcessor() {
+        @Override
         public void process(final String componentName, final IFile file, final Element element) {
           currentNames.remove(file.getName());
 
@@ -208,6 +220,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
 
       if (myDir.exists() && !currentNames.isEmpty()) {
       ApplicationManager.getApplication().runWriteAction(new Runnable() {
+        @Override
         public void run() {
           if (myDir.exists()) {
             for (String name : currentNames) {
@@ -238,8 +251,9 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       myStorageData.clear();
     }
 
+    @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
       boolean containsSelf = false;
 
       for (Pair<VirtualFile, StateStorage> pair : changedFiles) {
@@ -263,6 +277,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       return new HashSet<String>(myStorageData.getComponentNames());
     }
 
+    @Override
+    @NotNull
     public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
       assert mySession == this;
 
@@ -278,6 +294,7 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       }
 
       myStorageData.process(new DirectoryStorageData.StorageDataProcessor() {
+        @Override
         public void process(final String componentName, final IFile file, final Element element) {
           if (currentChildNames.contains(file.getName())) {
             currentChildNames.remove(file.getName());
@@ -303,6 +320,8 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       return filesToSave;
     }
 
+    @Override
+    @NotNull
     public List<IFile> getAllStorageFiles() {
       return new ArrayList<IFile>(myStorageData.getAllStorageFiles().keySet());
     }
@@ -315,13 +334,14 @@ public class DirectoryBasedStorage implements StateStorage, Disposable {
       myStorageData = storageData;
     }
 
-    public void setState(final Object component, final String componentName, final Object state, final Storage storageSpec)
+    @Override
+    public void setState(@NotNull final Object component, final String componentName, @NotNull final Object state, final Storage storageSpec)
       throws StateStorageException {
       assert mySession == this;
       setState(componentName, state, storageSpec);
     }
 
-    private void setState(final String componentName, Object state, final Storage storageSpec) throws StateStorageException {
+    private void setState(final String componentName, @NotNull Object state, final Storage storageSpec) throws StateStorageException {
       try {
         final Element element = DefaultStateSerializer.serializeState(state, storageSpec);
 

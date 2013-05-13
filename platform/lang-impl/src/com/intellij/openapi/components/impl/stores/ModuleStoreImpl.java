@@ -252,6 +252,7 @@ public class ModuleStoreImpl extends BaseFileConfigurableStoreImpl implements IM
     return ((ProjectEx)myModule.getProject()).isOptimiseTestLoadSpeed();
   }
 
+  @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
     return new ModuleStateStorageManager(PathMacroManager.getInstance(getComponentManager()).createTrackingSubstitutor(), myModule);

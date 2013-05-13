@@ -17,6 +17,7 @@ package com.intellij.execution.process;
 
 import com.intellij.execution.ExecutionBundle;
 import com.intellij.execution.ExecutionException;
+import com.intellij.execution.KillableProcess;
 import com.intellij.execution.configurations.GeneralCommandLine;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
@@ -201,4 +202,32 @@ public final class ScriptRunnerUtil {
       myMergedOutput.append(text);
     }
   }
+
+  /**
+   * Gracefully terminates a process.
+   * Initially, 'soft kill' is performed (on UNIX it's equivalent to SIGINT signal sending).
+   * If the process didn't terminate within a given timeout, 'force quite' is performed (on UNIX it's equivalent to SIGKILL
+   * signal sending).
+   *
+   * @param processHandler {@link ProcessHandler} instance
+   */
+  public static void terminateProcess(@NotNull ProcessHandler processHandler,
+                                      long millisTimeout,
+                                      @Nullable String commandLine) {
+    if (processHandler.isProcessTerminated()) {
+      LOG.warn("Process '" + commandLine + "' is already terminated!");
+      return;
+    }
+    processHandler.destroyProcess();
+    if (processHandler instanceof KillableProcess) {
+      KillableProcess killableProcess = (KillableProcess) processHandler;
+      if (killableProcess.canKillProcess()) {
+        if (!processHandler.waitFor(millisTimeout)) {
+          // doing 'force quite'
+          killableProcess.killProcess();
+        }
+      }
+    }
+  }
+
 }

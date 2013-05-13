@@ -138,9 +138,11 @@ public class CreateLauncherScriptAction extends DumbAwareAction {
       final String productName = ApplicationNamesInfo.getInstance().getProductName().toLowerCase();
       runPath += "/bin/" + productName + ".sh";
     }
-    final String launcherContents = ExecUtil.loadTemplate(CreateLauncherScriptAction.class.getClassLoader(), "launcher.py",
+    String launcherContents = ExecUtil.loadTemplate(CreateLauncherScriptAction.class.getClassLoader(), "launcher.py",
                                                           newHashMap(asList("$CONFIG_PATH$", "$RUN_PATH$"),
                                                                      asList(PathManager.getConfigPath(), runPath)));
+
+    launcherContents = StringUtil.convertLineSeparators(launcherContents);
     return ExecUtil.createTempExecutableScript("launcher", "", launcherContents);
   }
 

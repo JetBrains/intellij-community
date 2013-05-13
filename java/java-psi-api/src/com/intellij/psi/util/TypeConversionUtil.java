@@ -325,7 +325,7 @@ public class TypeConversionUtil {
     PsiClass[] supers = derived.getSupers();
     if (manager.areElementsEquivalent(base, derived)) {
       derivedSubstitutor = getSuperClassSubstitutor(derived, derived, derivedSubstitutor);
-      return areSameArgumentTypes(derived, baseResult.getSubstitutor(), derivedSubstitutor);
+      return areSameArgumentTypes(derived, baseResult.getSubstitutor(), derivedSubstitutor, 1);
     }
     else if (base.isInheritor(derived, true)) {
       derivedSubstitutor = getSuperClassSubstitutor(derived, derived, derivedSubstitutor);
@@ -355,11 +355,18 @@ public class TypeConversionUtil {
   }
 
   private static boolean areSameArgumentTypes(PsiClass aClass, PsiSubstitutor substitutor1, PsiSubstitutor substitutor2) {
+    return areSameArgumentTypes(aClass, substitutor1, substitutor2, 0);
+  }
+
+  private static boolean areSameArgumentTypes(PsiClass aClass,
+                                              PsiSubstitutor substitutor1,
+                                              PsiSubstitutor substitutor2,
+                                              int level) {
     for (PsiTypeParameter typeParameter : PsiUtil.typeParametersIterable(aClass)) {
       PsiType typeArg1 = substitutor1.substitute(typeParameter);
       PsiType typeArg2 = substitutor2.substitute(typeParameter);
       if (typeArg1 == null || typeArg2 == null) return true;
-      if (TypesDistinctProver.provablyDistinct(typeArg1, typeArg2)) return false;
+      if (TypesDistinctProver.provablyDistinct(typeArg1, typeArg2, level)) return false;
 
       final PsiClass class1 = PsiUtil.resolveClassInType(typeArg1);
       if (class1 instanceof PsiTypeParameter) {

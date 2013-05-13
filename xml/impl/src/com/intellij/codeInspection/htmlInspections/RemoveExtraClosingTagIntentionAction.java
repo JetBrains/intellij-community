@@ -41,26 +41,31 @@ import org.jetbrains.annotations.NotNull;
  * @author spleaner
  */
 public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix, IntentionAction {
+  @Override
   @NotNull
   public String getFamilyName() {
     return XmlErrorMessages.message("remove.extra.closing.tag.quickfix");
   }
 
+  @Override
   @NotNull
   public String getName() {
     return XmlErrorMessages.message("remove.extra.closing.tag.quickfix");
   }
 
 
+  @Override
   @NotNull
   public String getText() {
     return getName();
   }
 
+  @Override
   public boolean isAvailable(@NotNull final Project project, final Editor editor, final PsiFile file) {
     return true;
   }
 
+  @Override
   public void invoke(@NotNull final Project project, final Editor editor, final PsiFile file) throws IncorrectOperationException {
     final int offset = editor.getCaretModel().getOffset();
     final PsiElement psiElement = file.findElementAt(offset);
@@ -72,6 +77,7 @@ public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix, Inte
     doFix(psiElement);
   }
 
+  @Override
   public boolean startInWriteAction() {
     return true;
   }
@@ -98,12 +104,14 @@ public class RemoveExtraClosingTagIntentionAction implements LocalQuickFix, Inte
     }
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
     if (!element.isValid() || !(element instanceof XmlToken)) return;
     if (!FileModificationService.getInstance().prepareFileForWrite(element.getContainingFile())) return;
 
     new WriteCommandAction(project) {
+      @Override
       protected void run(final Result result) throws Throwable {
         doFix(element);
       }

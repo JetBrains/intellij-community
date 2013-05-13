@@ -5,6 +5,6 @@ public class Test {
     }
 
     private <T extends String> void bar(T t1, T t2) {
-        <caret><selection>//To change body of created methods use File | Settings | File Templates.</selection>
+        <caret><selection></selection>
     }
 }

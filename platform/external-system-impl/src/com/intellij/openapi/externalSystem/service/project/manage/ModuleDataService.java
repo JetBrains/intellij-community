@@ -8,8 +8,11 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleManager;
 import com.intellij.openapi.project.Project;
@@ -33,7 +36,8 @@ import java.util.concurrent.TimeUnit;
  * @author Denis Zhdanov
  * @since 2/7/12 2:49 PM
  */
-public class ModuleDataService implements ProjectDataService<ModuleData> {
+@Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
+public class ModuleDataService implements ProjectDataService<ModuleData, Module> {
 
   private static final Logger LOG = Logger.getInstance("#" + ModuleDataService.class.getName());
 
@@ -71,7 +75,11 @@ public class ModuleDataService implements ProjectDataService<ModuleData> {
     Runnable task = new Runnable() {
       @Override
       public void run() {
-        removeExistingModulesConfigs(toImport, project);
+        final Collection<DataNode<ModuleData>> toCreate = filterExistingModules(toImport, project);
+        if (toCreate.isEmpty()) {
+          return;
+        }
+        removeExistingModulesConfigs(toCreate, project);
         Application application = ApplicationManager.getApplication();
         final Map<DataNode<ModuleData>, Module> moduleMappings = ContainerUtilRt.newHashMap();
         application.runWriteAction(new Runnable() {
@@ -80,7 +88,7 @@ public class ModuleDataService implements ProjectDataService<ModuleData> {
             final ModuleManager moduleManager = ModuleManager.getInstance(project);
             final ProjectEntityChangeListener publisher
               = project.getMessageBus().syncPublisher(ProjectEntityChangeListener.TOPIC);
-            for (DataNode<ModuleData> module : toImport) {
+            for (DataNode<ModuleData> module : toCreate) {
               publisher.onChangeStart(module, module.getData().getOwner());
               try {
                 importModule(moduleManager, module);
@@ -99,6 +107,12 @@ public class ModuleDataService implements ProjectDataService<ModuleData> {
             ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(created);
             final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
             moduleRootModel.inheritSdk();
+            created.setOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY, data.getOwner().toString());
+            ProjectData projectData = module.getData(ProjectKeys.PROJECT);
+            if (projectData != null) {
+              created.setOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY, projectData.getLinkedExternalProjectPath());
+            }
+            
             RootPolicy<Object> visitor = new RootPolicy<Object>() {
               @Override
               public Object visitLibraryOrderEntry(LibraryOrderEntry libraryOrderEntry, Object value) {
@@ -132,6 +146,19 @@ public class ModuleDataService implements ProjectDataService<ModuleData> {
       UIUtil.invokeLaterIfNeeded(task);
     }
   }
+  
+  @NotNull
+  private Collection<DataNode<ModuleData>> filterExistingModules(@NotNull Collection<DataNode<ModuleData>> modules,
+                                                                 @NotNull Project project)
+  {
+    Collection<DataNode<ModuleData>> result = ContainerUtilRt.newArrayList();
+    for (DataNode<ModuleData> node : modules) {
+      if (myProjectStructureHelper.findIdeModule(node.getData(), project) == null) {
+        result.add(node);
+      }
+    }
+    return result;
+  }
 
   private void removeExistingModulesConfigs(@NotNull final Collection<DataNode<ModuleData>> nodes, @NotNull Project project) {
     if (nodes.isEmpty()) {
@@ -159,23 +186,10 @@ public class ModuleDataService implements ProjectDataService<ModuleData> {
   }
 
   @Override
-  public void removeData(@NotNull Collection<DataNode<ModuleData>> toRemove, @NotNull Project project, boolean synchronous) {
-     Collection<Module> modules = ContainerUtilRt.newArrayList();
-    for (DataNode<ModuleData> node : toRemove) {
-      Module module = myProjectStructureHelper.findIdeModule(node.getData(), project);
-      if (module != null) {
-        modules.add(module);
-      }
-    }
-    removeData(modules, synchronous);
-  }
-
-  @SuppressWarnings("MethodMayBeStatic")
-  public void removeData(@NotNull final Collection<? extends Module> modules, boolean synchronous) {
+  public void removeData(@NotNull final Collection<? extends Module> modules, @NotNull Project project, boolean synchronous) {
     if (modules.isEmpty()) {
       return;
     }
-    Project project = modules.iterator().next().getProject();
     ExternalSystemApiUtil.executeProjectChangeAction(project, ProjectSystemId.IDE, modules, synchronous, new Runnable() {
       @Override
       public void run() {
@@ -193,6 +207,11 @@ public class ModuleDataService implements ProjectDataService<ModuleData> {
         }
       }
     });
+  }
+
+  public static void unlinkModuleFromExternalSystem(@NotNull Module module) {
+    module.clearOption(ExternalSystemConstants.EXTERNAL_SYSTEM_ID_KEY);
+    module.clearOption(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
   }
   
   private class ImportModulesTask implements Runnable {

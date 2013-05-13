@@ -44,40 +44,43 @@ public class GradleBuildManager implements ExternalSystemBuildManager<GradleExec
   private final GradleExecutionHelper myHelper = new GradleExecutionHelper();
 
   @Override
-  public Collection<ExternalSystemTaskDescriptor> listTasks(@NotNull final ExternalSystemTaskId id,
-                                                            @NotNull String projectPath,
-                                                            @Nullable final GradleExecutionSettings settings)
+  public Map<String, Collection<ExternalSystemTaskDescriptor>> listTasks(@NotNull final ExternalSystemTaskId id,
+                                                                         @NotNull String projectPath,
+                                                                         @Nullable final GradleExecutionSettings settings)
     throws ExternalSystemException
   {
-    Function<ProjectConnection, Collection<ExternalSystemTaskDescriptor>> f =
-      new Function<ProjectConnection, Collection<ExternalSystemTaskDescriptor>>() {
-        @Nullable
-        @Override
-        public Collection<ExternalSystemTaskDescriptor> fun(ProjectConnection connection) {
-          ModelBuilder<? extends IdeaProject> modelBuilder = myHelper.getModelBuilder(id, settings, connection, false);
-          IdeaProject project = modelBuilder.get();
-          DomainObjectSet<? extends IdeaModule> modules = project.getModules();
-          if (modules == null) {
-            return Collections.emptyList();
-          }
-          Set<ExternalSystemTaskDescriptor> result = new HashSet<ExternalSystemTaskDescriptor>();
-          for (IdeaModule module : modules) {
-            for (GradleTask task : module.getGradleProject().getTasks()) {
-              String name = task.getName();
-              if (name == null || name.trim().isEmpty()) {
-                continue;
-              }
-              String s = name.toLowerCase();
-              if (s.contains("idea") || s.contains("eclipse")) {
-                continue;
-              }
-              result.add(new ExternalSystemTaskDescriptor(name, task.getDescription()));
-            }
-          }
-          return result;
-        }
-      };
-    return myHelper.execute(projectPath, settings, f);
+    
+    // TODO den implement
+    return Collections.emptyMap();
+    //Function<ProjectConnection, Collection<ExternalSystemTaskDescriptor>> f =
+    //  new Function<ProjectConnection, Collection<ExternalSystemTaskDescriptor>>() {
+    //    @Nullable
+    //    @Override
+    //    public Collection<ExternalSystemTaskDescriptor> fun(ProjectConnection connection) {
+    //      ModelBuilder<? extends IdeaProject> modelBuilder = myHelper.getModelBuilder(id, settings, connection, false);
+    //      IdeaProject project = modelBuilder.get();
+    //      DomainObjectSet<? extends IdeaModule> modules = project.getModules();
+    //      if (modules == null) {
+    //        return Collections.emptyList();
+    //      }
+    //      Set<ExternalSystemTaskDescriptor> result = new HashSet<ExternalSystemTaskDescriptor>();
+    //      for (IdeaModule module : modules) {
+    //        for (GradleTask task : module.getGradleProject().getTasks()) {
+    //          String name = task.getName();
+    //          if (name == null || name.trim().isEmpty()) {
+    //            continue;
+    //          }
+    //          String s = name.toLowerCase();
+    //          if (s.contains("idea") || s.contains("eclipse")) {
+    //            continue;
+    //          }
+    //          result.add(new ExternalSystemTaskDescriptor(name, task.getDescription()));
+    //        }
+    //      }
+    //      return result;
+    //    }
+    //  };
+    //return myHelper.execute(projectPath, settings, f);
   }
 
   @Override

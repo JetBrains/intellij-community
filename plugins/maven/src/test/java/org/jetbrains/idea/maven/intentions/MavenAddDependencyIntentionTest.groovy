@@ -74,6 +74,22 @@ class A extends Fo<caret>o<String> {
 """, "Foo")
   }
 
+  public void testAddDependencyFromClassInsideGeneric() {
+    doTest("""
+class A extends List<Fo<caret>o> {
+  void foo() { }
+}
+""", "Foo")
+  }
+
+  public void testAddDependencyFromClassInsideGenericWithExtends() {
+    doTest("""
+class A extends List<? extends Fo<caret>o> {
+  void foo() { }
+}
+""", "Foo")
+  }
+
   private void doTest(String classText, @Nullable String referenceText) {
     def file = createProjectSubFile("src/main/java/A.java", classText)
 

@@ -88,16 +88,19 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @Override
   @SuppressWarnings({"unchecked"})
   public TrackingPathMacroSubstitutor getMacroSubstitutor() {
     return myPathMacroSubstitutor;
   }
 
+  @Override
   public synchronized void addMacro(String macro, String expansion) {
     // avoid hundreds of $MODULE_FILE$ instances
     myMacros.put(("$" + macro + "$").intern(), expansion);
   }
 
+  @Override
   @Nullable
   public StateStorage getStateStorage(@NotNull final Storage storageSpec) throws StateStorageException {
     String key = getStorageSpecId(storageSpec);
@@ -116,6 +119,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @Override
   @Nullable
   public StateStorage getFileStateStorage(final String fileName) {
     myStorageLock.lock();
@@ -132,6 +136,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @Override
   public Collection<String> getStorageFileNames() {
     myStorageLock.lock();
     try {
@@ -169,12 +174,10 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       ((MutablePicoContainer)myPicoContainer).registerComponentImplementation(key, storageSpec.storageClass());
       return (StateStorage)myPicoContainer.getComponentInstance(key);
     }
-    else if (!storageSpec.stateSplitter().equals(StorageAnnotationsDefaultValues.NullStateSplitter.class)) {
+    if (!storageSpec.stateSplitter().equals(StorageAnnotationsDefaultValues.NullStateSplitter.class)) {
       return createDirectoryStateStorage(storageSpec.file(), storageSpec.stateSplitter());
     }
-    else {
-      return createFileStateStorage(storageSpec.file());
-    }
+    return createFileStateStorage(storageSpec.file());
   }
 
   private static String getStorageSpecId(Storage storageSpec) {
@@ -186,6 +189,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @Override
   public void clearStateStorage(@NotNull String file) {
     myStorageLock.lock();
     try {
@@ -233,6 +237,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
     return new FileBasedStorage(getMacroSubstitutor(fileSpec), this, expandedFile, fileSpec, myRootTagName, this,
                                 myPicoContainer, ComponentRoamingManager.getInstance(), this) {
+      @Override
       @NotNull
       protected StorageData createStorageData() {
         return StateStorageManagerImpl.this.createStorageData(fileSpec);
@@ -240,6 +245,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     };
   }
 
+  @Override
   public long getVersion(String name) {
     Map<String, Long> versions = getComponentVersions();
     return versions.containsKey(name) ? versions.get(name).longValue() : 0;
@@ -302,11 +308,13 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   protected abstract String getVersionsFilePath();
 
+  @Override
   public void changeVersion(String name, long version) {
     getComponentVersions().put(name, version);
     isDirty = true;
   }
 
+  @Override
   public void saveContent(final String fileSpec, final InputStream content, final long size, final RoamingType roamingType, boolean async) {
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
@@ -323,6 +331,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @Override
   public void deleteFile(final String fileSpec, final RoamingType roamingType) {
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
@@ -336,6 +345,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @NotNull
+  @Override
   public StreamProvider[] getStreamProviders(RoamingType type) {
     synchronized (myStreamProviders) {
       final Collection<StreamProvider> providers = myStreamProviders.get(type);
@@ -343,12 +354,14 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @NotNull
   public Collection<StreamProvider> getStreamProviders() {
     synchronized (myStreamProviders) {
       return Collections.unmodifiableCollection(myStreamProviders.values());
     }
   }
 
+  @Override
   public InputStream loadContent(final String fileSpec, final RoamingType roamingType) throws IOException {
     for (StreamProvider streamProvider : getStreamProviders(roamingType)) {
       try {
@@ -369,10 +382,12 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return null;
   }
 
+  @Override
   public String[] listSubFiles(final String fileSpec) {
     return ArrayUtil.EMPTY_STRING_ARRAY;
   }
 
+  @Override
   public boolean isEnabled() {
     for (StreamProvider provider : getStreamProviders()) {
       if (provider.isEnabled()) return true;
@@ -388,6 +403,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
 
   private static final Pattern MACRO_PATTERN = Pattern.compile("(\\$[^\\$]*\\$)");
 
+  @Override
   @Nullable
   public synchronized String expandMacros(final String file) {
     final Matcher matcher = MACRO_PATTERN.matcher(file);
@@ -410,6 +426,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return actualFile;
   }
 
+  @NotNull
+  @Override
   public ExternalizationSession startExternalization() {
     if (mySession != null) {
       LOG.error("Starting duplicate externalization session: " + mySession);
@@ -419,18 +437,22 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     return session;
   }
 
-  public SaveSession startSave(final ExternalizationSession externalizationSession) {
+  @NotNull
+  @Override
+  public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
     assert mySession == externalizationSession;
     SaveSession session = createSaveSession(externalizationSession);
     mySession = session;
     return session;
   }
 
+  @NotNull
   protected MySaveSession createSaveSession(final ExternalizationSession externalizationSession) {
     return new MySaveSession((MyExternalizationSession)externalizationSession);
   }
 
-  public void finishSave(final SaveSession saveSession) {
+  @Override
+  public void finishSave(@NotNull final SaveSession saveSession) {
     try {
       assert mySession == saveSession : "mySession=" + mySession + " saveSession=" + saveSession;
       ((MySaveSession)saveSession).finishSave();
@@ -441,6 +463,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @Override
   public void reset() {
     mySession = null;
   }
@@ -448,7 +471,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
   protected class MyExternalizationSession implements ExternalizationSession {
     CompoundExternalizationSession myCompoundExternalizationSession = new CompoundExternalizationSession();
 
-    public void setState(@NotNull final Storage[] storageSpecs, final Object component, final String componentName, final Object state)
+    @Override
+    public void setState(@NotNull final Storage[] storageSpecs, @NotNull final Object component, final String componentName, @NotNull final Object state)
       throws StateStorageException {
       assert mySession == this;
 
@@ -461,7 +485,8 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       }
     }
 
-    public void setStateInOldStorage(Object component, final String componentName, Object state) throws StateStorageException {
+    @Override
+    public void setStateInOldStorage(@NotNull Object component, @NotNull final String componentName, @NotNull Object state) throws StateStorageException {
       assert mySession == this;
       StateStorage stateStorage = getOldStorage(component, componentName, StateStorageOperation.WRITE);
       if (stateStorage != null) {
@@ -470,6 +495,7 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @Override
   @Nullable
   public StateStorage getOldStorage(Object component, String componentName, StateStorageOperation operation) throws StateStorageException {
     return getFileStateStorage(getOldStorageSpec(component, componentName, operation));
@@ -485,15 +511,20 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
       myCompoundSaveSession = new CompoundSaveSession(externalizationSession.myCompoundExternalizationSession);
     }
 
+    @Override
+    @NotNull
     public List<IFile> getAllStorageFilesToSave() throws StateStorageException {
       assert mySession == this;
       return myCompoundSaveSession.getAllStorageFilesToSave();
     }
 
+    @Override
+    @NotNull
     public List<IFile> getAllStorageFiles() {
       return myCompoundSaveSession.getAllStorageFiles();
     }
 
+    @Override
     public void save() throws StateStorageException {
       assert mySession == this;
       myCompoundSaveSession.save();
@@ -509,8 +540,9 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
 
     //returns set of component which were changed, null if changes are much more than just component state.
+    @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
+    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile, StateStorage>> changedFiles) {
       Set<String> result = new HashSet<String>();
 
       nextStorage:
@@ -528,15 +560,18 @@ public abstract class StateStorageManagerImpl implements StateStorageManager, Di
     }
   }
 
+  @Override
   public void dispose() {
   }
 
+  @Override
   public void registerStreamProvider(StreamProvider streamProvider, final RoamingType type) {
     synchronized (myStreamProviders) {
       myStreamProviders.putValue(type, streamProvider);
     }
   }
 
+  @Override
   public void unregisterStreamProvider(StreamProvider streamProvider, final RoamingType roamingType) {
     synchronized (myStreamProviders) {
       myStreamProviders.removeValue(roamingType, streamProvider);

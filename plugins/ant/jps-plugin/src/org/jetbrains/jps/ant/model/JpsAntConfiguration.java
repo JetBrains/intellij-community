@@ -19,6 +19,8 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.jps.model.JpsElement;
 
+import java.util.Collection;
+
 /**
  * @author nik
  */
@@ -28,4 +30,9 @@ public interface JpsAntConfiguration extends JpsElement {
 
   @Nullable
   String getProjectDefaultAntName();
+
+  void setProjectDefaultAntName(@Nullable String projectDefaultAntName);
+
+  @NotNull
+  Collection<JpsAntBuildFileOptions> getOptionsForAllBuildFiles();
 }

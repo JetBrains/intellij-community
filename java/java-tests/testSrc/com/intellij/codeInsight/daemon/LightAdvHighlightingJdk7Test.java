@@ -170,7 +170,14 @@ public class LightAdvHighlightingJdk7Test extends LightDaemonAnalyzerTestCase {
   public void testWrongArgsAndUnknownTypeParams() { doTest(false, false); }
   public void testAmbiguousMethodCallIDEA97983() { doTest(false, false); }
   public void testAmbiguousMethodCallIDEA100314() { doTest(false, false); }
+  public void testAmbiguousMethodCallIDEA67668() { doTest(false, false); }
+  public void testAmbiguousMethodCallIDEA67671() { doTest(false, false); }
+  public void testAmbiguousMethodCallIDEA67669() { doTest(false, false); }
   public void testInstanceMemberNotAccessibleInStaticContext() { doTest(false, false); }
   public void testRejectedTypeParamsForConstructor() { doTest(false, false); }
   public void testAnnotationArgs() throws Exception { doTest(false, false);}
+  public void testIDEA70890() { doTest(false, false); }
+  public void testIDEA63731() { doTest(false, false); }
+  public void testIDEA62056() { doTest(false, false); }
+  public void testIDEA78916() { doTest(false, false); }
 }

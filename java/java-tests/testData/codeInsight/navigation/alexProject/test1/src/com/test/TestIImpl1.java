@@ -9,6 +9,6 @@ package com.test;
  */
 public class TestIImpl1 implements TestI {
     public void test() {
-        //To change body of implemented methods use File | Settings | File Templates.
+      
     }
 }

@@ -15,6 +15,8 @@
  */
 package com.intellij.ide.util.newProjectWizard.impl;
 
+import com.intellij.framework.FrameworkGroup;
+import com.intellij.framework.FrameworkGroupVersion;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
@@ -46,6 +48,7 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   private final EventDispatcher<FrameworkSupportModelListener> myDispatcher = EventDispatcher.create(FrameworkSupportModelListener.class);
   private final Map<String, FrameworkSupportNode> mySettingsMap = new HashMap<String, FrameworkSupportNode>();
   private final Map<String, FrameworkSupportOptionsComponent> myOptionsComponentsMap = new HashMap<String, FrameworkSupportOptionsComponent>();
+  private final Map<FrameworkGroup<?>, FrameworkGroupVersion> mySelectedVersions = new HashMap<FrameworkGroup<?>, FrameworkGroupVersion>();
 
   public FrameworkSupportModelBase(final @Nullable Project project, @Nullable ModuleBuilder builder, @NotNull LibrariesContainer librariesContainer) {
     myProject = project;
@@ -121,6 +124,15 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
       return null;
     }
     return ((OldFrameworkSupportProviderWrapper.FrameworkSupportConfigurableWrapper)node.getConfigurable()).getConfigurable();
+  }
+
+  public void setSelectedVersion(@NotNull FrameworkGroup<?> group, @Nullable FrameworkGroupVersion version) {
+    mySelectedVersions.put(group, version);
+  }
+
+  @Nullable
+  public <V extends FrameworkGroupVersion> V getSelectedVersion(@NotNull FrameworkGroup<V> group) {
+    return (V)mySelectedVersions.get(group);
   }
 
   public void onFrameworkSelectionChanged(FrameworkSupportNode node) {

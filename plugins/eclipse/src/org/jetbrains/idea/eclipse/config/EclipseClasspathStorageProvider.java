@@ -21,6 +21,7 @@ import com.intellij.openapi.module.Module;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.roots.*;
 import com.intellij.openapi.roots.impl.RootModelImpl;
+import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.libraries.Library;
@@ -29,7 +30,7 @@ import com.intellij.openapi.util.WriteExternalException;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jdom.Document;
 import org.jdom.Element;
@@ -55,16 +56,19 @@ import java.util.Set;
 public class EclipseClasspathStorageProvider implements ClasspathStorageProvider {
   public static final String DESCR = EclipseBundle.message("eclipse.classpath.storage.description");
 
+  @Override
   @NonNls
   public String getID() {
     return JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID;
   }
 
+  @Override
   @Nls
   public String getDescription() {
     return DESCR;
   }
 
+  @Override
   public void assertCompatible(final ModuleRootModel model) throws ConfigurationException {
     final String moduleName = model.getModule().getName();
     for (OrderEntry entry : model.getOrderEntries()) {
@@ -91,7 +95,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     final String output = model.getModuleExtension(CompilerModuleExtension.class).getCompilerOutputUrl();
     final String contentRoot = getContentRoot(model);
     if (output == null ||
-        !StringUtil.startsWith(VfsUtil.urlToPath(output), contentRoot) &&
+        !StringUtil.startsWith(VfsUtilCore.urlToPath(output), contentRoot) &&
         PathMacroManager.getInstance(model.getModule()).collapsePath(output).equals(output)) {
       throw new ConfigurationException("Module \'" +
                                        moduleName +
@@ -99,14 +103,17 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     }
   }
 
+  @Override
   public void detach(Module module) {
     EclipseModuleManagerImpl.getInstance(module).setDocumentSet(null);
   }
 
+  @Override
   public ClasspathConverter createConverter(Module module) {
     return new EclipseClasspathConverter(module);
   }
 
+  @Override
   public String getContentRoot(ModuleRootModel model) {
     final VirtualFile contentRoot = EPathUtil.getContentRoot(model);
     if (contentRoot != null) return contentRoot.getPath();
@@ -145,8 +152,9 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
     return fileCache;
   }
 
+  @Override
   public void moduleRenamed(final Module module, String newName) {
-    if (ClasspathStorage.getStorageType(module).equals(JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID)) {
+    if (ClassPathStorageUtil.getStorageType(module).equals(JpsEclipseClasspathSerializer.CLASSPATH_STORAGE_ID)) {
       try {
         final CachedXmlDocumentSet documentSet = getFileCache(module);
 
@@ -184,10 +192,12 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       this.module = module;
     }
 
+    @Override
     public CachedXmlDocumentSet getFileSet() {
       return getFileCache(module);
     }
 
+    @Override
     public Set<String> getClasspath(ModifiableRootModel model, final Element element) throws IOException, InvalidDataException {
       try {
         final HashSet<String> usedVariables = new HashSet<String>();
@@ -225,6 +235,7 @@ public class EclipseClasspathStorageProvider implements ClasspathStorageProvider
       }
     }
 
+    @Override
     public void setClasspath(final ModuleRootModel model) throws IOException, WriteExternalException {
       try {
         final Element classpathElement = new Element(EclipseXml.CLASSPATH_TAG);

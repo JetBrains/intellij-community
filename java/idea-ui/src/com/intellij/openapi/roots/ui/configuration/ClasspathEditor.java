@@ -24,6 +24,7 @@ import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootEvent;
 import com.intellij.openapi.roots.ModuleRootListener;
 import com.intellij.openapi.roots.OrderEntry;
+import com.intellij.openapi.roots.impl.storage.ClassPathStorageUtil;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorage;
 import com.intellij.openapi.roots.impl.storage.ClasspathStorageProvider;
 import com.intellij.openapi.roots.ui.configuration.classpath.ClasspathPanelImpl;
@@ -53,7 +54,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
     super(state);
 
     final Disposable disposable = Disposer.newDisposable();
-    
+
     state.getProject().getMessageBus().connect(disposable).subscribe(ProjectTopics.PROJECT_ROOTS, this);
     registerDisposable(disposable);
   }
@@ -211,7 +212,7 @@ public class ClasspathEditor extends ModuleElementsEditor implements ModuleRootL
 
     @NotNull
     private String getModuleClasspathFormat() {
-      return ClasspathStorage.getStorageType(getModel().getModule());
+      return ClassPathStorageUtil.getStorageType(getModel().getModule());
     }
 
     boolean isModified() {

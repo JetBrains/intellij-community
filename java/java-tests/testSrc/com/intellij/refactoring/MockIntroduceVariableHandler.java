@@ -52,7 +52,7 @@ class MockIntroduceVariableHandler extends IntroduceVariableBase {
                                                PsiElement anchor, final OccurrencesChooser.ReplaceChoice replaceChoice) {
     final PsiType type = myLookForType ? findType(typeSelectorManager.getTypesForAll(), typeSelectorManager.getDefaultType())
                                        : typeSelectorManager.getDefaultType();
-    Assert.assertTrue(type.getCanonicalText(), type.equalsToText(myExpectedTypeCanonicalName));
+    Assert.assertTrue(type.getInternalCanonicalText(), type.getInternalCanonicalText().equals(myExpectedTypeCanonicalName));
     IntroduceVariableSettings introduceVariableSettings = new IntroduceVariableSettings() {
       @Override
       public String getEnteredName() {

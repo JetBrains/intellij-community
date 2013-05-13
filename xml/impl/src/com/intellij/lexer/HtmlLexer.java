@@ -20,6 +20,7 @@ import com.intellij.lang.Language;
 import com.intellij.lang.LanguageHtmlInlineScriptTokenTypesProvider;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.psi.TokenType;
+import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.xml.XmlTokenType;
 
@@ -75,10 +76,12 @@ public class HtmlLexer extends BaseHtmlLexer {
         tokenType = ourInlineStyleElementType;
       }
     } else if (hasSeenScript()) {
-      IElementType currentScriptElementType = getCurrentScriptElementType();
-      if (hasSeenTag() && currentScriptElementType != null && isStartOfEmbeddmentTagContent(tokenType)) {
+      Language scriptLanguage = getScriptLanguage();
+      boolean canInject = scriptLanguage == null || InjectedLanguageUtil.isInjectableLanguage(scriptLanguage);
+      if (hasSeenTag() && isStartOfEmbeddmentTagContent(tokenType) && canInject) {
         myTokenEnd = skipToTheEndOfTheEmbeddment();
-        tokenType = currentScriptElementType;
+        IElementType currentScriptElementType = getCurrentScriptElementType();
+        tokenType = currentScriptElementType == null ? XmlTokenType.XML_DATA_CHARACTERS : currentScriptElementType;
       } else if (hasSeenAttribute() && isStartOfEmbeddmentAttributeValue(tokenType) && ourInlineScriptElementType!=null) {
         myTokenEnd = skipToTheEndOfTheEmbeddment();
         tokenType = ourInlineScriptElementType;

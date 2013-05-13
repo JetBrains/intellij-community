@@ -24,7 +24,6 @@ import com.intellij.codeInsight.daemon.impl.quickfix.QuickFixAction;
 import com.intellij.codeInsight.intention.EmptyIntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.*;
-import com.intellij.codeInspection.ui.ProblemDescriptionNode;
 import com.intellij.concurrency.JobLauncher;
 import com.intellij.injected.editor.DocumentWindow;
 import com.intellij.lang.Language;
@@ -47,6 +46,7 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.Trinity;
@@ -78,6 +78,12 @@ import java.util.concurrent.ConcurrentMap;
 public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass implements DumbAware {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.LocalInspectionsPass");
   public static final TextRange EMPTY_PRIORITY_RANGE = TextRange.EMPTY_RANGE;
+  private static final Condition<PsiFile> FILE_FILTER = new Condition<PsiFile>() {
+    @Override
+    public boolean value(PsiFile file) {
+      return HighlightLevelUtil.shouldInspect(file);
+    }
+  };
   private final int myStartOffset;
   private final int myEndOffset;
   private final TextRange myPriorityRange;
@@ -174,7 +180,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           PsiElement psiElement = descriptor.getPsiElement();
           if (psiElement == null) continue;
           if (InspectionManagerEx.inspectionResultSuppressed(psiElement, tool.getTool())) continue;
-          List<TextRange> editables = ilManager.intersectWithAllEditableFragments(file, ((ProblemDescriptorImpl)descriptor).getTextRange());
+          List<TextRange> editables = ilManager.intersectWithAllEditableFragments(file, ((ProblemDescriptorBase)descriptor).getTextRange());
           for (TextRange editable : editables) {
             TextRange hostRange = documentRange.injectedToHost(editable);
             QuickFix[] fixes = descriptor.getFixes();
@@ -207,7 +213,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     List<PsiElement> inside = new ArrayList<PsiElement>();
     List<PsiElement> outside = new ArrayList<PsiElement>();
     Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, outside,
-                                   HighlightLevelUtil.AnalysisLevel.HIGHLIGHT_AND_INSPECT,true);
+                                   true, FILE_FILTER);
 
     MultiMap<LocalInspectionToolWrapper, String> tools = getToolsForElements(toolWrappers, checkDumbAwareness, inside, outside);
 
@@ -216,7 +222,8 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
     List<InspectionContext> init =
       visitPriorityElementsAndInit(tools, iManager, isOnTheFly, indicator, inside, session, toolWrappers, checkDumbAwareness);
-    visitRestElementsAndCleanup(iManager, isOnTheFly, indicator, outside, session, init, toolWrappers, checkDumbAwareness);
+    visitRestElementsAndCleanup(indicator, outside, session, init);
+    inspectInjectedPsi(outside, isOnTheFly, indicator, iManager, false, checkDumbAwareness, toolWrappers);
 
     indicator.checkCanceled();
 
@@ -292,6 +299,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return map;
   }
 
+  @NotNull
   private List<InspectionContext> visitPriorityElementsAndInit(@NotNull MultiMap<LocalInspectionToolWrapper, String> tools,
                                                                @NotNull final InspectionManagerEx iManager,
                                                                final boolean isOnTheFly,
@@ -337,7 +345,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
           }
         }
     };
-    PsiElementVisitor visitor = createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, languages);
+    PsiElementVisitor visitor = InspectionEngine.createVisitorAndAcceptElements(tool, holder, isOnTheFly, session, elements, languages);
 
     synchronized (init) {
       init.add(new InspectionContext(toolWrapper, holder, visitor, languages));
@@ -351,41 +359,17 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     return true;
   }
 
-  @NotNull
-  private static PsiElementVisitor createVisitorAndAcceptElements(@NotNull LocalInspectionTool tool,
-                                                                  @NotNull ProblemsHolder holder,
-                                                                  boolean isOnTheFly,
-                                                                  @NotNull LocalInspectionToolSession session,
-                                                                  @NotNull List<PsiElement> elements,
-                                                                  @Nullable Collection<String> languages) {
-    PsiElementVisitor visitor = tool.buildVisitor(holder, isOnTheFly, session);
-    //noinspection ConstantConditions
-    if(visitor == null) {
-      LOG.error("Tool " + tool + " must not return null from the buildVisitor() method");
-    }
-    assert !(visitor instanceof PsiRecursiveElementVisitor || visitor instanceof PsiRecursiveElementWalkingVisitor)
-      : "The visitor returned from LocalInspectionTool.buildVisitor() must not be recursive. "+tool;
-
-    tool.inspectionStarted(session, isOnTheFly);
-    acceptElements(elements, visitor, languages);
-    return visitor;
-  }
-
-  private void visitRestElementsAndCleanup(@NotNull final InspectionManagerEx iManager,
-                                           final boolean isOnTheFly,
-                                           @NotNull final ProgressIndicator indicator,
+  private void visitRestElementsAndCleanup(@NotNull final ProgressIndicator indicator,
                                            @NotNull final List<PsiElement> elements,
                                            @NotNull final LocalInspectionToolSession session,
-                                           @NotNull List<InspectionContext> init,
-                                           @NotNull List<LocalInspectionToolWrapper> wrappers,
-                                           boolean checkDumbAwareness) {
+                                           @NotNull List<InspectionContext> init) {
     Processor<InspectionContext> processor =
       new Processor<InspectionContext>() {
         @Override
         public boolean process(InspectionContext context) {
           indicator.checkCanceled();
           ApplicationManager.getApplication().assertReadAccessAllowed();
-          acceptElements(elements, context.visitor, context.languageIds);
+          InspectionEngine.acceptElements(elements, context.visitor, context.languageIds);
           advanceProgress(1);
           context.tool.getTool().inspectionFinished(session, context.holder);
 
@@ -398,20 +382,6 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
     boolean result = JobLauncher.getInstance().invokeConcurrentlyUnderProgress(init, indicator, myFailFastOnAcquireReadAction, processor);
     if (!result) {
       throw new ProcessCanceledException();
-    }
-    inspectInjectedPsi(elements, isOnTheFly, indicator, iManager, false, checkDumbAwareness, wrappers);
-  }
-
-  private static void acceptElements(@NotNull List<PsiElement> elements,
-                                     @NotNull PsiElementVisitor elementVisitor,
-                                     @Nullable Collection<String> languages) {
-    //noinspection ForLoopReplaceableByForEach
-    for (int i = 0, elementsSize = elements.size(); i < elementsSize; i++) {
-      PsiElement element = elements.get(i);
-      if (languages == null || languages.contains(element.getLanguage().getID())) {
-        element.accept(elementVisitor);
-      }
-      ProgressManager.checkCanceled();
     }
   }
 
@@ -451,7 +421,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                                     @NotNull String message,
                                                     String toolTip,
                                                     PsiElement psiElement) {
-    TextRange textRange = ((ProblemDescriptorImpl)problemDescriptor).getTextRange();
+    TextRange textRange = ((ProblemDescriptorBase)problemDescriptor).getTextRange();
     if (textRange == null || psiElement == null) return null;
     boolean isFileLevel = psiElement instanceof PsiFile && textRange.equals(psiElement.getTextRange());
 
@@ -555,7 +525,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
       case GENERIC_ERROR:
         return HighlightInfoType.ERROR;
       case INFORMATION:
-        final TextAttributesKey attributes = ((ProblemDescriptorImpl)problemDescriptor).getEnforcedTextAttributes();
+        final TextAttributesKey attributes = ((ProblemDescriptorBase)problemDescriptor).getEnforcedTextAttributes();
         if (attributes != null) {
           return new HighlightInfoType.HighlightInfoTypeImpl(HighlightSeverity.INFORMATION, attributes);
         }
@@ -647,7 +617,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
                                             @NotNull HighlightInfoType level,
                                             @NotNull Set<Pair<TextRange, String>> emptyActionRegistered,
                                             @NotNull PsiElement element) {
-    @NonNls String message = ProblemDescriptionNode.renderDescriptionMessage(descriptor, element);
+    @NonNls String message = ProblemDescriptorUtil.renderDescriptionMessage(descriptor, element);
 
     final HighlightDisplayKey key = HighlightDisplayKey.find(tool.getShortName());
     final InspectionProfile inspectionProfile = myProfileWrapper.getInspectionProfile();
@@ -692,12 +662,12 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
         }
       }
     }
-    HintAction hintAction = ((ProblemDescriptorImpl)descriptor).getHintAction();
+    HintAction hintAction = descriptor instanceof ProblemDescriptorImpl ? ((ProblemDescriptorImpl)descriptor).getHintAction() : null;
     if (hintAction != null) {
       QuickFixAction.registerQuickFixAction(highlightInfo, hintAction, key);
       needEmptyAction = false;
     }
-    if (((ProblemDescriptorImpl)descriptor).getEnforcedTextAttributes() != null) {
+    if (((ProblemDescriptorBase)descriptor).getEnforcedTextAttributes() != null) {
       needEmptyAction = false;
     }
     if (needEmptyAction && emptyActionRegistered.add(Pair.create(new TextRange(highlightInfo.fixStartOffset, highlightInfo.fixEndOffset), tool.getShortName()))) {
@@ -785,7 +755,7 @@ public class LocalInspectionsPass extends ProgressableTextEditorHighlightingPass
 
       LocalInspectionToolSession injSession = new LocalInspectionToolSession(injectedPsi, 0, injectedPsi.getTextLength());
       Collection<String> languages = pair.getValue();
-      createVisitorAndAcceptElements(tool, holder, isOnTheFly, injSession, elements, languages);
+      InspectionEngine.createVisitorAndAcceptElements(tool, holder, isOnTheFly, injSession, elements, languages);
       tool.inspectionFinished(injSession, holder);
       List<ProblemDescriptor> problems = holder.getResults();
       if (!problems.isEmpty()) {

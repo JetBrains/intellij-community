@@ -17,6 +17,7 @@
 package com.intellij.usageView.impl;
 
 import com.intellij.ide.hierarchy.*;
+import com.intellij.ide.hierarchy.actions.BrowseHierarchyActionBase;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -59,11 +60,11 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
       PsiElement element = ((PsiElementUsageTarget)target).getElement();
       if (element == null || !element.isValid()) return false;
 
-      HierarchyProvider provider = LanguageCallHierarchy.INSTANCE.forLanguage(element.getLanguage());
-      if (provider == null) return false;
       Project project = element.getProject();
       DataContext context = SimpleDataContext.getSimpleContext(LangDataKeys.PSI_ELEMENT.getName(), element,
                                                                SimpleDataContext.getProjectContext(project));
+      HierarchyProvider provider = BrowseHierarchyActionBase.findBestHierarchyProvider(LanguageCallHierarchy.INSTANCE, element, context);
+      if (provider == null) return false;
       PsiElement providerTarget = provider.getTarget(context);
       return providerTarget != null;
     }
@@ -116,9 +117,9 @@ public class UsageContextCallHierarchyPanel extends UsageContextPanelBase {
 
   @Nullable
   private static HierarchyBrowser createCallHierarchyPanel(@NotNull PsiElement element) {
-    HierarchyProvider provider = LanguageCallHierarchy.INSTANCE.forLanguage(element.getLanguage());
-    if (provider == null) return null;
     DataContext context = SimpleDataContext.getSimpleContext(LangDataKeys.PSI_ELEMENT.getName(), element, SimpleDataContext.getProjectContext(element.getProject()));
+    HierarchyProvider provider = BrowseHierarchyActionBase.findBestHierarchyProvider(LanguageCallHierarchy.INSTANCE, element, context);
+    if (provider == null) return null;
     PsiElement providerTarget = provider.getTarget(context);
     if (providerTarget == null) return null;
 

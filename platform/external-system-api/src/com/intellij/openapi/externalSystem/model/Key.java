@@ -20,7 +20,12 @@ import org.jetbrains.annotations.NotNull;
 import java.io.Serializable;
 
 /**
- * // TODO den add doc
+ * The basic design of external system integration assumes that target project info if represented as a generic graph
+ * of {@link DataNode} objects where every {@link DataNode} content type is identified by an instance of this class.
+ * <p/>
+ * That makes it possible to register custom {@link DataNode} processor per-{@link Key}
+ * <p/>
+ * Thread-safe.
  * 
  * @author Denis Zhdanov
  * @since 4/12/13 11:49 AM
@@ -30,20 +35,15 @@ public class Key<T> implements Serializable {
 
   private static final long serialVersionUID = 1L;
   
-  @NotNull private final Class<T> myDataClass;
+  @NotNull private final String myDataClass;
 
-  public Key(@NotNull Class<T> dataClass) {
+  public Key(@NotNull String dataClass) {
     myDataClass = dataClass;
   }
 
   @NotNull
   public static <T> Key<T> create(@NotNull Class<T> dataClass) {
-    return new Key<T>(dataClass);
-  }
-
-  @NotNull
-  public Class<T> getDataClass() {
-    return myDataClass;
+    return new Key<T>(dataClass.getName());
   }
 
   @Override
@@ -65,6 +65,6 @@ public class Key<T> implements Serializable {
 
   @Override
   public String toString() {
-    return myDataClass.getSimpleName();
+    return myDataClass;
   }
 }

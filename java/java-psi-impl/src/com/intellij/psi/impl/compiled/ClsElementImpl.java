@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -310,20 +310,19 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
   }
 
   protected static <T extends  PsiElement> void setMirrors(@NotNull T[] stubs, @NotNull T[] mirrors) throws InvalidMirrorException {
-    if (stubs.length != mirrors.length) {
-      throw new InvalidMirrorException(stubs, mirrors);
-    }
-    for (int i = 0; i < stubs.length; i++) {
-      setMirror(stubs[i], mirrors[i]);
-    }
+    setMirrors(Arrays.asList(stubs), Arrays.asList(mirrors));
   }
 
   protected static <T extends  PsiElement> void setMirrors(@NotNull List<T> stubs, @NotNull T[] mirrors) throws InvalidMirrorException {
-    if (stubs.size() != mirrors.length) {
+    setMirrors(stubs, Arrays.asList(mirrors));
+  }
+
+  protected static <T extends  PsiElement> void setMirrors(@NotNull List<T> stubs, @NotNull List<T> mirrors) throws InvalidMirrorException {
+    if (stubs.size() != mirrors.size()) {
       throw new InvalidMirrorException(stubs, mirrors);
     }
     for (int i = 0; i < stubs.size(); i++) {
-      setMirror(stubs.get(i), mirrors[i]);
+      setMirror(stubs.get(i), mirrors.get(i));
     }
   }
 
@@ -340,8 +339,8 @@ public abstract class ClsElementImpl extends PsiElementBase implements PsiCompil
       this("stub:" + Arrays.toString(stubElements) + "; mirror:" + Arrays.toString(mirrorElements));
     }
 
-    public InvalidMirrorException(@NotNull List<? extends PsiElement> stubElements, @NotNull PsiElement[] mirrorElements) {
-      this("stub:" + stubElements + "; mirror:" + Arrays.toString(mirrorElements));
+    public InvalidMirrorException(@NotNull List<? extends PsiElement> stubElements, @NotNull List<? extends PsiElement> mirrorElements) {
+      this("stub:" + stubElements + "; mirror:" + mirrorElements);
     }
   }
 }

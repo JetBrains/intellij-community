@@ -116,4 +116,6 @@ public interface EditorSettings {
   boolean isPreselectRename();
   void setPreselectRename(final boolean val);
 
+  boolean isShowIntentionBulb();
+  void setShowIntentionBulb(boolean show);
 }

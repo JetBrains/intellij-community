@@ -43,6 +43,7 @@ import com.intellij.psi.presentation.java.SymbolPresentationUtil;
 import com.intellij.util.SequentialModalProgressTask;
 import com.intellij.util.SequentialTask;
 import gnu.trove.THashSet;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import java.util.*;
@@ -57,11 +58,11 @@ public class QuickFixAction extends AnAction {
     return InspectionResultsView.DATA_KEY.getData(e.getDataContext());
   }
 
-  protected QuickFixAction(String text, InspectionTool tool) {
+  protected QuickFixAction(String text, @NotNull InspectionTool tool) {
     this(text, AllIcons.Actions.CreateFromUsage, null, tool);
   }
 
-  protected QuickFixAction(String text, Icon icon, KeyStroke keyStroke, InspectionTool tool) {
+  protected QuickFixAction(String text, Icon icon, KeyStroke keyStroke, @NotNull InspectionTool tool) {
     super(text, null, icon);
     myTool = tool;
     if (keyStroke != null) {

@@ -10,6 +10,6 @@ abstract class B implements A{
                     String p5,
                     String p6,
                     String p7) {
-        <caret><selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+        <caret>
     }
 }

@@ -44,6 +44,7 @@ import org.jetbrains.annotations.Nullable;
  */
 public class XmlWrongClosingTagNameInspection implements Annotator {
 
+  @Override
   public void annotate(final PsiElement psiElement, final AnnotationHolder holder) {
     if (psiElement instanceof XmlToken) {
       final PsiElement parent = psiElement.getParent();
@@ -65,7 +66,7 @@ public class XmlWrongClosingTagNameInspection implements Annotator {
       else if (parent instanceof PsiErrorElement) {
         if (XmlTokenType.XML_NAME == ((XmlToken)psiElement).getTokenType()) {
           final PsiFile psiFile = psiElement.getContainingFile();
-          
+
           if (psiFile != null && (HTMLLanguage.INSTANCE == psiFile.getViewProvider().getBaseLanguage() || HTMLLanguage.INSTANCE == parent.getLanguage())) {
             final String message = XmlErrorMessages.message("xml.parsing.closing.tag.matches.nothing");
 

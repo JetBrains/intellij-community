@@ -155,8 +155,8 @@ Runnable r = new Run<caret>
 ''', '''\
 Runnable r = new Runnable() {
     @Override
-    void run() {
-        <caret><selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+    void run() {<caret><selection></selection>
+
     }
 }
 ''')
@@ -175,6 +175,26 @@ def aaaa = '123'
 aaaa = 123
 
 foo(aaaa<caret>)
+''')
+  }
+
+  void testQualifiedNameAfterNew() {
+    myFixture.addClass('''\
+package foo;
+public class User<T> {}
+''')
+    doSmartTest('''\
+class User {
+}
+def a(foo.User<String> f){}
+
+a(new Us<caret>)
+''', '''\
+class User {
+}
+def a(foo.User<String> f){}
+
+a(new foo.User<String>()<caret>)
 ''')
   }
 }

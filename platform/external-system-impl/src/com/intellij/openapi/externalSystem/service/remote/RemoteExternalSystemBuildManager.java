@@ -22,6 +22,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemService;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -37,13 +38,15 @@ public interface RemoteExternalSystemBuildManager<S extends ExternalSystemExecut
   /** <a href="http://en.wikipedia.org/wiki/Null_Object_pattern">Null object</a> for {@link RemoteExternalSystemProjectResolverImpl}. */
   RemoteExternalSystemBuildManager<ExternalSystemExecutionSettings> NULL_OBJECT =
     new RemoteExternalSystemBuildManager<ExternalSystemExecutionSettings>() {
+
+      @Nullable
       @Override
-      public Collection<ExternalSystemTaskDescriptor> listTasks(@NotNull ExternalSystemTaskId id,
-                                                                @NotNull String projectPath,
-                                                                @Nullable ExternalSystemExecutionSettings settings)
+      public Map<String, Collection<ExternalSystemTaskDescriptor>> listTasks(@NotNull ExternalSystemTaskId id,
+                                                                             @NotNull String projectPath,
+                                                                             @Nullable ExternalSystemExecutionSettings settings)
         throws RemoteException, ExternalSystemException
       {
-        return Collections.emptyList();
+        return ContainerUtilRt.newHashMap();
       }
 
       @Override
@@ -74,7 +77,10 @@ public interface RemoteExternalSystemBuildManager<S extends ExternalSystemExecut
       }
     };
 
-  Collection<ExternalSystemTaskDescriptor> listTasks(@NotNull ExternalSystemTaskId id, @NotNull String projectPath, @Nullable S settings)
+  @Nullable
+  Map<String, Collection<ExternalSystemTaskDescriptor>> listTasks(@NotNull ExternalSystemTaskId id,
+                                                                  @NotNull String projectPath,
+                                                                  @Nullable S settings)
     throws RemoteException, ExternalSystemException;
 
   void executeTasks(@NotNull ExternalSystemTaskId id, @NotNull List<String> taskNames, @NotNull String projectPath, @Nullable S settings)

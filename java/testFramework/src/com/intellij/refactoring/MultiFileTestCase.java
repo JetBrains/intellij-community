@@ -63,7 +63,7 @@ public abstract class MultiFileTestCase extends CodeInsightTestCase {
     FileDocumentManager.getInstance().saveAllDocuments();
 
     if (myDoCompare) {
-      PlatformTestUtil.assertDirectoriesEqual(rootAfter, rootDir, PlatformTestUtil.CVS_FILE_FILTER);
+      PlatformTestUtil.assertDirectoriesEqual(rootAfter, rootDir);
     }
   }
 

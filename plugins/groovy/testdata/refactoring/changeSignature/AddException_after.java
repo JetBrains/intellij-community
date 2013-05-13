@@ -3,7 +3,7 @@ class Foo {
       try {
           new AddException().foo();
       } catch (java.io.IOException e) {
-          e.printStackTrace();  //To change body of catch statement use File | Settings | File Templates.
+          e.printStackTrace();
       }
   }
 }

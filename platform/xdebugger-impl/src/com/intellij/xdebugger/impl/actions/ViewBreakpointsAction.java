@@ -25,9 +25,8 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsMasterDetailPopupFactory;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 
 public class ViewBreakpointsAction extends AnAction implements AnAction.TransparentUpdate, DumbAware {
   private Object myInitialBreakpoint;
@@ -53,11 +52,7 @@ public class ViewBreakpointsAction extends AnAction implements AnAction.Transpar
       }
     }
 
-    final JBPopup popup = BreakpointsMasterDetailPopupFactory.
-      getInstance(project).createPopup(myInitialBreakpoint);
-    if (popup != null) {
-      popup.showCenteredInCurrentWindow(project);
-    }
+    BreakpointsDialogFactory.getInstance(project).showDialog(myInitialBreakpoint);
     myInitialBreakpoint = null;
   }
 

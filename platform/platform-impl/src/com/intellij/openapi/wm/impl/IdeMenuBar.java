@@ -31,7 +31,9 @@ import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.wm.ex.IdeFrameEx;
 import com.intellij.openapi.wm.impl.status.ClockPanel;
+import com.intellij.ui.Gray;
 import com.intellij.ui.ScreenUtil;
+import com.intellij.ui.border.CustomLineBorder;
 import com.intellij.util.ui.Animator;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -39,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 import javax.swing.border.Border;
+import javax.swing.border.EmptyBorder;
 import java.awt.*;
 import java.awt.event.*;
 import java.awt.geom.AffineTransform;
@@ -87,7 +90,6 @@ public class IdeMenuBar extends JMenuBar {
     myDataManager = dataManager;
 
     if (WindowManagerImpl.isFloatingMenuBarSupported()) {
-      addMouseListener(new MouseAdapter() {});  // event catcher for "floating" full screen menu
       myAnimator = new MyAnimator();
       Toolkit.getDefaultToolkit().addAWTEventListener(new MyAWTEventListener(), AWTEvent.MOUSE_MOTION_EVENT_MASK | AWTEvent.MOUSE_EVENT_MASK);
       myActivationWatcher = new Timer(100, new MyActionListener());
@@ -98,12 +100,42 @@ public class IdeMenuBar extends JMenuBar {
           updateState();
         }
       });
+      addMouseListener(new MyMouseListener());
     }
     else {
       myAnimator = null;
       myActivationWatcher = null;
       myClockPanel = null;
     }
+  }
+
+  @Override
+  public Border getBorder() {
+    //avoid moving lines
+    if (myState == State.EXPANDING || myState == State.COLLAPSING) {
+      return new EmptyBorder(0,0,0,0);
+    }
+
+    //fix for Darcula double border
+    if (myState == State.TEMPORARY_EXPANDED && UIUtil.isUnderDarcula()) {
+      return new CustomLineBorder(Gray._75, 0, 0, 1, 0);
+    }
+
+    //save 1px for mouse handler
+    if (myState == State.COLLAPSED) {
+      return new EmptyBorder(0, 0, 1, 0);
+    }
+
+    return super.getBorder();
+  }
+
+  @Override
+  public void paint(Graphics g) {
+    //otherwise, there will be 1px line on top
+    if (myState == State.COLLAPSED) {
+      return;
+    }
+    super.paint(g);
   }
 
   @Override
@@ -142,14 +174,6 @@ public class IdeMenuBar extends JMenuBar {
       });
     }
     super.menuSelectionChanged(isIncluded);
-  }
-
-  @Override
-  public void setBorder(Border border) {
-    if (border != null && myAnimator != null) {
-      border = new MyBorderDelegator(border);
-    }
-    super.setBorder(border);
   }
 
   private static boolean isDescendingFrom(@Nullable Component a, @NotNull Component b) {
@@ -417,33 +441,6 @@ public class IdeMenuBar extends JMenuBar {
     }
   }
 
-  private class MyBorderDelegator implements Border {
-    @NotNull private final Border mySource;
-
-    private MyBorderDelegator(@NotNull Border source) {
-      mySource = source;
-    }
-
-    @Override
-    public void paintBorder(Component c, Graphics g, int x, int y, int width, int height) {
-      mySource.paintBorder(c, g, x, y, width, height);
-    }
-
-    @Override
-    public Insets getBorderInsets(Component c) {
-      Insets insets = mySource.getBorderInsets(c);
-      if (myState != State.EXPANDED) {
-        insets.top = 0;  // get rid of "passive top pixel" in full screen mode
-      }
-      return insets;
-    }
-
-    @Override
-    public boolean isBorderOpaque() {
-      return mySource.isBorderOpaque();
-    }
-  }
-
   private class MyAnimator extends Animator {
     public MyAnimator() {
       super("MenuBarAnimator", 16, 300, false);
@@ -469,7 +466,12 @@ public class IdeMenuBar extends JMenuBar {
         default:
       }
       revalidate();
-      repaint();
+      if (myState == State.COLLAPSED) {
+        //we should repaint parent, to clear 1px on top when menu is collapsed
+        getParent().repaint();
+      } else {
+        repaint();
+      }
     }
   }
 
@@ -525,6 +527,30 @@ public class IdeMenuBar extends JMenuBar {
       if (activated) {
         myActivated = true;
       }
+    }
+  }
+
+  private static class MyMouseListener extends MouseAdapter {
+    @Override
+    public void mousePressed(MouseEvent e) {
+      Component c = e.getComponent();
+      if (c instanceof IdeMenuBar) {
+        Dimension size = c.getSize();
+        Insets insets = ((IdeMenuBar)c).getInsets();
+        Point p = e.getPoint();
+        if (p.y < insets.top || p.y >= size.height - insets.bottom) {
+          Component item = ((IdeMenuBar)c).findComponentAt(p.x, size.height / 2);
+          if (item instanceof JMenuItem) {
+            // re-target border clicks as a menu item ones
+            item.dispatchEvent(
+              new MouseEvent(item, e.getID(), e.getWhen(), e.getModifiers(), 1, 1, e.getClickCount(), e.isPopupTrigger(), e.getButton()));
+            e.consume();
+            return;
+          }
+        }
+      }
+
+      super.mouseClicked(e);
     }
   }
 }

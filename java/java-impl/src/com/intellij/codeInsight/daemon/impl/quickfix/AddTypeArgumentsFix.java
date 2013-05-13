@@ -20,7 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -71,7 +71,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
               PsiTypeParameter typeParameter = typeParameters[i];
               final PsiType substitution = helper.getSubstitutionForTypeParameter(typeParameter, returnType, toType, false, level);
               if (substitution == null || PsiType.NULL.equals(substitution)) return null;
-              mappings[i] = substitution;
+              mappings[i] = GenericsUtil.eliminateWildcards(substitution);
             }
 
             final PsiElementFactory factory = JavaPsiFacade.getInstance(expression.getProject()).getElementFactory();
@@ -89,7 +89,7 @@ public class AddTypeArgumentsFix extends MethodArgumentFix {
               if (method.hasModifierProperty(PsiModifier.STATIC)) {
                 qualifierExpression = factory.createReferenceExpression(containingClass);
               } else {
-                qualifierExpression = RefactoringUtil.createThisExpression(method.getManager(), null);
+                qualifierExpression = RefactoringChangeUtil.createThisExpression(method.getManager(), null);
               }
               methodExpression.setQualifierExpression(qualifierExpression);
             }

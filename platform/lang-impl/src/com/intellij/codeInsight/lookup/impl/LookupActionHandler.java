@@ -85,7 +85,7 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     static void executeDown(LookupImpl lookup) {
       if (!lookup.isFocused()) {
-        boolean semiFocused = CompletionPreview.hasPreview(lookup);
+        boolean semiFocused = lookup.isSemiFocused();
         lookup.setFocused(true);
         lookup.getList().setSelectedIndex(0);
         lookup.refreshUi(false, true);

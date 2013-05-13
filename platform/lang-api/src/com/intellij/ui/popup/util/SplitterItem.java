@@ -30,7 +30,7 @@ import javax.swing.*;
  */
 public class SplitterItem extends ItemWrapper {
 
-  private String myText;
+  private final String myText;
 
   public SplitterItem(String text) {
     myText = text;

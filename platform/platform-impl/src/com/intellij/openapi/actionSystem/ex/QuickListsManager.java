@@ -17,10 +17,7 @@ package com.intellij.openapi.actionSystem.ex;
 
 import com.intellij.ide.IdeBundle;
 import com.intellij.ide.actions.QuickSwitchSchemeAction;
-import com.intellij.openapi.actionSystem.ActionManager;
-import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.DataContext;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
+import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.BundledQuickListsProvider;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
@@ -231,6 +228,7 @@ public class QuickListsManager implements ExportableApplicationComponent, NamedJ
 
     public InvokeQuickListAction(QuickList quickList) {
       myQuickList = quickList;
+      myActionPlace = ActionPlaces.ACTION_PLACE_QUICK_LIST_POPUP_ACTION;
       getTemplatePresentation().setDescription(myQuickList.getDescription());
       getTemplatePresentation().setText(myQuickList.getDisplayName(), false);
     }

@@ -43,7 +43,7 @@ import java.util.*;
 /**
  * @author Eugene.Kudelevsky
  */
-public abstract class AndroidLintInspectionBase extends GlobalInspectionTool implements CustomSuppressableInspectionTool {
+public abstract class AndroidLintInspectionBase extends GlobalInspectionTool implements BatchSuppressableTool {
   private static final Logger LOG = Logger.getInstance("#org.jetbrains.android.inspections.lint.AndroidLintInspectionBase");
 
   private static volatile Map<Issue, String> ourIssue2InspectionShortName;
@@ -74,12 +74,12 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool imp
   public IntentionAction[] getIntentions(@NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     return IntentionAction.EMPTY_ARRAY;
   }
-  
+
   @NotNull
   private LocalQuickFix[] getLocalQuickFixes(@NotNull PsiElement startElement, @NotNull PsiElement endElement, @NotNull String message) {
     final AndroidLintQuickFix[] fixes = getQuickFixes(message);
     final LocalQuickFix[] result = new LocalQuickFix[fixes.length];
-    
+
     for (int i = 0; i < fixes.length; i++) {
       if (fixes[i].isApplicable(startElement, endElement, AndroidQuickfixContexts.BatchContext.TYPE)) {
         result[i] = new MyLocalQuickFix(fixes[i]);
@@ -181,12 +181,12 @@ public abstract class AndroidLintInspectionBase extends GlobalInspectionTool imp
   }
 
   @Override
-  public SuppressIntentionAction[] getSuppressActions(@Nullable PsiElement element) {
-    final List<SuppressIntentionAction> result = new ArrayList<SuppressIntentionAction>();
-    result.addAll(Arrays.asList(SuppressManager.getInstance().createSuppressActions(HighlightDisplayKey.find(getShortName()))));
+  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
+    final List<SuppressQuickFix> result = new ArrayList<SuppressQuickFix>();
+    result.addAll(Arrays.asList(BatchSuppressManager.SERVICE.getInstance().createBatchSuppressActions(HighlightDisplayKey.find(getShortName()))));
     result.addAll(Arrays.asList(new XmlSuppressableInspectionTool.SuppressTagStatic(getShortName()),
                                 new XmlSuppressableInspectionTool.SuppressForFile(getShortName())));
-    return result.toArray(new SuppressIntentionAction[result.size()]);
+    return result.toArray(new SuppressQuickFix[result.size()]);
   }
 
   @Override

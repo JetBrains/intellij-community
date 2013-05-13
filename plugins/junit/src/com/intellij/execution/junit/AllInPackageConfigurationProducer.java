@@ -49,4 +49,10 @@ public class AllInPackageConfigurationProducer extends JUnitConfigurationProduce
   public PsiElement getSourceElement() {
     return myPackage;
   }
+
+  @Override
+  public int compareTo(Object o) {
+    if (o instanceof AllInDirectoryConfigurationProducer) return -PREFERED;
+    return PREFERED;
+  }
 }

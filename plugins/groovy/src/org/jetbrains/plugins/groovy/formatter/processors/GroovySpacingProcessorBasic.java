@@ -27,6 +27,7 @@ import com.intellij.psi.tree.IElementType;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.ClosureBodyBlock;
+import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.formatter.MethodCallWithoutQualifierBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement;
@@ -46,7 +47,6 @@ import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElemen
 import static org.jetbrains.plugins.groovy.lang.groovydoc.parser.GroovyDocElementTypes.GROOVY_DOC_COMMENT;
 import static org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes.mTRIPLE_DOT;
 import static org.jetbrains.plugins.groovy.lang.lexer.TokenSets.DOTS;
-import static org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes.METHOD_DEFS;
 
 /**
  * @author ilyas
@@ -57,14 +57,11 @@ public abstract class GroovySpacingProcessorBasic {
   private static final Spacing NO_SPACING = Spacing.createSpacing(0, 0, 0, false, 0);
   private static final Spacing COMMON_SPACING = Spacing.createSpacing(1, 1, 0, true, 100);
   private static final Spacing COMMON_SPACING_WITH_NL = Spacing.createSpacing(1, 1, 1, true, 100);
-  private static final Spacing IMPORT_BETWEEN_SPACING = Spacing.createSpacing(0, 0, 1, true, 100);
-  private static final Spacing IMPORT_OTHER_SPACING = Spacing.createSpacing(0, 0, 2, true, 100);
   private static final Spacing LAZY_SPACING = Spacing.createSpacing(0, 239, 0, true, 100);
 
   public static Spacing getSpacing(GroovyBlock child1,
                                    GroovyBlock child2,
-                                   CommonCodeStyleSettings settings,
-                                   GroovyCodeStyleSettings groovySettings) {
+                                   FormattingContext context) {
 
     ASTNode leftNode = child1.getNode();
     ASTNode rightNode = child2.getNode();
@@ -73,6 +70,9 @@ public abstract class GroovySpacingProcessorBasic {
 
     IElementType leftType = leftNode.getElementType();
     IElementType rightType = rightNode.getElementType();
+
+    final CommonCodeStyleSettings settings = context.getSettings();
+    final GroovyCodeStyleSettings groovySettings = context.getGroovySettings();
 
     if (!(mirrorsAst(child1) && mirrorsAst(child2))) {
       return NO_SPACING;
@@ -95,21 +95,7 @@ public abstract class GroovySpacingProcessorBasic {
       return COMMON_SPACING_WITH_NL;
     }
 
-    if (METHOD_DEFS.contains(leftType)) {
-      if (rightType == mSEMI) {
-        return NO_SPACING;
-      }
-      return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
-    }
-
-    if (METHOD_DEFS.contains(rightType)) {
-      if (leftNode.getElementType() == GROOVY_DOC_COMMENT) {
-        return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD, settings.KEEP_LINE_BREAKS, 0);
-      }
-      return Spacing.createSpacing(0, 0, settings.BLANK_LINES_AROUND_METHOD + 1, settings.KEEP_LINE_BREAKS, 100);
-    }
-
-    if (right != null && right instanceof GrTypeArgumentList) {
+    if (right instanceof GrTypeArgumentList) {
       return NO_SPACING_WITH_NEWLINE;
     }
 
@@ -134,16 +120,6 @@ public abstract class GroovySpacingProcessorBasic {
 
     if (DOTS.contains(leftType)) {
       return NO_SPACING_WITH_NEWLINE;
-    }
-
-/********** imports ************/
-    if (IMPORT_STATEMENT.equals(leftType) && IMPORT_STATEMENT.equals(rightType)) {
-      return IMPORT_BETWEEN_SPACING;
-    }
-    if ((IMPORT_STATEMENT.equals(leftType) &&
-         (!IMPORT_STATEMENT.equals(rightType) && !mSEMI.equals(rightType))) ||
-        ((!IMPORT_STATEMENT.equals(leftType) && !mSEMI.equals(leftType)) && IMPORT_STATEMENT.equals(rightType))) {
-      return IMPORT_OTHER_SPACING;
     }
 
     //todo:check it for multiple assignments

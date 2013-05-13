@@ -187,6 +187,12 @@ public class RefCountingStorage extends AbstractStorage {
     }
   }
 
+  public int createNewRecord() throws IOException {
+    synchronized (myLock) {
+      return myRecordsTable.createNewRecord();
+    }
+  }
+
   public void acquireRecord(int record) {
     waitForPendingWriteForRecord(record);
     synchronized (myLock) {
@@ -195,9 +201,13 @@ public class RefCountingStorage extends AbstractStorage {
   }
 
   public void releaseRecord(int record) throws IOException {
+    releaseRecord(record, true);
+  }
+
+  public void releaseRecord(int record, boolean completely) throws IOException {
     waitForPendingWriteForRecord(record);
     synchronized (myLock) {
-      if (((RefCountingRecordsTable)myRecordsTable).decRefCount(record)) {
+      if (((RefCountingRecordsTable)myRecordsTable).decRefCount(record) && completely) {
         doDeleteRecord(record);
       }
     }

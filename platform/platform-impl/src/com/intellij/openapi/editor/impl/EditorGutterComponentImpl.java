@@ -147,7 +147,7 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
   @Override
   public Dimension getPreferredSize() {
     if (UISettings.getInstance().PRESENTATION_MODE) {
-      return new Dimension(5, myEditor.getPreferredHeight());
+      return new Dimension(myEditor.getFontMetrics(Font.PLAIN).getHeight(), myEditor.getPreferredHeight());
     }
     int w = getLineNumberAreaWidth() + getLineMarkerAreaWidth() + getFoldingAreaWidth() + getAnnotationsAreaWidth();
     myLastPreferredHeight = myEditor.getPreferredHeight();
@@ -1414,6 +1414,14 @@ class EditorGutterComponentImpl extends EditorGutterComponentEx implements Mouse
                                                                                         actionGroup);
           popupMenu.getComponent().show(this, e.getX(), e.getY());
           e.consume();
+        } else {
+          AnAction rightButtonAction = renderer.getRightButtonClickAction();
+          if (rightButtonAction != null) {
+            rightButtonAction.actionPerformed(new AnActionEvent(e, myEditor.getDataContext(), "ICON_NAVIGATION_SECONDARY_BUTTON", rightButtonAction.getTemplatePresentation(),
+                                                                ActionManager.getInstance(),
+                                                                e.getModifiers()));
+            e.consume();
+          }
         }
       }
       else {

@@ -21,10 +21,9 @@ import com.intellij.execution.*;
 import com.intellij.execution.configurations.JavaParameters;
 import com.intellij.execution.configurations.RunProfile;
 import com.intellij.openapi.components.ServiceManager;
-import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectConfigurable;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
-import com.intellij.openapi.options.ShowSettingsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.io.FileUtil;
@@ -182,9 +181,9 @@ public class GradleScriptType extends GroovyScriptType {
           }
         }
         final GradleInstallationManager libraryManager = ServiceManager.getService(GradleInstallationManager.class);
-        if (libraryManager.getGradleHome(module, project) == null) {
-          int result = 0;
-          // TODO den implement
+        // TODO den implement
+        //if (libraryManager.getGradleHome(module, project) == null) {
+        //  int result = 0;
 //          int result = Messages.showOkCancelDialog(
 //            ExternalSystemBundle.message("gradle.run.no.sdk.text"),
 //            ExternalSystemBundle.message("gradle.run.no.sdk.title"),
@@ -193,10 +192,10 @@ public class GradleScriptType extends GroovyScriptType {
 //          if (result == 0) {
 //            ShowSettingsUtil.getInstance().editConfigurable(project, new AbstractExternalProjectConfigurable(project));
 //          }
-          if (libraryManager.getGradleHome(module, project) == null) {
-            return false;
-          }
-        }
+//          if (libraryManager.getGradleHome(module, project) == null) {
+//            return false;
+//          }
+//        }
         return true;
       }
 
@@ -211,7 +210,15 @@ public class GradleScriptType extends GroovyScriptType {
         String scriptParameters = configuration.getScriptParameters();
 
         final GradleInstallationManager libraryManager = ServiceManager.getService(GradleInstallationManager.class);
-        final VirtualFile gradleHome = libraryManager.getGradleHome(module, project);
+        if (module == null) {
+          throw new CantRunException("Target module is undefined");
+        }
+        String linkedProjectPath = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+        if (StringUtil.isEmpty(linkedProjectPath)) {
+          throw new CantRunException(String.format("Module '%s' is not backed by gradle", module.getName()));
+        }
+        assert linkedProjectPath != null;
+        final VirtualFile gradleHome = libraryManager.getGradleHome(module, project, linkedProjectPath);
         assert gradleHome != null;
 
         params.setMainClass(findMainClass(gradleHome, script, project));
@@ -219,7 +226,8 @@ public class GradleScriptType extends GroovyScriptType {
         final File[] groovyJars = GroovyConfigUtils.getGroovyAllJars(gradleHome.getPath() + "/lib/");
         if (groovyJars.length > 0) {
           params.getClassPath().add(groovyJars[0].getAbsolutePath());
-        } else if (module != null) {
+        }
+        else {
           final VirtualFile groovyJar = findGroovyJar(module);
           if (groovyJar != null) {
             params.getClassPath().add(groovyJar);

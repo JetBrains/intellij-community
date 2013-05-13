@@ -56,9 +56,10 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
     new PropertyRenameDialog(property, editor).show();
   }
 
-  public static void doRename(@NotNull final BeanProperty property, final String newName, final boolean searchInComments) {
+  public static void doRename(@NotNull final BeanProperty property, final String newName, final boolean searchInComments, boolean isPreview) {
     final PsiElement psiElement = property.getPsiElement();
     final RenameRefactoring rename = new JavaRenameRefactoringImpl(psiElement.getProject(), psiElement, newName, searchInComments, false);
+    rename.setPreviewUsages(isPreview);
 
     final PsiMethod setter = property.getSetter();
     if (setter != null) {
@@ -90,7 +91,7 @@ public abstract class BeanPropertyRenameHandler implements RenameHandler {
     protected void doAction() {
       final String newName = getNewName();
       final boolean searchInComments = isSearchInComments();
-      doRename(myProperty, newName, searchInComments);
+      doRename(myProperty, newName, searchInComments, isPreviewUsages());
       close(DialogWrapper.OK_EXIT_CODE);
     }
   }

@@ -191,12 +191,12 @@ public class StubUpdatingIndex extends CustomImplementationFileBasedIndexExtensi
       memStorage.addBufferingStateListsner(new MemoryIndexStorage.BufferingStateListener() {
         @Override
         public void bufferingStateChanged(final boolean newState) {
-          ((StubIndexImpl)StubIndexImpl.getInstance()).setDataBufferingEnabled(newState);
+          ((StubIndexImpl)StubIndex.getInstance()).setDataBufferingEnabled(newState);
         }
 
         @Override
         public void memoryStorageCleared() {
-          ((StubIndexImpl)StubIndexImpl.getInstance()).cleanupMemoryStorage();
+          ((StubIndexImpl)StubIndex.getInstance()).cleanupMemoryStorage();
         }
       });
     }

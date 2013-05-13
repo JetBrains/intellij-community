@@ -5,35 +5,35 @@ interface A<T> {
 class MyClass<T> implements A<T> {
     @Override
     public void m(T t) {
-        <selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+        <caret>
     }
 
     public MyClass() {
-        super();    //To change body of overridden methods use File | Settings | File Templates.
+        super();
     }
 
     @Override
     public int hashCode() {
-        return super.hashCode();    //To change body of overridden methods use File | Settings | File Templates.
+        return super.hashCode();
     }
 
     @Override
     public boolean equals(Object obj) {
-        return super.equals(obj);    //To change body of overridden methods use File | Settings | File Templates.
+        return super.equals(obj);
     }
 
     @Override
     protected Object clone() throws CloneNotSupportedException {
-        return super.clone();    //To change body of overridden methods use File | Settings | File Templates.
+        return super.clone();
     }
 
     @Override
     public String toString() {
-        return super.toString();    //To change body of overridden methods use File | Settings | File Templates.
+        return super.toString();
     }
 
     @Override
     protected void finalize() throws Throwable {
-        super.finalize();    //To change body of overridden methods use File | Settings | File Templates.
+        super.finalize();
     }
 }

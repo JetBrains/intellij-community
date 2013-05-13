@@ -1253,6 +1253,8 @@ class Foo {
   protected void tearDown() {
     CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
     CodeInsightSettings.instance.COMPLETION_CASE_SENSITIVE = CodeInsightSettings.FIRST_LETTER
+    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = false
+
     super.tearDown()
   }
 
@@ -1383,5 +1385,24 @@ class ListConfigKey {
 '''
 
   }
+
+  public void testPreselectMostRelevantInTheMiddleAlpha() {
+    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true;
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+
+    myFixture.configureByText 'a.java', '''
+class Foo {
+  void setText() {}
+  void setHorizontalText() {}
+  void foo() {
+    <caret>
+  }
+
+}
+'''
+    type 'sette'
+    myFixture.assertPreferredCompletionItems 1, 'setHorizontalText', 'setText'
+  }
+
 
 }

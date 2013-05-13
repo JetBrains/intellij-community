@@ -65,6 +65,17 @@ public class InplaceIntroduceConstantTest extends AbstractJavaInplaceIntroduceTe
     });
   }
 
+  public void testReplaceAllFromLiteral() throws Exception {
+
+    doTest(new Pass<AbstractInplaceIntroducer>() {
+      @Override
+      public void pass(AbstractInplaceIntroducer inplaceIntroduceFieldPopup) {
+        type("NINE");
+        inplaceIntroduceFieldPopup.setReplaceAllOccurrences(true);
+      }
+    });
+  }
+
   public void testConflictingConstantName() throws Exception {
 
     doTest(new Pass<AbstractInplaceIntroducer>() {

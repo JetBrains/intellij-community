@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -37,7 +37,7 @@ class Test {<caret>}
 class Test {
     @Override
     boolean equals(Object obj) {
-        return super.equals(obj)    //To change body of overridden methods use File | Settings | File Templates.
+        return super.equals(obj)
     }
 }
 """
@@ -51,7 +51,7 @@ class Test {<caret>}
     myFixture.checkResult """
 class Test {
     Test() {
-        super()    //To change body of overridden methods use File | Settings | File Templates.
+        super()
     }
 }
 """
@@ -73,7 +73,7 @@ class Test {<caret>}
 class Test {
     @Override
     def foo() {
-        return super.foo()    //To change body of overridden methods use File | Settings | File Templates.
+        return super.foo()
     }
 }
 """
@@ -93,7 +93,7 @@ class Test<T> extends Base<T> {<caret>}
 class Test<T> extends Base<T> {
     @Override
     def <T> T[] toArray(T[] t) {
-        return super.toArray(t)    //To change body of overridden methods use File | Settings | File Templates.
+        return super.toArray(t)
     }
 }
 """
@@ -117,7 +117,7 @@ class X implements I {
 
     @Override
     void foo() throws RuntimeException {
-        //To change body of implemented methods use File | Settings | File Templates.
+
     }
 }
 

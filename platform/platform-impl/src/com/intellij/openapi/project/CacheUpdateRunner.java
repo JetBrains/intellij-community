@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.progress.util.ProgressIndicatorBase;
+import com.intellij.openapi.progress.util.ProgressWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -234,34 +235,19 @@ class CacheUpdateRunner {
             }
           };
           try {
-            ProgressManager.getInstance().runProcess(new Runnable() {
-              @Override
-              public void run() {
-                if (myProcessInReadAction) {
-                  myApplication.runReadAction(action);
+            ProgressManager.getInstance().runProcess(
+              new Runnable() {
+                @Override
+                public void run() {
+                  if (myProcessInReadAction) {
+                    myApplication.runReadAction(action);
+                  }
+                  else {
+                    action.run();
+                  }
                 }
-                else {
-                  action.run();
-                }
-              }
-            }, new DelegatingProgressIndicator(myInnerIndicator) {
-               boolean myStarted;
-
-               @Override
-               public void start() {
-                 myStarted = true;
-               }
-
-               @Override
-               public void stop() {
-                 myStarted = false;
-               }
-
-               @Override
-               public boolean isRunning() {
-                 return myStarted;
-               }
-             }
+              },
+              ProgressWrapper.wrap(myInnerIndicator)
             );
           }
           catch (ProcessCanceledException e) {

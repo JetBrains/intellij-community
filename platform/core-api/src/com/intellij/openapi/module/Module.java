@@ -29,7 +29,7 @@ import org.jetbrains.annotations.Nullable;
  * Represents a module in an IDEA project.
  *
  * @see ModuleManager#getModules()
- * @see ModuleComponent 
+ * @see ModuleComponent
  */
 public interface Module extends ComponentManager, AreaInstance, Disposable {
   /**
@@ -99,7 +99,8 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
    * @param optionName the name of the custom option.
    * @return the value of the custom option, or null if no value has been set.
    */
-  @Nullable String getOptionValue(@NotNull String optionName);
+  @Nullable
+  String getOptionValue(@NotNull String optionName);
 
   /**
    * Returns module scope including sources and tests, excluding libraries and dependencies.
@@ -119,7 +120,7 @@ public interface Module extends ComponentManager, AreaInstance, Disposable {
 
   /**
    * Returns module scope including sources, tests, and dependencies, excluding libraries.
-   * 
+   *
    * @return scope including sources, tests, and dependencies, excluding libraries.
    */
   GlobalSearchScope getModuleWithDependenciesScope();

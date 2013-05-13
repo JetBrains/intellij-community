@@ -38,11 +38,11 @@ import com.intellij.openapi.updateSettings.impl.UpdateSettings;
 import com.intellij.openapi.util.*;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.WindowManager;
+import com.intellij.openapi.wm.impl.SystemDock;
 import com.intellij.openapi.wm.impl.WindowManagerImpl;
 import com.intellij.openapi.wm.impl.X11UiUtil;
 import com.intellij.openapi.wm.impl.welcomeScreen.WelcomeFrame;
 import com.intellij.ui.Splash;
-import com.intellij.util.SystemProperties;
 import com.intellij.util.messages.MessageBus;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
@@ -106,7 +106,7 @@ public class IdeaApplication {
       RepaintManager.setCurrentManager(new IdeRepaintManager());
     }
 
-    if (SystemInfo.isXWindow && !SystemProperties.getBooleanProperty("idea.skip.wm.patching", false)) {
+    if (SystemInfo.isXWindow) {
       String wmName = X11UiUtil.getWmName();
       LOG.info("WM detected: " + wmName);
       if (wmName != null) {
@@ -215,6 +215,7 @@ public class IdeaApplication {
     @Override
     public void main(String[] args) {
 
+      SystemDock.initialize();
       // Event queue should not be changed during initialization of application components.
       // It also cannot be changed before initialization of application components because IdeEventQueue uses other
       // application components. So it is proper to perform replacement only here.

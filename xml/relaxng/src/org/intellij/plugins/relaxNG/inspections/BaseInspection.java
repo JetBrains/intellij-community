@@ -16,11 +16,8 @@
 
 package org.intellij.plugins.relaxNG.inspections;
 
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.SuppressIntentionAction;
-import com.intellij.codeInspection.XmlSuppressableInspectionTool;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.TextRange;
@@ -31,7 +28,6 @@ import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.Function;
-import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
 import org.intellij.plugins.relaxNG.compact.psi.*;
 import org.jetbrains.annotations.Nls;
@@ -45,6 +41,7 @@ import org.jetbrains.annotations.Nullable;
  * Date: 25.11.2007
  */
 public abstract class BaseInspection extends XmlSuppressableInspectionTool {
+  @Override
   @Nls
   @NotNull
   public final String getGroupDisplayName() {
@@ -88,65 +85,69 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     return false;
   }
 
+  @NotNull
   @Override
-  @Nullable
-  public SuppressIntentionAction[] getSuppressActions(PsiElement element) {
+  public SuppressQuickFix[] getBatchSuppressActions(@Nullable PsiElement element) {
     if (element.getContainingFile() instanceof RncFile) {
-      return ArrayUtil.mergeArrays(new SuppressIntentionAction[]{
+      return ArrayUtil.mergeArrays(new SuppressQuickFix[] {
               new SuppressAction("Define") {
+                @Override
                 protected PsiElement getTarget(PsiElement element) {
                   return PsiTreeUtil.getParentOfType(element, RncDefine.class, false);
                 }
               },
               new SuppressAction("Grammar") {
+                @Override
                 protected PsiElement getTarget(PsiElement element) {
                   final RncDefine define = PsiTreeUtil.getParentOfType(element, RncDefine.class, false);
-                  return define != null ? PsiTreeUtil.getParentOfType(define, RncGrammar.class, false) : null;
-                }
-
-                @SuppressWarnings({ "SSBasedInspection" })
-                public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-                  return super.isAvailable(project, editor, element) && getTarget(element).getText().startsWith("grammar ");
+                  RncGrammar target = define != null ? PsiTreeUtil.getParentOfType(define, RncGrammar.class, false) : null;
+                  return target != null && target.getText().startsWith("grammar ") ? target : null;
                 }
               }
       }, getXmlOnlySuppressions(element));
-    } else {
-      return super.getSuppressActions(element);
+    }
+    else {
+      return super.getBatchSuppressActions(element);
     }
   }
 
-  private SuppressIntentionAction[] getXmlOnlySuppressions(PsiElement element) {
-    return ContainerUtil.map(super.getSuppressActions(element), new Function<SuppressIntentionAction, SuppressIntentionAction>() {
-      public SuppressIntentionAction fun(final SuppressIntentionAction action) {
-        return new SuppressIntentionAction() {
-          public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-            action.invoke(project, editor, element);
-          }
-
-          public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-            return element.getContainingFile().getFileType() == StdFileTypes.XML && action.isAvailable(project, editor, element);
-          }
-
+  private SuppressQuickFix[] getXmlOnlySuppressions(PsiElement element) {
+    return ContainerUtil.map(super.getBatchSuppressActions(element), new Function<SuppressQuickFix, SuppressQuickFix>() {
+      @Override
+      public SuppressQuickFix fun(final SuppressQuickFix action) {
+        return new SuppressQuickFix() {
           @NotNull
-          public String getText() {
-            return action.getText();
+          @Override
+          public String getName() {
+            return action.getName();
           }
 
-          public boolean startInWriteAction() {
-            return action.startInWriteAction();
+          @Override
+          public boolean isAvailable(@NotNull Project project, @NotNull PsiElement context) {
+            return context.isValid();
           }
 
+          @Override
+          public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+            PsiElement element = descriptor.getPsiElement();
+            PsiFile file = element == null ? null : element.getContainingFile();
+            if (file == null || file.getFileType() != StdFileTypes.XML) return;
+            action.applyFix(project, descriptor);
+          }
+
+          @Override
           @NotNull
           public String getFamilyName() {
             return action.getFamilyName();
           }
         };
       }
-    }, new SuppressIntentionAction[0]);
+    }, SuppressQuickFix.EMPTY_ARRAY);
   }
 
   private void suppress(PsiFile file, @NotNull PsiElement location) {
     suppress(file, location, "#suppress " + getID(), new Function<String, String>() {
+      @Override
       public String fun(final String text) {
         return text + ", " + getID();
       }
@@ -160,7 +161,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     if (vfile == null || ReadonlyStatusHandler.getInstance(project).ensureFilesWritable(vfile).hasReadonlyFiles()) {
       return;
     }
-    
+
     final Document doc = PsiDocumentManager.getInstance(project).getDocument(file);
     assert doc != null;
 
@@ -188,7 +189,7 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
   @NotNull
   public abstract RncElementVisitor buildVisitor(@NotNull ProblemsHolder holder, boolean isOnTheFly);
 
-  private abstract class SuppressAction extends SuppressIntentionAction {
+  private abstract class SuppressAction implements SuppressQuickFix {
     private final String myLocation;
 
     public SuppressAction(String location) {
@@ -196,21 +197,28 @@ public abstract class BaseInspection extends XmlSuppressableInspectionTool {
     }
 
     @NotNull
-    public String getText() {
+    @Override
+    public String getName() {
       return "Suppress for " + myLocation;
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getDisplayName();
     }
 
-    public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-      suppress(element.getContainingFile(), getTarget(element));
+    @Override
+    public boolean isAvailable(@NotNull Project project, @NotNull PsiElement context) {
+      return context.isValid();
     }
 
-    public boolean isAvailable(@NotNull Project project, Editor editor, @NotNull PsiElement element) {
-      return getTarget(element) != null;
+    @Override
+    public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
+      PsiElement element = descriptor.getPsiElement();
+      PsiElement target = getTarget(element);
+      if (target == null) return;
+      suppress(element.getContainingFile(), target);
     }
 
     protected abstract PsiElement getTarget(PsiElement element);

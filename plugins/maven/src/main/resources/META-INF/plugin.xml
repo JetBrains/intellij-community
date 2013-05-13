@@ -429,8 +429,7 @@
       </action>
     </group>
 
-    <group id="Maven.DownloadAllGroup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
-           icon="AllIcons.Actions.Download">
+    <group id="Maven.DownloadAllGroup">
       <reference id="Maven.DownloadAllSources"/>
       <reference id="Maven.DownloadAllDocs"/>
       <reference id="Maven.DownloadAllSourcesAndDocs"/>
@@ -439,7 +438,11 @@
     <group id="Maven.NavigatorActionsToolbar">
       <reference id="Maven.Reimport"/>
       <reference id="Maven.UpdateFolders"/>
-      <reference id="Maven.DownloadAllGroup"/>
+
+      <group id="Maven.DownloadAllGroupPopup" popup="true" class="org.jetbrains.idea.maven.project.actions.DownloadActionGroup"
+             icon="AllIcons.Actions.Download">
+        <reference id="Maven.DownloadAllGroup"/>
+      </group>
       <separator/>
       <reference id="Maven.AddManagedFiles"/>
       <separator/>
@@ -486,7 +489,7 @@
       <reference id="Maven.OpenSettingsXml"/>
       <reference id="Maven.OpenProfilesXml"/>
       <separator/>
-      <reference ref="Maven.DependencyMenu"/>
+      <reference id="Maven.DownloadAllGroup"/>
       <separator/>
     </group>
 

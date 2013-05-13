@@ -60,16 +60,16 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
 
     MessageBusConnection connection = project.getMessageBus().connect(project);
     connection.subscribe(GradleSettingsListener.TOPIC, new GradleSettingsListenerAdapter() {
-      
-      @Override public void onLinkedProjectPathChange(@Nullable String oldPath, @Nullable String newPath) {
-        if (StringUtil.isEmpty(newPath)) {
-          myLayout.show(myContent, NON_LINKED_CARD_NAME);
-          return;
-        }
-        if (StringUtil.isEmpty(oldPath) && !StringUtil.isEmpty(newPath)) {
-          myLayout.show(myContent, CONTENT_CARD_NAME);
-        }
-      }
+      // TODO den implement
+//      @Override public void onLinkedProjectConfigChange(@Nullable String oldPath, @Nullable String newPath) {
+//        if (StringUtil.isEmpty(newPath)) {
+//          myLayout.show(myContent, NON_LINKED_CARD_NAME);
+//          return;
+//        }
+//        if (StringUtil.isEmpty(oldPath) && !StringUtil.isEmpty(newPath)) {
+//          myLayout.show(myContent, CONTENT_CARD_NAME);
+//        }
+//      }
     });
   }
 
@@ -118,7 +118,9 @@ public abstract class GradleToolWindowPanel extends SimpleToolWindowPanel {
    */
   public void update() {
     final GradleSettings settings = GradleSettings.getInstance(myProject);
-    String cardToShow = StringUtil.isEmpty(settings.getLinkedExternalProjectPath()) ? NON_LINKED_CARD_NAME : CONTENT_CARD_NAME;
+    // TODO den implement
+    String cardToShow = "sf";
+//    String cardToShow = StringUtil.isEmpty(settings.getLinkedExternalProjectPath()) ? NON_LINKED_CARD_NAME : CONTENT_CARD_NAME;
     myLayout.show(myContent, cardToShow);
     boolean showToolbar = cardToShow != NON_LINKED_CARD_NAME;
     for (JComponent component : getToolbarControls()) {

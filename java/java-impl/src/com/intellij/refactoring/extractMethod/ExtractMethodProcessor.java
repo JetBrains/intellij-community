@@ -203,7 +203,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   public boolean prepare() throws PrepareFailedException {
     return prepare(null);
   }
-  
+
   /**
    * Invoked in atomic action
    */
@@ -551,7 +551,7 @@ public class ExtractMethodProcessor implements MatchProvider {
       myVariableDatum[i] = myInputVariables.getInputVariables().get(i);
     }
   }
-  
+
   @TestOnly
   public void doNotPassParameter(int i) {
     myVariableDatum[i].passAsParameter = false;
@@ -824,10 +824,10 @@ public class ExtractMethodProcessor implements MatchProvider {
 
     myExtractedMethod = (PsiMethod)myTargetClass.addAfter(newMethod, myAnchor);
     if (isNeedToChangeCallContext() && myNeedChangeContext) {
-      ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringUtil.createThisExpression(myManager, null));
+      ChangeContextUtil.decodeContextInfo(myExtractedMethod, myTargetClass, RefactoringChangeUtil.createThisExpression(myManager, null));
       if (myMethodCall.resolveMethod() != myExtractedMethod) {
         final PsiReferenceExpression methodExpression = myMethodCall.getMethodExpression();
-        methodExpression.setQualifierExpression(RefactoringUtil.createThisExpression(myManager, myTargetClass));
+        methodExpression.setQualifierExpression(RefactoringChangeUtil.createThisExpression(myManager, myTargetClass));
       }
     }
 
@@ -1000,7 +1000,7 @@ public class ExtractMethodProcessor implements MatchProvider {
   private PsiMethod generateEmptyMethod(PsiClassType[] exceptions, boolean isStatic) throws IncorrectOperationException {
     PsiMethod newMethod;
     if (myIsChainedConstructor) {
-      newMethod = myElementFactory.createConstructor();      
+      newMethod = myElementFactory.createConstructor();
     }
     else {
       newMethod = myElementFactory.createMethod(myMethodName, myReturnType);

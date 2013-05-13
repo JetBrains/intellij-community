@@ -11,7 +11,7 @@ public class Test {
 
         @Override
         void bar() {
-            //To change body of implemented methods use File | Settings | File Templates.
+
         }
     }
 }

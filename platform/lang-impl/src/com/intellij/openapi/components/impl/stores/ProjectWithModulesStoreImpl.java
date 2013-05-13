@@ -26,6 +26,7 @@ import com.intellij.openapi.project.impl.ProjectImpl;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.io.fs.IFile;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -42,7 +43,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
   }
 
   @Override
-  public void reinitComponents(final Set<String> componentNames, final boolean reloadData) {
+  public void reinitComponents(@NotNull final Set<String> componentNames, final boolean reloadData) {
     super.reinitComponents(componentNames, reloadData);
 
     for (Module module : getPersistentModules()) {
@@ -63,7 +64,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
   }
 
   @Override
-  public boolean isReloadPossible(final Set<String> componentNames) {
+  public boolean isReloadPossible(@NotNull final Set<String> componentNames) {
     if (!super.isReloadPossible(componentNames)) return false;
 
     for (Module module : getPersistentModules()) {
@@ -99,6 +100,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
       }
     }
 
+    @NotNull
     @Override
     public List<IFile> getAllStorageFiles(final boolean includingSubStructures) {
       final List<IFile> result = super.getAllStorageFiles(includingSubStructures);
@@ -114,7 +116,7 @@ public class ProjectWithModulesStoreImpl extends ProjectStoreImpl {
 
     @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
+    public Set<String> analyzeExternalChanges(@NotNull final Set<Pair<VirtualFile,StateStorage>> changedFiles) {
       final Set<String> result = super.analyzeExternalChanges(changedFiles);
       if (result == null) return null;
 

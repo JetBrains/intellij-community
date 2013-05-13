@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -253,7 +253,7 @@ package pack
 
 import foo.Foo
 import foo.Bar
-import java.test.Test 
+import java.test.Test
 import java.test2.Test2
 import static foo.Bar.foo0
 import static java.test.Test.foo
@@ -352,7 +352,8 @@ GParsExecutorsPool oi
     doOptimizeImports()
 
     myFixture.checkResult('''\
-@Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12') @Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12')
+@Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12')
+@Grab(group = 'org.codehaus.gpars', module = 'gpars', version = '0.12')
 import groovyx.gpars.GParsExecutorsPool
 
 GParsExecutorsPool oi

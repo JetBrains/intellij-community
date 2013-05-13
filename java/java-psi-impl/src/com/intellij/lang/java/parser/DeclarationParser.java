@@ -710,7 +710,7 @@ public class DeclarationParser {
     IElementType tokenType = builder.getTokenType();
     if (tokenType != JavaTokenType.LBRACKET && tokenType != JavaTokenType.AT) return true;
 
-    PsiBuilder.Marker marker = errorKey != null ? builder.mark() : null;
+    PsiBuilder.Marker marker = builder.mark();
 
     int count = 0;
     while (true) {
@@ -725,11 +725,21 @@ public class DeclarationParser {
       ++count;
     }
 
-    boolean paired = count % 2 == 0;
-    if (marker != null) {
+    if (count == 0) {
+      // just annotation, most probably belongs to a next declaration
+      marker.rollbackTo();
+      return true;
+    }
+
+    if (errorKey != null) {
       marker.error(JavaErrorMessages.message(errorKey));
     }
-    else if (!paired) {
+    else {
+      marker.drop();
+    }
+
+    boolean paired = count % 2 == 0;
+    if (!paired) {
       error(builder, JavaErrorMessages.message("expected.rbracket"));
     }
     return paired;

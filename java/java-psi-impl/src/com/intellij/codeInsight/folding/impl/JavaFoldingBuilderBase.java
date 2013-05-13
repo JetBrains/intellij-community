@@ -388,11 +388,11 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   protected abstract boolean shouldShowExplicitLambdaType(PsiAnonymousClass anonymousClass, PsiNewExpression expression);
 
   private static boolean seemsLikeLambda(@Nullable final PsiClass baseClass) {
-    if (baseClass == null) return false;
+    return baseClass != null && PsiUtil.hasDefaultConstructor(baseClass, true);
+  }
 
+  private static boolean isImplementingLambdaMethod(PsiClass baseClass) {
     if (!baseClass.hasModifierProperty(PsiModifier.ABSTRACT)) return false;
-
-    if (!PsiUtil.hasDefaultConstructor(baseClass, true)) return false;
 
     for (final PsiMethod method : baseClass.getMethods()) {
       if (method.hasModifierProperty(PsiModifier.ABSTRACT)) {
@@ -625,11 +625,12 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
   }
 
   private void addCodeBlockFolds(PsiElement scope, final List<FoldingDescriptor> foldElements,
-                                 final @NotNull Set<PsiElement> processedComments, final Document document, final boolean quick)
-  {
+                                 final @NotNull Set<PsiElement> processedComments, final Document document, final boolean quick) {
+    final boolean dumb = DumbService.isDumb(scope.getProject());
     scope.accept(new JavaRecursiveElementWalkingVisitor() {
-      @Override public void visitClass(PsiClass aClass) {
-        if (!addClosureFolding(aClass, document, foldElements, processedComments, quick)) {
+      @Override
+      public void visitClass(PsiClass aClass) {
+        if (dumb || !addClosureFolding(aClass, document, foldElements, processedComments, quick)) {
           addToFold(foldElements, aClass, document, true);
           addElementsToFold(foldElements, aClass, document, false, quick);
         }
@@ -637,14 +638,18 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
       @Override
       public void visitMethodCallExpression(PsiMethodCallExpression expression) {
-        addMethodGenericParametersFolding(expression, foldElements, document, quick);
+        if (!dumb) {
+          addMethodGenericParametersFolding(expression, foldElements, document, quick);
+        }
 
         super.visitMethodCallExpression(expression);
       }
 
       @Override
       public void visitNewExpression(PsiNewExpression expression) {
-        addGenericParametersFolding(expression, foldElements, document, quick);
+        if (!dumb) {
+          addGenericParametersFolding(expression, foldElements, document, quick);
+        }
 
         super.visitNewExpression(expression);
       }
@@ -659,7 +664,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
 
   private boolean addClosureFolding(final PsiClass aClass, final Document document, final List<FoldingDescriptor> foldElements,
                                     @NotNull Set<PsiElement> processedComments, final boolean quick) {
-    if (!JavaCodeFoldingSettings.getInstance().isCollapseLambdas() || DumbService.isDumb(aClass.getProject())) {
+    if (!JavaCodeFoldingSettings.getInstance().isCollapseLambdas()) {
       return false;
     }
 
@@ -672,7 +677,8 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
         final PsiExpressionList argumentList = expression.getArgumentList();
         if (argumentList != null && argumentList.getExpressions().length == 0) {
           final PsiMethod[] methods = anonymousClass.getMethods();
-          if (hasOnlyOneLambdaMethod(anonymousClass, !quick) && (quick || seemsLikeLambda(anonymousClass.getBaseClassType().resolve()))) {
+          PsiClass baseClass = anonymousClass.getBaseClassType().resolve();
+          if (hasOnlyOneLambdaMethod(anonymousClass, !quick) && seemsLikeLambda(baseClass)) {
             final PsiMethod method = methods[0];
             final PsiCodeBlock body = method.getBody();
             if (body != null) {
@@ -704,6 +710,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
               if (lastLineEnd < firstLineStart) return false;
 
               String type = quick ? "" : getOptionalLambdaType(anonymousClass, expression);
+              String methodName = quick || !isImplementingLambdaMethod(baseClass) ? method.getName() : "";
 
               final String params = StringUtil.join(method.getParameterList().getParameters(), new Function<PsiParameter, String>() {
                 @Override
@@ -711,7 +718,7 @@ public abstract class JavaFoldingBuilderBase extends CustomFoldingBuilder implem
                   return psiParameter.getName();
                 }
               }, ", ");
-              @NonNls final String lambdas = type + "(" + params + ") -> {";
+              @NonNls final String lambdas = type + methodName + "(" + params + ") -> {";
 
               final int closureStart = expression.getTextRange().getStartOffset();
               final int closureEnd = expression.getTextRange().getEndOffset();

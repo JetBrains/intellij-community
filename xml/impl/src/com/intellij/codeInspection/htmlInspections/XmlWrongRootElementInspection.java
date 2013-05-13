@@ -40,29 +40,34 @@ import org.jetbrains.annotations.NotNull;
  */
 public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return XmlInspectionGroupNames.XML_INSPECTIONS;
   }
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return XmlBundle.message("xml.inspection.wrong.root.element");
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return "XmlWrongRootElement";
   }
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
+  @Override
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     if (!(tag.getParent() instanceof XmlTag)) {
       final PsiFile psiFile = tag.getContainingFile();
@@ -134,16 +139,19 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
       myText = text;
     }
 
+    @Override
     @NotNull
     public String getName() {
       return XmlBundle.message("change.root.element.to", myText);
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
     }
 
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
       final XmlTag myTag = PsiTreeUtil.getParentOfType(descriptor.getPsiElement(), XmlTag.class);
 
@@ -152,6 +160,7 @@ public class XmlWrongRootElementInspection extends HtmlLocalInspectionTool {
       }
 
       new WriteCommandAction(project) {
+        @Override
         protected void run(final Result result) throws Throwable {
           myTag.setName(myText);
         }

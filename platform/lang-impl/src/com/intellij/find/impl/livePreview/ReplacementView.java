@@ -25,22 +25,6 @@ public class ReplacementView extends JPanel {
 
   private static final String MALFORMED_REPLACEMENT_STRING = "Malformed replacement string";
   private String myReplacement;
-  private FindResult myOccurrence;
-  private JButton myStatusButton;
-
-  public interface Delegate {
-
-  }
-
-  private Delegate myDelegate;
-
-  public Delegate getDelegate() {
-    return myDelegate;
-  }
-
-  public void setDelegate(Delegate delegate) {
-    this.myDelegate = delegate;
-  }
 
   @Override
   protected void paintComponent(Graphics graphics) {

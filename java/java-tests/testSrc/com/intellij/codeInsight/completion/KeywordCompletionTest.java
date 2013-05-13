@@ -75,16 +75,8 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testMethodScope3() throws Exception { doTest(1, "final", "public", "static", "volatile", "abstract", "throws", "instanceof"); }
   public void testMethodScope4() throws Exception { doTest(6, "final", "try", "for", "while", "return", "throw"); }
   public void testMethodScope5() throws Exception { doTest(true); }
-  public void testExtraBracketAfterFinally1() throws Exception {
-    configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
-    selectItem(myItems[1]);
-    checkResultByFile(BASE_PATH + "/" + getTestName(true) + "_after.java");
-  }
-  public void testExtraBracketAfterFinally2() throws Exception {
-    configureByFile(BASE_PATH + "/" + getTestName(true) + ".java");
-    selectItem(myItems[1]);
-    checkResultByFile(BASE_PATH + "/" + getTestName(true) + "_after.java");
-  }
+  public void testExtraBracketAfterFinally1() throws Exception { doTest(false); }
+  public void testExtraBracketAfterFinally2() throws Exception { doTest(false); }
   public void testExtendsInCastTypeParameters() throws Exception { doTest(false); }
   public void testExtendsInCastTypeParameters2() throws Exception { doTest(2, "extends", "super"); }
   public void testExtendsWithRightContextInClassTypeParameters() throws Exception { doTest(false); }
@@ -105,6 +97,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testNullInMethodCall2() throws Exception { doTest(false); }
   public void testNewInMethodRefs() throws Exception { doTest(1, "new"); }
   public void testSpaceAfterInstanceof() throws Exception { doTest(false); }
+  public void testInstanceofAfterUnresolved() throws Exception { doTest(1, "instanceof"); }
   public void testAbstractInInterface() throws Exception { doTest(1, "abstract"); }
   public void testCharInAnnotatedParameter() throws Exception { doTest(1, "char"); }
   public void testReturnInTernary() throws Exception { doTest(1, "return"); }
@@ -112,6 +105,7 @@ public class KeywordCompletionTest extends LightCompletionTestCase {
   public void testFinalAfterParameterAnno2() throws Exception { doTest(2, "final", "float", "class"); }
   public void testFinalAfterCase() throws Exception { doTest(3, "final", "float", "class"); }
   public void testFinalInTryWithResources() throws Exception { doTest(1, "final", "float", "class"); }
+  public void testNoFinalAfterTryBody() throws Exception { doTest(1, "final", "finally"); }
   public void testClassInMethod() throws Exception { doTest(2, "class", "char"); }
   public void testIntInClassArray() throws Throwable { doTest(2, "int", "char", "final"); }
   public void testIntInClassArray2() throws Throwable { doTest(2, "int", "char", "final"); }

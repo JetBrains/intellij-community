@@ -51,6 +51,7 @@ import com.intellij.openapi.project.impl.ProjectManagerImpl;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.*;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.wm.IdeFrame;
@@ -73,6 +74,7 @@ import org.picocontainer.MutablePicoContainer;
 
 import javax.swing.*;
 import java.awt.*;
+import java.io.File;
 import java.io.IOException;
 import java.lang.reflect.Method;
 import java.util.List;
@@ -116,7 +118,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   private volatile boolean myDisposeInProgress = false;
 
   private final Disposable myLastDisposable = Disposer.newDisposable(); // will be disposed last
-  
+
   private boolean myHandlingInitComponentError;
 
   private final AtomicBoolean mySaveSettingsIsInProgress = new AtomicBoolean(false);
@@ -530,6 +532,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
   public void load(String path) throws IOException, InvalidDataException {
     getStateStore().setOptionsPath(path);
     getStateStore().setConfigPath(PathManager.getConfigPath());
+
     myIsFiringLoadingEvent = true;
     try {
       fireBeforeApplicationLoaded();
@@ -551,6 +554,15 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       HeavyProcessLatch.INSTANCE.processFinished();
     }
     myLoaded = true;
+
+    File locatorFile = new File(PathManager.getSystemPath() + "/" + ApplicationEx.LOCATOR_FILE_NAME);
+    try {
+      byte[] data = PathManager.getHomePath().getBytes("UTF-8");
+      FileUtil.writeToFile(locatorFile, data);
+    }
+    catch (Exception e) {
+      LOG.warn("can't store a location in '" + locatorFile + "'", e);
+    }
   }
 
   @Override
@@ -1154,7 +1166,7 @@ public class ApplicationImpl extends ComponentManagerImpl implements Application
       if (root != null) {
         component.putClientProperty(WAS_EVER_SHOWN, Boolean.TRUE);
         assertIsDispatchThread();
-      } 
+      }
     }
   }
 

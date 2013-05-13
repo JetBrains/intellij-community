@@ -33,6 +33,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 public class CreateFromScratchMode extends WizardMode {
@@ -51,7 +52,7 @@ public class CreateFromScratchMode extends WizardMode {
 
   @Nullable
   protected StepSequence createSteps(final WizardContext context, @NotNull final ModulesProvider modulesProvider) {
-    ModuleBuilder[] builders = context.getAllBuilders();
+    List<ModuleBuilder> builders = ModuleBuilder.getAllBuilders();
     for (ModuleBuilder builder : builders) {
       myBuildersMap.put(builder.getBuilderId(), builder);
     }

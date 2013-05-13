@@ -395,7 +395,7 @@ public class VfsUtil extends VfsUtilCore {
       }
     }
     catch (MalformedURLException e) {
-      LOG.debug("MalformedURLException occured:" + e.getMessage());
+      LOG.debug("MalformedURLException occurred:" + e.getMessage());
       return null;
     }
   }

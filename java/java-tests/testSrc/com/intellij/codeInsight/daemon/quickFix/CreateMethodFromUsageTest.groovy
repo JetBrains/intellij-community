@@ -67,7 +67,7 @@ class SomeOuterClassWithLongName {
         static class Group {
 
             public void addSubGroup(Group child) {
-                <selection>//To change body of created methods use File | Settings | File Templates.</selection>
+                <selection></selection>
             }
         }
     }

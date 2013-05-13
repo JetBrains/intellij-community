@@ -21,13 +21,17 @@ import com.intellij.android.designer.propertyTable.IXmlAttributeLocator;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.HighlightDisplayKey;
 import com.intellij.codeInsight.intention.IntentionAction;
-import com.intellij.codeInspection.SuppressIntentionAction;
+import com.intellij.codeInspection.InspectionManager;
+import com.intellij.codeInspection.LocalQuickFix;
+import com.intellij.codeInspection.ProblemHighlightType;
+import com.intellij.codeInspection.SuppressQuickFix;
 import com.intellij.codeInspection.ex.DisableInspectionToolAction;
 import com.intellij.codeInspection.ex.EditInspectionToolsSettingsAction;
 import com.intellij.designer.model.*;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Iconable;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.PsiElement;
@@ -121,17 +125,17 @@ public final class ErrorAnalyzer {
                   }
                 });
 
-              SuppressIntentionAction[] suppressActions = inspection.getSuppressActions(startElement);
+              SuppressQuickFix[] suppressActions = inspection.getBatchSuppressActions(startElement);
               if (suppressActions != null) {
-                for (final SuppressIntentionAction action : suppressActions) {
-                  if (action.isAvailable(xmlFile.getProject(), null, startElement)) {
-                    designerFixes.add(new QuickFix(action.getText(), action.getIcon(0)) {
-                      @Override
-                      public void run() {
-                        action.invoke(project, null, startElement);
-                      }
-                    });
-                  }
+                for (final SuppressQuickFix action : suppressActions) {
+                  Icon icon1 = action instanceof Iconable ? ((Iconable)action).getIcon(0) : null;
+                  designerFixes.add(new QuickFix(action.getName(), icon1) {
+                    @Override
+                    public void run() {
+                      action.applyFix(project, InspectionManager.getInstance(project).createProblemDescriptor(startElement,"", (LocalQuickFix)null,
+                                                                                                              ProblemHighlightType.GENERIC_ERROR_OR_WARNING,false));
+                    }
+                  });
                 }
               }
             }

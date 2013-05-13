@@ -17,10 +17,7 @@
 package com.intellij.codeInsight.template.impl;
 
 import com.intellij.codeInsight.CodeInsightSettings;
-import com.intellij.codeInsight.lookup.LookupAdapter;
-import com.intellij.codeInsight.lookup.LookupElement;
-import com.intellij.codeInsight.lookup.LookupEvent;
-import com.intellij.codeInsight.lookup.LookupManager;
+import com.intellij.codeInsight.lookup.*;
 import com.intellij.codeInsight.lookup.impl.LookupImpl;
 import com.intellij.codeInsight.template.*;
 import com.intellij.lang.injection.InjectedLanguageManager;
@@ -522,7 +519,7 @@ public class TemplateState implements Disposable {
   private void insertSingleItem(List<TemplateExpressionLookupElement> lookupItems) {
     TemplateExpressionLookupElement first = lookupItems.get(0);
     EditorModificationUtil.insertStringAtCaret(myEditor, first.getLookupString());
-    first.handleTemplateInsert(lookupItems);
+    first.handleTemplateInsert(lookupItems, Lookup.AUTO_INSERT_SELECT_CHAR);
   }
 
   @NotNull
@@ -575,7 +572,7 @@ public class TemplateState implements Disposable {
 
         LookupElement item = event.getItem();
         if (item instanceof TemplateExpressionLookupElement) {
-          ((TemplateExpressionLookupElement)item).handleTemplateInsert(lookupItems);
+          ((TemplateExpressionLookupElement)item).handleTemplateInsert(lookupItems, event.getCompletionChar());
         }
       }
     });

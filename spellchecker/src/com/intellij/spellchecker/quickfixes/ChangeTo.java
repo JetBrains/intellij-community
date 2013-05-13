@@ -19,7 +19,7 @@ import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.codeInsight.lookup.LookupManager;
 import com.intellij.codeInspection.ProblemDescriptor;
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
+import com.intellij.codeInspection.ProblemDescriptorBase;
 import com.intellij.openapi.actionSystem.Anchor;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -65,7 +65,7 @@ public class ChangeTo extends ShowSuggestions implements SpellCheckerQuickFix {
       return;
     }
 
-    TextRange textRange = ((ProblemDescriptorImpl)descriptor).getTextRange();
+    TextRange textRange = ((ProblemDescriptorBase)descriptor).getTextRange();
     editor.getSelectionModel().setSelection(textRange.getStartOffset(), textRange.getEndOffset());
 
     String word = editor.getSelectionModel().getSelectedText();

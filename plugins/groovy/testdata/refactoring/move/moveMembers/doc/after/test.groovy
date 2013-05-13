@@ -1,4 +1,6 @@
 class A {
+
+
 }
 
 class B {

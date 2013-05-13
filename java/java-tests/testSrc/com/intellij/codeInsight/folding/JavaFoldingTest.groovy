@@ -266,6 +266,34 @@ class Test {
     assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("MyAction(")).placeholderText == '(MyAction) () -> { '
   }
 
+  public void "test closure folding when overriding one method of many"() {
+    myFixture.addClass('abstract class Runnable { void run() {}; void run2() {} }')
+    myFixture.addClass('abstract class Runnable2 { void run() {}; void run2() {} }')
+    def text = """\
+class Test {
+  void test() {
+    Runnable r = new Runnable() {
+      public void run() {
+        System.out.println();
+      }
+    };
+    foo(new Runnable2() {
+      public void run2() {
+        System.out.println();
+      }
+    });
+  }
+
+  void foo(Object o) {}
+}
+"""
+    configure text
+    def foldingModel = myFixture.editor.foldingModel as FoldingModelImpl
+
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable("))?.placeholderText == 'run() -> { '
+    assert foldingModel.getCollapsedRegionAtOffset(text.indexOf("Runnable2("))?.placeholderText == '(Runnable2) run2() -> { '
+  }
+
   public void "test no closure folding when the method throws an unresolved exception"() {
     def text = """\
 class Test {

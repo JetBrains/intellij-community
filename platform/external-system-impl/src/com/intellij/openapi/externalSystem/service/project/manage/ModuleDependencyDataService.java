@@ -25,19 +25,18 @@ import com.intellij.openapi.externalSystem.model.project.ModuleDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ExportableOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleOrderEntry;
 import com.intellij.openapi.roots.ModuleRootManager;
 import com.intellij.util.BooleanFunction;
-import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
-import java.util.List;
 import java.util.Map;
 
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
@@ -46,7 +45,8 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
  * @author Denis Zhdanov
  * @since 4/15/13 8:37 AM
  */
-public class ModuleDependencyDataService extends AbstractDependencyDataService<ModuleDependencyData> {
+@Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
+public class ModuleDependencyDataService extends AbstractDependencyDataService<ModuleDependencyData, ModuleOrderEntry> {
 
   private static final Logger LOG = Logger.getInstance("#" + ModuleDependencyDataService.class.getName());
 
@@ -138,27 +138,5 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
         }
       }
     });
-  }
-
-  @Override
-  public void removeData(@NotNull Collection<DataNode<ModuleDependencyData>> toRemove, @NotNull Project project, boolean synchronous) {
-    if (toRemove.isEmpty()) {
-      return;
-    }
-    Map<DataNode<ModuleData>, Collection<DataNode<ModuleDependencyData>>> byModule = ExternalSystemApiUtil.groupBy(toRemove, MODULE);
-    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ModuleDependencyData>>> entry : byModule.entrySet()) {
-      Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
-      if (module == null) {
-        continue;
-      }
-      List<ExportableOrderEntry> dependencies = ContainerUtilRt.newArrayList();
-      for (DataNode<ModuleDependencyData> node : entry.getValue()) {
-        ModuleOrderEntry dependency = myProjectStructureHelper.findIdeModuleDependency(module.getName(), node.getData().getName(), project);
-        if (dependency != null) {
-          dependencies.add(dependency);
-        }
-      }
-      removeData(dependencies, module, synchronous);
-    } 
   }
 }

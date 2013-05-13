@@ -657,6 +657,11 @@ public class JavaDocInfoGenerator {
           }
           buffer.append("&nbsp;");
         }
+      } else {
+        buffer.append("<font color=red>");
+        buffer.append(annotation.getText());
+        buffer.append("</font>");
+        buffer.append("&nbsp;");
       }
     }
   }

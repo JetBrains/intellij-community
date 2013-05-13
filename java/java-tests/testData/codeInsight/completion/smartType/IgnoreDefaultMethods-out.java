@@ -11,7 +11,7 @@ public class Test1 {
         Predicate p = new Predicate() {
             @Override
             public boolean test(Object o) {
-                <selection>return false;  //To change body of implemented methods use File | Settings | File Templates.</selection>
+                <selection>return false;</selection>
             }
         };
     }

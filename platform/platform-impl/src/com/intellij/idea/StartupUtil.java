@@ -29,9 +29,8 @@ import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.win32.IdeaWin32;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.Consumer;
+import com.intellij.util.EnvironmentUtil;
 import com.intellij.util.SystemProperties;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.text.DateFormatUtilRt;
 import com.sun.jna.Native;
 import org.jetbrains.annotations.NonNls;
@@ -39,14 +38,13 @@ import org.xerial.snappy.Snappy;
 import org.xerial.snappy.SnappyLoader;
 
 import javax.swing.*;
-import java.io.ByteArrayOutputStream;
 import java.io.File;
 import java.io.InputStream;
 import java.lang.management.ManagementFactory;
 import java.lang.management.RuntimeMXBean;
-import java.lang.reflect.Field;
 import java.lang.reflect.Method;
-import java.util.*;
+import java.util.Arrays;
+import java.util.List;
 
 /**
  * @author yole
@@ -56,8 +54,6 @@ public class StartupUtil {
 
   public static final boolean NO_SNAPPY = SystemProperties.getBooleanProperty("idea.no.snappy", false) ||
                                           SystemInfo.isMac && SystemInfo.is32Bit;  // todo[maxim] drop once available
-
-  private static final boolean FIX_MAC_ENV = SystemProperties.getBooleanProperty("idea.fix.mac.env", false);
 
   static boolean isHeadless;
 
@@ -182,100 +178,9 @@ public class StartupUtil {
 
 
   static void fixProcessEnvironment(Logger log) {
-    if (!SystemInfo.isMac || !FIX_MAC_ENV) return;
-
-    Map<String, String> envDiff = getEnvironmentDifference(log);
-    if (!envDiff.isEmpty()) {
-      updateEnvironment(log, envDiff);
-    }
-  }
-
-  private static Map<String, String> getEnvironmentDifference(Logger log) {
-    try {
-      String shell = System.getenv("SHELL");
-      if (shell != null && new File(shell).canExecute()) {
-        String[] command = {shell, "-l", "-c", "/usr/bin/printenv"};
-        Process process = Runtime.getRuntime().exec(command);
-
-        InputStream input = process.getInputStream();
-        List<String> lines = new ArrayList<String>();
-        ByteArrayOutputStream lineBuf = new ByteArrayOutputStream();
-        int b;
-        while ((b = input.read()) >= 0) {
-          if (b != '\n') {
-            lineBuf.write(b);
-          }
-          else {
-            String line = new String(lineBuf.toByteArray());
-            lines.add(line);
-            lineBuf = new ByteArrayOutputStream();
-          }
-        }
-        input.close();
-
-        int rv;
-        try {
-          rv = process.exitValue();
-        }
-        catch (IllegalThreadStateException e) {
-          process.destroy();
-          rv = -1;
-        }
-        if (rv != 0 || lines.isEmpty()) {
-          throw new Exception("rv:" + rv + " lines:" + lines.size());
-        }
-
-        Map<String, String> env = System.getenv();
-        Map<String, String> envDiff = new HashMap<String, String>();
-        Set<String> varsToIgnore = new HashSet<String>(Arrays.asList("_", "PWD", "SHLVL"));
-
-        for (String line : lines) {
-          int pos = line.indexOf('=');
-          if (pos > 0) {
-            String name = line.substring(0, pos);
-            if (!varsToIgnore.contains(name)) {
-              String value = line.substring(pos + 1);
-              if (!env.containsKey(name) || !value.equals(env.get(name))) {
-                envDiff.put(name, value);
-              }
-            }
-          }
-        }
-
-        return envDiff;
-      }
-    }
-    catch (Throwable t) {
-      log.warn("can't get shell environment", t);
-    }
-
-    return Collections.emptyMap();
-  }
-
-  @SuppressWarnings({"PrimitiveArrayArgumentToVariableArgMethod", "SSBasedInspection", "unchecked"})
-  private static void updateEnvironment(Logger log, Map<String, String> envDiff) {
-    try {
-      Class<?> envClass = Class.forName("java.lang.ProcessEnvironment");
-      Field theEnvironment = envClass.getDeclaredField("theEnvironment");
-      theEnvironment.setAccessible(true);
-
-      Class<?> varClass = Class.forName("java.lang.ProcessEnvironment$Variable");
-      Method makeVar = varClass.getDeclaredMethod("valueOf", byte[].class);
-      makeVar.setAccessible(true);
-
-      Class<?> valClass = Class.forName("java.lang.ProcessEnvironment$Value");
-      Method makeVal = valClass.getDeclaredMethod("valueOf", byte[].class);
-      makeVal.setAccessible(true);
-
-      Map envMap = (Map)theEnvironment.get(null);
-      for (Map.Entry<String, String> entry : envDiff.entrySet()) {
-        Object name = makeVar.invoke(null, entry.getKey().getBytes());
-        Object value = makeVal.invoke(null, entry.getValue().getBytes());
-        envMap.put(name, value);
-      }
-    }
-    catch (Throwable t) {
-      log.warn("can't update environment", t);
+    boolean envReady = EnvironmentUtil.isEnvironmentReady();  // trigger environment loading
+    if (!envReady) {
+      log.info("initializing environment");
     }
   }
 

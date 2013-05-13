@@ -27,7 +27,7 @@ import com.intellij.psi.impl.source.PsiImmediateClassType;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.*;
 import com.intellij.refactoring.extractMethod.InputVariables;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.IntArrayList;
@@ -349,11 +349,11 @@ public class DuplicatesFinder {
         return false;
       }
       PsiElement qualifier1 = ((PsiJavaCodeReferenceElement)pattern).getQualifier();
-      if (qualifier1 instanceof PsiReferenceExpression && qualifier2 instanceof PsiReferenceExpression && 
+      if (qualifier1 instanceof PsiReferenceExpression && qualifier2 instanceof PsiReferenceExpression &&
           !match.areCorrespond(((PsiReferenceExpression)qualifier1).resolve(), ((PsiReferenceExpression)qualifier2).resolve())) {
         return false;
       }
-      
+
     }
 
     if (pattern instanceof PsiTypeCastExpression) {
@@ -424,16 +424,17 @@ public class DuplicatesFinder {
               final Pair<PsiVariable, PsiType> parameter = patternQualifier.getUserData(PARAMETER);
 
               if (parameter != null) {
-                final PsiClass thisClass = RefactoringUtil.getThisClass(parameter.first);
+                final PsiClass thisClass = RefactoringChangeUtil.getThisClass(parameter.first);
 
                 if (contextClass != null && InheritanceUtil.isInheritorOrSelf(thisClass, contextClass, true)) {
                   contextClass = thisClass;
                 }
-                final PsiClass thisCandidate = RefactoringUtil.getThisClass(candidate);
+                final PsiClass thisCandidate = RefactoringChangeUtil.getThisClass(candidate);
                 if (thisCandidate != null && InheritanceUtil.isInheritorOrSelf(thisCandidate, contextClass, true)) {
                   contextClass = thisCandidate;
                 }
-                return contextClass != null && match.putParameter(parameter, RefactoringUtil.createThisExpression(patternQualifier.getManager(), contextClass));
+                return contextClass != null && match.putParameter(parameter, RefactoringChangeUtil
+                  .createThisExpression(patternQualifier.getManager(), contextClass));
               } else if (patternQualifier instanceof PsiReferenceExpression) {
                 final PsiElement resolved = ((PsiReferenceExpression)patternQualifier).resolve();
                 if (resolved instanceof PsiClass) {

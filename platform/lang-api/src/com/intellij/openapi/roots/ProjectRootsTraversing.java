@@ -249,7 +249,7 @@ public class ProjectRootsTraversing {
     public static final Visit<ModuleOrderEntry> RECURSIVE_WITHOUT_TESTS = new RecursiveModules(false);
 
     public static class AddModuleSource implements Visit<ModuleSourceOrderEntry> {
-      private boolean myExcludeTests;
+      private final boolean myExcludeTests;
 
       public AddModuleSource() {
         this(false);

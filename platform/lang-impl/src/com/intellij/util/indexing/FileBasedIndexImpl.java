@@ -119,7 +119,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private final ConcurrentHashSet<ID<?, ?>> myUpToDateIndices = new ConcurrentHashSet<ID<?, ?>>();
   private final Map<Document, PsiFile> myTransactionMap = new THashMap<Document, PsiFile>();
 
-  private static final int ALREADY_PROCESSED = 0x04;
+  private static final int ALREADY_PROCESSED = 0x04000000;
 
   @Nullable private final String myConfigPath;
   @Nullable private final String myLogPath;
@@ -384,11 +384,18 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       IndexInfrastructure.rewriteVersion(versionFile, version);
     }
 
-    MapIndexStorage<K, V> storage = null;
+    compactIndex(extension, version, versionFile);
+    return versionChanged;
+  }
 
+  private <K, V> void compactIndex(final FileBasedIndexExtension<K, V> extension, int version, File versionFile)
+    throws IOException {
+    MapIndexStorage<K, V> storage = null;
+    final ID<K, V> name = extension.getName();
     for (int attempt = 0; attempt < 2; attempt++) {
       try {
-        storage = ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<MapIndexStorage<K, V>, IOException>() {
+        storage = ProgressManager
+          .getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<MapIndexStorage<K, V>, IOException>() {
           @Override
           public MapIndexStorage<K, V> compute() throws IOException {
             return new MapIndexStorage<K, V>(
@@ -432,7 +439,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         IndexInfrastructure.rewriteVersion(versionFile, version);
       }
     }
-    return versionChanged;
   }
 
   private static void saveRegisteredIndices(@NotNull Collection<ID<?, ?>> ids) {
@@ -502,12 +508,32 @@ public class FileBasedIndexImpl extends FileBasedIndex {
       @Override
       public PersistentHashMap<Integer, Collection<K>> create() {
         try {
-          return ProgressManager.getInstance().runProcessWithProgressSynchronously(new ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException>() {
-            @Override
-            public PersistentHashMap<Integer, Collection<K>> compute() throws IOException {
-              return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
+          // this factory method may be called either on index creation from dispatch thread, or on index rebuild
+          // from arbitrary thread and under some existing progress indicator
+          final ProgressManager progressManager = ProgressManager.getInstance();
+          final ProgressIndicator currentProgress = progressManager.getProgressIndicator();
+          if (currentProgress == null && ApplicationManager.getApplication().isDispatchThread()) {
+            return progressManager.runProcessWithProgressSynchronously(
+              new ThrowableComputable<PersistentHashMap<Integer, Collection<K>>, IOException>() {
+                @Override
+                public PersistentHashMap<Integer, Collection<K>> compute() throws IOException {
+                  return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
+                }
+              }, LangBundle.message("compacting.indices.title"), false, null);
+          }
+          if (currentProgress != null)  {
+            // reuse existing progress indicator if available
+            currentProgress.pushState();
+            currentProgress.setText(LangBundle.message("compacting.indices.title"));
+          }
+          try {
+            return createIdToDataKeysIndex(indexId, keyDescriptor, storage);
+          }
+          finally {
+            if (currentProgress != null) {
+              currentProgress.popState();
             }
-          }, LangBundle.message("compacting.indices.title"), false, null);
+          }
         }
         catch (IOException e) {
           throw new RuntimeException(e);
@@ -1486,8 +1512,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
     }
 
     final long currentDocStamp = content.getModificationStamp();
-    long currentIndexedStamp;
-    if (currentDocStamp != (currentIndexedStamp = myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp))) {
+    final long previousDocStamp = myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentDocStamp);
+    if (currentDocStamp != previousDocStamp) {
       final String contentText = content.getText();
       if (!isTooLarge(vFile, contentText.length()) && getInputFilter(requestedIndexId).acceptInput(vFile)) {
         // Reasonably attempt to use same file content when calculating indices as we can evaluate them several at once and store in file content
@@ -1512,7 +1538,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         try {
           getIndex(requestedIndexId).update(inputId, newFc);
         } catch (ProcessCanceledException pce) {
-          myLastIndexedDocStamps.getAndSet(document, requestedIndexId, currentIndexedStamp);
+          myLastIndexedDocStamps.getAndSet(document, requestedIndexId, previousDocStamp);
           throw pce;
         }
         finally {

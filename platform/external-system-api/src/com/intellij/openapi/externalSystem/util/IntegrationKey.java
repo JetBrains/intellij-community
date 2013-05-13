@@ -20,7 +20,7 @@ import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 /**
- * Unique key which encapsulates information about target ide project and external project management system.
+ * Unique key which encapsulates information about target ide and external projects.
  * <p/>
  * Thread-safe.
  * 
@@ -32,18 +32,21 @@ public class IntegrationKey {
   @NotNull private final String          myIdeProjectName;
   @NotNull private final String          myIdeProjectLocationHash;
   @NotNull private final ProjectSystemId myExternalSystemId;
+  @NotNull private final String          myExternalProjectConfigPath;
 
-  public IntegrationKey(@NotNull Project ideProject, @NotNull ProjectSystemId externalSystemId) {
-    this(ideProject.getName(), ideProject.getLocationHash(), externalSystemId);
+  public IntegrationKey(@NotNull Project ideProject, @NotNull ProjectSystemId externalSystemId, @NotNull String externalProjectConfigPath) {
+    this(ideProject.getName(), ideProject.getLocationHash(), externalSystemId, externalProjectConfigPath);
   }
 
   public IntegrationKey(@NotNull String ideProjectName,
                         @NotNull String ideProjectLocationHash,
-                        @NotNull ProjectSystemId externalSystemId)
+                        @NotNull ProjectSystemId externalSystemId,
+                        @NotNull String externalProjectConfigPath)
   {
     myIdeProjectName = ideProjectName;
     myIdeProjectLocationHash = ideProjectLocationHash;
     myExternalSystemId = externalSystemId;
+    myExternalProjectConfigPath = externalProjectConfigPath;
   }
 
   @NotNull
@@ -61,11 +64,17 @@ public class IntegrationKey {
     return myExternalSystemId;
   }
 
+  @NotNull
+  public String getExternalProjectConfigPath() {
+    return myExternalProjectConfigPath;
+  }
+
   @Override
   public int hashCode() {
     int result = myIdeProjectName.hashCode();
     result = 31 * result + myIdeProjectLocationHash.hashCode();
     result = 31 * result + myExternalSystemId.hashCode();
+    result = 31 * result + myExternalProjectConfigPath.hashCode();
     return result;
   }
 
@@ -79,6 +88,7 @@ public class IntegrationKey {
     if (!myExternalSystemId.equals(key.myExternalSystemId)) return false;
     if (!myIdeProjectLocationHash.equals(key.myIdeProjectLocationHash)) return false;
     if (!myIdeProjectName.equals(key.myIdeProjectName)) return false;
+    if (!myExternalProjectConfigPath.equals(key.myExternalProjectConfigPath)) return false;
 
     return true;
   }

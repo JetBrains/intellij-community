@@ -109,7 +109,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
   private static DataNode<ProjectData> populateProject(@NotNull IdeaProject project, @NotNull String projectPath) {
     String projectDirPath = ExternalSystemApiUtil.toCanonicalPath(PathUtil.getParentPath(projectPath));
 
-    ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, projectDirPath);
+    ProjectData projectData = new ProjectData(GradleConstants.SYSTEM_ID, projectDirPath, projectPath);
     projectData.setName(project.getName());
 
     // Gradle API doesn't expose project compile output path yet.
@@ -143,7 +143,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
       ProjectData projectData = ideProject.getData();
       ModuleData ideModule = new ModuleData(
-        GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), moduleName, projectData.getProjectFileDirectoryPath()
+        GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), moduleName, projectData.getIdeProjectFileDirectoryPath()
       );
       Pair<DataNode<ModuleData>, IdeaModule> previouslyParsedModule = result.get(moduleName);
       if (previouslyParsedModule != null) {
@@ -200,6 +200,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         continue;
       }
       ContentRootData ideContentRoot = new ContentRootData(GradleConstants.SYSTEM_ID, rootDirectory.getAbsolutePath());
+      ideModule.getData().setModuleFileDirectoryPath(ideContentRoot.getRootPath());
       populateContentRoot(ideContentRoot, ExternalSystemSourceType.SOURCE, gradleContentRoot.getSourceDirectories());
       populateContentRoot(ideContentRoot, ExternalSystemSourceType.TEST, gradleContentRoot.getTestDirectories());
       Set<File> excluded = gradleContentRoot.getExcludeDirectories();

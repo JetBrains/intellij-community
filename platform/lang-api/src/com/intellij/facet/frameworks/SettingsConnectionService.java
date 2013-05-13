@@ -46,8 +46,8 @@ public abstract class SettingsConnectionService {
        return new String[] {SERVICE_URL_ATTR_NAME};
   }
 
-  private String mySettingsUrl;
-  @Nullable private String myDefaultServiceUrl;
+  private final String mySettingsUrl;
+  @Nullable private final String myDefaultServiceUrl;
 
   protected SettingsConnectionService(@NotNull String settingsUrl, @Nullable String defaultServiceUrl) {
     mySettingsUrl = settingsUrl;

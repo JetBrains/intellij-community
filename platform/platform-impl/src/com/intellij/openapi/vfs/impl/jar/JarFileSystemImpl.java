@@ -20,6 +20,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.components.ApplicationComponent;
+import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileAttributes;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
@@ -49,7 +50,7 @@ public class JarFileSystemImpl extends JarFileSystem implements ApplicationCompo
   private static final JarFileSystemImplLock LOCK = new JarFileSystemImplLock();
 
   private final Set<String> myNoCopyJarPaths =
-    SystemProperties.getBooleanProperty("idea.jars.nocopy", false) ? null : new ConcurrentHashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
+    SystemProperties.getBooleanProperty("idea.jars.nocopy", !SystemInfo.isWindows) ? null : new ConcurrentHashSet<String>(FileUtil.PATH_HASHING_STRATEGY);
   private File myNoCopyJarDir;
   private final Map<String, JarHandler> myHandlers = new THashMap<String, JarHandler>(FileUtil.PATH_HASHING_STRATEGY);
   private String[] jarPathsCache;

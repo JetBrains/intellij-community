@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -64,11 +64,7 @@ public class ExtConnection extends ConnectionOnProcess {
     if (isOpen()) throw new RuntimeException(CvsBundle.message("error.message.connection.already.open"));
 
     GeneralCommandLine command = createRshCommand(myHost, myUserName, myConfiguration);
-
-    for (String command1 : commands) {
-      command.addParameter(command1);
-    }
-
+    command.addParameters(commands);
     execute(command);
 
     if (expectedResult != null) {

@@ -16,10 +16,13 @@
 package org.jetbrains.plugins.gradle.internal.task;
 
 import com.intellij.openapi.components.ServiceManager;
+import com.intellij.openapi.externalSystem.build.ExternalSystemBuildManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.task.AbstractExternalSystemTask;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemBuildManager;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -36,7 +39,7 @@ public class ExternalSystemRefreshTasksListTask extends AbstractExternalSystemTa
                                             @NotNull Project project,
                                             @NotNull String projectPath)
   {
-    super(externalSystemId, ExternalSystemTaskType.REFRESH_TASKS_LIST, project);
+    super(externalSystemId, ExternalSystemTaskType.REFRESH_TASKS_LIST, project, projectPath);
     myProjectPath = projectPath;
   }
 
@@ -44,36 +47,37 @@ public class ExternalSystemRefreshTasksListTask extends AbstractExternalSystemTa
   protected void doExecute() throws Exception {
     final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     Project project = getIdeProject();
+    RemoteExternalSystemBuildManager buildManager = manager.getFacade(project, myProjectPath, getExternalSystemId()).getBuildManager();
+    setState(ExternalSystemTaskState.IN_PROGRESS);
     // TODO den implement
-//    ExternalSystemBuildManager buildManager = manager.getFacade(project).getBuildManager();
-//    setState(GradleTaskState.IN_PROGRESS);
-//    try {
-//      final Collection<ExternalSystemTaskDescriptor> descriptors = buildManager.listTasks(getId(), myProjectPath);
-//      if (descriptors == null || descriptors.isEmpty()) {
-//        return;
-//      }
-//      
-//      if (project == null) {
-//        return;
-//      }
-//
-//      GradleLocalSettings settings = GradleLocalSettings.getInstance(project);
-//      settings.setAvailableTasks(descriptors);
-//      
-//      final GradleTasksModel tasksModel = GradleUtil.getToolWindowElement(GradleTasksModel.class, project, ExternalSystemDataKeys.ALL_TASKS_MODEL);
-//      if (tasksModel == null) {
-//        return;
-//      }
-//      UIUtil.invokeLaterIfNeeded(new Runnable() {
-//        @Override
-//        public void run() {
-//          tasksModel.setTasks(descriptors); 
-//        }
-//      });
-//    }
-//    finally {
-//      setState(GradleTaskState.FINISHED);
-//    }
+    //buildManager.listTasks()
+    //try {
+    //  final Collection<ExternalSystemTaskDescriptor> descriptors = buildManager.listTasks(getId(), myProjectPath);
+    //  if (descriptors == null || descriptors.isEmpty()) {
+    //    return;
+    //  }
+    //  
+    //  if (project == null) {
+    //    return;
+    //  }
+    //
+    //  GradleLocalSettings settings = GradleLocalSettings.getInstance(project);
+    //  settings.setAvailableTasks(descriptors);
+    //  
+    //  final GradleTasksModel tasksModel = GradleUtil.getToolWindowElement(GradleTasksModel.class, project, ExternalSystemDataKeys.ALL_TASKS_MODEL);
+    //  if (tasksModel == null) {
+    //    return;
+    //  }
+    //  UIUtil.invokeLaterIfNeeded(new Runnable() {
+    //    @Override
+    //    public void run() {
+    //      tasksModel.setTasks(descriptors); 
+    //    }
+    //  });
+    //}
+    //finally {
+    //  setState(GradleTaskState.FINISHED);
+    //}
   }
 
   @Override

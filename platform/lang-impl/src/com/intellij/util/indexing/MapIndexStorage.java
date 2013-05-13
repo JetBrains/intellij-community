@@ -54,7 +54,15 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   private final LowMemoryWatcher myLowMemoryFlusher = LowMemoryWatcher.register(new Runnable() {
     @Override
     public void run() {
-      flush();
+      l.lock();
+      try {
+        if (!myMap.isClosed()) {
+          myCache.clear();
+          if (myMap.isDirty()) myMap.force();
+        }
+      } finally {
+        l.unlock();
+      }
     }
   });
 
@@ -144,6 +152,7 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
   @Override
   public void close() throws StorageException {
     try {
+      myLowMemoryFlusher.stop();
       flush();
       myMap.close();
     }
@@ -253,7 +262,14 @@ public final class MapIndexStorage<Key, Value> implements IndexStorage<Key, Valu
         return;
       }
 
-      ChangeTrackingValueContainer<Value> cached = myCache.getIfCached(key);
+      ChangeTrackingValueContainer<Value> cached;
+      try {
+        l.lock();
+        cached = myCache.getIfCached(key);
+      } finally {
+        l.unlock();
+      }
+
       if (cached != null) {
         cached.addValue(inputId, value);
         return;

@@ -760,6 +760,14 @@ public class EditorUtil {
   public static boolean inVirtualSpace(@NotNull Editor editor, @NotNull LogicalPosition logicalPosition) {
     return !editor.offsetToLogicalPosition(editor.logicalPositionToOffset(logicalPosition)).equals(logicalPosition);
   }
+
+  public static void reinitSettings() {
+    for (Editor editor : EditorFactory.getInstance().getAllEditors()) {
+      if (editor instanceof EditorEx) {
+        ((EditorEx)editor).reinitSettings();
+      }
+    }
+  }
 }
 
 

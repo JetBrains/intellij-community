@@ -1771,4 +1771,16 @@ print aa<caret>
 ''', CompletionType.BASIC, 'aaa', 'aaaa')
   }
 
+  void testCompleteRefInLValue() {
+    myFixture.addClass('''\
+public class Util {
+    public int CONST = 4;
+}
+''')
+    doVariantableTest('''\
+def foo(Util util) {
+  util.CONS<caret>T = 3
+}
+''', '', CompletionType.BASIC, CompletionResult.contain, 'CONST')
+  }
 }

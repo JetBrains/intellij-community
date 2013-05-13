@@ -16,12 +16,14 @@
 package org.jetbrains.plugins.gradle.config;
 
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.util.Key;
 import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VfsUtil;
 import com.intellij.openapi.vfs.VfsUtilCore;
@@ -127,7 +129,12 @@ public class GradlePositionManager extends ScriptPositionManagerHelper {
 
   @Nullable
   private ClassLoader createGradleClassLoader(@NotNull Module module) {
-    final VirtualFile sdkHome = myLibraryManager.getGradleHome(module, module.getProject());
+    String linkedProjectPath = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+    if (StringUtil.isEmpty(linkedProjectPath)) {
+      return null;
+    }
+    assert linkedProjectPath != null;
+    final VirtualFile sdkHome = myLibraryManager.getGradleHome(module, module.getProject(), linkedProjectPath);
     if (sdkHome == null) {
       return null;
     }

@@ -284,6 +284,24 @@ public class FileAttributesReadingTest {
   }
 
   @Test
+  public void notSoHiddenRoot() throws Exception {
+    if (SystemInfo.isWindows) {
+      File absRoot = new File("C:\\");
+      FileAttributes absAttributes = getAttributes(absRoot);
+      assertFalse(absAttributes.isHidden());
+
+      File relRoot = new File("C:");
+      FileAttributes relAttributes = getAttributes(relRoot);
+      assertFalse(relAttributes.isHidden());
+    }
+    else {
+      File absRoot = new File("/");
+      FileAttributes absAttributes = getAttributes(absRoot);
+      assertFalse(absAttributes.isHidden());
+    }
+  }
+
+  @Test
   public void wellHiddenFile() throws Exception {
     assumeTrue(SystemInfo.isWindows);
     final File file = new File("C:\\Documents and Settings\\desktop.ini");

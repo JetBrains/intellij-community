@@ -28,13 +28,14 @@ import com.intellij.openapi.wm.ToolWindowId;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.psi.PsiDocumentManager;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiFile;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentFactory;
 import com.intellij.ui.content.ContentManager;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.Nullable;
 
 import java.awt.*;
+import java.util.List;
 
 /**
  * @author yole
@@ -114,9 +115,21 @@ public abstract class BrowseHierarchyActionBase extends AnAction {
 
   @Nullable
   private HierarchyProvider getProvider(final AnActionEvent e) {
-    PsiFile file = e.getData(LangDataKeys.PSI_FILE);
-    if (file == null) return null;
+    return findBestHierarchyProvider(myExtension, e.getData(LangDataKeys.PSI_FILE), e.getDataContext());
+  }
 
-    return myExtension.forLanguage(file.getLanguage());
+  @Nullable
+  public static HierarchyProvider findBestHierarchyProvider(final LanguageExtension<HierarchyProvider> extension,
+                                                            @Nullable PsiElement element,
+                                                            DataContext dataContext) {
+    if (element == null) return null;
+    List<HierarchyProvider> providers = extension.allForLanguage(element.getLanguage());
+    for (HierarchyProvider provider : providers) {
+      PsiElement target = provider.getTarget(dataContext);
+      if (target != null) {
+        return provider;
+      }
+    }
+    return ContainerUtil.getFirstItem(providers);
   }
 }

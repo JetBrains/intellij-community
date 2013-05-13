@@ -1,8 +1,7 @@
 public abstract class X {
   protected abstract void f();
 }
-public class XImpl extends X {
+<spot>public class XImpl extends X {
   protected void f() {
-    //To change body of implemented methods use File | Settings | File Templates.
   }
-}
+}</spot>

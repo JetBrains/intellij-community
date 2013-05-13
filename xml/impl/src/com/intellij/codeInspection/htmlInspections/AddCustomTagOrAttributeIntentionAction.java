@@ -41,6 +41,7 @@ public class AddCustomTagOrAttributeIntentionAction implements LocalQuickFix {
     myType = type;
   }
 
+  @Override
   @NotNull
   public String getName() {
     if (myType == XmlEntitiesInspection.UNKNOWN_TAG) {
@@ -58,11 +59,13 @@ public class AddCustomTagOrAttributeIntentionAction implements LocalQuickFix {
     return getFamilyName();
   }
 
+  @Override
   @NotNull
   public String getFamilyName() {
     return XmlBundle.message("fix.html.family");
   }
 
+  @Override
   public void applyFix(@NotNull final Project project, @NotNull final ProblemDescriptor descriptor) {
     final PsiElement element = descriptor.getPsiElement();
 

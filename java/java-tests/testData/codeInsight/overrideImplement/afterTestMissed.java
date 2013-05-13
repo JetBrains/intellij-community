@@ -6,6 +6,6 @@ class f{
 class ff extends f {
     @Override
     String foo() {
-        <selection>return super.foo();    //To change body of overridden methods use File | Settings | File Templates.</selection>
+        <selection>return super.foo();</selection>
     }
 }

@@ -19,12 +19,10 @@ package org.jetbrains.plugins.groovy.formatter.processors;
 import com.intellij.formatting.Indent;
 import com.intellij.lang.ASTNode;
 import com.intellij.psi.PsiElement;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.CommonCodeStyleSettings;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.plugins.groovy.GroovyFileType;
 import org.jetbrains.plugins.groovy.formatter.ClosureBodyBlock;
 import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.GrDocComment;
@@ -49,8 +47,10 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrElvisExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrParenthesizedExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrExtendsClause;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrImplementsClause;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinitionBody;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 
@@ -127,14 +127,14 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
   @Override
   public void visitSwitchStatement(GrSwitchStatement switchStatement) {
     if (myChildType == CASE_SECTION) {
-      myResult = getSwitchCaseIndent(switchStatement);
+      myResult = getSwitchCaseIndent(getGroovySettings());
     }
   }
 
   @Override
   public void visitLabeledStatement(GrLabeledStatement labeledStatement) {
     if (myChildType == LABEL) {
-      CommonCodeStyleSettings.IndentOptions indentOptions = myBlock.getSettings().getIndentOptions();
+      CommonCodeStyleSettings.IndentOptions indentOptions = myBlock.getContext().getSettings().getIndentOptions();
       if (indentOptions != null && indentOptions.LABEL_INDENT_ABSOLUTE) {
         myResult = Indent.getAbsoluteLabelIndent();
       }
@@ -173,7 +173,7 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
       myResult = Indent.getNormalIndent();
     }
     else if (myChild == ifStatement.getElseBranch()) {
-      if (getGroovySettings(ifStatement).SPECIAL_ELSE_IF_TREATMENT && myChildType == IF_STATEMENT) {
+      if (getGroovySettings().SPECIAL_ELSE_IF_TREATMENT && myChildType == IF_STATEMENT) {
         myResult = Indent.getNoneIndent();
       }
       else {
@@ -273,7 +273,14 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
       myResult = Indent.getContinuationIndent();
     }
     else if (myChildType == THROW_CLAUSE) {
-      myResult = getGroovySettings(method).ALIGN_THROWS_KEYWORD ? Indent.getNoneIndent() : Indent.getContinuationIndent();
+      myResult = getGroovySettings().ALIGN_THROWS_KEYWORD ? Indent.getNoneIndent() : Indent.getContinuationIndent();
+    }
+  }
+
+  @Override
+  public void visitTypeDefinition(GrTypeDefinition typeDefinition) {
+    if (myChildType == EXTENDS_CLAUSE || myChildType == IMPLEMENTS_CLAUSE) {
+      myResult = Indent.getContinuationIndent();
     }
   }
 
@@ -293,6 +300,9 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitOpenBlock(GrOpenBlock block) {
+    final IElementType type = block.getNode().getElementType();
+    if (type != OPEN_BLOCK && type != CONSTRUCTOR_BODY) return;
+
     if (myChildType != mLCURLY && myChildType != mRCURLY) {
       myResult = Indent.getNormalIndent();
     }
@@ -325,12 +335,22 @@ public class GroovyIndentProcessor extends GroovyElementVisitor {
     }
   }
 
-  private static CommonCodeStyleSettings getGroovySettings(PsiElement parent) {
-    return CodeStyleSettingsManager.getSettings(parent.getProject()).getCommonSettings(GroovyFileType.GROOVY_LANGUAGE);
+  private CommonCodeStyleSettings getGroovySettings() {
+    return myBlock.getContext().getSettings();
   }
 
-  public static Indent getSwitchCaseIndent(PsiElement psiParent) {
-    if (getGroovySettings(psiParent).INDENT_CASE_FROM_SWITCH) {
+  @Override
+  public void visitParenthesizedExpression(GrParenthesizedExpression expression) {
+    if (myChildType == mLPAREN || myChildType == mRPAREN) {
+      myResult = Indent.getNoneIndent();
+    }
+    else {
+      myResult = Indent.getContinuationIndent();
+    }
+  }
+
+  public static Indent getSwitchCaseIndent(final CommonCodeStyleSettings settings) {
+    if (settings.INDENT_CASE_FROM_SWITCH) {
       return Indent.getNormalIndent();
     }
     else {

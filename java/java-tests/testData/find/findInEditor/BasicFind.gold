@@ -1,0 +1,32 @@
+--- FIND MODEL ---
+myStringToFind =a
+myStringToReplace =
+isReplaceState =false
+isWholeWordsOnly =false
+isInStringLiterals =false
+isInComments =false
+isFromCursor =true
+isForward =true
+isGlobal =true
+isRegularExpressions =false
+isCaseSensitive =false
+isMultipleFiles =false
+isPromptOnReplace =true
+isReplaceAll =false
+isOpenNewTab =false
+isOpenInNewTabEnabled =false
+isOpenNewTabVisible =false
+isProjectScope =true
+directoryName =null
+isWithSubdirectories =true
+fileFilter =null
+moduleName =null
+customScopeName =null
+
+--
+
+[[<a>]]b
+--
+RangeHighlighter: (0,1); layer:5999; tooltip: null : [null,java.awt.Color[r=255,g=255,b=0],0,BOXED,null,java.awt.Color[r=0,g=255,b=0]]
+RangeHighlighter: (0,1); layer:5999; tooltip: null : [null,null,0,ROUNDED_BOX,java.awt.Color[r=0,g=0,b=0],null]
+------------

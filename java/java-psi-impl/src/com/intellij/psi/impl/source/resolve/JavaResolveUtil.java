@@ -183,7 +183,7 @@ public class JavaResolveUtil {
     PsiClass lastClass = null;
     Boolean isAtLeast17 = null;
     for (PsiElement placeParent = place; placeParent != null; placeParent = placeParent.getContext()) {
-      if (placeParent instanceof PsiClass && !(placeParent instanceof PsiAnonymousClass)) {
+      if (placeParent instanceof PsiClass) {
         final boolean isTypeParameter = placeParent instanceof PsiTypeParameter;
         if (isTypeParameter && isAtLeast17 == null) {
           isAtLeast17 = JavaVersionService.getInstance().isAtLeast(place, JavaSdkVersion.JDK_1_7);

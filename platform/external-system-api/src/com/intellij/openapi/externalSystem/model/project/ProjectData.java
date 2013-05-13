@@ -14,28 +14,37 @@ public class ProjectData extends AbstractNamedData {
 
   private static final long serialVersionUID = 1L;
 
-  @NotNull private String myProjectFileDirectoryPath;
+  @NotNull private final String myLinkedExternalProjectPath;
+
+  @NotNull private String myIdeProjectFileDirectoryPath;
 
   public ProjectData(@NotNull ProjectSystemId owner,
-                     @NotNull String projectFileDirectoryPath)
+                     @NotNull String ideProjectFileDirectoryPath,
+                     @NotNull String linkedExternalProjectPath)
   {
     super(owner, "unnamed");
-    myProjectFileDirectoryPath = ExternalSystemApiUtil.toCanonicalPath(projectFileDirectoryPath);
+    myLinkedExternalProjectPath = linkedExternalProjectPath;
+    myIdeProjectFileDirectoryPath = ExternalSystemApiUtil.toCanonicalPath(ideProjectFileDirectoryPath);
   }
 
   @NotNull
-  public String getProjectFileDirectoryPath() {
-    return myProjectFileDirectoryPath;
+  public String getIdeProjectFileDirectoryPath() {
+    return myIdeProjectFileDirectoryPath;
   }
 
-  public void setProjectFileDirectoryPath(@NotNull String projectFileDirectoryPath) {
-    myProjectFileDirectoryPath = ExternalSystemApiUtil.toCanonicalPath(projectFileDirectoryPath);
+  public void setIdeProjectFileDirectoryPath(@NotNull String ideProjectFileDirectoryPath) {
+    myIdeProjectFileDirectoryPath = ExternalSystemApiUtil.toCanonicalPath(ideProjectFileDirectoryPath);
+  }
+
+  @NotNull
+  public String getLinkedExternalProjectPath() {
+    return myLinkedExternalProjectPath;
   }
 
   @Override
   public int hashCode() {
     int result = super.hashCode();
-    result = 31 * result + myProjectFileDirectoryPath.hashCode();
+    result = 31 * result + myIdeProjectFileDirectoryPath.hashCode();
     return result;
   }
 
@@ -47,7 +56,7 @@ public class ProjectData extends AbstractNamedData {
 
     ProjectData project = (ProjectData)o;
 
-    if (!myProjectFileDirectoryPath.equals(project.myProjectFileDirectoryPath)) return false;
+    if (!myIdeProjectFileDirectoryPath.equals(project.myIdeProjectFileDirectoryPath)) return false;
 
     return true;
   }

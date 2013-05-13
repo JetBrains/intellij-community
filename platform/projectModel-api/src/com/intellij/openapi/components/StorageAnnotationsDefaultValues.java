@@ -54,15 +54,15 @@ public interface StorageAnnotationsDefaultValues {
     }
 
     @NotNull
-    public SaveSession startSave(ExternalizationSession externalizationSession) {
+    public SaveSession startSave(@NotNull ExternalizationSession externalizationSession) {
       throw new UnsupportedOperationException("Method startSave not implemented in " + getClass());
     }
 
-    public void finishSave(SaveSession saveSession) {
+    public void finishSave(@NotNull SaveSession saveSession) {
       throw new UnsupportedOperationException("Method finishSave not implemented in " + getClass());
     }
 
-    public void reload(final Set<String> changedComponents) throws StateStorageException {
+    public void reload(@NotNull final Set<String> changedComponents) throws StateStorageException {
       throw new UnsupportedOperationException("Method reload not implemented in " + getClass());
     }
 

@@ -15,6 +15,7 @@
  */
 package com.intellij.openapi.editor.colors;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.options.FontSize;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -56,6 +57,11 @@ public class FontPreferences {
     myChangeListener = changeListener;
   }
 
+  @Nullable
+  public Runnable getChangeListener() {
+    return myChangeListener;
+  }
+
   public void clear() {
     myEffectiveFontFamilies.clear();
     myRealFontFamilies.clear();
@@ -78,6 +84,9 @@ public class FontPreferences {
   }
 
   public int getSize(@NotNull String fontFamily) {
+    if (UISettings.getInstance().PRESENTATION_MODE) {
+      return UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE;
+    }
     int result = myFontSizes.get(fontFamily);
     if (result <= 0) {
       result = myTemplateFontSize;

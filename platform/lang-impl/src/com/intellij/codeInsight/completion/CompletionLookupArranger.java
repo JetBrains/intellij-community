@@ -184,7 +184,7 @@ public class CompletionLookupArranger extends LookupArranger {
                                     sortByPresentation(items, lookup) :
                                     fillModelByRelevance((LookupImpl)lookup, items, itemsBySorter, relevantSelection);
 
-    int toSelect = getItemToSelect(lookup, listModel, onExplicitAction, relevantSelection);
+    int toSelect = getItemToSelect((LookupImpl)lookup, listModel, onExplicitAction, relevantSelection);
     LOG.assertTrue(toSelect >= 0);
 
     addDummyItems(items.size() - listModel.size(), listModel);
@@ -320,8 +320,8 @@ public class CompletionLookupArranger extends LookupArranger {
     return new CompletionLookupArranger(myParameters, myProcess);
   }
 
-  private static int getItemToSelect(Lookup lookup, List<LookupElement> items, boolean onExplicitAction, @Nullable LookupElement mostRelevant) {
-    if (items.isEmpty() || !lookup.isFocused()) {
+  private static int getItemToSelect(LookupImpl lookup, List<LookupElement> items, boolean onExplicitAction, @Nullable LookupElement mostRelevant) {
+    if (items.isEmpty() || !lookup.isFocused() && !lookup.isSemiFocused()) {
       return 0;
     }
 

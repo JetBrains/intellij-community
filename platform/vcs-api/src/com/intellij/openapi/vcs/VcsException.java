@@ -86,7 +86,6 @@ public class VcsException extends Exception {
 
   @Override
   public String getMessage() {
-    final String message = super.getMessage();
-    return (message == null ? "" : (message + " ")) + StringUtil.join(myMessages, ", ");
+    return StringUtil.join(myMessages, ", ");
   }
 }

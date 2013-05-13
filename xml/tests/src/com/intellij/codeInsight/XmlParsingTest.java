@@ -671,7 +671,7 @@ public class XmlParsingTest extends ParsingTestCase {
     doTest("<script type=\"application/custom\">Custom Script</script>", "test.html");
   }
 
-  static class MyLanguage extends Language {
+  static class MyLanguage extends Language implements InjectableLanguage {
     protected MyLanguage() {
       super("MyLanguage", "application/custom");
     }

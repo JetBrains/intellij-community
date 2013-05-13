@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,7 +28,7 @@ import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.openapi.vfs.VfsUtil;
+import com.intellij.openapi.vfs.VfsUtilCore;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.EnvironmentUtil;
 import org.intellij.images.ImagesBundle;
@@ -39,7 +39,6 @@ import org.intellij.images.options.impl.OptionsConfigurabe;
 
 import java.io.File;
 import java.util.Map;
-import java.util.Set;
 
 /**
  * Open image file externally.
@@ -60,9 +59,8 @@ public final class EditExternallyAction extends AnAction {
     }
     else {
       if (files != null) {
-        Map<String, String> env = EnvironmentUtil.getEnvironmentProperties();
-        Set<String> varNames = env.keySet();
-        for (String varName : varNames) {
+        Map<String, String> env = EnvironmentUtil.getEnvironmentMap();
+        for (String varName : env.keySet()) {
           if (SystemInfo.isWindows) {
             executablePath = StringUtil.replace(executablePath, "%" + varName + "%", env.get(varName), true);
           }
@@ -85,7 +83,7 @@ public final class EditExternallyAction extends AnAction {
         ImageFileTypeManager typeManager = ImageFileTypeManager.getInstance();
         for (VirtualFile file : files) {
           if (file.isInLocalFileSystem() && typeManager.isImage(file)) {
-            commandLine.addParameter(VfsUtil.virtualToIoFile(file).getAbsolutePath());
+            commandLine.addParameter(VfsUtilCore.virtualToIoFile(file).getAbsolutePath());
           }
         }
         commandLine.setWorkDirectory(new File(executablePath).getParentFile());
@@ -94,9 +92,7 @@ public final class EditExternallyAction extends AnAction {
           commandLine.createProcess();
         }
         catch (ExecutionException ex) {
-          Messages.showErrorDialog(project,
-                                   ex.getLocalizedMessage(),
-                                   ImagesBundle.message("error.title.launching.external.editor"));
+          Messages.showErrorDialog(project, ex.getLocalizedMessage(), ImagesBundle.message("error.title.launching.external.editor"));
           OptionsConfigurabe.show(project);
         }
       }

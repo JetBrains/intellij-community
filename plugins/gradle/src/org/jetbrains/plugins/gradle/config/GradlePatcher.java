@@ -35,19 +35,19 @@ public class GradlePatcher {
     }
 
     // Propagate gradle settings from the current project to the default project if necessary.
-    final GradleSettings defaultProjectSettings = GradleSettings.getInstance(defaultProject);
-    final GradleSettings currentProjectSettings = GradleSettings.getInstance(project);
-    String projectGradleHome = currentProjectSettings.getGradleHome();
-    String defaultGradleHome = defaultProjectSettings.getGradleHome();
-    if (StringUtil.isEmpty(projectGradleHome) || !StringUtil.isEmpty(defaultGradleHome)) {
-      return;
-    }
-    GradleInstallationManager libraryManager = ServiceManager.getService(GradleInstallationManager.class);
-    File autodetectedGradleHome = libraryManager.getAutodetectedGradleHome();
-    // We don't want to store auto-detected value at the settings.
-    if (autodetectedGradleHome == null || !FileUtil.filesEqual(autodetectedGradleHome, new File(projectGradleHome))) {
-      // TODO den implement
+    // TODO den implement
+//    final GradleSettings defaultProjectSettings = GradleSettings.getInstance(defaultProject);
+//    final GradleSettings currentProjectSettings = GradleSettings.getInstance(project);
+//    String projectGradleHome = currentProjectSettings.getGradleHome();
+//    String defaultGradleHome = defaultProjectSettings.getGradleHome();
+//    if (StringUtil.isEmpty(projectGradleHome) || !StringUtil.isEmpty(defaultGradleHome)) {
+//      return;
+//    }
+//    GradleInstallationManager libraryManager = ServiceManager.getService(GradleInstallationManager.class);
+//    File autodetectedGradleHome = libraryManager.getAutodetectedGradleHome();
+//    // We don't want to store auto-detected value at the settings.
+//    if (autodetectedGradleHome == null || !FileUtil.filesEqual(autodetectedGradleHome, new File(projectGradleHome))) {
 //      GradleSettings.applyGradleHome(projectGradleHome, defaultProject);
-    }
+//    }
   }
 }

@@ -727,6 +727,7 @@ public class CompletionProgressIndicator extends ProgressIndicatorBase implement
     for (CompletionConfidence confidence : CompletionConfidenceEP.forLanguage(language)) {
       final ThreeState result = confidence.shouldFocusLookup(parameters);
       if (result != ThreeState.UNSURE) {
+        LOG.debug(confidence + " has returned shouldFocusLookup=" + result);
         return result == ThreeState.YES;
       }
     }

@@ -23,6 +23,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiTypesUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.RefactoringBundle;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.VisibilityUtil;
@@ -83,9 +84,9 @@ class MethodDuplicatesMatchProvider implements MatchProvider {
       } else {
         final PsiClass psiClass = PsiTreeUtil.getParentOfType(match.getMatchStart(), PsiClass.class);
         if (psiClass != null && psiClass.isInheritor(containingClass, true)) {
-          qualifierExpression.replace(RefactoringUtil.createSuperExpression(containingClass.getManager(), null));
+          qualifierExpression.replace(RefactoringChangeUtil.createSuperExpression(containingClass.getManager(), null));
         } else {
-          qualifierExpression.replace(RefactoringUtil.createThisExpression(containingClass.getManager(), containingClass));
+          qualifierExpression.replace(RefactoringChangeUtil.createThisExpression(containingClass.getManager(), containingClass));
         }
       }
     }

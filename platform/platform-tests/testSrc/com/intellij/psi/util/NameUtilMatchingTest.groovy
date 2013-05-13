@@ -255,6 +255,7 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertDoesntMatch("*foc", "reformatCode");
     assertMatches("*forc", "reformatCode");
     assertDoesntMatch("*sTC", "LazyClassTypeConstructor");
+
     assertDoesntMatch("*Icon", "LEADING_CONSTRUCTOR");
     assertMatches("*I", "LEADING_CONSTRUCTOR");
     assertMatches("*i", "LEADING_CONSTRUCTOR");
@@ -262,6 +263,11 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertMatches("*ing", "LEADING_CONSTRUCTOR");
     assertDoesntMatch("*inc", "LEADING_CONSTRUCTOR");
     assertDoesntMatch("*ico", "drawLinePickedOut");
+
+    assertMatches("*l", "AppDelegate");
+    assertMatches("*le", "AppDelegate");
+    assertMatches("*leg", "AppDelegate");
+
   }
 
   public void testMiddleMatchingUnderscore() {
@@ -362,6 +368,9 @@ public class NameUtilMatchingTest extends UsefulTestCase {
   }
 
   public void testFinalSpace() {
+    assertMatches("a ", "alpha + beta");
+    assertMatches("a ", "a ");
+    assertMatches("a ", "a");
     assertMatches("GrDebT ", "GroovyDebuggerTest");
     assertDoesntMatch("grdebT ", "GroovyDebuggerTest");
     assertDoesntMatch("grdebt ", "GroovyDebuggerTest");
@@ -446,10 +455,24 @@ public class NameUtilMatchingTest extends UsefulTestCase {
                         TextRange.from(0, 4), TextRange.from(10, 1));
   }
 
-  public void "test plus in the pattern should allow to be space-surrounded"() {
+  public void "test plus/minus in the pattern should allow to be space-surrounded"() {
     assertMatches("a+b", "alpha+beta")
     assertMatches("a+b", "alpha_gamma+beta")
     assertMatches("a+b", "alpha + beta")
+    assertMatches("Foo+", "Foo+Bar.txt")
+    assertMatches("Foo+", "Foo + Bar.txt")
+    assertMatches("a", "alpha+beta");
+    assertMatches("*b", "alpha+beta");
+    assertMatches("a + b", "alpha+beta");
+    assertMatches("a+", "alpha+beta");
+    assertDoesntMatch("a ", "alpha+beta");
+    assertMatches("", "alpha+beta");
+    assertMatches("*+ b", "alpha+beta");
+    assertDoesntMatch("d+g", "alphaDelta+betaGamma");
+    assertMatches("*d+g", "alphaDelta+betaGamma");
+
+    assertMatches("a-b", "alpha-beta")
+    assertMatches("a-b", "alpha - beta")
   }
 
   public void testMatchingDegree() {
@@ -556,6 +579,11 @@ public class NameUtilMatchingTest extends UsefulTestCase {
 
   public void testUsingCapsMeansTheyShouldMatchCaps() {
     assertDoesntMatch("URLCl", "UrlClassLoader");
+  }
+
+  public void "test a capital after another capital may match a lowercase letter because shift was accidentally help too long"() {
+    assertMatches("USerDefa", "UserDefaults")
+    assertMatches("NSUSerDefa", "NSUserDefaults")
   }
 
   public void testPerformance() {

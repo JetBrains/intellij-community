@@ -36,12 +36,14 @@ import org.jetbrains.annotations.NotNull;
  */
 public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionTool {
 
+  @Override
   @Nls
   @NotNull
   public String getGroupDisplayName() {
     return XmlInspectionGroupNames.HTML_INSPECTIONS;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return true;
   }
@@ -54,6 +56,7 @@ public abstract class HtmlLocalInspectionTool extends XmlSuppressableInspectionT
     // should be overridden
   }
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new XmlElementVisitor() {

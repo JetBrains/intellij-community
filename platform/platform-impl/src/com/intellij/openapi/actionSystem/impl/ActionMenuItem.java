@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -225,8 +225,8 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
 
     public void actionPerformed(final ActionEvent e) {
       final IdeFocusManager fm = IdeFocusManager.findInstanceByContext(myContext);
-      final ActionCallback typeahead = new ActionCallback();
-      fm.typeAheadUntil(typeahead);
+      final ActionCallback typeAhead = new ActionCallback();
+      fm.typeAheadUntil(typeAhead);
       fm.runOnOwnContext(myContext, new Runnable() {
         @Override
         public void run() {
@@ -240,17 +240,18 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
             actionManager.fireBeforeActionPerformed(action, myContext, event);
             Component component = PlatformDataKeys.CONTEXT_COMPONENT.getData(event.getDataContext());
             if (component != null && !isInTree(component)) {
-              typeahead.setDone();
+              typeAhead.setDone();
               return;
             }
 
             SimpleTimer.getInstance().setUp(new Runnable() {
               @Override
               public void run() {
+                //noinspection SSBasedInspection
                 SwingUtilities.invokeLater(new Runnable() {
                   @Override
                   public void run() {
-                    fm.doWhenFocusSettlesDown(typeahead.createSetDoneRunnable());
+                    fm.doWhenFocusSettlesDown(typeAhead.createSetDoneRunnable());
                   }
                 });
               }
@@ -258,8 +259,9 @@ public class ActionMenuItem extends JCheckBoxMenuItem {
 
             ActionUtil.performActionDumbAware(action, event);
             actionManager.queueActionPerformedEvent(action, myContext, event);
-          } else {
-            typeahead.setDone();
+          }
+          else {
+            typeAhead.setDone();
           }
         }
       });

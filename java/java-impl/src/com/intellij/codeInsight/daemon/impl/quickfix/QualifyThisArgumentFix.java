@@ -33,7 +33,7 @@ import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -44,7 +44,7 @@ public class QualifyThisArgumentFix extends PsiElementBaseIntentionAction {
   private final PsiThisExpression myExpression;
   private final PsiClass myPsiClass;
 
-  
+
   public QualifyThisArgumentFix(@NotNull PsiThisExpression expression, @NotNull PsiClass psiClass) {
     myExpression = expression;
     myPsiClass = psiClass;
@@ -67,7 +67,7 @@ public class QualifyThisArgumentFix extends PsiElementBaseIntentionAction {
 
   @Override
   public void invoke(@NotNull Project project, Editor editor, @NotNull PsiElement element) throws IncorrectOperationException {
-    myExpression.replace(RefactoringUtil.createThisExpression(PsiManager.getInstance(project), myPsiClass));
+    myExpression.replace(RefactoringChangeUtil.createThisExpression(PsiManager.getInstance(project), myPsiClass));
   }
 
   public static void registerQuickFixAction(CandidateInfo[] candidates, PsiCall call, HighlightInfo highlightInfo, final TextRange fixRange) {

@@ -54,6 +54,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   }
 
 
+  @NotNull
   @Override
   protected StateStorageManager createStateStorageManager() {
     Document _d = null;
@@ -98,11 +99,13 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
           myProjectManager.setDefaultProjectRootElement(getDocumentToSave().getRootElement());
         }
 
+        @NotNull
         @Override
         public Collection<IFile> getStorageFilesToSave() throws StateStorageException {
           return Collections.emptyList();
         }
 
+        @NotNull
         @Override
         public List<IFile> getAllStorageFiles() {
           return Collections.emptyList();
@@ -138,18 +141,20 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       public void clearStateStorage(@NotNull String file) {
       }
 
+      @NotNull
       @Override
       public ExternalizationSession startExternalization() {
         return new MyExternalizationSession(storage);
       }
 
+      @NotNull
       @Override
-      public SaveSession startSave(final ExternalizationSession externalizationSession) {
+      public SaveSession startSave(@NotNull final ExternalizationSession externalizationSession) {
         return new MySaveSession(storage, externalizationSession);
       }
 
       @Override
-      public void finishSave(SaveSession saveSession) {
+      public void finishSave(@NotNull SaveSession saveSession) {
         storage.finishSave(((MySaveSession)saveSession).saveSession);
       }
 
@@ -174,6 +179,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
       public void unregisterStreamProvider(final StreamProvider streamProvider, final RoamingType roamingType) {
         throw new UnsupportedOperationException("Method unregisterStreamProvider not implemented in " + getClass());
       }
+      @NotNull
       @Override
       public StreamProvider[] getStreamProviders(final RoamingType roamingType) {
         throw new UnsupportedOperationException("Method getStreamProviders not implemented in " + getClass());
@@ -186,7 +192,7 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
 
       @Override
       public void reset() {
-        
+
       }
     };
   }
@@ -203,43 +209,45 @@ public class DefaultProjectStoreImpl extends ProjectStoreImpl {
   }
 
   private static class MyExternalizationSession implements StateStorageManager.ExternalizationSession {
-    StateStorage.ExternalizationSession externalizationSession;
+    @NotNull final StateStorage.ExternalizationSession externalizationSession;
 
-    public MyExternalizationSession(final XmlElementStorage storage) {
+    public MyExternalizationSession(@NotNull XmlElementStorage storage) {
       externalizationSession = storage.startExternalization();
     }
 
     @Override
-    public void setState(@NotNull final Storage[] storageSpecs, final Object component, final String componentName, final Object state)
+    public void setState(@NotNull final Storage[] storageSpecs, @NotNull final Object component, final String componentName, @NotNull final Object state)
     throws StateStorageException {
       externalizationSession.setState(component, componentName, state, null);
     }
 
     @Override
-    public void setStateInOldStorage(final Object component, final String componentName, final Object state) throws StateStorageException {
+    public void setStateInOldStorage(@NotNull final Object component, @NotNull final String componentName, @NotNull final Object state) throws StateStorageException {
       externalizationSession.setState(component, componentName, state, null);
     }
   }
 
   private static class MySaveSession implements StateStorageManager.SaveSession {
-    StateStorage.SaveSession saveSession;
+    @NotNull private final StateStorage.SaveSession saveSession;
 
-    public MySaveSession(final XmlElementStorage storage, final StateStorageManager.ExternalizationSession externalizationSession) {
+    public MySaveSession(@NotNull XmlElementStorage storage, @NotNull StateStorageManager.ExternalizationSession externalizationSession) {
       saveSession = storage.startSave(((MyExternalizationSession)externalizationSession).externalizationSession);
     }
 
     //returns set of component which were changed, null if changes are much more than just component state.
     @Override
     @Nullable
-    public Set<String> analyzeExternalChanges(Set<Pair<VirtualFile, StateStorage>> files) {
+    public Set<String> analyzeExternalChanges(@NotNull Set<Pair<VirtualFile, StateStorage>> files) {
       throw new UnsupportedOperationException("Method analyzeExternalChanges not implemented in " + getClass());
     }
 
+    @NotNull
     @Override
     public List<IFile> getAllStorageFilesToSave() throws StateStorageException {
       return Collections.emptyList();
     }
 
+    @NotNull
     @Override
     public List<IFile> getAllStorageFiles() {
       return Collections.emptyList();

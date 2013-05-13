@@ -911,6 +911,12 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
     return myTools.get(toolId);
   }
 
+  public void enableAllTools() {
+    for (InspectionProfileEntry entry : getInspectionTools(null)) {
+      enableTool(entry.getShortName());
+    }
+  }
+
   public void disableAllTools() {
     for (InspectionProfileEntry entry : getInspectionTools(null)) {
       disableTool(entry.getShortName());
@@ -920,5 +926,13 @@ public class InspectionProfileImpl extends ProfileEx implements ModifiableModel,
   @NotNull
   public String toString() {
     return mySource == null ? getName() : getName() + " (copy)";
+  }
+
+  @Override
+  public boolean equals(Object o) {
+    if (super.equals(o)) {
+      return ((InspectionProfileImpl) o).getProfileManager() == myProfileManager;
+    }
+    return false;
   }
 }

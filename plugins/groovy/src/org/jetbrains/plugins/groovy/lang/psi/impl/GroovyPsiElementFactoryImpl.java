@@ -216,6 +216,28 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
                                                          @Nullable GrExpression initializer,
                                                          @Nullable PsiType type,
                                                          String... identifiers) {
+
+    String initializerText;
+    if (initializer != null) {
+      if (initializer instanceof GrApplicationStatement &&
+          !GroovyConfigUtils.getInstance().isVersionAtLeast(initializer, GroovyConfigUtils.GROOVY1_8, false)) {
+        initializer = createMethodCallByAppCall((GrApplicationStatement)initializer);
+      }
+      assert initializer != null;
+      initializerText = initializer.getText();
+    }
+    else {
+      initializerText = null;
+    }
+
+    return createVariableDeclaration(modifiers, initializerText, type, identifiers);
+  }
+
+  @Override
+  public GrVariableDeclaration createVariableDeclaration(@Nullable String[] modifiers,
+                                                         @Nullable String initializer,
+                                                         @Nullable PsiType type,
+                                                         String... identifiers) {
     StringBuilder text = writeModifiers(modifiers);
 
     if (type != null && type != PsiType.NULL) {
@@ -239,13 +261,8 @@ public class GroovyPsiElementFactoryImpl extends GroovyPsiElementFactory {
       text.append(')');
     }
 
-    if (initializer != null) {
-      if (initializer instanceof GrApplicationStatement &&
-          !GroovyConfigUtils.getInstance().isVersionAtLeast(initializer, GroovyConfigUtils.GROOVY1_8, false)) {
-        initializer = createMethodCallByAppCall((GrApplicationStatement)initializer);
-      }
-      assert initializer != null;
-      text.append(" = ").append(initializer.getText());
+    if (!StringUtil.isEmptyOrSpaces(initializer)) {
+      text.append(" = ").append(initializer);
     }
 
     GrTopStatement[] topStatements = createGroovyFileChecked(text).getTopStatements();

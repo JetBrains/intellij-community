@@ -2,6 +2,7 @@ package org.jetbrains.plugins.gradle.settings;
 
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
 import com.intellij.util.messages.Topic;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 /**
@@ -12,7 +13,7 @@ import org.jetbrains.annotations.Nullable;
  * @author Denis Zhdanov
  * @since 1/17/12 1:02 PM
  */
-public interface GradleSettingsListener extends ExternalSystemSettingsListener {
+public interface GradleSettingsListener extends ExternalSystemSettingsListener<GradleProjectSettings> {
 
   Topic<GradleSettingsListener> TOPIC = Topic.create("Gradle-specific settings", GradleSettingsListener.class);
 
@@ -21,10 +22,11 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener {
    * <p/>
    * <b>Note:</b> this callback is executed <b>after</b> the actual config change.
    *
-   * @param oldPath  old path (if any)
-   * @param newPath  new path (if any)
+   * @param oldPath            old path (if any)
+   * @param newPath            new path (if any)
+   * @param linkedProjectPath  target linked gradle project path
    */
-  void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath);
+  void onGradleHomeChange(@Nullable String oldPath, @Nullable String newPath, @NotNull String linkedProjectPath);
 
   /**
    * Is expected to be invoked when 'prefer local gradle distribution to wrapper' setting is changed (generally this
@@ -32,9 +34,10 @@ public interface GradleSettingsListener extends ExternalSystemSettingsListener {
    * <p/>
    * <b>Note:</b> this callback is executed <b>after</b> the actual config change.
    * 
-   * @param currentValue    current value
+   * @param currentValue       current value
+   * @param linkedProjectPath  target linked gradle project path
    */
-  void onPreferLocalGradleDistributionToWrapperChange(boolean currentValue);
+  void onPreferLocalGradleDistributionToWrapperChange(boolean currentValue, @NotNull String linkedProjectPath);
 
   /**
    * Is expected to be invoked when service directory path is changed.

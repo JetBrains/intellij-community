@@ -488,7 +488,7 @@ public class PagedFileStorage implements Forceable {
     }
 
     private int registerPagedFileStorage(@NotNull PagedFileStorage storage) {
-      int registered = myIndex2Storage.keys().length;
+      int registered = myIndex2Storage.size();
       assert registered <= MAX_LIVE_STORAGES_COUNT;
       int value = registered << FILE_INDEX_SHIFT;
       while(myIndex2Storage.cacheOrGet(value, storage) != storage) {

@@ -51,7 +51,7 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
   private final boolean myIsDirectory;
   private final String myNewFileName;
   private final String myText;
-  @NotNull private String myKey;
+  @NotNull private final String myKey;
   private boolean myIsAvailable;
   private long myIsAvailableTimeStamp;
   private static final int REFRESH_INTERVAL = 1000;
@@ -71,14 +71,11 @@ public class CreateFileFix extends LocalQuickFixAndIntentionActionOnPsiElement {
     myIsAvailableTimeStamp = System.currentTimeMillis();
   }
 
-  public CreateFileFix(final String newFileName,
-                                   @NotNull PsiDirectory directory, String text) {
-    this(false,newFileName,directory, text, "create.file.text" );
+  public CreateFileFix(@NotNull String newFileName, @NotNull PsiDirectory directory, String text) {
+    this(false,newFileName,directory, text, "create.file.text");
   }
 
-  public CreateFileFix(final boolean isDirectory,
-                                   final String newFileName,
-                                   @NotNull PsiDirectory directory) {
+  public CreateFileFix(final boolean isDirectory, @NotNull String newFileName, @NotNull PsiDirectory directory) {
     this(isDirectory,newFileName,directory,null, isDirectory ? "create.directory.text":"create.file.text" );
   }
 

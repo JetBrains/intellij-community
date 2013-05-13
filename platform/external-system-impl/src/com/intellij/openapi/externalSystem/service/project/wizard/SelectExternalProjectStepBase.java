@@ -1,10 +1,8 @@
 package com.intellij.openapi.externalSystem.service.project.wizard;
 
 import com.intellij.ide.util.projectWizard.WizardContext;
-import com.intellij.openapi.externalSystem.service.settings.AbstractExternalProjectConfigurable;
-import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
+import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
 import com.intellij.openapi.options.ConfigurationException;
-import com.intellij.openapi.ui.MessageType;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
@@ -27,7 +25,7 @@ public class SelectExternalProjectStepBase extends AbstractImportFromExternalSys
 
   private final JPanel myComponent = new JPanel(new BorderLayout());
 
-  @NotNull private AbstractExternalProjectConfigurable myConfigurable;
+  @NotNull private AbstractImportFromExternalSystemControl myControl;
 
   private boolean myGradleSettingsInitialised;
 
@@ -59,10 +57,7 @@ public class SelectExternalProjectStepBase extends AbstractImportFromExternalSys
 
   @Override
   public boolean validate() throws ConfigurationException {
-    AbstractExternalProjectConfigurable.ValidationError error = myConfigurable.validate();
-    if (error != null) {
-      ExternalSystemUiUtil.showBalloon(error.problemHolder, MessageType.ERROR, error.message);
-    }
+    myControl.apply();
     storeCurrentSettings();
     AbstractExternalProjectImportBuilder builder = getBuilder();
     if (builder == null) {
@@ -78,10 +73,7 @@ public class SelectExternalProjectStepBase extends AbstractImportFromExternalSys
   }
 
   private void storeCurrentSettings() {
-    if (myConfigurable.isModified()) {
-      myConfigurable.apply();
-    }
-    final String projectPath = myConfigurable.getLinkedExternalProjectPath();
+    final String projectPath = myControl.getProjectSettings().getExternalProjectPath();
     if (projectPath != null) {
       final File parent = new File(projectPath).getParentFile();
       if (parent != null) {
@@ -96,8 +88,8 @@ public class SelectExternalProjectStepBase extends AbstractImportFromExternalSys
       return;
     }
     builder.prepare(getWizardContext());
-    myConfigurable = builder.getConfigurable();
-    myComponent.add(myConfigurable.createComponent());
+    myControl = builder.getControl();
+    myComponent.add(myControl.getComponent());
     myGradleSettingsInitialised = true;
   }
 }

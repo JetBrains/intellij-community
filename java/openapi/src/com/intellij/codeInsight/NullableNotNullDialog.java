@@ -28,6 +28,7 @@ import com.intellij.psi.search.GlobalSearchScope;
 import com.intellij.ui.*;
 import com.intellij.ui.components.JBList;
 import com.intellij.util.ui.EmptyIcon;
+import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
@@ -43,18 +44,16 @@ import java.util.Set;
  * Date: 1/25/11
  */
 public class NullableNotNullDialog extends DialogWrapper {
-
   private final Project myProject;
   private AnnotationsPanel myNullablePanel;
   private AnnotationsPanel myNotNullPanel;
 
-  public NullableNotNullDialog(Project project) {
+  public NullableNotNullDialog(@NotNull Project project) {
     super(project, true);
     myProject = project;
     init();
     setTitle("Nullable/NotNull configuration");
   }
-
 
   @Override
   protected JComponent createCenterPanel() {

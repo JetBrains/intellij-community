@@ -36,16 +36,21 @@ import java.util.List;
 public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T> {
   private static final Logger LOG = Logger.getInstance("#com.intellij.util.xml.impl.DomAnchorImpl");
 
-  public static <T extends DomElement> DomAnchorImpl<T> createAnchor(@NotNull T t) {
+  public static <T extends DomElement> DomAnchor<T> createAnchor(@NotNull T t) {
     return createAnchor(t, false);
   }
 
-  public static <T extends DomElement> DomAnchorImpl<T> createAnchor(@NotNull T t, boolean usePsi) {
+  public static <T extends DomElement> DomAnchor<T> createAnchor(@NotNull T t, boolean usePsi) {
     if (usePsi) {
       final XmlElement element = t.getXmlElement();
       if (element != null) {
         return new PsiBasedDomAnchor<T>(PsiAnchor.create(element), element.getProject());
       }
+    }
+
+    DomInvocationHandler handler = DomManagerImpl.getNotNullHandler(t);
+    if (handler.getStub() != null) {
+      return new StubAnchor<T>(handler);
     }
 
     final DomElement parent = t.getParent();
@@ -59,7 +64,7 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
       return new RootAnchor<T>(fileElement.getFile(), fileElement.getRootElementClass());
     }
 
-    final DomAnchorImpl<DomElement> parentAnchor = createAnchor(parent);
+    final DomAnchor<DomElement> parentAnchor = createAnchor(parent);
     final String name = t.getGenericInfo().getElementName(t);
     final AbstractDomChildrenDescription description = t.getChildDescription();
     final List<? extends DomElement> values = description.getValues(parent);
@@ -141,12 +146,12 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
   public abstract XmlFile getContainingFile();
 
   private static class NamedAnchor<T extends DomElement> extends DomAnchorImpl<T> {
-    private final DomAnchorImpl myParent;
+    private final DomAnchor myParent;
     private final AbstractDomChildrenDescription myDescr;
     private final String myName;
     private final int myIndex;
 
-    private NamedAnchor(final DomAnchorImpl parent, final AbstractDomChildrenDescription descr, final String id, int index) {
+    private NamedAnchor(final DomAnchor parent, final AbstractDomChildrenDescription descr, final String id, int index) {
       myParent = parent;
       myDescr = descr;
       myName = id;
@@ -204,11 +209,11 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
   }
 
   private static class IndexedAnchor<T extends DomElement> extends DomAnchorImpl<T> {
-    private final DomAnchorImpl myParent;
+    private final DomAnchor myParent;
     private final AbstractDomChildrenDescription myDescr;
     private final int myIndex;
 
-    private IndexedAnchor(final DomAnchorImpl parent, final AbstractDomChildrenDescription descr, final int index) {
+    private IndexedAnchor(final DomAnchor parent, final AbstractDomChildrenDescription descr, final int index) {
       myParent = parent;
       myDescr = descr;
       myIndex = index;
@@ -372,10 +377,5 @@ public abstract class DomAnchorImpl<T extends DomElement> implements DomAnchor<T
     public PsiElement getPsiElement() {
       return myHandler.getXmlElement();
     }
-  }
-
-  public static <T extends DomElement> DomAnchor<T> createStubAnchor(T element) {
-    DomInvocationHandler handler = DomManagerImpl.getDomInvocationHandler(element);
-    return handler.getStub() == null ? createAnchor(element, true) : new StubAnchor<T>(handler);
   }
 }

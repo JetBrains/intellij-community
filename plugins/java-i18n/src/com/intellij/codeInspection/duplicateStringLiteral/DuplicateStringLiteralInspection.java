@@ -63,6 +63,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
   @SuppressWarnings({"WeakerAccess"}) public boolean IGNORE_PROPERTY_KEYS = false;
   @NonNls private static final String BR = "<br>";
 
+  @Override
   @NotNull
   public PsiElementVisitor buildVisitor(@NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     return new JavaElementVisitor() {
@@ -76,16 +77,19 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     };
   }
 
+  @Override
   @NotNull
   public String getDisplayName() {
     return InspectionsBundle.message("inspection.duplicates.display.name");
   }
 
+  @Override
   @NotNull
   public String getGroupDisplayName() {
     return GroupNames.INTERNATIONALIZATION_GROUP_NAME;
   }
 
+  @Override
   @NotNull
   public String getShortName() {
     return "DuplicateStringLiteralInspection";
@@ -106,6 +110,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     if (words.isEmpty()) return;
     // put longer strings first
     Collections.sort(words, new Comparator<String>() {
+      @Override
       public int compare(final String o1, final String o2) {
         return o2.length() - o1.length();
       }
@@ -170,6 +175,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     String classList;
     if (isOnTheFly) {
       classList = StringUtil.join(tenClassesMost, new Function<PsiClass, String>() {
+        @Override
         public String fun(final PsiClass aClass) {
           final boolean thisFile = aClass.getContainingFile() == originalExpression.getContainingFile();
           //noinspection HardCodedStringLiteral
@@ -180,6 +186,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     }
     else {
       classList = StringUtil.join(tenClassesMost, new Function<PsiClass, String>() {
+        @Override
         public String fun(final PsiClass aClass) {
           return "'" + aClass.getQualifiedName() + "'";
         }
@@ -254,18 +261,22 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
     return null;
   }
 
+  @Override
   public boolean isEnabledByDefault() {
     return false;
   }
 
+  @Override
   public JComponent createOptionsPanel() {
     final OptionsPanel optionsPanel = new OptionsPanel();
     optionsPanel.myIgnorePropertyKeyExpressions.addActionListener(new ActionListener() {
+      @Override
       public void actionPerformed(final ActionEvent e) {
         IGNORE_PROPERTY_KEYS = optionsPanel.myIgnorePropertyKeyExpressions.isSelected();
       }
     });
     optionsPanel.myMinStringLengthField.getDocument().addDocumentListener(new DocumentAdapter() {
+      @Override
       protected void textChanged(final DocumentEvent e) {
         try {
           MIN_STRING_LENGTH = Integer.parseInt(optionsPanel.myMinStringLengthField.getText());
@@ -296,13 +307,16 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       }
     }
 
+    @Override
     @NotNull
     public String getName() {
       return InspectionsBundle.message("introduce.constant.across.the.project");
     }
 
+    @Override
     public void applyFix(@NotNull final Project project, @NotNull ProblemDescriptor descriptor) {
       SwingUtilities.invokeLater(new Runnable() {
+        @Override
         public void run() {
           if (project.isDisposed()) return;
           final List<PsiExpression> expressions = new ArrayList<PsiExpression>();
@@ -314,17 +328,21 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
           }
           final PsiExpression[] expressionArray = expressions.toArray(new PsiExpression[expressions.size()]);
           final IntroduceConstantHandler handler = new IntroduceConstantHandler() {
+            @Override
             protected OccurrenceManager createOccurrenceManager(PsiExpression selectedExpr, PsiClass parentClass) {
               final OccurrenceFilter filter = new OccurrenceFilter() {
+                @Override
                 public boolean isOK(PsiExpression occurrence) {
                   return true;
                 }
               };
               return new BaseOccurrenceManager(filter) {
+                @Override
                 protected PsiExpression[] defaultOccurrences() {
                   return expressionArray;
                 }
 
+                @Override
                 protected PsiExpression[] findOccurrences() {
                   return expressionArray;
                 }
@@ -336,6 +354,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       });
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return getName();
@@ -383,6 +402,7 @@ public class DuplicateStringLiteralInspection extends BaseLocalInspectionTool {
       }
     }
 
+    @Override
     @NotNull
     public String getFamilyName() {
       return InspectionsBundle.message("inspection.duplicates.replace.family.quickfix");

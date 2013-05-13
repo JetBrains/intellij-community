@@ -85,6 +85,12 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
   static final String PRESENTABLE_NAME = DaemonBundle.message("pass.syntax");
   private static final Key<Boolean> HAS_ERROR_ELEMENT = Key.create("HAS_ERROR_ELEMENT");
   private static final JobLauncher JobUtil = JobLauncher.getInstance();
+  private static final Condition<PsiFile> FILE_FILTER = new Condition<PsiFile>() {
+    @Override
+    public boolean value(PsiFile file) {
+      return HighlightLevelUtil.shouldHighlight(file);
+    }
+  };
 
   private final int myStartOffset;
   private final int myEndOffset;
@@ -195,7 +201,7 @@ public class GeneralHighlightingPass extends ProgressableTextEditorHighlightingP
     try {
       final HighlightVisitor[] filteredVisitors = filterVisitors(highlightVisitors, myFile);
       Divider.divideInsideAndOutside(myFile, myStartOffset, myEndOffset, myPriorityRange, inside, outside,
-                                     HighlightLevelUtil.AnalysisLevel.HIGHLIGHT,false);
+                                     false, FILE_FILTER);
 
       setProgressLimit((long)(inside.size()+outside.size()));
 

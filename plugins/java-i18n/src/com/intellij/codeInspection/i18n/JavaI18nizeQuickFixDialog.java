@@ -123,6 +123,7 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
       myResourceBundleSuggester.add(myRBEditorTextField, BorderLayout.CENTER);
       suggestAvailableResourceBundleExpressions();
       myRBEditorTextField.addDocumentListener(new DocumentAdapter() {
+        @Override
         public void documentChanged(com.intellij.openapi.editor.event.DocumentEvent e) {
           somethingChanged();
         }
@@ -135,10 +136,12 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
     if (templateName != null) {
       HyperlinkLabel link = new HyperlinkLabel(CodeInsightBundle.message("i18nize.dialog.template.link.label"));
       link.addHyperlinkListener(new HyperlinkListener() {
+        @Override
         public void hyperlinkUpdate(HyperlinkEvent e) {
           final FileTemplateConfigurable configurable = new FileTemplateConfigurable();
           final FileTemplate template = FileTemplateManager.getInstance().getCodeTemplate(templateName);
           SwingUtilities.invokeLater(new Runnable() {
+            @Override
             public void run() {
               configurable.setTemplate(template, null);
             }
@@ -210,12 +213,14 @@ public class JavaI18nizeQuickFixDialog extends I18nizeQuickFixDialog {
 
     myRBEditorTextField.setHistory(ArrayUtil.toStringArray(result));
     SwingUtilities.invokeLater(new Runnable() {
+      @Override
       public void run() {
         myRBEditorTextField.setSelectedIndex(0);
       }
     });
   }
 
+  @Override
   protected void somethingChanged() {
     if (myShowPreview) {
       myPreviewLabel.setText(getI18nizedText());

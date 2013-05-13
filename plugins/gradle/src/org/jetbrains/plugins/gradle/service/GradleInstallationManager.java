@@ -1,7 +1,10 @@
 package org.jetbrains.plugins.gradle.service;
 
+import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderEnumerator;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
@@ -9,7 +12,9 @@ import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.gradle.settings.GradleProjectSettings;
 import org.jetbrains.plugins.gradle.settings.GradleSettings;
 import org.jetbrains.plugins.gradle.util.GradleEnvironment;
 import org.jetbrains.plugins.gradle.util.GradleLog;
@@ -17,6 +22,7 @@ import org.jetbrains.plugins.gradle.util.GradleUtil;
 import org.jetbrains.plugins.groovy.config.GroovyConfigUtils;
 
 import java.io.File;
+import java.io.FileFilter;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
@@ -45,18 +51,25 @@ public class GradleInstallationManager {
     GRADLE_START_FILE_NAMES = System.getProperty("gradle.start.file.names", "gradle:gradle.cmd:gradle.sh").split(":");
     GRADLE_ENV_PROPERTY_NAME = System.getProperty("gradle.home.env.key", "GRADLE_HOME");
   }
+  
+  @NotNull private final PlatformFacade myPlatformFacade;
+
+  public GradleInstallationManager(@NotNull PlatformFacade facade) {
+    myPlatformFacade = facade;
+  }
 
   /**
    * Allows to get file handles for the gradle binaries to use.
    *
-   * @param project  target project
-   * @return file handles for the gradle binaries; <code>null</code> if gradle is not discovered
+   * @param project            target project
+   * @param linkedProjectPath  path to the target external project's config
+   * @return                   file handles for the gradle binaries; <code>null</code> if gradle is not discovered
    */
   @Nullable
-  public Collection<File> getAllLibraries(@Nullable Project project) {
+  public Collection<File> getAllLibraries(@Nullable Project project, @NotNull String linkedProjectPath) {
 
     // Manually defined gradle home
-    File gradleHome = getGradleHome(project);
+    File gradleHome = getGradleHome(project, linkedProjectPath);
 
     if (gradleHome == null || !gradleHome.isDirectory()) {
       return null;
@@ -79,16 +92,17 @@ public class GradleInstallationManager {
   /**
    * Tries to return file handle that points to the gradle installation home.
    *
-   * @param project  target project (if any)
-   * @return file handle that points to the gradle installation home (if any)
+   * @param project            target project (if any)
+   * @param linkedProjectPath  path to the target linked project config
+   * @return                   file handle that points to the gradle installation home (if any)
    */
   @Nullable
-  public File getGradleHome(@Nullable Project project) {
-    File result = getWrapperHome(project);
+  public File getGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
+    File result = getWrapperHome(project, linkedProjectPath);
     if (result != null) {
       return result;
     }
-    result = getManuallyDefinedGradleHome(project);
+    result = getManuallyDefinedGradleHome(project, linkedProjectPath);
     if (result != null) {
       return result;
     }
@@ -137,33 +151,33 @@ public class GradleInstallationManager {
    * @return         gradle home derived from the settings of the given entities (if any); <code>null</code> otherwise
    */
   @Nullable
-  public VirtualFile getGradleHome(@Nullable Module module, @Nullable Project project) {
+  public VirtualFile getGradleHome(@Nullable Module module, @Nullable Project project, @NotNull String linkedProjectPath) {
     final VirtualFile result = getGradleHome(module);
     if (result != null) {
       return result;
     }
 
-    final File home = getGradleHome(project);
+    final File home = getGradleHome(project, linkedProjectPath);
     return home == null ? null : LocalFileSystem.getInstance().refreshAndFindFileByIoFile(home);
   }
 
   @Nullable
-  public File getWrapperHome(@Nullable Project project) {
+  public File getWrapperHome(@Nullable Project project, @NotNull String linkedProjectPath) {
     if (project == null) {
       return null;
     }
-    GradleSettings settings = GradleSettings.getInstance(project);
-    String gradleProjectPath = settings.getLinkedExternalProjectPath();
-    if (StringUtil.isEmpty(gradleProjectPath)) {
+
+    GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath);
+    if (settings == null) {
       return null;
     }
-
+    
     if (settings.isPreferLocalInstallationToWrapper()) {
       return null;
     }
 
-    String version = GradleUtil.getWrapperVersion(gradleProjectPath);
-    if (version == null) {
+    String distribution = GradleUtil.getWrapperDistribution(linkedProjectPath);
+    if (distribution == null) {
       return null;
     }
     File gradleSystemDir = new File(System.getProperty("user.home"), ".gradle");
@@ -176,7 +190,7 @@ public class GradleInstallationManager {
       return null;
     }
 
-    File targetDistributionHome = new File(gradleWrapperDistributionsHome, String.format("gradle-%s-bin", version));
+    File targetDistributionHome = new File(gradleWrapperDistributionsHome, distribution);
     if (!targetDistributionHome.isDirectory()) {
       return null;
     }
@@ -187,13 +201,18 @@ public class GradleInstallationManager {
       return null;
     }
 
-    File result = new File(files[0], String.format("gradle-%s", version));
-    if (result.isDirectory()) {
-      return result;
-    }
-    else {
+    File[] distFiles = files[0].listFiles(new FileFilter() {
+      @Override
+      public boolean accept(File f) {
+        return f.isDirectory();
+      }
+    });
+    if (distFiles == null || distFiles.length != 1) {
+      // There should exist only the gradle directory in the distribution directory
       return null;
     }
+
+    return distFiles[0].isDirectory() ? distFiles[0] : null;
   }
 
   /**
@@ -203,11 +222,15 @@ public class GradleInstallationManager {
    * @return         path to the gradle distribution (if the one is explicitly configured)
    */
   @Nullable
-  public File getManuallyDefinedGradleHome(@Nullable Project project) {
+  public File getManuallyDefinedGradleHome(@Nullable Project project, @NotNull String linkedProjectPath) {
     if (project == null) {
       return null;
     }
-    GradleSettings settings = GradleSettings.getInstance(project);
+    GradleProjectSettings settings = GradleSettings.getInstance(project).getLinkedProjectSettings(linkedProjectPath);
+    if (settings == null) {
+      return null;
+    }
+    
     String path = settings.getGradleHome();
     if (path == null) {
       return null;
@@ -360,21 +383,33 @@ public class GradleInstallationManager {
    */
   @Nullable
   public List<VirtualFile> getClassRoots(@Nullable Project project) {
-    final Collection<File> libraries = getAllLibraries(project);
-    if (libraries == null) {
-      return null;
+    if (project == null) {
+      project = ProjectManager.getInstance().getDefaultProject();
     }
-    final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
-    final JarFileSystem jarFileSystem = JarFileSystem.getInstance();
-    List<VirtualFile> result = new ArrayList<VirtualFile>();
-    for (File file : libraries) {
-      if (ANY_GRADLE_JAR_FILE_PATTERN.matcher(file.getName()).matches() || GroovyConfigUtils.matchesGroovyAll(file.getName())) {
-        final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByIoFile(file);
-        if (virtualFile != null) {
-          ContainerUtil.addIfNotNull(result, jarFileSystem.getJarRootForLocalFile(virtualFile));
+
+    for (Module module : myPlatformFacade.getModules(project)) {
+      String path = module.getOptionValue(ExternalSystemConstants.LINKED_PROJECT_PATH_KEY);
+      if (StringUtil.isEmpty(path)) {
+        continue;
+      }
+      assert path != null;
+      final Collection<File> libraries = getAllLibraries(project, path);
+      if (libraries == null) {
+        continue;
+      }
+      final LocalFileSystem localFileSystem = LocalFileSystem.getInstance();
+      final JarFileSystem jarFileSystem = JarFileSystem.getInstance();
+      List<VirtualFile> result = new ArrayList<VirtualFile>();
+      for (File file : libraries) {
+        if (ANY_GRADLE_JAR_FILE_PATTERN.matcher(file.getName()).matches() || GroovyConfigUtils.matchesGroovyAll(file.getName())) {
+          final VirtualFile virtualFile = localFileSystem.refreshAndFindFileByIoFile(file);
+          if (virtualFile != null) {
+            ContainerUtil.addIfNotNull(result, jarFileSystem.getJarRootForLocalFile(virtualFile));
+          }
         }
       }
+      return result;
     }
-    return result;
+    return null;
   }
 }

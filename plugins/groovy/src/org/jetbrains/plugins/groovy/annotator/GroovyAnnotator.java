@@ -895,13 +895,42 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   }
 
   @Nullable
-  private static String checkSuperMethodSignature(PsiMethod superMethod,
-                                                  MethodSignatureBackedByPsiMethod superMethodSignature,
-                                                  PsiType superReturnType,
-                                                  PsiMethod method,
-                                                  MethodSignatureBackedByPsiMethod methodSignature,
-                                                  PsiType returnType) {
-    if (superReturnType == null) return null;
+  private static String checkSuperMethodSignature(@NotNull PsiMethod superMethod,
+                                                  @NotNull MethodSignatureBackedByPsiMethod superMethodSignature,
+                                                  @NotNull PsiType superReturnType,
+                                                  @NotNull PsiMethod method,
+                                                  @NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                                  @NotNull PsiType returnType) {
+    PsiType substitutedSuperReturnType = substituteSuperReturnType(superMethodSignature, methodSignature, superReturnType);
+
+    if (returnType.equals(substitutedSuperReturnType)) return null;
+
+    final PsiType rawReturnType = TypeConversionUtil.erasure(returnType);
+    final PsiType rawSuperReturnType = TypeConversionUtil.erasure(substitutedSuperReturnType);
+
+    if (returnType instanceof PsiClassType && substitutedSuperReturnType instanceof PsiClassType) {
+      if (TypeConversionUtil.isAssignable(rawSuperReturnType, rawReturnType)) {
+        return null;
+      }
+    }
+    else if (returnType instanceof PsiArrayType && superReturnType instanceof PsiArrayType) {
+      if (rawReturnType.equals(rawSuperReturnType)) {
+        return null;
+      }
+    }
+
+    String qName = getQNameOfMember(method);
+    String baseQName = getQNameOfMember(superMethod);
+    final String presentation = returnType.getCanonicalText() + " " + GroovyPresentationUtil.getSignaturePresentation(methodSignature);
+    final String basePresentation =
+      superReturnType.getCanonicalText() + " " + GroovyPresentationUtil.getSignaturePresentation(superMethodSignature);
+    return GroovyBundle.message("return.type.is.incompatible", presentation, qName, basePresentation, baseQName);
+  }
+
+  @NotNull
+  private static PsiType substituteSuperReturnType(@NotNull MethodSignatureBackedByPsiMethod superMethodSignature,
+                                                   @NotNull MethodSignatureBackedByPsiMethod methodSignature,
+                                                   @NotNull PsiType superReturnType) {
     PsiType substitutedSuperReturnType;
     if (!superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
       PsiSubstitutor unifyingSubstitutor = MethodSignatureUtil.getSuperMethodSignatureSubstitutor(methodSignature,
@@ -913,20 +942,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     else {
       substitutedSuperReturnType = TypeConversionUtil.erasure(superReturnType);
     }
-
-    if (returnType.equals(substitutedSuperReturnType)) return null;
-    if (!(returnType instanceof PsiPrimitiveType) &&
-        substitutedSuperReturnType.getDeepComponentType() instanceof PsiClassType &&
-        TypeConversionUtil.isAssignable(substitutedSuperReturnType, returnType)) {
-      return null;
-    }
-
-    String qName = getQNameOfMember(method);
-    String baseQName = getQNameOfMember(superMethod);
-    final String presentation = returnType.getCanonicalText() + " " + GroovyPresentationUtil.getSignaturePresentation(methodSignature);
-    final String basePresentation =
-      superReturnType.getCanonicalText() + " " + GroovyPresentationUtil.getSignaturePresentation(superMethodSignature);
-    return GroovyBundle.message("return.type.is.incompatible", presentation, qName, basePresentation, baseQName);
+    return substitutedSuperReturnType;
   }
 
   @NotNull
@@ -1358,14 +1374,22 @@ public class GroovyAnnotator extends GroovyElementVisitor {
     if (value instanceof GrReferenceExpression) {
       PsiElement resolved = ((GrReferenceExpression)value).resolve();
       if (resolved instanceof PsiClass) return false;
+      if (resolved instanceof PsiEnumConstant) return false;
+      if (resolved == null && isClassReference(value)) return false;
 
       if (resolved instanceof GrAccessorMethod) resolved = ((GrAccessorMethod)resolved).getProperty();
       if (resolved instanceof PsiField) {
         GrExpression initializer;
         try {
-          initializer = resolved instanceof GrField
-                        ? ((GrField)resolved).getInitializerGroovy()
-                        : (GrExpression)ExpressionConverter.getExpression(((PsiField)resolved).getInitializer(), GroovyFileType.GROOVY_LANGUAGE, value.getProject());
+          if (resolved instanceof GrField) {
+            initializer = ((GrField)resolved).getInitializerGroovy();
+          }
+          else {
+            final PsiExpression _initializer = ((PsiField)resolved).getInitializer();
+            initializer = _initializer != null
+                          ? (GrExpression)ExpressionConverter.getExpression(_initializer, GroovyFileType.GROOVY_LANGUAGE, value.getProject())
+                          : null;
+          }
         }
         catch (IncorrectOperationException e) {
           initializer = null;
@@ -1385,6 +1409,23 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
     myHolder.createErrorAnnotation(toHighlight, GroovyBundle.message("expected.0.to.be.inline.constant", value.getText()));
     return true;
+  }
+
+  private static boolean isClassReference(GrAnnotationMemberValue value) {
+    if (value instanceof GrReferenceExpression) {
+      final String referenceName = ((GrReferenceExpression)value).getReferenceName();
+      if ("class".equals(referenceName)) {
+        final GrExpression qualifier = ((GrReferenceExpression)value).getQualifier();
+        if (qualifier instanceof GrReferenceExpression) {
+          final PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
+          if (resolved instanceof PsiClass) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
   }
 
   @Override

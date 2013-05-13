@@ -1,7 +1,7 @@
 // "Create Constructor In 'Base'" "true"
 class Base {
     public Base(int i, Object o) {
-        <selection>//To change body of created methods use File | Settings | File Templates.</selection>
+        
     }
 }
 

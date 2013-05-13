@@ -29,7 +29,6 @@ public class MavenActionGroup extends DefaultActionGroup implements DumbAware {
   }
 
   protected boolean isAvailable(AnActionEvent e) {
-    return MavenActionUtil.hasProject(e.getDataContext())
-           && !MavenActionUtil.getMavenProjects(e.getDataContext()).isEmpty();
+    return !MavenActionUtil.getMavenProjects(e.getDataContext()).isEmpty();
   }
 }

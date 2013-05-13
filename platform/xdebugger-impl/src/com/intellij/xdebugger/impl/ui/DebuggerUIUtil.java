@@ -34,7 +34,7 @@ import com.intellij.xdebugger.breakpoints.XBreakpoint;
 import com.intellij.xdebugger.breakpoints.XBreakpointListener;
 import com.intellij.xdebugger.breakpoints.XBreakpointManager;
 import com.intellij.xdebugger.frame.XFullValueEvaluator;
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsMasterDetailPopupFactory;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.breakpoints.ui.XLightBreakpointPropertiesPanel;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -199,11 +199,7 @@ public class DebuggerUIUtil {
       public void run() {
         propertiesPanel.saveProperties();
         //showXBreakpointEditorBalloon(project, point, component, true, breakpoint);
-        final JBPopup popup = BreakpointsMasterDetailPopupFactory.
-          getInstance(project).createPopup(breakpoint);
-        if (popup != null) {
-          popup.showCenteredInCurrentWindow(project);
-        }
+        BreakpointsDialogFactory.getInstance(project).showDialog(breakpoint);
       }
     };
 
@@ -308,7 +304,7 @@ public class DebuggerUIUtil {
       balloon.show(p, Balloon.Position.below);
     }
 
-    BreakpointsMasterDetailPopupFactory.getInstance(project).setBalloonToHide(balloon, breakpoint);
+    BreakpointsDialogFactory.getInstance(project).setBalloonToHide(balloon, breakpoint);
 
     return balloon;
   }

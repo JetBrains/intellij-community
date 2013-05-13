@@ -373,22 +373,6 @@ public class RefactoringUtil {
     return null;
   }
 
-  public static PsiClass getThisClass(PsiElement place) {
-    PsiElement parent = place.getContext();
-    if (parent == null) return null;
-    PsiElement prev = null;
-    while (true) {
-      if (parent instanceof PsiClass) {
-        if (!(parent instanceof PsiAnonymousClass && ((PsiAnonymousClass)parent).getArgumentList() == prev)) {
-          return (PsiClass)parent;
-        }
-      }
-      prev = parent;
-      parent = parent.getContext();
-      if (parent == null) return null;
-    }
-  }
-
   public static PsiClass getThisResolveClass(final PsiReferenceExpression place) {
     final JavaResolveResult resolveResult = place.advancedResolve(false);
     final PsiElement scope = resolveResult.getCurrentFileResolveScope();
@@ -433,29 +417,6 @@ public class RefactoringUtil {
       .isReassigned(variable, new THashMap<PsiElement, Collection<ControlFlowUtil.VariableInfo>>());
     return !isReassigned;
   }
-
-  public static PsiThisExpression createThisExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
-    return RefactoringUtil.<PsiThisExpression>createQualifiedExpression(manager, qualifierClass, "this");
-  }
-
-  public static PsiSuperExpression createSuperExpression(PsiManager manager, PsiClass qualifierClass) throws IncorrectOperationException {
-    return RefactoringUtil.<PsiSuperExpression>createQualifiedExpression(manager, qualifierClass, "super");
-  }
-
-  private static <T extends PsiQualifiedExpression> T createQualifiedExpression(PsiManager manager, PsiClass qualifierClass, String qName) throws IncorrectOperationException {
-     PsiElementFactory factory = JavaPsiFacade.getInstance(manager.getProject()).getElementFactory();
-     if (qualifierClass != null) {
-       T qualifiedThis = (T)factory.createExpressionFromText("q." + qName, null);
-       qualifiedThis = (T)CodeStyleManager.getInstance(manager.getProject()).reformat(qualifiedThis);
-       PsiJavaCodeReferenceElement thisQualifier = qualifiedThis.getQualifier();
-       LOG.assertTrue(thisQualifier != null);
-       thisQualifier.bindToElement(qualifierClass);
-       return qualifiedThis;
-     }
-     else {
-       return (T)factory.createExpressionFromText(qName, null);
-     }
-   }
 
   /**
    * removes a reference to the specified class from the reference list given

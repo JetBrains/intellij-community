@@ -809,6 +809,7 @@ public class IncProjectBuilder {
   private void buildTargetsChunk(CompileContext context, final BuildTargetChunk chunk) throws ProjectBuildException {
     boolean doneSomething;
     try {
+      sendBuildingTargetMessages(chunk.getTargets(), BuildingTargetProgressMessage.Event.STARTED);
       Utils.ERRORS_DETECTED_KEY.set(context, Boolean.FALSE);
 
       for (BuildTarget<?> target : chunk.getTargets()) {
@@ -864,7 +865,12 @@ public class IncProjectBuilder {
       finally {
         Utils.REMOVED_SOURCES_KEY.set(context, null);
       }
+      sendBuildingTargetMessages(chunk.getTargets(), BuildingTargetProgressMessage.Event.FINISHED);
     }
+  }
+
+  private void sendBuildingTargetMessages(@NotNull Set<? extends BuildTarget<?>> targets, @NotNull BuildingTargetProgressMessage.Event event) {
+    myMessageDispatcher.processMessage(new BuildingTargetProgressMessage(targets, event));
   }
 
   private static void createClasspathIndex(final BuildTargetChunk chunk) {

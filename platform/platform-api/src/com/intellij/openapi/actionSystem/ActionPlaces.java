@@ -104,6 +104,7 @@ public abstract class ActionPlaces {
 
   public static final String TFS_TREE_POPUP = "TfsTreePopup";
   public static final String ACTION_PLACE_VCS_QUICK_LIST_POPUP_ACTION = "ActionPlace.VcsQuickListPopupAction";
+  public static final String ACTION_PLACE_QUICK_LIST_POPUP_ACTION = "ActionPlace.QuickListPopupAction";
 
   public static final String PHING_EXPLORER_POPUP = "PhingExplorerPopup";
   public static final String PHING_EXPLORER_TOOLBAR = "PhingExplorerToolbar";

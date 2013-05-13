@@ -6,6 +6,9 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.PropertyKey;
 
+import javax.swing.*;
+import java.awt.*;
+
 /**
  * Enumerates possible types of 'gradle home' location setting.
  *
@@ -15,7 +18,7 @@ import org.jetbrains.annotations.PropertyKey;
 public enum LocationSettingType {
 
   /** User hasn't defined gradle location but the IDE discovered it automatically. */
-  DEDUCED("setting.type.location.deduced"),
+  DEDUCED("setting.type.location.deduced", "TextField.inactiveForeground"),
 
   /** User hasn't defined gradle location and the IDE was unable to discover it automatically. */
   UNKNOWN("setting.type.location.unknown"),
@@ -25,16 +28,29 @@ public enum LocationSettingType {
 
   EXPLICIT_CORRECT("setting.type.location.explicit.incorrect");
 
-  private final String myKey;
+  @NotNull private final String myDescriptionKey;
+  @NotNull private final String myColorKey;
 
-  LocationSettingType(@NotNull @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) String key) {
-    myKey = key;
+  LocationSettingType(@NotNull String descriptionKey) {
+    this(descriptionKey, "TextField.foreground");
+  }
+
+  LocationSettingType(@NotNull @PropertyKey(resourceBundle = ExternalSystemBundle.PATH_TO_BUNDLE) String descriptionKey,
+                      @NotNull String colorKey)
+  {
+    myDescriptionKey = descriptionKey;
+    myColorKey = colorKey;
   }
 
   /**
-   * @return    human-readable description of the current setting type
+   * @return human-readable description of the current setting type
    */
   public String getDescription(@NotNull ProjectSystemId externalSystemId) {
-    return ExternalSystemBundle.message(myKey, ExternalSystemApiUtil.toReadableName(externalSystemId));
+    return ExternalSystemBundle.message(myDescriptionKey, ExternalSystemApiUtil.toReadableName(externalSystemId));
+  }
+
+  @NotNull
+  public Color getColor() {
+    return UIManager.getColor(myColorKey);
   }
 }

@@ -491,6 +491,10 @@ public class PsiImplUtil {
       toplevel = (PsiExpression)toplevel.getParent();
     }
 
+    if (toplevel instanceof PsiArrayAccessExpression && !PsiUtil.isAccessedForWriting(toplevel)) {
+      return PsiUtil.captureToplevelWildcards(type, expression);
+    }
+
     final PsiType normalized = doNormalizeWildcardByPosition(type, expression, toplevel);
     LOG.assertTrue(normalized.isValid(), type);
     if (normalized instanceof PsiClassType && !PsiUtil.isAccessedForWriting(toplevel)) {

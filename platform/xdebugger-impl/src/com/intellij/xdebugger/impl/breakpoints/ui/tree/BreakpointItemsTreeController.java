@@ -52,6 +52,10 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
     setGroupingRulesInternal(groupingRules);
   }
 
+  public JTree getTreeView() {
+    return myTreeView;
+  }
+
   public void setTreeView(JTree treeView) {
     myTreeView = treeView;
     if (treeView instanceof BreakpointsCheckboxTree) {
@@ -239,9 +243,5 @@ public class BreakpointItemsTreeController implements BreakpointsCheckboxTree.De
       }
       return o1 instanceof BreakpointsGroupNode ? -1 : 1;
     }
-  }
-
-  public interface BreakpointItemsTreeDelegate {
-    void execute(BreakpointItem item);
   }
 }

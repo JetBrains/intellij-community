@@ -55,6 +55,7 @@ import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.beans.PropertyChangeEvent;
 import java.beans.PropertyChangeListener;
 import java.beans.PropertyChangeSupport;
 import java.lang.ref.Reference;
@@ -133,9 +134,9 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
     });
   }
 
-  private void setCachedCharsetFromContent(Charset charset, Charset oldCached, Document document) {
+  private void setCachedCharsetFromContent(Charset charset, Charset oldCached, @NotNull Document document) {
     document.putUserData(CACHED_CHARSET_FROM_CONTENT, charset);
-    firePropertyChange(PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
+    firePropertyChange(document, PROP_CACHED_ENCODING_CHANGED, oldCached, charset);
   }
 
   @Nullable("returns null if charset set cannot be determined from content")
@@ -312,7 +313,8 @@ public class EncodingManagerImpl extends EncodingManager implements PersistentSt
   public void removePropertyChangeListener(@NotNull PropertyChangeListener listener){
     myPropertyChangeSupport.removePropertyChangeListener(listener);
   }
-  void firePropertyChange(final String propertyName, final Object oldValue, final Object newValue) {
-    myPropertyChangeSupport.firePropertyChange(propertyName, oldValue, newValue);
+  void firePropertyChange(@Nullable Document document, @NotNull String propertyName, final Object oldValue, final Object newValue) {
+    Object source = document == null ? this : document;
+    myPropertyChangeSupport.firePropertyChange(new PropertyChangeEvent(source, propertyName, oldValue, newValue));
   }
 }

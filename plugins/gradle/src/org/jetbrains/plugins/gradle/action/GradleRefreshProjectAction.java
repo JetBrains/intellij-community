@@ -62,12 +62,13 @@ public class GradleRefreshProjectAction extends AbstractGradleLinkedProjectActio
     FileDocumentManager.getInstance().saveAllDocuments();
 
     GradleConfigNotificationManager notificationManager = ServiceManager.getService(project, GradleConfigNotificationManager.class);
-    if (!GradleUtil.isGradleAvailable(project)) {
-      notificationManager.processUnknownGradleHome();
-      return;
-    }
+    // TODO den implement
+    //if (!GradleUtil.isGradleAvailable(project)) {
+    //  notificationManager.processUnknownGradleHome();
+    //  return;
+    //}
 
-    myErrorMessage.set(null);
-    ExternalSystemUtil.refreshProject(project, GradleConstants.SYSTEM_ID, myErrorMessage);
+    //myErrorMessage.set(null);
+    //ExternalSystemUtil.refreshProject(project, GradleConstants.SYSTEM_ID, myErrorMessage);
   }
 }

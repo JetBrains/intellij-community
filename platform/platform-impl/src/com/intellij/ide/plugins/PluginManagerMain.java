@@ -251,11 +251,11 @@ public abstract class PluginManagerMain implements Disposable {
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           public void run() {
             setDownloadStatus(false);
-            if (list != null && errorMessages.isEmpty()) {
+            if (list != null) {
               modifyPluginsList(list);
               propagateUpdates(list);
             }
-            else if (!errorMessages.isEmpty()) {
+            if (!errorMessages.isEmpty()) {
               if (0 == Messages.showOkCancelDialog(
                 IdeBundle.message("error.list.of.plugins.was.not.loaded", StringUtil.join(errorMessages, ", ")),
                 IdeBundle.message("title.plugins"),

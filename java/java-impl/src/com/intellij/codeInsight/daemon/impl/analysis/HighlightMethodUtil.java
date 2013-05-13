@@ -32,6 +32,7 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.CandidateInfo;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.*;
+import com.intellij.refactoring.util.RefactoringChangeUtil;
 import com.intellij.ui.ColorUtil;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xml.util.XmlStringUtil;
@@ -146,6 +147,14 @@ public class HighlightMethodUtil {
                                                          String detailMessage,
                                                          PsiMethod methodToHighlight) {
     if (superReturnType == null) return null;
+    if ("clone".equals(method.getName())) {
+      final PsiClass containingClass = method.getContainingClass();
+      final PsiClass superContainingClass = superMethod.getContainingClass();
+      if (containingClass != null && superContainingClass != null && containingClass.isInterface() && !superContainingClass.isInterface()) {
+        return null;
+      }
+    }
+
     PsiType substitutedSuperReturnType;
     final boolean isJdk15 = PsiUtil.isLanguageLevel5OrHigher(method);
     if (isJdk15 && !superMethodSignature.isRaw() && superMethodSignature.equals(methodSignature)) { //see 8.4.5
@@ -906,7 +915,7 @@ public class HighlightMethodUtil {
   @Nullable
   static HighlightInfo checkConstructorCallMustBeFirstStatement(PsiReferenceExpression expression) {
     PsiElement methodCall = expression.getParent();
-    if (!HighlightUtil.isSuperOrThisMethodCall(methodCall)) return null;
+    if (!RefactoringChangeUtil.isSuperOrThisMethodCall(methodCall)) return null;
     PsiElement codeBlock = methodCall.getParent().getParent();
     if (codeBlock instanceof PsiCodeBlock
         && codeBlock.getParent() instanceof PsiMethod

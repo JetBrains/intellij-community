@@ -17,6 +17,7 @@ package com.intellij.ide.util.newProjectWizard;
 
 import com.intellij.ui.CheckboxTree;
 import com.intellij.ui.CheckedTreeNode;
+import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.ui.tree.TreeUtil;
@@ -33,8 +34,8 @@ import java.util.List;
 public class FrameworksTree extends CheckboxTree {
   private boolean myProcessingMouseEventOnCheckbox;
 
-  public FrameworksTree(List<List<FrameworkSupportNode>> groups) {
-    super(new FrameworksTreeRenderer(), new FrameworksRootNode(groups), new CheckPolicy(false, true, true, false));
+  public FrameworksTree(List<FrameworkSupportNodeBase> roots) {
+    super(new FrameworksTreeRenderer(), new FrameworksRootNode(roots), new CheckPolicy(false, true, true, false));
     setRootVisible(false);
     setShowsRootHandles(false);
     TreeUtil.expandAll(this);
@@ -71,8 +72,8 @@ public class FrameworksTree extends CheckboxTree {
       @Override
       public String convert(TreePath path) {
         final Object node = path.getLastPathComponent();
-        if (node instanceof FrameworkSupportNode) {
-          return ((FrameworkSupportNode)node).getTitle();
+        if (node instanceof FrameworkSupportNodeBase) {
+          return ((FrameworkSupportNodeBase)node).getTitle();
         }
         return "";
       }
@@ -90,21 +91,21 @@ public class FrameworksTree extends CheckboxTree {
 
     @Override
     public void customizeRenderer(JTree tree, Object value, boolean selected, boolean expanded, boolean leaf, int row, boolean hasFocus) {
-      if (value instanceof FrameworkSupportNode) {
-        final FrameworkSupportNode node = (FrameworkSupportNode)value;
-        getTextRenderer().append(node.getTitle());
-        getTextRenderer().setIcon(node.getProvider().getFrameworkType().getIcon());
+      if (value instanceof FrameworkSupportNodeBase) {
+        final FrameworkSupportNodeBase node = (FrameworkSupportNodeBase)value;
+        SimpleTextAttributes attributes = node instanceof FrameworkGroupNode ? SimpleTextAttributes.REGULAR_BOLD_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES;
+        getTextRenderer().append(node.getTitle(), attributes);
+        getTextRenderer().setIcon(node.getIcon());
+        getCheckbox().setVisible(value instanceof FrameworkSupportNode);
       }
     }
   }
 
   private static class FrameworksRootNode extends CheckedTreeNode {
-    public FrameworksRootNode(List<List<FrameworkSupportNode>> groups) {
+    public FrameworksRootNode(List<FrameworkSupportNodeBase> roots) {
       super(null);
-      for (List<FrameworkSupportNode> group : groups) {
-        for (FrameworkSupportNode node : group) {
-          add(node);
-        }
+      for (FrameworkSupportNodeBase node : roots) {
+        add(node);
       }
     }
   }

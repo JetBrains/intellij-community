@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -20,6 +20,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.util.*;
+import com.intellij.util.concurrency.FixedFuture;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.Convertor;
 import com.intellij.util.io.URLUtil;
@@ -345,7 +346,7 @@ public class FileUtil extends FileUtilRt {
     if (!tempFiles.isEmpty()) {
       return startDeletionThread(tempFiles.toArray(new File[tempFiles.size()]));
     }
-    return new CompletedFuture<Void>();
+    return new FixedFuture<Void>(null);
   }
 
   private static Future<Void> startDeletionThread(@NotNull final File... tempFiles) {
@@ -1338,6 +1339,28 @@ public class FileUtil extends FileUtilRt {
   }
 
   @NotNull
+  public static List<String> loadLines(@NotNull InputStream stream) throws IOException {
+    //noinspection IOResourceOpenedButNotSafelyClosed
+    return loadLines(new InputStreamReader(stream));
+  }
+
+  @NotNull
+  public static List<String> loadLines(@NotNull Reader reader) throws IOException {
+    List<String> lines = new ArrayList<String>();
+    BufferedReader bufferedReader = new BufferedReader(reader);
+    try {
+      String line;
+      while ((line = bufferedReader.readLine()) != null) {
+        lines.add(line);
+      }
+    }
+    finally {
+      bufferedReader.close();
+    }
+    return lines;
+  }
+
+  @NotNull
   public static byte[] loadBytes(@NotNull InputStream stream) throws IOException {
     return FileUtilRt.loadBytes(stream);
   }
@@ -1358,29 +1381,5 @@ public class FileUtil extends FileUtilRt {
     }
     list.add(path.substring(index, path.length()));
     return list;
-  }
-
-  private static final class CompletedFuture<T> implements Future<T> {
-    public boolean cancel(boolean mayInterruptIfRunning) {
-      return false;
-    }
-
-    public boolean isCancelled() {
-      return false;
-    }
-
-    public boolean isDone() {
-      return true;
-    }
-
-    @Nullable
-    public T get() throws InterruptedException, ExecutionException {
-      return null;
-    }
-
-    @Nullable
-    public T get(long timeout, TimeUnit unit) throws InterruptedException, ExecutionException, TimeoutException {
-      return null;
-    }
   }
 }

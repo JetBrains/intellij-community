@@ -27,6 +27,7 @@ import com.intellij.refactoring.MockInlineMethodOptions;
 import com.intellij.refactoring.RefactoringTestCase;
 import com.intellij.refactoring.util.InlineUtil;
 import com.intellij.testFramework.IdeaTestUtil;
+import com.intellij.testFramework.PlatformTestUtil;
 import com.intellij.testFramework.PsiTestUtil;
 
 import java.io.File;
@@ -61,6 +62,6 @@ public class InlineMethodMultifileTest extends RefactoringTestCase {
     String rootAfter = getRoot() + "/after";
     VirtualFile rootDir2 = LocalFileSystem.getInstance().findFileByPath(rootAfter.replace(File.separatorChar, '/'));
     myProject.getComponent(PostprocessReformattingAspect.class).doPostponedFormatting();
-    IdeaTestUtil.assertDirectoriesEqual(rootDir2, rootDir, IdeaTestUtil.CVS_FILE_FILTER);
+    PlatformTestUtil.assertDirectoriesEqual(rootDir2, rootDir);
   }
 }

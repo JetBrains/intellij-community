@@ -149,6 +149,13 @@ public class JpsAntModelSerializerExtension extends JpsModelSerializerExtension 
             options.addJarDirectory(JpsPathUtil.urlToPath(dirUrl));
           }
         }
+        for (Element propertyTag : JDOMUtil.getChildren(buildFileTag.getChild("properties"), "property")) {
+          String name = propertyTag.getAttributeValue("name");
+          String value = propertyTag.getAttributeValue("value");
+          if (name != null && value != null) {
+            options.addProperty(name, value);
+          }
+        }
         optionsMap.put(url, options);
       }
       Element defaultAnt = componentTag.getChild("defaultAnt");

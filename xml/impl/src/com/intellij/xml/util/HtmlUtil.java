@@ -29,6 +29,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.fileTypes.FileTypeManager;
+import com.intellij.openapi.fileTypes.StdFileTypes;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.CharsetToolkit;
 import com.intellij.openapi.vfs.VirtualFile;
@@ -607,6 +608,11 @@ public class HtmlUtil {
   public static boolean isHtmlFile(PsiElement element) {
     Language language = element.getLanguage();
     return language == HTMLLanguage.INSTANCE || language == XHTMLLanguage.INSTANCE;
+  }
+
+  public static boolean isHtmlFile(@NotNull VirtualFile file) {
+    FileType fileType = file.getFileType();
+    return fileType == StdFileTypes.HTML || fileType == StdFileTypes.XHTML;
   }
 
   public static boolean isHtmlTagContainingFile(PsiElement element) {

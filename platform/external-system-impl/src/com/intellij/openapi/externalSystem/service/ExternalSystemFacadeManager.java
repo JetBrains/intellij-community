@@ -174,8 +174,9 @@ public class ExternalSystemFacadeManager {
 
         ProjectSystemId externalSystemId = myTargetExternalSystemId.get();
         if (externalSystemId != null) {
-          ExternalSystemManager<?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
+          ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
           if (manager != null) {
+            params.getClassPath().add(PathUtil.getJarPathForClass(manager.getProjectResolverClass().getClass()));
             params.getProgramParametersList().add(manager.getProjectResolverClass().getName());
             params.getProgramParametersList().add(manager.getBuildManagerClass().getName());
             manager.enhanceParameters(params);
@@ -226,11 +227,14 @@ public class ExternalSystemFacadeManager {
    * @throws Exception    in case of inability to return the facade
    */
   @NotNull
-  public RemoteExternalSystemFacade getFacade(@Nullable Project project, @NotNull ProjectSystemId externalSystemId) throws Exception {
+  public RemoteExternalSystemFacade getFacade(@Nullable Project project,
+                                              @NotNull String externalProjectPath,
+                                              @NotNull ProjectSystemId externalSystemId) throws Exception
+  {
     if (project == null) {
       project = ProjectManager.getInstance().getDefaultProject();
     }
-    IntegrationKey key = new IntegrationKey(project, externalSystemId);
+    IntegrationKey key = new IntegrationKey(project, externalSystemId, externalProjectPath);
     final RemoteExternalSystemFacade facade = myFacadeWrappers.get(key);
     if (facade == null) {
       final RemoteExternalSystemFacade newFacade = (RemoteExternalSystemFacade)Proxy.newProxyInstance(
@@ -263,7 +267,7 @@ public class ExternalSystemFacadeManager {
   @NotNull
   private RemoteExternalSystemFacade doGetFacade(@NotNull IntegrationKey key, @NotNull Project project) throws Exception {
     ExternalSystemManager manager = ExternalSystemApiUtil.getManager(key.getExternalSystemId());
-    if (project.isDisposed() || manager == null || !manager.isReady(project)) {
+    if (project.isDisposed() || manager == null) {
       return RemoteExternalSystemFacade.NULL_OBJECT;
     }
     Pair<RemoteExternalSystemFacade, ExternalSystemExecutionSettings> pair = myRemoteFacades.get(key);
@@ -307,7 +311,8 @@ public class ExternalSystemFacadeManager {
       }
     });
     final RemoteExternalSystemFacade result = new ExternalSystemFacadeWrapper(facade, myProgressManager);
-    ExternalSystemExecutionSettings settings = mySettingsManager.getExecutionSettings(project, key.getExternalSystemId());
+    ExternalSystemExecutionSettings settings
+      = mySettingsManager.getExecutionSettings(project, key.getExternalProjectConfigPath(), key.getExternalSystemId());
     Pair<RemoteExternalSystemFacade, ExternalSystemExecutionSettings> newPair = Pair.create(result, settings);
     myRemoteFacades.put(key, newPair);
     result.applySettings(newPair.second);
@@ -339,7 +344,8 @@ public class ExternalSystemFacadeManager {
     try {
       pair.first.getResolver();
 
-      ExternalSystemExecutionSettings currentSettings = mySettingsManager.getExecutionSettings(project, key.getExternalSystemId());
+      ExternalSystemExecutionSettings currentSettings
+        = mySettingsManager.getExecutionSettings(project, key.getExternalProjectConfigPath(), key.getExternalSystemId());
       if (!currentSettings.equals(pair.second)) {
         pair.first.applySettings(currentSettings);
         myRemoteFacades.put(key, Pair.create(pair.first, currentSettings));

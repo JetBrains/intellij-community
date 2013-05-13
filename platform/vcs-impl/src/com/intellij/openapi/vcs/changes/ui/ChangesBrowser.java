@@ -52,6 +52,7 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
   protected final Project myProject;
   private final boolean myCapableOfExcludingChanges;
   protected final JPanel myHeaderPanel;
+  private JComponent myBottomPanel;
   private DefaultActionGroup myToolBarGroup;
   private DiffExtendUIFactory myDiffExtendUIFactory = new DiffToolbarActionsFactory();
   private String myToggleActionTitle = VcsBundle.message("commit.dialog.include.action.name");
@@ -113,6 +114,9 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
     myHeaderPanel = new JPanel(new BorderLayout());
     myHeaderPanel.add(createToolbar(), BorderLayout.CENTER);
     add(myHeaderPanel, BorderLayout.NORTH);
+
+    myBottomPanel = new JPanel(new BorderLayout());
+    add(myBottomPanel, BorderLayout.SOUTH);
 
     myViewer.installPopupHandler(myToolBarGroup);
   }
@@ -191,6 +195,10 @@ public class ChangesBrowser extends JPanel implements TypeSafeDataProvider {
 
   public void select(List<Change> changes) {
     myViewer.select(changes);
+  }
+
+  public JComponent getBottomPanel() {
+    return myBottomPanel;
   }
 
   private class ToggleChangeAction extends CheckboxAction {

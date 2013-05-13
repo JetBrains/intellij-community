@@ -1236,6 +1236,13 @@ def e
 
 @A(values=<error descr="Expected ''ABC' + 'CDE'' to be an inline constant">[C.CONST1, C.CONST2]</error>)
 def f
+
+@interface X {
+  Class value()
+}
+
+@X(String.class)
+def g
 ''')
   }
 
@@ -1262,4 +1269,104 @@ class D<T, E> {
   def foo(E t) {}
 }''')
   }
+
+  void testOverriddenReturnType0() {
+    myFixture.addClass('class Base{}')
+    myFixture.addClass('class Inh extends Base{}')
+    testHighlighting('''\
+class A {
+  List<Base> foo() {}
+}
+
+class B extends A {
+  List<Inh> foo() {} //correct
+}
+''')
+  }
+
+  void testOverriddenReturnType1() {
+    myFixture.addClass('class Base extends SuperBase {}')
+    myFixture.addClass('class Inh extends Base{}')
+    testHighlighting('''\
+class A {
+  List<Base> foo() {}
+}
+
+class B extends A {
+  <error>Collection<Base></error> foo() {}
+}
+''')
+  }
+
+  void testOverriddenReturnType2() {
+    myFixture.addClass('class Base extends SuperBase {}')
+    myFixture.addClass('class Inh extends Base{}')
+    testHighlighting('''\
+class A {
+  List<Base> foo() {}
+}
+
+class B extends A {
+  <error>int</error> foo() {}
+}
+''')
+  }
+
+  void testOverriddenReturnType3() {
+    myFixture.addClass('class Base extends SuperBase {}')
+    myFixture.addClass('class Inh extends Base{}')
+    testHighlighting('''\
+class A {
+  Base[] foo() {}
+}
+
+class B extends A {
+  <error>Inh[]</error> foo() {}
+}
+''')
+  }
+
+  void testOverriddenReturnType4() {
+    myFixture.addClass('class Base extends SuperBase {}')
+    myFixture.addClass('class Inh extends Base{}')
+    testHighlighting('''\
+class A {
+  Base[] foo() {}
+}
+
+class B extends A {
+  Base[] foo() {}
+}
+''')
+  }
+
+  void testEnumConstantAsAnnotationAttribute() {
+    testHighlighting('''\
+enum A {CONST}
+
+@interface I {
+    A foo()
+}
+
+@I(foo = A.CONST) //no error
+def bar
+''')
+  }
+
+  void testUnassignedFieldAsAnnotationAttribute() {
+    testHighlighting('''\
+interface A {
+  String CONST
+}
+
+@interface I {
+    String foo()
+}
+
+@I(foo = <error descr="Expected 'A.CONST' to be an inline constant">A.CONST</error>)
+def bar
+''')
+  }
+
+
 }

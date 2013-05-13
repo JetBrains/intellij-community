@@ -177,7 +177,7 @@ public class PsiTypesUtil {
           final PsiClassType classType = JavaPsiFacade.getInstance(project).getElementFactory()
             .createType(javaLangClass, substitutor, languageLevel);
           final PsiElement parent = call.getParent();
-          return parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiMethodCallExpression
+          return parent instanceof PsiReferenceExpression && parent.getParent() instanceof PsiMethodCallExpression || parent instanceof PsiExpressionList
                  ? PsiUtil.captureToplevelWildcards(classType, methodExpression) : classType;
         }
       }

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -44,17 +44,9 @@ public final class ActionMenu extends JMenu {
   private final ActionRef<ActionGroup> myGroup;
   private final PresentationFactory myPresentationFactory;
   private final Presentation myPresentation;
-  /**
-   * Defines whether menu shows its mnemonic or not.
-   */
   private boolean myMnemonicEnabled;
   private MenuItemSynchronizer myMenuItemSynchronizer;
-  /**
-   * This is PATCH!!!
-   * Do not remove this STUPID code. Otherwise you will lose all keyboard navigation
-   * at JMenuBar.
-   */
-  private StubItem myStubItem;
+  private StubItem myStubItem;  // A PATCH!!! Do not remove this code, otherwise you will lose all keyboard navigation in JMenuBar.
   private final boolean myTopLevel;
 
   public ActionMenu(final DataContext context,
@@ -121,10 +113,6 @@ public final class ActionMenu extends JMenu {
 
     if (UIUtil.isStandardMenuLAF()) {
       super.updateUI();
-
-      if (myTopLevel && isAmbiance) {
-        setForeground(UIUtil.GTK_AMBIANCE_TEXT_COLOR);
-      }
     }
     else {
       setUI(IdeaMenuUI.createUI(this));
@@ -133,6 +121,24 @@ public final class ActionMenu extends JMenu {
       JPopupMenu popupMenu = getPopupMenu();
       if (popupMenu != null) {
         popupMenu.updateUI();
+      }
+    }
+
+    if (myTopLevel && isAmbiance) {
+      setForeground(UIUtil.GTK_AMBIANCE_TEXT_COLOR);
+    }
+
+    if (myTopLevel && UIUtil.isUnderGTKLookAndFeel()) {
+      Insets insets = getInsets();
+      Insets newInsets = new Insets(insets.top, insets.left, insets.bottom, insets.right);
+      if (insets.top + insets.bottom < 6) {
+        newInsets.top = newInsets.bottom = 3;
+      }
+      if (insets.left + insets.right < 12) {
+        newInsets.left = newInsets.right = 6;
+      }
+      if (!newInsets.equals(insets)) {
+        setBorder(BorderFactory.createEmptyBorder(newInsets.top, newInsets.left, newInsets.bottom, newInsets.right));
       }
     }
   }
@@ -248,21 +254,23 @@ public final class ActionMenu extends JMenu {
   }
 
   private void fillMenu() {
-    boolean mayContextBeInvalid;
     DataContext context;
+    boolean mayContextBeInvalid;
 
     if (myContext != null) {
       context = myContext;
       mayContextBeInvalid = false;
     }
     else {
-      context = DataManager.getInstance().getDataContext();
+      @SuppressWarnings("deprecation") DataContext contextFromFocus = DataManager.getInstance().getDataContext();
+      context = contextFromFocus;
       if (PlatformDataKeys.CONTEXT_COMPONENT.getData(context) == null) {
-        context = DataManager.getInstance()
-          .getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor(UIUtil.getParentOfType(IdeFrame.class, this)));
+        IdeFrame frame = UIUtil.getParentOfType(IdeFrame.class, this);
+        context = DataManager.getInstance().getDataContext(IdeFocusManager.getGlobalInstance().getLastFocusedFor(frame));
       }
       mayContextBeInvalid = true;
     }
+
     Utils.fillMenu(myGroup.getAction(), this, myMnemonicEnabled, myPresentationFactory, context, myPlace, true, mayContextBeInvalid);
   }
 

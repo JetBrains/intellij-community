@@ -36,10 +36,7 @@ import com.intellij.refactoring.listeners.RefactoringElementListener;
 import com.intellij.refactoring.move.MoveCallback;
 import com.intellij.refactoring.move.moveClassesOrPackages.MoveClassesOrPackagesUtil;
 import com.intellij.refactoring.rename.RenameUtil;
-import com.intellij.refactoring.util.ConflictsUtil;
-import com.intellij.refactoring.util.NonCodeUsageInfo;
-import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
+import com.intellij.refactoring.util.*;
 import com.intellij.usageView.UsageInfo;
 import com.intellij.usageView.UsageViewDescriptor;
 import com.intellij.usageView.UsageViewUtil;
@@ -231,12 +228,12 @@ public class MoveInnerProcessor extends BaseRefactoringProcessor {
             if (argList != null) { // can happen in incomplete code
               if (newExpr.getQualifier() == null) {
                 PsiThisExpression thisExpr;
-                PsiClass parentClass = RefactoringUtil.getThisClass(newExpr);
+                PsiClass parentClass = RefactoringChangeUtil.getThisClass(newExpr);
                 if (myOuterClass.equals(parentClass)) {
-                  thisExpr = RefactoringUtil.createThisExpression(manager, null);
+                  thisExpr = RefactoringChangeUtil.createThisExpression(manager, null);
                 }
                 else {
-                  thisExpr = RefactoringUtil.createThisExpression(manager, myOuterClass);
+                  thisExpr = RefactoringChangeUtil.createThisExpression(manager, myOuterClass);
                 }
                 argList.addAfter(thisExpr, null);
               }

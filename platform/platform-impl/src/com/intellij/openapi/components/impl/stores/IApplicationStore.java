@@ -19,6 +19,7 @@ import com.intellij.openapi.components.StateStorageException;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.components.StateStorage;
 import com.intellij.openapi.util.Pair;
+import org.jetbrains.annotations.NotNull;
 
 import java.util.Set;
 import java.util.Collection;
@@ -27,10 +28,8 @@ import java.io.IOException;
 public interface IApplicationStore extends IComponentStore {
   void setOptionsPath(String path);
 
-  StateStorageManager getStateStorageManager();
+  void setConfigPath(@NotNull String configPath);
 
-  void setConfigPath(final String configPath);
-
-  boolean reload(final Set<Pair<VirtualFile, StateStorage>> changedFiles, final Collection<String> notReloadableComponents) throws
-                                                                                                                            StateStorageException, IOException;
+  boolean reload(@NotNull Set<Pair<VirtualFile, StateStorage>> changedFiles, @NotNull Collection<String> notReloadableComponents)
+    throws StateStorageException, IOException;
 }

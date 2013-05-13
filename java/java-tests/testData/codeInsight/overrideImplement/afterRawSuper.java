@@ -20,6 +20,6 @@ interface A<T> {
     class B implements A
     {
         public void foo() {
-            <selection>//To change body of implemented methods use File | Settings | File Templates.</selection>
+            <caret>
         }
     }

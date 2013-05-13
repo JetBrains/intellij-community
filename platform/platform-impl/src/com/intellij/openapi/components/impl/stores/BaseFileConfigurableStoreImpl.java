@@ -124,6 +124,7 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return myDefaultsStateStorage;
   }
 
+  @NotNull
   @Override
   public StateStorageManager getStateStorageManager() {
     if (myStateStorageManager == null) {
@@ -132,5 +133,6 @@ abstract class BaseFileConfigurableStoreImpl extends ComponentStoreImpl {
     return myStateStorageManager;
   }
 
+  @NotNull
   protected abstract StateStorageManager createStateStorageManager();
 }

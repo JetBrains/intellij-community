@@ -28,6 +28,8 @@ import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ExportableOrderEntry;
@@ -51,7 +53,8 @@ import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
  * @author Denis Zhdanov
  * @since 4/12/13 6:19 PM
  */
-public class LibraryDependencyDataService extends AbstractDependencyDataService<LibraryDependencyData> {
+@Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
+public class LibraryDependencyDataService extends AbstractDependencyDataService<LibraryDependencyData, LibraryOrderEntry> {
 
   private static final Logger LOG = Logger.getInstance("#" + LibraryDependencyDataService.class.getName());
 
@@ -135,7 +138,6 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         }
 
         for (DataNode<LibraryDependencyData> dependencyNode : nodesToImport) {
-          ProjectStructureHelper helper = ServiceManager.getService(module.getProject(), ProjectStructureHelper.class);
           ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
           final ModifiableRootModel moduleRootModel = moduleRootManager.getModifiableModel();
           try {
@@ -146,7 +148,7 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
               assert false;
               continue;
             }
-            LibraryOrderEntry orderEntry = helper.findIdeLibraryDependency(dependencyData.getName(), moduleRootModel);
+            LibraryOrderEntry orderEntry = myProjectStructureHelper.findIdeLibraryDependency(dependencyData.getName(), moduleRootModel);
             if (orderEntry == null) {
               // We need to get the most up-to-date Library object due to our project model restrictions.
               orderEntry = moduleRootModel.addLibraryEntry(library);
@@ -165,28 +167,5 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
         }
       }
     });
-  }
-
-  @Override
-  public void removeData(@NotNull Collection<DataNode<LibraryDependencyData>> toRemove, @NotNull Project project, boolean synchronous) {
-    if (toRemove.isEmpty()) {
-      return;
-    }
-    Map<DataNode<ModuleData>, Collection<DataNode<LibraryDependencyData>>> byModule = ExternalSystemApiUtil.groupBy(toRemove, MODULE);
-    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<LibraryDependencyData>>> entry : byModule.entrySet()) {
-      Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
-      if (module == null) {
-        continue;
-      }
-      List<ExportableOrderEntry> dependencies = ContainerUtilRt.newArrayList();
-      for (DataNode<LibraryDependencyData> node : entry.getValue()) {
-        LibraryOrderEntry dependency
-          = myProjectStructureHelper.findIdeLibraryDependency(module.getName(), node.getData().getName(), project);
-        if (dependency != null) {
-          dependencies.add(dependency);
-        }
-      }
-      removeData(dependencies, module, synchronous);
-    }
   }
 }

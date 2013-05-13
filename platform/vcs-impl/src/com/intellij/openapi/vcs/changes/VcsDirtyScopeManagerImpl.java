@@ -30,10 +30,10 @@ import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vcs.VcsRoot;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.util.Consumer;
+import com.intellij.util.ReflectionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
-import sun.reflect.Reflection;
 
 import java.util.ArrayList;
 import java.util.Collection;
@@ -105,7 +105,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
     if ((! myProject.isOpen()) || myProject.isDisposed() || myVcsManager.getAllActiveVcss().length == 0) return;
 
     if (LOG.isDebugEnabled()) {
-      LOG.debug("everything dirty: " + Reflection.getCallerClass(1));
+      LOG.debug("everything dirty: " + ReflectionUtil.findCallerClass(1));
     }
 
     final LifeDrop lifeDrop = myLife.doIfAlive(new Runnable() {
@@ -169,7 +169,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       if (! haveStuff) return;
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug("paths dirty: " + filesConverted + "; " + dirsConverted + "; " + Reflection.getCallerClass(2));
+        LOG.debug("paths dirty: " + filesConverted + "; " + dirsConverted + "; " + ReflectionUtil.findCallerClass(2));
       }
 
       takeDirt(new Consumer<DirtBuilder>() {
@@ -231,7 +231,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       if (! haveStuff) return;
 
       if (LOG.isDebugEnabled()) {
-        LOG.debug("files dirty: " + filesConverted + "; " + dirsConverted + "; " + Reflection.getCallerClass(2));
+        LOG.debug("files dirty: " + filesConverted + "; " + dirsConverted + "; " + ReflectionUtil.findCallerClass(2));
       }
 
       takeDirt(new Consumer<DirtBuilder>() {
@@ -257,7 +257,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       final AbstractVcs vcs = myGuess.getVcsForDirty(file);
       if (vcs == null) return;
       if (LOG.isDebugEnabled()) {
-        LOG.debug("file dirty: " + file + "; " + Reflection.getCallerClass(2));
+        LOG.debug("file dirty: " + file + "; " + ReflectionUtil.findCallerClass(2));
       }
       final VcsRoot root = new VcsRoot(vcs, file);
       takeDirt(new Consumer<DirtBuilder>() {
@@ -274,7 +274,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       final AbstractVcs vcs = myGuess.getVcsForDirty(file);
       if (vcs == null) return;
       if (LOG.isDebugEnabled()) {
-        LOG.debug("file dirty: " + file + "; " + Reflection.getCallerClass(1));
+        LOG.debug("file dirty: " + file + "; " + ReflectionUtil.findCallerClass(1));
       }
       final FilePathUnderVcs root = new FilePathUnderVcs(file, vcs);
       takeDirt(new Consumer<DirtBuilder>() {
@@ -295,7 +295,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       final AbstractVcs vcs = myGuess.getVcsForDirty(dir);
       if (vcs == null) return;
       if (LOG.isDebugEnabled()) {
-        LOG.debug("dir dirty recursively: " + dir + "; " + Reflection.getCallerClass(2));
+        LOG.debug("dir dirty recursively: " + dir + "; " + ReflectionUtil.findCallerClass(2));
       }
       final VcsRoot root = new VcsRoot(vcs, dir);
       takeDirt(new Consumer<DirtBuilder>() {
@@ -312,7 +312,7 @@ public class VcsDirtyScopeManagerImpl extends VcsDirtyScopeManager implements Pr
       final AbstractVcs vcs = myGuess.getVcsForDirty(path);
       if (vcs == null) return;
       if (LOG.isDebugEnabled()) {
-        LOG.debug("dir dirty recursively: " + path + "; " + Reflection.getCallerClass(2));
+        LOG.debug("dir dirty recursively: " + path + "; " + ReflectionUtil.findCallerClass(2));
       }
       final FilePathUnderVcs root = new FilePathUnderVcs(path, vcs);
       takeDirt(new Consumer<DirtBuilder>() {

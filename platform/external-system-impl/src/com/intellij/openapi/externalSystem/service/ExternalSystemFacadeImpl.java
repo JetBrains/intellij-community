@@ -236,10 +236,8 @@ public class ExternalSystemFacadeImpl<S extends ExternalSystemExecutionSettings>
   public void applyProgressManager(@NotNull RemoteExternalSystemProgressNotificationManager progressManager) throws RemoteException {
     ExternalSystemTaskNotificationListener listener = new SwallowingNotificationListener(progressManager);
     myNotificationListener.set(listener);
-    List<RemoteExternalSystemService> services = new ArrayList<RemoteExternalSystemService>(myRemotes.values());
-    for (RemoteExternalSystemService service : services) {
-      service.setNotificationListener(listener);
-    }
+    myProjectResolver.setNotificationListener(listener);
+    myBuildManager.setNotificationListener(listener);
   }
   
   /**

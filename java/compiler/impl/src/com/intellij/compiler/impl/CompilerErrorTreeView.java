@@ -25,7 +25,6 @@ import com.intellij.ide.errorTreeView.NewErrorTreeViewPanel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.command.CommandProcessor;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.fileEditor.OpenFileDescriptor;
 import com.intellij.openapi.module.LanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -86,7 +85,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
           ApplicationManager.getApplication().runWriteAction(new Runnable() {
             public void run() {
               try {
-                suppressInspectionFix.invoke(project, null, file.findElementAt(navigatable.getOffset()));
+                suppressInspectionFix.invoke(project, file.findElementAt(navigatable.getOffset()));
               }
               catch (IncorrectOperationException e1) {
                 LOG.error(e1);
@@ -139,7 +138,7 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
               }
               final String id = text[0].substring(1, text[0].indexOf("]"));
               final SuppressFix suppressInspectionFix = getSuppressAction(id);
-              final boolean available = suppressInspectionFix.isAvailable(project, null, context);
+              final boolean available = suppressInspectionFix.isAvailable(project, context);
               presentation.setEnabled(available);
               presentation.setVisible(available);
               if (available) {
@@ -151,17 +150,17 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
       }
     }
 
-    protected SuppressFix getSuppressAction(final String id) {
+    protected SuppressFix getSuppressAction(@NotNull final String id) {
       return new SuppressFix(id) {
         @Override
         @SuppressWarnings({"SimplifiableIfStatement"})
-        public boolean isAvailable(@NotNull final Project project, final Editor editor, @NotNull final PsiElement context) {
+        public boolean isAvailable(@NotNull final Project project, @NotNull final PsiElement context) {
           if (getContainer(context) instanceof PsiClass) return false;
-          return super.isAvailable(project, editor, context);
+          return super.isAvailable(project, context);
         }
 
         @Override
-        protected boolean use15Suppressions(final PsiDocCommentOwner container) {
+        protected boolean use15Suppressions(@NotNull final PsiDocCommentOwner container) {
           return true;
         }
       };
@@ -170,10 +169,10 @@ public class CompilerErrorTreeView extends NewErrorTreeViewPanel {
 
   private class SuppressJavacWarningForClassAction extends SuppressJavacWarningsAction {
     @Override
-    protected SuppressFix getSuppressAction(final String id) {
+    protected SuppressFix getSuppressAction(@NotNull final String id) {
       return new SuppressForClassFix(id){
         @Override
-        protected boolean use15Suppressions(final PsiDocCommentOwner container) {
+        protected boolean use15Suppressions(@NotNull final PsiDocCommentOwner container) {
           return true;
         }
       };

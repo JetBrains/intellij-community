@@ -4,7 +4,7 @@ class Foo implements Comparable<Foo> {
 
     @Override
     int compareTo(Foo o) {
-        <selection>return 0  //To change body of implemented methods use File | Settings | File Templates.</selection>
+        <selection>return 0</selection>
     }
 }
 

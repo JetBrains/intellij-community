@@ -19,6 +19,7 @@
  */
 package com.intellij.openapi.editor.colors.impl;
 
+import com.intellij.ide.ui.UISettings;
 import com.intellij.openapi.editor.HighlighterColors;
 import com.intellij.openapi.editor.colors.*;
 import com.intellij.openapi.editor.colors.ex.DefaultColorSchemesManager;
@@ -172,6 +173,10 @@ public abstract class AbstractColorsScheme implements EditorColorsScheme {
 
   @Override
   public Font getFont(EditorFontType key) {
+    if (UISettings.getInstance().PRESENTATION_MODE) {
+      final Font font = myFonts.get(key);
+      return new Font(font.getName(), font.getStyle(), UISettings.getInstance().PRESENTATION_MODE_FONT_SIZE);
+    }
     return myFonts.get(key);
   }
 

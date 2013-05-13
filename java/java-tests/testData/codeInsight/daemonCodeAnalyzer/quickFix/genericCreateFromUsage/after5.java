@@ -3,7 +3,7 @@ public class Seq<T> {
     public Seq() {}
 
     public Seq(T x, Seq<T> xs) {
-        <selection>//To change body of created methods use File | Settings | File Templates.</selection>
+        
     }
 
     static <T> Seq<T> nil () {

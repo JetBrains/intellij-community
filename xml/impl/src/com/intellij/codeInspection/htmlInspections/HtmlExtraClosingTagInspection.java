@@ -35,23 +35,27 @@ import org.jetbrains.annotations.NotNull;
  */
 public class HtmlExtraClosingTagInspection extends HtmlLocalInspectionTool {
 
+  @Override
   @Nls
   @NotNull
   public String getDisplayName() {
     return XmlBundle.message("html.inspection.extra.closing.tag");
   }
 
+  @Override
   @NonNls
   @NotNull
   public String getShortName() {
     return "HtmlExtraClosingTag";
   }
 
+  @Override
   @NotNull
   public HighlightDisplayLevel getDefaultLevel() {
     return HighlightDisplayLevel.ERROR;
   }
 
+  @Override
   protected void checkTag(@NotNull final XmlTag tag, @NotNull final ProblemsHolder holder, final boolean isOnTheFly) {
     final XmlToken endTagName = XmlTagUtil.getEndTagNameElement(tag);
 

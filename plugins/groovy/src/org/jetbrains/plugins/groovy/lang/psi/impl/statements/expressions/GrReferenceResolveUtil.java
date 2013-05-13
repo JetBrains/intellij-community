@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -190,7 +190,13 @@ public class GrReferenceResolveUtil {
       return true;
     }
 
-    if (qualifierType instanceof PsiClassType) {
+    /*if (qualifierType instanceof GrAnonymousClassType) {
+      final GrAnonymousClassDefinition anonymous = ((GrAnonymousClassType)qualifierType).getAnonymous();
+      if (!anonymous.processDeclarations(processor, state, null, place)) {
+        return false;
+      }
+    }
+    else */if (qualifierType instanceof PsiClassType) {
       PsiClassType.ClassResolveResult qualifierResult = ((PsiClassType)qualifierType).resolveGenerics();
       PsiClass qualifierClass = qualifierResult.getElement();
       if (qualifierClass != null) {
@@ -200,17 +206,16 @@ public class GrReferenceResolveUtil {
       }
     }
     else if (qualifierType instanceof PsiArrayType) {
-      final GrTypeDefinition arrayClass =
-        GroovyPsiManager.getInstance(place.getProject()).getArrayClass(((PsiArrayType)qualifierType).getComponentType());
-      if (!arrayClass.processDeclarations(processor, state, null, place)) return false;
+      final GroovyPsiManager gmanager = GroovyPsiManager.getInstance(place.getProject());
+      final GrTypeDefinition arrayClass = gmanager.getArrayClass(((PsiArrayType)qualifierType).getComponentType());
+      if (arrayClass != null && !arrayClass.processDeclarations(processor, state, null, place)) return false;
     }
 
     if (!(place.getParent() instanceof GrMethodCall) && InheritanceUtil.isInheritor(qualifierType, CommonClassNames.JAVA_UTIL_COLLECTION)) {
       final PsiType componentType = ClosureParameterEnhancer.findTypeForIteration(qualifierType, place);
       if (componentType != null) {
         final SpreadState spreadState = state.get(SpreadState.SPREAD_STATE);
-        processQualifierType(processor, componentType, state.put(SpreadState.SPREAD_STATE, SpreadState.create(qualifierType, spreadState)),
-                             place);
+        processQualifierType(processor, componentType, state.put(SpreadState.SPREAD_STATE, SpreadState.create(qualifierType, spreadState)), place);
       }
     }
 

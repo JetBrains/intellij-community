@@ -152,7 +152,7 @@ public abstract class FindManager {
    */
   public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model) throws MalformedReplacementStringException;
   public abstract String getStringToReplace(@NotNull String foundString, @NotNull FindModel model,
-                                            int startOffset, @NotNull String documentText) throws MalformedReplacementStringException;
+                                            int startOffset, @NotNull CharSequence documentText) throws MalformedReplacementStringException;
 
   /**
    * Gets the flag indicating whether the "Find Next" and "Find Previous" actions are

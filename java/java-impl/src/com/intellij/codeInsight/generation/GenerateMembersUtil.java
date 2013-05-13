@@ -18,17 +18,18 @@ package com.intellij.codeInsight.generation;
 import com.intellij.codeInsight.daemon.impl.quickfix.CreateFromUsageUtils;
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.editor.RangeMarker;
 import com.intellij.openapi.editor.ScrollType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
-import com.intellij.psi.codeStyle.CodeStyleSettings;
-import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
-import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.psi.codeStyle.VariableKind;
+import com.intellij.psi.codeStyle.*;
 import com.intellij.psi.impl.light.LightTypeElement;
+import com.intellij.psi.impl.source.tree.LeafElement;
+import com.intellij.psi.impl.source.tree.PsiWhiteSpaceImpl;
 import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
@@ -133,21 +134,44 @@ public class GenerateMembersUtil {
       PsiMethod method = (PsiMethod)firstMember;
       PsiCodeBlock body = method.getBody();
       if (body != null) {
-        PsiElement l = body.getFirstBodyElement();
+        PsiElement firstBodyElement = body.getFirstBodyElement();
+        PsiElement l = firstBodyElement;
         while (l instanceof PsiWhiteSpace) l = l.getNextSibling();
         if (l == null) l = body;
-        PsiElement r = body.getLastBodyElement();
+        PsiElement lastBodyElement = body.getLastBodyElement();
+        PsiElement r = lastBodyElement;
         while (r instanceof PsiWhiteSpace) r = r.getPrevSibling();
         if (r == null) r = body;
 
         int start = l.getTextRange().getStartOffset();
         int end = r.getTextRange().getEndOffset();
 
+        boolean adjustLineIndent = false;
+
+        // body is whitespace
+        if (start > end &&
+            firstBodyElement == lastBodyElement &&
+            firstBodyElement instanceof PsiWhiteSpaceImpl
+          ) {
+          CharSequence chars = ((PsiWhiteSpaceImpl)firstBodyElement).getChars();
+          if (chars.length() > 1 && chars.charAt(0) == '\n' && chars.charAt(1) == '\n') {
+            start = end = firstBodyElement.getTextRange().getStartOffset() + 1;
+            adjustLineIndent = true;
+          }
+        }
+
         editor.getCaretModel().moveToOffset(Math.min(start, end));
         editor.getScrollingModel().scrollToCaret(ScrollType.RELATIVE);
         if (start < end) {
           //Not an empty body
           editor.getSelectionModel().setSelection(start, end);
+        } else if (adjustLineIndent) {
+          Document document = editor.getDocument();
+          RangeMarker marker = document.createRangeMarker(start, start);
+          PsiDocumentManager.getInstance(body.getProject()).doPostponedOperationsAndUnblockDocument(document);
+          if (marker.isValid()) {
+            CodeStyleManager.getInstance(body.getProject()).adjustLineIndent(document, marker.getStartOffset());
+          }
         }
         return;
       }

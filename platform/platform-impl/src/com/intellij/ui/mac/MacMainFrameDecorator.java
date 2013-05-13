@@ -185,18 +185,18 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
         FullScreenUtilities.addFullScreenListenerTo(frame, new FullScreenAdapter() {
           @Override
           public void windowEnteredFullScreen(AppEvent.FullScreenEvent event) {
-            if (!ORACLE_BUG_ID_8003173) {
-              enterFullscreen();
-              myFrame.validate();
-            }
+            // We can get the notification when the frame has been disposed
+            if (myFrame == null || ORACLE_BUG_ID_8003173) return;
+            enterFullscreen();
+            myFrame.validate();
           }
 
           @Override
           public void windowExitedFullScreen(AppEvent.FullScreenEvent event) {
-            if (!ORACLE_BUG_ID_8003173) {
-              exitFullscreen();
-              myFrame.validate();
-            }
+            // We can get the notification when the frame has been disposed
+            if (myFrame == null || ORACLE_BUG_ID_8003173) return;
+            exitFullscreen();
+            myFrame.validate();
           }
         });
       }

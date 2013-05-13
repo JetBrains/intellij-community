@@ -30,14 +30,6 @@ public class FormatterTest extends GroovyFormatterTestCase {
 
   final String basePath = TestUtils.testDataPath + "groovy/formatter/"
 
-  @Override
-  protected void setUp() throws Exception {
-    super.setUp();
-    groovySettings.CLASS_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    groovySettings.METHOD_BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-    groovySettings.BRACE_STYLE = CommonCodeStyleSettings.END_OF_LINE;
-  }
-
   public void testAddign1() throws Throwable { doTest(); }
   public void testArg1() throws Throwable { doTest(); }
   public void testArg2() throws Throwable { doTest(); }
@@ -274,6 +266,7 @@ class B {
 ''', '''\
 class A {
 }
+
 class B {
 }
 ''')
@@ -476,6 +469,246 @@ def cl = {
     print 2
 }
 ''')
+  }
+
+  void testLineFeedsInMethodParams0() {
+    groovySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+def foo(String s,
+int x) {}
+''', '''\
+def foo(
+    String s,
+    int x) {}
+''')
+  }
+
+  void testLineFeedsInMethodParams1() {
+    groovySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+def foo(String s,
+int x) {}
+''', '''\
+def foo(String s,
+        int x
+) {}
+''')
+  }
+
+  void testLineFeedsInMethodParams2() {
+    groovySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    groovySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+def foo(String s,
+int x) {}
+''', '''\
+def foo(
+    String s,
+    int x
+) {}
+''')
+  }
+
+  void testLineFeedsInMethodParams3() {
+    groovySettings.METHOD_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    groovySettings.METHOD_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    groovySettings.SPACE_WITHIN_METHOD_PARENTHESES = true
+    checkFormatting('''\
+def foo(String s, int x) {}
+''', '''\
+def foo( String s, int x ) {}
+''')
+  }
+
+  void testLineFeedsInMethodCall0() {
+    groovySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+foo(s,
+    x)
+''', '''\
+foo(
+    s,
+    x)
+''')
+  }
+
+  void testLineFeedsInMethodCall1() {
+    groovySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+foo(s,
+x)
+''', '''\
+foo(s,
+    x
+)
+''')
+  }
+
+  void testLineFeedsInMethodCall2() {
+    groovySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    groovySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    checkFormatting('''\
+foo(s,
+ x)
+''', '''\
+foo(
+    s,
+    x
+)
+''')
+  }
+
+  void testLineFeedsInMethodCall3() {
+    groovySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    groovySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    groovySettings.SPACE_WITHIN_METHOD_CALL_PARENTHESES = true
+    checkFormatting('''\
+foo(s, x)
+''', '''\
+foo( s, x )
+''')
+  }
+
+  void testLineFeedsInMethodCall4() {
+    groovySettings.CALL_PARAMETERS_LPAREN_ON_NEXT_LINE = true
+    groovySettings.CALL_PARAMETERS_RPAREN_ON_NEXT_LINE = true
+    groovySettings.SPACE_WITHIN_EMPTY_METHOD_CALL_PARENTHESES = true
+    checkFormatting('''\
+foo()
+''', '''\
+foo( )
+''')
+  }
+
+  void testAlignMethodParentheses() {
+    groovySettings.ALIGN_MULTILINE_METHOD_BRACKETS = true
+    checkFormatting('''\
+def foooo(
+String s
+) {}
+''', '''\
+def foooo(
+    String s
+         ) {}
+''')
+  }
+
+  void testAlignFor() {
+    groovySettings.ALIGN_MULTILINE_FOR = true
+    checkFormatting('''\
+for (int i = 3;
+i<2;
+i++) print 2
+''', '''\
+for (int i = 3;
+     i < 2;
+     i++) print 2
+''')
+  }
+
+  void testBinaryOperationSingOnNewLine() {
+    groovySettings.BINARY_OPERATION_SIGN_ON_NEXT_LINE = true
+
+    checkFormatting('''\
+(1 +
+ 2) + 3
+''', '''\
+(1
+    +
+    2)
+    + 3
+''')
+  }
+
+  void testParenthesized0() {
+    groovySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP = true
+    checkFormatting('''\
+(2+
+3)
+''', '''\
+(
+    2 +
+        3)
+''')
+  }
+
+  void testParenthesized1() {
+    groovySettings.PARENTHESES_EXPRESSION_RPAREN_WRAP = true
+    checkFormatting('''\
+(2+
+3)
+''', '''\
+(2 +
+    3
+)
+''')
+  }
+
+  void testParenthesized2() {
+    groovySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP = true
+    groovySettings.PARENTHESES_EXPRESSION_RPAREN_WRAP = true
+    checkFormatting('''\
+(2+
+3)
+''', '''\
+(
+    2 +
+        3
+)
+''')
+  }
+
+  void testParenthesized3() {
+    groovySettings.PARENTHESES_EXPRESSION_LPAREN_WRAP = true
+    groovySettings.PARENTHESES_EXPRESSION_RPAREN_WRAP = true
+    groovySettings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    checkFormatting('''\
+(2+
+3)
+''', '''\
+(
+    2 +
+    3
+)
+''')
+  }
+
+  void testAlignBinaryOperands() {
+    groovySettings.ALIGN_MULTILINE_BINARY_OPERATION = true
+    checkFormatting('''\
+(2+
+3 +
+4)
+''', '''\
+(2 +
+ 3 +
+ 4)
+''')
+  }
+
+
+  void testConditional0() {
+    groovySettings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    checkFormatting '''\
+print abc ?
+cde:
+xyz
+''', '''\
+print abc ?
+      cde :
+      xyz
+'''
+  }
+
+  void testConditional1() {
+    groovySettings.ALIGN_MULTILINE_TERNARY_OPERATION = true
+    checkFormatting '''\
+print abc ?:
+xyz
+''', '''\
+print abc ?:
+      xyz
+'''
   }
 
   private void doGeeseTest() {

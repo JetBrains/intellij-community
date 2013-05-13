@@ -24,7 +24,6 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ex.InspectionToolWrapper;
 import com.intellij.codeInspection.ex.LocalInspectionToolWrapper;
-import com.intellij.codeInspection.ex.ProblemDescriptorImpl;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.progress.EmptyProgressIndicator;
 import com.intellij.openapi.progress.ProgressManager;
@@ -80,8 +79,8 @@ public class CleanupInspectionIntention implements IntentionAction, HighPriority
     Collections.sort(descriptions, new Comparator<CommonProblemDescriptor>() {
       @Override
       public int compare(final CommonProblemDescriptor o1, final CommonProblemDescriptor o2) {
-        final ProblemDescriptorImpl d1 = (ProblemDescriptorImpl)o1;
-        final ProblemDescriptorImpl d2 = (ProblemDescriptorImpl)o2;
+        final ProblemDescriptorBase d1 = (ProblemDescriptorBase)o1;
+        final ProblemDescriptorBase d2 = (ProblemDescriptorBase)o2;
         return d2.getTextRange().getStartOffset() - d1.getTextRange().getStartOffset();
       }
     });

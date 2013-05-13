@@ -92,6 +92,10 @@ public class GitSimpleHandler extends GitTextHandler {
       LOG.info(stderr.trim());
       myStderrLine.setLength(0);
     }
+    else {
+      LOG.debug(stderr.trim());
+      LOG.debug(stdout.trim());
+    }
   }
 
   /**
@@ -130,6 +134,7 @@ public class GitSimpleHandler extends GitTextHandler {
     }
     entire.append(text);
     if (suppressed || myVcs == null) {
+      LOG.debug(text);
       return;
     }
     int last = lineRest.length() > 0 ? lineRest.charAt(lineRest.length() - 1) : -1;

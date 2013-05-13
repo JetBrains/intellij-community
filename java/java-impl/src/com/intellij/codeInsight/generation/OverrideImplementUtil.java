@@ -50,6 +50,7 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Messages;
 import com.intellij.openapi.util.Ref;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleManager;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
@@ -393,10 +394,9 @@ public class OverrideImplementUtil extends OverrideImplementExploreUtil {
     JVMElementFactory factory = JVMElementFactories.getFactory(targetClass.getLanguage(), originalMethod.getProject());
     if (factory == null) factory = JavaPsiFacade.getInstance(originalMethod.getProject()).getElementFactory();
     @NonNls String methodText;
+
     try {
-      String bodyText = template.getText(properties);
-      if (bodyText != null && !bodyText.isEmpty()) bodyText += "\n";
-      methodText = "void foo () {\n" + bodyText + "}";
+      methodText = "void foo () {\n" + template.getText(properties) + "\n}";
       methodText = FileTemplateUtil.indent(methodText, result.getProject(), fileType);
     } catch (Exception e) {
       throw new IncorrectOperationException("Failed to parse file template",e);

@@ -31,8 +31,9 @@ public class SuppressByGroovyCommentFix extends SuppressByCommentFix {
     super(key, GrStatement.class);
   }
 
+  @Override
   @Nullable
-  protected PsiElement getContainer(PsiElement context) {
+  public PsiElement getContainer(PsiElement context) {
     return PsiUtil.findEnclosingStatement(context);
   }
 

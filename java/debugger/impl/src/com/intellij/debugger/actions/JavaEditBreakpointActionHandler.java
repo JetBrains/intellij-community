@@ -26,7 +26,6 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.editor.markup.GutterIconRenderer;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.popup.Balloon;
-import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupListener;
 import com.intellij.openapi.ui.popup.LightweightWindowEvent;
 import com.intellij.openapi.util.Key;
@@ -35,7 +34,7 @@ import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.xdebugger.impl.actions.EditBreakpointActionHandler;
 import com.intellij.xdebugger.impl.breakpoints.XBreakpointUtil;
-import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsMasterDetailPopupFactory;
+import com.intellij.xdebugger.impl.breakpoints.ui.BreakpointsDialogFactory;
 import com.intellij.xdebugger.impl.ui.DebuggerUIUtil;
 import org.jetbrains.annotations.NotNull;
 
@@ -93,11 +92,8 @@ public class JavaEditBreakpointActionHandler extends EditBreakpointActionHandler
         UIUtil.invokeLaterIfNeeded(new Runnable() {
           @Override
           public void run() {
-            final JBPopup popup = BreakpointsMasterDetailPopupFactory.
-              getInstance(project).createPopup(javaBreakpoint);
-            if (popup != null) {
-              popup.showCenteredInCurrentWindow(project);
-            }
+            BreakpointsDialogFactory.getInstance(project).showDialog(javaBreakpoint);
+
           }
         });
       }

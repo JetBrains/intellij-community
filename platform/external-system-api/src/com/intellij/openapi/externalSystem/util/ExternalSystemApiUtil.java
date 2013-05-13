@@ -24,6 +24,7 @@ import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.fileTypes.FileTypes;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
 import com.intellij.openapi.util.AtomicNotNullLazyValue;
@@ -56,12 +57,12 @@ public class ExternalSystemApiUtil {
 
   @NotNull private static final Pattern ARTIFACT_PATTERN = Pattern.compile("(?:.*/)?(.+?)(?:-([\\d+](?:\\.[\\d]+)*))?(?:\\.[^\\.]+?)?");
 
-  @NotNull private static final NotNullLazyValue<Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?>>> MANAGERS =
-    new AtomicNotNullLazyValue<Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?>>>() {
+  @NotNull private static final NotNullLazyValue<Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>>> MANAGERS =
+    new AtomicNotNullLazyValue<Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>>>() {
       @NotNull
       @Override
-      protected Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?>> compute() {
-        Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?>> result = ContainerUtilRt.newHashMap();
+      protected Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>> compute() {
+        Map<ProjectSystemId, ExternalSystemManager<?, ?, ?, ?, ?>> result = ContainerUtilRt.newHashMap();
         for (ExternalSystemManager manager : ExternalSystemManager.EP_NAME.getExtensions()) {
           result.put(manager.getSystemId(), manager);
         }
@@ -178,7 +179,7 @@ public class ExternalSystemApiUtil {
   }
 
   @Nullable
-  public static ExternalSystemManager<?, ?, ?, ?> getManager(@NotNull ProjectSystemId externalSystemId) {
+  public static ExternalSystemManager<?, ?, ?, ?, ?> getManager(@NotNull ProjectSystemId externalSystemId) {
     return MANAGERS.getValue().get(externalSystemId);
   }
 
@@ -349,5 +350,27 @@ public class ExternalSystemApiUtil {
       pathToUse = '/' + pathToUse;
     }
     classPath.add(PathManager.getResourceRoot(contextClass, pathToUse));
+  }
+
+  @Nullable
+  public static String normalizePath(@Nullable String s) {
+    return StringUtil.isEmpty(s) ? null : s;
+  }
+
+  /**
+   * We can divide all 'import from external system' use-cases into at least as below:
+   * <pre>
+   * <ul>
+   *   <li>this is a new project being created (import project from external model);</li>
+   *   <li>a new module is being imported from an external project into an existing ide project;</li>
+   * </ul>
+   * </pre>
+   * This method allows to differentiate between them (e.g. we don't want to change language level when new module is imported to
+   * an existing project).
+   * 
+   * @return    <code>true</code> if new project is being imported; <code>false</code> if new module is being imported
+   */
+  public static boolean isNewProjectConstruction() {
+    return ProjectManager.getInstance().getOpenProjects().length == 0;
   }
 }

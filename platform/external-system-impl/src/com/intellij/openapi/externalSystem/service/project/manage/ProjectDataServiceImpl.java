@@ -21,6 +21,8 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import org.jetbrains.annotations.NotNull;
@@ -31,7 +33,8 @@ import java.util.Collection;
  * @author Denis Zhdanov
  * @since 2/21/13 2:40 PM
  */
-public class ProjectDataServiceImpl implements ProjectDataService<ProjectData> {
+@Order(ExternalSystemConstants.BUILTIN_SERVICE_ORDER)
+public class ProjectDataServiceImpl implements ProjectDataService<ProjectData, Project> {
 
   @NotNull
   @Override
@@ -41,6 +44,9 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData> {
 
   @Override
   public void importData(@NotNull Collection<DataNode<ProjectData>> toImport, @NotNull Project project, boolean synchronous) {
+    if (!ExternalSystemApiUtil.isNewProjectConstruction()) {
+      return;
+    }
     if (toImport.size() != 1) {
       throw new IllegalArgumentException(String.format("Expected to get a single project but got %d: %s", toImport.size(), toImport));
     }
@@ -51,7 +57,7 @@ public class ProjectDataServiceImpl implements ProjectDataService<ProjectData> {
   }
 
   @Override
-  public void removeData(@NotNull Collection<DataNode<ProjectData>> toRemove, @NotNull Project project, boolean synchronous) {
+  public void removeData(@NotNull Collection<? extends Project> toRemove, @NotNull Project project, boolean synchronous) {
   }
 
   @SuppressWarnings("MethodMayBeStatic")

@@ -18,7 +18,9 @@ package com.intellij.spellchecker.compress;
 import com.intellij.spellchecker.dictionary.Dictionary;
 import com.intellij.spellchecker.dictionary.Loader;
 import com.intellij.spellchecker.engine.Transformation;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.Consumer;
+import gnu.trove.THashSet;
 import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TIntObjectProcedure;
 import org.jetbrains.annotations.NonNls;
@@ -44,13 +46,13 @@ public final class CompressedDictionary implements Dictionary {
     }
   };
 
-  CompressedDictionary(@NotNull Alphabet alphabet, @NotNull Encoder encoder, @NotNull String name) {
+  private CompressedDictionary(@NotNull Alphabet alphabet, @NotNull Encoder encoder, @NotNull String name) {
     this.alphabet = alphabet;
     this.encoder = encoder;
     this.name = name;
   }
 
-  void addToDictionary(@NotNull byte[] word) {
+  private void addToDictionary(@NotNull byte[] word) {
     SortedSet<byte[]> set = rawData.get(word.length);
     if (set == null) {
       set = createSet();
@@ -60,20 +62,21 @@ public final class CompressedDictionary implements Dictionary {
     wordsCount++;
   }
 
-  void pack() {
+  private void pack() {
     lengths = new int[rawData.size()];
     words = new byte[rawData.size()][];
     rawData.forEachEntry(new TIntObjectProcedure<SortedSet<byte[]>>() {
       int row = 0;
       @Override
-      public boolean execute(int l, SortedSet<byte[]> value) {
-        lengths[row] = l;
-        words[row] = new byte[value.size() * l];
+      public boolean execute(int length, SortedSet<byte[]> value) {
+        lengths[row] = length;
+        words[row] = new byte[value.size() * length];
         int k = 0;
+        byte[] wordBytes = words[row];
         for (byte[] bytes : value) {
-          for (byte aByte : bytes) {
-            words[row][k++] = aByte;
-          }
+          assert bytes.length == length;
+          System.arraycopy(bytes, 0, wordBytes, k, bytes.length);
+          k += bytes.length;
         }
         row++;
         return true;
@@ -97,15 +100,14 @@ public final class CompressedDictionary implements Dictionary {
     int i = 0;
     for (byte[] data : words) {
       int length = lengths[i];
+      if (length < minLength || length > maxLength) continue;
       for (int x = 0; x < data.length; x += length) {
-        byte[] toTest = new byte[length];
-        System.arraycopy(data, x, toTest, 0, length);
-        if (toTest[1] != index || toTest[0] > maxLength || toTest[0] < minLength) {
-          continue;
+        if (encoder.getFirstLetterIndex(data[x]) == index) {
+          byte[] toTest = new byte[length];
+          System.arraycopy(data, x, toTest, 0, length);
+          String decoded = encoder.decode(toTest);
+          result.add(decoded);
         }
-        UnitBitSet set = UnitBitSet.create(toTest);
-        String decoded = encoder.decode(set);
-        if(decoded!=null) result.add(decoded);
       }
       i++;
     }
@@ -127,20 +129,12 @@ public final class CompressedDictionary implements Dictionary {
   @Nullable
   public Boolean contains(@NotNull String word) {
     UnitBitSet bs = encoder.encode(word, false);
-    if (bs == Encoder.WORD_OF_ENTIRELY_UNKNOWN_LETTERS)
-      return null;
+    if (bs == Encoder.WORD_OF_ENTIRELY_UNKNOWN_LETTERS) return null;
     if (bs == null) return false;
       //TODO throw new EncodingException("WORD_WITH_SOME_UNKNOWN_LETTERS");
-    byte[] compressed = UnitBitSet.getBytes(bs);
-    int index = -1;
-    for (int i = 0; i < lengths.length; i++) {
-      if (lengths[i] == compressed.length) {
-        index = i;
-        break;
-      }
-    }
+    byte[] compressed = bs.pack();
+    int index = ArrayUtil.indexOf(lengths, compressed.length);
     return index != -1 && contains(compressed, words[index]);
-
   }
 
   @Override
@@ -155,7 +149,12 @@ public final class CompressedDictionary implements Dictionary {
 
   @Override
   public Set<String> getWords() {
-    throw new UnsupportedOperationException();
+    Set<String> words = new THashSet<String>();
+    for (int i=0; i<=alphabet.getLastIndexUsed();i++) {
+      char letter = alphabet.getLetter(i);
+      words.addAll(getWords(letter));
+    }
+    return words;
   }
 
   @Override
@@ -178,6 +177,7 @@ public final class CompressedDictionary implements Dictionary {
     Alphabet alphabet = new Alphabet();
     final Encoder encoder = new Encoder(alphabet);
     final CompressedDictionary dictionary = new CompressedDictionary(alphabet, encoder, loader.getName());
+    final List<UnitBitSet> bss = new ArrayList<UnitBitSet>();
     loader.load(new Consumer<String>() {
       @Override
       public void consume(String s) {
@@ -185,11 +185,14 @@ public final class CompressedDictionary implements Dictionary {
         if (transformed != null) {
           UnitBitSet bs = encoder.encode(transformed, true);
           if (bs == null) return;
-          byte[] compressed = UnitBitSet.getBytes(bs);
-          dictionary.addToDictionary(compressed);
+          bss.add(bs);
         }
       }
     });
+    for (UnitBitSet bs : bss) {
+      byte[] compressed = bs.pack();
+      dictionary.addToDictionary(compressed);
+    }
     dictionary.pack();
     return dictionary;
   }

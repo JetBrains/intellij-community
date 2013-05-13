@@ -7,6 +7,6 @@ class Gen {
 class X2 extends Gen {
     @Override
     protected Gen clone() {
-        <caret><selection>return super.clone();    //To change body of overridden methods use File | Settings | File Templates.</selection>
+        <caret><selection>return super.clone();</selection>
     }
 }

@@ -169,7 +169,22 @@ public class GroovyLiteralCopyPasteProcessor extends StringLiteralCopyPasteProce
     }
 
     if (tokenType == mGSTRING_CONTENT || tokenType == mGSTRING_LITERAL || tokenType == GroovyElementTypes.GSTRING_INJECTION) {
-      return GrStringUtil.escapeSymbolsForGString(s, !token.getParent().getText().contains("\"\"\""), false);
+      boolean singleLine = !token.getParent().getText().contains("\"\"\"");
+      StringBuilder b = new StringBuilder();
+      GrStringUtil.escapeStringCharacters(s.length(), s, singleLine ? "\"" : "", singleLine, true, b);
+      GrStringUtil.unescapeCharacters(b, singleLine ? "'" : "'\"", true);
+      for (int i = b.length() - 2; i >= 0; i--) {
+        if (b.charAt(i) == '$') {
+          final char next = b.charAt(i + 1);
+          if (next != '{' && !Character.isLetter(next)) {
+            b.insert(i, '\\');
+          }
+        }
+      }
+      if (b.charAt(b.length() - 1) == '$') {
+        b.insert(b.length() - 1, '\\');
+      }
+      return b.toString();
     }
 
     if (tokenType == mSTRING_LITERAL) {

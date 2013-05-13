@@ -16,7 +16,6 @@
 package com.intellij.refactoring.inline;
 
 import com.intellij.codeInsight.ChangeContextUtil;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
 import com.intellij.history.LocalHistory;
 import com.intellij.history.LocalHistoryAction;
 import com.intellij.lang.Language;
@@ -621,7 +620,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       }
     }
 
-    
+
     PsiClass thisClass = myMethod.getContainingClass();
     PsiExpression thisAccessExpr;
     if (thisVar != null) {
@@ -968,8 +967,8 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
       for (PsiReference ref : refs) {
         final PsiJavaCodeReferenceElement javaRef = (PsiJavaCodeReferenceElement)ref;
         if (initializer instanceof PsiThisExpression && ((PsiThisExpression)initializer).getQualifier() == null) {
-          final PsiClass varThisClass = RefactoringUtil.getThisClass(variable);
-          if (RefactoringUtil.getThisClass(javaRef) != varThisClass) {
+          final PsiClass varThisClass = RefactoringChangeUtil.getThisClass(variable);
+          if (RefactoringChangeUtil.getThisClass(javaRef) != varThisClass) {
             initializer = JavaPsiFacade.getInstance(myManager.getProject()).getElementFactory().createExpressionFromText(varThisClass.getName() + ".this", variable);
           }
         }
@@ -1438,7 +1437,7 @@ public class InlineMethodProcessor extends BaseRefactoringProcessor {
     if (methodBody.getStatements().length > 1) {
       PsiExpression expr = PsiTreeUtil.getParentOfType(element, PsiExpression.class);
       while (expr != null) {
-        if (HighlightUtil.isSuperOrThisMethodCall(expr)) {
+        if (RefactoringChangeUtil.isSuperOrThisMethodCall(expr)) {
           return "Inline cannot be applied to multiline method in constructor call";
         }
         expr = PsiTreeUtil.getParentOfType(expr, PsiExpression.class, true);

@@ -15,7 +15,7 @@
  */
 package com.intellij.spellchecker.tokenizer;
 
-import com.intellij.codeInsight.daemon.impl.actions.AbstractSuppressByNoInspectionCommentFix;
+import com.intellij.codeInspection.SuppressionUtil;
 import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -51,7 +51,7 @@ public class SpellcheckingStrategy {
   public Tokenizer getTokenizer(PsiElement element) {
     if (element instanceof PsiNameIdentifierOwner) return new PsiIdentifierOwnerTokenizer();
     if (element instanceof PsiComment) {
-      if (AbstractSuppressByNoInspectionCommentFix.isSuppressionComment(element)) {
+      if (SuppressionUtil.isSuppressionComment(element)) {
         return EMPTY_TOKENIZER;
       }
       return myCommentTokenizer;

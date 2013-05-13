@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -25,6 +25,7 @@ import com.intellij.refactoring.HelpID;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
+import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFileBase;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
@@ -120,10 +121,9 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     // Generating variable declaration
 
     final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
-    final GrVariableDeclaration varDecl = factory
-      .createVariableDeclaration(settings.isDeclareFinal() ? new String[]{PsiModifier.FINAL} : null,
-                                 (GrExpression)PsiUtil.skipParentheses(context.getExpression(), false), settings.getSelectedType(),
-                                 settings.getName());
+    final String[] modifiers = settings.isDeclareFinal() ? new String[]{PsiModifier.FINAL} : null;
+    final GrVariableDeclaration varDecl = factory.createVariableDeclaration(modifiers, "foo", settings.getSelectedType(), settings.getName());
+    varDecl.getVariables()[0].getInitializerGroovy().replaceWithExpression(context.getExpression(), true);
 
     // Marker for caret position
     try {
@@ -151,6 +151,8 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
         // Insert before first occurrence
         insertedVar = insertVariableDefinition(context, settings, varDecl);
       }
+
+      GrReferenceAdjuster.shortenReferences(insertedVar);
 
       insertedVar.setType(settings.getSelectedType());
 
@@ -260,16 +262,13 @@ public class GrIntroduceVariableHandler extends GrIntroduceHandlerBase<GroovyInt
     if (realContainer instanceof GrLoopStatement || realContainer instanceof GrIfStatement) {
       boolean isThenBranch = realContainer instanceof GrIfStatement && anchorElement.equals(((GrIfStatement)realContainer).getThenBranch());
 
-      // To replace branch body correctly
-      String refId = varDecl.getVariables()[0].getName();
-
       GrBlockStatement newBody;
       final GroovyPsiElementFactory factory = GroovyPsiElementFactory.getInstance(context.getProject());
       if (context.getExpression().equals(PsiUtil.skipParentheses(anchorElement, false))) {
         newBody = factory.createBlockStatement(varDecl);
       }
       else {
-        replaceExpressionOccurrencesInStatement(anchorElement, context.getExpression(), refId, settings.replaceAllOccurrences());
+        replaceExpressionOccurrencesInStatement(anchorElement, context.getExpression(), settings.getName(), settings.replaceAllOccurrences());
         newBody = factory.createBlockStatement(varDecl, anchorElement);
       }
 

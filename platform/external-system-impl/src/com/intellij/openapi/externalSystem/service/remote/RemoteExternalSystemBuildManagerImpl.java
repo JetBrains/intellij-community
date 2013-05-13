@@ -27,6 +27,7 @@ import org.jetbrains.annotations.Nullable;
 import java.rmi.RemoteException;
 import java.util.Collection;
 import java.util.List;
+import java.util.Map;
 
 /**
  * @author Denis Zhdanov
@@ -43,14 +44,16 @@ public class RemoteExternalSystemBuildManagerImpl<S extends ExternalSystemExecut
   }
 
   @Override
-  public Collection<ExternalSystemTaskDescriptor> listTasks(@NotNull final ExternalSystemTaskId id,
-                                                            @NotNull final String projectPath,
-                                                            @Nullable final S settings) throws RemoteException, ExternalSystemException
+  public Map<String, Collection<ExternalSystemTaskDescriptor>> listTasks(@NotNull final ExternalSystemTaskId id,
+                                                                         @NotNull final String projectPath,
+                                                                         @Nullable final S settings)
+    throws RemoteException, ExternalSystemException
   {
-    return execute(id, new Producer<Collection<ExternalSystemTaskDescriptor>>() {
+    
+    return execute(id, new Producer<Map<String, Collection<ExternalSystemTaskDescriptor>>>() {
       @Nullable
       @Override
-      public Collection<ExternalSystemTaskDescriptor> produce() {
+      public Map<String, Collection<ExternalSystemTaskDescriptor>> produce() {
         return myDelegate.listTasks(id, projectPath, settings);
       }
     });

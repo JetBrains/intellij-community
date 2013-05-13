@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -21,8 +21,8 @@ import com.intellij.psi.tree.TokenSet;
 import org.jetbrains.plugins.groovy.GroovyBundle;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyElementTypes;
 import org.jetbrains.plugins.groovy.lang.parser.GroovyParser;
-import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 import org.jetbrains.plugins.groovy.lang.parser.parsing.statements.expressions.BinaryExpression;
+import org.jetbrains.plugins.groovy.lang.parser.parsing.util.ParserUtils;
 
 /**
  * @author ilyas
@@ -47,31 +47,24 @@ public class MultiplicativeExpression implements GroovyElementTypes {
   public static boolean parse(PsiBuilder builder, GroovyParser parser) {
 
     PsiBuilder.Marker marker = builder.mark();
-    if ((PREFIXES.contains(builder.getTokenType())) ? BinaryExpression.POWER.parseBinary(builder, parser) : PowerExpressionNotPlusMinus.parse(builder, parser)) {
+    if ((PREFIXES.contains(builder.getTokenType()))
+        ? BinaryExpression.POWER.parseBinary(builder, parser)
+        : PowerExpressionNotPlusMinus.parse(builder, parser)) {
       if (ParserUtils.getToken(builder, MULT_DIV)) {
-        ParserUtils.getToken(builder, mNLS);
-        if (!BinaryExpression.POWER.parseBinary(builder, parser)) {
-          builder.error(GroovyBundle.message("expression.expected"));
-        }
-        PsiBuilder.Marker newMarker = marker.precede();
-        marker.done(MULTIPLICATIVE_EXPRESSION);
-        if (MULT_DIV.contains(builder.getTokenType())) {
-          subParse(builder, newMarker, parser);
-        } else {
-          newMarker.drop();
-        }
-      } else {
+        subParse(builder, parser, marker);
+      }
+      else {
         marker.drop();
       }
       return true;
-    } else {
+    }
+    else {
       marker.drop();
       return false;
     }
   }
 
-  private static void subParse(PsiBuilder builder, PsiBuilder.Marker marker, GroovyParser parser) {
-    ParserUtils.getToken(builder, MULT_DIV);
+  private static void subParse(PsiBuilder builder, GroovyParser parser, PsiBuilder.Marker marker) {
     ParserUtils.getToken(builder, mNLS);
     if (!BinaryExpression.POWER.parseBinary(builder, parser)) {
       builder.error(GroovyBundle.message("expression.expected"));
@@ -79,10 +72,11 @@ public class MultiplicativeExpression implements GroovyElementTypes {
     PsiBuilder.Marker newMarker = marker.precede();
     marker.done(MULTIPLICATIVE_EXPRESSION);
     if (MULT_DIV.contains(builder.getTokenType())) {
-      subParse(builder, newMarker, parser);
-    } else {
+      ParserUtils.getToken(builder, MULT_DIV);
+      subParse(builder, parser, newMarker);
+    }
+    else {
       newMarker.drop();
     }
   }
-
 }
