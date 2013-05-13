@@ -27,7 +27,7 @@ import java.util.Collection;
  * @author nik
  */
 public class ProjectConversionUtil {
-  @NonNls private static final String PROJECT_FILES_BACKUP = "projectFilesBackup";
+  @NonNls public static final String PROJECT_FILES_BACKUP = "projectFilesBackup";
   @NonNls private static final String BACKUP_EXTENSION = "backup";
 
   private ProjectConversionUtil() {
