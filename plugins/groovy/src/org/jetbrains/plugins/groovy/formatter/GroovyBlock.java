@@ -71,7 +71,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   public GroovyBlock(@NotNull final ASTNode node,
                      @NotNull final Indent indent,
                      @Nullable final Wrap wrap,
-                     FormattingContext context) {
+                     @NotNull FormattingContext context) {
     myNode = node;
 
     myIndent = indent;
@@ -143,7 +143,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
         return Spacing.getReadOnlySpacing();
       }
 
-      Spacing spacing = new GroovySpacingProcessor(((GroovyBlock)child2).getNode(), myContext).getSpacing();
+      Spacing spacing = new GroovySpacingProcessor(((GroovyBlock)child1), (GroovyBlock)child2, myContext).getSpacing();
       if (spacing != null) {
         return spacing;
       }
