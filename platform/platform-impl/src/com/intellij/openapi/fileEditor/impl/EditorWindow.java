@@ -672,7 +672,7 @@ public class EditorWindow {
         
         final VirtualFile file = editor.getFile();
         final Icon template = AllIcons.FileTypes.Text;
-        myTabbedPane.insertTab(file, new EmptyIcon(template.getIconWidth(), template.getIconHeight()), new TComp(this, editor), null, indexToInsert);
+        myTabbedPane.insertTab(file, new EmptyIcon(template.getIconWidth(), template.getIconHeight()), new TComp(this, editor), null, indexToInsert, false);
         trimToSize(UISettings.getInstance().EDITOR_TAB_LIMIT, file, false);
         setSelectedEditor(editor, focusEditor);
         myOwner.updateFileIcon(file);

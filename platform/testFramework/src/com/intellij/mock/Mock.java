@@ -440,6 +440,11 @@ public class Mock {
     public void createNavigationTab(FileEditor fileEditor) {
       //To change body of implemented methods use File | Settings | File Templates.
     }
+
+    @Override
+    public void useForNavigation(FileEditor fileEditor, boolean b) {
+      //To change body of implemented methods use File | Settings | File Templates.
+    }
   }
 
   public static class MyVirtualFile extends VirtualFile {

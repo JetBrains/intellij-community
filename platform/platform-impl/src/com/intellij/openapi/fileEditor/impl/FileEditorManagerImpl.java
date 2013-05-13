@@ -621,9 +621,9 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           EditorWindow[] windows = active.getWindows();
           if (windows.length == 2) {
             int windowWithNavigationTabIndex = windows[0] == active.getNavigationEditorWindow() ? 0 : 1;
-            if (windows[windowWithNavigationTabIndex].getEditors().length == 1) { // todo: add setting to do this
-              wndToOpenIn = windows[1-windowWithNavigationTabIndex];
-            }
+            wndToOpenIn = windows[1-windowWithNavigationTabIndex];
+            //if (windows[windowWithNavigationTabIndex].getEditors().length == 1) { // todo: add setting to do this
+            //}
           }
         }
         if (wndToOpenIn == null) {
@@ -763,6 +763,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     FileEditor[] editors;
     FileEditorProvider[] providers;
     final EditorWithProviderComposite newSelectedComposite;
+    EditorWithProviderComposite compositeForNavigation = null;
     boolean newEditorCreated = false;
 
     final boolean open = window.isFileOpen(file);
@@ -782,7 +783,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       }
 
 
-      EditorWithProviderComposite compositeForNavigation = null;
       if (useNavigationTab) {
         final EditorWithProviderComposite[] tabs = window.getEditors();
         for (int i = 0; i < tabs.length; i++) {
@@ -847,16 +847,22 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
       if (index >= 0) {
         newSelectedComposite.getFile().putUserData(EditorWindow.INITIAL_INDEX_KEY, index);
       }
-
-      if (compositeForNavigation != null) {
-        if (index >= 0) {
-          window.getTabbedPane().removeTabAt(index, -1);
-        }
-        disposeComposite(compositeForNavigation);
-      }
     }
 
     window.setEditor(newSelectedComposite, focusEditor);
+
+    if (compositeForNavigation != null) {
+      FileEditor selectedEditor = compositeForNavigation.getSelectedEditor();
+      if (compositeForNavigation.isToMaterialize() && selectedEditor instanceof TextEditor) {
+        TextEditor selectedTextEditor = (TextEditor)selectedEditor;
+        doMaterializeComposite(selectedTextEditor, compositeForNavigation);
+      }
+      if (index >= 0) {
+        int indexToRemove = window.findEditorIndex(compositeForNavigation);
+        window.getTabbedPane().removeTabAt(indexToRemove, -1);
+      }
+      disposeComposite(compositeForNavigation);
+    }
 
     final EditorHistoryManager editorHistoryManager = EditorHistoryManager.getInstance(myProject);
     for (int i = 0; i < editors.length; i++) {
@@ -1018,10 +1024,19 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   }
 
   @Override
-  public void materializeNavigationTab(@NotNull FileEditor fileEditor) {
-    EditorWithProviderComposite composite = getEditorComposite(fileEditor);
+  public void materializeNavigationTab(@NotNull FileEditor e) {
+    EditorWithProviderComposite composite = getEditorComposite(e);
+    doMaterializeComposite((TextEditor)e, composite);
+  }
+
+  private void doMaterializeComposite(TextEditor fileEditor, EditorWithProviderComposite composite) {
     if (composite != null) {
-      openFileWithProviders(composite.getFile(), true, true, false);
+      Pair<FileEditor[], FileEditorProvider[]> pair = openFileWithProviders(composite.getFile(), true, true, false);
+      TextEditor textEditor = ContainerUtil.findInstance(pair.first, TextEditor.class);
+      Editor editor = textEditor.getEditor();
+      Editor editor1 = fileEditor.getEditor();
+      editor.getCaretModel().moveToOffset(editor1.getCaretModel().getOffset());
+      editor.getSelectionModel().setSelection(editor1.getSelectionModel().getSelectionStart(), editor1.getSelectionModel().getSelectionStart());
     }
   }
 
@@ -1033,6 +1048,11 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     newComposite.setForNavigation(true);
   }
 
+  @Override
+  public void useForNavigation(FileEditor fileEditor, boolean b) {
+    EditorWithProviderComposite composite = getEditorComposite(fileEditor);
+    composite.setForNavigation(b);
+  }
 
   @Nullable
   EditorWithProviderComposite newEditorComposite(final VirtualFile file) {

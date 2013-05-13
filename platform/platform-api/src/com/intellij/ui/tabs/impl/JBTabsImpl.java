@@ -2501,6 +2501,15 @@ public class JBTabsImpl extends JComponent
     return null;
   }
 
+  public TabInfo findInfo(final Object object, boolean forNavigation) {
+    for (int i = 0; i < getTabCount(); i++) {
+      final TabInfo each = getTabAt(i);
+      final Object eachObject = each.getObject();
+      if (eachObject != null && forNavigation == each.isForNavigation() && eachObject.equals(object)) return each;
+    }
+    return null;
+  }
+
   @Nullable
   private TabInfo _findInfo(final Point point, boolean labelsOnly) {
     Component component = findComponentAt(point);
