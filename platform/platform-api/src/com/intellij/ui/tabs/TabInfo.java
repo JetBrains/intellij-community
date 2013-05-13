@@ -86,6 +86,16 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
   private Queryable myQueryable;
   private DragOutDelegate myDragOutDelegate;
 
+  public boolean isForNavigation() {
+    return isForNavigation;
+  }
+
+  public void setForNavigation(boolean forNavigation) {
+    isForNavigation = forNavigation;
+  }
+
+  private boolean isForNavigation;
+
   /**
    * The tab which was selected before the mouse was pressed on this tab. Focus will be transferred to that tab if this tab is dragged
    * out of its container. (IDEA-61536)

@@ -21,10 +21,9 @@ import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.DumbAware;
-import org.jetbrains.annotations.Nullable;
 
-public class MaterializeTab extends AnAction implements DumbAware {
-  public MaterializeTab() {
+public class MakeTabNavigation extends AnAction implements DumbAware {
+  public MakeTabNavigation() {
   }
 
   @Override
@@ -37,6 +36,7 @@ public class MaterializeTab extends AnAction implements DumbAware {
     FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(e.getDataContext());
     if (fileEditor == null)
       return;
-    FileEditorManager.getInstance(getEventProject(e)).materializeNavigationTab(fileEditor);
+
+    FileEditorManager.getInstance(getEventProject(e)).useForNavigation(fileEditor, true);
   }
 }

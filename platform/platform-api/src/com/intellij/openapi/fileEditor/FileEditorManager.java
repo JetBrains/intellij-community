@@ -195,4 +195,6 @@ public abstract class FileEditorManager {
   public abstract void materializeNavigationTab(FileEditor fileEditor);
 
   public abstract void createNavigationTab(FileEditor fileEditor);
+
+  public abstract void useForNavigation(FileEditor fileEditor, boolean b);
 }

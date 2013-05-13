@@ -15,16 +15,22 @@
  */
 package com.intellij.openapi.fileEditor.impl;
 
+import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.ex.AnActionListener;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.fileEditor.FileEditor;
-import com.intellij.openapi.fileEditor.FileEditorProvider;
-import com.intellij.openapi.fileEditor.FileEditorState;
-import com.intellij.openapi.fileEditor.FileEditorStateLevel;
+import com.intellij.openapi.editor.actionSystem.EditorAction;
+import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
+import com.intellij.openapi.editor.event.CaretEvent;
+import com.intellij.openapi.editor.event.CaretListener;
+import com.intellij.openapi.editor.event.DocumentEvent;
+import com.intellij.openapi.editor.event.DocumentListener;
+import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -34,6 +40,8 @@ public class EditorWithProviderComposite extends EditorComposite {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite");
   private final FileEditorProvider[] myProviders;
   private boolean myIsNavigation = false;
+  private AnActionListener.Adapter myListener;
+  private boolean myToMaterialize;
 
   EditorWithProviderComposite (
     final VirtualFile file,
@@ -103,6 +111,47 @@ public class EditorWithProviderComposite extends EditorComposite {
       if (index > 0) {
         window.setForegroundAt(index, JBColor.cyan);
       }
+      if (navigation) {
+        final TextEditor textEditor = ContainerUtil.findInstance(getEditors(), TextEditor.class);
+
+        myListener = new AnActionListener.Adapter() {
+          @Override
+          public void beforeEditorTyping(char c, final DataContext dataContext) {
+            final FileEditor data = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
+            if (data == textEditor) {
+              myToMaterialize = true;
+              ActionManager.getInstance().removeAnActionListener(this);
+              myListener = null;
+            }
+          }
+
+          @Override
+          public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+            FileEditor data = PlatformDataKeys.FILE_EDITOR.getData(event.getDataContext());
+            if (data == textEditor &&
+                action instanceof EditorAction &&
+                ((EditorAction)action).getHandler() instanceof EditorWriteActionHandler) {
+              //FileEditorManager.getInstance(PlatformDataKeys.PROJECT.getData(dataContext)).materializeNavigationTab(data);
+              myToMaterialize = true;
+              ActionManager.getInstance().removeAnActionListener(this);
+              myListener = null;
+            }
+          }
+        };
+        ActionManager.getInstance().addAnActionListener(myListener);
+      }
     }
+  }
+
+  public boolean isToMaterialize() {
+    return myToMaterialize;
+  }
+
+  @Override
+  public void dispose() {
+    if (myListener != null) {
+      ActionManager.getInstance().removeAnActionListener(myListener);
+    }
+    super.dispose();
   }
 }
