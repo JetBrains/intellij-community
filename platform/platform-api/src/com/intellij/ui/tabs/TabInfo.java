@@ -90,8 +90,9 @@ public final class TabInfo implements Queryable, PlaceProvider<String> {
     return isForNavigation;
   }
 
-  public void setForNavigation(boolean forNavigation) {
+  public TabInfo setForNavigation(boolean forNavigation) {
     isForNavigation = forNavigation;
+    return this;
   }
 
   private boolean isForNavigation;
