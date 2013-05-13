@@ -86,12 +86,12 @@ public class ImageLoader implements Serializable {
   @Nullable
   public static Image loadFromResource(@NonNls String s) {
     int stackFrameCount = 2;
-    Class callerClass = Reflection.getCallerClass(stackFrameCount);
+    Class callerClass = ReflectionUtil.getCallerClass(stackFrameCount);
     while (callerClass != null && callerClass.getClassLoader() == null) { // looks like a system class
-      callerClass = Reflection.getCallerClass(++stackFrameCount);
+      callerClass = ReflectionUtil.getCallerClass(++stackFrameCount);
     }
     if (callerClass == null) {
-      callerClass = Reflection.getCallerClass(1);
+      callerClass = ReflectionUtil.getCallerClass(1);
     }
     return loadFromResource(s, callerClass);
   }
