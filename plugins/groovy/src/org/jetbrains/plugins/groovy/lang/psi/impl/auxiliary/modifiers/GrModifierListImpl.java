@@ -317,6 +317,16 @@ public class GrModifierListImpl extends GrStubElementBase<GrModifierListStub> im
     }
   }
 
+  @Override
+  public ASTNode addInternal(ASTNode first, ASTNode last, ASTNode anchor, Boolean before) {
+    final ASTNode node = super.addInternal(first, last, anchor, before);
+    final PsiElement sibling = getNextSibling();
+    if (sibling != null && sibling.getText().contains("\n")) {
+      sibling.replace(GroovyPsiElementFactory.getInstance(getProject()).createWhiteSpace());
+    }
+    return node;
+  }
+
   private boolean isEmptyModifierList() {
     return getTextLength() == 0 || getModifiers().length == 0 && getRawAnnotations().length == 0;
   }
