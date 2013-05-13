@@ -1,5 +1,6 @@
 package com.jetbrains.python.psi.impl.references;
 
+import com.intellij.codeInsight.completion.CompletionUtil;
 import com.intellij.codeInsight.completion.InsertHandler;
 import com.intellij.codeInsight.completion.InsertionContext;
 import com.intellij.codeInsight.lookup.LookupElement;
@@ -81,7 +82,7 @@ public class PyImportReference extends PyReferenceImpl {
     }
 
     PyExpression qualifier = myElement.getQualifier();
-    final TypeEvalContext context = TypeEvalContext.userInitiated(myElement.getContainingFile());
+    final TypeEvalContext context = TypeEvalContext.userInitiated(CompletionUtil.getOriginalOrSelf(myElement).getContainingFile());
     if (qualifier != null) {
       // qualifier's type must be module, it should know how to complete
       PyType type = context.getType(qualifier);
