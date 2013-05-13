@@ -114,7 +114,7 @@ public class PyDictKeyNamesCompletionContributor extends CompletionContributor {
     if (callee == null) return;
     final String name = callee.getText();
     if ("dict".equals(name)) {
-      final TypeEvalContext context = TypeEvalContext.fast();
+      final TypeEvalContext context = TypeEvalContext.userInitiated();
       final PyType type = context.getType(dictConstructor);
       if (type != null && type.isBuiltin(context)) {
         final PyArgumentList list = dictConstructor.getArgumentList();

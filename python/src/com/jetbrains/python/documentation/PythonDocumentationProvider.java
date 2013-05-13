@@ -148,18 +148,18 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   }
 
   static String describeExpressionType(PyExpression expr) {
-    final TypeEvalContext context = TypeEvalContext.slow();
+    final TypeEvalContext context = TypeEvalContext.userInitiated();
     return String.format("Inferred type: %s", getTypeName(context.getType(expr), context));
   }
 
   public static String getTypeDescription(@NotNull PyFunction fun) {
-    final TypeEvalContext context = TypeEvalContext.slow();
+    final TypeEvalContext context = TypeEvalContext.userInitiated();
     PyTypeModelBuilder builder = new PyTypeModelBuilder(context);
     return builder.build(fun).asString();
   }
 
   public static void getTypeDescription(@NotNull PyFunction fun, ChainIterable<String> body) {
-    final TypeEvalContext context = TypeEvalContext.slow();
+    final TypeEvalContext context = TypeEvalContext.userInitiated();
     PyTypeModelBuilder builder = new PyTypeModelBuilder(context);
     builder.build(fun).toBodyWithLinks(body, fun);
   }
@@ -481,7 +481,7 @@ public class PythonDocumentationProvider extends AbstractDocumentationProvider i
   @Nullable
   private static PyClass inferClassOfParameter(PsiElement context) {
     if (context instanceof PyNamedParameter) {
-      final PyType type = TypeEvalContext.fast().getType((PyNamedParameter)context);
+      final PyType type = TypeEvalContext.userInitiated().getType((PyNamedParameter)context);
       if (type instanceof PyClassType) {
         return ((PyClassType)type).getPyClass();
       }

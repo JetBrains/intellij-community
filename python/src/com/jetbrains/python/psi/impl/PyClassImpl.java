@@ -58,7 +58,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     @Nullable
     @Override
     public Result<List<PyClassLikeType>> compute() {
-      final TypeEvalContext context = myCachedContext != null ? myCachedContext : TypeEvalContext.fastStubOnly(null);
+      final TypeEvalContext context = myCachedContext != null ? myCachedContext : TypeEvalContext.codeInsightFallback();
       final List<PyClassLikeType> ancestorTypes = isNewStyleClass() ? getMROAncestorTypes(context) : getOldStyleAncestorTypes(context);
       return Result.create(ancestorTypes, PsiModificationTracker.OUT_OF_CODE_BLOCK_MODIFICATION_COUNT);
     }
@@ -194,7 +194,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
   @NotNull
   @Override
   public List<PyClass> getAncestorClasses() {
-    return getAncestorClasses(TypeEvalContext.fastStubOnly(null));
+    return getAncestorClasses(TypeEvalContext.codeInsightFallback());
   }
 
   @NotNull
@@ -224,7 +224,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     if (superClassQName.equals(getQualifiedName())) {
       return true;
     }
-    for (PyClassLikeType type : getAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+    for (PyClassLikeType type : getAncestorTypes(TypeEvalContext.codeInsightFallback())) {
       if (type != null && superClassQName.equals(type.getClassQName())) {
         return true;
       }
@@ -287,7 +287,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
 
   @NotNull
   public PyClass[] getSuperClasses() {
-    final List<PyClassLikeType> superTypes = getSuperClassTypes(TypeEvalContext.fastStubOnly(null));
+    final List<PyClassLikeType> superTypes = getSuperClassTypes(TypeEvalContext.codeInsightFallback());
     if (superTypes.isEmpty()) {
       return EMPTY_ARRAY;
     }
@@ -925,7 +925,7 @@ public class PyClassImpl extends PyPresentableElementImpl<PyClassStub> implement
     final PyClass objClass = PyBuiltinCache.getInstance(this).getClass("object");
     if (this == objClass) return true; // a rare but possible case
     if (hasNewStyleMetaClass(this)) return true;
-    for (PyClassLikeType type : getOldStyleAncestorTypes(TypeEvalContext.fastStubOnly(null))) {
+    for (PyClassLikeType type : getOldStyleAncestorTypes(TypeEvalContext.codeInsightFallback())) {
       if (type == null) {
         // unknown, assume new-style class
         return true;

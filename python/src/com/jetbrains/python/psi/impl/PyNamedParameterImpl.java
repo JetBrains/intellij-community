@@ -179,7 +179,7 @@ public class PyNamedParameterImpl extends PyPresentableElementImpl<PyNamedParame
             else {
               final PyStdlibTypeProvider stdlib = PyStdlibTypeProvider.getInstance();
               if (stdlib != null) {
-                initType = stdlib.getConstructorType(containingClass);
+                initType = stdlib.getConstructorType(containingClass, context);
               }
             }
             if (initType != null && !(initType instanceof PyNoneType || initType instanceof PyReturnTypeReference)) {

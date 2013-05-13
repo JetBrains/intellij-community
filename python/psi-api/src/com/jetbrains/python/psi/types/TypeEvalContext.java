@@ -53,25 +53,43 @@ public class TypeEvalContext {
     return myAllowDataFlow || element.getContainingFile() == myOrigin;
   }
 
-  public static TypeEvalContext slow() {
+  /**
+   * Create the most detailed type evaluation context for user-initiated actions.
+   *
+   * Should be used for code completion, go to definition, find usages, refactorings, documentation.
+   */
+  public static TypeEvalContext userInitiated() {
     return new TypeEvalContext(true, true, null);
   }
 
-  public static TypeEvalContext fast() {
-    return new TypeEvalContext(false, true, null);
+  /**
+   * Create a type evaluation context for performing analysis operations on the specified file which is currently open in the editor,
+   * without accessing stubs. For such a file, additional slow operations are allowed.
+   *
+   * Inspections should not create a new type evaluation context. They should re-use the context of the inspection session.
+   */
+  public static TypeEvalContext codeAnalysis(@Nullable PsiFile origin) {
+    return new TypeEvalContext(false, false, origin);
   }
 
   /**
-   * Creates a TypeEvalContext for performing analysis operations on the specified file which is currently open in the editor,
-   * without accessing stubs. For such a file, additional slow operations are allowed.
+   * Create the most shallow type evaluation context for code insight purposes when other more detailed contexts are not available.
    *
-   * @param origin the file open in the editor
-   * @return the type eval context for the file.
+   * It's use should be minimized.
    */
-  public static TypeEvalContext fastStubOnly(@Nullable PsiFile origin) {
-    return new TypeEvalContext(false, false, origin);
+  public static TypeEvalContext codeInsightFallback() {
+    return new TypeEvalContext(false, false, null);
   }
-  
+
+  /**
+   * Create a type evaluation context for deeper and slower code insight.
+   *
+   * Should be used only when normal code insight context is not enough for getting good results.
+   */
+  public static TypeEvalContext deepCodeInsight() {
+    return new TypeEvalContext(false, true, null);
+  }
+
   public TypeEvalContext withTracing() {
     if (myTrace == null) {
       myTrace = new ArrayList<String>();

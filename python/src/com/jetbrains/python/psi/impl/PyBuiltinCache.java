@@ -314,11 +314,11 @@ public class PyBuiltinCache {
   }
 
   @Nullable
-  public Ref<PyType> getStdlibType(@NotNull String key) {
+  public Ref<PyType> getStdlibType(@NotNull String key, @NotNull TypeEvalContext context) {
     synchronized (myStdlibTypeCache) {
       final Ref<PyType> ref = myStdlibTypeCache.get(key);
       if (ref != null) {
-        if (!isValid(ref.get())) {
+        if (!isValid(ref.get(), context)) {
           myStdlibTypeCache.clear();
           return null;
         }
@@ -327,10 +327,10 @@ public class PyBuiltinCache {
     }
   }
 
-  private static boolean isValid(@Nullable PyType type) {
+  private static boolean isValid(@Nullable PyType type, @NotNull TypeEvalContext context) {
     if (type instanceof PyCollectionType) {
-      final PyType elementType = ((PyCollectionType)type).getElementType(TypeEvalContext.fastStubOnly(null));
-      if (!isValid(elementType)) {
+      final PyType elementType = ((PyCollectionType)type).getElementType(context);
+      if (!isValid(elementType, context)) {
         return false;
       }
     }
@@ -340,7 +340,7 @@ public class PyBuiltinCache {
     }
     else if (type instanceof PyUnionType) {
       for (PyType member : ((PyUnionType)type).getMembers()) {
-        if (!isValid(member)) {
+        if (!isValid(member, context)) {
           return false;
         }
       }

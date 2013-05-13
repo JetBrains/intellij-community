@@ -64,15 +64,22 @@ public class PyTypeCheckerInspection extends PyInspection {
       final Map<PyGenericType, PyType> substitutions = new LinkedHashMap<PyGenericType, PyType>();
       final PyTypeChecker.AnalyzeCallResults results = PyTypeChecker.analyzeCallSite(callSite, myTypeEvalContext);
       if (results != null) {
-        substitutions.putAll(PyTypeChecker.collectCallGenerics(results.getCallable(), results.getReceiver(), myTypeEvalContext));
+        boolean genericsCollected = false;
         for (Map.Entry<PyExpression, PyNamedParameter> entry : results.getArguments().entrySet()) {
           final PyNamedParameter p = entry.getValue();
           if (p.isPositionalContainer() || p.isKeywordContainer()) {
             // TODO: Support *args, **kwargs
             continue;
           }
-          final PyType argType = myTypeEvalContext.getType(entry.getKey());
           final PyType paramType = myTypeEvalContext.getType(p);
+          if (paramType == null) {
+            continue;
+          }
+          final PyType argType = myTypeEvalContext.getType(entry.getKey());
+          if (!genericsCollected) {
+            substitutions.putAll(PyTypeChecker.collectCallGenerics(results.getCallable(), results.getReceiver(), myTypeEvalContext));
+            genericsCollected = true;
+          }
           checkTypes(paramType, argType, entry.getKey(), myTypeEvalContext, substitutions);
         }
       }

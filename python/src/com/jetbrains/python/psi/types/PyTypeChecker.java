@@ -104,7 +104,7 @@ public class PyTypeChecker {
       final PyClass superClass = ((PyClassType)expected).getPyClass();
       final PyClass subClass = ((PyClassType)actual).getPyClass();
       if (expected instanceof PyCollectionType && actual instanceof PyCollectionType) {
-        if (!matchClasses(superClass, subClass)) {
+        if (!matchClasses(superClass, subClass, context)) {
           return false;
         }
         final PyType superElementType = ((PyCollectionType)expected).getElementType(context);
@@ -126,7 +126,7 @@ public class PyTypeChecker {
           return true;
         }
       }
-      else if (matchClasses(superClass, subClass)) {
+      else if (matchClasses(superClass, subClass, context)) {
         return true;
       }
       else if (((PyClassType)actual).isDefinition() && PyNames.CALLABLE.equals(expected.getName())) {
@@ -287,7 +287,7 @@ public class PyTypeChecker {
         // Unify generics in stdlib pseudo-constructor
         final PyStdlibTypeProvider stdlib = PyStdlibTypeProvider.getInstance();
         if (stdlib != null) {
-          final PyType initType = stdlib.getConstructorType(cls);
+          final PyType initType = stdlib.getConstructorType(cls, context);
           if (initType != null) {
             match(initType, qualifierType, context, substitutions);
           }
@@ -297,11 +297,11 @@ public class PyTypeChecker {
     return substitutions;
   }
 
-  private static boolean matchClasses(@Nullable PyClass superClass, @Nullable PyClass subClass) {
+  private static boolean matchClasses(@Nullable PyClass superClass, @Nullable PyClass subClass, @NotNull TypeEvalContext context) {
     if (superClass == null || subClass == null || subClass.isSubclass(superClass) || PyABCUtil.isSubclass(subClass, superClass)) {
       return true;
     }
-    else if (PyUtil.hasUnresolvedAncestors(subClass)) {
+    else if (PyUtil.hasUnresolvedAncestors(subClass, context)) {
       return true;
     }
     else {

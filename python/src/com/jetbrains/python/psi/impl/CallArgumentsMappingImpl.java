@@ -47,14 +47,10 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
    * positional paramaters, but at least one item long.
    * @param arguments what to map, get if from call site
    * @param resolved_callee what to map parameters of
-   * @param type_context optional shared type evaluator / cache.
+   * @param context optional shared type evaluator / cache.
    */
-  public void mapArguments(
-    PyCallExpression.PyMarkedCallee resolved_callee,
-    @Nullable TypeEvalContext type_context
-  ) {
+  public void mapArguments(PyCallExpression.PyMarkedCallee resolved_callee, @Nullable TypeEvalContext context) {
     PyExpression[] arguments = myArgumentList.getArguments();
-    if (type_context == null) type_context = TypeEvalContext.fast();
     myMarkedCallee = resolved_callee;
     List<PyExpression> unmatched_args = new LinkedList<PyExpression>();
     Collections.addAll(unmatched_args, arguments);
@@ -144,8 +140,8 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
               mapped_args.add(arg); // tuple itself is always mapped; its insides can fail
             }
             else {
-              PyType arg_type = type_context.getType(arg);
-              if (arg_type != null && arg_type.isBuiltin(type_context) && "list".equals(arg_type.getName())) {
+              PyType arg_type = context.getType(arg);
+              if (arg_type != null && arg_type.isBuiltin(context) && "list".equals(arg_type.getName())) {
                 mapped_args.add(arg); // we can't really analyze arbitrary lists statically yet
                 // but ListLiteralExpressions are handled by visitor
               }
@@ -210,10 +206,10 @@ public class CallArgumentsMappingImpl implements CallArgumentsMapping {
     if (cnt < parameters.length && cnt < positional_index && myTupleArg != null) {
       // check length of myTupleArg
       PyType tuple_arg_type = null;
-      if (type_context != null) {
+      if (context != null) {
         final PyExpression expression = PsiTreeUtil.getChildOfType(myTupleArg, PyExpression.class);
         if (expression != null) {
-          tuple_arg_type = type_context.getType(expression);
+          tuple_arg_type = context.getType(expression);
         }
       }
       int tuple_length;
