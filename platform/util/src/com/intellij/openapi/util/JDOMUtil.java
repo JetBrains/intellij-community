@@ -68,7 +68,7 @@ public class JDOMUtil {
   @NotNull
   public static List<Element> getChildren(@Nullable Element parent, @NotNull String name) {
     if (parent != null) {
-      @SuppressWarnings({"UnnecessaryLocalVariable", "unchecked"}) final List<Element> children = parent.getChildren(name);
+      @SuppressWarnings("UnnecessaryLocalVariable") final List<Element> children = parent.getChildren(name);
       return children;
     }
     else {
