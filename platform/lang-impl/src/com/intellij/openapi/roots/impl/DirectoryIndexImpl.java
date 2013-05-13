@@ -93,6 +93,12 @@ public class DirectoryIndexImpl extends DirectoryIndex {
       @Override
       public void dispose() {
         myDisposed = true;
+        myState.multiDirPackages.clear();
+        myState.myDirToInfoMap.clear();
+        myState.myDirToPackageName.clear();
+        myState.myExcludeRootsMap.clear();
+        myState.myPackageNameToDirsMap.clear();
+        myState.myProjectExcludeRoots.clear();
       }
     });
   }
