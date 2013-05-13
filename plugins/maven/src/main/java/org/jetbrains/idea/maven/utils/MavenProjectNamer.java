@@ -1,6 +1,5 @@
 package org.jetbrains.idea.maven.utils;
 
-import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.util.containers.MultiMap;
 import gnu.trove.THashMap;
@@ -86,22 +85,7 @@ public class MavenProjectNamer {
 
   private static void doBuildProjectTree(MavenProjectsManager manager, Map<MavenProject, Integer> res, List<MavenProject> rootProjects, int deep) {
     MavenProject[] rootProjectArray = rootProjects.toArray(new MavenProject[rootProjects.size()]);
-    Arrays.sort(rootProjectArray, new Comparator<MavenProject>() {
-      @Override
-      public int compare(MavenProject o1, MavenProject o2) {
-        MavenId id1 = o1.getMavenId();
-        MavenId id2 = o2.getMavenId();
-
-        int res = Comparing.compare(id1.getGroupId(), id2.getGroupId());
-        if (res != 0) return res;
-
-        res = Comparing.compare(id1.getArtifactId(), id2.getArtifactId());
-        if (res != 0) return res;
-
-        res = Comparing.compare(id1.getVersion(), id2.getVersion());
-        return res;
-      }
-    });
+    Arrays.sort(rootProjectArray, new MavenProjectComparator());
 
     for (MavenProject project : rootProjectArray) {
       if (!res.containsKey(project)) {
@@ -120,4 +104,20 @@ public class MavenProjectNamer {
     return res;
   }
 
+  public static class MavenProjectComparator implements Comparator<MavenProject> {
+    @Override
+    public int compare(MavenProject o1, MavenProject o2) {
+      MavenId id1 = o1.getMavenId();
+      MavenId id2 = o2.getMavenId();
+
+      int res = Comparing.compare(id1.getGroupId(), id2.getGroupId());
+      if (res != 0) return res;
+
+      res = Comparing.compare(id1.getArtifactId(), id2.getArtifactId());
+      if (res != 0) return res;
+
+      res = Comparing.compare(id1.getVersion(), id2.getVersion());
+      return res;
+    }
+  }
 }
