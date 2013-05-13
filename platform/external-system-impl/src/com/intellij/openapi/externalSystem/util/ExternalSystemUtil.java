@@ -199,7 +199,7 @@ public class ExternalSystemUtil {
 
       @Override
       public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-        if (--myCounter <= 0 && !project.isDisposed()) {
+        if (--myCounter <= 0 && !project.isDisposed() && project.isOpen()) {
           processOrphanModules();
         }
       }
