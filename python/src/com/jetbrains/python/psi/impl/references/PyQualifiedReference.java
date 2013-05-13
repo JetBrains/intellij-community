@@ -247,7 +247,7 @@ public class PyQualifiedReference extends PyReferenceImpl {
     }
     final PyQualifiedExpression element = CompletionUtil.getOriginalOrSelf(myElement);
 
-    PyType qualifierType = TypeEvalContext.userInitiated().getType(qualifier);
+    PyType qualifierType = TypeEvalContext.userInitiated(myElement.getContainingFile()).getType(qualifier);
     ProcessingContext ctx = new ProcessingContext();
     final Set<String> namesAlready = new HashSet<String>();
     ctx.put(PyType.CTX_NAMES, namesAlready);

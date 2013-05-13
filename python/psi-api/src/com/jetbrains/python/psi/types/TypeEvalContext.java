@@ -58,8 +58,8 @@ public class TypeEvalContext {
    *
    * Should be used for code completion, go to definition, find usages, refactorings, documentation.
    */
-  public static TypeEvalContext userInitiated() {
-    return new TypeEvalContext(true, true, null);
+  public static TypeEvalContext userInitiated(@Nullable PsiFile origin) {
+    return new TypeEvalContext(true, true, origin);
   }
 
   /**
