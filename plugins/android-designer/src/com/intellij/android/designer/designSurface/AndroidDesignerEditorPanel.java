@@ -139,8 +139,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           myPSIChangeListener.activate();
           myPSIChangeListener.addRequest();
         }
-        else if (myProfileLastVersion != myProfileAction.getVersion() ||
-                 !ProfileManager.isAndroidSdk(myProfileAction.getCurrentSdk())) {
+        else if (myProfileLastVersion != myProfileAction.getVersion() || !ProfileManager.isAndroidSdk(myProfileAction.getCurrentSdk())) {
           myPSIChangeListener.addRequest(new Runnable() {
             @Override
             public void run() {
@@ -233,8 +232,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         newRootComponent.setClientProperty(ModelParser.MODULE_KEY, AndroidDesignerEditorPanel.this);
         newRootComponent.setClientProperty(TreeComponentDecorator.KEY, myTreeDecorator);
 
-        PropertyParser propertyParser =
-          new PropertyParser(getModule(), myProfileAction.getProfileManager().getSelectedTarget());
+        PropertyParser propertyParser = new PropertyParser(getModule(), myProfileAction.getProfileManager().getSelectedTarget());
         newRootComponent.setClientProperty(PropertyParser.KEY, propertyParser);
         propertyParser.loadRecursive(newRootComponent);
 
@@ -337,18 +335,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
           RenderingResult result = null;
           if (myRendererLock.tryLock()) {
             try {
-              result = RenderUtil.renderLayout(getModule(),
-                                               layoutXmlText,
-                                               myFile,
-                                               null,
-                                               myLastTarget,
-                                               facet,
-                                               myLastRenderedConfiguration,
-                                               xdpi,
-                                               ydpi,
-                                               theme,
-                                               10000,
-                                               true);
+              result = RenderUtil
+                .renderLayout(getModule(), layoutXmlText, myFile, null, myLastTarget, facet, myLastRenderedConfiguration, xdpi, ydpi, theme,
+                              10000, true);
             }
             finally {
               myRendererLock.unlock();
@@ -425,8 +414,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       List<FixableMessageInfo> messages = new ArrayList<FixableMessageInfo>();
       for (FixableIssueMessage message : warnMessages) {
         messages.add(
-          new FixableMessageInfo(false, message.myBeforeLinkText, message.myLinkText, message.myAfterLinkText,
-                                 message.myQuickFix,
+          new FixableMessageInfo(false, message.myBeforeLinkText, message.myLinkText, message.myAfterLinkText, message.myQuickFix,
                                  message.myAdditionalFixes));
       }
       showWarnMessages(messages);
@@ -465,7 +453,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         myHorizontalCaption.update();
         myVerticalCaption.update();
 
-        DesignerToolWindowManager.getInstance(getProject()).refresh(updateProperties);
+        DesignerToolWindowManager.getInstance(AndroidDesignerEditorPanel.this).refresh(updateProperties);
       }
     });
   }
@@ -494,8 +482,9 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
       info.myShowStack = false;
 
       if (AndroidMavenUtil.isMavenizedModule(getModule())) {
-        info.myMessages.add(new FixableMessageInfo(true, AndroidBundle.message("android.maven.cannot.parse.android.sdk.error",
-                                                                               getModule().getName()), "", "", null, null));
+        info.myMessages.add(
+          new FixableMessageInfo(true, AndroidBundle.message("android.maven.cannot.parse.android.sdk.error", getModule().getName()), "", "",
+                                 null, null));
       }
       else {
         info.myMessages.add(new FixableMessageInfo(true, "Please ", "configure", " Android SDK", new Runnable() {
@@ -520,8 +509,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
     else if (((info.myThrowable instanceof ClassNotFoundException || info.myThrowable instanceof NoClassDefFoundError) &&
               myParseTime &&
               !info.myThrowable.toString().contains("jetbrains") &&
-              !info.myThrowable.toString().contains("intellij")) ||
-             info.myThrowable instanceof ProcessCanceledException) {
+              !info.myThrowable.toString().contains("intellij")) || info.myThrowable instanceof ProcessCanceledException) {
       info.myShowLog = false;
     }
     else {
@@ -728,7 +716,7 @@ public final class AndroidDesignerEditorPanel extends DesignerEditorPanel {
         activatePaletteItem(null);
       }
 
-      PaletteToolWindowManager.getInstance(getProject()).refresh();
+      PaletteToolWindowManager.getInstance(this).refresh();
     }
     catch (Throwable e) {
     }
