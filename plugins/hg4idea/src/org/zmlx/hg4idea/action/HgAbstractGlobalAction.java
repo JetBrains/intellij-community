@@ -15,6 +15,8 @@ package org.zmlx.hg4idea.action;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.MessageType;
+import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
 import org.zmlx.hg4idea.util.HgUtil;
@@ -22,6 +24,7 @@ import org.zmlx.hg4idea.util.HgUtil;
 import javax.swing.*;
 import java.lang.reflect.InvocationTargetException;
 import java.util.Collection;
+import java.util.List;
 
 abstract class HgAbstractGlobalAction extends AnAction {
   protected HgAbstractGlobalAction(Icon icon) {
@@ -41,7 +44,13 @@ abstract class HgAbstractGlobalAction extends AnAction {
     }
     VirtualFile file = event.getData(PlatformDataKeys.VIRTUAL_FILE);
     VirtualFile repo = file != null ? HgUtil.getHgRootOrNull(project, file) : null;
-    execute(project, HgUtil.getHgRepositories(project), repo);
+    List<VirtualFile> repos = HgUtil.getHgRepositories(project);
+    if (!repos.isEmpty()) {
+      execute(project, repos, repo);
+    }
+    else {
+      VcsBalloonProblemNotifier.showOverChangesView(project, "No Mercurial repositories in the project", MessageType.ERROR);
+    }
   }
 
   @Override
@@ -75,5 +84,4 @@ abstract class HgAbstractGlobalAction extends AnAction {
       handleException(project, e);
     }
   }
-
 }
