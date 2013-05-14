@@ -26,6 +26,7 @@ import com.intellij.ide.actions.CopyReferenceAction;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.MnemonicHelper;
 import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.application.ApplicationAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -159,7 +160,6 @@ public abstract class ChooseByNameBase {
 
   /**
    * @param initialText initial text which will be in the lookup text field
-   * @param context
    */
   protected ChooseByNameBase(Project project, @NotNull ChooseByNameModel model, String initialText, PsiElement context) {
     this(project, model, new DefaultChooseByNameItemProvider(context), initialText, 0);
@@ -172,7 +172,6 @@ public abstract class ChooseByNameBase {
 
   /**
    * @param initialText  initial text which will be in the lookup text field
-   * @param initialIndex
    */
   protected ChooseByNameBase(Project project,
                              @NotNull ChooseByNameModel model,
@@ -329,9 +328,7 @@ public abstract class ChooseByNameBase {
   }
 
   /**
-   * @param callback
    * @param modalityState          - if not null rebuilds list in given {@link ModalityState}
-   * @param allowMultipleSelection
    */
   protected void initUI(final ChooseByNamePopupComponent.Callback callback,
                         final ModalityState modalityState,
@@ -480,6 +477,7 @@ public abstract class ChooseByNameBase {
       myTextField.addFocusListener(new FocusAdapter() {
         @Override
         public void focusLost(@NotNull final FocusEvent e) {
+          cancelCalcElementsThread(); // cancel thread as early as possible
           myHideAlarm.addRequest(new Runnable() {
             @Override
             public void run() {
@@ -585,7 +583,7 @@ public abstract class ChooseByNameBase {
           case KeyEvent.VK_ENTER:
             if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += myListSizeIncreasing;
-              rebuildList(myList.getSelectedIndex(), myRebuildDelay, null, ModalityState.current());
+              rebuildList(myList.getSelectedIndex(), myRebuildDelay, ModalityState.current(), null);
               e.consume();
             }
             break;
@@ -628,7 +626,7 @@ public abstract class ChooseByNameBase {
           if (selectedCellBounds != null && selectedCellBounds.contains(e.getPoint())) { // Otherwise it was reselected in the selection listener
             if (myList.getSelectedValue() == EXTRA_ELEM) {
               myMaximumListSizeLimit += myListSizeIncreasing;
-              rebuildList(selectedIndex, myRebuildDelay, null, ModalityState.current());
+              rebuildList(selectedIndex, myRebuildDelay, ModalityState.current(), null);
             }
             else {
               doClose(true);
@@ -668,7 +666,7 @@ public abstract class ChooseByNameBase {
     showTextFieldPanel();
 
     if (modalityState != null) {
-      rebuildList(myInitialIndex, 0, null, modalityState);
+      rebuildList(myInitialIndex, 0, modalityState, null);
     }
   }
 
@@ -711,7 +709,7 @@ public abstract class ChooseByNameBase {
    */
   public void rebuildList(boolean initial) {
     // TODO this method is public, because the chooser does not listed for the model.
-    rebuildList(initial ? myInitialIndex : 0, myRebuildDelay, null, ModalityState.current());
+    rebuildList(initial ? myInitialIndex : 0, myRebuildDelay, ModalityState.current(), null);
   }
 
   private void updateDocPosition() {
@@ -868,6 +866,12 @@ public abstract class ChooseByNameBase {
         cancelCalcElementsThread();
       }
     });
+    ApplicationManager.getApplication().addApplicationListener(new ApplicationAdapter() {
+      @Override
+      public void beforeWriteActionStart(Object action) {
+        cancelCalcElementsThread();
+      }
+    }, myTextPopup);
     myTextPopup.show(layeredPane);
   }
 
@@ -895,8 +899,8 @@ public abstract class ChooseByNameBase {
 
   protected void rebuildList(final int pos,
                              final int delay,
-                             @Nullable final Runnable postRunnable,
-                             @NotNull final ModalityState modalityState) {
+                             @NotNull final ModalityState modalityState,
+                             @Nullable final Runnable postRunnable) {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myListIsUpToDate = false;
     myAlarm.cancelAllRequests();
@@ -1257,7 +1261,7 @@ public abstract class ChooseByNameBase {
             fillInCommonPrefix(pattern);
           }
         };
-        rebuildList(0, 0, postRunnable, ModalityState.current());
+        rebuildList(0, 0, ModalityState.current(), postRunnable);
         return;
       }
       if (backStroke != null && keyStroke.equals(backStroke)) {
@@ -1268,7 +1272,7 @@ public abstract class ChooseByNameBase {
           final Pair<String, Integer> last = myHistory.remove(myHistory.size() - 1);
           myTextField.setText(last.first);
           myFuture.add(Pair.create(oldText, oldPos));
-          rebuildList(0, 0, null, ModalityState.current());
+          rebuildList(0, 0, ModalityState.current(), null);
         }
         return;
       }
@@ -1280,7 +1284,7 @@ public abstract class ChooseByNameBase {
           final Pair<String, Integer> next = myFuture.remove(myFuture.size() - 1);
           myTextField.setText(next.first);
           myHistory.add(Pair.create(oldText, oldPos));
-          rebuildList(0, 0, null, ModalityState.current());
+          rebuildList(0, 0, ModalityState.current(), null);
         }
         return;
       }
@@ -1395,11 +1399,11 @@ public abstract class ChooseByNameBase {
     private final ProgressIndicator myCancelled = new ProgressIndicatorBase();
     private final boolean myCanCancel;
 
-    private CalcElementsThread(String pattern,
-                               boolean checkboxState,
-                               CalcElementsCallback callback,
-                               @NotNull ModalityState modalityState,
-                               boolean canCancel) {
+    CalcElementsThread(String pattern,
+                       boolean checkboxState,
+                       CalcElementsCallback callback,
+                       @NotNull ModalityState modalityState,
+                       boolean canCancel) {
       myPattern = pattern;
       myCheckboxState = checkboxState;
       myCallback = callback;
@@ -1680,11 +1684,9 @@ public abstract class ChooseByNameBase {
     private void showUsageView(@NotNull List<PsiElement> targets,
                                @NotNull List<Usage> usages,
                                @NotNull UsageViewPresentation presentation) {
-      UsageViewManager
-        .getInstance(myProject).showUsages(targets.isEmpty() ? UsageTarget.EMPTY_ARRAY
-                                                             : PsiElement2UsageTargetAdapter
-                                             .convert(PsiUtilCore.toPsiElementArray(targets)),
-                                           usages.toArray(new Usage[usages.size()]), presentation);
+      UsageTarget[] usageTargets = targets.isEmpty() ? UsageTarget.EMPTY_ARRAY :
+                                   PsiElement2UsageTargetAdapter.convert(PsiUtilCore.toPsiElementArray(targets));
+      UsageViewManager.getInstance(myProject).showUsages(usageTargets, usages.toArray(new Usage[usages.size()]), presentation);
     }
 
     @Override
