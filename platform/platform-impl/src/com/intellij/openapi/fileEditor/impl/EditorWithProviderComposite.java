@@ -17,6 +17,7 @@ package com.intellij.openapi.fileEditor.impl;
 
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.ex.AnActionListener;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.actionSystem.EditorAction;
 import com.intellij.openapi.editor.actionSystem.EditorWriteActionHandler;
@@ -39,7 +40,7 @@ import org.jetbrains.annotations.NotNull;
 public class EditorWithProviderComposite extends EditorComposite {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.fileEditor.impl.EditorWithProviderComposite");
   private final FileEditorProvider[] myProviders;
-  private boolean myIsNavigation = false;
+  private boolean myIsNavigation;
   private AnActionListener.Adapter myListener;
   private boolean myToMaterialize;
 
@@ -105,6 +106,9 @@ public class EditorWithProviderComposite extends EditorComposite {
 
   public void setForNavigation(boolean navigation) {
     myIsNavigation = navigation;
+    if (!ApplicationManager.getApplication().isDispatchThread()) {
+      return;
+    }
     EditorWindow window = ((FileEditorManagerEx)getFileEditorManager()).getSplitters().getNavigationEditorWindow();
     if (window != null) {
       int index = window.findEditorIndex(this);
