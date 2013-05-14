@@ -28,10 +28,8 @@ import org.zmlx.hg4idea.command.HgRevertCommand;
 import org.zmlx.hg4idea.command.HgWorkingCopyRevisionsCommand;
 import org.zmlx.hg4idea.util.HgUtil;
 
-import java.util.Collection;
-import java.util.LinkedList;
-import java.util.List;
-import java.util.Map;
+import java.io.File;
+import java.util.*;
 
 public class HgRollbackEnvironment implements RollbackEnvironment {
 
@@ -50,19 +48,40 @@ public class HgRollbackEnvironment implements RollbackEnvironment {
     if (changes == null || changes.isEmpty()) {
       return;
     }
+    List<FilePath> toDelete = new ArrayList<FilePath>();
     List<FilePath> filePaths = new LinkedList<FilePath>();
     for (Change change : changes) {
       ContentRevision contentRevision;
       if (Change.Type.DELETED == change.getType()) {
         contentRevision = change.getBeforeRevision();
-      } else {
+      }
+      else {
         contentRevision = change.getAfterRevision();
       }
       if (contentRevision != null) {
         filePaths.add(contentRevision.getFile());
+        if (Change.Type.MOVED == change.getType()) {
+          toDelete.add(contentRevision.getFile());
+        }
       }
     }
     revert(filePaths);
+    for (FilePath file : toDelete) {
+      listener.accept(file);
+      try {
+        final File ioFile = file.getIOFile();
+        if (ioFile.exists()) {
+          if (!ioFile.delete()) {
+            //noinspection ThrowableInstanceNeverThrown
+            vcsExceptions.add(new VcsException("Unable to delete file: " + file));
+          }
+        }
+      }
+      catch (Exception e) {
+        //noinspection ThrowableInstanceNeverThrown
+        vcsExceptions.add(new VcsException("Unable to delete file: " + file, e));
+      }
+    }
   }
 
   public void rollbackMissingFileDeletion(List<FilePath> files,
