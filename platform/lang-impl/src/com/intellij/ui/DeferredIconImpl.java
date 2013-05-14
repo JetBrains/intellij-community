@@ -24,10 +24,13 @@ import com.intellij.concurrency.JobLauncher;
 import com.intellij.openapi.application.ex.ApplicationManagerEx;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.project.IndexNotReadyException;
+import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.registry.Registry;
 import com.intellij.ui.tabs.impl.TabLabel;
 import com.intellij.util.Alarm;
 import com.intellij.util.Function;
+import com.intellij.util.Processor;
+import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.EmptyIcon;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -50,6 +53,13 @@ public class DeferredIconImpl<T> implements DeferredIcon {
   private boolean myDone;
 
   private IconListener<T> myEvalListener;
+  private static final TransferToEDTQueue<Runnable> ourLaterInvocator = new TransferToEDTQueue<Runnable>("Deferred icon later invocator", new Processor<Runnable>() {
+    @Override
+    public boolean process(Runnable runnable) {
+      runnable.run();
+      return true;
+    }
+  }, Condition.FALSE, 200);
 
   public DeferredIconImpl(Icon baseIcon, T param, @NotNull Function<T, Icon> evaluator) {
     this(baseIcon, param, true, evaluator);
@@ -121,8 +131,7 @@ public class DeferredIconImpl<T> implements DeferredIcon {
         final boolean shouldRevalidate =
           Registry.is("ide.tree.deferred.icon.invalidates.cache") && myDelegateIcon.getIconWidth() != oldWidth;
 
-        //noinspection SSBasedInspection
-        SwingUtilities.invokeLater(new Runnable() {
+        ourLaterInvocator.offer(new Runnable() {
           @Override
           public void run() {
             setDone(result);
