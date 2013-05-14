@@ -15,29 +15,33 @@
  */
 package org.jetbrains.idea.maven.execution;
 
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileTypes.PlainTextFileType;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.ComboBox;
 import com.intellij.openapi.ui.DialogWrapper;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.*;
+import com.intellij.openapi.ui.FixedSizeButton;
+import com.intellij.openapi.ui.TextFieldWithBrowseButton;
+import com.intellij.ui.EditorComboBoxEditor;
+import com.intellij.ui.EditorComboBoxRenderer;
+import com.intellij.ui.EditorTextField;
+import com.intellij.ui.StringComboboxEditor;
+import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenProjectNamer;
 
 import javax.swing.*;
-import java.util.*;
-import java.util.List;
 
 public class MavenExecuteGoalDialog extends DialogWrapper {
 
   private final Project myProject;
 
   private JPanel contentPane;
-  private JComboBox myModuleComboBox;
   private ComboBox myGoalsComboBox;
+  private FixedSizeButton showProjectTreeButton;
+  private TextFieldWithBrowseButton pomXmlTextField;
 
   public MavenExecuteGoalDialog(@NotNull Project project) {
     super(project, true);
@@ -67,37 +71,13 @@ public class MavenExecuteGoalDialog extends DialogWrapper {
     // Configure Module ComboBox
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
 
-    List<MavenProject> mavenProjects = projectsManager.getProjects();
-
-    final Map<MavenProject, String> nameMap = MavenProjectNamer.generateNameMap(mavenProjects);
-    final Map<MavenProject, Integer> projectTreeMap = MavenProjectNamer.buildProjectTree(projectsManager);
-
-    myModuleComboBox.setModel(new CollectionComboBoxModel(new ArrayList<MavenProject>(projectTreeMap.keySet())));
-
-    myModuleComboBox.setRenderer(new ListCellRendererWrapper<MavenProject>() {
+    showProjectTreeButton.setIcon(AllIcons.Actions.Module);
+    MavenSelectProjectPopup.attachToButton(showProjectTreeButton, projectsManager, new Consumer<MavenProject>() {
       @Override
-      public void customize(JList list, MavenProject value, int index, boolean selected, boolean hasFocus) {
-        String text = nameMap.get(value);
-
-        Integer deep = projectTreeMap.get(value);
-
-        if (deep != null && deep > 0) {
-          text = StringUtil.repeat("  ", deep) + text;
-        }
-
-        setText(text);
+      public void consume(MavenProject project) {
+        pomXmlTextField.setText(project.getPath());
       }
     });
-    new ComboboxSpeedSearch(myModuleComboBox){
-      protected String getElementText(Object element) {
-        String name = nameMap.get((MavenProject)element);
-        if (name != null) return name;
-
-        if (element == null) return "";
-
-        return ((MavenProject)element).getMavenId().toString();
-      }
-    }.setComparator(new SpeedSearchComparator(false, false));
   }
 
   @NotNull
@@ -109,19 +89,13 @@ public class MavenExecuteGoalDialog extends DialogWrapper {
     myGoalsComboBox.setSelectedItem(goals);
   }
 
-  @Nullable
-  public MavenProject getSelectedMavenProject() {
-    return (MavenProject)myModuleComboBox.getSelectedItem();
+  @NotNull
+  public String getPomXmlPath() {
+    return pomXmlTextField.getText();
   }
 
   public void setSelectedMavenProject(@Nullable MavenProject mavenProject) {
-    CollectionComboBoxModel model = (CollectionComboBoxModel)myModuleComboBox.getModel();
-
-    //if (!model.contains(null)) {
-    //  model.
-    //}
-
-    myModuleComboBox.setSelectedItem(mavenProject);
+    pomXmlTextField.setText(mavenProject == null ? "" : mavenProject.getPath());
   }
 
   protected JComponent createCenterPanel() {
