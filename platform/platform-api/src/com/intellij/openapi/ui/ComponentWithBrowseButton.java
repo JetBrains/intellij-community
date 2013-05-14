@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -27,6 +27,8 @@ import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.SystemInfo;
+import com.intellij.openapi.util.io.FileUtil;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.LocalFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.UIBundle;
@@ -41,7 +43,6 @@ import java.awt.*;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.io.File;
 import java.util.List;
 
 public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel implements Disposable {
@@ -122,7 +123,7 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
   }
 
   public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener) {
-    addBrowseFolderListener(project, actionListener, true);  
+    addBrowseFolderListener(project, actionListener, true);
   }
 
   public void addBrowseFolderListener(@Nullable Project project, final BrowseFolderActionListener<Comp> actionListener, boolean autoRemoveOnHide) {
@@ -211,8 +212,11 @@ public class ComponentWithBrowseButton<Comp extends JComponent> extends JPanel i
     @Nullable
     protected VirtualFile getInitialFile() {
       String directoryName = getComponentText();
-      if (directoryName.length() == 0) return null;
-      directoryName = directoryName.replace(File.separatorChar, '/');
+      if (StringUtil.isEmptyOrSpaces(directoryName) || directoryName == null) {
+        return null;
+      }
+
+      directoryName = FileUtil.toSystemIndependentName(directoryName);
       VirtualFile path = LocalFileSystem.getInstance().findFileByPath(directoryName);
       while (path == null && directoryName.length() > 0) {
         int pos = directoryName.lastIndexOf('/');

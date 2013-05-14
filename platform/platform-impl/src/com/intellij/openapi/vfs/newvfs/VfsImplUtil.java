@@ -26,7 +26,7 @@ import java.io.File;
 
 public class VfsImplUtil {
   private static final Logger LOG = Logger.getInstance("#com.intellij.openapi.vfs.newvfs.VfsImplUtil");
-  
+
   @NonNls private static final String FILE_SEPARATORS = "/" + File.separator;
 
   private VfsImplUtil() { }
@@ -123,13 +123,13 @@ public class VfsImplUtil {
   @Nullable
   private static Pair<NewVirtualFile, Iterable<String>> prepare(@NotNull NewVirtualFileSystem vfs, @NotNull String path) {
     String normalizedPath = normalize(vfs, path);
-    if (normalizedPath == null) {
+    if (StringUtil.isEmptyOrSpaces(normalizedPath) || normalizedPath == null) {
       return null;
     }
 
     String basePath = vfs.extractRootPath(normalizedPath);
     if (basePath.length() > normalizedPath.length()) {
-      LOG.error(vfs + " failed to extract root path '" + basePath + "' from '" + normalizedPath + "'");
+      LOG.error(vfs + " failed to extract root path '" + basePath + "' from '" + normalizedPath + "' (original '" + path + "')");
       return null;
     }
 
