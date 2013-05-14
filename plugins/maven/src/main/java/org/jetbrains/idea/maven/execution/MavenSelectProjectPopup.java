@@ -96,6 +96,7 @@ public class MavenSelectProjectPopup {
 
         JBPopup popup = new PopupChooserBuilder(projectTree)
           .setTitle("Select maven module")
+          .setResizable(true)
           .setItemChoosenCallback(clickCallBack).setAutoselectOnMouseMove(true)
           .setCloseOnEnter(false)
           .createPopup();
