@@ -47,7 +47,7 @@ public class GrStubUtils {
   public static final int TOO_LONG = -1;
 
   public static void writeStringArray(StubOutputStream dataStream, String[] array) throws IOException {
-    if (array.length >= Byte.MAX_VALUE) {
+    if (array.length > Byte.MAX_VALUE) {
       dataStream.writeByte(TOO_LONG);
       dataStream.writeInt(array.length);
     }
