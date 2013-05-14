@@ -18,7 +18,6 @@ package com.intellij.openapi.wm.impl;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
 import com.intellij.openapi.Disposable;
-import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Splitter;
@@ -113,7 +112,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
     myHorizontalSplitter.setDividerWidth(0);
     myHorizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
     myHorizontalSplitter.setBackground(Color.gray);
-    if (ApplicationManager.getApplication().isInternal() || Registry.is("ide.windowSystem.supportWidescreen", false)) {
+    if (/*ApplicationManager.getApplication().isInternal() ||*/ Registry.is("ide.windowSystem.supportWidescreen", false)) {
       Rectangle mainScreenBounds = ScreenUtil.getMainScreenBounds();
       if (!mainScreenBounds.isEmpty() && ((double)mainScreenBounds.width/ mainScreenBounds.height) > 1.34) {
         myWidescreen = true;
