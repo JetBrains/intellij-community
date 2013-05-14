@@ -15,6 +15,7 @@
  */
 package com.intellij.designer.palette;
 
+import com.intellij.designer.LightToolWindowContent;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.application.ApplicationManager;
@@ -41,7 +42,7 @@ import java.util.List;
 /**
  * @author Alexander Lobas
  */
-public class PalettePanel extends JPanel implements DataProvider {
+public class PalettePanel extends JPanel implements DataProvider, LightToolWindowContent {
   private final JPanel myPaletteContainer = new PaletteContainer();
   private List<PaletteGroupComponent> myGroupComponents = Collections.emptyList();
   private List<PaletteItemsComponent> myItemsComponents = Collections.emptyList();
@@ -95,6 +96,7 @@ public class PalettePanel extends JPanel implements DataProvider {
     }
   }
 
+  @Override
   public void dispose() {
     if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
       DragSource.getDefaultDragSource().removeDragSourceListener(myDragSourceListener);
@@ -121,6 +123,10 @@ public class PalettePanel extends JPanel implements DataProvider {
       }
       notifySelection(null);
     }
+  }
+
+  public void refresh() {
+    repaint();
   }
 
   public boolean isEmpty() {

@@ -81,10 +81,10 @@ public final class InternalDecorator extends JPanel implements Queryable, TypeSa
   private final ToolWindowHandler myToolWindowHandler;
   private final MyKeymapManagerListener myWeakKeymapManagerListener;
   @NonNls private static final String HIDE_ACTIVE_WINDOW_ACTION_ID = "HideActiveWindow";
-  @NonNls private static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
-  @NonNls private static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
-  @NonNls private static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
-  @NonNls private static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
+  @NonNls public static final String TOGGLE_PINNED_MODE_ACTION_ID = "TogglePinnedMode";
+  @NonNls public static final String TOGGLE_DOCK_MODE_ACTION_ID = "ToggleDockMode";
+  @NonNls public static final String TOGGLE_FLOATING_MODE_ACTION_ID = "ToggleFloatingMode";
+  @NonNls public static final String TOGGLE_SIDE_MODE_ACTION_ID = "ToggleSideMode";
   @NonNls private static final String TOGGLE_CONTENT_UI_TYPE_ACTION_ID = "ToggleContentUiTypeMode";
   
   private ToolWindowHeader myHeader;
