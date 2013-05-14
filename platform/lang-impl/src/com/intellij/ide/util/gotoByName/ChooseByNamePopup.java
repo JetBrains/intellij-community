@@ -91,7 +91,7 @@ public class ChooseByNamePopup extends ChooseByNameBase implements ChooseByNameP
       if (selEnd > selStart) {
         myTextField.select(selStart, selEnd);
       }
-      rebuildList(myInitialIndex, 0, null, ModalityState.current());
+      rebuildList(myInitialIndex, 0, ModalityState.current(), null);
     }
     if (myOldFocusOwner != null) {
       myPreviouslyFocusedComponent = myOldFocusOwner;
