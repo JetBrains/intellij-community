@@ -95,7 +95,7 @@ public class MavenSelectProjectPopup {
         };
 
         JBPopup popup = new PopupChooserBuilder(projectTree)
-          .setTitle("Select maven project")
+          .setTitle("Select maven module")
           .setItemChoosenCallback(clickCallBack).setAutoselectOnMouseMove(true)
           .setCloseOnEnter(false)
           .createPopup();
