@@ -45,29 +45,37 @@ public class PythonHighlightingLexer extends PythonLexer {
 
   @Override
   public IElementType getTokenType() {
-    final String tokenText = getTokenText();
-    IElementType tokenType = super.getTokenType();
-    if (PyTokenTypes.STRING_NODES.contains(tokenType))
-      return convertStringType(tokenType, tokenText);
+    final IElementType tokenType = super.getTokenType();
 
-    if (myLanguageLevel.hasWithStatement()) {
-      if (tokenText.equals("with")) return PyTokenTypes.WITH_KEYWORD;
-      if (tokenText.equals("as")) return PyTokenTypes.AS_KEYWORD;
+    if (PyTokenTypes.STRING_NODES.contains(tokenType)) {
+      return convertStringType(tokenType, getTokenText());
     }
-    if (myLanguageLevel.hasPrintStatement()) {
-      if (tokenText.equals("print")) return PyTokenTypes.PRINT_KEYWORD;
+
+    if (tokenType == PyTokenTypes.IDENTIFIER) {
+      final String tokenText = getTokenText();
+
+      if (myLanguageLevel.hasWithStatement()) {
+        if (tokenText.equals("with")) return PyTokenTypes.WITH_KEYWORD;
+        if (tokenText.equals("as")) return PyTokenTypes.AS_KEYWORD;
+      }
+
+      if (myLanguageLevel.hasPrintStatement()) {
+        if (tokenText.equals("print")) return PyTokenTypes.PRINT_KEYWORD;
+      }
+
+      if (myLanguageLevel.isPy3K()) {
+        if (tokenText.equals("None")) return PyTokenTypes.NONE_KEYWORD;
+        if (tokenText.equals("True")) return PyTokenTypes.TRUE_KEYWORD;
+        if (tokenText.equals("False")) return PyTokenTypes.FALSE_KEYWORD;
+        if (tokenText.equals("nonlocal")) return PyTokenTypes.NONLOCAL_KEYWORD;
+        if (tokenText.equals("__debug__")) return PyTokenTypes.DEBUG_KEYWORD;
+      }
+      else if (tokenText.equals("exec")) {
+        return PyTokenTypes.EXEC_KEYWORD;
+      }
     }
-    if (myLanguageLevel.isPy3K()) {
-      if (tokenText.equals("None")) return PyTokenTypes.NONE_KEYWORD;
-      if (tokenText.equals("True")) return PyTokenTypes.TRUE_KEYWORD;
-      if (tokenText.equals("False")) return PyTokenTypes.FALSE_KEYWORD;
-      if (tokenText.equals("nonlocal")) return PyTokenTypes.NONLOCAL_KEYWORD;
-      if (tokenText.equals("__debug__")) return PyTokenTypes.DEBUG_KEYWORD;
-    }
-    else {
-      if (tokenText.equals("exec")) return PyTokenTypes.EXEC_KEYWORD;
-    }
-    return super.getTokenType();
+
+    return tokenType;
   }
 
   private enum state {
@@ -87,7 +95,6 @@ public class PythonHighlightingLexer extends PythonLexer {
   @Override
   public void advance() {
     IElementType type = super.getTokenType();
-    String tokenText = super.getTokenText();
     switch (myState) {
       case init:
         if (type == PyTokenTypes.BACKSLASH) break;
@@ -101,7 +108,7 @@ public class PythonHighlightingLexer extends PythonLexer {
       case pending_future:
         if (type == PyTokenTypes.BACKSLASH) break;
         if (PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(type)) break;
-        if (type == PyTokenTypes.IDENTIFIER && PyNames.FUTURE_MODULE.equals(tokenText))
+        if (type == PyTokenTypes.IDENTIFIER && PyNames.FUTURE_MODULE.equals(super.getTokenText()))
           myState = state.pending_import;
         else myState = state.stop;
         break;
@@ -123,7 +130,7 @@ public class PythonHighlightingLexer extends PythonLexer {
         if (PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(type)) break;
         if (type == PyTokenTypes.IDENTIFIER) {
           myState = state.pending_comma;
-          if (PyNames.UNICODE_LITERALS.equals(tokenText)) {
+          if (PyNames.UNICODE_LITERALS.equals(super.getTokenText())) {
             hasUnicodeImport = true;
             myImportOffset = getTokenEnd();
           }
@@ -137,6 +144,8 @@ public class PythonHighlightingLexer extends PythonLexer {
         if (PyTokenTypes.WHITESPACE_OR_LINEBREAK.contains(type)) break;
         if (type == PyTokenTypes.COMMA)
           myState = state.pending_id;
+        break;
+      case stop:
         break;
     }
     super.advance();
