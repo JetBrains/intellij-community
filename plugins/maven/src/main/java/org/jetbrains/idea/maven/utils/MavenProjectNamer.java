@@ -83,15 +83,15 @@ public class MavenProjectNamer {
     return true;
   }
 
-  private static void doBuildProjectTree(MavenProjectsManager manager, Map<MavenProject, Integer> res, List<MavenProject> rootProjects, int deep) {
+  private static void doBuildProjectTree(MavenProjectsManager manager, Map<MavenProject, Integer> res, List<MavenProject> rootProjects, int depth) {
     MavenProject[] rootProjectArray = rootProjects.toArray(new MavenProject[rootProjects.size()]);
     Arrays.sort(rootProjectArray, new MavenProjectComparator());
 
     for (MavenProject project : rootProjectArray) {
       if (!res.containsKey(project)) {
-        res.put(project, deep);
+        res.put(project, depth);
 
-        doBuildProjectTree(manager, res, manager.getModules(project), deep + 1);
+        doBuildProjectTree(manager, res, manager.getModules(project), depth + 1);
       }
     }
   }
