@@ -222,6 +222,13 @@ public class IdeMenuBar extends JMenuBar {
 
   private void setState(@NotNull State state) {
     myState = state;
+    if (myState == State.EXPANDING && myActivationWatcher != null && !myActivationWatcher.isRunning()) {
+      myActivationWatcher.start();
+    } else if (myActivationWatcher != null && myActivationWatcher.isRunning()) {
+      if (state == State.EXPANDED || state == State.COLLAPSED) {
+        myActivationWatcher.stop();
+      }
+    }
   }
 
   @Override
