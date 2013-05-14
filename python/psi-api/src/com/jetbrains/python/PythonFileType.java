@@ -11,11 +11,13 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.io.BufferedReader;
+import java.io.IOException;
+import java.io.StringReader;
 import java.nio.ByteBuffer;
 import java.nio.charset.Charset;
 import java.nio.charset.IllegalCharsetNameException;
 import java.nio.charset.UnsupportedCharsetException;
-import java.util.List;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
@@ -84,19 +86,28 @@ public class PythonFileType extends LanguageFileType {
 
   @Nullable
   public static String getCharsetFromEncodingDeclaration(String content) {
-    if (!content.contains("coding")) {
+    if (content == null || content.isEmpty()) {
       return null;
     }
-    final List<String> lines = StringUtil.split(content, "\n");
-    int count = 0;
-    for (String line : lines) {
-      final Matcher matcher = ENCODING_PATTERN.matcher(line);
-      if (matcher.find()) {
-        final String charset = matcher.group(1);
-        return normalizeCharset(charset);
+    try {
+      final BufferedReader reader = new BufferedReader(new StringReader(content));
+      try {
+        for (int i = 0; i < 2; i++) {
+          final String line = reader.readLine();
+          if (line == null) {
+            return null;
+          }
+          final Matcher matcher = ENCODING_PATTERN.matcher(line);
+          if (matcher.find()) {
+            final String charset = matcher.group(1);
+            return normalizeCharset(charset);
+          }
+        }
+      } finally {
+        reader.close();
       }
-      count++;
-      if (count == 2) break;
+    }
+    catch (IOException ignored) {
     }
     return null;
   }
