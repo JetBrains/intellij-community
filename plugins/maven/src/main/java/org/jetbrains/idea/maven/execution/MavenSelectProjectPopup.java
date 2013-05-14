@@ -19,8 +19,10 @@ import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Ref;
+import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
+import com.intellij.util.containers.Convertor;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -54,7 +56,7 @@ public class MavenSelectProjectPopup {
 
         final Map<MavenProject, String> projectsNameMap = MavenProjectNamer.generateNameMap(projectList);
 
-        final JTree projectTree = new Tree(root);
+        final Tree projectTree = new Tree(root);
         projectTree.setRootVisible(false);
         projectTree.setCellRenderer(new NodeRenderer() {
           @Override
@@ -71,6 +73,19 @@ public class MavenSelectProjectPopup {
             }
 
             super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
+          }
+        });
+
+        new TreeSpeedSearch(projectTree, new Convertor<TreePath, String>() {
+          @Override
+          public String convert(TreePath o) {
+            Object lastPathComponent = o.getLastPathComponent();
+            if (!(lastPathComponent instanceof DefaultMutableTreeNode)) return null;
+
+            Object userObject = ((DefaultMutableTreeNode)lastPathComponent).getUserObject();
+
+            //noinspection SuspiciousMethodCalls
+            return projectsNameMap.get(userObject);
           }
         });
 
