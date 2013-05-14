@@ -45,12 +45,14 @@ import com.intellij.psi.util.MethodSignature;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.psi.util.TypeConversionUtil;
+import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.SmartList;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.List;
 import java.util.Map;
 
@@ -356,12 +358,21 @@ public class PsiMethodReferenceExpressionImpl extends PsiReferenceExpressionBase
                                                                  PsiSubstitutor substitutor,
                                                                  LanguageLevel languageLevel) {
       if (signature == null) return PsiSubstitutor.EMPTY;
-      final PsiType[] types = method.getSignature(PsiUtil.isRawSubstitutor(method, substitutor) ? PsiSubstitutor.EMPTY : substitutor).getParameterTypes();
-      final PsiType[] rightTypes = signature.getParameterTypes();
-      if (types.length < rightTypes.length) {
-        return getSubstitutor(rightTypes[0]);
-      } else if (types.length > rightTypes.length) {
-        return getSubstitutor(types[0]);
+      PsiType[] types = method.getSignature(PsiUtil.isRawSubstitutor(method, substitutor) ? PsiSubstitutor.EMPTY : substitutor).getParameterTypes();
+      PsiType[] rightTypes = signature.getParameterTypes();
+      if (!method.isVarArgs() || types.length == 0) {
+        if (types.length < rightTypes.length) {
+          return getSubstitutor(rightTypes[0]);
+        } else if (types.length > rightTypes.length) {
+          return getSubstitutor(types[0]);
+        }
+      } else {
+        if (rightTypes.length != types.length || rightTypes[rightTypes.length - 1].getArrayDimensions() != types[types.length-1].getArrayDimensions()) {
+          types[types.length - 1] = ((PsiArrayType)types[types.length - 1]).getComponentType();
+          int min = Math.min(types.length, rightTypes.length);
+          types = Arrays.copyOf(types, min);
+          rightTypes = Arrays.copyOf(rightTypes, min);
+        }
       }
 
       for (int i = 0; i < rightTypes.length; i++) {
