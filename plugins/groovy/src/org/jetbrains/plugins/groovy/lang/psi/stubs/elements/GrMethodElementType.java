@@ -53,8 +53,7 @@ public abstract class GrMethodElementType extends GrStubElementType<GrMethodStub
   public void serialize(@NotNull GrMethodStub stub, @NotNull StubOutputStream dataStream) throws IOException {
     dataStream.writeName(stub.getName());
     GrStubUtils.writeStringArray(dataStream, stub.getAnnotations());
-    final String[] namedParameters = stub.getNamedParameters();
-    GrStubUtils.writeStringArray(dataStream, namedParameters.length <= Byte.MAX_VALUE ? namedParameters : ArrayUtil.EMPTY_STRING_ARRAY);
+    GrStubUtils.writeStringArray(dataStream, stub.getNamedParameters());
     GrStubUtils.writeNullableString(dataStream, stub.getTypeText());
     dataStream.writeByte(stub.getFlags());
   }
