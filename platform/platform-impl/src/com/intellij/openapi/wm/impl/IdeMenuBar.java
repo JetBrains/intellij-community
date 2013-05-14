@@ -267,18 +267,11 @@ public class IdeMenuBar extends JMenuBar {
     };
     UISettings.getInstance().addUISettingsListener(UISettingsListener, myDisposable);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
-
-    if (myActivationWatcher != null) {
-      myActivationWatcher.start();
-    }
   }
 
   @Override
   public void removeNotify() {
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      if (myActivationWatcher != null) {
-        myActivationWatcher.stop();
-      }
       if (myAnimator != null) {
         myAnimator.suspend();
       }
