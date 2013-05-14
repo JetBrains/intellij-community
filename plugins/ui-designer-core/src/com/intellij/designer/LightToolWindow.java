@@ -111,7 +111,7 @@ public class LightToolWindow extends JPanel {
     header.add(titleLabel, BorderLayout.CENTER);
 
     JPanel actionPanel = new JPanel(new FlowLayout(FlowLayout.CENTER, 5, 0));
-    actionPanel.setBorder(IdeBorderFactory.createEmptyBorder(2, 0, 2, 0));
+    actionPanel.setBorder(IdeBorderFactory.createEmptyBorder(3, 0, 2, 0));
     actionPanel.setOpaque(false);
     header.add(actionPanel, BorderLayout.EAST);
 
@@ -327,11 +327,11 @@ public class LightToolWindow extends JPanel {
       presentation.setText(UIBundle.message("tool.window.hide.action.name"));
       if (myStyle == SideBorder.LEFT) {
         presentation.setIcon(AllIcons.General.HideLeftPart);
-        presentation.setHoveredIcon(AllIcons.General.HideLeftHover);
+        presentation.setHoveredIcon(AllIcons.General.HideLeftPartHover);
       }
       else {
         presentation.setIcon(AllIcons.General.HideRightPart);
-        presentation.setHoveredIcon(AllIcons.General.HideRightHover);
+        presentation.setHoveredIcon(AllIcons.General.HideRightPartHover);
       }
     }
 
@@ -484,8 +484,7 @@ public class LightToolWindow extends JPanel {
       return new Dimension(size.width, TabsUtil.getTabsHeight());
     }
 
-    @Override
-    protected void paintComponent(Graphics g) {
+    protected void _paintComponent(Graphics g) { // XXX: visual artifacts on linux
       Rectangle r = getBounds();
 
       Image image;
