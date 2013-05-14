@@ -23,6 +23,7 @@ import com.intellij.ui.TreeSpeedSearch;
 import com.intellij.ui.treeStructure.Tree;
 import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
+import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
@@ -70,6 +71,7 @@ public class MavenSelectProjectPopup {
             if (value instanceof DefaultMutableTreeNode) {
               MavenProject mavenProject = (MavenProject)((DefaultMutableTreeNode)value).getUserObject();
               value = projectsNameMap.get(mavenProject);
+              setIcon(MavenIcons.MavenProject);
             }
 
             super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
