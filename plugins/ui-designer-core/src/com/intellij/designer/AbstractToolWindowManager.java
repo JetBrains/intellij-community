@@ -78,19 +78,16 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
     }
   };
 
-  private final int myStyle;
-
   //////////////////////////////////////////////////////////////////////////////////////////
   //
   // ToolWindow
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
-  protected AbstractToolWindowManager(Project project, FileEditorManager fileEditorManager, int style) {
+  protected AbstractToolWindowManager(Project project, FileEditorManager fileEditorManager) {
     myProject = project;
     myFileEditorManager = fileEditorManager;
     myPropertiesComponent = PropertiesComponent.getInstance(myProject);
-    myStyle = style;
   }
 
   @Override
@@ -237,19 +234,19 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
   protected final LightToolWindow createContent(DesignerEditorPanel designer,
                                                 LightToolWindowContent content,
                                                 String title,
-                                                String title2, Icon icon,
+                                                Icon icon,
                                                 JComponent component,
                                                 JComponent focusedComponent,
+                                                int style,
                                                 int defaultWidth,
                                                 AnAction[] actions) {
     return new LightToolWindow(content,
                                title,
-                               title2,
                                icon,
                                component,
                                focusedComponent,
                                designer.getContentSplitter(),
-                               myStyle,
+                               style,
                                this,
                                myProject,
                                myPropertiesComponent,

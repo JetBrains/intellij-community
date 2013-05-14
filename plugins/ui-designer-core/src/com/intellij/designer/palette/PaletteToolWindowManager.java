@@ -43,7 +43,7 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   public PaletteToolWindowManager(Project project, FileEditorManager fileEditorManager) {
-    super(project, fileEditorManager, SideBorder.RIGHT);
+    super(project, fileEditorManager);
   }
 
   public static PalettePanel getInstance(DesignerEditorPanel designer) {
@@ -72,20 +72,17 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
     return createContent(designer,
                          palettePanel,
                          "Palette",
-                         "Palette            ",
                          AllIcons.Toolwindows.ToolWindowPalette,
                          palettePanel,
                          palettePanel,
+                         getAnchor() == ToolWindowAnchor.LEFT ? SideBorder.LEFT : SideBorder.RIGHT,
                          180,
                          null);
   }
 
   @Override
   protected void initToolWindow() {
-    DesignerCustomizations customization = getCustomizations();
-    ToolWindowAnchor anchor = customization != null ? customization.getPaletteAnchor() : ToolWindowAnchor.RIGHT;
-
-    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette\t", false, anchor, myProject, true);
+    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette\t", false, getAnchor(), myProject, true);
     myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowPalette);
     initGearActions();
 
@@ -96,6 +93,11 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
     contentManager.addContent(content);
     contentManager.setSelectedContent(content, true);
     myToolWindow.setAvailable(false, null);
+  }
+
+  private static ToolWindowAnchor getAnchor() {
+    DesignerCustomizations customization = getCustomizations();
+    return customization != null ? customization.getPaletteAnchor() : ToolWindowAnchor.RIGHT;
   }
 
   @Override
