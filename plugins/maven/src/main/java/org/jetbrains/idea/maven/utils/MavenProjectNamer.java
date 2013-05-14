@@ -33,11 +33,11 @@ public class MavenProjectNamer {
       if (projectList.size() == 1) {
         res.put(projectList.get(0), artifactId);
       }
-      else if (allGroupsIsDifferent(projectList)) {
+      else if (allGroupsAreDifferent(projectList)) {
         for (MavenProject mavenProject : projectList) {
           res.put(mavenProject, mavenProject.getMavenId().getGroupId() + ':' + mavenProject.getMavenId().getArtifactId());
         }
-      } else if (allGroupsEquals(mavenProjects)) {
+      } else if (allGroupsEqual(mavenProjects)) {
         for (MavenProject mavenProject : projectList) {
           res.put(mavenProject, mavenProject.getMavenId().getArtifactId() + ':' + mavenProject.getMavenId().getVersion());
         }
@@ -53,7 +53,7 @@ public class MavenProjectNamer {
     return res;
   }
 
-  private static boolean allGroupsEquals(Collection<MavenProject> mavenProjects) {
+  private static boolean allGroupsEqual(Collection<MavenProject> mavenProjects) {
     Iterator<MavenProject> itr = mavenProjects.iterator();
 
     if (!itr.hasNext()) return true;
@@ -71,7 +71,7 @@ public class MavenProjectNamer {
     return true;
   }
 
-  private static boolean allGroupsIsDifferent(Collection<MavenProject> mavenProjects) {
+  private static boolean allGroupsAreDifferent(Collection<MavenProject> mavenProjects) {
     Set<String> exitingGroups = new THashSet<String>();
 
     for (MavenProject mavenProject : mavenProjects) {
