@@ -18,6 +18,10 @@
       <keyboard-shortcut first-keystroke="shift BACK_SPACE"/>
     </action>
 
+    <action id="MaterializeTab">
+      <keyboard-shortcut first-keystroke="control X" second-keystroke="M"/>
+    </action>
+
     <action id="NextSplitter">
       <keyboard-shortcut first-keystroke="alt TAB"/>
     </action>

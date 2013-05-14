@@ -904,6 +904,9 @@
     <keyboard-shortcut first-keystroke="ctrl TAB"/>
     <keyboard-shortcut first-keystroke="ctrl shift TAB"/>
   </action>
+  <action id="MaterializeTab">
+    <keyboard-shortcut first-keystroke="control X" second-keystroke="M"/>
+  </action>
   <action id="NextProjectWindow">
     <keyboard-shortcut first-keystroke="control alt CLOSE_BRACKET"/>
   </action>
