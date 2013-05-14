@@ -19,7 +19,6 @@ import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.configurations.ParametersList;
 import com.intellij.icons.AllIcons;
-import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
@@ -27,14 +26,11 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
-import com.intellij.openapi.ui.popup.JBPopup;
-import com.intellij.openapi.ui.popup.PopupChooserBuilder;
-import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.ui.treeStructure.Tree;
+import com.intellij.util.Consumer;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NonNls;
@@ -43,17 +39,11 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-import org.jetbrains.idea.maven.utils.MavenProjectNamer;
 import org.jetbrains.idea.maven.utils.Strings;
 
 import javax.swing.*;
-import javax.swing.tree.DefaultMutableTreeNode;
-import javax.swing.tree.TreePath;
-import java.awt.*;
-import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
-import java.util.*;
-import java.util.List;
+import java.util.LinkedHashMap;
+import java.util.Map;
 
 /**
  * @author Vladislav.Kaznacheev
@@ -65,7 +55,7 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
   private LabeledComponent<EditorTextField> profilesComponent;
   private JBLabel myFakeLabel;
   private JCheckBox myResolveToWorkspaceCheckBox;
-  private JPanel myWorkingDirectoryPanel;
+  private FixedSizeButton showProjectTreeButton;
   private JComponent anchor;
 
   public MavenRunnerParametersConfigurable(@NotNull final Project project) {
@@ -105,102 +95,16 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
       goalsComponent.setComponent(new MavenArgumentsCompletionProvider(project).createEditor(project));
     }
 
-    createShowProjectTreeButton(project);
-
-    setAnchor(profilesComponent.getLabel());
-  }
-
-  private void createShowProjectTreeButton(final Project project) {
-    final FixedSizeButton showProjectTreeButton = new FixedSizeButton();
     showProjectTreeButton.setIcon(AllIcons.Actions.Module);
 
-    showProjectTreeButton.addActionListener(new ActionListener() {
+    MavenSelectProjectPopup.attachToButton(showProjectTreeButton, MavenProjectsManager.getInstance(project), new Consumer<MavenProject>() {
       @Override
-      public void actionPerformed(ActionEvent e) {
-        MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(project);
-
-        List<MavenProject> projectList = projectsManager.getProjects();
-        if (projectList.isEmpty()) return;
-
-        MavenProject[] projects = projectList.toArray(new MavenProject[projectList.size()]);
-        Arrays.sort(projects, new MavenProjectNamer.MavenProjectComparator());
-
-        Map<MavenProject, DefaultMutableTreeNode> projectsToNode = new HashMap<MavenProject, DefaultMutableTreeNode>();
-        for (MavenProject mavenProject : projects) {
-          projectsToNode.put(mavenProject, new DefaultMutableTreeNode(mavenProject));
-        }
-
-        DefaultMutableTreeNode root = new DefaultMutableTreeNode();
-
-        for (MavenProject mavenProject : projects) {
-          DefaultMutableTreeNode parent;
-
-          MavenProject aggregator = projectsManager.findAggregator(mavenProject);
-          if (aggregator != null) {
-            parent = projectsToNode.get(aggregator);
-          }
-          else {
-            parent = root;
-          }
-
-          parent.add(projectsToNode.get(mavenProject));
-        }
-
-        final Map<MavenProject, String> projectsNameMap = MavenProjectNamer.generateNameMap(projectList);
-
-        final JTree projectTree = new Tree(root);
-        projectTree.setRootVisible(false);
-        projectTree.setCellRenderer(new NodeRenderer() {
-          @Override
-          public void customizeCellRenderer(JTree tree,
-                                            Object value,
-                                            boolean selected,
-                                            boolean expanded,
-                                            boolean leaf,
-                                            int row,
-                                            boolean hasFocus) {
-            if (value instanceof DefaultMutableTreeNode) {
-              MavenProject mavenProject = (MavenProject)((DefaultMutableTreeNode)value).getUserObject();
-              value = projectsNameMap.get(mavenProject);
-            }
-
-            super.customizeCellRenderer(tree, value, selected, expanded, leaf, row, hasFocus);
-          }
-        });
-
-        final Ref<JBPopup> popupRef = new Ref<JBPopup>();
-
-        Runnable clickCallBack = new Runnable() {
-          @Override
-          public void run() {
-            TreePath path = projectTree.getSelectionPath();
-            if (path == null) return;
-
-            Object lastPathComponent = path.getLastPathComponent();
-            if (!(lastPathComponent instanceof DefaultMutableTreeNode)) return;
-
-            Object object = ((DefaultMutableTreeNode)lastPathComponent).getUserObject();
-            if (object == null) return; // may be it's the root
-
-            workingDirComponent.getComponent().setText(((MavenProject)object).getDirectory());
-
-            popupRef.get().closeOk(null);
-          }
-        };
-
-        JBPopup popup = new PopupChooserBuilder(projectTree)
-          .setTitle("Select maven project")
-          .setItemChoosenCallback(clickCallBack).setAutoselectOnMouseMove(true)
-          .setCloseOnEnter(false)
-          .createPopup();
-
-        popupRef.set(popup);
-
-        popup.showUnderneathOf(showProjectTreeButton);
+      public void consume(MavenProject project) {
+        workingDirComponent.getComponent().setText(project.getDirectory());
       }
     });
 
-    myWorkingDirectoryPanel.add(showProjectTreeButton, BorderLayout.EAST);
+    setAnchor(profilesComponent.getLabel());
   }
 
   public JComponent createComponent() {
