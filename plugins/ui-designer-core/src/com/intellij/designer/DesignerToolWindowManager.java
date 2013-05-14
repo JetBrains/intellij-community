@@ -16,6 +16,7 @@
 package com.intellij.designer;
 
 import com.intellij.designer.designSurface.DesignerEditorPanel;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowAnchor;
@@ -99,7 +100,10 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(DesignerBundle.message("designer.toolwindow.name"),
                                                                                false, getAnchor(), myProject, true);
     myToolWindow.setIcon(UIDesignerNewIcons.ToolWindow);
-    myToolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
+
+    if (!ApplicationManager.getApplication().isHeadlessEnvironment()) {
+      myToolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
+    }
 
     ((ToolWindowEx)myToolWindow).setTitleActions(myToolWindowContent.createActions());
     initGearActions();
