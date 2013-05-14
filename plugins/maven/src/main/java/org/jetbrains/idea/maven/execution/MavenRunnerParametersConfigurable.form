@@ -68,7 +68,7 @@
           <text value="Resolve &amp;Workspace artifacts"/>
         </properties>
       </component>
-      <grid id="41a03" binding="myWorkingDirectoryPanel" layout-manager="BorderLayout" hgap="0" vgap="0">
+      <grid id="41a03" layout-manager="BorderLayout" hgap="0" vgap="0">
         <constraints>
           <grid row="0" column="0" row-span="1" col-span="1" vsize-policy="3" hsize-policy="3" anchor="0" fill="3" indent="0" use-parent-layout="false"/>
         </constraints>
@@ -81,6 +81,12 @@
               <componentClass value="com.intellij.openapi.ui.TextFieldWithBrowseButton"/>
               <labelLocation value="West"/>
               <text value="Working &amp;directory"/>
+            </properties>
+          </component>
+          <component id="b7a16" class="com.intellij.openapi.ui.FixedSizeButton" binding="showProjectTreeButton">
+            <constraints border-constraint="East"/>
+            <properties>
+              <toolTipText value="Select project"/>
             </properties>
           </component>
         </children>
