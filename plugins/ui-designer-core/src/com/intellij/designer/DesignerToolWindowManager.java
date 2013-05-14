@@ -42,7 +42,7 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   public DesignerToolWindowManager(Project project, FileEditorManager fileEditorManager) {
-    super(project, fileEditorManager, SideBorder.LEFT);
+    super(project, fileEditorManager);
     myToolWindowContent = new DesignerToolWindow(project, true);
   }
 
@@ -70,15 +70,13 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
     DesignerToolWindow toolWindowContent = new DesignerToolWindow(myProject, false);
     toolWindowContent.update(designer);
 
-    String title = DesignerBundle.message("designer.toolwindow.title");
-
     return createContent(designer,
                          toolWindowContent,
-                         title,
-                         title,
+                         DesignerBundle.message("designer.toolwindow.title"),
                          UIDesignerNewIcons.ToolWindow,
                          toolWindowContent.getToolWindowPanel(),
                          toolWindowContent.getComponentTree(),
+                         getAnchor() == ToolWindowAnchor.LEFT ? SideBorder.LEFT : SideBorder.RIGHT,
                          320,
                          toolWindowContent.createActions());
   }
@@ -98,11 +96,8 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
 
   @Override
   protected void initToolWindow() {
-    DesignerCustomizations customization = getCustomizations();
-    ToolWindowAnchor anchor = customization != null ? customization.getStructureAnchor() : ToolWindowAnchor.LEFT;
-
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(DesignerBundle.message("designer.toolwindow.name"),
-                                                                               false, anchor, myProject, true);
+                                                                               false, getAnchor(), myProject, true);
     myToolWindow.setIcon(UIDesignerNewIcons.ToolWindow);
     myToolWindow.getComponent().putClientProperty(ToolWindowContentUi.HIDE_ID_LABEL, "true");
 
@@ -118,6 +113,11 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
     contentManager.addContent(content);
     contentManager.setSelectedContent(content, true);
     myToolWindow.setAvailable(false, null);
+  }
+
+  private static ToolWindowAnchor getAnchor() {
+    DesignerCustomizations customization = getCustomizations();
+    return customization != null ? customization.getStructureAnchor() : ToolWindowAnchor.LEFT;
   }
 
   @Override

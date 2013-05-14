@@ -76,7 +76,6 @@ public class LightToolWindow extends JPanel {
 
   public LightToolWindow(LightToolWindowContent content,
                          String title,
-                         String title2,
                          Icon icon,
                          JComponent component,
                          JComponent focusedComponent,
@@ -144,7 +143,7 @@ public class LightToolWindow extends JPanel {
       }
     });
 
-    myMinimizeButton = new AnchoredButton(title2, icon) {
+    myMinimizeButton = new AnchoredButton(title, icon) {
       @Override
       public void updateUI() {
         setUI(StripeButtonUI.createUI(this));
