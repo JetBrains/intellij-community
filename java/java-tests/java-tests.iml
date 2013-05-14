@@ -30,6 +30,7 @@
     <orderEntry type="module" module-name="IntentionPowerPackPlugin" scope="TEST" />
     <orderEntry type="module" module-name="InspectionGadgetsPlugin" scope="TEST" />
     <orderEntry type="module" module-name="java-indexing-api" scope="TEST" />
+    <orderEntry type="module" module-name="external-system-impl" scope="RUNTIME" />
   </component>
 </module>
 
