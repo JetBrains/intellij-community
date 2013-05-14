@@ -177,10 +177,6 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
   protected abstract void updateToolWindow(@Nullable DesignerEditorPanel designer);
 
   protected final void initGearActions() {
-    if (!ApplicationManager.getApplication().isInternal()) {
-      return; // XXX: delete after test
-    }
-
     DefaultActionGroup group = new DefaultActionGroup();
     group.add(new ToggleAction("In Editor Mode", "Pin/unpin tool window to Designer Editor", null) {
       @Override
@@ -279,7 +275,7 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
   }
 
   public final boolean isEditorMode() {
-    return myPropertiesComponent.getBoolean(EDITOR_MODE + getComponentName(), false); // XXX: sets true after test
+    return myPropertiesComponent.getBoolean(EDITOR_MODE + getComponentName(), true);
   }
 
   public final void setEditorMode(boolean value) {
