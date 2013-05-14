@@ -787,7 +787,7 @@ public class MavenProjectsStructure extends SimpleTreeStructure {
 
     private String wrappedText(MavenProjectProblem each) {
       String text = StringUtil.replace(each.getDescription(), new String[]{"<", ">"}, new String[]{"&lt;", "&gt;"});
-      StringBuffer result = new StringBuffer();
+      StringBuilder result = new StringBuilder();
       int count = 0;
       for (int i = 0; i < text.length(); i++) {
         char ch = text.charAt(i);
