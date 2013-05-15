@@ -51,7 +51,7 @@ public class ExtensionsAreaImpl implements ExtensionsArea {
   private final AreaPicoContainerImpl myPicoContainer;
   private final Throwable myCreationTrace;
   private final Map<String,ExtensionPointImpl> myExtensionPoints = new ConcurrentHashMap<String, ExtensionPointImpl>();
-  private final Map<String,Throwable> myEPTraces = new HashMap<String, Throwable>();
+  private final Map<String,Throwable> myEPTraces = DEBUG_REGISTRATION ? new HashMap<String, Throwable>():null;
   private final MultiMap<String, ExtensionPointAvailabilityListener> myAvailabilityListeners = new MultiMap<String, ExtensionPointAvailabilityListener>();
   private final List<Runnable> mySuspendedListenerActions = new ArrayList<Runnable>();
   private boolean myAvailabilityNotificationsActive = true;
