@@ -26,6 +26,7 @@ import com.intellij.psi.PsiManager;
 import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.Stub;
 import com.intellij.psi.xml.XmlFile;
+import com.intellij.util.indexing.FileContent;
 import com.intellij.util.xml.*;
 import com.intellij.util.xml.stubs.FileStub;
 import com.intellij.xml.util.XmlUtil;
@@ -44,8 +45,9 @@ public class DomStubBuilder implements BinaryFileStubBuilder {
   }
 
   @Override
-  public Stub buildStubTree(VirtualFile file, byte[] content, Project project) {
-
+  public Stub buildStubTree(FileContent fileContent) {
+    VirtualFile file = fileContent.getFile();
+    Project project = fileContent.getProject();
     PsiFile psiFile = PsiManager.getInstance(project).findFile(file);
     if (!(psiFile instanceof XmlFile)) return null;
 
