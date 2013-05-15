@@ -432,5 +432,13 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
     ''')
   }
 
+  void testFinalFieldAccess() {
+    testHighlighting('''
+      class Foo {
+        public final foo = 5
+      }
 
+      <warning>new Foo().foo</warning> = 3
+    ''')
+  }
 }
