@@ -16,16 +16,12 @@
 
 package com.intellij.util.pico;
 
-import com.intellij.util.ReflectionCache;
 import org.jetbrains.annotations.NotNull;
 import org.picocontainer.*;
 import org.picocontainer.defaults.*;
 import org.picocontainer.monitors.DefaultComponentMonitor;
 
-import java.util.ArrayList;
-import java.util.Collections;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 
 public class IdeaPicoContainer extends DefaultPicoContainer {
 
@@ -80,19 +76,7 @@ public class IdeaPicoContainer extends DefaultPicoContainer {
       result.add(cacheHit);
     }
 
-    for (final ComponentAdapter componentAdapter : getNonAssignableAdapters()) {
-
-      if (componentAdapter instanceof AssignableToComponentAdapter) {
-        AssignableToComponentAdapter assignableToComponentAdapter = (AssignableToComponentAdapter)componentAdapter;
-        if (assignableToComponentAdapter.isAssignableTo(componentType)) result.add(assignableToComponentAdapter);
-      }
-      else {
-        if (ReflectionCache.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
-          result.add(componentAdapter);
-        }
-      }
-    }
-    
+    result.addAll(getNonAssignableAdaptersOfType(componentType));
     return result;
   }
 }
