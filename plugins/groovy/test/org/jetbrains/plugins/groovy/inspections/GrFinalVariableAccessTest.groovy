@@ -209,14 +209,14 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   void testFinalField3() {
     testHighlighting('''
       class Foo {
-        final foo
+        final foo;
 
         {
           foo = 3
         }
 
         def Foo() {
-          foo = 2
+          <warning>foo</warning> = 2
         }
 
         def Foo(x) {
@@ -320,7 +320,6 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
     ''')
   }
 
-
   void testStaticFinalField4() {
     testHighlighting('''
       class Foo {
@@ -338,6 +337,97 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
             foo = -1
           }
         }
+      }
+    ''')
+  }
+
+  void testFinalFieldInit0() {
+    testHighlighting('''
+      class Foo {
+        final foo = 0;
+
+        {
+          <warning>foo</warning> = 1
+        }
+      }
+    ''')
+  }
+
+  void testFinalFieldInit1() {
+    testHighlighting('''
+      class Foo {
+        final foo;
+
+        {
+          foo = 0
+        }
+
+        {
+          <warning>foo</warning> = 1
+        }
+      }
+    ''')
+  }
+
+  void testFinalFieldInit2() {
+    testHighlighting('''
+      class Foo {
+        final foo;
+
+        {
+          foo = 0
+        }
+
+        Foo(){
+          <warning>foo</warning> = 1
+        }
+      }
+    ''')
+  }
+
+  void testFinalFieldInit3() {
+    testHighlighting('''
+      class Foo {
+        final foo;
+
+        Foo(x){
+          foo = 0
+        }
+
+        Foo(){
+          this(1)
+          <warning>foo</warning> = 1
+        }
+      }
+    ''')
+  }
+
+  void testFinalFieldInit4() {
+    testHighlighting('''
+      class Foo {
+        final foo;
+
+        {
+          foo = 0
+          <warning>foo</warning> = 2
+        }
+
+      }
+    ''')
+  }
+
+  void testFinalFieldInit5() {
+    testHighlighting('''
+      class Foo {
+        final foo;
+
+        {
+          if (1) {
+            foo = 0
+          }
+          <warning>foo</warning> = 2
+        }
+
       }
     ''')
   }

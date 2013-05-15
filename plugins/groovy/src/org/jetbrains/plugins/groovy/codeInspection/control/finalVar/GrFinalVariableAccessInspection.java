@@ -61,6 +61,10 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         if (block != null) {
           processLocalVars(block);
         }
+
+        if (method.isConstructor()) {
+          processFieldsInConstructors(method);
+        }
       }
 
       @Override
@@ -85,7 +89,6 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         }
       }
 
-
       private void checkFieldIsInitialized(@NotNull GrField field) {
         if (!isFieldInitialized(field)) {
           registerError(field.getNameIdentifierGroovy(), GroovyBundle.message("variable.0.might.not.have.been.initialized", field.getName()),
@@ -93,15 +96,59 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         }
       }
 
+
       @Override
       public void visitClassInitializer(GrClassInitializer initializer) {
         super.visitClassInitializer(initializer);
 
         final GrOpenBlock block = initializer.getBlock();
         processLocalVars(block);
+
+        processFieldsInClassInitializer(initializer);
       }
 
+      private void processFieldsInConstructors(GrMethod constructor) {
+        final GrOpenBlock block = constructor.getBlock();
+        if (block == null) return;
 
+        final GrTypeDefinition clazz = (GrTypeDefinition)constructor.getContainingClass();
+        if (clazz == null) return;
+
+        final GrClassInitializer[] initializers = clazz.getInitializers();
+        final GrField[] fields = clazz.getCodeFields();
+
+        Set<GrVariable> initializedFields = ContainerUtil.newHashSet();
+        appendFieldInitializedInDeclaration(false, fields, initializedFields);
+        appendFieldsInitializedInClassInitializer(null, false, initializers, fields, initializedFields);
+        appendInitializationFromChainedConstructors(initializedFields, constructor, fields);
+
+        final Instruction[] flow = buildFlowForField(block);
+        final Map<String, GrVariable> variables = buildVarMap(fields, false);
+        final List<ReadWriteVariableInstruction> invalidWriteAccess =
+          new InvalidWriteAccessSearcher().findInvalidWriteAccess(flow, variables, initializedFields);
+        highlightInvalidWriteAccess(variables, invalidWriteAccess);
+
+      }
+
+      private void processFieldsInClassInitializer(GrClassInitializer initializer) {
+        GrTypeDefinition clazz = (GrTypeDefinition)initializer.getContainingClass();
+        if (clazz == null) return;
+
+        final boolean isStatic = initializer.isStatic();
+
+        final GrClassInitializer[] initializers = clazz.getInitializers();
+        final GrField[] fields = clazz.getCodeFields();
+
+        Set<GrVariable> initializedFields = ContainerUtil.newHashSet();
+        appendFieldInitializedInDeclaration(isStatic, fields, initializedFields);
+        appendFieldsInitializedInClassInitializer(initializer, isStatic, initializers, fields, initializedFields);
+
+        final Instruction[] flow = buildFlowForField(initializer.getBlock());
+        final Map<String, GrVariable> variables = buildVarMap(fields, isStatic);
+        final List<ReadWriteVariableInstruction> invalidWriteAccess =
+          new InvalidWriteAccessSearcher().findInvalidWriteAccess(flow, variables, initializedFields);
+        highlightInvalidWriteAccess(variables, invalidWriteAccess);
+      }
 
       private void processLocalVars(GroovyPsiElement scope) {
         MultiMap<PsiElement, GrVariable> scopes = collectVariables(scope);
@@ -119,13 +166,17 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
           }
 
           final List<ReadWriteVariableInstruction> result = new InvalidWriteAccessSearcher().findInvalidWriteAccess(getFlow(scopeToProcess), variables, forInParameters);
-          if (result != null) {
-            for (ReadWriteVariableInstruction instruction : result) {
-              if (variables.containsKey(instruction.getVariableName())) {
-                registerError(instruction.getElement(),
-                              GroovyBundle.message("cannot.assign.a.value.to.final.field.0", instruction.getVariableName()),
-                              LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
-              }
+          highlightInvalidWriteAccess(variables, result);
+        }
+      }
+
+      private void highlightInvalidWriteAccess(Map<String, GrVariable> variables, List<ReadWriteVariableInstruction> result) {
+        if (result != null) {
+          for (ReadWriteVariableInstruction instruction : result) {
+            if (variables.containsKey(instruction.getVariableName())) {
+              registerError(instruction.getElement(),
+                            GroovyBundle.message("cannot.assign.a.value.to.final.field.0", instruction.getVariableName()),
+                            LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
             }
           }
         }
@@ -133,11 +184,72 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
     };
   }
 
+  private static void appendFieldInitializedInDeclaration(boolean isStatic,
+                                                          @NotNull GrField[] fields,
+                                                          @NotNull Set<GrVariable> initializedFields) {
+    for (GrField field : fields) {
+      if (field.hasModifierProperty(PsiModifier.STATIC) == isStatic && field.getInitializerGroovy() != null) {
+        initializedFields.add(field);
+      }
+    }
+  }
+
+  private static void appendFieldsInitializedInClassInitializer(@Nullable GrClassInitializer initializer,
+                                                                boolean isStatic,
+                                                                @NotNull GrClassInitializer[] initializers,
+                                                                @NotNull GrField[] fields,
+                                                                final Set<GrVariable> initializedFields) {
+    for (GrClassInitializer curInit : initializers) {
+      if (curInit.isStatic() != isStatic) continue;
+      if (curInit == initializer) break;
+
+      final GrOpenBlock block = curInit.getBlock();
+      final Instruction[] flow = buildFlowForField(block);
+
+      for (GrField field : fields) {
+        if (field.hasModifierProperty(PsiModifier.STATIC) != isStatic) continue;
+        if (initializedFields.contains(field)) continue;
+        if (VariableInitializationChecker.isVariableDefinitelyInitializedCached(field, block, flow)) {
+          initializedFields.add(field);
+        }
+      }
+    }
+  }
+
+  private static void appendInitializationFromChainedConstructors(Set<GrVariable> initializedFields, GrMethod constructor, GrField[] fields) {
+    final List<GrMethod> chained = getChainedConstructors(constructor);
+    chained.remove(0);
+
+    for (GrMethod method : chained) {
+      final GrOpenBlock block = method.getBlock();
+      if (block == null) continue;
+      final Instruction[] flow = buildFlowForField(block);
+
+      for (GrField field : fields) {
+        if (field.hasModifierProperty(PsiModifier.STATIC)) continue;
+        if (initializedFields.contains(field)) continue;
+        if (VariableInitializationChecker.isVariableDefinitelyInitializedCached(field, block, flow)) {
+          initializedFields.add(field);
+        }
+      }
+    }
+  }
+
+  @NotNull
+  private static Map<String, GrVariable> buildVarMap(@NotNull GrField[] fields, boolean isStatic) {
+    Map<String, GrVariable> result = ContainerUtil.newHashMap();
+    for (GrField field : fields) {
+      if (field.hasModifierProperty(PsiModifier.STATIC) == isStatic) {
+        result.put(field.getName(), field);
+      }
+    }
+    return result;
+  }
+
   private static boolean isFieldInitialized(@NotNull GrField field) {
     if (field.getInitializerGroovy() != null) return true;
 
     final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
-    final String name = field.getName();
 
     final GrTypeDefinition aClass = ((GrTypeDefinition)field.getContainingClass());
     if (aClass == null) return true;
@@ -146,8 +258,9 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
     for (GrClassInitializer initializer : initializers) {
       if (initializer.isStatic() != isStatic) continue;
 
-      final Instruction[] initializerFlow = buildFlowForField(initializer.getBlock());
-      if (VariableInitializationChecker.isVariableDefinitelyInitialized(name, initializerFlow)) {
+      final GrOpenBlock block = initializer.getBlock();
+      final Instruction[] initializerFlow = buildFlowForField(block);
+      if (VariableInitializationChecker.isVariableDefinitelyInitializedCached(field, block, initializerFlow)) {
         return true;
       }
     }
@@ -176,7 +289,8 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
 
         final GrOpenBlock block = method.getBlock();
         assert block != null;
-        final boolean initialized = VariableInitializationChecker.isVariableDefinitelyInitialized(name, buildFlowForField(block));
+        final boolean initialized = VariableInitializationChecker.isVariableDefinitelyInitializedCached(field, block,
+                                                                                                        buildFlowForField(block));
 
         if (initialized) {
           initializedConstructors.add(method);

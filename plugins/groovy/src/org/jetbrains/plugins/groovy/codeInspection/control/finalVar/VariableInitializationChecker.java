@@ -16,25 +16,50 @@
 package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import com.intellij.openapi.util.Ref;
+import com.intellij.psi.PsiVariable;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElement;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
+import org.jetbrains.plugins.groovy.util.LightCacheKey;
 
 import java.util.ArrayList;
+import java.util.Map;
 
 /**
  * @author Max Medvedev
  */
 public class VariableInitializationChecker {
+  private static final LightCacheKey<Map<GroovyPsiElement, Boolean>> KEY = LightCacheKey.createByFileModificationCount();
+
   public static boolean isVariableDefinitelyInitialized(@NotNull String varName, @NotNull Instruction[] controlFlow) {
     DFAEngine<Data> engine = new DFAEngine<Data>(controlFlow, new MyDfaInstance(varName), new MySemilattice());
     final ArrayList<Data> result = engine.performDFAWithTimeout();
     if (result == null) return false;
 
     return result.get(controlFlow.length - 1).get();
+  }
+
+  public static boolean isVariableDefinitelyInitializedCached(@NotNull PsiVariable var,
+                                                              @NotNull GroovyPsiElement context,
+                                                              @NotNull Instruction[] controlFlow) {
+    Map<GroovyPsiElement, Boolean> map = KEY.getCachedValue(var);
+    if (map == null) {
+      map = ContainerUtil.newHashMap();
+      KEY.putCachedValue(var, map);
+    }
+
+    final Boolean cached = map.get(context);
+    if (cached != null) return cached.booleanValue();
+
+    final boolean result = isVariableDefinitelyInitialized(var.getName(), controlFlow);
+    map.put(context, result);
+
+    return result;
   }
 
   private static class MyDfaInstance implements DfaInstance<Data> {
