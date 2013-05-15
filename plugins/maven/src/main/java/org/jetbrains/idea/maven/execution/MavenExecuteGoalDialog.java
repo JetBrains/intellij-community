@@ -35,19 +35,32 @@ import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 
 import javax.swing.*;
+import java.util.Collection;
 
 public class MavenExecuteGoalDialog extends DialogWrapper {
 
   private final Project myProject;
+  @Nullable private final Collection<String> myHistory;
 
   private JPanel contentPane;
-  private ComboBox myGoalsComboBox;
+
   private FixedSizeButton showProjectTreeButton;
   private TextFieldWithBrowseButton workDirectoryField;
 
+  private JPanel goalsPanel;
+  private JLabel goalsLabel;
+  private ComboBox goalsComboBox;
+  private EditorTextField goalsEditor;
+
+
   public MavenExecuteGoalDialog(@NotNull Project project) {
+    this(project, null);
+  }
+
+  public MavenExecuteGoalDialog(@NotNull Project project, @Nullable Collection<String> history) {
     super(project, true);
     myProject = project;
+    myHistory = history;
 
     setTitle("Run Maven Goal");
     setUpDialog();
@@ -56,26 +69,42 @@ public class MavenExecuteGoalDialog extends DialogWrapper {
   }
 
   private void setUpDialog() {
-    // Configure project combobox
-    myGoalsComboBox.setLightWeightPopupEnabled(false);
+    JComponent goalComponent;
+    if (myHistory == null) {
+      goalsEditor = new EditorTextField("", myProject, PlainTextFileType.INSTANCE);
+      goalComponent = goalsEditor;
 
-    EditorComboBoxEditor editor = new StringComboboxEditor(myProject, PlainTextFileType.INSTANCE, myGoalsComboBox);
-    myGoalsComboBox.setRenderer(new EditorComboBoxRenderer(editor));
+      goalsLabel.setLabelFor(goalsEditor);
+    }
+    else {
+      //noinspection SSBasedInspection
+      goalsComboBox = new ComboBox(myHistory.toArray(new String[myHistory.size()]), -1);
+      goalComponent = goalsComboBox;
 
-    myGoalsComboBox.setEditable(true);
-    myGoalsComboBox.setEditor(editor);
-    myGoalsComboBox.setFocusable(true);
+      goalsLabel.setLabelFor(goalsComboBox);
 
-    EditorTextField editorTextField = editor.getEditorComponent();
+      goalsComboBox.setLightWeightPopupEnabled(false);
 
-    new MavenArgumentsCompletionProvider(myProject).apply(editorTextField);
+      EditorComboBoxEditor editor = new StringComboboxEditor(myProject, PlainTextFileType.INSTANCE, goalsComboBox);
+      goalsComboBox.setRenderer(new EditorComboBoxRenderer(editor));
+
+      goalsComboBox.setEditable(true);
+      goalsComboBox.setEditor(editor);
+      goalsComboBox.setFocusable(true);
+
+      goalsEditor = editor.getEditorComponent();
+    }
+
+    goalsPanel.add(goalComponent);
+
+    new MavenArgumentsCompletionProvider(myProject).apply(goalsEditor);
 
     // Configure Module ComboBox
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
 
     showProjectTreeButton.setIcon(AllIcons.Actions.Module);
     MavenSelectProjectPopup.attachToWorkingDirectoryField(projectsManager, workDirectoryField.getTextField(), showProjectTreeButton,
-                                                          myGoalsComboBox);
+                                                          goalsComboBox != null ? goalsComboBox : goalsEditor);
 
     workDirectoryField.addBrowseFolderListener(
       RunnerBundle.message("maven.select.maven.project.file"), "", myProject,
@@ -90,11 +119,21 @@ public class MavenExecuteGoalDialog extends DialogWrapper {
 
   @NotNull
   public String getGoals() {
-    return (String)myGoalsComboBox.getEditor().getItem();
+    if (goalsComboBox != null) {
+      return (String)goalsComboBox.getEditor().getItem();
+    }
+    else {
+      return goalsEditor.getText();
+    }
   }
 
   public void setGoals(@NotNull String goals) {
-    myGoalsComboBox.setSelectedItem(goals);
+    if (goalsComboBox != null) {
+      goalsComboBox.setSelectedItem(goals);
+    }
+    else {
+      goalsEditor.setText(goals);
+    }
   }
 
   @NotNull
@@ -111,7 +150,7 @@ public class MavenExecuteGoalDialog extends DialogWrapper {
   }
 
   public JComponent getPreferredFocusedComponent() {
-    return myGoalsComboBox;
+    return goalsComboBox;
   }
 
 }
