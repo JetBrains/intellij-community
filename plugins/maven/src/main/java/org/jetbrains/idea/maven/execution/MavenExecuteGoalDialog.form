@@ -54,7 +54,7 @@
                   <toolTipText value="Select module"/>
                 </properties>
               </component>
-              <component id="d7025" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="pomXmlTextField">
+              <component id="d7025" class="com.intellij.openapi.ui.TextFieldWithBrowseButton" binding="workDirectoryField">
                 <constraints border-constraint="Center"/>
                 <properties/>
               </component>

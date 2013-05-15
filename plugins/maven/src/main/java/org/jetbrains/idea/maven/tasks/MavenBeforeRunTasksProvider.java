@@ -135,8 +135,7 @@ public class MavenBeforeRunTasksProvider extends BeforeRunTaskProvider<MavenBefo
     dialog.show();
     if (!dialog.isOK()) return false;
 
-    String pomXml = dialog.getPomXmlPath();
-    task.setProjectPath(pomXml);
+    task.setProjectPath(dialog.getWorkDirectory() + "/pom.xml");
     task.setGoal(dialog.getGoals());
     return true;
   }
