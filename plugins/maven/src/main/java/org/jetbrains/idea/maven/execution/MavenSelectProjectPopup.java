@@ -16,6 +16,7 @@
 package org.jetbrains.idea.maven.execution;
 
 import com.intellij.ide.util.treeView.NodeRenderer;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.ui.popup.JBPopup;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
@@ -26,6 +27,7 @@ import com.intellij.util.Consumer;
 import com.intellij.util.containers.Convertor;
 import icons.MavenIcons;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenProjectNamer;
@@ -47,8 +49,41 @@ import java.util.Map;
  */
 public class MavenSelectProjectPopup {
 
-  public static void attachToButton(@NotNull final JButton button,
-                                    @NotNull final MavenProjectsManager projectsManager,
+  public static void attachToWorkingDirectoryField(@NotNull final MavenProjectsManager projectsManager,
+                                                   final JTextField workingDirectoryField,
+                                                   final JButton showModulesButton,
+                                                   @Nullable final JComponent focusAfterSelection) {
+    attachToButton(projectsManager, showModulesButton, new Consumer<MavenProject>() {
+      @Override
+      public void consume(MavenProject project) {
+        workingDirectoryField.setText(project.getDirectory());
+
+        if (focusAfterSelection != null) {
+          ApplicationManager.getApplication().invokeLater(new Runnable() {
+            @Override
+            public void run() {
+              if (workingDirectoryField.hasFocus()) {
+                focusAfterSelection.requestFocus();
+              }
+            }
+          });
+        }
+      }
+    });
+
+    workingDirectoryField.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+          e.consume();
+          showModulesButton.doClick();
+        }
+      }
+    });
+  }
+
+  public static void attachToButton(@NotNull final MavenProjectsManager projectsManager,
+                                    @NotNull final JButton button,
                                     @NotNull final Consumer<MavenProject> callback) {
     button.addActionListener(new ActionListener() {
       @Override
@@ -155,18 +190,6 @@ public class MavenSelectProjectPopup {
         }
 
         return root;
-      }
-    });
-  }
-
-  public static void clickButtonOnDown(JComponent textField, final JButton button) {
-    textField.addKeyListener(new KeyAdapter() {
-      @Override
-      public void keyPressed(KeyEvent e) {
-        if (e.getKeyCode() == KeyEvent.VK_DOWN) {
-          e.consume();
-          button.doClick();
-        }
       }
     });
   }

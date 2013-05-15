@@ -28,7 +28,6 @@ import com.intellij.ui.EditorComboBoxEditor;
 import com.intellij.ui.EditorComboBoxRenderer;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.StringComboboxEditor;
-import com.intellij.util.Consumer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
@@ -75,14 +74,8 @@ public class MavenExecuteGoalDialog extends DialogWrapper {
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
 
     showProjectTreeButton.setIcon(AllIcons.Actions.Module);
-    MavenSelectProjectPopup.attachToButton(showProjectTreeButton, projectsManager, new Consumer<MavenProject>() {
-      @Override
-      public void consume(MavenProject project) {
-        workDirectoryField.setText(project.getDirectory());
-      }
-    });
-
-    MavenSelectProjectPopup.clickButtonOnDown(workDirectoryField.getTextField(), showProjectTreeButton);
+    MavenSelectProjectPopup.attachToWorkingDirectoryField(projectsManager, workDirectoryField.getTextField(), showProjectTreeButton,
+                                                          myGoalsComboBox);
 
     workDirectoryField.addBrowseFolderListener(
       RunnerBundle.message("maven.select.maven.project.file"), "", myProject,
