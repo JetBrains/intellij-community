@@ -29,7 +29,7 @@
             </constraints>
             <properties>
               <labelFor value="d7025"/>
-              <text value="&amp;Pom.xml"/>
+              <text value="pom.xml"/>
             </properties>
           </component>
           <component id="8a07" class="javax.swing.JLabel">
@@ -38,7 +38,7 @@
             </constraints>
             <properties>
               <labelFor value="d150a"/>
-              <text value="&amp;Goals"/>
+              <text value="&amp;Command line"/>
             </properties>
           </component>
           <grid id="415e7" layout-manager="BorderLayout" hgap="0" vgap="0">
