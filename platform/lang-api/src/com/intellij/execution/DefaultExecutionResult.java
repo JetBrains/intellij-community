@@ -88,6 +88,10 @@ public class DefaultExecutionResult implements ExecutionResult {
     return myProcessHandler;
   }
 
+  /**
+   * @deprecated use {@link com.intellij.execution.actions.StopProcessAction}.
+   * Will be removed in IDEA 14
+   */
   public static class StopAction extends AnAction implements DumbAware {
     private final ProcessHandler myProcessHandler;
 
