@@ -21,10 +21,7 @@ import com.intellij.find.FindModel;
 import com.intellij.find.FindResult;
 import com.intellij.ide.IdeTooltipManager;
 import com.intellij.openapi.application.ApplicationManager;
-import com.intellij.openapi.editor.Document;
-import com.intellij.openapi.editor.Editor;
-import com.intellij.openapi.editor.ScrollType;
-import com.intellij.openapi.editor.SelectionModel;
+import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.colors.EditorColors;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
 import com.intellij.openapi.editor.event.*;
@@ -250,8 +247,9 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
       myCursorHighlighter = null;
     }
 
-    FindResult cursor = mySearchResults.getCursor();
+    final FindResult cursor = mySearchResults.getCursor();
     Editor editor = mySearchResults.getEditor();
+    SelectionModel selection = editor.getSelectionModel();
     if (cursor != null) {
       Set<RangeHighlighter> dummy = new HashSet<RangeHighlighter>();
       highlightRange(cursor, new TextAttributes(null, null, Color.BLACK, EffectType.ROUNDED_BOX, 0), dummy);
@@ -259,19 +257,38 @@ public class LivePreview extends DocumentAdapter implements SearchResults.Search
         myCursorHighlighter = dummy.iterator().next();
       }
 
-      if (!SearchResults.insideVisibleArea(editor, cursor) && scroll) {
-        editor.getScrollingModel().scrollTo(editor.offsetToLogicalPosition(cursor.getStartOffset()),
-                                            ScrollType.CENTER);
-        editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
-          @Override
-          public void run() {
-            showReplacementPreview();
+      if (scroll) {
+        if (mySearchResults.getFindModel().isGlobal()) {
+          FoldingModel foldingModel = editor.getFoldingModel();
+          final FoldRegion[] allRegions = editor.getFoldingModel().getAllFoldRegions();
+
+          foldingModel.runBatchFoldingOperation(new Runnable() {
+            @Override
+            public void run() {
+              for (FoldRegion region : allRegions) {
+                if (cursor.intersects(TextRange.create(region))) {
+                  region.setExpanded(true);
+                }
+              }
+            }
+          });
+          selection.setSelection(cursor.getStartOffset(), cursor.getEndOffset());
+
+          editor.getCaretModel().moveToOffset(cursor.getEndOffset());
+          editor.getScrollingModel().scrollToCaret(ScrollType.CENTER);
+        } else {
+          if (!SearchResults.insideVisibleArea(editor, cursor)) {
+            LogicalPosition pos = editor.offsetToLogicalPosition(cursor.getStartOffset());
+            editor.getScrollingModel().scrollTo(pos, ScrollType.CENTER);
           }
-        });
+        }
       }
-      else {
-        showReplacementPreview();
-      }
+      editor.getScrollingModel().runActionOnScrollingFinished(new Runnable() {
+        @Override
+        public void run() {
+          showReplacementPreview();
+        }
+      });
     }
   }
 
