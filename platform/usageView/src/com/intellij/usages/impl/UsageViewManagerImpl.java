@@ -408,7 +408,7 @@ public class UsageViewManagerImpl extends UsageViewManager {
                                                              myPresentation.getScopeText());
 
               if (notFoundActions == null || notFoundActions.isEmpty()) {
-                notifyByFindBalloon("<html>"+message+".<br>" + createOptionsHtml() + "</html>", createGotToOptionsListener(mySearchFor),
+                notifyByFindBalloon("<html>"+StringUtil.escapeXml(message)+".<br>" + createOptionsHtml() + "</html>", createGotToOptionsListener(mySearchFor),
                                     MessageType.INFO);
                 findStartedBalloonShown.set(false);
               }
