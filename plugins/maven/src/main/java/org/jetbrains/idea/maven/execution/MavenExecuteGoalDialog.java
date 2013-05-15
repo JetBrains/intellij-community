@@ -82,6 +82,8 @@ public class MavenExecuteGoalDialog extends DialogWrapper {
       }
     });
 
+    MavenSelectProjectPopup.clickButtonOnDown(workDirectoryField.getTextField(), showProjectTreeButton);
+
     workDirectoryField.addBrowseFolderListener(
       RunnerBundle.message("maven.select.maven.project.file"), "", myProject,
       new FileChooserDescriptor(false, true, false, false, false, false) {

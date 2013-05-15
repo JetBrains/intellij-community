@@ -104,6 +104,8 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
       }
     });
 
+    MavenSelectProjectPopup.clickButtonOnDown(workingDirComponent.getComponent().getTextField(), showProjectTreeButton);
+
     setAnchor(profilesComponent.getLabel());
   }
 

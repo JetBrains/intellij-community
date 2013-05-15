@@ -35,6 +35,8 @@ import javax.swing.tree.DefaultMutableTreeNode;
 import javax.swing.tree.TreePath;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+import java.awt.event.KeyAdapter;
+import java.awt.event.KeyEvent;
 import java.util.Arrays;
 import java.util.HashMap;
 import java.util.List;
@@ -153,6 +155,18 @@ public class MavenSelectProjectPopup {
         }
 
         return root;
+      }
+    });
+  }
+
+  public static void clickButtonOnDown(JComponent textField, final JButton button) {
+    textField.addKeyListener(new KeyAdapter() {
+      @Override
+      public void keyPressed(KeyEvent e) {
+        if (e.getKeyCode() == KeyEvent.VK_DOWN) {
+          e.consume();
+          button.doClick();
+        }
       }
     });
   }
