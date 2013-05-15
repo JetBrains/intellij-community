@@ -29,7 +29,7 @@
             </constraints>
             <properties>
               <labelFor value="d7025"/>
-              <text value="pom.xml"/>
+              <text value="Working &amp;directory"/>
             </properties>
           </component>
           <component id="8a07" class="javax.swing.JLabel">
