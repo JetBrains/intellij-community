@@ -32,7 +32,6 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementVisitor;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrClosableBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
-import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrAssertStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.branch.GrReturnStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -109,7 +108,7 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     }
   }
 
-  public static boolean methodMissesSomeReturns(GrControlFlowOwner block, ReturnStatus returnStatus) {
+  public static boolean methodMissesSomeReturns(@NotNull GrControlFlowOwner block, @NotNull final ReturnStatus returnStatus) {
     if (returnStatus == ReturnStatus.shouldNotReturnValue) {
       return false;
     }
@@ -120,38 +119,29 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
       @Override
       public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-        if (instruction instanceof MaybeReturnInstruction) {
-          if (((MaybeReturnInstruction)instruction).mayReturnValue()) {
+        //don't modify sometimesHaveReturn  in this case:
+        // def foo() {
+        //   if (cond) throw new RuntimeException()
+        // }
+        if (instruction instanceof ThrowingInstruction) {
+          if (returnStatus == ReturnStatus.mustReturnValue) {
             sometimesHaveReturn.set(true);
-          }
-          else {
-            alwaysHaveReturn.set(false);
           }
           return true;
         }
-        final PsiElement element = instruction.getElement();
-        if (element instanceof GrReturnStatement) {
+
+        if (instruction instanceof MaybeReturnInstruction && ((MaybeReturnInstruction)instruction).mayReturnValue()) {
           sometimesHaveReturn.set(true);
-          if (returnValue != null) {
-            hasExplicitReturn.set(true);
-          }
+          return true;
         }
-        else if (instruction instanceof ThrowingInstruction) {
-          //skip throwing instructions
-        }
-        else if (element instanceof GrAssertStatement) {
+
+        if (instruction.getElement() instanceof GrReturnStatement && returnValue != null) {
           sometimesHaveReturn.set(true);
-          int count = 0;
-          for (Instruction _i : instruction.allSuccessors()) {
-            count++;
-          }
-          if (count <= 1) {
-            alwaysHaveReturn.set(false);
-          }
+          hasExplicitReturn.set(true);
+          return true;
         }
-        else {
-          alwaysHaveReturn.set(false);
-        }
+
+        alwaysHaveReturn.set(false);
         return true;
       }
     });

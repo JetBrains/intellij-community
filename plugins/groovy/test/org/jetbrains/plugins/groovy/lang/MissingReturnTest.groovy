@@ -169,6 +169,139 @@ List createFilters3() {
 ''')
   }
 
+  void testReturnWithoutValue0() {
+    doTextText('''\
+int foo() {
+  if (abc) {
+    return
+  }
+
+  return 2
+<warning>}</warning>
+''')
+  }
+
+  void testReturnWithoutValue1() {
+    doTextText('''\
+int foo() {
+  return
+<warning>}</warning>
+''')
+  }
+
+  void testReturnWithoutValue2() {
+    doTextText('''\
+void foo() {
+  if (abc) {
+    return
+  }
+
+  print 2
+} //no error
+''')
+  }
+
+  void testReturnWithoutValue3() {
+    doTextText('''\
+void foo() {
+  return
+} //no error
+''')
+  }
+
+  void testSingleThrow1() {
+    doTextText('''
+      int foo() {
+        throw new RuntimeException()
+      } //correct
+    ''')
+  }
+
+  void testSingleThrow2() {
+    doTextText('''
+      void foo() {
+        throw new RuntimeException()
+      } //correct
+    ''')
+  }
+
+  void testSingleThrow3() {
+    doTextText('''
+      def foo() {
+        throw new RuntimeException()
+      } //correct
+    ''')
+  }
+
+  void testThrowFromIf1() {
+    doTextText('''
+      int foo() {
+        if (1) {
+          throw new RuntimeException()
+        }
+      <warning>}</warning>
+    ''')
+  }
+
+  void testThrowFromIf2() {
+    doTextText('''
+      void foo() {
+        if (1) {
+          throw new RuntimeException()
+        }
+      } //correct
+    ''')
+  }
+
+  void testThrowFromIf3() {
+    doTextText('''
+      def foo() {
+        if (1) {
+          throw new RuntimeException()
+        }
+      } //correct
+    ''')
+  }
+
+  void testThrowFromIf4() {
+    doTextText('''
+      int foo() {
+        if (1) {
+          throw new RuntimeException()
+        }
+        else {
+          return 1
+        }
+      }
+    ''')
+  }
+
+  void testThrowFromIf5() {
+    doTextText('''
+      void foo() {
+        if (1) {
+          throw new RuntimeException()
+        }
+        else {
+          throw new RuntimeException()
+        }
+      } //correct
+    ''')
+  }
+
+  void testThrowFromIf6() {
+    doTextText('''
+      def foo() {
+        if (1) {
+          throw new RuntimeException()
+        }
+        else {
+          return 1
+        }
+      } //correct
+    ''')
+  }
+
   void doTextText(String text) {
     myFixture.configureByText('___.groovy', text)
     myFixture.enableInspections(MissingReturnInspection)
