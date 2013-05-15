@@ -432,7 +432,7 @@ public class PsiSubstitutorImpl implements PsiSubstitutor {
   public PsiSubstitutor put(@NotNull PsiTypeParameter typeParameter, PsiType mapping) {
     PsiSubstitutorImpl ret = clone();
     if (mapping != null && !mapping.isValid()) {
-      LOG.error("Invalid type in substitutor: " + mapping);
+      LOG.error("Invalid type in substitutor: " + mapping + "; " + mapping.getClass());
     }
     ret.mySubstitutionMap.put(typeParameter, mapping);
     return ret;
