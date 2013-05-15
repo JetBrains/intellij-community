@@ -18,6 +18,7 @@ package org.jetbrains.plugins.groovy.lang.parameterInfo;
 import com.intellij.codeInsight.lookup.LookupElement;
 import com.intellij.lang.parameterInfo.*;
 import com.intellij.openapi.editor.Editor;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.tree.IElementType;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -196,6 +197,6 @@ public class GroovyAnnotationAttributeInfoHandler implements ParameterInfoHandle
     }
 
 
-    context.setupUIComponentPresentation(buffer.toString(), highlightStartOffset, highlightEndOffset, false, p.isDeprecated(), false, context.getDefaultParameterColor());
+    context.setupUIComponentPresentation(StringUtil.escapeXml(buffer.toString()), highlightStartOffset, highlightEndOffset, false, p.isDeprecated(), false, context.getDefaultParameterColor());
   }
 }
