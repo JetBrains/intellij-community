@@ -432,5 +432,32 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
     ''')
   }
 
+  void testFinalFieldAccess() {
+    testHighlighting('''
+      class Foo {
+        public final foo = 5
+      }
 
+      <warning>new Foo().foo</warning> = 3
+    ''')
+  }
+
+  void testImmutable() {
+    testHighlighting('''
+import groovy.transform.Immutable
+
+@Immutable
+class Money {
+    String <warning>currency</warning>
+    int <warning>amount</warning>
+
+    void doubleYourMoney() {
+        <error>amount</error> *= 2
+    }
+}
+
+def a = new Money('USA', 100)
+<warning>a.amount</warning> = 1000
+''')
+  }
 }

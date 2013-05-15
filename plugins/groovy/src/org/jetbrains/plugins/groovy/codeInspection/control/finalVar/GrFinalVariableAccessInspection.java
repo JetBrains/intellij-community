@@ -17,10 +17,7 @@ package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.psi.PsiElement;
-import com.intellij.psi.PsiField;
-import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiModifier;
+import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.MultiMap;
@@ -34,6 +31,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.formatter.GrControlStatement;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
@@ -44,6 +42,8 @@ import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrFieldControlFlow
 import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
+
+import static com.intellij.psi.PsiModifier.FINAL;
 
 /**
  * @author Max Medvedev
@@ -85,10 +85,26 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
           processLocalVars(initializer);
         }
 
-        if (field.hasModifierProperty(PsiModifier.FINAL)) {
+        if (field.hasModifierProperty(FINAL)) {
           if (!isFieldInitialized(field)) {
             registerError(field.getNameIdentifierGroovy(),
                           GroovyBundle.message("variable.0.might.not.have.been.initialized", field.getName()), LocalQuickFix.EMPTY_ARRAY,
+                          ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+          }
+        }
+      }
+
+      @Override
+      public void visitReferenceExpression(GrReferenceExpression ref) {
+        super.visitReferenceExpression(ref);
+
+        final PsiElement resolved = ref.resolve();
+        if (resolved instanceof GrField && ((GrField)resolved).hasModifierProperty(FINAL) && PsiUtil.isLValue(ref)) {
+          final GrField field = (GrField)resolved;
+
+          final PsiClass containingClass = field.getContainingClass();
+          if (containingClass == null || !PsiTreeUtil.isAncestor(containingClass, ref, true)) {
+            registerError(ref, GroovyBundle.message("cannot.assign.a.value.to.final.field.0", field.getName()), LocalQuickFix.EMPTY_ARRAY,
                           ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
           }
         }
@@ -341,7 +357,7 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       @Override
       public void visitVariable(GrVariable variable) {
         super.visitVariable(variable);
-        if (!(variable instanceof PsiField) && variable.hasModifierProperty(PsiModifier.FINAL)) {
+        if (!(variable instanceof PsiField) && variable.hasModifierProperty(FINAL)) {
           final PsiElement varScope = findScope(variable);
           if (varScope != null) {
             scopes.putValue(varScope, variable);

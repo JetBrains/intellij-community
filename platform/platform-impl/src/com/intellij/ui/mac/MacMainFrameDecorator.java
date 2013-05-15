@@ -19,6 +19,7 @@ import com.apple.eawt.*;
 import com.intellij.Patches;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.ui.UISettingsListener;
+import com.intellij.openapi.application.impl.ApplicationInfoImpl;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.SystemInfo;
 import com.intellij.openapi.wm.impl.IdeFrameDecorator;
@@ -234,8 +235,10 @@ public class MacMainFrameDecorator extends IdeFrameDecorator implements UISettin
       // install uri handler
       final ID mainBundle = invoke("NSBundle", "mainBundle");
       final ID urlTypes = invoke(mainBundle, "objectForInfoDictionaryKey:", Foundation.nsString("CFBundleURLTypes"));
-      if (urlTypes.equals(ID.NIL)) {
-        LOG.warn("no url bundle present");
+      if (urlTypes.equals(ID.NIL) && !ApplicationInfoImpl.getShadowInstance().getBuild().isSnapshot()) {
+        LOG.warn("no url bundle present. \n" +
+                 "To use platform protocol handler to open external links specify required protocols in the mac app layout section of the build file\n" +
+                 "Example: args.urlSchemes = [\"your-protocol\"] will handle following links: your-protocol://open?file=file&line=line");
         return;
       }
       ourProtocolHandler = new CustomProtocolHandler();

@@ -108,7 +108,7 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     }
   }
 
-  public static boolean methodMissesSomeReturns(GrControlFlowOwner block, ReturnStatus returnStatus) {
+  public static boolean methodMissesSomeReturns(@NotNull GrControlFlowOwner block, @NotNull final ReturnStatus returnStatus) {
     if (returnStatus == ReturnStatus.shouldNotReturnValue) {
       return false;
     }
@@ -119,7 +119,17 @@ public class MissingReturnInspection extends GroovySuppressableInspectionTool {
     ControlFlowUtils.visitAllExitPoints(block, new ControlFlowUtils.ExitPointVisitor() {
       @Override
       public boolean visitExitPoint(Instruction instruction, @Nullable GrExpression returnValue) {
-        if (instruction instanceof ThrowingInstruction) return true;
+        //don't modify sometimesHaveReturn  in this case:
+        // def foo() {
+        //   if (cond) throw new RuntimeException()
+        // }
+        if (instruction instanceof ThrowingInstruction) {
+          if (returnStatus == ReturnStatus.mustReturnValue) {
+            sometimesHaveReturn.set(true);
+          }
+          return true;
+        }
+
         if (instruction instanceof MaybeReturnInstruction && ((MaybeReturnInstruction)instruction).mayReturnValue()) {
           sometimesHaveReturn.set(true);
           return true;
