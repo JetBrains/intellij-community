@@ -37,7 +37,7 @@ import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import javax.swing.*;
 import java.util.Collection;
 
-public class MavenExecuteGoalDialog extends DialogWrapper {
+public class MavenEditGoalDialog extends DialogWrapper {
 
   private final Project myProject;
   @Nullable private final Collection<String> myHistory;
@@ -53,16 +53,16 @@ public class MavenExecuteGoalDialog extends DialogWrapper {
   private EditorTextField goalsEditor;
 
 
-  public MavenExecuteGoalDialog(@NotNull Project project) {
+  public MavenEditGoalDialog(@NotNull Project project) {
     this(project, null);
   }
 
-  public MavenExecuteGoalDialog(@NotNull Project project, @Nullable Collection<String> history) {
+  public MavenEditGoalDialog(@NotNull Project project, @Nullable Collection<String> history) {
     super(project, true);
     myProject = project;
     myHistory = history;
 
-    setTitle("Run Maven Goal");
+    setTitle("Edit Maven Goal");
     setUpDialog();
     setModal(true);
     init();
