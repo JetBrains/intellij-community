@@ -17,7 +17,6 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullFunction;
 import com.intellij.xdebugger.frame.*;
@@ -46,13 +45,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     }
   };
 
-  public static final XValuePresenter DEFAULT_VALUE_PRESENTER = new XValuePresenter() {
-    @Override
-    public void append(String value, SimpleColoredText text, boolean changed) {
-      String presentableValue = StringUtil.escapeStringCharacters(value);
-      text.append(presentableValue, changed ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
-    }
-  };
+  public static final XValuePresenter DEFAULT_VALUE_PRESENTER = new XValuePresenterAdapter(StringUtil.escaper(false, null));
 
   private String myName;
   private String myType;
