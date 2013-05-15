@@ -151,6 +151,7 @@ public class FileManagerImpl implements FileManager {
   @Override
   @NotNull
   public FileViewProvider findViewProvider(@NotNull final VirtualFile file) {
+    assert !file.isDirectory();
     FileViewProvider viewProvider = getFromInjected(file);
     if (viewProvider != null) return viewProvider;
     viewProvider = myVFileToViewProviderMap.get(file);

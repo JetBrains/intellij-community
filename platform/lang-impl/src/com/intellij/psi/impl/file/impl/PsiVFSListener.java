@@ -302,8 +302,9 @@ public class PsiVFSListener extends VirtualFileAdapter {
   public void propertyChanged(final VirtualFilePropertyEvent event) {
     final String propertyName = event.getPropertyName();
     final VirtualFile vFile = event.getFile();
+    if (vFile.isDirectory()) return;
 
-    final FileViewProvider oldFileViewProvider = myFileManager.findViewProvider(vFile);
+    final FileViewProvider oldFileViewProvider = myFileManager.findCachedViewProvider(vFile);
     final PsiFile oldPsiFile;
     if (oldFileViewProvider instanceof SingleRootFileViewProvider) {
       oldPsiFile = ((SingleRootFileViewProvider)oldFileViewProvider).getCachedPsi(oldFileViewProvider.getBaseLanguage());
