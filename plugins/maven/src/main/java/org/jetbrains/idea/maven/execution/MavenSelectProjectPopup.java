@@ -17,6 +17,7 @@ package org.jetbrains.idea.maven.execution;
 
 import com.intellij.ide.util.treeView.NodeRenderer;
 import com.intellij.openapi.ui.popup.JBPopup;
+import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.openapi.ui.popup.PopupChooserBuilder;
 import com.intellij.openapi.util.Ref;
 import com.intellij.ui.TreeSpeedSearch;
@@ -51,7 +52,10 @@ public class MavenSelectProjectPopup {
       @Override
       public void actionPerformed(ActionEvent e) {
         List<MavenProject> projectList = projectsManager.getProjects();
-        if (projectList.isEmpty()) return;
+        if (projectList.isEmpty()) {
+          JBPopupFactory.getInstance().createMessage("Maven modules not found").showUnderneathOf(button);
+          return;
+        }
 
         DefaultMutableTreeNode root = buildTree(projectList);
 
