@@ -31,7 +31,6 @@ import com.intellij.openapi.editor.markup.SeparatorPlacement;
 import com.intellij.openapi.progress.ProgressManager;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.DumbService;
-import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.util.text.StringUtil;
@@ -68,15 +67,10 @@ public class JavaLineMarkerProvider implements LineMarkerProvider, DumbAware {
   @Nullable
   public LineMarkerInfo getLineMarkerInfo(@NotNull final PsiElement element) {
     PsiElement parent;
-    if (element instanceof PsiIdentifier && (parent = element.getParent()) instanceof PsiMethod) {
+    if (element instanceof PsiIdentifier && (parent = element.getParent()) instanceof PsiMethod && 
+        !DumbService.getInstance(element.getProject()).isDumb()) {
       PsiMethod method = (PsiMethod)parent;
-      MethodSignatureBackedByPsiMethod superSignature = null;
-      try {
-        superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
-      }
-      catch (IndexNotReadyException e) {
-        //some searchers (EJB) require indices. What shall we do?
-      }
+      MethodSignatureBackedByPsiMethod superSignature = SuperMethodsSearch.search(method, null, true, false).findFirst();
       if (superSignature != null) {
         boolean overrides =
           method.hasModifierProperty(PsiModifier.ABSTRACT) == superSignature.getMethod().hasModifierProperty(PsiModifier.ABSTRACT);
