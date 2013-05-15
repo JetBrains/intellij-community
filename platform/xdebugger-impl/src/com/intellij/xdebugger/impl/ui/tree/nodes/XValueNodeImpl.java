@@ -41,7 +41,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   public static final Comparator<XValueNodeImpl> COMPARATOR = new Comparator<XValueNodeImpl>() {
     @Override
     public int compare(XValueNodeImpl o1, XValueNodeImpl o2) {
-      return StringUtil.compare(o1.getName(), o2.getName(), true);
+      return StringUtil.naturalCompare(o1.getName(), o2.getName());
     }
   };
   public static final NotNullFunction<String, String> DEFAULT_VALUE_PRESENTER = StringUtil.escaper(false, null);
