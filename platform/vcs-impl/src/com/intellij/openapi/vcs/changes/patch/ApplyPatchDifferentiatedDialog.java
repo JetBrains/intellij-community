@@ -434,8 +434,8 @@ public class ApplyPatchDifferentiatedDialog extends DialogWrapper {
       myCenterPanel.add(toolbar.getComponent(), gb);
 
       ++ gb.gridy;
-      gb.weighty = 0;
-      gb.fill = GridBagConstraints.HORIZONTAL;
+      gb.weighty = 1;
+      gb.fill = GridBagConstraints.BOTH;
       myCenterPanel.add(myChangesTreeList, gb);
 
       ++ gb.gridy;

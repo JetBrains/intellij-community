@@ -62,7 +62,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
   private static final int DIRTY_MAGIC = 0xbabe1977;
   private static final int VERSION = 6 + IntToIntBtree.version();
   private static final int CORRECTLY_CLOSED_MAGIC = 0xebabafc + VERSION + PAGE_SIZE;
-  @NotNull private static Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
+  @NotNull private static final Version ourVersion = new Version(CORRECTLY_CLOSED_MAGIC, DIRTY_MAGIC);
   private static final int KEY_SHIFT = 1;
 
   public PersistentBTreeEnumerator(@NotNull File file, @NotNull KeyDescriptor<Data> dataDescriptor, int initialSize) throws IOException {
@@ -237,7 +237,7 @@ public class PersistentBTreeEnumerator<Data> extends PersistentEnumeratorBase<Da
       IntToIntBtree.myAssert(idx > 0);
       return idx - KEY_SHIFT;
     }
-    
+
     int anInt = myStorage.getInt(idx);
     if (IntToIntBtree.doSanityCheck) {
       IntToIntBtree.myAssert(anInt >= 0 || myDataDescriptor instanceof InlineKeyDescriptor);

@@ -23,6 +23,7 @@ import com.intellij.openapi.actionSystem.*;
 import com.intellij.openapi.actionSystem.impl.ActionButton;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
+import com.intellij.openapi.wm.IdeFocusManager;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.PopupHandler;
 import com.intellij.ui.ScrollPaneFactory;
@@ -36,6 +37,8 @@ import javax.swing.*;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import java.awt.*;
+import java.awt.event.MouseAdapter;
+import java.awt.event.MouseEvent;
 
 /**
  * @author Alexander Lobas
@@ -53,11 +56,10 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
   private TablePanelActionPolicy myActionPolicy;
   private final JLabel myTitleLabel;
 
-  public PropertyTablePanel(Project project) {
+  public PropertyTablePanel(final Project project) {
     myPropertyTable = new RadPropertyTable(project);
 
     setLayout(new GridBagLayout());
-    setBorder(IdeBorderFactory.createBorder(SideBorder.TOP));
 
     int gridX = 0;
 
@@ -119,6 +121,12 @@ public final class PropertyTablePanel extends JPanel implements ListSelectionLis
                                            new Insets(0, 0, 0, 0), 0, 0));
 
     myPropertyTable.setPropertyTablePanel(this);
+
+    addMouseListener(new MouseAdapter() {
+      public void mouseReleased(final MouseEvent e) {
+        IdeFocusManager.getInstance(project).requestFocus(myPropertyTable, true);
+      }
+    });
   }
 
   public void setArea(@Nullable DesignerEditorPanel designer, @Nullable EditableArea area) {

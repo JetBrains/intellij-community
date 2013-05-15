@@ -315,7 +315,8 @@ public class GroovyAnnotator extends GroovyElementVisitor {
           }
         }
         else {
-          if (container instanceof GrMethod && ((GrMethod)container).isConstructor()) {
+          if (container instanceof GrMethod && ((GrMethod)container).isConstructor() ||
+              container instanceof GrClassInitializer && !((GrClassInitializer)container).isStatic()) {
             return;
           }
         }

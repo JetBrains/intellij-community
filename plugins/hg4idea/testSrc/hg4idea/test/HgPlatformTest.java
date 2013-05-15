@@ -115,4 +115,15 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     hg("add file.txt");
     hg("commit -m initial");
   }
+
+  public void prepareSecondRepository() throws IOException {
+    cd(myRepository);
+    hg("clone " + myRepository.getCanonicalPath() + " childRepo");
+    myChildRepo = myRepository.findChild("childRepo");
+    cd(myChildRepo);
+    hg("pull");
+    hg("update");
+    HgTestUtil.updateDirectoryMappings(myProject, myRepository);
+    HgTestUtil.updateDirectoryMappings(myProject, myChildRepo);
+  }
 }

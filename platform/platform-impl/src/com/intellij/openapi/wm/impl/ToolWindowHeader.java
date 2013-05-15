@@ -314,7 +314,7 @@ public abstract class ToolWindowHeader extends JPanel implements Disposable {
     
     BufferedImage image = UIUtil.createImage(width, height, BufferedImage.TYPE_INT_ARGB);
     Graphics2D g = image.createGraphics();
-    UIUtil.drawHeader(g, 0, width, height, active, true, !floating);
+    UIUtil.drawHeader(g, 0, width, height, active, true, !floating, true);
     g.dispose();
 
     return image; 

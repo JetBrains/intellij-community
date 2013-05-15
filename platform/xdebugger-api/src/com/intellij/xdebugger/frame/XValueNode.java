@@ -37,6 +37,8 @@ public interface XValueNode extends Obsolescent {
    */
   int MAX_VALUE_LENGTH = 100;
 
+  int MAX_CHILDREN_TO_SHOW = 100;
+
   /**
    * Setup presentation of the value
    * @param icon icon representing value type (see {@link com.intellij.icons.AllIcons.Debugger})
@@ -69,6 +71,8 @@ public interface XValueNode extends Obsolescent {
    */
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value,
                        @Nullable NotNullFunction<String, String> valuePresenter, boolean hasChildren);
+
+  void setPresentation(@Nullable Icon icon, @NonNls @NotNull String value, @Nullable XValuePresenter valuePresenter, boolean hasChildren);
 
   /**
    * The same as {@link #setPresentation(javax.swing.Icon, String, String, com.intellij.util.NotNullFunction, boolean)} but also allows to

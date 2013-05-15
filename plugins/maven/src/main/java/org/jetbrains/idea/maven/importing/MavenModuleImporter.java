@@ -33,7 +33,6 @@ import org.jetbrains.idea.maven.model.MavenConstants;
 import org.jetbrains.idea.maven.project.*;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
-import java.io.File;
 import java.util.List;
 import java.util.Map;
 
@@ -164,7 +163,9 @@ public class MavenModuleImporter {
           addAttachArtifactDependency(buildHelperCfg, scope, depProject, artifact);
         }
 
-        if (artifact.getClassifier() != null && !"system".equals(artifact.getScope())) {
+        if (artifact.getClassifier() != null
+            && !"system".equals(artifact.getScope())
+            && !"false".equals(System.getProperty("idea.maven.classifier.dep"))) {
           MavenArtifact a = new MavenArtifact(
             artifact.getGroupId(),
             artifact.getArtifactId(),

@@ -48,7 +48,7 @@ public class StubTreeBuilder {
 
       final BinaryFileStubBuilder builder = BinaryFileStubBuilders.INSTANCE.forFileType(fileType);
       if (builder != null) {
-        data = builder.buildStubTree(inputData.getFile(), inputData.getContent(), inputData.getProject());
+        data = builder.buildStubTree(inputData);
       }
       else if (!fileType.isBinary()) {
         final LanguageFileType languageFileType = (LanguageFileType)fileType;

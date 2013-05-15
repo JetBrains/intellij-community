@@ -17,12 +17,14 @@ package com.intellij.designer.palette;
 
 import com.intellij.designer.AbstractToolWindowManager;
 import com.intellij.designer.DesignerCustomizations;
+import com.intellij.designer.LightToolWindow;
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
+import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
@@ -34,29 +36,55 @@ import org.jetbrains.annotations.Nullable;
 public class PaletteToolWindowManager extends AbstractToolWindowManager {
   private final PalettePanel myToolWindowPanel = new PalettePanel();
 
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Public Access
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
   public PaletteToolWindowManager(Project project, FileEditorManager fileEditorManager) {
     super(project, fileEditorManager);
+  }
+
+  public static PalettePanel getInstance(DesignerEditorPanel designer) {
+    PaletteToolWindowManager manager = getInstance(designer.getProject());
+    if (manager.isEditorMode()) {
+      return (PalettePanel)manager.getContent(designer);
+    }
+    return manager.myToolWindowPanel;
   }
 
   public static PaletteToolWindowManager getInstance(Project project) {
     return project.getComponent(PaletteToolWindowManager.class);
   }
 
-  public void clearActiveItem() {
-    myToolWindowPanel.clearActiveItem();
-  }
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Impl
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
 
-  public void refresh() {
-    myToolWindowPanel.repaint();
+  @Override
+  protected LightToolWindow createContent(DesignerEditorPanel designer) {
+    PalettePanel palettePanel = new PalettePanel();
+    palettePanel.loadPalette(designer);
+
+    return createContent(designer,
+                         palettePanel,
+                         "Palette",
+                         AllIcons.Toolwindows.ToolWindowPalette,
+                         palettePanel,
+                         palettePanel,
+                         getAnchor() == ToolWindowAnchor.LEFT ? SideBorder.LEFT : SideBorder.RIGHT,
+                         180,
+                         null);
   }
 
   @Override
   protected void initToolWindow() {
-    DesignerCustomizations customization = getCustomizations();
-    ToolWindowAnchor anchor = customization != null ? customization.getPaletteAnchor() : ToolWindowAnchor.RIGHT;
-
-    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette\t", false, anchor, myProject, true);
+    myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette\t", false, getAnchor(), myProject, true);
     myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowPalette);
+    initGearActions();
 
     ContentManager contentManager = myToolWindow.getContentManager();
     Content content = contentManager.getFactory().createContent(myToolWindowPanel, null, false);
@@ -65,6 +93,11 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
     contentManager.addContent(content);
     contentManager.setSelectedContent(content, true);
     myToolWindow.setAvailable(false, null);
+  }
+
+  private static ToolWindowAnchor getAnchor() {
+    DesignerCustomizations customization = getCustomizations();
+    return customization != null ? customization.getPaletteAnchor() : ToolWindowAnchor.RIGHT;
   }
 
   @Override

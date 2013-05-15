@@ -38,6 +38,7 @@ import java.util.Collection;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.atomic.AtomicInteger;
 import java.util.concurrent.atomic.AtomicReference;
 
 public class RefCountHolder {
@@ -56,19 +57,26 @@ public class RefCountHolder {
   private static class HolderReference extends SoftReference<RefCountHolder> {
     @SuppressWarnings("UnusedDeclaration")
     private volatile RefCountHolder myHardRef; // to prevent gc
+    // number of live references to RefCountHolder. Once it reaches zero, hard ref is cleared
+    // the counter is used instead of a flag because multiple passes can be running simultaneously (one actual and several canceled winding down)
+    // and there is a chance they overlap the usage of RCH
+    private final AtomicInteger myRefCount = new AtomicInteger();
 
     public HolderReference(@NotNull RefCountHolder holder) {
       super(holder);
       myHardRef = holder;
     }
-    
-    private void makeHardReachable(boolean isHard) {
-      RefCountHolder holder = get();
-      assert !isHard || holder != null : "hard: "+isHard +"; holder="+holder;
-      myHardRef = isHard ? holder : null;
+
+    private void changeLivenessBy(int delta) {
+      if (myRefCount.addAndGet(delta) == 0) {
+        myHardRef = null;
+      }
+      else if (myHardRef == null) {
+        myHardRef = get();
+      }
     }
   }
-  
+
   private static final Key<HolderReference> REF_COUNT_HOLDER_IN_FILE_KEY = Key.create("REF_COUNT_HOLDER_IN_FILE_KEY");
   @NotNull
   private static Pair<RefCountHolder, HolderReference> getInstance(@NotNull PsiFile file, boolean create) {
@@ -98,7 +106,7 @@ public class RefCountHolder {
   public static RefCountHolder startUsing(@NotNull PsiFile file) {
     Pair<RefCountHolder, HolderReference> pair = getInstance(file, true);
     HolderReference reference = pair.second;
-    reference.makeHardReachable(true); // make sure RefCountHolder won't be gced during highlighting
+    reference.changeLivenessBy(1); // make sure RefCountHolder won't be gced during highlighting
     log("startUsing: " + pair.first.myState+" for "+file);
     return pair.first;
   }
@@ -107,12 +115,12 @@ public class RefCountHolder {
   public static RefCountHolder endUsing(@NotNull PsiFile file) {
     Pair<RefCountHolder, HolderReference> pair = getInstance(file, false);
     HolderReference reference = pair.second;
-    reference.makeHardReachable(false); // no longer needed, can be cleared
+    reference.changeLivenessBy(-1); // no longer needed, can be cleared
     RefCountHolder holder = pair.first;
     log("endUsing: " + (holder == null ? null : holder.myState)+" for "+file);
     return holder;
   }
-  
+
   private RefCountHolder(@NotNull PsiFile file) {
     myFile = file;
     log("c: created: " + myState.get()+" for "+file);

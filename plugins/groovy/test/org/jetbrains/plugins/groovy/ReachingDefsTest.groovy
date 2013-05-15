@@ -23,7 +23,9 @@ import org.jetbrains.plugins.groovy.codeInspection.utils.ControlFlowUtils
 import org.jetbrains.plugins.groovy.lang.psi.GrControlFlowOwner
 import org.jetbrains.plugins.groovy.lang.psi.GroovyFile
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrStatement
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrAllVarsInitializedPolicy
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo
@@ -67,7 +69,12 @@ public class ReachingDefsTest extends LightCodeInsightFixtureTestCase {
     assert owner != null
     GrStatement firstStatement = getStatement(start, owner)
     GrStatement lastStatement = getStatement(end, owner)
-    final FragmentVariableInfos fragmentVariableInfos = ReachingDefinitionsCollector.obtainVariableFlowInformation(firstStatement, lastStatement, ControlFlowUtils.findControlFlowOwner(firstStatement), new ControlFlowBuilder(firstStatement.getProject(), true).buildControlFlow(ControlFlowUtils.findControlFlowOwner(firstStatement)))
+
+    final GrControlFlowOwner flowOwner = ControlFlowUtils.findControlFlowOwner(firstStatement)
+    final ControlFlowBuilder flowBuilder = new ControlFlowBuilder(firstStatement.getProject(), GrAllVarsInitializedPolicy.getInstance())
+    final Instruction[] flow = flowBuilder.buildControlFlow(flowOwner)
+    final FragmentVariableInfos fragmentVariableInfos = ReachingDefinitionsCollector.obtainVariableFlowInformation(firstStatement, lastStatement, flowOwner, flow)
+
     assertEquals(data.get(1), dumpInfo(fragmentVariableInfos).trim())
   }
 

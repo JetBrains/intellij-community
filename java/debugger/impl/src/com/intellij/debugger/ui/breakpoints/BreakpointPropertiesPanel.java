@@ -43,7 +43,6 @@ import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiElement;
 import com.intellij.ui.FieldPanel;
 import com.intellij.ui.MultiLineTooltipUI;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.popup.util.DetailView;
 import com.intellij.util.IJSwingUtilities;
 import com.intellij.xdebugger.impl.DebuggerSupport;
@@ -540,7 +539,7 @@ public abstract class BreakpointPropertiesPanel {
         if (myBreakpoint.ENABLED != myEnabledCheckbox.isSelected()) {
           myBreakpoint.ENABLED = myEnabledCheckbox.isSelected();
           getBreakpointManager(myProject).fireBreakpointChanged(myBreakpoint);
-          myBreakpoint.updateUI(null);
+          myBreakpoint.updateUI();
         }
       }
     });

@@ -1320,7 +1320,7 @@ public class UIUtil {
   }
 
   public static void drawHeader(Graphics g, int x, int width, int height, boolean active, boolean drawTopLine) {
-    drawHeader(g, x, width, height, active, false, drawTopLine);
+    drawHeader(g, x, width, height, active, false, drawTopLine, true);
   }
 
   public static void drawHeader(Graphics g,
@@ -1329,7 +1329,8 @@ public class UIUtil {
                                 int height,
                                 boolean active,
                                 boolean toolWindow,
-                                boolean drawTopLine) {
+                                boolean drawTopLine,
+                                boolean drawBottomLine) {
     g.setColor(getPanelBackground());
     g.fillRect(x, 0, width, height);
 
@@ -1338,7 +1339,7 @@ public class UIUtil {
 
     g.setColor(new Color(0, 0, 0, toolWindow ? 90 : 50));
     if (drawTopLine) g.drawLine(x, 0, width, 0);
-    g.drawLine(x, height - 1, width, height - 1);
+    if (drawBottomLine) g.drawLine(x, height - 1, width, height - 1);
 
     g.setColor(isUnderDarcula() ? Gray._255.withAlpha(30) : new Color(255, 255, 255, 100));
     g.drawLine(x, drawTopLine ? 1 : 0, width, drawTopLine ? 1 : 0);

@@ -27,8 +27,8 @@ import java.util.List;
  */
 public class XValueChildrenList {
   public static final XValueChildrenList EMPTY = new XValueChildrenList(Collections.<String>emptyList(), Collections.<XValue>emptyList());
-  private List<String> myNames;
-  private List<XValue> myValues;
+  private final List<String> myNames;
+  private final List<XValue> myValues;
 
   public XValueChildrenList(int initialCapacity) {
     myNames = new ArrayList<String>(initialCapacity);

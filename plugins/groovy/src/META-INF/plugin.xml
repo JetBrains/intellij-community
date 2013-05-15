@@ -664,7 +664,7 @@
     <localInspection language="Groovy" groupPath="Groovy" shortName="GrFinalVariableAccess" displayName="Final variable access"
                      groupName="Control Flow"
                      enabledByDefault="true" level="WARNING"
-                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.GrFinalVariableAccessInspection"/>
+                     implementationClass="org.jetbrains.plugins.groovy.codeInspection.control.finalVar.GrFinalVariableAccessInspection"/>
     <localInspection language="Groovy" groupPath="Groovy" shortName="GroovySwitchStatementWithNoDefault"
                      displayName="Switch statement with no default case"
                      groupName="Control Flow" enabledByDefault="false" level="WARNING"

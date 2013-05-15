@@ -16,7 +16,7 @@
 package org.jetbrains.plugins.groovy.inspections
 
 import com.intellij.codeInspection.InspectionProfileEntry
-import org.jetbrains.plugins.groovy.codeInspection.control.GrFinalVariableAccessInspection
+import org.jetbrains.plugins.groovy.codeInspection.control.finalVar.GrFinalVariableAccessInspection
 import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
 
 /**
@@ -24,10 +24,7 @@ import org.jetbrains.plugins.groovy.lang.highlighting.GrHighlightingTestBase
  */
 class GrFinalVariableAccessTest extends GrHighlightingTestBase {
   @Override
-  InspectionProfileEntry[] getCustomInspections() {
-    return [new GrFinalVariableAccessInspection()]
-  }
-
+  InspectionProfileEntry[] getCustomInspections() { [new GrFinalVariableAccessInspection()] }
 
   void testSimpleVar() {
     testHighlighting('''
@@ -81,7 +78,6 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
     ''')
   }
 
-
   void testFor() {
     testHighlighting('''
       for (a in b) {
@@ -107,7 +103,6 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
         final foo = 5  //correct code
     ''')
   }
-
 
   void testForParam() {
     testHighlighting('''
@@ -173,6 +168,296 @@ class GrFinalVariableAccessTest extends GrHighlightingTestBase {
             final foo = 3 //correct
         }
       }
+''')
+  }
+
+  void testFinalField0() {
+    testHighlighting('''
+      class Foo {
+        final <warning>foo</warning>
+      }
+    ''')
+  }
+
+  void testFinalField1() {
+    testHighlighting('''
+      class Foo {
+        final foo //correct
+
+        def Foo() {
+          foo = 2
+        }
+      }
+    ''')
+  }
+
+  void testFinalField2() {
+    testHighlighting('''
+      class Foo {
+        final <warning>foo</warning>
+
+        def Foo() {
+          foo = 2
+        }
+
+        def Foo(x) {
+        }
+      }
+    ''')
+  }
+
+  void testFinalField3() {
+    testHighlighting('''
+      class Foo {
+        final foo;
+
+        {
+          foo = 3
+        }
+
+        def Foo() {
+          <warning>foo</warning> = 2
+        }
+
+        def Foo(x) {
+        }
+      }
+    ''')
+  }
+
+  void testFinalField4() {
+    testHighlighting('''
+      class Foo {
+        final foo //correct
+
+        def Foo() {
+          foo = 2
+        }
+
+        def Foo(x) {
+          this()
+        }
+      }
+    ''')
+  }
+
+  void testFinalField5() {
+    testHighlighting('''
+      class Foo {
+        final <warning>foo</warning> //correct
+
+        def Foo() {
+
+        }
+
+        def Foo(x) {
+          this()
+        }
+      }
+    ''')
+  }
+
+  void testFinalField6() {
+    testHighlighting('''
+      class Foo {
+        final <warning>foo</warning> //correct
+
+        <error>def Foo()</error> {
+          this(2)
+        }
+
+        <error>def Foo(x)</error> {
+          this()
+        }
+      }
+    ''')
+  }
+
+  void testStaticFinalField0() {
+    testHighlighting('''
+      class Foo {
+        static final foo = 5 //correct
+      }
+    ''')
+  }
+
+  void testStaticFinalField1() {
+    testHighlighting('''
+      class Foo {
+        static final <warning>foo</warning>
+      }
+    ''')
+  }
+
+  void testStaticFinalField2() {
+    testHighlighting('''
+      class Foo {
+        static final <warning>foo</warning>
+
+        static {
+          if (1) {
+            foo = 1
+          }
+        }
+      }
+    ''')
+  }
+
+  void testStaticFinalField3() {
+    testHighlighting('''
+      class Foo {
+        static final foo //correct
+
+        static {
+          if (1) {
+            foo = 1
+          }
+          else {
+            foo = -1
+          }
+        }
+      }
+    ''')
+  }
+
+  void testStaticFinalField4() {
+    testHighlighting('''
+      class Foo {
+        static final foo //correct
+
+        static {
+          print 1
+        }
+
+        static {
+          if (1) {
+            foo = 1
+          }
+          else {
+            foo = -1
+          }
+        }
+      }
+    ''')
+  }
+
+  void testFinalFieldInit0() {
+    testHighlighting('''
+      class Foo {
+        final foo = 0;
+
+        {
+          <warning>foo</warning> = 1
+        }
+      }
+    ''')
+  }
+
+  void testFinalFieldInit1() {
+    testHighlighting('''
+      class Foo {
+        final foo;
+
+        {
+          foo = 0
+        }
+
+        {
+          <warning>foo</warning> = 1
+        }
+      }
+    ''')
+  }
+
+  void testFinalFieldInit2() {
+    testHighlighting('''
+      class Foo {
+        final foo;
+
+        {
+          foo = 0
+        }
+
+        Foo(){
+          <warning>foo</warning> = 1
+        }
+      }
+    ''')
+  }
+
+  void testFinalFieldInit3() {
+    testHighlighting('''
+      class Foo {
+        final foo;
+
+        Foo(x){
+          foo = 0
+        }
+
+        Foo(){
+          this(1)
+          <warning>foo</warning> = 1
+        }
+      }
+    ''')
+  }
+
+  void testFinalFieldInit4() {
+    testHighlighting('''
+      class Foo {
+        final foo;
+
+        {
+          foo = 0
+          <warning>foo</warning> = 2
+        }
+
+      }
+    ''')
+  }
+
+  void testFinalFieldInit5() {
+    testHighlighting('''
+      class Foo {
+        final foo;
+
+        {
+          if (1) {
+            foo = 0
+          }
+          <warning>foo</warning> = 2
+        }
+
+      }
+    ''')
+  }
+
+  void testFinalFieldAccess() {
+    testHighlighting('''
+      class Foo {
+        public final foo = 5
+      }
+
+      <warning>new Foo().foo</warning> = 3
+    ''')
+  }
+
+  void testImmutable() {
+    testHighlighting('''
+import groovy.transform.Immutable
+
+@Immutable
+class Money {
+    String <warning>currency</warning>
+    int <warning>amount</warning>
+
+    void doubleYourMoney() {
+        <error>amount</error> *= 2
+    }
+}
+
+def a = new Money('USA', 100)
+<warning>a.amount</warning> = 1000
 ''')
   }
 }

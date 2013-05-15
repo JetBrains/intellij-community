@@ -38,7 +38,7 @@ public final class DesignerHighlightingPass implements HighlightingPass {
 
   @Override
   public void applyInformationToEditor() {
-    DesignerToolWindowManager.getInstance(myDesigner.getProject()).updateInspections();
+    DesignerToolWindowManager.getInstance(myDesigner).updateInspections();
     myDesigner.updateInspections();
   }
 }

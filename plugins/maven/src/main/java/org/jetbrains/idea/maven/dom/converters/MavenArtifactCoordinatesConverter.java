@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -212,14 +212,14 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
       return psiManager.findFile(virtualFile);
     }
 
-    protected File makeLocalRepositoryFile(MavenId id, File localRepostory) {
+    protected File makeLocalRepositoryFile(MavenId id, File localRepository) {
       String relPath = (StringUtil.notNullize(id.getGroupId(), "null")).replace(".", "/");
 
       relPath += "/" + id.getArtifactId();
       relPath += "/" + id.getVersion();
       relPath += "/" + id.getArtifactId() + "-" + id.getVersion() + ".pom";
 
-      return new File(localRepostory, relPath);
+      return new File(localRepository, relPath);
     }
   }
 
@@ -332,7 +332,7 @@ public abstract class MavenArtifactCoordinatesConverter extends ResolvingConvert
 
     @Override
     public String getContextName() {
-      return myPlugin ? "Plugin " : "Build Extension";
+      return myPlugin ? "Plugin" : "Build Extension";
     }
 
     public boolean isValid(MavenId id, MavenProjectIndicesManager manager, ConvertContext context) {
