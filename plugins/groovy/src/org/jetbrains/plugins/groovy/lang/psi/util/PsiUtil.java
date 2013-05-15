@@ -1289,4 +1289,20 @@ public class PsiUtil {
   public static boolean isSingleBindingVariant(GroovyResolveResult[] candidates) {
     return candidates.length == 1 && candidates[0].getElement() instanceof GrBindingVariable;
   }
+
+  @Nullable
+  public static GrConstructorInvocation getConstructorInvocation(@NotNull GrMethod constructor) {
+    assert constructor.isConstructor();
+
+    final GrOpenBlock body = constructor.getBlock();
+    if (body == null) return null;
+
+    final GrStatement[] statements = body.getStatements();
+    if (statements.length > 0 && statements[0] instanceof GrConstructorInvocation) {
+      return ((GrConstructorInvocation)statements[0]);
+    }
+    else {
+      return null;
+    }
+  }
 }

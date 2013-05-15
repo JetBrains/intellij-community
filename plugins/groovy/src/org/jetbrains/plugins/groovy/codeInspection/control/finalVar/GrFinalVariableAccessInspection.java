@@ -13,12 +13,13 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package org.jetbrains.plugins.groovy.codeInspection.control;
+package org.jetbrains.plugins.groovy.codeInspection.control.finalVar;
 
 import com.intellij.codeInspection.LocalQuickFix;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiField;
+import com.intellij.psi.PsiMethod;
 import com.intellij.psi.PsiModifier;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.util.containers.ContainerUtil;
@@ -34,13 +35,13 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameter;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.GrTypeDefinition;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMethod;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.ReadWriteVariableInstruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DFAEngine;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.DfaInstance;
-import org.jetbrains.plugins.groovy.lang.psi.dataFlow.Semilattice;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrFieldControlFlowPolicy;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.*;
 
@@ -78,14 +79,29 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         if (initializer != null) {
           processLocalVars(initializer);
         }
+
+        if (field.hasModifierProperty(PsiModifier.FINAL)) {
+          checkFieldIsInitialized(field);
+        }
+      }
+
+
+      private void checkFieldIsInitialized(@NotNull GrField field) {
+        if (!isFieldInitialized(field)) {
+          registerError(field.getNameIdentifierGroovy(), GroovyBundle.message("variable.0.might.not.have.been.initialized", field.getName()),
+                        LocalQuickFix.EMPTY_ARRAY, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
+        }
       }
 
       @Override
       public void visitClassInitializer(GrClassInitializer initializer) {
         super.visitClassInitializer(initializer);
 
-        processLocalVars(initializer);
+        final GrOpenBlock block = initializer.getBlock();
+        processLocalVars(block);
       }
+
+
 
       private void processLocalVars(GroovyPsiElement scope) {
         MultiMap<PsiElement, GrVariable> scopes = collectVariables(scope);
@@ -93,13 +109,16 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
         for (Map.Entry<PsiElement, Collection<GrVariable>> entry : scopes.entrySet()) {
           final PsiElement scopeToProcess = entry.getKey();
 
+          final Set<GrVariable> forInParameters = ContainerUtil.newHashSet();
           final Map<String, GrVariable> variables = ContainerUtil.newHashMap();
           for (GrVariable var : entry.getValue()) {
             variables.put(var.getName(), var);
+            if (var instanceof GrParameter && ((GrParameter)var).getDeclarationScope() instanceof GrForStatement) {
+              forInParameters.add(var);
+            }
           }
 
-
-          final List<ReadWriteVariableInstruction> result = checkFlow(getFlow(scopeToProcess), variables);
+          final List<ReadWriteVariableInstruction> result = new InvalidWriteAccessSearcher().findInvalidWriteAccess(getFlow(scopeToProcess), variables, forInParameters);
           if (result != null) {
             for (ReadWriteVariableInstruction instruction : result) {
               if (variables.containsKey(instruction.getVariableName())) {
@@ -113,6 +132,90 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       }
     };
   }
+
+  private static boolean isFieldInitialized(@NotNull GrField field) {
+    if (field.getInitializerGroovy() != null) return true;
+
+    final boolean isStatic = field.hasModifierProperty(PsiModifier.STATIC);
+    final String name = field.getName();
+
+    final GrTypeDefinition aClass = ((GrTypeDefinition)field.getContainingClass());
+    if (aClass == null) return true;
+
+    GrClassInitializer[] initializers = aClass.getInitializers();
+    for (GrClassInitializer initializer : initializers) {
+      if (initializer.isStatic() != isStatic) continue;
+
+      final Instruction[] initializerFlow = buildFlowForField(initializer.getBlock());
+      if (VariableInitializationChecker.isVariableDefinitelyInitialized(name, initializerFlow)) {
+        return true;
+      }
+    }
+
+    if (isStatic) return false;
+
+    final GrMethod[] constructors = aClass.getCodeConstructors();
+    if (constructors.length == 0) return false;
+
+    Set<GrMethod> initializedConstructors = ContainerUtil.newHashSet();
+    Set<GrMethod> notInitializedConstructors = ContainerUtil.newHashSet();
+
+    NEXT_CONSTR:
+    for (GrMethod constructor : constructors) {
+      if (constructor.getBlock() == null) return false;
+      final List<GrMethod> chained = getChainedConstructors(constructor);
+
+      NEXT_CHAINED:
+      for (GrMethod method : chained) {
+        if (initializedConstructors.contains(method)) {
+          continue NEXT_CONSTR;
+        }
+        else if (notInitializedConstructors.contains(method)) {
+          continue NEXT_CHAINED;
+        }
+
+        final GrOpenBlock block = method.getBlock();
+        assert block != null;
+        final boolean initialized = VariableInitializationChecker.isVariableDefinitelyInitialized(name, buildFlowForField(block));
+
+        if (initialized) {
+          initializedConstructors.add(method);
+          continue NEXT_CONSTR;
+        }
+        else {
+          notInitializedConstructors.add(method);
+        }
+      }
+
+      return false;
+    }
+    return true;
+  }
+
+  @NotNull
+  private static List<GrMethod> getChainedConstructors(@NotNull GrMethod constructor) {
+    final HashSet<Object> visited = ContainerUtil.newHashSet();
+
+    final ArrayList<GrMethod> result = ContainerUtil.newArrayList(constructor);
+    while (true) {
+      final GrConstructorInvocation invocation = PsiUtil.getConstructorInvocation(constructor);
+      if (invocation != null && invocation.isThisCall()) {
+        final PsiMethod method = invocation.resolveMethod();
+        if (method != null && method.isConstructor() && visited.add(method)) {
+          result.add((GrMethod)method);
+          constructor = (GrMethod)method;
+          continue;
+        }
+      }
+      return result;
+    }
+  }
+
+  @NotNull
+  private static Instruction[] buildFlowForField(@NotNull GrOpenBlock block) {
+    return new ControlFlowBuilder(block.getProject(), GrFieldControlFlowPolicy.getInstance()).buildControlFlow(block);
+  }
+
 
   /**
    * @return map: scope -> variables defined in the scope
@@ -142,35 +245,6 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
            : new ControlFlowBuilder(element.getProject()).buildControlFlow((GroovyPsiElement)element);
   }
 
-  @Nullable
-  private static List<ReadWriteVariableInstruction> checkFlow(@NotNull Instruction[] flow, @NotNull Map<String, GrVariable> variables) {
-    DFAEngine<MyData> engine = new DFAEngine<MyData>(flow, new MyDFAInstance(), new MySemilattice());
-    final ArrayList<MyData> dfaResult = engine.performDFAWithTimeout();
-    if (dfaResult == null) return null;
-
-
-    List<ReadWriteVariableInstruction> result = ContainerUtil.newArrayList();
-    for (int i = 0; i < flow.length; i++) {
-      Instruction instruction = flow[i];
-      if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction)instruction).isWrite()) {
-        final MyData initialized = dfaResult.get(i);
-        final GrVariable var = variables.get(((ReadWriteVariableInstruction)instruction).getVariableName());
-        if (var instanceof GrParameter && ((GrParameter)var).getDeclarationScope() instanceof GrForStatement) {
-          if (initialized.isInitialized(((ReadWriteVariableInstruction)instruction).getVariableName())) {
-            result.add((ReadWriteVariableInstruction)instruction);
-          }
-        }
-        else {
-          if (initialized.isOverInitialized(((ReadWriteVariableInstruction)instruction).getVariableName())) {
-            result.add((ReadWriteVariableInstruction)instruction);
-          }
-        }
-      }
-    }
-
-
-    return result;
-  }
 
   @Nullable
   private static PsiElement findScope(@NotNull GrVariable variable) {
@@ -182,72 +256,5 @@ public class GrFinalVariableAccessInspection extends BaseInspection {
       }
     }
     return result;
-  }
-
-  private static class MyDFAInstance implements DfaInstance<MyData> {
-    @Override
-    public void fun(MyData e, Instruction instruction) {
-      if (instruction instanceof ReadWriteVariableInstruction && ((ReadWriteVariableInstruction)instruction).isWrite()) {
-        e.add(((ReadWriteVariableInstruction)instruction).getVariableName());
-      }
-    }
-
-    @NotNull
-    @Override
-    public MyData initial() {
-      return new MyData();
-    }
-
-    @Override
-    public boolean isForward() {
-      return true;
-    }
-  }
-
-  private static class MySemilattice implements Semilattice<MyData> {
-    @Override
-    public MyData join(ArrayList<MyData> ins) {
-      return new MyData(ins);
-    }
-
-    @Override
-    public boolean eq(MyData e1, MyData e2) {
-      return e1.equals(e2);
-    }
-  }
-
-  private static class MyData {
-    private final Set<String> myInitialized = ContainerUtil.newHashSet();
-    private final Set<String> myOverInitialized = ContainerUtil.newHashSet();
-
-    public MyData(List<MyData> ins) {
-      for (MyData data : ins) {
-        myInitialized.addAll(data.myInitialized);
-        myOverInitialized.addAll(data.myOverInitialized);
-      }
-    }
-
-    public MyData() {}
-
-    public void add(String var) {
-      if (!myInitialized.add(var)) {
-        myOverInitialized.add(var);
-      }
-    }
-
-    @Override
-    public boolean equals(Object obj) {
-      return obj instanceof MyData &&
-             myInitialized.equals(((MyData)obj).myInitialized) &&
-             myOverInitialized.equals(((MyData)obj).myOverInitialized);
-    }
-
-    public boolean isOverInitialized(String var) {
-      return myOverInitialized.contains(var);
-    }
-
-    public boolean isInitialized(String var) {
-      return myInitialized.contains(var);
-    }
   }
 }

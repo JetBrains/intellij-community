@@ -95,14 +95,14 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   private List<Pair<InstructionImpl, GroovyPsiElement>> myPending;
 
   private int myInstructionNumber;
-  private final boolean myForRefactoring;
+  private final GrControlFlowPolicy myPolicy;
 
   public ControlFlowBuilder(Project project) {
-    this(project, false);
+    this(project, GrResolverPolicy.getInstance());
   }
 
-  public ControlFlowBuilder(Project project, boolean refactoring) {
-    myForRefactoring = refactoring;
+  public ControlFlowBuilder(Project project, GrControlFlowPolicy policy) {
+    myPolicy = policy;
     myConstantEvaluator = JavaPsiFacade.getInstance(project).getConstantEvaluationHelper();
   }
 
@@ -494,7 +494,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
 
   public void visitReferenceExpression(GrReferenceExpression refExpr) {
     super.visitReferenceExpression(refExpr);
-    if (refExpr.getQualifierExpression() == null) {
+
+    if (myPolicy.isReferenceAccepted(refExpr)) {
       String name = refExpr.getReferenceName();
       if (name == null) return;
 
@@ -511,7 +512,8 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
         }
       }
     }
-    else if (!(refExpr.getParent() instanceof GrCall)) {
+
+    if (refExpr.isQualified() && !(refExpr.getParent() instanceof GrCall)) {
       visitCall(refExpr);
     }
   }
@@ -1187,17 +1189,10 @@ public class ControlFlowBuilder extends GroovyRecursiveElementVisitor {
   public void visitVariable(GrVariable variable) {
     super.visitVariable(variable);
 
-    if (myForRefactoring ||
-        variable.getInitializerGroovy() != null ||
-        hasTupleInitializer(variable)) {
+    if (myPolicy.isVariableInitialized(variable)) {
       ReadWriteVariableInstruction writeInst = new ReadWriteVariableInstruction(variable.getName(), variable, WRITE);
       addNodeAndCheckPending(writeInst);
     }
-  }
-
-  private static boolean hasTupleInitializer(@NotNull GrVariable variable) {
-    final PsiElement parent = variable.getParent();
-    return parent instanceof GrVariableDeclaration && ((GrVariableDeclaration)parent).getTupleInitializer() != null;
   }
 
   @Nullable
