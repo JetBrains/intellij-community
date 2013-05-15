@@ -12,13 +12,16 @@
 // limitations under the License.
 package org.zmlx.hg4idea.action;
 
-import com.intellij.openapi.actionSystem.*;
+import com.intellij.openapi.actionSystem.AnAction;
+import com.intellij.openapi.actionSystem.AnActionEvent;
+import com.intellij.openapi.actionSystem.DataContext;
+import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.ui.MessageType;
-import com.intellij.openapi.vcs.ui.VcsBalloonProblemNotifier;
+import com.intellij.openapi.vcs.ProjectLevelVcsManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import org.jetbrains.annotations.Nullable;
+import org.zmlx.hg4idea.HgVcs;
 import org.zmlx.hg4idea.util.HgUtil;
 
 import javax.swing.*;
@@ -48,22 +51,13 @@ abstract class HgAbstractGlobalAction extends AnAction {
     if (!repos.isEmpty()) {
       execute(project, repos, repo);
     }
-    else {
-      VcsBalloonProblemNotifier.showOverChangesView(project, "No Mercurial repositories in the project", MessageType.ERROR);
-    }
   }
 
   @Override
   public void update(AnActionEvent e) {
     super.update(e);
-
-    Presentation presentation = e.getPresentation();
-    final DataContext dataContext = e.getDataContext();
-
-    Project project = PlatformDataKeys.PROJECT.getData(dataContext);
-    if (project == null) {
-      presentation.setEnabled(false);
-    }
+    boolean enabled = isEnabled(e);
+    e.getPresentation().setEnabled(enabled);
   }
 
   protected abstract void execute(Project project, Collection<VirtualFile> repositories, @Nullable VirtualFile selectedRepo);
@@ -83,5 +77,18 @@ abstract class HgAbstractGlobalAction extends AnAction {
     catch (InterruptedException e) {
       handleException(project, e);
     }
+  }
+
+  public static boolean isEnabled(AnActionEvent e) {
+    Project project = e.getData(PlatformDataKeys.PROJECT);
+    if (project == null) {
+      return false;
+    }
+    HgVcs vcs = HgVcs.getInstance(project);
+    final VirtualFile[] roots = ProjectLevelVcsManager.getInstance(project).getRootsUnderVcs(vcs);
+    if (roots == null || roots.length == 0) {
+      return false;
+    }
+    return true;
   }
 }
