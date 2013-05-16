@@ -21,6 +21,7 @@ package com.intellij.ui;
 
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.impl.ProjectLifecycleListener;
+import com.intellij.openapi.util.LowMemoryWatcher;
 import com.intellij.psi.util.PsiModificationTracker;
 import com.intellij.util.Function;
 import com.intellij.util.messages.MessageBus;
@@ -28,13 +29,24 @@ import com.intellij.util.messages.MessageBusConnection;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
-import java.util.HashMap;
+import java.util.LinkedHashMap;
 import java.util.Map;
 
 public class IconDeferrerImpl extends IconDeferrer {
   private final Object LOCK = new Object();
-  private final Map<Object, Icon> myIconsCache = new HashMap<Object, Icon>();
+  private final Map<Object, Icon> myIconsCache = new LinkedHashMap<Object, Icon>() {
+    @Override
+    protected boolean removeEldestEntry(Map.Entry<Object, Icon> eldest) {
+      return size() > 100;
+    }
+  };
   private long myLastClearTimestamp = 0;
+  @SuppressWarnings("UnusedDeclaration") private LowMemoryWatcher myLowMemoryWatcher = LowMemoryWatcher.register(new Runnable() {
+    @Override
+    public void run() {
+      clear();
+    }
+  });
 
   public IconDeferrerImpl(MessageBus bus) {
     final MessageBusConnection connection = bus.connect();
