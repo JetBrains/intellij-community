@@ -29,7 +29,7 @@ import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedFileViewProvider;
+import com.intellij.psi.impl.FreeThreadedFileViewProvider;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -163,7 +163,7 @@ class SmartPsiElementPointerImpl<E extends PsiElement> implements SmartPointerEx
     }
 
     FileViewProvider viewProvider = containingFile.getViewProvider();
-    if (viewProvider instanceof InjectedFileViewProvider) {
+    if (viewProvider instanceof FreeThreadedFileViewProvider) {
       PsiElement hostContext = InjectedLanguageManager.getInstance(containingFile.getProject()).getInjectionHost(containingFile);
       if (hostContext != null) return new InjectedSelfElementInfo(project, element, hostContext);
     }

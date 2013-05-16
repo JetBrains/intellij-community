@@ -20,12 +20,13 @@ import com.intellij.lang.Language;
 import com.intellij.lang.injection.InjectedLanguageManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.Segment;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
-import com.intellij.psi.impl.source.tree.injected.InjectedLanguageUtil;
+import com.intellij.util.containers.ContainerUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collections;
@@ -87,7 +88,7 @@ class InjectedSelfElementInfo extends SelfElementInfo {
     PsiDocumentManager documentManager = PsiDocumentManager.getInstance(getProject());
     Document document = documentManager.getDocument(hostFile);
     if (document != null && documentManager.isUncommited(document)) {
-      for (DocumentWindow documentWindow : InjectedLanguageUtil.getCachedInjectedDocuments(hostFile)) {
+      for (DocumentWindow documentWindow : InjectedLanguageManager.getInstance(getProject()).getCachedInjectedDocuments(hostFile)) {
         PsiFile injected = documentManager.getPsiFile(documentWindow);
         if (injected != null) {
           visitor.visit(injected, Collections.<PsiLanguageInjectionHost.Shred>emptyList());
@@ -95,7 +96,13 @@ class InjectedSelfElementInfo extends SelfElementInfo {
       }
     }
     else {
-      InjectedLanguageUtil.enumerate(hostContext, hostFile, true, visitor);
+      List<Pair<PsiElement,TextRange>> injected = InjectedLanguageManager.getInstance(getProject()).getInjectedPsiFiles(hostContext);
+      if (injected != null) {
+        for (Pair<PsiElement, TextRange> pair : injected) {
+          PsiFile injectedFile = pair.first.getContainingFile();
+          visitor.visit(injectedFile, ContainerUtil.<PsiLanguageInjectionHost.Shred>emptyList());
+        }
+      }
     }
 
     return result.get();
