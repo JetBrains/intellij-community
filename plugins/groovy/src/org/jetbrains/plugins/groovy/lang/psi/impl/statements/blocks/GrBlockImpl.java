@@ -49,9 +49,6 @@ import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 import org.jetbrains.plugins.groovy.util.ResolveProfiler;
 
-import java.util.ArrayList;
-import java.util.List;
-
 /**
  * @author ven
  */
@@ -146,11 +143,7 @@ public abstract class GrBlockImpl extends LazyParseablePsiElement implements GrC
 
   @NotNull
   public GrStatement[] getStatements() {
-    List<GrStatement> result = new ArrayList<GrStatement>();
-    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (cur instanceof GrStatement) result.add((GrStatement)cur);
-    }
-    return result.toArray(new GrStatement[result.size()]);
+    return  PsiImplUtil.getStatements(this);
   }
 
   @NotNull
