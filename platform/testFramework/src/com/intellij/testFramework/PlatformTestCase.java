@@ -638,7 +638,7 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
           }
         }
         catch (Throwable throwable) {
-          if (throwables[0] == null) {
+          if (throwables[0] == null) {  // report tearDown() problems if only no exceptions thrown from runTest()
             throwables[0] = throwable;
           }
         }
