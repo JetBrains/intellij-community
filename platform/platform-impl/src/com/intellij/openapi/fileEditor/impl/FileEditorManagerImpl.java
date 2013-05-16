@@ -630,13 +630,14 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
           wndToOpenIn = active.getCurrentWindow();
         }
       } else {
+        splittersIter:
         for (EditorsSplitters splitters : allSplitters) {
-          final EditorWindow window = splitters.getCurrentWindow();
-          if (window == null) continue;
-
-          if (window.isFileOpen(file)) {
-            wndToOpenIn = window;
-            break;
+          EditorWindow[] windows = splitters.getWindows();
+          for (EditorWindow window : windows) {
+            if (window.isFileOpen(file)) {
+              wndToOpenIn = window;
+              break splittersIter;
+            }
           }
         }
       }
