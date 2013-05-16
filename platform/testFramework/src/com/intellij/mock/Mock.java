@@ -432,17 +432,12 @@ public class Mock {
     }
 
     @Override
-    public void materializeNavigationTab(FileEditor fileEditor) {
+    public void materializeNavigationTab(@NotNull FileEditor fileEditor) {
       //To change body of implemented methods use File | Settings | File Templates.
     }
 
     @Override
     public void createNavigationTab(FileEditor fileEditor) {
-      //To change body of implemented methods use File | Settings | File Templates.
-    }
-
-    @Override
-    public void useForNavigation(FileEditor fileEditor, boolean b) {
       //To change body of implemented methods use File | Settings | File Templates.
     }
   }

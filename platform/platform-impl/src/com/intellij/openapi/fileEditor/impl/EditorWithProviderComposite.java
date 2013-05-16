@@ -111,37 +111,10 @@ public class EditorWithProviderComposite extends EditorComposite {
     }
     EditorWindow window = ((FileEditorManagerEx)getFileEditorManager()).getSplitters().getNavigationEditorWindow();
     if (window != null) {
-      int index = window.findEditorIndex(this);
-      if (index > 0) {
-        window.setForegroundAt(index, JBColor.cyan);
-      }
+      ((FileEditorManagerEx)getFileEditorManager()).getSplitters().updateFileColor(getFile());
       if (navigation) {
         final TextEditor textEditor = ContainerUtil.findInstance(getEditors(), TextEditor.class);
-
-        myListener = new AnActionListener.Adapter() {
-          @Override
-          public void beforeEditorTyping(char c, final DataContext dataContext) {
-            final FileEditor data = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
-            if (data == textEditor) {
-              myToMaterialize = true;
-              ActionManager.getInstance().removeAnActionListener(this);
-              myListener = null;
-            }
-          }
-
-          @Override
-          public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
-            FileEditor data = PlatformDataKeys.FILE_EDITOR.getData(event.getDataContext());
-            if (data == textEditor &&
-                action instanceof EditorAction &&
-                ((EditorAction)action).getHandler() instanceof EditorWriteActionHandler) {
-              //FileEditorManager.getInstance(PlatformDataKeys.PROJECT.getData(dataContext)).materializeNavigationTab(data);
-              myToMaterialize = true;
-              ActionManager.getInstance().removeAnActionListener(this);
-              myListener = null;
-            }
-          }
-        };
+        myListener = new TabMaterializer(textEditor);
         ActionManager.getInstance().addAnActionListener(myListener);
       }
     }
@@ -157,5 +130,36 @@ public class EditorWithProviderComposite extends EditorComposite {
       ActionManager.getInstance().removeAnActionListener(myListener);
     }
     super.dispose();
+  }
+
+  private class TabMaterializer extends AnActionListener.Adapter {
+    private final TextEditor myTextEditor;
+
+    public TabMaterializer(TextEditor textEditor) {
+      myTextEditor = textEditor;
+    }
+
+    @Override
+    public void beforeEditorTyping(char c, final DataContext dataContext) {
+      final FileEditor data = PlatformDataKeys.FILE_EDITOR.getData(dataContext);
+      if (data == myTextEditor) {
+        myToMaterialize = true;
+        ActionManager.getInstance().removeAnActionListener(this);
+        myListener = null;
+      }
+    }
+
+    @Override
+    public void afterActionPerformed(AnAction action, DataContext dataContext, AnActionEvent event) {
+      FileEditor data = PlatformDataKeys.FILE_EDITOR.getData(event.getDataContext());
+      if (data == myTextEditor &&
+          action instanceof EditorAction &&
+          ((EditorAction)action).getHandler() instanceof EditorWriteActionHandler) {
+        //FileEditorManager.getInstance(PlatformDataKeys.PROJECT.getData(dataContext)).materializeNavigationTab(data);
+        myToMaterialize = true;
+        ActionManager.getInstance().removeAnActionListener(this);
+        myListener = null;
+      }
+    }
   }
 }

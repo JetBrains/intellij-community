@@ -852,8 +852,7 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     if (compositeForNavigation != null) {
       FileEditor selectedEditor = compositeForNavigation.getSelectedEditor();
       if (compositeForNavigation.isToMaterialize() && selectedEditor instanceof TextEditor) {
-        TextEditor selectedTextEditor = (TextEditor)selectedEditor;
-        doMaterializeComposite(selectedTextEditor, compositeForNavigation);
+        doMaterializeComposite(compositeForNavigation);
       }
     }
 
@@ -1029,15 +1028,16 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
   @Override
   public void materializeNavigationTab(@NotNull FileEditor e) {
     EditorWithProviderComposite composite = getEditorComposite(e);
-    doMaterializeComposite((TextEditor)e, composite);
+    doMaterializeComposite(composite);
   }
 
-  private void doMaterializeComposite(TextEditor fileEditor, EditorWithProviderComposite composite) {
+  private void doMaterializeComposite(EditorWithProviderComposite composite) {
     if (composite != null) {
+      TextEditor textEditor1 = ContainerUtil.findInstance(composite.getEditors(), TextEditor.class);
       Pair<FileEditor[], FileEditorProvider[]> pair = openFileWithProviders(composite.getFile(), true, true, false);
       TextEditor textEditor = ContainerUtil.findInstance(pair.first, TextEditor.class);
+      Editor editor1 = textEditor1.getEditor();
       Editor editor = textEditor.getEditor();
-      Editor editor1 = fileEditor.getEditor();
       editor.getCaretModel().moveToOffset(editor1.getCaretModel().getOffset());
       editor.getSelectionModel().setSelection(editor1.getSelectionModel().getSelectionStart(), editor1.getSelectionModel().getSelectionStart());
     }
@@ -1049,12 +1049,6 @@ public class FileEditorManagerImpl extends FileEditorManagerEx implements Projec
     Pair<FileEditor[], FileEditorProvider[]> pair = openFileWithProviders(composite.getFile(), false, false, false);
     EditorWithProviderComposite newComposite = getEditorComposite(pair.first[0]);
     newComposite.setForNavigation(true);
-  }
-
-  @Override
-  public void useForNavigation(FileEditor fileEditor, boolean b) {
-    EditorWithProviderComposite composite = getEditorComposite(fileEditor);
-    composite.setForNavigation(b);
   }
 
   @Nullable

@@ -16,6 +16,7 @@
 package com.intellij.openapi.fileEditor;
 
 import com.intellij.openapi.Disposable;
+import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Key;
@@ -192,9 +193,7 @@ public abstract class FileEditorManager {
    */
   public abstract void setSelectedEditor(@NotNull VirtualFile file, String fileEditorProviderId);
 
-  public abstract void materializeNavigationTab(FileEditor fileEditor);
+  public abstract void materializeNavigationTab(@NotNull FileEditor e);
 
   public abstract void createNavigationTab(FileEditor fileEditor);
-
-  public abstract void useForNavigation(FileEditor fileEditor, boolean b);
 }

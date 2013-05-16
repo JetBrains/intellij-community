@@ -356,7 +356,7 @@
 
         <group id="EditorTabsGroup" popup="true">
           <action id="MaterializeTab" class="com.intellij.ide.actions.MaterializeTab" text="Materialize Tab"/>
-          <action id="MakeTabNavigation" class="com.intellij.ide.actions.MakeTabNavigation" text="Use for Navigation"/>
+          <action id="MakeTabNavigation" class="com.intellij.ide.actions.UseForNavigation" text="Use for Navigation"/>
           <action id="CreateNavigationTab" class="com.intellij.ide.actions.CreateNavigationTab" text="Create Navigation Tab"/>
           <action id="NextTab" class="com.intellij.ide.actions.NextTabAction"/>
           <action id="PreviousTab" class="com.intellij.ide.actions.PreviousTabAction"/>
@@ -475,6 +475,8 @@
       <action id="MoveEditorToOppositeTabGroup" class="com.intellij.openapi.fileEditor.impl.MoveEditorToOppositeTabGroupAction"/>
       <reference ref="ChangeSplitOrientation"/>
       <reference ref="PinActiveTab"/>
+      <reference ref="MakeTabNavigation"/>
+      <reference ref="MaterializeTab"/>
       <reference ref="TabsPlacementGroup"/>
       <reference ref="TabsAlphabeticalMode"/>
       <separator/>

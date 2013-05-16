@@ -20,23 +20,27 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.fileEditor.FileEditor;
 import com.intellij.openapi.fileEditor.FileEditorManager;
+import com.intellij.openapi.fileEditor.impl.EditorWindow;
 import com.intellij.openapi.project.DumbAware;
 
-public class MakeTabNavigation extends AnAction implements DumbAware {
-  public MakeTabNavigation() {
+public class UseForNavigation extends AnAction implements DumbAware {
+  public UseForNavigation() {
   }
 
   @Override
   public void update(AnActionEvent e) {
-    super.update(e);    //To change body of overridden methods use File | Settings | File Templates.
+    super.update(e);
+    EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(e.getDataContext());
+    if (editorWindow != null) {
+      e.getPresentation().setVisible(!editorWindow.getSelectedEditor().isForNavigation());
+    }
   }
 
   @Override
   public void actionPerformed(AnActionEvent e) {
-    FileEditor fileEditor = PlatformDataKeys.FILE_EDITOR.getData(e.getDataContext());
-    if (fileEditor == null)
-      return;
-
-    FileEditorManager.getInstance(getEventProject(e)).useForNavigation(fileEditor, true);
+    EditorWindow editorWindow = EditorWindow.DATA_KEY.getData(e.getDataContext());
+    if (editorWindow != null) {
+      editorWindow.getSelectedEditor().setForNavigation(true);
+    }
   }
 }
