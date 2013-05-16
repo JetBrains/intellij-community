@@ -89,6 +89,9 @@ public class PyMethodMayBeStaticInspection extends PyInspection {
               if (callee != null && PyNames.NOT_IMPLEMENTED_ERROR.equals(callee.getText()))
                 mayBeStatic[0] = false;
             }
+            else if (PyNames.NOT_IMPLEMENTED_ERROR.equals(expression.getText())) {
+              mayBeStatic[0] = false;
+            }
           }
         }
 
