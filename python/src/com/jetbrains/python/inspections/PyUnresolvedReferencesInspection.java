@@ -713,8 +713,8 @@ public class PyUnresolvedReferencesInspection extends PyInspection {
       final PyFunction function = PsiTreeUtil.getParentOfType(node, PyFunction.class);
       if (containedClass != null && function != null) {
         final PyParameter[] parameters = function.getParameterList().getParameters();
-        final String qualifier = parameters[0].getText();
         if (parameters.length == 0) return;
+        final String qualifier = parameters[0].getText();
         final PyDecoratorList decoratorList = function.getDecoratorList();
         boolean isClassmethod = false;
         if (decoratorList != null) {
