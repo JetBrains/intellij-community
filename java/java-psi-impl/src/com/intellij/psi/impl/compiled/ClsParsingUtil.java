@@ -126,20 +126,20 @@ public class ClsParsingUtil {
     if (expr instanceof PsiLiteralExpression) {
       return new ClsLiteralExpressionImpl(parent, expr.getText(), expr.getType(), ((PsiLiteralExpression)expr).getValue());
     }
-    else if (expr instanceof PsiPrefixExpression) {
+    if (expr instanceof PsiPrefixExpression) {
       final PsiPrefixExpression prefixExpr = (PsiPrefixExpression)expr;
       final ClsJavaTokenImpl operation = new ClsJavaTokenImpl(null, prefixExpr.getOperationTokenType(), prefixExpr.getOperationSign().getText());
       final ClsLiteralExpressionImpl literal = (ClsLiteralExpressionImpl) psiToClsExpression(prefixExpr.getOperand(), null);
       return new ClsPrefixExpressionImpl(parent, operation, literal);
     }
-    else if (expr instanceof PsiClassObjectAccessExpression) {
+    if (expr instanceof PsiClassObjectAccessExpression) {
       final String canonicalClassText = ((PsiClassObjectAccessExpression)expr).getOperand().getType().getCanonicalText();
       return new ClsClassObjectAccessExpressionImpl(parent, canonicalClassText);
     }
-    else if (expr instanceof PsiReferenceExpression) {
+    if (expr instanceof PsiReferenceExpression) {
       return new ClsReferenceExpressionImpl(parent, (PsiReferenceExpression)expr);
     }
-    else if (expr instanceof PsiBinaryExpression) {
+    if (expr instanceof PsiBinaryExpression) {
       final PsiBinaryExpression binaryExpr = (PsiBinaryExpression)expr;
       final PsiExpression lOperand = psiToClsExpression(binaryExpr.getLOperand(), null);
       final ClsJavaTokenImpl operation = new ClsJavaTokenImpl(null, binaryExpr.getOperationTokenType(), binaryExpr.getOperationSign().getText());
