@@ -42,7 +42,8 @@ class SMTestSender extends RunListener {
   private String myCurrentClassName;
 
   public void testRunStarted(Description description) throws Exception {
-    System.out.println("##teamcity[testSuiteStarted name =\'" + description.toString() + "\']");
+    myCurrentClassName = description.toString();
+    System.out.println("##teamcity[testSuiteStarted name =\'" + myCurrentClassName + "\']");
   }
 
   public void testRunFinished(Result result) throws Exception {
@@ -52,14 +53,6 @@ class SMTestSender extends RunListener {
   }
 
   public void testStarted(Description description) throws Exception {
-    final String className = JUnit4ReflectionUtil.getClassName(description);
-    if (myCurrentClassName == null || !myCurrentClassName.equals(className)) {
-      if (myCurrentClassName != null) {
-        System.out.println("##teamcity[testSuiteFinished name=\'" + myCurrentClassName + "\']");
-      }
-      myCurrentClassName = className;
-      System.out.println("##teamcity[testSuiteStarted name=\'" + className + "\']");
-    }
     System.out.println("##teamcity[testStarted name=\'" + JUnit4ReflectionUtil.getMethodName(description) + "\']");
   }
 
@@ -72,7 +65,7 @@ class SMTestSender extends RunListener {
     final String trace = failure.getTrace();
     final Map attrs = new HashMap();
     attrs.put("name", JUnit4ReflectionUtil.getMethodName(failure.getDescription()));
-    attrs.put("message", failureMessage);
+    attrs.put("message", failureMessage != null ? failureMessage : "");
     final ComparisonFailureData notification = createExceptionNotification(failure.getException());
     if (notification != null) {
       attrs.put("expected", notification.getExpected());
@@ -82,6 +75,7 @@ class SMTestSender extends RunListener {
       attrs.put("details", failureIdx > -1 ? trace.substring(failureIdx + failureMessage.length()) : trace);
     } else {
       attrs.put("details", trace);
+      attrs.put("error", "true");
     }
 
     System.out.println(ServiceMessage.asString(ServiceMessageTypes.TEST_FAILED, attrs));
