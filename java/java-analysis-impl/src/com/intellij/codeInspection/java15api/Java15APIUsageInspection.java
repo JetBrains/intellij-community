@@ -19,7 +19,9 @@ import com.intellij.ToolExtensionPoints;
 import com.intellij.codeHighlighting.HighlightDisplayLevel;
 import com.intellij.codeInsight.daemon.GroupNames;
 import com.intellij.codeInspection.*;
+import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.openapi.extensions.ExtensionPoint;
+import com.intellij.openapi.extensions.ExtensionPointName;
 import com.intellij.openapi.extensions.Extensions;
 import com.intellij.openapi.module.EffectiveLanguageLevelUtil;
 import com.intellij.openapi.module.Module;
@@ -34,7 +36,6 @@ import com.intellij.psi.javadoc.PsiDocComment;
 import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.psi.util.PsiUtil;
 import com.intellij.reference.SoftReference;
-import com.intellij.ide.ui.ListCellRendererWrapper;
 import com.intellij.util.ui.UIUtil;
 import gnu.trove.THashSet;
 import org.jdom.Element;
@@ -232,10 +233,11 @@ public class Java15APIUsageInspection extends BaseJavaBatchLocalInspectionTool {
     return ourPresentableShortMessage.get(languageLevel);
   }
 
+  public static final ExtensionPointName<FileCheckingInspection> EP_NAME = ExtensionPointName.create(ToolExtensionPoints.JAVA15_INSPECTION_TOOL);
   private class MyVisitor extends JavaElementVisitor {
     private final ProblemsHolder myHolder;
     private final boolean myOnTheFly;
-    private final ExtensionPoint<FileCheckingInspection> point = Extensions.getRootArea().getExtensionPoint(ToolExtensionPoints.JAVA15_INSPECTION_TOOL);
+    private final ExtensionPoint<FileCheckingInspection> point = Extensions.getRootArea().getExtensionPoint(EP_NAME);
 
     public MyVisitor(final ProblemsHolder holder, boolean onTheFly) {
       myHolder = holder;
