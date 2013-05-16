@@ -581,10 +581,10 @@ public class JavaMethodsConflictResolver implements PsiConflictResolver{
     if (aClass1 instanceof PsiTypeParameter && aClass2 instanceof PsiTypeParameter) {
       return checkTypeParams(method1, method2, classSubstitutor1, classSubstitutor2, type1, type2, (PsiTypeParameter)aClass1, (PsiTypeParameter)aClass2);
     }
-    if (aClass1 instanceof PsiTypeParameter) {
+    if (aClass1 instanceof PsiTypeParameter && aClass2 != null) {
       return chooseHigherDimension(type1, type2);
     }
-    else if (aClass2 instanceof PsiTypeParameter) {
+    else if (aClass2 instanceof PsiTypeParameter && aClass1 != null) {
       return chooseHigherDimension(type2, type1);
     }
 
