@@ -21,26 +21,35 @@ import com.intellij.openapi.editor.markup.TextAttributes;
 import com.intellij.ui.JBColor;
 import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
+import org.jetbrains.annotations.Nullable;
 
 public class StringValuePresenter implements XValuePresenter {
-  public static final XValuePresenter DEFAULT = new StringValuePresenter(XValueNode.MAX_VALUE_LENGTH);
+  public static final XValuePresenter DEFAULT = new StringValuePresenter(XValueNode.MAX_VALUE_LENGTH, "\"\\");
 
   private final int maxLength;
+  private final String additionalChars;
 
-  public StringValuePresenter(int maxLength) {
+  public StringValuePresenter(int maxLength, @Nullable String additionalChars) {
     this.maxLength = maxLength;
+    this.additionalChars = additionalChars;
   }
 
   @Override
   public void append(String value, SimpleColoredText text, boolean changed) {
     SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DefaultLanguageHighlighterColors.STRING));
+    text.append("\"", attributes);
+    doAppend(value, text, attributes);
+    text.append("\"", attributes);
+  }
+
+  protected void doAppend(String value, SimpleColoredText text, SimpleTextAttributes attributes) {
     SimpleTextAttributes escapeAttributes = null;
     int lastOffset = 0;
-    int length = Math.min(value.length(), maxLength);
-    text.append("\"", attributes);
+    int length = maxLength == -1 ? value.length() : Math.min(value.length(), maxLength);
     for (int i = 0; i < length; i++) {
       char ch = value.charAt(i);
-      if (ch == '\\' || ch == '"' || ch == '\b' || ch == '\t' || ch == '\n' || ch == '\f' || ch == '\r') {
+      int additionalCharIndex = -1;
+      if (ch == '\n' || ch == '\r' || ch == '\t' || ch == '\b' || ch == '\f' || (additionalChars != null && (additionalCharIndex = additionalChars.indexOf(ch)) != -1)) {
         if (i > lastOffset) {
           text.append(value.substring(lastOffset, i), attributes);
         }
@@ -56,32 +65,12 @@ public class StringValuePresenter implements XValuePresenter {
           }
         }
 
-        if (ch != '\\' && ch != '"') {
+        if (additionalCharIndex == -1) {
           text.append("\\", escapeAttributes);
         }
 
         String string;
         switch (ch) {
-          case '\b':
-            string = "b";
-            break;
-
-          case '\t':
-            string = "t";
-            break;
-
-          case '\n':
-            string = "n";
-            break;
-
-          case '\f':
-            string = "f";
-            break;
-
-          case '\r':
-            string = "r";
-            break;
-
           case '"':
             string = "\"";
             break;
@@ -90,8 +79,28 @@ public class StringValuePresenter implements XValuePresenter {
             string = "\\";
             break;
 
+          case '\n':
+            string = "n";
+            break;
+
+          case '\r':
+            string = "r";
+            break;
+
+          case '\t':
+            string = "t";
+            break;
+
+          case '\b':
+            string = "b";
+            break;
+
+          case '\f':
+            string = "f";
+            break;
+
           default:
-            throw new IllegalStateException();
+            string = String.valueOf(ch);
         }
         text.append(string, escapeAttributes);
       }
@@ -100,6 +109,5 @@ public class StringValuePresenter implements XValuePresenter {
     if (lastOffset < length) {
       text.append(value.substring(lastOffset, length), attributes);
     }
-    text.append("\"", attributes);
   }
 }
