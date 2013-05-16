@@ -77,7 +77,9 @@ public class CodeInsightTestUtil {
     fixture.configureByFile(before);
     List<IntentionAction> availableIntentions = fixture.getAvailableIntentions();
     final IntentionAction intentionAction = findIntentionByText(availableIntentions, action);
-    Assert.assertTrue("Action not found: " + action + " among " + availableIntentions, intentionAction != null);
+    if (intentionAction == null) {
+      Assert.fail("Action not found: " + action + " in place: " + fixture.getElementAtCaret() + " among " + availableIntentions);
+    }
     new WriteCommandAction(fixture.getProject()) {
       @Override
       protected void run(Result result) throws Throwable {
