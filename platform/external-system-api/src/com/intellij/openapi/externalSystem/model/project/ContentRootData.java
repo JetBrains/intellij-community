@@ -15,7 +15,7 @@ import java.util.Map;
  * @author Denis Zhdanov
  * @since 8/9/11 6:25 PM
  */
-public class ContentRootData extends AbstractProjectEntityData {
+public class ContentRootData extends AbstractExternalEntityData {
 
   private static final long serialVersionUID = 1L;
 

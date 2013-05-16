@@ -1,10 +1,10 @@
 package com.intellij.openapi.externalSystem.service;
 
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskAware;
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemTaskAware;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemBuildManager;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
 import org.jetbrains.annotations.NotNull;
@@ -39,8 +39,8 @@ public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSet
 
     @NotNull
     @Override
-    public RemoteExternalSystemBuildManager<ExternalSystemExecutionSettings> getBuildManager() throws RemoteException {
-      return RemoteExternalSystemBuildManager.NULL_OBJECT;
+    public RemoteExternalSystemTaskManager<ExternalSystemExecutionSettings> getTaskManager() throws RemoteException {
+      return RemoteExternalSystemTaskManager.NULL_OBJECT;
     }
 
     @Override
@@ -80,7 +80,7 @@ public interface RemoteExternalSystemFacade<S extends ExternalSystemExecutionSet
    * @throws RemoteException  in case of inability to create the service
    */
   @NotNull
-  RemoteExternalSystemBuildManager<S> getBuildManager() throws RemoteException;
+  RemoteExternalSystemTaskManager<S> getTaskManager() throws RemoteException;
 
   /**
    * Asks remote external system process to apply given settings.

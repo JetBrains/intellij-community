@@ -1,0 +1,13 @@
+<component>
+  <actions>
+    
+    <!--Tool window actions-->
+    <action id="ExternalSystem.RefreshAllProjects"
+            class="com.intellij.openapi.externalSystem.action.RefreshAllExternalProjectsAction"
+            icon="AllIcons.Actions.Refresh"/>
+    <group id="ExternalSystem.ToolWindow.Toolbar">
+      <reference id="ExternalSystem.RefreshAllProjects"/>
+    </group>
+    
+  </actions>
+</component>

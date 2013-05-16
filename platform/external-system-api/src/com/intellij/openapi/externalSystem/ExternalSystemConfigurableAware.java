@@ -13,18 +13,18 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem.service.task;
+package com.intellij.openapi.externalSystem;
 
-import javax.swing.tree.DefaultTreeModel;
-import javax.swing.tree.TreeNode;
+import com.intellij.openapi.options.Configurable;
+import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 5/12/13 10:28 PM
+ * @since 5/14/13 12:49 PM
  */
-public class ExternalSystemTasksTreeModel extends DefaultTreeModel {
+public interface ExternalSystemConfigurableAware {
 
-  public ExternalSystemTasksTreeModel() {
-    super(null);
-  }
+  @NotNull
+  Configurable getConfigurable(@NotNull Project project);
 }

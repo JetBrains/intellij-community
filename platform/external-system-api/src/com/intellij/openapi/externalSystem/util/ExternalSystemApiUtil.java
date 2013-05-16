@@ -184,13 +184,13 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static Map<Key<?>, Collection<DataNode<?>>> group(@NotNull Collection<DataNode<?>> nodes) {
+  public static Map<Key<?>, List<DataNode<?>>> group(@NotNull Collection<DataNode<?>> nodes) {
     if (nodes.isEmpty()) {
       return Collections.emptyMap();
     }
-    Map<Key<?>, Collection<DataNode<?>>> result = ContainerUtilRt.newHashMap();
+    Map<Key<?>, List<DataNode<?>>> result = ContainerUtilRt.newHashMap();
     for (DataNode<?> node : nodes) {
-      Collection<DataNode<?>> n = result.get(node.getKey());
+      List<DataNode<?>> n = result.get(node.getKey());
       if (n == null) {
         result.put(node.getKey(), n = ContainerUtilRt.newArrayList());
       }
@@ -200,8 +200,8 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static <K, V> Map<DataNode<K>, Collection<DataNode<V>>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull Key<K> key) {
-    Map<DataNode<K>, Collection<DataNode<V>>> result = ContainerUtilRt.newHashMap();
+  public static <K, V> Map<DataNode<K>, List<DataNode<V>>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull Key<K> key) {
+    Map<DataNode<K>, List<DataNode<V>>> result = ContainerUtilRt.newHashMap();
     for (DataNode<V> data : nodes) {
       DataNode<K> grouper = data.getDataNode(key);
       if (grouper == null) {
@@ -211,7 +211,7 @@ public class ExternalSystemApiUtil {
         ));
         continue;
       }
-      Collection<DataNode<V>> grouped = result.get(grouper);
+      List<DataNode<V>> grouped = result.get(grouper);
       if (grouped == null) {
         result.put(grouper, grouped = ContainerUtilRt.newArrayList());
       }
@@ -372,5 +372,16 @@ public class ExternalSystemApiUtil {
    */
   public static boolean isNewProjectConstruction() {
     return ProjectManager.getInstance().getOpenProjects().length == 0;
+  }
+
+  /**
+   * Tries to guess external project name given it's path.
+   * 
+   * @param projectPath  target external project path
+   * @return             external project name on the basis of the given external project path
+   */
+  @NotNull
+  public static String guessProjectName(@NotNull String projectPath) {
+    return new File(projectPath).getParentFile().getName();
   }
 }

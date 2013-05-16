@@ -3,8 +3,6 @@ package com.intellij.openapi.externalSystem.model.project;
 import com.intellij.openapi.roots.DependencyScope;
 import org.jetbrains.annotations.NotNull;
 
-import java.beans.PropertyChangeEvent;
-import java.beans.PropertyChangeListener;
 import java.io.IOException;
 import java.io.ObjectInputStream;
 
@@ -12,7 +10,7 @@ import java.io.ObjectInputStream;
  * @author Denis Zhdanov
  * @since 8/10/11 6:41 PM
  */
-public abstract class AbstractDependencyData<T extends AbstractProjectEntityData & Named> extends AbstractProjectEntityData
+public abstract class AbstractDependencyData<T extends AbstractExternalEntityData & Named> extends AbstractExternalEntityData
   implements DependencyData, Named
 {
 
@@ -23,14 +21,12 @@ public abstract class AbstractDependencyData<T extends AbstractProjectEntityData
 
   private DependencyScope myScope = DependencyScope.COMPILE;
 
-  private transient boolean mySkipNameChange;
-  private           boolean myExported;
+  private boolean myExported;
 
   protected AbstractDependencyData(@NotNull ModuleData ownerModule, @NotNull T dependency) {
     super(ownerModule.getOwner());
     myOwnerModule = ownerModule;
     myTarget = dependency;
-    initListener();
   }
 
   @NotNull
@@ -70,39 +66,12 @@ public abstract class AbstractDependencyData<T extends AbstractProjectEntityData
   
   @Override
   public void setName(@NotNull String name) {
-    mySkipNameChange = true;
-    try {
-      String oldName = myTarget.getName();
-      myTarget.setName(name);
-      firePropertyChange(NAME_PROPERTY, oldName, name);
-    }
-    finally {
-      mySkipNameChange = false;
-    }
-  }
-
-  private void initListener() {
-    myTarget.addPropertyChangeListener(new PropertyChangeListener() {
-      @Override
-      public void propertyChange(PropertyChangeEvent evt) {
-        if (mySkipNameChange || !NAME_PROPERTY.equals(evt.getPropertyName())) {
-          return;
-        }
-        mySkipNameChange = true;
-        try {
-          firePropertyChange(NAME_PROPERTY, evt.getOldValue(), evt.getNewValue());
-        }
-        finally {
-          mySkipNameChange = false;
-        }
-      }
-    });
+    myTarget.setName(name);
   }
 
   @SuppressWarnings("MethodOverridesPrivateMethodOfSuperclass")
   private void readObject(ObjectInputStream in) throws IOException, ClassNotFoundException {
     in.defaultReadObject();
-    initListener();
   }
 
   @Override

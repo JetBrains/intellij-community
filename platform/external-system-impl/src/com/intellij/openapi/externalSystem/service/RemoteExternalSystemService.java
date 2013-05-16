@@ -1,6 +1,6 @@
 package com.intellij.openapi.externalSystem.service;
 
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskAware;
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemTaskAware;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotificationListener;
 import org.jetbrains.annotations.NotNull;

@@ -95,7 +95,7 @@ public abstract class AbstractExternalSystemConfigurable<
   @Nls
   @Override
   public String getDisplayName() {
-    return ExternalSystemApiUtil.toReadableName(myExternalSystemId);
+    return myExternalSystemId.getReadableName();
   }
 
   @Nullable
@@ -126,8 +126,7 @@ public abstract class AbstractExternalSystemConfigurable<
     myProjectsList = new JBList(myProjectsModel);
     myProjectsList.setSelectionMode(ListSelectionModel.SINGLE_SELECTION);
 
-    String externalSystemName = ExternalSystemApiUtil.toReadableName(myExternalSystemId);
-    addTitle(ExternalSystemBundle.message("settings.title.linked.projects", externalSystemName));
+    addTitle(ExternalSystemBundle.message("settings.title.linked.projects", myExternalSystemId.getReadableName()));
     myComponent.add(new JBScrollPane(myProjectsList), ExternalSystemUiUtil.getFillLineConstraints(1));
     
     addTitle(ExternalSystemBundle.message("settings.title.project.settings"));
@@ -170,7 +169,7 @@ public abstract class AbstractExternalSystemConfigurable<
 
     
     if (!myProjectsModel.isEmpty()) {
-      addTitle(ExternalSystemBundle.message("settings.title.system.settings", externalSystemName));
+      addTitle(ExternalSystemBundle.message("settings.title.system.settings", myExternalSystemId.getReadableName()));
       myProjectsList.setSelectedIndex(0);
     }
   }

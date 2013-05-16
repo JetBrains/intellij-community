@@ -19,7 +19,6 @@ import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalProjectSettings;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsListener;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.PaintAwarePanel;
@@ -66,13 +65,13 @@ public abstract class AbstractImportFromExternalSystemControl<
     myProjectSettingsControl = createProjectSettingsControl(myProjectSettings);
     mySystemSettingsControl = createSystemSettingsControl(mySystemSettings);
 
-    String name = ExternalSystemApiUtil.toReadableName(externalSystemId);
-    JLabel linkedProjectPathLabel = new JLabel(ExternalSystemBundle.message("settings.label.select.project", name));
+    JLabel linkedProjectPathLabel
+      = new JLabel(ExternalSystemBundle.message("settings.label.select.project", externalSystemId.getReadableName()));
     FileChooserDescriptor fileChooserDescriptor = getLinkedProjectChooserDescriptor();
 
     myLinkedProjectPathField.addBrowseFolderListener(
       "",
-      ExternalSystemBundle.message("settings.label.select.project", ExternalSystemApiUtil.toReadableName(externalSystemId)),
+      ExternalSystemBundle.message("settings.label.select.project", externalSystemId.getReadableName()),
       null,
       fileChooserDescriptor,
       TextComponentAccessor.TEXT_FIELD_WHOLE_TEXT,

@@ -28,7 +28,8 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemResolveProjectTask;
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
+import com.intellij.openapi.externalSystem.service.notification.ExternalSystemIdeNotificationManager;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.PlatformFacade;
 import com.intellij.openapi.externalSystem.service.project.manage.ModuleDataService;
@@ -109,7 +110,7 @@ public class ExternalSystemUtil {
     if (toolWindowManager == null) {
       return null;
     }
-    final ToolWindow toolWindow = toolWindowManager.getToolWindow(ExternalSystemApiUtil.toReadableName(externalSystemId));
+    final ToolWindow toolWindow = toolWindowManager.getToolWindow(externalSystemId.getReadableName());
     if (toolWindow == null) {
       return null;
     }
@@ -233,10 +234,9 @@ public class ExternalSystemUtil {
     UIUtil.invokeLaterIfNeeded(new Runnable() {
       @Override
       public void run() {
-        final String externalSystem = ExternalSystemApiUtil.toReadableName(externalSystemId);
         
         final JPanel content = new JPanel(new GridBagLayout());
-        content.add(new JLabel(ExternalSystemBundle.message("orphan.modules.text", externalSystem)),
+        content.add(new JLabel(ExternalSystemBundle.message("orphan.modules.text", externalSystemId.getReadableName())),
                     ExternalSystemUiUtil.getFillLineConstraints(0));
         
         final CheckBoxList<Module> orphanModulesList = new CheckBoxList<Module>();
@@ -255,7 +255,7 @@ public class ExternalSystemUtil {
         DialogWrapper dialog = new DialogWrapper(project) {
 
           {
-            setTitle(ExternalSystemBundle.message("import.title", externalSystem));
+            setTitle(ExternalSystemBundle.message("import.title", externalSystemId.getReadableName()));
             init();
           }
           
@@ -314,6 +314,7 @@ public class ExternalSystemUtil {
                                     final boolean resolveLibraries,
                                     final boolean modal)
   {
+    final String projectName = new File(externalProjectPath).getParentFile().getName();
     final TaskUnderProgress refreshProjectStructureTask = new TaskUnderProgress() {
       @SuppressWarnings({"ThrowableResultOfMethodCallIgnored", "IOResourceOpenedButNotSafelyClosed"})
       @Override
@@ -331,26 +332,22 @@ public class ExternalSystemUtil {
         if (StringUtil.isEmpty(message)) {
           message = String.format(
             "Can't resolve %s project at '%s'. Reason: %s",
-            ExternalSystemApiUtil.toReadableName(externalSystemId), externalProjectPath, message
+            externalSystemId.getReadableName(), externalProjectPath, message
           );
         }
+        
         callback.onFailure(message, extractDetails(error));
+
+        ExternalSystemIdeNotificationManager notificationManager = ServiceManager.getService(ExternalSystemIdeNotificationManager.class);
+        if (notificationManager != null) {
+          notificationManager.processExternalProjectRefreshError(message, project, projectName, externalSystemId);
+        }
       }
     };
-
-    // TODO den implement
-    //final TaskUnderProgress refreshTasksTask = new TaskUnderProgress() {
-    //  @Override
-    //  public void execute(@NotNull ProgressIndicator indicator) {
-    //    final ExternalSystemRefreshTasksListTask task = new ExternalSystemRefreshTasksListTask(project, externalProjectPath);
-    //    task.execute(indicator);
-    //  }
-    //};
 
     UIUtil.invokeAndWaitIfNeeded(new Runnable() {
       @Override
       public void run() {
-        final String projectName = new File(externalProjectPath).getParentFile().getName();
         if (modal) {
           String title = ExternalSystemBundle.message("progress.import.text",
                                                       projectName,
@@ -359,9 +356,6 @@ public class ExternalSystemUtil {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               refreshProjectStructureTask.execute(indicator);
-              // TODO den uncomment
-              //setTitle(ExternalSystemBundle.message("gradle.task.progress.initial.text"));
-              //refreshTasksTask.execute(indicator);
             }
           });
         }
@@ -372,9 +366,6 @@ public class ExternalSystemUtil {
             @Override
             public void run(@NotNull ProgressIndicator indicator) {
               refreshProjectStructureTask.execute(indicator);
-              // TODO den uncomment
-              //setTitle(ExternalSystemBundle.message("gradle.task.progress.initial.text"));
-              //refreshTasksTask.execute(indicator);
             }
           });
         }
