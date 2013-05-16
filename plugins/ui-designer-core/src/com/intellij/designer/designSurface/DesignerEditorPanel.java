@@ -849,10 +849,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       Dimension contentSize = parent.getComponent(1).getPreferredSize();
       int extraWidth = 0;
       JComponent jParent = (JComponent)parent;
-      if (jParent.getClientProperty("left") != null) {
+      if (jParent.getClientProperty(LightToolWindow.LEFT_MIN_KEY) != null) {
         extraWidth += MINIMIZE_WIDTH;
       }
-      if (jParent.getClientProperty("right") != null) {
+      if (jParent.getClientProperty(LightToolWindow.RIGHT_MIN_KEY) != null) {
         extraWidth += MINIMIZE_WIDTH;
       }
       return new Dimension(Math.max(toolbarSize.width, contentSize.width + extraWidth), toolbarSize.height + contentSize.height);
@@ -865,10 +865,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       Dimension contentSize = parent.getComponent(1).getMinimumSize();
       int extraWidth = 0;
       JComponent jParent = (JComponent)parent;
-      if (jParent.getClientProperty("left") != null) {
+      if (jParent.getClientProperty(LightToolWindow.LEFT_MIN_KEY) != null) {
         extraWidth += MINIMIZE_WIDTH;
       }
-      if (jParent.getClientProperty("right") != null) {
+      if (jParent.getClientProperty(LightToolWindow.RIGHT_MIN_KEY) != null) {
         extraWidth += MINIMIZE_WIDTH;
       }
       return new Dimension(Math.max(toolbarSize.width, contentSize.width + extraWidth), toolbarSize.height + contentSize.height);
@@ -879,11 +879,11 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       int leftWidth = 0;
       int rightWidth = 0;
       JComponent jParent = (JComponent)parent;
-      JComponent left = (JComponent)jParent.getClientProperty("left");
+      JComponent left = (JComponent)jParent.getClientProperty(LightToolWindow.LEFT_MIN_KEY);
       if (left != null) {
         leftWidth = MINIMIZE_WIDTH;
       }
-      JComponent right = (JComponent)jParent.getClientProperty("right");
+      JComponent right = (JComponent)jParent.getClientProperty(LightToolWindow.RIGHT_MIN_KEY);
       if (right != null) {
         rightWidth = MINIMIZE_WIDTH;
       }

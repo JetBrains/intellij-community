@@ -44,13 +44,17 @@ import java.awt.image.BufferedImage;
  * @author Alexander Lobas
  */
 public class LightToolWindow extends JPanel {
+  public static final String LEFT_MIN_KEY = "left";
+  public static final String RIGHT_MIN_KEY = "right";
+  private static final String IGNORE_WIDTH_KEY = "ignore_width";
+
   private final LightToolWindowContent myContent;
   private final JComponent myFocusedComponent;
   private final ThreeComponentsSplitter myContentSplitter;
+  private ToolWindowAnchor myAnchor;
   private final Project myProject;
   private final AbstractToolWindowManager myManager;
   private final PropertiesComponent myPropertiesComponent;
-  private final int myStyle;
   private boolean myShowContent;
   private final String myShowStateKey;
   private int myCurrentWidth;
@@ -58,7 +62,6 @@ public class LightToolWindow extends JPanel {
   private final JPanel myMinimizeComponent;
   private final AnchoredButton myMinimizeButton;
 
-  private final ToggleInEditorModeAction myToggleInEditorModeAction = new ToggleInEditorModeAction();
   private final TogglePinnedModeAction myToggleAutoHideModeAction = new TogglePinnedModeAction();
   private final ToggleDockModeAction myToggleDockModeAction = new ToggleDockModeAction();
   private final ToggleFloatingModeAction myToggleFloatingModeAction = new ToggleFloatingModeAction();
@@ -67,8 +70,9 @@ public class LightToolWindow extends JPanel {
   private final ComponentListener myWidthListener = new ComponentAdapter() {
     @Override
     public void componentResized(ComponentEvent e) {
-      int width = myStyle == SideBorder.LEFT ? myContentSplitter.getFirstSize() : myContentSplitter.getLastSize();
-      if (width > 0 && width != myCurrentWidth) {
+      int width = isLeft() ? myContentSplitter.getFirstSize() : myContentSplitter.getLastSize();
+      if (width > 0 && width != myCurrentWidth && myContentSplitter.getInnerComponent().getClientProperty(IGNORE_WIDTH_KEY) == null) {
+        myCurrentWidth = width;
         myPropertiesComponent.setValue(myWidthKey, Integer.toString(width));
       }
     }
@@ -80,7 +84,7 @@ public class LightToolWindow extends JPanel {
                          JComponent component,
                          JComponent focusedComponent,
                          ThreeComponentsSplitter contentSplitter,
-                         int style,
+                         ToolWindowAnchor anchor,
                          AbstractToolWindowManager manager,
                          Project project,
                          PropertiesComponent propertiesComponent,
@@ -91,12 +95,11 @@ public class LightToolWindow extends JPanel {
     myContent = content;
     myFocusedComponent = focusedComponent;
     myContentSplitter = contentSplitter;
+    myAnchor = anchor;
     myProject = project;
     myManager = manager;
     myPropertiesComponent = propertiesComponent;
-    setBorder(IdeBorderFactory.createBorder((style == SideBorder.LEFT ? SideBorder.RIGHT : SideBorder.LEFT) | SideBorder.BOTTOM));
 
-    myStyle = style;
     myShowStateKey = AbstractToolWindowManager.EDITOR_MODE + key + ".SHOW";
     myWidthKey = AbstractToolWindowManager.EDITOR_MODE + key + ".WIDTH";
 
@@ -157,7 +160,7 @@ public class LightToolWindow extends JPanel {
 
       @Override
       public ToolWindowAnchor getAnchor() {
-        return myStyle == SideBorder.LEFT ? ToolWindowAnchor.LEFT : ToolWindowAnchor.RIGHT;
+        return myAnchor;
       }
     };
     myMinimizeButton.addActionListener(new ActionListener() {
@@ -180,30 +183,68 @@ public class LightToolWindow extends JPanel {
         myMinimizeButton.setBounds(0, 0, getWidth(), size.height);
       }
     };
-    myMinimizeComponent.setBorder(IdeBorderFactory.createBorder(style == SideBorder.LEFT ? SideBorder.RIGHT : SideBorder.LEFT));
     myMinimizeComponent.add(myMinimizeButton);
 
+    configureBorder();
     configureWidth(defaultWidth);
     updateContent(myPropertiesComponent.getBoolean(myShowStateKey, true), false);
   }
 
+  private void configureBorder() {
+    int borderStyle = isLeft() ? SideBorder.RIGHT : SideBorder.LEFT;
+    setBorder(IdeBorderFactory.createBorder(borderStyle | SideBorder.BOTTOM));
+    myMinimizeComponent.setBorder(IdeBorderFactory.createBorder(borderStyle));
+  }
+
   private void configureWidth(int defaultWidth) {
     myCurrentWidth = myPropertiesComponent.getOrInitInt(myWidthKey, defaultWidth);
+    updateWidth();
+    myContentSplitter.getInnerComponent().addComponentListener(myWidthListener);
+  }
 
-    if (myStyle == SideBorder.LEFT) {
+  private void updateWidth() {
+    if (isLeft()) {
       myContentSplitter.setFirstSize(myCurrentWidth);
     }
     else {
       myContentSplitter.setLastSize(myCurrentWidth);
     }
+  }
 
-    myContentSplitter.getInnerComponent().addComponentListener(myWidthListener);
+  public void updateAnchor(ToolWindowAnchor newAnchor) {
+    JComponent minimizeParent = myContentSplitter.getInnerComponent();
+    minimizeParent.putClientProperty(IGNORE_WIDTH_KEY, Boolean.TRUE);
+
+    if (myShowContent) {
+      Object oldWindow = isLeft() ? myContentSplitter.getFirstComponent() : myContentSplitter.getLastComponent();
+      if (oldWindow == this) {
+        setContentComponent(null);
+      }
+    }
+    else {
+      String key = getMinKey();
+      if (minimizeParent.getClientProperty(key) == myMinimizeComponent) {
+        minimizeParent.putClientProperty(key, null);
+      }
+      minimizeParent.putClientProperty(isLeft() ? RIGHT_MIN_KEY : LEFT_MIN_KEY, myMinimizeComponent);
+      minimizeParent.revalidate();
+    }
+
+    myAnchor = newAnchor;
+    configureBorder();
+    updateWidth();
+
+    if (myShowContent) {
+      setContentComponent(this);
+    }
+
+    minimizeParent.putClientProperty(IGNORE_WIDTH_KEY, null);
   }
 
   private void updateContent(boolean show, boolean flag) {
     myShowContent = show;
 
-    String key = myStyle == SideBorder.LEFT ? "left" : "right";
+    String key = getMinKey();
 
     JComponent minimizeParent = myContentSplitter.getInnerComponent();
 
@@ -227,7 +268,7 @@ public class LightToolWindow extends JPanel {
   }
 
   private void setContentComponent(JComponent component) {
-    if (myStyle == SideBorder.LEFT) {
+    if (isLeft()) {
       myContentSplitter.setFirstComponent(component);
     }
     else {
@@ -243,14 +284,22 @@ public class LightToolWindow extends JPanel {
     myContent.dispose();
 
     if (!myShowContent) {
-      minimizeParent.putClientProperty(myStyle == SideBorder.LEFT ? "left" : "right", null);
+      minimizeParent.putClientProperty(getMinKey(), null);
       minimizeParent.remove(myMinimizeComponent);
       minimizeParent.revalidate();
     }
   }
 
+  private String getMinKey() {
+    return isLeft() ? LEFT_MIN_KEY : RIGHT_MIN_KEY;
+  }
+
   public Object getContent() {
     return myContent;
+  }
+
+  private boolean isLeft() {
+    return myAnchor == ToolWindowAnchor.LEFT;
   }
 
   private boolean isActive() {
@@ -270,7 +319,7 @@ public class LightToolWindow extends JPanel {
   private DefaultActionGroup createGearPopupGroup() {
     DefaultActionGroup group = new DefaultActionGroup();
 
-    group.add(myToggleInEditorModeAction);
+    group.add(myManager.createGearActions());
     group.addSeparator();
 
     ToolWindowType type = myManager.getToolWindow().getType();
@@ -324,7 +373,7 @@ public class LightToolWindow extends JPanel {
     public HideAction() {
       Presentation presentation = getTemplatePresentation();
       presentation.setText(UIBundle.message("tool.window.hide.action.name"));
-      if (myStyle == SideBorder.LEFT) {
+      if (isLeft()) {
         presentation.setIcon(AllIcons.General.HideLeftPart);
         presentation.setHoveredIcon(AllIcons.General.HideLeftPartHover);
       }
@@ -337,22 +386,6 @@ public class LightToolWindow extends JPanel {
     @Override
     public void actionPerformed(AnActionEvent e) {
       updateContent(false, true);
-    }
-  }
-
-  private class ToggleInEditorModeAction extends ToggleAction {
-    public ToggleInEditorModeAction() {
-      super("In Editor Mode", "Pin/unpin tool window to Designer Editor", null);
-    }
-
-    @Override
-    public boolean isSelected(AnActionEvent e) {
-      return true;
-    }
-
-    @Override
-    public void setSelected(AnActionEvent e, boolean state) {
-      myManager.setEditorMode(false);
     }
   }
 
@@ -370,7 +403,7 @@ public class LightToolWindow extends JPanel {
     public void setSelected(AnActionEvent e, boolean state) {
       ToolWindow window = myManager.getToolWindow();
       window.setAutoHide(!window.isAutoHide());
-      myManager.setEditorMode(false);
+      myManager.setEditorMode(null);
     }
   }
 
@@ -394,7 +427,7 @@ public class LightToolWindow extends JPanel {
       else if (type == ToolWindowType.SLIDING) {
         window.setType(ToolWindowType.DOCKED, null);
       }
-      myManager.setEditorMode(false);
+      myManager.setEditorMode(null);
     }
   }
 
@@ -418,7 +451,7 @@ public class LightToolWindow extends JPanel {
       else {
         window.setType(ToolWindowType.FLOATING, null);
       }
-      myManager.setEditorMode(false);
+      myManager.setEditorMode(null);
     }
   }
 
@@ -435,7 +468,7 @@ public class LightToolWindow extends JPanel {
     @Override
     public void setSelected(AnActionEvent e, boolean state) {
       myManager.getToolWindow().setSplitMode(state, null);
-      myManager.setEditorMode(false);
+      myManager.setEditorMode(null);
     }
   }
 
