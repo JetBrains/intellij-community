@@ -409,6 +409,10 @@
             icon="AllIcons.Actions.Collapseall"
             use-shortcut-of="CollapseAll"/>
 
+    <action id="Maven.RunGoal" class="org.jetbrains.idea.maven.navigator.actions.MavenExecuteGoalAction" text="Run Maven Goal"
+            icon="MavenIcons.Console">
+    </action>
+
     <group id="Maven.TasksGroup">
       <action id="Maven.BeforeCompile"
               class="org.jetbrains.idea.maven.tasks.actions.ToggleBeforeCompileTasksAction" text="Execute Before Make"
@@ -447,6 +451,7 @@
       <reference id="Maven.AddManagedFiles"/>
       <separator/>
       <reference id="Maven.RunBuild"/>
+      <reference id="Maven.RunGoal"/>
       <reference id="Maven.ToggleOffline"/>
       <reference id="Maven.ToggleSkipTests"/>
       <reference id="Maven.CollapseAll"/>
