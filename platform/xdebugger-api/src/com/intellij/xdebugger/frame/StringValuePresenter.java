@@ -35,14 +35,16 @@ public class StringValuePresenter implements XValuePresenter {
   public void append(String value, SimpleColoredText text, boolean changed) {
     SimpleTextAttributes attributes = SimpleTextAttributes.fromTextAttributes(EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DefaultLanguageHighlighterColors.STRING));
     SimpleTextAttributes escapeAttributes = null;
-    StringBuilder builder = new StringBuilder().append('"');
-    for (int i = 0, n = Math.min(value.length(), maxLength); i < n; i++) {
+    int lastOffset = 0;
+    int length = Math.min(value.length(), maxLength);
+    text.append("\"", attributes);
+    for (int i = 0; i < length; i++) {
       char ch = value.charAt(i);
-      if (ch == '\\' || ch == '\"' || ch == '\b' || ch == '\t' || ch == '\n' || ch == '\f' || ch == '\r') {
-        if (builder.length() > 0) {
-          text.append(builder.toString(), attributes);
-          builder.setLength(0);
+      if (ch == '\\' || ch == '"' || ch == '\b' || ch == '\t' || ch == '\n' || ch == '\f' || ch == '\r') {
+        if (i > lastOffset) {
+          text.append(value.substring(lastOffset, i), attributes);
         }
+        lastOffset = i + 1;
 
         if (escapeAttributes == null) {
           TextAttributes fromHighlighter = EditorColorsManager.getInstance().getGlobalScheme().getAttributes(DefaultLanguageHighlighterColors.VALID_STRING_ESCAPE);
@@ -54,7 +56,7 @@ public class StringValuePresenter implements XValuePresenter {
           }
         }
 
-        if (ch != '\\' && ch != '\"') {
+        if (ch != '\\' && ch != '"') {
           text.append("\\", escapeAttributes);
         }
 
@@ -80,19 +82,24 @@ public class StringValuePresenter implements XValuePresenter {
             string = "r";
             break;
 
-          default:
-            string = String.valueOf(ch);
+          case '"':
+            string = "\"";
             break;
+
+          case '\\':
+            string = "\\";
+            break;
+
+          default:
+            throw new IllegalStateException();
         }
         text.append(string, escapeAttributes);
       }
-      else {
-        builder.append(ch);
-      }
     }
 
-    if (builder.length() > 0) {
-      text.append(builder.append('"').toString(), attributes);
+    if (lastOffset < length) {
+      text.append(value.substring(lastOffset, length), attributes);
     }
+    text.append("\"", attributes);
   }
 }
