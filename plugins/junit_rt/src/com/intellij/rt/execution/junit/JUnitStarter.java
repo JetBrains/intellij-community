@@ -36,6 +36,7 @@ public class JUnitStarter {
   private static final String SOCKET = "-socket";
   private static String ourForkMode;
   private static String ourCommandFileName;
+  public static boolean SM_RUNNER = System.getProperty("idea.junit.sm_runner") != null;
 
   public static void main(String[] args) throws IOException {
     SegmentedOutputStream out = new SegmentedOutputStream(System.out);
@@ -192,7 +193,7 @@ public class JUnitStarter {
       }
       IdeaTestRunner testRunner = (IdeaTestRunner)getAgentClass(isJUnit4).newInstance();
       testRunner.setStreams(out, err, 0);
-      return testRunner.startRunnerWithArgs(args, listeners, true);
+      return testRunner.startRunnerWithArgs(args, listeners, !SM_RUNNER);
     }
     catch (Exception e) {
       e.printStackTrace(System.err);
