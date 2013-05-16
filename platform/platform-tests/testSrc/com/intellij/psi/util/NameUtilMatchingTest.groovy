@@ -583,9 +583,12 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertDoesntMatch("URLCl", "UrlClassLoader");
   }
 
-  public void "test a capital after another capital may match a lowercase letter because shift was accidentally help too long"() {
+  public void "test a capital after another capital may match a lowercase letter because shift was accidentally held too long"() {
     assertMatches("USerDefa", "UserDefaults")
     assertMatches("NSUSerDefa", "NSUserDefaults")
+    assertMatches("NSUSER", "NSUserDefaults")
+    assertMatches("NSUSD", "NSUserDefaults")
+    assertMatches("NSUserDEF", "NSUserDefaults")
   }
 
   public void testPerformance() {

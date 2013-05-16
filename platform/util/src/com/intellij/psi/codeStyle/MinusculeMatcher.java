@@ -363,7 +363,8 @@ public class MinusculeMatcher implements Matcher {
           // at least three consecutive uppercase letters shouldn't match lowercase
           if (myHasHumps && i > 1 && isUpperCase[patternIndex + i - 1] && isUpperCase[patternIndex + i - 2]) {
             // but if there's a lowercase after them, it can match (in case shift was released a bit later)
-            if (nameIndex + i + 1 == name.length() || !isLowerCase[patternIndex + i + 1]) {
+            if (nameIndex + i + 1 == name.length() ||
+                patternIndex + i + 1 < myPattern.length && !isLowerCase[patternIndex + i + 1]) {
               return null;
             }
           }
