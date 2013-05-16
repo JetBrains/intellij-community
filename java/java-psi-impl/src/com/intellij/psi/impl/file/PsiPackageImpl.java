@@ -100,9 +100,7 @@ public class PsiPackageImpl extends PsiPackageBase implements PsiPackage, Querya
 
   @Override
   public boolean isValid() {
-    final CommonProcessors.FindFirstProcessor<PsiDirectory> processor = new CommonProcessors.FindFirstProcessor<PsiDirectory>();
-    getFacade().processPackageDirectories(this, allScope(), processor);
-    return processor.getFoundValue() != null || PsiPackageImplementationHelper.getInstance().packagePrefixExists(this);
+    return PsiPackageImplementationHelper.getInstance().packagePrefixExists(this) || !getAllDirectories().isEmpty();
   }
 
   @Override
