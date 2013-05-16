@@ -72,6 +72,24 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     return lookup != null || myOriginalHandler.isEnabled(editor, dataContext);
   }
 
+  private static void executeUpOrDown(LookupImpl lookup, boolean up) {
+    if (!lookup.isFocused()) {
+      boolean semiFocused = lookup.isSemiFocused();
+      lookup.setFocused(true);
+      if (!up && !semiFocused) {
+        return;
+      }
+    }
+    if (up) {
+      ListScrollingUtil.moveUp(lookup.getList(), 0);
+    } else {
+      ListScrollingUtil.moveDown(lookup.getList(), 0);
+    }
+    lookup.markSelectionTouched();
+    lookup.refreshUi(false, true);
+
+  }
+
   public static class DownHandler extends LookupActionHandler {
 
     public DownHandler(EditorActionHandler originalHandler){
@@ -80,23 +98,9 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
-      executeDown(lookup);
+      executeUpOrDown(lookup, false);
     }
 
-    static void executeDown(LookupImpl lookup) {
-      if (!lookup.isFocused()) {
-        boolean semiFocused = lookup.isSemiFocused();
-        if (!lookup.isSemiFocused()) {
-          lookup.getList().setSelectedIndex(0);
-        }
-        lookup.setFocused(true);
-        lookup.refreshUi(false, true);
-        if (!semiFocused) {
-          return;
-        }
-      }
-      ListScrollingUtil.moveDown(lookup.getList(), 0);
-    }
   }
 
   public static class UpAction extends DumbAwareAction {
@@ -142,27 +146,13 @@ public abstract class LookupActionHandler extends EditorActionHandler {
 
     @Override
     protected void executeInLookup(final LookupImpl lookup, DataContext context) {
-      if (!executeUp(lookup)) {
+      if (!UISettings.getInstance().CYCLE_SCROLLING && !lookup.isFocused() && lookup.getList().getSelectedIndex() == 0) {
         myOriginalHandler.execute(lookup.getEditor(), context);
+        return;
       }
+      executeUpOrDown(lookup, true);
     }
 
-    static boolean executeUp(final LookupImpl lookup) {
-      if (!lookup.isFocused()) {
-        if (!UISettings.getInstance().CYCLE_SCROLLING) {
-          return false;
-        }
-
-        if (!lookup.isSemiFocused()) {
-          lookup.getList().setSelectedIndex(0);
-        }
-        lookup.setFocused(true);
-      }
-      lookup.markSelectionTouched();
-      ListScrollingUtil.moveUp(lookup.getList(), 0);
-      lookup.refreshUi(false, true);
-      return true;
-    }
   }
 
   public static class PageDownHandler extends LookupActionHandler {

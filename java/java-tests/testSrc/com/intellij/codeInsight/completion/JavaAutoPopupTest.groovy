@@ -385,50 +385,64 @@ class JavaAutoPopupTest extends CompletionAutoPopupTestCase {
     assert !lookup
   }
 
-  void testArrow(boolean up, boolean cycleScrolling, boolean lookupAbove, int index) {
-    myFixture.configureByText("a.java", """
-    class A {
-      { ArrayIndexOutOfBoundsException <caret> }
-    }
-    """)
+  void testArrows(String toType, int indexDown, int indexUp) {
+    Closure checkArrow = { String action, int expectedIndex ->
+      myFixture.configureByText("a.java", """
+      class A {
+        void foo() {}
+        void farObject() {}
+        void fzrObject() {}
+        { <caret> }
+      }
+      """)
 
-    type 'ind'
-    assert lookup
-    assert !lookup.focused
-    assert lookup.items.size() == 2
+      type toType
+      assert lookup
+      assert !lookup.focused
 
-    lookup.positionedAbove = lookupAbove
-    UISettings.instance.CYCLE_SCROLLING = cycleScrolling
-
-    def action = up ? IdeActions.ACTION_EDITOR_MOVE_CARET_UP : IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN
-    try {
       edt { myFixture.performEditorAction(action) }
       if (lookup) {
         assert lookup.focused
-        assert index >= 0
-        assert lookup.items[index] == lookup.currentItem
+        assert expectedIndex >= 0
+        assert lookup.items[expectedIndex] == lookup.currentItem
         edt { lookup.hide() }
       } else {
-        assert index == -1
+        assert expectedIndex == -1
       }
       type '\b'
+    }
+
+    checkArrow(IdeActions.ACTION_EDITOR_MOVE_CARET_UP, indexUp)
+    checkArrow(IdeActions.ACTION_EDITOR_MOVE_CARET_DOWN, indexDown)
+  }
+
+  public void "test vertical arrows in non-focused lookup"() {
+    String toType = "ArrayIndexOutOfBoundsException ind"
+    testArrows toType, 0, 1
+
+    UISettings.instance.CYCLE_SCROLLING = false
+    try {
+      testArrows toType, 0, -1
     }
     finally {
       UISettings.instance.CYCLE_SCROLLING = true
     }
-
   }
 
-  void testArrows(boolean cycleScrolling, boolean lookupAbove, int indexDown, int indexUp) {
-    testArrow true, cycleScrolling, lookupAbove, indexUp
-    testArrow false, cycleScrolling, lookupAbove, indexDown
-  }
+  public void "test vertical arrows in semi-focused lookup"() {
+    CodeInsightSettings.instance.SELECT_AUTOPOPUP_SUGGESTIONS_BY_CHARS = false
+    UISettings.getInstance().SORT_LOOKUP_ELEMENTS_LEXICOGRAPHICALLY = true
 
-  public void testVerticalArrows() {
-    testArrows false, false, 0, -1
-    testArrows false, true, 0, -1
-    testArrows true, false, 0, 1
-    testArrows true, true, 0, 1
+    String toType = "fo"
+    testArrows toType, 2, 0
+
+    UISettings.instance.CYCLE_SCROLLING = false
+    try {
+      testArrows toType, 2, 0
+    }
+    finally {
+      UISettings.instance.CYCLE_SCROLLING = true
+    }
   }
 
   public void testHideOnOnePrefixVariant() {
