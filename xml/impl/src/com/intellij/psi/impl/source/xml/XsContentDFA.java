@@ -45,6 +45,7 @@ import org.apache.xerces.xs.XSTypeDefinition;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.xml.sax.SAXException;
+import org.xml.sax.SAXParseException;
 
 import javax.xml.parsers.ParserConfigurationException;
 import javax.xml.parsers.SAXParser;
@@ -182,7 +183,22 @@ class XsContentDFA extends XmlContentDFA {
         return parser;
       }
     };
-    handler.setErrorReporter(handler.new TestErrorReporter());
+    handler.setErrorReporter(handler.new ErrorReporter() {
+
+      int count;
+      @Override
+      public void processError(SAXParseException ex, ValidateXmlActionHandler.ProblemType warning) throws SAXException {
+        if (warning != ValidateXmlActionHandler.ProblemType.WARNING && count++ > 100) {
+          throw new SAXException(ex);
+        }
+      }
+
+      @Override
+      public boolean isUniqueProblem(SAXParseException e) {
+        return true;
+      }
+    });
+
     handler.doValidate(file);
     XMLGrammarPool grammarPool = ValidateXmlActionHandler.getGrammarPool(file);
     if (grammarPool == null) {
