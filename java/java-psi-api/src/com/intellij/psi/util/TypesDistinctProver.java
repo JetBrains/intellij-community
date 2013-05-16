@@ -146,7 +146,7 @@ public class TypesDistinctProver {
         if (superBoundClass instanceof PsiTypeParameter) return false;
         return !InheritanceUtil.isInheritorOrSelf(superBoundClass, extendsBoundClass, true);
       }
-      return true;
+      return provablyDistinct(extendsBound, superBound);
     }
 
     if (!type1.isBounded() || !type2.isBounded()) {
