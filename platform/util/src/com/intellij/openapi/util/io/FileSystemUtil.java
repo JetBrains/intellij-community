@@ -142,6 +142,9 @@ public class FileSystemUtil {
     return attributes != null ? attributes.lastModified : 0;
   }
 
+  /**
+   * Checks if a last element in the path is a symlink.
+   */
   public static boolean isSymLink(@NotNull String path) {
     if (SystemInfo.areSymLinksSupported) {
       final FileAttributes attributes = getAttributes(path);
@@ -150,6 +153,9 @@ public class FileSystemUtil {
     return false;
   }
 
+  /**
+   * Checks if a last element in the path is a symlink.
+   */
   public static boolean isSymLink(@NotNull File file) {
     return isSymLink(file.getAbsolutePath());
   }

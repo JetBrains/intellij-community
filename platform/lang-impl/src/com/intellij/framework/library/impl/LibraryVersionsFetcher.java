@@ -19,6 +19,7 @@ import com.intellij.facet.frameworks.beans.Artifact;
 import com.intellij.facet.frameworks.beans.ArtifactItem;
 import com.intellij.framework.library.DownloadableLibraryDescription;
 import com.intellij.framework.library.DownloadableLibraryFileDescription;
+import com.intellij.framework.library.FrameworkAvailabilityFilter;
 import com.intellij.framework.library.FrameworkLibraryVersion;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.io.FileUtilRt;
@@ -39,7 +40,13 @@ public class LibraryVersionsFetcher extends FileSetVersionsFetcherBase<Framework
 
   @Override
   protected FrameworkLibraryVersion createVersion(Artifact version, List<DownloadableLibraryFileDescription> files) {
-    return new FrameworkLibraryVersionImpl(version.getVersion(), files, myGroupId);
+    FrameworkAvailabilityFilter filter = createAvailabilityFilter(version);
+    return new FrameworkLibraryVersionImpl(version.getVersion(), filter, files, myGroupId);
+  }
+
+  @NotNull
+  protected FrameworkAvailabilityFilter createAvailabilityFilter(Artifact version) {
+    return FrameworkAvailabilityFilter.ALWAYS;
   }
 
   @Override

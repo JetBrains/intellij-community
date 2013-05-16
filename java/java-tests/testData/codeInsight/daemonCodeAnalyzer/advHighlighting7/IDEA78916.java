@@ -36,3 +36,13 @@ abstract class EnumPrivateMethodTest2 {
 
     private void firstMethod() {}
 }
+
+class Test {
+    private class Foo {
+        private Foo() {}
+
+        {
+          new  Foo(){};
+        }
+    }
+}

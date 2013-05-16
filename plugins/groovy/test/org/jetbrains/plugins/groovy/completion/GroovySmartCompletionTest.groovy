@@ -177,4 +177,24 @@ aaaa = 123
 foo(aaaa<caret>)
 ''')
   }
+
+  void testQualifiedNameAfterNew() {
+    myFixture.addClass('''\
+package foo;
+public class User<T> {}
+''')
+    doSmartTest('''\
+class User {
+}
+def a(foo.User<String> f){}
+
+a(new Us<caret>)
+''', '''\
+class User {
+}
+def a(foo.User<String> f){}
+
+a(new foo.User<String>()<caret>)
+''')
+  }
 }

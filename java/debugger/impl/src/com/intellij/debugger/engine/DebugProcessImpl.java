@@ -762,6 +762,7 @@ public abstract class DebugProcessImpl implements DebugProcess {
         getManagerThread().close();
       }
       finally {
+        final VirtualMachineProxyImpl vm = myVirtualMachineProxy;
         myVirtualMachineProxy = null;
         myPositionManager = null;
         myReturnValueWatcher = null;
@@ -774,6 +775,13 @@ public abstract class DebugProcessImpl implements DebugProcess {
         }
         finally {
           setBreakpointsMuted(false);
+          if (vm != null) {
+            try {
+              vm.dispose(); // to be on the safe side ensure that VM mirror, if present, is disposed and invalidated
+            }
+            catch (Throwable ignored) {
+            }
+          }
           myWaitFor.up();
         }
       }
@@ -1343,8 +1351,12 @@ public abstract class DebugProcessImpl implements DebugProcess {
         else {
           // some VM's (like IBM VM 1.4.2 bundled with WebSpere) does not
           // resume threads on dispose() like it should
-          virtualMachineProxy.resume();
-          virtualMachineProxy.dispose();
+          try {
+            virtualMachineProxy.resume();
+          }
+          finally {
+            virtualMachineProxy.dispose();
+          }
         }
       }
       else {

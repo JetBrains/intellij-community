@@ -45,6 +45,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSectio
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrBinaryExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrCommandArgumentList;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrConditionalExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.params.GrParameterList;
 
 import java.util.ArrayList;
@@ -70,7 +71,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
   public GroovyBlock(@NotNull final ASTNode node,
                      @NotNull final Indent indent,
                      @Nullable final Wrap wrap,
-                     FormattingContext context) {
+                     @NotNull FormattingContext context) {
     myNode = node;
 
     myIndent = indent;
@@ -142,7 +143,7 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
         return Spacing.getReadOnlySpacing();
       }
 
-      Spacing spacing = new GroovySpacingProcessor(((GroovyBlock)child2).getNode(), myContext).getSpacing();
+      Spacing spacing = new GroovySpacingProcessor(((GroovyBlock)child1), (GroovyBlock)child2, myContext).getSpacing();
       if (spacing != null) {
         return spacing;
       }
@@ -188,27 +189,21 @@ public class GroovyBlock implements Block, GroovyElementTypes, ASTBlock {
       return new ChildAttributes(Indent.getNormalIndent(), null);
     }
     if (psiParent instanceof GrBinaryExpression ||
+        psiParent instanceof GrConditionalExpression ||
         psiParent instanceof GrCommandArgumentList ||
-        psiParent instanceof GrArgumentList) {
+        psiParent instanceof GrArgumentList ||
+        psiParent instanceof GrParameterList ||
+        psiParent instanceof GrListOrMap ||
+        psiParent instanceof GrAnnotationArgumentList ||
+        psiParent instanceof GrVariable ||
+        psiParent instanceof GrAssignmentExpression) {
       return new ChildAttributes(Indent.getContinuationWithoutFirstIndent(), null);
-    }
-    if (psiParent instanceof GrParameterList) {
-      return new ChildAttributes(getIndent(), getAlignment());
-    }
-    if (psiParent instanceof GrListOrMap) {
-      return new ChildAttributes(Indent.getContinuationIndent(), null);
     }
     if (psiParent instanceof GrDocComment || psiParent instanceof GrDocTag) {
       return new ChildAttributes(Indent.getSpaceIndent(GroovyIndentProcessor.GDOC_COMMENT_INDENT), null);
     }
-    if (psiParent instanceof GrVariable || psiParent instanceof GrAssignmentExpression) {
-      return new ChildAttributes(Indent.getNormalIndent(), null);
-    }
     if (psiParent instanceof GrIfStatement || psiParent instanceof GrLoopStatement) {
       return new ChildAttributes(Indent.getNormalIndent(), null);
-    }
-    if (psiParent instanceof GrAnnotationArgumentList) {
-      return new ChildAttributes(Indent.getContinuationIndent(), null);
     }
     return new ChildAttributes(Indent.getNoneIndent(), null);
   }

@@ -52,6 +52,7 @@ import com.intellij.openapi.vfs.newvfs.BulkFileListener;
 import com.intellij.openapi.vfs.newvfs.ManagingFS;
 import com.intellij.openapi.vfs.newvfs.NewVirtualFile;
 import com.intellij.openapi.vfs.newvfs.events.VFileEvent;
+import com.intellij.openapi.vfs.newvfs.impl.VirtualFileSystemEntry;
 import com.intellij.openapi.vfs.newvfs.persistent.FlushingDaemon;
 import com.intellij.openapi.vfs.newvfs.persistent.PersistentFS;
 import com.intellij.psi.*;
@@ -118,8 +119,6 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   private final FileTypeManager myFileTypeManager;
   private final ConcurrentHashSet<ID<?, ?>> myUpToDateIndices = new ConcurrentHashSet<ID<?, ?>>();
   private final Map<Document, PsiFile> myTransactionMap = new THashMap<Document, PsiFile>();
-
-  private static final int ALREADY_PROCESSED = 0x04000000;
 
   @Nullable private final String myConfigPath;
   @Nullable private final String myLogPath;
@@ -2175,7 +2174,7 @@ public class FileBasedIndexImpl extends FileBasedIndex {
         return true;
       }
       if (!file.isDirectory()) {
-        if (file instanceof NewVirtualFile && ((NewVirtualFile)file).getFlag(ALREADY_PROCESSED)) {
+        if (file instanceof VirtualFileSystemEntry && ((VirtualFileSystemEntry)file).isFileIndexed()) {
           return true;
         }
 
@@ -2223,8 +2222,8 @@ public class FileBasedIndexImpl extends FileBasedIndex {
             }
             IndexingStamp.flushCache(file);
 
-            if (oldStuff && file instanceof NewVirtualFile) {
-              ((NewVirtualFile)file).setFlag(ALREADY_PROCESSED, true);
+            if (oldStuff && file instanceof VirtualFileSystemEntry) {
+              ((VirtualFileSystemEntry)file).setFileIndexed(true);
             }
           }
           finally {
@@ -2325,16 +2324,16 @@ public class FileBasedIndexImpl extends FileBasedIndex {
   }
 
   private static void cleanProcessedFlag(@NotNull final VirtualFile file) {
-    if (!(file instanceof NewVirtualFile)) return;
+    if (!(file instanceof VirtualFileSystemEntry)) return;
 
-    final NewVirtualFile nvf = (NewVirtualFile)file;
+    final VirtualFileSystemEntry nvf = (VirtualFileSystemEntry)file;
     if (file.isDirectory()) {
       for (VirtualFile child : nvf.getCachedChildren()) {
         cleanProcessedFlag(child);
       }
     }
     else {
-      nvf.setFlag(ALREADY_PROCESSED, false);
+      nvf.setFileIndexed(false);
     }
   }
 

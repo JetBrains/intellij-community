@@ -196,7 +196,7 @@ public class XLightBreakpointPropertiesPanel<B extends XBreakpoint<?>> implement
       customPanel.loadFrom(myBreakpoint);
     }
     myEnabledCheckbox.setSelected(myBreakpoint.isEnabled());
-    myEnabledCheckbox.setText(XBreakpointUtil.getShortText(myBreakpoint));
+    myEnabledCheckbox.setText(XBreakpointUtil.getShortText(myBreakpoint) + " enabled");
   }
 
   public JPanel getMainPanel() {

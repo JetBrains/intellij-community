@@ -79,7 +79,6 @@ public class ExternalSystemUtil {
                                            @NotNull DataKey<T> key,
                                            @NotNull ProjectSystemId externalSystemId)
   {
-    // TODO den use external system
     if (context != null) {
       final T result = key.getData(context);
       if (result != null) {
@@ -110,9 +109,7 @@ public class ExternalSystemUtil {
     if (toolWindowManager == null) {
       return null;
     }
-    // TODO den use external system.
-    final ToolWindow toolWindow = null;
-//    final ToolWindow toolWindow = toolWindowManager.getToolWindow(GradleConstants.TOOL_WINDOW_ID);
+    final ToolWindow toolWindow = toolWindowManager.getToolWindow(ExternalSystemApiUtil.toReadableName(externalSystemId));
     if (toolWindow == null) {
       return null;
     }
@@ -202,7 +199,7 @@ public class ExternalSystemUtil {
 
       @Override
       public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-        if (--myCounter <= 0) {
+        if (--myCounter <= 0 && !project.isDisposed() && project.isOpen()) {
           processOrphanModules();
         }
       }
@@ -341,7 +338,7 @@ public class ExternalSystemUtil {
       }
     };
 
-    // TODO den uncomment
+    // TODO den implement
     //final TaskUnderProgress refreshTasksTask = new TaskUnderProgress() {
     //  @Override
     //  public void execute(@NotNull ProgressIndicator indicator) {

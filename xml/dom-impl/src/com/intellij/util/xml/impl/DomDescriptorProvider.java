@@ -45,7 +45,7 @@ public class DomDescriptorProvider implements XmlElementDescriptorProvider {
       if (parent instanceof XmlTag) {
         final XmlElementDescriptor descriptor = ((XmlTag)parent).getDescriptor();
 
-        if (descriptor != null && descriptor instanceof DomElementXmlDescriptor) {
+        if (descriptor instanceof DomElementXmlDescriptor) {
           return descriptor.getElementDescriptor(tag, (XmlTag)parent);
         }
       }

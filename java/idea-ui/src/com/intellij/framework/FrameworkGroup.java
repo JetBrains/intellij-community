@@ -9,7 +9,7 @@ import java.util.List;
 /**
  * @author nik
  */
-public abstract class FrameworkGroup {
+public abstract class FrameworkGroup<V extends FrameworkGroupVersion> {
   private final String myId;
 
   public FrameworkGroup(String id) {
@@ -28,7 +28,7 @@ public abstract class FrameworkGroup {
   public abstract Icon getIcon();
 
   @NotNull
-  public List<String> getGroupVersions() {
+  public List<V> getGroupVersions() {
     return Collections.emptyList();
   }
 }

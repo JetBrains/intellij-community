@@ -47,6 +47,7 @@ public class GenericsUtil {
     if (TypeConversionUtil.isPrimitiveAndNotNull(type1) || TypeConversionUtil.isPrimitiveAndNotNull(type2)) return null;
     if (TypeConversionUtil.isNullType(type1)) return type2;
     if (TypeConversionUtil.isNullType(type2)) return type1;
+    if (type1.equals(type2)) return type1;
     return getLeastUpperBound(type1, type2, new LinkedHashSet<Pair<PsiType, PsiType>>(), manager);
   }
 

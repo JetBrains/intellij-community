@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 
@@ -40,7 +41,7 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
       if (((GrReferenceElement)element).getQualifier() == null) {
         final GroovyResolveResult resolveResult = ((GrReferenceElement)element).advancedResolve();
         final PsiElement refElement = resolveResult.getElement();
-        if (refElement != null && refElement.getContainingFile() != file) {
+        if (refElement != null) {
 
           if (refElement instanceof PsiClass) {
             if (refElement.getContainingFile() != element.getContainingFile()) {
@@ -81,7 +82,7 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
       int endOffset = data.endOffset + bounds.getStartOffset();
       PsiElement element = file.findElementAt(startOffset);
 
-      if (element != null && element.getParent() instanceof GrReferenceElement) {
+      if (element != null && element.getParent() instanceof GrReferenceElement && !PsiUtil.isThisOrSuperRef(element.getParent())) {
         GrReferenceElement reference = (GrReferenceElement)element.getParent();
         TextRange range = reference.getTextRange();
         if (range.getStartOffset() == startOffset && range.getEndOffset() == endOffset) {

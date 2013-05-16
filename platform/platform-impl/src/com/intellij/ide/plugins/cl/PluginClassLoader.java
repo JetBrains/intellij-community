@@ -116,7 +116,8 @@ public class PluginClassLoader extends UrlClassLoader {
   }
 
   public boolean hasLoadedClass(String name) {
-    return findLoadedClass(name) != null;
+    Class<?> aClass = findLoadedClass(name);
+    return aClass != null && aClass.getClassLoader() == this;
   }
 
   public URL findResource(final String name) {

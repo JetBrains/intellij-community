@@ -1783,4 +1783,26 @@ def foo(Util util) {
 }
 ''', '', CompletionType.BASIC, CompletionResult.contain, 'CONST')
   }
+
+  void testInnerClassOfAnonymous() {
+    doCompletionTest(
+      '''
+        def r = new Runnable() {
+          void run() {
+            Data data = new <caret>
+          }
+
+          private static class Data {}
+        }
+      ''',
+      '''
+        def r = new Runnable() {
+          void run() {
+            Data data = new Data()<caret>
+          }
+
+          private static class Data {}
+        }
+      ''', CompletionType.SMART)
+  }
 }

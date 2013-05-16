@@ -1575,4 +1575,12 @@ def anon = new Object() {
 anon.fo<caret>o()
 ''', GrMethod)
   }
+
+  void testMapAccess() {
+    resolveByText('''
+      Map<String, List<String>> foo() {}
+
+      foo().bar.first().subs<caret>tring(1, 2)
+    ''', PsiMethod)
+  }
 }

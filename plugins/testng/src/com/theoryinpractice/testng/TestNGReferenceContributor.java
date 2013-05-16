@@ -100,8 +100,11 @@ public class TestNGReferenceContributor extends PsiReferenceContributor {
           if (dataProviderAnnotation != null) {
             PsiNameValuePair[] values = dataProviderAnnotation.getParameterList().getAttributes();
             for (PsiNameValuePair value : values) {
-              if ("name".equals(value.getName()) && val.equals(StringUtil.unquoteString(value.getText()))) {
-                return method;
+              if ("name".equals(value.getName())) {
+                final PsiAnnotationMemberValue dataProviderMethodName = value.getValue();
+                if (dataProviderMethodName != null && val.equals(StringUtil.unquoteString(dataProviderMethodName.getText()))) {
+                  return method;
+                }
               }
             }
             if (val.equals(method.getName())) {

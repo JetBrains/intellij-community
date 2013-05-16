@@ -28,6 +28,7 @@ import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.ui.ScrollPaneFactory;
+import com.intellij.ui.TableViewSpeedSearch;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.text.DateFormatUtil;
 import com.intellij.util.ui.ColumnInfo;
@@ -143,6 +144,12 @@ public class ShowFeatureUsageStatisticsDialog extends DialogWrapper {
       features.add(registry.getFeatureDescriptor(id));
     }
     final TableView table = new TableView<FeatureDescriptor>(new ListTableModel<FeatureDescriptor>(COLUMNS, features, 0));
+    new TableViewSpeedSearch<FeatureDescriptor>(table) {
+      @Override
+      protected String getItemText(@NotNull FeatureDescriptor element) {
+        return element.getDisplayName();
+      }
+    };
 
     JPanel controlsPanel = new JPanel(new VerticalFlowLayout());
 

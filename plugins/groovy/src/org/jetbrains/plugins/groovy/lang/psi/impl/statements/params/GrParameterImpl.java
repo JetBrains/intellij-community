@@ -120,10 +120,6 @@ public class GrParameterImpl extends GrVariableBaseImpl<GrParameterStub> impleme
     if (isMainMethodFirstUntypedParameter()) {
       return TypesUtil.createTypeByFQClassName(CommonClassNames.JAVA_LANG_STRING, this).createArrayType();
     }
-    if (getParent() instanceof GrForClause) { //inside for loop
-      final PsiType typeGroovy = getTypeGroovy();
-      if (typeGroovy != null) return typeGroovy;
-    }
     return type;
   }
 

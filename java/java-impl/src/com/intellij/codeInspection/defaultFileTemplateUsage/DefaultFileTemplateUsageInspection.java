@@ -17,7 +17,6 @@ package com.intellij.codeInspection.defaultFileTemplateUsage;
 
 import com.intellij.codeInspection.*;
 import com.intellij.ide.fileTemplates.FileTemplate;
-import com.intellij.ide.fileTemplates.FileTemplateManager;
 import com.intellij.ide.fileTemplates.impl.FileTemplateConfigurable;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.options.ShowSettingsUtil;
@@ -29,13 +28,19 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
-import java.util.ArrayList;
-import java.util.Collection;
 
 /**
  * @author cdr
  */
 public class DefaultFileTemplateUsageInspection extends BaseJavaLocalInspectionTool {
+  // Fields are left for the compatibility
+  @Deprecated @SuppressWarnings("UnusedDeclaration")
+  public boolean CHECK_FILE_HEADER = true;
+  @Deprecated @SuppressWarnings("UnusedDeclaration")
+  public boolean CHECK_TRY_CATCH_SECTION = true;
+  @Deprecated @SuppressWarnings("UnusedDeclaration")
+  public boolean CHECK_METHOD_BODY = true;
+
   @Override
   @NotNull
   public String getGroupDisplayName() {

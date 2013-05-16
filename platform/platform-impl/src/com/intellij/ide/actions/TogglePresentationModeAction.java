@@ -15,6 +15,7 @@
  */
 package com.intellij.ide.actions;
 
+import com.intellij.ide.ui.LafManager;
 import com.intellij.ide.ui.UISettings;
 import com.intellij.ide.util.PropertiesComponent;
 import com.intellij.openapi.actionSystem.AnAction;
@@ -22,8 +23,12 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.project.DumbAware;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ex.ToolWindowManagerEx;
+import com.intellij.openapi.wm.impl.DesktopLayout;
 import com.intellij.openapi.wm.impl.IdeFrameImpl;
 
+import javax.swing.*;
 import java.awt.*;
 
 /**
@@ -41,11 +46,12 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
     UISettings settings = UISettings.getInstance();
     Project project = e.getProject();
 
+    settings.PRESENTATION_MODE = !settings.PRESENTATION_MODE;
+
     if (project != null) {
-      HideAllToolWindowsAction.performAction(project);
+      hideToolWindows(project);
     }
 
-    settings.PRESENTATION_MODE = !settings.PRESENTATION_MODE;
     settings.fireUISettingsChanged();
 
     if (project != null) {
@@ -61,7 +67,49 @@ public class TogglePresentationModeAction extends AnAction implements DumbAware 
         }
       }
     }
+    Font tooltipFont = UIManager.getFont("ToolTip.font");
+    if (settings.PRESENTATION_MODE) {
+      Font font = new Font(tooltipFont.getName(), tooltipFont.getStyle(), settings.PRESENTATION_MODE_FONT_SIZE);
+      UIManager.put("old.tooltip.font", tooltipFont);
+      UIManager.put("ToolTip.font", font);
+    } else {
+      UIManager.put("ToolTip.font", UIManager.getFont("old.tooltip.font"));
+    }
+
+
+    LafManager.getInstance().updateUI();
 
     EditorUtil.reinitSettings();
+  }
+
+  private static void hideToolWindows(Project project) {
+    final ToolWindowManagerEx mgr = ToolWindowManagerEx.getInstanceEx(project);
+
+    final DesktopLayout layout = new DesktopLayout();
+    layout.copyFrom(mgr.getLayout());
+
+    // to clear windows stack
+    mgr.clearSideStack();
+
+    final String[] ids = mgr.getToolWindowIds();
+    boolean hasVisible = false;
+    for (String id : ids) {
+      final ToolWindow toolWindow = mgr.getToolWindow(id);
+      if (toolWindow.isVisible()) {
+        toolWindow.hide(null);
+        hasVisible = true;
+      }
+    }
+
+    if (hasVisible && UISettings.getInstance().PRESENTATION_MODE) {
+      mgr.setLayoutToRestoreLater(layout);
+      mgr.activateEditorComponent();
+    }
+    else if (!UISettings.getInstance().PRESENTATION_MODE && !hasVisible) {
+      final DesktopLayout restoreLayout = mgr.getLayoutToRestoreLater();
+      if (restoreLayout != null) {
+        mgr.setLayout(restoreLayout);
+      }
+    }
   }
 }

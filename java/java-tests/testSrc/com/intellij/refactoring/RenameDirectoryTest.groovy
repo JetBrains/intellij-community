@@ -26,12 +26,12 @@ public class RenameDirectoryTest extends JavaCodeInsightFixtureTestCase {
   public void testRenameSrcRootWithTextOccurrences() {
     VirtualFile srcRoot = myFixture.tempDirFixture.findOrCreateDir("")
 
-    def fooClass = myFixture.addClass """
+    def fooClass = myFixture.addClass("""
 // PsiPackage:
 class Foo {
   String s1 = "PsiPackage:"
 }
-"""
+""")
     myFixture.configureFromExistingVirtualFile(fooClass.containingFile.virtualFile)
 
     new RenameProcessor(getProject(), psiManager.findDirectory(srcRoot), "newName", true, true).run();

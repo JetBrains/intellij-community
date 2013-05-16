@@ -24,7 +24,10 @@ import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.progress.Progressive;
 import com.intellij.openapi.util.ActionCallback;
 import com.intellij.openapi.util.AsyncResult;
+import com.intellij.openapi.util.Condition;
+import com.intellij.util.Processor;
 import com.intellij.util.containers.HashSet;
+import com.intellij.util.containers.TransferToEDTQueue;
 import com.intellij.util.ui.UIUtil;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import org.jetbrains.annotations.NonNls;
@@ -43,6 +46,20 @@ public class AbstractTreeBuilder implements Disposable {
   private AbstractTreeUi myUi;
   @NonNls private static final String TREE_BUILDER = "TreeBuilder";
   public static final boolean DEFAULT_UPDATE_INACTIVE = true;
+  private final TransferToEDTQueue<Runnable>
+    myLaterInvocator = new TransferToEDTQueue<Runnable>("Tree later invocator", new Processor<Runnable>() {
+    @Override
+    public boolean process(Runnable runnable) {
+      runnable.run();
+      return true;
+    }
+  }, new Condition<Object>() {
+    @Override
+    public boolean value(Object o) {
+      return isDisposed();
+    }
+  }, 200);
+
 
   public AbstractTreeBuilder(@NotNull JTree tree,
                              @NotNull DefaultTreeModel treeModel,
@@ -418,11 +435,11 @@ public class AbstractTreeBuilder implements Disposable {
   protected void runOnYeildingDone(Runnable onDone) {
     if (isDisposed()) return;
 
-    if (myUi.isPassthroughMode()) {
+    if (myUi.isPassthroughMode() || SwingUtilities.isEventDispatchThread()) {
       onDone.run();
     }
     else {
-      UIUtil.invokeLaterIfNeeded(onDone);
+      myLaterInvocator.offer(onDone);
     }
   }
 
@@ -433,7 +450,7 @@ public class AbstractTreeBuilder implements Disposable {
       runnable.run();
     }
     else {
-      SwingUtilities.invokeLater(runnable);
+      myLaterInvocator.offer(runnable);
     }
   }
 

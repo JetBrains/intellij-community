@@ -15,10 +15,7 @@
  */
 package com.intellij.designer.designSurface;
 
-import com.intellij.designer.DesignerEditor;
-import com.intellij.designer.DesignerEditorState;
-import com.intellij.designer.DesignerToolWindowManager;
-import com.intellij.designer.ModuleProvider;
+import com.intellij.designer.*;
 import com.intellij.designer.actions.AbstractComboBoxAction;
 import com.intellij.designer.actions.DesignerActionPanel;
 import com.intellij.designer.componentTree.TreeComponentDecorator;
@@ -42,9 +39,11 @@ import com.intellij.openapi.module.ModuleUtilCore;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.ui.Messages;
+import com.intellij.openapi.ui.ThreeComponentsSplitter;
 import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.registry.Registry;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.HyperlinkLabel;
@@ -97,6 +96,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   protected final VirtualFile myFile;
 
   private final CardLayout myLayout = new CardLayout();
+  private final ThreeComponentsSplitter myContentSplitter = new ThreeComponentsSplitter();
   private final JPanel myPanel = new JPanel(myLayout);
   private JPanel myDesignerCard;
 
@@ -144,15 +144,36 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myModule = module;
     myFile = file;
 
-    setLayout(new FillLayout());
-    createDesignerCard();
-    createErrorCard();
-    createProgressPanel();
+    initUI();
 
     myToolProvider.loadDefaultTool();
   }
 
+  private void initUI() {
+    setLayout(new BorderLayout());
+
+    myContentSplitter.setDividerWidth(0);
+    myContentSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
+    add(myContentSplitter, BorderLayout.CENTER);
+
+    createDesignerCard();
+    createErrorCard();
+    createProgressPanel();
+
+    UIUtil.invokeLaterIfNeeded(new Runnable() {
+      @Override
+      public void run() {
+        DesignerEditorPanel designer = DesignerEditorPanel.this;
+        DesignerToolWindowManager.getInstance(myProject).bind(designer);
+        PaletteToolWindowManager.getInstance(myProject).bind(designer);
+      }
+    });
+  }
+
   private void createDesignerCard() {
+    JPanel panel = new JPanel(new FillLayout());
+    myContentSplitter.setInnerComponent(panel);
+
     myLayeredPane = new MyLayeredPane();
 
     mySurfaceArea = createEditableArea();
@@ -206,8 +227,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myActionPanel = createActionPanel();
     myWarnAction = new FixableMessageAction();
 
-    add(myActionPanel.getToolbarComponent());
-    add(myPanel);
+    panel.add(myActionPanel.getToolbarComponent());
+    panel.add(myPanel);
 
     myDesignerCard = content;
     myPanel.add(myDesignerCard, DESIGNER_CARD);
@@ -218,6 +239,10 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
         storeSourceSelectionState();
       }
     });
+  }
+
+  public final ThreeComponentsSplitter getContentSplitter() {
+    return myContentSplitter;
   }
 
   protected EditableArea createEditableArea() {
@@ -351,7 +376,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     myErrorPanel.revalidate();
     myLayout.show(myPanel, ERROR_CARD);
 
-    DesignerToolWindowManager.getInstance(getProject()).refresh(true);
+    DesignerToolWindowManager.getInstance(this).refresh(true);
     repaint();
   }
 
@@ -575,7 +600,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   }
 
   protected void restoreState() {
-    DesignerToolWindowManager toolManager = DesignerToolWindowManager.getInstance(getProject());
+    DesignerToolWindow toolManager = DesignerToolWindowManager.getInstance(this);
 
     if (myExpandedState != null) {
       List<RadComponent> expanded = new ArrayList<RadComponent>();
@@ -705,6 +730,9 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
 
   public void dispose() {
     Disposer.dispose(myProgressIcon);
+    DesignerToolWindowManager.getInstance(myProject).dispose(this);
+    PaletteToolWindowManager.getInstance(myProject).dispose(this);
+    Disposer.dispose(myContentSplitter);
   }
 
   @Nullable
@@ -780,6 +808,8 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
+  private static final int MINIMIZE_WIDTH = 25;
+
   private static final class FillLayout implements LayoutManager2 {
     @Override
     public void addLayoutComponent(Component comp, Object constraints) {
@@ -817,7 +847,15 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       Component toolbar = parent.getComponent(0);
       Dimension toolbarSize = toolbar.isVisible() ? toolbar.getPreferredSize() : new Dimension();
       Dimension contentSize = parent.getComponent(1).getPreferredSize();
-      return new Dimension(Math.max(toolbarSize.width, contentSize.width), toolbarSize.height + contentSize.height);
+      int extraWidth = 0;
+      JComponent jParent = (JComponent)parent;
+      if (jParent.getClientProperty(LightToolWindow.LEFT_MIN_KEY) != null) {
+        extraWidth += MINIMIZE_WIDTH;
+      }
+      if (jParent.getClientProperty(LightToolWindow.RIGHT_MIN_KEY) != null) {
+        extraWidth += MINIMIZE_WIDTH;
+      }
+      return new Dimension(Math.max(toolbarSize.width, contentSize.width + extraWidth), toolbarSize.height + contentSize.height);
     }
 
     @Override
@@ -825,17 +863,45 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
       Component toolbar = parent.getComponent(0);
       Dimension toolbarSize = toolbar.isVisible() ? toolbar.getMinimumSize() : new Dimension();
       Dimension contentSize = parent.getComponent(1).getMinimumSize();
-      return new Dimension(Math.max(toolbarSize.width, contentSize.width), toolbarSize.height + contentSize.height);
+      int extraWidth = 0;
+      JComponent jParent = (JComponent)parent;
+      if (jParent.getClientProperty(LightToolWindow.LEFT_MIN_KEY) != null) {
+        extraWidth += MINIMIZE_WIDTH;
+      }
+      if (jParent.getClientProperty(LightToolWindow.RIGHT_MIN_KEY) != null) {
+        extraWidth += MINIMIZE_WIDTH;
+      }
+      return new Dimension(Math.max(toolbarSize.width, contentSize.width + extraWidth), toolbarSize.height + contentSize.height);
     }
 
     @Override
     public void layoutContainer(Container parent) {
-      int width = parent.getWidth();
+      int leftWidth = 0;
+      int rightWidth = 0;
+      JComponent jParent = (JComponent)parent;
+      JComponent left = (JComponent)jParent.getClientProperty(LightToolWindow.LEFT_MIN_KEY);
+      if (left != null) {
+        leftWidth = MINIMIZE_WIDTH;
+      }
+      JComponent right = (JComponent)jParent.getClientProperty(LightToolWindow.RIGHT_MIN_KEY);
+      if (right != null) {
+        rightWidth = MINIMIZE_WIDTH;
+      }
+      int extraWidth = leftWidth + rightWidth;
+
+      int width = parent.getWidth() - extraWidth;
       int height = parent.getHeight();
       Component toolbar = parent.getComponent(0);
       Dimension toolbarSize = toolbar.isVisible() ? toolbar.getPreferredSize() : new Dimension();
-      toolbar.setBounds(0, 0, width, toolbarSize.height);
-      parent.getComponent(1).setBounds(0, toolbarSize.height, width, height - toolbarSize.height);
+      toolbar.setBounds(leftWidth, 0, width, toolbarSize.height);
+      parent.getComponent(1).setBounds(leftWidth, toolbarSize.height, width, height - toolbarSize.height);
+
+      if (left != null) {
+        left.setBounds(0, 0, leftWidth, height);
+      }
+      if (right != null) {
+        right.setBounds(width + leftWidth, 0, rightWidth, height);
+      }
     }
   }
 
@@ -943,7 +1009,7 @@ public abstract class DesignerEditorPanel extends JPanel implements DataProvider
     @Override
     public void setActiveTool(InputTool tool) {
       if (getActiveTool() instanceof CreationTool && !(tool instanceof CreationTool)) {
-        PaletteToolWindowManager.getInstance(getProject()).clearActiveItem();
+        PaletteToolWindowManager.getInstance(DesignerEditorPanel.this).clearActiveItem();
       }
       if (!(tool instanceof SelectionTool)) {
         hideInspections();

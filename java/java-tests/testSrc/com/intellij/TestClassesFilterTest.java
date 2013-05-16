@@ -1,49 +1,35 @@
 /*
- * Copyright (c) 2004 JetBrains s.r.o. All  Rights Reserved.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
- * Redistribution and use in source and binary forms, with or without
- * modification, are permitted provided that the following conditions
- * are met:
+ * Licensed under the Apache License, Version 2.0 (the "License");
+ * you may not use this file except in compliance with the License.
+ * You may obtain a copy of the License at
  *
- * -Redistributions of source code must retain the above copyright
- *  notice, this list of conditions and the following disclaimer.
+ * http://www.apache.org/licenses/LICENSE-2.0
  *
- * -Redistribution in binary form must reproduct the above copyright
- *  notice, this list of conditions and the following disclaimer in
- *  the documentation and/or other materials provided with the distribution.
- *
- * Neither the name of JetBrains or IntelliJ IDEA
- * may be used to endorse or promote products derived from this software
- * without specific prior written permission.
- *
- * This software is provided "AS IS," without a warranty of any kind. ALL
- * EXPRESS OR IMPLIED CONDITIONS, REPRESENTATIONS AND WARRANTIES, INCLUDING
- * ANY IMPLIED WARRANTY OF MERCHANTABILITY, FITNESS FOR A PARTICULAR PURPOSE
- * OR NON-INFRINGEMENT, ARE HEREBY EXCLUDED. JETBRAINS AND ITS LICENSORS SHALL NOT
- * BE LIABLE FOR ANY DAMAGES OR LIABILITIES SUFFERED BY LICENSEE AS A RESULT
- * OF OR RELATING TO USE, MODIFICATION OR DISTRIBUTION OF THE SOFTWARE OR ITS
- * DERIVATIVES. IN NO EVENT WILL JETBRAINS OR ITS LICENSORS BE LIABLE FOR ANY LOST
- * REVENUE, PROFIT OR DATA, OR FOR DIRECT, INDIRECT, SPECIAL, CONSEQUENTIAL,
- * INCIDENTAL OR PUNITIVE DAMAGES, HOWEVER CAUSED AND REGARDLESS OF THE THEORY
- * OF LIABILITY, ARISING OUT OF THE USE OF OR INABILITY TO USE SOFTWARE, EVEN
- * IF JETBRAINS HAS BEEN ADVISED OF THE POSSIBILITY OF SUCH DAMAGES.
- *
+ * Unless required by applicable law or agreed to in writing, software
+ * distributed under the License is distributed on an "AS IS" BASIS,
+ * WITHOUT WARRANTIES OR CONDITIONS OF ANY KIND, either express or implied.
+ * See the License for the specific language governing permissions and
+ * limitations under the License.
  */
 package com.intellij;
 
 import com.intellij.openapi.diagnostic.Logger;
-import junit.framework.TestCase;
+import org.junit.Test;
 
 import java.io.ByteArrayInputStream;
-import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.UnsupportedEncodingException;
 
-public class TestClassesFilterTest extends TestCase {
+import static org.junit.Assert.assertFalse;
+import static org.junit.Assert.assertTrue;
+
+public class TestClassesFilterTest {
   private static final Logger LOG = Logger.getInstance("#com.intellij.TestClassesFilterTest");
 
-  @SuppressWarnings({"IOResourceOpenedButNotSafelyClosed"})
-  public void test() throws IOException {
-
+  @Test
+  public void test() throws Exception {
     LOG.info("test");
 
     String filterText = "[Group1]\n" +
@@ -55,9 +41,7 @@ public class TestClassesFilterTest extends TestCase {
                         "com.intellij.package6.ExcludedTest\n" +
                         "com.intellij.package7.*package8";
 
-
-    TestClassesFilter classesFilter = GroupBasedTestClassFilter
-      .createOn(new InputStreamReader(new ByteArrayInputStream(filterText.getBytes())), "Group1");
+    TestClassesFilter classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), "Group1");
     assertTrue(classesFilter.matches("com.intellij.package1.Test"));
     assertTrue(classesFilter.matches("com.intellij.package1.Test2"));
     assertFalse(classesFilter.matches("com.intellij.package2.Test"));
@@ -67,7 +51,6 @@ public class TestClassesFilterTest extends TestCase {
     assertFalse(classesFilter.matches("com.intellij.package3"));
     assertFalse(classesFilter.matches("com.intellij"));
     assertFalse(classesFilter.matches("com.intellij.Test"));
-
     assertFalse(classesFilter.matches("com.intellij.package5.Test"));
     assertFalse(classesFilter.matches("com.intellij.package5.Test2"));
     assertFalse(classesFilter.matches("com.intellij.package6.Test"));
@@ -76,8 +59,7 @@ public class TestClassesFilterTest extends TestCase {
     assertFalse(classesFilter.matches("com.intellij.package7.package5.package8"));
     assertFalse(classesFilter.matches("com.intellij.package7"));
 
-    classesFilter = GroupBasedTestClassFilter
-      .createOn(new InputStreamReader(new ByteArrayInputStream(filterText.getBytes())), "Group2");
+    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), "Group2");
     assertFalse(classesFilter.matches("com.intellij.package1.Test"));
     assertFalse(classesFilter.matches("com.intellij.package1.Test2"));
     assertFalse(classesFilter.matches("com.intellij.package2.Test"));
@@ -87,7 +69,6 @@ public class TestClassesFilterTest extends TestCase {
     assertFalse(classesFilter.matches("com.intellij.package3"));
     assertFalse(classesFilter.matches("com.intellij"));
     assertFalse(classesFilter.matches("com.intellij.Test"));
-
     assertTrue(classesFilter.matches("com.intellij.package5.Test"));
     assertTrue(classesFilter.matches("com.intellij.package5.Test2"));
     assertFalse(classesFilter.matches("com.intellij.package6.Test"));
@@ -96,14 +77,18 @@ public class TestClassesFilterTest extends TestCase {
     assertTrue(classesFilter.matches("com.intellij.package7.package5.package8"));
     assertFalse(classesFilter.matches("com.intellij.package7"));
 
-    checkForNullGroup(filterText, null);
-    checkForNullGroup(filterText, GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED);
+    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), null);
+    checkForNullGroup(classesFilter);
 
+    classesFilter = GroupBasedTestClassFilter.createOn(getReader(filterText), GroupBasedTestClassFilter.ALL_EXCLUDE_DEFINED);
+    checkForNullGroup(classesFilter);
   }
 
-  private static void checkForNullGroup(String filterText, String group0Name) {
-    TestClassesFilter classesFilter = GroupBasedTestClassFilter.createOn(new InputStreamReader(new ByteArrayInputStream(filterText.getBytes())), group0Name);
+  private static InputStreamReader getReader(String filterText) throws UnsupportedEncodingException {
+    return new InputStreamReader(new ByteArrayInputStream(filterText.getBytes("UTF-8")));
+  }
 
+  private static void checkForNullGroup(TestClassesFilter classesFilter) {
     assertFalse(classesFilter.matches("com.intellij.package1.Test"));
     assertFalse(classesFilter.matches("com.intellij.package1.Test2"));
     assertTrue(classesFilter.matches("com.intellij.package2.Test"));
@@ -113,7 +98,6 @@ public class TestClassesFilterTest extends TestCase {
     assertTrue(classesFilter.matches("com.intellij.package3"));
     assertTrue(classesFilter.matches("com.intellij"));
     assertTrue(classesFilter.matches("com.intellij.Test"));
-
     assertFalse(classesFilter.matches("com.intellij.package5.Test"));
     assertFalse(classesFilter.matches("com.intellij.package5.Test2"));
     assertTrue(classesFilter.matches("com.intellij.package6.Test"));

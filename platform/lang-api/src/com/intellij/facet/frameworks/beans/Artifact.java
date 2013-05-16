@@ -22,11 +22,19 @@ public class Artifact {
   @Attribute("name")
   public String myName;
 
+  @Deprecated
   @Attribute("group")
   public String myGroup;
 
+  @Property(surroundWithTag = false)
+  public RequiredFrameworkVersion myRequiredFrameworkVersion;
+
   @Attribute("urlPrefix")
   public String myUrlPrefix;
+
+  public RequiredFrameworkVersion getRequiredFrameworkVersion() {
+    return myRequiredFrameworkVersion;
+  }
 
   public String getName() {
     return myName;

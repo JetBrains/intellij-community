@@ -125,4 +125,16 @@ public class RelaxedHtmlFromRngElementDescriptor implements XmlElementDescriptor
   public boolean allowElementsFromNamespace(String namespace, XmlTag context) {
     return true;
   }
+
+  @Override
+  public int hashCode() {
+    return myDelegate.hashCode();
+  }
+
+  @Override
+  public boolean equals(Object obj) {
+    return obj == this ||
+           (obj instanceof RelaxedHtmlFromRngElementDescriptor
+            && myDelegate.equals(((RelaxedHtmlFromRngElementDescriptor)obj).myDelegate));
+  }
 }

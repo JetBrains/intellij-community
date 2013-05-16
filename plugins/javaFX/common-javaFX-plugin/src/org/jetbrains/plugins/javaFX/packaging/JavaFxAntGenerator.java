@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.javaFX.packaging;
 
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 
 import java.io.File;
@@ -35,6 +36,7 @@ public class JavaFxAntGenerator {
                                                         String artifactFileName,
                                                         String artifactName,
                                                         String tempDirPath) {
+    final String artifactFileNameWithoutExtension = FileUtil.getNameWithoutExtension(artifactFileName);
     final List<SimpleTag> topLevelTagsCollector = new ArrayList<SimpleTag>(); 
     final String preloaderJar = packager.getPreloaderJar();
     final String preloaderClass = packager.getPreloaderClass();
@@ -42,21 +44,21 @@ public class JavaFxAntGenerator {
     String allButPreloader = null;
     
     if (!StringUtil.isEmptyOrSpaces(preloaderJar) && !StringUtil.isEmptyOrSpaces(preloaderClass)) {
-      preloaderFiles = artifactName + "_preloader_files";
+      preloaderFiles = artifactFileNameWithoutExtension + "_preloader_files";
       topLevelTagsCollector.add(new SimpleTag("fx:fileset",
                                               new Pair<String, String>("id", preloaderFiles),
                                               new Pair<String, String>("requiredFor", "preloader"),
                                               new Pair<String, String>("dir", tempDirPath),
                                               new Pair<String, String>("includes", preloaderJar)));
 
-      allButPreloader = "all_but_preloader_" + artifactName;
+      allButPreloader = "all_but_preloader_" + artifactFileNameWithoutExtension;
       topLevelTagsCollector.add(new SimpleTag("fx:fileset", new Pair<String, String>("id", allButPreloader),
                                                             new Pair<String, String>("dir", tempDirPath),
                                                             new Pair<String, String>("excludes", preloaderJar),
                                                             new Pair<String, String>("includes", "**/*.jar")));
     }
 
-    final String allButSelf = "all_but_" + artifactName;
+    final String allButSelf = "all_but_" + artifactFileNameWithoutExtension;
     final SimpleTag allButSelfAndPreloader = new SimpleTag("fx:fileset", new Pair<String, String>("id", allButSelf),
                                                                          new Pair<String, String>("dir", tempDirPath),
                                                                          new Pair<String, String>("includes", "**/*.jar"));
@@ -66,14 +68,14 @@ public class JavaFxAntGenerator {
     }
     topLevelTagsCollector.add(allButSelfAndPreloader);
 
-    final String all = "all_" + artifactName;
+    final String all = "all_" + artifactFileNameWithoutExtension;
     final SimpleTag allIncluded = new SimpleTag("fx:fileset", new Pair<String, String>("id", all),
                                                               new Pair<String, String>("dir", tempDirPath),
                                                               new Pair<String, String>("includes", "**/*.jar"));
     topLevelTagsCollector.add(allIncluded);
 
     //register application
-    final String appId = artifactName + "_id";
+    final String appId = artifactFileNameWithoutExtension + "_id";
     final SimpleTag applicationTag = new SimpleTag("fx:application", new Pair<String, String>("id", appId),
                                                                      new Pair<String, String>("name", artifactName),
                                                                      new Pair<String, String>("mainClass", packager.getAppClass()));
@@ -113,7 +115,7 @@ public class JavaFxAntGenerator {
                                               new Pair<String, String>("height", packager.getHeight()),
                                               new Pair<String, String>("updatemode", packager.getUpdateMode()),
                                               new Pair<String, String>("outdir", tempDirPath + File.separator + "deploy"),
-                                              new Pair<String, String>("outfile", artifactName));
+                                              new Pair<String, String>("outfile", artifactFileNameWithoutExtension));
     final JavaFxPackagerConstants.NativeBundles bundle = packager.getNativeBundle();
     if (bundle != JavaFxPackagerConstants.NativeBundles.none) {
       deployTag.addAttribute(new Pair<String, String>("nativeBundles", bundle.name()));

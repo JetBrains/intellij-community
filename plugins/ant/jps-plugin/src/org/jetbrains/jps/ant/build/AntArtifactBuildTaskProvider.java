@@ -46,6 +46,7 @@ import org.jetbrains.jps.model.library.JpsOrderRootType;
 import org.jetbrains.jps.model.library.JpsTypedLibrary;
 import org.jetbrains.jps.model.library.sdk.JpsSdk;
 import org.jetbrains.jps.model.library.sdk.JpsSdkReference;
+import org.jetbrains.jps.service.JpsServiceManager;
 import org.jetbrains.jps.util.JpsPathUtil;
 
 import java.io.File;
@@ -164,7 +165,12 @@ public class AntArtifactBuildTaskProvider extends ArtifactBuildTaskProvider {
         programParams.add(targetName);
       }
 
-      List<String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable(jdk), AntMain2.class.getName(),
+      Iterable<AntBuildTaskListener> listeners = JpsServiceManager.getInstance().getExtensions(AntBuildTaskListener.class);
+      for (AntBuildTaskListener listener : listeners) {
+        listener.beforeAntBuildTaskStarted(myExtension, vmParams, programParams);
+      }
+
+      List <String> commandLine = ExternalProcessUtil.buildJavaCommandLine(JpsJavaSdkType.getJavaExecutable(jdk), AntMain2.class.getName(),
                                                                           Collections.<String>emptyList(), classpath, vmParams, programParams, false);
       try {
         Process process = new ProcessBuilder(commandLine).directory(new File(buildFilePath).getParentFile()).start();

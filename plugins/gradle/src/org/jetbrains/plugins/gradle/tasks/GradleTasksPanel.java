@@ -96,7 +96,8 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
     result.setOpaque(false);
     
     myRecentTasksModel.clear();
-    myRecentTasksModel.setTasks(myLocalSettings.getRecentTasks());
+    // TODO den implement
+    //myRecentTasksModel.setTasks(myLocalSettings.getRecentTasks());
     int recentTasksNumber = Registry.intValue(GradleConstants.REGISTRY_RECENT_TASKS_NUMBER_KEY, 5);
     myRecentTasksModel.ensureSize(recentTasksNumber);
     myRecentTasksList.setVisibleRowCount(recentTasksNumber);
@@ -104,11 +105,11 @@ public class GradleTasksPanel extends GradleToolWindowPanel {
 //    addListPanel(myRecentTasksList, result, ExternalSystemBundle.message("gradle.task.recent.title"), false);
     
     myAllTasksModel.clear();
-    Collection<ExternalSystemTaskDescriptor> tasks = myLocalSettings.getAvailableTasks();
-    if (!tasks.isEmpty()) {
-      myAllTasksModel.setTasks(tasks);
-    }
     // TODO den implement
+    //Collection<ExternalSystemTaskDescriptor> tasks = myLocalSettings.getAvailableTasks();
+    //if (!tasks.isEmpty()) {
+    //  myAllTasksModel.setTasks(tasks);
+    //}
 //    addListPanel(myAllTasksList, result, ExternalSystemBundle.message("gradle.task.all.title"), true);
 
     return result;

@@ -9,14 +9,14 @@ import javax.swing.*;
  * @author nik
  */
 public class FrameworkGroupNode extends FrameworkSupportNodeBase {
-  private final FrameworkGroup myGroup;
+  private final FrameworkGroup<?> myGroup;
 
-  public FrameworkGroupNode(@NotNull FrameworkGroup group, FrameworkSupportNodeBase parent) {
+  public FrameworkGroupNode(@NotNull FrameworkGroup<?> group, FrameworkSupportNodeBase parent) {
     super(group, parent);
     myGroup = group;
   }
 
-  public FrameworkGroup getGroup() {
+  public FrameworkGroup<?> getGroup() {
     return myGroup;
   }
 

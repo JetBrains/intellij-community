@@ -629,12 +629,18 @@ public abstract class PlatformTestCase extends UsefulTestCase implements DataPro
             runTest();
             myAssertionsInTestDetected = false;
           }
+          catch (Throwable e) {
+            throwables[0] = e;
+            throw e;
+          }
           finally {
             tearDown();
           }
         }
         catch (Throwable throwable) {
-          throwables[0] = throwable;
+          if (throwables[0] == null) {  // report tearDown() problems if only no exceptions thrown from runTest()
+            throwables[0] = throwable;
+          }
         }
         finally {
           ourTestThread = null;

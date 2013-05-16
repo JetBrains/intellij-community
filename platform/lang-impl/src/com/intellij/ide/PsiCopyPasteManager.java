@@ -175,7 +175,7 @@ public class PsiCopyPasteManager {
   }
 
 
-  private static class MyData {
+  public static class MyData {
     private PsiElement[] myElements;
     private final boolean myIsCopied;
 
@@ -246,6 +246,10 @@ public class PsiCopyPasteManager {
 
     public MyTransferable(MyData data) {
       myDataProxy = data;
+    }
+
+    public MyTransferable(PsiElement[] selectedValues) {
+      this(new PsiCopyPasteManager.MyData(selectedValues, true));
     }
 
     @Override

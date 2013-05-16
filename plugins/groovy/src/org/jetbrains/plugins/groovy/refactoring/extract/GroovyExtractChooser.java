@@ -40,6 +40,7 @@ import org.jetbrains.plugins.groovy.lang.psi.api.statements.typedef.members.GrMe
 import org.jetbrains.plugins.groovy.lang.psi.api.util.GrStatementOwner;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.Instruction;
 import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.ControlFlowBuilder;
+import org.jetbrains.plugins.groovy.lang.psi.controlFlow.impl.GrAllVarsInitializedPolicy;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.FragmentVariableInfos;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.ReachingDefinitionsCollector;
 import org.jetbrains.plugins.groovy.lang.psi.dataFlow.reachingDefs.VariableInfo;
@@ -121,7 +122,7 @@ public class GroovyExtractChooser {
     Set<GrStatement> allReturnStatements = new HashSet<GrStatement>();
     GrControlFlowOwner controlFlowOwner = ControlFlowUtils.findControlFlowOwner(statement0);
     LOG.assertTrue(controlFlowOwner != null);
-    final Instruction[] flow = new ControlFlowBuilder(project, true).buildControlFlow(controlFlowOwner);
+    final Instruction[] flow = new ControlFlowBuilder(project, GrAllVarsInitializedPolicy.getInstance()).buildControlFlow(controlFlowOwner);
     allReturnStatements.addAll(ControlFlowUtils.collectReturns(flow, true));
 
     ArrayList<GrStatement> returnStatements = new ArrayList<GrStatement>();

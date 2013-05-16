@@ -18,6 +18,7 @@ package com.intellij.codeInsight.daemon.impl;
 
 import com.intellij.codeInsight.navigation.ListBackgroundUpdaterTask;
 import com.intellij.find.FindUtil;
+import com.intellij.ide.PsiCopyPasteManager;
 import com.intellij.ide.util.PsiElementListCellRenderer;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -37,6 +38,7 @@ import com.intellij.util.Processor;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
+import java.awt.datatransfer.Transferable;
 import java.awt.event.MouseEvent;
 import java.util.List;
 
@@ -83,6 +85,24 @@ public class PsiElementListNavigator {
         return (PsiElement) selectedValue;
       }
     };
+
+    list.setTransferHandler(new TransferHandler(){
+      @Nullable
+      @Override
+      protected Transferable createTransferable(JComponent c) {
+        final Object[] selectedValues = list.getSelectedValues();
+        final PsiElement[] copy = new PsiElement[selectedValues.length];
+        for (int i = 0; i < selectedValues.length; i++) {
+          copy[i] = (PsiElement)selectedValues[i];
+        }
+        return new PsiCopyPasteManager.MyTransferable(copy);
+      }
+
+      @Override
+      public int getSourceActions(JComponent c) {
+        return COPY;
+      }
+    });
 
     list.setCellRenderer(listRenderer);
 

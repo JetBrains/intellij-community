@@ -15,16 +15,13 @@
  */
 package com.intellij.openapi.externalSystem.settings;
 
-import com.intellij.openapi.components.PersistentStateComponent;
-import com.intellij.openapi.components.State;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
-import com.intellij.util.xmlb.XmlSerializerUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -42,39 +39,20 @@ import java.util.concurrent.atomic.AtomicReference;
  * @author Denis Zhdanov
  * @since 4/4/13 4:51 PM
  */
-public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExternalSystemLocalSettings<S>>
-  implements PersistentStateComponent<S>
-{
+public abstract class AbstractExternalSystemLocalSettings {
   private static final boolean PRESERVE_EXPAND_STATE
     = !SystemProperties.getBooleanProperty("external.system.forget.expand.nodes.state", false);
 
-  /** Holds changes confirmed by the end-user. */
   private final AtomicReference<Map<String/*tree path*/, Boolean/*expanded*/>> myExpandStates
     = new AtomicReference<Map<String, Boolean>>(new HashMap<String, Boolean>());
-  /** @see #getWorkingExpandStates() */
-  private final AtomicReference<Map<String/*tree path*/, Boolean/*expanded*/>> myWorkingExpandStates
-    = new AtomicReference<Map<String, Boolean>>(new HashMap<String, Boolean>());
-
-  private final AtomicReference<List<ExternalSystemTaskDescriptor>> myRecentTasks    =
-    new AtomicReference<List<ExternalSystemTaskDescriptor>>(ContainerUtilRt.<ExternalSystemTaskDescriptor>newArrayList());
-  private final AtomicReference<Collection<ExternalSystemTaskDescriptor>>   myAvailableTasks =
-    new AtomicReference<Collection<ExternalSystemTaskDescriptor>>(ContainerUtilRt.<ExternalSystemTaskDescriptor>newArrayList());
-
-  @SuppressWarnings("unchecked")
-  @Nullable
-  @Override
-  public S getState() {
-    myExpandStates.get().clear();
-    if (PRESERVE_EXPAND_STATE) {
-      myExpandStates.get().putAll(myWorkingExpandStates.get());
-    }
-    return (S)this;
-  }
-
-  @Override
-  public void loadState(S state) {
-    XmlSerializerUtil.copyBean(state, this);
-  }
+  private final AtomicReference<Map<String, List<ExternalSystemTaskDescriptor>>> myRecentTasks =
+    new AtomicReference<Map<String, List<ExternalSystemTaskDescriptor>>>(
+      ContainerUtilRt.<String, List<ExternalSystemTaskDescriptor>>newHashMap()
+    );
+  private final AtomicReference<Map<String, List<ExternalSystemTaskDescriptor>>> myAvailableTasks =
+    new AtomicReference<Map<String, List<ExternalSystemTaskDescriptor>>>(
+      ContainerUtilRt.<String, List<ExternalSystemTaskDescriptor>>newHashMap()
+    );
 
   @SuppressWarnings("UnusedDeclaration")
   @NotNull
@@ -82,44 +60,44 @@ public abstract class AbstractExternalSystemLocalSettings<S extends AbstractExte
     return myExpandStates.get();
   }
 
-  /**
-   * It's possible to configure the gradle integration to not persist 'expand states' (see {@link #PRESERVE_EXPAND_STATE}).
-   * <p/>
-   * However, we want the state to be saved during the single IDE session even if we don't want to persist it between the
-   * different sessions.
-   * <p/>
-   * This method allows to retrieve that 'non-persistent state'.
-   *
-   * @return project structure changes tree nodes 'expand state' to use
-   */
   @NotNull
-  public Map<String, Boolean> getWorkingExpandStates() {
-    return myWorkingExpandStates.get();
-  }
-
-  @SuppressWarnings("UnusedDeclaration")
-  public void setExpandStates(@Nullable Map<String, Boolean> state) { // Necessary for the serialization.
-    if (state != null) {
-      myExpandStates.get().putAll(state);
-      myWorkingExpandStates.get().putAll(state);
-    }
-  }
-
-  @NotNull
-  public Collection<ExternalSystemTaskDescriptor> getAvailableTasks() {
+  public Map<String, List<ExternalSystemTaskDescriptor>> getAvailableTasks() {
     return myAvailableTasks.get();
   }
 
-  public void setAvailableTasks(@NotNull Collection<ExternalSystemTaskDescriptor> taskNames) {
-    myAvailableTasks.set(taskNames);
-  }
-
   @NotNull
-  public List<ExternalSystemTaskDescriptor> getRecentTasks() {
+  public Map<String, List<ExternalSystemTaskDescriptor>> getRecentTasks() {
     return myRecentTasks.get();
   }
 
-  public void setRecentTasks(@NotNull List<ExternalSystemTaskDescriptor> taskNames) {
-    myRecentTasks.set(taskNames);
+  public void fillState(@NotNull State state) {
+    if (PRESERVE_EXPAND_STATE) {
+      state.tasksExpandState = myExpandStates.get();
+    }
+    else {
+      state.tasksExpandState = Collections.emptyMap();
+    }
+    state.recentTasks = myRecentTasks.get();
+    state.availableTasks = myAvailableTasks.get();
+  }
+
+  public void loadState(@NotNull State state) {
+    setIfNotNull(myExpandStates, state.tasksExpandState);
+    setIfNotNull(myRecentTasks, state.recentTasks);
+    setIfNotNull(myAvailableTasks, state.availableTasks);
+  }
+
+  private static <K, V> void setIfNotNull(@NotNull AtomicReference<Map<K, V>> ref, @Nullable Map<K, V> candidate) {
+    if (candidate != null) {
+      Map<K, V> map = ref.get();
+      map.clear();
+      map.putAll(candidate);
+    }
+  }
+  
+  public static class State {
+    public Map<String, Boolean>                                              tasksExpandState = ContainerUtilRt.newHashMap();
+    public Map<String/* project name */, List<ExternalSystemTaskDescriptor>> recentTasks      = ContainerUtilRt.newHashMap();
+    public Map<String/* project name */, List<ExternalSystemTaskDescriptor>> availableTasks   = ContainerUtilRt.newHashMap();
   }
 }

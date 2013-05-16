@@ -42,6 +42,15 @@ class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor {
   }
 
   @Override
+  public void visitMethodReferenceExpression(PsiMethodReferenceExpression expression) {
+    super.visitMethodReferenceExpression(expression);
+    if (updated) return;
+    final String methodName = expression.getReferenceName();
+    if (checkMethodName(methodName)) return;
+    checkQualifier(expression.getQualifierExpression());
+  }
+
+  @Override
   public void visitMethodCallExpression(
     @NotNull PsiMethodCallExpression call) {
     super.visitMethodCallExpression(call);
@@ -51,8 +60,14 @@ class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor {
     final PsiReferenceExpression methodExpression =
       call.getMethodExpression();
     final String methodName = methodExpression.getReferenceName();
+    if (checkMethodName(methodName)) return;
+    final PsiExpression qualifier = methodExpression.getQualifierExpression();
+    checkQualifier(qualifier);
+  }
+
+  private boolean checkMethodName(String methodName) {
     if (methodName == null) {
-      return;
+      return true;
     }
     if (!updateNames.contains(methodName)) {
       boolean found = false;
@@ -64,11 +79,10 @@ class CollectionUpdateCalledVisitor extends JavaRecursiveElementVisitor {
         break;
       }
       if (!found) {
-        return;
+        return true;
       }
     }
-    final PsiExpression qualifier = methodExpression.getQualifierExpression();
-    checkQualifier(qualifier);
+    return false;
   }
 
   private void checkQualifier(PsiExpression expression) {

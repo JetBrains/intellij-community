@@ -18,6 +18,8 @@ package org.jetbrains.plugins.groovy.lang.psi.impl.synthetic;
 import com.intellij.navigation.ItemPresentation;
 import com.intellij.openapi.util.Pair;
 import com.intellij.openapi.util.TextRange;
+import com.intellij.openapi.util.io.FileUtilRt;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.impl.*;
 import com.intellij.psi.impl.light.LightElement;
@@ -105,14 +107,17 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
     return myFile.isValid() && myFile.isScript();
   }
 
-  @NotNull
+  @Nullable
   public String getQualifiedName() {
+    final String name = getName();
+    if (name == null) return null;
+
     final String packName = myFile.getPackageName();
     if (packName.length() == 0) {
-      return getName();
+      return name;
     }
     else {
-      return packName + "." + getName();
+      return packName + "." + name;
     }
   }
 
@@ -327,11 +332,16 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
     return InheritanceImplUtil.isInheritor(this, baseClass, checkDeep);
   }
 
-  @NotNull
+  @Nullable
   public String getName() {
-    String name = myFile.getName();
-    int i = name.indexOf('.');
-    return i > 0 ? name.substring(0, i) : name;
+    String fileName = myFile.getName();
+    final String name = FileUtilRt.getNameWithoutExtension(fileName);
+    if (StringUtil.isJavaIdentifier(name)) {
+      return name;
+    }
+    else {
+      return null;
+    }
   }
 
   public PsiElement setName(@NotNull String name) throws IncorrectOperationException {
@@ -371,7 +381,8 @@ public class GroovyScriptClass extends LightElement implements PsiClass, Synthet
   public ItemPresentation getPresentation() {
     return new ItemPresentation() {
       public String getPresentableText() {
-        return getName();
+        final String name = getName();
+        return name != null ? name : "<unnamed>";
       }
 
       public String getLocationString() {

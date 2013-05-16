@@ -63,6 +63,7 @@ public class LanguageFolding extends LanguageExtension<FoldingBuilder> {
     return result;
   }
 
+  @NotNull
   @Override
   public List<FoldingBuilder> allForLanguage(@NotNull Language l) {
     FoldingBuilder result = forLanguage(l);

@@ -18,23 +18,26 @@ package org.jetbrains.idea.maven.execution;
 import com.intellij.codeInsight.completion.CompletionResultSet;
 import com.intellij.codeInsight.lookup.LookupElementBuilder;
 import com.intellij.execution.configurations.ParametersList;
+import com.intellij.icons.AllIcons;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.ui.FixedSizeButton;
 import com.intellij.openapi.ui.LabeledComponent;
 import com.intellij.openapi.ui.TextFieldWithBrowseButton;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PanelWithAnchor;
-import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.components.JBLabel;
+import com.intellij.util.Consumer;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.Strings;
 
@@ -52,6 +55,7 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
   private LabeledComponent<EditorTextField> profilesComponent;
   private JBLabel myFakeLabel;
   private JCheckBox myResolveToWorkspaceCheckBox;
+  private FixedSizeButton showProjectTreeButton;
   private JComponent anchor;
 
   public MavenRunnerParametersConfigurable(@NotNull final Project project) {
@@ -90,6 +94,15 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
 
       goalsComponent.setComponent(new MavenArgumentsCompletionProvider(project).createEditor(project));
     }
+
+    showProjectTreeButton.setIcon(AllIcons.Actions.Module);
+
+    MavenSelectProjectPopup.attachToButton(showProjectTreeButton, MavenProjectsManager.getInstance(project), new Consumer<MavenProject>() {
+      @Override
+      public void consume(MavenProject project) {
+        workingDirComponent.getComponent().setText(project.getDirectory());
+      }
+    });
 
     setAnchor(profilesComponent.getLabel());
   }

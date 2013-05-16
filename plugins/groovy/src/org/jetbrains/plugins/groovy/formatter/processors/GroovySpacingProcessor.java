@@ -31,6 +31,8 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.groovy.codeStyle.GroovyCodeStyleSettings;
 import org.jetbrains.plugins.groovy.formatter.FormattingContext;
 import org.jetbrains.plugins.groovy.formatter.GeeseUtil;
+import org.jetbrains.plugins.groovy.formatter.GroovyBlock;
+import org.jetbrains.plugins.groovy.formatter.ParameterListBlock;
 import org.jetbrains.plugins.groovy.lang.groovydoc.psi.api.*;
 import org.jetbrains.plugins.groovy.lang.lexer.TokenSets;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyElementVisitor;
@@ -109,12 +111,15 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
   private IElementType myType1;
   private IElementType myType2;
 
-  public GroovySpacingProcessor(ASTNode node, FormattingContext context) {
+  public GroovySpacingProcessor(GroovyBlock block1, GroovyBlock block2, FormattingContext context) {
     mySettings = context.getSettings();
     myGroovySettings = context.getGroovySettings();
 
+    final ASTNode node = block2.getNode();
+
     if (init(node)) return;
     if (manageComments()) return;
+    if (manageMethodParameterList(block2)) return;
 
     if (myParent instanceof GroovyPsiElement) {
       ((GroovyPsiElement) myParent).accept(this);
@@ -160,6 +165,14 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
       final CompositeElement parent = (CompositeElement)treePrev.getTreeParent();
       myParent = SourceTreeToPsiMap.treeElementToPsi(parent);
     }
+  }
+
+  private boolean manageMethodParameterList(GroovyBlock block2) {
+    if (block2 instanceof ParameterListBlock) {
+      createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
+      return true;
+    }
+    return false;
   }
 
   private boolean manageComments() {
@@ -562,10 +575,7 @@ public class GroovySpacingProcessor extends GroovyElementVisitor {
 
   @Override
   public void visitMethod(GrMethod method) {
-    if (myType2 == mLPAREN) {
-      createSpaceInCode(mySettings.SPACE_BEFORE_METHOD_PARENTHESES);
-    }
-    else if (myType1 == mRPAREN && myType2 == THROW_CLAUSE) {
+    if (myType1 == mRPAREN && myType2 == THROW_CLAUSE) {
       if (mySettings.THROWS_KEYWORD_WRAP == CommonCodeStyleSettings.WRAP_ALWAYS) {
         createLF(true);
       }

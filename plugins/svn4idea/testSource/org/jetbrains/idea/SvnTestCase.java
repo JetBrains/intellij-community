@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -55,7 +55,6 @@ import com.intellij.util.Processor;
 import com.intellij.util.concurrency.Semaphore;
 import com.intellij.util.io.ZipUtil;
 import com.intellij.util.ui.UIUtil;
-import junit.framework.Assert;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -71,6 +70,8 @@ import java.io.File;
 import java.io.IOException;
 import java.util.*;
 
+import static org.junit.Assert.assertEquals;
+import static org.junit.Assert.assertNotNull;
 import static org.junit.Assert.assertTrue;
 
 /**
@@ -98,9 +99,9 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
   public static void imitateEvent(VirtualFile dir) {
     final VirtualFile child = dir.findChild(".svn");
-    org.junit.Assert.assertNotNull(child);
+    assertNotNull(child);
     final VirtualFile wcdb = child.findChild("wc.db");
-    org.junit.Assert.assertNotNull(wcdb);
+    assertNotNull(wcdb);
 
     final BulkFileListener listener = ApplicationManager.getApplication().getMessageBus().syncPublisher(VirtualFileManager.VFS_CHANGES);
     final VFileContentChangeEvent event =
@@ -299,7 +300,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     final File rootFile = new File(subTree.myRootDir.getPath());
     FileUtil.delete(rootFile);
     FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
-    Assert.assertTrue(!rootFile.exists());
+    assertTrue(!rootFile.exists());
     sleep(200);
     myWorkingCopyDir.refresh(false, true);
 
@@ -377,7 +378,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
       if (deleted) break;
       sleep(200);
     }
-    Assert.assertTrue(deleted);
+    assertTrue(deleted);
     sleep(200);
     myWorkingCopyDir.refresh(false, true);
 
@@ -420,7 +421,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     final File rootFile = new File(subTree.myRootDir.getPath());
     FileUtil.delete(rootFile);
     FileUtil.delete(new File(myWorkingCopyDir.getPath() + File.separator + ".svn"));
-    Assert.assertTrue(!rootFile.exists());
+    assertTrue(!rootFile.exists());
     sleep(200);
     myWorkingCopyDir.refresh(false, true);
 
@@ -439,7 +440,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
 
     if (updateExternal) {
       myWorkingCopyDir.refresh(false, true);
-      Assert.assertTrue(new File(sourceDir, "external").exists());
+      assertTrue(new File(sourceDir, "external").exists());
     }
     // above is preparation
 
@@ -458,7 +459,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     final File tmpWc = FileUtil.createTempDirectory("hhh", "");
     runInAndVerifyIgnoreOutput("co", myAnotherRepoUrl, tmpWc.getPath());
     final VirtualFile tmpWcVf = LocalFileSystem.getInstance().refreshAndFindFileByIoFile(tmpWc);
-    Assert.assertNotNull(tmpWcVf);
+    assertNotNull(tmpWcVf);
     final SubTree tree = new SubTree(tmpWcVf);
     runInAndVerifyIgnoreOutput(tmpWc, "add", "root");
     runInAndVerifyIgnoreOutput(tmpWc, "ci", "-m", "fff");
@@ -531,7 +532,7 @@ public abstract class SvnTestCase extends AbstractJunitVcsTestCase  {
     return new Processor<ProcessOutput>() {
       @Override
       public boolean process(ProcessOutput output) {
-        Assert.assertEquals(output.getStderr(), 0, output.getExitCode());
+        assertEquals(output.getStderr(), 0, output.getExitCode());
         return false;
       }
     };

@@ -70,7 +70,7 @@ public class DefaultChooseByNameItemProvider implements ChooseByNameItemProvider
     Set<String> names = new THashSet<String>(Arrays.asList(base.getNames(everywhere)));
 
     if (base.isSearchInAnyPlace() && !namePattern.trim().isEmpty()) {
-      String middleMatchPattern = "*" + namePattern + (namePattern.charAt(namePattern.length() - 1) == ' ' ? "" : "*");
+      String middleMatchPattern = "*" + namePattern;
 
       // consume elements matching by prefix case-sensitively
       Integer elementsConsumed = consumeElements(base, everywhere, indicator, consumer, namePattern, qualifierPattern, names,

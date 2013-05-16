@@ -18,7 +18,6 @@ package hg4idea.test;
 import com.intellij.openapi.application.PluginPathManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.io.FileUtil;
-import com.intellij.openapi.vcs.merge.MergeProvider;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.testFramework.PlatformTestCase;
 import com.intellij.testFramework.UsefulTestCase;
@@ -52,14 +51,11 @@ public abstract class HgPlatformTest extends UsefulTestCase {
   protected VirtualFile myProjectRoot;
   protected VirtualFile myRepository;
   protected VirtualFile myChildRepo;
-  protected MergeProvider myMergeProvider;
 
   protected static final String COMMIT_MESSAGE = "text";
 
   private IdeaProjectTestFixture myProjectFixture;
 
-  protected static final String AFILE = "A.txt";
-  protected static final String BFILE = "B.txt";
 
   @SuppressWarnings("JUnitTestCaseWithNonTrivialConstructors")
   protected HgPlatformTest() {
@@ -84,13 +80,6 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     hgVcs.getGlobalSettings().setHgExecutable(HgExecutor.getHgExecutable());
     myRepository = myProjectRoot;
     setUpHgrc(myRepository);
-
-    HgVcs vcs = HgVcs.getInstance(myProject);
-    assertNotNull(vcs);
-    myMergeProvider = vcs.getMergeProvider();
-    assertNotNull(myMergeProvider);
-
-    prepareSecondRepository();
   }
 
   @Override
@@ -127,7 +116,7 @@ public abstract class HgPlatformTest extends UsefulTestCase {
     hg("commit -m initial");
   }
 
-  private void prepareSecondRepository() throws IOException {
+  public void prepareSecondRepository() throws IOException {
     cd(myRepository);
     hg("clone " + myRepository.getCanonicalPath() + " childRepo");
     myChildRepo = myRepository.findChild("childRepo");

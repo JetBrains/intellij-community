@@ -18,7 +18,6 @@ package org.jetbrains.plugins.groovy.lang.psi.impl;
 
 import com.intellij.lang.ASTNode;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
 import com.intellij.psi.codeStyle.PackageEntry;
@@ -148,7 +147,7 @@ public class GroovyFileImpl extends GroovyFileBaseImpl implements GroovyFile {
     }
 
     GroovyScriptClass scriptClass = getScriptClass();
-    if (scriptClass != null && StringUtil.isJavaIdentifier(scriptClass.getName())) {
+    if (scriptClass != null && scriptClass.getName() != null) {
       if (!(lastParent instanceof GrTypeDefinition)) {
         if (!scriptClass.processDeclarations(processor, state, lastParent, place)) return false;
       }

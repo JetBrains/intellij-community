@@ -21,6 +21,7 @@ import com.intellij.ui.components.JBCheckBox;
 import com.intellij.ui.table.TableView;
 import com.intellij.util.ui.ColumnInfo;
 import com.intellij.util.ui.ListTableModel;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -57,11 +58,10 @@ public class CssEditPrefixesListPanel {
     myPrefixesTableView.setStriped(true);
     myPrefixesTableView.getRowSorter().toggleSortOrder(0);
 
-    new TableViewSpeedSearch(myPrefixesTableView) {
+    new TableViewSpeedSearch<CssPrefixInfo>(myPrefixesTableView) {
       @Override
-      protected String getElementText(final Object element) {
-        CssPrefixInfo prefixInfo = (CssPrefixInfo)element;
-        return prefixInfo.getPropertyName();
+      protected String getItemText(@NotNull CssPrefixInfo element) {
+        return element.getPropertyName();
       }
     };
   }

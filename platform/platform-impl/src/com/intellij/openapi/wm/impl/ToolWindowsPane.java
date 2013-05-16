@@ -86,6 +86,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
 
   private boolean myStripesOverlayed;
   private final Disposable myDisposable = Disposer.newDisposable();
+  private boolean myWidescreen = false;
 
   ToolWindowsPane(final IdeFrameImpl frame, ToolWindowManagerImpl manager){
     myManager = manager;
@@ -111,8 +112,18 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
     myHorizontalSplitter.setDividerWidth(0);
     myHorizontalSplitter.setDividerMouseZoneSize(Registry.intValue("ide.splitter.mouseZone"));
     myHorizontalSplitter.setBackground(Color.gray);
-
-    myVerticalSplitter.setInnerComponent(myHorizontalSplitter);
+    if (/*ApplicationManager.getApplication().isInternal() ||*/ Registry.is("ide.windowSystem.supportWidescreen", false)) {
+      Rectangle mainScreenBounds = ScreenUtil.getMainScreenBounds();
+      if (!mainScreenBounds.isEmpty() && ((double)mainScreenBounds.width/ mainScreenBounds.height) > 1.34) {
+        myWidescreen = true;
+      }
+    }
+    if (myWidescreen) {
+      myHorizontalSplitter.setInnerComponent(myVerticalSplitter);
+    }
+    else {
+      myVerticalSplitter.setInnerComponent(myHorizontalSplitter);
+    }
 
     // Tool stripes
 
@@ -129,7 +140,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
 
     // Layered pane
 
-    myLayeredPane=new MyLayeredPane(myVerticalSplitter);
+    myLayeredPane=new MyLayeredPane(myWidescreen ? myHorizontalSplitter : myVerticalSplitter);
 
     // Compose layout
 
@@ -382,7 +393,7 @@ public final class ToolWindowsPane extends JBLayeredPane implements Disposable {
   }
 
   public void setDocumentComponent(final JComponent component){
-    myHorizontalSplitter.setInnerComponent(component);
+    (myWidescreen ? myVerticalSplitter : myHorizontalSplitter).setInnerComponent(component);
   }
 
   private void updateToolStripesVisibility(){

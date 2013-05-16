@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -225,7 +225,7 @@ public class PsiTypeLookupItem extends LookupItem {
           if (!psiClass.getManager().areElementsEquivalent(resolved, psiClass) && !PsiUtil.isInnerClass(psiClass)) {
             // inner class name should be shown qualified if its not accessible by single name
             PsiClass aClass = psiClass.getContainingClass();
-            while (aClass != null && !PsiUtil.isInnerClass(aClass)) {
+            while (aClass != null && !PsiUtil.isInnerClass(aClass) && aClass.getName() != null) {
               name = aClass.getName() + '.' + name;
               allStrings.add(name);
               aClass = aClass.getContainingClass();

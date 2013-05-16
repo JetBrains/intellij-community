@@ -338,7 +338,7 @@ public class TagNameReference implements PsiReference {
     }
     else{
       // Don't use default namespace in case there are other namespaces in scope
-      // If there are tags from default namespace they will be handeled via
+      // If there are tags from default namespace they will be handled via
       // their element descriptors (prev if section)
       if (namespace == null) return;
       if(namespace.length() == 0 && !visited.isEmpty()) return;

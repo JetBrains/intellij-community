@@ -30,6 +30,7 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.*;
 import com.intellij.openapi.editor.actions.ContentChooser;
 import com.intellij.openapi.editor.ex.EditorEx;
+import com.intellij.openapi.editor.ex.util.EditorUtil;
 import com.intellij.openapi.editor.ex.util.LexerEditorHighlighter;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
 import com.intellij.openapi.fileTypes.SyntaxHighlighter;
@@ -39,7 +40,6 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ex.ProjectEx;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.CharFilter;
 import com.intellij.openapi.util.text.StringHash;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.CharsetToolkit;
@@ -195,6 +195,7 @@ public class ConsoleHistoryController {
   }
 
   protected void setConsoleText(final String command, final boolean storeUserText, final boolean regularMode) {
+    if (regularMode && myMultiline && StringUtil.isEmptyOrSpaces(command)) return;
     final Editor editor = myConsole.getCurrentEditor();
     final Document document = editor.getDocument();
     new WriteCommandAction.Simple(myConsole.getProject()) {
@@ -207,25 +208,7 @@ public class ConsoleHistoryController {
         int offset;
         if (regularMode) {
           if (myMultiline) {
-            if (text.isEmpty()) return;
-            int selectionStart = editor.getSelectionModel().getSelectionStart();
-            int selectionEnd = editor.getSelectionModel().getSelectionEnd();
-            int caretOffset = editor.getCaretModel().getOffset();
-            int line = document.getLineNumber(caretOffset);
-            int lineStartOffset = document.getLineStartOffset(line);
-            if (selectionStart == lineStartOffset) document.deleteString(selectionStart, selectionEnd);
-            String trimmedLine = document.getText(new TextRange(lineStartOffset, document.getLineEndOffset(line))).trim();
-            if (StringUtil.findFirst(trimmedLine, new CharFilter() {
-              @Override
-              public boolean accept(char ch) {
-                return ch == '\'' || ch == '\"' || ch == '_' || Character.isLetterOrDigit(ch);
-              }
-            }) > -1) {
-              text += "\n";
-            }
-            document.insertString(lineStartOffset, text);
-            offset = lineStartOffset;
-            editor.getSelectionModel().setSelection(lineStartOffset, lineStartOffset + text.length());
+            offset = insertTextMultiline(text, editor, document);
           }
           else {
             document.setText(text);
@@ -248,6 +231,16 @@ public class ConsoleHistoryController {
     }.execute();
   }
 
+  protected int insertTextMultiline(String text, Editor editor, Document document) {
+    TextRange selection = EditorUtil.getSelectionInAnyMode(editor);
+
+    int start = document.getLineStartOffset(document.getLineNumber(selection.getStartOffset()));
+    int end = document.getLineEndOffset(document.getLineNumber(selection.getEndOffset()));
+
+    document.replaceString(start, end, text);
+    editor.getSelectionModel().setSelection(start, start + text.length());
+    return start;
+  }
 
   private class MyAction extends AnAction {
     private boolean myNext;

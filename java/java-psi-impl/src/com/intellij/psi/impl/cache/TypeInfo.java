@@ -65,8 +65,10 @@ public class TypeInfo {
       "null",
       "short",
       "void",
-      CommonClassNames.JAVA_LANG_OBJECT_SHORT, CommonClassNames.JAVA_LANG_OBJECT,
-      CommonClassNames.JAVA_LANG_STRING_SHORT, CommonClassNames.JAVA_LANG_STRING
+      CommonClassNames.JAVA_LANG_OBJECT_SHORT,
+      CommonClassNames.JAVA_LANG_OBJECT,
+      CommonClassNames.JAVA_LANG_STRING_SHORT,
+      CommonClassNames.JAVA_LANG_STRING
     };
 
     ourFrequentTypeIndex = new TObjectIntHashMap<String>();
@@ -273,11 +275,11 @@ public class TypeInfo {
       buf.append("...");
     }
 
-    return buf.toString();
+    return internFrequentType(buf.toString());
   }
 
   @NotNull
-  private static String internFrequentType(@NotNull String type) {
+  public static String internFrequentType(@NotNull String type) {
     int frequentIndex = ourFrequentTypeIndex.get(type);
     return frequentIndex == 0 ? type : ourIndexFrequentType[frequentIndex];
   }

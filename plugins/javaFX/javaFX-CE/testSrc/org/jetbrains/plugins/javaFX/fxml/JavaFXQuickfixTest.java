@@ -35,8 +35,6 @@ public class JavaFXQuickfixTest extends LightCodeInsightFixtureTestCase {
        public void configureModule(Module module, ModifiableRootModel model, ContentEntry contentEntry) {
        PsiTestUtil.addLibrary(module, model, "javafx", PluginPathManager.getPluginHomePath("javaFX") + "/testData", "jfxrt.jar");
        PsiTestUtil.addLibrary(module, model, "groovy", PluginPathManager.getPluginHomePath("groovy") + "/testdata/mockGroovyLib1.8", "groovy-1.8.0-beta-2.jar");
-       final Sdk projectJdk = JavaAwareProjectJdkTableImpl.getInstanceEx().getInternalJdk();
-       PsiTestUtil.addLibrary(module, model, "rt", projectJdk.getHomePath() + "/lib", "rt.jar");
        super.configureModule(module, model, contentEntry);
      }
    };

@@ -26,11 +26,9 @@ import com.intellij.debugger.engine.requests.RequestManagerImpl;
 import com.intellij.debugger.impl.DebuggerContextImpl;
 import com.intellij.debugger.settings.DebuggerSettings;
 import com.intellij.debugger.ui.JavaDebuggerSupport;
-import com.intellij.idea.ActionsBundle;
 import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
 import com.intellij.openapi.actionSystem.AnActionEvent;
-import com.intellij.openapi.actionSystem.DefaultActionGroup;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.editor.Document;
 import com.intellij.openapi.editor.colors.EditorColorsManager;
@@ -52,8 +50,6 @@ import com.intellij.ui.classFilter.ClassFilter;
 import com.intellij.util.StringBuilderSpinAllocator;
 import com.intellij.xdebugger.impl.DebuggerSupport;
 import com.intellij.xdebugger.impl.actions.EditBreakpointAction;
-import com.intellij.xdebugger.impl.actions.ViewBreakpointsAction;
-import com.intellij.xdebugger.impl.actions.XDebuggerActions;
 import com.intellij.xdebugger.ui.DebuggerColors;
 import com.intellij.xml.util.XmlStringUtil;
 import com.sun.jdi.ReferenceType;
@@ -346,6 +342,7 @@ public abstract class BreakpointWithHighlighter extends Breakpoint {
         if (debugProcess == null || !debugProcess.isAttached()) {
           updateCaches(null);
           updateGutter();
+
           afterUpdate.run();
         }
         else {

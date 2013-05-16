@@ -64,4 +64,6 @@ public class JavaFxCommonClassNames {
   }
 
   @NonNls public static final String JAVA_FX_PARENT = "javafx.scene.Parent";
+  @NonNls public static final String JAVA_FX_SCENE = "javafx.scene.Scene";
+  @NonNls public static final String JAVAFX_APPLICATION_APPLICATION = "javafx.application.Application";
 }

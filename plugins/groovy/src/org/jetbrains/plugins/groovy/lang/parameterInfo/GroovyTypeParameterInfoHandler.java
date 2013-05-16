@@ -163,6 +163,6 @@ public class GroovyTypeParameterInfoHandler implements ParameterInfoHandlerWithT
         }
       }, ", "));
 
-    context.setupUIComponentPresentation(buffer.toString(), 0, highlightEndOffset, false, false, false, context.getDefaultParameterColor());
+    context.setupUIComponentPresentation(StringUtil.escapeXml(buffer.toString()), 0, highlightEndOffset, false, false, false, context.getDefaultParameterColor());
   }
 }

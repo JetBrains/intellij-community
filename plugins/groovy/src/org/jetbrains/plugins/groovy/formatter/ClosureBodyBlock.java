@@ -16,6 +16,7 @@
 package org.jetbrains.plugins.groovy.formatter;
 
 import com.intellij.formatting.Block;
+import com.intellij.formatting.ChildAttributes;
 import com.intellij.formatting.Indent;
 import com.intellij.formatting.Wrap;
 import com.intellij.lang.ASTNode;
@@ -65,6 +66,12 @@ public class ClosureBodyBlock extends GroovyBlock {
   public List<Block> getSubBlocks() {
     init();
     return mySubBlocks;
+  }
+
+  @NotNull
+  @Override
+  public ChildAttributes getChildAttributes(int newChildIndex) {
+    return new ChildAttributes(Indent.getNormalIndent(), null);
   }
 
   @Override

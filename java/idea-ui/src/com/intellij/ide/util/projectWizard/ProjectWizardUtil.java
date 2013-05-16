@@ -46,7 +46,7 @@ public class ProjectWizardUtil {
     if (!dir.exists()) {
       if (promptUser) {
         final int answer = Messages.showOkCancelDialog(IdeBundle.message("promot.projectwizard.directory.does.not.exist", promptPrefix,
-                                                                         dir.getPath(), ApplicationNamesInfo.getInstance().getProductName()),
+                                                                         dir.getPath(), ApplicationNamesInfo.getInstance().getFullProductName()),
                                                        IdeBundle.message("title.directory.does.not.exist"), Messages.getQuestionIcon());
         if (answer != 0) {
           return false;

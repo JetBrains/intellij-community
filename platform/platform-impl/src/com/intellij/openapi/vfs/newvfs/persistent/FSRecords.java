@@ -219,7 +219,7 @@ public class FSRecords implements Forceable {
         myNames = new PersistentStringEnumerator(namesFile, storageLockContext);
         myAttributes = new Storage(attributesFile.getCanonicalPath(), REASONABLY_SMALL);
         myContents = new RefCountingStorage(contentsFile.getCanonicalPath(), CapacityAllocationPolicy.FIVE_PERCENT_FOR_GROWTH); // sources usually zipped with 4x ratio
-        myContentHashesEnumerator = weHaveContentHashes ? new PersistentBTreeEnumerator<byte[]>(contentsHashesFile, new KeyDescriptor<byte[]>() {
+        KeyDescriptor<byte[]> descriptor = new KeyDescriptor<byte[]>() {
           @Override
           public void save(DataOutput out, byte[] value) throws IOException {
             out.write(value);
@@ -235,7 +235,7 @@ public class FSRecords implements Forceable {
           @Override
           public int getHashCode(byte[] value) {
             int hash = 0; // take first 4 bytes, this should be good enough hash given we reference git revisions with 7-8 hex digits
-            for(int i = 0; i < 4; ++i) {
+            for (int i = 0; i < 4; ++i) {
               hash = (hash << 8) + (value[i] & 0xFF);
             }
             return hash;
@@ -245,7 +245,8 @@ public class FSRecords implements Forceable {
           public boolean isEqual(byte[] val1, byte[] val2) {
             return Arrays.equals(val1, val2);
           }
-        }, 4096, storageLockContext) {
+        };
+        myContentHashesEnumerator = weHaveContentHashes ? new PersistentBTreeEnumerator<byte[]>(contentsHashesFile, descriptor, 4096, storageLockContext) {
           @Override
           protected int doWriteData(byte[] value) throws IOException {
             int record = getContentStorage().createNewRecord();
@@ -361,7 +362,7 @@ public class FSRecords implements Forceable {
         final String[] children = indexRoot.list();
         if (children != null && children.length > 0) {
           // create index corruption marker only if index directory exists and is non-empty
-          // It is incorrect to consider non-existing indices "corrupted" 
+          // It is incorrect to consider non-existing indices "corrupted"
           FileUtil.createIfDoesntExist(new File(PathManager.getIndexRoot(), "corruption.marker"));
         }
       }
@@ -1686,6 +1687,6 @@ public class FSRecords implements Forceable {
   }
 
   public static RuntimeException handleError(Throwable e) {
-    return DbConnection.handleError(e);   
+    return DbConnection.handleError(e);
   }
 }

@@ -31,7 +31,7 @@ public abstract class FrameworkTypeEx extends FrameworkType {
   }
 
   @Nullable
-  public FrameworkGroup getParentGroup() {
+  public FrameworkGroup<?> getParentGroup() {
     return null;
   }
 

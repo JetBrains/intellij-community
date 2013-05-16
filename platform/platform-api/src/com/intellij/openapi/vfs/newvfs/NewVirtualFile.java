@@ -127,7 +127,4 @@ public abstract class NewVirtualFile extends VirtualFile implements VirtualFileW
   @NotNull
   public abstract Iterable<VirtualFile> iterInDbChildren();
 
-  public abstract void setFlag(int flagMask, boolean value);
-
-  public abstract boolean getFlag(int flagMask);
 }

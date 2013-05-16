@@ -222,6 +222,13 @@ public class IdeMenuBar extends JMenuBar {
 
   private void setState(@NotNull State state) {
     myState = state;
+    if (myState == State.EXPANDING && myActivationWatcher != null && !myActivationWatcher.isRunning()) {
+      myActivationWatcher.start();
+    } else if (myActivationWatcher != null && myActivationWatcher.isRunning()) {
+      if (state == State.EXPANDED || state == State.COLLAPSED) {
+        myActivationWatcher.stop();
+      }
+    }
   }
 
   @Override
@@ -260,18 +267,11 @@ public class IdeMenuBar extends JMenuBar {
     };
     UISettings.getInstance().addUISettingsListener(UISettingsListener, myDisposable);
     Disposer.register(ApplicationManager.getApplication(), myDisposable);
-
-    if (myActivationWatcher != null) {
-      myActivationWatcher.start();
-    }
   }
 
   @Override
   public void removeNotify() {
     if (ScreenUtil.isStandardAddRemoveNotify(this)) {
-      if (myActivationWatcher != null) {
-        myActivationWatcher.stop();
-      }
       if (myAnimator != null) {
         myAnimator.suspend();
       }

@@ -251,7 +251,12 @@ public class JavaFxAntTaskTest extends UsefulTestCase{
     public void setSigned(boolean signed) {
       mySigned = signed;
     }
-    
+
+    @Override
+    protected String getArtifactName() {
+      return getArtifactRootName();
+    }
+
     @Override
     protected String getArtifactOutputPath() {
       return new File(myOutputPath).getParent();

@@ -10,7 +10,7 @@ public java.lang.Integer doCall(int x) {final groovy.lang.Reference<java.lang.In
 
 
 return org.codehaus.groovy.runtime.DefaultGroovyMethods.each(1, new groovy.lang.Closure<java.lang.Void>(X.this, X.this) {
-public void doCall(java.lang.Object it) {
+public void doCall(java.lang.Integer it) {
 i1.set(2);
 int i = 3;
 

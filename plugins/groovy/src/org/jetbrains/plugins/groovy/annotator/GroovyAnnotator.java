@@ -286,6 +286,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
   public void visitReferenceExpression(final GrReferenceExpression referenceExpression) {
     checkStringNameIdentifier(referenceExpression);
     checkThisOrSuperReferenceExpression(referenceExpression, myHolder);
+    checkFinalFieldAccess(referenceExpression);
     if (ResolveUtil.isKeyOfMap(referenceExpression)) {
       PsiElement nameElement = referenceExpression.getReferenceNameElement();
       LOG.assertTrue(nameElement != null);
@@ -295,6 +296,33 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       PsiElement nameElement = referenceExpression.getReferenceNameElement();
       LOG.assertTrue(nameElement != null);
       myHolder.createInfoAnnotation(nameElement, null).setTextAttributes(KEYWORD);
+    }
+  }
+
+  private void checkFinalFieldAccess(@NotNull GrReferenceExpression ref) {
+    final PsiElement resolved = ref.resolve();
+
+    if (resolved instanceof GrField && resolved.isPhysical() && ((GrField)resolved).hasModifierProperty(FINAL) && PsiUtil.isLValue(ref)) {
+      final GrField field = (GrField)resolved;
+
+      final PsiClass containingClass = field.getContainingClass();
+      if (containingClass != null && PsiTreeUtil.isAncestor(containingClass, ref, true)) {
+        GrMember container = GrHighlightUtil.findClassMemberContainer(ref, containingClass);
+
+        if (field.hasModifierProperty(STATIC)) {
+          if (container instanceof GrClassInitializer && ((GrClassInitializer)container).isStatic()) {
+            return;
+          }
+        }
+        else {
+          if (container instanceof GrMethod && ((GrMethod)container).isConstructor() ||
+              container instanceof GrClassInitializer && !((GrClassInitializer)container).isStatic()) {
+            return;
+          }
+        }
+
+        myHolder.createErrorAnnotation(ref, GroovyBundle.message("cannot.assign.a.value.to.final.field.0", field.getName()));
+      }
     }
   }
 
@@ -1375,6 +1403,7 @@ public class GroovyAnnotator extends GroovyElementVisitor {
       PsiElement resolved = ((GrReferenceExpression)value).resolve();
       if (resolved instanceof PsiClass) return false;
       if (resolved instanceof PsiEnumConstant) return false;
+      if (resolved == null && isClassReference(value)) return false;
 
       if (resolved instanceof GrAccessorMethod) resolved = ((GrAccessorMethod)resolved).getProperty();
       if (resolved instanceof PsiField) {
@@ -1408,6 +1437,23 @@ public class GroovyAnnotator extends GroovyElementVisitor {
 
     myHolder.createErrorAnnotation(toHighlight, GroovyBundle.message("expected.0.to.be.inline.constant", value.getText()));
     return true;
+  }
+
+  private static boolean isClassReference(GrAnnotationMemberValue value) {
+    if (value instanceof GrReferenceExpression) {
+      final String referenceName = ((GrReferenceExpression)value).getReferenceName();
+      if ("class".equals(referenceName)) {
+        final GrExpression qualifier = ((GrReferenceExpression)value).getQualifier();
+        if (qualifier instanceof GrReferenceExpression) {
+          final PsiElement resolved = ((GrReferenceExpression)qualifier).resolve();
+          if (resolved instanceof PsiClass) {
+            return true;
+          }
+        }
+      }
+    }
+
+    return false;
   }
 
   @Override
