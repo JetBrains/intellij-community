@@ -634,9 +634,9 @@ public interface Test {
   }
 
   public void testNoSingleTemplateLookup() {
-    myFixture.configureByText 'a.java', 'class Foo {{ ite<caret> }}'
-    type 'r'
-    assert !lookup
+    myFixture.configureByText 'a.java', 'class Foo { psv<caret> }'
+    type 'm'
+    assert !lookup : myFixture.lookupElementStrings
   }
 
   public void testTemplatesWithNonImportedClasses() {
@@ -666,7 +666,7 @@ class Foo {
 }
 """)
     type 'er '
-    assert myFixture.editor.document.text.contains('iter ')
+    assert !myFixture.editor.document.text.contains('for ')
   }
 
   public void testNewClassParenthesis() {
