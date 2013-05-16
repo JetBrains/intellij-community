@@ -1414,6 +1414,8 @@ class Foo {
 '''
     type 'sette'
     myFixture.assertPreferredCompletionItems 1, 'setHorizontalText', 'setText'
+    edt { myFixture.performEditorAction IdeActions.ACTION_EDITOR_MOVE_CARET_UP }
+    myFixture.assertPreferredCompletionItems 0, 'setHorizontalText', 'setText'
   }
 
 
