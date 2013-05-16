@@ -74,7 +74,7 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
   }
 
   @NotNull
-  public static Collection<String> getAllRegisteredIds(Project project, Set<String> fxmls) {
+  public static Collection<String> getAllRegisteredIds(Project project) {
     CommonProcessors.CollectUniquesProcessor<String> processor = new CommonProcessors.CollectUniquesProcessor<String>();
     FileBasedIndex.getInstance().processAllKeys(KEY, processor, project);
     final Collection<String> results = new ArrayList<String>(processor.getResults());
@@ -84,7 +84,7 @@ public class JavaFxIdsIndex extends FileBasedIndexExtension<String, Set<String>>
       final List<Set<String>> values = FileBasedIndex.getInstance().getValues(KEY, id, searchScope);
       if (!values.isEmpty()) {
         final Set<String> pathSet = values.get(0);
-        if (pathSet != null && !Collections.disjoint(pathSet, fxmls)) {
+        if (pathSet != null) {
           continue;
         }
       }
