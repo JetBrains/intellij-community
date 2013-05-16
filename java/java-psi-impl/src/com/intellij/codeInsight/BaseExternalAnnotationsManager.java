@@ -18,8 +18,10 @@ package com.intellij.codeInsight;
 import com.intellij.lang.PsiBuilder;
 import com.intellij.lang.java.parser.JavaParser;
 import com.intellij.lang.java.parser.JavaParserUtil;
+import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.fileEditor.FileDocumentManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.Condition;
 import com.intellij.openapi.util.JDOMUtil;
@@ -43,6 +45,7 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
+import java.io.StringWriter;
 import java.util.*;
 import java.util.concurrent.ConcurrentMap;
 
@@ -184,83 +187,103 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
   private final ConcurrentMap<PsiFile, Pair<MostlySingularMultiMap<String, AnnotationData>, Long>> annotationFileToDataAndModStamp = new ConcurrentSoftHashMap<PsiFile, Pair<MostlySingularMultiMap<String, AnnotationData>, Long>>();
 
   @NotNull
-  private MostlySingularMultiMap<String, AnnotationData> getDataFromFile(@NotNull PsiFile file) {
+  private MostlySingularMultiMap<String, AnnotationData> getDataFromFile(@NotNull final PsiFile file) {
     Pair<MostlySingularMultiMap<String, AnnotationData>, Long> cached = annotationFileToDataAndModStamp.get(file);
-    if (cached != null && cached.getSecond() == file.getModificationStamp()) {
+    final long fileModificationStamp = file.getModificationStamp();
+    if (cached != null && cached.getSecond() == fileModificationStamp) {
       return cached.getFirst();
     }
     MostlySingularMultiMap<String, AnnotationData> data = new MostlySingularMultiMap<String, AnnotationData>();
     try {
       Document document = JDOMUtil.loadDocument(escapeAttributes(file.getText()));
       Element rootElement = document.getRootElement();
-      if (rootElement != null) {
-        boolean sorted = true;
-        boolean modified = false;
-        String prevItemName = null;
         //noinspection unchecked
-        for (Element element : (List<Element>) rootElement.getChildren("item")) {
-          String externalName = element.getAttributeValue("name");
-          if (externalName == null) {
-            element.detach();
-            modified = true;
-            continue;
-          }
-          if (prevItemName != null && prevItemName.compareTo(externalName) > 0) {
-            sorted = false;
-          }
-          prevItemName = externalName;
-
-          //noinspection unchecked
-          for (Element annotationElement : (List<Element>) element.getChildren("annotation")) {
-            String annotationFQN = annotationElement.getAttributeValue("name");
-            if (StringUtil.isEmpty(annotationFQN)) continue;
-            annotationFQN = intern(annotationFQN);
-            //noinspection unchecked
-            List<Element> children = (List<Element>)annotationElement.getChildren();
-            StringBuilder buf = new StringBuilder(children.size() * "name=value,".length()); // just guess
-            for (Element annotationParameter : children) {
-              if (buf.length() != 0) {
-                buf.append(",");
-              }
-              String nameValue = annotationParameter.getAttributeValue("name");
-              if (nameValue != null) {
-                buf.append(nameValue);
-                buf.append("=");
-              }
-              buf.append(annotationParameter.getAttributeValue("val"));
-            }
-            String annotationParameters = buf.length() == 0 ? "" : intern(buf.toString());
-            for (AnnotationData existingData : data.get(externalName)) {
-              if (existingData.annotationClassFqName.equals(annotationFQN)) {
-                LOG.error("Duplicate annotation '" + annotationFQN+"' for signature: '" + externalName + "' in the file " + file.getVirtualFile().getPresentableUrl());
-              }
-            }
-            AnnotationData annData = internAnnotationData(new AnnotationData(annotationFQN, annotationParameters, file.getVirtualFile()));
-
-            data.add(externalName, annData);
-          }
-        }
-        if (!sorted) {
+      List<Element> itemElements = rootElement == null ? Collections.<Element>emptyList() : (List<Element>)rootElement.getChildren("item");
+      boolean sorted = true;
+      boolean modified = false;
+      String prevItemName = null;
+      for (Element element : itemElements) {
+        String externalName = element.getAttributeValue("name");
+        if (externalName == null) {
+          element.detach();
           modified = true;
-          List<Element> items = new ArrayList<Element>(rootElement.getChildren("item"));
-          rootElement.removeChildren("item");
-          Collections.sort(items, new Comparator<Element>() {
-            @Override
-            public int compare(Element item1, Element item2) {
-              String externalName1 = item1.getAttributeValue("name");
-              String externalName2 = item2.getAttributeValue("name");
-              return externalName1.compareTo(externalName2);
+          continue;
+        }
+        if (prevItemName != null && prevItemName.compareTo(externalName) > 0) {
+          sorted = false;
+        }
+        prevItemName = externalName;
+
+        //noinspection unchecked
+        for (Element annotationElement : (List<Element>) element.getChildren("annotation")) {
+          String annotationFQN = annotationElement.getAttributeValue("name");
+          if (StringUtil.isEmpty(annotationFQN)) continue;
+          annotationFQN = intern(annotationFQN);
+          //noinspection unchecked
+          List<Element> children = (List<Element>)annotationElement.getChildren();
+          StringBuilder buf = new StringBuilder(children.size() * "name=value,".length()); // just guess
+          for (Element annotationParameter : children) {
+            if (buf.length() != 0) {
+              buf.append(",");
             }
-          });
-          for (Element item : items) {
-            rootElement.addContent(item);
+            String nameValue = annotationParameter.getAttributeValue("name");
+            if (nameValue != null) {
+              buf.append(nameValue);
+              buf.append("=");
+            }
+            buf.append(annotationParameter.getAttributeValue("val"));
           }
+          String annotationParameters = buf.length() == 0 ? "" : intern(buf.toString());
+          for (AnnotationData existingData : data.get(externalName)) {
+            if (existingData.annotationClassFqName.equals(annotationFQN)) {
+              duplicateError(file, externalName, "Duplicate annotation '" + annotationFQN + "' ");
+            }
+          }
+          AnnotationData annData = internAnnotationData(new AnnotationData(annotationFQN, annotationParameters, file.getVirtualFile()));
+
+          data.add(externalName, annData);
         }
-        VirtualFile virtualFile = file.getVirtualFile();
-        if (modified && virtualFile.isInLocalFileSystem() && virtualFile.isWritable()) {
-          String lineSeparator = FileDocumentManager.getInstance().getLineSeparator(virtualFile, file.getProject());
-          JDOMUtil.writeDocument(document, virtualFile.getPath(), lineSeparator);
+      }
+      if (!sorted) {
+        modified = true;
+        List<Element> items = new ArrayList<Element>(rootElement.getChildren("item"));
+        rootElement.removeChildren("item");
+        Collections.sort(items, new Comparator<Element>() {
+          @Override
+          public int compare(Element item1, Element item2) {
+            String externalName1 = item1.getAttributeValue("name");
+            String externalName2 = item2.getAttributeValue("name");
+            return externalName1.compareTo(externalName2);
+          }
+        });
+        for (Element item : items) {
+          rootElement.addContent(item);
         }
+      }
+      final VirtualFile virtualFile = file.getVirtualFile();
+      if (modified && virtualFile.isInLocalFileSystem() && virtualFile.isWritable()) {
+        final Project project = file.getProject();
+        final FileDocumentManager fileDocumentManager = FileDocumentManager.getInstance();
+        final StringWriter string = new StringWriter(file.getTextLength());
+        JDOMUtil.writeDocument(document, string, "\n");
+        ApplicationManager.getApplication().invokeLater(new Runnable() {
+          @Override
+          public void run() {
+            if (file.getModificationStamp() == fileModificationStamp && !fileDocumentManager.isFileModified(virtualFile)) {
+              // modify .xml in write action to avoid conflicts and torn reads
+              ApplicationManager.getApplication().runWriteAction(new Runnable() {
+                @Override
+                public void run() {
+                  com.intellij.openapi.editor.Document editorDoc = PsiDocumentManager.getInstance(project).getDocument(file);
+                  if (editorDoc != null) {
+                    editorDoc.setText(string.toString());
+                    fileDocumentManager.saveDocument(editorDoc);
+                  }
+                }
+              });
+            }
+          }
+        }, project.getDisposed());
       }
     }
     catch (IOException e) {
@@ -277,6 +300,10 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     annotationFileToDataAndModStamp.put(file, pair);
 
     return data;
+  }
+
+  protected void duplicateError(@NotNull PsiFile file, @NotNull String externalName, @NotNull String text) {
+    LOG.error(text + "; for signature: '" + externalName + "' in the file " + file.getVirtualFile().getPresentableUrl());
   }
 
   @NotNull
@@ -315,7 +342,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
     return result;
   }
 
-  private static void addAnnotations(@NotNull List<AnnotationData> result,
+  private void addAnnotations(@NotNull List<AnnotationData> result,
                                      @NotNull String externalName,
                                      @NotNull PsiFile file,
                                      @NotNull MostlySingularMultiMap<String, AnnotationData> fileData) {
@@ -324,7 +351,7 @@ public abstract class BaseExternalAnnotationsManager extends ExternalAnnotations
       if (result.contains(ad)) {
         // there can be compatible annotations in different files
         if (Comparing.equal(ad.virtualFile, file.getVirtualFile())) {
-          LOG.error("Duplicate signature: '" + externalName + "'; in  " + file.getVirtualFile());
+          duplicateError(file, externalName, "Duplicate signature");
         }
       }
       else {

@@ -18,6 +18,7 @@ package com.intellij.codeInsight;
 import com.intellij.CommonBundle;
 import com.intellij.ProjectTopics;
 import com.intellij.codeInsight.highlighting.HighlightManager;
+import com.intellij.diagnostic.LogMessageEx;
 import com.intellij.icons.AllIcons;
 import com.intellij.ide.DataManager;
 import com.intellij.ide.highlighter.XmlFileType;
@@ -126,6 +127,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
                                  @NotNull final String annotationFQName,
                                  @NotNull final PsiFile fromFile,
                                  @Nullable final PsiNameValuePair[] value) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     final Project project = myPsiManager.getProject();
     final PsiFile containingFile = listOwner.getContainingFile();
     if (!(containingFile instanceof PsiJavaFile)) {
@@ -336,6 +338,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
 
   @Override
   public boolean deannotate(@NotNull final PsiModifierListOwner listOwner, @NotNull final String annotationFQN) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return processExistingExternalAnnotations(listOwner, annotationFQN, new Processor<XmlTag>() {
       @Override
       public boolean process(XmlTag annotationTag) {
@@ -355,6 +358,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   public boolean editExternalAnnotation(@NotNull PsiModifierListOwner listOwner,
                                         @NotNull final String annotationFQN,
                                         @Nullable final PsiNameValuePair[] value) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     return processExistingExternalAnnotations(listOwner, annotationFQN, new Processor<XmlTag>() {
       @Override
       public boolean process(XmlTag annotationTag) {
@@ -365,7 +369,8 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
     });
   }
 
-  private boolean processExistingExternalAnnotations(@NotNull final PsiModifierListOwner listOwner, @NotNull final String annotationFQN,
+  private boolean processExistingExternalAnnotations(@NotNull final PsiModifierListOwner listOwner,
+                                                     @NotNull final String annotationFQN,
                                                      @NotNull final Processor<XmlTag> annotationTagProcessor) {
     try {
       final List<XmlFile> files = findExternalAnnotationsXmlFiles(listOwner);
@@ -428,6 +433,7 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
   @Override
   @NotNull
   public AnnotationPlace chooseAnnotationsPlace(@NotNull final PsiElement element) {
+    ApplicationManager.getApplication().assertIsDispatchThread();
     if (!element.isPhysical()) return AnnotationPlace.IN_CODE; //element just created
     if (!element.getManager().isInProject(element)) return AnnotationPlace.EXTERNAL;
     final Project project = myPsiManager.getProject();
@@ -632,6 +638,12 @@ public class ExternalAnnotationsManagerImpl extends ReadableExternalAnnotationsM
       LOG.error(e);
     }
     return null;
+  }
+
+  @Override
+  protected void duplicateError(@NotNull PsiFile file, @NotNull String externalName, @NotNull String text) {
+    String message = text + "; for signature: '" + externalName + "' in the file " + file.getVirtualFile().getPresentableUrl();
+    LogMessageEx.error(LOG, message, file.getText());
   }
 
   private static class MyExternalPromptDialog extends OptionsMessageDialog {
