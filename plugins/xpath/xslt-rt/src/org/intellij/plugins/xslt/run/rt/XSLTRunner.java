@@ -76,6 +76,13 @@ public class XSLTRunner implements XSLTMain {
 
                 final File input = new File(System.getProperty("xslt.input"));
                 final String out = System.getProperty("xslt.output");
+                OutputStream fileStream;
+                if (out != null) {
+                  final File output = new File(out);
+                  fileStream = new BufferedOutputStream(new FileOutputStream(output));
+                } else {
+                  fileStream = null;
+                }
                 final StreamResult result;
 
                 final Integer _port = Integer.getInteger("xslt.listen-port", -1);
@@ -86,31 +93,13 @@ public class XSLTRunner implements XSLTMain {
                         final ServerSocket serverSocket = new ServerSocket(port, 1, InetAddress.getByName("127.0.0.1"));
                         serverSocket.setSoTimeout(Integer.getInteger("xslt.listen-timeout", 5000).intValue());
                         final Socket socket = serverSocket.accept();
-                        final BufferedOutputStream stream = new BufferedOutputStream(socket.getOutputStream(), 16);
+                        final BufferedOutputStream socketStream = new BufferedOutputStream(socket.getOutputStream(), 16);
 
                         if (out != null) {
-                            final File output = new File(out);
-                            result = new StreamResult(new ForkedOutputStream(new OutputStream[]{ stream, new FileOutputStream(output) }));
+                            result = new StreamResult(new ForkedOutputStream(new OutputStream[]{ socketStream, fileStream }));
                         } else {
-                            result = new StreamResult(new OutputStreamWriter(stream, "UTF-8"));
+                            result = new StreamResult(new OutputStreamWriter(socketStream, "UTF-8"));
                         }
-
-                        Runtime.getRuntime().addShutdownHook(new Thread() {
-                            public void run() {
-                                try {
-                                    final Writer out = result.getWriter();
-                                    if (out != null) {
-                                        out.flush();
-                                        out.close();
-                                    } else if (result.getOutputStream() != null) {
-                                        result.getOutputStream().flush();
-                                        result.getOutputStream().close();
-                                    }
-                                } catch (IOException e) {
-                                    // no chance to fix...
-                                }
-                            }
-                        });
                     } catch (SocketTimeoutException e) {
                         System.err.println("Plugin did not connect to runner within timeout. Run aborted.");
                         return;
@@ -120,11 +109,36 @@ public class XSLTRunner implements XSLTMain {
                     if (encoding != null) {
                         // ensure proper encoding in xml declaration
                         transformer.setOutputProperty("encoding", encoding);
-                        result = new StreamResult(new OutputStreamWriter(System.out, encoding));
-                    } else {
-                        result = new StreamResult(System.out);
-                    }
+                        if (out != null) {
+                          result = new StreamResult(new OutputStreamWriter(new ForkedOutputStream(new OutputStream[]{System.out, fileStream}), encoding));
+                        } else {
+                          result = new StreamResult(new OutputStreamWriter(System.out, encoding));
+                        }
+                      } else {
+                        if (out != null) {
+                          result = new StreamResult(new ForkedOutputStream(new OutputStream[]{ System.out, fileStream }));
+                        } else {
+                          result = new StreamResult(System.out);
+                        }
+                      }
                 }
+
+                Runtime.getRuntime().addShutdownHook(new Thread() {
+                  public void run() {
+                    try {
+                      final Writer out = result.getWriter();
+                      if (out != null) {
+                        out.flush();
+                        out.close();
+                      } else if (result.getOutputStream() != null) {
+                        result.getOutputStream().flush();
+                        result.getOutputStream().close();
+                      }
+                    } catch (IOException e) {
+                      // no chance to fix...
+                    }
+                  }
+                });
 
                 main.start(transformer, new StreamSource(input), result);
             }
