@@ -284,13 +284,10 @@ public class ToBeMergedDialog extends DialogWrapper implements MergeDialogI {
       }
     };
     myRevisionsList.getExpandableItemsHandler().setEnabled(false);
-    new TableViewSpeedSearch(myRevisionsList) {
+    new TableViewSpeedSearch<CommittedChangeList>(myRevisionsList) {
       @Override
-      protected String getElementText(Object element) {
-        if (element instanceof CommittedChangeList) {
-          return ((CommittedChangeList) element).getComment();
-        }
-        return null;
+      protected String getItemText(@NotNull CommittedChangeList element) {
+        return element.getComment();
       }
     };
     final ListTableModel<CommittedChangeList> flatModel = new ListTableModel<CommittedChangeList>(FAKE_COLUMN);

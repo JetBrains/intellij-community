@@ -573,11 +573,10 @@ public class InjectionsSettingsUI implements SearchableConfigurable.Parent, NonD
       getColumnModel().getColumn(2).setMinWidth(preferred);
       getColumnModel().getColumn(2).setPreferredWidth(preferred);
       getColumnModel().getColumn(2).setMaxWidth(preferred);
-      new TableViewSpeedSearch(this) {
-
+      new TableViewSpeedSearch<InjInfo>(this) {
         @Override
-        protected String getElementText(final Object element) {
-          final BaseInjection injection = ((InjInfo)element).injection;
+        protected String getItemText(@NotNull InjInfo element) {
+          final BaseInjection injection = element.injection;
           return injection.getSupportId() + " " + injection.getInjectedLanguageId() + " " + injection.getDisplayName();
         }
       };
