@@ -39,6 +39,9 @@ public class FrameworkGroupOptionsComponent {
       for (FrameworkGroupVersion version : versions) {
         versionsBox.addItem(version);
       }
+      FrameworkGroupVersion latestVersion = versions.get(versions.size() - 1);
+      versionsBox.setSelectedItem(latestVersion);
+      model.setSelectedVersion(group, latestVersion);
       panel.add(FormBuilder.createFormBuilder().addLabeledComponent("Version:", versionsBox).getPanel());
     }
     myMainPanel = panel;

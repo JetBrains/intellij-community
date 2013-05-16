@@ -19,6 +19,9 @@ import com.intellij.facet.impl.ui.libraries.LibraryCompositionSettings;
 import com.intellij.facet.impl.ui.libraries.LibraryOptionsPanel;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleConfigurable;
 import com.intellij.framework.addSupport.FrameworkSupportInModuleProvider;
+import com.intellij.framework.library.FrameworkLibraryVersion;
+import com.intellij.framework.library.FrameworkLibraryVersionFilter;
+import com.intellij.framework.library.impl.FrameworkLibraryVersionImpl;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurableListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelAdapter;
 import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
@@ -29,6 +32,7 @@ import com.intellij.openapi.ui.VerticalFlowLayout;
 import com.intellij.openapi.util.Disposer;
 import com.intellij.ui.IdeBorderFactory;
 import com.intellij.ui.SeparatorFactory;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
@@ -82,7 +86,7 @@ public class FrameworkSupportOptionsComponent {
 
     final CustomLibraryDescription description = myConfigurable.createLibraryDescription();
     if (description != null) {
-      myLibraryOptionsPanel = new LibraryOptionsPanel(description, myModel.getBaseDirectoryForLibrariesPath(), myConfigurable.getLibraryVersionFilter(),
+      myLibraryOptionsPanel = new LibraryOptionsPanel(description, myModel.getBaseDirectoryForLibrariesPath(), createLibraryVersionFilter(),
                                                       container, !myConfigurable.isOnlyLibraryAdded());
       Disposer.register(myConfigurable, myLibraryOptionsPanel);
       if (addSeparator) {
@@ -98,9 +102,18 @@ public class FrameworkSupportOptionsComponent {
   public void updateLibrariesPanel() {
     if (myLibraryOptionsPanel != null) {
       myLibraryOptionsPanel.changeBaseDirectoryPath(myModel.getBaseDirectoryForLibrariesPath());
-      myLibraryOptionsPanel.setVersionFilter(myConfigurable.getLibraryVersionFilter());
+      myLibraryOptionsPanel.setVersionFilter(createLibraryVersionFilter());
       myLibraryOptionsPanelWrapper.setVisible(myConfigurable.isVisible());
     }
+  }
+
+  private FrameworkLibraryVersionFilter createLibraryVersionFilter() {
+    return new FrameworkLibraryVersionFilter() {
+      @Override
+      public boolean isAccepted(@NotNull FrameworkLibraryVersion version) {
+        return myConfigurable.getLibraryVersionFilter().isAccepted(version) && ((FrameworkLibraryVersionImpl)version).getAvailabilityFilter().isAvailable(myModel);
+      }
+    };
   }
 
 
