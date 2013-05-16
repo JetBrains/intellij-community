@@ -16,6 +16,7 @@
 
 package com.intellij.util.net;
 
+import com.intellij.Patches;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.progress.ProgressIndicator;
@@ -37,20 +38,22 @@ public class NetUtils {
   }
 
   public static boolean canConnectToSocket(String host, int port) {
-    if (isLocalhost(host)) {
-      return checkLocal(host, port);
-    }
-    else {
-      return checkRemote(host, port);
-    }
+    return canConnectToSocket(host, port, false);
   }
 
-  public static boolean canConnectToSocketWithAnotherJdk(String host, int port) {
+  public static boolean canConnectToSocketOpenedByJavaProcess(String host, int port) {
+    return canConnectToSocket(host, port, Patches.SUN_BUG_ID_7179799);
+  }
+
+  private static boolean canConnectToSocket(String host, int port, boolean alwaysTryToConnectDirectly) {
     if (isLocalhost(host)) {
-      return checkLocal(host, port) || checkRemote(host, port);
+      if (!canBindToLocalSocket(host, port)) {
+        return true;
+      }
+      return alwaysTryToConnectDirectly && canConnectToRemoteSocket(host, port);
     }
     else {
-      return checkRemote(host, port);
+      return canConnectToRemoteSocket(host, port);
     }
   }
 
@@ -58,7 +61,7 @@ public class NetUtils {
     return host.equals("localhost") || host.equals("127.0.0.1");
   }
 
-  private static boolean checkLocal(String host, int port) {
+  private static boolean canBindToLocalSocket(String host, int port) {
     try {
       ServerSocket socket = new ServerSocket();
       try {
@@ -73,15 +76,15 @@ public class NetUtils {
         catch (IOException ignored) {
         }
       }
-      return false;
+      return true;
     }
     catch (IOException e) {
       LOG.debug(e);
-      return true;
+      return false;
     }
   }
 
-  private static boolean checkRemote(String host, int port) {
+  private static boolean canConnectToRemoteSocket(String host, int port) {
     try {
       Socket socket = new Socket(host, port);
       socket.close();
