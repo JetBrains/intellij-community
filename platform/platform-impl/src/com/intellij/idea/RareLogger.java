@@ -34,7 +34,7 @@ public class RareLogger extends Logger {
 
   private RareLogger(final Logger logger, final boolean fairSynch) {
     myLogger = logger;
-    
+
     final Object lock = new Object();
     myCache = new SLRUMap<Object, Long>(64, 32) {
       @Override
@@ -69,7 +69,7 @@ public class RareLogger extends Logger {
       }
     };
     myConvertors = new LinkedList<LogFilter>();
-    
+
     // just passes to parent logger
     myProxy = new LogFilter() {
       @Override
@@ -133,7 +133,7 @@ public class RareLogger extends Logger {
   }
 
   @Override
-  public void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details) {
+  public void error(@NonNls String message, @Nullable Throwable t, @NotNull @NonNls String... details) {
     process(Level.ERROR, message, t, details);
   }
 

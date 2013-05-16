@@ -27,6 +27,7 @@ import com.intellij.openapi.progress.ProcessCanceledException;
 import com.intellij.openapi.util.text.StringUtil;
 import org.apache.log4j.Level;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.IOException;
@@ -112,7 +113,7 @@ public class IdeaLogger extends Logger {
   }
 
   @Override
-  public void error(String message, @Nullable Throwable t, String... details) {
+  public void error(String message, @Nullable Throwable t, @NotNull String... details) {
     if (t instanceof ProcessCanceledException) {
       myLogger.error(new Throwable("Do not log ProcessCanceledException").initCause(t));
       throw (ProcessCanceledException)t;

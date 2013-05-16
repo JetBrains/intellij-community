@@ -27,6 +27,7 @@ public abstract class Logger {
   }
 
   public static Factory ourFactory = new Factory() {
+    @Override
     public Logger getLoggerInstance(String category) {
       return new DefaultLogger(category);
     }
@@ -78,7 +79,7 @@ public abstract class Logger {
   }
 
 
-  public abstract void error(@NonNls String message, @Nullable Throwable t, @NonNls String... details);
+  public abstract void error(@NonNls String message, @Nullable Throwable t, @NonNls @NotNull String... details);
 
   public abstract void info(@NonNls String message);
 
