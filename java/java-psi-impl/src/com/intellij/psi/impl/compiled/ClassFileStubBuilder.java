@@ -23,6 +23,7 @@ import com.intellij.psi.stubs.BinaryFileStubBuilder;
 import com.intellij.psi.stubs.PsiFileStub;
 import com.intellij.psi.stubs.StubElement;
 import com.intellij.util.cls.ClsFormatException;
+import com.intellij.util.indexing.FileContent;
 
 /**
  * @author max
@@ -34,8 +35,11 @@ public class ClassFileStubBuilder implements BinaryFileStubBuilder {
   }
 
   @Override
-  public StubElement buildStubTree(final VirtualFile file, final byte[] content, final Project project) {
+  public StubElement buildStubTree(FileContent fileContent) {
     try {
+      VirtualFile file = fileContent.getFile();
+      Project project = fileContent.getProject();
+      byte[] content = fileContent.getContent();
       final ClsStubBuilderFactory[] factories = Extensions.getExtensions(ClsStubBuilderFactory.EP_NAME);
       for (ClsStubBuilderFactory factory : factories) {
         if (!factory.isInnerClass(file) && factory.canBeProcessed(file, content)) {

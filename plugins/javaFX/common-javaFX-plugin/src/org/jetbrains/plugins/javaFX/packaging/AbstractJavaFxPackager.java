@@ -45,6 +45,8 @@ public abstract class AbstractJavaFxPackager {
   protected String getArtifactRootName() {
     return PathUtilRt.getFileName(getArtifactOutputFilePath());
   }
+  
+  protected abstract String getArtifactName();
 
   protected abstract String getArtifactOutputPath();
 
@@ -102,9 +104,8 @@ public abstract class AbstractJavaFxPackager {
          .append("classpath=\"").append(homePath).append("/lib/ant-javafx.jar\"/>\n");
       buf.append("<target name=\"build artifact\" xmlns:fx=\"javafx:com.sun.javafx.tools.ant\">");
       final String artifactFileName = getArtifactRootName();
-      final String artifactName = FileUtil.getNameWithoutExtension(artifactFileName);
       final List<JavaFxAntGenerator.SimpleTag> tags =
-        JavaFxAntGenerator.createJarAndDeployTasks(this, artifactFileName, artifactName, tempUnzippedArtifactOutput.getPath());
+        JavaFxAntGenerator.createJarAndDeployTasks(this, artifactFileName, getArtifactName(), tempUnzippedArtifactOutput.getPath());
       for (JavaFxAntGenerator.SimpleTag tag : tags) {
         tag.generate(buf);
       }

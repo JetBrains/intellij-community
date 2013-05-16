@@ -37,37 +37,58 @@ public class NetUtils {
   }
 
   public static boolean canConnectToSocket(String host, int port) {
-    if (host.equals("localhost") || host.equals("127.0.0.1")) {
-      try {
-        ServerSocket socket = new ServerSocket();
-        try {
-          //it looks like this flag should be set but it leads to incorrect results for NodeJS under Windows
-          //socket.setReuseAddress(true);
-          socket.bind(new InetSocketAddress(host, port));
-        }
-        finally {
-          try {
-            socket.close();
-          }
-          catch (IOException ignored) {
-          }
-        }
-        return false;
-      }
-      catch (IOException e) {
-        LOG.debug(e);
-        return true;
-      }
+    if (isLocalhost(host)) {
+      return checkLocal(host, port);
     }
     else {
+      return checkRemote(host, port);
+    }
+  }
+
+  public static boolean canConnectToSocketWithAnotherJdk(String host, int port) {
+    if (isLocalhost(host)) {
+      return checkLocal(host, port) || checkRemote(host, port);
+    }
+    else {
+      return checkRemote(host, port);
+    }
+  }
+
+  private static boolean isLocalhost(String host) {
+    return host.equals("localhost") || host.equals("127.0.0.1");
+  }
+
+  private static boolean checkLocal(String host, int port) {
+    try {
+      ServerSocket socket = new ServerSocket();
       try {
-        Socket socket = new Socket(host, port);
-        socket.close();
-        return true;
+        //it looks like this flag should be set but it leads to incorrect results for NodeJS under Windows
+        //socket.setReuseAddress(true);
+        socket.bind(new InetSocketAddress(host, port));
       }
-      catch (IOException ignored) {
-        return false;
+      finally {
+        try {
+          socket.close();
+        }
+        catch (IOException ignored) {
+        }
       }
+      return false;
+    }
+    catch (IOException e) {
+      LOG.debug(e);
+      return true;
+    }
+  }
+
+  private static boolean checkRemote(String host, int port) {
+    try {
+      Socket socket = new Socket(host, port);
+      socket.close();
+      return true;
+    }
+    catch (IOException ignored) {
+      return false;
     }
   }
 

@@ -109,6 +109,11 @@ public class JpsJavaFxArtifactBuildTaskProvider extends ArtifactBuildTaskProvide
     }
 
     @Override
+    protected String getArtifactName() {
+      return myArtifact.getName();
+    }
+
+    @Override
     protected String getArtifactOutputPath() {
       return myArtifact.getOutputPath();
     }

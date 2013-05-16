@@ -222,15 +222,20 @@ public class CodeCompletionHandlerBase {
     Document document = editor.getDocument();
     int docLength = document.getTextLength();
     int psiLength = psiFile.getTextLength();
-    boolean committed = !PsiDocumentManager.getInstance(psiFile.getProject()).isUncommited(document);
+    PsiDocumentManager manager = PsiDocumentManager.getInstance(psiFile.getProject());
+    boolean committed = !manager.isUncommited(document);
     if (docLength == psiLength && committed) {
       return;
     }
 
-    String message = "unsuccessful commit: (injected=" +(editor instanceof EditorWindow) +")";
+    String message = "unsuccessful commit:";
+    message += "\nmatching=" + (psiFile == manager.getPsiFile(document));
+    message += "\ninjectedEditor=" + (editor instanceof EditorWindow);
+    message += "\ninjectedFile=" + InjectedLanguageManager.getInstance(psiFile.getProject()).isInjectedFragment(psiFile);
     message += "\ncommitted=" + committed;
     message += "\nfile=" + psiFile.getName();
     message += "\nfile class=" + psiFile.getClass();
+    message += "\nfile.valid=" + psiFile.isValid();
     message += "\nlanguage=" + psiFile.getLanguage();
     message += "\ndoc.length=" + docLength;
     message += "\npsiFile.length=" + psiLength;
@@ -246,9 +251,10 @@ public class CodeCompletionHandlerBase {
         message += "\nnode.text.length=" + nodeText.length();
       }
     }
+    message += "\n" + DebugUtil.currentStackTrace();
 
     LOG.error(LogMessageEx.createEvent("Commit unsuccessful", message,
-                                       new Attachment(psiFile.getViewProvider().getVirtualFile().getPath(), fileText),
+                                       new Attachment(psiFile.getViewProvider().getVirtualFile().getPath() + "_file.txt", fileText),
                                        createAstAttachment(psiFile, psiFile),
                                        new Attachment("docText.txt", document.getText())));
   }
@@ -397,7 +403,7 @@ public class CodeCompletionHandlerBase {
   }
 
   private static Attachment createAstAttachment(PsiFile fileCopy, final PsiFile originalFile) {
-    return new Attachment(originalFile.getViewProvider().getVirtualFile().getPath() + " syntactic tree.txt", DebugUtil.psiToString(fileCopy, false));
+    return new Attachment(originalFile.getViewProvider().getVirtualFile().getPath() + " syntactic tree.txt", DebugUtil.psiToString(fileCopy, false, true));
   }
 
   private static Attachment createFileTextAttachment(PsiFile fileCopy, final PsiFile originalFile) {

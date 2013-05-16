@@ -237,7 +237,7 @@ public def layoutCommunityPlugins(String home, String androidHome=null) {
   }
 
   dir("plugins") {
-    def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "hg4idea", "github", "ui-designer-core", "tasks-time-tracking"]
+    def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "hg4idea", "github", "ui-designer-core"] //, "tasks-time-tracking"]
 
     simplePlugins.each {
       layoutPlugin it

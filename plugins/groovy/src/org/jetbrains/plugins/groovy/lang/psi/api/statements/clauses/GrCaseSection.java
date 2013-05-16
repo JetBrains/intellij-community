@@ -29,9 +29,5 @@ public interface GrCaseSection extends GroovyPsiElement, GrVariableDeclarationOw
   @NotNull
   GrCaseLabel[] getCaseLabels();
 
-  @NotNull
-  @Deprecated
-  GrCaseLabel getCaseLabel();
-
   boolean isDefault();
 }

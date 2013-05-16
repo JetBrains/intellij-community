@@ -17,10 +17,9 @@ package com.intellij.designer;
 
 import com.intellij.designer.designSurface.DesignerEditorPanel;
 import com.intellij.ide.util.PropertiesComponent;
+import com.intellij.openapi.actionSystem.ActionGroup;
 import com.intellij.openapi.actionSystem.AnAction;
-import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.DefaultActionGroup;
-import com.intellij.openapi.actionSystem.ToggleAction;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.components.ProjectComponent;
 import com.intellij.openapi.fileEditor.FileEditor;
@@ -31,7 +30,9 @@ import com.intellij.openapi.project.Project;
 import com.intellij.openapi.startup.StartupManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.wm.ToolWindow;
+import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
+import com.intellij.util.ParameterizedRunnable;
 import com.intellij.util.messages.MessageBusConnection;
 import com.intellij.util.ui.update.MergingUpdateQueue;
 import com.intellij.util.ui.update.Update;
@@ -53,7 +54,10 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
   private volatile boolean myToolWindowReady;
   private volatile boolean myToolWindowDisposed;
 
-  protected final PropertiesComponent myPropertiesComponent;
+  private final PropertiesComponent myPropertiesComponent;
+  public final String myEditorModeKey;
+  private ToggleEditorModeAction myLeftEditorModeAction;
+  private ToggleEditorModeAction myRightEditorModeAction;
 
   private MessageBusConnection myConnection;
   private final FileEditorManagerListener myListener = new FileEditorManagerListener() {
@@ -88,6 +92,7 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
     myProject = project;
     myFileEditorManager = fileEditorManager;
     myPropertiesComponent = PropertiesComponent.getInstance(myProject);
+    myEditorModeKey = EDITOR_MODE + getComponentName() + ".STATE";
   }
 
   @Override
@@ -97,7 +102,7 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
     StartupManager.getInstance(myProject).registerPostStartupActivity(new Runnable() {
       public void run() {
         myToolWindowReady = true;
-        if (!isEditorMode()) {
+        if (getEditorMode() == null) {
           initListeners();
           bindToDesigner(getActiveDesigner());
         }
@@ -174,20 +179,11 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
   protected abstract void updateToolWindow(@Nullable DesignerEditorPanel designer);
 
   protected final void initGearActions() {
-    DefaultActionGroup group = new DefaultActionGroup();
-    group.add(new ToggleAction("In Editor Mode", "Pin/unpin tool window to Designer Editor", null) {
-      @Override
-      public boolean isSelected(AnActionEvent e) {
-        return false;
-      }
-
-      @Override
-      public void setSelected(AnActionEvent e, boolean state) {
-        setEditorMode(true);
-      }
-    });
-    ((ToolWindowEx)myToolWindow).setAdditionalGearActions(group);
+    ToolWindowEx toolWindow = (ToolWindowEx)myToolWindow;
+    toolWindow.setAdditionalGearActions(new DefaultActionGroup(createGearActions()));
   }
+
+  protected abstract ToolWindowAnchor getAnchor();
 
   @Override
   public void initComponent() {
@@ -203,9 +199,25 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
   //
   //////////////////////////////////////////////////////////////////////////////////////////
 
+  public final ActionGroup createGearActions() {
+    DefaultActionGroup group = new DefaultActionGroup("In Editor Mode", true);
+
+    if (myLeftEditorModeAction == null) {
+      myLeftEditorModeAction = new ToggleEditorModeAction(this, myProject, ToolWindowAnchor.LEFT);
+    }
+    group.add(myLeftEditorModeAction);
+
+    if (myRightEditorModeAction == null) {
+      myRightEditorModeAction = new ToggleEditorModeAction(this, myProject, ToolWindowAnchor.RIGHT);
+    }
+    group.add(myRightEditorModeAction);
+
+    return group;
+  }
+
   public final void bind(DesignerEditorPanel designer) {
     if (isEditorMode()) {
-      updateContent(designer, true);
+      myCreateAction.run(designer);
     }
   }
 
@@ -220,15 +232,6 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
     return toolWindow.getContent();
   }
 
-  protected final void updateContent(DesignerEditorPanel designer, boolean bindToEditor) {
-    if (bindToEditor) {
-      designer.putClientProperty(getComponentName(), createContent(designer));
-    }
-    else {
-      disposeContent(designer);
-    }
-  }
-
   protected abstract LightToolWindow createContent(DesignerEditorPanel designer);
 
   protected final LightToolWindow createContent(DesignerEditorPanel designer,
@@ -237,7 +240,6 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
                                                 Icon icon,
                                                 JComponent component,
                                                 JComponent focusedComponent,
-                                                int style,
                                                 int defaultWidth,
                                                 AnAction[] actions) {
     return new LightToolWindow(content,
@@ -246,7 +248,7 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
                                component,
                                focusedComponent,
                                designer.getContentSplitter(),
-                               style,
+                               getEditorMode(),
                                this,
                                myProject,
                                myPropertiesComponent,
@@ -262,31 +264,67 @@ public abstract class AbstractToolWindowManager implements ProjectComponent {
     toolWindow.dispose();
   }
 
-  private void updateContent(boolean bindToEditor) {
+  private final ParameterizedRunnable<DesignerEditorPanel> myCreateAction = new ParameterizedRunnable<DesignerEditorPanel>() {
+    @Override
+    public void run(DesignerEditorPanel designer) {
+      designer.putClientProperty(getComponentName(), createContent(designer));
+    }
+  };
+
+  private final ParameterizedRunnable<DesignerEditorPanel> myUpdateAnchorAction = new ParameterizedRunnable<DesignerEditorPanel>() {
+    @Override
+    public void run(DesignerEditorPanel designer) {
+      LightToolWindow toolWindow = (LightToolWindow)designer.getClientProperty(getComponentName());
+      toolWindow.updateAnchor(getEditorMode());
+    }
+  };
+
+  private final ParameterizedRunnable<DesignerEditorPanel> myDisposeAction = new ParameterizedRunnable<DesignerEditorPanel>() {
+    @Override
+    public void run(DesignerEditorPanel designer) {
+      disposeContent(designer);
+    }
+  };
+
+  private void runUpdateContent(ParameterizedRunnable<DesignerEditorPanel> action) {
     for (FileEditor editor : myFileEditorManager.getAllEditors()) {
       DesignerEditorPanel designer = getDesigner(editor);
       if (designer != null) {
-        updateContent(designer, bindToEditor);
+        action.run(designer);
       }
     }
   }
 
-  public final boolean isEditorMode() {
-    return myPropertiesComponent.getBoolean(EDITOR_MODE + getComponentName(), true);
+  protected final boolean isEditorMode() {
+    return getEditorMode() != null;
   }
 
-  public final void setEditorMode(boolean value) {
-    if (value) {
+  @Nullable
+  final ToolWindowAnchor getEditorMode() {
+    String value = myPropertiesComponent.getValue(myEditorModeKey);
+    if (value == null) {
+      return getAnchor();
+    }
+    return value.equals("ToolWindow") ? null : ToolWindowAnchor.fromText(value);
+  }
+
+  final void setEditorMode(@Nullable ToolWindowAnchor newState) {
+    ToolWindowAnchor oldState = getEditorMode();
+    myPropertiesComponent.setValue(myEditorModeKey, newState == null ? "ToolWindow" : newState.toString());
+
+    if (oldState != null && newState != null) {
+      runUpdateContent(myUpdateAnchorAction);
+    }
+    else if (newState != null) {
       removeListeners();
       updateToolWindow(null);
-      updateContent(true);
+      runUpdateContent(myCreateAction);
     }
     else {
-      updateContent(false);
+      runUpdateContent(myDisposeAction);
       initListeners();
       bindToDesigner(getActiveDesigner());
     }
-    myPropertiesComponent.setValue(EDITOR_MODE + getComponentName(), Boolean.toString(value));
   }
 
   final ToolWindow getToolWindow() {

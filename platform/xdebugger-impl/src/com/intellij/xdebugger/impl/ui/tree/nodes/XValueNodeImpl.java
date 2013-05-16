@@ -17,6 +17,7 @@ package com.intellij.xdebugger.impl.ui.tree.nodes;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.text.StringUtil;
+import com.intellij.ui.SimpleColoredText;
 import com.intellij.ui.SimpleTextAttributes;
 import com.intellij.util.NotNullFunction;
 import com.intellij.xdebugger.frame.*;
@@ -41,17 +42,24 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   public static final Comparator<XValueNodeImpl> COMPARATOR = new Comparator<XValueNodeImpl>() {
     @Override
     public int compare(XValueNodeImpl o1, XValueNodeImpl o2) {
-      return StringUtil.compare(o1.getName(), o2.getName(), true);
+      return StringUtil.naturalCompare(o1.getName(), o2.getName());
     }
   };
-  public static final NotNullFunction<String, String> DEFAULT_VALUE_PRESENTER = StringUtil.escaper(false, null);
+
+  public static final XValuePresenter DEFAULT_VALUE_PRESENTER = new StringValuePresenter(-1, null) {
+    @Override
+    public void append(String value, SimpleColoredText text, boolean changed) {
+      doAppend(value, text, changed ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
+  };
+
   private String myName;
   private String myType;
   private String myValue;
   private XFullValueEvaluator myFullValueEvaluator;
   private String mySeparator;
   private boolean myChanged;
-  private NotNullFunction<String, String> myValuePresenter;
+  private XValuePresenter myValuePresenter;
 
   public XValueNodeImpl(XDebuggerTree tree, final XDebuggerTreeNode parent, String name, final @NotNull XValue value) {
     super(tree, parent, value);
@@ -95,9 +103,9 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
                               @NonNls @Nullable String type,
                               @NonNls @NotNull String separator,
                               @NonNls @NotNull String value,
-                              @Nullable NotNullFunction<String, String> valuePresenter,
+                              final  @Nullable NotNullFunction<String, String> valuePresenter,
                               boolean hasChildren) {
-    setPresentation(null, icon, type, separator, value, valuePresenter, hasChildren, false);
+    setPresentation(null, icon, type, separator, value, valuePresenter == null ? null : new XValuePresenterAdapter(valuePresenter), hasChildren, false);
   }
 
   public void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
@@ -110,8 +118,13 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     setPresentation(null, icon, type, "", "", null, true, expand);
   }
 
+  @Override
+  public void setPresentation(@Nullable Icon icon, @NonNls @NotNull String value, @Nullable XValuePresenter valuePresenter, boolean hasChildren) {
+    setPresentation(null, icon, null, XDebuggerUIConstants.EQ_TEXT, value, valuePresenter, hasChildren, false);
+  }
+
   private void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
-                               @NonNls @NotNull final String value, @Nullable final NotNullFunction<String, String> valuePresenter, final boolean hasChildren, final boolean expand) {
+                               @NonNls @NotNull final String value, @Nullable final XValuePresenter valuePresenter, final boolean hasChildren, final boolean expand) {
     DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {
         setIcon(icon);
@@ -164,9 +177,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     if (myType != null) {
       myText.append("{" + myType + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
     }
-
-    String presentableValue = myValuePresenter.fun(myValue);
-    myText.append(presentableValue, myChanged ? XDebuggerUIConstants.CHANGED_VALUE_ATTRIBUTES : SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    myValuePresenter.append(myValue, myText, myChanged);
   }
 
   public void markChanged() {

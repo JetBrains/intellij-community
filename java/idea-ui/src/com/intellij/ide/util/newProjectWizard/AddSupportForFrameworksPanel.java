@@ -177,6 +177,9 @@ public class AddSupportForFrameworksPanel implements Disposable {
       if (parentNode instanceof FrameworkSupportNode) {
         initializeOptionsPanel((FrameworkSupportNode)parentNode);
       }
+      else if (parentNode instanceof FrameworkGroupNode) {
+        initializeGroupPanel(((FrameworkGroupNode)parentNode).getGroup());
+      }
 
       FrameworkSupportOptionsComponent optionsComponent = new FrameworkSupportOptionsComponent(myModel, myLibrariesContainer, this,
                                                                                                node.getProvider(), node.getConfigurable());

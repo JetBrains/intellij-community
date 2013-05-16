@@ -536,7 +536,11 @@ public class ListUtils {
   }
 
   public void testNoThisInComment() throws Throwable { doAntiTest() }
-  public void testIncNull() throws Throwable { doAntiTest() }
+  public void testIncNull() throws Throwable {
+    configure()
+    checkResultByFile(getTestName(false) + ".java")
+    assert !('null' in myFixture.lookupElementStrings)
+  }
 
   public void testLastExpressionInFor() throws Throwable { doTest(); }
 
@@ -1363,6 +1367,17 @@ class Foo {{
 }}'''
   }
 
+  public void "test complete lowercase class name"() {
+    myFixture.addClass("package foo; public class myClass {}")
+    myFixture.configureByText "a.java", """
+class Foo extends my<caret>
+"""
+    myFixture.completeBasic()
+    myFixture.type('\n')
+    myFixture.checkResult '''import foo.myClass;
 
+class Foo extends myClass
+'''
+  }
 
 }

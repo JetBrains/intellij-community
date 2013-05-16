@@ -28,8 +28,6 @@ public class FList<E> extends AbstractList<E> {
   private FList<E> myTail;
   private int mySize;
 
-  private List<E> myReversedList;
-  
   private FList() {
   }
 
@@ -117,22 +115,6 @@ public class FList<E> extends AbstractList<E> {
   @Override
   public int size() {
     return mySize;
-  }
-
-  /**
-   * @deprecated this method will be removed in IDEA 13
-   */
-  @Deprecated
-  public List<E> getReversedList() {
-    List<E> res = myReversedList;
-    if (res == null) {
-      res = new ArrayList<E>(this);
-      Collections.reverse(res);
-
-      myReversedList = res;
-    }
-    
-    return res;
   }
 
   public static <E> FList<E> emptyList() {

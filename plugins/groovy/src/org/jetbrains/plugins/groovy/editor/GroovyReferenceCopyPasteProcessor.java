@@ -26,6 +26,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GrReferenceElement;
 import org.jetbrains.plugins.groovy.lang.psi.api.GroovyResolveResult;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.toplevel.imports.GrImportStatement;
+import org.jetbrains.plugins.groovy.lang.psi.util.PsiUtil;
 
 import java.util.ArrayList;
 
@@ -81,7 +82,7 @@ public class GroovyReferenceCopyPasteProcessor extends CopyPasteReferenceProcess
       int endOffset = data.endOffset + bounds.getStartOffset();
       PsiElement element = file.findElementAt(startOffset);
 
-      if (element != null && element.getParent() instanceof GrReferenceElement) {
+      if (element != null && element.getParent() instanceof GrReferenceElement && !PsiUtil.isThisOrSuperRef(element.getParent())) {
         GrReferenceElement reference = (GrReferenceElement)element.getParent();
         TextRange range = reference.getTextRange();
         if (range.getStartOffset() == startOffset && range.getEndOffset() == endOffset) {

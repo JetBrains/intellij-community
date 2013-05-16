@@ -24,7 +24,6 @@ import com.intellij.openapi.fileEditor.FileEditorManager;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
-import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import org.jetbrains.annotations.NotNull;
@@ -65,22 +64,6 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @Override
-  protected LightToolWindow createContent(DesignerEditorPanel designer) {
-    PalettePanel palettePanel = new PalettePanel();
-    palettePanel.loadPalette(designer);
-
-    return createContent(designer,
-                         palettePanel,
-                         "Palette",
-                         AllIcons.Toolwindows.ToolWindowPalette,
-                         palettePanel,
-                         palettePanel,
-                         getAnchor() == ToolWindowAnchor.LEFT ? SideBorder.LEFT : SideBorder.RIGHT,
-                         180,
-                         null);
-  }
-
-  @Override
   protected void initToolWindow() {
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow("Palette\t", false, getAnchor(), myProject, true);
     myToolWindow.setIcon(AllIcons.Toolwindows.ToolWindowPalette);
@@ -95,7 +78,8 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
     myToolWindow.setAvailable(false, null);
   }
 
-  private static ToolWindowAnchor getAnchor() {
+  @Override
+  protected ToolWindowAnchor getAnchor() {
     DesignerCustomizations customization = getCustomizations();
     return customization != null ? customization.getPaletteAnchor() : ToolWindowAnchor.RIGHT;
   }
@@ -122,5 +106,26 @@ public class PaletteToolWindowManager extends AbstractToolWindowManager {
   @Override
   public String getComponentName() {
     return "PaletteToolWindowManager";
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Impl
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  @Override
+  protected LightToolWindow createContent(DesignerEditorPanel designer) {
+    PalettePanel palettePanel = new PalettePanel();
+    palettePanel.loadPalette(designer);
+
+    return createContent(designer,
+                         palettePanel,
+                         "Palette",
+                         AllIcons.Toolwindows.ToolWindowPalette,
+                         palettePanel,
+                         palettePanel,
+                         180,
+                         null);
   }
 }

@@ -26,6 +26,7 @@ import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.ModalityState;
 import com.intellij.openapi.application.ex.ApplicationEx;
 import com.intellij.openapi.application.impl.ApplicationImpl;
+import com.intellij.openapi.diagnostic.FrequentEventDetector;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.keymap.impl.IdeKeyEventDispatcher;
 import com.intellij.openapi.keymap.impl.IdeMouseEventDispatcher;
@@ -960,5 +961,12 @@ public class IdeEventQueue extends EventQueue {
         myInputMethodLock--;
       }
     });
+  }
+
+  private final FrequentEventDetector myFrequentEventDetector = new FrequentEventDetector(1000, 100);
+  @Override
+  public void postEvent(AWTEvent theEvent) {
+    myFrequentEventDetector.eventHappened();
+    super.postEvent(theEvent);
   }
 }

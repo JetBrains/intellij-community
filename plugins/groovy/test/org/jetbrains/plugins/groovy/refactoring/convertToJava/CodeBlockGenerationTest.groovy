@@ -60,6 +60,9 @@ public class CodeBlockGenerationTest extends LightGroovyTestCase {
 
   void testSwitch4() { doTest() }
 
+  void testSwitch5() { doTest() }
+  void testSwitch6() { doTest() }
+
   void _testWhile1() { doTest() }
 
   void _testWhile2() { doTest() }

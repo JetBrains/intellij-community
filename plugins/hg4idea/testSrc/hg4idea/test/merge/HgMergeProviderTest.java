@@ -191,14 +191,4 @@ public class HgMergeProviderTest extends HgPlatformTest {
     Assert.assertEquals(s, new String(bytes));
   }
 
-  private void prepareSecondRepository() throws IOException {
-    cd(myRepository);
-    hg("clone " + myRepository.getCanonicalPath() + " childRepo");
-    myChildRepo = myRepository.findChild("childRepo");
-    cd(myChildRepo);
-    hg("pull");
-    hg("update");
-    HgTestUtil.updateDirectoryMappings(myProject, myRepository);
-    HgTestUtil.updateDirectoryMappings(myProject, myChildRepo);
-  }
 }

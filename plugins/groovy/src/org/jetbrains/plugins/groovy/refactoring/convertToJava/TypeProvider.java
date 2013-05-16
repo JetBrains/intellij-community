@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -65,6 +65,11 @@ public class TypeProvider {
   @NotNull
   public PsiType getVarType(@NotNull PsiVariable variable) {
     if (variable instanceof PsiParameter) return getParameterType((PsiParameter)variable);
+    return getVariableTypeInner(variable);
+  }
+
+  @NotNull
+  private static PsiType getVariableTypeInner(@NotNull PsiVariable variable) {
     PsiType type = null;
     if (variable instanceof GrVariable) {
       type = ((GrVariable)variable).getDeclaredType();
@@ -87,13 +92,11 @@ public class TypeProvider {
       }
       return parameter.getType();
     }
-    /*GrTypeElement typeElementGroovy = ((GrParameter)parameter).getTypeElementGroovy();
-    if (typeElementGroovy != null) {
-      return parameter.getType();
-    }*/
 
     PsiElement parent = parameter.getParent();
-    if (!(parent instanceof GrParameterList)) return parameter.getType();
+    if (!(parent instanceof GrParameterList)) {
+      return getVariableTypeInner(parameter);
+    }
 
     PsiElement pparent = parent.getParent();
     if (!(pparent instanceof GrMethod)) return parameter.getType();

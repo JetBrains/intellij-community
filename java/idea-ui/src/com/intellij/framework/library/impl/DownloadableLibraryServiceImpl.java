@@ -15,11 +15,14 @@
  */
 package com.intellij.framework.library.impl;
 
-import com.intellij.framework.library.DownloadableLibraryDescription;
-import com.intellij.framework.library.DownloadableLibraryService;
-import com.intellij.framework.library.DownloadableLibraryType;
-import com.intellij.framework.library.LibraryVersionProperties;
+import com.intellij.facet.frameworks.beans.Artifact;
+import com.intellij.facet.frameworks.beans.RequiredFrameworkVersion;
+import com.intellij.framework.FrameworkGroup;
+import com.intellij.framework.FrameworkGroupVersion;
+import com.intellij.framework.library.*;
 import com.intellij.ide.util.frameworkSupport.CustomLibraryDescriptionImpl;
+import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
+import com.intellij.ide.util.newProjectWizard.impl.FrameworkSupportModelBase;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.roots.libraries.LibraryType;
 import com.intellij.openapi.roots.libraries.ui.LibraryEditorComponent;
@@ -37,8 +40,18 @@ public class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
 
   @NotNull
   @Override
-  public DownloadableLibraryDescription createLibraryDescription(@NotNull String groupId, @NotNull URL... localUrls) {
-    return new LibraryVersionsFetcher(groupId, localUrls);
+  public DownloadableLibraryDescription createLibraryDescription(@NotNull String groupId, @NotNull final URL... localUrls) {
+    return new LibraryVersionsFetcher(groupId, localUrls) {
+      //todo[nik] pull up this method after moving corresponding API to lang-api
+      @NotNull
+      protected FrameworkAvailabilityFilter createAvailabilityFilter(Artifact version) {
+        RequiredFrameworkVersion groupVersion = version.getRequiredFrameworkVersion();
+        if (groupVersion != null) {
+          return new FrameworkLibraryAvailabilityFilter(groupVersion.myGroupId, groupVersion.myVersion);
+        }
+        return FrameworkAvailabilityFilter.ALWAYS;
+      }
+    };
   }
 
   @NotNull
@@ -55,5 +68,27 @@ public class DownloadableLibraryServiceImpl extends DownloadableLibraryService {
                                                                  @NotNull LibraryEditorComponent<LibraryVersionProperties> editorComponent,
                                                                  @NotNull DownloadableLibraryType libraryType) {
     return new DownloadableLibraryPropertiesEditor(description, editorComponent, libraryType);
+  }
+
+  private static class FrameworkLibraryAvailabilityFilter extends FrameworkAvailabilityFilter {
+    private final String myGroupId;
+    private final String myVersionId;
+
+    public FrameworkLibraryAvailabilityFilter(String groupId, String versionId) {
+      myGroupId = groupId;
+      myVersionId = versionId;
+    }
+
+    @Override
+    public boolean isAvailable(@NotNull FrameworkSupportModel model) {
+      FrameworkSupportModelBase modelBase = (FrameworkSupportModelBase)model;
+      for (FrameworkGroup<?> group : modelBase.getFrameworkGroups()) {
+        if (group.getId().equals(myGroupId)) {
+          FrameworkGroupVersion selectedVersion = modelBase.getSelectedVersion(group);
+          return selectedVersion != null && myVersionId.equals(selectedVersion.getId());
+        }
+      }
+      return true;
+    }
   }
 }

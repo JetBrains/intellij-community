@@ -310,6 +310,11 @@ public class JavaFxArtifactProperties extends ArtifactProperties<JavaFxArtifactP
     }
 
     @Override
+    protected String getArtifactName() {
+      return myArtifact.getName();
+    }
+
+    @Override
     protected String getArtifactOutputPath() {
       return myArtifact.getOutputPath();
     }

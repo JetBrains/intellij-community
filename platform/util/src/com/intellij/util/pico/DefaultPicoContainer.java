@@ -57,9 +57,14 @@ public class DefaultPicoContainer implements MutablePicoContainer, Serializable 
     return Collections.unmodifiableMap(classNameToAdapter);
   }
 
-
-  public Collection<ComponentAdapter> getNonAssignableAdapters() {
-    return nonAssignableComponentAdapters.get().getReversedList();
+  protected LinkedList<ComponentAdapter> getNonAssignableAdaptersOfType(final Class componentType) {
+    LinkedList<ComponentAdapter> result = new LinkedList<ComponentAdapter>();
+    for (final ComponentAdapter componentAdapter : nonAssignableComponentAdapters.get()) {
+      if (ReflectionCache.isAssignable(componentType, componentAdapter.getComponentImplementation())) {
+        result.addFirst(componentAdapter);
+      }
+    }
+    return result;
   }
 
   @Override

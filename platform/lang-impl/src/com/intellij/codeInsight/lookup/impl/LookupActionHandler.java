@@ -86,8 +86,10 @@ public abstract class LookupActionHandler extends EditorActionHandler {
     static void executeDown(LookupImpl lookup) {
       if (!lookup.isFocused()) {
         boolean semiFocused = lookup.isSemiFocused();
+        if (!lookup.isSemiFocused()) {
+          lookup.getList().setSelectedIndex(0);
+        }
         lookup.setFocused(true);
-        lookup.getList().setSelectedIndex(0);
         lookup.refreshUi(false, true);
         if (!semiFocused) {
           return;
@@ -151,8 +153,10 @@ public abstract class LookupActionHandler extends EditorActionHandler {
           return false;
         }
 
+        if (!lookup.isSemiFocused()) {
+          lookup.getList().setSelectedIndex(0);
+        }
         lookup.setFocused(true);
-        lookup.getList().setSelectedIndex(0);
       }
       lookup.markSelectionTouched();
       ListScrollingUtil.moveUp(lookup.getList(), 0);

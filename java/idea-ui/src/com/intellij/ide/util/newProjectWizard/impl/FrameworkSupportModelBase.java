@@ -22,19 +22,19 @@ import com.intellij.ide.util.frameworkSupport.FrameworkSupportConfigurable;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModel;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportModelListener;
 import com.intellij.ide.util.frameworkSupport.FrameworkSupportProvider;
-import com.intellij.ide.util.newProjectWizard.FrameworkSupportNode;
-import com.intellij.ide.util.newProjectWizard.FrameworkSupportOptionsComponent;
-import com.intellij.ide.util.newProjectWizard.OldFrameworkSupportProviderWrapper;
+import com.intellij.ide.util.newProjectWizard.*;
 import com.intellij.ide.util.projectWizard.ModuleBuilder;
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.roots.ui.configuration.projectRoot.LibrariesContainer;
+import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.UserDataHolderBase;
 import com.intellij.util.EventDispatcher;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
+import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -127,7 +127,28 @@ public abstract class FrameworkSupportModelBase extends UserDataHolderBase imple
   }
 
   public void setSelectedVersion(@NotNull FrameworkGroup<?> group, @Nullable FrameworkGroupVersion version) {
-    mySelectedVersions.put(group, version);
+    FrameworkGroupVersion oldVersion = mySelectedVersions.put(group, version);
+    if (!Comparing.equal(oldVersion, version)) {
+      for (Map.Entry<String, FrameworkSupportNode> entry : mySettingsMap.entrySet()) {
+        FrameworkGroup<?> parentGroup = getParentGroup(entry.getValue());
+        if (group.equals(parentGroup)) {
+          updateFrameworkLibraryComponent(entry.getKey());
+        }
+      }
+    }
+  }
+
+  @Nullable
+  private static FrameworkGroup<?> getParentGroup(final FrameworkSupportNode node) {
+    FrameworkSupportNodeBase current = node;
+    while (current instanceof FrameworkSupportNode) {
+      current = current.getParentNode();
+    }
+    return current instanceof FrameworkGroupNode ? ((FrameworkGroupNode)current).getGroup() : null;
+  }
+
+  public Collection<FrameworkGroup<?>> getFrameworkGroups() {
+    return mySelectedVersions.keySet();
   }
 
   @Nullable

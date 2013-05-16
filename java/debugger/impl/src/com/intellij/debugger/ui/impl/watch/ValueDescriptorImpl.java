@@ -217,6 +217,9 @@ public abstract class ValueDescriptorImpl extends NodeDescriptorImpl implements 
       }
       catch (ClassNotLoadedException ignored) {
       }
+      catch (Throwable e) {
+        LOG.info(e); // catch all exceptions to ensure the method returns gracefully
+      }
     }
     return exceptionObj;
   }

@@ -563,9 +563,15 @@ public class GroovyExpectedTypesProvider {
       final GrCaseSection[] sections = switchStatement.getCaseSections();
       List<PsiType> types = new ArrayList<PsiType>(sections.length);
       for (GrCaseSection section : sections) {
-        final GrExpression value = section.getCaseLabel().getValue();
-        final PsiType type = value != null ? value.getType() : null;
-        if (type != null) types.add(type);
+        for (GrCaseLabel label : section.getCaseLabels()) {
+          final GrExpression value = label.getValue();
+          if (value != null) {
+            final PsiType type = value.getType();
+            if (type != null) {
+              types.add(type);
+            }
+          }
+        }
       }
 
       final PsiType upperBoundNullable = TypesUtil.getLeastUpperBoundNullable(types, switchStatement.getManager());

@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -28,6 +28,7 @@ import org.jetbrains.plugins.groovy.lang.GrReferenceAdjuster;
 import org.jetbrains.plugins.groovy.lang.lexer.GroovyTokenTypes;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.GrSwitchStatement;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseLabel;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.clauses.GrCaseSection;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -100,10 +101,12 @@ public class GrCreateMissingSwitchBranchesIntention extends Intention {
 
     final GrCaseSection[] sections = switchStatement.getCaseSections();
     for (GrCaseSection section : sections) {
-      final GrExpression value = section.getCaseLabel().getValue();
-      if (value instanceof GrReferenceExpression) {
-        final PsiElement r = ((GrReferenceExpression)value).resolve();
-        constants.remove(r);
+      for (GrCaseLabel label : section.getCaseLabels()) {
+        final GrExpression value = label.getValue();
+        if (value instanceof GrReferenceExpression) {
+          final PsiElement r = ((GrReferenceExpression)value).resolve();
+          constants.remove(r);
+        }
       }
     }
     return constants;

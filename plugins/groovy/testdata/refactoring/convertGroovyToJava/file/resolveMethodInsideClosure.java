@@ -12,7 +12,7 @@ return null;
 public java.util.ArrayList<java.lang.Integer> foo() {
 java.util.ArrayList<java.lang.Integer> list = new java.util.ArrayList<java.lang.Integer>(java.util.Arrays.asList(1, 2, 3));
 return org.codehaus.groovy.runtime.DefaultGroovyMethods.each(list, new groovy.lang.Closure<java.util.ArrayList<java.lang.Integer>>(this, this) {
-public java.util.ArrayList<java.lang.Integer> doCall(java.lang.Object it) {
+public java.util.ArrayList<java.lang.Integer> doCall(java.lang.Integer it) {
 return foo();
 }
 

@@ -15,9 +15,14 @@
  */
 package org.jetbrains.idea.maven.execution;
 
-import com.intellij.execution.*;
+import com.intellij.execution.DefaultExecutionResult;
+import com.intellij.execution.ExecutionException;
+import com.intellij.execution.ExecutionResult;
+import com.intellij.execution.Executor;
 import com.intellij.execution.configurations.*;
-import com.intellij.execution.process.*;
+import com.intellij.execution.process.OSProcessHandler;
+import com.intellij.execution.process.ProcessAdapter;
+import com.intellij.execution.process.ProcessEvent;
 import com.intellij.execution.runners.ExecutionEnvironment;
 import com.intellij.execution.runners.ProgramRunner;
 import com.intellij.openapi.module.Module;
@@ -35,8 +40,6 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.project.MavenConsoleImpl;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
-
-import java.io.File;
 
 public class MavenRunConfiguration extends RunConfigurationBase implements LocatableConfiguration, ModuleRunProfile {
   private MavenSettings mySettings;
@@ -75,15 +78,14 @@ public class MavenRunConfiguration extends RunConfigurationBase implements Locat
         return MavenRunConfiguration.this.createJavaParameters(env.getProject());
       }
 
+      @NotNull
       @Override
       public ExecutionResult execute(@NotNull Executor executor, @NotNull ProgramRunner runner) throws ExecutionException {
         DefaultExecutionResult res = (DefaultExecutionResult)super.execute(executor, runner);
-        if (res != null) {
-          if (executor.getId().equals(ToolWindowId.RUN)
-              && MavenResumeAction.isApplicable(env.getProject(), getJavaParameters(), MavenRunConfiguration.this)) {
-            MavenResumeAction resumeAction = new MavenResumeAction(res.getProcessHandler(), runner, executor, env);
-            res.setRestartActions(resumeAction);
-          }
+        if (executor.getId().equals(ToolWindowId.RUN)
+            && MavenResumeAction.isApplicable(env.getProject(), getJavaParameters(), MavenRunConfiguration.this)) {
+          MavenResumeAction resumeAction = new MavenResumeAction(res.getProcessHandler(), runner, executor, env);
+          res.setRestartActions(resumeAction);
         }
         return res;
       }

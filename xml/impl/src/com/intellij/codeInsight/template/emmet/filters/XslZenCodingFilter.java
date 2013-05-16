@@ -15,13 +15,13 @@
  */
 package com.intellij.codeInsight.template.emmet.filters;
 
+import com.intellij.codeInsight.template.XslTextContextType;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGenerator;
 import com.intellij.codeInsight.template.emmet.generators.XmlZenCodingGeneratorImpl;
 import com.intellij.codeInsight.template.emmet.nodes.GenerationNode;
 import com.intellij.codeInsight.template.emmet.tokens.TemplateToken;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.util.Pair;
-import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.PsiElement;
 import com.intellij.psi.xml.XmlAttribute;
 import com.intellij.psi.xml.XmlDocument;
@@ -90,7 +90,6 @@ public class XslZenCodingFilter extends ZenCodingFilter {
 
   @Override
   public boolean isAppliedByDefault(@NotNull PsiElement context) {
-    VirtualFile vFile = context.getContainingFile().getVirtualFile();
-    return vFile != null && "xsl".equals(vFile.getExtension());
+    return XslTextContextType.isXslOrXsltFile(context.getContainingFile());
   }
 }

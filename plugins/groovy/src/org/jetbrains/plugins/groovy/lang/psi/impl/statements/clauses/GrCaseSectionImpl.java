@@ -36,7 +36,6 @@ import org.jetbrains.plugins.groovy.lang.psi.impl.GroovyPsiElementImpl;
 import org.jetbrains.plugins.groovy.lang.psi.impl.PsiImplUtil;
 import org.jetbrains.plugins.groovy.lang.resolve.ResolveUtil;
 
-import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -71,12 +70,6 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
 
   @NotNull
   @Override
-  public GrCaseLabel getCaseLabel() {
-    return findNotNullChildByClass(GrCaseLabel.class);
-  }
-
-  @NotNull
-  @Override
   public GrCaseLabel[] getCaseLabels() {
     final List<GrCaseLabel> labels = findChildrenByType(GroovyElementTypes.CASE_LABEL);
     return labels.toArray(new GrCaseLabel[labels.size()]);
@@ -93,13 +86,7 @@ public class GrCaseSectionImpl extends GroovyPsiElementImpl implements GrCaseSec
 
   @NotNull
   public GrStatement[] getStatements() {
-    List<GrStatement> result = new ArrayList<GrStatement>();
-    for (PsiElement cur = getFirstChild(); cur != null; cur = cur.getNextSibling()) {
-      if (cur instanceof GrStatement) {
-        result.add((GrStatement)cur);
-      }
-    }
-    return result.toArray(new GrStatement[result.size()]);
+    return PsiImplUtil.getStatements(this);
   }
 
   @NotNull

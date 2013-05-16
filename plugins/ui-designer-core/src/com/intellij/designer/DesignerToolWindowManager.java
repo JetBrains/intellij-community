@@ -23,7 +23,6 @@ import com.intellij.openapi.wm.ToolWindowAnchor;
 import com.intellij.openapi.wm.ToolWindowManager;
 import com.intellij.openapi.wm.ex.ToolWindowEx;
 import com.intellij.openapi.wm.impl.content.ToolWindowContentUi;
-import com.intellij.ui.SideBorder;
 import com.intellij.ui.content.Content;
 import com.intellij.ui.content.ContentManager;
 import icons.UIDesignerNewIcons;
@@ -67,35 +66,6 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
   //////////////////////////////////////////////////////////////////////////////////////////
 
   @Override
-  protected LightToolWindow createContent(DesignerEditorPanel designer) {
-    DesignerToolWindow toolWindowContent = new DesignerToolWindow(myProject, false);
-    toolWindowContent.update(designer);
-
-    return createContent(designer,
-                         toolWindowContent,
-                         DesignerBundle.message("designer.toolwindow.title"),
-                         UIDesignerNewIcons.ToolWindow,
-                         toolWindowContent.getToolWindowPanel(),
-                         toolWindowContent.getComponentTree(),
-                         getAnchor() == ToolWindowAnchor.LEFT ? SideBorder.LEFT : SideBorder.RIGHT,
-                         320,
-                         toolWindowContent.createActions());
-  }
-
-  @Override
-  protected void updateToolWindow(@Nullable DesignerEditorPanel designer) {
-    myToolWindowContent.update(designer);
-
-    if (designer == null) {
-      myToolWindow.setAvailable(false, null);
-    }
-    else {
-      myToolWindow.setAvailable(true, null);
-      myToolWindow.show(null);
-    }
-  }
-
-  @Override
   protected void initToolWindow() {
     myToolWindow = ToolWindowManager.getInstance(myProject).registerToolWindow(DesignerBundle.message("designer.toolwindow.name"),
                                                                                false, getAnchor(), myProject, true);
@@ -119,9 +89,23 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
     myToolWindow.setAvailable(false, null);
   }
 
-  private static ToolWindowAnchor getAnchor() {
+  @Override
+  protected ToolWindowAnchor getAnchor() {
     DesignerCustomizations customization = getCustomizations();
     return customization != null ? customization.getStructureAnchor() : ToolWindowAnchor.LEFT;
+  }
+
+  @Override
+  protected void updateToolWindow(@Nullable DesignerEditorPanel designer) {
+    myToolWindowContent.update(designer);
+
+    if (designer == null) {
+      myToolWindow.setAvailable(false, null);
+    }
+    else {
+      myToolWindow.setAvailable(true, null);
+      myToolWindow.show(null);
+    }
   }
 
   @Override
@@ -133,5 +117,26 @@ public final class DesignerToolWindowManager extends AbstractToolWindowManager {
   @Override
   public String getComponentName() {
     return "UIDesignerToolWindowManager2";
+  }
+
+  //////////////////////////////////////////////////////////////////////////////////////////
+  //
+  // Impl
+  //
+  //////////////////////////////////////////////////////////////////////////////////////////
+
+  @Override
+  protected LightToolWindow createContent(DesignerEditorPanel designer) {
+    DesignerToolWindow toolWindowContent = new DesignerToolWindow(myProject, false);
+    toolWindowContent.update(designer);
+
+    return createContent(designer,
+                         toolWindowContent,
+                         DesignerBundle.message("designer.toolwindow.title"),
+                         UIDesignerNewIcons.ToolWindow,
+                         toolWindowContent.getToolWindowPanel(),
+                         toolWindowContent.getComponentTree(),
+                         320,
+                         toolWindowContent.createActions());
   }
 }

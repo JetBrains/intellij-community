@@ -52,7 +52,7 @@ public abstract class StubProcessingHelperBase {
     }
     if (stubTree == null) {
       ObjectStubTree objectStubTree = StubTreeLoader.getInstance().readFromVFile(project, file);
-      if (!(objectStubTree instanceof ObjectStubTree)) {
+      if (objectStubTree == null) {
         return true;
       }
       stubTree = (StubTree)objectStubTree;

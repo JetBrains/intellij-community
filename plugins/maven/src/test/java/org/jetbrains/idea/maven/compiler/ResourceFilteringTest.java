@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -1038,20 +1038,13 @@ public abstract class ResourceFilteringTest extends MavenImportingTestCase {
     assertResult(myProjectPom, relativePath, content);
   }
 
-  private String loadResult(VirtualFile pomFile, String relativePath) throws IOException {
-    if (useJps()) {
-      File file = new File(pomFile.getParent().getPath(), relativePath);
-      assertTrue("file not found: " + relativePath, file.exists());
-      return new String(FileUtil.loadFileText(file));
-    }
-    else {
-      VirtualFile file = pomFile.getParent().findFileByRelativePath(relativePath);
-      assertNotNull("file not found: " + relativePath, file);
-      return VfsUtil.loadText(file);
-    }
+  private static void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {
+    assertEquals(content, loadResult(pomFile, relativePath));
   }
 
-  private void assertResult(VirtualFile pomFile, String relativePath, String content) throws IOException {
-    assertEquals(content, loadResult(pomFile, relativePath));
+  private static String loadResult(VirtualFile pomFile, String relativePath) throws IOException {
+    File file = new File(pomFile.getParent().getPath(), relativePath);
+    assertTrue("file not found: " + relativePath, file.exists());
+    return new String(FileUtil.loadFileText(file));
   }
 }
