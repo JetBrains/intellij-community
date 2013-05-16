@@ -36,7 +36,7 @@ public abstract class ArchivedProjectTemplate implements ProjectTemplate {
 
   protected final String myDisplayName;
 
-  public ArchivedProjectTemplate(String displayName) {
+  public ArchivedProjectTemplate(@NotNull String displayName) {
     myDisplayName = displayName;
   }
 
