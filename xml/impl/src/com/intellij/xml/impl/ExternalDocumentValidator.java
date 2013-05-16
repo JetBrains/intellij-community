@@ -129,7 +129,7 @@ public class ExternalDocumentValidator {
         return true;
       }
 
-      public void processError(final SAXParseException e, final boolean warning) {
+      public void processError(final SAXParseException e, final ValidateXmlActionHandler.ProblemType warning) {
         try {
           ApplicationManager.getApplication().runReadAction(new Runnable() {
             public void run() {
@@ -146,6 +146,7 @@ public class ExternalDocumentValidator {
                 return;
               }
 
+              int problemType = getProblemType(warning);
               int offset = Math.max(0, document.getLineStartOffset(e.getLineNumber() - 1) + e.getColumnNumber() - 2);
               if (offset >= document.getTextLength()) return;
               PsiElement currentElement = PsiDocumentManager.getInstance(project).getPsiFile(document).findElementAt(offset);
@@ -179,70 +180,72 @@ public class ExternalDocumentValidator {
                 //return;
               } else if (localizedMessage.startsWith(VALUE_ERROR_PREFIX)) {
                 addProblemToTagName(currentElement, originalElement, localizedMessage, warning);
-              } else if (messageId.startsWith(ATTRIBUTE_MESSAGE_PREFIX)) {
-                @NonNls String prefix = "of attribute ";
-                final int i = localizedMessage.indexOf(prefix);
-                
-                if (i != -1) {
-                  int messagePrefixLength = prefix.length() + i;
-                  final int nextQuoteIndex = localizedMessage.indexOf(localizedMessage.charAt(messagePrefixLength), messagePrefixLength + 1);
-                  String attrName = nextQuoteIndex == -1 ? null : localizedMessage.substring(messagePrefixLength + 1, nextQuoteIndex);
+              } else {
+                if (messageId.startsWith(ATTRIBUTE_MESSAGE_PREFIX)) {
+                  @NonNls String prefix = "of attribute ";
+                  final int i = localizedMessage.indexOf(prefix);
 
-                  XmlTag parent = PsiTreeUtil.getParentOfType(originalElement,XmlTag.class);
-                  currentElement = parent.getAttribute(attrName,null);
+                  if (i != -1) {
+                    int messagePrefixLength = prefix.length() + i;
+                    final int nextQuoteIndex = localizedMessage.indexOf(localizedMessage.charAt(messagePrefixLength), messagePrefixLength + 1);
+                    String attrName = nextQuoteIndex == -1 ? null : localizedMessage.substring(messagePrefixLength + 1, nextQuoteIndex);
 
-                  if (currentElement != null) {
-                    currentElement = ((XmlAttribute)currentElement).getValueElement();
+                    XmlTag parent = PsiTreeUtil.getParentOfType(originalElement,XmlTag.class);
+                    currentElement = parent.getAttribute(attrName,null);
+
+                    if (currentElement != null) {
+                      currentElement = ((XmlAttribute)currentElement).getValueElement();
+                    }
                   }
-                }
-
-                if (currentElement!=null) {
-                  assertValidElement(currentElement, originalElement,localizedMessage);
-                  myHost.addMessage(currentElement,localizedMessage,warning ? Validator.ValidationHost.WARNING:Validator.ValidationHost.ERROR);
-                } else {
-                  addProblemToTagName(originalElement, originalElement, localizedMessage, warning);
-                }
-              }
-              else if (localizedMessage.startsWith(ATTRIBUTE_ERROR_PREFIX)) {
-                final int messagePrefixLength = ATTRIBUTE_ERROR_PREFIX.length();
-
-                if ( localizedMessage.charAt(messagePrefixLength) == '"' ||
-                     localizedMessage.charAt(messagePrefixLength) == '\''
-                   ) {
-                  // extract the attribute name from message and get it from tag!
-                  final int nextQuoteIndex = localizedMessage.indexOf(localizedMessage.charAt(messagePrefixLength), messagePrefixLength + 1);
-                  String attrName = nextQuoteIndex == -1 ? null : localizedMessage.substring(messagePrefixLength + 1, nextQuoteIndex);
-
-                  XmlTag parent = PsiTreeUtil.getParentOfType(originalElement,XmlTag.class);
-                  currentElement = parent.getAttribute(attrName,null);
 
                   if (currentElement!=null) {
-                    currentElement = SourceTreeToPsiMap.treeElementToPsi(
-                      XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(
-                        SourceTreeToPsiMap.psiElementToTree(currentElement)
-                      )
-                    );
+                    assertValidElement(currentElement, originalElement,localizedMessage);
+                    myHost.addMessage(currentElement,localizedMessage, problemType);
+                  } else {
+                    addProblemToTagName(originalElement, originalElement, localizedMessage, warning);
                   }
-                } else {
-                  currentElement = PsiTreeUtil.getParentOfType(currentElement, XmlTag.class, false);
                 }
+                else if (localizedMessage.startsWith(ATTRIBUTE_ERROR_PREFIX)) {
+                  final int messagePrefixLength = ATTRIBUTE_ERROR_PREFIX.length();
 
-                if (currentElement!=null) {
+                  if ( localizedMessage.charAt(messagePrefixLength) == '"' ||
+                       localizedMessage.charAt(messagePrefixLength) == '\''
+                     ) {
+                    // extract the attribute name from message and get it from tag!
+                    final int nextQuoteIndex = localizedMessage.indexOf(localizedMessage.charAt(messagePrefixLength), messagePrefixLength + 1);
+                    String attrName = nextQuoteIndex == -1 ? null : localizedMessage.substring(messagePrefixLength + 1, nextQuoteIndex);
+
+                    XmlTag parent = PsiTreeUtil.getParentOfType(originalElement,XmlTag.class);
+                    currentElement = parent.getAttribute(attrName,null);
+
+                    if (currentElement!=null) {
+                      currentElement = SourceTreeToPsiMap.treeElementToPsi(
+                        XmlChildRole.ATTRIBUTE_NAME_FINDER.findChild(
+                          SourceTreeToPsiMap.psiElementToTree(currentElement)
+                        )
+                      );
+                    }
+                  } else {
+                    currentElement = PsiTreeUtil.getParentOfType(currentElement, XmlTag.class, false);
+                  }
+
+                  if (currentElement!=null) {
+                    assertValidElement(currentElement, originalElement,localizedMessage);
+                    myHost.addMessage(currentElement,localizedMessage, problemType);
+                  } else {
+                    addProblemToTagName(originalElement, originalElement, localizedMessage, warning);
+                  }
+                } else if (localizedMessage.startsWith(STRING_ERROR_PREFIX)) {
+                  if (currentElement != null) {
+                    myHost.addMessage(currentElement,localizedMessage,Validator.ValidationHost.WARNING);
+                  }
+                }
+                else {
+                  currentElement = getNodeForMessage(currentElement != null ? currentElement:originalElement);
                   assertValidElement(currentElement, originalElement,localizedMessage);
-                  myHost.addMessage(currentElement,localizedMessage,warning ? Validator.ValidationHost.WARNING:Validator.ValidationHost.ERROR);
-                } else {
-                  addProblemToTagName(originalElement, originalElement, localizedMessage, warning);
-                }
-              } else if (localizedMessage.startsWith(STRING_ERROR_PREFIX)) {
-                if (currentElement != null) {
-                  myHost.addMessage(currentElement,localizedMessage,Validator.ValidationHost.WARNING);
-                }
-              }
-              else {
-                currentElement = getNodeForMessage(currentElement != null ? currentElement:originalElement);
-                assertValidElement(currentElement, originalElement,localizedMessage);
-                if (currentElement!=null) {
-                  myHost.addMessage(currentElement,localizedMessage,warning ? Validator.ValidationHost.WARNING:Validator.ValidationHost.ERROR);
+                  if (currentElement!=null) {
+                    myHost.addMessage(currentElement,localizedMessage, problemType);
+                  }
                 }
               }
             }
@@ -264,6 +267,10 @@ public class ExternalDocumentValidator {
     myInfos = new WeakReference<List<ValidationInfo>>(results);
 
     addAllInfos(host,results);
+  }
+
+  private int getProblemType(ValidateXmlActionHandler.ProblemType warning) {
+    return warning == ValidateXmlActionHandler.ProblemType.WARNING ? Validator.ValidationHost.WARNING : Validator.ValidationHost.ERROR;
   }
 
   private static PsiElement getNodeForMessage(final PsiElement currentElement) {
@@ -297,7 +304,7 @@ public class ExternalDocumentValidator {
   private PsiElement addProblemToTagName(PsiElement currentElement,
                                      final PsiElement originalElement,
                                      final String localizedMessage,
-                                     final boolean warning) {
+                                     final ValidateXmlActionHandler.ProblemType problemType) {
     currentElement = PsiTreeUtil.getParentOfType(currentElement,XmlTag.class,false);
     if (currentElement==null) {
       currentElement = PsiTreeUtil.getParentOfType(originalElement,XmlElementDecl.class,false);
@@ -308,7 +315,7 @@ public class ExternalDocumentValidator {
     assertValidElement(currentElement, originalElement,localizedMessage);
 
     if (currentElement!=null) {
-      myHost.addMessage(currentElement,localizedMessage,warning ? Validator.ValidationHost.WARNING:Validator.ValidationHost.ERROR);
+      myHost.addMessage(currentElement,localizedMessage, getProblemType(problemType));
     }
 
     return currentElement;

@@ -108,9 +108,11 @@ public class ValidateXmlActionHandler {
     return null;
   }
 
+  public enum ProblemType { WARNING, ERROR, FATAL }
+
   public abstract class ErrorReporter {
     protected final Set<String> ourErrorsSet = new HashSet<String>();
-    public abstract void processError(SAXParseException ex,boolean warning);
+    public abstract void processError(SAXParseException ex, ProblemType warning) throws SAXException;
 
     public boolean filterValidationException(Exception ex) {
       if (ex instanceof ProcessCanceledException) throw (ProcessCanceledException)ex;
@@ -172,7 +174,7 @@ public class ValidateXmlActionHandler {
       return errors.add(ex.getMessage());
     }
 
-    public void processError(SAXParseException ex, boolean warning) {
+    public void processError(SAXParseException ex, ProblemType warning) {
       errors.add(buildMessageString(ex));
     }
 
@@ -267,7 +269,7 @@ public class ValidateXmlActionHandler {
       }
     }
 
-    public void processError(final SAXParseException ex, final boolean warning) {
+    public void processError(final SAXParseException ex, final ProblemType problemType) {
       if (LOG.isDebugEnabled()) {
         String error = buildMessageString(ex);
         LOG.debug("enter: processError(error='" + error + "')");
@@ -281,7 +283,7 @@ public class ValidateXmlActionHandler {
               public void run() {
                 final VirtualFile file = getFile(ex.getPublicId(), ex.getSystemId());
                 myErrorsView.addMessage(
-                    warning ? MessageCategory.WARNING : MessageCategory.ERROR,
+                    problemType == ProblemType.WARNING ? MessageCategory.WARNING : MessageCategory.ERROR,
                     new String[]{ex.getLocalizedMessage()},
                     file,
                     ex.getLineNumber() - 1,
@@ -383,16 +385,16 @@ public class ValidateXmlActionHandler {
   private void doParse() {
     try {
       myParser.parse(new InputSource(new StringReader(myFile.getText())), new DefaultHandler() {
-        public void warning(SAXParseException e) {
-          if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, true);
+        public void warning(SAXParseException e) throws SAXException {
+          if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, ProblemType.WARNING);
         }
 
-        public void error(SAXParseException e) {
-          if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, false);
+        public void error(SAXParseException e) throws SAXException {
+          if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, ProblemType.ERROR);
         }
 
-        public void fatalError(SAXParseException e) {
-          if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, false);
+        public void fatalError(SAXParseException e) throws SAXException {
+          if (myErrorReporter.isUniqueProblem(e)) myErrorReporter.processError(e, ProblemType.FATAL);
         }
 
         public InputSource resolveEntity(String publicId, String systemId) {
