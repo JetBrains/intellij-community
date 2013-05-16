@@ -277,6 +277,8 @@ public class NameUtilMatchingTest extends UsefulTestCase {
   }
 
   public void testMiddleMatching() {
+    assertMatches("*zz*", "ListConfigzzKey");
+    assertMatches("*zz", "ListConfigzzKey");
     assertTrue(caseInsensitiveMatcher("*old").matches("folder"));
     assertMatches("SWU*H*7", "SWUpgradeHdlrFSPR7Test");
     assertMatches("SWU*H*R", "SWUpgradeHdlrFSPR7Test");

@@ -380,7 +380,7 @@ public class MinusculeMatcher implements Matcher {
 
     // try to match the remainder of pattern with the remainder of name
     // it may not succeed with the longest matching fragment, then try shorter matches
-    while (i >= minFragment) {
+    while (i >= minFragment || isWildcard(patternIndex + i)) {
       FList<TextRange> ranges = isWildcard(patternIndex + i) ?
                                 matchWildcards(name, patternIndex + i, nameIndex + i, matchingState) :
                                 matchSkippingWords(name, patternIndex + i, nameIndex + i, false, matchingState);
