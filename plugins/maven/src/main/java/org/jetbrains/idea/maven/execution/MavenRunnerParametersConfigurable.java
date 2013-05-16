@@ -30,14 +30,12 @@ import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.EditorTextField;
 import com.intellij.ui.PanelWithAnchor;
 import com.intellij.ui.components.JBLabel;
-import com.intellij.util.Consumer;
 import com.intellij.util.TextFieldCompletionProvider;
 import com.intellij.util.execution.ParametersListUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 import org.jetbrains.idea.maven.model.MavenConstants;
-import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.Strings;
 
@@ -97,12 +95,10 @@ public abstract class MavenRunnerParametersConfigurable implements Configurable,
 
     showProjectTreeButton.setIcon(AllIcons.Actions.Module);
 
-    MavenSelectProjectPopup.attachToButton(showProjectTreeButton, MavenProjectsManager.getInstance(project), new Consumer<MavenProject>() {
-      @Override
-      public void consume(MavenProject project) {
-        workingDirComponent.getComponent().setText(project.getDirectory());
-      }
-    });
+    MavenSelectProjectPopup.attachToWorkingDirectoryField(MavenProjectsManager.getInstance(project),
+                                                          workingDirComponent.getComponent().getTextField(),
+                                                          showProjectTreeButton,
+                                                          goalsComponent.getComponent());
 
     setAnchor(profilesComponent.getLabel());
   }

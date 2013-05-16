@@ -15,48 +15,29 @@
  */
 package com.intellij.openapi.externalSystem.service.remote;
 
-import com.intellij.openapi.externalSystem.build.ExternalSystemBuildManager;
+import com.intellij.openapi.externalSystem.build.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.util.Producer;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.rmi.RemoteException;
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * @author Denis Zhdanov
  * @since 4/9/13 7:49 PM
  */
-public class RemoteExternalSystemBuildManagerImpl<S extends ExternalSystemExecutionSettings>
-  extends AbstractRemoteExternalSystemService<S> implements RemoteExternalSystemBuildManager<S>
+public class RemoteExternalSystemTaskManagerImpl<S extends ExternalSystemExecutionSettings>
+  extends AbstractRemoteExternalSystemService<S> implements RemoteExternalSystemTaskManager<S>
 {
-  
-  @NotNull private final ExternalSystemBuildManager<S> myDelegate;
 
-  public RemoteExternalSystemBuildManagerImpl(@NotNull ExternalSystemBuildManager<S> delegate) {
+  @NotNull private final ExternalSystemTaskManager<S> myDelegate;
+
+  public RemoteExternalSystemTaskManagerImpl(@NotNull ExternalSystemTaskManager<S> delegate) {
     myDelegate = delegate;
-  }
-
-  @Override
-  public Map<String, Collection<ExternalSystemTaskDescriptor>> listTasks(@NotNull final ExternalSystemTaskId id,
-                                                                         @NotNull final String projectPath,
-                                                                         @Nullable final S settings)
-    throws RemoteException, ExternalSystemException
-  {
-    
-    return execute(id, new Producer<Map<String, Collection<ExternalSystemTaskDescriptor>>>() {
-      @Nullable
-      @Override
-      public Map<String, Collection<ExternalSystemTaskDescriptor>> produce() {
-        return myDelegate.listTasks(id, projectPath, settings);
-      }
-    });
   }
 
   @Override
@@ -69,7 +50,7 @@ public class RemoteExternalSystemBuildManagerImpl<S extends ExternalSystemExecut
       @Nullable
       @Override
       public Object produce() {
-        myDelegate.executeTasks(id, taskNames, projectPath, settings); 
+        myDelegate.executeTasks(id, taskNames, projectPath, settings);
         return null;
       }
     });

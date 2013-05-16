@@ -45,30 +45,6 @@
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleSettings"/>
     <projectService serviceImplementation="org.jetbrains.plugins.gradle.settings.GradleLocalSettings"/>
 
-    <!--<applicationService serviceInterface="com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager"-->
-    <!--serviceImplementation="com.intellij.openapi.externalSystem.service.remote.ExternalSystemProgressNotificationManagerImpl"/>-->
-    <!--<applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.PlatformFacade"-->
-    <!--serviceImplementation="com.intellij.openapi.externalSystem.service.project.PlatformFacadeImpl"/>-->
-    <!--<applicationService serviceInterface="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper"-->
-    <!--serviceImplementation="com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapperImpl"/>-->
-
-    <!--Conflict UI components-->
-    <!--<applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleConflictControlFactory"/>-->
-    <!--<applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleProjectConflictControlFactory"/>-->
-    <!--<applicationService serviceImplementation="org.jetbrains.plugins.gradle.sync.conflict.GradleCommonDependencyConflictControlFactory"/>-->
-
-    <!--<projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.change.ProjectStructureChangesModel"/>-->
-    <!--<projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ProjectStructureHelper"/>-->
-    <!--<projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.OutdatedLibraryManager"/>-->
-    <!--<projectService serviceImplementation="com.intellij.openapi.externalSystem.model.project.id.EntityIdMapper"/>-->
-    <!--<projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ProjectStructureServices"/>-->
-    <!--<projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.GradleLocalNodeManageHelper"/>-->
-    <!--<projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.manage.EntityManageHelper"/>-->
-    <!--<projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.ProjectStructureChangesDetector"/>-->
-    <!--<projectService serviceImplementation="com.intellij.openapi.externalSystem.service.project.change.user.UserProjectChangesCalculator"/>-->
-    <!--<projectService serviceImplementation="org.jetbrains.plugins.gradle.notification.GradleConfigNotificationManager"/>-->
-    <!--<projectService serviceImplementation="com.intellij.openapi.externalSystem.service.task.ExternalSystemTaskManager"/>-->
-
     <toolWindow id="Gradle" anchor="right" icon="GradleIcons.ToolWindowGradle"
                 factoryClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactory"
                 conditionClass="org.jetbrains.plugins.gradle.ui.GradleToolWindowFactoryCondition"/>
@@ -84,7 +60,7 @@
   <actions>
 
     <!-- Tool window toolbar actions -->
-    <action id="Gradle.RefreshProject" class="org.jetbrains.plugins.gradle.action.GradleRefreshProjectAction" icon="AllIcons.Actions.Refresh"/>
+    <action id="Gradle.RefreshProject" class="com.intellij.openapi.externalSystem.action.RefreshAllExternalProjectsAction" icon="AllIcons.Actions.Refresh"/>
     <action id="Gradle.OpenScript" class="org.jetbrains.plugins.gradle.action.GradleOpenScriptAction" icon="GradleIcons.GradleNavigate"/>
     <action id="Gradle.Help.ToolWindow" class="org.jetbrains.plugins.gradle.action.GradleToolWindowHelpAction" icon="AllIcons.Actions.Help"/>
     <group id="Gradle.ChangeActionsToolbar">

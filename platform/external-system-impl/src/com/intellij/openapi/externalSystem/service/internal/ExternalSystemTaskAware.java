@@ -1,5 +1,7 @@
-package com.intellij.openapi.externalSystem.model.task;
+package com.intellij.openapi.externalSystem.service.internal;
 
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import org.jetbrains.annotations.NotNull;
 
 import java.rmi.RemoteException;

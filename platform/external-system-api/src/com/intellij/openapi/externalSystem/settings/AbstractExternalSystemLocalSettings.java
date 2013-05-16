@@ -64,6 +64,10 @@ public abstract class AbstractExternalSystemLocalSettings {
   public Map<String, List<ExternalSystemTaskDescriptor>> getAvailableTasks() {
     return myAvailableTasks.get();
   }
+  
+  public void setAvailableTasks(@NotNull Map<String, List<ExternalSystemTaskDescriptor>> tasks) {
+    myAvailableTasks.set(tasks);
+  }
 
   @NotNull
   public Map<String, List<ExternalSystemTaskDescriptor>> getRecentTasks() {

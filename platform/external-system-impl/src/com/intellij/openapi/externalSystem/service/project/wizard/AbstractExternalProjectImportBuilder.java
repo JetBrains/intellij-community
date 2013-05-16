@@ -7,7 +7,7 @@ import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemResolveProjectTask;
+import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
 import com.intellij.openapi.externalSystem.service.project.manage.ProjectDataManager;
 import com.intellij.openapi.externalSystem.service.settings.AbstractImportFromExternalSystemControl;
@@ -152,8 +152,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
           final Runnable resolveDependenciesTask = new Runnable() {
             @Override
             public void run() {
-              String progressText
-                = ExternalSystemBundle.message("progress.resolve.libraries", ExternalSystemApiUtil.toReadableName(myExternalSystemId));
+              String progressText = ExternalSystemBundle.message("progress.resolve.libraries", myExternalSystemId.getReadableName());
               ProgressManager.getInstance().run(
                 new Task.Backgroundable(project, progressText, false) {
                   @Override
@@ -254,7 +253,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
    * @throws ConfigurationException   if gradle project is not defined and can't be constructed
    */
   public void ensureProjectIsDefined(@NotNull WizardContext wizardContext) throws ConfigurationException {
-    String externalSystemName = ExternalSystemApiUtil.toReadableName(myExternalSystemId);
+    String externalSystemName = myExternalSystemId.getReadableName();
     File projectFile = getProjectFile();
     if (projectFile == null) {
       throw new ConfigurationException(ExternalSystemBundle.message("error.project.undefined"));

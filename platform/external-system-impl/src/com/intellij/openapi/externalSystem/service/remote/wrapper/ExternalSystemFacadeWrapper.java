@@ -4,7 +4,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
-import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemBuildManager;
+import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProgressNotificationManager;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
 import org.jetbrains.annotations.NotNull;
@@ -43,8 +43,8 @@ public class ExternalSystemFacadeWrapper<S extends ExternalSystemExecutionSettin
 
   @NotNull
   @Override
-  public RemoteExternalSystemBuildManager<S> getBuildManager() throws RemoteException {
-    return new ExternalSystemBuildManagerWrapper<S>(myDelegate.getBuildManager(), myProgressManager);
+  public RemoteExternalSystemTaskManager<S> getTaskManager() throws RemoteException {
+    return new ExternalSystemTaskManagerWrapper<S>(myDelegate.getTaskManager(), myProgressManager);
   }
 
   @Override

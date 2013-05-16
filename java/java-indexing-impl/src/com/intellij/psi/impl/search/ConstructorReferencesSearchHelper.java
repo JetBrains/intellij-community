@@ -104,8 +104,11 @@ public class ConstructorReferencesSearchHelper {
     Processor<PsiClass> processor2 = new Processor<PsiClass>() {
       @Override
       public boolean process(PsiClass inheritor) {
-        return processSuperOrThis(processor, (PsiClass)inheritor.getNavigationElement(), constructor, constructorCanBeCalledImplicitly, searchScope, isStrictSignatureSearch,
-                                  PsiKeyword.SUPER);
+        final PsiElement navigationElement = inheritor.getNavigationElement();
+        if (navigationElement instanceof PsiClass) {
+          return processSuperOrThis(processor, (PsiClass)navigationElement, constructor, constructorCanBeCalledImplicitly, searchScope, isStrictSignatureSearch, PsiKeyword.SUPER);
+        }
+        return true;
       }
     };
 

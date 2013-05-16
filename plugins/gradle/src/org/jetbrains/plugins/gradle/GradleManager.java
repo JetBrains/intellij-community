@@ -20,8 +20,10 @@ import com.intellij.execution.configurations.SimpleJavaParameters;
 import com.intellij.externalSystem.JavaProjectData;
 import com.intellij.openapi.application.PathManager;
 import com.intellij.openapi.diagnostic.Logger;
+import com.intellij.openapi.externalSystem.ExternalSystemConfigurableAware;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
-import com.intellij.openapi.externalSystem.build.ExternalSystemBuildManager;
+import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
+import com.intellij.openapi.externalSystem.build.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
@@ -29,6 +31,7 @@ import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.JavaModuleType;
 import com.intellij.openapi.module.ModuleType;
 import com.intellij.openapi.module.StdModuleTypes;
+import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.Pair;
@@ -38,17 +41,21 @@ import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtilRt;
+import icons.GradleIcons;
 import org.gradle.tooling.ProjectConnection;
 import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.remote.GradleJavaHelper;
-import org.jetbrains.plugins.gradle.remote.impl.GradleBuildManager;
+import org.jetbrains.plugins.gradle.remote.impl.GradleTaskManager;
 import org.jetbrains.plugins.gradle.service.GradleInstallationManager;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolver;
 import org.jetbrains.plugins.gradle.service.project.GradleProjectResolverExtension;
+import org.jetbrains.plugins.gradle.service.settings.GradleConfigurable;
 import org.jetbrains.plugins.gradle.settings.*;
 import org.jetbrains.plugins.gradle.util.GradleBundle;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
+import javax.swing.*;
 import java.io.File;
 import java.io.FilenameFilter;
 import java.io.IOException;
@@ -59,7 +66,7 @@ import java.util.List;
  * @author Denis Zhdanov
  * @since 4/10/13 1:19 PM
  */
-public class GradleManager implements ExternalSystemManager<
+public class GradleManager implements ExternalSystemConfigurableAware, ExternalSystemUiAware, ExternalSystemManager<
   GradleProjectSettings,
   GradleSettingsListener,
   GradleSettings,
@@ -207,7 +214,19 @@ public class GradleManager implements ExternalSystemManager<
   }
 
   @Override
-  public Class<? extends ExternalSystemBuildManager<GradleExecutionSettings>> getBuildManagerClass() {
-    return GradleBuildManager.class;
+  public Class<? extends ExternalSystemTaskManager<GradleExecutionSettings>> getTaskManagerClass() {
+    return GradleTaskManager.class;
+  }
+
+  @NotNull
+  @Override
+  public Configurable getConfigurable(@NotNull Project project) {
+    return new GradleConfigurable(project);
+  }
+
+  @Nullable
+  @Override
+  public Icon getProjectIcon() {
+    return GradleIcons.Gradle;
   }
 }

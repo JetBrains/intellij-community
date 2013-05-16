@@ -1,5 +1,6 @@
 package com.intellij.openapi.externalSystem.model.task;
 
+import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -13,26 +14,45 @@ import java.util.concurrent.atomic.AtomicLong;
  */
 public class ExternalSystemTaskId implements Serializable {
 
-  private static final long       serialVersionUID = 1L;
-  private static final AtomicLong COUNTER          = new AtomicLong();
+  @NotNull private static final AtomicLong COUNTER          = new AtomicLong();
+  private static final          long       serialVersionUID = 1L;
 
-  private final ExternalSystemTaskType myType;
-  private final long                   myId;
+  @NotNull private final ExternalSystemTaskType myType;
+  @NotNull private final String                 myProjectId;
 
-  private ExternalSystemTaskId(@NotNull ExternalSystemTaskType type, long id) {
+  private final long myId;
+
+  private ExternalSystemTaskId(@NotNull ExternalSystemTaskType type, @NotNull String projectId, long taskId) {
     myType = type;
-    myId = id;
+    myProjectId = projectId;
+    myId = taskId;
+  }
+
+  @NotNull
+  public String getIdeProjectId() {
+    return myProjectId;
   }
 
   /**
    * Allows to retrieve distinct task id object of the given type.
    *
-   * @param type  target task type
-   * @return distinct task id object of the given type
+   * @param type     target task type
+   * @param project  target ide project
+   * @return         distinct task id object of the given type
    */
   @NotNull
-  public static ExternalSystemTaskId create(@NotNull ExternalSystemTaskType type) {
-    return new ExternalSystemTaskId(type, COUNTER.getAndIncrement());
+  public static ExternalSystemTaskId create(@NotNull ExternalSystemTaskType type, @NotNull Project project) {
+    return create(type, getProjectId(project));
+  }
+
+  @NotNull
+  public static ExternalSystemTaskId create(@NotNull ExternalSystemTaskType type, @NotNull String ideProjectId) {
+    return new ExternalSystemTaskId(type, ideProjectId, COUNTER.getAndIncrement());
+  }
+
+  @NotNull
+  public static String getProjectId(@NotNull Project project) {
+    return project.getName() + ":" + project.getLocationHash();
   }
 
   @NotNull

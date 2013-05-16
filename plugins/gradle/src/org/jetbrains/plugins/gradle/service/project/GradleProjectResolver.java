@@ -5,7 +5,9 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
+import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.StdModuleTypes;
@@ -19,6 +21,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
+import org.gradle.tooling.model.GradleTask;
 import org.gradle.tooling.model.idea.*;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -27,10 +30,7 @@ import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
 
 import java.io.File;
-import java.util.Collection;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
 
 /**
  * @author Denis Zhdanov
@@ -102,6 +102,7 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     populateModules(modules.values(), result);
     Collection<DataNode<LibraryData>> libraries = ExternalSystemApiUtil.getChildren(result, ProjectKeys.LIBRARY);
     myLibraryNamesMixer.mixNames(libraries);
+    parseTasks(result, project);
     return result;
   }
 
@@ -142,9 +143,11 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         throw new IllegalStateException("Module with undefined name detected: " + gradleModule);
       }
       ProjectData projectData = ideProject.getData();
-      ModuleData ideModule = new ModuleData(
-        GradleConstants.SYSTEM_ID, StdModuleTypes.JAVA.getId(), moduleName, projectData.getIdeProjectFileDirectoryPath()
-      );
+      ModuleData ideModule = new ModuleData(GradleConstants.SYSTEM_ID,
+                                            StdModuleTypes.JAVA.getId(),
+                                            moduleName,
+                                            projectData.getIdeProjectFileDirectoryPath(),
+                                            gradleModule.getGradleProject().getPath());
       Pair<DataNode<ModuleData>, IdeaModule> previouslyParsedModule = result.get(moduleName);
       if (previouslyParsedModule != null) {
         throw new IllegalStateException(
@@ -380,5 +383,35 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
       }
     }
     return null;
+  }
+
+  private static void parseTasks(@NotNull DataNode<?> parent, @NotNull IdeaProject project) {
+    Map<String/* module name */, TaskData> tasksByModule = ContainerUtilRt.newHashMap();
+    for (IdeaModule module : project.getModules()) {
+      TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, module.getGradleProject().getPath());
+      for (GradleTask task : module.getGradleProject().getTasks()) {
+        String name = task.getName();
+        if (name == null || name.trim().isEmpty()) {
+          continue;
+        }
+
+        String s = name.toLowerCase();
+        if (s.contains("idea") || s.contains("eclipse")) {
+          continue;
+        }
+
+        taskData.addTask(new ExternalSystemTaskDescriptor(name, task.getDescription()));
+      }
+      Collections.sort(taskData.getTasks());
+      tasksByModule.put(module.getName(), taskData);
+    }
+
+    Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(parent, ProjectKeys.MODULE);
+    for (DataNode<ModuleData> moduleNode : moduleNodes) {
+      TaskData taskData = tasksByModule.get(moduleNode.getData().getName());
+      if (taskData != null && !taskData.getTasks().isEmpty()) {
+        moduleNode.createChild(ProjectKeys.TASK, taskData);
+      }
+    }
   }
 }

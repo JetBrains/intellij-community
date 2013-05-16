@@ -40,6 +40,7 @@ import org.apache.xerces.xni.parser.XMLEntityResolver;
 import org.apache.xerces.xni.parser.XMLInputSource;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.Nullable;
+import org.xml.sax.SAXException;
 import org.xml.sax.SAXParseException;
 
 import java.io.File;
@@ -238,9 +239,14 @@ public class XmlResourceResolver implements XMLEntityResolver {
     }
 
     if (psiFile == null) {
-      if (publicId != null && publicId.indexOf(":/") != -1) {
-        myErrorReporter.processError(
-          new SAXParseException(XmlBundle.message("xml.validate.external.resource.is.not.registered", publicId), publicId, null, 0,0), false);
+      if (publicId != null && publicId.contains(":/")) {
+        try {
+          myErrorReporter.processError(
+            new SAXParseException(XmlBundle.message("xml.validate.external.resource.is.not.registered", publicId), publicId, null, 0,0), ValidateXmlActionHandler.ProblemType.ERROR);
+        }
+        catch (SAXException ignore) {
+
+        }
         final XMLInputSource source = new XMLInputSource(xmlResourceIdentifier);
         source.setPublicId(publicId);
         source.setCharacterStream(new StringReader(""));

@@ -9,7 +9,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/10/11 6:31 PM
  */
-public interface DependencyData<T extends ProjectEntityData> extends ProjectEntityData {
+public interface DependencyData<T extends ExternalEntityData> extends ExternalEntityData {
   
   boolean isExported();
 

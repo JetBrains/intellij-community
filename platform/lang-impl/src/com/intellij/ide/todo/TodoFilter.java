@@ -111,19 +111,6 @@ public class TodoFilter implements Cloneable{
   }
 
   /**
-   * @return index of specified <code>pattern</code> in the array of <code>patterns</code>.
-   * Returns <code>-1</code> if <code>pattern</code> not found.
-   */
-  private static int getPatterIndex(TodoPattern pattern,TodoPattern[] patterns){
-    for(int i=0;i<patterns.length;i++){
-      if(pattern.equals(patterns[i])){
-        return i;
-      }
-    }
-    return -1;
-  }
-
-  /**
    * @param element with filter's data.
    * @param patterns all available patterns
    */
@@ -160,11 +147,9 @@ public class TodoFilter implements Cloneable{
    */
   public void writeExternal(Element element,TodoPattern[] patterns){
     element.setAttribute(ATTRIBUTE_NAME,myName);
-    for (TodoPattern pattern : myTodoPatterns) {
-      int index = getPatterIndex(pattern, patterns);
-      LOG.assertTrue(index != -1);
+    for (int i = 0; i < patterns.length; i++) {
       Element child = new Element(ELEMENT_PATTERN);
-      child.setAttribute(ATTRIBUTE_INDEX, Integer.toString(index));
+      child.setAttribute(ATTRIBUTE_INDEX, Integer.toString(i));
       element.addContent(child);
     }
   }
