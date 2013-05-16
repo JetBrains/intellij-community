@@ -14,29 +14,24 @@
  * limitations under the License.
  */
 
-package com.intellij.psi.util;
-
-import com.intellij.openapi.util.TextRange;
-import com.intellij.openapi.util.text.StringUtil;
-import com.intellij.psi.codeStyle.MinusculeMatcher;
-import com.intellij.psi.codeStyle.NameUtil;
-import com.intellij.testFramework.PlatformTestUtil;
-import com.intellij.testFramework.UsefulTestCase;
-import com.intellij.ui.SpeedSearchComparator;
-import com.intellij.util.ThrowableRunnable;
-import com.intellij.util.containers.ContainerUtil;
-import com.intellij.util.text.Matcher;
-import org.jetbrains.annotations.NonNls;
-
-import java.util.ArrayList;
-import java.util.List;
-
+package com.intellij.psi.util
+import com.intellij.openapi.util.TextRange
+import com.intellij.openapi.util.text.StringUtil
+import com.intellij.psi.codeStyle.MinusculeMatcher
+import com.intellij.psi.codeStyle.NameUtil
+import com.intellij.testFramework.PlatformTestUtil
+import com.intellij.testFramework.UsefulTestCase
+import com.intellij.ui.SpeedSearchComparator
+import com.intellij.util.ThrowableRunnable
+import com.intellij.util.containers.ContainerUtil
+import com.intellij.util.text.Matcher
+import org.jetbrains.annotations.NonNls
 /**
  * @author max
  * @author peter
  * @author Konstantin Bulenkov
  */
-public class NameUtilTest extends UsefulTestCase {
+public class NameUtilMatchingTest extends UsefulTestCase {
 
   public void testSimpleCases() throws Exception {
     assertMatches("N", "NameUtilTest");
@@ -63,7 +58,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("replmap", "ReplacePathToMacroMap");
     assertDoesntMatch("ABCD", "AbstractButton.DISABLED_ICON_CHANGED_PROPERTY");
   }
-  
+
   public void testSimpleCasesWithFirstLowercased() throws Exception {
     assertMatches("N", "nameUtilTest");
     assertDoesntMatch("N", "anameUtilTest");
@@ -77,7 +72,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("NaUtT", "nameUtilTest");
     assertMatches("NaUtTe", "nameUtilTest");
   }
-  
+
   public void testSpaceDelimiters() throws Exception {
     assertMatches("Na Ut Te", "name util test");
     assertMatches("Na Ut Te", "name Util Test");
@@ -88,7 +83,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("na te", "name_util_test");
     assertDoesntMatch("na ti", "name_util_test");
   }
-  
+
   public void testXMLCompletion() throws Exception {
     assertDoesntMatch("N_T", "NameUtilTest");
     assertMatches("ORGS_ACC", "ORGS_POSITION_ACCOUNTABILITY");
@@ -194,7 +189,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("comboBox", "combobox");
     assertMatches("combobox", "comboBox");
   }
-  
+
   public void testStartsWithDot() throws Exception {
     assertMatches(".foo", ".foo");
   }
@@ -260,6 +255,7 @@ public class NameUtilTest extends UsefulTestCase {
     assertDoesntMatch("*foc", "reformatCode");
     assertMatches("*forc", "reformatCode");
     assertDoesntMatch("*sTC", "LazyClassTypeConstructor");
+
     assertDoesntMatch("*Icon", "LEADING_CONSTRUCTOR");
     assertMatches("*I", "LEADING_CONSTRUCTOR");
     assertMatches("*i", "LEADING_CONSTRUCTOR");
@@ -267,6 +263,11 @@ public class NameUtilTest extends UsefulTestCase {
     assertMatches("*ing", "LEADING_CONSTRUCTOR");
     assertDoesntMatch("*inc", "LEADING_CONSTRUCTOR");
     assertDoesntMatch("*ico", "drawLinePickedOut");
+
+    assertMatches("*l", "AppDelegate");
+    assertMatches("*le", "AppDelegate");
+    assertMatches("*leg", "AppDelegate");
+
   }
 
   public void testMiddleMatchingUnderscore() {
@@ -451,6 +452,26 @@ public class NameUtilTest extends UsefulTestCase {
                         TextRange.from(0, 4), TextRange.from(10, 1));
   }
 
+  public void "test plus/minus in the pattern should allow to be space-surrounded"() {
+    assertMatches("a+b", "alpha+beta")
+    assertMatches("a+b", "alpha_gamma+beta")
+    assertMatches("a+b", "alpha + beta")
+    assertMatches("Foo+", "Foo+Bar.txt")
+    assertMatches("Foo+", "Foo + Bar.txt")
+    assertMatches("a", "alpha+beta");
+    assertMatches("*b", "alpha+beta");
+    assertMatches("a + b", "alpha+beta");
+    assertMatches("a+", "alpha+beta");
+    assertDoesntMatch("a ", "alpha+beta");
+    assertMatches("", "alpha+beta");
+    assertMatches("*+ b", "alpha+beta");
+    assertDoesntMatch("d+g", "alphaDelta+betaGamma");
+    assertMatches("*d+g", "alphaDelta+betaGamma");
+
+    assertMatches("a-b", "alpha-beta")
+    assertMatches("a-b", "alpha - beta")
+  }
+
   public void testMatchingDegree() {
     assertPreference("jscote", "JsfCompletionTest", "JSCompletionTest", NameUtil.MatchingCaseSensitivity.NONE);
     assertPreference("OCO", "OneCoolObject", "OCObject");
@@ -533,20 +554,20 @@ public class NameUtilTest extends UsefulTestCase {
   }
 
   private static void assertNoPreference(@NonNls String pattern,
-                                       @NonNls String name1,
-                                       @NonNls String name2,
-                                       NameUtil.MatchingCaseSensitivity sensitivity) {
+                                         @NonNls String name1,
+                                         @NonNls String name2,
+                                         NameUtil.MatchingCaseSensitivity sensitivity) {
     MinusculeMatcher matcher = new MinusculeMatcher(pattern, sensitivity);
     assertEquals(matcher.matchingDegree(name1), matcher.matchingDegree(name2));
   }
 
- public void testSpeedSearchComparator() {
-   final SpeedSearchComparator c = new SpeedSearchComparator(false, true);
+  public void testSpeedSearchComparator() {
+    final SpeedSearchComparator c = new SpeedSearchComparator(false, true);
 
-   assertTrue(c.matchingFragments("a", "Ant") != null);
-   assertTrue(c.matchingFragments("an", "Changes") != null);
-   assertTrue(c.matchingFragments("a", "Changes") != null);
- }
+    assertTrue(c.matchingFragments("a", "Ant") != null);
+    assertTrue(c.matchingFragments("an", "Changes") != null);
+    assertTrue(c.matchingFragments("a", "Changes") != null);
+  }
 
   public void testFilePatterns() {
     assertMatches("groovy*.jar", "groovy-1.7.jar");
