@@ -41,7 +41,6 @@ import com.intellij.ui.LayeredIcon;
 import com.intellij.ui.RowIcon;
 import com.intellij.util.*;
 import com.intellij.util.ui.EmptyIcon;
-import com.intellij.util.ui.update.ComparableObject;
 import gnu.trove.TIntObjectHashMap;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -194,26 +193,45 @@ public abstract class ElementBase extends UserDataHolderBase implements Iconable
     ):baseIcon;
   }
 
-  private static class ElementIconRequest extends ComparableObject.Impl {
-    public ElementIconRequest(PsiElement element, int flags) {
-      super(new Object[] {createPointer(element), flags});
-    }
+  private static class ElementIconRequest {
+    private final SmartPsiElementPointer<?> myPointer;
+    @Iconable.IconFlags private final int myFlags;
 
-    private static Object createPointer(PsiElement element) {
-      return SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
+    public ElementIconRequest(PsiElement element, @Iconable.IconFlags int flags) {
+      myPointer = SmartPointerManager.getInstance(element.getProject()).createSmartPsiElementPointer(element);
+      myFlags = flags;
     }
 
     @Nullable
     public PsiElement getElement() {
-      SmartPsiElementPointer pointer = (SmartPsiElementPointer)getEqualityObjects()[0];
-      if (pointer.getProject().isDisposed()) return null;
+      if (myPointer.getProject().isDisposed()) return null;
 
-      return pointer.getElement();
+      return myPointer.getElement();
     }
 
     @Iconable.IconFlags
     public int getFlags() {
-      return (Integer)getEqualityObjects()[1];
+      return myFlags;
+    }
+
+    @Override
+    public boolean equals(Object o) {
+      if (this == o) return true;
+      if (!(o instanceof ElementIconRequest)) return false;
+
+      ElementIconRequest request = (ElementIconRequest)o;
+
+      if (myFlags != request.myFlags) return false;
+      if (!myPointer.equals(request.myPointer)) return false;
+
+      return true;
+    }
+
+    @Override
+    public int hashCode() {
+      int result = myPointer.hashCode();
+      result = 31 * result + myFlags;
+      return result;
     }
   }
 
