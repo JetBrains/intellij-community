@@ -90,7 +90,7 @@ public class MavenSelectProjectPopup {
       public void actionPerformed(ActionEvent e) {
         List<MavenProject> projectList = projectsManager.getProjects();
         if (projectList.isEmpty()) {
-          JBPopupFactory.getInstance().createMessage("Maven modules not found").showUnderneathOf(button);
+          JBPopupFactory.getInstance().createMessage("Maven projects not found").showUnderneathOf(button);
           return;
         }
 
@@ -153,7 +153,7 @@ public class MavenSelectProjectPopup {
         };
 
         JBPopup popup = new PopupChooserBuilder(projectTree)
-          .setTitle("Select maven module")
+          .setTitle("Select maven project")
           .setResizable(true)
           .setItemChoosenCallback(clickCallBack).setAutoselectOnMouseMove(true)
           .setCloseOnEnter(false)

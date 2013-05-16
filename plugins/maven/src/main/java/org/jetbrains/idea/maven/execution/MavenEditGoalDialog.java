@@ -99,7 +99,7 @@ public class MavenEditGoalDialog extends DialogWrapper {
 
     new MavenArgumentsCompletionProvider(myProject).apply(goalsEditor);
 
-    // Configure Module ComboBox
+
     MavenProjectsManager projectsManager = MavenProjectsManager.getInstance(myProject);
 
     showProjectTreeButton.setIcon(AllIcons.Actions.Module);
