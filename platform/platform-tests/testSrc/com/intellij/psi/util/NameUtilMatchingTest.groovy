@@ -381,6 +381,10 @@ public class NameUtilMatchingTest extends UsefulTestCase {
     assertDoesntMatch("Foo ", "Foox");
     assertDoesntMatch("Collections ", "CollectionSplitter");
     assertMatches("CollectionS ", "CollectionSplitter");
+
+    assertDoesntMatch("*l ", "AppDelegate");
+    assertDoesntMatch("*le ", "AppDelegate");
+    assertDoesntMatch("*leg ", "AppDelegate");
   }
 
   public void testDigits() {
