@@ -516,7 +516,10 @@ public class DebugUtil {
   }
 
   private static final Key<List<Pair<Object, Processor<PsiElement>>>> TRACK_INVALIDATION_KEY = Key.create("TRACK_INVALIDATION_KEY");
+  private static volatile boolean ourTrackInvalidationCalled = false;
+
   public static void trackInvalidation(@NotNull PsiElement element, @NotNull Object requestor, @NotNull Processor<PsiElement> callback) {
+    ourTrackInvalidationCalled = true;
     synchronized (element) {
       final ASTNode node = element.getNode();
       if (node == null) return;
@@ -538,6 +541,10 @@ public class DebugUtil {
   }
 
   public static void onInvalidated(@NotNull TreeElement treeElement) {
+    if (!ourTrackInvalidationCalled) {
+      return;
+    }
+
     treeElement.acceptTree(new RecursiveTreeElementWalkingVisitor(false) {
       @Override
       protected void visitNode(TreeElement element) {

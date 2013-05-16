@@ -828,7 +828,7 @@ public class CompositeElement extends TreeElement {
   public void rawAddChildrenWithoutNotifications(TreeElement first) {
     final TreeElement last = getLastChildNode();
     if (last == null){
-      first.rawRemoveUpToWithoutNotifications(null);
+      first.rawRemoveUpToWithoutNotifications(null, false);
       setFirstChildNode(first);
       while(true){
         final TreeElement treeNext = first.getTreeNext();

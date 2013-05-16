@@ -257,7 +257,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   }
 
   protected final void rawInsertAfterMeWithoutNotifications(TreeElement firstNew) {
-    firstNew.rawRemoveUpToWithoutNotifications(null);
+    firstNew.rawRemoveUpToWithoutNotifications(null, false);
     final CompositeElement p = getTreeParent();
     final TreeElement treeNext = getTreeNext();
     firstNew.setTreePrev(this);
@@ -337,7 +337,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   public void rawRemoveUpTo(@Nullable TreeElement end) {
     CompositeElement parent = getTreeParent();
 
-    rawRemoveUpToWithoutNotifications(end);
+    rawRemoveUpToWithoutNotifications(end, true);
 
     if (parent != null) {
       parent.subtreeChanged();
@@ -345,7 +345,7 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
   }
 
   // remove nodes from this[including] to end[excluding] from the parent
-  protected final void rawRemoveUpToWithoutNotifications(TreeElement end) {
+  protected final void rawRemoveUpToWithoutNotifications(TreeElement end, boolean invalidate) {
     if(this == end) return;
 
     final CompositeElement parent = getTreeParent();
@@ -382,7 +382,9 @@ public abstract class TreeElement extends ElementBase implements ASTNode, Clonea
     if (parent != null){
       for(TreeElement element = this; element != null; element = element.getTreeNext()){
         element.setTreeParent(null);
-        element.onInvalidated();
+        if (invalidate) {
+          element.onInvalidated();
+        }
       }
     }
 
