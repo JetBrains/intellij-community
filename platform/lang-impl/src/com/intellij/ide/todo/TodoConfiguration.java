@@ -183,14 +183,15 @@ public class TodoConfiguration implements NamedComponent, JDOMExternalizable {
 
   @Override
   public void writeExternal(Element element) throws WriteExternalException {
-    for (TodoPattern pattern : myTodoPatterns) {
+    final TodoPattern[] todoPatterns = myTodoPatterns;
+    for (TodoPattern pattern : todoPatterns) {
       Element child = new Element(ELEMENT_PATTERN);
       pattern.writeExternal(child);
       element.addContent(child);
     }
     for (TodoFilter filter : myTodoFilters) {
       Element child = new Element(ELEMENT_FILTER);
-      filter.writeExternal(child, myTodoPatterns);
+      filter.writeExternal(child, todoPatterns);
       element.addContent(child);
     }
   }
