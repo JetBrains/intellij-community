@@ -21,7 +21,6 @@ package com.intellij.util.indexing;
 
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.application.PathManager;
-import com.intellij.openapi.fileTypes.FileType;
 import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.openapi.vfs.ex.dummy.DummyFileSystem;
@@ -47,7 +46,7 @@ public class IndexInfrastructure {
   }
 
   public static File getVersionFile(@NotNull ID<?, ?> indexName) {
-    return new File(getIndexDirectory(indexName, true), indexName + ".ver");
+    return new File(getIndexRootDir(indexName), indexName + ".ver");
   }
 
   public static File getStorageFile(@NotNull ID<?, ?> indexName) {
@@ -59,16 +58,12 @@ public class IndexInfrastructure {
   }
 
   public static File getIndexRootDir(@NotNull ID<?, ?> indexName) {
-    return getIndexDirectory(indexName, false);
-  }
-
-  private static File getIndexDirectory(ID<?, ?> indexName, boolean forVersion) {
     final String dirName = indexName.toString().toLowerCase(Locale.US);
-    // store StubIndices under StubUpdating index' root to ensure they are deleted
-    // when StubUpdatingIndex version is changed
-    final File indexDir = indexName instanceof StubIndexKey
-               ? new File(getIndexRootDir(StubUpdatingIndex.INDEX_ID), forVersion ? ".versions" : dirName)
-               : new File(PathManager.getIndexRoot(), dirName);
+    // store StubIndices under StubUpdating index' root to ensure they are deleted 
+    // when StubUpdatingIndex version is changed 
+    final File indexDir = indexName instanceof StubIndexKey ?
+                          new File(getIndexRootDir(StubUpdatingIndex.INDEX_ID), dirName) : 
+                          new File(PathManager.getIndexRoot(), dirName);
     indexDir.mkdirs();
     return indexDir;
   }
@@ -103,26 +98,6 @@ public class IndexInfrastructure {
     ourIndexIdToCreationStamp.putIfAbsent(indexName, stamp);
 
     return stamp;
-  }
-
-  public static long getIndexCreationStamp(ID<?, ?> indexName, VirtualFile forFile) {
-    return getIndexCreationStamp(getStubId(indexName, forFile.getFileType()));
-  }
-
-  static ID getStubId(ID<?, ?> indexName, FileType fileType) {
-    if (StubUpdatingIndex.INDEX_ID.equals(indexName)) {
-      String name = fileType.getName();
-      ID id = ID.findByName(name);
-      if (id != null) {
-        return id;
-      }
-      else {
-        return StubIndexKey.createIndexKey(name);
-      }
-    }
-    else {
-      return indexName;
-    }
   }
 
   public static boolean versionDiffers(final File versionFile, final int currentIndexVersion) {
