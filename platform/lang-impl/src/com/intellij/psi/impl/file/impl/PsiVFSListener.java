@@ -514,12 +514,11 @@ public class PsiVFSListener extends VirtualFileAdapter {
                                   ? myFileManager.getCachedDirectory(vFile)
                                   : myFileManager.getCachedPsiFileInner(vFile);
     myFileManager.removeInvalidFilesAndDirs(true);
-    final FileViewProvider viewProvider = myFileManager.findViewProvider(vFile);
     final PsiElement newElement;
     final FileViewProvider newViewProvider;
     if (!vFile.isDirectory()){
       newViewProvider = myFileManager.createFileViewProvider(vFile, true);
-      newElement = newViewProvider.getPsi(viewProvider.getBaseLanguage());
+      newElement = newViewProvider.getPsi(myFileManager.findViewProvider(vFile).getBaseLanguage());
     }
     else {
       newElement = myFileManager.findDirectory(vFile);

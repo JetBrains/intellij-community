@@ -124,4 +124,9 @@ public class Patches {
   public static final boolean SUN_BUG_ID_8013359 =
     SystemInfo.isXWindow && SystemInfo.isJavaVersionAtLeast("1.7") && !SystemInfo.isJavaVersionAtLeast("1.7.0.40");
 
+  /**
+   * No BindException when another program is using the port.
+   * See http://bugs.sun.com/bugdatabase/view_bug.do?bug_id=7179799
+   */
+  public static final boolean SUN_BUG_ID_7179799 = true;
 }

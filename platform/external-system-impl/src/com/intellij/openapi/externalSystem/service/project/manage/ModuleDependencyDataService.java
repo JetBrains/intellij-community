@@ -37,6 +37,7 @@ import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
 import java.util.Collections;
+import java.util.List;
 import java.util.Map;
 
 import static com.intellij.openapi.externalSystem.model.ProjectKeys.MODULE;
@@ -66,8 +67,8 @@ public class ModuleDependencyDataService extends AbstractDependencyDataService<M
 
   @Override
   public void importData(@NotNull Collection<DataNode<ModuleDependencyData>> toImport, @NotNull Project project, boolean synchronous) {
-    Map<DataNode<ModuleData>, Collection<DataNode<ModuleDependencyData>>> byModule= ExternalSystemApiUtil.groupBy(toImport, MODULE);
-    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ModuleDependencyData>>> entry : byModule.entrySet()) {
+    Map<DataNode<ModuleData>, List<DataNode<ModuleDependencyData>>> byModule= ExternalSystemApiUtil.groupBy(toImport, MODULE);
+    for (Map.Entry<DataNode<ModuleData>, List<DataNode<ModuleDependencyData>>> entry : byModule.entrySet()) {
       Module ideModule = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
       if (ideModule == null) {
         myModuleDataManager.importData(Collections.singleton(entry.getKey()), project, true);

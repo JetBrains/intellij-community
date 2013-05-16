@@ -1,12 +1,12 @@
-package com.intellij.openapi.externalSystem.model.task;
+package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.task.*;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.RemoteExternalSystemFacade;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.progress.ProgressIndicator;
 import com.intellij.openapi.project.Project;
@@ -44,7 +44,7 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
   {
     myExternalSystemId = id;
     myIdeProject = project;
-    myId = ExternalSystemTaskId.create(type);
+    myId = ExternalSystemTaskId.create(type, myIdeProject);
     myExernalProjectPath = externalProjectPath;
   }
 
@@ -159,6 +159,6 @@ public abstract class AbstractExternalSystemTask implements ExternalSystemTask {
 
   @Override
   public String toString() {
-    return String.format("%s task %s: %s", ExternalSystemApiUtil.toReadableName(myExternalSystemId), myId, myState);
+    return String.format("%s task %s: %s", myExternalSystemId.getReadableName(), myId, myState);
   }
 }

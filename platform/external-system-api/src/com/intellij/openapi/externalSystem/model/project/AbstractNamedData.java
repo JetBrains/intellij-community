@@ -7,7 +7,7 @@ import org.jetbrains.annotations.NotNull;
  * @author Denis Zhdanov
  * @since 8/25/11 5:38 PM
  */
-public abstract class AbstractNamedData extends AbstractProjectEntityData implements Named {
+public abstract class AbstractNamedData extends AbstractExternalEntityData implements Named {
 
   private static final long serialVersionUID = 1L;
   
@@ -26,9 +26,7 @@ public abstract class AbstractNamedData extends AbstractProjectEntityData implem
 
   @Override
   public void setName(@NotNull String name) {
-    String oldName = myName;
     myName = name;
-    firePropertyChange(NAME_PROPERTY, oldName, name);
   }
 
   @Override

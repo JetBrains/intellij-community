@@ -1,5 +1,6 @@
 package com.intellij.openapi.externalSystem.model;
 
+import com.intellij.openapi.util.text.StringUtil;
 import org.jetbrains.annotations.NotNull;
 
 import java.io.Serializable;
@@ -20,9 +21,15 @@ public class ProjectSystemId implements Serializable {
   @NotNull public static final ProjectSystemId IDE = new ProjectSystemId("IDE");
 
   @NotNull private final String myId;
+  @NotNull private final String myReadableName;
 
   public ProjectSystemId(@NotNull String id) {
+    this(id, StringUtil.capitalize(id.toLowerCase()));
+  }
+
+  public ProjectSystemId(@NotNull String id, @NotNull String readableName) {
     myId = id;
+    myReadableName = readableName;
   }
 
   @Override
@@ -40,6 +47,11 @@ public class ProjectSystemId implements Serializable {
     return myId.equals(owner.myId);
   }
 
+  @NotNull
+  public String getReadableName() {
+    return myReadableName;
+  }
+  
   @Override
   public String toString() {
     return myId;

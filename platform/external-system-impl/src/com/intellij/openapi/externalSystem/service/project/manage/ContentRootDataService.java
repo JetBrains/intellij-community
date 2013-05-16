@@ -22,6 +22,7 @@ import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -56,9 +57,8 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
       return;
     }
 
-    Map<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> byModule
-      = ExternalSystemApiUtil.groupBy(toImport, ProjectKeys.MODULE);
-    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
+    Map<DataNode<ModuleData>, List<DataNode<ContentRootData>>> byModule = ExternalSystemApiUtil.groupBy(toImport, ProjectKeys.MODULE);
+    for (Map.Entry<DataNode<ModuleData>, List<DataNode<ContentRootData>>> entry : byModule.entrySet()) {
       final Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
       if (module == null) {
         LOG.warn(String.format(

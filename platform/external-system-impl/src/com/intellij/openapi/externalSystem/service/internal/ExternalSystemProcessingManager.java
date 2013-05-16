@@ -1,4 +1,4 @@
-package com.intellij.openapi.externalSystem.service.task;
+package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.Disposable;
 import com.intellij.openapi.application.ApplicationManager;
@@ -8,6 +8,7 @@ import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskNotifica
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
 import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.notification.ExternalSystemProgressNotificationManager;
+import com.intellij.openapi.project.Project;
 import com.intellij.util.Alarm;
 import com.intellij.util.containers.ContainerUtil;
 import com.intellij.util.containers.ContainerUtilRt;
@@ -25,7 +26,7 @@ import java.util.concurrent.TimeUnit;
  * @author Denis Zhdanov
  * @since 2/8/12 1:52 PM
  */
-public class ExternalSystemTaskManager implements ExternalSystemTaskNotificationListener, Disposable {
+public class ExternalSystemProcessingManager implements ExternalSystemTaskNotificationListener, Disposable {
 
   /**
    * We receive information about the tasks being enqueued to the slave processes which work directly with external systems here.
@@ -40,7 +41,7 @@ public class ExternalSystemTaskManager implements ExternalSystemTaskNotification
    * We need to distinguish between them, so, we perform 'task pings' if any task is executed too long. Current constant holds
    * criteria of 'too long execution'.
    */
-  private static final long TOO_LONG_EXECUTION_MS   = TimeUnit.SECONDS.toMillis(10);
+  private static final long TOO_LONG_EXECUTION_MS = TimeUnit.SECONDS.toMillis(10);
 
   @NotNull private final ConcurrentMap<ExternalSystemTaskId, Long> myTasksInProgress = ContainerUtil.newConcurrentMap();
   @NotNull private final Alarm                                     myAlarm           = new Alarm(Alarm.ThreadToUse.SHARED_THREAD);
@@ -48,8 +49,8 @@ public class ExternalSystemTaskManager implements ExternalSystemTaskNotification
   @NotNull private final ExternalSystemFacadeManager               myFacadeManager;
   @NotNull private final ExternalSystemProgressNotificationManager myProgressNotificationManager;
 
-  public ExternalSystemTaskManager(@NotNull ExternalSystemFacadeManager facadeManager,
-                                   @NotNull ExternalSystemProgressNotificationManager notificationManager)
+  public ExternalSystemProcessingManager(@NotNull ExternalSystemFacadeManager facadeManager,
+                                         @NotNull ExternalSystemProgressNotificationManager notificationManager)
   {
     myFacadeManager = facadeManager;
     myProgressNotificationManager = notificationManager;
@@ -73,9 +74,10 @@ public class ExternalSystemTaskManager implements ExternalSystemTaskNotification
    * @return      <code>true</code> if any task of the given type is being executed at the moment;
    *              <code>false</code> otherwise
    */
-  public boolean hasTaskOfTypeInProgress(@NotNull ExternalSystemTaskType type) {
+  public boolean hasTaskOfTypeInProgress(@NotNull ExternalSystemTaskType type, @NotNull Project project) {
+    String projectId = ExternalSystemTaskId.getProjectId(project);
     for (ExternalSystemTaskId id : myTasksInProgress.keySet()) {
-      if (type.equals(id.getType())) {
+      if (type.equals(id.getType()) && projectId.equals(id.getIdeProjectId())) {
         return true;
       }
     }

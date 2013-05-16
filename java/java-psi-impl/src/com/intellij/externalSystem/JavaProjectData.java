@@ -18,7 +18,7 @@ package com.intellij.externalSystem;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.AbstractProjectEntityData;
+import com.intellij.openapi.externalSystem.model.project.AbstractExternalEntityData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.projectRoots.JavaSdkVersion;
 import com.intellij.pom.java.LanguageLevel;
@@ -32,7 +32,7 @@ import java.util.regex.Pattern;
  * @author Denis Zhdanov
  * @since 4/12/13 12:27 PM
  */
-public class JavaProjectData extends AbstractProjectEntityData {
+public class JavaProjectData extends AbstractExternalEntityData {
   
   @NotNull public static final Key<JavaProjectData> KEY = Key.create(JavaProjectData.class);
   

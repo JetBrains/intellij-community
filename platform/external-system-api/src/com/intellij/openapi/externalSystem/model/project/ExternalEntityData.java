@@ -3,8 +3,6 @@ package com.intellij.openapi.externalSystem.model.project;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import org.jetbrains.annotations.NotNull;
 
-import java.beans.PropertyChangeListener;
-import java.beans.PropertyChangeSupport;
 import java.io.Serializable;
 
 /**
@@ -18,15 +16,8 @@ import java.io.Serializable;
  * @author Denis Zhdanov
  * @since 8/12/11 12:50 PM
  */
-public interface ProjectEntityData extends Serializable {
+public interface ExternalEntityData extends Serializable {
 
   @NotNull
   ProjectSystemId getOwner();
-
-  /**
-   * Follows contract of {@link PropertyChangeSupport#addPropertyChangeListener(PropertyChangeListener)}  
-   * 
-   * @param listener  target listener
-   */
-  void addPropertyChangeListener(@NotNull PropertyChangeListener listener);
 }

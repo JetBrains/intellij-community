@@ -408,9 +408,11 @@ public class GenerateMembersUtil {
 
   private static void copyDocComment(PsiMethod source, PsiMethod target) {
     final PsiElement navigationElement = source.getNavigationElement();
-    final PsiDocComment docComment = ((PsiDocCommentOwner)navigationElement).getDocComment();
-    if (docComment != null) {
-      target.addAfter(docComment, null);
+    if (navigationElement instanceof PsiDocCommentOwner) {
+      final PsiDocComment docComment = ((PsiDocCommentOwner)navigationElement).getDocComment();
+      if (docComment != null) {
+        target.addAfter(docComment, null);
+      }
     }
   }
 

@@ -1,14 +1,15 @@
-package com.intellij.openapi.externalSystem.model.task;
+package com.intellij.openapi.externalSystem.service.internal;
 
 import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
-import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskState;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskType;
+import com.intellij.openapi.externalSystem.service.ExternalSystemFacadeManager;
 import com.intellij.openapi.externalSystem.service.remote.RemoteExternalSystemProjectResolver;
 import com.intellij.openapi.externalSystem.settings.ExternalSystemSettingsManager;
-import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.Project;
 import org.jetbrains.annotations.NotNull;
@@ -44,17 +45,21 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
     final ExternalSystemFacadeManager manager = ServiceManager.getService(ExternalSystemFacadeManager.class);
     Project ideProject = getIdeProject();
     RemoteExternalSystemProjectResolver resolver = manager.getFacade(ideProject, myProjectPath, getExternalSystemId()).getResolver();
-    setState(ExternalSystemTaskState.IN_PROGRESS);
-
-    ExternalSystemSettingsManager settingsManager = ServiceManager.getService(ExternalSystemSettingsManager.class);
-    ExternalSystemExecutionSettings settings = settingsManager.getExecutionSettings(ideProject, myProjectPath, getExternalSystemId());
-    DataNode<ProjectData> project = resolver.resolveProjectInfo(getId(), myProjectPath, myResolveLibraries, settings);
     
-    if (project == null) {
-      return;
+    setState(ExternalSystemTaskState.IN_PROGRESS);
+    try {
+      ExternalSystemSettingsManager settingsManager = ServiceManager.getService(ExternalSystemSettingsManager.class);
+      ExternalSystemExecutionSettings settings = settingsManager.getExecutionSettings(ideProject, myProjectPath, getExternalSystemId());
+      DataNode<ProjectData> project = resolver.resolveProjectInfo(getId(), myProjectPath, myResolveLibraries, settings);
+
+      if (project == null) {
+        return;
+      }
+      myExternalProject.set(project);
     }
-    myExternalProject.set(project);
-    setState(ExternalSystemTaskState.FINISHED);
+    finally {
+      setState(ExternalSystemTaskState.FINISHED);
+    }
   }
 
   @Nullable
@@ -65,6 +70,6 @@ public class ExternalSystemResolveProjectTask extends AbstractExternalSystemTask
   @Override
   @NotNull
   protected String wrapProgressText(@NotNull String text) {
-    return ExternalSystemBundle.message("progress.update.text", ExternalSystemApiUtil.toReadableName(getExternalSystemId()), text);
+    return ExternalSystemBundle.message("progress.update.text", getExternalSystemId().getReadableName(), text);
   }
 }

@@ -21,11 +21,20 @@ import com.intellij.openapi.ui.popup.Balloon;
 import com.intellij.openapi.ui.popup.BalloonBuilder;
 import com.intellij.openapi.ui.popup.JBPopupFactory;
 import com.intellij.ui.awt.RelativePoint;
+import com.intellij.util.containers.ContainerUtil;
+import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.GridBag;
+import gnu.trove.THashMap;
 import org.jetbrains.annotations.NotNull;
 
 import javax.swing.*;
+import javax.swing.tree.DefaultMutableTreeNode;
+import javax.swing.tree.DefaultTreeModel;
+import javax.swing.tree.MutableTreeNode;
+import javax.swing.tree.TreeNode;
 import java.awt.*;
+import java.util.*;
+import java.util.List;
 import java.util.concurrent.TimeUnit;
 
 /**
@@ -81,5 +90,31 @@ public class ExternalSystemUiUtil {
 
   public static void fillBottom(@NotNull JComponent component) {
     component.add(Box.createVerticalGlue(), new GridBag().weightx(1).weighty(1).fillCell().coverLine());
+  }
+
+  public static void sort(@NotNull DefaultMutableTreeNode parent,
+                          @NotNull DefaultTreeModel model,
+                          @NotNull Comparator<TreeNode> comparator)
+  {
+    List<MutableTreeNode> children = ContainerUtilRt.newArrayList();
+    THashMap<TreeNode, Integer> initialOrder = ContainerUtil.newIdentityTroveMap();
+    for (int i = 0; i < parent.getChildCount(); i++) {
+      MutableTreeNode child = (MutableTreeNode)parent.getChildAt(i);
+      children.add(child);
+      initialOrder.put(child, i);
+    }
+    Collections.sort(children, comparator);
+    parent.removeAllChildren();
+
+    for (MutableTreeNode child : children) {
+      parent.add(child);
+    }
+    for (int i = 0; i < children.size(); i++) {
+      MutableTreeNode child = children.get(i);
+      Integer initialIndex = initialOrder.get(child);
+      if (initialIndex != i) {
+        model.nodeChanged(child);
+      }
+    }
   }
 }

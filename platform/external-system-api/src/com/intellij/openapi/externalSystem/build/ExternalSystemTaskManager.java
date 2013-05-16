@@ -16,15 +16,12 @@
 package com.intellij.openapi.externalSystem.build;
 
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.settings.ExternalSystemExecutionSettings;
+import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collection;
 import java.util.List;
-import java.util.Map;
 
 /**
  * Abstraction layer for executing gradle tasks.
@@ -32,22 +29,8 @@ import java.util.Map;
  * @author Denis Zhdanov
  * @since 3/14/13 5:04 PM
  */
-public interface ExternalSystemBuildManager<S extends ExternalSystemExecutionSettings> {
+public interface ExternalSystemTaskManager<S extends ExternalSystemExecutionSettings> {
 
-  /**
-   * Refreshes available tasks for the target external project.
-   *  
-   * @param id                          request task id
-   * @param projectPath                 target external project path
-   * @param settings                    settings to use during the refresh
-   * @return                            mappings like 'module name -&gt; module tasks'
-   * @throws ExternalSystemException    in case when unexpected exception occurs during project info construction
-   */
-  Map<String, Collection<ExternalSystemTaskDescriptor>> listTasks(@NotNull ExternalSystemTaskId id,
-                                                                  @NotNull String projectPath,
-                                                                  @Nullable S settings)
-    throws ExternalSystemException;
-  
   void executeTasks(@NotNull ExternalSystemTaskId id, @NotNull List<String> taskNames, @NotNull String projectPath, @Nullable S settings)
     throws ExternalSystemException;
 }

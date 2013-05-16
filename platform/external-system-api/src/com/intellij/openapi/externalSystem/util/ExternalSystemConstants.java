@@ -27,7 +27,12 @@ public class ExternalSystemConstants {
   @NonNls @NotNull public static final String EXTERNAL_SYSTEM_ID_KEY  = "external.system.id";
   @NonNls @NotNull public static final String LINKED_PROJECT_PATH_KEY = "external.linked.project.path";
 
+  @NonNls @NotNull public static final String TOOL_WINDOW_TOOLBAR_ACTIONS_GROUP_ID = "ExternalSystem.ToolWindow.Toolbar";
+
+  @NonNls @NotNull public static final String TOOL_WINDOW_PLACE = "ExternalSystem.ToolWindow";
+
   // Order.
-  public static final int BUILTIN_SERVICE_ORDER = 42;
-  public static final int UNORDERED             = 1000;
+  public static final int BUILTIN_SERVICE_ORDER             = 42;
+  public static final int BUILTIN_TOOL_WINDOW_SERVICE_ORDER = 62;
+  public static final int UNORDERED                         = 1000;
 }

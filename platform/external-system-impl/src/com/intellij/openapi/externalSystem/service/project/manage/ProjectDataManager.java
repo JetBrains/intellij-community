@@ -64,8 +64,8 @@ public class ProjectDataManager {
 
   @SuppressWarnings("unchecked")
   public <T> void importData(@NotNull Collection<DataNode<?>> nodes, @NotNull Project project, boolean synchronous) {
-    Map<Key<?>, Collection<DataNode<?>>> grouped = ExternalSystemApiUtil.group(nodes);
-    for (Map.Entry<Key<?>, Collection<DataNode<?>>> entry : grouped.entrySet()) {
+    Map<Key<?>, List<DataNode<?>>> grouped = ExternalSystemApiUtil.group(nodes);
+    for (Map.Entry<Key<?>, List<DataNode<?>>> entry : grouped.entrySet()) {
       // Simple class cast makes ide happy but compiler fails.
       Collection<DataNode<T>> dummy = ContainerUtilRt.newArrayList();
       for (DataNode<?> node : entry.getValue()) {

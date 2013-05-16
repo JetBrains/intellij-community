@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.components.ServiceManager;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
@@ -32,7 +31,6 @@ import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.externalSystem.util.Order;
 import com.intellij.openapi.module.Module;
 import com.intellij.openapi.project.Project;
-import com.intellij.openapi.roots.ExportableOrderEntry;
 import com.intellij.openapi.roots.LibraryOrderEntry;
 import com.intellij.openapi.roots.ModifiableRootModel;
 import com.intellij.openapi.roots.ModuleRootManager;
@@ -86,8 +84,8 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
       return;
     }
 
-    Map<DataNode<ModuleData>, Collection<DataNode<LibraryDependencyData>>> byModule = ExternalSystemApiUtil.groupBy(toImport, MODULE);
-    for (Map.Entry<DataNode<ModuleData>, Collection<DataNode<LibraryDependencyData>>> entry : byModule.entrySet()) {
+    Map<DataNode<ModuleData>, List<DataNode<LibraryDependencyData>>> byModule = ExternalSystemApiUtil.groupBy(toImport, MODULE);
+    for (Map.Entry<DataNode<ModuleData>, List<DataNode<LibraryDependencyData>>> entry : byModule.entrySet()) {
       Module module = myProjectStructureHelper.findIdeModule(entry.getKey().getData(), project);
       if (module == null) {
         myModuleManager.importData(Collections.singleton(entry.getKey()), project, true);
