@@ -55,7 +55,7 @@ public class TestNGInClassConfigurationProducer extends TestNGConfigurationProdu
     PsiClass psiClass = null;
     PsiElement element = location.getPsiElement();
     while (element != null) {
-      if (element instanceof PsiClass && isTestNGClass(psiClass)) {
+      if (element instanceof PsiClass && isTestNGClass((PsiClass)element)) {
         psiClass = (PsiClass)element;
         break;
       }
