@@ -21,6 +21,8 @@ import gnu.trove.TIntObjectHashMap;
 import gnu.trove.TObjectIntHashMap;
 import gnu.trove.TObjectIntProcedure;
 import org.jetbrains.annotations.NonNls;
+import org.jetbrains.annotations.NotNull;
+import org.jetbrains.annotations.Nullable;
 
 import java.io.*;
 
@@ -117,12 +119,13 @@ public class ID<K, V> {
   }
 
   public static <K, V> ID<K, V> create(@NonNls String name) {
-    short id = stringToId(name);
+    final ID<K, V> found = findByName(name);
+    return found != null ? found : new ID<K, V>(name);
+  }
 
-    final ID<K, V> found = (ID<K, V>)findById(id);
-    if (found != null) return found;
-
-    return new ID<K, V>(name);
+  @Nullable
+  public static <K, V> ID<K, V> findByName(@NotNull String name) {
+    return (ID<K, V>)findById(stringToId(name));
   }
 
   public int hashCode() {
