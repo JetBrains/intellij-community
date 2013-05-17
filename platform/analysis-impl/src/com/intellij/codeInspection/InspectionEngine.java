@@ -68,6 +68,7 @@ public class InspectionEngine {
     }
   }
 
+  @NotNull
   public static List<ProblemDescriptor> inspect(@NotNull final List<LocalInspectionTool> tools,
                                                 @NotNull final PsiFile file,
                                                 @NotNull final InspectionManager iManager,
