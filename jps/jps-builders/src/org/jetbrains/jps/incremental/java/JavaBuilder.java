@@ -588,13 +588,28 @@ public class JavaBuilder extends ModuleLevelBuilder {
       // check if user explicitly defined bytecode target in additional compiler options
       bytecodeTarget = USER_DEFINED_BYTECODE_TARGET.get(context);
     }
+
+    final int compilerSdkVersion = getCompilerSdkVersion(context);
     
     if (bytecodeTarget != null) {
       options.add("-target");
+      if (chunkSdkVersion > 0 && compilerSdkVersion > chunkSdkVersion) { 
+        // if compiler is newer than module JDK
+        final int userSpecifiedTargetVersion = convertToNumber(bytecodeTarget);
+        if (userSpecifiedTargetVersion > 0 && userSpecifiedTargetVersion <= compilerSdkVersion) {
+          // if user-specified bytecode version can be determined and is supported by compiler
+          if (userSpecifiedTargetVersion > chunkSdkVersion) {
+            // and user-specified bytecode target level is higher than the highest one supported by the target JDK,
+            // force compiler to use highest-available bytecode target version that is supported by the chunk JDK.
+            bytecodeTarget = "1." + chunkSdkVersion;
+          }
+        }
+        // otherwise let compiler display compilation error about incorrectly set bytecode target version
+      }
       options.add(bytecodeTarget);
     }
     else {
-      if (chunkSdkVersion > 0 && getCompilerSdkVersion(context) > chunkSdkVersion) {
+      if (chunkSdkVersion > 0 && compilerSdkVersion > chunkSdkVersion) {
         // force lower bytecode target level to match the version of sdk assigned to this chunk
         options.add("-target");
         options.add("1." + chunkSdkVersion);
