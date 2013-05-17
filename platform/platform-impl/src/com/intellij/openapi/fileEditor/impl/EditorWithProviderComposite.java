@@ -28,6 +28,8 @@ import com.intellij.openapi.editor.event.DocumentListener;
 import com.intellij.openapi.fileEditor.*;
 import com.intellij.openapi.fileEditor.ex.FileEditorManagerEx;
 import com.intellij.openapi.util.Pair;
+import com.intellij.openapi.vcs.FileStatus;
+import com.intellij.openapi.vcs.FileStatusManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.ui.JBColor;
 import com.intellij.util.ArrayUtil;
@@ -113,6 +115,12 @@ public class EditorWithProviderComposite extends EditorComposite {
     if (window != null) {
       ((FileEditorManagerEx)getFileEditorManager()).getSplitters().updateFileColor(getFile());
       if (navigation) {
+        FileStatus status = FileStatusManager.getInstance(getFileEditorManager().getProject()).getStatus(getFile());
+        if (status == FileStatus.MODIFIED || status == FileStatus.ADDED || status == FileStatus.MERGE) {
+          myToMaterialize = true;
+          return;
+        }
+
         final TextEditor textEditor = ContainerUtil.findInstance(getEditors(), TextEditor.class);
         myListener = new TabMaterializer(textEditor);
         ActionManager.getInstance().addAnActionListener(myListener);
