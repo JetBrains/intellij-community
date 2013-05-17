@@ -1,8 +1,0 @@
-<?xml version="1.0" encoding="UTF-8"?>
-<problems>
-  <problem>
-    <file>layout.xml</file>
-    <line>15</line>
-    <description>Layout uses the wrong button order for API &amp;gt;= 14: Create a layout-v14/layout.xml file with opposite order: OK button should be on the right (was &amp;quot;OK | Cancel&amp;quot;, should be &amp;quot;Cancel | OK&amp;quot;)</description>
-  </problem>
-</problems>

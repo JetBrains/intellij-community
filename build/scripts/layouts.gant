@@ -231,11 +231,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
   //reorder(targetDirectory)
 }
 
-public def layoutCommunityPlugins(String home, String androidHome=null) {
-  if (androidHome == null) {
-    androidHome = "$home/plugins/android"
-  }
-
+public def layoutCommunityPlugins(String home) {
   dir("plugins") {
     def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "hg4idea", "github", "ui-designer-core"] //, "tasks-time-tracking"]
 
@@ -461,32 +457,6 @@ public def layoutCommunityPlugins(String home, String androidHome=null) {
       }
       jar("common-eclipse-util.jar") {
         module("common-eclipse-util")
-      }
-    }
-
-    layoutPlugin("android") {
-      fileset(dir: "${androidHome}/lib") {
-        include(name: "**/*.jar")
-        exclude(name: "**/ddmlib_1.jar")
-        exclude(name: "src/*.jar")
-      }
-
-      jar("android-common.jar") {
-        module("android-common")
-      }
-
-      jar("android-rt.jar") {
-        module("android-rt")
-      }
-
-      dir("jps") {
-        jar("android-jps-plugin.jar") { module("android-jps-plugin") }
-      }
-    }
-
-    layoutPlugin("android-designer") {
-      jar("android-designer.jar") {
-        module("android-designer")
       }
     }
   }

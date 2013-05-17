@@ -1,9 +1,0 @@
-<resources>
-  <attr name="myAttr" format="integer"/>
-
-  <declare-styleable name="MyCustomView">
-    <attr name="otherAttr" format="integer"/>
-  </declare-styleable>
-
-  <drawable name="myDrawable"/>
-</resources>
