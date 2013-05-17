@@ -213,7 +213,7 @@ public class XDebuggerTree extends DnDAwareTree implements DataProvider, Disposa
     }
   }
 
-  public void nodeLoaded(final @NotNull XValueNodeImpl node, final @NotNull String name, final @NotNull String value) {
+  public void nodeLoaded(final @NotNull XValueNodeImpl node, final @NotNull String name, final @Nullable String value) {
     for (XDebuggerTreeListener listener : myListeners) {
       listener.nodeLoaded(node, name, value);
     }

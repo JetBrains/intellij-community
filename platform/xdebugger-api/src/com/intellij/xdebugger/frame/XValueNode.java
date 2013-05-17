@@ -46,13 +46,13 @@ public interface XValueNode extends Obsolescent {
    * @param value string representation of value. It is also used in 'Copy Value' action
    * @param hasChildren {@code false} if the node is a leaf
    */
-  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren);
+  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @Nullable String value, boolean hasChildren);
 
   /**
    * The same as {@link #setPresentation(javax.swing.Icon, String, String, boolean)} but also allows to
    * customize {@code separator} between name and value
    */
-  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @NotNull String value, boolean hasChildren);
+  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator, @NonNls @Nullable String value, boolean hasChildren);
 
   /**
    * Setup presentation of the grouping value (value as container)

@@ -55,6 +55,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
 
   private String myName;
   private String myType;
+  @Nullable
   private String myValue;
   private XFullValueEvaluator myFullValueEvaluator;
   private String mySeparator;
@@ -73,13 +74,13 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   @Override
-  public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value, boolean hasChildren) {
+  public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @Nullable String value, boolean hasChildren) {
     setPresentation(icon, type, XDebuggerUIConstants.EQ_TEXT, value, hasChildren);
   }
 
   @Override
   public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String separator,
-                              @NonNls @NotNull String value, boolean hasChildren) {
+                              @NonNls @Nullable String value, boolean hasChildren) {
     setPresentation(null, icon, type, separator, value, hasChildren);
   }
 
@@ -109,7 +110,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   public void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
-                              @NonNls @NotNull final String value, final boolean hasChildren) {
+                              @NonNls @Nullable final String value, final boolean hasChildren) {
     setPresentation(name, icon, type, separator, value, null, hasChildren, false);
   }
 
@@ -124,7 +125,7 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   private void setPresentation(@NonNls final String name, @Nullable final Icon icon, @NonNls @Nullable final String type, @NonNls @NotNull final String separator,
-                               @NonNls @NotNull final String value, @Nullable final XValuePresenter valuePresenter, final boolean hasChildren, final boolean expand) {
+                               @NonNls @Nullable final String value, @Nullable final XValuePresenter valuePresenter, final boolean hasChildren, final boolean expand) {
     DebuggerUIUtil.invokeOnEventDispatch(new Runnable() {
       public void run() {
         setIcon(icon);
@@ -173,11 +174,15 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
       }
     }
     myText.append(myName, XDebuggerUIConstants.VALUE_NAME_ATTRIBUTES);
-    myText.append(mySeparator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    if (!StringUtil.isEmpty(mySeparator)) {
+      myText.append(mySeparator, SimpleTextAttributes.REGULAR_ATTRIBUTES);
+    }
     if (myType != null) {
       myText.append("{" + myType + "} ", XDebuggerUIConstants.TYPE_ATTRIBUTES);
     }
-    myValuePresenter.append(myValue, myText, myChanged);
+    if (myValue != null) {
+      myValuePresenter.append(myValue, myText, myChanged);
+    }
   }
 
   public void markChanged() {
