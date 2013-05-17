@@ -738,6 +738,8 @@
                      groupKey="group.names.internationalization.issues" enabledByDefault="false" level="WARNING"
                      implementationClass="com.intellij.codeInspection.LossyEncodingInspection"/>
 
+    <annotator language="TEXT" implementationClass="com.intellij.codeInsight.highlighting.LargeFilesAnnotator"/>
+
     <applicationService serviceInterface="com.intellij.codeInsight.template.TemplateBuilderFactory"
                         serviceImplementation="com.intellij.codeInsight.template.TemplateBuilderFactoryImpl"/>
 
