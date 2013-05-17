@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.util.Condition;
 import com.intellij.psi.*;
@@ -32,6 +33,7 @@ import org.jetbrains.plugins.groovy.lang.psi.GroovyFile;
 import org.jetbrains.plugins.groovy.lang.psi.GroovyPsiElementFactory;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.*;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrCodeBlock;
+import org.jetbrains.plugins.groovy.lang.psi.api.statements.blocks.GrOpenBlock;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrAssignmentExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrExpression;
 import org.jetbrains.plugins.groovy.lang.psi.api.statements.expressions.GrReferenceExpression;
@@ -150,6 +152,9 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
     else if (i == CUR_METHOD) {
       initializeInMethod(context, settings, field);
     }
+    else if (i == SETUP_METHOD) {
+      initializeInSetup(context, settings, field);
+    }
 
     GrReferenceAdjuster.shortenReferences(added);
 
@@ -174,6 +179,15 @@ public class GrIntroduceFieldHandler extends GrIntroduceHandlerBase<GrIntroduceF
       }
     }
     return field;
+  }
+
+  private static void initializeInSetup(GrIntroduceContext context, GrIntroduceFieldSettings settings, GrVariable field) {
+    final PsiMethod setUpMethod = TestFrameworks.getInstance().findOrCreateSetUpMethod(((PsiClass)context.getScope()));
+    assert setUpMethod instanceof GrMethod;
+
+    final GrOpenBlock body = ((GrMethod)setUpMethod).getBlock();
+    final PsiElement anchor = findAnchor(context, settings, body);
+    generateAssignment(context, settings, field, (GrStatement)anchor, body);
   }
 
   @Nullable

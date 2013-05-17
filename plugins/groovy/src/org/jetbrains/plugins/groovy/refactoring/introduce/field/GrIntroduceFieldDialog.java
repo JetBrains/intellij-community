@@ -15,6 +15,7 @@
  */
 package org.jetbrains.plugins.groovy.refactoring.introduce.field;
 
+import com.intellij.codeInsight.TestFrameworks;
 import com.intellij.openapi.ui.DialogWrapper;
 import com.intellij.openapi.util.Ref;
 import com.intellij.openapi.util.text.StringUtil;
@@ -23,6 +24,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import com.intellij.refactoring.RefactoringBundle;
 import com.intellij.refactoring.ui.NameSuggestionsField;
 import com.intellij.refactoring.util.RadioUpDownListener;
+import com.intellij.ui.components.JBRadioButton;
 import com.intellij.util.ArrayUtil;
 import com.intellij.util.IncorrectOperationException;
 import com.intellij.util.containers.ContainerUtil;
@@ -68,6 +70,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
   private JRadioButton myCurrentMethodRadioButton;
   private JRadioButton myFieldDeclarationRadioButton;
   private JRadioButton myClassConstructorSRadioButton;
+  private JBRadioButton mySetUpMethodRadioButton;
   private JCheckBox myDeclareFinalCheckBox;
   private JCheckBox myReplaceAllOccurrencesCheckBox;
   private GrTypeComboBox myTypeComboBox;
@@ -100,7 +103,14 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     initialization.add(myCurrentMethodRadioButton);
     initialization.add(myFieldDeclarationRadioButton);
     initialization.add(myClassConstructorSRadioButton);
-    new RadioUpDownListener(myCurrentMethodRadioButton, myFieldDeclarationRadioButton, myClassConstructorSRadioButton);
+    if (TestFrameworks.getInstance().isTestClass(clazz)) {
+      initialization.add(mySetUpMethodRadioButton);
+      new RadioUpDownListener(myCurrentMethodRadioButton, myFieldDeclarationRadioButton, myClassConstructorSRadioButton, mySetUpMethodRadioButton);
+    }
+    else {
+      mySetUpMethodRadioButton.setVisible(false);
+      new RadioUpDownListener(myCurrentMethodRadioButton, myFieldDeclarationRadioButton, myClassConstructorSRadioButton);
+    }
 
     if (clazz instanceof GroovyScriptClass) {
       myClassConstructorSRadioButton.setEnabled(false);
@@ -299,6 +309,7 @@ public class GrIntroduceFieldDialog extends DialogWrapper implements GrIntroduce
     if (myCurrentMethodRadioButton.isSelected()) return Init.CUR_METHOD;
     if (myFieldDeclarationRadioButton.isSelected()) return Init.FIELD_DECLARATION;
     if (myClassConstructorSRadioButton.isSelected()) return Init.CONSTRUCTOR;
+    if (mySetUpMethodRadioButton.isSelected()) return Init.SETUP_METHOD;
     throw new IncorrectOperationException("no initialization place is selected");
   }
 
