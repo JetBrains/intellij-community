@@ -275,14 +275,15 @@ public class MoveClassesOrPackagesUtil {
 
     PsiDirectory[] directories = aPackage != null ? aPackage.getDirectories() : null;
     final ProjectFileIndex fileIndex = ProjectRootManager.getInstance(project).getFileIndex();
-    final boolean filterOutSources = baseDir != null && fileIndex.isInTestSourceContent(baseDir.getVirtualFile());
-    if (directories != null && directories.length == 1 && !(filterOutSources &&
-                                                            !fileIndex.isInTestSourceContent(directories[0].getVirtualFile()))) {
+    final VirtualFile baseDirVirtualFile = baseDir != null ? baseDir.getVirtualFile() : null;
+    final boolean isBaseDirInTestSources = baseDirVirtualFile != null && fileIndex.isInTestSourceContent(baseDirVirtualFile);
+    if (directories != null && directories.length == 1 && (baseDirVirtualFile == null ||
+                                                           fileIndex.isInTestSourceContent(directories[0].getVirtualFile()) == isBaseDirInTestSources)) {
       directory = directories[0];
     }
     else {
       final VirtualFile[] contentSourceRoots = ProjectRootManager.getInstance(project).getContentSourceRoots();
-      if (contentSourceRoots.length == 1 && !(filterOutSources && !fileIndex.isInTestSourceContent(contentSourceRoots[0]))) {
+      if (contentSourceRoots.length == 1 && (baseDirVirtualFile == null || fileIndex.isInTestSourceContent(contentSourceRoots[0]) == isBaseDirInTestSources)) {
         directory = ApplicationManager.getApplication().runWriteAction(new Computable<PsiDirectory>() {
           @Override
           public PsiDirectory compute() {
