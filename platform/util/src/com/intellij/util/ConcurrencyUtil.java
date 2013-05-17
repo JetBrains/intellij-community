@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2009 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -13,7 +13,6 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-
 package com.intellij.util;
 
 import org.jetbrains.annotations.NonNls;
@@ -29,11 +28,11 @@ import java.util.concurrent.*;
  */
 public class ConcurrencyUtil {
   /**
-   * invokes and waits all tasks using threadPool, avoiding thread starvation on the way
-   * @lookat http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html
+   * Invokes and waits all tasks using threadPool, avoiding thread starvation on the way
+   * (see <a href="http://gafter.blogspot.com/2006/11/thread-pool-puzzler.html">"A Thread Pool Puzzler"</a>).
    */
   public static <T> List<Future<T>> invokeAll(@NotNull Collection<Callable<T>> tasks, ExecutorService executorService) throws Throwable {
-    if (executorService == null) { 
+    if (executorService == null) {
       for (Callable<T> task : tasks) {
         task.call();
       }
@@ -47,7 +46,7 @@ public class ConcurrencyUtil {
         Future<T> future = executorService.submit(t);
         futures.add(future);
       }
-      // force unstarted futures to execute using the current thread
+      // force not started futures to execute using the current thread
       for (Future f : futures) {
         ((Runnable)f).run();
       }
@@ -77,10 +76,11 @@ public class ConcurrencyUtil {
   }
 
   /**
-   * @return defaultValue if there is no entry in the map (in that case defaultValue is placed into the map), or corresponding value if entry already exists
+   * @return defaultValue if there is no entry in the map (in that case defaultValue is placed into the map),
+   *         or corresponding value if entry already exists.
    */
   @NotNull
-  public static <K,V> V cacheOrGet(@NotNull ConcurrentMap<K, V> map, @NotNull final K key, @NotNull final V defaultValue) {
+  public static <K, V> V cacheOrGet(@NotNull ConcurrentMap<K, V> map, @NotNull final K key, @NotNull final V defaultValue) {
     V v = map.get(key);
     if (v != null) return v;
     V prev = map.putIfAbsent(key, defaultValue);
