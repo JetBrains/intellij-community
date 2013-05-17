@@ -213,6 +213,10 @@ public class UnscrambleDialog extends DialogWrapper {
     return new Action[]{createNormalizeTextAction(), getOKAction(), getCancelAction(), getHelpAction()};
   }
 
+  public JComponent getPreferredFocusedComponent() {
+    return getButtons()[1]; //ok
+  }
+
   private void createLogFileChooser() {
     myLogFile = new TextFieldWithHistory();
     JPanel panel = GuiUtils.constructFieldWithBrowseButton(myLogFile, new ActionListener() {
@@ -415,10 +419,6 @@ public class UnscrambleDialog extends DialogWrapper {
 
   protected String getDimensionServiceKey(){
     return "#com.intellij.unscramble.UnscrambleDialog";
-  }
-
-  public JComponent getPreferredFocusedComponent() {
-    return myStacktraceEditorPanel.getEditorComponent();
   }
 
   @Nullable
