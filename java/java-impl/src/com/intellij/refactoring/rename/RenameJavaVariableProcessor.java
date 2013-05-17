@@ -260,6 +260,16 @@ public class RenameJavaVariableProcessor extends RenameJavaMemberProcessor {
   }
 
   @Override
+  public void findExistingNameConflicts(PsiElement element,
+                                        String newName,
+                                        MultiMap<PsiElement, String> conflicts,
+                                        Map<PsiElement, String> allRenames) {
+    for (PsiElement psiElement : allRenames.keySet()) {
+      RenamePsiElementProcessor.forElement(psiElement).findExistingNameConflicts(psiElement, allRenames.get(psiElement), conflicts);
+    }
+  }
+
+  @Override
   public void findExistingNameConflicts(PsiElement element, String newName, MultiMap<PsiElement, String> conflicts) {
     if (element instanceof PsiCompiledElement) return;
     if (element instanceof PsiField) {

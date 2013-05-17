@@ -144,7 +144,7 @@ public class RenameProcessor extends BaseRefactoringProcessor {
     MultiMap<PsiElement, String> conflicts = new MultiMap<PsiElement, String>();
 
     RenameUtil.addConflictDescriptions(usagesIn, conflicts);
-    RenamePsiElementProcessor.forElement(myPrimaryElement).findExistingNameConflicts(myPrimaryElement, myNewName, conflicts);
+    RenamePsiElementProcessor.forElement(myPrimaryElement).findExistingNameConflicts(myPrimaryElement, myNewName, conflicts, myAllRenames);
     if (!conflicts.isEmpty()) {
       if (ApplicationManager.getApplication().isUnitTestMode()) {
         throw new ConflictsInTestsException(conflicts.values());
