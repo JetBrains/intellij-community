@@ -89,6 +89,7 @@ import com.intellij.profile.codeInspection.InspectionProfileManager;
 import com.intellij.profile.codeInspection.InspectionProjectProfileManager;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.CodeStyleSettingsManager;
+import com.intellij.psi.impl.DebugUtil;
 import com.intellij.psi.impl.PsiManagerImpl;
 import com.intellij.psi.impl.PsiModificationTrackerImpl;
 import com.intellij.psi.impl.cache.CacheManager;
@@ -671,7 +672,8 @@ public class CodeInsightTestFixtureImpl extends BaseFixture implements CodeInsig
     assert element != null : "element not found in file " +
                              myFile.getName() +
                              " at caret position, offset " +
-                             myEditor.getCaretModel().getOffset();
+                             myEditor.getCaretModel().getOffset() + "\"" +
+                             " psi structure: " + DebugUtil.psiToString(myFile, true);
     return element;
   }
 
