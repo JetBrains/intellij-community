@@ -86,8 +86,9 @@ class DataTable implements Disposable, Forceable {
     long newLenght = result + len;
     writeBytes(newLenght - 1, new byte[]{0});
     long actualLenght = myFile.length();
-    LOG.assertTrue(actualLenght == newLenght,
-                   "Failed to resize the storage at: " + myFile.getFile() + ". Required: " + newLenght + ", actual: " + actualLenght);
+    if (actualLenght != newLenght) {
+      LOG.error("Failed to resize the storage at: " + myFile.getFile() + ". Required: " + newLenght + ", actual: " + actualLenght);
+    }
     return result;
   }
 
