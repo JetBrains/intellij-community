@@ -35,8 +35,9 @@ import java.util.UUID;
  */
 @SuppressWarnings({"UtilityClassWithoutPrivateConstructor"})
 public class FileUtilRt {
-  public static final int MEGABYTE = 1024 * 1024;
-  public static final int LARGE_FOR_CONTENT_LOADING = 20 * MEGABYTE;
+  private static final int KILOBYTE = 1024;
+  public static final int MEGABYTE = KILOBYTE * KILOBYTE;
+  public static final int LARGE_FOR_CONTENT_LOADING = Math.max(20 * MEGABYTE, getUserFileSizeLimit());
 
   private static final LoggerRt LOG = LoggerRt.getInstance("#com.intellij.openapi.util.io.FileUtilLight");
   private static final int MAX_FILE_DELETE_ATTEMPTS = 10;
@@ -551,6 +552,15 @@ public class FileUtilRt {
         if (read < 0) break;
         outputStream.write(buffer, 0, read);
       }
+    }
+  }
+
+  public static int getUserFileSizeLimit() {
+    try {
+      return Integer.parseInt(System.getProperty("idea.max.intellisense.filesize")) * KILOBYTE;
+    }
+    catch (NumberFormatException e) {
+      return 2500 * KILOBYTE;
     }
   }
 }
