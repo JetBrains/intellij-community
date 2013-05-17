@@ -70,7 +70,7 @@ public class LocalSearchScope extends SearchScope {
         List<PsiFile> files = ((PsiFile)element).getViewProvider().getAllFiles();
         ContainerUtil.addAll(localScope, files);
       }
-      else {
+      else if (element.getTextRange() != null){
         localScope.add(element);
       }
     }
