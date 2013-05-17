@@ -114,10 +114,10 @@ public class JavaTreeGenerator implements TreeGenerator {
     if (original instanceof PsiCompiledElement) {
       PsiElement sourceVersion = original.getNavigationElement();
       if (sourceVersion != original) {
-        return ChangeUtil.generateTreeElement(sourceVersion, table,manager);
+        return ChangeUtil.generateTreeElement(sourceVersion, table, manager);
       }
-      ASTNode mirror = SourceTreeToPsiMap.psiElementToTree(((PsiCompiledElement)original).getMirror());
-      return ChangeUtil.generateTreeElement(SourceTreeToPsiMap.treeElementToPsi(mirror), table,manager);
+      PsiElement mirror = ((PsiCompiledElement)original).getMirror();
+      return ChangeUtil.generateTreeElement(mirror, table, manager);
     }
 
     if (original instanceof PsiTypeElement) {
