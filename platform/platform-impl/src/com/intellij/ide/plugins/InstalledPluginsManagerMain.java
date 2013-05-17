@@ -307,7 +307,20 @@ public class InstalledPluginsManagerMain extends PluginManagerMain {
   @Override
   protected String canApply() {
     final Map<PluginId, Set<PluginId>> dependentToRequiredListMap =
-      ((InstalledPluginsTableModel)pluginsModel).getDependentToRequiredListMap();
+      new HashMap<PluginId, Set<PluginId>>(((InstalledPluginsTableModel)pluginsModel).getDependentToRequiredListMap());
+    for (Iterator<PluginId> iterator = dependentToRequiredListMap.keySet().iterator(); iterator.hasNext(); ) {
+      final PluginId id = iterator.next();
+      boolean hasNonModuleDeps = false;
+      for (PluginId pluginId : dependentToRequiredListMap.get(id)) {
+        if (!PluginManager.isModuleDependency(pluginId)) {
+          hasNonModuleDeps = true;
+          break;
+        }
+      }
+      if (!hasNonModuleDeps) {
+        iterator.remove();
+      }
+    }
     if (!dependentToRequiredListMap.isEmpty()) {
       final StringBuffer sb = new StringBuffer("<html><body style=\"padding: 5px;\">Unable to apply changes: plugin")
         .append(dependentToRequiredListMap.size() == 1 ? " " : "s ");
