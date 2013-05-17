@@ -45,6 +45,7 @@ import com.intellij.openapi.fileTypes.*;
 import com.intellij.openapi.options.Configurable;
 import com.intellij.openapi.options.ConfigurationException;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.ui.Splitter;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.io.FileUtil;
@@ -95,10 +96,16 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   private JEditorPane myDescriptionComponent;
   private boolean myModified = false;
   private URL myDefaultDescriptionUrl;
-  private final Project myProject = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+  private final Project myProject;
 
   private final List<ChangeListener> myChangeListeners = ContainerUtil.createLockFreeCopyOnWriteList();;
   private Splitter mySplitter;
+  private FileType myVelocityFileType = FileTypeManager.getInstance().getFileTypeByExtension("ft");
+
+  public FileTemplateConfigurable() {
+    Project project = PlatformDataKeys.PROJECT.getData(DataManager.getInstance().getDataContext());
+    myProject = project != null ? project : ProjectManager.getInstance().getDefaultProject();
+  }
 
   public FileTemplate getTemplate() {
     return myTemplate;
@@ -363,7 +370,7 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   private PsiFile createFile(final String text, final String name) {
     if (myTemplate == null || myProject == null) return null;
 
-    final FileType fileType = FileTypeManager.getInstance().getFileTypeByExtension("ft");
+    final FileType fileType = myVelocityFileType;
     if (fileType == FileTypes.UNKNOWN) return null;
 
     final PsiFile file = PsiFileFactory.getInstance(myProject).createFileFromText(name + ".txt.ft", fileType, text, 0, true);
@@ -382,21 +389,20 @@ public class FileTemplateConfigurable implements Configurable, Configurable.NoSc
   }
 
   private EditorHighlighter createHighlighter() {
-    if (myTemplate != null && myProject != null) {
+    if (myTemplate != null && myProject != null && myVelocityFileType != FileTypes.UNKNOWN) {
       return EditorHighlighterFactory.getInstance().createEditorHighlighter(myProject, new LightVirtualFile("aaa." + myTemplate.getExtension() + ".ft"));
     }
-    else {
-      FileType fileType = null;
-      if (myTemplate != null) {
-        fileType = FileTypeManager.getInstance().getFileTypeByExtension(myTemplate.getExtension());
-      }
-      if (fileType == null) {
-        fileType = FileTypes.PLAIN_TEXT;
-      }
-      SyntaxHighlighter originalHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, null, null);
-      if (originalHighlighter == null) originalHighlighter = new PlainSyntaxHighlighter();
-      return new LexerEditorHighlighter(new TemplateHighlighter(originalHighlighter), EditorColorsManager.getInstance().getGlobalScheme());
+
+    FileType fileType = null;
+    if (myTemplate != null) {
+      fileType = FileTypeManager.getInstance().getFileTypeByExtension(myTemplate.getExtension());
     }
+    if (fileType == null) {
+      fileType = FileTypes.PLAIN_TEXT;
+    }
+    SyntaxHighlighter originalHighlighter = SyntaxHighlighterFactory.getSyntaxHighlighter(fileType, null, null);
+    if (originalHighlighter == null) originalHighlighter = new PlainSyntaxHighlighter();
+    return new LexerEditorHighlighter(new TemplateHighlighter(originalHighlighter), EditorColorsManager.getInstance().getGlobalScheme());
   }
 
   private final static TokenSet TOKENS_TO_MERGE = TokenSet.create(FileTemplateTokenType.TEXT);
