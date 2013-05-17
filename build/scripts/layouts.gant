@@ -44,7 +44,7 @@ String patchAppDescriptor(String targetDirectory) {
   return patchedDirectory
 }
 
-def layoutFull(String home, String targetDirectory, String patchedDescriptorDir = null) {
+def layoutFull(String home, String targetDirectory, String patchedDescriptorDir = null, String androidHome=null) {
   projectBuilder.stage("layout to $targetDirectory")
 
   //noinspection GroovyAssignabilityCheck
@@ -189,7 +189,7 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
       }
     }
 
-    layoutCommunityPlugins(home)
+    layoutCommunityPlugins(home, androidHome)
 
     dir("plugins") {
       dir("javaFX") {

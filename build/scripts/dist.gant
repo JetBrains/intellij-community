@@ -93,14 +93,14 @@ target('build-dist-jars' : 'Target to build jars from locally compiled classes')
              home, null, paths)
 }
 
-def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps = false) {
+def layoutAll(Map args, String home, String out, Paths _paths = null, buildJps = false, String androidHome = null) {
   Paths paths = _paths != null ? _paths : new Paths(out)
 
   wireBuildDate(args.buildNumber, appInfoFile())
   ant.echo(message: args.buildNumber, file: "$paths.distAll/build.txt")
 
   def layouts = includeFile("$home/build/scripts/layouts.gant")
-  layouts.layoutFull(home, paths.distAll)
+  layouts.layoutFull(home, paths.distAll, null, androidHome)
   layouts.layout_core(home, paths.artifacts_core)
   notifyArtifactBuilt(paths.artifacts_core)
   layouts.layout_core_upsource(home, paths.artifacts_core_upsource)
