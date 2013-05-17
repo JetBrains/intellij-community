@@ -50,7 +50,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
   private final ReentrantReadWriteLock myLock = new ReentrantReadWriteLock();
   
   private Factory<PersistentHashMap<Integer, Collection<Key>>> myInputsIndexFactory;
-
+  private boolean myNeedsCompaction;
 
   public MapReduceIndex(@Nullable final ID<Key, Value> indexId, DataIndexer<Key, Value, Input> indexer, @NotNull IndexStorage<Key, Value> storage) {
     myIndexId = indexId;
@@ -75,6 +75,9 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
         }
         catch (IOException ignored) {
         }
+
+        // if we clear index (at arbitrary moment of time) we should run without progress to avoid modality switching issues: IDEA-107265
+        myNeedsCompaction = false;
         FileUtil.delete(baseFile);
         myInputsIndex = createInputsIndex();
       }
@@ -86,6 +89,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
       LOG.error(e);
     }
     finally {
+      myNeedsCompaction = true;
       getWriteLock().unlock();
     }
   }
@@ -295,4 +299,7 @@ public class MapReduceIndex<Key, Value, Input> implements UpdatableIndex<Key,Val
     }
   }
 
+  public boolean doesNeedCompaction() {
+    return myNeedsCompaction;
+  }
 }
