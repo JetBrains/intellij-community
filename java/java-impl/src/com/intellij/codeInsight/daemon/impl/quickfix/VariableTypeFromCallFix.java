@@ -33,6 +33,8 @@ import com.intellij.psi.util.PsiUtil;
 import com.intellij.refactoring.typeMigration.TypeMigrationLabeler;
 import com.intellij.refactoring.typeMigration.TypeMigrationProcessor;
 import com.intellij.refactoring.typeMigration.TypeMigrationRules;
+import com.intellij.usageView.UsageViewUtil;
+import com.intellij.usages.impl.UsageViewImpl;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
 
@@ -49,6 +51,7 @@ public class VariableTypeFromCallFix implements IntentionAction {
   @NotNull
   public String getText() {
     return QuickFixBundle.message("fix.variable.type.text",
+                                  UsageViewUtil.getType(myVar),
                                   myVar.getName(),
                                   myExpressionType.getCanonicalText());
   }

@@ -23,6 +23,7 @@ import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
+import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -48,7 +49,7 @@ public class VariableArrayTypeFix extends LocalQuickFixAndIntentionActionOnPsiEl
     PsiVariable myVariable = getVariableLocal(arrayInitializer);
     myName = myVariable == null ? null : myTargetType.equals(myVariable.getType()) && myNewExpression != null ?
              QuickFixBundle.message("change.new.operator.type.text", getNewText(myNewExpression,arrayInitializer), myTargetType.getCanonicalText(), "") :
-             QuickFixBundle.message("fix.variable.type.text", myVariable.getName(), myTargetType.getCanonicalText());
+             QuickFixBundle.message("fix.variable.type.text", UsageViewUtil.getType(myVariable), myVariable.getName(), myTargetType.getCanonicalText());
     myFamilyName = myVariable == null ? null : myTargetType.equals(myVariable.getType()) && myNewExpression != null ?
                    QuickFixBundle.message("change.new.operator.type.family") :
                    QuickFixBundle.message("fix.variable.type.family");
