@@ -113,12 +113,12 @@ public class GroovyGenerationInfo<T extends PsiMember> extends PsiGenerationInfo
 
   @Override
   public PsiElement findInsertionAnchor(@NotNull PsiClass aClass, @NotNull PsiElement leaf) {
-    if (leaf.getParent() == aClass) {
-      return null; // we are not in class body
-    }
-
     PsiElement parent = aClass instanceof GroovyScriptClass ? aClass.getContainingFile() : ((GrTypeDefinition)aClass).getBody();
     if (parent == null) return null;
+
+    if (!PsiTreeUtil.isAncestor(parent, leaf, true)) {
+      return null; // we are not in class body
+    }
 
     PsiElement element = PsiTreeUtil.findPrevParent(parent, leaf);
 
