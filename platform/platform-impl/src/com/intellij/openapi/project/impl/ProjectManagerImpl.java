@@ -374,11 +374,14 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
         LOG.error("Open projects: " + myOpenProjects + "; cache: " + Arrays.asList(myOpenProjectsArrayCache));
       }
       if (myOpenProjectsArrayCache.length > 0 && myOpenProjectsArrayCache[0] != myOpenProjects.get(0)) {
-        LOG
-          .error("Open projects cache corrupted. Open projects: " + myOpenProjects + "; cache: " + Arrays.asList(myOpenProjectsArrayCache));
+        LOG.error("Open projects cache corrupted. Open projects: " + myOpenProjects + "; cache: " + Arrays.asList(myOpenProjectsArrayCache));
       }
       if (ApplicationManager.getApplication().isUnitTestMode()) {
-        return ArrayUtil.mergeArrays(myOpenProjectsArrayCache, myTestProjects.toArray(new Project[myTestProjects.size()]));
+        Project[] testProjects = myTestProjects.toArray(new Project[myTestProjects.size()]);
+        for (Project testProject : testProjects) {
+          assert !testProject.isDisposed() : testProject;
+        }
+        return ArrayUtil.mergeArrays(myOpenProjectsArrayCache, testProjects);
       }
       return myOpenProjectsArrayCache;
     }
@@ -386,7 +389,9 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Override
   public boolean isProjectOpened(Project project) {
-    return ApplicationManager.getApplication().isUnitTestMode() && myTestProjects.contains(project) || myOpenProjects.contains(project);
+    synchronized (myOpenProjects) {
+      return ApplicationManager.getApplication().isUnitTestMode() && myTestProjects.contains(project) || myOpenProjects.contains(project);
+    }
   }
 
   @Override
@@ -770,15 +775,20 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
 
   @Override
   public void openTestProject(@NotNull final Project project) {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    myTestProjects.add(project);
+    synchronized (myOpenProjects) {
+      assert ApplicationManager.getApplication().isUnitTestMode();
+      assert !project.isDisposed() : "Must not open already disposed project";
+      myTestProjects.add(project);
+    }
   }
 
   @Override
   public Collection<Project> closeTestProject(@NotNull Project project) {
-    assert ApplicationManager.getApplication().isUnitTestMode();
-    myTestProjects.remove(project);
-    return myTestProjects;
+    synchronized (myOpenProjects) {
+      assert ApplicationManager.getApplication().isUnitTestMode();
+      myTestProjects.remove(project);
+      return myTestProjects;
+    }
   }
 
   @Override
@@ -946,8 +956,8 @@ public class ProjectManagerImpl extends ProjectManagerEx implements NamedJDOMExt
           synchronized (myOpenProjects) {
             myOpenProjects.remove(project);
             cacheOpenProjects();
+            myTestProjects.remove(project);
           }
-          myTestProjects.remove(project);
 
           myChangedProjectFiles.remove(project);
 
