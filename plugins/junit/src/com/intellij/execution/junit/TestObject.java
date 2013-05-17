@@ -206,7 +206,9 @@ public abstract class TestObject implements JavaCommandLine {
 
     myJavaParameters.getClassPath().add(JavaSdkUtil.getIdeaRtJarPath());
     myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(JUnitStarter.class));
-    myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
+    if (Registry.is("junit_sm_runner", false)) {
+      myJavaParameters.getClassPath().add(PathUtil.getJarPathForClass(ServiceMessageTypes.class));
+    }
     myJavaParameters.getProgramParametersList().add(JUnitStarter.IDE_VERSION + JUnitStarter.VERSION);
     for (RunConfigurationExtension ext : Extensions.getExtensions(RunConfigurationExtension.EP_NAME)) {
       ext.updateJavaParameters(myConfiguration, myJavaParameters, getRunnerSettings());
