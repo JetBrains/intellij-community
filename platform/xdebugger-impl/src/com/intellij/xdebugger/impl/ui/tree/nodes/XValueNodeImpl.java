@@ -235,6 +235,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     return myValue;
   }
 
+  public boolean isComputed() {
+    return myName != null && myValuePresenter != null;
+  }
+
   public void setValueModificationStarted() {
     ApplicationManager.getApplication().assertIsDispatchThread();
     myValue = null;
@@ -244,5 +248,10 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
     myText.append(XDebuggerUIConstants.MODIFYING_VALUE_MESSAGE, XDebuggerUIConstants.MODIFYING_VALUE_HIGHLIGHT_ATTRIBUTES);
     setLeaf(true);
     fireNodeStructureChanged();
+  }
+
+  @Override
+  public String toString() {
+    return getName();
   }
 }
