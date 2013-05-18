@@ -596,15 +596,6 @@ def layoutCommunityJps(String home, String target) {
     }
     jar("ui-designer-jps-plugin.jar") { module("ui-designer-jps-plugin") }
 
-    jar("android-jps-plugin.jar") {
-      module("android-jps-plugin")
-      module("android-common")
-      module("android-rt")
-    }
-    fileset(dir: "${home}/plugins/android/lib") {
-      include(name: "**/*.jar")
-      exclude(name: "**/ddmlib_1.jar")
-    }
 
     jar("maven-jps-plugin.jar") { module("maven-jps-plugin") }
     fileset(dir: "$home/plugins/maven/maven3-server-impl/lib/maven3/lib") {include(name: "plexus-utils-*.jar")}
