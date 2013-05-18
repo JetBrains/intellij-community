@@ -115,12 +115,12 @@ public class XValueNodeImpl extends XValueContainerNode<XValue> implements XValu
   }
 
   @Override
-  public void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String type, boolean expand) {
-    setPresentation(null, icon, type, "", "", null, true, expand);
+  public void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @Nullable XValuePresenter valuePresenter, boolean expand) {
+    setPresentation(null, icon, null, value == null ? "" : XDebuggerUIConstants.EQ_TEXT, value, valuePresenter, true, expand);
   }
 
   @Override
-  public void setPresentation(@Nullable Icon icon, @NonNls @NotNull String value, @Nullable XValuePresenter valuePresenter, boolean hasChildren) {
+  public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @Nullable XValuePresenter valuePresenter, boolean hasChildren) {
     setPresentation(null, icon, null, XDebuggerUIConstants.EQ_TEXT, value, valuePresenter, hasChildren, false);
   }
 

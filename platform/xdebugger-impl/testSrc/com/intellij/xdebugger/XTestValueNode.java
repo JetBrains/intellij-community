@@ -32,12 +32,12 @@ public class XTestValueNode implements XValueNode {
   }
 
   @Override
-  public void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String type, boolean expand) {
-    setPresentation(icon, type, "", true);
+  public void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @Nullable XValuePresenter valuePresenter, boolean expand) {
+    setPresentation(icon, value, valuePresenter, true);
   }
 
   @Override
-  public void setPresentation(@Nullable Icon icon, @NonNls @NotNull String value, @Nullable XValuePresenter valuePresenter, boolean hasChildren) {
+  public void setPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @Nullable XValuePresenter valuePresenter, boolean hasChildren) {
     setPresentation(icon, null, value, hasChildren);
   }
 

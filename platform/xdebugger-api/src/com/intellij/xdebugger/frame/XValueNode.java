@@ -57,7 +57,7 @@ public interface XValueNode extends Obsolescent {
   /**
    * Setup presentation of the grouping value (value as container)
    */
-  void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String type, boolean expand);
+  void setGroupingPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @Nullable XValuePresenter valuePresenter, boolean expand);
 
   /**
    * The same as {@link #setPresentation(javax.swing.Icon, String, String, boolean)} but allows to change default processing of
@@ -72,7 +72,7 @@ public interface XValueNode extends Obsolescent {
   void setPresentation(@Nullable Icon icon, @NonNls @Nullable String type, @NonNls @NotNull String value,
                        @Nullable NotNullFunction<String, String> valuePresenter, boolean hasChildren);
 
-  void setPresentation(@Nullable Icon icon, @NonNls @NotNull String value, @Nullable XValuePresenter valuePresenter, boolean hasChildren);
+  void setPresentation(@Nullable Icon icon, @NonNls @Nullable String value, @Nullable XValuePresenter valuePresenter, boolean hasChildren);
 
   /**
    * The same as {@link #setPresentation(javax.swing.Icon, String, String, com.intellij.util.NotNullFunction, boolean)} but also allows to
