@@ -15,7 +15,6 @@
  */
 package com.intellij.openapi.externalSystem.service.project.manage;
 
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.AbstractDependencyData;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
@@ -40,8 +39,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
 {
 
   public void setScope(@NotNull final DependencyScope scope, @NotNull final ExportableOrderEntry dependency, boolean synchronous) {
-    Project project = dependency.getOwnerModule().getProject();
-    ExternalSystemApiUtil.executeProjectChangeAction(project, ProjectSystemId.IDE, dependency, synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
       @Override
       public void run() {
         doForDependency(dependency, new Consumer<ExportableOrderEntry>() {
@@ -55,8 +53,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
   }
 
   public void setExported(final boolean exported, @NotNull final ExportableOrderEntry dependency, boolean synchronous) {
-    Project project = dependency.getOwnerModule().getProject();
-    ExternalSystemApiUtil.executeProjectChangeAction(project, ProjectSystemId.IDE, dependency, synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
       @Override
       public void run() {
         doForDependency(dependency, new Consumer<ExportableOrderEntry>() {
@@ -119,7 +116,7 @@ public abstract class AbstractDependencyDataService<E extends AbstractDependency
       return;
     }
     for (final ExportableOrderEntry dependency : toRemove) {
-      ExternalSystemApiUtil.executeProjectChangeAction(module.getProject(), ProjectSystemId.IDE, toRemove, synchronous, new Runnable() {
+      ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
         @Override
         public void run() {
           ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);

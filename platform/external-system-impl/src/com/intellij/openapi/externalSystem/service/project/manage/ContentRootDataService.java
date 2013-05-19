@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.ContentRootData;
 import com.intellij.openapi.externalSystem.model.project.ExternalSystemSourceType;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
@@ -67,17 +66,15 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
         ));
         continue;
       }
-      importData(entry.getValue(), entry.getKey().getData().getOwner(), project, module, synchronous);
+      importData(entry.getValue(), module, synchronous);
     }
   }
 
   private static void importData(@NotNull final Collection<DataNode<ContentRootData>> datas,
-                                 @NotNull ProjectSystemId owner,
-                                 @NotNull Project project,
                                  @NotNull final Module module,
                                  boolean synchronous)
   {
-    ExternalSystemApiUtil.executeProjectChangeAction(project, owner, datas, synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
       @Override
       public void run() {
         final ModuleRootManager moduleRootManager = ModuleRootManager.getInstance(module);
@@ -201,15 +198,12 @@ public class ContentRootDataService implements ProjectDataService<ContentRootDat
       roots.add(root);
     }
     for (Map.Entry<Module, Collection<ModuleAwareContentRoot>> entry : byModule.entrySet()) {
-      doRemoveData(entry.getValue(), project, synchronous);
+      doRemoveData(entry.getValue(), synchronous);
     }
   }
 
-  private static void doRemoveData(@NotNull final Collection<ModuleAwareContentRoot> contentRoots,
-                                   @NotNull Project project,
-                                   boolean synchronous)
-  {
-    ExternalSystemApiUtil.executeProjectChangeAction(project, ProjectSystemId.IDE, contentRoots, synchronous, new Runnable() {
+  private static void doRemoveData(@NotNull final Collection<ModuleAwareContentRoot> contentRoots, boolean synchronous) {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
       @Override
       public void run() {
         for (ModuleAwareContentRoot contentRoot : contentRoots) {

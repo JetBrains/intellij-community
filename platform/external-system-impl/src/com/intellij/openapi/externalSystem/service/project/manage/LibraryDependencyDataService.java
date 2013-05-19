@@ -19,7 +19,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.LibraryDependencyData;
 import com.intellij.openapi.externalSystem.model.project.ModuleData;
@@ -98,16 +97,15 @@ public class LibraryDependencyDataService extends AbstractDependencyDataService<
           continue;
         }
       }
-      importData(entry.getValue(), entry.getKey().getData().getOwner(), module, synchronous);
+      importData(entry.getValue(), module, synchronous);
     }
   }
 
   public void importData(@NotNull final Collection<DataNode<LibraryDependencyData>> nodesToImport,
-                         @NotNull ProjectSystemId externalSystemId,
                          @NotNull final Module module,
                          final boolean synchronous)
   {
-    ExternalSystemApiUtil.executeProjectChangeAction(module.getProject(), externalSystemId, nodesToImport, synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
       @Override
       public void run() {
         LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(module.getProject());

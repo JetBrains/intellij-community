@@ -3,9 +3,7 @@ package com.intellij.openapi.externalSystem.service.project.wizard;
 import com.intellij.ide.util.projectWizard.WizardContext;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
-import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.ProjectData;
 import com.intellij.openapi.externalSystem.service.internal.ExternalSystemResolveProjectTask;
 import com.intellij.openapi.externalSystem.service.project.ExternalProjectRefreshCallback;
@@ -42,7 +40,10 @@ import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
 import java.io.File;
-import java.util.*;
+import java.util.Arrays;
+import java.util.Collections;
+import java.util.List;
+import java.util.Set;
 
 /**
  * GoF builder for gradle-backed projects.
@@ -137,7 +138,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
         onProjectInit(project);
 
         if (externalProjectNode != null) {
-          ExternalSystemApiUtil.executeProjectChangeAction(project, myExternalSystemId, project, new Runnable() {
+          ExternalSystemApiUtil.executeProjectChangeAction(new Runnable() {
             @Override
             public void run() {
               ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {
@@ -202,8 +203,7 @@ public abstract class AbstractExternalProjectImportBuilder<C extends AbstractImp
    *                                      dependencies information available at the given gradle project
    */
   private void setupLibraries(@NotNull final DataNode<ProjectData> projectWithResolvedLibraries, final Project project) {
-    Collection<DataNode<LibraryData>> libraries = ExternalSystemApiUtil.findAll(projectWithResolvedLibraries, ProjectKeys.LIBRARY);
-    ExternalSystemApiUtil.executeProjectChangeAction(project, projectWithResolvedLibraries.getData().getOwner(), libraries, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(new Runnable() {
       @Override
       public void run() {
         ProjectRootManagerEx.getInstanceEx(project).mergeRootsChangesDuring(new Runnable() {

@@ -23,7 +23,6 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.fileTypes.FileTypes;
-import com.intellij.openapi.project.Project;
 import com.intellij.openapi.project.ProjectManager;
 import com.intellij.openapi.roots.OrderRootType;
 import com.intellij.openapi.roots.libraries.Library;
@@ -32,7 +31,10 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.*;
+import com.intellij.util.BooleanFunction;
+import com.intellij.util.Function;
+import com.intellij.util.PathUtil;
+import com.intellij.util.PathsList;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -290,37 +292,11 @@ public class ExternalSystemApiUtil {
     return StringUtil.capitalize(id.toString().toLowerCase());
   }
 
-  public static void executeProjectChangeAction(@NotNull Project project,
-                                                @NotNull final ProjectSystemId externalSystemId,
-                                                @NotNull Object entityToChange,
-                                                @NotNull Runnable task)
-  {
-    executeProjectChangeAction(project, externalSystemId, entityToChange, false, task);
+  public static void executeProjectChangeAction(@NotNull final Runnable task) {
+    executeProjectChangeAction(false, task);
   }
 
-  public static void executeProjectChangeAction(@NotNull Project project,
-                                                @NotNull final ProjectSystemId externalSystemId,
-                                                @NotNull Object entityToChange,
-                                                boolean synchronous,
-                                                @NotNull Runnable task)
-  {
-    executeProjectChangeAction(project, externalSystemId, Collections.singleton(entityToChange), synchronous, task);
-  }
-
-  public static void executeProjectChangeAction(@NotNull final Project project,
-                                                @NotNull final ProjectSystemId externalSystemId,
-                                                @NotNull final Iterable<?> entitiesToChange,
-                                                @NotNull final Runnable task)
-  {
-    executeProjectChangeAction(project, externalSystemId, entitiesToChange, false, task);
-  }
-
-  public static void executeProjectChangeAction(@NotNull final Project project,
-                                                @NotNull final ProjectSystemId externalSystemId,
-                                                @NotNull final Iterable<?> entitiesToChange,
-                                                boolean synchronous,
-                                                @NotNull final Runnable task)
-  {
+  public static void executeProjectChangeAction(boolean synchronous, @NotNull final Runnable task) {
     Runnable wrappedTask = new Runnable() {
       public void run() {
         ApplicationManager.getApplication().runWriteAction(new Runnable() {
@@ -383,16 +359,5 @@ public class ExternalSystemApiUtil {
    */
   public static boolean isNewProjectConstruction() {
     return ProjectManager.getInstance().getOpenProjects().length == 0;
-  }
-
-  /**
-   * Tries to guess external project name given it's path.
-   * 
-   * @param projectPath  target external project path
-   * @return             external project name on the basis of the given external project path
-   */
-  @NotNull
-  public static String guessProjectName(@NotNull String projectPath) {
-    return new File(projectPath).getParentFile().getName();
   }
 }

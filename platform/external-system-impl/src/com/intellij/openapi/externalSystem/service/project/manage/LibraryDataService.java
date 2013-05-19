@@ -4,7 +4,6 @@ import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
-import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.model.project.LibraryData;
 import com.intellij.openapi.externalSystem.model.project.LibraryPathType;
 import com.intellij.openapi.externalSystem.service.project.ExternalLibraryPathTypeMapper;
@@ -84,19 +83,18 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
 
     Library library = myProjectStructureHelper.findIdeLibrary(toImport, project);
     if (library != null) {
-      syncPaths(toImport, library, project, synchronous);
+      syncPaths(toImport, library, synchronous);
       return;
     }
-    importLibrary(toImport.getName(), toImport.getOwner(), libraryFiles, project, synchronous);
+    importLibrary(toImport.getName(), libraryFiles, project, synchronous);
   }
 
   public void importLibrary(@NotNull final String libraryName,
-                            @NotNull ProjectSystemId externalSystemId,
                             @NotNull final Map<OrderRootType, Collection<File>> libraryFiles,
                             @NotNull final Project project,
                             boolean synchronous)
   {
-    ExternalSystemApiUtil.executeProjectChangeAction(project, externalSystemId, libraryName, synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
       @Override
       public void run() {
         // Is assumed to be called from the EDT.
@@ -156,7 +154,7 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
     if (libraries.isEmpty()) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(project, ProjectSystemId.IDE, libraries, synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
       @Override
       public void run() {
         final LibraryTable libraryTable = myPlatformFacade.getProjectLibraryTable(project);
@@ -179,11 +177,7 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
     });
   }
 
-  public void syncPaths(@NotNull final LibraryData externalLibrary,
-                        @NotNull final Library ideLibrary,
-                        @NotNull Project project,
-                        boolean synchronous)
-  {
+  public void syncPaths(@NotNull final LibraryData externalLibrary, @NotNull final Library ideLibrary, boolean synchronous) {
     final Set<String> toRemove = ContainerUtilRt.newHashSet();
     final Set<String> toAdd = ContainerUtilRt.newHashSet(externalLibrary.getPaths(LibraryPathType.BINARY));
     for (VirtualFile ideFile : ideLibrary.getFiles(OrderRootType.CLASSES)) {
@@ -195,7 +189,7 @@ public class LibraryDataService implements ProjectDataService<LibraryData, Libra
     if (toRemove.isEmpty() && toAdd.isEmpty()) {
       return;
     }
-    ExternalSystemApiUtil.executeProjectChangeAction(project, externalLibrary.getOwner(), ideLibrary, synchronous, new Runnable() {
+    ExternalSystemApiUtil.executeProjectChangeAction(synchronous, new Runnable() {
       @Override
       public void run() {
         Library.ModifiableModel model = ideLibrary.getModifiableModel();
