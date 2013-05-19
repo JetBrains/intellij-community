@@ -15,16 +15,15 @@
  */
 package com.intellij.openapi.externalSystem.settings;
 
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
+import com.intellij.openapi.externalSystem.model.serialization.ExternalProjectPojo;
+import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
+import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.util.SystemProperties;
 import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-import java.util.Collections;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
+import java.util.*;
 import java.util.concurrent.atomic.AtomicReference;
 
 /**
@@ -43,15 +42,20 @@ public abstract class AbstractExternalSystemLocalSettings {
   private static final boolean PRESERVE_EXPAND_STATE
     = !SystemProperties.getBooleanProperty("external.system.forget.expand.nodes.state", false);
 
-  private final AtomicReference<Map<String/*tree path*/, Boolean/*expanded*/>> myExpandStates
-    = new AtomicReference<Map<String, Boolean>>(new HashMap<String, Boolean>());
-  private final AtomicReference<Map<String, List<ExternalSystemTaskDescriptor>>> myRecentTasks =
-    new AtomicReference<Map<String, List<ExternalSystemTaskDescriptor>>>(
-      ContainerUtilRt.<String, List<ExternalSystemTaskDescriptor>>newHashMap()
+  private final AtomicReference<Map<String/*tree path*/, Boolean/*expanded*/>>             myExpandStates
+                                                                                                               =
+    new AtomicReference<Map<String, Boolean>>(new HashMap<String, Boolean>());
+  private final AtomicReference<Map<String, Collection<TaskData>>>                         myRecentTasks       =
+    new AtomicReference<Map<String, Collection<TaskData>>>(
+      ContainerUtilRt.<String, Collection<TaskData>>newHashMap()
     );
-  private final AtomicReference<Map<String, List<ExternalSystemTaskDescriptor>>> myAvailableTasks =
-    new AtomicReference<Map<String, List<ExternalSystemTaskDescriptor>>>(
-      ContainerUtilRt.<String, List<ExternalSystemTaskDescriptor>>newHashMap()
+  private final AtomicReference<Map<ExternalProjectPojo, Collection<ExternalProjectPojo>>> myAvailableProjects =
+    new AtomicReference<Map<ExternalProjectPojo, Collection<ExternalProjectPojo>>>(
+      ContainerUtilRt.<ExternalProjectPojo, Collection<ExternalProjectPojo>>newHashMap()
+    );
+  private final AtomicReference<Map<String, Collection<ExternalTaskPojo>>>                 myAvailableTasks    =
+    new AtomicReference<Map<String, Collection<ExternalTaskPojo>>>(
+      ContainerUtilRt.<String, Collection<ExternalTaskPojo>>newHashMap()
     );
 
   @SuppressWarnings("UnusedDeclaration")
@@ -61,16 +65,25 @@ public abstract class AbstractExternalSystemLocalSettings {
   }
 
   @NotNull
-  public Map<String, List<ExternalSystemTaskDescriptor>> getAvailableTasks() {
+  public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> getAvailableProjects() {
+    return myAvailableProjects.get();
+  }
+
+  public void setAvailableProjects(@NotNull Map<ExternalProjectPojo, Collection<ExternalProjectPojo>> projects) {
+    myAvailableProjects.set(projects);
+  }
+
+  @NotNull
+  public Map<String, Collection<ExternalTaskPojo>> getAvailableTasks() {
     return myAvailableTasks.get();
   }
-  
-  public void setAvailableTasks(@NotNull Map<String, List<ExternalSystemTaskDescriptor>> tasks) {
+
+  public void setAvailableTasks(@NotNull Map<String, Collection<ExternalTaskPojo>> tasks) {
     myAvailableTasks.set(tasks);
   }
 
   @NotNull
-  public Map<String, List<ExternalSystemTaskDescriptor>> getRecentTasks() {
+  public Map<String, Collection<TaskData>> getRecentTasks() {
     return myRecentTasks.get();
   }
 
@@ -82,12 +95,14 @@ public abstract class AbstractExternalSystemLocalSettings {
       state.tasksExpandState = Collections.emptyMap();
     }
     state.recentTasks = myRecentTasks.get();
+    state.availableProjects = myAvailableProjects.get();
     state.availableTasks = myAvailableTasks.get();
   }
 
   public void loadState(@NotNull State state) {
     setIfNotNull(myExpandStates, state.tasksExpandState);
     setIfNotNull(myRecentTasks, state.recentTasks);
+    setIfNotNull(myAvailableProjects, state.availableProjects);
     setIfNotNull(myAvailableTasks, state.availableTasks);
   }
 
@@ -98,10 +113,11 @@ public abstract class AbstractExternalSystemLocalSettings {
       map.putAll(candidate);
     }
   }
-  
+
   public static class State {
-    public Map<String, Boolean>                                              tasksExpandState = ContainerUtilRt.newHashMap();
-    public Map<String/* project name */, List<ExternalSystemTaskDescriptor>> recentTasks      = ContainerUtilRt.newHashMap();
-    public Map<String/* project name */, List<ExternalSystemTaskDescriptor>> availableTasks   = ContainerUtilRt.newHashMap();
+    public Map<String, Boolean>                                        tasksExpandState  = ContainerUtilRt.newHashMap();
+    public Map<String/* project name */, Collection<TaskData>>         recentTasks       = ContainerUtilRt.newHashMap();
+    public Map<ExternalProjectPojo, Collection<ExternalProjectPojo>>   availableProjects = ContainerUtilRt.newHashMap();
+    public Map<String/* project name */, Collection<ExternalTaskPojo>> availableTasks    = ContainerUtilRt.newHashMap();
   }
 }

@@ -15,16 +15,29 @@
  */
 package com.intellij.openapi.externalSystem.service.task;
 
+import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.Key;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
+import com.intellij.openapi.externalSystem.model.ProjectSystemId;
+import com.intellij.openapi.externalSystem.model.project.ExternalConfigPathAware;
+import com.intellij.openapi.externalSystem.model.project.ModuleData;
+import com.intellij.openapi.externalSystem.model.serialization.ExternalTaskPojo;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.task.ui.ExternalSystemTasksTreeModel;
+import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
+import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
+import com.intellij.openapi.externalSystem.util.ExternalSystemUiUtil;
 import com.intellij.openapi.externalSystem.util.Order;
+import com.intellij.openapi.project.Project;
+import com.intellij.util.Function;
+import com.intellij.util.containers.ContainerUtilRt;
 import org.jetbrains.annotations.NotNull;
 
 import java.util.Collection;
+import java.util.List;
+import java.util.Map;
 
 /**
  * @author Denis Zhdanov
@@ -34,13 +47,51 @@ import java.util.Collection;
 public class ToolWindowTaskService extends AbstractToolWindowService<TaskData> {
 
   @NotNull
+  public static final Function<DataNode<TaskData>, ExternalTaskPojo> MAPPER = new Function<DataNode<TaskData>, ExternalTaskPojo>() {
+    @Override
+    public ExternalTaskPojo fun(DataNode<TaskData> node) {
+      return ExternalTaskPojo.from(node.getData());
+    }
+  };
+
+  public static final Function<DataNode<TaskData>, ExternalConfigPathAware> TASK_HOLDER_RETRIEVAL_STRATEGY =
+    new Function<DataNode<TaskData>, ExternalConfigPathAware>() {
+      @Override
+      public ExternalConfigPathAware fun(DataNode<TaskData> node) {
+        ModuleData moduleData = node.getData(ProjectKeys.MODULE);
+        return moduleData == null ? node.getData(ProjectKeys.PROJECT) : moduleData;
+      }
+    };
+
+  @NotNull
   @Override
   public Key<TaskData> getTargetDataKey() {
     return ProjectKeys.TASK;
   }
 
   @Override
-  protected void processData(@NotNull Collection<DataNode<TaskData>> nodes, @NotNull ExternalSystemTasksTreeModel model) {
-    // TODO den implement 
+  protected void processData(@NotNull Collection<DataNode<TaskData>> nodes,
+                             @NotNull Project project,
+                             @NotNull final ExternalSystemTasksTreeModel model)
+  {
+    if (nodes.isEmpty()) {
+      return;
+    }
+    ProjectSystemId externalSystemId = nodes.iterator().next().getData().getOwner();
+    ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(externalSystemId);
+    assert manager != null;
+
+    Map<ExternalConfigPathAware, List<DataNode<TaskData>>> grouped = ExternalSystemApiUtil.groupBy(nodes, TASK_HOLDER_RETRIEVAL_STRATEGY);
+    Map<String, Collection<ExternalTaskPojo>> data = ContainerUtilRt.newHashMap();
+    for (Map.Entry<ExternalConfigPathAware, List<DataNode<TaskData>>> entry : grouped.entrySet()) {
+      data.put(entry.getKey().getLinkedExternalProjectPath(), ContainerUtilRt.map2List(entry.getValue(), MAPPER));
+    }
+
+    AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
+    Map<String, Collection<ExternalTaskPojo>> availableTasks = ContainerUtilRt.newHashMap(settings.getAvailableTasks());
+    availableTasks.putAll(data);
+    settings.setAvailableTasks(availableTasks);
+
+    ExternalSystemUiUtil.apply(settings, model);
   }
 }

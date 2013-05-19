@@ -26,6 +26,7 @@ import com.intellij.openapi.externalSystem.ExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.build.ExternalSystemTaskManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
+import com.intellij.openapi.externalSystem.service.ui.DefaultExternalSystemUiAware;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.module.EmptyModuleType;
 import com.intellij.openapi.module.JavaModuleType;
@@ -228,5 +229,11 @@ public class GradleManager implements ExternalSystemConfigurableAware, ExternalS
   @Override
   public Icon getProjectIcon() {
     return GradleIcons.Gradle;
+  }
+
+  @Nullable
+  @Override
+  public Icon getTaskIcon() {
+    return DefaultExternalSystemUiAware.INSTANCE.getTaskIcon();
   }
 }

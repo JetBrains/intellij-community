@@ -18,7 +18,6 @@ package com.intellij.openapi.externalSystem.service.task.ui;
 import com.intellij.notification.NotificationGroup;
 import com.intellij.openapi.externalSystem.ExternalSystemManager;
 import com.intellij.openapi.externalSystem.model.ProjectSystemId;
-import com.intellij.openapi.externalSystem.settings.AbstractExternalSystemLocalSettings;
 import com.intellij.openapi.externalSystem.util.ExternalSystemApiUtil;
 import com.intellij.openapi.externalSystem.util.ExternalSystemBundle;
 import com.intellij.openapi.project.DumbAware;
@@ -52,11 +51,7 @@ public abstract class AbstractExternalSystemToolWindowFactory implements ToolWin
     String tasksTitle = ExternalSystemBundle.message("tool.window.title.tasks");
     ExternalSystemManager<?, ?, ?, ?, ?> manager = ExternalSystemApiUtil.getManager(myExternalSystemId);
     assert manager != null;
-    AbstractExternalSystemLocalSettings settings = manager.getLocalSettingsProvider().fun(project);
-    ExternalSystemTasksPanel panel = new ExternalSystemTasksPanel(settings.getAvailableTasks(),
-                                                                  project,
-                                                                  myExternalSystemId,
-                                                                  myNotificationGroup);
+    ExternalSystemTasksPanel panel = new ExternalSystemTasksPanel(project, myExternalSystemId, myNotificationGroup);
     ContentImpl tasksContent = new ContentImpl(panel, tasksTitle, true);
     contentManager.addContent(tasksContent);
   }

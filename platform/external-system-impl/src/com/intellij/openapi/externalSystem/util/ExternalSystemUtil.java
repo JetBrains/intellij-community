@@ -200,9 +200,7 @@ public class ExternalSystemUtil {
 
       @Override
       public void onFailure(@NotNull String errorMessage, @Nullable String errorDetails) {
-        if (--myCounter <= 0 && !project.isDisposed() && project.isOpen()) {
-          processOrphanModules();
-        }
+        myCounter = Integer.MAX_VALUE; // Don't process orphan modules if there was an error on refresh.
       }
 
       private void processOrphanModules() {

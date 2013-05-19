@@ -1,10 +1,15 @@
 package org.jetbrains.plugins.gradle.util;
 
 import com.intellij.ide.actions.OpenProjectFileChooserDescriptor;
+import com.intellij.openapi.externalSystem.util.ExternalSystemConstants;
 import com.intellij.openapi.fileChooser.FileChooserDescriptor;
 import com.intellij.openapi.fileChooser.FileTypeDescriptor;
+import com.intellij.openapi.util.io.FileUtil;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.VirtualFile;
+import com.intellij.util.containers.ContainerUtilRt;
+import com.intellij.util.containers.Stack;
+import org.gradle.tooling.model.GradleProject;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
@@ -148,4 +153,27 @@ public class GradleUtil {
     public static final FileChooserDescriptor GRADLE_HOME_FILE_CHOOSER_DESCRIPTOR
       = new FileChooserDescriptor(false, true, false, false, false, false);
   }
+
+  /**
+   * Allows to build file system path to the target gradle sub-project given the root project path.
+   * 
+   * @param subProject       target sub-project which 'build.gradle' path we're interested in
+   * @param rootProjectPath  root project's 'build.gradle' path
+   * @return                 path to the given sub-project's 'build.gradle'
+   */
+  @NotNull
+  public static String getConfigPath(@NotNull GradleProject subProject, @NotNull String rootProjectPath) {
+    File rootProjectParent = new File(rootProjectPath).getParentFile().getParentFile();
+    StringBuilder buffer = new StringBuilder(FileUtil.toCanonicalPath(rootProjectParent.getAbsolutePath()));
+    Stack<String> stack = ContainerUtilRt.newStack();
+    for (GradleProject p = subProject; p != null; p = p.getParent()) {
+      stack.push(p.getName());
+    }
+    while (!stack.isEmpty()) {
+      buffer.append(ExternalSystemConstants.PATH_SEPARATOR).append(stack.pop());
+    }
+    buffer.append(ExternalSystemConstants.PATH_SEPARATOR).append(GradleConstants.DEFAULT_SCRIPT_NAME);
+    return buffer.toString();
+  }
+
 }

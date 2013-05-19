@@ -13,21 +13,16 @@
  * See the License for the specific language governing permissions and
  * limitations under the License.
  */
-package com.intellij.openapi.externalSystem;
+package com.intellij.openapi.externalSystem.model.project;
 
-import org.jetbrains.annotations.Nullable;
-
-import javax.swing.*;
+import org.jetbrains.annotations.NotNull;
 
 /**
  * @author Denis Zhdanov
- * @since 5/15/13 12:37 PM
+ * @since 5/18/13 8:01 PM
  */
-public interface ExternalSystemUiAware {
-  
-  @Nullable
-  Icon getProjectIcon();
+public interface ExternalConfigPathAware {
 
-  @Nullable
-  Icon getTaskIcon();
+  @NotNull
+  String getLinkedExternalProjectPath();
 }

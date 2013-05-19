@@ -32,9 +32,7 @@ import com.intellij.openapi.util.NotNullLazyValue;
 import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.openapi.vfs.JarFileSystem;
 import com.intellij.openapi.vfs.VirtualFile;
-import com.intellij.util.BooleanFunction;
-import com.intellij.util.PathUtil;
-import com.intellij.util.PathsList;
+import com.intellij.util.*;
 import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.UIUtil;
 import org.jetbrains.annotations.NotNull;
@@ -200,20 +198,33 @@ public class ExternalSystemApiUtil {
   }
 
   @NotNull
-  public static <K, V> Map<DataNode<K>, List<DataNode<V>>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull Key<K> key) {
-    Map<DataNode<K>, List<DataNode<V>>> result = ContainerUtilRt.newHashMap();
+  public static <K, V> Map<DataNode<K>, List<DataNode<V>>> groupBy(@NotNull Collection<DataNode<V>> nodes, @NotNull final Key<K> key) {
+    return groupBy(nodes, new Function<DataNode<V>, DataNode<K>>() {
+      @Override
+      public DataNode<K> fun(DataNode<V> node) {
+        return node.getDataNode(key);
+      }
+    });
+  }
+
+  @NotNull
+  public static <K, V> Map<K, List<DataNode<V>>> groupBy(@NotNull Collection<DataNode<V>> nodes,
+                                                         @NotNull Function<DataNode<V>, K> grouper)
+  {
+    Map<K, List<DataNode<V>>> result = ContainerUtilRt.newHashMap();
     for (DataNode<V> data : nodes) {
-      DataNode<K> grouper = data.getDataNode(key);
-      if (grouper == null) {
+      K key = grouper.fun(data);
+      if (key == null) {
         LOG.warn(String.format(
-          "Skipping entry '%s' during grouping. Reason: it doesn't provide a value for key %s. Given entries: %s",
-          data, key, nodes
+          "Skipping entry '%s' during grouping. Reason: it's not possible to build a grouping key with grouping strategy '%s'. "
+          + "Given entries: %s",
+          data, grouper.getClass(), nodes
         ));
         continue;
       }
-      List<DataNode<V>> grouped = result.get(grouper);
+      List<DataNode<V>> grouped = result.get(key);
       if (grouped == null) {
-        result.put(grouper, grouped = ContainerUtilRt.newArrayList());
+        result.put(key, grouped = ContainerUtilRt.newArrayList());
       }
       grouped.add(data);
     }
@@ -352,9 +363,9 @@ public class ExternalSystemApiUtil {
     classPath.add(PathManager.getResourceRoot(contextClass, pathToUse));
   }
 
-  @Nullable
-  public static String normalizePath(@Nullable String s) {
-    return StringUtil.isEmpty(s) ? null : s;
+  @SuppressWarnings("ConstantConditions")
+  public static String normalizePath(String s) {
+    return StringUtil.isEmpty(s) ? null : s.replace('\\', ExternalSystemConstants.PATH_SEPARATOR);
   }
 
   /**

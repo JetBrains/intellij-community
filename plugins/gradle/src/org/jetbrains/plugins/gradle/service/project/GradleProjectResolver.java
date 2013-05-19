@@ -5,7 +5,6 @@ import com.intellij.openapi.externalSystem.model.DataNode;
 import com.intellij.openapi.externalSystem.model.ExternalSystemException;
 import com.intellij.openapi.externalSystem.model.ProjectKeys;
 import com.intellij.openapi.externalSystem.model.project.*;
-import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskDescriptor;
 import com.intellij.openapi.externalSystem.model.task.ExternalSystemTaskId;
 import com.intellij.openapi.externalSystem.model.task.TaskData;
 import com.intellij.openapi.externalSystem.service.project.ExternalSystemProjectResolver;
@@ -18,6 +17,8 @@ import com.intellij.util.BooleanFunction;
 import com.intellij.util.Function;
 import com.intellij.util.PathUtil;
 import com.intellij.util.containers.ContainerUtilRt;
+import gnu.trove.TObjectIntHashMap;
+import gnu.trove.TObjectIntProcedure;
 import org.gradle.tooling.ModelBuilder;
 import org.gradle.tooling.ProjectConnection;
 import org.gradle.tooling.model.DomainObjectSet;
@@ -28,6 +29,7 @@ import org.jetbrains.annotations.Nullable;
 import org.jetbrains.plugins.gradle.remote.impl.GradleLibraryNamesMixer;
 import org.jetbrains.plugins.gradle.settings.GradleExecutionSettings;
 import org.jetbrains.plugins.gradle.util.GradleConstants;
+import org.jetbrains.plugins.gradle.util.GradleUtil;
 
 import java.io.File;
 import java.util.*;
@@ -143,11 +145,13 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
         throw new IllegalStateException("Module with undefined name detected: " + gradleModule);
       }
       ProjectData projectData = ideProject.getData();
+      String moduleConfigPath
+        = GradleUtil.getConfigPath(gradleModule.getGradleProject(), ideProject.getData().getLinkedExternalProjectPath());
       ModuleData ideModule = new ModuleData(GradleConstants.SYSTEM_ID,
                                             StdModuleTypes.JAVA.getId(),
                                             moduleName,
                                             projectData.getIdeProjectFileDirectoryPath(),
-                                            gradleModule.getGradleProject().getPath());
+                                            moduleConfigPath);
       Pair<DataNode<ModuleData>, IdeaModule> previouslyParsedModule = result.get(moduleName);
       if (previouslyParsedModule != null) {
         throw new IllegalStateException(
@@ -385,10 +389,28 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
     return null;
   }
 
-  private static void parseTasks(@NotNull DataNode<?> parent, @NotNull IdeaProject project) {
-    Map<String/* module name */, TaskData> tasksByModule = ContainerUtilRt.newHashMap();
-    for (IdeaModule module : project.getModules()) {
-      TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, module.getGradleProject().getPath());
+  private static void parseTasks(@NotNull DataNode<ProjectData> rootProjectNode, @NotNull IdeaProject project) {
+    
+    // So, the general idea is to fill target nodes by nodes with TaskData. Specifics:
+    //   1. Gradle tooling api doesn't explicitly provide information about root project tasks, e.g. when a root project
+    //      contains code block like below:
+    //        subprojects {
+    //          apply plugin: 'java'
+    //        }
+    //   2. Gradle tooling api provides an IdeaModule object for every IdeaProject among IdeaModule objects which correspond
+    //      to real sub-projects;
+    //
+    // Our aim is to make sub-project nodes contain corresponding TaskData nodes and add root project tasks to ProjectData node.
+    // The later is achieved by composing all tasks from IdeaModule which corresponds to the IdeaProject plus all tasks
+    // which are shared between all sub-projects.
+    
+    final String rootProjectPath = rootProjectNode.getData().getLinkedExternalProjectPath();
+    Map<String/* module name */, Collection<TaskData>> tasksByModule = ContainerUtilRt.newHashMap();
+    TObjectIntHashMap<Pair<String/* task name */, String /* task description */>> rootProjectTaskCandidates
+      = new TObjectIntHashMap<Pair<String, String>>();
+    final Collection<TaskData> rootProjectTasks = ContainerUtilRt.newArrayList();
+    final DomainObjectSet<? extends IdeaModule> modules = project.getModules();
+    for (IdeaModule module : modules) {
       for (GradleTask task : module.getGradleProject().getTasks()) {
         String name = task.getName();
         if (name == null || name.trim().isEmpty()) {
@@ -400,17 +422,43 @@ public class GradleProjectResolver implements ExternalSystemProjectResolver<Grad
           continue;
         }
 
-        taskData.addTask(new ExternalSystemTaskDescriptor(name, task.getDescription()));
+        String moduleConfigPath = GradleUtil.getConfigPath(module.getGradleProject(), rootProjectPath);
+        TaskData taskData = new TaskData(GradleConstants.SYSTEM_ID, name, moduleConfigPath, task.getDescription());
+        
+        if (rootProjectPath.equals(moduleConfigPath)) {
+          rootProjectTasks.add(taskData);
+        }
+        else {
+          Collection<TaskData> tasks = tasksByModule.get(module.getName());
+          if (tasks == null) {
+            tasksByModule.put(module.getName(), tasks = ContainerUtilRt.newArrayList());
+          }
+          tasks.add(taskData);
+          Pair<String, String> key = Pair.create(name, task.getDescription());
+          rootProjectTaskCandidates.put(key, rootProjectTaskCandidates.get(key) + 1);
+        }
       }
-      Collections.sort(taskData.getTasks());
-      tasksByModule.put(module.getName(), taskData);
+    }
+    rootProjectTaskCandidates.forEachEntry(new TObjectIntProcedure<Pair<String, String>>() {
+      @Override
+      public boolean execute(Pair<String, String> p, int occurrenceNumber) {
+        if (occurrenceNumber >= modules.size() - 1) {
+          rootProjectTasks.add(new TaskData(GradleConstants.SYSTEM_ID, p.first, rootProjectPath, p.second));
+        }
+        return true;
+      }
+    });
+    for (TaskData task : rootProjectTasks) {
+      rootProjectNode.createChild(ProjectKeys.TASK, task);
     }
 
-    Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(parent, ProjectKeys.MODULE);
+    Collection<DataNode<ModuleData>> moduleNodes = ExternalSystemApiUtil.findAll(rootProjectNode, ProjectKeys.MODULE);
     for (DataNode<ModuleData> moduleNode : moduleNodes) {
-      TaskData taskData = tasksByModule.get(moduleNode.getData().getName());
-      if (taskData != null && !taskData.getTasks().isEmpty()) {
-        moduleNode.createChild(ProjectKeys.TASK, taskData);
+      Collection<TaskData> tasks = tasksByModule.get(moduleNode.getData().getName());
+      if (tasks != null && !tasks.isEmpty()) {
+        for (TaskData task : tasks) {
+          moduleNode.createChild(ProjectKeys.TASK, task);
+        }
       }
     }
   }

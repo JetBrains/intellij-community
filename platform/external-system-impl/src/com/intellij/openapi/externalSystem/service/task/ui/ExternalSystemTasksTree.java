@@ -21,7 +21,10 @@ import com.intellij.util.containers.ContainerUtilRt;
 import com.intellij.util.ui.tree.TreeModelAdapter;
 import org.jetbrains.annotations.NotNull;
 
+import javax.swing.event.TreeExpansionEvent;
 import javax.swing.event.TreeModelEvent;
+import javax.swing.event.TreeWillExpandListener;
+import javax.swing.tree.ExpandVetoException;
 import javax.swing.tree.TreePath;
 import java.util.*;
 
@@ -56,6 +59,22 @@ public class ExternalSystemTasksTree extends Tree {
     myExpandedStateHolder = expandedStateHolder;
     setRootVisible(false);
 
+    addTreeWillExpandListener(new TreeWillExpandListener() {
+      @Override
+      public void treeWillExpand(TreeExpansionEvent event) throws ExpandVetoException {
+        if (!mySuppressCollapseTracking) {
+          myExpandedStateHolder.put(getPath(event.getPath()), true);
+        }
+      }
+
+      @Override
+      public void treeWillCollapse(TreeExpansionEvent event) throws ExpandVetoException {
+        if (!mySuppressCollapseTracking) {
+          myExpandedStateHolder.put(getPath(event.getPath()), false);
+        }
+      }
+    });
+    
     model.addTreeModelListener(new TreeModelAdapter() {
       @Override
       public void treeStructureChanged(TreeModelEvent e) {
@@ -86,7 +105,7 @@ public class ExternalSystemTasksTree extends Tree {
         // a chance.
         // Another thing is that we sort the paths in order to process the longest first. That is related to the JTree specifics
         // that it automatically expands parent paths on child path expansion.
-        List<TreePath> paths = new ArrayList<TreePath>(myPathsToProcessCollapseState);
+        List<TreePath> paths = ContainerUtilRt.newArrayList(myPathsToProcessCollapseState);
         myPathsToProcessCollapseState.clear();
         Collections.sort(paths, PATH_COMPARATOR);
         for (TreePath treePath : paths) {
