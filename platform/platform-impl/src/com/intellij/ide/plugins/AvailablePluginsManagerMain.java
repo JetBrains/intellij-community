@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2011 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -36,6 +36,7 @@ import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.MouseEvent;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.TreeSet;
 
 /**
@@ -179,7 +180,7 @@ public class AvailablePluginsManagerMain extends PluginManagerMain {
   }
 
   @Override
-  protected void propagateUpdates(ArrayList<IdeaPluginDescriptor> list) {
+  protected void propagateUpdates(List<IdeaPluginDescriptor> list) {
     installed.modifyPluginsList(list); //propagate updates
   }
 

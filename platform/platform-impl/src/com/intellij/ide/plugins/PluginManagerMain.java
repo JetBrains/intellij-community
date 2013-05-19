@@ -183,8 +183,7 @@ public abstract class PluginManagerMain implements Disposable {
     return pluginsModel.dependent(pluginDescriptor);
   }
 
-
-  protected void modifyPluginsList(ArrayList<IdeaPluginDescriptor> list) {
+  protected void modifyPluginsList(List<IdeaPluginDescriptor> list) {
     IdeaPluginDescriptor[] selected = pluginTable.getSelectedObjects();
     pluginsModel.updatePluginsList(list);
     pluginTable.getRowSorter().setSortKeys(Collections.singletonList(pluginsModel.getDefaultSortKey()));
@@ -213,12 +212,12 @@ public abstract class PluginManagerMain implements Disposable {
     setDownloadStatus(true);
 
     new SwingWorker() {
-      ArrayList<IdeaPluginDescriptor> list = null;
-      final List<String> errorMessages = new ArrayList<String>();
+      List<IdeaPluginDescriptor> list = null;
+      List<String> errorMessages = new ArrayList<String>();
 
       public Object construct() {
         try {
-          list = RepositoryHelper.process(null);
+          list = RepositoryHelper.loadPluginsFromRepository(null);
         }
         catch (Exception e) {
           LOG.info(e);
@@ -269,7 +268,7 @@ public abstract class PluginManagerMain implements Disposable {
     }.start();
   }
 
-  protected abstract void propagateUpdates(ArrayList<IdeaPluginDescriptor> list);
+  protected abstract void propagateUpdates(List<IdeaPluginDescriptor> list);
 
   protected void setDownloadStatus(boolean status) {
     pluginTable.setPaintBusy(status);
@@ -283,7 +282,7 @@ public abstract class PluginManagerMain implements Disposable {
       //  then read it, load into the list and start the updating process.
       //  Otherwise just start the process of loading the list and save it
       //  into the persistent config file for later reading.
-      File file = new File(PathManager.getPluginsPath(), RepositoryHelper.extPluginsFile);
+      File file = new File(PathManager.getPluginsPath(), RepositoryHelper.PLUGIN_LIST_FILE);
       if (file.exists()) {
         RepositoryContentHandler handler = new RepositoryContentHandler();
         SAXParser parser = SAXParserFactory.newInstance().newSAXParser();

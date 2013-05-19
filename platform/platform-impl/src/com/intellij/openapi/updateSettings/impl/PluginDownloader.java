@@ -1,5 +1,5 @@
 /*
- * Copyright 2000-2012 JetBrains s.r.o.
+ * Copyright 2000-2013 JetBrains s.r.o.
  *
  * Licensed under the Apache License, Version 2.0 (the "License");
  * you may not use this file except in compliance with the License.
@@ -66,23 +66,17 @@ public class PluginDownloader {
 
   private File myFile;
   private File myOldFile;
-
-  //additional settings
   private String myDescription;
   private List<PluginId> myDepends;
   private IdeaPluginDescriptor myDescriptor;
 
-  public PluginDownloader(final String pluginId, final String pluginUrl, final String pluginVersion) {
+  public PluginDownloader(String pluginId, String pluginUrl, String pluginVersion) {
     myPluginId = pluginId;
     myPluginUrl = pluginUrl;
     myPluginVersion = pluginVersion;
   }
 
-  public PluginDownloader(final String pluginId,
-                          final String pluginUrl,
-                          final String pluginVersion,
-                          final String fileName,
-                          final String pluginName) {
+  public PluginDownloader(String pluginId, String pluginUrl, String pluginVersion, String fileName, String pluginName) {
     myPluginId = pluginId;
     myPluginUrl = pluginUrl;
     myPluginVersion = pluginVersion;
@@ -150,16 +144,6 @@ public class PluginDownloader {
       setDescriptor(descriptor);
      }
     return true;
-  }
-
-  public static void replaceLib(String libPath, String libName, File fromFile) throws IOException {
-    final File source = new File(libPath, libName);
-
-    StartupActionScriptManager.ActionCommand deleteOld = new StartupActionScriptManager.DeleteCommand(source);
-    StartupActionScriptManager.addActionCommand(deleteOld);
-
-    StartupActionScriptManager.ActionCommand addNew = new StartupActionScriptManager.CopyCommand(fromFile, source);
-    StartupActionScriptManager.addActionCommand(addNew);
   }
 
   @Nullable
@@ -328,7 +312,7 @@ public class PluginDownloader {
       }
     }
 
-    if (fileName == null || !PathUtil.isValidFileName(fileName)) {
+    if (!PathUtil.isValidFileName(fileName)) {
       FileUtil.delete(file);
       throw new IOException("Invalid filename returned by a server");
     }
@@ -374,19 +358,20 @@ public class PluginDownloader {
     return myDepends;
   }
 
-  public static PluginDownloader createDownloader(IdeaPluginDescriptor pluginDescriptor) throws UnsupportedEncodingException {
-    String installationUUID = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance());
-
-    final BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
-    @NonNls String url = RepositoryHelper.DOWNLOAD_URL +
-                         URLEncoder.encode(pluginDescriptor.getPluginId().getIdString(), "UTF8") +
-                         "&build=" + buildNumber.asString() + "&uuid=" + URLEncoder.encode(installationUUID, "UTF8");
-    if (pluginDescriptor instanceof PluginNode && ((PluginNode)pluginDescriptor).getDownloadUrl() != null){
-      url = ((PluginNode)pluginDescriptor).getDownloadUrl();
+  public static PluginDownloader createDownloader(IdeaPluginDescriptor descriptor) throws UnsupportedEncodingException {
+    String url = null;
+    if (descriptor instanceof PluginNode) {
+      url = ((PluginNode)descriptor).getDownloadUrl();
     }
-    final PluginDownloader downloader =
-      new PluginDownloader(pluginDescriptor.getPluginId().getIdString(), url, null, null, pluginDescriptor.getName());
-    downloader.setDescriptor(pluginDescriptor);
+    if (url == null) {
+      BuildNumber buildNumber = ApplicationInfo.getInstance().getBuild();
+      String uuid = UpdateChecker.getInstallationUID(PropertiesComponent.getInstance());
+      url = RepositoryHelper.getDownloadUrl() + URLEncoder.encode(descriptor.getPluginId().getIdString(), "UTF8") +
+            "&build=" + buildNumber.asString() + "&uuid=" + URLEncoder.encode(uuid, "UTF8");
+    }
+
+    PluginDownloader downloader = new PluginDownloader(descriptor.getPluginId().getIdString(), url, null, null, descriptor.getName());
+    downloader.setDescriptor(descriptor);
     return downloader;
   }
 
