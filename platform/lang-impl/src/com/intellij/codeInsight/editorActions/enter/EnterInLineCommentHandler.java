@@ -52,7 +52,8 @@ public class EnterInLineCommentHandler extends EnterHandlerDelegateAdapter {
             if (text.charAt(caretOffset) != ' ' && !prefix.endsWith(" ")) {
               prefix += " ";
             }
-            document.insertString(caretOffset, prefix);
+            document.insertString(offset, prefix);
+            caretOffsetRef.set(offset);
             return Result.Default;
           }
         }

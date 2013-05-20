@@ -440,7 +440,7 @@ public class EnterHandler extends BaseEnterHandler {
             myDocument.insertString(myOffset + 1, " ");
           }
 
-          final char c = myDocument.getCharsSequence().charAt(myOffset);
+          final char c = myDocument.getCharsSequence().charAt(myOffset-1);
           if (c != '\n') {
             myOffset += 1;
           }
