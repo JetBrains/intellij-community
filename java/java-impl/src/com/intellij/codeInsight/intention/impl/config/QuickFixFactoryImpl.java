@@ -79,9 +79,9 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
 
   @Override
   public LocalQuickFixOnPsiElement createMethodThrowsFix(@NotNull PsiMethod method,
-                                                                           @NotNull PsiClassType exceptionClass,
-                                                                           boolean shouldThrow,
-                                                                           boolean showContainingClass) {
+                                                         @NotNull PsiClassType exceptionClass,
+                                                         boolean shouldThrow,
+                                                         boolean showContainingClass) {
     return new MethodThrowsFix(method, exceptionClass, shouldThrow, showContainingClass);
   }
 

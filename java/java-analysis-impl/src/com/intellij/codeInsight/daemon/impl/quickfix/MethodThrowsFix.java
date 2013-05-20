@@ -35,7 +35,7 @@ public class MethodThrowsFix extends LocalQuickFixOnPsiElement {
   private final boolean myShouldThrow;
   private final String myMethodName;
 
-  public MethodThrowsFix(PsiMethod method, PsiClassType exceptionType, boolean shouldThrow, boolean showContainingClass) {
+  public MethodThrowsFix(@NotNull PsiMethod method, @NotNull PsiClassType exceptionType, boolean shouldThrow, boolean showContainingClass) {
     super(method);
     myThrowsCanonicalText = exceptionType.getCanonicalText();
     myShouldThrow = shouldThrow;
