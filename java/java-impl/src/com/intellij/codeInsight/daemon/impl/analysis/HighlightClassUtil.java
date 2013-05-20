@@ -98,7 +98,7 @@ public class HighlightClassUtil {
       return null;
     }
     String baseClassName = HighlightUtil.formatClass(aClass, false);
-    String methodName = HighlightUtil.formatMethod(abstractMethod);
+    String methodName = JavaHighlightUtil.formatMethod(abstractMethod);
     String message = JavaErrorMessages.message(aClass instanceof PsiEnumConstantInitializer || implementsFixElement instanceof PsiEnumConstant ? "enum.constant.should.implement.method" : "class.must.be.abstract",
                                                baseClassName,
                                                methodName,

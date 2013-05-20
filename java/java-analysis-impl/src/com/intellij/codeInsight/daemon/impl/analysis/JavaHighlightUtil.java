@@ -16,6 +16,8 @@
 package com.intellij.codeInsight.daemon.impl.analysis;
 
 import com.intellij.psi.*;
+import com.intellij.psi.util.PsiFormatUtil;
+import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.psi.util.TypeConversionUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
@@ -70,5 +72,41 @@ public class JavaHighlightUtil {
     if (type == null) return PsiKeyword.NULL;
     String text = type.getInternalCanonicalText();
     return text == null ? PsiKeyword.NULL : text;
+  }
+
+  @Nullable
+  private static PsiType getArrayInitializerType(@NotNull final PsiArrayInitializerExpression element) {
+    final PsiType typeCheckResult = sameType(element.getInitializers());
+    if (typeCheckResult != null) {
+      return typeCheckResult.createArrayType();
+    }
+    return null;
+  }
+
+  @Nullable
+  public static PsiType sameType(@NotNull PsiExpression[] expressions) {
+    PsiType type = null;
+    for (PsiExpression expression : expressions) {
+      final PsiType currentType;
+      if (expression instanceof PsiArrayInitializerExpression) {
+        currentType = getArrayInitializerType((PsiArrayInitializerExpression)expression);
+      }
+      else {
+        currentType = expression.getType();
+      }
+      if (type == null) {
+        type = currentType;
+      }
+      else if (!type.equals(currentType)) {
+        return null;
+      }
+    }
+    return type;
+  }
+
+  @NotNull
+  public static String formatMethod(@NotNull PsiMethod method) {
+    return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
+                                      PsiFormatUtilBase.SHOW_TYPE);
   }
 }

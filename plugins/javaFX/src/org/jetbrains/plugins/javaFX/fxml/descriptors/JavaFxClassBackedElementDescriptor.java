@@ -2,7 +2,7 @@ package org.jetbrains.plugins.javaFX.fxml.descriptors;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.daemon.Validator;
-import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaGenericsUtil;
 import com.intellij.openapi.project.Project;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.openapi.util.text.StringUtil;
@@ -274,7 +274,10 @@ public class JavaFxClassBackedElementDescriptor implements XmlElementDescriptor,
         private boolean acceptablePropertyType(PsiType fieldType) {
           return fieldType.equalsToText(CommonClassNames.JAVA_LANG_STRING) ||
                  (acceptPrimitive && fieldType instanceof PsiPrimitiveType) ||
-                 InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_OBSERVABLE_LIST_PROPERTY) && GenericsHighlightUtil.getCollectionItemType(fieldType, myPsiClass.getResolveScope()) != null;
+                 InheritanceUtil.isInheritor(fieldType, JavaFxCommonClassNames.JAVAFX_OBSERVABLE_LIST_PROPERTY) && JavaGenericsUtil
+                                                                                                                     .getCollectionItemType(
+                                                                                                                       fieldType, myPsiClass
+                                                                                                                       .getResolveScope()) != null;
         }
       });
     if (fieldList != null) {

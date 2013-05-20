@@ -17,19 +17,20 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
+import com.intellij.ide.TypePresentationService;
+import com.intellij.lang.findUsages.FindUsagesProvider;
+import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.openapi.command.undo.UndoUtil;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
+import com.intellij.openapi.util.text.StringUtil;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
-import com.intellij.usageView.UsageViewUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class VariableArrayTypeFix extends LocalQuickFixAndIntentionActionOnPsiElement {
-
+public class VariableArrayTypeFix extends LocalQuickFixOnPsiElement {
   @NotNull
   private final PsiArrayType myTargetType;
   private final String myName;
@@ -49,10 +50,20 @@ public class VariableArrayTypeFix extends LocalQuickFixAndIntentionActionOnPsiEl
     PsiVariable myVariable = getVariableLocal(arrayInitializer);
     myName = myVariable == null ? null : myTargetType.equals(myVariable.getType()) && myNewExpression != null ?
              QuickFixBundle.message("change.new.operator.type.text", getNewText(myNewExpression,arrayInitializer), myTargetType.getCanonicalText(), "") :
-             QuickFixBundle.message("fix.variable.type.text", UsageViewUtil.getType(myVariable), myVariable.getName(), myTargetType.getCanonicalText());
+             QuickFixBundle.message("fix.variable.type.text", formatType(myVariable), myVariable.getName(), myTargetType.getCanonicalText());
     myFamilyName = myVariable == null ? null : myTargetType.equals(myVariable.getType()) && myNewExpression != null ?
                    QuickFixBundle.message("change.new.operator.type.family") :
                    QuickFixBundle.message("fix.variable.type.family");
+  }
+
+  private static String formatType(@NotNull PsiVariable variable) {
+    FindUsagesProvider provider = LanguageFindUsages.INSTANCE.forLanguage(variable.getLanguage());
+    final String type = provider.getType(variable);
+    if (StringUtil.isNotEmpty(type)) {
+      return type;
+    }
+
+    return TypePresentationService.getService().getTypePresentableName(variable.getClass());
   }
 
   private static PsiArrayInitializerExpression getInitializer(PsiArrayInitializerExpression initializer) {
@@ -64,7 +75,7 @@ public class VariableArrayTypeFix extends LocalQuickFixAndIntentionActionOnPsiEl
     return arrayInitializer;
   }
 
-  private static PsiVariable getVariableLocal(PsiArrayInitializerExpression initializer) {
+  private static PsiVariable getVariableLocal(@NotNull PsiArrayInitializerExpression initializer) {
     PsiVariable variableLocal = null;
 
     final PsiElement parent = initializer.getParent();
@@ -87,14 +98,15 @@ public class VariableArrayTypeFix extends LocalQuickFixAndIntentionActionOnPsiEl
     return variableLocal;
   }
 
-  private static PsiNewExpression getNewExpressionLocal(PsiArrayInitializerExpression initializer) {
+  private static PsiNewExpression getNewExpressionLocal(@NotNull PsiArrayInitializerExpression initializer) {
     PsiNewExpression newExpressionLocal = null;
 
     final PsiElement parent = initializer.getParent();
     if (parent instanceof PsiVariable) {
 
-    } else if (parent instanceof PsiNewExpression) {
-      newExpressionLocal = (PsiNewExpression) parent;
+    }
+    else if (parent instanceof PsiNewExpression) {
+      newExpressionLocal = (PsiNewExpression)parent;
     }
 
     return newExpressionLocal;
@@ -144,11 +156,7 @@ public class VariableArrayTypeFix extends LocalQuickFixAndIntentionActionOnPsiEl
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable("is null when called from inspection") Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
+  public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     final PsiArrayInitializerExpression myInitializer = (PsiArrayInitializerExpression)startElement;
     final PsiVariable myVariable = getVariableLocal(myInitializer);
     if (myVariable == null) return;

@@ -61,8 +61,8 @@ public class HighlightMethodUtil {
   public static String createClashMethodMessage(PsiMethod method1, PsiMethod method2, boolean showContainingClasses) {
     @NonNls String pattern = showContainingClasses ? "clash.methods.message.show.classes" : "clash.methods.message";
     return JavaErrorMessages.message(pattern,
-                                     HighlightUtil.formatMethod(method1),
-                                     HighlightUtil.formatMethod(method2),
+                                     JavaHighlightUtil.formatMethod(method1),
+                                     JavaHighlightUtil.formatMethod(method2),
                                      HighlightUtil.formatClass(method1.getContainingClass()),
                                      HighlightUtil.formatClass(method2.getContainingClass()));
   }
@@ -213,8 +213,8 @@ public class HighlightMethodUtil {
     // strange things happen when super method is from Object and method from interface
     if (superMethod.hasModifierProperty(PsiModifier.FINAL)) {
       String description = JavaErrorMessages.message("final.method.override",
-                                                 HighlightUtil.formatMethod(method),
-                                                 HighlightUtil.formatMethod(superMethod),
+                                                 JavaHighlightUtil.formatMethod(method),
+                                                 JavaHighlightUtil.formatMethod(superMethod),
                                                  HighlightUtil.formatClass(superMethod.getContainingClass()));
       TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
       HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
@@ -850,7 +850,7 @@ public class HighlightMethodUtil {
     }
     if (methodCount > 1) {
       String description = JavaErrorMessages.message("duplicate.method",
-                                                 HighlightUtil.formatMethod(method),
+                                                 JavaHighlightUtil.formatMethod(method),
                                                  HighlightUtil.formatClass(aClass));
       TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
@@ -940,7 +940,7 @@ public class HighlightMethodUtil {
       PsiMethodCallExpression methodCallExpression = (PsiMethodCallExpression)expr.getParent().getParent();
       PsiMethod method = methodCallExpression.resolveMethod();
       if (method != null && method.hasModifierProperty(PsiModifier.ABSTRACT)) {
-        String message = JavaErrorMessages.message("direct.abstract.method.access", HighlightUtil.formatMethod(method));
+        String message = JavaErrorMessages.message("direct.abstract.method.access", JavaHighlightUtil.formatMethod(method));
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(methodCallExpression).descriptionAndTooltip(message).create();
       }
     }
@@ -1029,9 +1029,9 @@ public class HighlightMethodUtil {
                                 : "instance.method.cannot.override.static.method";
 
       String description = JavaErrorMessages.message(messageKey,
-                                                 HighlightUtil.formatMethod(method),
+                                                 JavaHighlightUtil.formatMethod(method),
                                                  HighlightUtil.formatClass(aClass),
-                                                 HighlightUtil.formatMethod(superMethod),
+                                                 JavaHighlightUtil.formatMethod(superMethod),
                                                  HighlightUtil.formatClass(superClass));
 
       HighlightInfo info = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
@@ -1129,9 +1129,9 @@ public class HighlightMethodUtil {
           PsiMethod superMethod = superSignature.getMethod();
           if (!superMethod.hasModifierProperty(PsiModifier.STATIC)) {
             description = JavaErrorMessages.message("static.method.cannot.override.instance.method",
-                                                         HighlightUtil.formatMethod(method),
+                                                         JavaHighlightUtil.formatMethod(method),
                                                          HighlightUtil.formatClass(containingClass),
-                                                         HighlightUtil.formatMethod(superMethod),
+                                                         JavaHighlightUtil.formatMethod(superMethod),
                                                          HighlightUtil.formatClass(superMethod.getContainingClass()));
             break Ultimate;
           }

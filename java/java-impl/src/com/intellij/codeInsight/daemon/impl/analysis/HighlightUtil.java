@@ -26,6 +26,7 @@ import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInsight.quickfix.ChangeVariableTypeQuickFixProvider;
 import com.intellij.codeInsight.quickfix.UnresolvedReferenceQuickFixProvider;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.lang.findUsages.LanguageFindUsages;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -629,12 +630,6 @@ public class HighlightUtil extends HighlightUtilBase {
   public static String formatClass(@NotNull PsiClass aClass, boolean fqn) {
     return PsiFormatUtil.formatClass(aClass, PsiFormatUtilBase.SHOW_NAME |
                                              PsiFormatUtilBase.SHOW_ANONYMOUS_CLASS_VERBOSE | (fqn ? PsiFormatUtilBase.SHOW_FQ_NAME : 0));
-  }
-
-  @NotNull
-  public static String formatMethod(@NotNull PsiMethod method) {
-    return PsiFormatUtil.formatMethod(method, PsiSubstitutor.EMPTY, PsiFormatUtilBase.SHOW_NAME | PsiFormatUtilBase.SHOW_PARAMETERS,
-                                      PsiFormatUtilBase.SHOW_TYPE);
   }
 
   @NotNull
@@ -1555,46 +1550,16 @@ public class HighlightUtil extends HighlightUtilBase {
         result.add(info);
 
         if (!arrayTypeFixChecked) {
-          final PsiType checkResult = sameType(initializers);
+          final PsiType checkResult = JavaHighlightUtil.sameType(initializers);
           fix = checkResult != null ? new VariableArrayTypeFix(arrayInitializer, checkResult) : null;
           arrayTypeFixChecked = true;
         }
         if (fix != null) {
-          QuickFixAction.registerQuickFixAction(info, fix);
+          QuickFixAction.registerQuickFixAction(info, new LocalQuickFixOnPsiElementAsIntentionAdapter(fix));
         }
       }
     }
     return result;
-  }
-
-  @Nullable
-  private static PsiType getArrayInitializerType(@NotNull final PsiArrayInitializerExpression element) {
-    final PsiType typeCheckResult = sameType(element.getInitializers());
-    if (typeCheckResult != null) {
-      return typeCheckResult.createArrayType();
-    }
-    return null;
-  }
-
-  @Nullable
-  public static PsiType sameType(@NotNull PsiExpression[] expressions) {
-    PsiType type = null;
-    for (PsiExpression expression : expressions) {
-      final PsiType currentType;
-      if (expression instanceof PsiArrayInitializerExpression) {
-        currentType = getArrayInitializerType((PsiArrayInitializerExpression)expression);
-      }
-      else {
-        currentType = expression.getType();
-      }
-      if (type == null) {
-        type = currentType;
-      }
-      else if (!type.equals(currentType)) {
-        return null;
-      }
-    }
-    return type;
   }
 
   @Nullable
@@ -2499,7 +2464,7 @@ public class HighlightUtil extends HighlightUtilBase {
   @NotNull
   private static String format(@NotNull PsiElement element) {
     if (element instanceof PsiClass) return formatClass((PsiClass)element);
-    if (element instanceof PsiMethod) return formatMethod((PsiMethod)element);
+    if (element instanceof PsiMethod) return JavaHighlightUtil.formatMethod((PsiMethod)element);
     if (element instanceof PsiField) return formatField((PsiField)element);
     return ElementDescriptionUtil.getElementDescription(element, HighlightUsagesDescriptionLocation.INSTANCE);
   }
