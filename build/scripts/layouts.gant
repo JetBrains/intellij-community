@@ -232,6 +232,10 @@ def layoutFull(String home, String targetDirectory, String patchedDescriptorDir 
 }
 
 public def layoutCommunityPlugins(String home) {
+  if (isDefined("androidPluginHome")) {
+    layoutAndroid(p("androidPluginHome"))
+  }
+
   dir("plugins") {
     def simplePlugins = ["commander", "copyright", "properties", "java-i18n", "hg4idea", "github", "ui-designer-core"] //, "tasks-time-tracking"]
 
@@ -562,6 +566,67 @@ def reorder(String home, String targetDirectory) {
         pathelement(location: projectBuilder.moduleOutput(findModule("util-rt")))
         pathelement(location: "$home/lib/jna.jar")
         pathelement(location: "$home/lib/trove4j.jar")
+      }
+    }
+  }
+}
+
+def layoutAndroid(String androidHome) {
+  dir("plugins") {
+    layoutPlugin("android") {
+      fileset(dir: "${androidHome}/android/lib") {
+        include(name: "**/*.jar")
+        exclude(name: "**/ddmlib_1.jar")
+        exclude(name: "src/*.jar")
+      }
+
+      jar("android-common.jar") {
+        module("android-common")
+      }
+
+      jar("android-rt.jar") {
+        module("android-rt")
+      }
+
+      jar("common.jar") {
+        module("common")
+      }
+      jar("sdklib.jar") {
+        module("sdklib")
+      }
+      jar("layoutlib-api.jar") {
+        module("layoutlib-api")
+      }
+      jar("sdk-tools.jar") {
+        module("assetstudio")
+        module("ddmlib")
+        module("dvlib")
+        module("draw9patch")
+        module("lint-cli")
+        module("lint-api")
+        module("lint-checks")
+        module("manifest-merger")
+        module("ninepatch")
+        module("sdk-common")
+      }
+      jar("androidAnnotations.jar") {
+        fileset(dir: "$androidHome/android/annotations")
+      }
+      dir("jps") {
+        jar("android-gradle-jps.jar") { module("android-gradle-jps") }
+      }
+      dir("device-art-resources") {
+        fileset(dir: "$androidHome/android/device-art-resources")
+      }
+
+      dir("jps") {
+        jar("android-jps-plugin.jar") { module("android-jps-plugin") }
+      }
+    }
+
+    layoutPlugin("android-designer") {
+      jar("android-designer.jar") {
+        module("android-designer")
       }
     }
   }
