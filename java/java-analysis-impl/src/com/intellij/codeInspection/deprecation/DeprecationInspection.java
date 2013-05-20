@@ -16,12 +16,9 @@
 package com.intellij.codeInspection.deprecation;
 
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
-import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.MultipleCheckboxOptionsPanel;
 import com.intellij.openapi.util.TextRange;
 import com.intellij.psi.*;
@@ -38,10 +35,10 @@ import java.util.List;
 /**
  * @author max
  */
-public class DeprecationInspection extends BaseJavaLocalInspectionTool {
-  @NonNls public static final String SHORT_NAME = HighlightInfoType.DEPRECATION_SHORT_NAME;
-  @NonNls public static final String ID = HighlightInfoType.DEPRECATION_ID;
-  public static final String DISPLAY_NAME = HighlightInfoType.DEPRECATION_DISPLAY_NAME;
+public class DeprecationInspection extends BaseJavaBatchLocalInspectionTool {
+  @NonNls public static final String SHORT_NAME = DeprecationUtil.DEPRECATION_SHORT_NAME;
+  @NonNls public static final String ID = DeprecationUtil.DEPRECATION_ID;
+  public static final String DISPLAY_NAME = DeprecationUtil.DEPRECATION_DISPLAY_NAME;
 
   public boolean IGNORE_INSIDE_DEPRECATED = false;
   public boolean IGNORE_ABSTRACT_DEPRECATED_OVERRIDES = true;
