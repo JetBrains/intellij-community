@@ -541,6 +541,13 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
       return GrClosureType.create(multiResolve(false), this);
     }
 
+    if (isDefinitelyKeyOfMap()) {
+      final PsiType type = getTypeFromMapAccess(this);
+      if (type != null) {
+        return type;
+      }
+    }
+
     PsiType result = getNominalTypeInner(resolved);
     if (result == null) return null;
 
@@ -679,13 +686,6 @@ public class GrReferenceExpressionImpl extends GrReferenceElementImpl<GrExpressi
     public PsiType fun(GrReferenceExpressionImpl refExpr) {
       PsiType result = GrReassignedLocalVarsChecker.checkReassignedVar(refExpr, true);
       if (result != null) return result;
-
-      if (refExpr.isDefinitelyKeyOfMap()) {
-        final PsiType type = getTypeFromMapAccess(refExpr);
-        if (type != null) {
-          return type;
-        }
-      }
 
       if (GrUnresolvedAccessInspection.isClassReference(refExpr)) {
         GrExpression qualifier = refExpr.getQualifier();
