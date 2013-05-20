@@ -26,13 +26,15 @@ import com.intellij.psi.search.GlobalSearchScope;
 public class TestsConsoleBuilderImpl extends TextConsoleBuilderImpl {
   public TestsConsoleBuilderImpl(final Project project,
                                  final GlobalSearchScope scope,
-                                 boolean isViewer) {
+                                 boolean isViewer,
+                                 boolean usePredefinedMessageFilter) {
     super(project, scope);
     setViewer(isViewer);
+    setUsePredefinedMessageFilter(usePredefinedMessageFilter);
   }
 
   @Override
   protected ConsoleView createConsole() {
-    return new TestsConsoleViewImpl(getProject(), getScope(), isViewer(), null);
+    return new TestsConsoleViewImpl(getProject(), getScope(), isViewer(), null, isUsePredefinedMessageFilter());
   }
 }
