@@ -17,10 +17,7 @@ package com.intellij.codeInspection.testOnly;
 
 import com.intellij.codeInsight.AnnotationUtil;
 import com.intellij.codeInsight.TestFrameworks;
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.roots.ProjectRootManager;
 import com.intellij.openapi.vfs.VirtualFile;
 import com.intellij.psi.*;
@@ -28,7 +25,7 @@ import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
 
-public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
+public class TestOnlyInspection extends BaseJavaBatchLocalInspectionTool {
   @Override
   @NotNull
   public String getDisplayName() {
@@ -57,7 +54,7 @@ public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
     };
   }
 
-  private void validate(PsiCallExpression e, ProblemsHolder h) {
+  private static void validate(PsiCallExpression e, ProblemsHolder h) {
     if (!isTestOnlyMethodCalled(e)) return;
     if (isInsideTestOnlyMethod(e)) return;
     if (isInsideTestClass(e)) return;
@@ -66,28 +63,27 @@ public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
     reportProblem(e, h);
   }
 
-  private boolean isTestOnlyMethodCalled(PsiCallExpression e) {
+  private static boolean isTestOnlyMethodCalled(PsiCallExpression e) {
     return isAnnotatedAsTestOnly(e.resolveMethod());
   }
 
-  private boolean isInsideTestOnlyMethod(PsiCallExpression e) {
+  private static boolean isInsideTestOnlyMethod(PsiCallExpression e) {
     PsiMethod m = getTopLevelParentOfType(e, PsiMethod.class);
     return isAnnotatedAsTestOnly(m);
   }
 
   private static boolean isAnnotatedAsTestOnly(@Nullable PsiMethod m) {
-    if (m == null) return false;
-    return AnnotationUtil.isAnnotated(m, AnnotationUtil.TEST_ONLY, false, false) ||
-           AnnotationUtil.isAnnotated(m, "com.google.common.annotations.VisibleForTesting", false, false);
+    return m != null &&
+           (AnnotationUtil.isAnnotated(m, AnnotationUtil.TEST_ONLY, false, false) ||
+            AnnotationUtil.isAnnotated(m, "com.google.common.annotations.VisibleForTesting", false, false));
   }
 
-  private boolean isInsideTestClass(PsiCallExpression e) {
+  private static boolean isInsideTestClass(PsiCallExpression e) {
     PsiClass c = getTopLevelParentOfType(e, PsiClass.class);
-    if (c == null) return false;
-    return TestFrameworks.getInstance().isTestClass(c);
+    return c != null && TestFrameworks.getInstance().isTestClass(c);
   }
 
-  private <T extends PsiElement> T getTopLevelParentOfType(PsiElement e, Class<T> c) {
+  private static <T extends PsiElement> T getTopLevelParentOfType(PsiElement e, Class<T> c) {
     T parent = PsiTreeUtil.getParentOfType(e, c);
     if (parent == null) return null;
 
@@ -99,14 +95,13 @@ public class TestOnlyInspection extends BaseJavaLocalInspectionTool {
     while (true);
   }
 
-  private boolean isUnderTestSources(PsiCallExpression e) {
+  private static boolean isUnderTestSources(PsiCallExpression e) {
     ProjectRootManager rm = ProjectRootManager.getInstance(e.getProject());
     VirtualFile f = e.getContainingFile().getVirtualFile();
-    if (f == null) return false;
-    return rm.getFileIndex().isInTestSourceContent(f);
+    return f != null && rm.getFileIndex().isInTestSourceContent(f);
   }
 
-  private void reportProblem(PsiCallExpression e, ProblemsHolder h) {
+  private static void reportProblem(PsiCallExpression e, ProblemsHolder h) {
     String message = InspectionsBundle.message("inspection.test.only.problems.test.only.method.call");
     h.registerProblem(e, message, ProblemHighlightType.GENERIC_ERROR_OR_WARNING);
   }
