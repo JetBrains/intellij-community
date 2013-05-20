@@ -48,7 +48,7 @@ public abstract class BundleBase {
       else {
         value = "!" + key + "!";
         if (assertKeyIsFound) {
-          assert false : key + " is not found in " + bundle;
+          assert false : "'" + key + "' is not found in " + bundle;
         }
       }
     }
