@@ -470,6 +470,7 @@ public class InstalledPluginsTableModel extends PluginTableModel {
           }
 
           if (!newVal) {
+            if (ideaPluginDescriptor instanceof IdeaPluginDescriptorImpl && ((IdeaPluginDescriptorImpl)ideaPluginDescriptor).isDeleted()) return true;
             final PluginId pluginDescriptorId = ideaPluginDescriptor.getPluginId();
             for (IdeaPluginDescriptor descriptor : ideaPluginDescriptors) {
               if (pluginId.equals(descriptor.getPluginId())) {
