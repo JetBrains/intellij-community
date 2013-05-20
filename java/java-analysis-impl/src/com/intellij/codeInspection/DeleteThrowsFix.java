@@ -19,9 +19,10 @@ import com.intellij.codeInsight.daemon.QuickFixBundle;
 import com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.PsiClassType;
+import com.intellij.psi.PsiElement;
 import com.intellij.psi.PsiFile;
 import com.intellij.psi.PsiMethod;
-import com.intellij.psi.PsiElement;
+import com.intellij.psi.util.PsiTreeUtil;
 import org.jetbrains.annotations.NotNull;
 
 /**
@@ -30,7 +31,7 @@ import org.jetbrains.annotations.NotNull;
 public class DeleteThrowsFix implements LocalQuickFix {
   private final MethodThrowsFix myQuickFix;
 
-  public DeleteThrowsFix(PsiMethod method, PsiClassType exceptionClass) {
+  public DeleteThrowsFix(@NotNull PsiMethod method, PsiClassType exceptionClass) {
     myQuickFix = new MethodThrowsFix(method, exceptionClass, false, false);
   }
 
@@ -49,10 +50,11 @@ public class DeleteThrowsFix implements LocalQuickFix {
   @Override
   public void applyFix(@NotNull Project project, @NotNull ProblemDescriptor descriptor) {
     PsiElement element = descriptor.getPsiElement();
-    if (element == null) return;
-    final PsiFile psiFile = element.getContainingFile();
-    if (myQuickFix.isAvailable(project, psiFile, element, element)) {
-      myQuickFix.invoke(project, psiFile, element, element);
+    PsiMethod method = PsiTreeUtil.getParentOfType(element, PsiMethod.class);
+    if (method == null) return;
+    final PsiFile psiFile = method.getContainingFile();
+    if (myQuickFix.isAvailable(project, psiFile, method, method)) {
+      myQuickFix.invoke(project, psiFile, method, method);
     }
   }
 }
