@@ -133,7 +133,7 @@ public class PsiClassStubImpl<T extends PsiClass> extends StubBase<T> implements
 
   @Override
   public LanguageLevel getLanguageLevel() {
-    return myLanguageLevel != null ? myLanguageLevel : LanguageLevel.HIGHEST; // TODO!!!
+    return myLanguageLevel != null ? myLanguageLevel : LanguageLevel.HIGHEST;
   }
 
   @Override

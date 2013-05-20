@@ -18,6 +18,7 @@ package com.intellij.psi.impl.java.stubs;
 import com.intellij.lang.ASTNode;
 import com.intellij.lang.LighterAST;
 import com.intellij.lang.LighterASTNode;
+import com.intellij.pom.java.LanguageLevel;
 import com.intellij.psi.JavaTokenType;
 import com.intellij.psi.PsiClass;
 import com.intellij.psi.PsiNameHelper;
@@ -152,6 +153,7 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
     if (!stub.isAnonymous()) {
       dataStream.writeName(stub.getName());
       dataStream.writeName(stub.getQualifiedName());
+      dataStream.writeByte(stub.getLanguageLevel().ordinal());
       dataStream.writeName(stub.getSourceFileName());
     }
     else {
@@ -163,16 +165,17 @@ public abstract class JavaClassElementType extends JavaStubElementType<PsiClassS
   @Override
   public PsiClassStub deserialize(@NotNull final StubInputStream dataStream, final StubElement parentStub) throws IOException {
     byte flags = dataStream.readByte();
-
-    final boolean isAnonymous = PsiClassStubImpl.isAnonymous(flags);
-    final boolean isEnumConst = PsiClassStubImpl.isEnumConstInitializer(flags);
-    final JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
+    boolean isAnonymous = PsiClassStubImpl.isAnonymous(flags);
+    boolean isEnumConst = PsiClassStubImpl.isEnumConstInitializer(flags);
+    JavaClassElementType type = typeForClass(isAnonymous, isEnumConst);
 
     if (!isAnonymous) {
       StringRef name = dataStream.readName();
       StringRef qname = dataStream.readName();
-      final StringRef sourceFileName = dataStream.readName();
-      final PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, qname, name, null, flags);
+      int languageLevelId = dataStream.readByte();
+      StringRef sourceFileName = dataStream.readName();
+      PsiClassStubImpl classStub = new PsiClassStubImpl(type, parentStub, qname, name, null, flags);
+      classStub.setLanguageLevel(LanguageLevel.values()[languageLevelId]);
       classStub.setSourceFileName(sourceFileName);
       return classStub;
     }
