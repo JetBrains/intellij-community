@@ -138,12 +138,15 @@ final class BuildSession implements Runnable, CanceledStatus {
             CustomBuilderMessage builderMessage = (CustomBuilderMessage)buildMessage;
             response = CmdlineProtoUtil.createCustomBuilderMessage(builderMessage.getBuilderId(), builderMessage.getMessageType(), builderMessage.getMessageText());
           }
-          else {
+          else if (!(buildMessage instanceof BuildingTargetProgressMessage)) {
             float done = -1.0f;
             if (buildMessage instanceof ProgressMessage) {
               done = ((ProgressMessage)buildMessage).getDone();
             }
             response = CmdlineProtoUtil.createCompileProgressMessageResponse(buildMessage.getMessageText(), done);
+          }
+          else {
+            response = null;
           }
           if (response != null) {
             Channels.write(myChannel, CmdlineProtoUtil.toMessage(mySessionId, response));
