@@ -24,7 +24,7 @@
 package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.psi.*;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
@@ -38,10 +38,10 @@ public class CastMethodArgumentFix extends MethodArgumentFix {
   @NotNull
   public String getText() {
     if (myArgList.getExpressions().length == 1) {
-      return QuickFixBundle.message("cast.single.parameter.text", HighlightUtil.formatType(myToType));
+      return QuickFixBundle.message("cast.single.parameter.text", JavaHighlightUtil.formatType(myToType));
     }
 
-    return QuickFixBundle.message("cast.parameter.text", myIndex + 1, HighlightUtil.formatType(myToType));
+    return QuickFixBundle.message("cast.parameter.text", myIndex + 1, JavaHighlightUtil.formatType(myToType));
   }
 
   private static class MyFixerActionFactory extends ArgumentFixerActionFactory {

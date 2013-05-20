@@ -21,6 +21,7 @@ import com.intellij.codeInsight.daemon.quickFix.CreateFieldOrPropertyFix;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
 import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PropertyMemberType;
 import com.intellij.psi.util.ClassKind;
@@ -77,7 +78,7 @@ public class QuickFixFactoryImpl extends QuickFixFactory {
   }
 
   @Override
-  public LocalQuickFixAndIntentionActionOnPsiElement createMethodThrowsFix(@NotNull PsiMethod method,
+  public LocalQuickFixOnPsiElement createMethodThrowsFix(@NotNull PsiMethod method,
                                                                            @NotNull PsiClassType exceptionClass,
                                                                            boolean shouldThrow,
                                                                            boolean showContainingClass) {

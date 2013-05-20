@@ -15,10 +15,7 @@
  */
 package com.intellij.codeInspection.sillyAssignment;
 
-import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
+import com.intellij.codeInspection.*;
 import com.intellij.openapi.util.Comparing;
 import com.intellij.psi.*;
 import com.intellij.psi.util.PsiTreeUtil;
@@ -31,7 +28,7 @@ import org.jetbrains.annotations.Nullable;
  * User: anna
  * Date: 15-Nov-2005
  */
-public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
+public class SillyAssignmentInspection extends BaseJavaBatchLocalInspectionTool {
   @Override
   @NotNull
   public String getGroupDisplayName() {
@@ -164,7 +161,8 @@ public class SillyAssignmentInspection extends BaseJavaLocalInspectionTool {
         }
       }
       return thisQualifier;
-    } else if (qualifier != null) {
+    }
+    if (qualifier != null) {
       return  ((PsiSuperExpression)qualifier).getQualifier();
     }
     return null;

@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.diagnostic.Logger;
 import com.intellij.openapi.editor.Editor;
@@ -44,8 +44,8 @@ public class MoveCatchUpFix implements IntentionAction {
   @NotNull
   public String getText() {
     return QuickFixBundle.message("move.catch.up.text",
-                                  HighlightUtil.formatType(myCatchSection.getCatchType()),
-                                  HighlightUtil.formatType(myMoveBeforeSection.getCatchType()));
+                                  JavaHighlightUtil.formatType(myCatchSection.getCatchType()),
+                                  JavaHighlightUtil.formatType(myMoveBeforeSection.getCatchType()));
   }
 
   @Override

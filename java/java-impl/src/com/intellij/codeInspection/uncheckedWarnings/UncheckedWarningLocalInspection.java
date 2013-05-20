@@ -19,6 +19,7 @@ package com.intellij.codeInspection.uncheckedWarnings;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.analysis.GenericsHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.daemon.impl.quickfix.GenerifyFileFix;
 import com.intellij.codeInsight.daemon.impl.quickfix.VariableArrayTypeFix;
 import com.intellij.codeInsight.intention.IntentionAction;
@@ -225,7 +226,8 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
       if (!TypeConversionUtil.areTypesConvertible(exprType, castType)) return;
       if (GenericsHighlightUtil.isUncheckedCast(castType, exprType)) {
         final String description =
-          JavaErrorMessages.message("generics.unchecked.cast", HighlightUtil.formatType(exprType), HighlightUtil.formatType(castType));
+          JavaErrorMessages.message("generics.unchecked.cast", JavaHighlightUtil.formatType(exprType), JavaHighlightUtil
+            .formatType(castType));
         registerProblem(description, expression, myGenerifyFixes);
       }
     }
@@ -337,8 +339,8 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
         if (!TypeConversionUtil.isAssignable(componentType, itemType)) continue;
         if (GenericsHighlightUtil.isRawToGeneric(componentType, itemType)) {
           String description = JavaErrorMessages.message("generics.unchecked.assignment",
-                                                         HighlightUtil.formatType(itemType),
-                                                         HighlightUtil.formatType(componentType));
+                                                         JavaHighlightUtil.formatType(itemType),
+                                                         JavaHighlightUtil.formatType(componentType));
           if (!arrayTypeFixChecked) {
             final PsiType checkResult = HighlightUtil.sameType(initializers);
             fix = checkResult != null ? new VariableArrayTypeFix(arrayInitializer, checkResult) : null;
@@ -361,8 +363,8 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
       if (checkAssignability && !TypeConversionUtil.isAssignable(parameterType, itemType)) return;
       if (GenericsHighlightUtil.isRawToGeneric(parameterType, itemType)) {
         String description = JavaErrorMessages.message("generics.unchecked.assignment",
-                                                       HighlightUtil.formatType(itemType),
-                                                       HighlightUtil.formatType(parameterType));
+                                                       JavaHighlightUtil.formatType(itemType),
+                                                       JavaHighlightUtil.formatType(parameterType));
         registerProblem(description, parameter, quickFixes);
       }
     }
@@ -386,8 +388,8 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
             if (baseReturnType == null || overriderReturnType == null) return;
             if (GenericsHighlightUtil.isRawToGeneric(baseReturnType, overriderReturnType)) {
               final String message = JavaErrorMessages.message("unchecked.overriding.incompatible.return.type",
-                                                               HighlightUtil.formatType(overriderReturnType),
-                                                               HighlightUtil.formatType(baseReturnType));
+                                                               JavaHighlightUtil.formatType(overriderReturnType),
+                                                               JavaHighlightUtil.formatType(baseReturnType));
 
               final PsiTypeElement returnTypeElement = method.getReturnTypeElement();
               LOG.assertTrue(returnTypeElement != null);
@@ -471,7 +473,7 @@ public class UncheckedWarningLocalInspection extends BaseJavaLocalInspectionTool
           PsiType type = elementFactory.createType(method.getContainingClass(), substitutor);
           return JavaErrorMessages.message("generics.unchecked.call.to.member.of.raw.type",
                                                          HighlightUtil.formatMethod(method),
-                                                         HighlightUtil.formatType(type));
+                                                         JavaHighlightUtil.formatType(type));
         }
       }
       return null;

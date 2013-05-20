@@ -280,7 +280,8 @@ public class HighlightUtil extends HighlightUtilBase {
     if (TypeConversionUtil.isPrimitiveAndNotNull(operandType)
         || TypeConversionUtil.isPrimitiveAndNotNull(checkType)
         || !TypeConversionUtil.areTypesConvertible(operandType, checkType)) {
-      String message = JavaErrorMessages.message("inconvertible.type.cast", formatType(operandType), formatType(checkType));
+      String message = JavaErrorMessages.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
+        .formatType(checkType));
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
     }
     return null;
@@ -300,7 +301,8 @@ public class HighlightUtil extends HighlightUtilBase {
     if (operandType != null &&
         !TypeConversionUtil.areTypesConvertible(operandType, castType) &&
         !RedundantCastUtil.isInPolymorphicCall(expression)) {
-      String message = JavaErrorMessages.message("inconvertible.type.cast", formatType(operandType), formatType(castType));
+      String message = JavaErrorMessages.message("inconvertible.type.cast", JavaHighlightUtil.formatType(operandType), JavaHighlightUtil
+        .formatType(castType));
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
     }
 
@@ -347,8 +349,8 @@ public class HighlightUtil extends HighlightUtilBase {
         PsiType.getJavaLangObject(assignment.getManager(), assignment.getResolveScope()).equals(lType)) {
       String operatorText = operationSign.getText().substring(0, operationSign.getText().length() - 1);
       String message = JavaErrorMessages.message("binary.operator.not.applicable", operatorText,
-                                                 formatType(lType),
-                                                 formatType(rType));
+                                                 JavaHighlightUtil.formatType(lType),
+                                                 JavaHighlightUtil.formatType(rType));
 
       errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(assignment).descriptionAndTooltip(message).create();
       QuickFixAction.registerQuickFixAction(errorResult, new ChangeToAppendFix(eqOpSign, lType, assignment));
@@ -547,7 +549,7 @@ public class HighlightUtil extends HighlightUtilBase {
       @NotNull
       @Override
       public String fun(PsiClassType type) {
-        return formatType(type);
+        return JavaHighlightUtil.formatType(type);
       }
     }, ", ");
   }
@@ -639,14 +641,6 @@ public class HighlightUtil extends HighlightUtilBase {
   public static String formatField(@NotNull PsiField field) {
     return PsiFormatUtil.formatVariable(field, PsiFormatUtilBase.SHOW_CONTAINING_CLASS | PsiFormatUtilBase.SHOW_NAME, PsiSubstitutor.EMPTY);
   }
-
-  @NotNull
-  public static String formatType(@Nullable PsiType type) {
-    if (type == null) return PsiKeyword.NULL;
-    String text = type.getInternalCanonicalText();
-    return text == null ? PsiKeyword.NULL : text;
-  }
-
 
   @Nullable
   public static HighlightInfo checkUnhandledExceptions(@NotNull final PsiElement element, @Nullable TextRange textRange) {
@@ -1148,7 +1142,7 @@ public class HighlightUtil extends HighlightUtilBase {
       if (exceptionType.isAssignableFrom(caughtType) || caughtType.isAssignableFrom(exceptionType)) return null;
     }
 
-    final String description = JavaErrorMessages.message("exception.never.thrown.try", formatType(caughtType));
+    final String description = JavaErrorMessages.message("exception.never.thrown.try", JavaHighlightUtil.formatType(caughtType));
     final HighlightInfo errorResult =
       HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parameter).descriptionAndTooltip(description).create();
     QuickFixAction.registerQuickFixAction(errorResult, new DeleteCatchFix(parameter));
@@ -1173,7 +1167,7 @@ public class HighlightUtil extends HighlightUtilBase {
         }
       }
       if (!used) {
-        final String description = JavaErrorMessages.message("exception.never.thrown.try", formatType(catchType));
+        final String description = JavaErrorMessages.message("exception.never.thrown.try", JavaHighlightUtil.formatType(catchType));
         final HighlightInfo highlight =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
         QuickFixAction.registerQuickFixAction(highlight, new DeleteMultiCatchFix(typeElement));
@@ -1267,7 +1261,8 @@ public class HighlightUtil extends HighlightUtilBase {
     if (type != null) {
       if (!isValidTypeForSwitchSelector(type, PsiUtil.isLanguageLevel7OrHigher(expression))) {
         String message =
-          JavaErrorMessages.message("incompatible.types", JavaErrorMessages.message("valid.switch.selector.types"), formatType(type));
+          JavaErrorMessages.message("incompatible.types", JavaErrorMessages.message("valid.switch.selector.types"), JavaHighlightUtil
+            .formatType(type));
         errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
         QuickFixAction.registerQuickFixAction(errorResult, new ConvertSwitchToIfIntention(statement));
         if (PsiType.LONG.equals(type) || PsiType.FLOAT.equals(type) || PsiType.DOUBLE.equals(type)) {
@@ -1312,8 +1307,8 @@ public class HighlightUtil extends HighlightUtilBase {
       if (!TypeConversionUtil.isBinaryOperatorApplicable(operationSign, lType, rType, false)) {
         PsiJavaToken token = expression.getTokenBeforeOperand(operand);
         String message = JavaErrorMessages.message("binary.operator.not.applicable", token.getText(),
-                                                   formatType(lType),
-                                                   formatType(rType));
+                                                   JavaHighlightUtil.formatType(lType),
+                                                   JavaHighlightUtil.formatType(rType));
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(message).create();
       }
       lType = TypeConversionUtil.calcTypeForBinaryExpression(lType, rType, operationSign, true);
@@ -1328,7 +1323,7 @@ public class HighlightUtil extends HighlightUtilBase {
     if (token != null && expression != null && !TypeConversionUtil.isUnaryOperatorApplicable(token, expression)) {
       PsiType type = expression.getType();
       if (type == null) return null;
-      String message = JavaErrorMessages.message("unary.operator.not.applicable", token.getText(), formatType(type));
+      String message = JavaErrorMessages.message("unary.operator.not.applicable", token.getText(), JavaHighlightUtil.formatType(type));
 
       PsiElement parentExpr = token.getParent();
       HighlightInfo highlightInfo =
@@ -1510,7 +1505,7 @@ public class HighlightUtil extends HighlightUtilBase {
     final PsiType arrayExpressionType = arrayExpression.getType();
 
     if (arrayExpressionType != null && !(arrayExpressionType instanceof PsiArrayType)) {
-      final String description = JavaErrorMessages.message("array.type.expected", formatType(arrayExpressionType));
+      final String description = JavaErrorMessages.message("array.type.expected", JavaHighlightUtil.formatType(arrayExpressionType));
       final HighlightInfo info =
         HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(arrayExpression).descriptionAndTooltip(description).create();
       QuickFixAction.registerQuickFixAction(info, new ReplaceWithListAccessFix(arrayAccessExpression));
@@ -1606,7 +1601,7 @@ public class HighlightUtil extends HighlightUtilBase {
   private static HighlightInfo checkArrayInitializerCompatibleTypes(@NotNull PsiExpression initializer, final PsiType componentType) {
     PsiType initializerType = initializer.getType();
     if (initializerType == null) {
-      String description = JavaErrorMessages.message("illegal.initializer", formatType(componentType));
+      String description = JavaErrorMessages.message("illegal.initializer", JavaHighlightUtil.formatType(componentType));
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(initializer).descriptionAndTooltip(description).create();
     }
     PsiExpression expression = initializer instanceof PsiArrayInitializerExpression ? null : initializer;
@@ -2333,7 +2328,8 @@ public class HighlightUtil extends HighlightUtilBase {
                                                redIfNotMatch(lRawType, assignable), requiredRow,
                                                redIfNotMatch(rRawType, assignable), foundRow);
 
-    String description = JavaErrorMessages.message("incompatible.types", formatType(lType1), formatType(rType1));
+    String description = JavaErrorMessages.message("incompatible.types", JavaHighlightUtil.formatType(lType1), JavaHighlightUtil
+      .formatType(rType1));
 
     return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).description(description).escapedToolTip(toolTip).navigationShift(navigationShift).create();
   }
@@ -2575,18 +2571,12 @@ public class HighlightUtil extends HighlightUtilBase {
   }
 
 
-  public static boolean isSerializable(@NotNull PsiClass aClass) {
-    PsiManager manager = aClass.getManager();
-    PsiClass serializableClass = JavaPsiFacade.getInstance(manager.getProject()).findClass("java.io.Serializable", aClass.getResolveScope());
-    return serializableClass != null && aClass.isInheritor(serializableClass, true);
-  }
-
   public static boolean isSerializationImplicitlyUsedField(@NotNull PsiField field) {
     final String name = field.getName();
     if (!SERIAL_VERSION_UID_FIELD_NAME.equals(name) && !SERIAL_PERSISTENT_FIELDS_FIELD_NAME.equals(name)) return false;
     if (!field.hasModifierProperty(PsiModifier.STATIC)) return false;
     PsiClass aClass = field.getContainingClass();
-    return aClass == null || isSerializable(aClass);
+    return aClass == null || JavaHighlightUtil.isSerializable(aClass);
   }
 
   @Nullable

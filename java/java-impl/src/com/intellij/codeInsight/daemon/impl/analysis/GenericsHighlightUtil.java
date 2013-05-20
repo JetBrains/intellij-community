@@ -96,8 +96,8 @@ public class GenericsHighlightUtil {
           String description = JavaErrorMessages.message(
             messageKey,
             HighlightUtil.formatClass(typeParameter),
-            HighlightUtil.formatType(extendsType),
-            HighlightUtil.formatType(substituted)
+            JavaHighlightUtil.formatType(extendsType),
+            JavaHighlightUtil.formatType(substituted)
           );
 
           return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(call).descriptionAndTooltip(description).create();
@@ -273,7 +273,7 @@ public class GenericsHighlightUtil {
 
         String description = JavaErrorMessages.message(messageKey,
                                                        referenceClass != null ? HighlightUtil.formatClass(referenceClass) : type.getPresentableText(),
-                                                       HighlightUtil.formatType(bound));
+                                                       JavaHighlightUtil.formatType(bound));
 
         final HighlightInfo highlightInfo =
           HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement2Highlight).descriptionAndTooltip(description).create();
@@ -447,8 +447,8 @@ public class GenericsHighlightUtil {
           if (!Comparing.equal(type1, type2)) {
             String description = JavaErrorMessages.message("generics.cannot.be.inherited.with.different.type.arguments",
                                                            HighlightUtil.formatClass(superClass),
-                                                           HighlightUtil.formatType(type1),
-                                                           HighlightUtil.formatType(type2));
+                                                           JavaHighlightUtil.formatType(type1),
+                                                           JavaHighlightUtil.formatType(type2));
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
           }
         }
@@ -532,9 +532,9 @@ public class GenericsHighlightUtil {
     MethodSignatureBackedByPsiMethod sameErasure = sameErasureMethods.get(signatureToErase);
     HighlightInfo info;
     if (sameErasure != null) {
-      if (aClass instanceof PsiTypeParameter || 
+      if (aClass instanceof PsiTypeParameter ||
           MethodSignatureUtil.findMethodBySuperMethod(aClass, sameErasure.getMethod(), false) != null ||
-          !(InheritanceUtil.isInheritorOrSelf(sameErasure.getMethod().getContainingClass(), method.getContainingClass(), true) || 
+          !(InheritanceUtil.isInheritorOrSelf(sameErasure.getMethod().getContainingClass(), method.getContainingClass(), true) ||
             InheritanceUtil.isInheritorOrSelf(method.getContainingClass(), sameErasure.getMethod().getContainingClass(), true))) {
         info = checkSameErasureNotSubSignatureOrSameClass(sameErasure, signature, aClass, method);
         if (info != null) return info;
@@ -659,7 +659,7 @@ public class GenericsHighlightUtil {
         if (refParent instanceof PsiNewExpression) {
           PsiNewExpression newExpression = (PsiNewExpression)refParent;
           if (!(newExpression.getType() instanceof PsiArrayType)) {
-            String description = JavaErrorMessages.message("wildcard.type.cannot.be.instantiated", HighlightUtil.formatType(type));
+            String description = JavaErrorMessages.message("wildcard.type.cannot.be.instantiated", JavaHighlightUtil.formatType(type));
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
           }
         }
@@ -700,7 +700,7 @@ public class GenericsHighlightUtil {
       if (toConvert instanceof PsiPrimitiveType) {
         final PsiClassType boxedType = ((PsiPrimitiveType)toConvert).getBoxedType(typeElement);
         if (boxedType != null) {
-          QuickFixAction.registerQuickFixAction(highlightInfo, 
+          QuickFixAction.registerQuickFixAction(highlightInfo,
                                                 new ReplacePrimitiveWithBoxedTypeAction(typeElement, toConvert.getPresentableText(), ((PsiPrimitiveType)toConvert).getBoxedTypeName()));
         }
       }
@@ -835,7 +835,7 @@ public class GenericsHighlightUtil {
     final PsiType itemType = getCollectionItemType(expression);
     if (itemType == null) {
       String description = JavaErrorMessages.message("foreach.not.applicable",
-                                                     HighlightUtil.formatType(expression.getType()));
+                                                     JavaHighlightUtil.formatType(expression.getType()));
       return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(expression).descriptionAndTooltip(description).create();
     }
     final int start = parameter.getTextRange().getStartOffset();
@@ -1058,10 +1058,10 @@ public class GenericsHighlightUtil {
 
     if (resolved instanceof PsiClass) {
       final PsiClass containingClass = ((PsiClass)resolved).getContainingClass();
-      if (containingClass != null && 
-          ref.getQualifier() == null && 
-          containingClass.getTypeParameters().length > 0 && 
-          !((PsiClass)resolved).hasModifierProperty(PsiModifier.STATIC) && 
+      if (containingClass != null &&
+          ref.getQualifier() == null &&
+          containingClass.getTypeParameters().length > 0 &&
+          !((PsiClass)resolved).hasModifierProperty(PsiModifier.STATIC) &&
           ((PsiClass)resolved).getTypeParameters().length == 0) {
         String description = JavaErrorMessages.message("illegal.generic.type.for.instanceof");
         return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(typeElement).descriptionAndTooltip(description).create();
@@ -1407,7 +1407,7 @@ public class GenericsHighlightUtil {
         if ((parent instanceof PsiCallExpression || parent instanceof PsiMethodReferenceExpression) && PsiUtil.isLanguageLevel7OrHigher(parent)) {
           return null;
         }
-        
+
         if (element instanceof PsiMethod) {
           if (((PsiMethod)element).findSuperMethods().length > 0) return null;
           if (qualifier instanceof PsiReferenceExpression){
@@ -1520,8 +1520,8 @@ public class GenericsHighlightUtil {
       if (qualifier instanceof PsiJavaCodeReferenceElement) {
         if (((PsiJavaCodeReferenceElement)qualifier).getTypeParameters().length > 0) {
           final PsiElement resolve = ((PsiJavaCodeReferenceElement)parent).resolve();
-          if (resolve instanceof PsiTypeParameterListOwner 
-              && ((PsiTypeParameterListOwner)resolve).hasTypeParameters() 
+          if (resolve instanceof PsiTypeParameterListOwner
+              && ((PsiTypeParameterListOwner)resolve).hasTypeParameters()
               && !((PsiTypeParameterListOwner)resolve).hasModifierProperty(PsiModifier.STATIC)) {
             return HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(parent).descriptionAndTooltip(
               "Improper formed type; some type parameters are missing").create();

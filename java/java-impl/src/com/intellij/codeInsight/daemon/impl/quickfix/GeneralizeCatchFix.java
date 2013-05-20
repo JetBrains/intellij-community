@@ -17,7 +17,7 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInsight.daemon.impl.analysis.HighlightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
@@ -41,8 +41,8 @@ public class GeneralizeCatchFix implements IntentionAction {
   @NotNull
   public String getText() {
     return QuickFixBundle.message("generalize.catch.text",
-                                  HighlightUtil.formatType(myCatchParameter == null ? null : myCatchParameter.getType()),
-                                  HighlightUtil.formatType(myUnhandledException));
+                                  JavaHighlightUtil.formatType(myCatchParameter == null ? null : myCatchParameter.getType()),
+                                  JavaHighlightUtil.formatType(myUnhandledException));
   }
 
   @Override

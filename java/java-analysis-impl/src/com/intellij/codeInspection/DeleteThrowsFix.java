@@ -51,8 +51,8 @@ public class DeleteThrowsFix implements LocalQuickFix {
     PsiElement element = descriptor.getPsiElement();
     if (element == null) return;
     final PsiFile psiFile = element.getContainingFile();
-    if (myQuickFix.isAvailable(project, null, psiFile)) {
-      myQuickFix.invoke(project, null, psiFile);
+    if (myQuickFix.isAvailable(project, psiFile, element, element)) {
+      myQuickFix.invoke(project, psiFile, element, element);
     }
   }
 }

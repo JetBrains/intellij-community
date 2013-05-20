@@ -23,6 +23,7 @@ import com.intellij.codeInsight.daemon.impl.RefCountHolder;
 import com.intellij.codeInsight.daemon.impl.quickfix.*;
 import com.intellij.codeInsight.intention.IntentionAction;
 import com.intellij.codeInsight.intention.QuickFixFactory;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElementAsIntentionAdapter;
 import com.intellij.openapi.application.ApplicationManager;
 import com.intellij.openapi.project.IndexNotReadyException;
 import com.intellij.openapi.util.Comparing;
@@ -265,7 +266,7 @@ public class HighlightMethodUtil {
         PsiClassType exception = checkedExceptions.get(index);
         String description = JavaErrorMessages.message("overridden.method.does.not.throw",
                                                    createClashMethodMessage(method, superMethod, true),
-                                                   HighlightUtil.formatType(exception));
+                                                   JavaHighlightUtil.formatType(exception));
         TextRange textRange;
         if (includeRealPositionInfo) {
           PsiElement exceptionContext = exceptionContexts.get(index);
@@ -275,8 +276,8 @@ public class HighlightMethodUtil {
           textRange = TextRange.EMPTY_RANGE;
         }
         HighlightInfo errorResult = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
-        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodThrowsFix(method, exception, false, false));
-        QuickFixAction.registerQuickFixAction(errorResult, QUICK_FIX_FACTORY.createMethodThrowsFix(superMethod, exception, true, true));
+        QuickFixAction.registerQuickFixAction(errorResult, new LocalQuickFixOnPsiElementAsIntentionAdapter(QUICK_FIX_FACTORY.createMethodThrowsFix(method, exception, false, false)));
+        QuickFixAction.registerQuickFixAction(errorResult, new LocalQuickFixOnPsiElementAsIntentionAdapter(QUICK_FIX_FACTORY.createMethodThrowsFix(superMethod, exception, true, true)));
         return errorResult;
       }
     }
@@ -683,7 +684,7 @@ public class HighlightMethodUtil {
       if (parameter != null) {
         PsiType type = substitutor.substitute(parameter.getType());
         s +=  "<font " + (mismatchColor == null ? "" : "color=" + mismatchColor) + ">" +
-              esctrim(showShort ? type.getPresentableText() : HighlightUtil.formatType(type))
+              esctrim(showShort ? type.getPresentableText() : JavaHighlightUtil.formatType(type))
               + "</font>"
               ;
       }
@@ -694,7 +695,7 @@ public class HighlightMethodUtil {
         PsiType type = expression.getType();
         s += "<font " + (mismatchColor == null ? "" : "color='" + mismatchColor + "'") + ">" +
                esctrim(expression.getText()) + "&nbsp;&nbsp;"+
-              (mismatchColor == null || type == null || type == PsiType.NULL ? "" : "("+esctrim(HighlightUtil.formatType(type))+")")
+              (mismatchColor == null || type == null || type == PsiType.NULL ? "" : "("+esctrim(JavaHighlightUtil.formatType(type))+")")
               + "</font>"
               ;
 
@@ -722,7 +723,7 @@ public class HighlightMethodUtil {
       @NonNls String mismatchColor = showShort ? null : UIUtil.isUnderDarcula() ? "ff6464" : "red";
       ms += "<td> " + "<b><nobr>" + (i == 0 ? "(" : "")
             + "<font " + (showShort ? "" : "color=" + mismatchColor) + ">" +
-            XmlStringUtil.escapeString(showShort ? type.getPresentableText() : HighlightUtil.formatType(type))
+            XmlStringUtil.escapeString(showShort ? type.getPresentableText() : JavaHighlightUtil.formatType(type))
             + "</font>"
             + (i == expressions.length - 1 ? ")" : ",") + "</nobr></b></td>";
     }
@@ -744,7 +745,7 @@ public class HighlightMethodUtil {
       ms += "<td><b><nobr>" + (i == 0 ? "(" : "") +
             XmlStringUtil.escapeString(showShortType(i, parameters, expressions, substitutor)
                                  ? type.getPresentableText()
-                                 : HighlightUtil.formatType(type))
+                                 : JavaHighlightUtil.formatType(type))
             + (i == parameters.length - 1 ? ")" : ",") + "</nobr></b></td>";
     }
     return ms;
@@ -1177,7 +1178,7 @@ public class HighlightMethodUtil {
     TextRange textRange = HighlightNamesUtil.getMethodDeclarationTextRange(method);
     HighlightInfo highlightInfo = HighlightInfo.newHighlightInfo(HighlightInfoType.ERROR).range(textRange).descriptionAndTooltip(description).create();
     for (PsiClassType exception : unhandled) {
-      QuickFixAction.registerQuickFixAction(highlightInfo, QUICK_FIX_FACTORY.createMethodThrowsFix(method, exception, true, false));
+      QuickFixAction.registerQuickFixAction(highlightInfo, new LocalQuickFixOnPsiElementAsIntentionAdapter(QUICK_FIX_FACTORY.createMethodThrowsFix(method, exception, true, false)));
     }
     return highlightInfo;
   }
@@ -1380,43 +1381,6 @@ public class HighlightMethodUtil {
     }
   }
 
-  public static boolean isSerializationRelatedMethod(PsiMethod method, PsiClass containingClass) {
-    if (containingClass == null || method.isConstructor()) return false;
-    if (method.hasModifierProperty(PsiModifier.STATIC)) return false;
-    @NonNls String name = method.getName();
-    PsiParameter[] parameters = method.getParameterList().getParameters();
-    PsiType returnType = method.getReturnType();
-    if ("readObjectNoData".equals(name)) {
-      return parameters.length == 0 && TypeConversionUtil.isVoidType(returnType) && HighlightUtil.isSerializable(containingClass);
-    }
-    if ("readObject".equals(name)) {
-      return parameters.length == 1
-             && parameters[0].getType().equalsToText("java.io.ObjectInputStream")
-             && TypeConversionUtil.isVoidType(returnType) && method.hasModifierProperty(PsiModifier.PRIVATE)
-             && HighlightUtil.isSerializable(containingClass);
-    }
-    if ("readResolve".equals(name)) {
-      return parameters.length == 0
-             && returnType != null
-             && returnType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
-             && (containingClass.hasModifierProperty(PsiModifier.ABSTRACT) || HighlightUtil.isSerializable(containingClass));
-    }
-    if ("writeReplace".equals(name)) {
-      return parameters.length == 0
-             && returnType != null
-             && returnType.equalsToText(CommonClassNames.JAVA_LANG_OBJECT)
-             && (containingClass.hasModifierProperty(PsiModifier.ABSTRACT) || HighlightUtil.isSerializable(containingClass));
-    }
-    if ("writeObject".equals(name)) {
-      return parameters.length == 1
-             && TypeConversionUtil.isVoidType(returnType)
-             && parameters[0].getType().equalsToText("java.io.ObjectOutputStream")
-             && method.hasModifierProperty(PsiModifier.PRIVATE)
-             && HighlightUtil.isSerializable(containingClass);
-    }
-    return false;
-  }
-
   private static String buildArgTypesList(PsiExpressionList list) {
     StringBuilder builder = new StringBuilder();
     builder.append("(");
@@ -1426,7 +1390,7 @@ public class HighlightMethodUtil {
         builder.append(", ");
       }
       PsiType argType = args[i].getType();
-      builder.append(argType != null ? HighlightUtil.formatType(argType) : "?");
+      builder.append(argType != null ? JavaHighlightUtil.formatType(argType) : "?");
     }
     builder.append(")");
     return builder.toString();

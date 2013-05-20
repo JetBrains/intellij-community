@@ -17,10 +17,9 @@ package com.intellij.codeInsight.daemon.impl.quickfix;
 
 import com.intellij.codeInsight.FileModificationService;
 import com.intellij.codeInsight.daemon.QuickFixBundle;
-import com.intellij.codeInspection.LocalQuickFixAndIntentionActionOnPsiElement;
+import com.intellij.codeInspection.LocalQuickFixOnPsiElement;
 import com.intellij.openapi.command.undo.UndoUtil;
 import com.intellij.openapi.diagnostic.Logger;
-import com.intellij.openapi.editor.Editor;
 import com.intellij.openapi.project.Project;
 import com.intellij.psi.*;
 import com.intellij.psi.codeStyle.JavaCodeStyleManager;
@@ -28,9 +27,8 @@ import com.intellij.psi.util.PsiFormatUtil;
 import com.intellij.psi.util.PsiFormatUtilBase;
 import com.intellij.util.IncorrectOperationException;
 import org.jetbrains.annotations.NotNull;
-import org.jetbrains.annotations.Nullable;
 
-public class MethodThrowsFix extends LocalQuickFixAndIntentionActionOnPsiElement {
+public class MethodThrowsFix extends LocalQuickFixOnPsiElement {
   private static final Logger LOG = Logger.getInstance("#com.intellij.codeInsight.daemon.impl.quickfix.MethodThrowsFix");
 
   private final String myThrowsCanonicalText;
@@ -73,11 +71,7 @@ public class MethodThrowsFix extends LocalQuickFixAndIntentionActionOnPsiElement
   }
 
   @Override
-  public void invoke(@NotNull Project project,
-                     @NotNull PsiFile file,
-                     @Nullable("is null when called from inspection") Editor editor,
-                     @NotNull PsiElement startElement,
-                     @NotNull PsiElement endElement) {
+  public void invoke(@NotNull Project project, @NotNull PsiFile file, @NotNull PsiElement startElement, @NotNull PsiElement endElement) {
     final PsiMethod myMethod = (PsiMethod)startElement;
     if (!FileModificationService.getInstance().prepareFileForWrite(myMethod.getContainingFile())) return;
     PsiJavaCodeReferenceElement[] referenceElements = myMethod.getThrowsList().getReferenceElements();
@@ -100,7 +94,8 @@ public class MethodThrowsFix extends LocalQuickFixAndIntentionActionOnPsiElement
         myMethod.getThrowsList().add(ref);
       }
       UndoUtil.markPsiFileForUndo(file);
-    } catch (IncorrectOperationException e) {
+    }
+    catch (IncorrectOperationException e) {
       LOG.error(e);
     }
   }
