@@ -20,14 +20,17 @@ import com.intellij.openapi.actionSystem.AnActionEvent;
 import com.intellij.openapi.actionSystem.PlatformDataKeys;
 import com.intellij.openapi.project.DumbAwareAction;
 import com.intellij.openapi.project.Project;
+import org.jetbrains.annotations.NotNull;
 import org.jetbrains.idea.maven.execution.*;
 import org.jetbrains.idea.maven.project.MavenGeneralSettings;
+import org.jetbrains.idea.maven.project.MavenProject;
 import org.jetbrains.idea.maven.project.MavenProjectsManager;
 import org.jetbrains.idea.maven.utils.MavenUtil;
 
 import java.io.File;
 import java.util.Arrays;
 import java.util.LinkedHashMap;
+import java.util.List;
 
 /**
  * @author Sergey Evdokimov
@@ -40,7 +43,13 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
     ExecuteMavenGoalHistoryService historyService = ExecuteMavenGoalHistoryService.getInstance(project);
 
     MavenExecuteGoalDialog dialog = new MavenExecuteGoalDialog(project, historyService.getHistory());
-    dialog.setWorkDirectory(historyService.getWorkDirectory());
+
+    String lastWorkingDirectory = historyService.getWorkDirectory();
+    if (lastWorkingDirectory.length() == 0) {
+      lastWorkingDirectory = obtainAppropriateWorkingDirectory(project);
+    }
+
+    dialog.setWorkDirectory(lastWorkingDirectory);
 
     dialog.show();
     if (!dialog.isOK()) {
@@ -75,6 +84,13 @@ public class MavenExecuteGoalAction extends DumbAwareAction {
     runnerSettings.setSkipTests(false);
 
     MavenRunConfigurationType.runConfiguration(project, parameters, generalSettings, runnerSettings, null);
+  }
+
+  private static String obtainAppropriateWorkingDirectory(@NotNull Project project) {
+    List<MavenProject> rootProjects = MavenProjectsManager.getInstance(project).getRootProjects();
+    if (rootProjects.isEmpty()) return "";
+
+    return rootProjects.get(0).getDirectory();
   }
 
   @Override
