@@ -18,6 +18,7 @@ package com.intellij.codeInspection.deprecation;
 import com.intellij.codeInsight.daemon.JavaErrorMessages;
 import com.intellij.codeInsight.daemon.impl.HighlightInfoType;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightMessageUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInspection.BaseJavaLocalInspectionTool;
 import com.intellij.codeInspection.ProblemHighlightType;
 import com.intellij.codeInspection.ProblemsHolder;
@@ -27,7 +28,6 @@ import com.intellij.psi.*;
 import com.intellij.psi.infos.MethodCandidateInfo;
 import com.intellij.psi.util.MethodSignatureBackedByPsiMethod;
 import com.intellij.psi.util.PsiTreeUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import org.jetbrains.annotations.NonNls;
 import org.jetbrains.annotations.NotNull;
 import org.jetbrains.annotations.Nullable;
@@ -178,7 +178,7 @@ public class DeprecationInspection extends BaseJavaLocalInspectionTool {
         final PsiCodeBlock body = method.getBody();
         if (body != null) {
           final PsiStatement[] statements = body.getStatements();
-          if (statements.length == 0 || !RefactoringUtil.isSuperOrThisCall(statements[0], true, true)) {
+          if (statements.length == 0 || !JavaHighlightUtil.isSuperOrThisCall(statements[0], true, true)) {
             registerDefaultConstructorProblem(superClass, method.getNameIdentifier(), false);
           }
         }

@@ -18,6 +18,7 @@ package com.intellij.refactoring.util;
 import com.intellij.codeInsight.ExpectedTypeInfo;
 import com.intellij.codeInsight.ExpectedTypesProvider;
 import com.intellij.codeInsight.daemon.impl.analysis.HighlightControlFlowUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.lang.java.JavaLanguage;
 import com.intellij.openapi.diagnostic.Logger;
@@ -822,21 +823,6 @@ public class RefactoringUtil {
     return buffer.toString();
   }
 
-  public static boolean isSuperOrThisCall(PsiStatement statement, boolean testForSuper, boolean testForThis) {
-    if (!(statement instanceof PsiExpressionStatement)) return false;
-    PsiExpression expression = ((PsiExpressionStatement)statement).getExpression();
-    if (!(expression instanceof PsiMethodCallExpression)) return false;
-    final PsiReferenceExpression methodExpression = ((PsiMethodCallExpression)expression).getMethodExpression();
-    if (testForSuper) {
-      if ("super".equals(methodExpression.getText())) return true;
-    }
-    if (testForThis) {
-      if ("this".equals(methodExpression.getText())) return true;
-    }
-
-    return false;
-  }
-
   public static void visitImplicitSuperConstructorUsages(PsiClass subClass,
                                                          final ImplicitConstructorUsageVisitor implicitConstructorUsageVistor,
                                                          PsiClass superClass) {
@@ -845,7 +831,7 @@ public class RefactoringUtil {
     if (constructors.length > 0) {
       for (PsiMethod constructor : constructors) {
         final PsiStatement[] statements = constructor.getBody().getStatements();
-        if (statements.length < 1 || !isSuperOrThisCall(statements[0], true, true)) {
+        if (statements.length < 1 || !JavaHighlightUtil.isSuperOrThisCall(statements[0], true, true)) {
           implicitConstructorUsageVistor.visitConstructor(constructor, baseDefaultConstructor);
         }
       }

@@ -16,6 +16,7 @@
 package com.intellij.refactoring.extractMethod;
 
 import com.intellij.codeInsight.CodeInsightUtil;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.highlighting.HighlightManager;
 import com.intellij.openapi.actionSystem.DataContext;
 import com.intellij.openapi.actionSystem.LangDataKeys;
@@ -166,7 +167,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
                                                      final Project project,
                                                      final PsiFile file,
                                                      final Editor editor,
-                                                     final boolean showErrorMessages, 
+                                                     final boolean showErrorMessages,
                                                      final @Nullable Pass<ExtractMethodProcessor> pass) {
     if (elements == null || elements.length == 0) {
       if (showErrorMessages) {
@@ -178,7 +179,7 @@ public class ExtractMethodHandler implements RefactoringActionHandler {
     }
 
     for (PsiElement element : elements) {
-      if (element instanceof PsiStatement && RefactoringUtil.isSuperOrThisCall((PsiStatement)element, true, true)) {
+      if (element instanceof PsiStatement && JavaHighlightUtil.isSuperOrThisCall((PsiStatement)element, true, true)) {
         if (showErrorMessages) {
           String message = RefactoringBundle
             .getCannotRefactorMessage(RefactoringBundle.message("selected.block.contains.invocation.of.another.class.constructor"));

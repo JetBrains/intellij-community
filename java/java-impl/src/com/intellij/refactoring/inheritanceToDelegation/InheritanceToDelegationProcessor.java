@@ -16,6 +16,7 @@
 package com.intellij.refactoring.inheritanceToDelegation;
 
 import com.intellij.codeInsight.NullableNotNullManager;
+import com.intellij.codeInsight.daemon.impl.analysis.JavaHighlightUtil;
 import com.intellij.codeInsight.generation.GenerateMembersUtil;
 import com.intellij.codeInsight.generation.OverrideImplementUtil;
 import com.intellij.find.findUsages.PsiElement2UsageTargetAdapter;
@@ -37,7 +38,6 @@ import com.intellij.refactoring.ui.ConflictsDialog;
 import com.intellij.refactoring.util.CommonRefactoringUtil;
 import com.intellij.refactoring.util.ConflictsUtil;
 import com.intellij.refactoring.util.RefactoringUIUtil;
-import com.intellij.refactoring.util.RefactoringUtil;
 import com.intellij.refactoring.util.classMembers.ClassMemberReferencesVisitor;
 import com.intellij.refactoring.util.classRefs.ClassInstanceScanner;
 import com.intellij.refactoring.util.classRefs.ClassReferenceScanner;
@@ -682,7 +682,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
         }
       }
       final @NonNls String assignmentText = fieldQualifier + myFieldName + "= new " + defaultClassFieldType() + "()";
-      if (statements.length < 1 || !RefactoringUtil.isSuperOrThisCall(statements[0], true, true) || myBaseClass.isInterface()) {
+      if (statements.length < 1 || !JavaHighlightUtil.isSuperOrThisCall(statements[0], true, true) || myBaseClass.isInterface()) {
         PsiExpressionStatement assignmentStatement =
           (PsiExpressionStatement)myFactory.createStatementFromText(
             assignmentText, body
@@ -698,7 +698,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
 
         assignmentStatement = (PsiExpressionStatement)CodeStyleManager.getInstance(myProject).reformat(assignmentStatement);
         if (statements.length > 0) {
-          if (!RefactoringUtil.isSuperOrThisCall(statements[0], true, false)) {
+          if (!JavaHighlightUtil.isSuperOrThisCall(statements[0], true, false)) {
             body.addBefore(assignmentStatement, statements[0]);
           }
           else {
@@ -711,7 +711,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       }
       else {
         final PsiExpressionStatement callStatement = ((PsiExpressionStatement)statements[0]);
-        if (!RefactoringUtil.isSuperOrThisCall(callStatement, false, true)) {
+        if (!JavaHighlightUtil.isSuperOrThisCall(callStatement, false, true)) {
           final PsiMethodCallExpression superConstructorCall =
             (PsiMethodCallExpression)callStatement.getExpression();
           PsiAssignmentExpression assignmentExpression =
@@ -736,7 +736,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
     PsiMethod[] constructors = myClass.getConstructors();
     for (PsiMethod constructor : constructors) {
       final PsiStatement[] statements = constructor.getBody().getStatements();
-      if (statements.length > 0 && RefactoringUtil.isSuperOrThisCall(statements[0], true, false)) return false;
+      if (statements.length > 0 && JavaHighlightUtil.isSuperOrThisCall(statements[0], true, false)) return false;
     }
     return true;
   }
@@ -749,7 +749,7 @@ public class InheritanceToDelegationProcessor extends BaseRefactoringProcessor {
       PsiMethod[] constructors = myClass.getConstructors();
       for (PsiMethod constructor : constructors) {
         final PsiStatement[] statements = constructor.getBody().getStatements();
-        if (statements.length > 0 && RefactoringUtil.isSuperOrThisCall(statements[0], true, false)) {
+        if (statements.length > 0 && JavaHighlightUtil.isSuperOrThisCall(statements[0], true, false)) {
           final PsiMethodCallExpression superConstructorCall =
             (PsiMethodCallExpression)((PsiExpressionStatement)statements[0]).getExpression();
           PsiElement superConstructor = superConstructorCall.getMethodExpression().resolve();
