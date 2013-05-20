@@ -16,11 +16,7 @@
 package com.intellij.codeInspection.duplicateThrows;
 
 import com.intellij.codeInsight.daemon.GroupNames;
-import com.intellij.codeInspection.DeleteThrowsFix;
-import com.intellij.codeInspection.InspectionsBundle;
-import com.intellij.codeInspection.ProblemHighlightType;
-import com.intellij.codeInspection.ProblemsHolder;
-import com.intellij.codeInspection.ex.BaseLocalInspectionTool;
+import com.intellij.codeInspection.*;
 import com.intellij.codeInspection.ui.SingleCheckboxOptionsPanel;
 import com.intellij.psi.*;
 import org.jetbrains.annotations.NotNull;
@@ -28,8 +24,7 @@ import org.jetbrains.annotations.Nullable;
 
 import javax.swing.*;
 
-public class DuplicateThrowsInspection extends BaseLocalInspectionTool {
-
+public class DuplicateThrowsInspection extends BaseJavaBatchLocalInspectionTool {
   @SuppressWarnings("PublicField")
   public boolean ignoreSubclassing = false;
 
@@ -93,5 +88,10 @@ public class DuplicateThrowsInspection extends BaseLocalInspectionTool {
         }
       }
     };
+  }
+
+  @Override
+  public boolean isEnabledByDefault() {
+    return true;
   }
 }
