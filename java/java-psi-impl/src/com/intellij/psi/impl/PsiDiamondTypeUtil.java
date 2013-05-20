@@ -39,7 +39,7 @@ public class PsiDiamondTypeUtil {
 
   public static boolean canCollapseToDiamond(final PsiNewExpression expression,
                                              final PsiNewExpression context,
-                                             final @Nullable PsiType expectedType) {
+                                             @Nullable final PsiType expectedType) {
     return canCollapseToDiamond(expression, context, expectedType, false);
   }
 
@@ -50,7 +50,7 @@ public class PsiDiamondTypeUtil {
 
   private static boolean canCollapseToDiamond(final PsiNewExpression expression,
                                              final PsiNewExpression context,
-                                             final @Nullable PsiType expectedType,
+                                             @Nullable final PsiType expectedType,
                                              boolean skipDiamonds) {
     if (PsiUtil.getLanguageLevel(context).isAtLeast(LanguageLevel.JDK_1_7)) {
       final PsiJavaCodeReferenceElement classReference = expression.getClassOrAnonymousClassReference();
