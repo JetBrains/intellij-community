@@ -202,7 +202,7 @@ class MyTest extends GroovyTestCase {
     }
 
     void foo() {
-        print f
+        print <selection>f</selection>
     }
 }
 ''',
